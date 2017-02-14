@@ -57,7 +57,9 @@ namespace AnalysisManagerProg
 
             try
             {   // Get settings from config file
-                var lstMgrSettings = clsMainProcess.LoadMgrSettingsFromFile();
+                var mainProcess = new clsMainProcess(TRACE_MODE_ENABLED);
+
+                var lstMgrSettings = mainProcess.LoadMgrSettingsFromFile();
 
                 m_mgrParams = new clsAnalysisMgrSettings(CUSTOM_LOG_SOURCE_NAME, CUSTOM_LOG_NAME, lstMgrSettings, clsGlobal.GetAppFolderPath(), TRACE_MODE_ENABLED);
 

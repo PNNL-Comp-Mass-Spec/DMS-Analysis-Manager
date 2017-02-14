@@ -11,8 +11,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.Xml;
 using AnalysisManagerBase;
 using PRISM;
 
@@ -44,14 +46,17 @@ namespace AnalysisManagerProg
         #endregion
 
         #region "Member variables"
+        
         // clsAnalysisMgrSettings
         private IMgrParams m_MgrSettings;
 
         private clsCleanupMgrErrors m_MgrErrorCleanup;
+        private readonly string m_MgrExeName;
         private readonly string m_MgrFolderPath;
         private string m_WorkDirPath;
 
         private string m_MgrName = "??";
+        
         // clsAnalysisJob
         private IJobParams m_AnalysisTask;
         private clsPluginLoader m_PluginLoader;
@@ -143,7 +148,12 @@ namespace AnalysisManagerProg
             m_NeedToAbortProcessing = false;
             m_MostRecentJobInfo = string.Empty;
 
-            var fiMgr = new FileInfo(System.Windows.Forms.Application.ExecutablePath);
+            var exeName = Path.GetFileName(Assembly.GetExecutingAssembly().Location);
+            if (exeName == null)
+                throw new Exception("Unable to determine the Exe path of the currently executing assembly");
+
+            var fiMgr = new FileInfo(exeName);
+            m_MgrExeName = fiMgr.Name;
             m_MgrFolderPath = fiMgr.DirectoryName;
         }
 
@@ -168,6 +178,7 @@ namespace AnalysisManagerProg
             {
                 if (TraceMode)
                     ShowTraceMessage("Reading application config file");
+
                 var lstMgrSettings = LoadMgrSettingsFromFile();
 
                 // Get the manager settings
@@ -176,7 +187,11 @@ namespace AnalysisManagerProg
                 try
                 {
                     if (TraceMode)
+                    {
                         ShowTraceMessage("Instantiating clsAnalysisMgrSettings");
+                        foreach (var setting in lstMgrSettings)
+                            ShowTraceMessage(string.Format("  {0}: {1}", setting.Key, setting.Value));
+                    }
                     m_MgrSettings = new clsAnalysisMgrSettings(CUSTOM_LOG_SOURCE_NAME, CUSTOM_LOG_NAME, lstMgrSettings, m_MgrFolderPath, TraceMode);
                 }
                 catch (Exception ex)
@@ -1583,45 +1598,158 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
-        /// Loads the initial settings from application config file
+        /// Read settings from file AnalysisManagerProg.exe.config 
         /// </summary>
-        /// <returns>String dictionary containing initial settings if suceessful; NOTHING on error</returns>
-        /// <remarks></remarks>
-        internal static Dictionary<string, string> LoadMgrSettingsFromFile()
+        /// <returns>String dictionary of settings as key/value pairs; null on error</returns>
+        private Dictionary<string, string> ReadMgrSettingsFile()
         {
-            // Load initial settings into string dictionary for return
-            var lstMgrSettings = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
 
+            XmlDocument configDoc;
+
+            try
+            {
+                // Construct the path to the config document
+                var configFilePath = Path.Combine(m_MgrFolderPath, m_MgrExeName + ".config");
+                var configfile = new FileInfo(configFilePath);
+                if (!configfile.Exists)
+                {
+                    LogError("ReadMgrSettingsFile; manager config file not found: " + configFilePath);
+                    return null;
+                }
+
+                // Load the config document
+                configDoc = new XmlDocument();
+                configDoc.Load(configFilePath);
+            }
+            catch (Exception ex)
+            {
+                LogError("ReadMgrSettingsFile; exception loading settings file: " + ex.Message);
+                return null;
+            }
+
+            try
+            {
+                // Retrieve the settings node
+                var appSettingsNode = configDoc.SelectSingleNode("//applicationSettings");
+
+                if (appSettingsNode == null)
+                {
+                    LogError("ReadMgrSettingsFile; applicationSettings node not found");
+                    return null;
+                }
+
+                // Read each of the settings
+                var settingNodes = appSettingsNode.SelectNodes("//setting[@name]");
+                if (settingNodes == null)
+                {
+                    LogError("ReadMgrSettingsFile; applicationSettings/*/setting nodes not found");
+                    return null;
+                }
+
+                var settings = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
+
+                foreach (XmlNode settingNode in settingNodes)
+                {
+                    if (settingNode.Attributes == null)
+                    {
+                        if (TraceMode)
+                            ShowTraceMessage(string.Format("Skipping setting node because no attributes: {0}", settingNode));
+                        continue;
+                    }
+
+                    var settingName = settingNode.Attributes["name"].Value;
+
+                    var valueNode = settingNode.SelectSingleNode("value");
+                    if (valueNode == null)
+                    {
+                        if (TraceMode)
+                            ShowTraceMessage(string.Format("Skipping setting node because no value node: <setting name=\"{0}\"/>", settingName));
+                        continue;
+                    }
+
+                    var value = valueNode.InnerText;
+
+                    settings.Add(settingName, value);
+                }
+
+                return settings;
+
+            }
+            catch (Exception ex)
+            {
+                LogError("ReadMgrSettingsFile; Exception reading settings file: " + ex.Message);
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Loads the initial settings from application config file AnalysisManagerProg.exe.config
+        /// </summary>
+        /// <returns>String dictionary containing initial settings if successful; null on error</returns>
+        /// <remarks>This method is public because clsCodeTest uses it</remarks>
+        public Dictionary<string, string> LoadMgrSettingsFromFile()
+        {
             // Note: When you are editing this project using the Visual Studio IDE, if you edit the values
             //  ->My Project>Settings.settings, then when you run the program (from within the IDE), it
             //  will update file AnalysisManagerProg.exe.config with your settings
             // The manager will exit if the "UsingDefaults" value is "True", thus you need to have
             //  "UsingDefaults" be "False" to run (and/or debug) the application
 
-            Properties.Settings.Default.Reload();
+            // We should be able to load settings auto-magically using "Properties.Settings.Default.MgrCnfgDbConnectStr" and "Properties.Settings.Default.MgrName"
+            // But that mechanism stopped working when we ported the Analysis Manager from VB to C#
+            // So, falling back to simple XML file reading using ReadMgrSettingsFile()
 
-            // Manager config db connection string
-            lstMgrSettings.Add(clsAnalysisMgrSettings.MGR_PARAM_MGR_CFG_DB_CONN_STRING, Properties.Settings.Default.MgrCnfgDbConnectStr);
+
+            // Load initial settings into string dictionary
+            var lstMgrSettings = ReadMgrSettingsFile();
+
+            if (lstMgrSettings == null)
+                return null;
+
+            // Manager Config DB connection string
+            if (!lstMgrSettings.ContainsKey(clsAnalysisMgrSettings.MGR_PARAM_MGR_CFG_DB_CONN_STRING))
+            {
+                lstMgrSettings.Add(clsAnalysisMgrSettings.MGR_PARAM_MGR_CFG_DB_CONN_STRING, Properties.Settings.Default.MgrCnfgDbConnectStr);
+            }
 
             // Manager active flag
-            lstMgrSettings.Add(clsAnalysisMgrSettings.MGR_PARAM_MGR_ACTIVE_LOCAL, Properties.Settings.Default.MgrActive_Local.ToString());
+            if (!lstMgrSettings.ContainsKey(clsAnalysisMgrSettings.MGR_PARAM_MGR_ACTIVE_LOCAL))
+            {
+                lstMgrSettings.Add(clsAnalysisMgrSettings.MGR_PARAM_MGR_ACTIVE_LOCAL, Properties.Settings.Default.MgrActive_Local.ToString());
+            }
 
             // Manager name
+            if (!lstMgrSettings.ContainsKey(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME))
+            {
+                lstMgrSettings.Add(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, Properties.Settings.Default.MgrName);
+            }
+
             // If the MgrName setting in the AnalysisManagerProg.exe.config file contains the text $ComputerName$
             // that text is replaced with this computer's domain name
             // This is a case-sensitive comparison
+            var managerName = lstMgrSettings[clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME];
+            var autoDefinedName = managerName.Replace("$ComputerName$", Environment.MachineName);
 
-            lstMgrSettings.Add(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, Properties.Settings.Default.MgrName.Replace("$ComputerName$", Environment.MachineName));
+            if (!string.Equals(managerName, autoDefinedName))
+            {
+                if (TraceMode)
+                    ShowTraceMessage("Auto-defining the manager name as " + autoDefinedName);
+                lstMgrSettings[clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME] = autoDefinedName;
+            }
 
             // Default settings in use flag
-            var usingDefaults = Properties.Settings.Default.UsingDefaults.ToString();
-            lstMgrSettings.Add(clsAnalysisMgrSettings.MGR_PARAM_USING_DEFAULTS, usingDefaults);
+            if (!lstMgrSettings.ContainsKey(clsAnalysisMgrSettings.MGR_PARAM_USING_DEFAULTS))
+            {
+                lstMgrSettings.Add(clsAnalysisMgrSettings.MGR_PARAM_USING_DEFAULTS, Properties.Settings.Default.UsingDefaults.ToString());
+            }
 
             // Default connection string for logging errors to the databsae
             // Will get updated later when manager settings are loaded from the manager control database
-            var defaultDMSConnectionString = Properties.Settings.Default.DefaultDMSConnString;
-            lstMgrSettings.Add(clsAnalysisMgrSettings.MGR_PARAM_DEFAULT_DMS_CONN_STRING, defaultDMSConnectionString);
-
+            if (!lstMgrSettings.ContainsKey(clsAnalysisMgrSettings.MGR_PARAM_DEFAULT_DMS_CONN_STRING))
+            {
+                lstMgrSettings.Add(clsAnalysisMgrSettings.MGR_PARAM_DEFAULT_DMS_CONN_STRING, Properties.Settings.Default.DefaultDMSConnString);
+            }
+         
             return lstMgrSettings;
         }
 
@@ -1815,8 +1943,13 @@ namespace AnalysisManagerProg
                 // Get settings from config file
                 var lstMgrSettings = LoadMgrSettingsFromFile();
 
+                if (lstMgrSettings == null)
+                    return false;
+
                 if (TraceMode)
                     ShowTraceMessage("Storing manager settings in m_MgrSettings");
+
+                // Load settings from the database
                 if (!m_MgrSettings.LoadSettings(lstMgrSettings))
                 {
                     if (!string.IsNullOrWhiteSpace(m_MgrSettings.ErrMsg))
