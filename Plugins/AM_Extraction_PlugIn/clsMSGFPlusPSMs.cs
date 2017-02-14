@@ -1,190 +1,215 @@
-﻿Public Class clsMSGFPlusPSMs
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 
-    Public Structure udtPSMType
-        Public Peptide As String
-        Public SpecEValue As Double
-        Public DataLine As String
-    End Structure
+namespace AnalysisManagerExtractionPlugin
+{
+    public class clsMSGFPlusPSMs
+    {
+        public struct udtPSMType
+        {
+            public string Peptide;
+            public double SpecEValue;
+            public string DataLine;
+        }
 
-    ' Keys are the protein and peptide (separated by an undercore)
-    ' Values are the PSM details, including the original data line from the .TSV file
-    Private mPSMs As Dictionary(Of String, udtPSMType)
+        // Keys are the protein and peptide (separated by an undercore)
+        // Values are the PSM details, including the original data line from the .TSV file
+        private Dictionary<string, udtPSMType> mPSMs;
 
-    ' List of SpecEValues associated with this scan/charge
-    Private ReadOnly mSpecEValues As SortedSet(Of Double)
+        // List of SpecEValues associated with this scan/charge
+        private readonly SortedSet<double> mSpecEValues;
 
-    Private mBestSpecEValue As Double
-    Private mWorstSpecEValue As Double
+        private double mBestSpecEValue;
+        private double mWorstSpecEValue;
 
-    Private ReadOnly mCharge As Integer
-    Private ReadOnly mScan As Integer
+        private readonly int mCharge;
+        private readonly int mScan;
 
-    Private ReadOnly mMaximumPSMsToKeep As Integer
+        private readonly int mMaximumPSMsToKeep;
 
-    Public ReadOnly Property Charge() As Integer
-        Get
-            Return mCharge
-        End Get
-    End Property
+        public int Charge
+        {
+            get { return mCharge; }
+        }
 
-    Public ReadOnly Property MaximumPSMsToKeep() As Integer
-        Get
-            Return mMaximumPSMsToKeep
-        End Get
-    End Property
+        public int MaximumPSMsToKeep
+        {
+            get { return mMaximumPSMsToKeep; }
+        }
 
-    Public ReadOnly Property PSMs() As List(Of udtPSMType)
-        Get
-            Return mPSMs.Values.ToList()
-        End Get
-    End Property
+        public List<udtPSMType> PSMs
+        {
+            get { return mPSMs.Values.ToList(); }
+        }
 
-    Public ReadOnly Property Scan() As Integer
-        Get
-            Return mScan
-        End Get
-    End Property
+        public int Scan
+        {
+            get { return mScan; }
+        }
 
-    Public Sub New(scanNumber As Integer, chargeState As Integer, maximumPSMsToRetain As Integer)
-        mMaximumPSMsToKeep = maximumPSMsToRetain
-        If mMaximumPSMsToKeep < 1 Then mMaximumPSMsToKeep = 1
+        public clsMSGFPlusPSMs(int scanNumber, int chargeState, int maximumPSMsToRetain)
+        {
+            mMaximumPSMsToKeep = maximumPSMsToRetain;
+            if (mMaximumPSMsToKeep < 1)
+                mMaximumPSMsToKeep = 1;
 
-        mPSMs = New Dictionary(Of String, udtPSMType)
-        mSpecEValues = New SortedSet(Of Double)
+            mPSMs = new Dictionary<string, udtPSMType>();
+            mSpecEValues = new SortedSet<double>();
 
-        mBestSpecEValue = 0
-        mWorstSpecEValue = 0
+            mBestSpecEValue = 0;
+            mWorstSpecEValue = 0;
 
-        mScan = scanNumber
-        mCharge = chargeState
-    End Sub
+            mScan = scanNumber;
+            mCharge = chargeState;
+        }
 
-    ''' <summary>
-    ''' Adds the given PSM if the list has fewer than MaximumPSMsToKeep PSMs, or if the specEValue is less than the worst scoring entry in the list
-    ''' </summary>
-    ''' <param name="udtPSM"></param>
-    ''' <param name="protein"></param>
-    ''' <returns>True if the PSM was stored, otherwise false</returns>
-    ''' <remarks></remarks>
-    Public Function AddPSM(udtPSM As udtPSMType, protein As String) As Boolean
+        /// <summary>
+        /// Adds the given PSM if the list has fewer than MaximumPSMsToKeep PSMs, or if the specEValue is less than the worst scoring entry in the list
+        /// </summary>
+        /// <param name="udtPSM"></param>
+        /// <param name="protein"></param>
+        /// <returns>True if the PSM was stored, otherwise false</returns>
+        /// <remarks></remarks>
+        public bool AddPSM(udtPSMType udtPSM, string protein)
+        {
+            udtPSM.Peptide = RemovePrefixAndSuffix(udtPSM.Peptide);
 
-        udtPSM.Peptide = RemovePrefixAndSuffix(udtPSM.Peptide)
+            var updateScores = false;
+            bool addPeptide = false;
 
-        Dim updateScores = False
-        Dim addPeptide As Boolean = False
+            if (mSpecEValues.Count < mMaximumPSMsToKeep)
+            {
+                addPeptide = true;
+            }
+            else
+            {
+                if ((from item in mPSMs.Values where item.Peptide == udtPSM.Peptide select item).Any())
+                {
+                    addPeptide = true;
+                }
+            }
 
-        If mSpecEValues.Count < mMaximumPSMsToKeep Then
-            addPeptide = True
-        Else
-            If (From item In mPSMs.Values Where item.Peptide = udtPSM.Peptide Select item).Any() Then
-                addPeptide = True
-            End If
-        End If
+            var proteinPeptide = protein + "_" + udtPSM.Peptide;
 
-        Dim proteinPeptide = protein & "_" & udtPSM.Peptide
+            if (addPeptide)
+            {
+                udtPSMType udtExistingPSM;
 
-        If addPeptide Then
+                if (mPSMs.TryGetValue(proteinPeptide, out udtExistingPSM))
+                {
+                    if (udtExistingPSM.SpecEValue > udtPSM.SpecEValue)
+                    {
+                        udtExistingPSM.SpecEValue = udtPSM.SpecEValue;
+                        // Update the dictionary (necessary since udtExistingPSM is a structure and not an object)
+                        mPSMs[proteinPeptide] = udtExistingPSM;
+                    }
+                }
+                else
+                {
+                    mPSMs.Add(proteinPeptide, udtPSM);
+                }
 
-            Dim udtExistingPSM As udtPSMType = Nothing
+                updateScores = true;
+            }
+            else
+            {
+                if (udtPSM.SpecEValue < mWorstSpecEValue)
+                {
+                    if (mPSMs.Count <= 1 || mSpecEValues.Count == 1)
+                    {
+                        mPSMs.Clear();
+                    }
+                    else
+                    {
+                        // Remove all entries in mPSMs for the worst scoring peptide (or tied peptides) in mSpecEValues
+                        var keysToRemove = (from item in mPSMs where Math.Abs(item.Value.SpecEValue - mWorstSpecEValue) < double.Epsilon select item.Key).ToList();
 
-            If mPSMs.TryGetValue(proteinPeptide, udtExistingPSM) Then
-                If udtExistingPSM.SpecEValue > udtPSM.SpecEValue Then
-                    udtExistingPSM.SpecEValue = udtPSM.SpecEValue
-                    ' Update the dictionary (necessary since udtExistingPSM is a structure and not an object)
-                    mPSMs(proteinPeptide) = udtExistingPSM
-                End If
-            Else
-                mPSMs.Add(proteinPeptide, udtPSM)
-            End If
+                        foreach (var proteinPeptideKey in keysToRemove.Distinct())
+                        {
+                            mPSMs.Remove(proteinPeptideKey);
+                        }
+                    }
 
-            updateScores = True
+                    // Add the new PSM
+                    mPSMs.Add(proteinPeptide, udtPSM);
 
-        Else
+                    updateScores = true;
+                }
+                else if (Math.Abs(udtPSM.SpecEValue - mBestSpecEValue) < double.Epsilon)
+                {
+                    // The new peptide has the same score as the best scoring peptide; keep it (and don't remove anything)
 
-            If udtPSM.SpecEValue < mWorstSpecEValue Then
+                    // Add the new PSM
+                    mPSMs.Add(proteinPeptide, udtPSM);
 
-                If mPSMs.Count <= 1 OrElse mSpecEValues.Count = 1 Then
-                    mPSMs.Clear()
-                Else
+                    updateScores = true;
+                }
+            }
 
-                    ' Remove all entries in mPSMs for the worst scoring peptide (or tied peptides) in mSpecEValues
-                    Dim keysToRemove = (From item In mPSMs Where Math.Abs(item.Value.SpecEValue - mWorstSpecEValue) < Double.Epsilon Select item.Key).ToList()
+            if (updateScores)
+            {
+                if (mPSMs.Count > 1)
+                {
+                    // Make sure all peptides have the same SpecEvalue
+                    var bestScoreByPeptide = new Dictionary<string, double>();
 
-                    For Each proteinPeptideKey In keysToRemove.Distinct()
-                        mPSMs.Remove(proteinPeptideKey)
-                    Next
-                End If
+                    foreach (var psm in mPSMs)
+                    {
+                        string peptideToFind = psm.Value.Peptide;
+                        double storedScore = 0;
+                        if (bestScoreByPeptide.TryGetValue(peptideToFind, out storedScore))
+                        {
+                            bestScoreByPeptide[peptideToFind] = Math.Min(storedScore, psm.Value.SpecEValue);
+                        }
+                        else
+                        {
+                            bestScoreByPeptide.Add(peptideToFind, psm.Value.SpecEValue);
+                        }
+                    }
 
-                ' Add the new PSM
-                mPSMs.Add(proteinPeptide, udtPSM)
+                    foreach (var key in mPSMs.Keys.ToList())
+                    {
+                        var udtStoredPSM = mPSMs[key];
+                        var bestScore = bestScoreByPeptide[udtStoredPSM.Peptide];
+                        if (bestScore < udtStoredPSM.SpecEValue)
+                        {
+                            udtStoredPSM.SpecEValue = bestScore;
+                            mPSMs[key] = udtStoredPSM;
+                        }
+                    }
+                }
 
-                updateScores = True
+                // Update the distinct list of SpecEValues
+                mSpecEValues.Clear();
+                mSpecEValues.UnionWith((from item in mPSMs select item.Value.SpecEValue).Distinct());
 
-            ElseIf Math.Abs(udtPSM.SpecEValue - mBestSpecEValue) < Double.Epsilon Then
-                ' The new peptide has the same score as the best scoring peptide; keep it (and don't remove anything)
+                mBestSpecEValue = mSpecEValues.First();
+                mWorstSpecEValue = mSpecEValues.Last();
 
-                ' Add the new PSM
-                mPSMs.Add(proteinPeptide, udtPSM)
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
 
-                updateScores = True
+        public static string RemovePrefixAndSuffix(string peptide)
+        {
+            if (peptide.Length > 4)
+            {
+                if (peptide[1] == '.')
+                {
+                    peptide = peptide.Substring(2);
+                }
+                if (peptide[peptide.Length - 2] == '.')
+                {
+                    peptide = peptide.Substring(0, peptide.Length - 2);
+                }
+            }
 
-            End If
-        End If
-
-        If updateScores Then
-
-            If mPSMs.Count > 1 Then
-                ' Make sure all peptides have the same SpecEvalue
-                Dim bestScoreByPeptide = New Dictionary(Of String, Double)
-
-                For Each psm In mPSMs
-                    Dim peptideToFind As String = psm.Value.Peptide
-                    Dim storedScore As Double
-                    If bestScoreByPeptide.TryGetValue(peptideToFind, storedScore) Then
-                        bestScoreByPeptide(peptideToFind) = Math.Min(storedScore, psm.Value.SpecEValue)
-                    Else
-                        bestScoreByPeptide.Add(peptideToFind, psm.Value.SpecEValue)
-                    End If
-                Next
-
-                For Each key In mPSMs.Keys.ToList()
-                    Dim udtStoredPSM = mPSMs(key)
-                    Dim bestScore = bestScoreByPeptide(udtStoredPSM.Peptide)
-                    If bestScore < udtStoredPSM.SpecEValue Then
-                        udtStoredPSM.SpecEValue = bestScore
-                        mPSMs(key) = udtStoredPSM
-                    End If
-                Next
-            End If
-
-            ' Update the distinct list of SpecEValues
-            mSpecEValues.Clear()
-            mSpecEValues.UnionWith((From item In mPSMs Select item.Value.SpecEValue).Distinct())
-
-            mBestSpecEValue = mSpecEValues.First
-            mWorstSpecEValue = mSpecEValues.Last
-
-            Return True
-
-        Else
-            Return False
-        End If
-
-
-    End Function
-
-    Public Shared Function RemovePrefixAndSuffix(peptide As String) As String
-
-        If peptide.Length > 4 Then
-            If peptide.Chars(1) = "." Then
-                peptide = peptide.Substring(2)
-            End If
-            If peptide.Chars(peptide.Length - 2) = "." Then
-                peptide = peptide.Substring(0, peptide.Length - 2)
-            End If
-        End If
-
-        Return peptide
-    End Function
-
-End Class
+            return peptide;
+        }
+    }
+}

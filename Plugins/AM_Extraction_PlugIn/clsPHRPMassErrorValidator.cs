@@ -1,334 +1,380 @@
-﻿Option Strict On
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using AnalysisManagerBase;
+using PHRPReader;
 
-Imports AnalysisManagerBase
-Imports PHRPReader
+namespace AnalysisManagerExtractionPlugin
+{
+    public class clsPHRPMassErrorValidator
+    {
+        #region "Module variables"
 
-Public Class clsPHRPMassErrorValidator
+        protected string mErrorMessage = string.Empty;
+        protected readonly int mDebugLevel;
 
-#Region "Module variables"
+        // This is a value between 0 and 100
+        protected const double mErrorThresholdPercent = 5;
 
-    Protected mErrorMessage As String = String.Empty
-    Protected ReadOnly mDebugLevel As Integer
+        protected clsPHRPReader mPHRPReader;
 
-    ' This is a value between 0 and 100
-    Protected Const mErrorThresholdPercent As Double = 5
+        #endregion
 
-    Protected WithEvents mPHRPReader As clsPHRPReader
+        public string ErrorMessage
+        {
+            get { return mErrorMessage; }
+        }
 
-#End Region
+        /// <summary>
+        /// Value between 0 and 100
+        /// If more than this percent of the data has a mass error larger than the threshold, then ValidatePHRPResultMassErrors returns false
+        /// </summary>
+        /// <value></value>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        public double ErrorThresholdPercent
+        {
+            get { return mErrorThresholdPercent; }
+        }
 
-    Public ReadOnly Property ErrorMessage() As String
-        Get
-            Return mErrorMessage
-        End Get
-    End Property
+        public clsPHRPMassErrorValidator(int intDebugLevel)
+        {
+            mDebugLevel = intDebugLevel;
+        }
 
-    ''' <summary>
-    ''' Value between 0 and 100
-    ''' If more than this percent of the data has a mass error larger than the threshold, then ValidatePHRPResultMassErrors returns false
-    ''' </summary>
-    ''' <value></value>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public ReadOnly Property ErrorThresholdPercent As Double
-        Get
-            Return mErrorThresholdPercent
-        End Get
-    End Property
+        protected void InformLargeErrorExample(KeyValuePair<double, string> massErrorEntry)
+        {
+            ShowErrorMessage("  ... large error example: " + massErrorEntry.Key + " Da for " + massErrorEntry.Value);
+        }
 
-    Public Sub New(intDebugLevel As Integer)
-        mDebugLevel = intDebugLevel
-    End Sub
+        protected clsSearchEngineParameters LoadSearchEngineParameters(clsPHRPReader objPHRPReader, string strSearchEngineParamFilePath, clsPHRPReader.ePeptideHitResultType eResultType)
+        {
+            clsSearchEngineParameters objSearchEngineParams = null;
+            bool blnSuccess = false;
 
-    Protected Sub InformLargeErrorExample(massErrorEntry As KeyValuePair(Of Double, String))
-        ShowErrorMessage("  ... large error example: " & massErrorEntry.Key & " Da for " & massErrorEntry.Value)
-    End Sub
+            try
+            {
+                if (string.IsNullOrEmpty(strSearchEngineParamFilePath))
+                {
+                    ShowWarningMessage("Search engine parameter file not defined; will assume a maximum tolerance of 10 Da");
+                    objSearchEngineParams = new clsSearchEngineParameters(eResultType.ToString());
+                    objSearchEngineParams.AddUpdateParameter("peptide_mass_tol", "10");
+                }
+                else
+                {
+                    blnSuccess = objPHRPReader.PHRPParser.LoadSearchEngineParameters(strSearchEngineParamFilePath, out objSearchEngineParams);
 
-    Protected Function LoadSearchEngineParameters(
-       objPHRPReader As clsPHRPReader,
-       strSearchEngineParamFilePath As String,
-       eResultType As clsPHRPReader.ePeptideHitResultType) As clsSearchEngineParameters
-
-        Dim objSearchEngineParams As clsSearchEngineParameters = Nothing
-        Dim blnSuccess As Boolean
-
-        Try
-
-            If String.IsNullOrEmpty(strSearchEngineParamFilePath) Then
-                ShowWarningMessage("Search engine parameter file not defined; will assume a maximum tolerance of 10 Da")
-                objSearchEngineParams = New clsSearchEngineParameters(eResultType.ToString())
-                objSearchEngineParams.AddUpdateParameter("peptide_mass_tol", "10")
-            Else
-
-                blnSuccess = objPHRPReader.PHRPParser.LoadSearchEngineParameters(strSearchEngineParamFilePath, objSearchEngineParams)
-
-                If Not blnSuccess Then
-                    ShowWarningMessage("Error loading search engine parameter file " & IO.Path.GetFileName(strSearchEngineParamFilePath) & "; will assume a maximum tolerance of 10 Da")
-                    objSearchEngineParams = New clsSearchEngineParameters(eResultType.ToString())
-                    objSearchEngineParams.AddUpdateParameter("peptide_mass_tol", "10")
-                End If
-            End If
-
-        Catch ex As Exception
-            ShowErrorMessage("Error in LoadSearchEngineParameters", ex)
-        End Try
-
-        Return objSearchEngineParams
-
-    End Function
-
-    Protected Sub ShowErrorMessage(strMessage As String)
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMessage)
-    End Sub
-
-    Protected Sub ShowErrorMessage(strMessage As String, ex As Exception)
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMessage, ex)
-    End Sub
-
-    Protected Sub ShowMessage(strMessage As String)
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, strMessage)
-    End Sub
-
-    Protected Sub ShowWarningMessage(strWarningMessage As String)
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strWarningMessage)
-    End Sub
-
-    ''' <summary>
-    ''' Parses strInputFilePath to count the number of entries where the difference in mass between the precursor neutral mass value and the computed monoisotopic mass value is more than 6 Da away (more for higher charge states)
-    ''' </summary>
-    ''' <param name="strInputFilePath"></param>
-    ''' <param name="eResultType"></param>
-    ''' <param name="strSearchEngineParamFilePath"></param>
-    ''' <returns>True if less than mErrorThresholdPercent of the data is bad; False otherwise</returns>
-    ''' <remarks></remarks>
-    Public Function ValidatePHRPResultMassErrors(strInputFilePath As String, eResultType As clsPHRPReader.ePeptideHitResultType, strSearchEngineParamFilePath As String) As Boolean
-
-        Try
-            mErrorMessage = String.Empty
-
-            Dim oPeptideMassCalculator = New clsPeptideMassCalculator()
-
-            Dim oStartupOptions = New clsPHRPStartupOptions() With {
-                .LoadModsAndSeqInfo = True,
-                .LoadMSGFResults = False,
-                .LoadScanStatsData = False,
-                .MaxProteinsPerPSM = 1,
-                .PeptideMassCalculator = oPeptideMassCalculator
+                    if (!blnSuccess)
+                    {
+                        ShowWarningMessage("Error loading search engine parameter file " + Path.GetFileName(strSearchEngineParamFilePath) +
+                                           "; will assume a maximum tolerance of 10 Da");
+                        objSearchEngineParams = new clsSearchEngineParameters(eResultType.ToString());
+                        objSearchEngineParams.AddUpdateParameter("peptide_mass_tol", "10");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowErrorMessage("Error in LoadSearchEngineParameters", ex);
             }
 
-            mPHRPReader = New clsPHRPReader(strInputFilePath, eResultType, oStartupOptions)
+            return objSearchEngineParams;
+        }
 
-            ' Report any errors cached during instantiation of mPHRPReader
-            For Each strMessage As String In mPHRPReader.ErrorMessages
-                If String.IsNullOrEmpty(mErrorMessage) Then
-                    mErrorMessage = String.Copy(strMessage)
-                End If
-                ShowErrorMessage(strMessage)
-            Next
-            If mPHRPReader.ErrorMessages.Count > 0 Then Return False
+        protected void ShowErrorMessage(string strMessage)
+        {
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMessage);
+        }
 
-            ' Report any warnings cached during instantiation of mPHRPReader
-            For Each strMessage As String In mPHRPReader.WarningMessages
-                If strMessage.StartsWith("Warning, taxonomy file not found") Then
-                    ' Ignore this warning; the taxonomy file would have been used to determine the fasta file that was searched
-                    ' We don't need that information in this application
-                Else
-                    ShowWarningMessage(strMessage)
-                End If
-            Next
+        protected void ShowErrorMessage(string strMessage, Exception ex)
+        {
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMessage, ex);
+        }
 
-            mPHRPReader.ClearErrors()
-            mPHRPReader.ClearWarnings()
-            mPHRPReader.SkipDuplicatePSMs = True
+        protected void ShowMessage(string strMessage)
+        {
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, strMessage);
+        }
 
-            ' Load the search engine parameters
-            Dim objSearchEngineParams = LoadSearchEngineParameters(mPHRPReader, strSearchEngineParamFilePath, eResultType)
+        protected void ShowWarningMessage(string strWarningMessage)
+        {
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strWarningMessage);
+        }
 
-            ' Check for a custom charge carrier mass
-            Dim customChargeCarrierMass As Double
-            If clsPHRPParserMSGFDB.GetCustomChargeCarrierMass(objSearchEngineParams, customChargeCarrierMass) Then
-                If mDebugLevel >= 2 Then
+        /// <summary>
+        /// Parses strInputFilePath to count the number of entries where the difference in mass between the precursor neutral mass value and the computed monoisotopic mass value is more than 6 Da away (more for higher charge states)
+        /// </summary>
+        /// <param name="strInputFilePath"></param>
+        /// <param name="eResultType"></param>
+        /// <param name="strSearchEngineParamFilePath"></param>
+        /// <returns>True if less than mErrorThresholdPercent of the data is bad; False otherwise</returns>
+        /// <remarks></remarks>
+        public bool ValidatePHRPResultMassErrors(string strInputFilePath, clsPHRPReader.ePeptideHitResultType eResultType, string strSearchEngineParamFilePath)
+        {
+            try
+            {
+                mErrorMessage = string.Empty;
+
+                var oPeptideMassCalculator = new clsPeptideMassCalculator();
+
+                var oStartupOptions = new clsPHRPStartupOptions
+                {
+                    LoadModsAndSeqInfo = true,
+                    LoadMSGFResults = false,
+                    LoadScanStatsData = false,
+                    MaxProteinsPerPSM = 1,
+                    PeptideMassCalculator = oPeptideMassCalculator
+                };
+
+                mPHRPReader = new clsPHRPReader(strInputFilePath, eResultType, oStartupOptions);
+                mPHRPReader.ErrorEvent += mPHRPReader_ErrorEvent;
+                mPHRPReader.MessageEvent += mPHRPReader_MessageEvent;
+                mPHRPReader.WarningEvent += mPHRPReader_WarningEvent;
+
+                // Report any errors cached during instantiation of mPHRPReader
+                foreach (string strMessage in mPHRPReader.ErrorMessages)
+                {
+                    if (string.IsNullOrEmpty(mErrorMessage))
+                    {
+                        mErrorMessage = string.Copy(strMessage);
+                    }
+                    ShowErrorMessage(strMessage);
+                }
+                if (mPHRPReader.ErrorMessages.Count > 0)
+                    return false;
+
+                // Report any warnings cached during instantiation of mPHRPReader
+                foreach (string strMessage in mPHRPReader.WarningMessages)
+                {
+                    if (strMessage.StartsWith("Warning, taxonomy file not found"))
+                    {
+                        // Ignore this warning; the taxonomy file would have been used to determine the fasta file that was searched
+                        // We don't need that information in this application
+                    }
+                    else
+                    {
+                        ShowWarningMessage(strMessage);
+                    }
+                }
+
+                mPHRPReader.ClearErrors();
+                mPHRPReader.ClearWarnings();
+                mPHRPReader.SkipDuplicatePSMs = true;
+
+                // Load the search engine parameters
+                var objSearchEngineParams = LoadSearchEngineParameters(mPHRPReader, strSearchEngineParamFilePath, eResultType);
+
+                // Check for a custom charge carrier mass
+                double customChargeCarrierMass = 0;
+                if (clsPHRPParserMSGFDB.GetCustomChargeCarrierMass(objSearchEngineParams, out customChargeCarrierMass))
+                {
+                    if (mDebugLevel >= 2)
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                            string.Format("Custom charge carrier mass defined: {0:F3} Da", customChargeCarrierMass));
+                    }
+                    oPeptideMassCalculator.ChargeCarrierMass = customChargeCarrierMass;
+                }
+
+                // Define the precursor mass tolerance threshold
+                // At a minimum, use 6 Da, though we'll bump that up by 1 Da for each charge state (7 Da for CS 2, 8 Da for CS 3, 9 Da for CS 4, etc.)
+                // However, for MSGF+ we require that the masses match within 0.1 Da because the IsotopeError column allows for a more accurate comparison
+                double dblPrecursorMassTolerance = objSearchEngineParams.PrecursorMassToleranceDa;
+
+                if (dblPrecursorMassTolerance < 6)
+                {
+                    dblPrecursorMassTolerance = 6;
+                }
+
+                if (mDebugLevel >= 2)
+                {
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                     String.Format("Custom charge carrier mass defined: {0:F3} Da", customChargeCarrierMass))
-                End If
-                oPeptideMassCalculator.ChargeCarrierMass = customChargeCarrierMass
-            End If
+                        "Will use mass tolerance of " + dblPrecursorMassTolerance.ToString("0.0") + " Da when determining PHRP mass errors");
+                }
 
-            ' Define the precursor mass tolerance threshold
-            ' At a minimum, use 6 Da, though we'll bump that up by 1 Da for each charge state (7 Da for CS 2, 8 Da for CS 3, 9 Da for CS 4, etc.)
-            ' However, for MSGF+ we require that the masses match within 0.1 Da because the IsotopeError column allows for a more accurate comparison
-            Dim dblPrecursorMassTolerance As Double = objSearchEngineParams.PrecursorMassToleranceDa
+                // Count the number of PSMs with a mass error greater than dblPrecursorMassTolerance
 
-            If dblPrecursorMassTolerance < 6 Then
-                dblPrecursorMassTolerance = 6
-            End If
+                var intErrorCount = 0;
+                var intPsmCount = 0;
+                DateTime dtLastProgress = System.DateTime.UtcNow;
 
-            If mDebugLevel >= 2 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                     "Will use mass tolerance of " & dblPrecursorMassTolerance.ToString("0.0") & " Da when determining PHRP mass errors")
-            End If
+                string strPeptideDescription = null;
+                var lstLargestMassErrors = new SortedDictionary<double, string>();
 
-            ' Count the number of PSMs with a mass error greater than dblPrecursorMassTolerance
+                while (mPHRPReader.MoveNext())
+                {
+                    //// This is old code that was in LoadSearchEngineParameters and was called after all PSMs had been cached in memory
+                    //// Since we're no longer pre-caching PSMs in memory, this code block was moved to this function
+                    //// However, I don't think this code is really needed, so I've commented it out
+                    ////
+                    //// Make sure mSearchEngineParams.ModInfo is up-to-date
+                    //if (mPHRPReader.CurrentPSM.ModifiedResidues.Count > 0)
+                    //{
+                    //    foreach (var objResidue in mPHRPReader.CurrentPSM.ModifiedResidues)
+                    //    {
+                    //        // Check whether .ModDefinition is present in objSearchEngineParams.ModInfo
+                    //        var blnMatchFound = false;
+                    //        foreach (var objKnownMod in objSearchEngineParams.ModInfo)
+                    //        {
+                    //            if (objKnownMod == objResidue.ModDefinition)
+                    //            {
+                    //                blnMatchFound = true;
+                    //                break;
+                    //            }
+                    //        }
+                    //
+                    //        if (!blnMatchFound)
+                    //        {
+                    //            objSearchEngineParams.ModInfo.Add(objResidue.ModDefinition);
+                    //        }
+                    //    }
+                    //}
 
-            Dim intErrorCount = 0
-            Dim intPsmCount = 0
-            Dim dtLastProgress As DateTime = Date.UtcNow
+                    intPsmCount += 1;
 
-            Dim strPeptideDescription As String
-            Dim lstLargestMassErrors = New SortedDictionary(Of Double, String)
+                    if (intPsmCount % 100 == 0 && System.DateTime.UtcNow.Subtract(dtLastProgress).TotalSeconds >= 15)
+                    {
+                        dtLastProgress = System.DateTime.UtcNow;
+                        var statusMessage = "Validating mass errors: " + mPHRPReader.PercentComplete.ToString("0.0") + "% complete";
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, statusMessage);
+                        Console.WriteLine(statusMessage);
+                    }
 
-            While mPHRPReader.MoveNext
+                    clsPSM objCurrentPSM = mPHRPReader.CurrentPSM;
 
-                '' This is old code that was in LoadSearchEngineParameters and was called after all PSMs had been cached in memory
-                '' Since we're no longer pre-caching PSMs in memory, this code block was moved to this function
-                '' However, I don't think this code is really needed, so I've commented it out
-                ''
-                '' Make sure mSearchEngineParams.ModInfo is up-to-date
-                'If mPHRPReader.CurrentPSM.ModifiedResidues.Count > 0 Then
-                '	For Each objResidue As PHRPReader.clsAminoAcidModInfo In mPHRPReader.CurrentPSM.ModifiedResidues
+                    if (objCurrentPSM.PeptideMonoisotopicMass <= 0)
+                    {
+                        continue;
+                    }
 
-                '		' Check whether .ModDefinition is present in objSearchEngineParams.ModInfo
-                '		Dim blnMatchFound = False
-                '		For Each objKnownMod As PHRPReader.clsModificationDefinition In objSearchEngineParams.ModInfo
-                '			If objKnownMod Is objResidue.ModDefinition Then
-                '				blnMatchFound = True
-                '				Exit For
-                '			End If
-                '		Next
+                    // PrecursorNeutralMass is based on the mass value reported by the search engine
+                    //   (will be reported mono mass or could be m/z or MH converted to neutral mass)
+                    // PeptideMonoisotopicMass is the mass value computed by PHRP based on .PrecursorNeutralMass plus any modification masses associated with residues
+                    var dblMassError = objCurrentPSM.PrecursorNeutralMass - objCurrentPSM.PeptideMonoisotopicMass;
+                    double dblToleranceCurrent = 0;
 
-                '		If Not blnMatchFound Then
-                '			objSearchEngineParams.ModInfo.Add(objResidue.ModDefinition)
-                '		End If
-                '	Next
+                    string psmIsotopeError = null;
+                    if (eResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB && objCurrentPSM.TryGetScore("IsotopeError", out psmIsotopeError))
+                    {
+                        // The integer value of dblMassError should match psmIsotopeError
+                        // However, scale up the tolerance based on the peptide mass
+                        dblToleranceCurrent = 0.2 + objCurrentPSM.PeptideMonoisotopicMass / 50000.0;
+                        dblMassError -= Convert.ToInt32(psmIsotopeError);
+                    }
+                    else
+                    {
+                        dblToleranceCurrent = dblPrecursorMassTolerance + objCurrentPSM.Charge - 1;
+                    }
 
-                'End If
+                    if (Math.Abs(dblMassError) <= dblToleranceCurrent)
+                    {
+                        continue;
+                    }
 
-                intPsmCount += 1
+                    strPeptideDescription = "Scan=" + objCurrentPSM.ScanNumberStart + ", charge=" + objCurrentPSM.Charge + ", peptide=" +
+                                            objCurrentPSM.PeptideWithNumericMods;
+                    intErrorCount += 1;
 
-                If intPsmCount Mod 100 = 0 AndAlso Date.UtcNow.Subtract(dtLastProgress).TotalSeconds >= 15 Then
-                    dtLastProgress = Date.UtcNow
-                    Dim statusMessage = "Validating mass errors: " & mPHRPReader.PercentComplete.ToString("0.0") & "% complete"
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, statusMessage)
-                    Console.WriteLine(statusMessage)
-                End If
+                    // Keep track of the 100 largest mass errors
+                    if (lstLargestMassErrors.Count < 100)
+                    {
+                        if (!lstLargestMassErrors.ContainsKey(dblMassError))
+                        {
+                            lstLargestMassErrors.Add(dblMassError, strPeptideDescription);
+                        }
+                    }
+                    else
+                    {
+                        double dblMinValue = lstLargestMassErrors.Keys.Min();
+                        if (dblMassError > dblMinValue && !lstLargestMassErrors.ContainsKey(dblMassError))
+                        {
+                            lstLargestMassErrors.Remove(dblMinValue);
+                            lstLargestMassErrors.Add(dblMassError, strPeptideDescription);
+                        }
+                    }
+                }
 
-                Dim objCurrentPSM As clsPSM = mPHRPReader.CurrentPSM
+                mPHRPReader.Dispose();
 
-                If objCurrentPSM.PeptideMonoisotopicMass <= 0 Then
-                    Continue While
-                End If
+                if (intPsmCount == 0)
+                {
+                    ShowWarningMessage("PHRPReader did not find any records in " + Path.GetFileName(strInputFilePath));
+                    return true;
+                }
 
-                ' PrecursorNeutralMass is based on the mass value reported by the search engine 
-                '   (will be reported mono mass or could be m/z or MH converted to neutral mass)
-                ' PeptideMonoisotopicMass is the mass value computed by PHRP based on .PrecursorNeutralMass plus any modification masses associated with residues
-                Dim dblMassError = objCurrentPSM.PrecursorNeutralMass - objCurrentPSM.PeptideMonoisotopicMass
-                Dim dblToleranceCurrent As Double
+                var dblPercentInvalid = intErrorCount / intPsmCount * 100;
 
-                Dim psmIsotopeError As String = Nothing
-                If eResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB AndAlso objCurrentPSM.TryGetScore("IsotopeError", psmIsotopeError) Then
-                    ' The integer value of dblMassError should match psmIsotopeError
-                    ' However, scale up the tolerance based on the peptide mass
-                    dblToleranceCurrent = 0.2 + objCurrentPSM.PeptideMonoisotopicMass / 50000.0
-                    dblMassError -= CInt(psmIsotopeError)
-                Else
-                    dblToleranceCurrent = dblPrecursorMassTolerance + objCurrentPSM.Charge - 1
-                End If
+                if (intErrorCount <= 0)
+                {
+                    if (mDebugLevel >= 2)
+                    {
+                        ShowMessage("All " + intPsmCount + " peptides have a mass error below " + dblPrecursorMassTolerance.ToString("0.0") + " Da");
+                    }
+                    return true;
+                }
 
-                If Math.Abs(dblMassError) <= dblToleranceCurrent Then
-                    Continue While
-                End If
+                mErrorMessage = dblPercentInvalid.ToString("0.0") + "% of the peptides have a mass error over " +
+                                dblPrecursorMassTolerance.ToString("0.0") + " Da";
 
-                strPeptideDescription = "Scan=" & objCurrentPSM.ScanNumberStart & ", charge=" & objCurrentPSM.Charge & ", peptide=" & objCurrentPSM.PeptideWithNumericMods
-                intErrorCount += 1
+                var warningMessage = mErrorMessage + " (" + intErrorCount + " / " + intPsmCount + ")";
 
-                ' Keep track of the 100 largest mass errors
-                If lstLargestMassErrors.Count < 100 Then
-                    If Not lstLargestMassErrors.ContainsKey(dblMassError) Then
-                        lstLargestMassErrors.Add(dblMassError, strPeptideDescription)
-                    End If
-                Else
+                if (dblPercentInvalid <= mErrorThresholdPercent)
+                {
+                    ShowWarningMessage(warningMessage + "; this value is within tolerance");
 
-                    Dim dblMinValue As Double = lstLargestMassErrors.Keys.Min()
-                    If dblMassError > dblMinValue AndAlso Not lstLargestMassErrors.ContainsKey(dblMassError) Then
-                        lstLargestMassErrors.Remove(dblMinValue)
-                        lstLargestMassErrors.Add(dblMassError, strPeptideDescription)
-                    End If
+                    // Blank out mErrorMessage since only a warning
+                    mErrorMessage = string.Empty;
+                    return true;
+                }
 
-                End If
+                ShowErrorMessage(warningMessage + "; this value is too large (over " + mErrorThresholdPercent.ToString("0.0") + "%)");
 
-            End While
+                // Log the first, last, and middle entry in lstLargestMassErrors
+                InformLargeErrorExample(lstLargestMassErrors.First());
 
-            mPHRPReader.Dispose()
+                if (lstLargestMassErrors.Count > 1)
+                {
+                    InformLargeErrorExample(lstLargestMassErrors.Last());
 
-            If intPsmCount = 0 Then
-                ShowWarningMessage("PHRPReader did not find any records in " & IO.Path.GetFileName(strInputFilePath))
-                Return True
-            End If
+                    if (lstLargestMassErrors.Count > 2)
+                    {
+                        var iterator = 0;
+                        foreach (var massError in lstLargestMassErrors)
+                        {
+                            iterator += 1;
+                            if (iterator >= lstLargestMassErrors.Count / 2)
+                            {
+                                InformLargeErrorExample(massError);
+                                break;
+                            }
+                        }
+                    }
+                }
 
-            Dim dblPercentInvalid = intErrorCount / intPsmCount * 100
+                return false;
+            }
+            catch (Exception ex)
+            {
+                ShowErrorMessage("Error in ValidatePHRPResultMassErrors", ex);
+                mErrorMessage = "Exception in ValidatePHRPResultMassErrors";
+                return false;
+            }
+        }
 
-            If intErrorCount <= 0 Then
-                If mDebugLevel >= 2 Then
-                    ShowMessage(
-                        "All " & intPsmCount & " peptides have a mass error below " &
-                        dblPrecursorMassTolerance.ToString("0.0") & " Da")
-                End If
-                Return True
-            End If
+        private void mPHRPReader_ErrorEvent(string strErrorMessage)
+        {
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strErrorMessage);
+        }
 
-            mErrorMessage = dblPercentInvalid.ToString("0.0") & "% of the peptides have a mass error over " &
-                            dblPrecursorMassTolerance.ToString("0.0") & " Da"
+        private void mPHRPReader_MessageEvent(string strMessage)
+        {
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, strMessage);
+        }
 
-            Dim warningMessage = mErrorMessage & " (" & intErrorCount & " / " & intPsmCount & ")"
-
-            If dblPercentInvalid <= mErrorThresholdPercent Then
-                ShowWarningMessage(warningMessage & "; this value is within tolerance")
-
-                ' Blank out mErrorMessage since only a warning
-                mErrorMessage = String.Empty
-                Return True
-            End If
-
-            ShowErrorMessage(warningMessage & "; this value is too large (over " & mErrorThresholdPercent.ToString("0.0") & "%)")
-
-            ' Log the first, last, and middle entry in lstLargestMassErrors
-            InformLargeErrorExample(lstLargestMassErrors.First)
-
-            If lstLargestMassErrors.Count > 1 Then
-                InformLargeErrorExample(lstLargestMassErrors.Last)
-
-                If lstLargestMassErrors.Count > 2 Then
-                    Dim iterator = 0
-                    For Each massError In lstLargestMassErrors
-                        iterator += 1
-                        If iterator >= lstLargestMassErrors.Count / 2 Then
-                            InformLargeErrorExample(massError)
-                            Exit For
-                        End If
-                    Next
-                End If
-
-            End If
-
-            Return False
-
-        Catch ex As Exception
-            ShowErrorMessage("Error in ValidatePHRPResultMassErrors", ex)
-            mErrorMessage = "Exception in ValidatePHRPResultMassErrors"
-            Return False
-        End Try
-
-    End Function
-
-    Private Sub mPHRPReader_ErrorEvent(strErrorMessage As String) Handles mPHRPReader.ErrorEvent
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strErrorMessage)
-    End Sub
-
-    Private Sub mPHRPReader_MessageEvent(strMessage As String) Handles mPHRPReader.MessageEvent
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, strMessage)
-    End Sub
-
-    Private Sub mPHRPReader_WarningEvent(strWarningMessage As String) Handles mPHRPReader.WarningEvent
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strWarningMessage)
-    End Sub
-End Class
+        private void mPHRPReader_WarningEvent(string strWarningMessage)
+        {
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strWarningMessage);
+        }
+    }
+}
