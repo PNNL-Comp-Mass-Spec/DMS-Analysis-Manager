@@ -73,7 +73,7 @@ Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerDeconPeakDet
 EndProject
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerGlyQIQPlugin", "AM_GlyQIQ_Plugin\AnalysisManagerGlyQIQPlugin.vbproj", "{5924931F-9A13-4B6B-9CFD-E1896B6C0225}"
 EndProject
-Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerLipidMapSearchPlugIn", "AM_LipidMapSearch_Plugin\AnalysisManagerLipidMapSearchPlugIn.vbproj", "{ABBE557F-6955-4EFB-9892-8F028AD420DD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerLipidMapSearchPlugIn", "AM_LipidMapSearch_Plugin\AnalysisManagerLipidMapSearchPlugIn.csproj", "{ABBE557F-6955-4EFB-9892-8F028AD420DD}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMODaPlugIn", "AM_MODa_PlugIn\AnalysisManagerMODaPlugIn.csproj", "{894D4C6C-FD28-44D2-A570-2600ED2C787E}"
 EndProject
