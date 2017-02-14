@@ -38,7 +38,7 @@ namespace AnalysisManagerBase
                     iterations += 1;
                 }
 
-                OnStatusEvent("Available memory (MB) = " + freeMemoryMB.ToString("0.0"));
+                OnDebugEvent("Available memory (MB) = " + freeMemoryMB.ToString("0.0"));
 
                 return freeMemoryMB;
             }
@@ -75,7 +75,7 @@ namespace AnalysisManagerBase
                     var memData = memInfo.MemoryStatus;
 
                     var freeMemoryMB = Convert.ToSingle(memData.ullAvailPhys / 1024.0 / 1024.0);
-                    OnStatusEvent("Available memory from VB: " + freeMemoryMB + " MB");
+                    OnDebugEvent("Available memory from VB: " + freeMemoryMB + " MB");
 
                     return freeMemoryMB;
                 }
