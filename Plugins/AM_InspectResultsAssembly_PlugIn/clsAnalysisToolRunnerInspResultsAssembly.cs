@@ -1,1334 +1,1496 @@
-'*********************************************************************************************************
-' Written by John Sandoval for the US Department of Energy 
-' Pacific Northwest National Laboratory, Richland, WA
-' Copyright 2009, Battelle Memorial Institute
-' Created 01/29/2009
-'
-'*********************************************************************************************************
-
-Option Strict On
-
-Imports System.IO
-Imports System.Threading
-Imports AnalysisManagerBase
-Imports PeptideToProteinMapEngine
-Imports PRISM.Processes
-
-''' <summary>
-''' Class for running Inspect Results Assembler
-''' </summary>
-''' <remarks></remarks>
-Public Class clsAnalysisToolRunnerInspResultsAssembly
-    Inherits clsAnalysisToolRunnerBase
-
-#Region "Constants and Enums"
-    Private Const PVALUE_MINLENGTH5_SCRIPT As String = "PValue_MinLength5.py"
-
-    Private Const ORIGINAL_INSPECT_FILE_SUFFIX As String = "_inspect.txt"
-    Private Const FIRST_HITS_INSPECT_FILE_SUFFIX As String = "_inspect_fht.txt"
-    Private Const FILTERED_INSPECT_FILE_SUFFIX As String = "_inspect_filtered.txt"
-
-    'Used for result file type
-    Enum ResultFileType
-        INSPECT_RESULT = 0
-        INSPECT_ERROR = 1
-        INSPECT_SEARCH = 2
-        INSPECT_CONSOLE = 3
-    End Enum
-
-    ' Note: if you add/remove any steps, then update PERCENT_COMPLETE_LEVEL_COUNT and update the population of mPercentCompleteStartLevels()
-    Enum eInspectResultsProcessingSteps
-        Starting = 0
-        AssembleResults = 1
-        RunpValue = 2
-        ZipInspectResults = 3
-        CreatePeptideToProteinMapping = 4
-    End Enum
-
-#End Region
-
-#Region "Structures"
-    Protected Structure udtModInfoType
-        Public ModName As String
-        Public ModMass As String           ' Storing as a string since reading from a text file and writing to a text file
-        Public Residues As String
-    End Structure
-#End Region
-
-#Region "Module Variables"
-    Public Const INSPECT_INPUT_PARAMS_FILENAME As String = "inspect_input.txt"
-
-    Protected mInspectResultsFileName As String
-
-    Protected mInspectSearchLogFilePath As String = "InspectSearchLog.txt"      ' This value gets updated in function RunInSpecT
-
-    Private WithEvents mPeptideToProteinMapper As clsPeptideToProteinMapEngine
-
-    ' mPercentCompleteStartLevels is an array that lists the percent complete value to report 
-    '  at the start of each of the various processing steps performed in this procedure
-    ' The percent complete values range from 0 to 100
-    Const PERCENT_COMPLETE_LEVEL_COUNT As Integer = 5
-    Protected mPercentCompleteStartLevels() As Single
-
-#End Region
-
-#Region "Methods"
-    ''' <summary>
-    ''' Constructor
-    ''' </summary>
-    ''' <remarks>Initializes classwide variables</remarks>
-    Public Sub New()
-        InitializeVariables()
-    End Sub
-
-    ''' <summary>
-    ''' Runs InSpecT tool
-    ''' </summary>
-    ''' <returns>CloseOutType enum indicating success or failure</returns>
-    ''' <remarks></remarks>
-    Public Overrides Function RunTool() As CloseOutType
-
-        Dim numClonedSteps As String
-        Dim intNumResultFiles As Integer
-
-        Dim isParallelized = False
-
-        Dim Result As CloseOutType
-        Dim eReturnCode As CloseOutType
-
-        Dim blnProcessingError = False
-        Dim blnNoDataInFilteredResults = False
-
-        ' We no longer need to index the .Fasta file (since we're no longer using PValue.py with the -a switch or Summary.py
-        ''Dim objIndexedDBCreator As New clsCreateInspectIndexedDB
-
-        Try
-            If m_DebugLevel > 4 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerInspResultsAssembly.RunTool(): Enter")
-            End If
-
-            'Call base class for initial setup
-            MyBase.RunTool()
-
-            ' Store the AnalysisManager version info in the database
-            If Not StoreToolVersionInfo() Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
-                m_message = "Error determining Inspect Results Assembly version"
-                Return CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            'Determine if this is a parallelized job
-            numClonedSteps = m_jobParams.GetParam("NumberOfClonedSteps")
-            If [String].IsNullOrEmpty(numClonedSteps) Then
-                ' This is not a parallelized job; no need to assemble the results
-
-                ' FilterInspectResultsByFirstHits will create file _inspect_fht.txt
-                Result = FilterInspectResultsByFirstHits()
-
-                ' FilterInspectResultsByPValue will create file _inspect_filtered.txt
-                Result = FilterInspectResultsByPValue()
-                If Result <> CloseOutType.CLOSEOUT_SUCCESS Then
-                    blnProcessingError = True
-                End If
-                isParallelized = False
-            Else
-                ' This is a parallelized job; need to re-assemble the results
-                intNumResultFiles = CInt(numClonedSteps)
-
-                If m_DebugLevel >= 1 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Assembling parallelized inspect files; file count = " & intNumResultFiles.ToString)
-                End If
-
-                ' AssembleResults will create _inspect.txt, _inspect_fht.txt, and _inspect_filtered.txt
-                Result = AssembleResults(intNumResultFiles)
-
-                If Result <> CloseOutType.CLOSEOUT_SUCCESS Then
-                    blnProcessingError = True
-                End If
-                isParallelized = True
-            End If
-
-            If Not blnProcessingError Then
-                ' Rename and zip up files _inspect_filtered.txt and _inspect.txt
-                Result = ZipInspectResults()
-                If Result <> CloseOutType.CLOSEOUT_SUCCESS Then
-                    blnProcessingError = True
-                End If
-            End If
-
-            If Not blnProcessingError Then
-                ' Create the Peptide to Protein map file
-                Result = CreatePeptideToProteinMapping()
-                If Result = CloseOutType.CLOSEOUT_NO_DATA Then
-                    blnNoDataInFilteredResults = True
-                ElseIf Result <> CloseOutType.CLOSEOUT_SUCCESS And Result <> CloseOutType.CLOSEOUT_NO_DATA Then
-                    blnProcessingError = True
-                End If
-            End If
-
-            m_progress = 100
-            UpdateStatusRunning()
-
-            'Stop the job timer
-            m_StopTime = DateTime.UtcNow
-
-            If blnProcessingError Then
-                ' Something went wrong
-                ' In order to help diagnose things, we will move whatever files were created into the Result folder, 
-                '  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
-                eReturnCode = CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            'Add the current job data to the summary file
-            If Not UpdateSummaryFile() Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
-            End If
-
-            'Make sure objects are released
-            Thread.Sleep(500)        ' 500 msec delay
-            clsProgRunner.GarbageCollectNow()
-
-            Result = MakeResultsFolder()
-            If Result <> CloseOutType.CLOSEOUT_SUCCESS Then
-                'MakeResultsFolder handles posting to local log, so set database error message and exit
-                m_message = "Error making results folder"
-                Return CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            Result = MoveResultFiles()
-            If Result <> CloseOutType.CLOSEOUT_SUCCESS Then
-                'MoveResultFiles moves the Result files to the Result folder
-                m_message = "Error moving files into results folder"
-                eReturnCode = CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            If blnProcessingError Or eReturnCode = CloseOutType.CLOSEOUT_FAILED Then
-                ' Try to save whatever files were moved into the results folder
-                Dim objAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
-                objAnalysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(m_WorkDir, m_ResFolderName))
-
-                Return CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            Result = CopyResultsFolderToServer()
-            If Result <> CloseOutType.CLOSEOUT_SUCCESS Then
-                'TODO: What do we do here?
-                Return Result
-            End If
-
-            'If parallelized, then remove multiple Result files from server
-            If isParallelized Then
-                If Not MyBase.RemoveNonResultServerFiles() Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error deleting non Result files from directory on server, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
-                    Return CloseOutType.CLOSEOUT_FAILED
-                End If
-            End If
-
-            If blnNoDataInFilteredResults Then
-                Return CloseOutType.CLOSEOUT_NO_DATA
-            End If
-
-        Catch ex As Exception
-            Dim Msg As String
-            Msg = "clsMSGFToolRunner.RunTool(); Exception during Inspect Results Assembly: " &
-                ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg)
-            m_message = clsGlobal.AppendToComment(m_message, "Exception during Inspect Results Assembly")
-            Return CloseOutType.CLOSEOUT_FAILED
-        End Try
-
-        Return CloseOutType.CLOSEOUT_SUCCESS 'No failures so everything must have succeeded
-
-    End Function
-
-    ''' <summary>
-    ''' Initializes class
-    ''' </summary>
-    ''' <param name="mgrParams">Object containing manager parameters</param>
-    ''' <param name="jobParams">Object containing job parameters</param>
-    ''' <param name="statusTools">Object for updating status file as job progresses</param>
-    ''' <param name="summaryFile">Object for creating an analysis job summary file</param>
-    ''' <param name="myEMSLUtilities">MyEMSL download Utilities</param>
-    ''' <remarks></remarks>
-    Public Overrides Sub Setup(mgrParams As IMgrParams, jobParams As IJobParams, statusTools As IStatusFile, summaryFile As clsSummaryFile, myEMSLUtilities As clsMyEMSLUtilities)
-
-        MyBase.Setup(mgrParams, jobParams, statusTools, summaryFile, myEMSLUtilities)
-
-        mInspectResultsFileName = m_Dataset & ORIGINAL_INSPECT_FILE_SUFFIX
-
-    End Sub
-
-    Private Function AssembleResults(intNumResultFiles As Integer) As CloseOutType
-        Dim result As CloseOutType
-        Dim strFileName = ""
-
-        Try
-            If m_DebugLevel >= 3 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Assembling parallelized inspect result files")
-            End If
-
-            UpdateStatusRunning(mPercentCompleteStartLevels(eInspectResultsProcessingSteps.AssembleResults))
-
-            ' Combine the individual _xx_inspect.txt files to create the single _inspect.txt file
-            result = AssembleFiles(mInspectResultsFileName, ResultFileType.INSPECT_RESULT, intNumResultFiles)
-            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
-                Return result
-            End If
-
-            If m_DebugLevel >= 3 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Assembling parallelized inspect error files")
-            End If
-
-            strFileName = m_Dataset & "_error.txt"
-            result = AssembleFiles(strFileName, ResultFileType.INSPECT_ERROR, intNumResultFiles)
-            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
-                Return result
-            End If
-            m_jobParams.AddResultFileToKeep(strFileName)
-
-
-            If m_DebugLevel >= 3 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Assembling parallelized inspect search log files")
-            End If
-
-            strFileName = "InspectSearchLog.txt"
-            result = AssembleFiles(strFileName, ResultFileType.INSPECT_SEARCH, intNumResultFiles)
-            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
-                Return result
-            End If
-            m_jobParams.AddResultFileToKeep(strFileName)
-
-
-            If m_DebugLevel >= 3 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Assembling parallelized inspect console output files")
-            End If
-
-            strFileName = "InspectConsoleOutput.txt"
-            result = AssembleFiles(strFileName, ResultFileType.INSPECT_CONSOLE, intNumResultFiles)
-            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
-                Return result
-            End If
-            m_jobParams.AddResultFileToKeep(strFileName)
-
-
-            ' FilterInspectResultsByFirstHits will create file _inspect_fht.txt
-            result = FilterInspectResultsByFirstHits()
-
-            ' Rescore the assembled inspect results using PValue_MinLength5.py (which is similar to PValue.py but retains peptides of length 5 or greater)
-            ' This will create files _inspect_fht.txt and _inspect_filtered.txt
-            result = RescoreAssembledInspectResults()
-            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
-                Return result
-            End If
-
-        Catch ex As Exception
-            m_message = "Error in InspectResultsAssembly->AssembleResults"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
-            Return CloseOutType.CLOSEOUT_FAILED
-        End Try
-
-        Return CloseOutType.CLOSEOUT_SUCCESS
-
-    End Function
-
-    ''' <summary>
-    ''' Assemble the result files
-    ''' </summary>
-    ''' <returns>CloseOutType enum indicating success or failure</returns>
-    ''' <remarks></remarks>
-
-    Private Function AssembleFiles(strCombinedFileName As String,
-                                   resFileType As ResultFileType,
-                                   intNumResultFiles As Integer) As CloseOutType
-
-        Dim tr As StreamReader = Nothing
-        Dim tw As StreamWriter
-
-        Dim s As String
-        Dim DatasetName As String
-        Dim fileNameCounter As Integer
-        Dim InspectResultsFile = ""
-        Dim intLinesRead As Integer
-
-        Dim blnFilesContainHeaderLine As Boolean
-        Dim blnHeaderLineWritten As Boolean
-        Dim blnAddSegmentNumberToEachLine As Boolean
-        Dim blnAddBlankLineBetweenFiles As Boolean
-
-        Dim intTabIndex As Integer
-        Dim intSlashIndex As Integer
-
-        Try
-            DatasetName = m_Dataset
-
-            tw = CreateNewExportFile(Path.Combine(m_WorkDir, strCombinedFileName))
-            If tw Is Nothing Then
-                Return CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            For fileNameCounter = 1 To intNumResultFiles
-                Select Case resFileType
-                    Case ResultFileType.INSPECT_RESULT
-                        InspectResultsFile = DatasetName & "_" & fileNameCounter & ORIGINAL_INSPECT_FILE_SUFFIX
-                        blnFilesContainHeaderLine = True
-                        blnAddSegmentNumberToEachLine = False
-                        blnAddBlankLineBetweenFiles = False
-
-                    Case ResultFileType.INSPECT_ERROR
-                        InspectResultsFile = DatasetName & "_" & fileNameCounter & "_error.txt"
-                        blnFilesContainHeaderLine = False
-                        blnAddSegmentNumberToEachLine = True
-                        blnAddBlankLineBetweenFiles = False
-
-                    Case ResultFileType.INSPECT_SEARCH
-                        InspectResultsFile = "InspectSearchLog_" & fileNameCounter & ".txt"
-                        blnFilesContainHeaderLine = True
-                        blnAddSegmentNumberToEachLine = True
-                        blnAddBlankLineBetweenFiles = False
-
-                    Case ResultFileType.INSPECT_CONSOLE
-                        InspectResultsFile = "InspectConsoleOutput_" & fileNameCounter & ".txt"
-                        blnFilesContainHeaderLine = False
-                        blnAddSegmentNumberToEachLine = False
-                        blnAddBlankLineBetweenFiles = True
-
-                    Case Else
-                        ' Unknown ResultFileType
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerInspResultsAssembly->AssembleFiles: Unknown Inspect Result File Type: " & resFileType.ToString)
-                        Exit For
-                End Select
-
-                If File.Exists(Path.Combine(m_WorkDir, InspectResultsFile)) Then
-                    intLinesRead = 0
-
-                    tr = New StreamReader(New FileStream(Path.Combine(m_WorkDir, InspectResultsFile), FileMode.Open, FileAccess.Read, FileShare.Read))
-                    s = tr.ReadLine
-
-                    Do While s IsNot Nothing
-                        intLinesRead += 1
-                        If intLinesRead = 1 Then
-
-                            If blnFilesContainHeaderLine Then
-                                ' Handle the header line
-                                If Not blnHeaderLineWritten Then
-                                    If blnAddSegmentNumberToEachLine Then
-                                        s = "Segment" & ControlChars.Tab & s
-                                    End If
-                                    tw.WriteLine(s)
-                                End If
-                            Else
-                                If blnAddSegmentNumberToEachLine Then
-                                    If Not blnHeaderLineWritten Then
-                                        tw.WriteLine("Segment" & ControlChars.Tab & "Message")
-                                    End If
-                                    tw.WriteLine(fileNameCounter.ToString & ControlChars.Tab & s)
-                                Else
-                                    tw.WriteLine(s)
-                                End If
-                            End If
-                            blnHeaderLineWritten = True
-
-                        Else
-                            If resFileType = ResultFileType.INSPECT_RESULT Then
-                                ' Parse each line of the Inspect Results files to remove the folder path information from the first column
-                                Try
-                                    intTabIndex = s.IndexOf(ControlChars.Tab)
-                                    If intTabIndex > 0 Then
-                                        ' Note: .LastIndexOf will start at index intTabIndex and search backword until the first match is found (this is a bit counter-intuitive, but that's what it does)
-                                        intSlashIndex = s.LastIndexOf(Path.DirectorySeparatorChar, intTabIndex)
-                                        If intSlashIndex > 0 Then
-                                            s = s.Substring(intSlashIndex + 1)
-                                        End If
-                                    End If
-                                Catch ex As Exception
-                                    ' Ignore errors here
-                                End Try
-                            End If
-
-                            If blnAddSegmentNumberToEachLine Then
-                                tw.WriteLine(fileNameCounter.ToString & ControlChars.Tab & s)
-                            Else
-                                tw.WriteLine(s)
-                            End If
-                        End If
-
-                        ' Read the next line
-                        s = tr.ReadLine
-                    Loop
-                    tr.Close()
-
-                    If blnAddBlankLineBetweenFiles Then
-                        Console.WriteLine()
-                    End If
-                End If
-            Next
-
-            'close the main result file
-            tw.Close()
-
-        Catch ex As Exception
-            m_message = "Error in InspectResultsAssembly->AssembleFiles"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
-            Return CloseOutType.CLOSEOUT_FAILED
-        End Try
-
-        Return CloseOutType.CLOSEOUT_SUCCESS
-
-    End Function
-
-    Private Function CreateNewExportFile(exportFilePath As String) As StreamWriter
-        Dim ef As StreamWriter
-
-        If File.Exists(exportFilePath) Then
-            'post error to log
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerInspResultsAssembly->createNewExportFile: Export file already exists (" & exportFilePath & "); this is unexpected")
-            Return Nothing
-        End If
-
-        ef = New StreamWriter(New FileStream(exportFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
-        Return ef
-
-    End Function
-
-    Private Function CreatePeptideToProteinMapping() As CloseOutType
-
-        Dim OrgDbDir As String = m_mgrParams.GetParam("orgdbdir")
-
-        ' Note that job parameter "generatedFastaName" gets defined by clsAnalysisResources.RetrieveOrgDB
-        Dim dbFilename As String = Path.Combine(OrgDbDir, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
-        Dim strInputFilePath As String
-
-        Dim blnIgnorePeptideToProteinMapperErrors As Boolean
-        Dim blnSuccess As Boolean
-
-        UpdateStatusRunning(mPercentCompleteStartLevels(eInspectResultsProcessingSteps.CreatePeptideToProteinMapping))
-
-        strInputFilePath = Path.Combine(m_WorkDir, mInspectResultsFileName)
-
-        Try
-            ' Validate that the input file has at least one entry; if not, then no point in continuing
-            Dim srInFile As StreamReader
-            Dim strLineIn As String
-            Dim intLinesRead As Integer
-
-            srInFile = New StreamReader(New FileStream(strInputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
-
-            intLinesRead = 0
-            Do While Not srInFile.EndOfStream AndAlso intLinesRead < 10
-                strLineIn = srInFile.ReadLine()
-                If Not String.IsNullOrEmpty(strLineIn) Then
-                    intLinesRead += 1
-                End If
-            Loop
-
-            If intLinesRead <= 1 Then
-                ' File is empty or only contains a header line
-                m_message = "No results above threshold"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "No results above threshold; filtered inspect results file is empty")
-                Return CloseOutType.CLOSEOUT_NO_DATA
-            End If
-
-        Catch ex As Exception
-
-            m_message = "Error validating Inspect results file contents in InspectResultsAssembly->CreatePeptideToProteinMapping"
-
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ", job " &
-                m_JobNum & "; " & clsGlobal.GetExceptionStackTrace(ex))
-            Return CloseOutType.CLOSEOUT_FAILED
-
-        End Try
-
-        Try
-            If m_DebugLevel >= 1 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating peptide to protein map file")
-            End If
-
-            blnIgnorePeptideToProteinMapperErrors = m_jobParams.GetJobParameter("IgnorePeptideToProteinMapError", False)
-
-            mPeptideToProteinMapper = New clsPeptideToProteinMapEngine
-
-            With mPeptideToProteinMapper
-                .DeleteInspectTempFiles = True
-                .IgnoreILDifferences = False
-                .InspectParameterFilePath = Path.Combine(m_WorkDir, INSPECT_INPUT_PARAMS_FILENAME)
-
-                If m_DebugLevel > 2 Then
-                    .LogMessagesToFile = True
-                    .LogFolderPath = m_WorkDir
-                Else
-                    .LogMessagesToFile = False
-                End If
-
-                .MatchPeptidePrefixAndSuffixToProtein = False
-                .OutputProteinSequence = False
-                .PeptideInputFileFormat = clsPeptideToProteinMapEngine.ePeptideInputFileFormatConstants.InspectResultsFile
-                .PeptideFileSkipFirstLine = False
-                .ProteinInputFilePath = Path.Combine(OrgDbDir, dbFilename)
-                .SaveProteinToPeptideMappingFile = True
-                .SearchAllProteinsForPeptideSequence = True
-                .SearchAllProteinsSkipCoverageComputationSteps = True
-                .ShowMessages = False
-            End With
-
-            blnSuccess = mPeptideToProteinMapper.ProcessFile(strInputFilePath, m_WorkDir, String.Empty, True)
-
-            mPeptideToProteinMapper.CloseLogFileNow()
-
-            If blnSuccess Then
-                If m_DebugLevel >= 2 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Peptide to protein mapping complete")
-                End If
-            Else
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running clsPeptideToProteinMapEngine: " & mPeptideToProteinMapper.GetErrorMessage())
-
-                If blnIgnorePeptideToProteinMapperErrors Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Ignoring protein mapping error since 'IgnorePeptideToProteinMapError' = True")
-                    Return CloseOutType.CLOSEOUT_SUCCESS
-                Else
-                    Return CloseOutType.CLOSEOUT_FAILED
-                End If
-            End If
-
-        Catch ex As Exception
-
-            m_message = "Error in InspectResultsAssembly->CreatePeptideToProteinMapping"
-
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerInspResultsAssembly.CreatePeptideToProteinMapping, Error running clsPeptideToProteinMapEngine, job " &
-                m_JobNum & "; " & clsGlobal.GetExceptionStackTrace(ex))
-
-            If blnIgnorePeptideToProteinMapperErrors Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Ignoring protein mapping error since 'IgnorePeptideToProteinMapError' = True")
-                Return CloseOutType.CLOSEOUT_SUCCESS
-            Else
-                Return CloseOutType.CLOSEOUT_FAILED
-            End If
-        End Try
-
-        Return CloseOutType.CLOSEOUT_SUCCESS
-
-    End Function
-
-    ''' <summary>
-    ''' Reads the modification information defined in strInspectParameterFilePath, storing it in udtModList
-    ''' </summary>
-    ''' <param name="strInspectParameterFilePath"></param>
-    ''' <param name="udtModList"></param>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Private Function ExtractModInfoFromInspectParamFile(strInspectParameterFilePath As String, ByRef udtModList() As udtModInfoType) As Boolean
-
-        Dim strLineIn As String
-        Dim strSplitLine As String()
-
-        Dim intModCount As Integer
-
-        Try
-            ' Initialize udtModList
-            intModCount = 0
-            ReDim udtModList(-1)
-
-            If m_DebugLevel > 4 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerInspResultsAssembly.ExtractModInfoFromInspectParamFile(): Reading " & strInspectParameterFilePath)
-            End If
-
-            ' Read the contents of strProteinToPeptideMappingFilePath
-            Using srInFile = New StreamReader((New FileStream(strInspectParameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
-
-                Do While Not srInFile.EndOfStream
-                    strLineIn = srInFile.ReadLine()
-
-                    strLineIn = strLineIn.Trim()
-
-                    If String.IsNullOrEmpty(strLineIn) Then Continue Do
-
-                    If strLineIn.Chars(0) = "#"c Then
-                        ' Comment line; skip it
-                        Continue Do
-                    End If
-
-                    If strLineIn.ToLower.StartsWith("mod") Then
-                        ' Modification definition line
-
-                        ' Split the line on commas
-                        strSplitLine = strLineIn.Split(","c)
-
-                        If strSplitLine.Length >= 5 AndAlso strSplitLine(0).ToLower.Trim = "mod" Then
-                            If udtModList.Length = 0 Then
-                                ReDim udtModList(0)
-                            ElseIf intModCount >= udtModList.Length Then
-                                ReDim Preserve udtModList(udtModList.Length * 2 - 1)
-                            End If
-
-                            With udtModList(intModCount)
-                                .ModName = strSplitLine(4)
-                                .ModMass = strSplitLine(1)
-                                .Residues = strSplitLine(2)
-                            End With
-
-                            intModCount += 1
-                        End If
-                    End If
-
-                Loop
-
-                ' Shrink udtModList to the appropriate length
-                ReDim Preserve udtModList(intModCount - 1)
-
-            End Using
-
-        Catch ex As Exception
-            m_message = "Error in InspectResultsAssembly->ExtractModInfoFromInspectParamFile"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
-            Return False
-        End Try
-
-        Return True
-
-    End Function
-
-    ''' <summary>
-    ''' Use PValue_MinLength5.py to only retain the top hit for each scan (no p-value filtering is actually applied)
-    ''' </summary>
-    ''' <returns>CloseOutType enum indicating success or failure</returns>
-    ''' <remarks></remarks>
-    Private Function FilterInspectResultsByFirstHits() As CloseOutType
-
-        Dim eResult As CloseOutType
-
-        Dim strInspectResultsFilePath As String = Path.Combine(m_WorkDir, mInspectResultsFileName)
-        Dim strFilteredFilePath As String = Path.Combine(m_WorkDir, m_Dataset & FIRST_HITS_INSPECT_FILE_SUFFIX)
-
-        UpdateStatusRunning(mPercentCompleteStartLevels(eInspectResultsProcessingSteps.RunpValue))
-
-        ' Note that RunPvalue() will log any errors that occur
-        eResult = RunpValue(strInspectResultsFilePath, strFilteredFilePath, False, True)
-
-        Return eResult
-
-    End Function
-
-    ''' <summary>
-    ''' Filters the inspect results using PValue_MinLength5.py"
-    ''' </summary>
-    ''' <returns>CloseOutType enum indicating success or failure</returns>
-    ''' <remarks></remarks>
-    Private Function FilterInspectResultsByPValue() As CloseOutType
-
-        Dim eResult As CloseOutType
-
-        Dim strInspectResultsFilePath As String = Path.Combine(m_WorkDir, mInspectResultsFileName)
-        Dim strFilteredFilePath As String = Path.Combine(m_WorkDir, m_Dataset & FILTERED_INSPECT_FILE_SUFFIX)
-
-        UpdateStatusRunning(mPercentCompleteStartLevels(eInspectResultsProcessingSteps.RunpValue))
-
-        ' Note that RunPvalue() will log any errors that occur
-        eResult = RunpValue(strInspectResultsFilePath, strFilteredFilePath, True, False)
-
-        Return eResult
-
-    End Function
-
-    Protected Sub InitializeVariables()
-
-        ' Define the percent complete values to use for the start of each processing step
-
-        ReDim mPercentCompleteStartLevels(PERCENT_COMPLETE_LEVEL_COUNT)
-
-        mPercentCompleteStartLevels(eInspectResultsProcessingSteps.Starting) = 0
-        mPercentCompleteStartLevels(eInspectResultsProcessingSteps.AssembleResults) = 5
-        mPercentCompleteStartLevels(eInspectResultsProcessingSteps.RunpValue) = 10
-        mPercentCompleteStartLevels(eInspectResultsProcessingSteps.ZipInspectResults) = 65
-        mPercentCompleteStartLevels(eInspectResultsProcessingSteps.CreatePeptideToProteinMapping) = 66
-        mPercentCompleteStartLevels(PERCENT_COMPLETE_LEVEL_COUNT) = 100
-
-    End Sub
-
-    Private Function RenameAndZipInspectFile(strSourceFilePath As String,
-                                             strZipFilePath As String,
-                                             blnDeleteSourceAfterZip As Boolean) As Boolean
-
-        Dim fiFileInfo As FileInfo
-        Dim strTargetFilePath As String
-        Dim blnSuccess As Boolean
-
-        ' Zip up file specified by strSourceFilePath
-        ' Rename to _inspect.txt before zipping
-        fiFileInfo = New FileInfo(strSourceFilePath)
-
-        If Not fiFileInfo.Exists Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Inspect results file not found; nothing to zip: " & fiFileInfo.FullName)
-            Return False
-        End If
-
-        strTargetFilePath = Path.Combine(m_WorkDir, mInspectResultsFileName)
-        If m_DebugLevel >= 3 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Renaming " & fiFileInfo.FullName & " to " & strTargetFilePath)
-        End If
-
-        fiFileInfo.MoveTo(strTargetFilePath)
-        fiFileInfo.Refresh()
-
-        blnSuccess = MyBase.ZipFile(fiFileInfo.FullName, blnDeleteSourceAfterZip, strZipFilePath)
-
-        m_jobParams.AddResultFileToKeep(Path.GetFileName(strZipFilePath))
-
-        Return blnSuccess
-
-    End Function
-
-    ''' <summary>
-    ''' Uses PValue_MinLength5.py to recompute the p-value and FScore values for Inspect results computed in parallel then reassembled
-    ''' In addition, filters the data on p-value of 0.1 or smaller
-    ''' </summary>
-    ''' <returns>CloseOutType enum indicating success or failure</returns>
-    ''' <remarks></remarks>
-    Private Function RescoreAssembledInspectResults() As CloseOutType
-
-        Dim eResult As CloseOutType
-
-        Dim strInspectResultsFilePath As String = Path.Combine(m_WorkDir, mInspectResultsFileName)
-        Dim strFilteredFilePath As String = Path.Combine(m_WorkDir, m_Dataset & FILTERED_INSPECT_FILE_SUFFIX)
-
-        UpdateStatusRunning(mPercentCompleteStartLevels(eInspectResultsProcessingSteps.RunpValue))
-
-        ' Note that RunPvalue() will log any errors that occur
-        eResult = RunpValue(strInspectResultsFilePath, strFilteredFilePath, True, False)
-
-        Try
-            ' Make sure the filtered inspect results file is not zero-length
-            ' Also, log some stats on the size of the filtered file vs. the original one
-
-            Dim fiOriginalFile As FileInfo
-            Dim fiRescoredFile As FileInfo
-
-            fiRescoredFile = New FileInfo(strFilteredFilePath)
-            fiOriginalFile = New FileInfo(strInspectResultsFilePath)
-
-            If Not fiRescoredFile.Exists Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Rescored Inspect Results file not found: " & fiRescoredFile.FullName)
-                Return CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            If fiOriginalFile.Length = 0 Then
-                ' Assembled inspect results file is 0-bytes; this is unexpected
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Assembled Inspect Results file is 0 bytes: " & fiOriginalFile.FullName)
-                Return CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            If m_DebugLevel >= 1 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Rescored Inspect results file created; size is " & (fiRescoredFile.Length / CDbl(fiOriginalFile.Length) * 100).ToString("0.0") & "% of the original (" & fiRescoredFile.Length & " bytes vs. " & fiOriginalFile.Length & " bytes in original)")
-            End If
-
-        Catch ex As Exception
-            m_message = "Error in InspectResultsAssembly->RescoreAssembledInspectResults"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
-            Return CloseOutType.CLOSEOUT_FAILED
-        End Try
-
-        Return CloseOutType.CLOSEOUT_SUCCESS
-
-    End Function
-
-    Private Function RunpValue(strInspectResultsInputFilePath As String,
-                               strOutputFilePath As String,
-                               blnCreateImageFiles As Boolean,
-                               blnTopHitOnly As Boolean) As CloseOutType
-
-        Dim CmdStr As String
-
-        Dim InspectDir As String = m_mgrParams.GetParam("inspectdir")
-        Dim pvalDistributionFilename As String = Path.Combine(m_WorkDir, m_Dataset & "_PValueDistribution.txt")
-
-        ' The following code is only required if you use the -a and -d switches
-        ''Dim orgDbDir As String = m_mgrParams.GetParam("orgdbdir")
-        ''Dim fastaFilename As String = System.IO.Path.Combine(orgDbDir, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
-        ''Dim dbFilename As String = fastaFilename.Replace("fasta", "trie")
-
-        Dim pythonProgLoc As String = m_mgrParams.GetParam("pythonprogloc")
-        Dim pthresh = ""
-
-        Dim blnShuffledDBUsed As Boolean
-
-        ' Check whether a shuffled DB was created prior to running Inspect
-        blnShuffledDBUsed = ValidateShuffledDBInUse(strInspectResultsInputFilePath)
-
-        ' Lookup the p-value to filter on
-        pthresh = m_jobParams.GetJobParameter("InspectPvalueThreshold", "0.1")
-
-        Dim cmdRunner = New clsRunDosProgram(InspectDir)
-        RegisterEvents(cmdRunner)
-
-        If m_DebugLevel > 4 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerInspResultsAssembly.RunpValue(): Enter")
-        End If
-
-        ' verify that python program file exists
-        Dim progLoc As String = pythonProgLoc
-        If Not File.Exists(progLoc) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find python.exe program file: " & progLoc)
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
-
-        ' verify that PValue python script exists
-        Dim pvalueScriptPath As String = Path.Combine(InspectDir, PVALUE_MINLENGTH5_SCRIPT)
-        If Not File.Exists(pvalueScriptPath) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find PValue script: " & pvalueScriptPath)
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
-
-        ' Possibly required: Update the PTMods.txt file in InspectDir to contain the modification details, as defined in inspect_input.txt
-        UpdatePTModsFile(InspectDir, Path.Combine(m_WorkDir, "inspect_input.txt"))
-
-        'Set up and execute a program runner to run PVALUE_MINLENGTH5_SCRIPT.py
-        ' Note that PVALUE_MINLENGTH5_SCRIPT.py is nearly identical to PValue.py but it retains peptides with 5 amino acids (default is 7)
-        ' -r is the input file
-        ' -w is the output file
-        ' -s saves the p-value distribution to a text file
-        ' -H means to not remove entries mapped to shuffled proteins (created by shuffleDB.py); shuffled protein names start with XXX; we use this option when creating the First Hits file so that we retain the top hit, even if it is from a shuffled protein
-        ' -p 0.1 will filter out results with p-value <= 0.1 (this threshold was suggested by Sam Payne)
-        ' -i means to create a PValue distribution image file (.PNG)
-        ' -S 0.5 means that 50% of the proteins in the DB come from shuffled proteins
-
-        ' Other parameters not used:
-        ' -1 means to only retain the top match for each scan
-        ' -x means to retain "bad" matches (those with poor delta-score values, a p-value below the threshold, or an MQScore below -1)
-        ' -a means to perform protein selection (sort of like protein prophet, but not very good, according to Sam Payne)
-        ' -d .trie file to use (only used if -a is enabled)
-
-        CmdStr = " " & pvalueScriptPath &
-                 " -r " & strInspectResultsInputFilePath &
-                 " -w " & strOutputFilePath &
-                 " -s " & pvalDistributionFilename
-
-        If blnCreateImageFiles Then
-            CmdStr &= " -i"
-        End If
-
-        If blnTopHitOnly Then
-            CmdStr &= " -H -1 -p 1"
-        Else
-            CmdStr &= " -p " & pthresh
-        End If
-
-        If blnShuffledDBUsed Then
-            CmdStr &= " -S 0.5"
-        End If
-
-        ' The following could be used to enable protein selection
-        ' That would require that the database file be present, and this can take quite a bit longer
-        ''CmdStr &= " -a -d " & dbFilename
-
-
-        If m_DebugLevel >= 1 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc & " " & CmdStr)
-        End If
-
-        With cmdRunner
-            .CreateNoWindow = True
-            .CacheStandardOutput = True
-            .EchoOutputToConsole = True
-
-            .WriteConsoleOutputToFile = True
-            .ConsoleOutputFilePath = Path.Combine(m_WorkDir, "PValue_ConsoleOutput.txt")
-        End With
-
-        If Not cmdRunner.RunProgram(progLoc, CmdStr, "PValue", False) Then
-            ' Error running program; the error should have already been logged
-        End If
-
-        If cmdRunner.ExitCode <> 0 Then
-            ' Note: Log the non-zero exit code as an error, but return CLOSEOUT_SUCCESS anyway
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Path.GetFileName(pvalueScriptPath) & " returned a non-zero exit code: " & cmdRunner.ExitCode.ToString)
-        End If
-
-        Return CloseOutType.CLOSEOUT_SUCCESS
-
-    End Function
-
-    ''' <summary>
-    ''' Stores the tool version info in the database
-    ''' </summary>
-    ''' <remarks></remarks>
-    Protected Function StoreToolVersionInfo() As Boolean
-
-        Dim strToolVersionInfo As String = String.Empty
-        Dim strAppFolderPath As String = clsGlobal.GetAppFolderPath()
-        Dim blnSuccess As Boolean
-
-        If m_DebugLevel >= 2 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
-        End If
-
-        ' Lookup the version of the Inspect Results Assembly Plugin
-        If Not StoreToolVersionInfoForLoadedAssembly(strToolVersionInfo, "AnalysisManagerInspResultsAssemblyPlugIn") Then
-            Return False
-        End If
-
-        ' Store version information for the PeptideToProteinMapEngine and its associated DLLs
-        blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, Path.Combine(strAppFolderPath, "PeptideToProteinMapEngine.dll"))
-        If Not blnSuccess Then Return False
-
-        blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, Path.Combine(strAppFolderPath, "ProteinFileReader.dll"))
-        If Not blnSuccess Then Return False
-
-        blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, Path.Combine(strAppFolderPath, "System.Data.SQLite.dll"))
-        If Not blnSuccess Then Return False
-
-        blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, Path.Combine(strAppFolderPath, "ProteinCoverageSummarizer.dll"))
-        If Not blnSuccess Then Return False
-
-        ' Store the path to important DLLs in ioToolFiles
-        Dim ioToolFiles As New List(Of FileInfo)
-        ioToolFiles.Add(New FileInfo(Path.Combine(strAppFolderPath, "AnalysisManagerInspResultsAssemblyPlugIn.dll")))
-        ioToolFiles.Add(New FileInfo(Path.Combine(strAppFolderPath, "PeptideToProteinMapEngine.dll")))
-        ioToolFiles.Add(New FileInfo(Path.Combine(strAppFolderPath, "ProteinFileReader.dll")))
-        ' Skip System.Data.SQLite.dll; we don't need to track the file date
-        ioToolFiles.Add(New FileInfo(Path.Combine(strAppFolderPath, "ProteinCoverageSummarizer.dll")))
-
-        Try
-            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles)
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
-            Return False
-        End Try
-
-    End Function
-
-    ''' <summary>
-    ''' Assures that the PTMods.txt file in strInspectDir contains the modification info defined in strInspectInputFilePath
-    ''' Note: We run the risk that two InspectResultsAssembly tasks will run simultaneously and will both try to update PTMods.txt
-    ''' </summary>
-    ''' <param name="strInspectDir"></param>
-    ''' <param name="strInspectParameterFilePath"></param>
-    ''' <remarks></remarks>
-    Private Function UpdatePTModsFile(strInspectDir As String, strInspectParameterFilePath As String) As Boolean
-
-        Dim srInFile As StreamReader
-        Dim swOutFile As StreamWriter
-
-        Dim intIndex As Integer
-
-        Dim strPTModsFilePath As String
-        Dim strPTModsFilePathOld As String
-        Dim strPTModsFilePathNew As String
-
-        Dim strLineIn As String
-        Dim strSplitLine() As String
-        Dim strModName As String
-
-        Dim udtModList() As udtModInfoType
-        ReDim udtModList(-1)
-
-        Dim blnModProcessed() As Boolean
-
-        Dim blnMatchFound As Boolean
-        Dim blnPrevLineWasBlank As Boolean
-        Dim blnDifferenceFound As Boolean
-
-        Try
-            If m_DebugLevel > 4 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerInspResultsAssembly.UpdatePTModsFile(): Enter ")
-            End If
-
-            ' Read the mods defined in strInspectInputFilePath
-            If ExtractModInfoFromInspectParamFile(strInspectParameterFilePath, udtModList) Then
-
-                If udtModList.Length > 0 Then
-
-                    ' Initialize blnModProcessed()
-                    ReDim blnModProcessed(udtModList.Length - 1)
-
-                    ' Read PTMods.txt to look for the mods in udtModList
-                    ' While reading, will create a new file with any required updates
-                    ' In case two managers are doing this simultaneously, we'll put a unique string in strPTModsFilePathNew
-
-                    strPTModsFilePath = Path.Combine(strInspectDir, "PTMods.txt")
-                    strPTModsFilePathNew = strPTModsFilePath & ".Job" & m_JobNum & ".tmp"
-
-                    If m_DebugLevel > 4 Then
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerInspResultsAssembly.UpdatePTModsFile(): Open " & strPTModsFilePath)
-                    End If
-                    srInFile = New StreamReader(New FileStream(strPTModsFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
-
-                    If m_DebugLevel > 4 Then
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerInspResultsAssembly.UpdatePTModsFile(): Create " & strPTModsFilePathNew)
-                    End If
-                    swOutFile = New StreamWriter(New FileStream(strPTModsFilePathNew, FileMode.Create, FileAccess.Write, FileShare.Read))
-
-                    blnDifferenceFound = False
-                    Do While Not srInFile.EndOfStream
-                        strLineIn = srInFile.ReadLine()
-                        strLineIn = strLineIn.Trim()
-
-                        If Not String.IsNullOrEmpty(strLineIn) Then
-
-                            If strLineIn.Chars(0) = "#"c Then
-                                ' Comment line; skip it
-                            Else
-                                ' Split the line on tabs
-                                strSplitLine = strLineIn.Split(ControlChars.Tab)
-
-                                If strSplitLine.Length >= 3 Then
-                                    strModName = strSplitLine(0).ToLower
-
-                                    blnMatchFound = False
-                                    For intIndex = 0 To udtModList.Length - 1
-                                        If udtModList(intIndex).ModName.ToLower = strModName Then
-                                            ' Match found
-                                            blnMatchFound = True
-                                            Exit For
-                                        End If
-                                    Next
-
-                                    If blnMatchFound Then
-                                        If blnModProcessed(intIndex) Then
-                                            ' This mod was already processed; don't write the line out again
-                                            strLineIn = String.Empty
-                                        Else
-                                            With udtModList(intIndex)
-                                                ' First time we've seen this mod; make sure the mod mass and residues are correct
-                                                If strSplitLine(1) <> .ModMass OrElse strSplitLine(2) <> .Residues Then
-                                                    ' Mis-match; update the line
-                                                    strLineIn = .ModName & ControlChars.Tab & .ModMass & ControlChars.Tab & .Residues
-
-                                                    If m_DebugLevel > 4 Then
-                                                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerInspResultsAssembly.UpdatePTModsFile(): Mod def in PTMods.txt doesn't match required mod def; updating to: " & strLineIn)
-                                                    End If
-
-                                                    blnDifferenceFound = True
-                                                End If
-                                            End With
-                                            blnModProcessed(intIndex) = True
-                                        End If
-                                    End If
-                                End If
-                            End If
-                        End If
-
-                        If blnPrevLineWasBlank AndAlso strLineIn.Length = 0 Then
-                            ' Don't write out two blank lines in a row; skip this line
-                        Else
-                            swOutFile.WriteLine(strLineIn)
-
-                            If strLineIn.Length = 0 Then
-                                blnPrevLineWasBlank = True
-                            Else
-                                blnPrevLineWasBlank = False
-                            End If
-                        End If
-
-                    Loop
-
-                    ' Close the input file
-                    srInFile.Close()
-
-                    ' Look for any unprocessed mods
-                    For intIndex = 0 To udtModList.Length - 1
-                        If Not blnModProcessed(intIndex) Then
-                            With udtModList(intIndex)
-                                strLineIn = .ModName & ControlChars.Tab & .ModMass & ControlChars.Tab & .Residues
-                            End With
-                            swOutFile.WriteLine(strLineIn)
-
-                            blnDifferenceFound = True
-                        End If
-                    Next
-
-                    ' Close the output file
-                    swOutFile.Close()
-
-                    If blnDifferenceFound Then
-                        ' Wait 500 msec, then replace PTMods.txt with strPTModsFilePathNew
-                        Thread.Sleep(500)
-
-                        Try
-                            strPTModsFilePathOld = strPTModsFilePath & ".old"
-                            If File.Exists(strPTModsFilePathOld) Then
-                                File.Delete(strPTModsFilePathOld)
-                            End If
-
-                            File.Move(strPTModsFilePath, strPTModsFilePathOld)
-                            File.Move(strPTModsFilePathNew, strPTModsFilePath)
-                        Catch ex As Exception
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisToolRunnerInspResultsAssembly.UpdatePTModsFile, Error swapping in the new PTMods.txt file : " & m_JobNum & "; " & ex.Message)
-                            Return False
-                        End Try
-                    Else
-                        ' No difference was found; delete the .tmp file
-                        Thread.Sleep(500)
-                        Try
-                            File.Delete(strPTModsFilePathNew)
-                        Catch ex As Exception
-                            ' Ignore errors here
-                        End Try
-                    End If
-
-                End If
-            End If
-
-        Catch ex As Exception
-            m_message = "Error in InspectResultsAssembly->UpdatePTModsFile"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
-            Return False
-        End Try
-
-        Return True
-
-    End Function
-
-    Private Function ValidateShuffledDBInUse(strInspectResultsPath As String) As Boolean
-        Dim srInspectResults As StreamReader
-        Dim intLinesRead As Integer
-
-        Dim strLineIn As String = String.Empty
-        Dim strSplitLine() As String
-
-        Dim intDecoyProteinCount As Integer
-        Dim intNormalProteinCount As Integer
-
-        Dim blnShuffledDBUsed As Boolean
-
-        Dim chSepChars = New Char() {ControlChars.Tab}
-
-        blnShuffledDBUsed = m_jobParams.GetJobParameter("InspectUsesShuffledDB", False)
-
-        If blnShuffledDBUsed Then
-            ' Open the _inspect.txt file and make sure proteins exist that start with XXX
-            ' If not, change blnShuffledDBUsed back to false
-
-            Try
-                srInspectResults = New StreamReader(New FileStream(strInspectResultsPath, FileMode.Open, FileAccess.Read, FileShare.Read))
-
-                intLinesRead = 0
-                intDecoyProteinCount = 0
-                intNormalProteinCount = 0
-
-                Do While Not srInspectResults.EndOfStream
-                    strLineIn = srInspectResults.ReadLine
-                    intLinesRead += 1
-
-                    If String.IsNullOrEmpty(strLineIn) Then Continue Do
-
-                    ' Protein info should be stored in the fourth column (index=3)
-                    strSplitLine = strLineIn.Split(chSepChars, 5)
-
-                    If intLinesRead = 1 Then
-                        ' Verify that strSplitLine(3) is "Protein"
-                        If Not strSplitLine(3).ToLower.StartsWith("protein") Then
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
-                                                    "The fourth column in the Inspect results file does not start with 'Protein'; this is unexpected")
-                        End If
-                    Else
-                        If strSplitLine(3).StartsWith("XXX") Then
-                            intDecoyProteinCount += 1
-                        Else
-                            intNormalProteinCount += 1
-                        End If
-                    End If
-
-                    If intDecoyProteinCount > 10 Then Exit Do
-                Loop
-
-                srInspectResults.Close()
-
-                If intDecoyProteinCount = 0 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "The job has 'InspectUsesShuffledDB' set to True in the Settings file, but none of the proteins in the result file starts with XXX.  Will assume the fasta file did NOT have shuffled proteins, and will thus NOT use '-S 0.5' when calling " & PVALUE_MINLENGTH5_SCRIPT)
-                    blnShuffledDBUsed = False
-                End If
-
-            Catch ex As Exception
-                m_message = "Error in InspectResultsAssembly->strInspectResultsPath"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
-            End Try
-
-        End If
-
-        Return blnShuffledDBUsed
-
-    End Function
-
-
-    ''' <summary>
-    ''' Stores the _inspect.txt file in _inspect_all.zip
-    ''' Stores the _inspect_fht.txt file in _inspect_fht.zip (but renames it to _inspect.txt before storing)
-    ''' Stores the _inspect_filtered.txt file in _inspect.zip (but renames it to _inspect.txt before storing)
-    ''' </summary>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Private Function ZipInspectResults() As CloseOutType
-
-        Dim blnSuccess As Boolean
-
-        Try
-            UpdateStatusRunning(mPercentCompleteStartLevels(eInspectResultsProcessingSteps.ZipInspectResults))
-
-            ' Zip up the _inspect.txt file into _inspect_all.zip
-            ' Rename to _inspect.txt before zipping
-            ' Delete the _inspect.txt file after zipping
-            blnSuccess = RenameAndZipInspectFile(Path.Combine(m_WorkDir, m_Dataset & ORIGINAL_INSPECT_FILE_SUFFIX),
-                                                 Path.Combine(m_WorkDir, m_Dataset & "_inspect_all.zip"),
-                                                 True)
-
-            If Not blnSuccess Then
-                Return CloseOutType.CLOSEOUT_FAILED
-            End If
-
-
-            ' Zip up the _inspect_fht.txt file into _inspect_fht.zip
-            ' Rename to _inspect.txt before zipping
-            ' Delete the _inspect.txt file after zipping
-            blnSuccess = RenameAndZipInspectFile(Path.Combine(m_WorkDir, m_Dataset & FIRST_HITS_INSPECT_FILE_SUFFIX),
-                                                 Path.Combine(m_WorkDir, m_Dataset & "_inspect_fht.zip"),
-                                                 True)
-
-            If Not blnSuccess Then
-                ' Ignore errors creating the _fht.zip file
-            End If
-
-
-            ' Zip up the _inspect_filtered.txt file into _inspect.zip
-            ' Rename to _inspect.txt before zipping
-            ' Do not delete the _inspect.txt file after zipping since it is used in function CreatePeptideToProteinMapping
-            blnSuccess = RenameAndZipInspectFile(Path.Combine(m_WorkDir, m_Dataset & FILTERED_INSPECT_FILE_SUFFIX),
-                                     Path.Combine(m_WorkDir, m_Dataset & "_inspect.zip"),
-                                     False)
-
-            If Not blnSuccess Then
-                Return CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            ' Add the _inspect.txt file to .FilesToDelete since we only want to keep the Zipped version
-            m_jobParams.AddResultFileToSkip(mInspectResultsFileName)
-
-        Catch ex As Exception
-            m_message = "Error in InspectResultsAssembly->ZipInspectResults"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
-            Return CloseOutType.CLOSEOUT_FAILED
-        End Try
-
-        Return CloseOutType.CLOSEOUT_SUCCESS
-
-    End Function
-
-#End Region
-
-#Region "Event Handlers"
-    Private Sub mPeptideToProteinMapper_ProgressChanged(taskDescription As String, percentComplete As Single) Handles mPeptideToProteinMapper.ProgressChanged
-
-        ' Note that percentComplete is a value between 0 and 100
-
-        Dim sngStartPercent As Single = mPercentCompleteStartLevels(eInspectResultsProcessingSteps.CreatePeptideToProteinMapping)
-        Dim sngEndPercent As Single = mPercentCompleteStartLevels(eInspectResultsProcessingSteps.CreatePeptideToProteinMapping + 1)
-        Dim sngPercentCompleteEffective As Single
-
-        sngPercentCompleteEffective = sngStartPercent + CSng(percentComplete / 100.0 * (sngEndPercent - sngStartPercent))
-
-        UpdateStatusFile(sngPercentCompleteEffective)
-
-        LogProgress("Mapping peptides to proteins", 3)
-
-    End Sub
-
-#End Region
-
-End Class
+//*********************************************************************************************************
+// Written by John Sandoval for the US Department of Energy
+// Pacific Northwest National Laboratory, Richland, WA
+// Copyright 2009, Battelle Memorial Institute
+// Created 01/29/2009
+//
+//*********************************************************************************************************
+
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading;
+using AnalysisManagerBase;
+using PeptideToProteinMapEngine;
+using PRISM.Processes;
+
+namespace AnalysisManagerInspResultsAssemblyPlugIn
+{
+    /// <summary>
+    /// Class for running Inspect Results Assembler
+    /// </summary>
+    /// <remarks></remarks>
+    public class clsAnalysisToolRunnerInspResultsAssembly : clsAnalysisToolRunnerBase
+    {
+        #region "Constants and Enums"
+
+        private const string PVALUE_MINLENGTH5_SCRIPT = "PValue_MinLength5.py";
+
+        private const string ORIGINAL_INSPECT_FILE_SUFFIX = "_inspect.txt";
+        private const string FIRST_HITS_INSPECT_FILE_SUFFIX = "_inspect_fht.txt";
+        private const string FILTERED_INSPECT_FILE_SUFFIX = "_inspect_filtered.txt";
+        //Used for result file type
+        public enum ResultFileType
+        {
+            INSPECT_RESULT = 0,
+            INSPECT_ERROR = 1,
+            INSPECT_SEARCH = 2,
+            INSPECT_CONSOLE = 3
+        }
+
+        // Note: if you add/remove any steps, then update PERCENT_COMPLETE_LEVEL_COUNT and update the population of mPercentCompleteStartLevels()
+        public enum eInspectResultsProcessingSteps : int
+        {
+            Starting = 0,
+            AssembleResults = 1,
+            RunpValue = 2,
+            ZipInspectResults = 3,
+            CreatePeptideToProteinMapping = 4
+        }
+
+        #endregion
+
+        #region "Structures"
+
+        protected struct udtModInfoType
+        {
+            public string ModName;
+            public string ModMass;             // Storing as a string since reading from a text file and writing to a text file
+            public string Residues;
+        }
+
+        #endregion
+
+        #region "Module Variables"
+
+        public const string INSPECT_INPUT_PARAMS_FILENAME = "inspect_input.txt";
+
+        protected string mInspectResultsFileName;
+
+        protected string mInspectSearchLogFilePath = "InspectSearchLog.txt";      // This value gets updated in function RunInSpecT
+
+        private clsPeptideToProteinMapEngine mPeptideToProteinMapper;
+
+        // mPercentCompleteStartLevels is an array that lists the percent complete value to report
+        //  at the start of each of the various processing steps performed in this procedure
+        // The percent complete values range from 0 to 100
+        const int PERCENT_COMPLETE_LEVEL_COUNT = 5;
+        protected float[] mPercentCompleteStartLevels;
+
+        #endregion
+
+        #region "Methods"
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <remarks>Initializes classwide variables</remarks>
+        public clsAnalysisToolRunnerInspResultsAssembly()
+        {
+            InitializeVariables();
+        }
+
+        /// <summary>
+        /// Runs InSpecT tool
+        /// </summary>
+        /// <returns>CloseOutType enum indicating success or failure</returns>
+        /// <remarks></remarks>
+        public override CloseOutType RunTool()
+        {
+            string numClonedSteps = null;
+            int intNumResultFiles = 0;
+
+            var isParallelized = false;
+
+            var blnProcessingError = false;
+            var blnNoDataInFilteredResults = false;
+
+            // We no longer need to index the .Fasta file (since we're no longer using PValue.py with the -a switch or Summary.py
+            //'Dim objIndexedDBCreator As New clsCreateInspectIndexedDB
+
+            try
+            {
+                if (m_DebugLevel > 4)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        "clsAnalysisToolRunnerInspResultsAssembly.RunTool(): Enter");
+                }
+
+                //Call base class for initial setup
+                base.RunTool();
+
+                // Store the AnalysisManager version info in the database
+                if (!StoreToolVersionInfo())
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                        "Aborting since StoreToolVersionInfo returned false");
+                    m_message = "Error determining Inspect Results Assembly version";
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                //Determine if this is a parallelized job
+                numClonedSteps = m_jobParams.GetParam("NumberOfClonedSteps");
+                CloseOutType Result;
+                if (String.IsNullOrEmpty(numClonedSteps))
+                {
+                    // This is not a parallelized job; no need to assemble the results
+
+                    // FilterInspectResultsByFirstHits will create file _inspect_fht.txt
+                    Result = FilterInspectResultsByFirstHits();
+
+                    // FilterInspectResultsByPValue will create file _inspect_filtered.txt
+                    Result = FilterInspectResultsByPValue();
+                    if (Result != CloseOutType.CLOSEOUT_SUCCESS)
+                    {
+                        blnProcessingError = true;
+                    }
+                    isParallelized = false;
+                }
+                else
+                {
+                    // This is a parallelized job; need to re-assemble the results
+                    intNumResultFiles = Convert.ToInt32(numClonedSteps);
+
+                    if (m_DebugLevel >= 1)
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                            "Assembling parallelized inspect files; file count = " + intNumResultFiles.ToString());
+                    }
+
+                    // AssembleResults will create _inspect.txt, _inspect_fht.txt, and _inspect_filtered.txt
+                    Result = AssembleResults(intNumResultFiles);
+
+                    if (Result != CloseOutType.CLOSEOUT_SUCCESS)
+                    {
+                        blnProcessingError = true;
+                    }
+                    isParallelized = true;
+                }
+
+                if (!blnProcessingError)
+                {
+                    // Rename and zip up files _inspect_filtered.txt and _inspect.txt
+                    Result = ZipInspectResults();
+                    if (Result != CloseOutType.CLOSEOUT_SUCCESS)
+                    {
+                        blnProcessingError = true;
+                    }
+                }
+
+                if (!blnProcessingError)
+                {
+                    // Create the Peptide to Protein map file
+                    Result = CreatePeptideToProteinMapping();
+                    if (Result == CloseOutType.CLOSEOUT_NO_DATA)
+                    {
+                        blnNoDataInFilteredResults = true;
+                    }
+                    else if (Result != CloseOutType.CLOSEOUT_SUCCESS & Result != CloseOutType.CLOSEOUT_NO_DATA)
+                    {
+                        blnProcessingError = true;
+                    }
+                }
+
+                m_progress = 100;
+                UpdateStatusRunning();
+
+                //Stop the job timer
+                m_StopTime = DateTime.UtcNow;
+
+                CloseOutType eReturnCode = CloseOutType.CLOSEOUT_SUCCESS;
+                if (blnProcessingError)
+                {
+                    // Something went wrong
+                    // In order to help diagnose things, we will move whatever files were created into the Result folder,
+                    //  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
+                    eReturnCode = CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                //Add the current job data to the summary file
+                if (!UpdateSummaryFile())
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                        "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
+                }
+
+                //Make sure objects are released
+                Thread.Sleep(500);        // 500 msec delay
+                clsProgRunner.GarbageCollectNow();
+
+                Result = MakeResultsFolder();
+                if (Result != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    //MakeResultsFolder handles posting to local log, so set database error message and exit
+                    m_message = "Error making results folder";
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                Result = MoveResultFiles();
+                if (Result != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    //MoveResultFiles moves the Result files to the Result folder
+                    m_message = "Error moving files into results folder";
+                    eReturnCode = CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                if (blnProcessingError | eReturnCode == CloseOutType.CLOSEOUT_FAILED)
+                {
+                    // Try to save whatever files were moved into the results folder
+                    var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
+                    objAnalysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(m_WorkDir, m_ResFolderName));
+
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                Result = CopyResultsFolderToServer();
+                if (Result != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    //TODO: What do we do here?
+                    return Result;
+                }
+
+                //If parallelized, then remove multiple Result files from server
+                if (isParallelized)
+                {
+                    if (!base.RemoveNonResultServerFiles())
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                            "Error deleting non Result files from directory on server, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
+                        return CloseOutType.CLOSEOUT_FAILED;
+                    }
+                }
+
+                if (blnNoDataInFilteredResults)
+                {
+                    return CloseOutType.CLOSEOUT_NO_DATA;
+                }
+            }
+            catch (Exception ex)
+            {
+                string Msg = null;
+                Msg = "clsMSGFToolRunner.RunTool(); Exception during Inspect Results Assembly: " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg);
+                m_message = clsGlobal.AppendToComment(m_message, "Exception during Inspect Results Assembly");
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            return CloseOutType.CLOSEOUT_SUCCESS; //No failures so everything must have succeeded
+        }
+
+        /// <summary>
+        /// Initializes class
+        /// </summary>
+        /// <param name="mgrParams">Object containing manager parameters</param>
+        /// <param name="jobParams">Object containing job parameters</param>
+        /// <param name="statusTools">Object for updating status file as job progresses</param>
+        /// <param name="summaryFile">Object for creating an analysis job summary file</param>
+        /// <param name="myEMSLUtilities">MyEMSL download Utilities</param>
+        /// <remarks></remarks>
+        public override void Setup(IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsSummaryFile summaryFile, clsMyEMSLUtilities myEMSLUtilities)
+        {
+            base.Setup(mgrParams, jobParams, statusTools, summaryFile, myEMSLUtilities);
+
+            mInspectResultsFileName = m_Dataset + ORIGINAL_INSPECT_FILE_SUFFIX;
+        }
+
+        private CloseOutType AssembleResults(int intNumResultFiles)
+        {
+            var strFileName = "";
+
+            try
+            {
+                if (m_DebugLevel >= 3)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Assembling parallelized inspect result files");
+                }
+
+                UpdateStatusRunning(mPercentCompleteStartLevels[(int) eInspectResultsProcessingSteps.AssembleResults]);
+
+                // Combine the individual _xx_inspect.txt files to create the single _inspect.txt file
+                var result = AssembleFiles(mInspectResultsFileName, ResultFileType.INSPECT_RESULT, intNumResultFiles);
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    return result;
+                }
+
+                if (m_DebugLevel >= 3)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Assembling parallelized inspect error files");
+                }
+
+                strFileName = m_Dataset + "_error.txt";
+                result = AssembleFiles(strFileName, ResultFileType.INSPECT_ERROR, intNumResultFiles);
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    return result;
+                }
+                m_jobParams.AddResultFileToKeep(strFileName);
+
+                if (m_DebugLevel >= 3)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        "Assembling parallelized inspect search log files");
+                }
+
+                strFileName = "InspectSearchLog.txt";
+                result = AssembleFiles(strFileName, ResultFileType.INSPECT_SEARCH, intNumResultFiles);
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    return result;
+                }
+                m_jobParams.AddResultFileToKeep(strFileName);
+
+                if (m_DebugLevel >= 3)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        "Assembling parallelized inspect console output files");
+                }
+
+                strFileName = "InspectConsoleOutput.txt";
+                result = AssembleFiles(strFileName, ResultFileType.INSPECT_CONSOLE, intNumResultFiles);
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    return result;
+                }
+                m_jobParams.AddResultFileToKeep(strFileName);
+
+                // FilterInspectResultsByFirstHits will create file _inspect_fht.txt
+                result = FilterInspectResultsByFirstHits();
+
+                // Rescore the assembled inspect results using PValue_MinLength5.py (which is similar to PValue.py but retains peptides of length 5 or greater)
+                // This will create files _inspect_fht.txt and _inspect_filtered.txt
+                result = RescoreAssembledInspectResults();
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    return result;
+                }
+            }
+            catch (Exception ex)
+            {
+                m_message = "Error in InspectResultsAssembly->AssembleResults";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            return CloseOutType.CLOSEOUT_SUCCESS;
+        }
+
+        /// <summary>
+        /// Assemble the result files
+        /// </summary>
+        /// <returns>CloseOutType enum indicating success or failure</returns>
+        /// <remarks></remarks>
+        private CloseOutType AssembleFiles(string strCombinedFileName, ResultFileType resFileType, int intNumResultFiles)
+        {
+            StreamReader tr = null;
+
+            string s = null;
+            string DatasetName = null;
+            int fileNameCounter = 0;
+            var InspectResultsFile = "";
+            int intLinesRead = 0;
+
+            bool blnFilesContainHeaderLine = false;
+            bool blnHeaderLineWritten = false;
+            bool blnAddSegmentNumberToEachLine = false;
+            bool blnAddBlankLineBetweenFiles = false;
+
+            int intTabIndex = 0;
+            int intSlashIndex = 0;
+
+            try
+            {
+                DatasetName = m_Dataset;
+
+                var tw = CreateNewExportFile(Path.Combine(m_WorkDir, strCombinedFileName));
+                if (tw == null)
+                {
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                for (fileNameCounter = 1; fileNameCounter <= intNumResultFiles; fileNameCounter++)
+                {
+                    var error = false;
+                    switch (resFileType)
+                    {
+                        case ResultFileType.INSPECT_RESULT:
+                            InspectResultsFile = DatasetName + "_" + fileNameCounter + ORIGINAL_INSPECT_FILE_SUFFIX;
+                            blnFilesContainHeaderLine = true;
+                            blnAddSegmentNumberToEachLine = false;
+                            blnAddBlankLineBetweenFiles = false;
+
+                            break;
+                        case ResultFileType.INSPECT_ERROR:
+                            InspectResultsFile = DatasetName + "_" + fileNameCounter + "_error.txt";
+                            blnFilesContainHeaderLine = false;
+                            blnAddSegmentNumberToEachLine = true;
+                            blnAddBlankLineBetweenFiles = false;
+
+                            break;
+                        case ResultFileType.INSPECT_SEARCH:
+                            InspectResultsFile = "InspectSearchLog_" + fileNameCounter + ".txt";
+                            blnFilesContainHeaderLine = true;
+                            blnAddSegmentNumberToEachLine = true;
+                            blnAddBlankLineBetweenFiles = false;
+
+                            break;
+                        case ResultFileType.INSPECT_CONSOLE:
+                            InspectResultsFile = "InspectConsoleOutput_" + fileNameCounter + ".txt";
+                            blnFilesContainHeaderLine = false;
+                            blnAddSegmentNumberToEachLine = false;
+                            blnAddBlankLineBetweenFiles = true;
+
+                            break;
+                        default:
+                            // Unknown ResultFileType
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                "clsAnalysisToolRunnerInspResultsAssembly->AssembleFiles: Unknown Inspect Result File Type: " + resFileType.ToString());
+                            error = true;
+                            break;
+                    }
+                    if (error)
+                    {
+                        break;
+                    }
+
+                    if (File.Exists(Path.Combine(m_WorkDir, InspectResultsFile)))
+                    {
+                        intLinesRead = 0;
+
+                        tr = new StreamReader(new FileStream(Path.Combine(m_WorkDir, InspectResultsFile), FileMode.Open, FileAccess.Read, FileShare.Read));
+                        s = tr.ReadLine();
+
+                        while (s != null)
+                        {
+                            intLinesRead += 1;
+
+                            if (intLinesRead == 1)
+                            {
+                                if (blnFilesContainHeaderLine)
+                                {
+                                    // Handle the header line
+                                    if (!blnHeaderLineWritten)
+                                    {
+                                        if (blnAddSegmentNumberToEachLine)
+                                        {
+                                            s = "Segment\t" + s;
+                                        }
+                                        tw.WriteLine(s);
+                                    }
+                                }
+                                else
+                                {
+                                    if (blnAddSegmentNumberToEachLine)
+                                    {
+                                        if (!blnHeaderLineWritten)
+                                        {
+                                            tw.WriteLine("Segment\t" + "Message");
+                                        }
+                                        tw.WriteLine(fileNameCounter.ToString() + "\t" + s);
+                                    }
+                                    else
+                                    {
+                                        tw.WriteLine(s);
+                                    }
+                                }
+                                blnHeaderLineWritten = true;
+                            }
+                            else
+                            {
+                                if (resFileType == ResultFileType.INSPECT_RESULT)
+                                {
+                                    // Parse each line of the Inspect Results files to remove the folder path information from the first column
+                                    try
+                                    {
+                                        intTabIndex = s.IndexOf('\t');
+                                        if (intTabIndex > 0)
+                                        {
+                                            // Note: .LastIndexOf will start at index intTabIndex and search backword until the first match is found (this is a bit counter-intuitive, but that's what it does)
+                                            intSlashIndex = s.LastIndexOf(Path.DirectorySeparatorChar, intTabIndex);
+                                            if (intSlashIndex > 0)
+                                            {
+                                                s = s.Substring(intSlashIndex + 1);
+                                            }
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        // Ignore errors here
+                                    }
+                                }
+
+                                if (blnAddSegmentNumberToEachLine)
+                                {
+                                    tw.WriteLine(fileNameCounter.ToString() + "\t" + s);
+                                }
+                                else
+                                {
+                                    tw.WriteLine(s);
+                                }
+                            }
+
+                            // Read the next line
+                            s = tr.ReadLine();
+                        }
+                        tr.Close();
+
+                        if (blnAddBlankLineBetweenFiles)
+                        {
+                            Console.WriteLine();
+                        }
+                    }
+                }
+
+                //close the main result file
+                tw.Close();
+            }
+            catch (Exception ex)
+            {
+                m_message = "Error in InspectResultsAssembly->AssembleFiles";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            return CloseOutType.CLOSEOUT_SUCCESS;
+        }
+
+        private StreamWriter CreateNewExportFile(string exportFilePath)
+        {
+            if (File.Exists(exportFilePath))
+            {
+                //post error to log
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    "clsAnalysisToolRunnerInspResultsAssembly->createNewExportFile: Export file already exists (" + exportFilePath +
+                    "); this is unexpected");
+                return null;
+            }
+
+            var ef = new StreamWriter(new FileStream(exportFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+            return ef;
+        }
+
+        private CloseOutType CreatePeptideToProteinMapping()
+        {
+            string OrgDbDir = m_mgrParams.GetParam("orgdbdir");
+
+            // Note that job parameter "generatedFastaName" gets defined by clsAnalysisResources.RetrieveOrgDB
+            string dbFilename = Path.Combine(OrgDbDir, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"));
+            string strInputFilePath = null;
+
+            bool blnIgnorePeptideToProteinMapperErrors = false;
+            bool blnSuccess = false;
+
+            UpdateStatusRunning(mPercentCompleteStartLevels[(int) eInspectResultsProcessingSteps.CreatePeptideToProteinMapping]);
+
+            strInputFilePath = Path.Combine(m_WorkDir, mInspectResultsFileName);
+
+            try
+            {
+                // Validate that the input file has at least one entry; if not, then no point in continuing
+                string strLineIn = null;
+                int intLinesRead = 0;
+
+                var srInFile = new StreamReader(new FileStream(strInputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read));
+
+                intLinesRead = 0;
+                while (!srInFile.EndOfStream && intLinesRead < 10)
+                {
+                    strLineIn = srInFile.ReadLine();
+                    if (!string.IsNullOrEmpty(strLineIn))
+                    {
+                        intLinesRead += 1;
+                    }
+                }
+
+                if (intLinesRead <= 1)
+                {
+                    // File is empty or only contains a header line
+                    m_message = "No results above threshold";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                        "No results above threshold; filtered inspect results file is empty");
+                    return CloseOutType.CLOSEOUT_NO_DATA;
+                }
+            }
+            catch (Exception ex)
+            {
+                m_message = "Error validating Inspect results file contents in InspectResultsAssembly->CreatePeptideToProteinMapping";
+
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    m_message + ", job " + m_JobNum + "; " + clsGlobal.GetExceptionStackTrace(ex));
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            try
+            {
+                if (m_DebugLevel >= 1)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating peptide to protein map file");
+                }
+
+                blnIgnorePeptideToProteinMapperErrors = m_jobParams.GetJobParameter("IgnorePeptideToProteinMapError", false);
+
+                mPeptideToProteinMapper = new clsPeptideToProteinMapEngine();
+                mPeptideToProteinMapper.ProgressChanged += mPeptideToProteinMapper_ProgressChanged;
+
+                mPeptideToProteinMapper.DeleteInspectTempFiles = true;
+                mPeptideToProteinMapper.IgnoreILDifferences = false;
+                mPeptideToProteinMapper.InspectParameterFilePath = Path.Combine(m_WorkDir, INSPECT_INPUT_PARAMS_FILENAME);
+
+                if (m_DebugLevel > 2)
+                {
+                    mPeptideToProteinMapper.LogMessagesToFile = true;
+                    mPeptideToProteinMapper.LogFolderPath = m_WorkDir;
+                }
+                else
+                {
+                    mPeptideToProteinMapper.LogMessagesToFile = false;
+                }
+
+                mPeptideToProteinMapper.MatchPeptidePrefixAndSuffixToProtein = false;
+                mPeptideToProteinMapper.OutputProteinSequence = false;
+                mPeptideToProteinMapper.PeptideInputFileFormat = clsPeptideToProteinMapEngine.ePeptideInputFileFormatConstants.InspectResultsFile;
+                mPeptideToProteinMapper.PeptideFileSkipFirstLine = false;
+                mPeptideToProteinMapper.ProteinInputFilePath = Path.Combine(OrgDbDir, dbFilename);
+                mPeptideToProteinMapper.SaveProteinToPeptideMappingFile = true;
+                mPeptideToProteinMapper.SearchAllProteinsForPeptideSequence = true;
+                mPeptideToProteinMapper.SearchAllProteinsSkipCoverageComputationSteps = true;
+                mPeptideToProteinMapper.ShowMessages = false;
+
+                blnSuccess = mPeptideToProteinMapper.ProcessFile(strInputFilePath, m_WorkDir, string.Empty, true);
+
+                mPeptideToProteinMapper.CloseLogFileNow();
+
+                if (blnSuccess)
+                {
+                    if (m_DebugLevel >= 2)
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Peptide to protein mapping complete");
+                    }
+                }
+                else
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                        "Error running clsPeptideToProteinMapEngine: " + mPeptideToProteinMapper.GetErrorMessage());
+
+                    if (blnIgnorePeptideToProteinMapperErrors)
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                            "Ignoring protein mapping error since 'IgnorePeptideToProteinMapError' = True");
+                        return CloseOutType.CLOSEOUT_SUCCESS;
+                    }
+                    else
+                    {
+                        return CloseOutType.CLOSEOUT_FAILED;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                m_message = "Error in InspectResultsAssembly->CreatePeptideToProteinMapping";
+
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    "clsAnalysisToolRunnerInspResultsAssembly.CreatePeptideToProteinMapping, Error running clsPeptideToProteinMapEngine, job " +
+                    m_JobNum + "; " + clsGlobal.GetExceptionStackTrace(ex));
+
+                if (blnIgnorePeptideToProteinMapperErrors)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                        "Ignoring protein mapping error since 'IgnorePeptideToProteinMapError' = True");
+                    return CloseOutType.CLOSEOUT_SUCCESS;
+                }
+                else
+                {
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+            }
+
+            return CloseOutType.CLOSEOUT_SUCCESS;
+        }
+
+        /// <summary>
+        /// Reads the modification information defined in strInspectParameterFilePath, storing it in udtModList
+        /// </summary>
+        /// <param name="strInspectParameterFilePath"></param>
+        /// <param name="udtModList"></param>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        private bool ExtractModInfoFromInspectParamFile(string strInspectParameterFilePath, ref udtModInfoType[] udtModList)
+        {
+            string strLineIn = null;
+            string[] strSplitLine = null;
+
+            int intModCount = 0;
+
+            try
+            {
+                // Initialize udtModList
+                intModCount = 0;
+                udtModList = new udtModInfoType[-1 + 1];
+
+                if (m_DebugLevel > 4)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        "clsAnalysisToolRunnerInspResultsAssembly.ExtractModInfoFromInspectParamFile(): Reading " + strInspectParameterFilePath);
+                }
+
+                // Read the contents of strProteinToPeptideMappingFilePath
+                using (var srInFile = new StreamReader((new FileStream(strInspectParameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))))
+                {
+                    while (!srInFile.EndOfStream)
+                    {
+                        strLineIn = srInFile.ReadLine();
+
+                        strLineIn = strLineIn.Trim();
+
+                        if (string.IsNullOrEmpty(strLineIn))
+                            continue;
+
+                        if (strLineIn[0] == '#')
+                        {
+                            // Comment line; skip it
+                            continue;
+                        }
+
+                        if (strLineIn.ToLower().StartsWith("mod"))
+                        {
+                            // Modification definition line
+
+                            // Split the line on commas
+                            strSplitLine = strLineIn.Split(',');
+
+                            if (strSplitLine.Length >= 5 && strSplitLine[0].ToLower().Trim() == "mod")
+                            {
+                                if (udtModList.Length == 0)
+                                {
+                                    udtModList = new udtModInfoType[1];
+                                }
+                                else if (intModCount >= udtModList.Length)
+                                {
+                                    Array.Resize(ref udtModList, udtModList.Length * 2);
+                                }
+
+                                var mod = udtModList[intModCount];
+                                mod.ModName = strSplitLine[4];
+                                mod.ModMass = strSplitLine[1];
+                                mod.Residues = strSplitLine[2];
+
+                                intModCount += 1;
+                            }
+                        }
+                    }
+
+                    // Shrink udtModList to the appropriate length
+                    Array.Resize(ref udtModList, intModCount);
+                }
+            }
+            catch (Exception ex)
+            {
+                m_message = "Error in InspectResultsAssembly->ExtractModInfoFromInspectParamFile";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Use PValue_MinLength5.py to only retain the top hit for each scan (no p-value filtering is actually applied)
+        /// </summary>
+        /// <returns>CloseOutType enum indicating success or failure</returns>
+        /// <remarks></remarks>
+        private CloseOutType FilterInspectResultsByFirstHits()
+        {
+            string strInspectResultsFilePath = Path.Combine(m_WorkDir, mInspectResultsFileName);
+            string strFilteredFilePath = Path.Combine(m_WorkDir, m_Dataset + FIRST_HITS_INSPECT_FILE_SUFFIX);
+
+            UpdateStatusRunning(mPercentCompleteStartLevels[(int) eInspectResultsProcessingSteps.RunpValue]);
+
+            // Note that RunPvalue() will log any errors that occur
+            var eResult = RunpValue(strInspectResultsFilePath, strFilteredFilePath, false, true);
+
+            return eResult;
+        }
+
+        /// <summary>
+        /// Filters the inspect results using PValue_MinLength5.py"
+        /// </summary>
+        /// <returns>CloseOutType enum indicating success or failure</returns>
+        /// <remarks></remarks>
+        private CloseOutType FilterInspectResultsByPValue()
+        {
+            string strInspectResultsFilePath = Path.Combine(m_WorkDir, mInspectResultsFileName);
+            string strFilteredFilePath = Path.Combine(m_WorkDir, m_Dataset + FILTERED_INSPECT_FILE_SUFFIX);
+
+            UpdateStatusRunning(mPercentCompleteStartLevels[(int) eInspectResultsProcessingSteps.RunpValue]);
+
+            // Note that RunPvalue() will log any errors that occur
+            var eResult = RunpValue(strInspectResultsFilePath, strFilteredFilePath, true, false);
+
+            return eResult;
+        }
+
+        protected void InitializeVariables()
+        {
+            // Define the percent complete values to use for the start of each processing step
+
+            mPercentCompleteStartLevels = new float[PERCENT_COMPLETE_LEVEL_COUNT + 1];
+
+            mPercentCompleteStartLevels[(int) eInspectResultsProcessingSteps.Starting] = 0;
+            mPercentCompleteStartLevels[(int) eInspectResultsProcessingSteps.AssembleResults] = 5;
+            mPercentCompleteStartLevels[(int) eInspectResultsProcessingSteps.RunpValue] = 10;
+            mPercentCompleteStartLevels[(int) eInspectResultsProcessingSteps.ZipInspectResults] = 65;
+            mPercentCompleteStartLevels[(int) eInspectResultsProcessingSteps.CreatePeptideToProteinMapping] = 66;
+            mPercentCompleteStartLevels[PERCENT_COMPLETE_LEVEL_COUNT] = 100;
+        }
+
+        private bool RenameAndZipInspectFile(string strSourceFilePath, string strZipFilePath, bool blnDeleteSourceAfterZip)
+        {
+            string strTargetFilePath = null;
+            bool blnSuccess = false;
+
+            // Zip up file specified by strSourceFilePath
+            // Rename to _inspect.txt before zipping
+            var fiFileInfo = new FileInfo(strSourceFilePath);
+
+            if (!fiFileInfo.Exists)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    "Inspect results file not found; nothing to zip: " + fiFileInfo.FullName);
+                return false;
+            }
+
+            strTargetFilePath = Path.Combine(m_WorkDir, mInspectResultsFileName);
+            if (m_DebugLevel >= 3)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    "Renaming " + fiFileInfo.FullName + " to " + strTargetFilePath);
+            }
+
+            fiFileInfo.MoveTo(strTargetFilePath);
+            fiFileInfo.Refresh();
+
+            blnSuccess = base.ZipFile(fiFileInfo.FullName, blnDeleteSourceAfterZip, strZipFilePath);
+
+            m_jobParams.AddResultFileToKeep(Path.GetFileName(strZipFilePath));
+
+            return blnSuccess;
+        }
+
+        /// <summary>
+        /// Uses PValue_MinLength5.py to recompute the p-value and FScore values for Inspect results computed in parallel then reassembled
+        /// In addition, filters the data on p-value of 0.1 or smaller
+        /// </summary>
+        /// <returns>CloseOutType enum indicating success or failure</returns>
+        /// <remarks></remarks>
+        private CloseOutType RescoreAssembledInspectResults()
+        {
+            string strInspectResultsFilePath = Path.Combine(m_WorkDir, mInspectResultsFileName);
+            string strFilteredFilePath = Path.Combine(m_WorkDir, m_Dataset + FILTERED_INSPECT_FILE_SUFFIX);
+
+            UpdateStatusRunning(mPercentCompleteStartLevels[(int) eInspectResultsProcessingSteps.RunpValue]);
+
+            // Note that RunPvalue() will log any errors that occur
+            var eResult = RunpValue(strInspectResultsFilePath, strFilteredFilePath, true, false);
+
+            try
+            {
+                // Make sure the filtered inspect results file is not zero-length
+                // Also, log some stats on the size of the filtered file vs. the original one
+                var fiRescoredFile = new FileInfo(strFilteredFilePath);
+                var fiOriginalFile = new FileInfo(strInspectResultsFilePath);
+
+                if (!fiRescoredFile.Exists)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                        "Rescored Inspect Results file not found: " + fiRescoredFile.FullName);
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                if (fiOriginalFile.Length == 0)
+                {
+                    // Assembled inspect results file is 0-bytes; this is unexpected
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                        "Assembled Inspect Results file is 0 bytes: " + fiOriginalFile.FullName);
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                if (m_DebugLevel >= 1)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        "Rescored Inspect results file created; size is " +
+                        (fiRescoredFile.Length / Convert.ToDouble(fiOriginalFile.Length) * 100).ToString("0.0") + "% of the original (" +
+                        fiRescoredFile.Length + " bytes vs. " + fiOriginalFile.Length + " bytes in original)");
+                }
+            }
+            catch (Exception ex)
+            {
+                m_message = "Error in InspectResultsAssembly->RescoreAssembledInspectResults";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            return CloseOutType.CLOSEOUT_SUCCESS;
+        }
+
+        private CloseOutType RunpValue(string strInspectResultsInputFilePath, string strOutputFilePath, bool blnCreateImageFiles, bool blnTopHitOnly)
+        {
+            string CmdStr = null;
+
+            string InspectDir = m_mgrParams.GetParam("inspectdir");
+            string pvalDistributionFilename = Path.Combine(m_WorkDir, m_Dataset + "_PValueDistribution.txt");
+
+            // The following code is only required if you use the -a and -d switches
+            //'Dim orgDbDir As String = m_mgrParams.GetParam("orgdbdir")
+            //'Dim fastaFilename As String = Path.Combine(orgDbDir, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
+            //'Dim dbFilename As String = fastaFilename.Replace("fasta", "trie")
+
+            string pythonProgLoc = m_mgrParams.GetParam("pythonprogloc");
+            var pthresh = "";
+
+            bool blnShuffledDBUsed = false;
+
+            // Check whether a shuffled DB was created prior to running Inspect
+            blnShuffledDBUsed = ValidateShuffledDBInUse(strInspectResultsInputFilePath);
+
+            // Lookup the p-value to filter on
+            pthresh = m_jobParams.GetJobParameter("InspectPvalueThreshold", "0.1");
+
+            var cmdRunner = new clsRunDosProgram(InspectDir);
+            RegisterEvents(cmdRunner);
+
+            if (m_DebugLevel > 4)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    "clsAnalysisToolRunnerInspResultsAssembly.RunpValue(): Enter");
+            }
+
+            // verify that python program file exists
+            string progLoc = pythonProgLoc;
+            if (!File.Exists(progLoc))
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find python.exe program file: " + progLoc);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            // verify that PValue python script exists
+            string pvalueScriptPath = Path.Combine(InspectDir, PVALUE_MINLENGTH5_SCRIPT);
+            if (!File.Exists(pvalueScriptPath))
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find PValue script: " + pvalueScriptPath);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            // Possibly required: Update the PTMods.txt file in InspectDir to contain the modification details, as defined in inspect_input.txt
+            UpdatePTModsFile(InspectDir, Path.Combine(m_WorkDir, "inspect_input.txt"));
+
+            //Set up and execute a program runner to run PVALUE_MINLENGTH5_SCRIPT.py
+            // Note that PVALUE_MINLENGTH5_SCRIPT.py is nearly identical to PValue.py but it retains peptides with 5 amino acids (default is 7)
+            // -r is the input file
+            // -w is the output file
+            // -s saves the p-value distribution to a text file
+            // -H means to not remove entries mapped to shuffled proteins (created by shuffleDB.py); shuffled protein names start with XXX; we use this option when creating the First Hits file so that we retain the top hit, even if it is from a shuffled protein
+            // -p 0.1 will filter out results with p-value <= 0.1 (this threshold was suggested by Sam Payne)
+            // -i means to create a PValue distribution image file (.PNG)
+            // -S 0.5 means that 50% of the proteins in the DB come from shuffled proteins
+
+            // Other parameters not used:
+            // -1 means to only retain the top match for each scan
+            // -x means to retain "bad" matches (those with poor delta-score values, a p-value below the threshold, or an MQScore below -1)
+            // -a means to perform protein selection (sort of like protein prophet, but not very good, according to Sam Payne)
+            // -d .trie file to use (only used if -a is enabled)
+
+            CmdStr = " " + pvalueScriptPath + " -r " + strInspectResultsInputFilePath + " -w " + strOutputFilePath + " -s " + pvalDistributionFilename;
+
+            if (blnCreateImageFiles)
+            {
+                CmdStr += " -i";
+            }
+
+            if (blnTopHitOnly)
+            {
+                CmdStr += " -H -1 -p 1";
+            }
+            else
+            {
+                CmdStr += " -p " + pthresh;
+            }
+
+            if (blnShuffledDBUsed)
+            {
+                CmdStr += " -S 0.5";
+            }
+
+            // The following could be used to enable protein selection
+            // That would require that the database file be present, and this can take quite a bit longer
+            //'CmdStr &= " -a -d " & dbFilename
+
+            if (m_DebugLevel >= 1)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc + " " + CmdStr);
+            }
+
+            cmdRunner.CreateNoWindow = true;
+            cmdRunner.CacheStandardOutput = true;
+            cmdRunner.EchoOutputToConsole = true;
+
+            cmdRunner.WriteConsoleOutputToFile = true;
+            cmdRunner.ConsoleOutputFilePath = Path.Combine(m_WorkDir, "PValue_ConsoleOutput.txt");
+
+            if (!cmdRunner.RunProgram(progLoc, CmdStr, "PValue", false))
+            {
+                // Error running program; the error should have already been logged
+            }
+
+            if (cmdRunner.ExitCode != 0)
+            {
+                // Note: Log the non-zero exit code as an error, but return CLOSEOUT_SUCCESS anyway
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    Path.GetFileName(pvalueScriptPath) + " returned a non-zero exit code: " + cmdRunner.ExitCode.ToString());
+            }
+
+            return CloseOutType.CLOSEOUT_SUCCESS;
+        }
+
+        /// <summary>
+        /// Stores the tool version info in the database
+        /// </summary>
+        /// <remarks></remarks>
+        protected bool StoreToolVersionInfo()
+        {
+            string strToolVersionInfo = string.Empty;
+            string strAppFolderPath = clsGlobal.GetAppFolderPath();
+            bool blnSuccess = false;
+
+            if (m_DebugLevel >= 2)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+            }
+
+            // Lookup the version of the Inspect Results Assembly Plugin
+            if (!StoreToolVersionInfoForLoadedAssembly(ref strToolVersionInfo, "AnalysisManagerInspResultsAssemblyPlugIn"))
+            {
+                return false;
+            }
+
+            // Store version information for the PeptideToProteinMapEngine and its associated DLLs
+            blnSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, Path.Combine(strAppFolderPath, "PeptideToProteinMapEngine.dll"));
+            if (!blnSuccess)
+                return false;
+
+            blnSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, Path.Combine(strAppFolderPath, "ProteinFileReader.dll"));
+            if (!blnSuccess)
+                return false;
+
+            blnSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, Path.Combine(strAppFolderPath, "System.Data.SQLite.dll"));
+            if (!blnSuccess)
+                return false;
+
+            blnSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, Path.Combine(strAppFolderPath, "ProteinCoverageSummarizer.dll"));
+            if (!blnSuccess)
+                return false;
+
+            // Store the path to important DLLs in ioToolFiles
+            List<FileInfo> ioToolFiles = new List<FileInfo>();
+            ioToolFiles.Add(new FileInfo(Path.Combine(strAppFolderPath, "AnalysisManagerInspResultsAssemblyPlugIn.dll")));
+            ioToolFiles.Add(new FileInfo(Path.Combine(strAppFolderPath, "PeptideToProteinMapEngine.dll")));
+            ioToolFiles.Add(new FileInfo(Path.Combine(strAppFolderPath, "ProteinFileReader.dll")));
+            // Skip System.Data.SQLite.dll; we don't need to track the file date
+            ioToolFiles.Add(new FileInfo(Path.Combine(strAppFolderPath, "ProteinCoverageSummarizer.dll")));
+
+            try
+            {
+                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Assures that the PTMods.txt file in strInspectDir contains the modification info defined in strInspectInputFilePath
+        /// Note: We run the risk that two InspectResultsAssembly tasks will run simultaneously and will both try to update PTMods.txt
+        /// </summary>
+        /// <param name="strInspectDir"></param>
+        /// <param name="strInspectParameterFilePath"></param>
+        /// <remarks></remarks>
+        private bool UpdatePTModsFile(string strInspectDir, string strInspectParameterFilePath)
+        {
+            int intIndex = 0;
+
+            string strPTModsFilePath = null;
+            string strPTModsFilePathOld = null;
+            string strPTModsFilePathNew = null;
+
+            string strLineIn = null;
+            string[] strSplitLine = null;
+            string strModName = null;
+
+            udtModInfoType[] udtModList = null;
+            udtModList = new udtModInfoType[-1 + 1];
+
+            bool[] blnModProcessed = null;
+
+            bool blnMatchFound = false;
+            bool blnPrevLineWasBlank = false;
+            bool blnDifferenceFound = false;
+
+            try
+            {
+                if (m_DebugLevel > 4)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        "clsAnalysisToolRunnerInspResultsAssembly.UpdatePTModsFile(): Enter ");
+                }
+
+                // Read the mods defined in strInspectInputFilePath
+                if (ExtractModInfoFromInspectParamFile(strInspectParameterFilePath, ref udtModList))
+                {
+                    if (udtModList.Length > 0)
+                    {
+                        // Initialize blnModProcessed()
+                        blnModProcessed = new bool[udtModList.Length];
+
+                        // Read PTMods.txt to look for the mods in udtModList
+                        // While reading, will create a new file with any required updates
+                        // In case two managers are doing this simultaneously, we'll put a unique string in strPTModsFilePathNew
+
+                        strPTModsFilePath = Path.Combine(strInspectDir, "PTMods.txt");
+                        strPTModsFilePathNew = strPTModsFilePath + ".Job" + m_JobNum + ".tmp";
+
+                        if (m_DebugLevel > 4)
+                        {
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                "clsAnalysisToolRunnerInspResultsAssembly.UpdatePTModsFile(): Open " + strPTModsFilePath);
+                        }
+                        var srInFile = new StreamReader(new FileStream(strPTModsFilePath, FileMode.Open, FileAccess.Read, FileShare.Read));
+
+                        if (m_DebugLevel > 4)
+                        {
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                "clsAnalysisToolRunnerInspResultsAssembly.UpdatePTModsFile(): Create " + strPTModsFilePathNew);
+                        }
+                        var swOutFile = new StreamWriter(new FileStream(strPTModsFilePathNew, FileMode.Create, FileAccess.Write, FileShare.Read));
+
+                        blnDifferenceFound = false;
+                        while (!srInFile.EndOfStream)
+                        {
+                            strLineIn = srInFile.ReadLine();
+                            strLineIn = strLineIn.Trim();
+
+                            if (!string.IsNullOrEmpty(strLineIn))
+                            {
+                                if (strLineIn[0] == '#')
+                                {
+                                    // Comment line; skip it
+                                }
+                                else
+                                {
+                                    // Split the line on tabs
+                                    strSplitLine = strLineIn.Split('\t');
+
+                                    if (strSplitLine.Length >= 3)
+                                    {
+                                        strModName = strSplitLine[0].ToLower();
+
+                                        blnMatchFound = false;
+                                        for (intIndex = 0; intIndex <= udtModList.Length - 1; intIndex++)
+                                        {
+                                            if (udtModList[intIndex].ModName.ToLower() == strModName)
+                                            {
+                                                // Match found
+                                                blnMatchFound = true;
+                                                break;
+                                            }
+                                        }
+
+                                        if (blnMatchFound)
+                                        {
+                                            if (blnModProcessed[intIndex])
+                                            {
+                                                // This mod was already processed; don't write the line out again
+                                                strLineIn = string.Empty;
+                                            }
+                                            else
+                                            {
+                                                var mod = udtModList[intIndex];
+                                                // First time we've seen this mod; make sure the mod mass and residues are correct
+                                                if (strSplitLine[1] != mod.ModMass || strSplitLine[2] != mod.Residues)
+                                                {
+                                                    // Mis-match; update the line
+                                                    strLineIn = mod.ModName + "\t" + mod.ModMass + "\t" + mod.Residues;
+
+                                                    if (m_DebugLevel > 4)
+                                                    {
+                                                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                                            "clsAnalysisToolRunnerInspResultsAssembly.UpdatePTModsFile(): Mod def in PTMods.txt doesn't match required mod def; updating to: " +
+                                                            strLineIn);
+                                                    }
+
+                                                    blnDifferenceFound = true;
+                                                }
+                                                blnModProcessed[intIndex] = true;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            if (blnPrevLineWasBlank && strLineIn.Length == 0)
+                            {
+                                // Don't write out two blank lines in a row; skip this line
+                            }
+                            else
+                            {
+                                swOutFile.WriteLine(strLineIn);
+
+                                if (strLineIn.Length == 0)
+                                {
+                                    blnPrevLineWasBlank = true;
+                                }
+                                else
+                                {
+                                    blnPrevLineWasBlank = false;
+                                }
+                            }
+                        }
+
+                        // Close the input file
+                        srInFile.Close();
+
+                        // Look for any unprocessed mods
+                        for (intIndex = 0; intIndex <= udtModList.Length - 1; intIndex++)
+                        {
+                            if (!blnModProcessed[intIndex])
+                            {
+                                var mod = udtModList[intIndex];
+                                strLineIn = mod.ModName + "\t" + mod.ModMass + "\t" + mod.Residues;
+                                swOutFile.WriteLine(strLineIn);
+
+                                blnDifferenceFound = true;
+                            }
+                        }
+
+                        // Close the output file
+                        swOutFile.Close();
+
+                        if (blnDifferenceFound)
+                        {
+                            // Wait 500 msec, then replace PTMods.txt with strPTModsFilePathNew
+                            Thread.Sleep(500);
+
+                            try
+                            {
+                                strPTModsFilePathOld = strPTModsFilePath + ".old";
+                                if (File.Exists(strPTModsFilePathOld))
+                                {
+                                    File.Delete(strPTModsFilePathOld);
+                                }
+
+                                File.Move(strPTModsFilePath, strPTModsFilePathOld);
+                                File.Move(strPTModsFilePathNew, strPTModsFilePath);
+                            }
+                            catch (Exception ex)
+                            {
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                    "clsAnalysisToolRunnerInspResultsAssembly.UpdatePTModsFile, Error swapping in the new PTMods.txt file : " +
+                                    m_JobNum + "; " + ex.Message);
+                                return false;
+                            }
+                        }
+                        else
+                        {
+                            // No difference was found; delete the .tmp file
+                            Thread.Sleep(500);
+                            try
+                            {
+                                File.Delete(strPTModsFilePathNew);
+                            }
+                            catch (Exception ex)
+                            {
+                                // Ignore errors here
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                m_message = "Error in InspectResultsAssembly->UpdatePTModsFile";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool ValidateShuffledDBInUse(string strInspectResultsPath)
+        {
+            int intLinesRead = 0;
+
+            string strLineIn = string.Empty;
+            string[] strSplitLine = null;
+
+            int intDecoyProteinCount = 0;
+            int intNormalProteinCount = 0;
+
+            bool blnShuffledDBUsed = false;
+
+            var chSepChars = new char[] { '\t' };
+
+            blnShuffledDBUsed = m_jobParams.GetJobParameter("InspectUsesShuffledDB", false);
+
+            if (blnShuffledDBUsed)
+            {
+                // Open the _inspect.txt file and make sure proteins exist that start with XXX
+                // If not, change blnShuffledDBUsed back to false
+
+                try
+                {
+                    var srInspectResults = new StreamReader(new FileStream(strInspectResultsPath, FileMode.Open, FileAccess.Read, FileShare.Read));
+
+                    intLinesRead = 0;
+                    intDecoyProteinCount = 0;
+                    intNormalProteinCount = 0;
+
+                    while (!srInspectResults.EndOfStream)
+                    {
+                        strLineIn = srInspectResults.ReadLine();
+                        intLinesRead += 1;
+
+                        if (string.IsNullOrEmpty(strLineIn))
+                            continue;
+
+                        // Protein info should be stored in the fourth column (index=3)
+                        strSplitLine = strLineIn.Split(chSepChars, 5);
+
+                        if (intLinesRead == 1)
+                        {
+                            // Verify that strSplitLine[3] is "Protein"
+                            if (!strSplitLine[3].ToLower().StartsWith("protein"))
+                            {
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                                    "The fourth column in the Inspect results file does not start with 'Protein'; this is unexpected");
+                            }
+                        }
+                        else
+                        {
+                            if (strSplitLine[3].StartsWith("XXX"))
+                            {
+                                intDecoyProteinCount += 1;
+                            }
+                            else
+                            {
+                                intNormalProteinCount += 1;
+                            }
+                        }
+
+                        if (intDecoyProteinCount > 10)
+                            break;
+                    }
+
+                    srInspectResults.Close();
+
+                    if (intDecoyProteinCount == 0)
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                            "The job has 'InspectUsesShuffledDB' set to True in the Settings file, but none of the proteins in the result file starts with XXX.  Will assume the fasta file did NOT have shuffled proteins, and will thus NOT use '-S 0.5' when calling " +
+                            PVALUE_MINLENGTH5_SCRIPT);
+                        blnShuffledDBUsed = false;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    m_message = "Error in InspectResultsAssembly->strInspectResultsPath";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                }
+            }
+
+            return blnShuffledDBUsed;
+        }
+
+        /// <summary>
+        /// Stores the _inspect.txt file in _inspect_all.zip
+        /// Stores the _inspect_fht.txt file in _inspect_fht.zip (but renames it to _inspect.txt before storing)
+        /// Stores the _inspect_filtered.txt file in _inspect.zip (but renames it to _inspect.txt before storing)
+        /// </summary>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        private CloseOutType ZipInspectResults()
+        {
+            bool blnSuccess = false;
+
+            try
+            {
+                UpdateStatusRunning(mPercentCompleteStartLevels[(int) eInspectResultsProcessingSteps.ZipInspectResults]);
+
+                // Zip up the _inspect.txt file into _inspect_all.zip
+                // Rename to _inspect.txt before zipping
+                // Delete the _inspect.txt file after zipping
+                blnSuccess = RenameAndZipInspectFile(Path.Combine(m_WorkDir, m_Dataset + ORIGINAL_INSPECT_FILE_SUFFIX),
+                    Path.Combine(m_WorkDir, m_Dataset + "_inspect_all.zip"), true);
+
+                if (!blnSuccess)
+                {
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                // Zip up the _inspect_fht.txt file into _inspect_fht.zip
+                // Rename to _inspect.txt before zipping
+                // Delete the _inspect.txt file after zipping
+                blnSuccess = RenameAndZipInspectFile(Path.Combine(m_WorkDir, m_Dataset + FIRST_HITS_INSPECT_FILE_SUFFIX),
+                    Path.Combine(m_WorkDir, m_Dataset + "_inspect_fht.zip"), true);
+
+                if (!blnSuccess)
+                {
+                    // Ignore errors creating the _fht.zip file
+                }
+
+                // Zip up the _inspect_filtered.txt file into _inspect.zip
+                // Rename to _inspect.txt before zipping
+                // Do not delete the _inspect.txt file after zipping since it is used in function CreatePeptideToProteinMapping
+                blnSuccess = RenameAndZipInspectFile(Path.Combine(m_WorkDir, m_Dataset + FILTERED_INSPECT_FILE_SUFFIX),
+                    Path.Combine(m_WorkDir, m_Dataset + "_inspect.zip"), false);
+
+                if (!blnSuccess)
+                {
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                // Add the _inspect.txt file to .FilesToDelete since we only want to keep the Zipped version
+                m_jobParams.AddResultFileToSkip(mInspectResultsFileName);
+            }
+            catch (Exception ex)
+            {
+                m_message = "Error in InspectResultsAssembly->ZipInspectResults";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            return CloseOutType.CLOSEOUT_SUCCESS;
+        }
+
+        #endregion
+
+        #region "Event Handlers"
+
+        private void mPeptideToProteinMapper_ProgressChanged(string taskDescription, float percentComplete)
+        {
+            // Note that percentComplete is a value between 0 and 100
+
+            float sngStartPercent = mPercentCompleteStartLevels[(int) eInspectResultsProcessingSteps.CreatePeptideToProteinMapping];
+            float sngEndPercent = mPercentCompleteStartLevels[(int) eInspectResultsProcessingSteps.CreatePeptideToProteinMapping + 1];
+            float sngPercentCompleteEffective = 0;
+
+            sngPercentCompleteEffective = sngStartPercent + Convert.ToSingle(percentComplete / 100.0 * (sngEndPercent - sngStartPercent));
+
+            UpdateStatusFile(sngPercentCompleteEffective);
+
+            LogProgress("Mapping peptides to proteins", 3);
+        }
+
+        #endregion
+    }
+}
