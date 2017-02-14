@@ -25,7 +25,7 @@ Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerICR2LSPlugIn
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AM_IDM_Plugin", "AM_IDM_Plugin\AM_IDM_Plugin\AM_IDM_Plugin.csproj", "{AA0848C0-5407-4ED6-9FE4-720BF6E63BAE}"
 EndProject
-Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerIDPickerPlugIn", "AM_IDPicker_PlugIn\AnalysisManagerIDPickerPlugIn.vbproj", "{DD269705-9BF2-413C-9984-198ECFB300DF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerIDPickerPlugIn", "AM_IDPicker_PlugIn\AnalysisManagerIDPickerPlugIn.csproj", "{DD269705-9BF2-413C-9984-198ECFB300DF}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerInSpecTPlugIn", "AM_InSpecT_PlugIn\AnalysisManagerInSpecTPlugIn.csproj", "{C8422F47-9F58-4839-A211-61F763CD336C}"
 EndProject
