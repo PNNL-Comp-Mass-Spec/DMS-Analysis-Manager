@@ -129,16 +129,17 @@ namespace AnalysisManagerBase
         {
             if (m_DebugLevel >= 1)
             {
-                Console.WriteLine("  " + currentTask);
-                Console.WriteLine("   " + taskDetail);
+                clsGlobal.LogDebug(currentTask, false);
+                if (!string.IsNullOrWhiteSpace(taskDetail) && !currentTask.Contains(taskDetail))
+                    clsGlobal.LogDebug(" " + taskDetail, false);
 
                 if (m_DebugLevel >= 2)
                 {
-                    LogMessage(currentTask + "; " + taskDetail);
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, currentTask + "; " + taskDetail);
                 }
                 else
                 {
-                    LogMessage(currentTask);
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, currentTask);
                 }
             }
         }
@@ -147,19 +148,9 @@ namespace AnalysisManagerBase
         {
             if (m_DebugLevel >= 1)
             {
-                Console.WriteLine(warningMessage);
-                Console.WriteLine("  " + warningDetail);
-
-                string msg;
-                if (m_DebugLevel >= 2)
-                {
-                    msg = warningMessage + "; " + warningDetail;
-                }
-                else
-                {
-                    msg = warningMessage;
-                }
-                LogWarning(msg);
+                clsGlobal.LogWarning(warningMessage);
+                if (!string.IsNullOrWhiteSpace(warningDetail) && !warningMessage.Contains(warningDetail))
+                    clsGlobal.LogWarning("  " + warningDetail);
             }
         }
 
