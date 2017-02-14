@@ -5,7 +5,6 @@ using System.Data.SqlClient;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Reflection;
 using System.Runtime.Versioning;
 using System.Text.RegularExpressions;
@@ -1447,10 +1446,16 @@ namespace AnalysisManagerProg
 
         private void RegisterEvents(clsEventNotifier oProcessingClass)
         {
+            oProcessingClass.DebugEvent += DebugEventHandler;
             oProcessingClass.StatusEvent += StatusEventHandler;
             oProcessingClass.ErrorEvent += ErrorEventHandler;
             oProcessingClass.WarningEvent += WarningEventHandler;
             oProcessingClass.ProgressUpdate += ProgressUpdateHandler;
+        }
+
+        private void DebugEventHandler(string statusMessage)
+        {
+            LogDebug(statusMessage);
         }
 
         private void StatusEventHandler(string statusMessage)

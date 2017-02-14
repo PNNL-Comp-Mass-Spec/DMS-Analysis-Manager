@@ -1865,10 +1865,16 @@ namespace AnalysisManagerBase
 
         private static void RegisterEvents(clsEventNotifier oProcessingClass)
         {
+            oProcessingClass.DebugEvent += DebugEventHandler;
             oProcessingClass.StatusEvent += StatusEventHandler;
             oProcessingClass.ErrorEvent += ErrorEventHandler;
             oProcessingClass.WarningEvent += WarningEventHandler;
             // Ignore: oProcessingClass.ProgressUpdate += ProgressUpdateHandler;
+        }
+
+        private static void DebugEventHandler(string statusMessage)
+        {
+            LogDebug(statusMessage);
         }
 
         private static void StatusEventHandler(string statusMessage)

@@ -2327,10 +2327,16 @@ namespace AnalysisManagerProg
 
         private void RegisterEvents(clsEventNotifier oProcessingClass)
         {
+            oProcessingClass.DebugEvent += DebugEventHandler;
             oProcessingClass.StatusEvent += StatusEventHandler;
             oProcessingClass.ErrorEvent += ErrorEventHandler;
             oProcessingClass.WarningEvent += WarningEventHandler;
             oProcessingClass.ProgressUpdate += ProgressUpdateHandler;
+        }
+
+        private void DebugEventHandler(string statusMessage)
+        {
+            LogDebug(statusMessage);
         }
 
         private void StatusEventHandler(string statusMessage)
