@@ -29,10 +29,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// <remarks></remarks>
         private readonly string mCustomMSConvertArguments;
 
-        protected override string ProgramName
-        {
-            get { return "MSConvert"; }
-        }
+        protected override string ProgramName => "MSConvert";
 
         #region "Methods"
 
@@ -135,16 +132,15 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 // Input and output files are both .mzML
                 return Path.GetFileNameWithoutExtension(rawFilePath) + "_new" + clsAnalysisResources.DOT_MZML_EXTENSION;
             }
-            else if (string.Equals(msXmlFormat, "mzXML", StringComparison.InvariantCultureIgnoreCase) &&
-                     mRawDataType == clsAnalysisResources.eRawDataTypeConstants.mzXML)
+
+            if (string.Equals(msXmlFormat, "mzXML", StringComparison.InvariantCultureIgnoreCase) &&
+                mRawDataType == clsAnalysisResources.eRawDataTypeConstants.mzXML)
             {
                 // Input and output files are both .mzXML
                 return Path.GetFileNameWithoutExtension(rawFilePath) + "_new" + clsAnalysisResources.DOT_MZXML_EXTENSION;
             }
-            else
-            {
-                return Path.GetFileName(Path.ChangeExtension(rawFilePath, msXmlFormat));
-            }
+
+            return Path.GetFileName(Path.ChangeExtension(rawFilePath, msXmlFormat));
         }
 
         protected override bool SetupTool()

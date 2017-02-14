@@ -67,7 +67,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                 // Cache the parent ion m/z and charge values in the MGF file
 
-                MSDataFileReader.clsSpectrumInfo objMGFSpectrum = null;
+                MSDataFileReader.clsSpectrumInfo objMGFSpectrum;
                 while (mgfFileReader.ReadNextSpectrum(out objMGFSpectrum))
                 {
                     var objCurrentSpectrum = mgfFileReader.CurrentSpectrum;
@@ -78,7 +78,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                         Charge = objCurrentSpectrum.ParentIonCharges[0]
                     };
 
-                    List<udtChargeInfoType> chargeInfoList = null;
+                    List<udtChargeInfoType> chargeInfoList;
                     if (!cachedParentIonInfo.TryGetValue(objMGFSpectrum.ScanNumber, out chargeInfoList))
                     {
                         chargeInfoList = new List<udtChargeInfoType>();
@@ -117,7 +117,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
             try
             {
-                Dictionary<int, List<udtChargeInfoType>> cachedParentIonInfo = CacheMGFParentIonInfo(mgfFilePath);
+                var cachedParentIonInfo = CacheMGFParentIonInfo(mgfFilePath);
 
                 if (cachedParentIonInfo.Count == 0)
                 {
@@ -137,11 +137,11 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 {
                     var lastScan = 0;
 
-                    MSDataFileReader.clsSpectrumInfo objDTASpectrum = null;
+                    MSDataFileReader.clsSpectrumInfo objDTASpectrum;
 
                     while (dtaFileReader.ReadNextSpectrum(out objDTASpectrum))
                     {
-                        List<udtChargeInfoType> chargeInfoList = null;
+                        List<udtChargeInfoType> chargeInfoList;
 
                         if (!cachedParentIonInfo.TryGetValue(objDTASpectrum.ScanNumber, out chargeInfoList))
                         {
@@ -202,7 +202,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                             // Write the ions using the data from the DTA file
                             var dtaMsMsData = dtaFileReader.GetMSMSDataAsText();
-                            foreach (string strItem in dtaMsMsData)
+                            foreach (var strItem in dtaMsMsData)
                             {
                                 writer.WriteLine(strItem);
                             }
@@ -229,10 +229,8 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                     return dtaFilePath;
                 }
-                else
-                {
-                    return updatedDtaFile.FullName;
-                }
+
+                return updatedDtaFile.FullName;
             }
             catch (Exception ex)
             {
@@ -258,7 +256,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                     if (reader.Name == "count")
                     {
-                        int listItemCount = 0;
+                        int listItemCount;
                         if (int.TryParse(reader.Value, out listItemCount))
                         {
                             listItemCount += 1;
@@ -289,7 +287,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
             try
             {
-                udtSoftwareInfoType softwareInfo = new udtSoftwareInfoType
+                var softwareInfo = new udtSoftwareInfoType
                 {
                     ID = "RawConverter",
                     // Used to relate a <software> entry with a <dataProcessing> entry
@@ -299,7 +297,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     AccessionName = string.Empty
                 };
 
-                Dictionary<int, List<udtChargeInfoType>> cachedParentIonInfo = CacheMGFParentIonInfo(mgfFilePath);
+                var cachedParentIonInfo = CacheMGFParentIonInfo(mgfFilePath);
 
                 if (cachedParentIonInfo.Count == 0)
                 {
@@ -312,7 +310,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                         Path.GetFileNameWithoutExtension(sourceMzMLFile.Name) + "_new" + Path.GetExtension(sourceMzMLFile.Name)));
 
                 var atEndOfMzML = false;
-                int currentScanNumber = -1;
+                var currentScanNumber = -1;
                 var updatedScan = false;
                 var updatedSelectedIon = false;
 
@@ -428,7 +426,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                                         {
                                             updatedScan = true;
 
-                                            List<udtChargeInfoType> chargeInfoList = null;
+                                            List<udtChargeInfoType> chargeInfoList;
                                             if (cachedParentIonInfo.TryGetValue(currentScanNumber, out chargeInfoList))
                                             {
                                                 WriteUpdatedScan(reader, writer, chargeInfoList);
@@ -443,7 +441,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                                         {
                                             updatedSelectedIon = true;
 
-                                            List<udtChargeInfoType> chargeInfoList = null;
+                                            List<udtChargeInfoType> chargeInfoList;
                                             if (cachedParentIonInfo.TryGetValue(currentScanNumber, out chargeInfoList))
                                             {
                                                 WriteUpdatedSelectedIon(reader, writer, chargeInfoList);
@@ -494,10 +492,8 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                     return mzMLFilePath;
                 }
-                else
-                {
-                    return updatedMzMLFile.FullName;
-                }
+
+                return updatedMzMLFile.FullName;
             }
             catch (Exception ex)
             {

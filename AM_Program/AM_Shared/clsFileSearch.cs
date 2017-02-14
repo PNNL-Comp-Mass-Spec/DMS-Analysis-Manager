@@ -112,7 +112,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Copies the zipped s-folders to the working directory
         /// </summary>
-        /// <param name=""></param>
         /// <param name="createStoragePathInfoOnly">
         /// When true, then does not actually copy the specified files, 
         /// but instead creates a series of files named s*.zip_StoragePathInfo.txt, 
@@ -395,11 +394,9 @@ namespace AnalysisManagerBase
                     // add the _dta.zip file name to the folder path found by FindDataFile
                     return clsMyEMSLUtilities.AddFileToMyEMSLFolderPath(sourceFolderPath, sourceFileName);
                 }
-                else
-                {
-                    // Return the path to the _dta.zip file
-                    return Path.Combine(sourceFolderPath, sourceFileName);
-                }
+                
+                // Return the path to the _dta.zip file
+                return Path.Combine(sourceFolderPath, sourceFileName);
             }
 
             // Couldn't find a folder with the _dta.zip file; how about the _dta.txt file?
@@ -442,7 +439,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="fileToFind">Name of the file to search for</param>
         /// <param name="searchArchivedDatasetFolder">TRUE if the EMSL archive (Aurora) should also be searched</param>
-        /// <param name="datasetName"></param>
         /// <returns>Path to the directory containing the file if the file was found; empty string if not found found</returns>
         /// <remarks>If the file is found in MyEMSL, then the directory path returned will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
         private string FindDataFile(string fileToFind, bool searchArchivedDatasetFolder)

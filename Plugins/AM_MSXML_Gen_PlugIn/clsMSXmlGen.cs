@@ -30,7 +30,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
         // When true, then return an error if the progrunner returns a non-zero exit code
         protected bool mUseProgRunnerResultCode;
 
-        private string mErrorMessage = string.Empty;
+        private string mErrorMessage;
 
         public event ProgRunnerStartingEventHandler ProgRunnerStarting;
 
@@ -58,27 +58,28 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 {
                     return string.Empty;
                 }
-                else
-                {
-                    return mErrorMessage;
-                }
+
+                return mErrorMessage;
             }
         }
 
-        public string OutputFileName
-        {
-            get { return mOutputFileName; }
-        }
+        public string OutputFileName => mOutputFileName;
 
         protected abstract string ProgramName { get; }
 
-        public string SourceFilePath
-        {
-            get { return mSourceFilePath; }
-        }
+        public string SourceFilePath => mSourceFilePath;
 
         #endregion
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="workDir"></param>
+        /// <param name="programPath"></param>
+        /// <param name="datasetName"></param>
+        /// <param name="rawDataType"></param>
+        /// <param name="eOutputType"></param>
+        /// <param name="centroidMSXML"></param>
         public clsMSXmlGen(string workDir, string programPath, string datasetName, clsAnalysisResources.eRawDataTypeConstants rawDataType,
             clsAnalysisResources.MSXMLOutputTypeConstants eOutputType, bool centroidMSXML)
         {
@@ -93,6 +94,16 @@ namespace AnalysisManagerMsXmlGenPlugIn
             mErrorMessage = string.Empty;
         }
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="workDir"></param>
+        /// <param name="programPath"></param>
+        /// <param name="datasetName"></param>
+        /// <param name="rawDataType"></param>
+        /// <param name="eOutputType"></param>
+        /// <param name="centroidMS1"></param>
+        /// <param name="centroidMS2"></param>
         public clsMSXmlGen(string workDir, string programPath, string datasetName, clsAnalysisResources.eRawDataTypeConstants rawDataType,
             clsAnalysisResources.MSXMLOutputTypeConstants eOutputType, bool centroidMS1, bool centroidMS2)
         {
@@ -138,8 +149,6 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     throw new ArgumentOutOfRangeException("Unsupported raw data type: " + mRawDataType.ToString());
             }
 
-            bool blnSuccess = false;
-
             mErrorMessage = string.Empty;
 
             switch (mOutputType)
@@ -167,7 +176,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
             var cmdStr = CreateArguments(msXmlFormat, mSourceFilePath);
 
-            blnSuccess = SetupTool();
+            var blnSuccess = SetupTool();
             if (!blnSuccess)
             {
                 if (string.IsNullOrEmpty(mErrorMessage))
@@ -177,10 +186,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 return false;
             }
 
-            if (ProgRunnerStarting != null)
-            {
-                ProgRunnerStarting(mProgramPath + cmdStr);
-            }
+            ProgRunnerStarting?.Invoke(mProgramPath + cmdStr);
 
             if (ConsoleOutputSuffix == null)
                 ConsoleOutputSuffix = string.Empty;
@@ -225,41 +231,35 @@ namespace AnalysisManagerMsXmlGenPlugIn
                                     " hours and has thus been aborted";
                     return false;
                 }
-                else
-                {
-                    if (cmdRunner.ExitCode != 0)
-                    {
-                        mErrorMessage = Path.GetFileNameWithoutExtension(mProgramPath) + " returned a non-zero exit code: " +
-                                        cmdRunner.ExitCode.ToString();
-                        return false;
-                    }
-                    else
-                    {
-                        mErrorMessage = "Call to " + Path.GetFileNameWithoutExtension(mProgramPath) + " failed (but exit code is 0)";
-                        return true;
-                    }
-                }
-            }
-            else
-            {
-                // Make sure the output file was created and is not empty
-                var sourceFile = new FileInfo(mSourceFilePath);
-                var outputFilePath = Path.Combine(sourceFile.Directory.FullName, GetOutputFileName(msXmlFormat, mSourceFilePath, mRawDataType));
 
-                if (!File.Exists(outputFilePath))
+                if (cmdRunner.ExitCode != 0)
                 {
-                    mErrorMessage = "Output file not found: " + outputFilePath;
+                    mErrorMessage = Path.GetFileNameWithoutExtension(mProgramPath) + " returned a non-zero exit code: " +
+                                    cmdRunner.ExitCode.ToString();
                     return false;
                 }
 
-                // Validate that the output file is complete
-                if (!ValidateMsXmlFile(mOutputType, outputFilePath))
-                {
-                    return false;
-                }
-
+                mErrorMessage = "Call to " + Path.GetFileNameWithoutExtension(mProgramPath) + " failed (but exit code is 0)";
                 return true;
             }
+            
+            // Make sure the output file was created and is not empty
+            var sourceFile = new FileInfo(mSourceFilePath);
+            var outputFilePath = Path.Combine(sourceFile.Directory.FullName, GetOutputFileName(msXmlFormat, mSourceFilePath, mRawDataType));
+
+            if (!File.Exists(outputFilePath))
+            {
+                mErrorMessage = "Output file not found: " + outputFilePath;
+                return false;
+            }
+
+            // Validate that the output file is complete
+            if (!ValidateMsXmlFile(mOutputType, outputFilePath))
+            {
+                return false;
+            }
+
+            return true;
         }
 
         protected abstract string GetOutputFileName(string msXmlFormat, string rawFilePath, clsAnalysisResources.eRawDataTypeConstants rawDataType);
@@ -269,15 +269,13 @@ namespace AnalysisManagerMsXmlGenPlugIn
             try
             {
                 // Save some stats to the log
-                string strMessage = null;
                 double dblSourceFileSizeMB = 0;
                 double dblMsXmlSizeMB = 0;
-                double dblTotalMinutes = 0;
 
-                string strSourceFileExtension = Path.GetExtension(strSourceFilePath);
-                string strTargetFileExtension = Path.GetExtension(strMsXmlFilePath);
+                var strSourceFileExtension = Path.GetExtension(strSourceFilePath);
+                var strTargetFileExtension = Path.GetExtension(strMsXmlFilePath);
 
-                dblTotalMinutes = DateTime.UtcNow.Subtract(dtStartTimeUTC).TotalMinutes;
+                var dblTotalMinutes = DateTime.UtcNow.Subtract(dtStartTimeUTC).TotalMinutes;
 
                 var ioFileInfo = new FileInfo(strSourceFilePath);
                 if (ioFileInfo.Exists)
@@ -291,7 +289,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     dblMsXmlSizeMB = ioFileInfo.Length / 1024.0 / 1024;
                 }
 
-                strMessage = "MsXml creation time = " + dblTotalMinutes.ToString("0.00") + " minutes";
+                var strMessage = "MsXml creation time = " + dblTotalMinutes.ToString("0.00") + " minutes";
 
                 if (dblTotalMinutes > 0)
                 {
@@ -417,10 +415,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// <remarks></remarks>
         private void CmdRunner_LoopWaiting()
         {
-            if (LoopWaiting != null)
-            {
-                LoopWaiting();
-            }
+            LoopWaiting?.Invoke();
         }
     }
 }
