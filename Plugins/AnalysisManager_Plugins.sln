@@ -31,7 +31,7 @@ Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerInSpecTPlugI
 EndProject
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerInspResultsAssemblyPlugIn", "AM_InspectResultsAssembly_PlugIn\AnalysisManagerInspResultsAssemblyPlugIn.vbproj", "{FA91A92B-057C-4728-9A6A-774CE004AB05}"
 EndProject
-Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerLCMSFeatureFinderPlugIn", "AM_LCMSFeatureFinder_Plugin\AnalysisManagerLCMSFeatureFinderPlugIn.vbproj", "{9349F3CD-E706-455A-A002-20A1C4EE3AB0}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerLCMSFeatureFinderPlugIn", "AM_LCMSFeatureFinder_Plugin\AnalysisManagerLCMSFeatureFinderPlugIn.csproj", "{9349F3CD-E706-455A-A002-20A1C4EE3AB0}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManager_Mage_PlugIn", "AM_Mage_PlugIn\AnalysisManager_Mage_PlugIn.csproj", "{4AACC633-3F37-4102-AC9D-E23AB1EDC5BF}"
 EndProject
