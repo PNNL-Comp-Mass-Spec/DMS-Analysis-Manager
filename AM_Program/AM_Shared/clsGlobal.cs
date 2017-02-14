@@ -44,11 +44,16 @@ namespace AnalysisManagerBase
             OrgDbRequired = 0,
             MyEMSLSearchDisabled = 1
         }
-        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true, ExactSpelling = true)]
         #endregion
 
         #region "Module variables"
-        public static extern int GetDiskFreeSpaceEx(string lpRootPathName, ref long lpFreeBytesAvailable, ref long lpTotalNumberOfBytes, ref long lpTotalNumberOfFreeBytes);
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        public static extern int GetDiskFreeSpaceEx(
+            string lpRootPathName, 
+            out ulong lpFreeBytesAvailable, 
+            out ulong lpTotalNumberOfBytes, 
+            out ulong lpTotalNumberOfFreeBytes);
 
         private static string mAppFolderPath;
 
@@ -93,7 +98,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="bytes"></param>
         /// <returns></returns>
-        public static double BytesToGB(Int64 bytes)
+        public static double BytesToGB(long bytes)
         {
             return bytes / 1024.0 / 1024.0 / 1024.0;
         }
@@ -103,7 +108,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="bytes"></param>
         /// <returns></returns>
-        public static double BytesToMB(Int64 bytes)
+        public static double BytesToMB(long bytes)
         {
             return bytes / 1024.0 / 1024.0;
         }
@@ -1197,21 +1202,18 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Determines free disk space for the disk where the given directory resides.  Supports both fixed drive letters and UNC paths (e.g. \\Server\Share\)
         /// </summary>
-        /// <param name="strDirectoryPath"></param>
-        /// <param name="lngFreeBytesAvailableToUser"></param>
-        /// <param name="lngTotalDriveCapacityBytes"></param>
-        /// <param name="lngTotalNumberOfFreeBytes"></param>
+        /// <param name="directoryPath"></param>
+        /// <param name="freeBytesAvailableToUser"></param>
+        /// <param name="totalDriveCapacityBytes"></param>
+        /// <param name="totalNumberOfFreeBytes"></param>
         /// <returns>True if success, false if a problem</returns>
         /// <remarks></remarks>
-        private static bool GetDiskFreeSpace(string strDirectoryPath, out long lngFreeBytesAvailableToUser,
-            out long lngTotalDriveCapacityBytes, out long lngTotalNumberOfFreeBytes)
+        private static bool GetDiskFreeSpace(
+            string directoryPath, out ulong freeBytesAvailableToUser,
+            out ulong totalDriveCapacityBytes, out ulong totalNumberOfFreeBytes)
         {
 
-            lngFreeBytesAvailableToUser = 0;
-            lngTotalDriveCapacityBytes = 0;
-            lngTotalNumberOfFreeBytes = 0;
-
-            var result = GetDiskFreeSpaceEx(strDirectoryPath, ref lngFreeBytesAvailableToUser, ref lngTotalDriveCapacityBytes, ref lngTotalNumberOfFreeBytes);
+            var result = GetDiskFreeSpaceEx(directoryPath, out freeBytesAvailableToUser, out totalDriveCapacityBytes, out totalNumberOfFreeBytes);
 
             if (result == 0)
             {
@@ -1246,7 +1248,7 @@ namespace AnalysisManagerBase
         public static void LogDebug(string statusMessage, bool writeToLog = true)
         {
             Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine(statusMessage);
+            Console.WriteLine("  " + statusMessage);
             Console.ResetColor();
 
             if (writeToLog)
@@ -1738,7 +1740,7 @@ namespace AnalysisManagerBase
                                 switch (strSplitLine[0].ToLower())
                                 {
                                     case "size":
-                                        Int64.TryParse(strSplitLine[1], out lngExpectedFileSizeBytes);
+                                        long.TryParse(strSplitLine[1], out lngExpectedFileSizeBytes);
                                         break;
                                     case "modification_date_utc":
                                         DateTime.TryParse(strSplitLine[1], out dtExpectedFileDate);
@@ -1817,13 +1819,13 @@ namespace AnalysisManagerBase
             if (diDirectory.Root.FullName.StartsWith(@"\\") || !diDirectory.Root.FullName.Contains(":"))
             {
                 // Directory path is a remote share; use GetDiskFreeSpaceEx in Kernel32.dll
-                long lngFreeBytesAvailableToUser;
-                long lngTotalNumberOfBytes;
-                long lngTotalNumberOfFreeBytes;
+                ulong freeBytesAvailableToUser;
+                ulong lngTotalNumberOfBytes;
+                ulong totalNumberOfFreeBytes;
 
-                if (GetDiskFreeSpace(diDirectory.FullName, out lngFreeBytesAvailableToUser, out lngTotalNumberOfBytes, out lngTotalNumberOfFreeBytes))
+                if (GetDiskFreeSpace(diDirectory.FullName, out freeBytesAvailableToUser, out lngTotalNumberOfBytes, out totalNumberOfFreeBytes))
                 {
-                    freeSpaceMB = BytesToMB(lngTotalNumberOfFreeBytes);
+                    freeSpaceMB = BytesToMB((long)totalNumberOfFreeBytes);
                 }
                 else
                 {
