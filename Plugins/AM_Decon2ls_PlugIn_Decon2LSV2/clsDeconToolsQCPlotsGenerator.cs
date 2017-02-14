@@ -1,127 +1,144 @@
-﻿Option Strict On
+﻿using System;
+using System.IO;
+using AnalysisManagerBase;
 
-Imports AnalysisManagerBase
-Imports System.IO
+namespace AnalysisManagerDecon2lsV2PlugIn
+{
+    public class clsDeconToolsQCPlotsGenerator
+    {
+        private readonly int mDebugLevel;
+        private string mErrorMessage;
+        private readonly string mMSFileInfoScannerDLLPath;
 
-Public Class clsDeconToolsQCPlotsGenerator
+        private MSFileInfoScannerInterfaces.iMSFileInfoScanner mMSFileInfoScanner;
+        private int mMSFileInfoScannerErrorCount;
 
-    Private ReadOnly mDebugLevel As Integer
-    Private mErrorMessage As String
-    Private ReadOnly mMSFileInfoScannerDLLPath As String
+        public string ErrorMessage
+        {
+            get { return mErrorMessage; }
+        }
 
-    Private WithEvents mMSFileInfoScanner As MSFileInfoScannerInterfaces.iMSFileInfoScanner
-    Private mMSFileInfoScannerErrorCount As Integer
+        public int MSFileInfoScannerErrorCount
+        {
+            get { return mMSFileInfoScannerErrorCount; }
+        }
 
-    Public ReadOnly Property ErrorMessage As String
-        Get
-            Return mErrorMessage
-        End Get
-    End Property
+        public clsDeconToolsQCPlotsGenerator(string MSFileInfoScannerDLLPath, int DebugLevel)
+        {
+            mMSFileInfoScannerDLLPath = MSFileInfoScannerDLLPath;
+            mDebugLevel = DebugLevel;
 
-    Public ReadOnly Property MSFileInfoScannerErrorCount As Integer
-        Get
-            Return mMSFileInfoScannerErrorCount
-        End Get
-    End Property
+            mErrorMessage = string.Empty;
+        }
 
-    Public Sub New(MSFileInfoScannerDLLPath As String, DebugLevel As Integer)
-        mMSFileInfoScannerDLLPath = MSFileInfoScannerDLLPath
-        mDebugLevel = DebugLevel
+        public bool CreateQCPlots(string strInputFilePath, string strOutputFolderPath)
+        {
+            bool blnSuccess = false;
 
-        mErrorMessage = String.Empty
-    End Sub
+            try
+            {
+                mMSFileInfoScannerErrorCount = 0;
 
-    Public Function CreateQCPlots(strInputFilePath As String, strOutputFolderPath As String) As Boolean
+                // Initialize the MSFileScanner class
+                mMSFileInfoScanner = LoadMSFileInfoScanner(mMSFileInfoScannerDLLPath);
+                mMSFileInfoScanner.CheckFileIntegrity = false;
+                mMSFileInfoScanner.CreateDatasetInfoFile = false;
+                mMSFileInfoScanner.CreateScanStatsFile = false;
+                mMSFileInfoScanner.SaveLCMS2DPlots = true;
+                mMSFileInfoScanner.SaveTICAndBPIPlots = true;
+                mMSFileInfoScanner.UpdateDatasetStatsTextFile = false;
+                mMSFileInfoScanner.ErrorEvent += mMSFileInfoScanner_ErrorEvent;
+                mMSFileInfoScanner.MessageEvent += mMSFileInfoScanner_MessageEvent;
 
-        Dim blnSuccess As Boolean
+                blnSuccess = mMSFileInfoScanner.ProcessMSFileOrFolder(strInputFilePath, strOutputFolderPath);
 
-        Try
+                if (!blnSuccess)
+                {
+                    mErrorMessage = "Error generating QC Plots using " + strInputFilePath;
+                    string strMsgAddnl = mMSFileInfoScanner.GetErrorMessage();
 
-            mMSFileInfoScannerErrorCount = 0
+                    if (!string.IsNullOrEmpty(strMsgAddnl))
+                    {
+                        mErrorMessage = mErrorMessage + ": " + strMsgAddnl;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                mErrorMessage = "Exception in CreateQCPlots: " + ex.Message;
+                return false;
+            }
 
-            ' Initialize the MSFileScanner class					
-            mMSFileInfoScanner = LoadMSFileInfoScanner(mMSFileInfoScannerDLLPath)
-            With mMSFileInfoScanner
-                .CheckFileIntegrity = False
-                .CreateDatasetInfoFile = False
-                .CreateScanStatsFile = False
-                .SaveLCMS2DPlots = True
-                .SaveTICAndBPIPlots = True
-                .UpdateDatasetStatsTextFile = False
-            End With
+            return blnSuccess;
+        }
 
-            blnSuccess = mMSFileInfoScanner.ProcessMSFileOrFolder(strInputFilePath, strOutputFolderPath)
+        private MSFileInfoScannerInterfaces.iMSFileInfoScanner LoadMSFileInfoScanner(string strMSFileInfoScannerDLLPath)
+        {
+            const string MsDataFileReaderClass = "MSFileInfoScanner.clsMSFileInfoScanner";
 
-            If Not blnSuccess Then
-                mErrorMessage = "Error generating QC Plots using " & strInputFilePath
-                Dim strMsgAddnl As String = mMSFileInfoScanner.GetErrorMessage
+            MSFileInfoScannerInterfaces.iMSFileInfoScanner objMSFileInfoScanner = null;
+            string msg = null;
 
-                If Not String.IsNullOrEmpty(strMsgAddnl) Then
-                    mErrorMessage = mErrorMessage & ": " & strMsgAddnl
-                End If
-            End If
+            try
+            {
+                if (!File.Exists(strMSFileInfoScannerDLLPath))
+                {
+                    msg = "DLL not found: " + strMSFileInfoScannerDLLPath;
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                }
+                else
+                {
+                    var obj = LoadObject(MsDataFileReaderClass, strMSFileInfoScannerDLLPath);
+                    if (obj != null)
+                    {
+                        objMSFileInfoScanner = (MSFileInfoScannerInterfaces.iMSFileInfoScanner) obj;
+                        msg = "Loaded MSFileInfoScanner from " + strMSFileInfoScannerDLLPath;
+                        if (mDebugLevel >= 2)
+                        {
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                msg = "Exception loading class " + MsDataFileReaderClass + ": " + ex.Message;
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+            }
 
-        Catch ex As Exception
-            mErrorMessage = "Exception in CreateQCPlots: " & ex.Message
-            Return False
-        End Try
+            return objMSFileInfoScanner;
+        }
 
-        Return blnSuccess
+        private object LoadObject(string className, string strDLLFilePath)
+        {
+            object obj = null;
+            try
+            {
+                // Dynamically load the specified class from strDLLFilePath
+                var assem = System.Reflection.Assembly.LoadFrom(strDLLFilePath);
+                Type dllType = assem.GetType(className, false, true);
+                obj = Activator.CreateInstance(dllType);
+            }
+            catch (Exception ex)
+            {
+                string msg = "Exception loading DLL " + strDLLFilePath + ": " + ex.Message;
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+            }
+            return obj;
+        }
 
-    End Function
+        private void mMSFileInfoScanner_ErrorEvent(string Message)
+        {
+            mMSFileInfoScannerErrorCount += 1;
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MSFileInfoScanner error: " + Message);
+        }
 
-    Private Function LoadMSFileInfoScanner(strMSFileInfoScannerDLLPath As String) As MSFileInfoScannerInterfaces.iMSFileInfoScanner
-        Const MsDataFileReaderClass = "MSFileInfoScanner.clsMSFileInfoScanner"
-
-        Dim objMSFileInfoScanner As MSFileInfoScannerInterfaces.iMSFileInfoScanner = Nothing
-        Dim msg As String
-
-        Try
-            If Not File.Exists(strMSFileInfoScannerDLLPath) Then
-                msg = "DLL not found: " + strMSFileInfoScannerDLLPath
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
-            Else
-                Dim obj = LoadObject(MsDataFileReaderClass, strMSFileInfoScannerDLLPath)
-                If obj IsNot Nothing Then
-                    objMSFileInfoScanner = DirectCast(obj, MSFileInfoScannerInterfaces.iMSFileInfoScanner)
-                    msg = "Loaded MSFileInfoScanner from " + strMSFileInfoScannerDLLPath
-                    If mDebugLevel >= 2 Then
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg)
-                    End If
-                End If
-
-            End If
-        Catch ex As Exception
-            msg = "Exception loading class " + MsDataFileReaderClass + ": " + ex.Message
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
-        End Try
-
-        Return objMSFileInfoScanner
-    End Function
-
-    Private Function LoadObject(className As String, strDLLFilePath As String) As Object
-        Dim obj As Object = Nothing
-        Try
-            ' Dynamically load the specified class from strDLLFilePath
-            Dim assem = Reflection.Assembly.LoadFrom(strDLLFilePath)
-            Dim dllType As Type = assem.[GetType](className, False, True)
-            obj = Activator.CreateInstance(dllType)
-        Catch ex As Exception
-            Dim msg As String = "Exception loading DLL " + strDLLFilePath + ": " + ex.Message
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg)
-        End Try
-        Return obj
-    End Function
-
-    Private Sub mMSFileInfoScanner_ErrorEvent(Message As String) Handles mMSFileInfoScanner.ErrorEvent
-        mMSFileInfoScannerErrorCount += 1
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MSFileInfoScanner error: " & Message)
-    End Sub
-
-    Private Sub mMSFileInfoScanner_MessageEvent(Message As String) Handles mMSFileInfoScanner.MessageEvent
-        If mDebugLevel >= 3 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... " & Message)
-        End If
-    End Sub
-
-End Class
+        private void mMSFileInfoScanner_MessageEvent(string Message)
+        {
+            if (mDebugLevel >= 3)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... " + Message);
+            }
+        }
+    }
+}
