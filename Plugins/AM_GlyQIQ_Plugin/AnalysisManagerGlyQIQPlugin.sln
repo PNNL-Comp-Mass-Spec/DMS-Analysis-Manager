@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerGlyQIQPlugin", "AnalysisManagerGlyQIQPlugin.csproj", "{5924931F-9A13-4B6B-9CFD-E1896B6C0225}"
 EndProject
@@ -10,27 +10,17 @@ EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
-		Debug|x86 = Debug|x86
 		Release|Any CPU = Release|Any CPU
-		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{5924931F-9A13-4B6B-9CFD-E1896B6C0225}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{5924931F-9A13-4B6B-9CFD-E1896B6C0225}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5924931F-9A13-4B6B-9CFD-E1896B6C0225}.Debug|x86.ActiveCfg = Debug|x86
-		{5924931F-9A13-4B6B-9CFD-E1896B6C0225}.Debug|x86.Build.0 = Debug|x86
 		{5924931F-9A13-4B6B-9CFD-E1896B6C0225}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5924931F-9A13-4B6B-9CFD-E1896B6C0225}.Release|Any CPU.Build.0 = Release|Any CPU
-		{5924931F-9A13-4B6B-9CFD-E1896B6C0225}.Release|x86.ActiveCfg = Release|x86
-		{5924931F-9A13-4B6B-9CFD-E1896B6C0225}.Release|x86.Build.0 = Release|x86
 		{75BB2871-E238-4DA3-84D3-AD9E4B86B82D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{75BB2871-E238-4DA3-84D3-AD9E4B86B82D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{75BB2871-E238-4DA3-84D3-AD9E4B86B82D}.Debug|x86.ActiveCfg = Debug|x86
-		{75BB2871-E238-4DA3-84D3-AD9E4B86B82D}.Debug|x86.Build.0 = Debug|x86
 		{75BB2871-E238-4DA3-84D3-AD9E4B86B82D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{75BB2871-E238-4DA3-84D3-AD9E4B86B82D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{75BB2871-E238-4DA3-84D3-AD9E4B86B82D}.Release|x86.ActiveCfg = Release|x86
-		{75BB2871-E238-4DA3-84D3-AD9E4B86B82D}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
