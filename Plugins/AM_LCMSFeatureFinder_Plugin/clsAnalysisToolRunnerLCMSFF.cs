@@ -1,245 +1,271 @@
-Option Strict On
+//*********************************************************************************************************
+// Written by Matthew Monroe for the US Department of Energy
+// Pacific Northwest National Laboratory, Richland, WA
+// Copyright 2009, Battelle Memorial Institute
+//
+//*********************************************************************************************************
 
-'*********************************************************************************************************
-' Written by Matthew Monroe for the US Department of Energy 
-' Pacific Northwest National Laboratory, Richland, WA
-' Copyright 2009, Battelle Memorial Institute
-'
-'*********************************************************************************************************
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading;
+using AnalysisManagerBase;
+using PRISM.Processes;
 
-Imports AnalysisManagerBase
-Imports System.Collections.Generic
-Imports System.IO
-Imports System.Threading
-Imports PRISM.Processes
+namespace AnalysisManagerLCMSFeatureFinderPlugIn
+{
+    /// <summary>
+    /// Class for running the LCMS Feature Finder
+    /// </summary>
+    public class clsAnalysisToolRunnerLCMSFF : clsAnalysisToolRunnerBase
+    {
+        #region "Module Variables"
 
-Public Class clsAnalysisToolRunnerLCMSFF
-    Inherits clsAnalysisToolRunnerBase
+        protected const float PROGRESS_PCT_FEATURE_FINDER_RUNNING = 5;
+        protected const float PROGRESS_PCT_FEATURE_FINDER_DONE = 95;
 
-    '*********************************************************************************************************
-    ' Class for running the LCMS Feature Finder
-    '*********************************************************************************************************
+        protected clsRunDosProgram mCmdRunner;
 
-#Region "Module Variables"
-    Protected Const PROGRESS_PCT_FEATURE_FINDER_RUNNING As Single = 5
-    Protected Const PROGRESS_PCT_FEATURE_FINDER_DONE As Single = 95
+        #endregion
 
-    Protected mCmdRunner As clsRunDosProgram
+        #region "Methods"
 
-#End Region
+        /// <summary>
+        /// Runs LCMS Feature Finder tool
+        /// </summary>
+        /// <returns>CloseOutType enum indicating success or failure</returns>
+        /// <remarks></remarks>
+        public override CloseOutType RunTool()
+        {
+            string CmdStr = null;
+            bool blnSuccess = false;
 
-#Region "Methods"
-    ''' <summary>
-    ''' Runs LCMS Feature Finder tool
-    ''' </summary>
-    ''' <returns>CloseOutType enum indicating success or failure</returns>
-    ''' <remarks></remarks>
-    Public Overrides Function RunTool() As CloseOutType
+            //Do the base class stuff
+            if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
 
-        Dim CmdStr As String
-        Dim result As CloseOutType
-        Dim blnSuccess As Boolean
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running LCMSFeatureFinder");
 
-        'Do the base class stuff
-        If Not MyBase.RunTool = CloseOutType.CLOSEOUT_SUCCESS Then
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
+            mCmdRunner = new clsRunDosProgram(m_WorkDir);
+            RegisterEvents(mCmdRunner);
+            mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running LCMSFeatureFinder")
+            // Determine the path to the LCMSFeatureFinder folder
+            string progLoc = null;
+            progLoc = base.DetermineProgramLocation("LCMSFeatureFinder", "LCMSFeatureFinderProgLoc", "LCMSFeatureFinder.exe");
 
-        mCmdRunner = New clsRunDosProgram(m_WorkDir)
-        RegisterEvents(mCmdRunner)
-        AddHandler mCmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
+            if (string.IsNullOrWhiteSpace(progLoc))
+            {
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
 
-        ' Determine the path to the LCMSFeatureFinder folder
-        Dim progLoc As String
-        progLoc = MyBase.DetermineProgramLocation("LCMSFeatureFinder", "LCMSFeatureFinderProgLoc", "LCMSFeatureFinder.exe")
+            // Store the FeatureFinder version info in the database
+            blnSuccess = StoreToolVersionInfo(progLoc);
+            if (!blnSuccess)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    "Aborting since StoreToolVersionInfo returned false");
+                m_message = "Error determining LCMS FeatureFinder version";
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
 
-        If String.IsNullOrWhiteSpace(progLoc) Then
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
+            // Set up and execute a program runner to run the LCMS Feature Finder
+            CmdStr = Path.Combine(m_WorkDir, m_jobParams.GetParam("LCMSFeatureFinderIniFile"));
+            if (m_DebugLevel >= 1)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc + " " + CmdStr);
+            }
 
-        ' Store the FeatureFinder version info in the database
-        blnSuccess = StoreToolVersionInfo(progLoc)
-        If Not blnSuccess Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false")
-            m_message = "Error determining LCMS FeatureFinder version"
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
+            mCmdRunner.CreateNoWindow = true;
+            mCmdRunner.CacheStandardOutput = true;
+            mCmdRunner.EchoOutputToConsole = true;
 
-        ' Set up and execute a program runner to run the LCMS Feature Finder
-        CmdStr = Path.Combine(m_WorkDir, m_jobParams.GetParam("LCMSFeatureFinderIniFile"))
-        If m_DebugLevel >= 1 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc & " " & CmdStr)
-        End If
+            mCmdRunner.WriteConsoleOutputToFile = false;
 
-        With mCmdRunner
-            .CreateNoWindow = True
-            .CacheStandardOutput = True
-            .EchoOutputToConsole = True
+            if (!mCmdRunner.RunProgram(progLoc, CmdStr, "LCMSFeatureFinder", true))
+            {
+                m_message = "Error running LCMSFeatureFinder";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ", job " + m_JobNum);
+                blnSuccess = false;
+            }
+            else
+            {
+                blnSuccess = true;
+            }
 
-            .WriteConsoleOutputToFile = False
-        End With
+            //Stop the job timer
+            m_StopTime = DateTime.UtcNow;
+            m_progress = PROGRESS_PCT_FEATURE_FINDER_DONE;
 
-        If Not mCmdRunner.RunProgram(progLoc, CmdStr, "LCMSFeatureFinder", True) Then
-            m_message = "Error running LCMSFeatureFinder"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ", job " & m_JobNum)
-            blnSuccess = False
-        Else
-            blnSuccess = True
-        End If
+            //Add the current job data to the summary file
+            if (!UpdateSummaryFile())
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                    "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
+            }
 
-        'Stop the job timer
-        m_StopTime = DateTime.UtcNow
-        m_progress = PROGRESS_PCT_FEATURE_FINDER_DONE
+            //Make sure objects are released
+            Thread.Sleep(500);         // 1 second delay
+            clsProgRunner.GarbageCollectNow();
 
-        'Add the current job data to the summary file
-        If Not UpdateSummaryFile() Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
-        End If
+            if (!blnSuccess)
+            {
+                // Move the source files and any results to the Failed Job folder
+                // Useful for debugging FeatureFinder problems
+                CopyFailedResultsToArchiveFolder();
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
 
-        'Make sure objects are released
-        Thread.Sleep(500)         ' 1 second delay
-        clsProgRunner.GarbageCollectNow()
+            var result = MakeResultsFolder();
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                //TODO: What do we do here?
+                return result;
+            }
 
-        If Not blnSuccess Then
-            ' Move the source files and any results to the Failed Job folder
-            ' Useful for debugging FeatureFinder problems
-            CopyFailedResultsToArchiveFolder()
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
+            result = MoveResultFiles();
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                //TODO: What do we do here?
+                // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+                return result;
+            }
 
-        result = MakeResultsFolder()
-        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
-            'TODO: What do we do here?
-            Return result
-        End If
+            result = CopyResultsFolderToServer();
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                //TODO: What do we do here?
+                // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+                return result;
+            }
 
-        result = MoveResultFiles()
-        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
-            'TODO: What do we do here?
-            ' Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-            Return result
-        End If
+            return CloseOutType.CLOSEOUT_SUCCESS;    //ZipResult
+        }
 
-        result = CopyResultsFolderToServer()
-        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
-            'TODO: What do we do here?
-            ' Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-            Return result
-        End If
+        protected void CopyFailedResultsToArchiveFolder()
+        {
+            string strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
+            if (string.IsNullOrEmpty(strFailedResultsFolderPath))
+                strFailedResultsFolderPath = "??Not Defined??";
 
-        Return CloseOutType.CLOSEOUT_SUCCESS	'ZipResult
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
 
-    End Function
+            // Bump up the debug level if less than 2
+            if (m_DebugLevel < 2)
+                m_DebugLevel = 2;
 
-    Protected Sub CopyFailedResultsToArchiveFolder()
+            // Try to save whatever files are in the work directory (however, delete the .UIMF file first, plus also the Decon2LS .csv files)
+            string strFolderPathToArchive = null;
+            strFolderPathToArchive = string.Copy(m_WorkDir);
 
-        Dim result As CloseOutType
+            try
+            {
+                File.Delete(Path.Combine(m_WorkDir, m_Dataset + ".UIMF"));
+                File.Delete(Path.Combine(m_WorkDir, m_Dataset + "*.csv"));
+            }
+            catch (Exception ex)
+            {
+                // Ignore errors here
+            }
 
-        Dim strFailedResultsFolderPath As String = m_mgrParams.GetParam("FailedResultsFolderPath")
-        If String.IsNullOrEmpty(strFailedResultsFolderPath) Then strFailedResultsFolderPath = "??Not Defined??"
+            // Make the results folder
+            var result = MakeResultsFolder();
+            if (result == CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                // Move the result files into the result folder
+                result = MoveResultFiles();
+                if (result == CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    // Move was a success; update strFolderPathToArchive
+                    strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName);
+                }
+            }
 
-        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Processing interrupted; copying results to archive folder: " & strFailedResultsFolderPath)
+            // Copy the results folder to the Archive folder
+            var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
+            objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive);
+        }
 
-        ' Bump up the debug level if less than 2
-        If m_DebugLevel < 2 Then m_DebugLevel = 2
+        /// <summary>
+        /// Event handler for CmdRunner.LoopWaiting event
+        /// </summary>
+        /// <remarks></remarks>
+        private void CmdRunner_LoopWaiting()
+        {
+            UpdateStatusFile(PROGRESS_PCT_FEATURE_FINDER_RUNNING);
 
-        ' Try to save whatever files are in the work directory (however, delete the .UIMF file first, plus also the Decon2LS .csv files)
-        Dim strFolderPathToArchive As String
-        strFolderPathToArchive = String.Copy(m_WorkDir)
+            LogProgress("LCMSFeatureFinder");
+        }
 
-        Try
-            File.Delete(Path.Combine(m_WorkDir, m_Dataset & ".UIMF"))
-            File.Delete(Path.Combine(m_WorkDir, m_Dataset & "*.csv"))
-        Catch ex As Exception
-            ' Ignore errors here
-        End Try
+        /// <summary>
+        /// Stores the tool version info in the database
+        /// </summary>
+        /// <remarks></remarks>
+        protected bool StoreToolVersionInfo(string strFeatureFinderProgLoc)
+        {
+            string strToolVersionInfo = string.Empty;
+            bool blnSuccess = false;
 
-        ' Make the results folder
-        result = MakeResultsFolder()
-        If result = CloseOutType.CLOSEOUT_SUCCESS Then
-            ' Move the result files into the result folder
-            result = MoveResultFiles()
-            If result = CloseOutType.CLOSEOUT_SUCCESS Then
-                ' Move was a success; update strFolderPathToArchive
-                strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName)
-            End If
-        End If
+            if (m_DebugLevel >= 2)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+            }
 
-        ' Copy the results folder to the Archive folder
-        Dim objAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
-        objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive)
+            var ioFeatureFinderInfo = new FileInfo(strFeatureFinderProgLoc);
+            if (!ioFeatureFinderInfo.Exists)
+            {
+                try
+                {
+                    strToolVersionInfo = "Unknown";
+                    base.SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>(), blnSaveToolVersionTextFile: false);
+                }
+                catch (Exception ex)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                        "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                    return false;
+                }
 
+                return false;
+            }
 
-    End Sub
+            // Lookup the version of the Feature Finder
+            blnSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, ioFeatureFinderInfo.FullName);
+            if (!blnSuccess)
+                return false;
 
-    ''' <summary>
-    ''' Event handler for CmdRunner.LoopWaiting event
-    ''' </summary>
-    ''' <remarks></remarks>
-    Private Sub CmdRunner_LoopWaiting()
+            // Lookup the version of the FeatureFinder Library (in the feature finder folder)
+            string strFeatureFinderDllLoc = Path.Combine(ioFeatureFinderInfo.DirectoryName, "FeatureFinder.dll");
+            blnSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, strFeatureFinderDllLoc);
+            if (!blnSuccess)
+                return false;
 
-        UpdateStatusFile(PROGRESS_PCT_FEATURE_FINDER_RUNNING)
+            // Lookup the version of the UIMF Library (in the feature finder folder)
+            blnSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, Path.Combine(ioFeatureFinderInfo.DirectoryName, "UIMFLibrary.dll"));
+            if (!blnSuccess)
+                return false;
 
-        LogProgress("LCMSFeatureFinder")
+            // Store paths to key DLLs in ioToolFiles
+            List<FileInfo> ioToolFiles = new List<FileInfo>();
+            ioToolFiles.Add(new FileInfo(strFeatureFinderProgLoc));
+            ioToolFiles.Add(new FileInfo(strFeatureFinderDllLoc));
 
-    End Sub
+            try
+            {
+                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile: false);
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                return false;
+            }
+        }
 
-    ''' <summary>
-    ''' Stores the tool version info in the database
-    ''' </summary>
-    ''' <remarks></remarks>
-    Protected Function StoreToolVersionInfo(strFeatureFinderProgLoc As String) As Boolean
+        #endregion
 
-        Dim strToolVersionInfo As String = String.Empty
-        Dim ioFeatureFinderInfo As FileInfo
-        Dim blnSuccess As Boolean
-
-        If m_DebugLevel >= 2 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info")
-        End If
-
-        ioFeatureFinderInfo = New FileInfo(strFeatureFinderProgLoc)
-        If Not ioFeatureFinderInfo.Exists Then
-            Try
-                strToolVersionInfo = "Unknown"
-                MyBase.SetStepTaskToolVersion(strToolVersionInfo, New List(Of FileInfo), blnSaveToolVersionTextFile:=False)
-            Catch ex As Exception
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
-                Return False
-            End Try
-
-            Return False
-        End If
-
-        ' Lookup the version of the Feature Finder
-        blnSuccess = StoreToolVersionInfoOneFile64Bit(strToolVersionInfo, ioFeatureFinderInfo.FullName)
-        If Not blnSuccess Then Return False
-
-        ' Lookup the version of the FeatureFinder Library (in the feature finder folder)
-        Dim strFeatureFinderDllLoc As String = Path.Combine(ioFeatureFinderInfo.DirectoryName, "FeatureFinder.dll")
-        blnSuccess = StoreToolVersionInfoOneFile64Bit(strToolVersionInfo, strFeatureFinderDllLoc)
-        If Not blnSuccess Then Return False
-
-        ' Lookup the version of the UIMF Library (in the feature finder folder)
-        blnSuccess = StoreToolVersionInfoOneFile64Bit(strToolVersionInfo, Path.Combine(ioFeatureFinderInfo.DirectoryName, "UIMFLibrary.dll"))
-        If Not blnSuccess Then Return False
-
-        ' Store paths to key DLLs in ioToolFiles
-        Dim ioToolFiles As New List(Of FileInfo)
-        ioToolFiles.Add(New FileInfo(strFeatureFinderProgLoc))
-        ioToolFiles.Add(New FileInfo(strFeatureFinderDllLoc))
-
-        Try
-            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile:=False)
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " & ex.Message)
-            Return False
-        End Try
-
-    End Function
-
-#End Region
-
-End Class
+    }
+}
