@@ -1,87 +1,99 @@
-'*********************************************************************************************************
-' Written by Matt Monroe for the US Department of Energy 
-' Pacific Northwest National Laboratory, Richland, WA
-' Copyright 2006, Battelle Memorial Institute
-' Created 06/07/2006
-'
-'*********************************************************************************************************
+//*********************************************************************************************************
+// Written by Matt Monroe for the US Department of Energy
+// Pacific Northwest National Laboratory, Richland, WA
+// Copyright 2006, Battelle Memorial Institute
+// Created 06/07/2006
+//
+//*********************************************************************************************************
 
-Option Strict On
+using System;
+using System.IO;
+using AnalysisManagerBase;
 
-Imports AnalysisManagerBase
-Imports System.IO
+namespace AnalysisManagerMasicPlugin
+{
+    /// <summary>
+    /// Derived class for performing MASIC analysis on Agilent datasets
+    /// </summary>
+    /// <remarks></remarks>
+    public class clsAnalysisToolRunnerMASICAgilent : clsAnalysisToolRunnerMASICBase
+    {
+        public clsAnalysisToolRunnerMASICAgilent()
+        {
+        }
 
-''' <summary>
-''' Derived class for performing MASIC analysis on Agilent datasets
-''' </summary>
-''' <remarks></remarks>
-Public Class clsAnalysisToolRunnerMASICAgilent
-    Inherits clsAnalysisToolRunnerMASICBase
+        protected override CloseOutType RunMASIC()
+        {
+            string strParameterFileName = null;
+            string strParameterFilePath = null;
 
-    Public Sub New()
-    End Sub
+            string strMgfFileName = null;
+            string strInputFilePath = null;
 
-    Protected Overrides Function RunMASIC() As CloseOutType
+            strParameterFileName = m_jobParams.GetParam("parmFileName");
 
-        Dim strParameterFileName As String
-        Dim strParameterFilePath As String
+            if ((strParameterFileName != null) && strParameterFileName.Trim().ToLower() != "na")
+            {
+                strParameterFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"));
+            }
+            else
+            {
+                strParameterFilePath = string.Empty;
+            }
 
-        Dim strMgfFileName As String
-        Dim strInputFilePath As String
+            // Determine the path to the .Raw file
+            strMgfFileName = m_Dataset + ".mgf";
+            strInputFilePath = clsAnalysisResources.ResolveStoragePath(m_WorkDir, strMgfFileName);
 
-        strParameterFileName = m_JobParams.GetParam("parmFileName")
+            if (strInputFilePath == null || strInputFilePath.Length == 0)
+            {
+                // Unable to resolve the file path
+                m_ErrorMessage = "Could not find " + strMgfFileName + " or " + strMgfFileName + clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX +
+                                 " in the working folder; unable to run MASIC";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_ErrorMessage);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
 
-        If Not strParameterFileName Is Nothing AndAlso strParameterFileName.Trim.ToLower <> "na" Then
-            strParameterFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"))
-        Else
-            strParameterFilePath = String.Empty
-        End If
+            return base.StartMASICAndWait(strInputFilePath, m_WorkDir, strParameterFilePath);
+        }
 
-        ' Determine the path to the .Raw file
-        strMgfFileName = m_Dataset & ".mgf"
-        strInputFilePath = clsAnalysisResources.ResolveStoragePath(m_WorkDir, strMgfFileName)
+        protected override CloseOutType DeleteDataFile()
+        {
+            //Deletes the .cdf and .mgf files from the working directory
+            string[] FoundFiles = null;
 
-        If strInputFilePath Is Nothing OrElse strInputFilePath.Length = 0 Then
-            ' Unable to resolve the file path
-            m_ErrorMessage = "Could not find " & strMgfFileName & " or " & strMgfFileName & clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX & " in the working folder; unable to run MASIC"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_ErrorMessage)
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
+            //Delete the .cdf file
+            try
+            {
+                FoundFiles = Directory.GetFiles(m_WorkDir, "*.cdf");
+                foreach (string MyFile in FoundFiles)
+                {
+                    DeleteFileWithRetries(MyFile);
+                }
+            }
+            catch (Exception Err)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR,
+                    "Error deleting .cdf file, job " + m_JobNum + Err.Message);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
 
-        Return MyBase.StartMASICAndWait(strInputFilePath, m_workdir, strParameterFilePath)
+            //Delete the .mgf file
+            try
+            {
+                FoundFiles = Directory.GetFiles(m_WorkDir, "*.mgf");
+                foreach (string MyFile in FoundFiles)
+                {
+                    DeleteFileWithRetries(MyFile);
+                }
+            }
+            catch (Exception Err)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error deleting .mgf file, job " + m_JobNum);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
 
-    End Function
-
-    Protected Overrides Function DeleteDataFile() As CloseOutType
-
-        'Deletes the .cdf and .mgf files from the working directory
-        Dim FoundFiles() As String
-        Dim MyFile As String
-
-        'Delete the .cdf file
-        Try
-            FoundFiles = Directory.GetFiles(m_WorkDir, "*.cdf")
-            For Each MyFile In FoundFiles
-                DeleteFileWithRetries(MyFile)
-            Next
-        Catch Err As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error deleting .cdf file, job " & m_JobNum & Err.Message)
-            Return CloseOutType.CLOSEOUT_FAILED
-        End Try
-
-        'Delete the .mgf file
-        Try
-            FoundFiles = Directory.GetFiles(m_WorkDir, "*.mgf")
-            For Each MyFile In FoundFiles
-                DeleteFileWithRetries(MyFile)
-            Next
-        Catch Err As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error deleting .mgf file, job " & m_JobNum)
-            Return CloseOutType.CLOSEOUT_FAILED
-        End Try
-
-        Return CloseOutType.CLOSEOUT_SUCCESS
-
-    End Function
-
-End Class
+            return CloseOutType.CLOSEOUT_SUCCESS;
+        }
+    }
+}
