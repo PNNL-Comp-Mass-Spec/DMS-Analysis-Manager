@@ -69,7 +69,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerSMAQCPlugIn"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerXTandemPlugIn", "AM_XTandem_PlugIn\AnalysisManagerXTandemPlugIn.csproj", "{E29686F3-709C-4C38-8B9F-534F71682770}"
 EndProject
-Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerDeconPeakDetectorPlugIn", "AM_DeconPeakDetector_PlugIn\AnalysisManagerDeconPeakDetectorPlugIn.vbproj", "{C244E5E3-A545-4E6F-91FD-EB946E9BC229}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerDeconPeakDetectorPlugIn", "AM_DeconPeakDetector_PlugIn\AnalysisManagerDeconPeakDetectorPlugIn.csproj", "{C244E5E3-A545-4E6F-91FD-EB946E9BC229}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerGlyQIQPlugin", "AM_GlyQIQ_Plugin\AnalysisManagerGlyQIQPlugin.csproj", "{5924931F-9A13-4B6B-9CFD-E1896B6C0225}"
 EndProject
