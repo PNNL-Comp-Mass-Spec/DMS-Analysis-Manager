@@ -1,93 +1,107 @@
-Imports AnalysisManagerBase
-Imports System.IO
-Imports System
+using System;
+using System.IO;
+using AnalysisManagerBase;
 
-Public Class clsAnalysisResourcesDtaImport
-    Inherits clsAnalysisResources
+namespace AnalysisManagerDtaImportPlugIn
+{
+    public class clsAnalysisResourcesDtaImport : clsAnalysisResources
+    {
+        #region "Methods"
 
+        /// <summary>
+        /// Retrieves files necessary for performance of Sequest analysis
+        /// </summary>
+        /// <returns>CloseOutType indicating success or failure</returns>
+        /// <remarks></remarks>
+        public override CloseOutType GetResources()
+        {
+            // Retrieve shared resources, including the JobParameters file from the previous job step
+            var result = GetSharedResources();
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                return result;
+            }
 
-#Region "Methods"
-    ''' <summary>
-    ''' Retrieves files necessary for performance of Sequest analysis
-    ''' </summary>
-    ''' <returns>CloseOutType indicating success or failure</returns>
-    ''' <remarks></remarks>
-    Public Overrides Function GetResources() As CloseOutType
+            // There are really no resources to get, so just clear the list of files to delete or keep and validate zip file
+            result = ValidateDTA();
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                return result;
+            }
 
-        ' Retrieve shared resources, including the JobParameters file from the previous job step
-        Dim result = GetSharedResources()
-        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
-            Return result
-        End If
+            // All finished
+            return CloseOutType.CLOSEOUT_SUCCESS;
+        }
 
-        ' There are really no resources to get, so just clear the list of files to delete or keep and validate zip file
-        result = ValidateDTA()
-        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
-            Return result
-        End If
+        private CloseOutType ValidateDTA()
+        {
+            string SourceFolderNamePath = string.Empty;
+            try
+            {
+                // Note: the DTAFolderLocation is defined in the Manager_Control DB, and is specific for this manager
+                //       for example: \\pnl\projects\MSSHARE\SPurvine
+                // This folder must contain subfolders whose name matches the output_folder name assigned to each job
+                // Furthermore, each subfolder must have a file named Dataset_dta.zip
 
-        ' All finished
-        Return CloseOutType.CLOSEOUT_SUCCESS
+                SourceFolderNamePath = Path.Combine(m_mgrParams.GetParam("DTAFolderLocation"), m_jobParams.GetParam("OutputFolderName"));
 
-    End Function
+                //Determine if Dta folder in source directory exists
+                if (!Directory.Exists(SourceFolderNamePath))
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN,
+                        "Source Directory for Manually created Dta does not exist: " + SourceFolderNamePath);
+                    return CloseOutType.CLOSEOUT_FAILED;
+                    //TODO: Handle errors
+                }
 
-    Private Function ValidateDTA() As CloseOutType
+                string zipFileName = DatasetName + "_dta.zip";
+                string[] fileEntries = Directory.GetFiles(SourceFolderNamePath, zipFileName);
 
-        Dim SourceFolderNamePath As String = String.Empty
-        Try
-            ' Note: the DTAFolderLocation is defined in the Manager_Control DB, and is specific for this manager
-            '       for example: \\pnl\projects\MSSHARE\SPurvine
-            ' This folder must contain subfolders whose name matches the output_folder name assigned to each job
-            ' Furthermore, each subfolder must have a file named Dataset_dta.zip
+                // Process the list of files found in the directory.
+                if (fileEntries.Length < 1)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN,
+                        "DTA zip file was not found in source directory: " + Path.Combine(SourceFolderNamePath, zipFileName));
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
 
-            SourceFolderNamePath = System.IO.Path.Combine(m_mgrParams.GetParam("DTAFolderLocation"), m_jobParams.GetParam("OutputFolderName"))
+                //If valid zip file is found, then uzip the contents
+                foreach (string fileName in fileEntries)
+                {
+                    if (UnzipFileStart(Path.Combine(m_WorkingDir, fileName), m_WorkingDir, "clsAnalysisResourcesDtaImport.ValidateDTA", false))
+                    {
+                        if (m_DebugLevel >= 1)
+                        {
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Manual DTA file unzipped");
+                        }
+                    }
+                    else
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN,
+                            "An error occurred while unzipping the DTA file: " + Path.Combine(SourceFolderNamePath, zipFileName));
+                        return CloseOutType.CLOSEOUT_FAILED;
+                    }
+                }
 
-            'Determine if Dta folder in source directory exists
-            If Not System.IO.Directory.Exists(SourceFolderNamePath) Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "Source Directory for Manually created Dta does not exist: " & SourceFolderNamePath)
-                Return CloseOutType.CLOSEOUT_FAILED
-                'TODO: Handle errors
-            End If
+                string txtFileName = DatasetName + "_dta.txt";
+                fileEntries = Directory.GetFiles(m_WorkingDir, txtFileName);
+                if (fileEntries.Length < 1)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN,
+                        "DTA text file in the zip file was named incorrectly or not valid: " + Path.Combine(SourceFolderNamePath, txtFileName));
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+            }
+            catch (Exception ex)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN,
+                    "An exception occurred while validating manually created DTA zip file. " + SourceFolderNamePath + " : " + ex.Message);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
 
-            Dim zipFileName As String = DatasetName & "_dta.zip"
-            Dim fileEntries As String() = Directory.GetFiles(SourceFolderNamePath, zipFileName)
+            return CloseOutType.CLOSEOUT_SUCCESS;
+        }
 
-            ' Process the list of files found in the directory.
-            Dim fileName As String
-            If fileEntries.Length < 1 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "DTA zip file was not found in source directory: " & Path.Combine(SourceFolderNamePath, zipFileName))
-                Return CloseOutType.CLOSEOUT_FAILED
-            End If
-
-            'If valid zip file is found, then uzip the contents
-            For Each fileName In fileEntries
-                If UnzipFileStart(Path.Combine(m_WorkingDir, fileName), m_WorkingDir, "clsAnalysisResourcesDtaImport.ValidateDTA", False) Then
-                    If m_DebugLevel >= 1 Then
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Manual DTA file unzipped")
-                    End If
-                Else
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "An error occurred while unzipping the DTA file: " & Path.Combine(SourceFolderNamePath, zipFileName))
-                    Return CloseOutType.CLOSEOUT_FAILED
-                End If
-            Next fileName
-
-            Dim txtFileName As String = DatasetName & "_dta.txt"
-            fileEntries = Directory.GetFiles(m_WorkingDir, txtFileName)
-            If fileEntries.Length < 1 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "DTA text file in the zip file was named incorrectly or not valid: " & Path.Combine(SourceFolderNamePath, txtFileName))
-                Return CloseOutType.CLOSEOUT_FAILED
-            End If
-
-        Catch ex As Exception
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "An exception occurred while validating manually created DTA zip file. " & SourceFolderNamePath & " : " & ex.Message)
-            Return CloseOutType.CLOSEOUT_FAILED
-        End Try
-
-        Return CloseOutType.CLOSEOUT_SUCCESS
-
-    End Function
-
-
-#End Region
-
-End Class
+        #endregion
+    }
+}

@@ -1,119 +1,145 @@
-'*********************************************************************************************************
-' Written by John Sandoval for the US Department of Energy 
-' Pacific Northwest National Laboratory, Richland, WA
-' Copyright 2009, Battelle Memorial Institute
-' Created 04/10/2009
-'
-'*********************************************************************************************************
+//*********************************************************************************************************
+// Written by John Sandoval for the US Department of Energy
+// Pacific Northwest National Laboratory, Richland, WA
+// Copyright 2009, Battelle Memorial Institute
+// Created 04/10/2009
+//
+//*********************************************************************************************************
 
-Imports AnalysisManagerBase
+using System;
+using System.IO;
+using AnalysisManagerBase;
 
-''' <summary>
-''' Class for running DTA Importer
-''' </summary>
-''' <remarks></remarks>
-Public Class clsAnalysisToolRunnerDtaImport
-    Inherits clsAnalysisToolRunnerBase    
+namespace AnalysisManagerDtaImportPlugIn
+{
+    /// <summary>
+    /// Class for running DTA Importer
+    /// </summary>
+    /// <remarks></remarks>
+    public class clsAnalysisToolRunnerDtaImport : clsAnalysisToolRunnerBase
+    {
+        #region "Methods"
 
-#Region "Module Variables"
-#End Region
+        /// <summary>
+        /// Runs DTA Import tool
+        /// </summary>
+        /// <returns>CloseOutType enum indicating success or failure</returns>
+        /// <remarks></remarks>
+        public override CloseOutType RunTool()
+        {
+            try
+            {
+                //Start the job timer
+                m_StartTime = System.DateTime.UtcNow;
 
-#Region "Methods"
+                var result = CopyManualDTAs();
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    //TODO: What do we do here?
+                    return result;
+                }
 
-    ''' <summary>
-    ''' Runs DTA Import tool
-    ''' </summary>
-    ''' <returns>CloseOutType enum indicating success or failure</returns>
-    ''' <remarks></remarks>
-    Public Overrides Function RunTool() As CloseOutType
-        Dim result As CloseOutType
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    return result;
+                }
 
-        Try
-            'Start the job timer
-            m_StartTime = System.DateTime.UtcNow
+                //Stop the job timer
+                m_StopTime = System.DateTime.UtcNow;
 
-            result = CopyManualDTAs()
-            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
-                'TODO: What do we do here?
-                Return result
-            End If
+                //Add the current job data to the summary file
+                if (!UpdateSummaryFile())
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN,
+                        "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
+                }
+            }
+            catch (Exception ex)
+            {
+                m_message = "Error in DtaImportPlugin->RunTool: " + ex.Message;
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
 
-            If result <> CloseOutType.CLOSEOUT_SUCCESS Then
-                Return result
-            End If
+            return CloseOutType.CLOSEOUT_SUCCESS; //No failures so everything must have succeeded
+        }
 
-            'Stop the job timer
-            m_StopTime = System.DateTime.UtcNow
+        private CloseOutType CopyManualDTAs()
+        {
+            string SourceFolderNamePath = string.Empty;
+            string TargetFolderNamePath = string.Empty;
+            string CompleteFolderNamePath = string.Empty;
 
-            'Add the current job data to the summary file
-            If Not UpdateSummaryFile() Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "Error creating summary file, job " & m_JobNum & ", step " & m_jobParams.GetParam("Step"))
-            End If
+            try
+            {
+                // Note: the DTAFolderLocation is defined in the Manager_Control DB, and is specific for this manager
+                //       for example: \\pnl\projects\MSSHARE\SPurvine
+                // This folder must contain subfolders whose name matches the output_folder name assigned to each job
+                // Furthermore, each subfolder must have a file named Dataset_dta.zip
 
-        Catch ex As Exception
-            m_message = "Error in DtaImportPlugin->RunTool: " & ex.Message
-            Return CloseOutType.CLOSEOUT_FAILED
-        End Try
+                SourceFolderNamePath = Path.Combine(m_mgrParams.GetParam("DTAFolderLocation"), m_jobParams.GetParam("OutputFolderName"));
+                CompleteFolderNamePath = Path.Combine(m_mgrParams.GetParam("DTAProcessedFolderLocation"), m_jobParams.GetParam("OutputFolderName"));
 
-        Return CloseOutType.CLOSEOUT_SUCCESS 'No failures so everything must have succeeded
+                //Determine if Dta folder in transfer directory already exists; Make directory if it doesn't exist
+                TargetFolderNamePath = Path.Combine(m_jobParams.GetParam("transferFolderPath"), m_Dataset);
+                if (!Directory.Exists(TargetFolderNamePath))
+                {
+                    //Make the DTA folder
+                    try
+                    {
+                        Directory.CreateDirectory(TargetFolderNamePath);
+                    }
+                    catch (Exception ex)
+                    {
+                        m_message = clsGlobal.AppendToComment(m_message, "Error creating results folder on " + Path.GetPathRoot(TargetFolderNamePath)) + ": " + ex.Message;
+                        return CloseOutType.CLOSEOUT_FAILED;
+                        //TODO: Handle errors
+                    }
+                }
 
-    End Function
+                // Now append the output folder name to TargetFolderNamePath
+                TargetFolderNamePath = Path.Combine(TargetFolderNamePath, m_jobParams.GetParam("OutputFolderName"));
+            }
+            catch (Exception ex)
+            {
+                m_message = clsGlobal.AppendToComment(m_message, "Error creating results folder: " + ex.Message);
+                return CloseOutType.CLOSEOUT_FAILED;
+                //TODO: Handle errors
+            }
 
-    Private Function CopyManualDTAs() As CloseOutType
+            try
+            {
+                //Copy the DTA folder to the transfer folder
+                CopyDirectory(SourceFolderNamePath, TargetFolderNamePath);
 
-        Dim SourceFolderNamePath As String = String.Empty
-        Dim TargetFolderNamePath As String = String.Empty
-        Dim CompleteFolderNamePath As String = String.Empty
+                //Now move the DTA folder to succeeded folder
+                Directory.Move(SourceFolderNamePath, CompleteFolderNamePath);
 
-        Try
-            ' Note: the DTAFolderLocation is defined in the Manager_Control DB, and is specific for this manager
-            '       for example: \\pnl\projects\MSSHARE\SPurvine
-            ' This folder must contain subfolders whose name matches the output_folder name assigned to each job
-            ' Furthermore, each subfolder must have a file named Dataset_dta.zip
+                return CloseOutType.CLOSEOUT_SUCCESS;
+            }
+            catch (Exception ex)
+            {
+                m_message = clsGlobal.AppendToComment(m_message, "Error copying results folder to " + Path.GetPathRoot(TargetFolderNamePath) + " : " + ex.Message);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+        }
 
-            SourceFolderNamePath = System.IO.Path.Combine(m_mgrParams.GetParam("DTAFolderLocation"), m_jobParams.GetParam("OutputFolderName"))
-            CompleteFolderNamePath = System.IO.Path.Combine(m_mgrParams.GetParam("DTAProcessedFolderLocation"), m_jobParams.GetParam("OutputFolderName"))
+        private void CopyDirectory(string srcPath, string destPath)
+        {
+            // TODO: Needs verification
+            var dirInfo = new DirectoryInfo(srcPath);
+            foreach (var dir in dirInfo.EnumerateDirectories())
+            {
+                var newDirName = Path.Combine(destPath, dir.Name);
+                Directory.CreateDirectory(newDirName);
+                CopyDirectory(dir.FullName, newDirName);
+            }
+            foreach (var file in dirInfo.EnumerateFiles())
+            {
+                var newFileName = Path.Combine(destPath, file.Name);
+                File.Copy(file.FullName, newFileName);
+            }
+        }
 
-            'Determine if Dta folder in transfer directory already exists; Make directory if it doesn't exist
-            TargetFolderNamePath = System.IO.Path.Combine(m_jobParams.GetParam("transferFolderPath"), m_Dataset)
-            If Not System.IO.Directory.Exists(TargetFolderNamePath) Then
-                'Make the DTA folder
-                Try
-                    System.IO.Directory.CreateDirectory(TargetFolderNamePath)
-                Catch ex As Exception
-                    m_message = clsGlobal.AppendToComment(m_message, "Error creating results folder on " & System.IO.Path.GetPathRoot(TargetFolderNamePath)) & ": " & ex.Message
-                    Return CloseOutType.CLOSEOUT_FAILED
-                    'TODO: Handle errors
-                End Try
-            End If
-
-            ' Now append the output folder name to TargetFolderNamePath
-            TargetFolderNamePath = System.IO.Path.Combine(TargetFolderNamePath, m_jobParams.GetParam("OutputFolderName"))
-
-        Catch ex As Exception
-            m_message = clsGlobal.AppendToComment(m_message, "Error creating results folder: " & ex.Message)
-            Return CloseOutType.CLOSEOUT_FAILED
-            'TODO: Handle errors
-        End Try
-
-        Try
-
-            'Copy the DTA folder to the transfer folder
-            My.Computer.FileSystem.CopyDirectory(SourceFolderNamePath, TargetFolderNamePath, False)
-
-            'Now move the DTA folder to succeeded folder
-            My.Computer.FileSystem.MoveDirectory(SourceFolderNamePath, CompleteFolderNamePath, False)
-
-            Return CloseOutType.CLOSEOUT_SUCCESS
-
-        Catch ex As Exception
-            m_message = clsGlobal.AppendToComment(m_message, "Error copying results folder to " & System.IO.Path.GetPathRoot(TargetFolderNamePath) & " : " & ex.Message)
-            Return CloseOutType.CLOSEOUT_FAILED
-        End Try
-
-
-    End Function
-
-#End Region
-
-End Class
+        #endregion
+    }
+}
