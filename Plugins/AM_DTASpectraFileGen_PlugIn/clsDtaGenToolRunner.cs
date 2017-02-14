@@ -1,1178 +1,1360 @@
-﻿'*********************************************************************************************************
-' Written by Dave Clark for the US Department of Energy 
-' Pacific Northwest National Laboratory, Richland, WA
-' Copyright 2008, Battelle Memorial Institute
-' Created 07/29/2008
-'
-'*********************************************************************************************************
-
-Imports AnalysisManagerBase
-Imports MsMsDataFileReader
-Imports System.Collections.Generic
-Imports System.IO
-Imports System.Runtime.InteropServices
-
-
-''' <summary>
-''' Base class for DTA generation tool runners
-''' </summary>
-''' <remarks></remarks>
-Public Class clsDtaGenToolRunner
-    Inherits clsAnalysisToolRunnerBase
-
-#Region "Constants and Enums"
-    Public Const CDTA_FILE_SUFFIX As String = "_dta.txt"
-    Private Const CENTROID_CDTA_PROGRESS_START As Integer = 70
-
-    Public Enum eDTAGeneratorConstants
-        Unknown = 0
-        ExtractMSn = 1
-        DeconMSn = 2
-        MSConvert = 3
-        MGFtoDTA = 4
-        DeconConsole = 5
-        RawConverter = 6
-    End Enum
-#End Region
-
-#Region "Module-wide variables"
-    Private m_CentroidDTAs As Boolean
-    Private m_ConcatenateDTAs As Boolean
-    Private m_StepNum As Integer
-#End Region
-
-#Region "Methods"
-    ''' <summary>
-    ''' Runs the analysis tool
-    ''' </summary>
-    ''' <returns>CloseoutType enum indicating success or failure</returns>
-    ''' <remarks>This method is used to meet the interface requirement</remarks>
-    Public Overrides Function RunTool() As CloseOutType
-
-        Dim result As CloseOutType
-
-        ' Do the stuff in the base class
-        If Not MyBase.RunTool() = CloseOutType.CLOSEOUT_SUCCESS Then Return CloseOutType.CLOSEOUT_FAILED
-
-        m_StepNum = m_jobParams.GetJobParameter("Step", 0)
-
-        ' Create spectra files
-        result = CreateMSMSSpectra()
-        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
-            ' Something went wrong
-            ' In order to help diagnose things, we will move key files into the result folder, 
-            '  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
-            CopyFailedResultsToArchiveFolder()
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
-
-        ' Stop the job timer
-        m_StopTime = DateTime.UtcNow
-
-        ' Add the current job data to the summary file
-        Try
-            If Not UpdateSummaryFile() Then
-                LogWarning("Error creating summary file, job " & m_JobNum & ", step " & m_StepNum)
-            End If
-        Catch ex As Exception
-            LogWarning("Error creating summary file, job " & m_JobNum & ", step " & m_StepNum & ": " & ex.Message)
-        End Try
-
-        ' Get rid of raw data file
-        result = DeleteDataFile()
-        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
-            Return result
-        End If
-
-        ' Add all the extensions of the files to delete after run
-        m_jobParams.AddResultFileExtensionToSkip(CDTA_FILE_SUFFIX) ' Unzipped, concatenated DTA
-        m_jobParams.AddResultFileExtensionToSkip(".dta")     ' DTA files
-        m_jobParams.AddResultFileExtensionToSkip("DeconMSn_progress.txt")
-
-        ' Add any files that are an exception to the captured files to delete list
-        m_jobParams.AddResultFileToKeep("lcq_dta.txt")
-
-        result = MakeResultsFolder()
-        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
-            Return result
-        End If
-
-        result = MoveResultFiles()
-        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
-            ' Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-            Return result
-        End If
-
-        result = CopyResultsFolderToServer()
-        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
-            ' Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-            Return result
-        End If
-
-        Return CloseOutType.CLOSEOUT_SUCCESS 'No failures so everything must have succeeded
-
-    End Function
-
-    ''' <summary>
-    ''' Creates DTA files and filters if necessary
-    ''' </summary>
-    ''' <returns>CloseoutType enum indicating success or failure</returns>
-    ''' <remarks></remarks>
-    Public Function CreateMSMSSpectra() As CloseOutType
-
-        Dim Result As CloseOutType
-
-        'Make the spectra files
-        Result = MakeSpectraFiles()
-        If Result <> CloseOutType.CLOSEOUT_SUCCESS Then Return Result
-
-        'Concatenate spectra files
-        If m_ConcatenateDTAs Then
-            Result = ConcatSpectraFiles()
-            If Result <> CloseOutType.CLOSEOUT_SUCCESS Then Return Result
-        End If
-
-        If m_CentroidDTAs Then
-            Result = CentroidCDTA()
-            If Result <> CloseOutType.CLOSEOUT_SUCCESS Then Return Result
-        End If
-
-        'Zip concatenated spectra files
-        Result = ZipConcDtaFile()
-        If Result <> CloseOutType.CLOSEOUT_SUCCESS Then Return Result
-
-        'If we got to here, everything's OK
-        Return CloseOutType.CLOSEOUT_SUCCESS
-
-    End Function
-
-    Private Function GetDTAGenerator(<Out()> ByRef spectraGen As clsDtaGen) As eDTAGeneratorConstants
-
-        Dim strErrorMessage As String = String.Empty
-
-        Dim eDtaGeneratorType = GetDTAGeneratorInfo(m_jobParams, m_ConcatenateDTAs, strErrorMessage)
-        spectraGen = Nothing
-
-        Select Case eDtaGeneratorType
-            Case eDTAGeneratorConstants.MGFtoDTA
-                spectraGen = New clsMGFtoDtaGenMainProcess()
-
-            Case eDTAGeneratorConstants.MSConvert
-                spectraGen = New clsDtaGenMSConvert()
-
-            Case eDTAGeneratorConstants.DeconConsole
-                LogError("DeconConsole is obsolete and should no longer be used")
-                Return eDTAGeneratorConstants.Unknown
-
-                ' spectraGen = New clsDtaGenDeconConsole()
-
-            Case eDTAGeneratorConstants.ExtractMSn, eDTAGeneratorConstants.DeconMSn
-                spectraGen = New clsDtaGenThermoRaw()
-
-            Case eDTAGeneratorConstants.RawConverter
-                spectraGen = New clsDtaGenRawConverter()
-
-            Case eDTAGeneratorConstants.Unknown
-                If String.IsNullOrEmpty(strErrorMessage) Then
-                    LogError("GetDTAGeneratorInfo reported an Unknown DTAGenerator type")
-                Else
-                    LogError(strErrorMessage)
-                End If
-        End Select
-
-        Return eDtaGeneratorType
-
-    End Function
-
-    Public Shared Function GetDTAGeneratorInfo(oJobParams As IJobParams, <Out()> ByRef strErrorMessage As String) As eDTAGeneratorConstants
-        Dim blnConcatenateDTAs As Boolean
-        Return GetDTAGeneratorInfo(oJobParams, blnConcatenateDTAs, strErrorMessage)
-    End Function
-
-    Public Shared Function GetDTAGeneratorInfo(
-      oJobParams As IJobParams,
-      <Out()> ByRef blnConcatenateDTAs As Boolean,
-      <Out()> ByRef strErrorMessage As String) As eDTAGeneratorConstants
-
-        Dim strDTAGenerator As String = oJobParams.GetJobParameter("DtaGenerator", "")
-        Dim strRawDataType As String = oJobParams.GetJobParameter("RawDataType", "")
-        Dim blnMGFInstrumentData As Boolean = oJobParams.GetJobParameter("MGFInstrumentData", False)
-
-        strErrorMessage = String.Empty
-        blnConcatenateDTAs = True
-
-        Dim eRawDataType As clsAnalysisResources.eRawDataTypeConstants
-
-        If String.IsNullOrEmpty(strRawDataType) Then
-            strErrorMessage = NotifyMissingParameter(oJobParams, "RawDataType")
-            Return eDTAGeneratorConstants.Unknown
-        Else
-            eRawDataType = clsAnalysisResources.GetRawDataType(strRawDataType)
-        End If
-
-        If blnMGFInstrumentData Then
-            blnConcatenateDTAs = False
-            Return eDTAGeneratorConstants.MGFtoDTA
-        End If
-
-        Select Case eRawDataType
-            Case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile
-
-                blnConcatenateDTAs = False
-                Select Case strDTAGenerator.ToLower()
-                    Case clsDtaGenThermoRaw.MSCONVERT_FILENAME.ToLower()
-                        Return eDTAGeneratorConstants.MSConvert
-
-                    Case clsDtaGenThermoRaw.DECON_CONSOLE_FILENAME.ToLower()
-                        Return eDTAGeneratorConstants.DeconConsole
-
-                    Case clsDtaGenThermoRaw.EXTRACT_MSN_FILENAME.ToLower()
-                        blnConcatenateDTAs = True
-                        Return eDTAGeneratorConstants.ExtractMSn
-
-                    Case clsDtaGenThermoRaw.DECONMSN_FILENAME.ToLower()
-                        Return eDTAGeneratorConstants.DeconMSn
-
-                    Case clsDtaGenThermoRaw.RAWCONVERTER_FILENAME.ToLower()
-                        Return eDTAGeneratorConstants.RawConverter
-
-                    Case Else
-                        If String.IsNullOrEmpty(strDTAGenerator) Then
-                            strErrorMessage = NotifyMissingParameter(oJobParams, "DtaGenerator")
-                        Else
-                            strErrorMessage = "Unknown DTAGenerator for Thermo Raw files: " & strDTAGenerator
-                        End If
-
-                        Return eDTAGeneratorConstants.Unknown
-                End Select
-
-            Case clsAnalysisResources.eRawDataTypeConstants.mzML
-                If strDTAGenerator.ToLower() = clsDtaGenThermoRaw.MSCONVERT_FILENAME.ToLower() Then
-                    blnConcatenateDTAs = False
-                    Return eDTAGeneratorConstants.MSConvert
-
-                Else
-                    strErrorMessage = "Invalid DTAGenerator for mzML files: " & strDTAGenerator
-                    Return eDTAGeneratorConstants.Unknown
-                End If
-
-            Case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder
-                blnConcatenateDTAs = True
-                Return eDTAGeneratorConstants.MGFtoDTA
-
-            Case Else
-                strErrorMessage = "Unsupported data type for DTA generation: " & strRawDataType
-                Return eDTAGeneratorConstants.Unknown
-
-        End Select
-
-    End Function
-
-    ''' <summary>
-    ''' Detailed method for running a tool
-    ''' </summary>
-    ''' <returns>CloseoutType enum indicating success or failure</returns>
-    ''' <remarks></remarks>
-    Public Function DispositionResults() As CloseOutType
-
-        Dim StepResult As CloseOutType
-
-        'Make sure all files have released locks
-        PRISM.Processes.clsProgRunner.GarbageCollectNow()
-        Threading.Thread.Sleep(1000)
-
-        'Get rid of raw data file
-        Try
-            StepResult = DeleteDataFile()
-            If StepResult <> CloseOutType.CLOSEOUT_SUCCESS Then
-                Return StepResult
-            End If
-        Catch ex As Exception
-            LogError("clsDtaGenToolRunner.DispositionResults(), Exception while deleting data file", ex)
-            Return CloseOutType.CLOSEOUT_FAILED
-        End Try
-
-        'Add the current job data to the summary file
-        Try
-            If Not UpdateSummaryFile() Then
-                LogWarning("Error creating summary file, job " & m_JobNum & ", step " & m_StepNum)
-            End If
-        Catch ex As Exception
-            LogWarning("Error creating summary file, job " & m_JobNum & ", step " & m_StepNum & ": " & ex.Message)
-        End Try
-
-        'Delete .dta files
-        Dim TmpFile As String
-        Dim FileList() As String
-        Try
-            FileList = Directory.GetFiles(m_WorkDir, "*.dta")
-            For Each TmpFile In FileList
-                DeleteFileWithRetries(TmpFile)
-            Next
-        Catch ex As Exception
-            LogError("Error deleting .dta files", ex)
-            Return CloseOutType.CLOSEOUT_FAILED
-        End Try
-
-        'Delete unzipped concatenated dta files
-        FileList = Directory.GetFiles(m_WorkDir, "*" & CDTA_FILE_SUFFIX)
-        For Each TmpFile In FileList
-            Try
-                If Path.GetFileName(TmpFile.ToLower) <> "lcq_dta.txt" Then
-                    DeleteFileWithRetries(TmpFile)
-                End If
-            Catch ex As Exception
-                LogError("Error deleting concatenated dta file", ex)
-                Return CloseOutType.CLOSEOUT_FAILED
-            End Try
-        Next
-
-        'make results folder
-        Try
-            StepResult = MakeResultsFolder()
-            If StepResult <> CloseOutType.CLOSEOUT_SUCCESS Then
-                Return StepResult
-            End If
-        Catch ex As Exception
-            LogError("clsDtaGenToolRunner.DispositionResults(), Exception making results folder", ex)
-            Return CloseOutType.CLOSEOUT_FAILED
-        End Try
-
-        'Copy results folder to storage server
-        Try
-            StepResult = CopyResultsFolderToServer()
-            If StepResult <> CloseOutType.CLOSEOUT_SUCCESS Then
-                Return StepResult
-            End If
-        Catch ex As Exception
-            LogError("clsDtaGenToolRunner.DispositionResults(), Exception moving results folder", ex)
-            Return CloseOutType.CLOSEOUT_FAILED
-        End Try
-
-    End Function
-
-    Private Function GetDtaGenInitParams() As SpectraFileProcessorParams
-        Dim initParams As New SpectraFileProcessorParams With {
-            .DebugLevel = m_DebugLevel,
-            .JobParams = m_jobParams,
-            .MgrParams = m_mgrParams,
-            .StatusTools = m_StatusTools,
-            .WorkDir = m_WorkDir,
-            .DatasetName = m_Dataset
+﻿//*********************************************************************************************************
+// Written by Dave Clark for the US Department of Energy
+// Pacific Northwest National Laboratory, Richland, WA
+// Copyright 2008, Battelle Memorial Institute
+// Created 07/29/2008
+//
+//*********************************************************************************************************
+
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
+using System.Threading;
+using AnalysisManagerBase;
+using MsMsDataFileReader;
+
+namespace DTASpectraFileGen
+{
+    /// <summary>
+    /// Base class for DTA generation tool runners
+    /// </summary>
+    /// <remarks></remarks>
+    public class clsDtaGenToolRunner : clsAnalysisToolRunnerBase
+    {
+        #region "Constants and Enums"
+
+        public const string CDTA_FILE_SUFFIX = "_dta.txt";
+
+        private const int CENTROID_CDTA_PROGRESS_START = 70;
+
+        public enum eDTAGeneratorConstants
+        {
+            Unknown = 0,
+            ExtractMSn = 1,
+            DeconMSn = 2,
+            MSConvert = 3,
+            MGFtoDTA = 4,
+            DeconConsole = 5,
+            RawConverter = 6
         }
 
-        Return initParams
-    End Function
-
-    ''' <summary>
-    ''' Creates DTA files
-    ''' </summary>
-    ''' <returns>CloseoutType enum indicating success or failure</returns>
-    ''' <remarks></remarks>
-    Public Function MakeSpectraFiles() As CloseOutType
-
-        'Make individual spectra files from input raw data file, using plugin
-
-        LogMessage("Making spectra files, job " & m_JobNum & ", step " & m_StepNum)
-
-        Dim SpectraGen As clsDtaGen = Nothing
-
-        Dim eDtaGeneratorType = GetDTAGenerator(SpectraGen)
-
-        If eDtaGeneratorType = eDTAGeneratorConstants.Unknown Then
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
-
-        If eDtaGeneratorType = eDTAGeneratorConstants.DeconConsole Then
-            m_CentroidDTAs = False
-        Else
-            m_CentroidDTAs = m_jobParams.GetJobParameter("CentroidDTAs", False)
-        End If
-
-        RegisterEvents(SpectraGen)
-
-        ' Initialize the plugin
-
-        Try
-            SpectraGen.Setup(GetDtaGenInitParams(), Me)
-        Catch ex As Exception
-            LogError("Exception configuring DTAGenerator", ex)
-            Return CloseOutType.CLOSEOUT_FAILED
-        End Try
-
-        ' Store the Version info in the database
-        Dim blnSuccess As Boolean
-        If eDtaGeneratorType = eDTAGeneratorConstants.MGFtoDTA Then
-            ' MGFtoDTA Dll
-            blnSuccess = StoreToolVersionInfoDLL(SpectraGen.DtaToolNameLoc)
-        Else
-            If eDtaGeneratorType = eDTAGeneratorConstants.DeconConsole Then
-
-                ' Possibly use a specific version of DeconTools
-                Dim progLoc = DetermineProgramLocation("DeconMSn", "DeconToolsProgLoc", "DeconConsole.exe")
-
-                If String.IsNullOrWhiteSpace(progLoc) Then
-                    Return CloseOutType.CLOSEOUT_FAILED
-                Else
-                    SpectraGen.UpdateDtaToolNameLoc(progLoc)
-                End If
-
-            End If
-
-            blnSuccess = StoreToolVersionInfo(SpectraGen.DtaToolNameLoc, eDtaGeneratorType)
-        End If
-
-        If Not blnSuccess Then
-            LogError("Aborting since StoreToolVersionInfo returned false for " & SpectraGen.DtaToolNameLoc)
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
-
-        If eDtaGeneratorType = eDTAGeneratorConstants.DeconMSn AndAlso m_CentroidDTAs Then
-            Dim blnUsingExistingResults = m_jobParams.GetJobParameter(clsDtaGenResources.USING_EXISTING_DECONMSN_RESULTS, False)
-
-            If blnUsingExistingResults Then
-                ' Confirm that the existing DeconMSn results are valid
-                ' If they are, then we don't need to re-run DeconMSn
-
-                If ValidateDeconMSnResults() Then
-                    m_progress = 100
-                    Return CloseOutType.CLOSEOUT_SUCCESS
-                End If
-            End If
-
-        End If
-
-        Try
-
-            ' Start the spectra generation process
-            Dim eResult As CloseOutType
-            eResult = StartAndWaitForDTAGenerator(SpectraGen, "MakeSpectraFiles", False)
-
-            ' Set internal spectra file count to that returned by the spectra generator
-            m_DtaCount = SpectraGen.SpectraFileCount
-            m_progress = SpectraGen.Progress
-
-            If eResult <> CloseOutType.CLOSEOUT_SUCCESS Then Return eResult
-
-        Catch ex As Exception
-            LogError("clsDtaGenToolRunner.MakeSpectraFiles: Exception while generating dta files", ex)
-            Return CloseOutType.CLOSEOUT_FAILED
-        End Try
-
-        Return CloseOutType.CLOSEOUT_SUCCESS
-
-    End Function
-
-    ''' <summary>
-    ''' Creates a centroided .mgf file for the dataset
-    ''' Then updates the _DTA.txt file with the spectral data from the .mgf file
-    ''' </summary>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Private Function CentroidCDTA() As CloseOutType
-
-        Dim strCDTAFileOriginal As String
-        Dim strCDTAFileCentroided As String
-        Dim strCDTAFileFinal As String
-
-        Try
-
-            ' Rename the _DTA.txt file to _DTA_Original.txt
-            Dim fiCDTA = New FileInfo(Path.Combine(m_WorkDir, m_Dataset & CDTA_FILE_SUFFIX))
-            If Not fiCDTA.Exists() Then
-                LogError("File not found in CentroidCDTA: " & fiCDTA.Name)
-                Return CloseOutType.CLOSEOUT_NO_DTA_FILES
-            End If
-
-            PRISM.Processes.clsProgRunner.GarbageCollectNow()
-            Threading.Thread.Sleep(50)
-
-            strCDTAFileOriginal = Path.Combine(m_WorkDir, m_Dataset & "_DTA_Original.txt")
-            fiCDTA.MoveTo(strCDTAFileOriginal)
-
-            m_jobParams.AddResultFileToSkip(fiCDTA.Name)
-
-        Catch ex As Exception
-            LogError("Error renaming the original _DTA.txt file in CentroidCDTA")
-            Return CloseOutType.CLOSEOUT_FAILED
-        End Try
-
-
-        Try
-
-            ' Create a centroided _DTA.txt file from the .Raw file (first creates a .MGF file, then converts to _DTA.txt)
-            Dim oMSConvert = New clsDtaGenMSConvert()
-            oMSConvert.Setup(GetDtaGenInitParams(), Me)
-
-            oMSConvert.ForceCentroidOn = True
-
-            Dim eResult As CloseOutType
-            eResult = StartAndWaitForDTAGenerator(oMSConvert, "CentroidCDTA", True)
-
-            If eResult <> CloseOutType.CLOSEOUT_SUCCESS Then
-                Return eResult
-            End If
-
-        Catch ex As Exception
-            LogError("Error creating a centroided _DTA.txt file in CentroidCDTA", ex)
-            Return CloseOutType.CLOSEOUT_FAILED
-        End Try
-
-        Try
-
-            ' Rename the new _DTA.txt file to _DTA_Centroided.txt
-
-            Dim fiCDTA = New FileInfo(Path.Combine(m_WorkDir, m_Dataset & CDTA_FILE_SUFFIX))
-            If Not fiCDTA.Exists() Then
-                LogError("File not found in CentroidCDTA (after calling clsDtaGenMSConvert): " & fiCDTA.Name)
-                Return CloseOutType.CLOSEOUT_NO_DTA_FILES
-            End If
-
-            PRISM.Processes.clsProgRunner.GarbageCollectNow()
-            Threading.Thread.Sleep(50)
-
-            strCDTAFileCentroided = Path.Combine(m_WorkDir, m_Dataset & "_DTA_Centroided.txt")
-            fiCDTA.MoveTo(strCDTAFileCentroided)
-
-            m_jobParams.AddResultFileToSkip(fiCDTA.Name)
-
-        Catch ex As Exception
-            LogError("Error renaming the centroided _DTA.txt file in CentroidCDTA", ex)
-            Return CloseOutType.CLOSEOUT_FAILED
-        End Try
-
-        Try
-            ' Read _DTA_Original.txt and _DTA_Centroided.txt in parallel
-            ' Create the final _DTA.txt file
-
-            Dim blnSuccess As Boolean
-            strCDTAFileFinal = Path.Combine(m_WorkDir, m_Dataset & CDTA_FILE_SUFFIX)
-
-            blnSuccess = MergeCDTAs(strCDTAFileOriginal, strCDTAFileCentroided, strCDTAFileFinal)
-            If Not blnSuccess Then
-                If String.IsNullOrEmpty(m_message) Then m_message = "MergeCDTAs returned False in CentroidCDTA"
-                LogError(m_message)
-                Return CloseOutType.CLOSEOUT_FAILED
-            End If
-
-        Catch ex As Exception
-            LogError("Error creating final _DTA.txt file in CentroidCDTA", ex)
-            Return CloseOutType.CLOSEOUT_FAILED
-        End Try
-
-        Return CloseOutType.CLOSEOUT_SUCCESS
-
-    End Function
-
-    ''' <summary>
-    ''' Concatenates DTA files into a single test file
-    ''' </summary>
-    ''' <returns>CloseoutType enum indicating success or failure</returns>
-    ''' <remarks></remarks>
-    Private Function ConcatSpectraFiles() As CloseOutType
-
-        ' Packages dta files into concatenated text files
-
-        ' Make sure at least one .dta file was created
-        Dim diWorkDir = New DirectoryInfo(m_WorkDir)
-        Dim intDTACount As Integer = diWorkDir.GetFiles("*.dta").Length
-
-        If intDTACount = 0 Then
-            LogError("No .DTA files were created")
-            Return CloseOutType.CLOSEOUT_NO_DTA_FILES
-        ElseIf m_DebugLevel >= 1 Then
-            LogMessage("Concatenating spectra files, job " & m_JobNum & ", step " & m_StepNum)
-        End If
-
-
-        Dim ConcatTools As New clsConcatToolWrapper(diWorkDir.FullName)
-
-        If Not ConcatTools.ConcatenateFiles(clsConcatToolWrapper.ConcatFileTypes.CONCAT_DTA, m_Dataset) Then
-            LogError("Error packaging results: " & ConcatTools.ErrMsg)
-            Return CloseOutType.CLOSEOUT_FAILED
-        Else
-            Return CloseOutType.CLOSEOUT_SUCCESS
-        End If
-
-    End Function
-
-    Private Sub CopyFailedResultsToArchiveFolder()
-
-        Dim strFailedResultsFolderPath As String = m_mgrParams.GetParam("FailedResultsFolderPath")
-        If String.IsNullOrWhiteSpace(strFailedResultsFolderPath) Then strFailedResultsFolderPath = "??Not Defined??"
-
-        LogWarning("Processing interrupted; copying results to archive folder: " & strFailedResultsFolderPath)
-
-        ' Bump up the debug level if less than 2
-        If m_DebugLevel < 2 Then m_DebugLevel = 2
-
-        ' Make sure the _dta.txt file is retained
-        m_jobParams.RemoveResultFileToSkip(m_Dataset & "_dta.txt")
-
-        ' Skip any .dta files
-        m_jobParams.AddResultFileExtensionToSkip(".dta")
-
-        ' Try to save whatever files are in the work directory
-        Dim strFolderPathToArchive = String.Copy(m_WorkDir)
-
-        ' Make the results folder
-        Dim result = MakeResultsFolder()
-        If result = CloseOutType.CLOSEOUT_SUCCESS Then
-            ' Move the result files into the result folder
-            result = MoveResultFiles()
-            If result = CloseOutType.CLOSEOUT_SUCCESS Then
-                ' Move was a success; update strFolderPathToArchive
-                strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName)
-            End If
-        End If
-
-        ' Copy the results folder to the Archive folder
-        Dim objAnalysisResults = New clsAnalysisResults(m_mgrParams, m_jobParams)
-        objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive)
-
-    End Sub
-
-    Private Function GetMSConvertAppPath() As String
-
-        Dim ProteoWizardDir As String = m_mgrParams.GetParam("ProteoWizardDir")         ' MSConvert.exe is stored in the ProteoWizard folder
-        Dim progLoc As String = Path.Combine(ProteoWizardDir, clsDtaGenMSConvert.MSCONVERT_FILENAME)
-
-        Return progLoc
-
-    End Function
-
-    ''' <summary>
-    ''' Deletes .raw files from working directory
-    ''' </summary>
-    ''' <returns>CloseoutType enum indicating success or failure</returns>
-    ''' <remarks>Overridden for other types of input files</remarks>
-    Private Function DeleteDataFile() As CloseOutType
-
-        'Deletes the .raw file from the working directory
-        Dim lstFilesToDelete As List(Of String)
-
-        If m_DebugLevel >= 2 Then
-            LogMessage("clsDtaGenToolRunner.DeleteDataFile, executing method")
-        End If
-
-        'Delete the .raw file
-        Try
-            lstFilesToDelete = New List(Of String)
-            lstFilesToDelete.AddRange(Directory.GetFiles(m_WorkDir, "*" & clsAnalysisResources.DOT_RAW_EXTENSION))
-            lstFilesToDelete.AddRange(Directory.GetFiles(m_WorkDir, "*" & clsAnalysisResources.DOT_MZXML_EXTENSION))
-            lstFilesToDelete.AddRange(Directory.GetFiles(m_WorkDir, "*" & clsAnalysisResources.DOT_MZML_EXTENSION))
-            lstFilesToDelete.AddRange(Directory.GetFiles(m_WorkDir, "*" & clsAnalysisResources.DOT_MGF_EXTENSION))
-
-            For Each MyFile As String In lstFilesToDelete
-                If m_DebugLevel >= 2 Then
-                    LogMessage("clsDtaGenToolRunner.DeleteDataFile, deleting file " & MyFile)
-                End If
-                DeleteFileWithRetries(MyFile)
-            Next
-            Return CloseOutType.CLOSEOUT_SUCCESS
-        Catch ex As Exception
-            LogError("Error deleting .raw file, job " & m_JobNum & ", step " & m_StepNum, ex)
-            Return CloseOutType.CLOSEOUT_FAILED
-        End Try
-
-    End Function
-
-    Private Function MergeCDTAs(strCDTAWithParentIonData As String, strCDTAWithFragIonData As String, strCDTAFileFinal As String) As Boolean
-
-        Dim dtLastStatus = DateTime.UtcNow
-
-        Try
-            Dim oCDTAReaderParentIons = New clsDtaTextFileReader(False)
-            If Not oCDTAReaderParentIons.OpenFile(strCDTAWithParentIonData) Then
-                LogError("Error opening CDTA file with the parent ion data")
-                Return False
-            End If
-
-            Dim oCDTAReaderFragIonData = New clsDtaTextFileReader(True)
-            If Not oCDTAReaderFragIonData.OpenFile(strCDTAWithFragIonData) Then
-                LogError("Error opening CDTA file with centroided spectra data")
-                Return False
-            End If
-
-            ' This dictionary is used to track the spectrum scan numbers in strCDTAWithFragIonData
-            ' This is used to reduce the number of times that oCDTAReaderFragIonData is closed and re-opened
-            Dim fragIonDataScanStatus = New Dictionary(Of Integer, SortedSet(Of Integer))
-
-            ' Cache the Start/End scan combos in strCDTAWithFragIonData
-            LogMessage("Scanning " & Path.GetFileName(strCDTAWithFragIonData) & " to cache the scan range for each MS/MS spectrum")
-
-            Do While True
-                Dim msMsDataListCentroid As List(Of String) = Nothing
-
-                Dim udtFragIonDataHeaderCentroid As clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType = Nothing
-                Dim blnNextSpectrumAvailable = oCDTAReaderFragIonData.ReadNextSpectrum(msMsDataListCentroid, udtFragIonDataHeaderCentroid)
-                If Not blnNextSpectrumAvailable Then
-                    Exit Do
-                End If
-
-                Dim scanStart = udtFragIonDataHeaderCentroid.ScanNumberStart
-                Dim scanEnd = udtFragIonDataHeaderCentroid.ScanNumberEnd
-
-                Dim endScanList As SortedSet(Of Integer) = Nothing
-                If fragIonDataScanStatus.TryGetValue(scanStart, endScanList) Then
-                    If Not endScanList.Contains(scanEnd) Then
-                        endScanList.Add(scanEnd)
-                    End If
-                Else
-                    endScanList = New SortedSet(Of Integer) From {scanEnd}
-                    fragIonDataScanStatus.Add(scanStart, endScanList)
-                End If
-            Loop
-
-            ' Close, then re-open strCDTAWithFragIonData
-            oCDTAReaderFragIonData.CloseFile()
-            Dim udtFragIonDataHeader = oCDTAReaderFragIonData.GetNewSpectrumHeaderInfo()
-
-            Threading.Thread.Sleep(10)
-
-            oCDTAReaderFragIonData = New clsDtaTextFileReader(True)
-            If Not oCDTAReaderFragIonData.OpenFile(strCDTAWithFragIonData) Then
-                LogError("Error re-opening CDTA file with the fragment ion data (after initial scan of the file)")
-                Return False
-            End If
-
-            LogMessage("Merging " & Path.GetFileName(strCDTAWithParentIonData) & " with " & Path.GetFileName(strCDTAWithFragIonData))
-
-            Dim intSpectrumCountSkipped = 0
-            Using swCDTAOut = New StreamWriter(New FileStream(strCDTAFileFinal, FileMode.Create, FileAccess.Write, FileShare.Read))
-
-                Dim msMsDataList As List(Of String) = Nothing
-                Dim udtParentIonDataHeader As clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType = Nothing
-                While oCDTAReaderParentIons.ReadNextSpectrum(msMsDataList, udtParentIonDataHeader)
-
-                    If Not ScanMatchIsPossible(udtParentIonDataHeader, fragIonDataScanStatus) Then
-                        LogWarning("MergeCDTAs could not find spectrum with StartScan=" & udtParentIonDataHeader.ScanNumberStart & " and EndScan=" & udtParentIonDataHeader.ScanNumberEnd & " for " & Path.GetFileName(strCDTAWithParentIonData))
-                        intSpectrumCountSkipped += 1
-                        Continue While
-                    End If
-
-                    Dim msMsDataListCentroid As List(Of String) = Nothing
-                    Dim blnNextSpectrumAvailable As Boolean
-
-                    Do While Not ScanHeadersMatch(udtParentIonDataHeader, udtFragIonDataHeader)
-                        blnNextSpectrumAvailable = oCDTAReaderFragIonData.ReadNextSpectrum(msMsDataListCentroid, udtFragIonDataHeader)
-                        If Not blnNextSpectrumAvailable Then Exit Do
-                    Loop
-
-                    blnNextSpectrumAvailable = ScanHeadersMatch(udtParentIonDataHeader, udtFragIonDataHeader)
-                    If Not blnNextSpectrumAvailable Then
-                        ' We never did find a match; this is unexpected
-                        ' Try closing the FragIonData file, re-opening, and parsing again
-                        oCDTAReaderFragIonData.CloseFile()
-                        udtFragIonDataHeader = oCDTAReaderFragIonData.GetNewSpectrumHeaderInfo()
-
-                        Threading.Thread.Sleep(10)
-
-                        oCDTAReaderFragIonData = New clsDtaTextFileReader(True)
-                        If Not oCDTAReaderFragIonData.OpenFile(strCDTAWithFragIonData) Then
-                            LogError("Error re-opening CDTA file with the fragment ion data (when blnNextSpectrumAvailable = False)")
-                            Return False
-                        End If
-
-                        Do While Not ScanHeadersMatch(udtParentIonDataHeader, udtFragIonDataHeader)
-                            blnNextSpectrumAvailable = oCDTAReaderFragIonData.ReadNextSpectrum(msMsDataListCentroid, udtFragIonDataHeader)
-                            If Not blnNextSpectrumAvailable Then Exit Do
-                        Loop
-
-                        blnNextSpectrumAvailable = ScanHeadersMatch(udtParentIonDataHeader, udtFragIonDataHeader)
-                        If Not blnNextSpectrumAvailable Then
-                            LogWarning("MergeCDTAs could not find spectrum with StartScan=" & udtParentIonDataHeader.ScanNumberStart & " and EndScan=" & udtParentIonDataHeader.ScanNumberEnd & " for " & Path.GetFileName(strCDTAWithParentIonData))
-                            intSpectrumCountSkipped += 1
-                        End If
-                    End If
-
-                    If blnNextSpectrumAvailable Then
-                        swCDTAOut.WriteLine()
-                        swCDTAOut.WriteLine(udtParentIonDataHeader.SpectrumTitleWithCommentChars)
-                        swCDTAOut.WriteLine(udtParentIonDataHeader.ParentIonLineText)
-
-                        Dim strDataLinesToAppend = RemoveTitleAndParentIonLines(oCDTAReaderFragIonData.GetMostRecentSpectrumFileText)
-
-                        If String.IsNullOrWhiteSpace(strDataLinesToAppend) Then
-                            LogError("oCDTAReaderFragIonData.GetMostRecentSpectrumFileText returned empty text for " &
-                                     "StartScan=" & udtParentIonDataHeader.ScanNumberStart & " and " &
-                                     "EndScan=" & udtParentIonDataHeader.ScanNumberEnd &
-                                     " in MergeCDTAs for " & Path.GetFileName(strCDTAWithParentIonData))
-                            Return False
-                        Else
-                            swCDTAOut.Write(strDataLinesToAppend)
-                        End If
-
-                    End If
-
-                    If DateTime.UtcNow.Subtract(dtLastStatus).TotalSeconds >= 30 Then
-                        dtLastStatus = DateTime.UtcNow
-                        If m_DebugLevel >= 1 Then
-                            LogMessage("Merging CDTAs, scan " & udtParentIonDataHeader.ScanNumberStart.ToString())
-                        End If
-                    End If
-                End While
-
-            End Using
-
-            Try
-                oCDTAReaderParentIons.CloseFile()
-                oCDTAReaderFragIonData.CloseFile()
-            Catch ex As Exception
-                ' Ignore errors here
-            End Try
-
-            If intSpectrumCountSkipped > 0 Then
-                m_EvalMessage = "Skipped " & intSpectrumCountSkipped & " spectra in MergeCDTAs since they were not created by MSConvert"
-                LogWarning(m_EvalMessage)
-            End If
-
-        Catch ex As Exception
-            LogError("Error merging CDTA files", ex)
-            Return False
-        End Try
-
-        Return True
-    End Function
-
-    Private Function RemoveTitleAndParentIonLines(strSpectrumText As String) As String
-
-        Dim sbOutput = New Text.StringBuilder(strSpectrumText.Length)
-        Dim blnPreviousLineWasTitleLine = False
-
-        Using trReader = New StringReader(strSpectrumText)
-
-            While trReader.Peek() > -1
-                Dim strLine = trReader.ReadLine()
-
-                If strLine.StartsWith("=") Then
-                    ' Skip this line
-                    blnPreviousLineWasTitleLine = True
-                ElseIf blnPreviousLineWasTitleLine Then
-                    ' Skip this line
-                    blnPreviousLineWasTitleLine = False
-                ElseIf Not String.IsNullOrEmpty(strLine) Then
-                    ' Data line; keep it
-                    sbOutput.AppendLine(strLine)
-                End If
-
-            End While
-        End Using
-
-        Return sbOutput.ToString()
-
-    End Function
-
-    Private Function ScanMatchIsPossible(
-        udtParentIonDataHeader As clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType,
-        fragIonDataScanStatus As Dictionary(Of Integer, SortedSet(Of Integer))) As Boolean
-
-        Dim endScanList As SortedSet(Of Integer) = Nothing
-        If fragIonDataScanStatus.TryGetValue(udtParentIonDataHeader.ScanNumberStart, endScanList) Then
-            If endScanList.Contains(udtParentIonDataHeader.ScanNumberEnd) Then
-                Return True
-            End If
-        End If
-
-        Return False
-
-    End Function
-
-    Private Function ScanHeadersMatch(udtParentIonDataHeader As clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType, udtFragIonDataHeader As clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType) As Boolean
-
-        If udtParentIonDataHeader.ScanNumberStart = udtFragIonDataHeader.ScanNumberStart Then
-            If udtParentIonDataHeader.ScanNumberEnd = udtFragIonDataHeader.ScanNumberEnd Then
-                Return True
-            Else
-                ' MSConvert wrote out these headers for dataset Athal0503_26Mar12_Jaguar_12-02-26
-                ' 3160.0001.13.dta
-                ' 3211.0001.11.dta
-                ' 3258.0001.12.dta
-                ' 3259.0001.13.dta
-
-                ' Thus, allow a match if ScanNumberStart matches but ScanNumberEnd is less than ScanNumberStart
-                If udtFragIonDataHeader.ScanNumberEnd < udtFragIonDataHeader.ScanNumberStart Then
-                    Return True
-                End If
-            End If
-        End If
-
-        Return False
-
-    End Function
-
-    Private Function StartAndWaitForDTAGenerator(oDTAGenerator As clsDtaGen, strCallingFunction As String, blnSecondPass As Boolean) As CloseOutType
-
-        Dim retVal As ProcessStatus = oDTAGenerator.Start()
-        If retVal = ProcessStatus.SF_ERROR Then
-            LogError("Error starting spectra processor: " & oDTAGenerator.ErrMsg)
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
-
-        If m_DebugLevel > 0 Then
-            LogMessage("clsDtaGenToolRunner." & strCallingFunction & ": Spectra generation started")
-        End If
-
-        ' Loop until the spectra generator finishes
-        While (oDTAGenerator.Status = ProcessStatus.SF_STARTING) Or
-           (oDTAGenerator.Status = ProcessStatus.SF_RUNNING)
-
-            If blnSecondPass Then
-                m_progress = CENTROID_CDTA_PROGRESS_START + oDTAGenerator.Progress * (100.0! - CENTROID_CDTA_PROGRESS_START) / 100.0!
-            Else
-                If m_CentroidDTAs Then
-                    m_progress = oDTAGenerator.Progress * (CENTROID_CDTA_PROGRESS_START / 100.0!)
-                Else
-                    m_progress = oDTAGenerator.Progress
-                End If
-            End If
-
-            UpdateStatusRunning(m_progress, oDTAGenerator.SpectraFileCount)
-
-            Threading.Thread.Sleep(5000)                 'Delay for 5 seconds
-        End While
-
-        UpdateStatusRunning(m_progress, oDTAGenerator.SpectraFileCount)
-
-        'Check for reason spectra generator exited
-        If oDTAGenerator.Results = ProcessResults.SF_FAILURE Then
-            LogError("Error making DTA files in " & strCallingFunction & ": " & oDTAGenerator.ErrMsg)
-            Return CloseOutType.CLOSEOUT_FAILED
-        ElseIf oDTAGenerator.Results = ProcessResults.SF_ABORTED Then
-            LogError("DTA generation aborted in " & strCallingFunction & "")
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
-
-        If oDTAGenerator.Results = ProcessResults.SF_NO_FILES_CREATED Then
-            LogError("No spectra files created in " & strCallingFunction)
-            Return CloseOutType.CLOSEOUT_NO_DTA_FILES
-        Else
-            If m_DebugLevel >= 2 Then
-                LogMessage("clsDtaGenToolRunner." & strCallingFunction & ": Spectra generation completed")
-            End If
-        End If
-
-    End Function
-
-    ''' <summary>
-    ''' Stores the tool version info in the database
-    ''' </summary>
-    ''' <remarks></remarks>
-    Private Function StoreToolVersionInfo(strDtaGeneratorAppPath As String, eDtaGenerator As eDTAGeneratorConstants) As Boolean
-
-        Dim strToolVersionInfo As String = String.Empty
-
-        If m_DebugLevel >= 2 Then
-            LogMessage("Determining tool version info")
-        End If
-
-        Dim fiDtaGenerator = New FileInfo(strDtaGeneratorAppPath)
-        If Not fiDtaGenerator.Exists Then
-            Try
-                LogError("DtaGenerator not found: " & strDtaGeneratorAppPath)
-                strToolVersionInfo = "Unknown"
-                Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, New List(Of FileInfo), blnSaveToolVersionTextFile:=False)
-            Catch ex As Exception
-                LogError("Exception calling SetStepTaskToolVersion", ex)
-                Return False
-            End Try
-
-        End If
-
-        ' Store strDtaGeneratorAppPath in ioToolFiles
-        Dim ioToolFiles As New List(Of FileInfo)
-        ioToolFiles.Add(fiDtaGenerator)
-
-        If eDtaGenerator = eDTAGeneratorConstants.DeconConsole OrElse eDtaGenerator = eDTAGeneratorConstants.DeconMSn Then
-            ' Lookup the version of the DeconConsole or DeconMSn application
-            Dim strDllPath As String
-
-            Dim blnSuccess = StoreToolVersionInfoViaSystemDiagnostics(strToolVersionInfo, fiDtaGenerator.FullName)
-            If Not blnSuccess Then Return False
-
-            If eDtaGenerator = eDTAGeneratorConstants.DeconMSn Then
-                ' DeconMSn
-                Dim deconEngineV2File = New FileInfo(Path.Combine(fiDtaGenerator.DirectoryName, "DeconEngineV2.dll"))
-                If deconEngineV2File.Exists Then
-                    ' C# version of DeconMSn (released in January 2017)
-                    strDllPath = Path.Combine(fiDtaGenerator.DirectoryName, "DeconEngineV2.dll")
-                    ioToolFiles.Add(New FileInfo(strDllPath))
-                    blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, strDllPath)
-                Else
-                    strDllPath = Path.Combine(fiDtaGenerator.DirectoryName, "DeconMSnEngine.dll")
-                    ioToolFiles.Add(New FileInfo(strDllPath))
-                    blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, strDllPath)
-                End If
-
-                If Not blnSuccess Then Return False
-
-            ElseIf eDtaGenerator = eDTAGeneratorConstants.DeconConsole Then
-                ' DeconConsole re-implementation of DeconMSn (obsolete, superseded by C# version of DeconMSn that uses DeconEngineV2.dll)
-
-                ' Lookup the version of the DeconTools Backend (in the DeconTools folder)
-                ' In addition, add it to ioToolFiles
-                strDllPath = Path.Combine(fiDtaGenerator.DirectoryName, "DeconTools.Backend.dll")
-                ioToolFiles.Add(New FileInfo(strDllPath))
-                blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, strDllPath)
-                If Not blnSuccess Then Return False
-
-
-                ' Lookup the version of DeconEngineV2 (in the DeconTools folder)
-                strDllPath = Path.Combine(fiDtaGenerator.DirectoryName, "DeconEngineV2.dll")
-                blnSuccess = MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, strDllPath)
-                If Not blnSuccess Then Return False
-            End If
-
-        End If
-
-
-        ' Possibly also store the MSConvert version
-        If m_CentroidDTAs Then
-            ioToolFiles.Add(New FileInfo(GetMSConvertAppPath()))
-        End If
-
-        Try
-            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile:=False)
-        Catch ex As Exception
-            LogError("Exception calling SetStepTaskToolVersion", ex)
-            Return False
-        End Try
-
-    End Function
-
-    Private Function StoreToolVersionInfoDLL(strDtaGeneratorDLLPath As String) As Boolean
-
-        Dim strToolVersionInfo As String = String.Empty
-
-        If m_DebugLevel >= 2 Then
-            LogMessage("Determining tool version info")
-        End If
-
-        ' Lookup the version of the DLL
-        MyBase.StoreToolVersionInfoOneFile(strToolVersionInfo, strDtaGeneratorDLLPath)
-
-        ' Store paths to key files in ioToolFiles
-        Dim ioToolFiles As New List(Of FileInfo)
-        ioToolFiles.Add(New FileInfo(strDtaGeneratorDLLPath))
-
-        ' Possibly also store the MSConvert version
-        If m_CentroidDTAs Then
-            ioToolFiles.Add(New FileInfo(GetMSConvertAppPath()))
-        End If
-
-        Try
-            Return MyBase.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile:=False)
-        Catch ex As Exception
-            LogError("Exception calling SetStepTaskToolVersion", ex)
-            Return False
-        End Try
-
-    End Function
-
-    Private Function ValidateDeconMSnResults() As Boolean
-
-        Dim existingResultsAreValid = False
-
-        Try
-            Dim fiDeconMSnLogFile = New FileInfo(Path.Combine(m_WorkDir, m_Dataset & "_DeconMSn_log.txt"))
-
-            If Not fiDeconMSnLogFile.Exists Then
-                LogWarning("DeconMSn_log.txt file not found; cannot use pre-existing DeconMSn results")
-                Return False
-            End If
-
-            Dim headerLineFound = False
-
-            Using srLogFile = New StreamReader(New FileStream(fiDeconMSnLogFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
-                While Not srLogFile.EndOfStream
-                    Dim strLineIn = srLogFile.ReadLine()
-
-                    If Not String.IsNullOrEmpty(strLineIn) Then
-                        If headerLineFound Then
-                            ' Found a data line
-                            If Char.IsDigit(strLineIn.Chars(0)) Then
-                                existingResultsAreValid = True
-                                Exit While
-                            End If
-                        ElseIf strLineIn.StartsWith("MSn_Scan") Then
-                            ' Found the header line
-                            headerLineFound = True
-                        End If
-
-                    End If
-                End While
-            End Using
-
-        Catch ex As Exception
-            LogError("Exception in ValidateDeconMSnResults", ex)
-            Return False
-        End Try
-
-        Return existingResultsAreValid
-
-    End Function
-
-    ''' <summary>
-    ''' Zips concatenated DTA file to reduce size
-    ''' </summary>
-    ''' <returns>CloseoutType enum indicating success or failure</returns>
-    ''' <remarks></remarks>
-    Private Function ZipConcDtaFile() As CloseOutType
-
-        Dim DtaFileName As String = m_Dataset & "_dta.txt"
-        Dim DtaFilePath As String = Path.Combine(m_WorkDir, DtaFileName)
-
-        LogMessage("Zipping concatenated spectra file, job " & m_JobNum & ", step " & m_StepNum)
-
-        ' Verify the _dta.txt file exists
-        If Not File.Exists(DtaFilePath) Then
-            LogWarning("Error: Unable to find concatenated dta file")
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
-
-        ' Zip the file using IonicZip
-        Try
-            If MyBase.ZipFile(DtaFilePath, False) Then
-                Return CloseOutType.CLOSEOUT_SUCCESS
-            End If
-        Catch ex As Exception
-            Dim msg As String = "Exception zipping concat dta file, job " & m_JobNum & ", step " & m_StepNum & ": " & ex.Message
-            LogError(msg)
-            Return CloseOutType.CLOSEOUT_FAILED
-        End Try
-
-        ' Occasionally the zip file is corrupted and will need to be zipped using ICSharpCode.SharpZipLib instead
-        ' If the file exists and is not zero bytes in length, try zipping again, but instead use ICSharpCode.SharpZipLib
-
-        Dim fiZipFile = New FileInfo(MyBase.GetZipFilePathForFile(DtaFilePath))
-        If Not fiZipFile.Exists OrElse fiZipFile.Length <= 0 Then
-            Dim msg As String = "Error zipping concat dta file, job " & m_JobNum & ", step " & m_StepNum
-            LogError(msg)
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
-
-        Try
-            Threading.Thread.Sleep(250)
-
-            If MyBase.ZipFileSharpZipLib(DtaFilePath) Then
-                Dim warningMsg = String.Format("Zip file created using IonicZip was corrupted; successfully compressed it using SharpZipLib instead: {0}", DtaFileName)
-                LogWarning(warningMsg)
-                Return CloseOutType.CLOSEOUT_SUCCESS
-            End If
-
-            Dim msg As String = "Error zipping concat dta file using SharpZipLib, job " & m_JobNum & ", step " & m_StepNum
-            LogError(msg)
-            Return CloseOutType.CLOSEOUT_FAILED
-
-        Catch ex As Exception
-            Dim msg As String = "Exception zipping concat dta file using SharpZipLib, job " & m_JobNum & ", step " & m_StepNum
-            LogError(msg, ex)
-            Return CloseOutType.CLOSEOUT_FAILED
-        End Try
-
-
-
-    End Function
-#End Region
-
-End Class
+        #endregion
+
+        #region "Module-wide variables"
+
+        private bool m_CentroidDTAs;
+        private bool m_ConcatenateDTAs;
+        private int m_StepNum;
+
+        #endregion
+
+        #region "Methods"
+
+        /// <summary>
+        /// Runs the analysis tool
+        /// </summary>
+        /// <returns>CloseoutType enum indicating success or failure</returns>
+        /// <remarks>This method is used to meet the interface requirement</remarks>
+        public override CloseOutType RunTool()
+        {
+            // Do the stuff in the base class
+            if (!(base.RunTool() == CloseOutType.CLOSEOUT_SUCCESS))
+                return CloseOutType.CLOSEOUT_FAILED;
+
+            m_StepNum = m_jobParams.GetJobParameter("Step", 0);
+
+            // Create spectra files
+            var result = CreateMSMSSpectra();
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                // Something went wrong
+                // In order to help diagnose things, we will move key files into the result folder,
+                //  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
+                CopyFailedResultsToArchiveFolder();
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            // Stop the job timer
+            m_StopTime = DateTime.UtcNow;
+
+            // Add the current job data to the summary file
+            try
+            {
+                if (!UpdateSummaryFile())
+                {
+                    LogWarning("Error creating summary file, job " + m_JobNum + ", step " + m_StepNum);
+                }
+            }
+            catch (Exception ex)
+            {
+                LogWarning("Error creating summary file, job " + m_JobNum + ", step " + m_StepNum + ": " + ex.Message);
+            }
+
+            // Get rid of raw data file
+            result = DeleteDataFile();
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                return result;
+            }
+
+            // Add all the extensions of the files to delete after run
+            m_jobParams.AddResultFileExtensionToSkip(CDTA_FILE_SUFFIX);    // Unzipped, concatenated DTA
+            m_jobParams.AddResultFileExtensionToSkip(".dta");              // DTA files
+            m_jobParams.AddResultFileExtensionToSkip("DeconMSn_progress.txt");
+
+            // Add any files that are an exception to the captured files to delete list
+            m_jobParams.AddResultFileToKeep("lcq_dta.txt");
+
+            result = MakeResultsFolder();
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                return result;
+            }
+
+            result = MoveResultFiles();
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+                return result;
+            }
+
+            result = CopyResultsFolderToServer();
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+                return result;
+            }
+
+            return CloseOutType.CLOSEOUT_SUCCESS; //No failures so everything must have succeeded
+        }
+
+        /// <summary>
+        /// Creates DTA files and filters if necessary
+        /// </summary>
+        /// <returns>CloseoutType enum indicating success or failure</returns>
+        /// <remarks></remarks>
+        public CloseOutType CreateMSMSSpectra()
+        {
+            //Make the spectra files
+            var Result = MakeSpectraFiles();
+            if (Result != CloseOutType.CLOSEOUT_SUCCESS)
+                return Result;
+
+            //Concatenate spectra files
+            if (m_ConcatenateDTAs)
+            {
+                Result = ConcatSpectraFiles();
+                if (Result != CloseOutType.CLOSEOUT_SUCCESS)
+                    return Result;
+            }
+
+            if (m_CentroidDTAs)
+            {
+                Result = CentroidCDTA();
+                if (Result != CloseOutType.CLOSEOUT_SUCCESS)
+                    return Result;
+            }
+
+            //Zip concatenated spectra files
+            Result = ZipConcDtaFile();
+            if (Result != CloseOutType.CLOSEOUT_SUCCESS)
+                return Result;
+
+            //If we got to here, everything's OK
+            return CloseOutType.CLOSEOUT_SUCCESS;
+        }
+
+        private eDTAGeneratorConstants GetDTAGenerator(out clsDtaGen spectraGen)
+        {
+            string strErrorMessage = string.Empty;
+
+            var eDtaGeneratorType = GetDTAGeneratorInfo(m_jobParams, out m_ConcatenateDTAs, out strErrorMessage);
+            spectraGen = null;
+
+            switch (eDtaGeneratorType)
+            {
+                case eDTAGeneratorConstants.MGFtoDTA:
+                    spectraGen = new clsMGFtoDtaGenMainProcess();
+
+                    break;
+                case eDTAGeneratorConstants.MSConvert:
+                    spectraGen = new clsDtaGenMSConvert();
+
+                    break;
+                case eDTAGeneratorConstants.DeconConsole:
+                    LogError("DeconConsole is obsolete and should no longer be used");
+
+                    return eDTAGeneratorConstants.Unknown;
+                // spectraGen = New clsDtaGenDeconConsole()
+
+                case eDTAGeneratorConstants.ExtractMSn:
+                case eDTAGeneratorConstants.DeconMSn:
+                    spectraGen = new clsDtaGenThermoRaw();
+
+                    break;
+                case eDTAGeneratorConstants.RawConverter:
+                    spectraGen = new clsDtaGenRawConverter();
+
+                    break;
+                case eDTAGeneratorConstants.Unknown:
+                    if (string.IsNullOrEmpty(strErrorMessage))
+                    {
+                        LogError("GetDTAGeneratorInfo reported an Unknown DTAGenerator type");
+                    }
+                    else
+                    {
+                        LogError(strErrorMessage);
+                    }
+                    break;
+            }
+
+            return eDtaGeneratorType;
+        }
+
+        public static eDTAGeneratorConstants GetDTAGeneratorInfo(IJobParams oJobParams, out string strErrorMessage)
+        {
+            bool blnConcatenateDTAs = false;
+            return GetDTAGeneratorInfo(oJobParams, out blnConcatenateDTAs, out strErrorMessage);
+        }
+
+        public static eDTAGeneratorConstants GetDTAGeneratorInfo(IJobParams oJobParams, out bool blnConcatenateDTAs, out string strErrorMessage)
+        {
+            string strDTAGenerator = oJobParams.GetJobParameter("DtaGenerator", "");
+            string strRawDataType = oJobParams.GetJobParameter("RawDataType", "");
+            bool blnMGFInstrumentData = oJobParams.GetJobParameter("MGFInstrumentData", false);
+
+            strErrorMessage = string.Empty;
+            blnConcatenateDTAs = true;
+
+            clsAnalysisResources.eRawDataTypeConstants eRawDataType;
+
+            if (string.IsNullOrEmpty(strRawDataType))
+            {
+                strErrorMessage = NotifyMissingParameter(oJobParams, "RawDataType");
+                return eDTAGeneratorConstants.Unknown;
+            }
+            else
+            {
+                eRawDataType = clsAnalysisResources.GetRawDataType(strRawDataType);
+            }
+
+            if (blnMGFInstrumentData)
+            {
+                blnConcatenateDTAs = false;
+                return eDTAGeneratorConstants.MGFtoDTA;
+            }
+
+            switch (eRawDataType)
+            {
+                case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile:
+
+                    blnConcatenateDTAs = false;
+                    switch (strDTAGenerator.ToLower())
+                    {
+                        case clsDtaGenThermoRaw.MSCONVERT_FILENAME_LOWER:
+
+                            return eDTAGeneratorConstants.MSConvert;
+                        case clsDtaGenThermoRaw.DECON_CONSOLE_FILENAME_LOWER:
+
+                            return eDTAGeneratorConstants.DeconConsole;
+                        case clsDtaGenThermoRaw.EXTRACT_MSN_FILENAME_LOWER:
+                            blnConcatenateDTAs = true;
+
+                            return eDTAGeneratorConstants.ExtractMSn;
+                        case clsDtaGenThermoRaw.DECONMSN_FILENAME_LOWER:
+
+                            return eDTAGeneratorConstants.DeconMSn;
+                        case clsDtaGenThermoRaw.RAWCONVERTER_FILENAME_LOWER:
+
+                            return eDTAGeneratorConstants.RawConverter;
+                        default:
+                            if (string.IsNullOrEmpty(strDTAGenerator))
+                            {
+                                strErrorMessage = NotifyMissingParameter(oJobParams, "DtaGenerator");
+                            }
+                            else
+                            {
+                                strErrorMessage = "Unknown DTAGenerator for Thermo Raw files: " + strDTAGenerator;
+                            }
+
+                            return eDTAGeneratorConstants.Unknown;
+                    }
+
+                    break;
+                case clsAnalysisResources.eRawDataTypeConstants.mzML:
+                    if (strDTAGenerator.ToLower() == clsDtaGenThermoRaw.MSCONVERT_FILENAME.ToLower())
+                    {
+                        blnConcatenateDTAs = false;
+                        return eDTAGeneratorConstants.MSConvert;
+                    }
+                    else
+                    {
+                        strErrorMessage = "Invalid DTAGenerator for mzML files: " + strDTAGenerator;
+                        return eDTAGeneratorConstants.Unknown;
+                    }
+
+                    break;
+                case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder:
+                    blnConcatenateDTAs = true;
+
+                    return eDTAGeneratorConstants.MGFtoDTA;
+                default:
+                    strErrorMessage = "Unsupported data type for DTA generation: " + strRawDataType;
+
+                    return eDTAGeneratorConstants.Unknown;
+            }
+        }
+
+        /// <summary>
+        /// Detailed method for running a tool
+        /// </summary>
+        /// <returns>CloseoutType enum indicating success or failure</returns>
+        /// <remarks></remarks>
+        public CloseOutType DispositionResults()
+        {
+            //Make sure all files have released locks
+            PRISM.Processes.clsProgRunner.GarbageCollectNow();
+            Thread.Sleep(1000);
+
+            //Get rid of raw data file
+            try
+            {
+                var stepResult = DeleteDataFile();
+                if (stepResult != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    return stepResult;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError("clsDtaGenToolRunner.DispositionResults(), Exception while deleting data file", ex);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            //Add the current job data to the summary file
+            try
+            {
+                if (!UpdateSummaryFile())
+                {
+                    LogWarning("Error creating summary file, job " + m_JobNum + ", step " + m_StepNum);
+                }
+            }
+            catch (Exception ex)
+            {
+                LogWarning("Error creating summary file, job " + m_JobNum + ", step " + m_StepNum + ": " + ex.Message);
+            }
+
+            //Delete .dta files
+            string[] FileList = null;
+            try
+            {
+                FileList = Directory.GetFiles(m_WorkDir, "*.dta");
+                foreach (string TmpFile in FileList)
+                {
+                    DeleteFileWithRetries(TmpFile);
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError("Error deleting .dta files", ex);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            //Delete unzipped concatenated dta files
+            FileList = Directory.GetFiles(m_WorkDir, "*" + CDTA_FILE_SUFFIX);
+            foreach (string TmpFile in FileList)
+            {
+                try
+                {
+                    if (Path.GetFileName(TmpFile.ToLower()) != "lcq_dta.txt")
+                    {
+                        DeleteFileWithRetries(TmpFile);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogError("Error deleting concatenated dta file", ex);
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+            }
+
+            //make results folder
+            try
+            {
+                var stepResult = MakeResultsFolder();
+                if (stepResult != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    return stepResult;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError("clsDtaGenToolRunner.DispositionResults(), Exception making results folder", ex);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            //Copy results folder to storage server
+            try
+            {
+                var stepResult = CopyResultsFolderToServer();
+                if (stepResult != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    return stepResult;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError("clsDtaGenToolRunner.DispositionResults(), Exception moving results folder", ex);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            return CloseOutType.CLOSEOUT_SUCCESS;
+        }
+
+        private SpectraFileProcessorParams GetDtaGenInitParams()
+        {
+            SpectraFileProcessorParams initParams = new SpectraFileProcessorParams
+            {
+                DebugLevel = m_DebugLevel,
+                JobParams = m_jobParams,
+                MgrParams = m_mgrParams,
+                StatusTools = m_StatusTools,
+                WorkDir = m_WorkDir,
+                DatasetName = m_Dataset
+            };
+
+            return initParams;
+        }
+
+        /// <summary>
+        /// Creates DTA files
+        /// </summary>
+        /// <returns>CloseoutType enum indicating success or failure</returns>
+        /// <remarks></remarks>
+        public CloseOutType MakeSpectraFiles()
+        {
+            //Make individual spectra files from input raw data file, using plugin
+
+            LogMessage("Making spectra files, job " + m_JobNum + ", step " + m_StepNum);
+
+            clsDtaGen SpectraGen = null;
+
+            var eDtaGeneratorType = GetDTAGenerator(out SpectraGen);
+
+            if (eDtaGeneratorType == eDTAGeneratorConstants.Unknown)
+            {
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            if (eDtaGeneratorType == eDTAGeneratorConstants.DeconConsole)
+            {
+                m_CentroidDTAs = false;
+            }
+            else
+            {
+                m_CentroidDTAs = m_jobParams.GetJobParameter("CentroidDTAs", false);
+            }
+
+            RegisterEvents(SpectraGen);
+
+            // Initialize the plugin
+
+            try
+            {
+                SpectraGen.Setup(GetDtaGenInitParams(), this);
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception configuring DTAGenerator", ex);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            // Store the Version info in the database
+            bool blnSuccess = false;
+            if (eDtaGeneratorType == eDTAGeneratorConstants.MGFtoDTA)
+            {
+                // MGFtoDTA Dll
+                blnSuccess = StoreToolVersionInfoDLL(SpectraGen.DtaToolNameLoc);
+            }
+            else
+            {
+                if (eDtaGeneratorType == eDTAGeneratorConstants.DeconConsole)
+                {
+                    // Possibly use a specific version of DeconTools
+                    var progLoc = DetermineProgramLocation("DeconMSn", "DeconToolsProgLoc", "DeconConsole.exe");
+
+                    if (string.IsNullOrWhiteSpace(progLoc))
+                    {
+                        return CloseOutType.CLOSEOUT_FAILED;
+                    }
+                    else
+                    {
+                        SpectraGen.UpdateDtaToolNameLoc(progLoc);
+                    }
+                }
+
+                blnSuccess = StoreToolVersionInfo(SpectraGen.DtaToolNameLoc, eDtaGeneratorType);
+            }
+
+            if (!blnSuccess)
+            {
+                LogError("Aborting since StoreToolVersionInfo returned false for " + SpectraGen.DtaToolNameLoc);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            if (eDtaGeneratorType == eDTAGeneratorConstants.DeconMSn && m_CentroidDTAs)
+            {
+                var blnUsingExistingResults = m_jobParams.GetJobParameter(clsDtaGenResources.USING_EXISTING_DECONMSN_RESULTS, false);
+
+                if (blnUsingExistingResults)
+                {
+                    // Confirm that the existing DeconMSn results are valid
+                    // If they are, then we don't need to re-run DeconMSn
+
+                    if (ValidateDeconMSnResults())
+                    {
+                        m_progress = 100;
+                        return CloseOutType.CLOSEOUT_SUCCESS;
+                    }
+                }
+            }
+
+            try
+            {
+                // Start the spectra generation process
+                var eResult = StartAndWaitForDTAGenerator(SpectraGen, "MakeSpectraFiles", false);
+
+                // Set internal spectra file count to that returned by the spectra generator
+                m_DtaCount = SpectraGen.SpectraFileCount;
+                m_progress = SpectraGen.Progress;
+
+                if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+                    return eResult;
+            }
+            catch (Exception ex)
+            {
+                LogError("clsDtaGenToolRunner.MakeSpectraFiles: Exception while generating dta files", ex);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            return CloseOutType.CLOSEOUT_SUCCESS;
+        }
+
+        /// <summary>
+        /// Creates a centroided .mgf file for the dataset
+        /// Then updates the _DTA.txt file with the spectral data from the .mgf file
+        /// </summary>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        private CloseOutType CentroidCDTA()
+        {
+            string strCDTAFileOriginal = null;
+            string strCDTAFileCentroided = null;
+            string strCDTAFileFinal = null;
+
+            try
+            {
+                // Rename the _DTA.txt file to _DTA_Original.txt
+                var fiCDTA = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + CDTA_FILE_SUFFIX));
+                if (!fiCDTA.Exists)
+                {
+                    LogError("File not found in CentroidCDTA: " + fiCDTA.Name);
+                    return CloseOutType.CLOSEOUT_NO_DTA_FILES;
+                }
+
+                PRISM.Processes.clsProgRunner.GarbageCollectNow();
+                Thread.Sleep(50);
+
+                strCDTAFileOriginal = Path.Combine(m_WorkDir, m_Dataset + "_DTA_Original.txt");
+                fiCDTA.MoveTo(strCDTAFileOriginal);
+
+                m_jobParams.AddResultFileToSkip(fiCDTA.Name);
+            }
+            catch (Exception ex)
+            {
+                LogError("Error renaming the original _DTA.txt file in CentroidCDTA");
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            try
+            {
+                // Create a centroided _DTA.txt file from the .Raw file (first creates a .MGF file, then converts to _DTA.txt)
+                var oMSConvert = new clsDtaGenMSConvert();
+                oMSConvert.Setup(GetDtaGenInitParams(), this);
+
+                oMSConvert.ForceCentroidOn = true;
+
+                var eResult = StartAndWaitForDTAGenerator(oMSConvert, "CentroidCDTA", true);
+
+                if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    return eResult;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError("Error creating a centroided _DTA.txt file in CentroidCDTA", ex);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            try
+            {
+                // Rename the new _DTA.txt file to _DTA_Centroided.txt
+
+                var fiCDTA = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + CDTA_FILE_SUFFIX));
+                if (!fiCDTA.Exists)
+                {
+                    LogError("File not found in CentroidCDTA (after calling clsDtaGenMSConvert): " + fiCDTA.Name);
+                    return CloseOutType.CLOSEOUT_NO_DTA_FILES;
+                }
+
+                PRISM.Processes.clsProgRunner.GarbageCollectNow();
+                Thread.Sleep(50);
+
+                strCDTAFileCentroided = Path.Combine(m_WorkDir, m_Dataset + "_DTA_Centroided.txt");
+                fiCDTA.MoveTo(strCDTAFileCentroided);
+
+                m_jobParams.AddResultFileToSkip(fiCDTA.Name);
+            }
+            catch (Exception ex)
+            {
+                LogError("Error renaming the centroided _DTA.txt file in CentroidCDTA", ex);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            try
+            {
+                // Read _DTA_Original.txt and _DTA_Centroided.txt in parallel
+                // Create the final _DTA.txt file
+
+                bool blnSuccess = false;
+                strCDTAFileFinal = Path.Combine(m_WorkDir, m_Dataset + CDTA_FILE_SUFFIX);
+
+                blnSuccess = MergeCDTAs(strCDTAFileOriginal, strCDTAFileCentroided, strCDTAFileFinal);
+                if (!blnSuccess)
+                {
+                    if (string.IsNullOrEmpty(m_message))
+                        m_message = "MergeCDTAs returned False in CentroidCDTA";
+                    LogError(m_message);
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError("Error creating final _DTA.txt file in CentroidCDTA", ex);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            return CloseOutType.CLOSEOUT_SUCCESS;
+        }
+
+        /// <summary>
+        /// Concatenates DTA files into a single test file
+        /// </summary>
+        /// <returns>CloseoutType enum indicating success or failure</returns>
+        /// <remarks></remarks>
+        private CloseOutType ConcatSpectraFiles()
+        {
+            // Packages dta files into concatenated text files
+
+            // Make sure at least one .dta file was created
+            var diWorkDir = new DirectoryInfo(m_WorkDir);
+            int intDTACount = diWorkDir.GetFiles("*.dta").Length;
+
+            if (intDTACount == 0)
+            {
+                LogError("No .DTA files were created");
+                return CloseOutType.CLOSEOUT_NO_DTA_FILES;
+            }
+            else if (m_DebugLevel >= 1)
+            {
+                LogMessage("Concatenating spectra files, job " + m_JobNum + ", step " + m_StepNum);
+            }
+
+            clsConcatToolWrapper ConcatTools = new clsConcatToolWrapper(diWorkDir.FullName);
+
+            if (!ConcatTools.ConcatenateFiles(clsConcatToolWrapper.ConcatFileTypes.CONCAT_DTA, m_Dataset))
+            {
+                LogError("Error packaging results: " + ConcatTools.ErrMsg);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+            else
+            {
+                return CloseOutType.CLOSEOUT_SUCCESS;
+            }
+        }
+
+        private void CopyFailedResultsToArchiveFolder()
+        {
+            string strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
+            if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
+                strFailedResultsFolderPath = "??Not Defined??";
+
+            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
+
+            // Bump up the debug level if less than 2
+            if (m_DebugLevel < 2)
+                m_DebugLevel = 2;
+
+            // Make sure the _dta.txt file is retained
+            m_jobParams.RemoveResultFileToSkip(m_Dataset + "_dta.txt");
+
+            // Skip any .dta files
+            m_jobParams.AddResultFileExtensionToSkip(".dta");
+
+            // Try to save whatever files are in the work directory
+            var strFolderPathToArchive = string.Copy(m_WorkDir);
+
+            // Make the results folder
+            var result = MakeResultsFolder();
+            if (result == CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                // Move the result files into the result folder
+                result = MoveResultFiles();
+                if (result == CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    // Move was a success; update strFolderPathToArchive
+                    strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName);
+                }
+            }
+
+            // Copy the results folder to the Archive folder
+            var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
+            objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive);
+        }
+
+        private string GetMSConvertAppPath()
+        {
+            string ProteoWizardDir = m_mgrParams.GetParam("ProteoWizardDir");         // MSConvert.exe is stored in the ProteoWizard folder
+            string progLoc = Path.Combine(ProteoWizardDir, clsDtaGenMSConvert.MSCONVERT_FILENAME);
+
+            return progLoc;
+        }
+
+        /// <summary>
+        /// Deletes .raw files from working directory
+        /// </summary>
+        /// <returns>CloseoutType enum indicating success or failure</returns>
+        /// <remarks>Overridden for other types of input files</remarks>
+        private CloseOutType DeleteDataFile()
+        {
+            //Deletes the .raw file from the working directory
+
+            if (m_DebugLevel >= 2)
+            {
+                LogMessage("clsDtaGenToolRunner.DeleteDataFile, executing method");
+            }
+
+            //Delete the .raw file
+            try
+            {
+                var lstFilesToDelete = new List<string>();
+                lstFilesToDelete.AddRange(Directory.GetFiles(m_WorkDir, "*" + clsAnalysisResources.DOT_RAW_EXTENSION));
+                lstFilesToDelete.AddRange(Directory.GetFiles(m_WorkDir, "*" + clsAnalysisResources.DOT_MZXML_EXTENSION));
+                lstFilesToDelete.AddRange(Directory.GetFiles(m_WorkDir, "*" + clsAnalysisResources.DOT_MZML_EXTENSION));
+                lstFilesToDelete.AddRange(Directory.GetFiles(m_WorkDir, "*" + clsAnalysisResources.DOT_MGF_EXTENSION));
+
+                foreach (string MyFile in lstFilesToDelete)
+                {
+                    if (m_DebugLevel >= 2)
+                    {
+                        LogMessage("clsDtaGenToolRunner.DeleteDataFile, deleting file " + MyFile);
+                    }
+                    DeleteFileWithRetries(MyFile);
+                }
+                return CloseOutType.CLOSEOUT_SUCCESS;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error deleting .raw file, job " + m_JobNum + ", step " + m_StepNum, ex);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+        }
+
+        private bool MergeCDTAs(string strCDTAWithParentIonData, string strCDTAWithFragIonData, string strCDTAFileFinal)
+        {
+            var dtLastStatus = DateTime.UtcNow;
+
+            try
+            {
+                var oCDTAReaderParentIons = new clsDtaTextFileReader(false);
+                if (!oCDTAReaderParentIons.OpenFile(strCDTAWithParentIonData))
+                {
+                    LogError("Error opening CDTA file with the parent ion data");
+                    return false;
+                }
+
+                var oCDTAReaderFragIonData = new clsDtaTextFileReader(true);
+                if (!oCDTAReaderFragIonData.OpenFile(strCDTAWithFragIonData))
+                {
+                    LogError("Error opening CDTA file with centroided spectra data");
+                    return false;
+                }
+
+                // This dictionary is used to track the spectrum scan numbers in strCDTAWithFragIonData
+                // This is used to reduce the number of times that oCDTAReaderFragIonData is closed and re-opened
+                var fragIonDataScanStatus = new Dictionary<int, SortedSet<int>>();
+
+                // Cache the Start/End scan combos in strCDTAWithFragIonData
+                LogMessage("Scanning " + Path.GetFileName(strCDTAWithFragIonData) + " to cache the scan range for each MS/MS spectrum");
+
+                while (true)
+                {
+                    List<string> msMsDataListCentroid = null;
+
+                    clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType udtFragIonDataHeaderCentroid;
+                    var blnNextSpectrumAvailable = oCDTAReaderFragIonData.ReadNextSpectrum(out msMsDataListCentroid, out udtFragIonDataHeaderCentroid);
+                    if (!blnNextSpectrumAvailable)
+                    {
+                        break;
+                    }
+
+                    var scanStart = udtFragIonDataHeaderCentroid.ScanNumberStart;
+                    var scanEnd = udtFragIonDataHeaderCentroid.ScanNumberEnd;
+
+                    SortedSet<int> endScanList = null;
+                    if (fragIonDataScanStatus.TryGetValue(scanStart, out endScanList))
+                    {
+                        if (!endScanList.Contains(scanEnd))
+                        {
+                            endScanList.Add(scanEnd);
+                        }
+                    }
+                    else
+                    {
+                        endScanList = new SortedSet<int> { scanEnd };
+                        fragIonDataScanStatus.Add(scanStart, endScanList);
+                    }
+                }
+
+                // Close, then re-open strCDTAWithFragIonData
+                oCDTAReaderFragIonData.CloseFile();
+                var udtFragIonDataHeader = oCDTAReaderFragIonData.GetNewSpectrumHeaderInfo();
+
+                Thread.Sleep(10);
+
+                oCDTAReaderFragIonData = new clsDtaTextFileReader(true);
+                if (!oCDTAReaderFragIonData.OpenFile(strCDTAWithFragIonData))
+                {
+                    LogError("Error re-opening CDTA file with the fragment ion data (after initial scan of the file)");
+                    return false;
+                }
+
+                LogMessage("Merging " + Path.GetFileName(strCDTAWithParentIonData) + " with " + Path.GetFileName(strCDTAWithFragIonData));
+
+                var intSpectrumCountSkipped = 0;
+                using (var swCDTAOut = new StreamWriter(new FileStream(strCDTAFileFinal, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                {
+                    List<string> msMsDataList = null;
+                    clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType udtParentIonDataHeader;
+
+                    while (oCDTAReaderParentIons.ReadNextSpectrum(out msMsDataList, out udtParentIonDataHeader))
+                    {
+                        if (!ScanMatchIsPossible(udtParentIonDataHeader, fragIonDataScanStatus))
+                        {
+                            LogWarning("MergeCDTAs could not find spectrum with StartScan=" + udtParentIonDataHeader.ScanNumberStart + " and EndScan=" +
+                                       udtParentIonDataHeader.ScanNumberEnd + " for " + Path.GetFileName(strCDTAWithParentIonData));
+                            intSpectrumCountSkipped += 1;
+                            continue;
+                        }
+
+                        List<string> msMsDataListCentroid = null;
+                        bool blnNextSpectrumAvailable = false;
+
+                        while (!ScanHeadersMatch(udtParentIonDataHeader, udtFragIonDataHeader))
+                        {
+                            blnNextSpectrumAvailable = oCDTAReaderFragIonData.ReadNextSpectrum(out msMsDataListCentroid, out udtFragIonDataHeader);
+                            if (!blnNextSpectrumAvailable)
+                                break;
+                        }
+
+                        blnNextSpectrumAvailable = ScanHeadersMatch(udtParentIonDataHeader, udtFragIonDataHeader);
+                        if (!blnNextSpectrumAvailable)
+                        {
+                            // We never did find a match; this is unexpected
+                            // Try closing the FragIonData file, re-opening, and parsing again
+                            oCDTAReaderFragIonData.CloseFile();
+                            udtFragIonDataHeader = oCDTAReaderFragIonData.GetNewSpectrumHeaderInfo();
+
+                            Thread.Sleep(10);
+
+                            oCDTAReaderFragIonData = new clsDtaTextFileReader(true);
+                            if (!oCDTAReaderFragIonData.OpenFile(strCDTAWithFragIonData))
+                            {
+                                LogError("Error re-opening CDTA file with the fragment ion data (when blnNextSpectrumAvailable = False)");
+                                return false;
+                            }
+
+                            while (!ScanHeadersMatch(udtParentIonDataHeader, udtFragIonDataHeader))
+                            {
+                                blnNextSpectrumAvailable = oCDTAReaderFragIonData.ReadNextSpectrum(out msMsDataListCentroid, out udtFragIonDataHeader);
+                                if (!blnNextSpectrumAvailable)
+                                    break;
+                            }
+
+                            blnNextSpectrumAvailable = ScanHeadersMatch(udtParentIonDataHeader, udtFragIonDataHeader);
+                            if (!blnNextSpectrumAvailable)
+                            {
+                                LogWarning("MergeCDTAs could not find spectrum with StartScan=" + udtParentIonDataHeader.ScanNumberStart +
+                                           " and EndScan=" + udtParentIonDataHeader.ScanNumberEnd + " for " +
+                                           Path.GetFileName(strCDTAWithParentIonData));
+                                intSpectrumCountSkipped += 1;
+                            }
+                        }
+
+                        if (blnNextSpectrumAvailable)
+                        {
+                            swCDTAOut.WriteLine();
+                            swCDTAOut.WriteLine(udtParentIonDataHeader.SpectrumTitleWithCommentChars);
+                            swCDTAOut.WriteLine(udtParentIonDataHeader.ParentIonLineText);
+
+                            var strDataLinesToAppend = RemoveTitleAndParentIonLines(oCDTAReaderFragIonData.GetMostRecentSpectrumFileText());
+
+                            if (string.IsNullOrWhiteSpace(strDataLinesToAppend))
+                            {
+                                LogError("oCDTAReaderFragIonData.GetMostRecentSpectrumFileText returned empty text for " + "StartScan=" +
+                                         udtParentIonDataHeader.ScanNumberStart + " and " + "EndScan=" + udtParentIonDataHeader.ScanNumberEnd +
+                                         " in MergeCDTAs for " + Path.GetFileName(strCDTAWithParentIonData));
+                                return false;
+                            }
+                            else
+                            {
+                                swCDTAOut.Write(strDataLinesToAppend);
+                            }
+                        }
+
+                        if (DateTime.UtcNow.Subtract(dtLastStatus).TotalSeconds >= 30)
+                        {
+                            dtLastStatus = DateTime.UtcNow;
+                            if (m_DebugLevel >= 1)
+                            {
+                                LogMessage("Merging CDTAs, scan " + udtParentIonDataHeader.ScanNumberStart.ToString());
+                            }
+                        }
+                    }
+                }
+
+                try
+                {
+                    oCDTAReaderParentIons.CloseFile();
+                    oCDTAReaderFragIonData.CloseFile();
+                }
+                catch (Exception ex)
+                {
+                    // Ignore errors here
+                }
+
+                if (intSpectrumCountSkipped > 0)
+                {
+                    m_EvalMessage = "Skipped " + intSpectrumCountSkipped + " spectra in MergeCDTAs since they were not created by MSConvert";
+                    LogWarning(m_EvalMessage);
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError("Error merging CDTA files", ex);
+                return false;
+            }
+
+            return true;
+        }
+
+        private string RemoveTitleAndParentIonLines(string strSpectrumText)
+        {
+            var sbOutput = new StringBuilder(strSpectrumText.Length);
+            var blnPreviousLineWasTitleLine = false;
+
+            using (var trReader = new StringReader(strSpectrumText))
+            {
+                while (trReader.Peek() > -1)
+                {
+                    var strLine = trReader.ReadLine();
+
+                    if (strLine.StartsWith("="))
+                    {
+                        // Skip this line
+                        blnPreviousLineWasTitleLine = true;
+                    }
+                    else if (blnPreviousLineWasTitleLine)
+                    {
+                        // Skip this line
+                        blnPreviousLineWasTitleLine = false;
+                    }
+                    else if (!string.IsNullOrEmpty(strLine))
+                    {
+                        // Data line; keep it
+                        sbOutput.AppendLine(strLine);
+                    }
+                }
+            }
+
+            return sbOutput.ToString();
+        }
+
+        private bool ScanMatchIsPossible(clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType udtParentIonDataHeader,
+            Dictionary<int, SortedSet<int>> fragIonDataScanStatus)
+        {
+            SortedSet<int> endScanList = null;
+            if (fragIonDataScanStatus.TryGetValue(udtParentIonDataHeader.ScanNumberStart, out endScanList))
+            {
+                if (endScanList.Contains(udtParentIonDataHeader.ScanNumberEnd))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private bool ScanHeadersMatch(clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType udtParentIonDataHeader,
+            clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType udtFragIonDataHeader)
+        {
+            if (udtParentIonDataHeader.ScanNumberStart == udtFragIonDataHeader.ScanNumberStart)
+            {
+                if (udtParentIonDataHeader.ScanNumberEnd == udtFragIonDataHeader.ScanNumberEnd)
+                {
+                    return true;
+                }
+                else
+                {
+                    // MSConvert wrote out these headers for dataset Athal0503_26Mar12_Jaguar_12-02-26
+                    // 3160.0001.13.dta
+                    // 3211.0001.11.dta
+                    // 3258.0001.12.dta
+                    // 3259.0001.13.dta
+
+                    // Thus, allow a match if ScanNumberStart matches but ScanNumberEnd is less than ScanNumberStart
+                    if (udtFragIonDataHeader.ScanNumberEnd < udtFragIonDataHeader.ScanNumberStart)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        private CloseOutType StartAndWaitForDTAGenerator(clsDtaGen oDTAGenerator, string strCallingFunction, bool blnSecondPass)
+        {
+            ProcessStatus retVal = oDTAGenerator.Start();
+            if (retVal == ProcessStatus.SF_ERROR)
+            {
+                LogError("Error starting spectra processor: " + oDTAGenerator.ErrMsg);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            if (m_DebugLevel > 0)
+            {
+                LogMessage("clsDtaGenToolRunner." + strCallingFunction + ": Spectra generation started");
+            }
+
+            // Loop until the spectra generator finishes
+            while ((oDTAGenerator.Status == ProcessStatus.SF_STARTING) | (oDTAGenerator.Status == ProcessStatus.SF_RUNNING))
+            {
+                if (blnSecondPass)
+                {
+                    m_progress = CENTROID_CDTA_PROGRESS_START + oDTAGenerator.Progress * (100f - CENTROID_CDTA_PROGRESS_START) / 100f;
+                }
+                else
+                {
+                    if (m_CentroidDTAs)
+                    {
+                        m_progress = oDTAGenerator.Progress * (CENTROID_CDTA_PROGRESS_START / 100f);
+                    }
+                    else
+                    {
+                        m_progress = oDTAGenerator.Progress;
+                    }
+                }
+
+                UpdateStatusRunning(m_progress, oDTAGenerator.SpectraFileCount);
+
+                Thread.Sleep(5000);                 //Delay for 5 seconds
+            }
+
+            UpdateStatusRunning(m_progress, oDTAGenerator.SpectraFileCount);
+
+            //Check for reason spectra generator exited
+            if (oDTAGenerator.Results == ProcessResults.SF_FAILURE)
+            {
+                LogError("Error making DTA files in " + strCallingFunction + ": " + oDTAGenerator.ErrMsg);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+            else if (oDTAGenerator.Results == ProcessResults.SF_ABORTED)
+            {
+                LogError("DTA generation aborted in " + strCallingFunction + "");
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            if (oDTAGenerator.Results == ProcessResults.SF_NO_FILES_CREATED)
+            {
+                LogError("No spectra files created in " + strCallingFunction);
+                return CloseOutType.CLOSEOUT_NO_DTA_FILES;
+            }
+            else
+            {
+                if (m_DebugLevel >= 2)
+                {
+                    LogMessage("clsDtaGenToolRunner." + strCallingFunction + ": Spectra generation completed");
+                }
+            }
+
+            return CloseOutType.CLOSEOUT_SUCCESS;
+        }
+
+        /// <summary>
+        /// Stores the tool version info in the database
+        /// </summary>
+        /// <remarks></remarks>
+        private bool StoreToolVersionInfo(string strDtaGeneratorAppPath, eDTAGeneratorConstants eDtaGenerator)
+        {
+            string strToolVersionInfo = string.Empty;
+
+            if (m_DebugLevel >= 2)
+            {
+                LogMessage("Determining tool version info");
+            }
+
+            var fiDtaGenerator = new FileInfo(strDtaGeneratorAppPath);
+            if (!fiDtaGenerator.Exists)
+            {
+                try
+                {
+                    LogError("DtaGenerator not found: " + strDtaGeneratorAppPath);
+                    strToolVersionInfo = "Unknown";
+                    return base.SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>(), blnSaveToolVersionTextFile: false);
+                }
+                catch (Exception ex)
+                {
+                    LogError("Exception calling SetStepTaskToolVersion", ex);
+                    return false;
+                }
+            }
+
+            // Store strDtaGeneratorAppPath in ioToolFiles
+            List<FileInfo> ioToolFiles = new List<FileInfo>();
+            ioToolFiles.Add(fiDtaGenerator);
+
+            if (eDtaGenerator == eDTAGeneratorConstants.DeconConsole || eDtaGenerator == eDTAGeneratorConstants.DeconMSn)
+            {
+                // Lookup the version of the DeconConsole or DeconMSn application
+                string strDllPath = null;
+
+                var blnSuccess = StoreToolVersionInfoViaSystemDiagnostics(ref strToolVersionInfo, fiDtaGenerator.FullName);
+                if (!blnSuccess)
+                    return false;
+
+                if (eDtaGenerator == eDTAGeneratorConstants.DeconMSn)
+                {
+                    // DeconMSn
+                    var deconEngineV2File = new FileInfo(Path.Combine(fiDtaGenerator.DirectoryName, "DeconEngineV2.dll"));
+                    if (deconEngineV2File.Exists)
+                    {
+                        // C# version of DeconMSn (released in January 2017)
+                        strDllPath = Path.Combine(fiDtaGenerator.DirectoryName, "DeconEngineV2.dll");
+                        ioToolFiles.Add(new FileInfo(strDllPath));
+                        blnSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strDllPath);
+                    }
+                    else
+                    {
+                        strDllPath = Path.Combine(fiDtaGenerator.DirectoryName, "DeconMSnEngine.dll");
+                        ioToolFiles.Add(new FileInfo(strDllPath));
+                        blnSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strDllPath);
+                    }
+
+                    if (!blnSuccess)
+                        return false;
+                }
+                else if (eDtaGenerator == eDTAGeneratorConstants.DeconConsole)
+                {
+                    // DeconConsole re-implementation of DeconMSn (obsolete, superseded by C# version of DeconMSn that uses DeconEngineV2.dll)
+
+                    // Lookup the version of the DeconTools Backend (in the DeconTools folder)
+                    // In addition, add it to ioToolFiles
+                    strDllPath = Path.Combine(fiDtaGenerator.DirectoryName, "DeconTools.Backend.dll");
+                    ioToolFiles.Add(new FileInfo(strDllPath));
+                    blnSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strDllPath);
+                    if (!blnSuccess)
+                        return false;
+
+                    // Lookup the version of DeconEngineV2 (in the DeconTools folder)
+                    strDllPath = Path.Combine(fiDtaGenerator.DirectoryName, "DeconEngineV2.dll");
+                    blnSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strDllPath);
+                    if (!blnSuccess)
+                        return false;
+                }
+            }
+
+            // Possibly also store the MSConvert version
+            if (m_CentroidDTAs)
+            {
+                ioToolFiles.Add(new FileInfo(GetMSConvertAppPath()));
+            }
+
+            try
+            {
+                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile: false);
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception calling SetStepTaskToolVersion", ex);
+                return false;
+            }
+        }
+
+        private bool StoreToolVersionInfoDLL(string strDtaGeneratorDLLPath)
+        {
+            string strToolVersionInfo = string.Empty;
+
+            if (m_DebugLevel >= 2)
+            {
+                LogMessage("Determining tool version info");
+            }
+
+            // Lookup the version of the DLL
+            base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strDtaGeneratorDLLPath);
+
+            // Store paths to key files in ioToolFiles
+            List<FileInfo> ioToolFiles = new List<FileInfo>();
+            ioToolFiles.Add(new FileInfo(strDtaGeneratorDLLPath));
+
+            // Possibly also store the MSConvert version
+            if (m_CentroidDTAs)
+            {
+                ioToolFiles.Add(new FileInfo(GetMSConvertAppPath()));
+            }
+
+            try
+            {
+                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile: false);
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception calling SetStepTaskToolVersion", ex);
+                return false;
+            }
+        }
+
+        private bool ValidateDeconMSnResults()
+        {
+            var existingResultsAreValid = false;
+
+            try
+            {
+                var fiDeconMSnLogFile = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + "_DeconMSn_log.txt"));
+
+                if (!fiDeconMSnLogFile.Exists)
+                {
+                    LogWarning("DeconMSn_log.txt file not found; cannot use pre-existing DeconMSn results");
+                    return false;
+                }
+
+                var headerLineFound = false;
+
+                using (var srLogFile = new StreamReader(new FileStream(fiDeconMSnLogFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                {
+                    while (!srLogFile.EndOfStream)
+                    {
+                        var strLineIn = srLogFile.ReadLine();
+
+                        if (!string.IsNullOrEmpty(strLineIn))
+                        {
+                            if (headerLineFound)
+                            {
+                                // Found a data line
+                                if (char.IsDigit(strLineIn[0]))
+                                {
+                                    existingResultsAreValid = true;
+                                    break;
+                                }
+                            }
+                            else if (strLineIn.StartsWith("MSn_Scan"))
+                            {
+                                // Found the header line
+                                headerLineFound = true;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception in ValidateDeconMSnResults", ex);
+                return false;
+            }
+
+            return existingResultsAreValid;
+        }
+
+        /// <summary>
+        /// Zips concatenated DTA file to reduce size
+        /// </summary>
+        /// <returns>CloseoutType enum indicating success or failure</returns>
+        /// <remarks></remarks>
+        private CloseOutType ZipConcDtaFile()
+        {
+            string DtaFileName = m_Dataset + "_dta.txt";
+            string DtaFilePath = Path.Combine(m_WorkDir, DtaFileName);
+
+            LogMessage("Zipping concatenated spectra file, job " + m_JobNum + ", step " + m_StepNum);
+
+            // Verify the _dta.txt file exists
+            if (!File.Exists(DtaFilePath))
+            {
+                LogWarning("Error: Unable to find concatenated dta file");
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            // Zip the file using IonicZip
+            try
+            {
+                if (base.ZipFile(DtaFilePath, false))
+                {
+                    return CloseOutType.CLOSEOUT_SUCCESS;
+                }
+            }
+            catch (Exception ex)
+            {
+                string msg = "Exception zipping concat dta file, job " + m_JobNum + ", step " + m_StepNum + ": " + ex.Message;
+                LogError(msg);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            // Occasionally the zip file is corrupted and will need to be zipped using ICSharpCode.SharpZipLib instead
+            // If the file exists and is not zero bytes in length, try zipping again, but instead use ICSharpCode.SharpZipLib
+
+            var fiZipFile = new FileInfo(base.GetZipFilePathForFile(DtaFilePath));
+            if (!fiZipFile.Exists || fiZipFile.Length <= 0)
+            {
+                string msg = "Error zipping concat dta file, job " + m_JobNum + ", step " + m_StepNum;
+                LogError(msg);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            try
+            {
+                Thread.Sleep(250);
+
+                if (base.ZipFileSharpZipLib(DtaFilePath))
+                {
+                    var warningMsg = string.Format("Zip file created using IonicZip was corrupted; successfully compressed it using SharpZipLib instead: {0}", DtaFileName);
+                    LogWarning(warningMsg);
+                    return CloseOutType.CLOSEOUT_SUCCESS;
+                }
+
+                string msg = "Error zipping concat dta file using SharpZipLib, job " + m_JobNum + ", step " + m_StepNum;
+                LogError(msg);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+            catch (Exception ex)
+            {
+                string msg = "Exception zipping concat dta file using SharpZipLib, job " + m_JobNum + ", step " + m_StepNum;
+                LogError(msg, ex);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+        }
+
+        #endregion
+    }
+}

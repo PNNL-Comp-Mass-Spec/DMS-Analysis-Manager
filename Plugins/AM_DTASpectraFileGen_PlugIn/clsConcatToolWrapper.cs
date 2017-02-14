@@ -1,132 +1,148 @@
-'*********************************************************************************************************
-' Written by Dave Clark for the US Department of Energy 
-' Pacific Northwest National Laboratory, Richland, WA
-' Copyright 2005, Battelle Memorial Institute
-' Started 11/03/2005
-'
-'*********************************************************************************************************
+//*********************************************************************************************************
+// Written by Dave Clark for the US Department of Energy
+// Pacific Northwest National Laboratory, Richland, WA
+// Copyright 2005, Battelle Memorial Institute
+// Started 11/03/2005
+//
+//*********************************************************************************************************
 
-Option Strict On
+using System;
+using System.Threading;
+using AnalysisManagerBase;
+using FileConcatenator;
 
-Imports AnalysisManagerBase
-Imports FileConcatenator
-Imports System.Threading
+namespace DTASpectraFileGen
+{
+    /// <summary>
+    /// Provides a wrapper around Ken Auberry's file concatenator dll to simplify use
+    /// Requires FileConcatenator.dll to be referenced in project
+    /// </summary>
+    public class clsConcatToolWrapper
+    {
+        #region "Enums"
 
-Public Class clsConcatToolWrapper
+        public enum ConcatFileTypes
+        {
+            CONCAT_DTA,
+            CONCAT_OUT,
+            CONCAT_ALL
+        }
 
-    '*********************************************************************************************************
-    'Provides a wrapper around Ken Auberry's file concatenator dll to simplify use
-    'Requires FileConcatenator.dll to be referenced in project
-    '*********************************************************************************************************
+        #endregion
 
-#Region "Enums"
-    Public Enum ConcatFileTypes
-        CONCAT_DTA
-        CONCAT_OUT
-        CONCAT_ALL
-    End Enum
-#End Region
+        #region "Module variables"
 
-#Region "Module variables"
-    Private m_CatInProgress As Boolean = False
-    Private WithEvents m_CatTools As IConcatenateFiles
-    Private m_ErrMsg As String = ""
-    Private m_DataPath As String = ""
-    Private m_Progress As Single = 0.0 'Percent complete, 0-100
-#End Region
+        private bool m_CatInProgress = false;
+        private IConcatenateFiles m_CatTools;
+        private string m_ErrMsg = "";
+        private string m_DataPath = "";
+        private float m_Progress = 0.0f;        //Percent complete, 0-100
 
-#Region "Properties"
-    Public ReadOnly Property Progress() As Single
-        Get
-            Return m_Progress
-        End Get
-    End Property
+        #endregion
 
-    Public ReadOnly Property ErrMsg() As String
-        Get
-            Return m_ErrMsg
-        End Get
-    End Property
+        #region "Properties"
 
-    Public Property DataPath() As String
-        Get
-            Return m_DataPath
-        End Get
-        Set(Value As String)
-            m_DataPath = Value
-        End Set
-    End Property
-#End Region
+        public float Progress
+        {
+            get { return m_Progress; }
+        }
 
-#Region "Public Methods"
-    Public Sub New(DataPath As String)
+        public string ErrMsg
+        {
+            get { return m_ErrMsg; }
+        }
 
-        m_DataPath = DataPath
+        public string DataPath
+        {
+            get { return m_DataPath; }
+            set { m_DataPath = value; }
+        }
 
-    End Sub
+        #endregion
 
-    Public Function ConcatenateFiles(FileType As ConcatFileTypes, RootFileName As String) As Boolean
-        Return ConcatenateFiles(FileType, RootFileName, False)
-    End Function
+        #region "Public Methods"
 
-    Public Function ConcatenateFiles(
-      FileType As ConcatFileTypes,
-      RootFileName As String,
-      blnDeleteSourceFilesWhenConcatenating As Boolean) As Boolean
+        public clsConcatToolWrapper(string DataPath)
+        {
+            m_DataPath = DataPath;
+        }
 
-        Try
-            'Perform the concatenation
-            m_CatTools = New clsConcatenateFiles(m_DataPath, RootFileName)
-            m_CatTools.DeleteSourceFilesWhenConcatenating = blnDeleteSourceFilesWhenConcatenating
+        public bool ConcatenateFiles(ConcatFileTypes FileType, string RootFileName)
+        {
+            return ConcatenateFiles(FileType, RootFileName, false);
+        }
 
-            m_CatInProgress = True
+        public bool ConcatenateFiles(ConcatFileTypes FileType, string RootFileName, bool blnDeleteSourceFilesWhenConcatenating)
+        {
+            try
+            {
+                //Perform the concatenation
+                m_CatTools = new clsConcatenateFiles(m_DataPath, RootFileName);
+                m_CatTools.DeleteSourceFilesWhenConcatenating = blnDeleteSourceFilesWhenConcatenating;
+                m_CatTools.ErrorNotification += m_CatTools_ErrorNotification;
+                m_CatTools.EndTask += m_CatTools_EndingTask;
+                m_CatTools.Progress += m_CatTools_Progress;
 
-            'Call the dll based on the concatenation type
-            Select Case FileType
-                Case ConcatFileTypes.CONCAT_ALL
-                    m_CatTools.MakeCattedDTAsAndOUTs()
-                Case ConcatFileTypes.CONCAT_DTA
-                    m_CatTools.MakeCattedDTAsOnly()
-                Case ConcatFileTypes.CONCAT_OUT
-                    m_CatTools.MakeCattedOUTsOnly()
-                Case Else
-                    'Shouldn't ever get here
-                    m_ErrMsg = "Invalid concatenation selection: " & FileType.ToString
-                    Return False
-            End Select
+                m_CatInProgress = true;
 
-            'Loop until the concatenation finishes
-            While m_CatInProgress
-                Thread.Sleep(1000)
-            End While
+                //Call the dll based on the concatenation type
+                switch (FileType)
+                {
+                    case ConcatFileTypes.CONCAT_ALL:
+                        m_CatTools.MakeCattedDTAsAndOUTs();
+                        break;
+                    case ConcatFileTypes.CONCAT_DTA:
+                        m_CatTools.MakeCattedDTAsOnly();
+                        break;
+                    case ConcatFileTypes.CONCAT_OUT:
+                        m_CatTools.MakeCattedOUTsOnly();
+                        break;
+                    default:
+                        //Shouldn't ever get here
+                        m_ErrMsg = "Invalid concatenation selection: " + FileType.ToString();
+                        return false;
+                }
 
-            'Concatenation must have finished successfully, so exit
-            Return True
-        Catch ex As Exception
-            m_ErrMsg = "Exception while concatenating files: " & ex.Message & "; " & clsGlobal.GetExceptionStackTrace(ex)
-            Return False
-        End Try
+                //Loop until the concatenation finishes
+                while (m_CatInProgress)
+                {
+                    Thread.Sleep(1000);
+                }
 
-    End Function
-#End Region
+                //Concatenation must have finished successfully, so exit
+                return true;
+            }
+            catch (Exception ex)
+            {
+                m_ErrMsg = "Exception while concatenating files: " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex);
+                return false;
+            }
+        }
 
-#Region "Private methods"
-    Private Sub m_CatTools_ErrorNotification(errorMessage As String) Handles m_CatTools.ErrorNotification
-        m_CatInProgress = False
-        m_ErrMsg = errorMessage
-    End Sub
+        #endregion
 
-    'Private Sub m_CatTools_StartingTask(ByVal taskIdentString As String) Handles m_CatTools.StartingTask
-    '	m_CatInProgress = True
-    'End Sub
+        #region "Private methods"
 
-    Private Sub m_CatTools_EndingTask() Handles m_CatTools.EndTask
-        m_CatInProgress = False
-    End Sub
+        private void m_CatTools_ErrorNotification(string errorMessage)
+        {
+            m_CatInProgress = false;
+            m_ErrMsg = errorMessage;
+        }
 
-    Private Sub m_CatTools_Progress(fractionDone As Double) Handles m_CatTools.Progress
-        m_Progress = CSng(100.0 * fractionDone)
-    End Sub
-#End Region
+        //Private Sub m_CatTools_StartingTask(ByVal taskIdentString As String) Handles m_CatTools.StartingTask
+        //	m_CatInProgress = True
+        //End Sub
 
-End Class
+        private void m_CatTools_EndingTask()
+        {
+            m_CatInProgress = false;
+        }
+
+        private void m_CatTools_Progress(double fractionDone)
+        {
+            m_Progress = Convert.ToSingle(100.0 * fractionDone);
+        }
+
+        #endregion
+    }
+}

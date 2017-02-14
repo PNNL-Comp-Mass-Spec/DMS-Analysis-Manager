@@ -1,372 +1,437 @@
-﻿Option Strict On
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading;
+using System.Xml;
+using AnalysisManagerBase;
 
-Imports AnalysisManagerBase
-Imports System.Collections.Generic
-Imports System.IO
-Imports System.Runtime.InteropServices
+namespace DTASpectraFileGen
+{
+    public class clsMGFConverter
+    {
+        #region "Structures"
 
-Public Class clsMGFConverter
-
-#Region "Structures"
-    Private Structure udtScanInfoType
-        Public ScanStart As Integer
-        Public ScanEnd As Integer
-        Public Charge As Integer
-    End Structure
-#End Region
-
-#Region "Member variables"
-    Private m_DebugLevel As Integer
-    Private m_WorkDir As String
-    Private m_ErrMsg As String
-
-    Private WithEvents mMGFtoDTA As MascotGenericFileToDTA.clsMGFtoDTA
-
-#End Region
-
-#Region "Properties"
-    Public ReadOnly Property ErrorMessage() As String
-        Get
-            If String.IsNullOrEmpty(m_ErrMsg) Then
-                Return String.Empty
-            Else
-                Return m_ErrMsg
-            End If
-        End Get
-    End Property
-
-    ''' <summary>
-    ''' When true, the parent ion line will include text like "scan=5823 cs=3"
-    ''' </summary>
-    ''' <returns></returns>
-    Public Property IncludeExtraInfoOnParentIonLine As Boolean
-
-    ''' <summary>
-    ''' If non-zero, spectra with fewer than this many ions are excluded from the _dta.txt file
-    ''' </summary>
-    ''' <returns></returns>
-    Public Property MinimumIonsPerSpectrum As Integer
-
-    Public ReadOnly Property SpectraCountWritten() As Integer
-        Get
-            If mMGFtoDTA Is Nothing Then
-                Return 0
-            Else
-                Return mMGFtoDTA.SpectraCountWritten
-            End If
-        End Get
-    End Property
-#End Region
-
-    ''' <summary>
-    ''' Constructor
-    ''' </summary>
-    ''' <param name="intDebugLevel"></param>
-    ''' <param name="strWorkDir"></param>
-    Public Sub New(intDebugLevel As Integer, strWorkDir As String)
-        m_DebugLevel = intDebugLevel
-        m_WorkDir = strWorkDir
-        m_ErrMsg = String.Empty
-    End Sub
-
-    ''' <summary>
-    ''' Convert .mgf file to _DTA.txt using MascotGenericFileToDTA.dll
-    ''' This functon is called by MakeDTAFilesThreaded
-    ''' </summary>
-    ''' <returns>TRUE for success; FALSE for failure</returns>
-    ''' <remarks></remarks>
-    Public Function ConvertMGFtoDTA(eRawDataType As clsAnalysisResources.eRawDataTypeConstants, strDatasetName As String) As Boolean
-
-        Dim strMGFFilePath As String
-        Dim blnSuccess As Boolean
-
-        m_ErrMsg = String.Empty
-
-        If m_DebugLevel > 0 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Converting .MGF file to _DTA.txt")
-        End If
-
-        strMGFFilePath = Path.Combine(m_WorkDir, strDatasetName & clsAnalysisResources.DOT_MGF_EXTENSION)
-
-        If eRawDataType = clsAnalysisResources.eRawDataTypeConstants.mzML Then
-            ' Read the .mzML file to construct a mapping between "title" line and scan number
-            ' If necessary, update the .mgf file to have new "title" lines that clsMGFtoDTA will recognize
-
-            Dim strMzMLFilePath = Path.Combine(m_WorkDir, strDatasetName & clsAnalysisResources.DOT_MZML_EXTENSION)
-
-            blnSuccess = UpdateMGFFileTitleLinesUsingMzML(strMzMLFilePath, strMGFFilePath, strDatasetName)
-            If Not blnSuccess Then
-                Return False
-            End If
-
-        End If
-
-        mMGFtoDTA = New MascotGenericFileToDTA.clsMGFtoDTA() With {
-            .CreateIndividualDTAFiles = False,
-            .FilterSpectra = False,
-            .ForceChargeAddnForPredefined2PlusOr3Plus = False,
-            .GuesstimateChargeForAllSpectra = False,
-            .IncludeExtraInfoOnParentIonLine = IncludeExtraInfoOnParentIonLine,
-            .LogMessagesToFile = False,
-            .MinimumIonsPerSpectrum = MinimumIonsPerSpectrum,
-            .MaximumIonsPerSpectrum = 0
+        private struct udtScanInfoType
+        {
+            public int ScanStart;
+            public int ScanEnd;
+            public int Charge;
         }
 
-        blnSuccess = mMGFtoDTA.ProcessFile(strMGFFilePath, m_WorkDir)
-
-        If Not blnSuccess AndAlso String.IsNullOrEmpty(m_ErrMsg) Then
-            m_ErrMsg = mMGFtoDTA.GetErrorMessage()
-        End If
-
-        Return blnSuccess
-
-    End Function
-
-    Private Function GetCVParams(objXMLReader As Xml.XmlTextReader, strCurrentElementName As String) As Dictionary(Of String, String)
-
-        Dim lstCVParams = New Dictionary(Of String, String)()
-        Dim strAccession As String
-        Dim strValue As String
-
-        Do While objXMLReader.Read()
-            XMLTextReaderSkipWhitespace(objXMLReader)
-
-            If objXMLReader.NodeType = Xml.XmlNodeType.EndElement And objXMLReader.Name = strCurrentElementName Then
-                Exit Do
-            End If
-
-            If objXMLReader.NodeType = Xml.XmlNodeType.Element AndAlso objXMLReader.Name = "cvParam" Then
-                strAccession = XMLTextReaderGetAttributeValue(objXMLReader, "accession", String.Empty)
-                strValue = XMLTextReaderGetAttributeValue(objXMLReader, "value", String.Empty)
-
-                If Not lstCVParams.ContainsKey(strAccession) Then
-                    lstCVParams.Add(strAccession, strValue)
-                End If
-            End If
-
-        Loop
-        Return lstCVParams
-
-    End Function
-
-    Private Function ParseMzMLFile(
-      strMzMLFilePath As String,
-      <Out()> ByRef blnAutoNumberScans As Boolean,
-      lstSpectrumIDToScanNumber As Dictionary(Of String, udtScanInfoType)) As Boolean
-
-        Dim strSpectrumID As String = String.Empty
-
-        Dim intScanNumberStart As Integer
-        Dim intScanNumberEnd As Integer
-        Dim intCharge As Integer
-        Dim udtScanInfo As udtScanInfoType
-
-        Dim intScanNumberCurrent = 0
-        Dim strValue As String = String.Empty
-        Dim intValue As Integer
-
-        Dim lstCVParams As Dictionary(Of String, String)
-
-        blnAutoNumberScans = False
-
-        If lstSpectrumIDToScanNumber Is Nothing Then
-            lstSpectrumIDToScanNumber = New Dictionary(Of String, udtScanInfoType)
-        End If
-
-        Using objXMLReader = New Xml.XmlTextReader(strMzMLFilePath)
-
-            Do While objXMLReader.Read()
-                XMLTextReaderSkipWhitespace(objXMLReader)
-                If Not objXMLReader.ReadState = Xml.ReadState.Interactive Then Exit Do
-
-                If objXMLReader.NodeType = Xml.XmlNodeType.Element Then
-                    Select Case objXMLReader.Name
-                        Case "spectrum"
-
-                            strSpectrumID = XMLTextReaderGetAttributeValue(objXMLReader, "id", String.Empty)
-
-                            If Not String.IsNullOrEmpty(strSpectrumID) Then
-                                If MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.ExtractScanInfoFromDtaHeader(strSpectrumID, intScanNumberStart, intScanNumberEnd, intCharge) Then
-                                    ' This title is in a standard format
-                                    udtScanInfo.ScanStart = intScanNumberStart
-                                    udtScanInfo.ScanEnd = intScanNumberEnd
-                                    udtScanInfo.Charge = intCharge
-                                Else
-                                    blnAutoNumberScans = True
-                                End If
-
-                                If blnAutoNumberScans Then
-                                    intScanNumberCurrent += 1
-                                    udtScanInfo.ScanStart = intScanNumberCurrent
-                                    udtScanInfo.ScanEnd = intScanNumberCurrent
-                                    ' Store a charge of 0 for now; we'll update it later if the selectedIon element has a MS:1000041 attribute
-                                    udtScanInfo.Charge = 0
-                                Else
-                                    intScanNumberCurrent = intScanNumberStart
-                                End If
-
-                            End If
-
-
-                        Case "selectedIon"
-                            ' Read the cvParams for this selected ion							
-                            lstCVParams = GetCVParams(objXMLReader, "selectedIon")
-
-                            If lstCVParams.TryGetValue("MS:1000041", strValue) Then
-                                If Integer.TryParse(strValue, intValue) Then
-                                    udtScanInfo.Charge = intValue
-                                End If
-                            End If
-                    End Select
-
-                ElseIf objXMLReader.NodeType = Xml.XmlNodeType.EndElement AndAlso objXMLReader.Name = "spectrum" Then
-                    ' Store this spectrum
-                    If Not String.IsNullOrEmpty(strSpectrumID) Then
-                        lstSpectrumIDToScanNumber.Add(strSpectrumID, udtScanInfo)
-                    End If
-                End If
-            Loop
-
-        End Using
-
-        Return True
-
-    End Function
-
-    Private Function XMLTextReaderGetAttributeValue(objXMLReader As Xml.XmlTextReader, strAttributeName As String, strValueIfMissing As String) As String
-        objXMLReader.MoveToAttribute(strAttributeName)
-        If objXMLReader.ReadAttributeValue() Then
-            Return objXMLReader.Value
-        Else
-            Return String.Copy(strValueIfMissing)
-        End If
-    End Function
-
-    Private Function XMLTextReaderGetInnerText(objXMLReader As Xml.XmlTextReader) As String
-        Dim strValue As String = String.Empty
-        Dim blnSuccess As Boolean
-
-        If objXMLReader.NodeType = Xml.XmlNodeType.Element Then
-            ' Advance the reader so that we can read the value
-            blnSuccess = objXMLReader.Read()
-        Else
-            blnSuccess = True
-        End If
-
-        If blnSuccess AndAlso Not objXMLReader.NodeType = Xml.XmlNodeType.Whitespace And objXMLReader.HasValue Then
-            strValue = objXMLReader.Value
-        End If
-
-        Return strValue
-    End Function
-
-    Private Sub XMLTextReaderSkipWhitespace(objXMLReader As Xml.XmlTextReader)
-        If objXMLReader.NodeType = Xml.XmlNodeType.Whitespace Then
-            ' Whitspace; read the next node
-            objXMLReader.Read()
-        End If
-    End Sub
-
-    Private Function UpdateMGFFileTitleLinesUsingMzML(strMzMLFilePath As String, strMGFFilePath As String, strDatasetName As String) As Boolean
-
-        Dim strNewMGFFile As String
-        Dim strLineIn As String
-        Dim strTitle As String
-
-        Dim udtScanInfo As udtScanInfoType
-
-        Dim blnSuccess As Boolean
-        Dim blnAutoNumberScans As Boolean
-
-        Dim lstSpectrumIDtoScanNumber = New Dictionary(Of String, udtScanInfoType)
-
-        Try
-
-            ' Open the mzXML file and look for "spectrum" elements with an "id" attribute
-            ' Also look for the charge state
-
-            If m_DebugLevel >= 1 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing the .mzML file to create the spectrum ID to scan number mapping")
-            End If
-
-            blnSuccess = ParseMzMLFile(strMzMLFilePath, blnAutoNumberScans, lstSpectrumIDtoScanNumber)
-
-            If Not blnSuccess Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "ParseMzMLFile returned false; aborting")
-                Return False
-            ElseIf Not blnAutoNumberScans Then
-                ' Nothing to update; exit this function 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Spectrum IDs in the mzML file were in the format StartScan.EndScan.Charge; no need to update the MGF file")
-                Return True
-            End If
-
-            If m_DebugLevel >= 1 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Updating the Title lines in the MGF file")
-            End If
-
-            strNewMGFFile = Path.GetTempFileName
-
-            ' Now read the MGF file and update the title lines
-            Using srSourceMGF = New StreamReader(New FileStream(strMGFFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)),
-                  swNewMGF = New StreamWriter(New FileStream(strNewMGFFile, FileMode.Create, FileAccess.Write, FileShare.Read))
-
-                While Not srSourceMGF.EndOfStream
-                    strLineIn = srSourceMGF.ReadLine()
-
-                    If String.IsNullOrEmpty(strLineIn) Then
-                        strLineIn = String.Empty
-                    Else
-
-                        If strLineIn.StartsWith("TITLE=") Then
-                            strTitle = strLineIn.Substring("TITLE=".Length())
-
-                            ' Look for strTitle in lstSpectrumIDtoScanNumber
-                            If lstSpectrumIDtoScanNumber.TryGetValue(strTitle, udtScanInfo) Then
-                                strLineIn = "TITLE=" & strDatasetName & "." & udtScanInfo.ScanStart.ToString("0000") & "." & udtScanInfo.ScanEnd.ToString("0000") & "."
-                                If udtScanInfo.Charge > 0 Then
-                                    ' Also append charge
-                                    strLineIn &= udtScanInfo.Charge
-                                End If
-                            End If
-                        End If
-                    End If
-
-                    swNewMGF.WriteLine(strLineIn)
-                End While
-
-            End Using
-
-            If m_DebugLevel >= 1 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Update complete; replacing the original .MGF file")
-            End If
-
-            ' Delete the original .mgf file and replace it with strNewMGFFile
-            PRISM.Processes.clsProgRunner.GarbageCollectNow()
-            Threading.Thread.Sleep(500)
-            clsAnalysisToolRunnerBase.DeleteFileWithRetries(strMGFFilePath, m_DebugLevel)
-            Threading.Thread.Sleep(500)
-
-            Dim ioNewMGF = New FileInfo(strNewMGFFile)
-            ioNewMGF.MoveTo(strMGFFilePath)
-
-            blnSuccess = True
-
-        Catch ex As Exception
-            m_ErrMsg = "Error updating the MGF file title lines using the .mzML file"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_ErrMsg & ": " & ex.Message)
-            blnSuccess = False
-        End Try
-
-        Return blnSuccess
-
-    End Function
-
-    Private Sub mMGFtoDTA_ErrorEvent(strMessage As String) Handles mMGFtoDTA.ErrorEvent
-        If String.IsNullOrEmpty(m_ErrMsg) Then
-            m_ErrMsg = "MGFtoDTA_Error: " & strMessage
-        ElseIf m_ErrMsg.Length < 300 Then
-            m_ErrMsg &= "; MGFtoDTA_Error: " & strMessage
-        End If
-
-    End Sub
-End Class
+        #endregion
+
+        #region "Member variables"
+
+        private int m_DebugLevel;
+        private string m_WorkDir;
+        private string m_ErrMsg;
+
+        private MascotGenericFileToDTA.clsMGFtoDTA mMGFtoDTA;
+
+        #endregion
+
+        #region "Properties"
+
+        public string ErrorMessage
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(m_ErrMsg))
+                {
+                    return string.Empty;
+                }
+                else
+                {
+                    return m_ErrMsg;
+                }
+            }
+        }
+
+        /// <summary>
+        /// When true, the parent ion line will include text like "scan=5823 cs=3"
+        /// </summary>
+        /// <returns></returns>
+        public bool IncludeExtraInfoOnParentIonLine { get; set; }
+
+        /// <summary>
+        /// If non-zero, spectra with fewer than this many ions are excluded from the _dta.txt file
+        /// </summary>
+        /// <returns></returns>
+        public int MinimumIonsPerSpectrum { get; set; }
+
+        public int SpectraCountWritten
+        {
+            get
+            {
+                if (mMGFtoDTA == null)
+                {
+                    return 0;
+                }
+                else
+                {
+                    return mMGFtoDTA.SpectraCountWritten;
+                }
+            }
+        }
+
+        #endregion
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="intDebugLevel"></param>
+        /// <param name="strWorkDir"></param>
+        public clsMGFConverter(int intDebugLevel, string strWorkDir)
+        {
+            m_DebugLevel = intDebugLevel;
+            m_WorkDir = strWorkDir;
+            m_ErrMsg = string.Empty;
+        }
+
+        /// <summary>
+        /// Convert .mgf file to _DTA.txt using MascotGenericFileToDTA.dll
+        /// This functon is called by MakeDTAFilesThreaded
+        /// </summary>
+        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <remarks></remarks>
+        public bool ConvertMGFtoDTA(clsAnalysisResources.eRawDataTypeConstants eRawDataType, string strDatasetName)
+        {
+            string strMGFFilePath = null;
+            bool blnSuccess = false;
+
+            m_ErrMsg = string.Empty;
+
+            if (m_DebugLevel > 0)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Converting .MGF file to _DTA.txt");
+            }
+
+            strMGFFilePath = Path.Combine(m_WorkDir, strDatasetName + clsAnalysisResources.DOT_MGF_EXTENSION);
+
+            if (eRawDataType == clsAnalysisResources.eRawDataTypeConstants.mzML)
+            {
+                // Read the .mzML file to construct a mapping between "title" line and scan number
+                // If necessary, update the .mgf file to have new "title" lines that clsMGFtoDTA will recognize
+
+                var strMzMLFilePath = Path.Combine(m_WorkDir, strDatasetName + clsAnalysisResources.DOT_MZML_EXTENSION);
+
+                blnSuccess = UpdateMGFFileTitleLinesUsingMzML(strMzMLFilePath, strMGFFilePath, strDatasetName);
+                if (!blnSuccess)
+                {
+                    return false;
+                }
+            }
+
+            mMGFtoDTA = new MascotGenericFileToDTA.clsMGFtoDTA
+            {
+                CreateIndividualDTAFiles = false,
+                FilterSpectra = false,
+                ForceChargeAddnForPredefined2PlusOr3Plus = false,
+                GuesstimateChargeForAllSpectra = false,
+                IncludeExtraInfoOnParentIonLine = IncludeExtraInfoOnParentIonLine,
+                LogMessagesToFile = false,
+                MinimumIonsPerSpectrum = MinimumIonsPerSpectrum,
+                MaximumIonsPerSpectrum = 0
+            };
+            mMGFtoDTA.ErrorEvent += mMGFtoDTA_ErrorEvent;
+
+            blnSuccess = mMGFtoDTA.ProcessFile(strMGFFilePath, m_WorkDir);
+
+            if (!blnSuccess && string.IsNullOrEmpty(m_ErrMsg))
+            {
+                m_ErrMsg = mMGFtoDTA.GetErrorMessage();
+            }
+
+            return blnSuccess;
+        }
+
+        private Dictionary<string, string> GetCVParams(XmlTextReader objXMLReader, string strCurrentElementName)
+        {
+            var lstCVParams = new Dictionary<string, string>();
+            string strAccession = null;
+            string strValue = null;
+
+            while (objXMLReader.Read())
+            {
+                XMLTextReaderSkipWhitespace(objXMLReader);
+
+                if (objXMLReader.NodeType == XmlNodeType.EndElement & objXMLReader.Name == strCurrentElementName)
+                {
+                    break;
+                }
+
+                if (objXMLReader.NodeType == XmlNodeType.Element && objXMLReader.Name == "cvParam")
+                {
+                    strAccession = XMLTextReaderGetAttributeValue(objXMLReader, "accession", string.Empty);
+                    strValue = XMLTextReaderGetAttributeValue(objXMLReader, "value", string.Empty);
+
+                    if (!lstCVParams.ContainsKey(strAccession))
+                    {
+                        lstCVParams.Add(strAccession, strValue);
+                    }
+                }
+            }
+            return lstCVParams;
+        }
+
+        private bool ParseMzMLFile(string strMzMLFilePath, out bool blnAutoNumberScans, Dictionary<string, udtScanInfoType> lstSpectrumIDToScanNumber)
+        {
+            string strSpectrumID = string.Empty;
+
+            int intScanNumberStart = 0;
+            int intScanNumberEnd = 0;
+            int intCharge = 0;
+
+            var intScanNumberCurrent = 0;
+            string strValue = string.Empty;
+            int intValue = 0;
+
+            blnAutoNumberScans = false;
+
+            if (lstSpectrumIDToScanNumber == null)
+            {
+                lstSpectrumIDToScanNumber = new Dictionary<string, udtScanInfoType>();
+            }
+
+            using (var objXMLReader = new XmlTextReader(strMzMLFilePath))
+            {
+                while (objXMLReader.Read())
+                {
+                    XMLTextReaderSkipWhitespace(objXMLReader);
+                    if (!(objXMLReader.ReadState == ReadState.Interactive))
+                        break;
+
+                    udtScanInfoType udtScanInfo = new udtScanInfoType();
+                    if (objXMLReader.NodeType == XmlNodeType.Element)
+                    {
+                        switch (objXMLReader.Name)
+                        {
+                            case "spectrum":
+
+                                strSpectrumID = XMLTextReaderGetAttributeValue(objXMLReader, "id", string.Empty);
+
+                                if (!string.IsNullOrEmpty(strSpectrumID))
+                                {
+                                    if (MsMsDataFileReader.clsMsMsDataFileReaderBaseClass.ExtractScanInfoFromDtaHeader(strSpectrumID,
+                                        out intScanNumberStart, out intScanNumberEnd, out intCharge))
+                                    {
+                                        // This title is in a standard format
+                                        udtScanInfo.ScanStart = intScanNumberStart;
+                                        udtScanInfo.ScanEnd = intScanNumberEnd;
+                                        udtScanInfo.Charge = intCharge;
+                                    }
+                                    else
+                                    {
+                                        blnAutoNumberScans = true;
+                                    }
+
+                                    if (blnAutoNumberScans)
+                                    {
+                                        intScanNumberCurrent += 1;
+                                        udtScanInfo.ScanStart = intScanNumberCurrent;
+                                        udtScanInfo.ScanEnd = intScanNumberCurrent;
+                                        // Store a charge of 0 for now; we'll update it later if the selectedIon element has a MS:1000041 attribute
+                                        udtScanInfo.Charge = 0;
+                                    }
+                                    else
+                                    {
+                                        intScanNumberCurrent = intScanNumberStart;
+                                    }
+                                }
+
+                                break;
+
+                            case "selectedIon":
+                                // Read the cvParams for this selected ion
+                                var lstCVParams = GetCVParams(objXMLReader, "selectedIon");
+
+                                if (lstCVParams.TryGetValue("MS:1000041", out strValue))
+                                {
+                                    if (int.TryParse(strValue, out intValue))
+                                    {
+                                        udtScanInfo.Charge = intValue;
+                                    }
+                                }
+                                break;
+                        }
+                    }
+                    else if (objXMLReader.NodeType == XmlNodeType.EndElement && objXMLReader.Name == "spectrum")
+                    {
+                        // Store this spectrum
+                        if (!string.IsNullOrEmpty(strSpectrumID))
+                        {
+                            lstSpectrumIDToScanNumber.Add(strSpectrumID, udtScanInfo);
+                        }
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        private string XMLTextReaderGetAttributeValue(XmlTextReader objXMLReader, string strAttributeName, string strValueIfMissing)
+        {
+            objXMLReader.MoveToAttribute(strAttributeName);
+            if (objXMLReader.ReadAttributeValue())
+            {
+                return objXMLReader.Value;
+            }
+            else
+            {
+                return string.Copy(strValueIfMissing);
+            }
+        }
+
+        private string XMLTextReaderGetInnerText(XmlTextReader objXMLReader)
+        {
+            string strValue = string.Empty;
+            bool blnSuccess = false;
+
+            if (objXMLReader.NodeType == XmlNodeType.Element)
+            {
+                // Advance the reader so that we can read the value
+                blnSuccess = objXMLReader.Read();
+            }
+            else
+            {
+                blnSuccess = true;
+            }
+
+            if (blnSuccess && !(objXMLReader.NodeType == XmlNodeType.Whitespace) & objXMLReader.HasValue)
+            {
+                strValue = objXMLReader.Value;
+            }
+
+            return strValue;
+        }
+
+        private void XMLTextReaderSkipWhitespace(XmlTextReader objXMLReader)
+        {
+            if (objXMLReader.NodeType == XmlNodeType.Whitespace)
+            {
+                // Whitspace; read the next node
+                objXMLReader.Read();
+            }
+        }
+
+        private bool UpdateMGFFileTitleLinesUsingMzML(string strMzMLFilePath, string strMGFFilePath, string strDatasetName)
+        {
+            string strNewMGFFile = null;
+            string strLineIn = null;
+            string strTitle = null;
+
+            bool blnSuccess = false;
+            bool blnAutoNumberScans = false;
+
+            var lstSpectrumIDtoScanNumber = new Dictionary<string, udtScanInfoType>();
+
+            try
+            {
+                // Open the mzXML file and look for "spectrum" elements with an "id" attribute
+                // Also look for the charge state
+
+                if (m_DebugLevel >= 1)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        "Parsing the .mzML file to create the spectrum ID to scan number mapping");
+                }
+
+                blnSuccess = ParseMzMLFile(strMzMLFilePath, out blnAutoNumberScans, lstSpectrumIDtoScanNumber);
+
+                if (!blnSuccess)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "ParseMzMLFile returned false; aborting");
+                    return false;
+                }
+                else if (!blnAutoNumberScans)
+                {
+                    // Nothing to update; exit this function
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                        "Spectrum IDs in the mzML file were in the format StartScan.EndScan.Charge; no need to update the MGF file");
+                    return true;
+                }
+
+                if (m_DebugLevel >= 1)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Updating the Title lines in the MGF file");
+                }
+
+                strNewMGFFile = Path.GetTempFileName();
+
+                // Now read the MGF file and update the title lines
+                using (var srSourceMGF = new StreamReader(new FileStream(strMGFFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using (var swNewMGF = new StreamWriter(new FileStream(strNewMGFFile, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                {
+                    while (!srSourceMGF.EndOfStream)
+                    {
+                        strLineIn = srSourceMGF.ReadLine();
+
+                        if (string.IsNullOrEmpty(strLineIn))
+                        {
+                            strLineIn = string.Empty;
+                        }
+                        else
+                        {
+                            if (strLineIn.StartsWith("TITLE="))
+                            {
+                                strTitle = strLineIn.Substring("TITLE=".Length);
+
+                                // Look for strTitle in lstSpectrumIDtoScanNumber
+                                udtScanInfoType udtScanInfo;
+                                if (lstSpectrumIDtoScanNumber.TryGetValue(strTitle, out udtScanInfo))
+                                {
+                                    strLineIn = "TITLE=" + strDatasetName + "." + udtScanInfo.ScanStart.ToString("0000") + "." +
+                                                udtScanInfo.ScanEnd.ToString("0000") + ".";
+                                    if (udtScanInfo.Charge > 0)
+                                    {
+                                        // Also append charge
+                                        strLineIn += udtScanInfo.Charge;
+                                    }
+                                }
+                            }
+                        }
+
+                        swNewMGF.WriteLine(strLineIn);
+                    }
+                }
+
+                if (m_DebugLevel >= 1)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        "Update complete; replacing the original .MGF file");
+                }
+
+                // Delete the original .mgf file and replace it with strNewMGFFile
+                PRISM.Processes.clsProgRunner.GarbageCollectNow();
+                Thread.Sleep(500);
+                clsAnalysisToolRunnerBase.DeleteFileWithRetries(strMGFFilePath, m_DebugLevel);
+                Thread.Sleep(500);
+
+                var ioNewMGF = new FileInfo(strNewMGFFile);
+                ioNewMGF.MoveTo(strMGFFilePath);
+
+                blnSuccess = true;
+            }
+            catch (Exception ex)
+            {
+                m_ErrMsg = "Error updating the MGF file title lines using the .mzML file";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_ErrMsg + ": " + ex.Message);
+                blnSuccess = false;
+            }
+
+            return blnSuccess;
+        }
+
+        private void mMGFtoDTA_ErrorEvent(string strMessage)
+        {
+            if (string.IsNullOrEmpty(m_ErrMsg))
+            {
+                m_ErrMsg = "MGFtoDTA_Error: " + strMessage;
+            }
+            else if (m_ErrMsg.Length < 300)
+            {
+                m_ErrMsg += "; MGFtoDTA_Error: " + strMessage;
+            }
+        }
+    }
+}

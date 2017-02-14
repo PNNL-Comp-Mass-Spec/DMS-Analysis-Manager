@@ -1,188 +1,215 @@
-﻿'*********************************************************************************************************
-' Written by Dave Clark for the US Department of Energy 
-' Pacific Northwest National Laboratory, Richland, WA
-' Copyright 2008, Battelle Memorial Institute
-' Created 07/08/2008
-'
-'*********************************************************************************************************
+﻿//*********************************************************************************************************
+// Written by Dave Clark for the US Department of Energy
+// Pacific Northwest National Laboratory, Richland, WA
+// Copyright 2008, Battelle Memorial Institute
+// Created 07/08/2008
+//
+//*********************************************************************************************************
 
-Imports AnalysisManagerBase
-Imports System.IO
+using System.IO;
+using System.Threading;
+using AnalysisManagerBase;
 
-''' <summary>
-''' Gets resources necessary for DTA creation
-''' </summary>
-''' <remarks></remarks>
-Public Class clsDtaGenResources
-    Inherits clsAnalysisResources
+namespace DTASpectraFileGen
+{
+    /// <summary>
+    /// Gets resources necessary for DTA creation
+    /// </summary>
+    /// <remarks></remarks>
+    public class clsDtaGenResources : clsAnalysisResources
+    {
+        #region "Constants"
 
-#Region "Constants"
-    Public Const USING_EXISTING_DECONMSN_RESULTS As String = "Using_existing_DeconMSn_Results"
-#End Region
+        public const string USING_EXISTING_DECONMSN_RESULTS = "Using_existing_DeconMSn_Results";
 
-#Region "Methods"
-    Public Overrides Function GetResources() As CloseOutType
+        #endregion
 
-        ' Retrieve shared resources, including the JobParameters file from the previous job step
-        Dim result = GetSharedResources()
-        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
-            Return result
-        End If
+        #region "Methods"
 
-        Dim strRawDataType As String = m_jobParams.GetJobParameter("RawDataType", "")
-        Dim blnMGFInstrumentData As Boolean = m_jobParams.GetJobParameter("MGFInstrumentData", False)
+        public override CloseOutType GetResources()
+        {
+            // Retrieve shared resources, including the JobParameters file from the previous job step
+            var result = GetSharedResources();
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                return result;
+            }
 
-        Dim strErrorMessage As String = String.Empty
+            string strRawDataType = m_jobParams.GetJobParameter("RawDataType", "");
+            bool blnMGFInstrumentData = m_jobParams.GetJobParameter("MGFInstrumentData", false);
 
-        Dim zippedDTAFilePath As String = String.Empty
+            string strErrorMessage = string.Empty;
 
-        Dim eDtaGeneratorType = clsDtaGenToolRunner.GetDTAGeneratorInfo(m_jobParams, strErrorMessage)
-        If eDtaGeneratorType = clsDtaGenToolRunner.eDTAGeneratorConstants.Unknown Then
-            If String.IsNullOrEmpty(strErrorMessage) Then
-                LogError("GetDTAGeneratorInfo reported an Unknown DTAGenerator type")
-            Else
-                LogError(strErrorMessage)
-            End If
+            string zippedDTAFilePath = string.Empty;
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-            Return CloseOutType.CLOSEOUT_NO_SETTINGS_FILE
-        End If
+            var eDtaGeneratorType = clsDtaGenToolRunner.GetDTAGeneratorInfo(m_jobParams, out strErrorMessage);
+            if (eDtaGeneratorType == clsDtaGenToolRunner.eDTAGeneratorConstants.Unknown)
+            {
+                if (string.IsNullOrEmpty(strErrorMessage))
+                {
+                    LogError("GetDTAGeneratorInfo reported an Unknown DTAGenerator type");
+                }
+                else
+                {
+                    LogError(strErrorMessage);
+                }
 
-        If Not GetParameterFiles(eDtaGeneratorType) Then
-            Return CloseOutType.CLOSEOUT_NO_PARAM_FILE
-        End If
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                return CloseOutType.CLOSEOUT_NO_SETTINGS_FILE;
+            }
 
+            if (!GetParameterFiles(eDtaGeneratorType))
+            {
+                return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
+            }
 
-        If blnMGFInstrumentData Then
-            Dim strFileToFind As String = DatasetName & DOT_MGF_EXTENSION
-            If Not FileSearch.FindAndRetrieveMiscFiles(strFileToFind, False) Then
-                LogError("Instrument data not found: " & strFileToFind)
-                Return CloseOutType.CLOSEOUT_FAILED
-            Else
-                m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MGF_EXTENSION)
-            End If
-        Else
-            'Get input data file
-            If Not FileSearch.RetrieveSpectra(strRawDataType) Then
-                If String.IsNullOrEmpty(m_message) Then
-                    LogError("Error retrieving instrument data file")
-                End If
-                Return CloseOutType.CLOSEOUT_FAILED
-            End If
+            if (blnMGFInstrumentData)
+            {
+                string strFileToFind = DatasetName + DOT_MGF_EXTENSION;
+                if (!FileSearch.FindAndRetrieveMiscFiles(strFileToFind, false))
+                {
+                    LogError("Instrument data not found: " + strFileToFind);
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+                else
+                {
+                    m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MGF_EXTENSION);
+                }
+            }
+            else
+            {
+                //Get input data file
+                if (!FileSearch.RetrieveSpectra(strRawDataType))
+                {
+                    if (string.IsNullOrEmpty(m_message))
+                    {
+                        LogError("Error retrieving instrument data file");
+                    }
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
 
-            Dim blnCentroidDTAs = False
-            If eDtaGeneratorType = clsDtaGenToolRunner.eDTAGeneratorConstants.DeconConsole Then
-                blnCentroidDTAs = False
-            Else
-                blnCentroidDTAs = m_jobParams.GetJobParameter("CentroidDTAs", False)
-            End If
+                var blnCentroidDTAs = false;
+                if (eDtaGeneratorType == clsDtaGenToolRunner.eDTAGeneratorConstants.DeconConsole)
+                {
+                    blnCentroidDTAs = false;
+                }
+                else
+                {
+                    blnCentroidDTAs = m_jobParams.GetJobParameter("CentroidDTAs", false);
+                }
 
-            If blnCentroidDTAs Then
-                ' Look for a DTA_Gen_1_26_ folder for this dataset
-                ' If it exists, and if we can find a valid _dta.zip file, then use that file instead of re-running DeconMSn (since DeconMSn can take some time to run)
+                if (blnCentroidDTAs)
+                {
+                    // Look for a DTA_Gen_1_26_ folder for this dataset
+                    // If it exists, and if we can find a valid _dta.zip file, then use that file instead of re-running DeconMSn (since DeconMSn can take some time to run)
 
-                Dim datasetID = m_jobParams.GetJobParameter("DatasetID", 0)
-                Dim folderNameToFind = "DTA_Gen_1_26_" & datasetID
-                Dim fileToFind = DatasetName & "_dta.zip"
-                Dim validFolderFound As Boolean
-                Dim folderNotFoundMessage As String
+                    var datasetID = m_jobParams.GetJobParameter("DatasetID", 0);
+                    var folderNameToFind = "DTA_Gen_1_26_" + datasetID;
+                    var fileToFind = DatasetName + "_dta.zip";
+                    bool validFolderFound = false;
+                    string folderNotFoundMessage;
 
-                Dim existingDtaFolder = FolderSearch.FindValidFolder(
-                    DatasetName,
-                    fileToFind,
-                    folderNameToFind,
-                    maxAttempts:=1,
-                    logFolderNotFound:=False,
-                    retrievingInstrumentDataFolder:=False,
-                    assumeUnpurged:=False,
-                    validFolderFound:=validFolderFound,
-                    folderNotFoundMessage:=folderNotFoundMessage
-                    )
+                    var existingDtaFolder = FolderSearch.FindValidFolder(DatasetName,
+                        fileToFind,
+                        folderNameToFind,
+                        maxAttempts: 1,
+                        logFolderNotFound: false,
+                        retrievingInstrumentDataFolder: false,
+                        assumeUnpurged: false,
+                        validFolderFound: out validFolderFound,
+                        folderNotFoundMessage: out folderNotFoundMessage);
 
-                If validFolderFound Then
-                    ' Copy the file locally (or queue it for download from MyEMSL)
+                    if (validFolderFound)
+                    {
+                        // Copy the file locally (or queue it for download from MyEMSL)
 
-                    Dim blnFileCopiedOrQueued = CopyFileToWorkDir(fileToFind, existingDtaFolder, m_WorkingDir)
+                        var blnFileCopiedOrQueued = CopyFileToWorkDir(fileToFind, existingDtaFolder, m_WorkingDir);
 
-                    If blnFileCopiedOrQueued Then
-                        zippedDTAFilePath = Path.Combine(m_WorkingDir, fileToFind)
+                        if (blnFileCopiedOrQueued)
+                        {
+                            zippedDTAFilePath = Path.Combine(m_WorkingDir, fileToFind);
 
-                        m_jobParams.AddAdditionalParameter("JobParameters", USING_EXISTING_DECONMSN_RESULTS, "True")
+                            m_jobParams.AddAdditionalParameter("JobParameters", USING_EXISTING_DECONMSN_RESULTS, "True");
 
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Found pre-existing DeconMSn results; will not re-run DeconMSn if they are valid")
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                                "Found pre-existing DeconMSn results; will not re-run DeconMSn if they are valid");
 
-                        fileToFind = DatasetName & "_profile.txt"
-                        blnFileCopiedOrQueued = CopyFileToWorkDir(fileToFind, existingDtaFolder, m_WorkingDir)
+                            fileToFind = DatasetName + "_profile.txt";
+                            blnFileCopiedOrQueued = CopyFileToWorkDir(fileToFind, existingDtaFolder, m_WorkingDir);
 
-                        fileToFind = DatasetName & "_DeconMSn_log.txt"
-                        blnFileCopiedOrQueued = CopyFileToWorkDir(fileToFind, existingDtaFolder, m_WorkingDir)
-                    End If
+                            fileToFind = DatasetName + "_DeconMSn_log.txt";
+                            blnFileCopiedOrQueued = CopyFileToWorkDir(fileToFind, existingDtaFolder, m_WorkingDir);
+                        }
+                    }
+                }
+            }
 
-                End If
+            if (!base.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            {
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
 
-            End If
-        End If
+            if (!string.IsNullOrEmpty(zippedDTAFilePath))
+            {
+                Thread.Sleep(150);
 
-        If Not MyBase.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
+                var fiZippedDtaFile = new FileInfo(zippedDTAFilePath);
+                var tempZipFilePath = Path.Combine(m_WorkingDir, Path.GetFileNameWithoutExtension(fiZippedDtaFile.Name) + "_PreExisting.zip");
 
-        If Not String.IsNullOrEmpty(zippedDTAFilePath) Then
+                fiZippedDtaFile.MoveTo(tempZipFilePath);
 
-            Threading.Thread.Sleep(150)
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                    "Unzipping file " + Path.GetFileName(zippedDTAFilePath));
+                if (UnzipFileStart(tempZipFilePath, m_WorkingDir, "clsDtaGenResources", false))
+                {
+                    if (m_DebugLevel >= 1)
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                            "Unzipped file " + Path.GetFileName(zippedDTAFilePath));
+                    }
 
-            Dim fiZippedDtaFile = New FileInfo(zippedDTAFilePath)
-            Dim tempZipFilePath = Path.Combine(m_WorkingDir, Path.GetFileNameWithoutExtension(fiZippedDtaFile.Name) & "_PreExisting.zip")
+                    m_jobParams.AddResultFileToSkip(Path.GetFileName(tempZipFilePath));
+                }
+            }
 
-            fiZippedDtaFile.MoveTo(tempZipFilePath)
+            return CloseOutType.CLOSEOUT_SUCCESS;
+        }
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Unzipping file " + Path.GetFileName(zippedDTAFilePath))
-            If UnzipFileStart(tempZipFilePath, m_WorkingDir, "clsDtaGenResources", False) Then
-                If m_DebugLevel >= 1 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Unzipped file " + Path.GetFileName(zippedDTAFilePath))
-                End If
+        private bool GetParameterFiles(clsDtaGenToolRunner.eDTAGeneratorConstants eDtaGeneratorType)
+        {
+            if (eDtaGeneratorType == clsDtaGenToolRunner.eDTAGeneratorConstants.DeconConsole)
+            {
+                string strParamFileStoragePathKeyName = null;
+                string strParamFileStoragePath = null;
+                strParamFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "DTA_Gen";
 
-                m_jobParams.AddResultFileToSkip(Path.GetFileName(tempZipFilePath))
+                strParamFileStoragePath = m_mgrParams.GetParam(strParamFileStoragePathKeyName);
+                if (strParamFileStoragePath == null || strParamFileStoragePath.Length == 0)
+                {
+                    strParamFileStoragePath = @"\\gigasax\DMS_Parameter_Files\DTA_Gen";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                        "Parameter '" + strParamFileStoragePathKeyName +
+                        "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " +
+                        strParamFileStoragePath);
+                }
 
-            End If
-        End If
+                var strParamFileName = m_jobParams.GetJobParameter("DtaGenerator", "DeconMSn_ParamFile", string.Empty);
 
-        Return CloseOutType.CLOSEOUT_SUCCESS
+                if (string.IsNullOrEmpty(strParamFileName))
+                {
+                    LogError(clsAnalysisToolRunnerBase.NotifyMissingParameter(m_jobParams, "DeconMSn_ParamFile"));
+                    return false;
+                }
 
-    End Function
+                if (!FileSearch.RetrieveFile(strParamFileName, strParamFileStoragePath))
+                {
+                    return false;
+                }
+            }
 
-    Private Function GetParameterFiles(eDtaGeneratorType As clsDtaGenToolRunner.eDTAGeneratorConstants) As Boolean
+            return true;
+        }
 
-        If eDtaGeneratorType = clsDtaGenToolRunner.eDTAGeneratorConstants.DeconConsole Then
-
-            Dim strParamFileStoragePathKeyName As String
-            Dim strParamFileStoragePath As String
-            strParamFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX & "DTA_Gen"
-
-            strParamFileStoragePath = m_mgrParams.GetParam(strParamFileStoragePathKeyName)
-            If strParamFileStoragePath Is Nothing OrElse strParamFileStoragePath.Length = 0 Then
-                strParamFileStoragePath = "\\gigasax\DMS_Parameter_Files\DTA_Gen"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Parameter '" & strParamFileStoragePathKeyName & "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " & strParamFileStoragePath)
-            End If
-
-            Dim strParamFileName = m_jobParams.GetJobParameter("DtaGenerator", "DeconMSn_ParamFile", String.Empty)
-
-            If String.IsNullOrEmpty(strParamFileName) Then
-                LogError(clsAnalysisToolRunnerBase.NotifyMissingParameter(m_jobParams, "DeconMSn_ParamFile"))
-                Return False
-            End If
-
-            If Not FileSearch.RetrieveFile(strParamFileName, strParamFileStoragePath) Then
-                Return False
-            End If
-
-        End If
-
-        Return True
-
-    End Function
-
-#End Region
-
-End Class
-
+        #endregion
+    }
+}

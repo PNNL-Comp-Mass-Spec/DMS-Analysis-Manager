@@ -1,460 +1,512 @@
-﻿'*********************************************************************************************************
-' Written by Matthew Monroe for the US Department of Energy 
-' Pacific Northwest National Laboratory, Richland, WA
-' Created 01/24/2013
-'
-' Uses DeconConsole.exe to create a .MGF file from a .Raw file or .mzXML file or .mzML file
-' Next, converts the .MGF file to a _DTA.txt file
-'
-' Note that DeconConsole was the re-implementation of the legacy DeconMSn program (using C#)
-' DeconConsole was superseded by the C#-based DeconMSn developed by Bryson Gibbons in December 2016
-' We replaced the C++ based DeconMSn.exe with the C# based version after showing that results were identical
-'
-'*********************************************************************************************************
+﻿//*********************************************************************************************************
+// Written by Matthew Monroe for the US Department of Energy
+// Pacific Northwest National Laboratory, Richland, WA
+// Created 01/24/2013
+//
+// Uses DeconConsole.exe to create a .MGF file from a .Raw file or .mzXML file or .mzML file
+// Next, converts the .MGF file to a _DTA.txt file
+//
+// Note that DeconConsole was the re-implementation of the legacy DeconMSn program (using C#)
+// DeconConsole was superseded by the C#-based DeconMSn developed by Bryson Gibbons in December 2016
+// We replaced the C++ based DeconMSn.exe with the C# based version after showing that results were identical
+//
+//*********************************************************************************************************
 
-Option Strict On
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading;
+using AnalysisManagerBase;
 
-Imports AnalysisManagerBase
-Imports System.Collections.Generic
-Imports System.IO
-Imports System.Runtime.InteropServices
+namespace DTASpectraFileGen
+{
+    [Obsolete("This class is longer used")]
+    public class clsDtaGenDeconConsole : clsDtaGenThermoRaw
+    {
+        #region "Constants"
 
-<Obsolete("This class is longer used")>
-Public Class clsDtaGenDeconConsole
-    Inherits clsDtaGenThermoRaw
+        private const int PROGRESS_DECON_CONSOLE_START = 5;
+        private const int PROGRESS_MGF_TO_CDTA_START = 85;
+        private const int PROGRESS_CDTA_CREATED = 95;
 
-#Region "Constants"
-    Private Const PROGRESS_DECON_CONSOLE_START As Integer = 5
-    Private Const PROGRESS_MGF_TO_CDTA_START As Integer = 85
-    Private Const PROGRESS_CDTA_CREATED As Integer = 95
-#End Region
+        #endregion
 
-#Region "Structures"
+        #region "Structures"
 
-    Private Structure udtDeconToolsStatusType
-        Public CurrentLCScan As Integer     ' LC Scan number or IMS Frame Number
-        Public PercentComplete As Single
-        Public Sub Clear()
-            CurrentLCScan = 0
-            PercentComplete = 0
-        End Sub
-    End Structure
+        private struct udtDeconToolsStatusType
+        {
+            public int CurrentLCScan;       // LC Scan number or IMS Frame Number
+            public float PercentComplete;
 
-#End Region
-
-#Region "Classwide variables"
-    Private mInputFilePath As String
-    Private mDeconConsoleExceptionThrown As Boolean
-    Private mDeconConsoleFinishedDespiteProgRunnerError As Boolean
-#End Region
-
-    Private mDeconConsoleStatus As udtDeconToolsStatusType
-
-    ''' <summary>
-    ''' Returns the default path to the DTA generator tool
-    ''' </summary>
-    ''' <returns></returns>
-    ''' <remarks>The default path can be overridden by updating m_DtaToolNameLoc using clsDtaGen.UpdateDtaToolNameLoc</remarks>
-    Protected Overrides Function ConstructDTAToolPath() As String
-
-        Dim deconToolsDir As String = m_MgrParams.GetParam("DeconToolsProgLoc")         ' DeconConsole.exe is stored in the DeconTools folder
-
-        Dim strDTAToolPath = Path.Combine(deconToolsDir, DECON_CONSOLE_FILENAME)
-
-        Return strDTAToolPath
-
-    End Function
-
-    Protected Overrides Sub MakeDTAFilesThreaded()
-
-        m_Status = ProcessStatus.SF_RUNNING
-        m_ErrMsg = String.Empty
-
-        m_Progress = PROGRESS_DECON_CONSOLE_START
-
-        If Not ConvertRawToMGF(m_RawDataType) Then
-            If m_Status <> ProcessStatus.SF_ABORTING Then
-                m_Results = ProcessResults.SF_FAILURE
-                m_Status = ProcessStatus.SF_ERROR
-            End If
-            Return
-        End If
-
-        m_Progress = PROGRESS_MGF_TO_CDTA_START
-
-        If Not ConvertMGFtoDTA() Then
-            If m_Status <> ProcessStatus.SF_ABORTING Then
-                m_Results = ProcessResults.SF_FAILURE
-                m_Status = ProcessStatus.SF_ERROR
-            End If
-            Return
-        End If
-
-        m_Progress = PROGRESS_CDTA_CREATED
-
-        m_Results = ProcessResults.SF_SUCCESS
-        m_Status = ProcessStatus.SF_COMPLETE
-
-    End Sub
-
-    ''' <summary>
-    ''' Convert .mgf file to _DTA.txt using MascotGenericFileToDTA.dll
-    ''' This functon is called by MakeDTAFilesThreaded
-    ''' </summary>
-    ''' <returns>TRUE for success; FALSE for failure</returns>
-    ''' <remarks></remarks>
-    Private Function ConvertMGFtoDTA() As Boolean
-
-        Dim blnSuccess As Boolean
-
-        Dim strRawDataType As String = m_JobParams.GetJobParameter("RawDataType", "")
-        Dim eRawDataType As clsAnalysisResources.eRawDataTypeConstants
-
-        Dim oMGFConverter = New clsMGFConverter(m_DebugLevel, m_WorkDir) With {
-            .IncludeExtraInfoOnParentIonLine = True,
-            .MinimumIonsPerSpectrum = 0
+            public void Clear()
+            {
+                CurrentLCScan = 0;
+                PercentComplete = 0;
+            }
         }
 
-        eRawDataType = clsAnalysisResources.GetRawDataType(strRawDataType)
-        blnSuccess = oMGFConverter.ConvertMGFtoDTA(eRawDataType, m_Dataset)
+        #endregion
 
-        If Not blnSuccess Then
-            m_ErrMsg = oMGFConverter.ErrorMessage
-        End If
+        #region "Classwide variables"
 
-        m_SpectraFileCount = oMGFConverter.SpectraCountWritten
+        private string mInputFilePath;
+        private bool mDeconConsoleExceptionThrown;
+        private bool mDeconConsoleFinishedDespiteProgRunnerError;
 
-        Return blnSuccess
+        #endregion
 
-    End Function
+        private udtDeconToolsStatusType mDeconConsoleStatus;
 
+        /// <summary>
+        /// Returns the default path to the DTA generator tool
+        /// </summary>
+        /// <returns></returns>
+        /// <remarks>The default path can be overridden by updating m_DtaToolNameLoc using clsDtaGen.UpdateDtaToolNameLoc</remarks>
+        protected override string ConstructDTAToolPath()
+        {
+            string deconToolsDir = m_MgrParams.GetParam("DeconToolsProgLoc");         // DeconConsole.exe is stored in the DeconTools folder
 
-    ''' <summary>
-    ''' Create .mgf file using MSConvert
-    ''' This function is called by MakeDTAFilesThreaded
-    ''' </summary>
-    ''' <param name="eRawDataType">Raw data file type</param>
-    ''' <returns>TRUE for success; FALSE for failure</returns>
-    ''' <remarks></remarks>
-    Private Function ConvertRawToMGF(eRawDataType As clsAnalysisResources.eRawDataTypeConstants) As Boolean
+            var strDTAToolPath = Path.Combine(deconToolsDir, DECON_CONSOLE_FILENAME);
 
-        Dim RawFilePath As String
-
-        If m_DebugLevel > 0 Then
-            OnStatusEvent("Creating .MGF file using DeconConsole")
-        End If
-
-        m_ErrMsg = String.Empty
-
-        ' Construct the path to the .raw file
-        Select Case eRawDataType
-            Case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile
-                RawFilePath = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_RAW_EXTENSION)
-            Case Else
-                m_ErrMsg = "Data file type not supported by the DeconMSn workflow in DeconConsole: " & eRawDataType.ToString()
-                Return False
-        End Select
-
-        m_InstrumentFileName = Path.GetFileName(RawFilePath)
-        mInputFilePath = RawFilePath
-        m_JobParams.AddResultFileToSkip(m_InstrumentFileName)
-
-        If eRawDataType = clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile Then
-            'Get the maximum number of scans in the file
-            m_MaxScanInFile = GetMaxScan(RawFilePath)
-        Else
-            m_MaxScanInFile = DEFAULT_SCAN_STOP
-        End If
-
-        'Determine max number of scans to be performed
-        m_NumScans = m_MaxScanInFile
-
-        ' Reset the state variables
-        mDeconConsoleExceptionThrown = False
-        mDeconConsoleFinishedDespiteProgRunnerError = False
-        mDeconConsoleStatus.Clear()
-
-        Dim strParamFilePath = m_JobParams.GetJobParameter("DtaGenerator", "DeconMSn_ParamFile", String.Empty)
-
-        If String.IsNullOrEmpty(strParamFilePath) Then
-            m_ErrMsg = clsAnalysisToolRunnerBase.NotifyMissingParameter(m_JobParams, "DeconMSn_ParamFile")
-            Return False
-        Else
-            strParamFilePath = Path.Combine(m_WorkDir, strParamFilePath)
-        End If
-
-        'Set up command
-        Dim cmdStr = " " & RawFilePath & " " & strParamFilePath
-
-        If m_DebugLevel > 0 Then
-            OnStatusEvent(m_DtaToolNameLoc & " " & cmdStr)
-        End If
-
-        'Setup a program runner tool to make the spectra files
-        mCmdRunner = New clsRunDosProgram(m_WorkDir) With {
-            .CreateNoWindow = True,
-            .CacheStandardOutput = True,
-            .EchoOutputToConsole = True,
-            .WriteConsoleOutputToFile = False   ' Disable since the DeconConsole log file has very similar information
+            return strDTAToolPath;
         }
 
-        AddHandler mCmdRunner.ErrorEvent, AddressOf MyBase.CmdRunner_ErrorEvent
-        AddHandler mCmdRunner.LoopWaiting, AddressOf MyBase.CmdRunner_LoopWaiting
-
-        Dim blnSuccess = mCmdRunner.RunProgram(m_DtaToolNameLoc, cmdStr, "DeconConsole", True)
-
-        ' Parse the DeconTools .Log file to see whether it contains message "Finished file processing"
-
-        Dim dtFinishTime As DateTime
-        Dim blnFinishedProcessing As Boolean
-
-        ParseDeconToolsLogFile(blnFinishedProcessing, dtFinishTime)
-
-        If mDeconConsoleExceptionThrown Then
-            blnSuccess = False
-        End If
-
-        If blnFinishedProcessing And Not blnSuccess Then
-            mDeconConsoleFinishedDespiteProgRunnerError = True
-        End If
-
-        ' Look for file Dataset*BAD_ERROR_log.txt
-        ' If it exists, an exception occurred
-        Dim diWorkdir = New DirectoryInfo(Path.Combine(m_WorkDir))
-
-        For Each fiFile As FileInfo In diWorkdir.GetFiles(m_Dataset & "*BAD_ERROR_log.txt")
-            m_ErrMsg = "Error running DeconTools; Bad_Error_log file exists"
-            OnErrorEvent(m_ErrMsg & ": " & fiFile.Name)
-            blnSuccess = False
-            mDeconConsoleFinishedDespiteProgRunnerError = False
-            Exit For
-        Next
-
-        If mDeconConsoleFinishedDespiteProgRunnerError And Not mDeconConsoleExceptionThrown Then
-            ' ProgRunner reported an error code
-            ' However, the log file says things completed successfully
-            ' We'll trust the log file
-            blnSuccess = True
-        End If
-
-        If Not blnSuccess Then
-            ' .RunProgram returned False
-            LogDTACreationStats("ConvertRawToMGF", Path.GetFileNameWithoutExtension(m_DtaToolNameLoc), "m_RunProgTool.RunProgram returned False")
-
-            If Not String.IsNullOrEmpty(m_ErrMsg) Then
-                m_ErrMsg = "Error running " & Path.GetFileNameWithoutExtension(m_DtaToolNameLoc)
-            End If
-
-            Return False
-        End If
-
-        If m_DebugLevel >= 2 Then
-            OnStatusEvent(" ... MGF file created using DeconConsole")
-        End If
-
-        Return True
-
-    End Function
-
-    Protected Overrides Sub MonitorProgress()
-
-        Dim dtFinishTime As DateTime
-        Dim blnFinishedProcessing As Boolean
-
-        ParseDeconToolsLogFile(blnFinishedProcessing, dtFinishTime)
-
-        If m_DebugLevel >= 2 Then
-
-            Dim strProgressMessage = "Scan=" & mDeconConsoleStatus.CurrentLCScan
-            OnProgressUpdate("... " & strProgressMessage & ", " & m_Progress.ToString("0.0") & "% complete", m_Progress)
-
-        End If
-
-
-        Const MAX_LOGFINISHED_WAITTIME_SECONDS = 120
-        If blnFinishedProcessing Then
-            ' The DeconConsole Log File reports that the task is complete
-            ' If it finished over MAX_LOGFINISHED_WAITTIME_SECONDS seconds ago, then send an abort to the CmdRunner
-
-            If DateTime.Now().Subtract(dtFinishTime).TotalSeconds >= MAX_LOGFINISHED_WAITTIME_SECONDS Then
-                OnWarningEvent("Note: Log file reports finished over " & MAX_LOGFINISHED_WAITTIME_SECONDS & " seconds ago, " &
-                               "but the DeconConsole CmdRunner is still active")
-
-                mDeconConsoleFinishedDespiteProgRunnerError = True
-
-                ' Abort processing
-                mCmdRunner.AbortProgramNow()
-
-                Threading.Thread.Sleep(3000)
-            End If
-        End If
-
-    End Sub
-
-    Private Sub ParseDeconToolsLogFile(<Out()> ByRef blnFinishedProcessing As Boolean, <Out()> ByRef dtFinishTime As DateTime)
-
-        Dim strScanLine As String = String.Empty
-
-        blnFinishedProcessing = False
-        dtFinishTime = Date.MinValue
-
-        Try
-            Dim strLogFilePath As String
-
-            Select Case m_RawDataType
-                Case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder, clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder, clsAnalysisResources.eRawDataTypeConstants.BrukerTOFBaf
-                    ' As of 11/19/2010, the _Log.txt file is created inside the .D folder
-                    strLogFilePath = Path.Combine(mInputFilePath, m_Dataset) & "_log.txt"
-                Case Else
-                    strLogFilePath = Path.Combine(m_WorkDir, Path.GetFileNameWithoutExtension(mInputFilePath) & "_log.txt")
-            End Select
-
-            If Not File.Exists(strLogFilePath) Then '
-                Return
-            End If
-
-            Using srInFile = New StreamReader(New FileStream(strLogFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-
-                While Not srInFile.EndOfStream
-                    Dim strLineIn = srInFile.ReadLine
-
-                    If String.IsNullOrWhiteSpace(strLineIn) Then Continue While
-
-                    Dim intCharIndex = strLineIn.IndexOf("finished file processing", StringComparison.InvariantCultureIgnoreCase)
-                    If intCharIndex >= 0 Then
-
-                        Dim blnDateValid = False
-                        If intCharIndex > 1 Then
-                            ' Parse out the date from strLineIn
-                            If DateTime.TryParse(strLineIn.Substring(0, intCharIndex).Trim, dtFinishTime) Then
-                                blnDateValid = True
-                            Else
-                                ' Unable to parse out the date
-                                OnErrorEvent("Unable to parse date from string '" & strLineIn.Substring(0, intCharIndex).Trim &
-                                              "'; will use file modification date as the processing finish time")
-                            End If
-                        End If
-
-                        If Not blnDateValid Then
-                            Dim fiFileInfo = New FileInfo(strLogFilePath)
-                            dtFinishTime = fiFileInfo.LastWriteTime
-                        End If
-
-                        If m_DebugLevel >= 3 Then
-                            OnStatusEvent("DeconConsole log file reports 'finished file processing' at " & dtFinishTime.ToString())
-                        End If
-
-                        ''If intWorkFlowStep < TOTAL_WORKFLOW_STEPS Then
-                        ''	intWorkFlowStep += 1
-                        ''End If
-
-                        blnFinishedProcessing = True
-                    End If
-
-                    If intCharIndex < 0 Then
-                        intCharIndex = strLineIn.IndexOf("DeconTools.Backend.dll", StringComparison.Ordinal)
-                        If intCharIndex > 0 Then
-                            ' DeconConsole reports "Finished file processing" at the end of each step in the workflow
-                            ' Reset blnFinishedProcessing back to false
-                            blnFinishedProcessing = False
-                        End If
-                    End If
-
-                    If intCharIndex < 0 Then
-                        intCharIndex = strLineIn.ToLower.IndexOf("scan/frame", StringComparison.Ordinal)
-                        If intCharIndex > 0 Then
-                            strScanLine = strLineIn.Substring(intCharIndex)
-                        End If
-                    End If
-
-                    If intCharIndex < 0 Then
-                        intCharIndex = strLineIn.ToLower.IndexOf("scan=", StringComparison.Ordinal)
-                        If intCharIndex > 0 Then
-                            strScanLine = strLineIn.Substring(intCharIndex)
-                        End If
-                    End If
-
-                    If intCharIndex < 0 Then
-
-                        intCharIndex = strLineIn.IndexOf("ERROR THROWN", StringComparison.Ordinal)
-                        If intCharIndex >= 0 Then
-                            ' An exception was reported in the log file; treat this as a fatal error
-                            m_ErrMsg = "Error thrown by DeconConsole"
-
-                            OnErrorEvent("DeconConsole reports " & strLineIn.Substring(intCharIndex))
-                            mDeconConsoleExceptionThrown = True
-
-                        End If
-                    End If
-
-
-                End While
-
-            End Using
-
-        Catch ex As Exception
-            ' Ignore errors here		
-            If m_DebugLevel >= 4 Then
-                OnWarningEvent("Exception in ParseDeconToolsLogFile: " & ex.Message)
-            End If
-
-        End Try
-
-        If Not String.IsNullOrWhiteSpace(strScanLine) Then
-            ' Parse strScanFrameLine
-            ' It will look like:
-            ' Scan= 16500; PercentComplete= 89.2
-
-            Dim strProgressStats() As String
-            Dim kvStat As KeyValuePair(Of String, String)
-
-            strProgressStats = strScanLine.Split(";"c)
-
-            For i = 0 To strProgressStats.Length - 1
-                kvStat = ParseKeyValue(strProgressStats(i))
-                If Not String.IsNullOrWhiteSpace(kvStat.Key) Then
-                    Select Case kvStat.Key
-                        Case "Scan"
-                            Integer.TryParse(kvStat.Value, mDeconConsoleStatus.CurrentLCScan)
-                        Case "Scan/Frame"
-                            Integer.TryParse(kvStat.Value, mDeconConsoleStatus.CurrentLCScan)
-                        Case "PercentComplete"
-                            Single.TryParse(kvStat.Value, mDeconConsoleStatus.PercentComplete)
-
-                            ''mDeconConsoleStatus.PercentComplete = CSng((intWorkFlowStep - 1) / TOTAL_WORKFLOW_STEPS * 100.0 + mDeconConsoleStatus.PercentComplete / TOTAL_WORKFLOW_STEPS)
-                            mDeconConsoleStatus.PercentComplete = mDeconConsoleStatus.PercentComplete
-                    End Select
-                End If
-            Next
-
-            m_Progress = PROGRESS_DECON_CONSOLE_START + mDeconConsoleStatus.PercentComplete * (PROGRESS_MGF_TO_CDTA_START - PROGRESS_DECON_CONSOLE_START) / 100
-
-        End If
-
-    End Sub
-
-    ''' <summary>
-    ''' Looks for an equals sign in strData
-    ''' Returns a KeyValuePair object with the text before the equals sign and the text after the equals sign
-    ''' </summary>
-    ''' <param name="strData"></param>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Private Function ParseKeyValue(strData As String) As KeyValuePair(Of String, String)
-        Dim intCharIndex As Integer
-        intCharIndex = strData.IndexOf("="c)
-
-        If intCharIndex > 0 Then
-            Try
-                Return New KeyValuePair(Of String, String)(strData.Substring(0, intCharIndex).Trim(),
-                 strData.Substring(intCharIndex + 1).Trim())
-            Catch ex As Exception
-                ' Ignore errors here
-            End Try
-        End If
-
-        Return New KeyValuePair(Of String, String)(String.Empty, String.Empty)
-
-    End Function
-
-End Class
+        protected override void MakeDTAFilesThreaded()
+        {
+            m_Status = ProcessStatus.SF_RUNNING;
+            m_ErrMsg = string.Empty;
+
+            m_Progress = PROGRESS_DECON_CONSOLE_START;
+
+            if (!ConvertRawToMGF(m_RawDataType))
+            {
+                if (m_Status != ProcessStatus.SF_ABORTING)
+                {
+                    m_Results = ProcessResults.SF_FAILURE;
+                    m_Status = ProcessStatus.SF_ERROR;
+                }
+                return;
+            }
+
+            m_Progress = PROGRESS_MGF_TO_CDTA_START;
+
+            if (!ConvertMGFtoDTA())
+            {
+                if (m_Status != ProcessStatus.SF_ABORTING)
+                {
+                    m_Results = ProcessResults.SF_FAILURE;
+                    m_Status = ProcessStatus.SF_ERROR;
+                }
+                return;
+            }
+
+            m_Progress = PROGRESS_CDTA_CREATED;
+
+            m_Results = ProcessResults.SF_SUCCESS;
+            m_Status = ProcessStatus.SF_COMPLETE;
+        }
+
+        /// <summary>
+        /// Convert .mgf file to _DTA.txt using MascotGenericFileToDTA.dll
+        /// This functon is called by MakeDTAFilesThreaded
+        /// </summary>
+        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <remarks></remarks>
+        private bool ConvertMGFtoDTA()
+        {
+            bool blnSuccess = false;
+
+            string strRawDataType = m_JobParams.GetJobParameter("RawDataType", "");
+
+            var oMGFConverter = new clsMGFConverter(m_DebugLevel, m_WorkDir)
+            {
+                IncludeExtraInfoOnParentIonLine = true,
+                MinimumIonsPerSpectrum = 0
+            };
+
+            var eRawDataType = clsAnalysisResources.GetRawDataType(strRawDataType);
+            blnSuccess = oMGFConverter.ConvertMGFtoDTA(eRawDataType, m_Dataset);
+
+            if (!blnSuccess)
+            {
+                m_ErrMsg = oMGFConverter.ErrorMessage;
+            }
+
+            m_SpectraFileCount = oMGFConverter.SpectraCountWritten;
+
+            return blnSuccess;
+        }
+
+        /// <summary>
+        /// Create .mgf file using MSConvert
+        /// This function is called by MakeDTAFilesThreaded
+        /// </summary>
+        /// <param name="eRawDataType">Raw data file type</param>
+        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <remarks></remarks>
+        private bool ConvertRawToMGF(clsAnalysisResources.eRawDataTypeConstants eRawDataType)
+        {
+            string RawFilePath = null;
+
+            if (m_DebugLevel > 0)
+            {
+                OnStatusEvent("Creating .MGF file using DeconConsole");
+            }
+
+            m_ErrMsg = string.Empty;
+
+            // Construct the path to the .raw file
+            switch (eRawDataType)
+            {
+                case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile:
+                    RawFilePath = Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_RAW_EXTENSION);
+                    break;
+                default:
+                    m_ErrMsg = "Data file type not supported by the DeconMSn workflow in DeconConsole: " + eRawDataType.ToString();
+                    return false;
+            }
+
+            m_InstrumentFileName = Path.GetFileName(RawFilePath);
+            mInputFilePath = RawFilePath;
+            m_JobParams.AddResultFileToSkip(m_InstrumentFileName);
+
+            if (eRawDataType == clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile)
+            {
+                //Get the maximum number of scans in the file
+                m_MaxScanInFile = GetMaxScan(RawFilePath);
+            }
+            else
+            {
+                m_MaxScanInFile = DEFAULT_SCAN_STOP;
+            }
+
+            //Determine max number of scans to be performed
+            m_NumScans = m_MaxScanInFile;
+
+            // Reset the state variables
+            mDeconConsoleExceptionThrown = false;
+            mDeconConsoleFinishedDespiteProgRunnerError = false;
+            mDeconConsoleStatus.Clear();
+
+            var strParamFilePath = m_JobParams.GetJobParameter("DtaGenerator", "DeconMSn_ParamFile", string.Empty);
+
+            if (string.IsNullOrEmpty(strParamFilePath))
+            {
+                m_ErrMsg = clsAnalysisToolRunnerBase.NotifyMissingParameter(m_JobParams, "DeconMSn_ParamFile");
+                return false;
+            }
+            else
+            {
+                strParamFilePath = Path.Combine(m_WorkDir, strParamFilePath);
+            }
+
+            //Set up command
+            var cmdStr = " " + RawFilePath + " " + strParamFilePath;
+
+            if (m_DebugLevel > 0)
+            {
+                OnStatusEvent(m_DtaToolNameLoc + " " + cmdStr);
+            }
+
+            //Setup a program runner tool to make the spectra files
+            mCmdRunner = new clsRunDosProgram(m_WorkDir)
+            {
+                CreateNoWindow = true,
+                CacheStandardOutput = true,
+                EchoOutputToConsole = true,
+                WriteConsoleOutputToFile = false   // Disable since the DeconConsole log file has very similar information
+            };
+
+            mCmdRunner.ErrorEvent += base.CmdRunner_ErrorEvent;
+            mCmdRunner.LoopWaiting += base.CmdRunner_LoopWaiting;
+
+            var blnSuccess = mCmdRunner.RunProgram(m_DtaToolNameLoc, cmdStr, "DeconConsole", true);
+
+            // Parse the DeconTools .Log file to see whether it contains message "Finished file processing"
+
+            DateTime dtFinishTime = DateTime.Now;
+            bool blnFinishedProcessing = false;
+
+            ParseDeconToolsLogFile(out blnFinishedProcessing, out dtFinishTime);
+
+            if (mDeconConsoleExceptionThrown)
+            {
+                blnSuccess = false;
+            }
+
+            if (blnFinishedProcessing & !blnSuccess)
+            {
+                mDeconConsoleFinishedDespiteProgRunnerError = true;
+            }
+
+            // Look for file Dataset*BAD_ERROR_log.txt
+            // If it exists, an exception occurred
+            var diWorkdir = new DirectoryInfo(Path.Combine(m_WorkDir));
+
+            foreach (FileInfo fiFile in diWorkdir.GetFiles(m_Dataset + "*BAD_ERROR_log.txt"))
+            {
+                m_ErrMsg = "Error running DeconTools; Bad_Error_log file exists";
+                OnErrorEvent(m_ErrMsg + ": " + fiFile.Name);
+                blnSuccess = false;
+                mDeconConsoleFinishedDespiteProgRunnerError = false;
+                break;
+            }
+
+            if (mDeconConsoleFinishedDespiteProgRunnerError & !mDeconConsoleExceptionThrown)
+            {
+                // ProgRunner reported an error code
+                // However, the log file says things completed successfully
+                // We'll trust the log file
+                blnSuccess = true;
+            }
+
+            if (!blnSuccess)
+            {
+                // .RunProgram returned False
+                LogDTACreationStats("ConvertRawToMGF", Path.GetFileNameWithoutExtension(m_DtaToolNameLoc), "m_RunProgTool.RunProgram returned False");
+
+                if (!string.IsNullOrEmpty(m_ErrMsg))
+                {
+                    m_ErrMsg = "Error running " + Path.GetFileNameWithoutExtension(m_DtaToolNameLoc);
+                }
+
+                return false;
+            }
+
+            if (m_DebugLevel >= 2)
+            {
+                OnStatusEvent(" ... MGF file created using DeconConsole");
+            }
+
+            return true;
+        }
+
+        protected override void MonitorProgress()
+        {
+            DateTime dtFinishTime = DateTime.Now;
+            bool blnFinishedProcessing = false;
+
+            ParseDeconToolsLogFile(out blnFinishedProcessing, out dtFinishTime);
+
+            if (m_DebugLevel >= 2)
+            {
+                var strProgressMessage = "Scan=" + mDeconConsoleStatus.CurrentLCScan;
+                OnProgressUpdate("... " + strProgressMessage + ", " + m_Progress.ToString("0.0") + "% complete", m_Progress);
+            }
+
+            const int MAX_LOGFINISHED_WAITTIME_SECONDS = 120;
+            if (blnFinishedProcessing)
+            {
+                // The DeconConsole Log File reports that the task is complete
+                // If it finished over MAX_LOGFINISHED_WAITTIME_SECONDS seconds ago, then send an abort to the CmdRunner
+
+                if (DateTime.Now.Subtract(dtFinishTime).TotalSeconds >= MAX_LOGFINISHED_WAITTIME_SECONDS)
+                {
+                    OnWarningEvent("Note: Log file reports finished over " + MAX_LOGFINISHED_WAITTIME_SECONDS + " seconds ago, " +
+                                   "but the DeconConsole CmdRunner is still active");
+
+                    mDeconConsoleFinishedDespiteProgRunnerError = true;
+
+                    // Abort processing
+                    mCmdRunner.AbortProgramNow();
+
+                    Thread.Sleep(3000);
+                }
+            }
+        }
+
+        private void ParseDeconToolsLogFile(out bool blnFinishedProcessing, out DateTime dtFinishTime)
+        {
+            string strScanLine = string.Empty;
+
+            blnFinishedProcessing = false;
+            dtFinishTime = System.DateTime.MinValue;
+
+            try
+            {
+                string strLogFilePath = null;
+
+                switch (m_RawDataType)
+                {
+                    case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder:
+                    case clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder:
+                    case clsAnalysisResources.eRawDataTypeConstants.BrukerTOFBaf:
+                        // As of 11/19/2010, the _Log.txt file is created inside the .D folder
+                        strLogFilePath = Path.Combine(mInputFilePath, m_Dataset) + "_log.txt";
+                        break;
+                    default:
+                        strLogFilePath = Path.Combine(m_WorkDir, Path.GetFileNameWithoutExtension(mInputFilePath) + "_log.txt");
+                        break;
+                }
+
+                //
+                if (!File.Exists(strLogFilePath))
+                {
+                    return;
+                }
+
+                using (var srInFile = new StreamReader(new FileStream(strLogFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                {
+                    while (!srInFile.EndOfStream)
+                    {
+                        var strLineIn = srInFile.ReadLine();
+
+                        if (string.IsNullOrWhiteSpace(strLineIn))
+                            continue;
+
+                        var intCharIndex = strLineIn.IndexOf("finished file processing", StringComparison.InvariantCultureIgnoreCase);
+
+                        if (intCharIndex >= 0)
+                        {
+                            var blnDateValid = false;
+                            if (intCharIndex > 1)
+                            {
+                                // Parse out the date from strLineIn
+                                if (DateTime.TryParse(strLineIn.Substring(0, intCharIndex).Trim(), out dtFinishTime))
+                                {
+                                    blnDateValid = true;
+                                }
+                                else
+                                {
+                                    // Unable to parse out the date
+                                    OnErrorEvent("Unable to parse date from string '" + strLineIn.Substring(0, intCharIndex).Trim() +
+                                                 "'; will use file modification date as the processing finish time");
+                                }
+                            }
+
+                            if (!blnDateValid)
+                            {
+                                var fiFileInfo = new FileInfo(strLogFilePath);
+                                dtFinishTime = fiFileInfo.LastWriteTime;
+                            }
+
+                            if (m_DebugLevel >= 3)
+                            {
+                                OnStatusEvent("DeconConsole log file reports 'finished file processing' at " + dtFinishTime.ToString());
+                            }
+
+                            //'If intWorkFlowStep < TOTAL_WORKFLOW_STEPS Then
+                            //'	intWorkFlowStep += 1
+                            //'End If
+
+                            blnFinishedProcessing = true;
+                        }
+
+                        if (intCharIndex < 0)
+                        {
+                            intCharIndex = strLineIn.IndexOf("DeconTools.Backend.dll", StringComparison.Ordinal);
+                            if (intCharIndex > 0)
+                            {
+                                // DeconConsole reports "Finished file processing" at the end of each step in the workflow
+                                // Reset blnFinishedProcessing back to false
+                                blnFinishedProcessing = false;
+                            }
+                        }
+
+                        if (intCharIndex < 0)
+                        {
+                            intCharIndex = strLineIn.ToLower().IndexOf("scan/frame", StringComparison.Ordinal);
+                            if (intCharIndex > 0)
+                            {
+                                strScanLine = strLineIn.Substring(intCharIndex);
+                            }
+                        }
+
+                        if (intCharIndex < 0)
+                        {
+                            intCharIndex = strLineIn.ToLower().IndexOf("scan=", StringComparison.Ordinal);
+                            if (intCharIndex > 0)
+                            {
+                                strScanLine = strLineIn.Substring(intCharIndex);
+                            }
+                        }
+
+                        if (intCharIndex < 0)
+                        {
+                            intCharIndex = strLineIn.IndexOf("ERROR THROWN", StringComparison.Ordinal);
+                            if (intCharIndex >= 0)
+                            {
+                                // An exception was reported in the log file; treat this as a fatal error
+                                m_ErrMsg = "Error thrown by DeconConsole";
+
+                                OnErrorEvent("DeconConsole reports " + strLineIn.Substring(intCharIndex));
+                                mDeconConsoleExceptionThrown = true;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Ignore errors here
+                if (m_DebugLevel >= 4)
+                {
+                    OnWarningEvent("Exception in ParseDeconToolsLogFile: " + ex.Message);
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(strScanLine))
+            {
+                // Parse strScanFrameLine
+                // It will look like:
+                // Scan= 16500; PercentComplete= 89.2
+
+                string[] strProgressStats = null;
+
+                strProgressStats = strScanLine.Split(';');
+
+                for (int i = 0; i <= strProgressStats.Length - 1; i++)
+                {
+                    var kvStat = ParseKeyValue(strProgressStats[i]);
+                    if (!string.IsNullOrWhiteSpace(kvStat.Key))
+                    {
+                        switch (kvStat.Key)
+                        {
+                            case "Scan":
+                                int.TryParse(kvStat.Value, out mDeconConsoleStatus.CurrentLCScan);
+                                break;
+                            case "Scan/Frame":
+                                int.TryParse(kvStat.Value, out mDeconConsoleStatus.CurrentLCScan);
+                                break;
+                            case "PercentComplete":
+                                float.TryParse(kvStat.Value, out mDeconConsoleStatus.PercentComplete);
+
+                                //'mDeconConsoleStatus.PercentComplete = CSng((intWorkFlowStep - 1) / TOTAL_WORKFLOW_STEPS * 100.0 + mDeconConsoleStatus.PercentComplete / TOTAL_WORKFLOW_STEPS)
+                                mDeconConsoleStatus.PercentComplete = mDeconConsoleStatus.PercentComplete;
+                                break;
+                        }
+                    }
+                }
+
+                m_Progress = PROGRESS_DECON_CONSOLE_START + mDeconConsoleStatus.PercentComplete * (PROGRESS_MGF_TO_CDTA_START - PROGRESS_DECON_CONSOLE_START) / 100;
+            }
+        }
+
+        /// <summary>
+        /// Looks for an equals sign in strData
+        /// Returns a KeyValuePair object with the text before the equals sign and the text after the equals sign
+        /// </summary>
+        /// <param name="strData"></param>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        private KeyValuePair<string, string> ParseKeyValue(string strData)
+        {
+            int intCharIndex = 0;
+            intCharIndex = strData.IndexOf('=');
+
+            if (intCharIndex > 0)
+            {
+                try
+                {
+                    return new KeyValuePair<string, string>(strData.Substring(0, intCharIndex).Trim(), strData.Substring(intCharIndex + 1).Trim());
+                }
+                catch (Exception ex)
+                {
+                    // Ignore errors here
+                }
+            }
+
+            return new KeyValuePair<string, string>(string.Empty, string.Empty);
+        }
+    }
+}

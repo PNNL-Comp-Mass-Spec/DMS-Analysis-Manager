@@ -1,317 +1,346 @@
-'*********************************************************************************************************
-' Written by Dave Clark for the US Department of Energy 
-' Pacific Northwest National Laboratory, Richland, WA
-' Copyright 2007, Battelle Memorial Institute
-' Created 12/18/2007
-'
-'*********************************************************************************************************
-
-Imports AnalysisManagerBase
-Imports System.IO
-Imports System.Text.RegularExpressions
-
-''' <summary>
-''' This is the base class that implements a specific spectra file generator.
-''' </summary>
-''' <remarks></remarks>
-Public MustInherit Class clsDtaGen
-    Inherits clsEventNotifier
-    Implements ISpectraFileProcessor
-
-#Region "Module variables"
-    Protected m_ErrMsg As String = String.Empty
-    Protected m_WorkDir As String = String.Empty    ' Working directory on analysis machine
-    Protected m_Dataset As String = String.Empty
-    Protected m_RawDataType As clsAnalysisResources.eRawDataTypeConstants = clsAnalysisResources.eRawDataTypeConstants.Unknown
-
-    Protected m_DtaToolNameLoc As String = String.Empty             ' Path to the program used to create DTA files
-
-    Protected m_Status As ProcessStatus
-    Protected m_Results As ProcessResults
-    Protected m_MgrParams As IMgrParams
-    Protected m_JobParams As IJobParams
-    Protected m_DebugLevel As Short = 0
-    Protected m_SpectraFileCount As Integer
-    Protected m_StatusTools As IStatusFile
-
-    Protected m_ToolRunner As clsAnalysisToolRunnerBase
-
-    Protected m_AbortRequested As Boolean = False
-
-    ' The following is a value between 0 and 100
-    Protected m_Progress As Single = 0
-#End Region
-
-#Region "Properties"
-    Public WriteOnly Property StatusTools() As IStatusFile Implements ISpectraFileProcessor.StatusTools
-        Set(Value As IStatusFile)
-            m_StatusTools = Value
-        End Set
-    End Property
-
-    Public ReadOnly Property DtaToolNameLoc() As String Implements ISpectraFileProcessor.DtaToolNameLoc
-        Get
-            Return m_DtaToolNameLoc
-        End Get
-    End Property
-
-    Public ReadOnly Property ErrMsg() As String Implements ISpectraFileProcessor.ErrMsg
-        Get
-            Return m_ErrMsg
-        End Get
-    End Property
-
-    Public WriteOnly Property MgrParams() As IMgrParams Implements ISpectraFileProcessor.MgrParams
-        Set(Value As IMgrParams)
-            m_MgrParams = Value
-        End Set
-    End Property
-
-    Public WriteOnly Property JobParams() As IJobParams Implements ISpectraFileProcessor.JobParams
-        Set(Value As IJobParams)
-            m_JobParams = Value
-        End Set
-    End Property
-
-    Public ReadOnly Property Status() As ProcessStatus Implements ISpectraFileProcessor.Status
-        Get
-            Return m_Status
-        End Get
-    End Property
-
-    Public ReadOnly Property Results() As ProcessResults Implements ISpectraFileProcessor.Results
-        Get
-            Return m_Results
-        End Get
-    End Property
-
-    Public Property DebugLevel() As Integer Implements ISpectraFileProcessor.DebugLevel
-        Get
-            Return m_DebugLevel
-        End Get
-        Set(Value As Integer)
-            m_DebugLevel = CShort(Value)
-        End Set
-    End Property
-
-    Public ReadOnly Property SpectraFileCount() As Integer Implements ISpectraFileProcessor.SpectraFileCount
-        Get
-            Return m_SpectraFileCount
-        End Get
-    End Property
-
-    Public ReadOnly Property Progress() As Single Implements ISpectraFileProcessor.Progress
-        Get
-            Return m_Progress
-        End Get
-    End Property
-#End Region
-
-#Region "Methods"
-    ''' <summary>
-    ''' Aborts processing
-    ''' </summary>
-    ''' <returns>ProcessStatus value indicating process was aborted</returns>
-    ''' <remarks></remarks>
-    Public Function Abort() As ProcessStatus Implements ISpectraFileProcessor.Abort
-        m_AbortRequested = True
-    End Function
-
-    Public MustOverride Function Start() As ProcessStatus Implements ISpectraFileProcessor.Start
-
-    Public Overridable Sub Setup(
-      initParams As SpectraFileProcessorParams,
-      toolRunner As clsAnalysisToolRunnerBase) Implements ISpectraFileProcessor.Setup
-
-        ' Copies all input data required for plugin operation to appropriate memory variables
-        With initParams
-            m_DebugLevel = CShort(.DebugLevel)
-            m_JobParams = .JobParams
-            m_MgrParams = .MgrParams
-            m_StatusTools = .StatusTools
-            m_WorkDir = .WorkDir
-            m_Dataset = .DatasetName
-        End With
-
-        m_ToolRunner = toolRunner
-
-        m_RawDataType = clsAnalysisResources.GetRawDataType(m_JobParams.GetJobParameter("RawDataType", ""))
-
-        m_Progress = 0
-
-    End Sub
-
-    Public Sub UpdateDtaToolNameLoc(progLoc As String)
-        m_DtaToolNameLoc = progLoc
-    End Sub
-
-    Protected Function VerifyDirExists(TestDir As String) As Boolean
-
-        ' Verifies that the specified directory exists
-        If Directory.Exists(TestDir) Then
-            m_ErrMsg = ""
-            Return True
-        Else
-            m_ErrMsg = "Directory " & TestDir & " not found"
-            Return False
-        End If
-
-    End Function
-
-    Protected Function VerifyFileExists(TestFile As String) As Boolean
-        ' Verifies specified file exists
-        If File.Exists(TestFile) Then
-            m_ErrMsg = ""
-            Return True
-        Else
-            m_ErrMsg = "File " & TestFile & " not found"
-            Return False
-        End If
-
-    End Function
-
-    Protected Overridable Function InitSetup() As Boolean
-
-        ' Initializes module variables and verifies mandatory parameters have been propery specified
-
-        ' Manager parameters
-        If m_MgrParams Is Nothing Then
-            m_ErrMsg = "Manager parameters not specified"
-            Return False
-        End If
-
-        ' Job parameters
-        If m_JobParams Is Nothing Then
-            m_ErrMsg = "Job parameters not specified"
-            Return False
-        End If
-
-        ' Status tools
-        If m_StatusTools Is Nothing Then
-            m_ErrMsg = "Status tools object not set"
-            Return False
-        End If
-
-        ' If we got here, everything's OK
-        Return True
-
-    End Function
-
-    Protected Function DeleteNonDosFiles() As Boolean
-
-        ' extract_msn.exe and lcq_dta.exe sometimes leave files with funky filenames containing non-DOS characters. 
-        ' This function removes those files
-
-        Dim workDir As New DirectoryInfo(m_WorkDir)
-
-        Dim reValidFiles = New Regex(".dta$|.txt$|.csv$|.raw$|.params$|.wiff$|.xml$|.mgf$", RegexOptions.Compiled Or RegexOptions.IgnoreCase)
-
-        For Each dataFile In workDir.GetFiles
-            Dim reMatch = reValidFiles.Match(dataFile.Extension)
-            If Not reMatch.Success Then
-                Try
-                    dataFile.Delete()
-                Catch ex As Exception
-                    m_ErrMsg = "Error removing non-DOS files: " & ex.Message
-                    Return False
-                End Try
-            End If
-        Next
-
-        Return True
-
-    End Function
-
-    Protected Sub LogDTACreationStats(strProcedureName As String, strDTAToolName As String, strErrorMessage As String)
-
-        Dim strMostRecentBlankDTA As String = String.Empty
-        Dim strMostRecentValidDTA As String = String.Empty
-
-        If strProcedureName Is Nothing Then
-            strProcedureName = "clsDtaGen.??"
-        End If
-        If strDTAToolName Is Nothing Then
-            strDTAToolName = "Unknown DTA Tool"
-        End If
-
-        If strErrorMessage Is Nothing Then
-            strErrorMessage = "Unknown error"
-        End If
-
-        OnErrorEvent(strProcedureName & ", Error running " & strDTAToolName & "; " & strErrorMessage)
-
-        ' Now count the number of .Dta files in the working folder
-
-        Try
-            Dim objFolderInfo = New DirectoryInfo(m_WorkDir)
-            Dim objFiles = objFolderInfo.GetFiles("*.dta")
-            Dim intDTACount As Integer
-
-            If objFiles Is Nothing OrElse objFiles.Length <= 0 Then
-                intDTACount = 0
-            Else
-                intDTACount = objFiles.Length
-
-                Dim intMostRecentValidDTAIndex = -1
-                Dim intMostRecentBlankDTAIndex = -1
-                Dim lngDTAFileSize As Long = 0
-
-                ' Find the most recently created .Dta file
-                ' However, track blank (zero-length) .Dta files separate from those with data 
-                For intIndex = 1 To objFiles.Length - 1
-                    If objFiles(intIndex).Length = 0 Then
-                        If intMostRecentBlankDTAIndex < 0 Then
-                            intMostRecentBlankDTAIndex = intIndex
-                        Else
-                            If objFiles(intIndex).LastWriteTime > objFiles(intMostRecentBlankDTAIndex).LastWriteTime Then
-                                intMostRecentBlankDTAIndex = intIndex
-                            End If
-                        End If
-                    Else
-                        If intMostRecentValidDTAIndex < 0 Then
-                            intMostRecentValidDTAIndex = intIndex
-                        Else
-                            If objFiles(intIndex).LastWriteTime > objFiles(intMostRecentValidDTAIndex).LastWriteTime Then
-                                intMostRecentValidDTAIndex = intIndex
-                            End If
-                        End If
-                    End If
-                Next
-
-                If intMostRecentBlankDTAIndex >= 0 Then
-                    strMostRecentBlankDTA = objFiles(intMostRecentBlankDTAIndex).Name
-                End If
-
-                If intMostRecentValidDTAIndex >= 0 Then
-                    strMostRecentValidDTA = objFiles(intMostRecentValidDTAIndex).Name
-                    lngDTAFileSize = objFiles(intMostRecentValidDTAIndex).Length
-                End If
-
-                If intDTACount > 0 Then
-                    ' Log the name of the most recently created .Dta file
-                    If intMostRecentValidDTAIndex >= 0 Then
-                        OnStatusEvent(strProcedureName & ", The most recent .Dta file created is " & strMostRecentValidDTA &
-                                      " with size " & lngDTAFileSize.ToString & " bytes")
-                    Else
-                        OnWarningEvent(strProcedureName & ", No valid (non zero length) .Dta files were created")
-                    End If
-
-                    If intMostRecentBlankDTAIndex >= 0 Then
-                        OnStatusEvent(strProcedureName & ", The most recent blank (zero-length) .Dta file created is " & strMostRecentBlankDTA)
-                    End If
-                End If
-
-            End If
-
-            ' Log the number of .Dta files that were found
-            OnStatusEvent(strProcedureName & ", " & strDTAToolName & " created " & intDTACount.ToString & " .dta files")
-
-        Catch ex As Exception
-            OnErrorEvent(", Error finding the most recently created .Dta file: " & ex.Message)
-        End Try
-
-    End Sub
-
-#End Region
-
-End Class
+//*********************************************************************************************************
+// Written by Dave Clark for the US Department of Energy
+// Pacific Northwest National Laboratory, Richland, WA
+// Copyright 2007, Battelle Memorial Institute
+// Created 12/18/2007
+//
+//*********************************************************************************************************
+
+using System;
+using System.IO;
+using System.Text.RegularExpressions;
+using AnalysisManagerBase;
+
+namespace DTASpectraFileGen
+{
+    /// <summary>
+    /// This is the base class that implements a specific spectra file generator.
+    /// </summary>
+    /// <remarks></remarks>
+    public abstract class clsDtaGen : clsEventNotifier, ISpectraFileProcessor
+    {
+        #region "Module variables"
+
+        protected string m_ErrMsg = string.Empty;
+        protected string m_WorkDir = string.Empty;    // Working directory on analysis machine
+        protected string m_Dataset = string.Empty;
+
+        protected clsAnalysisResources.eRawDataTypeConstants m_RawDataType = clsAnalysisResources.eRawDataTypeConstants.Unknown;
+
+        protected string m_DtaToolNameLoc = string.Empty;             // Path to the program used to create DTA files
+
+        protected ProcessStatus m_Status;
+        protected ProcessResults m_Results;
+        protected IMgrParams m_MgrParams;
+        protected IJobParams m_JobParams;
+        protected short m_DebugLevel = 0;
+        protected int m_SpectraFileCount;
+        protected IStatusFile m_StatusTools;
+
+        protected clsAnalysisToolRunnerBase m_ToolRunner;
+
+        protected bool m_AbortRequested = false;
+
+        // The following is a value between 0 and 100
+        protected float m_Progress = 0;
+
+        #endregion
+
+        #region "Properties"
+
+        public IStatusFile StatusTools
+        {
+            set { m_StatusTools = value; }
+        }
+
+        public string DtaToolNameLoc
+        {
+            get { return m_DtaToolNameLoc; }
+        }
+
+        public string ErrMsg
+        {
+            get { return m_ErrMsg; }
+        }
+
+        public IMgrParams MgrParams
+        {
+            set { m_MgrParams = value; }
+        }
+
+        public IJobParams JobParams
+        {
+            set { m_JobParams = value; }
+        }
+
+        public ProcessStatus Status
+        {
+            get { return m_Status; }
+        }
+
+        public ProcessResults Results
+        {
+            get { return m_Results; }
+        }
+
+        public int DebugLevel
+        {
+            get { return m_DebugLevel; }
+            set { m_DebugLevel = Convert.ToInt16(value); }
+        }
+
+        public int SpectraFileCount
+        {
+            get { return m_SpectraFileCount; }
+        }
+
+        public float Progress
+        {
+            get { return m_Progress; }
+        }
+
+        #endregion
+
+        #region "Methods"
+
+        /// <summary>
+        /// Aborts processing
+        /// </summary>
+        /// <returns>ProcessStatus value indicating process was aborted</returns>
+        /// <remarks></remarks>
+        public ProcessStatus Abort()
+        {
+            m_AbortRequested = true;
+            return ProcessStatus.SF_ABORTING;
+        }
+
+        public abstract ProcessStatus Start();
+
+        public virtual void Setup(SpectraFileProcessorParams initParams, clsAnalysisToolRunnerBase toolRunner)
+        {
+            // Copies all input data required for plugin operation to appropriate memory variables
+            m_DebugLevel = Convert.ToInt16(initParams.DebugLevel);
+            m_JobParams = initParams.JobParams;
+            m_MgrParams = initParams.MgrParams;
+            m_StatusTools = initParams.StatusTools;
+            m_WorkDir = initParams.WorkDir;
+            m_Dataset = initParams.DatasetName;
+
+            m_ToolRunner = toolRunner;
+
+            m_RawDataType = clsAnalysisResources.GetRawDataType(m_JobParams.GetJobParameter("RawDataType", ""));
+
+            m_Progress = 0;
+        }
+
+        public void UpdateDtaToolNameLoc(string progLoc)
+        {
+            m_DtaToolNameLoc = progLoc;
+        }
+
+        protected bool VerifyDirExists(string TestDir)
+        {
+            // Verifies that the specified directory exists
+            if (Directory.Exists(TestDir))
+            {
+                m_ErrMsg = "";
+                return true;
+            }
+            else
+            {
+                m_ErrMsg = "Directory " + TestDir + " not found";
+                return false;
+            }
+        }
+
+        protected bool VerifyFileExists(string TestFile)
+        {
+            // Verifies specified file exists
+            if (File.Exists(TestFile))
+            {
+                m_ErrMsg = "";
+                return true;
+            }
+            else
+            {
+                m_ErrMsg = "File " + TestFile + " not found";
+                return false;
+            }
+        }
+
+        protected virtual bool InitSetup()
+        {
+            // Initializes module variables and verifies mandatory parameters have been propery specified
+
+            // Manager parameters
+            if (m_MgrParams == null)
+            {
+                m_ErrMsg = "Manager parameters not specified";
+                return false;
+            }
+
+            // Job parameters
+            if (m_JobParams == null)
+            {
+                m_ErrMsg = "Job parameters not specified";
+                return false;
+            }
+
+            // Status tools
+            if (m_StatusTools == null)
+            {
+                m_ErrMsg = "Status tools object not set";
+                return false;
+            }
+
+            // If we got here, everything's OK
+            return true;
+        }
+
+        protected bool DeleteNonDosFiles()
+        {
+            // extract_msn.exe and lcq_dta.exe sometimes leave files with funky filenames containing non-DOS characters.
+            // This function removes those files
+
+            DirectoryInfo workDir = new DirectoryInfo(m_WorkDir);
+
+            var reValidFiles = new Regex(@".dta$|.txt$|.csv$|.raw$|.params$|.wiff$|.xml$|.mgf$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+            foreach (var dataFile in workDir.GetFiles())
+            {
+                var reMatch = reValidFiles.Match(dataFile.Extension);
+                if (!reMatch.Success)
+                {
+                    try
+                    {
+                        dataFile.Delete();
+                    }
+                    catch (Exception ex)
+                    {
+                        m_ErrMsg = "Error removing non-DOS files: " + ex.Message;
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        protected void LogDTACreationStats(string strProcedureName, string strDTAToolName, string strErrorMessage)
+        {
+            string strMostRecentBlankDTA = string.Empty;
+            string strMostRecentValidDTA = string.Empty;
+
+            if (strProcedureName == null)
+            {
+                strProcedureName = "clsDtaGen.??";
+            }
+            if (strDTAToolName == null)
+            {
+                strDTAToolName = "Unknown DTA Tool";
+            }
+
+            if (strErrorMessage == null)
+            {
+                strErrorMessage = "Unknown error";
+            }
+
+            OnErrorEvent(strProcedureName + ", Error running " + strDTAToolName + "; " + strErrorMessage);
+
+            // Now count the number of .Dta files in the working folder
+
+            try
+            {
+                var objFolderInfo = new DirectoryInfo(m_WorkDir);
+                var objFiles = objFolderInfo.GetFiles("*.dta");
+                int intDTACount = 0;
+
+                if (objFiles == null || objFiles.Length <= 0)
+                {
+                    intDTACount = 0;
+                }
+                else
+                {
+                    intDTACount = objFiles.Length;
+
+                    var intMostRecentValidDTAIndex = -1;
+                    var intMostRecentBlankDTAIndex = -1;
+                    long lngDTAFileSize = 0;
+
+                    // Find the most recently created .Dta file
+                    // However, track blank (zero-length) .Dta files separate from those with data
+                    for (var intIndex = 1; intIndex <= objFiles.Length - 1; intIndex++)
+                    {
+                        if (objFiles[intIndex].Length == 0)
+                        {
+                            if (intMostRecentBlankDTAIndex < 0)
+                            {
+                                intMostRecentBlankDTAIndex = intIndex;
+                            }
+                            else
+                            {
+                                if (objFiles[intIndex].LastWriteTime > objFiles[intMostRecentBlankDTAIndex].LastWriteTime)
+                                {
+                                    intMostRecentBlankDTAIndex = intIndex;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            if (intMostRecentValidDTAIndex < 0)
+                            {
+                                intMostRecentValidDTAIndex = intIndex;
+                            }
+                            else
+                            {
+                                if (objFiles[intIndex].LastWriteTime > objFiles[intMostRecentValidDTAIndex].LastWriteTime)
+                                {
+                                    intMostRecentValidDTAIndex = intIndex;
+                                }
+                            }
+                        }
+                    }
+
+                    if (intMostRecentBlankDTAIndex >= 0)
+                    {
+                        strMostRecentBlankDTA = objFiles[intMostRecentBlankDTAIndex].Name;
+                    }
+
+                    if (intMostRecentValidDTAIndex >= 0)
+                    {
+                        strMostRecentValidDTA = objFiles[intMostRecentValidDTAIndex].Name;
+                        lngDTAFileSize = objFiles[intMostRecentValidDTAIndex].Length;
+                    }
+
+                    if (intDTACount > 0)
+                    {
+                        // Log the name of the most recently created .Dta file
+                        if (intMostRecentValidDTAIndex >= 0)
+                        {
+                            OnStatusEvent(strProcedureName + ", The most recent .Dta file created is " + strMostRecentValidDTA + " with size " +
+                                          lngDTAFileSize.ToString() + " bytes");
+                        }
+                        else
+                        {
+                            OnWarningEvent(strProcedureName + ", No valid (non zero length) .Dta files were created");
+                        }
+
+                        if (intMostRecentBlankDTAIndex >= 0)
+                        {
+                            OnStatusEvent(strProcedureName + ", The most recent blank (zero-length) .Dta file created is " + strMostRecentBlankDTA);
+                        }
+                    }
+                }
+
+                // Log the number of .Dta files that were found
+                OnStatusEvent(strProcedureName + ", " + strDTAToolName + " created " + intDTACount.ToString() + " .dta files");
+            }
+            catch (Exception ex)
+            {
+                OnErrorEvent(", Error finding the most recently created .Dta file: " + ex.Message);
+            }
+        }
+
+        #endregion
+    }
+}

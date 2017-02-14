@@ -1,176 +1,189 @@
-﻿'*********************************************************************************************************
-' Written by Matthew Monroe for the US Department of Energy 
-' Pacific Northwest National Laboratory, Richland, WA
-' Created 10/21/2016
-'
-' Uses RawConverter to create a .MGF file from a .Raw file (He and Yates. Anal Chem. 2015 Nov 17; 87 (22): 11361-11367)
-' Next, converts the .MGF file to a _DTA.txt file
-'*********************************************************************************************************
+﻿//*********************************************************************************************************
+// Written by Matthew Monroe for the US Department of Energy
+// Pacific Northwest National Laboratory, Richland, WA
+// Created 10/21/2016
+//
+// Uses RawConverter to create a .MGF file from a .Raw file (He and Yates. Anal Chem. 2015 Nov 17; 87 (22): 11361-11367)
+// Next, converts the .MGF file to a _DTA.txt file
+//*********************************************************************************************************
 
+using System;
+using System.IO;
+using AnalysisManagerBase;
 
-Imports AnalysisManagerBase
-Imports System.IO
+namespace DTASpectraFileGen
+{
+    public class clsDtaGenRawConverter : clsDtaGenThermoRaw
+    {
+        public override void Setup(SpectraFileProcessorParams initParams, clsAnalysisToolRunnerBase toolRunner)
+        {
+            base.Setup(initParams, toolRunner);
+        }
 
-Public Class clsDtaGenRawConverter
-    Inherits clsDtaGenThermoRaw
+        /// <summary>
+        /// Returns the default path to the DTA generator tool
+        /// </summary>
+        /// <returns></returns>
+        /// <remarks>The default path can be overridden by updating m_DtaToolNameLoc using clsDtaGen.UpdateDtaToolNameLoc</remarks>
+        protected override string ConstructDTAToolPath()
+        {
+            string strDTAToolPath = null;
 
-    Public Overrides Sub Setup(initParams As SpectraFileProcessorParams, toolRunner As clsAnalysisToolRunnerBase)
-        MyBase.Setup(initParams, toolRunner)
-    End Sub
+            string rawConverterDir = m_MgrParams.GetParam("RawConverterProgLoc");
+            strDTAToolPath = Path.Combine(rawConverterDir, RAWCONVERTER_FILENAME);
 
-    ''' <summary>
-    ''' Returns the default path to the DTA generator tool
-    ''' </summary>
-    ''' <returns></returns>
-    ''' <remarks>The default path can be overridden by updating m_DtaToolNameLoc using clsDtaGen.UpdateDtaToolNameLoc</remarks>
-    Protected Overrides Function ConstructDTAToolPath() As String
+            return strDTAToolPath;
+        }
 
-        Dim strDTAToolPath As String
+        protected override void MakeDTAFilesThreaded()
+        {
+            m_Status = ProcessStatus.SF_RUNNING;
+            m_ErrMsg = string.Empty;
 
-        Dim rawConverterDir As String = m_MgrParams.GetParam("RawConverterProgLoc")
-        strDTAToolPath = Path.Combine(rawConverterDir, RAWCONVERTER_FILENAME)
+            m_Progress = 10;
 
-        Return strDTAToolPath
-
-    End Function
-
-    Protected Overrides Sub MakeDTAFilesThreaded()
-
-        m_Status = ProcessStatus.SF_RUNNING
-        m_ErrMsg = String.Empty
-
-        m_Progress = 10
-
-        If Not ConvertRawToMGF(m_RawDataType) Then
-            If m_Status <> ProcessStatus.SF_ABORTING Then
-                m_Results = ProcessResults.SF_FAILURE
-                m_Status = ProcessStatus.SF_ERROR
-            End If
-            Return
-        End If
-
-        m_Progress = 75
-
-        If Not ConvertMGFtoDTA() Then
-            If m_Status <> ProcessStatus.SF_ABORTING Then
-                m_Results = ProcessResults.SF_FAILURE
-                m_Status = ProcessStatus.SF_ERROR
-            End If
-            Return
-        End If
-
-        m_Results = ProcessResults.SF_SUCCESS
-        m_Status = ProcessStatus.SF_COMPLETE
-
-    End Sub
-
-    ''' <summary>
-    ''' Convert .mgf file to _DTA.txt using MascotGenericFileToDTA.dll
-    ''' This function is called by MakeDTAFilesThreaded
-    ''' </summary>
-    ''' <returns>TRUE for success; FALSE for failure</returns>
-    ''' <remarks></remarks>
-    Private Function ConvertMGFtoDTA() As Boolean
-
-        Try
-            Dim strRawDataType As String = m_JobParams.GetJobParameter("RawDataType", "")
-
-            Dim oMGFConverter = New clsMGFConverter(m_DebugLevel, m_WorkDir) With {
-                .IncludeExtraInfoOnParentIonLine = True,
-                .MinimumIonsPerSpectrum = m_JobParams.GetJobParameter("IonCounts", "IonCount", 0)
+            if (!ConvertRawToMGF(m_RawDataType))
+            {
+                if (m_Status != ProcessStatus.SF_ABORTING)
+                {
+                    m_Results = ProcessResults.SF_FAILURE;
+                    m_Status = ProcessStatus.SF_ERROR;
+                }
+                return;
             }
 
-            Dim eRawDataType = clsAnalysisResources.GetRawDataType(strRawDataType)
-            Dim blnSuccess = oMGFConverter.ConvertMGFtoDTA(eRawDataType, m_Dataset)
+            m_Progress = 75;
 
-            If Not blnSuccess Then
-                m_ErrMsg = oMGFConverter.ErrorMessage
-            End If
-
-            m_SpectraFileCount = oMGFConverter.SpectraCountWritten
-            m_Progress = 95
-
-            Return blnSuccess
-
-        Catch ex As Exception
-            OnErrorEvent("Exception in ConvertMGFtoDTA", ex)
-            Return False
-        End Try
-
-    End Function
-
-    ''' <summary>
-    ''' Create .mgf file using RawConverter
-    ''' This function is called by MakeDTAFilesThreaded
-    ''' </summary>
-    ''' <param name="eRawDataType">Raw data file type</param>
-    ''' <returns>TRUE for success; FALSE for failure</returns>
-    ''' <remarks></remarks>
-    Private Function ConvertRawToMGF(eRawDataType As clsAnalysisResources.eRawDataTypeConstants) As Boolean
-
-        Try
-
-            If m_DebugLevel > 0 Then
-                OnStatusEvent("Creating .MGF file using RawConverter")
-            End If
-
-            Dim rawFilePath As String
-
-            ' Construct the path to the .raw file
-            Select Case eRawDataType
-                Case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile
-                    rawFilePath = Path.Combine(m_WorkDir, m_Dataset & clsAnalysisResources.DOT_RAW_EXTENSION)
-                Case Else
-                    m_ErrMsg = "Raw data file type not supported: " & eRawDataType.ToString()
-                    Return False
-            End Select
-
-            m_InstrumentFileName = Path.GetFileName(rawFilePath)
-            m_JobParams.AddResultFileToSkip(m_InstrumentFileName)
-
-            Dim fiRawConverter = New FileInfo(m_DtaToolNameLoc)
-
-            ' Set up command
-            Dim cmdStr = " " & clsGlobal.PossiblyQuotePath(rawFilePath) & " --mgf"
-
-            If m_DebugLevel > 0 Then
-                OnStatusEvent(m_DtaToolNameLoc & " " & cmdStr)
-            End If
-
-            ' Setup a program runner tool to make the spectra files
-            ' The working directory must be the folder that has RawConverter.exe
-            ' Otherwise, the program creates the .mgf file in C:\  (and will likely get Access Denied)
-
-            mCmdRunner = New clsRunDosProgram(fiRawConverter.Directory.FullName) With {
-                .CreateNoWindow = True,
-                .CacheStandardOutput = True,
-                .EchoOutputToConsole = True,
-                .WriteConsoleOutputToFile = True,
-                .ConsoleOutputFilePath = String.Empty      ' Allow the console output filename to be auto-generated
+            if (!ConvertMGFtoDTA())
+            {
+                if (m_Status != ProcessStatus.SF_ABORTING)
+                {
+                    m_Results = ProcessResults.SF_FAILURE;
+                    m_Status = ProcessStatus.SF_ERROR;
+                }
+                return;
             }
-            AddHandler mCmdRunner.ErrorEvent, AddressOf CmdRunner_ErrorEvent
-            AddHandler mCmdRunner.LoopWaiting, AddressOf CmdRunner_LoopWaiting
 
-            If Not mCmdRunner.RunProgram(m_DtaToolNameLoc, cmdStr, "RawConverter", True) Then
-                ' .RunProgram returned False
-                LogDTACreationStats("ConvertRawToMGF", Path.GetFileNameWithoutExtension(m_DtaToolNameLoc), "mCmdRunner.RunProgram returned False")
+            m_Results = ProcessResults.SF_SUCCESS;
+            m_Status = ProcessStatus.SF_COMPLETE;
+        }
 
-                m_ErrMsg = "Error running " & Path.GetFileNameWithoutExtension(m_DtaToolNameLoc)
-                Return False
-            End If
+        /// <summary>
+        /// Convert .mgf file to _DTA.txt using MascotGenericFileToDTA.dll
+        /// This function is called by MakeDTAFilesThreaded
+        /// </summary>
+        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <remarks></remarks>
+        private bool ConvertMGFtoDTA()
+        {
+            try
+            {
+                string strRawDataType = m_JobParams.GetJobParameter("RawDataType", "");
 
-            If m_DebugLevel >= 2 Then
-                OnStatusEvent(" ... MGF file created using RawConverter")
-            End If
+                var oMGFConverter = new clsMGFConverter(m_DebugLevel, m_WorkDir)
+                {
+                    IncludeExtraInfoOnParentIonLine = true,
+                    MinimumIonsPerSpectrum = m_JobParams.GetJobParameter("IonCounts", "IonCount", 0)
+                };
 
-            Return True
+                var eRawDataType = clsAnalysisResources.GetRawDataType(strRawDataType);
+                var blnSuccess = oMGFConverter.ConvertMGFtoDTA(eRawDataType, m_Dataset);
 
-        Catch ex As Exception
-            OnErrorEvent("Exception in ConvertRawToMGF", ex)
-            Return False
-        End Try
+                if (!blnSuccess)
+                {
+                    m_ErrMsg = oMGFConverter.ErrorMessage;
+                }
 
-    End Function
+                m_SpectraFileCount = oMGFConverter.SpectraCountWritten;
+                m_Progress = 95;
 
+                return blnSuccess;
+            }
+            catch (Exception ex)
+            {
+                OnErrorEvent("Exception in ConvertMGFtoDTA", ex);
+                return false;
+            }
+        }
 
-End Class
+        /// <summary>
+        /// Create .mgf file using RawConverter
+        /// This function is called by MakeDTAFilesThreaded
+        /// </summary>
+        /// <param name="eRawDataType">Raw data file type</param>
+        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <remarks></remarks>
+        private bool ConvertRawToMGF(clsAnalysisResources.eRawDataTypeConstants eRawDataType)
+        {
+            try
+            {
+                if (m_DebugLevel > 0)
+                {
+                    OnStatusEvent("Creating .MGF file using RawConverter");
+                }
+
+                string rawFilePath = null;
+
+                // Construct the path to the .raw file
+                switch (eRawDataType)
+                {
+                    case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile:
+                        rawFilePath = Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_RAW_EXTENSION);
+                        break;
+                    default:
+                        m_ErrMsg = "Raw data file type not supported: " + eRawDataType.ToString();
+                        return false;
+                }
+
+                m_InstrumentFileName = Path.GetFileName(rawFilePath);
+                m_JobParams.AddResultFileToSkip(m_InstrumentFileName);
+
+                var fiRawConverter = new FileInfo(m_DtaToolNameLoc);
+
+                // Set up command
+                var cmdStr = " " + clsGlobal.PossiblyQuotePath(rawFilePath) + " --mgf";
+
+                if (m_DebugLevel > 0)
+                {
+                    OnStatusEvent(m_DtaToolNameLoc + " " + cmdStr);
+                }
+
+                // Setup a program runner tool to make the spectra files
+                // The working directory must be the folder that has RawConverter.exe
+                // Otherwise, the program creates the .mgf file in C:\  (and will likely get Access Denied)
+
+                mCmdRunner = new clsRunDosProgram(fiRawConverter.Directory.FullName)
+                {
+                    CreateNoWindow = true,
+                    CacheStandardOutput = true,
+                    EchoOutputToConsole = true,
+                    WriteConsoleOutputToFile = true,
+                    ConsoleOutputFilePath = string.Empty      // Allow the console output filename to be auto-generated
+                };
+                mCmdRunner.ErrorEvent += CmdRunner_ErrorEvent;
+                mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
+
+                if (!mCmdRunner.RunProgram(m_DtaToolNameLoc, cmdStr, "RawConverter", true))
+                {
+                    // .RunProgram returned False
+                    LogDTACreationStats("ConvertRawToMGF", Path.GetFileNameWithoutExtension(m_DtaToolNameLoc), "mCmdRunner.RunProgram returned False");
+
+                    m_ErrMsg = "Error running " + Path.GetFileNameWithoutExtension(m_DtaToolNameLoc);
+                    return false;
+                }
+
+                if (m_DebugLevel >= 2)
+                {
+                    OnStatusEvent(" ... MGF file created using RawConverter");
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                OnErrorEvent("Exception in ConvertRawToMGF", ex);
+                return false;
+            }
+        }
+    }
+}
