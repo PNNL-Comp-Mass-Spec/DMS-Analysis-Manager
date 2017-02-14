@@ -21,7 +21,7 @@ Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "DTASpectraFileGen", "AM_DTA
 EndProject
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerExtractionPlugin", "AM_Extraction_PlugIn\AnalysisManagerExtractionPlugin.vbproj", "{657B81BF-1D50-4289-878A-CAAE154835C4}"
 EndProject
-Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "AnalysisManagerICR2LSPlugIn", "AM_ICR2LS_PlugIn\AnalysisManagerICR2LSPlugIn.vbproj", "{55DB2CD1-1298-4414-8425-D79DEB7F8DE5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerICR2LSPlugIn", "AM_ICR2LS_PlugIn\AnalysisManagerICR2LSPlugIn.csproj", "{55DB2CD1-1298-4414-8425-D79DEB7F8DE5}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AM_IDM_Plugin", "AM_IDM_Plugin\AM_IDM_Plugin\AM_IDM_Plugin.csproj", "{AA0848C0-5407-4ED6-9FE4-720BF6E63BAE}"
 EndProject
