@@ -79,7 +79,19 @@ namespace AnalysisManagerBase
             WarningEvent?.Invoke(strMessage);
         }
 
-        #endregion
+        /// <summary>
+        /// Use this method to chain events between classes
+        /// </summary>
+        /// <param name="oProcessingClass"></param>
+        protected void RegisterEvents(clsEventNotifier oProcessingClass)
+        {
+            oProcessingClass.DebugEvent += OnDebugEvent;
+            oProcessingClass.StatusEvent += OnStatusEvent;
+            oProcessingClass.ErrorEvent += OnErrorEvent;
+            oProcessingClass.WarningEvent += OnWarningEvent;
+            oProcessingClass.ProgressUpdate += OnProgressUpdate;
+        }
 
+        #endregion
     }
 }

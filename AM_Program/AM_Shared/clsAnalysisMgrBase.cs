@@ -18,6 +18,11 @@ namespace AnalysisManagerBase
         private readonly string m_derivedClassName;
 
         /// <summary>
+        /// status tools
+        /// </summary>
+        protected IStatusFile m_StatusTools;
+
+        /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="derivedClassName"></param>
@@ -189,6 +194,45 @@ namespace AnalysisManagerBase
                 }
             }
 
+        }
+
+        #endregion
+
+        #region "clsEventNotifier events"
+
+        protected void RegisterEvents(clsEventNotifier oProcessingClass)
+        {
+            oProcessingClass.DebugEvent += DebugEventHandler;
+            oProcessingClass.StatusEvent += StatusEventHandler;
+            oProcessingClass.ErrorEvent += ErrorEventHandler;
+            oProcessingClass.WarningEvent += WarningEventHandler;
+            oProcessingClass.ProgressUpdate += ProgressUpdateHandler;
+        }
+
+        private void DebugEventHandler(string statusMessage)
+        {
+            LogDebug(statusMessage);
+        }
+
+        private void StatusEventHandler(string statusMessage)
+        {
+            LogMessage(statusMessage);
+        }
+
+        private void ErrorEventHandler(string errorMessage, Exception ex)
+        {
+            LogError(errorMessage, ex);
+        }
+
+        private void WarningEventHandler(string warningMessage)
+        {
+            LogWarning(warningMessage);
+        }
+
+        protected void ProgressUpdateHandler(string progressMessage, float percentComplete)
+        {
+            m_StatusTools.CurrentOperation = progressMessage;
+            m_StatusTools.UpdateAndWrite(percentComplete);
         }
 
         #endregion

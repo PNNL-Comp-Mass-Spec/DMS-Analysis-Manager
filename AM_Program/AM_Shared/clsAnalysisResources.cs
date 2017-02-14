@@ -229,11 +229,6 @@ namespace AnalysisManagerBase
 
         protected string m_MgrName;
 
-        /// <summary>
-        /// Might be nothing
-        /// </summary>
-        protected IStatusFile m_StatusTools;
-
         protected string m_FastaToolsCnStr = "";
 
         protected string m_FastaFileName = "";
@@ -4367,39 +4362,6 @@ namespace AnalysisManagerBase
         private void m_SplitFastaFileUtility_SplittingBaseFastaFile(string strBaseFastaFileName, int numSplitParts)
         {
             LogDebugMessage("Splitting " + strBaseFastaFileName + " into " + numSplitParts + " parts");
-        }
-
-        #endregion
-
-        #region "clsEventNotifier events"
-
-        protected void RegisterEvents(clsEventNotifier oProcessingClass)
-        {
-            oProcessingClass.StatusEvent += StatusEventHandler;
-            oProcessingClass.ErrorEvent += ErrorEventHandler;
-            oProcessingClass.WarningEvent += WarningEventHandler;
-            oProcessingClass.ProgressUpdate += ProgressUpdateHandler;
-        }
-
-        private void StatusEventHandler(string statusMessage)
-        {
-            LogMessage(statusMessage);
-        }
-
-        private void ErrorEventHandler(string errorMessage, Exception ex)
-        {
-            LogError(errorMessage, ex);
-        }
-
-        private void WarningEventHandler(string warningMessage)
-        {
-            LogWarning(warningMessage);
-        }
-
-        private void ProgressUpdateHandler(string progressMessage, float percentComplete)
-        {
-            m_StatusTools.CurrentOperation = progressMessage;
-            m_StatusTools.UpdateAndWrite(percentComplete);
         }
 
         #endregion

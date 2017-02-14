@@ -3,7 +3,6 @@ using System;
 
 namespace AnalysisManagerBase
 {
-
     public abstract class clsLoggerBase
     {
 

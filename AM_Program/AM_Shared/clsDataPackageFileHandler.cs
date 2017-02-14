@@ -1356,33 +1356,6 @@ namespace AnalysisManagerBase
             OnErrorEvent(message);
         }
 
-        #endregion
-
-        #region "clsEventNotifier events"
-
-        private void RegisterEvents(clsEventNotifier oProcessingClass)
-        {
-            oProcessingClass.StatusEvent += StatusEventHandler;
-            oProcessingClass.ErrorEvent += ErrorEventHandler;
-            oProcessingClass.WarningEvent += WarningEventHandler;
-            // Ignore: oProcessingClass.ProgressUpdate += ProgressUpdateHandler;
-        }
-
-        private void StatusEventHandler(string statusMessage)
-        {
-            OnStatusEvent(statusMessage);
-        }
-
-        private void ErrorEventHandler(string errorMessage, Exception ex)
-        {
-            OnErrorEvent(errorMessage, ex);
-        }
-
-        private void WarningEventHandler(string warningMessage)
-        {
-            OnWarningEvent(warningMessage);
-        }
-
-        #endregion
+        #endregion        
     }
 }
