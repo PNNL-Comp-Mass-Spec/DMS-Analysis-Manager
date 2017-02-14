@@ -1,254 +1,283 @@
-Option Strict On
+using System.IO;
+using System.Linq;
+using AnalysisManagerBase;
+using MyEMSLReader;
 
-Imports System.IO
-Imports AnalysisManagerBase
-Imports MyEMSLReader
+namespace AnalysisManagerLipidMapSearchPlugIn
+{
+    public class clsAnalysisResourcesLipidMapSearch : clsAnalysisResources
+    {
+        public const string DECONTOOLS_PEAKS_FILE_SUFFIX = "_peaks.txt";
 
-Public Class clsAnalysisResourcesLipidMapSearch
-    Inherits clsAnalysisResources
+        public override CloseOutType GetResources()
+        {
+            // Retrieve shared resources, including the JobParameters file from the previous job step
+            var result = GetSharedResources();
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                return result;
+            }
 
-    Public Const DECONTOOLS_PEAKS_FILE_SUFFIX As String = "_peaks.txt"
+            // Retrieve the parameter file
+            string strParamFileName = m_jobParams.GetParam("ParmFileName");
+            string strParamFileStoragePath = m_jobParams.GetParam("ParmFileStoragePath");
 
-    Public Overrides Function GetResources() As CloseOutType
+            if (!FileSearch.RetrieveFile(strParamFileName, strParamFileStoragePath))
+            {
+                return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
+            }
 
-        ' Retrieve shared resources, including the JobParameters file from the previous job step
-        Dim result = GetSharedResources()
-        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
-            Return result
-        End If
+            if (!FileSearch.RetrievePNNLOmicsResourceFiles("LipidToolsProgLoc"))
+            {
+                return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
+            }
 
-        ' Retrieve the parameter file
-        Dim strParamFileName As String = m_jobParams.GetParam("ParmFileName")
-        Dim strParamFileStoragePath As String = m_jobParams.GetParam("ParmFileStoragePath")
+            // Retrieve the .Raw file and _Peaks.txt file for this dataset
+            if (!RetrieveFirstDatasetFiles())
+            {
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+            }
 
-        If Not FileSearch.RetrieveFile(strParamFileName, strParamFileStoragePath) Then
-            Return CloseOutType.CLOSEOUT_NO_PARAM_FILE
-        End If
+            // Potentially retrieve the .Raw file and _Peaks.txt file for the second dataset to be used by this job
+            if (!RetrieveSecondDatasetFiles())
+            {
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+            }
 
-        If Not FileSearch.RetrievePNNLOmicsResourceFiles("LipidToolsProgLoc") Then
-            Return CloseOutType.CLOSEOUT_NO_PARAM_FILE
-        End If
+            if (!m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkingDir, Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            {
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
 
-        ' Retrieve the .Raw file and _Peaks.txt file for this dataset
-        If Not RetrieveFirstDatasetFiles() Then
-            Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
-        End If
+            return CloseOutType.CLOSEOUT_SUCCESS;
+        }
 
-        ' Potentially retrieve the .Raw file and _Peaks.txt file for the second dataset to be used by this job
-        If Not RetrieveSecondDatasetFiles() Then
-            Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
-        End If
+        private bool RetrieveFirstDatasetFiles()
+        {
+            m_jobParams.AddResultFileExtensionToSkip(DECONTOOLS_PEAKS_FILE_SUFFIX);
+            m_jobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION);
 
-        If Not m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkingDir, Downloader.DownloadFolderLayout.FlatNoSubfolders) Then
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
+            // The Input_Folder for this job step should have been auto-defined by the DMS_Pipeline database using the Special_Processing parameters
+            // For example, for dataset XG_lipid_pt5a using Special_Processing of
+            //   SourceJob:Auto{Tool = "Decon2LS_V2" AND [Parm File] = "LTQ_FT_Lipidomics_2012-04-16.xml"}, Job2:Auto{Tool = "Decon2LS_V2" AND [Parm File] = "LTQ_FT_Lipidomics_2012-04-16.xml" AND Dataset LIKE "$Replace($ThisDataset,_Pos,)%NEG"}'
+            // Gives these parameters:
 
-        Return CloseOutType.CLOSEOUT_SUCCESS
+            // SourceJob                     = 852150
+            // InputFolderName               = "DLS201206180954_Auto852150"
+            // DatasetStoragePath            = \\proto-3\LTQ_Orb_3\2011_1\
+            // DatasetArchivePath            = \\adms.emsl.pnl.gov\dmsarch\LTQ_Orb_3\2011_1
 
-    End Function
+            // SourceJob2                    = 852151
+            // SourceJob2Dataset             = "XG_lipid_pt5aNeg"
+            // SourceJob2FolderPath          = "\\proto-3\LTQ_Orb_3\2011_1\XG_lipid_pt5aNeg\DLS201206180955_Auto852151"
+            // SourceJob2FolderPathArchive   = "\\adms.emsl.pnl.gov\dmsarch\LTQ_Orb_3\2011_1\XG_lipid_pt5aNeg\DLS201206180955_Auto852151"
 
-    Private Function RetrieveFirstDatasetFiles() As Boolean
+            string strDeconToolsFolderName = null;
+            strDeconToolsFolderName = m_jobParams.GetParam("StepParameters", "InputFolderName");
 
-        m_jobParams.AddResultFileExtensionToSkip(DECONTOOLS_PEAKS_FILE_SUFFIX)
-        m_jobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION)
+            if (string.IsNullOrEmpty(strDeconToolsFolderName))
+            {
+                m_message = "InputFolderName step parameter not found; this is unexpected";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                return false;
+            }
+            else if (!strDeconToolsFolderName.ToUpper().StartsWith("DLS"))
+            {
+                m_message = "InputFolderName step parameter is not a DeconTools folder; it should start with DLS and is auto-determined by the SourceJob SpecialProcessing text";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                return false;
+            }
 
-        ' The Input_Folder for this job step should have been auto-defined by the DMS_Pipeline database using the Special_Processing parameters
-        ' For example, for dataset XG_lipid_pt5a using Special_Processing of
-        '   SourceJob:Auto{Tool = "Decon2LS_V2" AND [Parm File] = "LTQ_FT_Lipidomics_2012-04-16.xml"}, Job2:Auto{Tool = "Decon2LS_V2" AND [Parm File] = "LTQ_FT_Lipidomics_2012-04-16.xml" AND Dataset LIKE "$Replace($ThisDataset,_Pos,)%NEG"}'
-        ' Gives these parameters:
+            string strDatasetFolder = null;
+            string strDatasetFolderArchive = null;
 
-        ' SourceJob                     = 852150
-        ' InputFolderName               = "DLS201206180954_Auto852150"
-        ' DatasetStoragePath            = \\proto-3\LTQ_Orb_3\2011_1\
-        ' DatasetArchivePath            = \\adms.emsl.pnl.gov\dmsarch\LTQ_Orb_3\2011_1
+            strDatasetFolder = m_jobParams.GetParam("JobParameters", "DatasetStoragePath");
+            strDatasetFolderArchive = m_jobParams.GetParam("JobParameters", "DatasetArchivePath");
 
-        ' SourceJob2                    = 852151
-        ' SourceJob2Dataset             = "XG_lipid_pt5aNeg"
-        ' SourceJob2FolderPath          = "\\proto-3\LTQ_Orb_3\2011_1\XG_lipid_pt5aNeg\DLS201206180955_Auto852151"
-        ' SourceJob2FolderPathArchive   = "\\adms.emsl.pnl.gov\dmsarch\LTQ_Orb_3\2011_1\XG_lipid_pt5aNeg\DLS201206180955_Auto852151"
+            if (string.IsNullOrEmpty(strDatasetFolder))
+            {
+                m_message = "DatasetStoragePath job parameter not found; this is unexpected";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                return false;
+            }
+            else if (string.IsNullOrEmpty(strDatasetFolderArchive))
+            {
+                m_message = "DatasetArchivePath job parameter not found; this is unexpected";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                return false;
+            }
 
-        Dim strDeconToolsFolderName As String
-        strDeconToolsFolderName = m_jobParams.GetParam("StepParameters", "InputFolderName")
+            strDatasetFolder = Path.Combine(strDatasetFolder, DatasetName);
+            strDatasetFolderArchive = Path.Combine(strDatasetFolderArchive, DatasetName);
 
-        If String.IsNullOrEmpty(strDeconToolsFolderName) Then
-            m_message = "InputFolderName step parameter not found; this is unexpected"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-            Return False
+            if (m_DebugLevel >= 2)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    "Retrieving the dataset's .Raw file and DeconTools _peaks.txt file");
+            }
 
-        ElseIf Not strDeconToolsFolderName.ToUpper().StartsWith("DLS") Then
-            m_message = "InputFolderName step parameter is not a DeconTools folder; it should start with DLS and is auto-determined by the SourceJob SpecialProcessing text"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-            Return False
-        End If
+            return RetrieveDatasetAndPeaksFile(DatasetName, strDatasetFolder, strDatasetFolderArchive);
+        }
 
+        private bool RetrieveSecondDatasetFiles()
+        {
+            // The Input_Folder for this job step should have been auto-defined by the DMS_Pipeline database using the Special_Processing parameters
+            // For example, for dataset XG_lipid_pt5a using Special_Processing of
+            //   SourceJob:Auto{Tool = "Decon2LS_V2" AND [Parm File] = "LTQ_FT_Lipidomics_2012-04-16.xml"}, Job2:Auto{Tool = "Decon2LS_V2" AND [Parm File] = "LTQ_FT_Lipidomics_2012-04-16.xml" AND Dataset LIKE "$Replace($ThisDataset,_Pos,)%NEG"}'
+            // Gives these parameters:
 
-        Dim strDatasetFolder As String
-        Dim strDatasetFolderArchive As String
+            // SourceJob                     = 852150
+            // InputFolderName               = "DLS201206180954_Auto852150"
+            // DatasetStoragePath            = \\proto-3\LTQ_Orb_3\2011_1\
+            // DatasetArchivePath            = \\adms.emsl.pnl.gov\dmsarch\LTQ_Orb_3\2011_1
 
-        strDatasetFolder = m_jobParams.GetParam("JobParameters", "DatasetStoragePath")
-        strDatasetFolderArchive = m_jobParams.GetParam("JobParameters", "DatasetArchivePath")
+            // SourceJob2                    = 852151
+            // SourceJob2Dataset             = "XG_lipid_pt5aNeg"
+            // SourceJob2FolderPath          = "\\proto-3\LTQ_Orb_3\2011_1\XG_lipid_pt5aNeg\DLS201206180955_Auto852151"
+            // SourceJob2FolderPathArchive   = "\\adms.emsl.pnl.gov\dmsarch\LTQ_Orb_3\2011_1\XG_lipid_pt5aNeg\DLS201206180955_Auto852151"
 
-        If String.IsNullOrEmpty(strDatasetFolder) Then
-            m_message = "DatasetStoragePath job parameter not found; this is unexpected"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-            Return False
-        ElseIf String.IsNullOrEmpty(strDatasetFolderArchive) Then
-            m_message = "DatasetArchivePath job parameter not found; this is unexpected"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-            Return False
-        End If
+            string strSourceJob2 = m_jobParams.GetParam("JobParameters", "SourceJob2");
+            int intSourceJob2 = 0;
 
-        strDatasetFolder = Path.Combine(strDatasetFolder, DatasetName)
-        strDatasetFolderArchive = Path.Combine(strDatasetFolderArchive, DatasetName)
+            if (string.IsNullOrWhiteSpace(strSourceJob2))
+            {
+                // Second dataset is not defined; that's OK
+                return true;
+            }
 
-        If m_DebugLevel >= 2 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Retrieving the dataset's .Raw file and DeconTools _peaks.txt file")
-        End If
+            if (!int.TryParse(strSourceJob2, out intSourceJob2))
+            {
+                m_message = "SourceJob2 is not numeric";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                return false;
+            }
 
-        Return RetrieveDatasetAndPeaksFile(DatasetName, strDatasetFolder, strDatasetFolderArchive)
+            if (intSourceJob2 <= 0)
+            {
+                // Second dataset is not defined; that's OK
+                return true;
+            }
 
-    End Function
+            string strDataset2 = null;
+            strDataset2 = m_jobParams.GetParam("JobParameters", "SourceJob2Dataset");
+            if (string.IsNullOrEmpty(strDataset2))
+            {
+                m_message = "SourceJob2Dataset job parameter not found; this is unexpected";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                return false;
+            }
 
-    Private Function RetrieveSecondDatasetFiles() As Boolean
+            string strInputFolder = null;
+            string strInputFolderArchive = null;
 
-        ' The Input_Folder for this job step should have been auto-defined by the DMS_Pipeline database using the Special_Processing parameters
-        ' For example, for dataset XG_lipid_pt5a using Special_Processing of
-        '   SourceJob:Auto{Tool = "Decon2LS_V2" AND [Parm File] = "LTQ_FT_Lipidomics_2012-04-16.xml"}, Job2:Auto{Tool = "Decon2LS_V2" AND [Parm File] = "LTQ_FT_Lipidomics_2012-04-16.xml" AND Dataset LIKE "$Replace($ThisDataset,_Pos,)%NEG"}'
-        ' Gives these parameters:
+            strInputFolder = m_jobParams.GetParam("JobParameters", "SourceJob2FolderPath");
+            strInputFolderArchive = m_jobParams.GetParam("JobParameters", "SourceJob2FolderPathArchive");
 
-        ' SourceJob                     = 852150
-        ' InputFolderName               = "DLS201206180954_Auto852150"
-        ' DatasetStoragePath            = \\proto-3\LTQ_Orb_3\2011_1\
-        ' DatasetArchivePath            = \\adms.emsl.pnl.gov\dmsarch\LTQ_Orb_3\2011_1
+            if (string.IsNullOrEmpty(strInputFolder))
+            {
+                m_message = "SourceJob2FolderPath job parameter not found; this is unexpected";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                return false;
+            }
+            else if (string.IsNullOrEmpty(strInputFolderArchive))
+            {
+                m_message = "SourceJob2FolderPathArchive job parameter not found; this is unexpected";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                return false;
+            }
 
-        ' SourceJob2                    = 852151
-        ' SourceJob2Dataset             = "XG_lipid_pt5aNeg"
-        ' SourceJob2FolderPath          = "\\proto-3\LTQ_Orb_3\2011_1\XG_lipid_pt5aNeg\DLS201206180955_Auto852151"
-        ' SourceJob2FolderPathArchive   = "\\adms.emsl.pnl.gov\dmsarch\LTQ_Orb_3\2011_1\XG_lipid_pt5aNeg\DLS201206180955_Auto852151"
+            var diInputFolder = new DirectoryInfo(strInputFolder);
+            var diInputFolderArchive = new DirectoryInfo(strInputFolderArchive);
 
-        Dim strSourceJob2 As String = m_jobParams.GetParam("JobParameters", "SourceJob2")
-        Dim intSourceJob2 As Integer
+            if (!diInputFolder.Name.ToUpper().StartsWith("DLS"))
+            {
+                m_message = "SourceJob2FolderPath is not a DeconTools folder; the last folder should start with DLS and is auto-determined by the SourceJob2 SpecialProcessing text";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                return false;
+            }
+            else if (!diInputFolderArchive.Name.ToUpper().StartsWith("DLS"))
+            {
+                m_message = "SourceJob2FolderPathArchive is not a DeconTools folder; the last folder should start with DLS and is auto-determined by the SourceJob2 SpecialProcessing text";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                return false;
+            }
 
-        If String.IsNullOrWhiteSpace(strSourceJob2) Then
-            ' Second dataset is not defined; that's OK
-            Return True
-        End If
+            if (m_DebugLevel >= 2)
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    "Retrieving the second dataset's .Raw file and DeconTools _peaks.txt file");
+            }
 
-        If Not Integer.TryParse(strSourceJob2, intSourceJob2) Then
-            m_message = "SourceJob2 is not numeric"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-            Return False
-        End If
+            return RetrieveDatasetAndPeaksFile(strDataset2, diInputFolder.Parent.FullName, diInputFolderArchive.Parent.FullName);
+        }
 
-        If intSourceJob2 <= 0 Then
-            ' Second dataset is not defined; that's OK
-            Return True
-        End If
+        private bool RetrieveDatasetAndPeaksFile(string strDatasetName, string strDatasetFolderPath, string strDatasetFolderPathArchive)
+        {
+            string strFileToFind = null;
 
-        Dim strDataset2 As String
-        strDataset2 = m_jobParams.GetParam("JobParameters", "SourceJob2Dataset")
-        If String.IsNullOrEmpty(strDataset2) Then
-            m_message = "SourceJob2Dataset job parameter not found; this is unexpected"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-            Return False
-        End If
+            // Copy the .Raw file
+            // Search the dataset folder first, then the archive folder
 
-        Dim strInputFolder As String
-        Dim strInputFolderArchive As String
+            strFileToFind = strDatasetName + DOT_RAW_EXTENSION;
+            if (!CopyFileToWorkDir(strFileToFind, strDatasetFolderPath, m_WorkingDir, clsLogTools.LogLevels.INFO))
+            {
+                // Raw file not found on the storage server; try the archive
+                if (!CopyFileToWorkDir(strFileToFind, strDatasetFolderPathArchive, m_WorkingDir, clsLogTools.LogLevels.ERROR))
+                {
+                    // Raw file still not found; try MyEMSL
 
-        Dim diInputFolder As DirectoryInfo
-        Dim diInputFolderArchive As DirectoryInfo
+                    string DSFolderPath = FolderSearch.FindValidFolder(strDatasetName, strFileToFind, RetrievingInstrumentDataFolder: false);
+                    if (DSFolderPath.StartsWith(MYEMSL_PATH_FLAG))
+                    {
+                        // Queue this file for download
+                        m_MyEMSLUtilities.AddFileToDownloadQueue(m_MyEMSLUtilities.RecentlyFoundMyEMSLFiles.First().FileInfo);
+                    }
+                    else
+                    {
+                        // Raw file still not found; abort processing
+                        return false;
+                    }
+                }
+            }
 
-        strInputFolder = m_jobParams.GetParam("JobParameters", "SourceJob2FolderPath")
-        strInputFolderArchive = m_jobParams.GetParam("JobParameters", "SourceJob2FolderPathArchive")
+            // As of January 2013, the _peaks.txt file generated by DeconTools does not have accurate data for centroided spectra
+            // Therefore, rather than copying the _Peaks.txt file locally, we will allow the LipidTools.exe software to re-generate it
 
-        If String.IsNullOrEmpty(strInputFolder) Then
-            m_message = "SourceJob2FolderPath job parameter not found; this is unexpected"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-            Return False
-        ElseIf String.IsNullOrEmpty(strInputFolderArchive) Then
-            m_message = "SourceJob2FolderPathArchive job parameter not found; this is unexpected"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-            Return False
-        End If
+            m_jobParams.AddResultFileExtensionToSkip(DECONTOOLS_PEAKS_FILE_SUFFIX);
 
-        diInputFolder = New DirectoryInfo(strInputFolder)
-        diInputFolderArchive = New DirectoryInfo(strInputFolderArchive)
+            //if (false)
+            //{
+            //    // Copy the _Peaks.txt file
+            //    // For jobs run after August 23, 2012, this file will be zipped
+            //
+            //    var blnUnzipPeaksFile = false;
+            //    strFileToFind = Path.ChangeExtension(strDatasetName + DECONTOOLS_PEAKS_FILE_SUFFIX, "zip");
+            //
+            //    if (CopyFileToWorkDir(strFileToFind, Path.Combine(strDatasetFolderPath, strDeconToolsFolderName), m_WorkingDir, clsLogTools.LogLevels.INFO))
+            //    {
+            //        blnUnzipPeaksFile = true;
+            //    }
+            //    else
+            //    {
+            //        // _Peaks.zip file not found on the storage server; try the archive
+            //        if (CopyFileToWorkDir(strFileToFind, Path.Combine(strDatasetFolderPathArchive, strDeconToolsFolderName), m_WorkingDir, clsLogTools.LogLevels.INFO))
+            //        {
+            //            blnUnzipPeaksFile = true;
+            //        }
+            //        else
+            //        {
+            //            // _Peaks.zip file still not found; this is OK, since LipidTools.exe can generate it using the .Raw file
+            //        }
+            //    }
+            //
+            //    if (blnUnzipPeaksFile)
+            //    {
+            //        m_jobParams.AddResultFileToSkip(strFileToFind);
+            //        UnzipFileStart(Path.Combine(m_WorkingDir, strFileToFind), m_WorkingDir, "RetrieveDatasetAndPeaksFile", false);
+            //    }
+            //}
 
-        If Not diInputFolder.Name.ToUpper().StartsWith("DLS") Then
-            m_message = "SourceJob2FolderPath is not a DeconTools folder; the last folder should start with DLS and is auto-determined by the SourceJob2 SpecialProcessing text"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-            Return False
-        ElseIf Not diInputFolderArchive.Name.ToUpper().StartsWith("DLS") Then
-            m_message = "SourceJob2FolderPathArchive is not a DeconTools folder; the last folder should start with DLS and is auto-determined by the SourceJob2 SpecialProcessing text"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message)
-            Return False
-        End If
-
-        If m_DebugLevel >= 2 Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Retrieving the second dataset's .Raw file and DeconTools _peaks.txt file")
-        End If
-
-        Return RetrieveDatasetAndPeaksFile(strDataset2, diInputFolder.Parent.FullName, diInputFolderArchive.Parent.FullName)
-    
-    End Function
-
-    Private Function RetrieveDatasetAndPeaksFile(strDatasetName As String, strDatasetFolderPath As String, strDatasetFolderPathArchive As String) As Boolean
-
-        Dim strFileToFind As String
-
-        ' Copy the .Raw file
-        ' Search the dataset folder first, then the archive folder
-
-        strFileToFind = strDatasetName & DOT_RAW_EXTENSION
-        If Not CopyFileToWorkDir(strFileToFind, strDatasetFolderPath, m_WorkingDir, clsLogTools.LogLevels.INFO) Then
-            ' Raw file not found on the storage server; try the archive
-            If Not CopyFileToWorkDir(strFileToFind, strDatasetFolderPathArchive, m_WorkingDir, clsLogTools.LogLevels.ERROR) Then
-                ' Raw file still not found; try MyEMSL
-
-                Dim DSFolderPath As String = FolderSearch.FindValidFolder(strDatasetName, strFileToFind, RetrievingInstrumentDataFolder:=False)
-                If DSFolderPath.StartsWith(MYEMSL_PATH_FLAG) Then
-                    ' Queue this file for download
-                    m_MyEMSLUtilities.AddFileToDownloadQueue(m_MyEMSLUtilities.RecentlyFoundMyEMSLFiles.First().FileInfo)
-                Else
-                    ' Raw file still not found; abort processing
-                    Return False
-                End If
-                
-            End If
-        End If
-
-        ' As of January 2013, the _peaks.txt file generated by DeconTools does not have accurate data for centroided spectra
-        ' Therefore, rather than copying the _Peaks.txt file locally, we will allow the LipidTools.exe software to re-generate it
-
-        m_jobParams.AddResultFileExtensionToSkip(DECONTOOLS_PEAKS_FILE_SUFFIX)
-
-        'If False Then
-
-        '	' Copy the _Peaks.txt file
-        '	' For jobs run after August 23, 2012, this file will be zipped
-
-        '	Dim blnUnzipPeaksFile As Boolean = False
-        '	strFileToFind = IO.Path.ChangeExtension(strDatasetName & DECONTOOLS_PEAKS_FILE_SUFFIX, "zip")
-
-        '	If CopyFileToWorkDir(strFileToFind, System.IO.Path.Combine(strDatasetFolderPath, strDeconToolsFolderName), m_WorkingDir, clsLogTools.LogLevels.INFO) Then
-        '		blnUnzipPeaksFile = True
-        '	Else
-        '		' _Peaks.zip file not found on the storage server; try the archive
-        '		If CopyFileToWorkDir(strFileToFind, System.IO.Path.Combine(strDatasetFolderPathArchive, strDeconToolsFolderName), m_WorkingDir, clsLogTools.LogLevels.INFO) Then
-        '			blnUnzipPeaksFile = True
-        '		Else
-        '			' _Peaks.zip file still not found; this is OK, since LipidTools.exe can generate it using the .Raw file
-        '		End If
-        '	End If
-
-        '	If blnUnzipPeaksFile Then
-        '		m_jobParams.AddResultFileToSkip(strFileToFind)
-        '		UnzipFileStart(IO.Path.Combine(m_WorkingDir, strFileToFind), m_WorkingDir, "RetrieveDatasetAndPeaksFile", False)
-        '	End If
-        'End If
-
-        Return True
-
-    End Function
-End Class
+            return true;
+        }
+    }
+}
