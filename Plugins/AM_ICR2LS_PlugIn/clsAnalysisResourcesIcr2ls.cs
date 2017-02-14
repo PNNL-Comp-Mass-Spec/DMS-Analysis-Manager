@@ -1,255 +1,299 @@
-﻿Option Strict On
+﻿using System;
+using System.IO;
+using AnalysisManagerBase;
 
-Imports System.IO
-Imports AnalysisManagerBase
+namespace AnalysisManagerICR2LSPlugIn
+{
+    public class clsAnalysisResourcesIcr2ls : clsAnalysisResources
+    {
+        #region "Methods"
 
-Public Class clsAnalysisResourcesIcr2ls
-    Inherits clsAnalysisResources
+        public override CloseOutType GetResources()
+        {
+            // Retrieve shared resources, including the JobParameters file from the previous job step
+            var result = GetSharedResources();
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                return result;
+            }
 
-#Region "Methods"
-    Public Overrides Function GetResources() As CloseOutType
+            // Retrieve param file
+            if (!FileSearch.RetrieveFile(m_jobParams.GetParam("ParmFileName"), m_jobParams.GetParam("ParmFileStoragePath")))
+            {
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
 
-        ' Retrieve shared resources, including the JobParameters file from the previous job step
-        Dim result = GetSharedResources()
-        If result <> CloseOutType.CLOSEOUT_SUCCESS Then
-            Return result
-        End If
+            // Look for an in-progress .PEK file in the transfer folder
+            var eExistingPEKFileResult = RetrieveExistingTempPEKFile();
 
-        ' Retrieve param file
-        If Not FileSearch.RetrieveFile(m_jobParams.GetParam("ParmFileName"), m_jobParams.GetParam("ParmFileStoragePath")) Then
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
+            if (eExistingPEKFileResult == CloseOutType.CLOSEOUT_FAILED)
+            {
+                if (string.IsNullOrEmpty(m_message))
+                {
+                    m_message = "Call to RetrieveExistingTempPEKFile failed";
+                }
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
 
-        ' Look for an in-progress .PEK file in the transfer folder
-        Dim eExistingPEKFileResult = RetrieveExistingTempPEKFile()
+            // Get input data file
+            if (!FileSearch.RetrieveSpectra(m_jobParams.GetParam("RawDataType")))
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    "clsAnalysisResourcesIcr2ls.GetResources: Error occurred retrieving spectra.");
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
 
-        If eExistingPEKFileResult = CloseOutType.CLOSEOUT_FAILED Then
-            If String.IsNullOrEmpty(m_message) Then
-                m_message = "Call to RetrieveExistingTempPEKFile failed"
-            End If
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
+            // NOTE: GetBrukerSerFile is not MyEMSL-compatible
+            if (!GetBrukerSerFile())
+            {
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
 
-        ' Get input data file
-        If Not FileSearch.RetrieveSpectra(m_jobParams.GetParam("RawDataType")) Then
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisResourcesIcr2ls.GetResources: Error occurred retrieving spectra.")
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
+            return CloseOutType.CLOSEOUT_SUCCESS;
+        }
 
-        ' NOTE: GetBrukerSerFile is not MyEMSL-compatible
-        If Not GetBrukerSerFile() Then
-            Return CloseOutType.CLOSEOUT_FAILED
-        End If
+        private bool GetBrukerSerFile()
+        {
+            string strLocalDatasetFolderPath = null;
 
-        Return CloseOutType.CLOSEOUT_SUCCESS
+            bool blnIsFolder = false;
 
-    End Function
+            try
+            {
+                string RawDataType = m_jobParams.GetParam("RawDataType");
 
-    Private Function GetBrukerSerFile() As Boolean
+                if (RawDataType == RAW_DATA_TYPE_DOT_RAW_FILES)
+                {
+                    // Thermo datasets do not have ser files
+                    return true;
+                }
 
-        Dim strLocalDatasetFolderPath As String
+                var strRemoteDatasetFolderPath = Path.Combine(m_jobParams.GetParam("DatasetArchivePath"), m_jobParams.GetParam("DatasetFolderName"));
 
-        Dim blnIsFolder As Boolean
+                if (RawDataType.ToLower() == RAW_DATA_TYPE_BRUKER_FT_FOLDER)
+                {
+                    strLocalDatasetFolderPath = Path.Combine(m_WorkingDir, DatasetName + ".d");
+                    strRemoteDatasetFolderPath = Path.Combine(strRemoteDatasetFolderPath, DatasetName + ".d");
+                }
+                else
+                {
+                    strLocalDatasetFolderPath = string.Copy(m_WorkingDir);
+                }
 
-        Try
-            Dim RawDataType As String = m_jobParams.GetParam("RawDataType")
+                var serFileOrFolderPath = FindSerFileOrFolder(strLocalDatasetFolderPath, ref blnIsFolder);
 
-            If RawDataType = RAW_DATA_TYPE_DOT_RAW_FILES Then
-                ' Thermo datasets do not have ser files
-                Return True
-            End If
+                if (string.IsNullOrEmpty(serFileOrFolderPath))
+                {
+                    // Ser file, fid file, or 0.ser folder not found in the working directory
+                    // See if the file exists in the archive
 
-            Dim strRemoteDatasetFolderPath = Path.Combine(m_jobParams.GetParam("DatasetArchivePath"), m_jobParams.GetParam("DatasetFolderName"))
+                    serFileOrFolderPath = FindSerFileOrFolder(strRemoteDatasetFolderPath, ref blnIsFolder);
 
-            If RawDataType.ToLower() = RAW_DATA_TYPE_BRUKER_FT_FOLDER Then
-                strLocalDatasetFolderPath = Path.Combine(m_WorkingDir, DatasetName & ".d")
-                strRemoteDatasetFolderPath = Path.Combine(strRemoteDatasetFolderPath, DatasetName & ".d")
-            Else
-                strLocalDatasetFolderPath = String.Copy(m_WorkingDir)
-            End If
+                    if (!string.IsNullOrEmpty(serFileOrFolderPath))
+                    {
+                        // File found in the archive; need to copy it locally
 
-            Dim serFileOrFolderPath = FindSerFileOrFolder(strLocalDatasetFolderPath, blnIsFolder)
+                        DateTime dtStartTime = System.DateTime.UtcNow;
 
-            If String.IsNullOrEmpty(serFileOrFolderPath) Then
-                ' Ser file, fid file, or 0.ser folder not found in the working directory
-                ' See if the file exists in the archive			
+                        if (blnIsFolder)
+                        {
+                            var diSourceFolder = new DirectoryInfo(serFileOrFolderPath);
 
-                serFileOrFolderPath = FindSerFileOrFolder(strRemoteDatasetFolderPath, blnIsFolder)
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                                "Copying 0.ser folder from archive to working directory: " + serFileOrFolderPath);
+                            ResetTimestampForQueueWaitTimeLogging();
+                            m_FileTools.CopyDirectory(serFileOrFolderPath, Path.Combine(strLocalDatasetFolderPath, diSourceFolder.Name));
 
-                If Not String.IsNullOrEmpty(serFileOrFolderPath) Then
-                    ' File found in the archive; need to copy it locally
-
-                    Dim dtStartTime As DateTime = Date.UtcNow
-
-                    If blnIsFolder Then
-                        Dim diSourceFolder As DirectoryInfo
-                        diSourceFolder = New DirectoryInfo(serFileOrFolderPath)
-
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copying 0.ser folder from archive to working directory: " & serFileOrFolderPath)
-                        ResetTimestampForQueueWaitTimeLogging()
-                        m_FileTools.CopyDirectory(serFileOrFolderPath, Path.Combine(strLocalDatasetFolderPath, diSourceFolder.Name))
-
-                        If m_DebugLevel >= 1 Then
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Successfully copied 0.ser folder in " & Date.UtcNow.Subtract(dtStartTime).TotalSeconds.ToString("0") & " seconds")
-                        End If
-
-                    Else
-                        Dim fiSourceFile As FileInfo
-                        fiSourceFile = New FileInfo(serFileOrFolderPath)
-
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copying " & Path.GetFileName(serFileOrFolderPath) & " file from archive to working directory: " & serFileOrFolderPath)
-
-                        If Not CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName, strLocalDatasetFolderPath, clsLogTools.LogLevels.ERROR) Then
-                            Return False
-                        Else
-                            If m_DebugLevel >= 1 Then
+                            if (m_DebugLevel >= 1)
+                            {
                                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
-                                                     "Successfully copied " & Path.GetFileName(serFileOrFolderPath) & " file in " &
-                                                     Date.UtcNow.Subtract(dtStartTime).TotalSeconds.ToString("0") & " seconds")
-                            End If
-                        End If
+                                    "Successfully copied 0.ser folder in " + System.DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds.ToString("0") +
+                                    " seconds");
+                            }
+                        }
+                        else
+                        {
+                            var fiSourceFile = new FileInfo(serFileOrFolderPath);
 
-                    End If
-                End If
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                                "Copying " + Path.GetFileName(serFileOrFolderPath) + " file from archive to working directory: " + serFileOrFolderPath);
 
-            End If
+                            if (!CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName, strLocalDatasetFolderPath, clsLogTools.LogLevels.ERROR))
+                            {
+                                return false;
+                            }
+                            else
+                            {
+                                if (m_DebugLevel >= 1)
+                                {
+                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                                        "Successfully copied " + Path.GetFileName(serFileOrFolderPath) + " file in " +
+                                        System.DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds.ToString("0") + " seconds");
+                                }
+                            }
+                        }
+                    }
+                }
 
-            Return True
+                return true;
+            }
+            catch (Exception ex)
+            {
+                m_message = "Exception in GetBrukerSerFile";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                return false;
+            }
+        }
 
-        Catch ex As Exception
-            m_message = "Exception in GetBrukerSerFile"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
-            Return False
-        End Try
+        /// <summary>
+        /// Looks for a ser file, fid file, or 0.ser folder in strFolderToCheck
+        /// </summary>
+        /// <param name="strFolderToCheck"></param>
+        /// <param name="blnIsFolder"></param>
+        /// <returns>The path to the ser file, fid file, or 0.ser folder, if found.  An empty string if not found</returns>
+        /// <remarks></remarks>
+        public static string FindSerFileOrFolder(string strFolderToCheck, ref bool blnIsFolder)
+        {
+            blnIsFolder = false;
 
-    End Function
+            // Look for a ser file in the working directory
+            var serFileOrFolderPath = Path.Combine(strFolderToCheck, BRUKER_SER_FILE);
 
-    ''' <summary>
-    ''' Looks for a ser file, fid file, or 0.ser folder in strFolderToCheck
-    ''' </summary>
-    ''' <param name="strFolderToCheck"></param>
-    ''' <param name="blnIsFolder"></param>
-    ''' <returns>The path to the ser file, fid file, or 0.ser folder, if found.  An empty string if not found</returns>
-    ''' <remarks></remarks>
-    Public Shared Function FindSerFileOrFolder(strFolderToCheck As String, ByRef blnIsFolder As Boolean) As String
+            if (File.Exists(serFileOrFolderPath))
+            {
+                // Ser file found
+                return serFileOrFolderPath;
+            }
 
-        blnIsFolder = False
+            // Ser file not found; look for a fid file
+            serFileOrFolderPath = Path.Combine(strFolderToCheck, BRUKER_FID_FILE);
 
-        ' Look for a ser file in the working directory
-        Dim serFileOrFolderPath = Path.Combine(strFolderToCheck, BRUKER_SER_FILE)
+            if (File.Exists(serFileOrFolderPath))
+            {
+                // Fid file found
+                return serFileOrFolderPath;
+            }
 
-        If File.Exists(serFileOrFolderPath) Then
-            ' Ser file found
-            Return serFileOrFolderPath
-        End If
+            // Fid file not found; look for a 0.ser folder in the working directory
+            serFileOrFolderPath = Path.Combine(strFolderToCheck, BRUKER_ZERO_SER_FOLDER);
+            if (Directory.Exists(serFileOrFolderPath))
+            {
+                blnIsFolder = true;
+                return serFileOrFolderPath;
+            }
 
-        ' Ser file not found; look for a fid file
-        serFileOrFolderPath = Path.Combine(strFolderToCheck, BRUKER_FID_FILE)
+            return string.Empty;
+        }
 
-        If File.Exists(serFileOrFolderPath) Then
-            ' Fid file found
-            Return serFileOrFolderPath
-        End If
+        /// <summary>
+        /// Look for file .pek.tmp in the transfer folder
+        /// Retrieves the file if it is found
+        /// </summary>
+        /// <returns>
+        /// CLOSEOUT_SUCCESS if an existing file was found and copied,
+        /// CLOSEOUT_FILE_NOT_FOUND if an existing file was not found, and
+        /// CLOSEOUT_FAILURE if an error
+        /// </returns>
+        /// <remarks>
+        /// Does not validate that the ICR-2LS param file matches (in contrast, clsAnalysisResourcesSeq.vb does valid the param file).
+        /// This is done on purpose to allow us to update the param file mid job.
+        /// Scans already deisotoped will have used one parameter file; scans processed from this point forward
+        /// will use a different one; this is OK and allows us to adjust the settings mid-job.
+        /// To prevent this behavior, delete the .pek.tmp file from the transfer folder
+        /// </remarks>
+        private CloseOutType RetrieveExistingTempPEKFile()
+        {
+            try
+            {
+                var strJob = m_jobParams.GetParam("Job");
+                var transferFolderPath = m_jobParams.GetParam("JobParameters", "transferFolderPath");
 
-        ' Fid file not found; look for a 0.ser folder in the working directory
-        serFileOrFolderPath = Path.Combine(strFolderToCheck, BRUKER_ZERO_SER_FOLDER)
-        If Directory.Exists(serFileOrFolderPath) Then
-            blnIsFolder = True
-            Return serFileOrFolderPath
-        End If
+                if (string.IsNullOrWhiteSpace(transferFolderPath))
+                {
+                    // Transfer folder path is not defined
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                        "transferFolderPath is empty; this is unexpected");
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+                else
+                {
+                    transferFolderPath = Path.Combine(transferFolderPath, m_jobParams.GetParam("JobParameters", "DatasetFolderName"));
+                    transferFolderPath = Path.Combine(transferFolderPath, m_jobParams.GetParam("StepParameters", "OutputFolderName"));
+                }
 
-        Return String.Empty
+                if (m_DebugLevel >= 4)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        "Checking for " + clsAnalysisToolRunnerICRBase.PEK_TEMP_FILE + " file at " + transferFolderPath);
+                }
 
-    End Function
+                var diSourceFolder = new DirectoryInfo(transferFolderPath);
 
-    ''' <summary>
-    ''' Look for file .pek.tmp in the transfer folder
-    ''' Retrieves the file if it is found
-    ''' </summary>
-    ''' <returns>
-    ''' CLOSEOUT_SUCCESS if an existing file was found and copied, 
-    ''' CLOSEOUT_FILE_NOT_FOUND if an existing file was not found, and 
-    ''' CLOSEOUT_FAILURE if an error
-    ''' </returns>
-    ''' <remarks>
-    ''' Does not validate that the ICR-2LS param file matches (in contrast, clsAnalysisResourcesSeq.vb does valid the param file).
-    ''' This is done on purpose to allow us to update the param file mid job.
-    ''' Scans already deisotoped will have used one parameter file; scans processed from this point forward
-    ''' will use a different one; this is OK and allows us to adjust the settings mid-job.
-    ''' To prevent this behavior, delete the .pek.tmp file from the transfer folder
-    ''' </remarks>
-    Private Function RetrieveExistingTempPEKFile() As CloseOutType
+                if (!diSourceFolder.Exists)
+                {
+                    // Transfer folder not found; return false
+                    if (m_DebugLevel >= 4)
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                            "  ... Transfer folder not found: " + diSourceFolder.FullName);
+                    }
+                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                }
 
-        Try
+                var pekTempFilePath = Path.Combine(diSourceFolder.FullName, DatasetName + clsAnalysisToolRunnerICRBase.PEK_TEMP_FILE);
 
-            Dim strJob = m_jobParams.GetParam("Job")
-            Dim transferFolderPath = m_jobParams.GetParam("JobParameters", "transferFolderPath")
+                var fiTempPekFile = new FileInfo(pekTempFilePath);
+                if (!fiTempPekFile.Exists)
+                {
+                    if (m_DebugLevel >= 4)
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                            "  ... " + clsAnalysisToolRunnerICRBase.PEK_TEMP_FILE + " file not found");
+                    }
+                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                }
 
-            If String.IsNullOrWhiteSpace(transferFolderPath) Then
-                ' Transfer folder path is not defined
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "transferFolderPath is empty; this is unexpected")
-                Return CloseOutType.CLOSEOUT_FAILED
-            Else
-                transferFolderPath = Path.Combine(transferFolderPath, m_jobParams.GetParam("JobParameters", "DatasetFolderName"))
-                transferFolderPath = Path.Combine(transferFolderPath, m_jobParams.GetParam("StepParameters", "OutputFolderName"))
-            End If
+                if (m_DebugLevel >= 1)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        clsAnalysisToolRunnerICRBase.PEK_TEMP_FILE + " file found for job " + strJob + " (file size = " +
+                        (fiTempPekFile.Length / 1024.0).ToString("#,##0") + " KB)");
+                }
 
-            If m_DebugLevel >= 4 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Checking for " & clsAnalysisToolRunnerICRBase.PEK_TEMP_FILE & " file at " & transferFolderPath)
-            End If
+                // Copy fiTempPekFile locally
+                try
+                {
+                    fiTempPekFile.CopyTo(Path.Combine(m_WorkingDir, fiTempPekFile.Name), true);
 
-            Dim diSourceFolder = New DirectoryInfo(transferFolderPath)
+                    if (m_DebugLevel >= 1)
+                    {
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                            "Copied " + fiTempPekFile.Name + " locally; will resume ICR-2LS analysis");
+                    }
 
-            If Not diSourceFolder.Exists Then
-                ' Transfer folder not found; return false
-                If m_DebugLevel >= 4 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  ... Transfer folder not found: " & diSourceFolder.FullName)
-                End If
-                Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
-            End If
+                    // If the job succeeds, we should delete the .pek.tmp file from the transfer folder
+                    // Add the full path to m_ServerFilesToDelete using AddServerFileToDelete
+                    m_jobParams.AddServerFileToDelete(fiTempPekFile.FullName);
+                }
+                catch (Exception ex)
+                {
+                    // Error copying the file; treat this as a failed job
+                    m_message = " Exception copying " + clsAnalysisToolRunnerICRBase.PEK_TEMP_FILE + " file locally";
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                        "  ... Exception copying " + fiTempPekFile.FullName + " locally; unable to resume: " + ex.Message);
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
 
-            Dim pekTempFilePath = Path.Combine(diSourceFolder.FullName, DatasetName & clsAnalysisToolRunnerICRBase.PEK_TEMP_FILE)
+                return CloseOutType.CLOSEOUT_SUCCESS;
+            }
+            catch (Exception ex)
+            {
+                m_message = "Exception in RetrieveExistingTempPEKFile";
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+        }
 
-            Dim fiTempPekFile = New FileInfo(pekTempFilePath)
-            If Not fiTempPekFile.Exists Then
-                If m_DebugLevel >= 4 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  ... " & clsAnalysisToolRunnerICRBase.PEK_TEMP_FILE & " file not found")
-                End If
-                Return CloseOutType.CLOSEOUT_FILE_NOT_FOUND
-            End If
-
-            If m_DebugLevel >= 1 Then
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, clsAnalysisToolRunnerICRBase.PEK_TEMP_FILE & " file found for job " & strJob & " (file size = " & (fiTempPekFile.Length / 1024.0).ToString("#,##0") & " KB)")
-            End If
-
-            ' Copy fiTempPekFile locally
-            Try
-                fiTempPekFile.CopyTo(Path.Combine(m_WorkingDir, fiTempPekFile.Name), True)
-
-                If m_DebugLevel >= 1 Then
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Copied " & fiTempPekFile.Name & " locally; will resume ICR-2LS analysis")
-                End If
-
-                ' If the job succeeds, we should delete the .pek.tmp file from the transfer folder
-                ' Add the full path to m_ServerFilesToDelete using AddServerFileToDelete
-                m_jobParams.AddServerFileToDelete(fiTempPekFile.FullName)
-
-            Catch ex As Exception
-                ' Error copying the file; treat this as a failed job
-                m_message = " Exception copying " & clsAnalysisToolRunnerICRBase.PEK_TEMP_FILE & " file locally"
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "  ... Exception copying " & fiTempPekFile.FullName & " locally; unable to resume: " & ex.Message)
-                Return CloseOutType.CLOSEOUT_FAILED
-            End Try
-
-            Return CloseOutType.CLOSEOUT_SUCCESS
-
-        Catch ex As Exception
-            m_message = "Exception in RetrieveExistingTempPEKFile"
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message & ": " & ex.Message)
-            Return CloseOutType.CLOSEOUT_FAILED
-        End Try
-
-    End Function
-#End Region
-
-End Class
+        #endregion
+    }
+}
