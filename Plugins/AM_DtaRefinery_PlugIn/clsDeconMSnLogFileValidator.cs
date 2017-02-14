@@ -1,212 +1,234 @@
-﻿Option Strict On
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
+using System.Threading;
 
-Imports System.Collections.Generic
-Imports System.IO
-Imports System.Runtime.InteropServices
-Imports System.Text
-Imports System.Threading
+namespace AnalysisManagerDtaRefineryPlugIn
+{
+    /// <summary>
+    /// This class can be used to validate the data in a _DeconMSn_log.txt file
+    /// It makes sure that the intensity values in the last two columns are all > 0
+    /// Values that are 0 are auto-changed to 1
+    /// </summary>
+    /// <remarks></remarks>
+    public class clsDeconMSnLogFileValidator
+    {
+        private string mErrorMessage = string.Empty;
 
-''' <summary>
-''' This class can be used to validate the data in a _DeconMSn_log.txt file
-''' It makes sure that the intensity values in the last two columns are all > 0
-''' Values that are 0 are auto-changed to 1
-''' </summary>
-''' <remarks></remarks>
-Public Class clsDeconMSnLogFileValidator
+        private bool mFileUpdated;
 
-    Private mErrorMessage As String = String.Empty
-    Private mFileUpdated As Boolean
+        /// <summary>
+        /// Error message (if any)
+        /// </summary>
+        public string ErrorMessage
+        {
+            get { return mErrorMessage; }
+        }
 
-    ''' <summary>
-    ''' Error message (if any)
-    ''' </summary>
-    Public ReadOnly Property ErrorMessage As String
-        Get
-            Return mErrorMessage
-        End Get
-    End Property
+        /// <summary>
+        /// Indicates whether the intensity values in the original file were updated
+        /// </summary>
+        /// <returns>True if the file was updated</returns>
+        public bool FileUpdated
+        {
+            get { return mFileUpdated; }
+        }
 
-    ''' <summary>
-    ''' Indicates whether the intensity values in the original file were updated
-    ''' </summary>
-    ''' <returns>True if the file was updated</returns>
-    Public ReadOnly Property FileUpdated As Boolean
-        Get
-            Return mFileUpdated
-        End Get
-    End Property
+        private string CollapseLine(string[] strSplitLine)
+        {
+            StringBuilder sbCollapsed = new StringBuilder(1024);
 
-    Private Function CollapseLine(strSplitLine() As String) As String
-        Dim sbCollapsed As New StringBuilder(1024)
+            if (strSplitLine.Length > 0)
+            {
+                sbCollapsed.Append(strSplitLine[0]);
+                for (var intIndex = 1; intIndex <= strSplitLine.Length - 1; intIndex++)
+                {
+                    sbCollapsed.Append("\t" + strSplitLine[intIndex]);
+                }
+            }
 
-        If strSplitLine.Length > 0 Then
-            sbCollapsed.Append(strSplitLine(0))
-            For intIndex = 1 To strSplitLine.Length - 1
-                sbCollapsed.Append(ControlChars.Tab & strSplitLine(intIndex))
-            Next
-        End If
+            return sbCollapsed.ToString();
+        }
 
-        Return sbCollapsed.ToString()
-    End Function
+        /// <summary>
+        /// Parse the specified DeconMSn log file to check for intensity values in the last two columns that are zero
+        /// </summary>
+        /// <param name="strSourceFilePath">Path to the file</param>
+        /// <returns>True if success; false if an unrecoverable error</returns>
+        public bool ValidateDeconMSnLogFile(string strSourceFilePath)
+        {
+            string strTempFilePath = null;
 
-    ''' <summary>
-    ''' Parse the specified DeconMSn log file to check for intensity values in the last two columns that are zero
-    ''' </summary>
-    ''' <param name="strSourceFilePath">Path to the file</param>
-    ''' <returns>True if success; false if an unrecoverable error</returns>
-    Public Function ValidateDeconMSnLogFile(strSourceFilePath As String) As Boolean
+            string strLineIn = null;
+            string[] strSplitLine = null;
 
-        Dim strTempFilePath As String
+            var blnHeaderPassed = false;
+            bool blnColumnUpdated = false;
 
-        Dim strLineIn As String
-        Dim strSplitLine() As String
+            var intParentIntensityColIndex = 9;
+            var intMonoIntensityColIndex = 10;
+            int intColumnCountUpdated = 0;
 
-        Dim blnHeaderPassed = False
-        Dim blnColumnUpdated As Boolean
+            try
+            {
+                mErrorMessage = string.Empty;
+                mFileUpdated = false;
 
-        Dim intParentIntensityColIndex = 9
-        Dim intMonoIntensityColIndex = 10
-        Dim intColumnCountUpdated As Integer
+                strTempFilePath = Path.GetTempFileName();
+                Thread.Sleep(250);
 
-        Try
+                using (var srSourceFile = new StreamReader(new FileStream(strSourceFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using (var swOutFile = new StreamWriter(new FileStream(strTempFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
+                {
+                    while (!srSourceFile.EndOfStream)
+                    {
+                        strLineIn = srSourceFile.ReadLine();
+                        intColumnCountUpdated = 0;
 
-            mErrorMessage = String.Empty
-            mFileUpdated = False
+                        if (blnHeaderPassed)
+                        {
+                            strSplitLine = strLineIn.Split('\t');
 
-            Using srSourceFile = New StreamReader(New FileStream(strSourceFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                            if (strSplitLine.Length > 1 && strSplitLine[0] == "MSn_Scan")
+                            {
+                                // This is the header line
+                                ValidateHeader(strLineIn, ref intParentIntensityColIndex, ref intMonoIntensityColIndex);
+                            }
+                            else if (strSplitLine.Length > 1)
+                            {
+                                ValidateColumnIsPositive(strSplitLine, intParentIntensityColIndex, out blnColumnUpdated);
+                                if (blnColumnUpdated)
+                                    intColumnCountUpdated += 1;
 
-                strTempFilePath = Path.GetTempFileName()
-                Thread.Sleep(250)
+                                ValidateColumnIsPositive(strSplitLine, intMonoIntensityColIndex, out blnColumnUpdated);
+                                if (blnColumnUpdated)
+                                    intColumnCountUpdated += 1;
+                            }
 
-                Using swOutFile = New StreamWriter(New FileStream(strTempFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite))
+                            if (intColumnCountUpdated > 0)
+                            {
+                                mFileUpdated = true;
+                                swOutFile.WriteLine(CollapseLine(strSplitLine));
+                            }
+                            else
+                            {
+                                swOutFile.WriteLine(strLineIn);
+                            }
+                        }
+                        else
+                        {
+                            if (strLineIn.StartsWith("--------------"))
+                            {
+                                blnHeaderPassed = true;
+                            }
+                            else if (strLineIn.StartsWith("MSn_Scan"))
+                            {
+                                ValidateHeader(strLineIn, ref intParentIntensityColIndex, ref intMonoIntensityColIndex);
+                                blnHeaderPassed = true;
+                            }
+                            swOutFile.WriteLine(strLineIn);
+                        }
+                    }
+                }
 
-                    Do While Not srSourceFile.EndOfStream
-                        strLineIn = srSourceFile.ReadLine()
-                        intColumnCountUpdated = 0
+                if (mFileUpdated)
+                {
+                    // First rename strFilePath
+                    var ioFileInfo = new FileInfo(strSourceFilePath);
+                    string strTargetFilePath = Path.Combine(ioFileInfo.DirectoryName,
+                        Path.GetFileNameWithoutExtension(ioFileInfo.Name) + "_Original.txt");
 
-                        If blnHeaderPassed Then
-                            strSplitLine = strLineIn.Split(ControlChars.Tab)
+                    if (File.Exists(strTargetFilePath))
+                    {
+                        try
+                        {
+                            File.Delete(strTargetFilePath);
+                        }
+                        catch (Exception ex)
+                        {
+                            mErrorMessage = "Error deleting old _Original.txt file: " + ex.Message;
+                            Console.WriteLine(mErrorMessage);
+                        }
+                    }
 
-                            If strSplitLine.Length > 1 AndAlso strSplitLine(0) = "MSn_Scan" Then
-                                ' This is the header line
-                                ValidateHeader(strLineIn, intParentIntensityColIndex, intMonoIntensityColIndex)
-                            ElseIf strSplitLine.Length > 1 Then
-                                ValidateColumnIsPositive(strSplitLine, intParentIntensityColIndex, blnColumnUpdated)
-                                If blnColumnUpdated Then intColumnCountUpdated += 1
+                    try
+                    {
+                        ioFileInfo.MoveTo(strTargetFilePath);
 
-                                ValidateColumnIsPositive(strSplitLine, intMonoIntensityColIndex, blnColumnUpdated)
-                                If blnColumnUpdated Then intColumnCountUpdated += 1
+                        // Now copy the temp file to strFilePath
+                        File.Copy(strTempFilePath, strSourceFilePath, false);
+                    }
+                    catch (Exception ex)
+                    {
+                        mErrorMessage = "Error replacing source file with new file: " + ex.Message;
+                        Console.WriteLine(mErrorMessage);
 
-                            End If
+                        // Copy the temp file to strFilePath
+                        File.Copy(strTempFilePath, Path.Combine(ioFileInfo.DirectoryName, Path.GetFileNameWithoutExtension(ioFileInfo.Name) + "_New.txt"), true);
+                        File.Delete(strTempFilePath);
 
-                            If intColumnCountUpdated > 0 Then
-                                mFileUpdated = True
-                                swOutFile.WriteLine(CollapseLine(strSplitLine))
-                            Else
-                                swOutFile.WriteLine(strLineIn)
-                            End If
+                        return false;
+                    }
+                }
 
-                        Else
-                            If strLineIn.StartsWith("--------------") Then
-                                blnHeaderPassed = True
-                            ElseIf strLineIn.StartsWith("MSn_Scan") Then
-                                ValidateHeader(strLineIn, intParentIntensityColIndex, intMonoIntensityColIndex)
-                                blnHeaderPassed = True
-                            End If
-                            swOutFile.WriteLine(strLineIn)
-                        End If
-                    Loop
+                File.Delete(strTempFilePath);
+            }
+            catch (Exception ex)
+            {
+                mErrorMessage = "Exception in clsDeconMSnLogFileValidator.ValidateFile: " + ex.Message;
+                Console.WriteLine(mErrorMessage);
+                return false;
+            }
 
-                End Using
+            return true;
+        }
 
-            End Using
+        /// <summary>
+        /// Validate the header, updating the column indices if necessary
+        /// </summary>
+        /// <param name="strLineIn"></param>
+        /// <param name="intParentIntensityColIndex">Input/output parameter</param>
+        /// <param name="intMonoIntensityColIndex">Input/output parameter</param>
+        /// <remarks></remarks>
+        private void ValidateHeader(string strLineIn, ref int intParentIntensityColIndex, ref int intMonoIntensityColIndex)
+        {
+            string[] strSplitLine = null;
+            int intColIndex = 0;
 
-            If mFileUpdated Then
-                ' First rename strFilePath
-                Dim ioFileInfo = New FileInfo(strSourceFilePath)
-                Dim strTargetFilePath As String = Path.Combine(ioFileInfo.DirectoryName, Path.GetFileNameWithoutExtension(ioFileInfo.Name) & "_Original.txt")
+            strSplitLine = strLineIn.Split('\t');
 
-                If File.Exists(strTargetFilePath) Then
-                    Try
-                        File.Delete(strTargetFilePath)
-                    Catch ex As Exception
-                        mErrorMessage = "Error deleting old _Original.txt file: " & ex.Message
-                        Console.WriteLine(mErrorMessage)
-                    End Try
-                End If
+            if (strSplitLine.Length > 1)
+            {
+                var lstSplitLine = new List<string>(strSplitLine);
 
-                Try
-                    ioFileInfo.MoveTo(strTargetFilePath)
+                intColIndex = lstSplitLine.IndexOf("Parent_Intensity");
+                if (intColIndex > 0)
+                    intParentIntensityColIndex = intColIndex;
 
-                    ' Now copy the temp file to strFilePath
-                    File.Copy(strTempFilePath, strSourceFilePath, False)
+                intColIndex = lstSplitLine.IndexOf("Mono_Intensity");
+                if (intColIndex > 0)
+                    intMonoIntensityColIndex = intColIndex;
+            }
+        }
 
-                Catch ex As Exception
-                    mErrorMessage = "Error replacing source file with new file: " & ex.Message
-                    Console.WriteLine(mErrorMessage)
+        private void ValidateColumnIsPositive(string[] strSplitLine, int intColIndex, out bool blnColumnUpdated)
+        {
+            double dblResult = 0;
+            bool blnIsNumeric = false;
 
-                    ' Copy the temp file to strFilePath
-                    File.Copy(strTempFilePath, Path.Combine(ioFileInfo.DirectoryName, Path.GetFileNameWithoutExtension(ioFileInfo.Name) & "_New.txt"), True)
-                    File.Delete(strTempFilePath)
+            blnColumnUpdated = false;
 
-                    Return False
-                End Try
-
-            End If
-
-            File.Delete(strTempFilePath)
-
-        Catch ex As Exception
-            mErrorMessage = "Exception in clsDeconMSnLogFileValidator.ValidateFile: " & ex.Message
-            Console.WriteLine(mErrorMessage)
-            Return False
-        End Try
-
-        Return True
-
-    End Function
-
-    ''' <summary>
-    ''' Validate the header, updating the column indices if necessary
-    ''' </summary>
-    ''' <param name="strLineIn"></param>
-    ''' <param name="intParentIntensityColIndex">Input/output parameter</param>
-    ''' <param name="intMonoIntensityColIndex">Input/output parameter</param>
-    ''' <remarks></remarks>
-    Private Sub ValidateHeader(strLineIn As String, ByRef intParentIntensityColIndex As Integer, ByRef intMonoIntensityColIndex As Integer)
-        Dim strSplitLine() As String
-        Dim lstSplitLine As List(Of String)
-        Dim intColIndex As Integer
-
-        strSplitLine = strLineIn.Split(ControlChars.Tab)
-
-        If strSplitLine.Length > 1 Then
-            lstSplitLine = New List(Of String)(strSplitLine)
-
-            intColIndex = lstSplitLine.IndexOf("Parent_Intensity")
-            If intColIndex > 0 Then intParentIntensityColIndex = intColIndex
-
-            intColIndex = lstSplitLine.IndexOf("Mono_Intensity")
-            If intColIndex > 0 Then intMonoIntensityColIndex = intColIndex
-        End If
-
-    End Sub
-
-    Private Sub ValidateColumnIsPositive(strSplitLine() As String, intColIndex As Integer, <Out()> ByRef blnColumnUpdated As Boolean)
-        Dim dblResult As Double
-        Dim blnIsNumeric As Boolean
-
-        blnColumnUpdated = False
-
-        If strSplitLine.Length > intColIndex Then
-            dblResult = 0
-            blnIsNumeric = Double.TryParse(strSplitLine(intColIndex), dblResult)
-            If Not blnIsNumeric OrElse dblResult < 1 Then
-                strSplitLine(intColIndex) = "1"
-                blnColumnUpdated = True
-            End If
-        End If
-
-    End Sub
-
-End Class
+            if (strSplitLine.Length > intColIndex)
+            {
+                dblResult = 0;
+                blnIsNumeric = double.TryParse(strSplitLine[intColIndex], out dblResult);
+                if (!blnIsNumeric || dblResult < 1)
+                {
+                    strSplitLine[intColIndex] = "1";
+                    blnColumnUpdated = true;
+                }
+            }
+        }
+    }
+}
