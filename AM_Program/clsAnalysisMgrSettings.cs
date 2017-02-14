@@ -138,12 +138,16 @@ namespace AnalysisManagerProg
         /// </summary>
         /// <param name="emergencyLogSource">Source name registered for emergency logging</param>
         /// <param name="emergencyLogName">Name of system log for emergency logging</param>
-        /// <param name="lstMgrSettings"></param>
+        /// <param name="lstMgrSettings">Manager settings loaded from file AnalysisManagerProg.exe.config</param>
         /// <param name="mgrFolderPath"></param>
         /// <param name="traceMode"></param>
         /// <remarks></remarks>
-        public clsAnalysisMgrSettings(string emergencyLogSource, string emergencyLogName, Dictionary<string, string> lstMgrSettings,
-            string mgrFolderPath, bool traceMode)
+        public clsAnalysisMgrSettings(
+            string emergencyLogSource, 
+            string emergencyLogName, 
+            Dictionary<string, string> lstMgrSettings,
+            string mgrFolderPath, 
+            bool traceMode)
         {
             mEmergencyLogName = emergencyLogName;
             mEmergencyLogSource = emergencyLogSource;
@@ -165,7 +169,7 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
-        /// Loads manager settings from config file and database
+        /// Loads manager settings from the database
         /// </summary>
         /// <param name="paramDictionary">Manager settings loaded from file AnalysisManagerProg.exe.config</param>
         /// <returns>True if successful; False on error</returns>
@@ -215,7 +219,7 @@ namespace AnalysisManagerProg
             // Verify manager settings dictionary exists
             if (paramDictionary == null)
             {
-                errorMessage = "clsMgrSettings.CheckInitialSettings(); Manager parameter string dictionary not found";
+                errorMessage = "clsAnalysisMgrSettings.CheckInitialSettings(); Manager parameter string dictionary not found";
 
                 if (mTraceMode)
                     ShowTraceMessage("Error in " + errorMessage);
@@ -228,7 +232,7 @@ namespace AnalysisManagerProg
             string strValue;
             if (!paramDictionary.TryGetValue(MGR_PARAM_USING_DEFAULTS, out strValue))
             {
-                errorMessage = "clsMgrSettings.CheckInitialSettings(); 'UsingDefaults' entry not found in Config file";
+                errorMessage = "clsAnalysisMgrSettings.CheckInitialSettings(); 'UsingDefaults' entry not found in Config file";
 
                 if (mTraceMode)
                     ShowTraceMessage("Error in " + errorMessage);
@@ -242,7 +246,7 @@ namespace AnalysisManagerProg
                 {
                     if (blnValue)
                     {
-                        errorMessage = "clsMgrSettings.CheckInitialSettings(); Config file problem, contains UsingDefaults=True";
+                        errorMessage = "clsAnalysisMgrSettings.CheckInitialSettings(); Config file problem, contains UsingDefaults=True";
 
                         if (mTraceMode)
                             ShowTraceMessage("Error in " + errorMessage);
@@ -377,7 +381,7 @@ namespace AnalysisManagerProg
                 // Log the message to the DB if the monthly Windows updates are not pending
                 var allowLogToDB = !(clsWindowsUpdateStatus.ServerUpdatesArePending());
 
-                mErrMsg = "clsMgrSettings.LoadMgrSettingsFromDBWork; Excessive failures attempting to retrieve manager settings from database " +
+                mErrMsg = "clsAnalysisMgrSettings.LoadMgrSettingsFromDBWork; Excessive failures attempting to retrieve manager settings from database " +
                           "for manager '" + managerName + "'";
                 WriteErrorMsg(mErrMsg, allowLogToDB);
 
@@ -389,7 +393,7 @@ namespace AnalysisManagerProg
             if (dtSettings.Rows.Count < 1 & returnErrorIfNoParameters)
             {
                 // No data was returned
-                mErrMsg = "clsMgrSettings.LoadMgrSettingsFromDBWork; Manager '" + managerName + "' not defined in the manager control database; using " + connectionString;
+                mErrMsg = "clsAnalysisMgrSettings.LoadMgrSettingsFromDBWork; Manager '" + managerName + "' not defined in the manager control database; using " + connectionString;
                 WriteErrorMsg(mErrMsg);
                 dtSettings.Dispose();
                 return false;
@@ -484,7 +488,7 @@ namespace AnalysisManagerProg
             // If loop exited due to errors, return false
             if (!success)
             {
-                var statusMessage = "clsMgrSettings.LoadBrokerDBSettings; Excessive failures attempting to retrieve settings from broker database";
+                var statusMessage = "clsAnalysisMgrSettings.LoadBrokerDBSettings; Excessive failures attempting to retrieve settings from broker database";
                 WriteErrorMsg(statusMessage);
                 dt.Dispose();
                 return false;
@@ -494,7 +498,7 @@ namespace AnalysisManagerProg
             if (dt.Rows.Count < 1)
             {
                 // No data was returned
-                var statusMessage = "clsMgrSettings.LoadBrokerDBSettings; V_Pipeline_Step_Tools_Detail_Report returned no rows using " +
+                var statusMessage = "clsAnalysisMgrSettings.LoadBrokerDBSettings; V_Pipeline_Step_Tools_Detail_Report returned no rows using " +
                                     connectionString;
                 WriteErrorMsg(statusMessage);
                 dt.Dispose();
@@ -516,7 +520,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                var statusMessage = "clsMgrSettings.LoadBrokerDBSettings; Exception filling string dictionary from table: " + ex.Message;
+                var statusMessage = "clsAnalysisMgrSettings.LoadBrokerDBSettings; Exception filling string dictionary from table: " + ex.Message;
                 WriteErrorMsg(statusMessage);
                 return false;
             }
@@ -681,7 +685,7 @@ namespace AnalysisManagerProg
 
             if (myNode == null)
             {
-                mErrMsg = "clsMgrSettings.WriteConfigSettings; appSettings node not found";
+                mErrMsg = "clsAnalysisMgrSettings.WriteConfigSettings; applicationSettings node not found";
                 return false;
             }
 
@@ -697,7 +701,7 @@ namespace AnalysisManagerProg
                 else
                 {
                     // Key was not found
-                    mErrMsg = "clsMgrSettings.WriteConfigSettings; specified key not found: " + key;
+                    mErrMsg = "clsAnalysisMgrSettings.WriteConfigSettings; specified key not found: " + key;
                     return false;
                 }
                 myDoc.Save(GetConfigFilePath());
@@ -705,7 +709,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                mErrMsg = "clsMgrSettings.WriteConfigSettings; Exception updating settings file: " + ex.Message;
+                mErrMsg = "clsAnalysisMgrSettings.WriteConfigSettings; Exception updating settings file: " + ex.Message;
                 return false;
             }
         }
@@ -767,7 +771,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                mErrMsg = "clsMgrSettings.LoadConfigDocument; Exception loading settings file: " + ex.Message;
+                mErrMsg = "clsAnalysisMgrSettings.LoadConfigDocument; Exception loading settings file: " + ex.Message;
                 return null;
             }
         }
