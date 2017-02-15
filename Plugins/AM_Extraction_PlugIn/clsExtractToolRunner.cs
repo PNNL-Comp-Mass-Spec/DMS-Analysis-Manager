@@ -546,7 +546,7 @@ namespace AnalysisManagerExtractionPlugin
                 }
 
                 // Initialize mMSGFDBUtils
-                mMSGFDBUtils = new clsMSGFDBUtils(m_mgrParams, m_jobParams, m_JobNum, m_WorkDir, m_DebugLevel, blnMSGFPlus: true);
+                mMSGFDBUtils = new clsMSGFDBUtils(m_mgrParams, m_jobParams, m_JobNum, m_WorkDir, m_DebugLevel, msgfPlus: true);
                 RegisterEvents(mMSGFDBUtils);
 
                 // Attach an additional handler for the ErrorEvent
@@ -606,7 +606,7 @@ namespace AnalysisManagerExtractionPlugin
             var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
             if (mMSGFDBUtils == null)
             {
-                mMSGFDBUtils = new clsMSGFDBUtils(m_mgrParams, m_jobParams, m_JobNum.ToString(), m_WorkDir, m_DebugLevel, blnMSGFPlus: true);
+                mMSGFDBUtils = new clsMSGFDBUtils(m_mgrParams, m_jobParams, m_JobNum.ToString(), m_WorkDir, m_DebugLevel, msgfPlus: true);
                 RegisterEvents(mMSGFDBUtils);
 
                 // Attach an additional handler for the ErrorEvent

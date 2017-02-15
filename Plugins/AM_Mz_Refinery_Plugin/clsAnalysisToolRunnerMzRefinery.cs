@@ -384,7 +384,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             string strAssumedScanType = string.Empty;
 
             // Initialize mMSGFDBUtils
-            mMSGFDBUtils = new clsMSGFDBUtils(m_mgrParams, m_jobParams, m_JobNum, m_WorkDir, m_DebugLevel, blnMSGFPlus: true);
+            mMSGFDBUtils = new clsMSGFDBUtils(m_mgrParams, m_jobParams, m_JobNum, m_WorkDir, m_DebugLevel, msgfPlus: true);
             RegisterEvents(mMSGFDBUtils);
 
             mMSGFDBUtils.IgnorePreviousErrorEvent += mMSGFDBUtils_IgnorePreviousErrorEvent;

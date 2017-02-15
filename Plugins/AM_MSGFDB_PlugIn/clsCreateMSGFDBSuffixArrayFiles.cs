@@ -387,7 +387,6 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             float sngMaxWaitTimeHours = MAX_WAITTIME_HOURS;
 
-            bool blnMSGFPlus = false;
             var strCurrentTask = "Initializing";
             CloseOutType eResult;
 
@@ -403,8 +402,8 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 var fiFastaFile = new FileInfo(strFASTAFilePath);
 
-                blnMSGFPlus = IsMSGFPlus(msgfDbProgLoc);
-                if (!blnMSGFPlus)
+                var msgfPlus = IsMSGFPlus(msgfDbProgLoc);
+                if (!msgfPlus)
                 {
                     // Running legacy MS-GFDB
                     throw new Exception("Legacy MS-GFDB is no longer supported");
@@ -436,17 +435,15 @@ namespace AnalysisManagerMSGFDBPlugIn
                 var blnReindexingRequired = false;
 
                 strCurrentTask = "Validating that expected files exist";
-                if (blnMSGFPlus)
+
+                // Check for any FastaFileName.revConcat.* files
+                // If they exist, delete them, since they are for legacy MSGFDB
+
+                var fiLegacyIndexedFiles = fiFastaFile.Directory.GetFiles(strOutputNameBase + ".revConcat.*");
+
+                if (fiLegacyIndexedFiles.Length > 0)
                 {
-                    // Check for any FastaFileName.revConcat.* files
-                    // If they exist, delete them, since they are for legacy MSGFDB
-
-                    FileInfo[] fiLegacyIndexedFiles = null;
-                    fiLegacyIndexedFiles = fiFastaFile.Directory.GetFiles(strOutputNameBase + ".revConcat.*");
-
-                    if (fiLegacyIndexedFiles.Length > 0)
-                    {
-                        blnReindexingRequired = true;
+                    blnReindexingRequired = true;
 
                         for (var intIndex = 0; intIndex <= fiLegacyIndexedFiles.Length - 1; intIndex++)
                         {
@@ -509,8 +506,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                     var strMissingFiles = string.Empty;
 
                     strCurrentTask = "Validating that expected files exist";
-                    var lstExistingFiles = FindExistingSuffixArrayFiles(blnFastaFileIsDecoy, blnMSGFPlus, strOutputNameBase, fiFastaFile.DirectoryName,
-                        lstFilesToFind, out strExistingFiles, out strMissingFiles);
+                    var lstExistingFiles = FindExistingSuffixArrayFiles(blnFastaFileIsDecoy, msgfPlus, strOutputNameBase, fiFastaFile.DirectoryName,
+                                                                        lstFilesToFind, out strExistingFiles, out strMissingFiles);
 
                     if (lstExistingFiles.Count < lstFilesToFind.Count)
                     {
@@ -614,9 +611,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                         {
                             OnStatusEvent("Running BuildSA to index " + fiFastaFile.Name);
 
-                            eResult = CreateSuffixArrayFilesWork(strLogFileDir, intDebugLevel, JobNum, fiFastaFile, fiLockFile, javaProgLoc,
-                                msgfDbProgLoc, blnFastaFileIsDecoy, blnMSGFPlus, dbSarrayFilename,
-                                udtHPCOptions);
+                            eResult = CreateSuffixArrayFilesWork(strLogFileDir, intDebugLevel, fiFastaFile, fiLockFile, javaProgLoc,
+                                                                 msgfDbProgLoc, blnFastaFileIsDecoy, msgfPlus, dbSarrayFilename);
 
                             if (blnRemoteLockFileCreated && eResult == CloseOutType.CLOSEOUT_SUCCESS)
                             {
@@ -647,9 +643,9 @@ namespace AnalysisManagerMSGFDBPlugIn
             return eResult;
         }
 
-        private CloseOutType CreateSuffixArrayFilesWork(string strLogFileDir, int intDebugLevel, string JobNum, FileInfo fiFastaFile,
-            FileInfo fiLockFile, string JavaProgLoc, string msgfDbProgLoc, bool blnFastaFileIsDecoy, bool blnMSGFPlus, string dbSarrayFilename,
-            clsAnalysisResources.udtHPCOptionsType udtHPCOptions)
+        private CloseOutType CreateSuffixArrayFilesWork(string strLogFileDir, int intDebugLevel, FileInfo fiFastaFile,
+                                                        FileInfo fiLockFile, string JavaProgLoc, string msgfDbProgLoc, bool blnFastaFileIsDecoy,
+                                                        bool msgfPlus, string dbSarrayFilename)
         {
             var strCurrentTask = string.Empty;
 
@@ -752,8 +748,8 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 string existingFiles;
                 string missingfiles;
-                var lstExistingFiles = FindExistingSuffixArrayFiles(blnFastaFileIsDecoy, blnMSGFPlus, strOutputNameBase, fiFastaFile.DirectoryName,
-                    new List<string>(), out existingFiles, out missingfiles);
+                var lstExistingFiles = FindExistingSuffixArrayFiles(blnFastaFileIsDecoy, msgfPlus, strOutputNameBase, fiFastaFile.DirectoryName,
+                                                                    new List<string>(), out existingFiles, out missingfiles);
 
                 foreach (var fiIndexFileToDelete in lstExistingFiles)
                 {
@@ -770,10 +766,10 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 //Set up and execute a program runner to invoke BuildSA (which is in MSGFDB.jar or MSGFPlus.jar)
                 strCurrentTask = "Construct BuildSA command line";
-                string CmdStr = null;
-                CmdStr = " -Xmx" + intJavaMemorySizeMB.ToString() + "M -cp " + msgfDbProgLoc;
 
-                if (blnMSGFPlus)
+                var CmdStr = " -Xmx" + intJavaMemorySizeMB + "M -cp " + msgfDbProgLoc;
+
+                if (msgfPlus)
                 {
                     CmdStr += " edu.ucsd.msjava.msdbsearch.BuildSA -d " + fiFastaFile.FullName;
                 }
@@ -1071,20 +1067,20 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Looks for each of those files
         /// </summary>
         /// <param name="blnFastaFileIsDecoy"></param>
-        /// <param name="blnMSGFPlus"></param>
+        /// <param name="msgfPlus"></param>
         /// <param name="strOutputNameBase"></param>
         /// <param name="strFolderPathToSearch"></param>
         /// <param name="lstFilesToFind">List of files that should exist; calling function must have initialized it</param>
         /// <returns>A list of the files that currently exist</returns>
         /// <remarks></remarks>
-        private List<FileInfo> FindExistingSuffixArrayFiles(bool blnFastaFileIsDecoy, bool blnMSGFPlus, string strOutputNameBase,
-            string strFolderPathToSearch, List<string> lstFilesToFind)
+        private List<FileInfo> FindExistingSuffixArrayFiles(bool blnFastaFileIsDecoy, bool msgfPlus, string strOutputNameBase,
+                                                            string strFolderPathToSearch, ICollection<string> lstFilesToFind)
         {
-            var strExistingFiles = string.Empty;
-            var strMissingFiles = string.Empty;
+            string strExistingFiles;
+            string strMissingFiles;
 
-            return FindExistingSuffixArrayFiles(blnFastaFileIsDecoy, blnMSGFPlus, strOutputNameBase, strFolderPathToSearch, lstFilesToFind,
-                out strExistingFiles, out strMissingFiles);
+            return FindExistingSuffixArrayFiles(blnFastaFileIsDecoy, msgfPlus, strOutputNameBase, strFolderPathToSearch, lstFilesToFind,
+                                                out strExistingFiles, out strMissingFiles);
         }
 
         /// <summary>
@@ -1092,7 +1088,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Looks for each of those files
         /// </summary>
         /// <param name="blnFastaFileIsDecoy"></param>
-        /// <param name="blnMSGFPlus"></param>
+        /// <param name="msgfPlus"></param>
         /// <param name="strOutputNameBase"></param>
         /// <param name="strFolderPathToSearch"></param>
         /// <param name="lstFilesToFind">List of files that should exist; calling function must have initialized it</param>
@@ -1100,8 +1096,9 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="strMissingFiles">Output param: semicolon separated list of missing files</param>
         /// <returns>A list of the files that currently exist</returns>
         /// <remarks></remarks>
-        private List<FileInfo> FindExistingSuffixArrayFiles(bool blnFastaFileIsDecoy, bool blnMSGFPlus, string strOutputNameBase,
-            string strFolderPathToSearch, List<string> lstFilesToFind, out string strExistingFiles, out string strMissingFiles)
+        private List<FileInfo> FindExistingSuffixArrayFiles(bool blnFastaFileIsDecoy, bool msgfPlus, string strOutputNameBase,
+                                                            string strFolderPathToSearch, ICollection<string> lstFilesToFind, out string strExistingFiles,
+                                                            out string strMissingFiles)
         {
             var lstExistingFiles = new List<FileInfo>();
 
@@ -1132,7 +1129,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             if (!blnFastaFileIsDecoy)
             {
-                if (blnMSGFPlus)
+                if (msgfPlus)
                 {
                     lstFilesToFind.Add(".revCat.canno");
                     lstFilesToFind.Add(".revCat.cnlcp");

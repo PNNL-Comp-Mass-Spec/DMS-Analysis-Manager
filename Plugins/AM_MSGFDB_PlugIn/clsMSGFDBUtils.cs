@@ -147,7 +147,16 @@ namespace AnalysisManagerMSGFDBPlugIn
 
         #region "Methods"
 
-        public clsMSGFDBUtils(IMgrParams oMgrParams, IJobParams oJobParams, string JobNum, string strWorkDir, short intDebugLevel, bool blnMSGFPlus)
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="oMgrParams"></param>
+        /// <param name="oJobParams"></param>
+        /// <param name="jobNum"></param>
+        /// <param name="workDir"></param>
+        /// <param name="debugLevel"></param>
+        /// <param name="msgfPlus"></param>
+        public clsMSGFDBUtils(IMgrParams oMgrParams, IJobParams oJobParams, string jobNum, string workDir, short debugLevel, bool msgfPlus)
         {
             m_mgrParams = oMgrParams;
             m_jobParams = oJobParams;
@@ -157,7 +166,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             m_JobNum = JobNum;
             m_DebugLevel = intDebugLevel;
 
-            mMSGFPlus = blnMSGFPlus;
+            mMSGFPlus = msgfPlus;
             mMSGFPlusVersion = string.Empty;
             mConsoleOutputErrorMsg = string.Empty;
             mContinuumSpectraSkipped = 0;
@@ -171,16 +180,16 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Update strArgumentSwitch and strValue if using the MS-GFDB syntax yet should be using the MS-GF+ syntax (or vice versa)
         /// </summary>
-        /// <param name="blnMSGFPlus"></param>
+        /// <param name="msgfPlus"></param>
         /// <param name="strArgumentSwitch"></param>
         /// <param name="strValue"></param>
         /// <remarks></remarks>
-        private void AdjustSwitchesForMSGFPlus(bool blnMSGFPlus, ref string strArgumentSwitch, ref string strValue)
+        private void AdjustSwitchesForMSGFPlus(bool msgfPlus, ref string strArgumentSwitch, ref string strValue)
         {
             int intValue = 0;
             int intCharIndex = 0;
 
-            if (blnMSGFPlus)
+            if (msgfPlus)
             {
                 // MS-GF+
 
@@ -1202,16 +1211,14 @@ namespace AnalysisManagerMSGFDBPlugIn
             return GetSearchEngineName(mMSGFPlus);
         }
 
-        public static string GetSearchEngineName(bool blnMSGFPlus)
+        public static string GetSearchEngineName(bool msgfPlus)
         {
-            if (blnMSGFPlus)
+            if (msgfPlus)
             {
                 return "MS-GF+";
             }
-            else
-            {
-                return "MS-GFDB";
-            }
+
+            return "MS-GFDB";
         }
 
         public string GetSettingFromMSGFDbParamFile(string strParameterFilePath, string strSettingToFind)
