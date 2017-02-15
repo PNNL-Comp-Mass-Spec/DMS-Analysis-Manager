@@ -1491,18 +1491,6 @@ namespace AnalysisManagerSequestPlugin
         /// <remarks></remarks>
         protected void ValidateProcessorsAreActive()
         {
-            string PVMProgFolder = null;     // Folder with PVM
-            string strBatchFilePath = null;
-
-            string strActiveNodesFilePath = null;
-            string strLineIn = null;
-
-            string strNodeName = null;
-
-            int intNodeCountCurrent = 0;
-            int intNodeCountActive = 0;
-            bool blnSuccess = false;
-
             try
             {
                 if (!mSequestLogNodesFound)
@@ -1521,7 +1509,7 @@ namespace AnalysisManagerSequestPlugin
                 }
 
                 // Determine the number of Active Nodes using PVM
-                PVMProgFolder = m_mgrParams.GetParam("PVMProgLoc");
+                var PVMProgFolder = m_mgrParams.GetParam("PVMProgLoc");
                 if (string.IsNullOrWhiteSpace(PVMProgFolder))
                 {
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
@@ -1529,14 +1517,14 @@ namespace AnalysisManagerSequestPlugin
                     return;
                 }
 
-                strBatchFilePath = Path.Combine(PVMProgFolder, "CheckActiveNodes.bat");
+                var strBatchFilePath = Path.Combine(PVMProgFolder, "CheckActiveNodes.bat");
                 if (!File.Exists(strBatchFilePath))
                 {
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Batch file not found: " + strBatchFilePath);
                     return;
                 }
 
-                strActiveNodesFilePath = Path.Combine(m_WorkDir, "ActiveNodesOutput.tmp");
+                var strActiveNodesFilePath = Path.Combine(m_WorkDir, "ActiveNodesOutput.tmp");
 
                 if (m_DebugLevel >= 4)
                 {
@@ -1550,7 +1538,7 @@ namespace AnalysisManagerSequestPlugin
                 }
 
                 var intMaxRuntimeSeconds = 60;
-                blnSuccess = m_UtilityRunner.RunProgram(strBatchFilePath, "", strTaskName, true, intMaxRuntimeSeconds);
+               var  blnSuccess = m_UtilityRunner.RunProgram(strBatchFilePath, "", strTaskName, true, intMaxRuntimeSeconds);
 
                 if (!blnSuccess)
                 {
@@ -1570,12 +1558,12 @@ namespace AnalysisManagerSequestPlugin
                 }
 
                 // Parse the ActiveNodesOutput.tmp file
-                intNodeCountCurrent = 0;
+                var intNodeCountCurrent = 0;
                 using (var srInFile = new StreamReader(new FileStream(strActiveNodesFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     while (!srInFile.EndOfStream)
                     {
-                        strLineIn = srInFile.ReadLine();
+                        var strLineIn = srInFile.ReadLine();
 
                         // Check whether line looks like:
                         //    p6    c0007     6/c,f sequest27_slave
@@ -1583,7 +1571,7 @@ namespace AnalysisManagerSequestPlugin
                         var reMatch = m_ActiveNodeRegEx.Match(strLineIn);
                         if (reMatch.Success)
                         {
-                            strNodeName = reMatch.Groups["node"].Value;
+                            var strNodeName = reMatch.Groups["node"].Value;
 
                             DateTime dtLastFinishTime;
                             if (mSequestNodes.TryGetValue(strNodeName, out dtLastFinishTime))
@@ -1610,7 +1598,7 @@ namespace AnalysisManagerSequestPlugin
                 }
 
                 // Look for nodes that have been missing for at least 5 minutes
-                intNodeCountActive = 0;
+                var intNodeCountActive = 0;
                 foreach (KeyValuePair<string, DateTime> objItem in mSequestNodes)
                 {
                     if (DateTime.UtcNow.Subtract(objItem.Value).TotalMinutes <= STALE_NODE_THRESHOLD_MINUTES)

@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using AnalysisManagerBase;
 
 namespace AnalysisManagerMSGFDBPlugIn
@@ -188,10 +189,9 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             // Retrieve the MASIC ScanStats.txt file (and possibly the ScanStatsEx.txt file)
 
-            bool blnSuccess = false;
-            blnSuccess = FileSearch.RetrieveScanStatsFiles(createStoragePathInfoOnly: false, retrieveScanStatsFile: true, retrieveScanStatsExFile: false);
+            var blnSuccess = FileSearch.RetrieveScanStatsFiles(createStoragePathInfoOnly: false, retrieveScanStatsFile: true, retrieveScanStatsExFile: false);
 
-            if (!base.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -209,7 +209,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     // We also have to retrieve the _ScanStatsEx.txt file
                     blnSuccess = FileSearch.RetrieveScanStatsFiles(createStoragePathInfoOnly: false, retrieveScanStatsFile: false, retrieveScanStatsExFile: true);
 
-                    if (!base.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+                    if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
                     {
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
@@ -265,7 +265,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (!base.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -317,84 +317,99 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             using (var srScanStatsFile = new StreamReader(new FileStream(strScanStatsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
             {
-                if (!srScanStatsFile.EndOfStream)
+                string headerLine = null;
+
+                while (!srScanStatsFile.EndOfStream)
                 {
-                    // Parse the scan headers
-                    var lstColumns = srScanStatsFile.ReadLine().Split('\t').ToList();
+                    headerLine = srScanStatsFile.ReadLine();
+                    if (!string.IsNullOrWhiteSpace(headerLine))
+                        break;
+                }
+                
+                if (string.IsNullOrWhiteSpace(headerLine))
+                {
+                    return false;
+                }
 
-                    foreach (var columnName in lstColumnNameWithScanType)
+                // Parse the scan headers
+                var headerColumns = headerLine.Split('\t').ToList();
+
+                foreach (var columnName in lstColumnNameWithScanType)
+                {
+                    var intScanTypeIndex = headerColumns.IndexOf(columnName);
+                    if (intScanTypeIndex >= 0)
                     {
-                        var intScanTypeIndex = lstColumns.IndexOf(columnName);
-                        if (intScanTypeIndex >= 0)
-                        {
-                            lstColumnIndicesToCheck.Add(intScanTypeIndex);
-                        }
+                        lstColumnIndicesToCheck.Add(intScanTypeIndex);
                     }
+                }
 
-                    if (lstColumnIndicesToCheck.Count == 0)
+                if (lstColumnIndicesToCheck.Count == 0)
+                {
+                    float sngValue;
+                    if (float.TryParse(headerColumns[0], out sngValue) || float.TryParse(headerColumns[1], out sngValue))
                     {
-                        float sngValue = 0;
-                        if (float.TryParse(lstColumns[0], out sngValue) || float.TryParse(lstColumns[1], out sngValue))
+                        // This file does not have a header line
+                        if (headerColumns.Count >= 11)
                         {
-                            // This file does not have a header line
-                            if (lstColumns.Count >= 11)
+                            // Check whether column 11 has ScanTypeName info
+                            if (headerColumns[10].IndexOf("MS", StringComparison.CurrentCultureIgnoreCase) >= 0 ||
+                                headerColumns[10].IndexOf("SRM", StringComparison.CurrentCultureIgnoreCase) >= 0 ||
+                                headerColumns[10].IndexOf("MRM", StringComparison.CurrentCultureIgnoreCase) >= 0)
                             {
-                                // Check whether column 11 has ScanTypeName info
-                                if (lstColumns[10].IndexOf("MS", StringComparison.CurrentCultureIgnoreCase) >= 0 ||
-                                    lstColumns[10].IndexOf("SRM", StringComparison.CurrentCultureIgnoreCase) >= 0 ||
-                                    lstColumns[10].IndexOf("MRM", StringComparison.CurrentCultureIgnoreCase) >= 0)
-                                {
-                                    return true;
-                                }
+                                return true;
                             }
+                        }
 
-                            if (lstColumns.Count >= 16)
+                        if (headerColumns.Count >= 16)
+                        {
+                            // Check whether column 15 has "Collision Mode" values
+                            if (headerColumns[15].IndexOf("HCD", StringComparison.CurrentCultureIgnoreCase) >= 0 ||
+                                headerColumns[15].IndexOf("CID", StringComparison.CurrentCultureIgnoreCase) >= 0 ||
+                                headerColumns[15].IndexOf("ETD", StringComparison.CurrentCultureIgnoreCase) >= 0)
                             {
-                                // Check whether column 15 has "Collision Mode" values
-                                if (lstColumns[15].IndexOf("HCD", StringComparison.CurrentCultureIgnoreCase) >= 0 ||
-                                    lstColumns[15].IndexOf("CID", StringComparison.CurrentCultureIgnoreCase) >= 0 ||
-                                    lstColumns[15].IndexOf("ETD", StringComparison.CurrentCultureIgnoreCase) >= 0)
-                                {
-                                    return true;
-                                }
+                                return true;
                             }
+                        }
 
-                            if (lstColumns.Count >= 17)
+                        if (headerColumns.Count >= 17)
+                        {
+                            // Check whether column 15 has "Collision Mode" values
+                            if (headerColumns[16].IndexOf("HCD", StringComparison.CurrentCultureIgnoreCase) >= 0 ||
+                                headerColumns[16].IndexOf("CID", StringComparison.CurrentCultureIgnoreCase) >= 0 ||
+                                headerColumns[16].IndexOf("ETD", StringComparison.CurrentCultureIgnoreCase) >= 0)
                             {
-                                // Check whether column 15 has "Collision Mode" values
-                                if (lstColumns[16].IndexOf("HCD", StringComparison.CurrentCultureIgnoreCase) >= 0 ||
-                                    lstColumns[16].IndexOf("CID", StringComparison.CurrentCultureIgnoreCase) >= 0 ||
-                                    lstColumns[16].IndexOf("ETD", StringComparison.CurrentCultureIgnoreCase) >= 0)
-                                {
-                                    return true;
-                                }
+                                return true;
                             }
                         }
                     }
                 }
 
-                if (lstColumnIndicesToCheck.Count > 0)
+                if (lstColumnIndicesToCheck.Count <= 0)
+                    return false;
+
+                while (!srScanStatsFile.EndOfStream && !blnDetailedScanTypesDefined)
                 {
-                    while (!srScanStatsFile.EndOfStream && !blnDetailedScanTypesDefined)
+                    var dataLine = srScanStatsFile.ReadLine();
+                    if (string.IsNullOrWhiteSpace(dataLine))
+                        continue;
+
+                    var lstColumns = dataLine.Split('\t').ToList();
+
+                    foreach (var columnIndex in lstColumnIndicesToCheck)
                     {
-                        var lstColumns = srScanStatsFile.ReadLine().Split('\t').ToList();
+                        var strScanType = lstColumns[columnIndex];
 
-                        foreach (var columnIndex in lstColumnIndicesToCheck)
+                        if (strScanType.IndexOf("HCD", StringComparison.CurrentCultureIgnoreCase) >= 0)
                         {
-                            var strScanType = lstColumns[columnIndex];
-
-                            if (strScanType.IndexOf("HCD", StringComparison.CurrentCultureIgnoreCase) >= 0)
-                            {
-                                blnDetailedScanTypesDefined = true;
-                            }
-                            else if (strScanType.IndexOf("CID", StringComparison.CurrentCultureIgnoreCase) >= 0)
-                            {
-                                blnDetailedScanTypesDefined = true;
-                            }
-                            else if (strScanType.IndexOf("ETD", StringComparison.CurrentCultureIgnoreCase) >= 0)
-                            {
-                                blnDetailedScanTypesDefined = true;
-                            }
+                            blnDetailedScanTypesDefined = true;
+                        }
+                        else if (strScanType.IndexOf("CID", StringComparison.CurrentCultureIgnoreCase) >= 0)
+                        {
+                            blnDetailedScanTypesDefined = true;
+                        }
+                        else if (strScanType.IndexOf("ETD", StringComparison.CurrentCultureIgnoreCase) >= 0)
+                        {
+                            blnDetailedScanTypesDefined = true;
                         }
                     }
                 }
@@ -405,39 +420,43 @@ namespace AnalysisManagerMSGFDBPlugIn
 
         private bool ValidateScanStatsFileHasScanTypeNameColumn(string strScanStatsFilePath)
         {
-            var blnScanTypeColumnFound = false;
 
             using (var srScanStatsFile = new StreamReader(new FileStream(strScanStatsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
             {
-                if (!srScanStatsFile.EndOfStream)
+                if (srScanStatsFile.EndOfStream)
+                    return false;
+
+                var headerLine = srScanStatsFile.ReadLine();
+                if (string.IsNullOrWhiteSpace(headerLine))
+                    return false;
+
+                // Parse the scan headers to look for ScanTypeName
+
+                float sngValue;
+                var lstColumns = headerLine.Split('\t').ToList();
+
+                if (lstColumns.Contains("ScanTypeName"))
                 {
-                    // Parse the scan headers to look for ScanTypeName
+                    return true;
+                }
 
-                    float sngValue = 0;
-                    var lstColumns = srScanStatsFile.ReadLine().Split('\t').ToList();
+                if (!float.TryParse(lstColumns[0], out sngValue) && !float.TryParse(lstColumns[1], out sngValue))
+                    return false;
 
-                    if (lstColumns.Contains("ScanTypeName"))
-                    {
-                        blnScanTypeColumnFound = true;
-                    }
-                    else if (float.TryParse(lstColumns[0], out sngValue) || float.TryParse(lstColumns[1], out sngValue))
-                    {
-                        // This file does not have a header line
-                        if (lstColumns.Count >= 11)
-                        {
-                            // Assume column 11 is the ScanTypeName column
-                            if (lstColumns[10].IndexOf("MS", StringComparison.CurrentCultureIgnoreCase) >= 0 ||
-                                lstColumns[10].IndexOf("SRM", StringComparison.CurrentCultureIgnoreCase) >= 0 ||
-                                lstColumns[10].IndexOf("MRM", StringComparison.CurrentCultureIgnoreCase) >= 0)
-                            {
-                                blnScanTypeColumnFound = true;
-                            }
-                        }
-                    }
+                // This file does not have a header line
+                if (lstColumns.Count < 11)
+                    return false;
+
+                // Assume column 11 is the ScanTypeName column
+                if (lstColumns[10].IndexOf("MS", StringComparison.CurrentCultureIgnoreCase) >= 0 ||
+                    lstColumns[10].IndexOf("SRM", StringComparison.CurrentCultureIgnoreCase) >= 0 ||
+                    lstColumns[10].IndexOf("MRM", StringComparison.CurrentCultureIgnoreCase) >= 0)
+                {
+                    return true;
                 }
             }
 
-            return blnScanTypeColumnFound;
+            return false;
         }
     }
 }
