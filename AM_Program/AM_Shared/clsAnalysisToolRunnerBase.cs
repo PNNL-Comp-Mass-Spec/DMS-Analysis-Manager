@@ -2626,7 +2626,7 @@ namespace AnalysisManagerBase
                         }
                     }
 
-                    if (dblTotalSizeMB / 1024 <= spaceUsageThresholdGB)
+                    if (dblTotalSizeMB / 1024.0 <= spaceUsageThresholdGB)
                     {
                         return;
                     }
@@ -3887,14 +3887,14 @@ namespace AnalysisManagerBase
 
                 if (secondsBetweenUpdates < 10)
                 {
-                    if (mCoreUsageHistory.Count > 5 * 60 / 10)
+                    if (mCoreUsageHistory.Count > 5 * 60 / 10.0)
                     {
                         mCoreUsageHistory.Dequeue();
                     }
                 }
                 else
                 {
-                    if (mCoreUsageHistory.Count > 5 * 60 / secondsBetweenUpdates)
+                    if (mCoreUsageHistory.Count > 5 * 60 / (float)secondsBetweenUpdates)
                     {
                         mCoreUsageHistory.Dequeue();
                     }

@@ -150,7 +150,7 @@ namespace AnalysisManagerBase
                                 if (DateTime.UtcNow.Subtract(dtLastProgress).TotalSeconds >= 5)
                                 {
                                     dtLastProgress = DateTime.UtcNow;
-                                    var percentComplete = bytesRead / srMgfFile.BaseStream.Length * 100;
+                                    var percentComplete = bytesRead / (float)srMgfFile.BaseStream.Length * 100;
                                     if (percentComplete > 100)
                                         percentComplete = 100;
                                     OnProgressUpdate("Splitting MGF file", Convert.ToInt32(percentComplete));

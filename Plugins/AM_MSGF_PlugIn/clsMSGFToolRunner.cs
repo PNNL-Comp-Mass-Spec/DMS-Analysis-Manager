@@ -2650,7 +2650,7 @@ namespace AnalysisManagerMSGFPlugin
                 }
 
                 // Update the overall progress
-                dblFraction = (intLineCount + mMSGFLineCountPreviousSegments) / mMSGFInputFileLineCount;
+                dblFraction = (intLineCount + mMSGFLineCountPreviousSegments) / (float)mMSGFInputFileLineCount;
 
                 if (mProcessingMSGFDBCollisionModeData)
                 {

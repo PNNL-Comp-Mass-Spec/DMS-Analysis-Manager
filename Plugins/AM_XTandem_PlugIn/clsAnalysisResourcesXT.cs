@@ -273,7 +273,7 @@ namespace AnalysisManagerXTandemPlugIn
                 {
                     // Need to condense the file
 
-                    strMessage = ioFileInfo.Name + " is " + Convert.ToSingle(ioFileInfo.Length / 1024 / 1024 / 1024).ToString("0.00") +
+                    strMessage = ioFileInfo.Name + " is " + Convert.ToSingle(ioFileInfo.Length / 1024.0 / 1024 / 1024).ToString("0.00") +
                                  " GB in size; will now condense it by combining data points with consecutive zero-intensity values";
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, strMessage);
 
@@ -298,7 +298,7 @@ namespace AnalysisManagerXTandemPlugIn
                         if (m_DebugLevel >= 1)
                         {
                             strMessage = "Condensing complete; size of the new _dta.txt file is " +
-                                         Convert.ToSingle(ioFileInfo.Length / 1024 / 1024 / 1024).ToString("0.00") + " GB";
+                                         Convert.ToSingle(ioFileInfo.Length / 1024.0 / 1024 / 1024).ToString("0.00") + " GB";
                             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, strMessage);
                         }
 

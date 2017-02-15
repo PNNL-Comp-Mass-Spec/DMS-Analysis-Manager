@@ -303,7 +303,7 @@ namespace AnalysisManagerExtractionPlugin
                     return true;
                 }
 
-                var dblPercentInvalid = intErrorCount / intPsmCount * 100;
+                var dblPercentInvalid = intErrorCount / (float)intPsmCount * 100;
 
                 if (intErrorCount <= 0)
                 {
@@ -343,7 +343,7 @@ namespace AnalysisManagerExtractionPlugin
                         foreach (var massError in lstLargestMassErrors)
                         {
                             iterator += 1;
-                            if (iterator >= lstLargestMassErrors.Count / 2)
+                            if (iterator >= lstLargestMassErrors.Count / 2.0)
                             {
                                 InformLargeErrorExample(massError);
                                 break;

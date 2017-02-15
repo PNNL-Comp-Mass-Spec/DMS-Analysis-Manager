@@ -508,7 +508,7 @@ namespace AnalysisManagerSequestPlugin
             {
                 const int MINIMUM_NODE_SUCCESS_PCT = 75;
                 double dblNodeCountSuccessPct = 0;
-                dblNodeCountSuccessPct = (intNodeCountProcessed - intNodeCountFailed) / intNodeCountProcessed * 100;
+                dblNodeCountSuccessPct = (intNodeCountProcessed - intNodeCountFailed) / (float)intNodeCountProcessed * 100;
 
                 strLogMessage = "Error, unable to verify database on " + intNodeCountFailed.ToString() + " node";
                 if (intNodeCountFailed > 1)

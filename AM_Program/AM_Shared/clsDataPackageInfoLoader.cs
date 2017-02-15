@@ -604,7 +604,7 @@ namespace AnalysisManagerBase
 
                             if (DateTime.UtcNow.Subtract(lastStatusTime).TotalSeconds >= statusIntervalSeconds)
                             {
-                                var pctComplete = jobsProcessed / splitFastaJobs.Count * 100;
+                                var pctComplete = jobsProcessed / (float)splitFastaJobs.Count * 100;
                                 LogDebugMessage("Retrieving job parameters from history for SplitFasta jobs; " + pctComplete.ToString("0") + "% complete");
 
                                 lastStatusTime = DateTime.UtcNow;

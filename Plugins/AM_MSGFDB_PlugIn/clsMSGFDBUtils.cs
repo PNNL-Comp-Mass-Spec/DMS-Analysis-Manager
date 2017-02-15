@@ -2675,7 +2675,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (countHighResMSn > 0)
                 {
-                    dblFractionHiRes = countHighResMSn / (countLowResMSn + countHighResMSn);
+                    dblFractionHiRes = countHighResMSn / (double)(countLowResMSn + countHighResMSn);
                 }
 
                 if (dblFractionHiRes > 0.1)
@@ -3060,8 +3060,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
                 else
                 {
-                    double dblErrorPercent = 0;    // Value between 0 and 100
-                    dblErrorPercent = intPeptideCountNoMatch / intPeptideCount * 100.0;
+                    // Value between 0 and 100
+                    var dblErrorPercent = intPeptideCountNoMatch / (double)intPeptideCount * 100.0;
 
                     mErrorMessage = dblErrorPercent.ToString("0.0") + "% of the entries in the peptide to protein map file did not match to a protein in the FASTA file";
                     OnErrorEvent(mErrorMessage);
