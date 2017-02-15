@@ -222,7 +222,7 @@ namespace AnalysisManagerMasicPlugin
                     m_MASICStatusFileName = "MasicStatus.xml";
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 m_MASICStatusFileName = "MasicStatus.xml";
             }
@@ -238,7 +238,7 @@ namespace AnalysisManagerMasicPlugin
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
                     "clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); Error looking for MASIC .Exe at " + strMASICExePath);
@@ -395,14 +395,14 @@ namespace AnalysisManagerMasicPlugin
                         {
                             m_progress = float.Parse(strProgress);
                         }
-                        catch (Exception ex)
+                        catch (Exception)
                         {
                             // Ignore errors
                         }
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Ignore errors
             }
@@ -468,7 +468,7 @@ namespace AnalysisManagerMasicPlugin
                         "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
                 }
             }
-            catch (Exception Err)
+            catch (Exception)
             {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN,
                     "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));

@@ -930,7 +930,7 @@ namespace AnalysisManagerIDPickerPlugIn
                             }
                             blnSuccess = true;
                         }
-                        catch (Exception ex)
+                        catch (Exception)
                         {
                             intAttempts += 1;
                             Thread.Sleep(2000);
@@ -945,7 +945,7 @@ namespace AnalysisManagerIDPickerPlugIn
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 blnErrorEncountered = true;
             }

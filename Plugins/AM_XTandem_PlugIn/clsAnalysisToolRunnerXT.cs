@@ -251,7 +251,7 @@ namespace AnalysisManagerXTandemPlugIn
                 File.Delete(Path.Combine(m_WorkDir, m_Dataset + "_dta.zip"));
                 File.Delete(Path.Combine(m_WorkDir, m_Dataset + "_dta.txt"));
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Ignore errors here
             }

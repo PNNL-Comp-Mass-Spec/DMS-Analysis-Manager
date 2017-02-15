@@ -254,7 +254,7 @@ namespace AnalysisManagerExtractionPlugin
                     var dblMassError = objCurrentPSM.PrecursorNeutralMass - objCurrentPSM.PeptideMonoisotopicMass;
                     double dblToleranceCurrent = 0;
 
-                    string psmIsotopeError = null;
+                    string psmIsotopeError;
                     if (eResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB && objCurrentPSM.TryGetScore("IsotopeError", out psmIsotopeError))
                     {
                         // The integer value of dblMassError should match psmIsotopeError

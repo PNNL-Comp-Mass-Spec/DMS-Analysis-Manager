@@ -781,7 +781,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 dblPValueEstimate = Math.Log10(dblSpecProb) * 0.9988 + 6.43;
                 dblPValueEstimate = Math.Pow(10, dblPValueEstimate);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Ignore errors here
                 // We will simply return strMSGFSpecProb
@@ -889,7 +889,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     {
                         fiCDTAFile.Delete();
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
                         // Ignore errors here
                     }
@@ -1151,7 +1151,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         }
                     }
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     // Ignore errors here
                 }
@@ -4233,7 +4233,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                             File.Delete(item);
                         }
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
                         lstFilesToRetry.Add(item);
                     }

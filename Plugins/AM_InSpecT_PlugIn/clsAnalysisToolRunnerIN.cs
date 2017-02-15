@@ -481,7 +481,7 @@ namespace AnalysisManagerInSpecTPlugIn
                     srInFile.Close();
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
                     "clsAnalysisToolRunnerIN.ParseInspectErrorsFile, Error reading the Inspect _errors.txt file (" + errorFilename + ")");

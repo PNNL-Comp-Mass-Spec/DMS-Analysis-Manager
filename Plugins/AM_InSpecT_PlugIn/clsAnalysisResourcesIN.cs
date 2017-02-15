@@ -67,7 +67,7 @@ namespace AnalysisManagerInSpecTPlugIn
         /// </summary>
         /// <returns>TRUE for success, FALSE for error</returns>
         /// <remarks></remarks>
-        public new bool RetrieveDtaFiles()
+        public bool RetrieveDtaFiles()
         {
             //Retrieve zipped DTA file
             string DtaResultFileName = null;

@@ -312,7 +312,7 @@ namespace AnalysisManagerExtractionPlugin
                 {
                     File.Delete(m_PHRPConsoleOutputFilePath);
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     // Ignore errors here
                 }

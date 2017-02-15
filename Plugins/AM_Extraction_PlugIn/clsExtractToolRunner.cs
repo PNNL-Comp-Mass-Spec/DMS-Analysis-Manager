@@ -1542,7 +1542,7 @@ namespace AnalysisManagerExtractionPlugin
                             // Delete the _msgfplus.txt or _msgfplus.tsv file
                             File.Delete(strTargetFilePath);
                         }
-                        catch (Exception ex)
+                        catch (Exception)
                         {
                             // Ignore errors here
                         }
@@ -1803,7 +1803,7 @@ namespace AnalysisManagerExtractionPlugin
                     // Delete the _inspect.txt file
                     File.Delete(strTargetFilePath);
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     // Ignore errors here
                 }

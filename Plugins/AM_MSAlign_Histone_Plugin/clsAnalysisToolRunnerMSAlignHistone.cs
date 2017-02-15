@@ -452,7 +452,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Ignore errors here
             }

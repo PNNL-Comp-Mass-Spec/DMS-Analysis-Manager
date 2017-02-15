@@ -134,7 +134,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             {
                 numOfResultFiles = m_jobParams.GetJobParameter("NumberOfClonedSteps", 0);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 numOfResultFiles = 0;
             }

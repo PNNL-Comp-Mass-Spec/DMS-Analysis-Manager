@@ -267,7 +267,7 @@ namespace AnalysisManagerMSDeconvPlugIn
             {
                 File.Delete(Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_MZXML_EXTENSION));
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Ignore errors here
             }

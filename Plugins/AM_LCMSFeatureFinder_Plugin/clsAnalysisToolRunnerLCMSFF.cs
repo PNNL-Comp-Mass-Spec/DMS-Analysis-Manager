@@ -166,7 +166,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
                 File.Delete(Path.Combine(m_WorkDir, m_Dataset + ".UIMF"));
                 File.Delete(Path.Combine(m_WorkDir, m_Dataset + "*.csv"));
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Ignore errors here
             }

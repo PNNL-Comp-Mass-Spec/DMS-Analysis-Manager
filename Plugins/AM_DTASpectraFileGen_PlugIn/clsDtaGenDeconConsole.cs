@@ -470,9 +470,6 @@ namespace DTASpectraFileGen
                                 break;
                             case "PercentComplete":
                                 float.TryParse(kvStat.Value, out mDeconConsoleStatus.PercentComplete);
-
-                                //'mDeconConsoleStatus.PercentComplete = CSng((intWorkFlowStep - 1) / TOTAL_WORKFLOW_STEPS * 100.0 + mDeconConsoleStatus.PercentComplete / TOTAL_WORKFLOW_STEPS)
-                                mDeconConsoleStatus.PercentComplete = mDeconConsoleStatus.PercentComplete;
                                 break;
                         }
                     }
@@ -500,7 +497,7 @@ namespace DTASpectraFileGen
                 {
                     return new KeyValuePair<string, string>(strData.Substring(0, intCharIndex).Trim(), strData.Substring(intCharIndex + 1).Trim());
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     // Ignore errors here
                 }

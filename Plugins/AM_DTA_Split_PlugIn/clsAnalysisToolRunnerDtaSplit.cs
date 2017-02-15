@@ -86,7 +86,7 @@ namespace AnalysisManagerDtaSplitPlugIn
                         intSegmentCountToCreate = 4;
                     }
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
                         "Setting 'NumberOfClonedSteps' is not numeric in the job parameters; will assume NumberOfClonedSteps=4");

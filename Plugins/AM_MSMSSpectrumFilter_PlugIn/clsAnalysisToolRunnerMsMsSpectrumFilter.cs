@@ -275,7 +275,7 @@ namespace MSMSSpectrumFilterAM
                     if ((objFilteredCDTA != null))
                         objFilteredCDTA.CloseFile();
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     // Ignore errors here
                 }

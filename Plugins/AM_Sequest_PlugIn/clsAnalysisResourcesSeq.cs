@@ -301,7 +301,7 @@ namespace AnalysisManagerSequestPlugin
                         // Copy the new file back to the transfer folder (necessary in case this job fails)
                         File.Copy(localFilePath, Path.Combine(transferFolderPath, strExistingSeqLogFileRenamed));
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
                         // Ignore errors here
                     }

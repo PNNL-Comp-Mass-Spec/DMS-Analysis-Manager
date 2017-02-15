@@ -959,7 +959,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                     {
                         File.Delete(udtJobMetadata.SpectrumFilePath);
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
                         // Ignore errors
                     }

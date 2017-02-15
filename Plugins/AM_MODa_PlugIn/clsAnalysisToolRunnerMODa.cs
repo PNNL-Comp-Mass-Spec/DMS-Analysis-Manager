@@ -312,7 +312,7 @@ namespace AnalysisManagerMODaPlugIn
             {
                 File.Delete(Path.Combine(m_WorkDir, m_Dataset + ".mzXML"));
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Ignore errors here
             }

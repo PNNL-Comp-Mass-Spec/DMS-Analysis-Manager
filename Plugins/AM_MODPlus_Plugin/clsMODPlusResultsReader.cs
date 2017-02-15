@@ -187,7 +187,7 @@ namespace AnalysisManagerMODPlusPlugin
                                 }
                             }
                         }
-                        catch (Exception ex)
+                        catch (Exception)
                         {
                             // Text parsing error
                             // Do not reconstruct dataLine
@@ -212,8 +212,6 @@ namespace AnalysisManagerMODPlusPlugin
                 dataLine = mReader.ReadLine();
             }
 
-            // ReSharper disable once VbUnreachableCode
-            return false;
         }
     }
 }

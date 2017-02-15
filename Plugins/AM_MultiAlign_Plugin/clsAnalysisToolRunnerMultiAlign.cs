@@ -182,7 +182,7 @@ namespace AnalysisManagerMultiAlignPlugIn
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 //Even if the rename failed, go ahead and continue
             }
@@ -212,7 +212,7 @@ namespace AnalysisManagerMultiAlignPlugIn
                 File.Delete(Path.Combine(m_WorkDir, m_Dataset + ".UIMF"));
                 File.Delete(Path.Combine(m_WorkDir, m_Dataset + "*.csv"));
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Ignore errors here
             }

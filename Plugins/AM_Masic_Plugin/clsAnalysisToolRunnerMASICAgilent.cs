@@ -87,7 +87,7 @@ namespace AnalysisManagerMasicPlugin
                     DeleteFileWithRetries(MyFile);
                 }
             }
-            catch (Exception Err)
+            catch (Exception)
             {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error deleting .mgf file, job " + m_JobNum);
                 return CloseOutType.CLOSEOUT_FAILED;

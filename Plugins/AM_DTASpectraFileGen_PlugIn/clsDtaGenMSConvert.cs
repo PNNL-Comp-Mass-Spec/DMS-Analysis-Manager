@@ -165,7 +165,7 @@ namespace DTASpectraFileGen
                 m_InstrumentFileName = Path.GetFileName(rawFilePath);
                 m_JobParams.AddResultFileToSkip(m_InstrumentFileName);
 
-                const int scanStart = 1;
+                const int SCAN_START = 1;
                 var scanStop = DEFAULT_SCAN_STOP;
 
                 if (eRawDataType == clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile)
@@ -204,7 +204,7 @@ namespace DTASpectraFileGen
                 //Verify max scan specified is in file
                 if (m_MaxScanInFile > 0)
                 {
-                    if (scanStart == 1 && scanStop == 999999 && scanStop < m_MaxScanInFile)
+                    if (scanStop == 999999 && scanStop < m_MaxScanInFile)
                     {
                         // The default scan range for processing all scans has traditionally be 1 to 999999
                         // This scan range is defined for this job's settings file, but this dataset has over 1 million spectra
@@ -214,19 +214,19 @@ namespace DTASpectraFileGen
 
                     if (scanStop > m_MaxScanInFile)
                         scanStop = m_MaxScanInFile;
+
                     if (scanStop < m_MaxScanInFile)
                         blnLimitingScanRange = true;
-                    if (scanStart > 1)
-                        blnLimitingScanRange = true;
+
                 }
                 else
                 {
-                    if (scanStart > 1 | scanStop < DEFAULT_SCAN_STOP)
+                    if (scanStop < DEFAULT_SCAN_STOP)
                         blnLimitingScanRange = true;
                 }
 
                 //Determine max number of scans to be used
-                m_NumScans = scanStop - scanStart + 1;
+                m_NumScans = scanStop - SCAN_START + 1;
 
                 // Lookup Centroid Settings
                 var centroidMGF = m_JobParams.GetJobParameter("CentroidMGF", false);
@@ -272,7 +272,7 @@ namespace DTASpectraFileGen
 
                 if (blnLimitingScanRange)
                 {
-                    cmdStr += " --filter \"scanNumber [" + scanStart + "," + scanStop + "]\"";
+                    cmdStr += " --filter \"scanNumber [" + SCAN_START + "," + scanStop + "]\"";
                 }
 
                 cmdStr += " --mgf -o " + m_WorkDir;

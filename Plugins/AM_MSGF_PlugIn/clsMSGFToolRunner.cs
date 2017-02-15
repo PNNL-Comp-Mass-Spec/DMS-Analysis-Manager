@@ -1111,7 +1111,7 @@ namespace AnalysisManagerMSGFPlugin
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Ignore errors here
             }
@@ -2295,7 +2295,7 @@ namespace AnalysisManagerMSGFPlugin
                                             {
                                                 lstMSGFResults.Add(intResultID, strSplitLine[intMSGFSpecProbColIndex]);
                                             }
-                                            catch (Exception ex)
+                                            catch (Exception)
                                             {
                                                 // Ignore errors here
                                                 // Possibly a key violation or a column index issue

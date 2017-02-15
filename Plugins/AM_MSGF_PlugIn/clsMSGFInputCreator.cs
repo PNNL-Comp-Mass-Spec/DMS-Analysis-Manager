@@ -156,7 +156,7 @@ namespace AnalysisManagerMSGFPlugin
             {
                 mMSGFCachedResults[ConstructMSGFResultCode(strScanNumber, strCharge, strPeptide)] = strMSGFResultData;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Entry not found; this is unexpected; we will only report the error at the console
                 LogError("Entry not found in mMSGFCachedResults for " + ConstructMSGFResultCode(strScanNumber, strCharge, strPeptide));
@@ -791,7 +791,7 @@ namespace AnalysisManagerMSGFPlugin
                     {
                         mMSGFCachedResults.Add(strPeptideResultCode, "");
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
                         // Key is already present; this is unexpected, but we can safely ignore this error
                         LogError("Warning in ReadAndStorePHRPData: Key already defined in mMSGFCachedResults: " + strPeptideResultCode);

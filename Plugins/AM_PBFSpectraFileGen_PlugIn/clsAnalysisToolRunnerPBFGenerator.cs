@@ -292,7 +292,7 @@ namespace AnalysisManagerPBFGenerator
                     return percentComplete;
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Ignore errors here
             }

@@ -216,7 +216,7 @@ namespace AnalysisManagerMSDeconvPlugIn
 
                     fiIndexedFile.MoveTo(filePath);
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     mErrorMessage = "Error replacing the original .mzXML file with the indexed version";
                     Console.WriteLine(mErrorMessage);

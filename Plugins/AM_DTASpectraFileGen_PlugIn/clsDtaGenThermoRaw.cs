@@ -24,7 +24,6 @@ namespace DTASpectraFileGen
     {
         #region "Constants"
 
-        private const bool USE_THREADING = true;
         protected const int DEFAULT_SCAN_STOP = 999999;
 
         private const string CONSOLE_OUTPUT_FILENAME = "DeconMSn_ConsoleOutput.txt";
@@ -116,17 +115,9 @@ namespace DTASpectraFileGen
             // Make the DTA files (the process runs in a separate thread)
             try
             {
-                if (USE_THREADING)
-                {
-                    m_thThread = new Thread(MakeDTAFilesThreaded);
-                    m_thThread.Start();
-                    m_Status = ProcessStatus.SF_RUNNING;
-                }
-                else
-                {
-                    MakeDTAFilesThreaded();
-                    m_Status = ProcessStatus.SF_COMPLETE;
-                }
+                m_thThread = new Thread(MakeDTAFilesThreaded);
+                m_thThread.Start();
+                m_Status = ProcessStatus.SF_RUNNING;
             }
             catch (Exception ex)
             {
@@ -690,7 +681,7 @@ namespace DTASpectraFileGen
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Ignore errors here
             }
@@ -713,7 +704,7 @@ namespace DTASpectraFileGen
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Ignore errors here
             }

@@ -216,7 +216,7 @@ namespace AnalysisManagerMasicPlugin
                 }
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
-            catch (Exception Err)
+            catch (Exception)
             {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error finding .raw files to delete, job " + m_JobNum);
                 return CloseOutType.CLOSEOUT_FAILED;

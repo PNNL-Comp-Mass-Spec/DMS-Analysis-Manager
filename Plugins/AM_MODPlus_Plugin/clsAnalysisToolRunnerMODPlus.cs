@@ -35,8 +35,6 @@ namespace AnalysisManagerMODPlusPlugin
         protected const float PROGRESS_PCT_MODPLUS_COMPLETE = 95;
         protected const float PROGRESS_PCT_COMPUTING_FDR = 96;
 
-        protected const bool USE_THREADING = true;
-
         #endregion
 
         #region "Module Variables"
@@ -303,7 +301,7 @@ namespace AnalysisManagerMODPlusPlugin
             {
                 File.Delete(Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_MZXML_EXTENSION));
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Ignore errors here
             }
@@ -932,134 +930,110 @@ namespace AnalysisManagerMODPlusPlugin
 
                     var modPlusRunner = new clsMODPlusRunner(m_Dataset, threadNum, m_WorkDir, paramFile.Value, javaProgLoc, mMODPlusProgLoc);
 
-                    if (!USE_THREADING)
-                    {
-                        modPlusRunner.CmdRunnerWaiting += CmdRunner_LoopWaiting;
-                    }
-
                     modPlusRunner.JavaMemorySizeMB = javaMemorySizeMB;
 
                     mMODPlusRunners.Add(threadNum, modPlusRunner);
 
-                    if (USE_THREADING)
-                    {
-                        Thread newThread = new Thread(new ThreadStart(modPlusRunner.StartAnalysis));
-                        newThread.Priority = ThreadPriority.BelowNormal;
-                        newThread.Start();
-                        lstThreads.Add(newThread);
-                    }
-                    else
-                    {
-                        modPlusRunner.StartAnalysis();
-
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                            javaProgLoc + " " + modPlusRunner.CommandLineArgs);
-
-                        if (modPlusRunner.Status == clsMODPlusRunner.MODPlusRunnerStatusCodes.Failure)
-                        {
-                            LogError("Error running MODPlus, thread " + threadNum);
-                            return false;
-                        }
-                    }
+                    Thread newThread = new Thread(new ThreadStart(modPlusRunner.StartAnalysis));
+                    newThread.Priority = ThreadPriority.BelowNormal;
+                    newThread.Start();
+                    lstThreads.Add(newThread);
                 }
 
-                if (USE_THREADING)
+                // Wait for all of the threads to exit
+                // Run for a maximum of 14 days
+
+                currentTask = "Waiting for all of the threads to exit";
+
+                var dtStartTime = DateTime.UtcNow;
+                SortedSet<int> completedThreads = new SortedSet<int>();
+
+                const int SECONDS_BETWEEN_UPDATES = 15;
+                var dtLastStatusUpdate = DateTime.UtcNow;
+
+                while (true)
                 {
-                    // Wait for all of the threads to exit
-                    // Run for a maximum of 14 days
+                    // Poll the status of each of the threads
 
-                    currentTask = "Waiting for all of the threads to exit";
+                    var stepsComplete = 0;
+                    double progressSum = 0;
 
-                    var dtStartTime = DateTime.UtcNow;
-                    SortedSet<int> completedThreads = new SortedSet<int>();
+                    var processIDs = new List<int>();
+                    float coreUsageOverall = 0;
 
-                    const int SECONDS_BETWEEN_UPDATES = 15;
-                    var dtLastStatusUpdate = DateTime.UtcNow;
-
-                    while (true)
+                    foreach (var modPlusRunner in mMODPlusRunners)
                     {
-                        // Poll the status of each of the threads
+                        var eStatus = modPlusRunner.Value.Status;
+                        if (eStatus >= clsMODPlusRunner.MODPlusRunnerStatusCodes.Success)
+                        {
+                            // Analysis completed (or failed)
+                            stepsComplete += 1;
 
-                        var stepsComplete = 0;
-                        double progressSum = 0;
+                            if (!completedThreads.Contains(modPlusRunner.Key))
+                            {
+                                completedThreads.Add(modPlusRunner.Key);
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                    "MODPlus thread " + modPlusRunner.Key + " is now complete");
+                            }
+                        }
 
-                        var processIDs = new List<int>();
-                        float coreUsageOverall = 0;
+                        processIDs.Add(modPlusRunner.Value.ProcessID);
+
+                        progressSum += modPlusRunner.Value.Progress;
+                        coreUsageOverall += modPlusRunner.Value.CoreUsage;
+
+                        if (m_DebugLevel >= 1)
+                        {
+                            if (!modPlusRunner.Value.CommandLineArgsLogged && !string.IsNullOrWhiteSpace(modPlusRunner.Value.CommandLineArgs))
+                            {
+                                modPlusRunner.Value.CommandLineArgsLogged = true;
+
+                                // "C:\Program Files\Java\jre8\bin\java.exe" -Xmx3G -jar C:\DMS_Programs\MODPlus\modp_pnnl.jar -i MODPlus_Params_Part1.xml -o E:\DMS_WorkDir2\Dataset_Part1_modp.txt  > MODPlus_ConsoleOutput_Part1.txt
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                    javaProgLoc + " " + modPlusRunner.Value.CommandLineArgs);
+                            }
+                        }
+
+                        if (!mToolVersionWritten && !string.IsNullOrWhiteSpace(modPlusRunner.Value.ReleaseDate))
+                        {
+                            mMODPlusVersion = modPlusRunner.Value.ReleaseDate;
+                            mToolVersionWritten = StoreToolVersionInfo(mMODPlusProgLoc);
+                        }
+                    }
+
+                    var subTaskProgress = progressSum / mMODPlusRunners.Count;
+                    var updatedProgress = ComputeIncrementalProgress(PROGRESS_PCT_MODPLUS_STARTING, PROGRESS_PCT_MODPLUS_COMPLETE, (float)subTaskProgress);
+                    if (updatedProgress > m_progress)
+                    {
+                        // This progress will get written to the status file and sent to the messaging queue by UpdateStatusFile()
+                        m_progress = updatedProgress;
+                    }
+
+                    if (stepsComplete >= mMODPlusRunners.Count)
+                    {
+                        // All threads are done
+                        break;
+                    }
+
+                    while (DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds < SECONDS_BETWEEN_UPDATES)
+                    {
+                        Thread.Sleep(250);
+                    }
+
+                    dtLastStatusUpdate = DateTime.UtcNow;
+
+                    CmdRunner_LoopWaiting(processIDs, coreUsageOverall, SECONDS_BETWEEN_UPDATES);
+
+                    if (DateTime.UtcNow.Subtract(dtStartTime).TotalDays > 14)
+                    {
+                        LogError("MODPlus ran for over 14 days; aborting");
 
                         foreach (var modPlusRunner in mMODPlusRunners)
                         {
-                            var eStatus = modPlusRunner.Value.Status;
-                            if (eStatus >= clsMODPlusRunner.MODPlusRunnerStatusCodes.Success)
-                            {
-                                // Analysis completed (or failed)
-                                stepsComplete += 1;
-
-                                if (!completedThreads.Contains(modPlusRunner.Key))
-                                {
-                                    completedThreads.Add(modPlusRunner.Key);
-                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                        "MODPlus thread " + modPlusRunner.Key + " is now complete");
-                                }
-                            }
-
-                            processIDs.Add(modPlusRunner.Value.ProcessID);
-
-                            progressSum += modPlusRunner.Value.Progress;
-                            coreUsageOverall += modPlusRunner.Value.CoreUsage;
-
-                            if (m_DebugLevel >= 1)
-                            {
-                                if (!modPlusRunner.Value.CommandLineArgsLogged && !string.IsNullOrWhiteSpace(modPlusRunner.Value.CommandLineArgs))
-                                {
-                                    modPlusRunner.Value.CommandLineArgsLogged = true;
-
-                                    // "C:\Program Files\Java\jre8\bin\java.exe" -Xmx3G -jar C:\DMS_Programs\MODPlus\modp_pnnl.jar -i MODPlus_Params_Part1.xml -o E:\DMS_WorkDir2\Dataset_Part1_modp.txt  > MODPlus_ConsoleOutput_Part1.txt
-                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                        javaProgLoc + " " + modPlusRunner.Value.CommandLineArgs);
-                                }
-                            }
-
-                            if (!mToolVersionWritten && !string.IsNullOrWhiteSpace(modPlusRunner.Value.ReleaseDate))
-                            {
-                                mMODPlusVersion = modPlusRunner.Value.ReleaseDate;
-                                mToolVersionWritten = StoreToolVersionInfo(mMODPlusProgLoc);
-                            }
+                            modPlusRunner.Value.AbortProcessingNow();
                         }
 
-                        var subTaskProgress = progressSum / mMODPlusRunners.Count;
-                        var updatedProgress = ComputeIncrementalProgress(PROGRESS_PCT_MODPLUS_STARTING, PROGRESS_PCT_MODPLUS_COMPLETE, (float)subTaskProgress);
-                        if (updatedProgress > m_progress)
-                        {
-                            // This progress will get written to the status file and sent to the messaging queue by UpdateStatusFile()
-                            m_progress = updatedProgress;
-                        }
-
-                        if (stepsComplete >= mMODPlusRunners.Count)
-                        {
-                            // All threads are done
-                            break;
-                        }
-
-                        while (DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds < SECONDS_BETWEEN_UPDATES)
-                        {
-                            Thread.Sleep(250);
-                        }
-
-                        dtLastStatusUpdate = DateTime.UtcNow;
-
-                        CmdRunner_LoopWaiting(processIDs, coreUsageOverall, SECONDS_BETWEEN_UPDATES);
-
-                        if (DateTime.UtcNow.Subtract(dtStartTime).TotalDays > 14)
-                        {
-                            LogError("MODPlus ran for over 14 days; aborting");
-
-                            foreach (var modPlusRunner in mMODPlusRunners)
-                            {
-                                modPlusRunner.Value.AbortProcessingNow();
-                            }
-
-                            return false;
-                        }
+                        return false;
                     }
                 }
 

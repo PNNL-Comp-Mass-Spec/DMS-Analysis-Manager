@@ -128,7 +128,7 @@ namespace AnalysisManagerMODaPlugIn
                     {
                         fiCDTAFile.Delete();
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
                         // Ignore errors here
                     }

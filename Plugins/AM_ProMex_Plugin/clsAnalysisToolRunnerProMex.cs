@@ -195,7 +195,7 @@ namespace AnalysisManagerProMexPlugIn
             {
                 File.Delete(Path.Combine(m_WorkDir, m_Dataset + ".mzXML"));
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Ignore errors here
             }
@@ -401,7 +401,7 @@ namespace AnalysisManagerProMexPlugIn
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 m_message = "Exception reading ProMex parameter file";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);

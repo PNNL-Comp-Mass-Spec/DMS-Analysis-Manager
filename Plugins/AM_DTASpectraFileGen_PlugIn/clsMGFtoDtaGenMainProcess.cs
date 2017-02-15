@@ -15,8 +15,6 @@ namespace DTASpectraFileGen
     {
         #region "Constants"
 
-        private const bool USE_THREADING = true;
-
         #endregion
 
         #region "Module variables"
@@ -55,17 +53,9 @@ namespace DTASpectraFileGen
             //Make the DTA files (the process runs in a separate thread)
             try
             {
-                if (USE_THREADING)
-                {
-                    m_thThread = new Thread(MakeDTAFilesThreaded);
-                    m_thThread.Start();
-                    m_Status = ProcessStatus.SF_RUNNING;
-                }
-                else
-                {
-                    MakeDTAFilesThreaded();
-                    m_Status = ProcessStatus.SF_COMPLETE;
-                }
+                m_thThread = new Thread(MakeDTAFilesThreaded);
+                m_thThread.Start();
+                m_Status = ProcessStatus.SF_RUNNING;
             }
             catch (Exception ex)
             {

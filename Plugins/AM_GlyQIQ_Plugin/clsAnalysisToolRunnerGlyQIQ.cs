@@ -27,8 +27,6 @@ namespace AnalysisManagerGlyQIQPlugin
         protected const float PROGRESS_PCT_STARTING = 1;
         protected const float PROGRESS_PCT_COMPLETE = 99;
 
-        protected const bool USE_THREADING = true;
-
         protected const string STORE_JOB_PSM_RESULTS_SP_NAME = "StoreJobPSMStats";
 
         #endregion
@@ -526,7 +524,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 Thread.Sleep(250);
                 diTempZipFolder.Create();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // This error can be safely ignored
             }
@@ -774,89 +772,72 @@ namespace AnalysisManagerGlyQIQPlugin
                     glyQRunner.CmdRunnerWaiting += CmdRunner_LoopWaiting;
                     mGlyQRunners.Add(core, glyQRunner);
 
-                    if (USE_THREADING)
-                    {
-                        Thread newThread = new Thread(new ThreadStart(glyQRunner.StartAnalysis));
-                        newThread.Priority = ThreadPriority.BelowNormal;
-                        newThread.Start();
-                        lstThreads.Add(newThread);
-                    }
-                    else
-                    {
-                        glyQRunner.StartAnalysis();
-
-                        if (glyQRunner.Status == clsGlyQIqRunner.GlyQIqRunnerStatusCodes.Failure)
-                        {
-                            m_message = "Error running " + Path.GetFileName(batchFilePath);
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
-                            return false;
-                        }
-                    }
+                    Thread newThread = new Thread(new ThreadStart(glyQRunner.StartAnalysis));
+                    newThread.Priority = ThreadPriority.BelowNormal;
+                    newThread.Start();
+                    lstThreads.Add(newThread);
                 }
 
-                if (USE_THREADING)
+                // Wait for all of the threads to exit
+                // Run for a maximum of 14 days
+
+                currentTask = "Waiting for all of the threads to exit";
+
+                var dtStartTime = DateTime.UtcNow;
+                SortedSet<int> completedCores = new SortedSet<int>();
+
+                while (true)
                 {
-                    // Wait for all of the threads to exit
-                    // Run for a maximum of 14 days
+                    // Poll the status of each of the threads
 
-                    currentTask = "Waiting for all of the threads to exit";
+                    var stepsComplete = 0;
+                    double progressSum = 0;
 
-                    var dtStartTime = DateTime.UtcNow;
-                    SortedSet<int> completedCores = new SortedSet<int>();
-
-                    while (true)
+                    foreach (var glyQRunner in mGlyQRunners)
                     {
-                        // Poll the status of each of the threads
+                        var eStatus = glyQRunner.Value.Status;
+                        if (eStatus >= clsGlyQIqRunner.GlyQIqRunnerStatusCodes.Success)
+                        {
+                            // Analysis completed (or failed)
+                            stepsComplete += 1;
 
-                        var stepsComplete = 0;
-                        double progressSum = 0;
+                            if (!completedCores.Contains(glyQRunner.Key))
+                            {
+                                completedCores.Add(glyQRunner.Key);
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                    "GlyQ-IQ processing core " + glyQRunner.Key + " is now complete");
+                            }
+                        }
+
+                        progressSum += glyQRunner.Value.Progress;
+                    }
+
+                    var subTaskProgress = (float)(progressSum / mGlyQRunners.Count);
+                    var updatedProgress = ComputeIncrementalProgress(PROGRESS_PCT_STARTING, PROGRESS_PCT_COMPLETE, subTaskProgress);
+                    if (updatedProgress > m_progress)
+                    {
+                        // This progress will get written to the status file and sent to the messaging queue by UpdateStatusFile()
+                        m_progress = updatedProgress;
+                    }
+
+                    if (stepsComplete >= mGlyQRunners.Count)
+                    {
+                        // All threads are done
+                        break;
+                    }
+
+                    Thread.Sleep(2000);
+
+                    if (DateTime.UtcNow.Subtract(dtStartTime).TotalDays > 14)
+                    {
+                        m_message = "GlyQ-IQ ran for over 14 days; aborting";
 
                         foreach (var glyQRunner in mGlyQRunners)
                         {
-                            var eStatus = glyQRunner.Value.Status;
-                            if (eStatus >= clsGlyQIqRunner.GlyQIqRunnerStatusCodes.Success)
-                            {
-                                // Analysis completed (or failed)
-                                stepsComplete += 1;
-
-                                if (!completedCores.Contains(glyQRunner.Key))
-                                {
-                                    completedCores.Add(glyQRunner.Key);
-                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                        "GlyQ-IQ processing core " + glyQRunner.Key + " is now complete");
-                                }
-                            }
-
-                            progressSum += glyQRunner.Value.Progress;
+                            glyQRunner.Value.AbortProcessingNow();
                         }
 
-                        var subTaskProgress = (float)(progressSum / mGlyQRunners.Count);
-                        var updatedProgress = ComputeIncrementalProgress(PROGRESS_PCT_STARTING, PROGRESS_PCT_COMPLETE, subTaskProgress);
-                        if (updatedProgress > m_progress)
-                        {
-                            // This progress will get written to the status file and sent to the messaging queue by UpdateStatusFile()
-                            m_progress = updatedProgress;
-                        }
-
-                        if (stepsComplete >= mGlyQRunners.Count)
-                        {
-                            // All threads are done
-                            break;
-                        }
-
-                        Thread.Sleep(2000);
-
-                        if (DateTime.UtcNow.Subtract(dtStartTime).TotalDays > 14)
-                        {
-                            m_message = "GlyQ-IQ ran for over 14 days; aborting";
-
-                            foreach (var glyQRunner in mGlyQRunners)
-                            {
-                                glyQRunner.Value.AbortProcessingNow();
-                            }
-
-                            return false;
-                        }
+                        return false;
                     }
                 }
 

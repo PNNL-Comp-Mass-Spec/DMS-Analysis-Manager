@@ -122,7 +122,7 @@ namespace AnalysisManagerDataImportPlugIn
                 if (fiFileToDelete.Exists)
                     fiFileToDelete.Delete();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Ignore errors here
             }

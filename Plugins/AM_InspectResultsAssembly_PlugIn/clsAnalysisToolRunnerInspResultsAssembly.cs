@@ -513,7 +513,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                                             }
                                         }
                                     }
-                                    catch (Exception ex)
+                                    catch (Exception)
                                     {
                                         // Ignore errors here
                                     }
@@ -1308,7 +1308,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                             {
                                 File.Delete(strPTModsFilePathNew);
                             }
-                            catch (Exception ex)
+                            catch (Exception)
                             {
                                 // Ignore errors here
                             }

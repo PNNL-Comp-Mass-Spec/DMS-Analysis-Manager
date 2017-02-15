@@ -281,7 +281,6 @@ namespace DTASpectraFileGen
                             return eDTAGeneratorConstants.Unknown;
                     }
 
-                    break;
                 case clsAnalysisResources.eRawDataTypeConstants.mzML:
                     if (strDTAGenerator.ToLower() == clsDtaGenThermoRaw.MSCONVERT_FILENAME.ToLower())
                     {
@@ -294,7 +293,6 @@ namespace DTASpectraFileGen
                         return eDTAGeneratorConstants.Unknown;
                     }
 
-                    break;
                 case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder:
                     blnConcatenateDTAs = true;
 
@@ -571,7 +569,7 @@ namespace DTASpectraFileGen
 
                 m_jobParams.AddResultFileToSkip(fiCDTA.Name);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 LogError("Error renaming the original _DTA.txt file in CentroidCDTA");
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -940,7 +938,7 @@ namespace DTASpectraFileGen
                     oCDTAReaderParentIons.CloseFile();
                     oCDTAReaderFragIonData.CloseFile();
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     // Ignore errors here
                 }
