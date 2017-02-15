@@ -80,8 +80,6 @@ namespace AnalysisManagerMzRefineryPlugIn
         /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
-            CloseOutType result = default(CloseOutType);
-
             try
             {
                 // Call base class for initial setup
@@ -150,6 +148,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 var fiMSGFPlusResults = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + MSGFPLUS_MZID_SUFFIX));
                 var skippedMSGFPlus = false;
 
+                CloseOutType result;
                 if (fiMSGFPlusResults.Exists)
                 {
                     result = CloseOutType.CLOSEOUT_SUCCESS;

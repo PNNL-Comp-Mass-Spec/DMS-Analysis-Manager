@@ -44,8 +44,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                 currentTask = "Get Input file";
 
-                CloseOutType eResult = default(CloseOutType);
-                eResult = GetMsXmlFile();
+                var eResult = GetMsXmlFile();
 
                 if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
                 {
