@@ -27,7 +27,6 @@ namespace AnalysisManager_Ape_PlugIn
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-
         /// <summary>
         /// run the Ape pipeline(s) listed in "ApeOperations" parameter
         /// </summary>

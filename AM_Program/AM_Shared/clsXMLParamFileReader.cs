@@ -75,7 +75,6 @@ namespace AnalysisManagerBase
         /// <param name="parameters">XML parameters to examine</param>
         /// <param name="dctParameters">Dictionary object where keys are section names and values are dictionary objects of key/value pairs</param>
         /// <remarks></remarks>
-
         protected void CacheXMLParseSection(IEnumerable<System.Xml.Linq.XElement> parameters,
                                             ref Dictionary<string, Dictionary<string, string>> dctParameters)
         {

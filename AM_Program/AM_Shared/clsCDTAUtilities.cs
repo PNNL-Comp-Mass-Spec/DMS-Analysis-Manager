@@ -165,7 +165,6 @@ namespace AnalysisManagerBase
         /// <param name="fiOriginalFile">File handle to the original CDTA file</param>
         /// <param name="fiUpdatedFile">File handle to the new CDTA file</param>
         /// <remarks></remarks>
-
         protected void FinalizeCDTAValidation(bool blnNewCDTAFileHasUpdates, bool blnReplaceSourceFile, bool blnDeleteSourceFileIfUpdated,
                                               FileInfo fiOriginalFile, FileInfo fiUpdatedFile)
         {

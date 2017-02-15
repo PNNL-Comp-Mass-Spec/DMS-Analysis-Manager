@@ -567,7 +567,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         /// </summary>
         /// <param name="strLogFilePath">Full path to the log file</param>
         /// <remarks></remarks>
-
         private void ParseMultiAlignLogFile(string strLogFilePath)
         {
 

@@ -19,29 +19,34 @@ namespace AnalysisManagerBase
     {
 
         #region "Module variables"
-        #endregion
+
         private string m_FileName;
 
+        #endregion
+
         #region "Properties"
+
         public string FileName
         {
             get { return m_FileName; }
         }
+
         #endregion
 
         #region "Methods"
+
         /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="FileName">Name of file being processed when exception occurred</param>
         /// <param name="Message">Message to be returned in exception</param>
         /// <remarks></remarks>
-
         public AMFileNotFoundException(string FileName, string Message) : base(Message)
         {
             m_FileName = FileName;
 
         }
+
         #endregion
 
     }
@@ -64,13 +69,13 @@ namespace AnalysisManagerBase
         #endregion
 
         #region "Methods"
+
         /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="FolderName">Name of unfound folder</param>
         /// <param name="Message">Message for exception to return</param>
         /// <remarks></remarks>
-
         public AMFolderNotFoundException(string FolderName, string Message) : base(Message)
         {
             m_FolderName = FolderName;
@@ -97,6 +102,7 @@ namespace AnalysisManagerBase
         #region "Module variables"
         private string m_FileName;
         #endregion
+
         private RetryExceptionType m_ExceptionType;
 
         #region "Properties"
@@ -112,6 +118,7 @@ namespace AnalysisManagerBase
         #endregion
 
         #region "Methods"
+
         /// <summary>
         /// Constructor
         /// </summary>
@@ -119,7 +126,6 @@ namespace AnalysisManagerBase
         /// <param name="ExceptionType">Exception type</param>
         /// <param name="Message">Message to be returned by exception</param>
         /// <remarks></remarks>
-
         public AMFileNotDeletedAfterRetryException(string FileName, RetryExceptionType ExceptionType, string Message) : base(Message)
         {
             m_FileName = FileName;
@@ -148,13 +154,13 @@ namespace AnalysisManagerBase
         #endregion
 
         #region "Methods"
+
         /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="FileName">Name of file causing exception</param>
         /// <param name="Message">Message to be returned by exception</param>
         /// <remarks></remarks>
-
         public AMFileNotDeletedException(string FileName, string Message) : base(Message)
         {
             m_FileName = FileName;

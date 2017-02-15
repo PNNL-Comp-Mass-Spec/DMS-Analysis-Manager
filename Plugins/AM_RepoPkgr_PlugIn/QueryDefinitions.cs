@@ -28,6 +28,7 @@ namespace AnalysisManager_RepoPkgr_PlugIn
         {
             _dbConnectionStrings[dbTag] = connectionString;
         }
+        
         /// <summary>
         /// Get connection string for given database tag name
         /// </summary>
@@ -37,6 +38,7 @@ namespace AnalysisManager_RepoPkgr_PlugIn
         {
             return _dbConnectionStrings[dbTag];
         }
+        
         /// <summary>
         /// Get connection string for given 
         /// </summary>

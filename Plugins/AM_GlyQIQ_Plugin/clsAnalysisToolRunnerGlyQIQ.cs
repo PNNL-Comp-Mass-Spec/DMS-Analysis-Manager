@@ -61,7 +61,6 @@ namespace AnalysisManagerGlyQIQPlugin
         /// Dictionary of GlyQIqRunner instances
         /// </summary>
         /// <remarks>Key is core number (1 through NumCores), value is the instance</remarks>
-
         protected Dictionary<int, clsGlyQIqRunner> mGlyQRunners;
 
         private XRawFileIO mThermoFileReader;

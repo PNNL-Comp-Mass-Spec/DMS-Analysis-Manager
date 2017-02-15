@@ -273,7 +273,6 @@ namespace AnalysisManagerBase
         /// <param name="MessageQueueTopicMgrStatus"></param>
         /// <param name="ClientName"></param>
         /// <remarks></remarks>
-
         public void ConfigureMessageQueueLogging(bool LogStatusToMessageQueue, string MsgQueueURI, string MessageQueueTopicMgrStatus, string ClientName)
         {
             LogToMsgQueue = LogStatusToMessageQueue;
@@ -735,7 +734,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
         /// <remarks></remarks>
-
         public void WriteStatusFile(bool ForceLogToBrokerDB)
         {
             // Writes a status file for external monitor to read
@@ -1019,7 +1017,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="PercentComplete">Job completion percentage (value between 0 and 100)</param>
         /// <remarks></remarks>
-
         public void UpdateAndWrite(float PercentComplete)
         {
             Progress = PercentComplete;
@@ -1035,7 +1032,6 @@ namespace AnalysisManagerBase
         /// <param name="eTaskStatusDetail">Task status detail enum</param>
         /// <param name="PercentComplete">Job completion percentage (value between 0 and 100)</param>
         /// <remarks></remarks>
-
         public void UpdateAndWrite(EnumMgrStatus eMgrStatus, EnumTaskStatus eTaskStatus, EnumTaskStatusDetail eTaskStatusDetail, float PercentComplete)
         {
             MgrStatus = eMgrStatus;
@@ -1053,7 +1049,6 @@ namespace AnalysisManagerBase
         /// <param name="PercentComplete">Job completion percentage (value between 0 and 100)</param>
         /// <param name="SpectrumCountTotal">Number of DTA files (i.e., spectra files); relevant for Sequest, X!Tandem, and Inspect</param>
         /// <remarks></remarks>
-
         public void UpdateAndWrite(EnumTaskStatus Status, float PercentComplete, int SpectrumCountTotal)
         {
             TaskStatus = Status;
@@ -1077,7 +1072,6 @@ namespace AnalysisManagerBase
         /// <param name="RecentJobInfo">Information on the job that started most recently</param>
         /// <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
         /// <remarks></remarks>
-
         public void UpdateAndWrite(EnumMgrStatus eMgrStatus, EnumTaskStatus eTaskStatus, EnumTaskStatusDetail eTaskStatusDetail, float PercentComplete, int DTACount, string MostRecentLogMessage, string MostRecentErrorMessage, string RecentJobInfo, bool ForceLogToBrokerDB)
         {
             MgrStatus = eMgrStatus;
@@ -1147,7 +1141,6 @@ namespace AnalysisManagerBase
         /// <param name="RecentJobInfo">Information on the job that started most recently</param>
         /// <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
         /// <remarks></remarks>
-
         public void UpdateIdle(string ManagerIdleMessage, IEnumerable<string> recentErrorMessages, string RecentJobInfo, bool ForceLogToBrokerDB)
         {
             ClearCachedInfo();

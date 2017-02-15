@@ -129,12 +129,9 @@ namespace AnalysisManagerBase
         /// <param name="mgrParams">IMgrParams object containing manager parameters</param>
         /// <param name="debugLvl">Debug level</param>
         /// <remarks></remarks>
-
         public clsAnalysisJob(IMgrParams mgrParams, short debugLvl) : base(mgrParams, debugLvl)
         {
-
             Reset();
-
         }
 
         /// <summary>
@@ -498,7 +495,6 @@ namespace AnalysisManagerBase
         /// <param name="ParamName">Parameter name</param>
         /// <param name="ParamValue">Parameter value</param>
         /// <remarks></remarks>
-
         public void SetParam(string ParamName, string ParamValue)
         {
             var blnMatchFound = false;
@@ -530,7 +526,6 @@ namespace AnalysisManagerBase
         /// <param name="ParamName">Parameter name</param>
         /// <param name="ParamValue">Parameter value</param>
         /// <remarks></remarks>
-
         public void SetParam(string Section, string ParamName, string ParamValue)
         {
             Dictionary<string, string> oParams;
@@ -643,7 +638,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="fileName"></param>
         /// <remarks></remarks>
-
         public void RemoveResultFileToSkip(string fileName)
         {
             if (m_ResultFilesToSkip.Contains(fileName))
@@ -922,7 +916,6 @@ namespace AnalysisManagerBase
         /// <param name="jobParamsXML">Contains the xml for all the job parameters</param>
         /// <param name="jobNum">Job number</param>
         /// <remarks></remarks>
-
         private void SaveJobParameters(string workDir, string jobParamsXML, int jobNum)
         {
             var xmlParameterFilePath = string.Empty;
@@ -991,7 +984,6 @@ namespace AnalysisManagerBase
         /// <param name="CompMsg">Completion message to be added to database upon closeout</param>
         /// <param name="EvalCode">Evaluation code (0 if no special evaulation message)</param>
         /// <param name="EvalMessage">Evaluation message ("" if no special message)</param>
-
         public override void CloseTask(CloseOutType CloseOut, string CompMsg, int EvalCode, string EvalMessage)
         {
             var CompCode = Convert.ToInt32(CloseOut);

@@ -198,7 +198,6 @@ namespace AnalysisManager_IDP_PlugIn
 
         }
 
-
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>

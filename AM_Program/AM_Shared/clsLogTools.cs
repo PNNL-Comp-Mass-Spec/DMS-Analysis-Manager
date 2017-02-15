@@ -247,7 +247,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="fileName">Log file base name and path (relative to program folder)</param>
         /// <remarks>This method is called by the Mage, Ascore, and Multialign plugins</remarks>
-
         public static void ChangeLogFileName(string fileName)
         {
             // Get a list of appenders
@@ -313,7 +312,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="logLevel">Integer corresponding to level (1-5, 5 being most verbose)</param>
         /// <remarks></remarks>
-
         public static void SetFileLogLevel(int logLevel)
         {
             var logLevelEnumType = typeof(LogLevels);
@@ -336,7 +334,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="logLevel">LogLevels value defining level (Debug is most verbose)</param>
         /// <remarks></remarks>
-
         public static void SetFileLogLevel(LogLevels logLevel)
         {
             var logger = (log4net.Repository.Hierarchy.Logger)m_FileLogger.Logger;

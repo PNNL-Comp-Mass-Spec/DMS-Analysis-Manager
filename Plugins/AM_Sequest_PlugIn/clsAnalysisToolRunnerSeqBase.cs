@@ -313,7 +313,6 @@ namespace AnalysisManagerSequestPlugin
         /// Calculates status information for progress file by counting the number of .out files
         /// </summary>
         /// <param name="blnUpdateDTACount">Set to True to update m_DtaCount</param>
-
         protected void CalculateNewStatus(bool blnUpdateDTACount)
         {
             int OutFileCount = 0;

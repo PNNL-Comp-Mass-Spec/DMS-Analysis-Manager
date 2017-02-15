@@ -25,35 +25,35 @@ namespace AnalysisManagerBase
             public DateTime LastUpdate;
 
             public DateTime LastStartTime;
+
             /// <summary>
             /// Overall CPU utilization of all threads
             /// </summary>
             /// <remarks></remarks>
-
             public float CPUUtilization;
+
             /// <summary>
             /// System-wide free memory
             /// </summary>
             /// <remarks></remarks>
-
             public float FreeMemoryMB;
+
             /// <summary>
             /// Return the ProcessID of the Analysis manager
             /// </summary>
             /// <remarks></remarks>
-
             public int ProcessID;
+
             /// <summary>
             /// ProcessID of an externally spawned process
             /// </summary>
             /// <remarks>0 if no external process running</remarks>
-
             public int ProgRunnerProcessID;
+
             /// <summary>
             /// Number of cores in use by an externally spawned process
             /// </summary>
             /// <remarks></remarks>
-
             public float ProgRunnerCoreUsage;
             public string MostRecentErrorMessage;
             public udtTaskInfoType Task;
@@ -90,7 +90,6 @@ namespace AnalysisManagerBase
         /// Stored procedure that could be used to report manager status; typically not used
         /// </summary>
         /// <remarks>This stored procedure is valid, but the primary way that we track status is when WriteStatusFile calls LogStatusToMessageQueue</remarks>
-
         private const string SP_NAME_UPDATE_MANAGER_STATUS = "UpdateManagerAndTaskStatus";
 
         private readonly string m_DBConnectionString;

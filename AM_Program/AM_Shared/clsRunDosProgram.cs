@@ -246,7 +246,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="WorkDir">Workdirectory for input/output files, if any</param>
         /// <remarks></remarks>
-
         public clsRunDosProgram(string WorkDir)
         {
             this.WorkDir = WorkDir;

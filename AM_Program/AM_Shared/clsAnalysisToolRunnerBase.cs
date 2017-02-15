@@ -2109,7 +2109,6 @@ namespace AnalysisManagerBase
         /// <param name="toolName"></param>
         /// <param name="logIntervalMinutes"></param>
         /// <remarks>Calls GetCurrentMgrSettingsFromDB every 300 seconds</remarks>
-
         protected void LogProgress(string toolName, int logIntervalMinutes)
         {
             const int CONSOLE_PROGRESS_INTERVAL_MINUTES = 1;

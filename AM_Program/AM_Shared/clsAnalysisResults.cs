@@ -85,7 +85,6 @@ namespace AnalysisManagerBase
         /// <param name="MaxRetryCount">The number of times to retry a failed copy of a file; if 0 or 1 then only tries once</param>
         /// <param name="continueOnError">When true, then will continue copying even if an error occurs</param>
         /// <remarks></remarks>
-
         public void CopyDirectory(string SourcePath, string DestPath, bool Overwrite, int MaxRetryCount, bool continueOnError)
         {
             var diSourceDir = new DirectoryInfo(SourcePath);
