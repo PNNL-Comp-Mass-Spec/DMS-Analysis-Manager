@@ -1865,13 +1865,26 @@ namespace AnalysisManagerBase
 
         #region "clsEventNotifier events"
 
-        private static void RegisterEvents(clsEventNotifier oProcessingClass)
+        private static void RegisterEvents(clsEventNotifier oProcessingClass, bool writeDebugEventsToLog = true)
         {
-            oProcessingClass.DebugEvent += DebugEventHandler;
+            if (writeDebugEventsToLog)
+            {
+                oProcessingClass.DebugEvent += DebugEventHandlerConsoleOnly;
+            }
+            else
+            {
+                oProcessingClass.DebugEvent += DebugEventHandler;
+            }
+
             oProcessingClass.StatusEvent += StatusEventHandler;
             oProcessingClass.ErrorEvent += ErrorEventHandler;
             oProcessingClass.WarningEvent += WarningEventHandler;
             // Ignore: oProcessingClass.ProgressUpdate += ProgressUpdateHandler;
+        }
+
+        private static void DebugEventHandlerConsoleOnly(string statusMessage)
+        {
+            LogDebug(statusMessage, writeToLog: false);
         }
 
         private static void DebugEventHandler(string statusMessage)
