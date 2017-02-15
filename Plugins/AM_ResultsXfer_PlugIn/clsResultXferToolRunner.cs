@@ -362,9 +362,6 @@ namespace AnalysisManagerResultsXferPlugin
             string DatasetDir = null;
             string TargetDir = null;
 
-            // Set this to True to overwrite existing results folders
-            const bool blnOverwriteExisting = true;
-
             var transferFolderPath = m_jobParams.GetParam("transferFolderPath");
             var datasetStoragePath = m_jobParams.GetParam("DatasetStoragePath");
 
@@ -481,18 +478,8 @@ namespace AnalysisManagerResultsXferPlugin
             // Determine if output folder already exists on storage server
             if (Directory.Exists(TargetDir))
             {
-                if (blnOverwriteExisting)
-                {
-                    msg = "Warning: overwriting existing results folder: " + TargetDir;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
-                }
-                else
-                {
-                    msg = "clsResultXferToolRunner.PerformResultsXfer(); destination directory " + DatasetDir + " already exists";
-                    m_message = clsGlobal.AppendToComment(m_message, "results folder already exists at destination and overwrite is disabled");
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
+                msg = "Warning: overwriting existing results folder: " + TargetDir;
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
             }
 
             // Move the directory
@@ -506,7 +493,7 @@ namespace AnalysisManagerResultsXferPlugin
 
                 if (movingLocalFiles)
                 {
-                    var success = MoveFilesLocally(FolderToMove, TargetDir, blnOverwriteExisting);
+                    var success = MoveFilesLocally(FolderToMove, TargetDir, overwriteExisting: true);
                     if (!success)
                         return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -519,7 +506,7 @@ namespace AnalysisManagerResultsXferPlugin
                             "Using m_FileTools.MoveDirectory to copy files to " + TargetDir);
                     }
                     ResetTimestampForQueueWaitTimeLogging();
-                    m_FileTools.MoveDirectory(FolderToMove, TargetDir, blnOverwriteExisting, m_mgrParams.GetParam("MgrName", "Undefined-Manager"));
+                    m_FileTools.MoveDirectory(FolderToMove, TargetDir, OverwriteFiles: true);
                 }
             }
             catch (Exception ex)
