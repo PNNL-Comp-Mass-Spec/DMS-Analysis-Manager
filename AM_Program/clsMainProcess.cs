@@ -1696,9 +1696,17 @@ namespace AnalysisManagerProg
             //  "UsingDefaults" be "False" to run (and/or debug) the application
 
             // We should be able to load settings auto-magically using "Properties.Settings.Default.MgrCnfgDbConnectStr" and "Properties.Settings.Default.MgrName"
-            // But that mechanism stopped working when we ported the Analysis Manager from VB to C#
-            // So, falling back to simple XML file reading using ReadMgrSettingsFile()
-
+            // But that mechanism only works if the AnalysisManagerProg.exe.config is of the form:
+            //   <applicationSettings>
+            //     <AnalysisManagerProg.Properties.Settings>
+            //       <setting name="MgrActive_Local" serializeAs="String">
+            
+            // Older VB.NET based versions of the AnalysisManagerProg.exe.config file have:
+            //   <applicationSettings>
+            //     <My.MySettings>
+            //       <setting name="MgrActive_Local" serializeAs="String">
+            
+            // Method ReadMgrSettingsFile() works with both versions of the .exe.config file
 
             // Load initial settings into string dictionary
             var lstMgrSettings = ReadMgrSettingsFile();
@@ -1715,13 +1723,13 @@ namespace AnalysisManagerProg
             // Manager active flag
             if (!lstMgrSettings.ContainsKey(clsAnalysisMgrSettings.MGR_PARAM_MGR_ACTIVE_LOCAL))
             {
-                lstMgrSettings.Add(clsAnalysisMgrSettings.MGR_PARAM_MGR_ACTIVE_LOCAL, Properties.Settings.Default.MgrActive_Local.ToString());
+                lstMgrSettings.Add(clsAnalysisMgrSettings.MGR_PARAM_MGR_ACTIVE_LOCAL, "False");
             }
 
             // Manager name
             if (!lstMgrSettings.ContainsKey(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME))
             {
-                lstMgrSettings.Add(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, Properties.Settings.Default.MgrName);
+                lstMgrSettings.Add(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, "LoadMgrSettingsFromFile__Undefined_manager_name");
             }
 
             // If the MgrName setting in the AnalysisManagerProg.exe.config file contains the text $ComputerName$
