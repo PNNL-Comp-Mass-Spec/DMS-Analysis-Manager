@@ -1,11 +1,14 @@
 ﻿using System;
 using System.IO;
+using System.Threading;
 using AnalysisManagerBase;
 
 namespace AnalysisManagerDecon2lsV2PlugIn
 {
     public class clsDeconToolsQCPlotsGenerator : clsEventNotifier
     {
+        private const int MAX_RUNTIME_HOURS = 5;
+
         private readonly int mDebugLevel;
         private string mErrorMessage;
         private readonly string mMSFileInfoScannerDLLPath;
@@ -47,9 +50,46 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 mMSFileInfoScanner.ErrorEvent += mMSFileInfoScanner_ErrorEvent;
                 mMSFileInfoScanner.MessageEvent += mMSFileInfoScanner_MessageEvent;
 
-                blnSuccess = mMSFileInfoScanner.ProcessMSFileOrFolder(strInputFilePath, strOutputFolderPath);
+                mInputFilePath = strInputFilePath;
+                mOutputFolderPath = strOutputFolderPath;
+                mSuccess = false;
 
-                if (!blnSuccess)
+                var thread = new Thread(ProcessMSFileOrFolderThread);
+
+                thread.SetApartmentState(ApartmentState.STA);
+                thread.Start();
+
+                var startTime = DateTime.UtcNow;
+
+                while (true)
+                {
+                    // Wait for 2 seconds
+                    thread.Join(2000);
+
+                    // Check whether the thread is still running
+                    if (!thread.IsAlive)
+                        break;
+
+                    // Check whether the thread has been running too long
+                    if (!(DateTime.UtcNow.Subtract(startTime).TotalHours > MAX_RUNTIME_HOURS))
+                        continue;
+
+                    OnErrorEvent("MSFileInfoScanner has run for over " + MAX_RUNTIME_HOURS + " hours; aborting");
+
+                    try
+                    {
+                        thread.Abort();
+                    }
+                    catch
+                    {
+                        // Ignore errors here;
+                    }
+                        
+                    break;
+                }                
+                
+
+                if (!mSuccess)
                 {
                     mErrorMessage = "Error generating QC Plots using " + strInputFilePath;
                     var strMsgAddnl = mMSFileInfoScanner.GetErrorMessage();
@@ -66,7 +106,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 return false;
             }
 
-            return blnSuccess;
+            return mSuccess;
         }
 
         private MSFileInfoScannerInterfaces.iMSFileInfoScanner LoadMSFileInfoScanner(string strMSFileInfoScannerDLLPath)
@@ -122,6 +162,11 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 OnErrorEvent(msg, ex);
             }
             return obj;
+        }
+
+        private void ProcessMSFileOrFolderThread()
+        {
+            mSuccess = mMSFileInfoScanner.ProcessMSFileOrFolder(mInputFilePath, mOutputFolderPath);
         }
 
         private void mMSFileInfoScanner_ErrorEvent(string Message)
