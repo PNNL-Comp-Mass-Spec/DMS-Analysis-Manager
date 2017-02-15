@@ -31,9 +31,6 @@ namespace AnalysisManagerBase
 
         public const string MYEMSL_PATH_FLAG = clsMyEMSLUtilities.MYEMSL_PATH_FLAG;
 
-        [Obsolete("Unused")]
-        protected const bool FORCE_WINHPC_FS = true;
-
         // Note: All of the RAW_DATA_TYPE constants need to be all lowercase
 
         /// <summary>
@@ -191,22 +188,6 @@ namespace AnalysisManagerBase
         {
             Undefined = 0,
             Ascore = 1
-        }
-
-        #endregion
-
-        #region "Structures"
-
-        public struct udtHPCOptionsType
-        {
-            public string HeadNode;
-            public bool UsingHPC;
-            public string SharePath;
-            public string ResourceType;
-            // Obsolete parameter; no longer used: Public NodeGroup As String
-            public int MinimumMemoryMB;
-            public int MinimumCores;
-            public string WorkDirPath;
         }
 
         #endregion
@@ -1951,102 +1932,6 @@ namespace AnalysisManagerBase
 
         }
 
-        [Obsolete("Unused in 2017")]
-        public static udtHPCOptionsType GetHPCOptions(IJobParams jobParams, string managerName)
-        {
-
-            var stepTool = jobParams.GetJobParameter("StepTool", "Unknown_Tool");
-
-            var udtHPCOptions = new udtHPCOptionsType
-            {
-                HeadNode = jobParams.GetJobParameter("HPCHeadNode", "")
-            };
-
-            if (string.Equals(stepTool, "MSGFPlus_HPC", StringComparison.InvariantCultureIgnoreCase) && string.IsNullOrWhiteSpace(udtHPCOptions.HeadNode))
-            {
-                // Run this job using HPC, despite the fact that the settings file does not have the HPC settings defined
-                udtHPCOptions.HeadNode = "deception2.pnnl.gov";
-                udtHPCOptions.UsingHPC = true;
-            }
-            else
-            {
-                udtHPCOptions.UsingHPC = !string.IsNullOrWhiteSpace(udtHPCOptions.HeadNode);
-            }
-
-            udtHPCOptions.ResourceType = jobParams.GetJobParameter("HPCResourceType", "socket");
-            // Obsolete parameter; no longer used: udtHPCOptions.NodeGroup = jobParams.GetJobParameter("HPCNodeGroup", "ComputeNodes")
-
-            // Share paths used:
-            // \\picfs\projects\DMS
-            // \\winhpcfs\projects\DMS           (this is a Windows File System wrapper to \\picfs, which is an Isilon FS)
-
-            if (FORCE_WINHPC_FS)
-            {
-                udtHPCOptions.SharePath = jobParams.GetJobParameter("HPCSharePath", @"\\winhpcfs\projects\DMS");
-            }
-            else
-            {
-                udtHPCOptions.SharePath = jobParams.GetJobParameter("HPCSharePath", @"\\picfs.pnl.gov\projects\DMS");
-            }
-
-            // Auto-switched the share path to \\winhpcfs starting April 15, 2014
-            // Stopped doing this April 21, 2014, because the drive was low on space
-            // Switched back to \\winhpcfs on April 24, because the connection to picfs is unstable
-            //
-
-            if (FORCE_WINHPC_FS)
-            {
-                if (udtHPCOptions.SharePath.StartsWith(@"\\picfs", StringComparison.CurrentCultureIgnoreCase))
-                {
-                    // Auto switch the share path
-                    udtHPCOptions.SharePath = clsGlobal.UpdateHostName(udtHPCOptions.SharePath, @"\\winhpcfs\");
-                }
-            }
-            else
-            {
-                if (udtHPCOptions.SharePath.StartsWith(@"\\winhpcfs", StringComparison.CurrentCultureIgnoreCase))
-                {
-                    // Auto switch the share path
-                    udtHPCOptions.SharePath = clsGlobal.UpdateHostName(udtHPCOptions.SharePath, @"\\picfs.pnl.gov\");
-                }
-            }
-
-            udtHPCOptions.MinimumMemoryMB = jobParams.GetJobParameter("HPCMinMemoryMB", 0);
-            udtHPCOptions.MinimumCores = jobParams.GetJobParameter("HPCMinCores", 0);
-
-            if (udtHPCOptions.UsingHPC && udtHPCOptions.MinimumMemoryMB <= 0)
-            {
-                udtHPCOptions.MinimumMemoryMB = 28000;
-            }
-
-            if (udtHPCOptions.UsingHPC && udtHPCOptions.MinimumCores <= 0)
-            {
-                udtHPCOptions.MinimumCores = 16;
-            }
-
-            var mgrNameClean = string.Empty;
-
-            for (var charIndex = 0; charIndex <= managerName.Length - 1; charIndex++)
-            {
-                if (Path.GetInvalidFileNameChars().Contains(managerName[charIndex]))
-                {
-                    mgrNameClean += "_";
-                }
-                else
-                {
-                    mgrNameClean += managerName[charIndex];
-                }
-            }
-
-            // Example WorkDirPath: 
-            // \\picfs.pnl.gov\projects\DMS\DMS_Work_Dir\Pub-60-3
-            // \\winhpcfs\projects\DMS\DMS_Work_Dir\Pub-60-3
-            udtHPCOptions.WorkDirPath = Path.Combine(udtHPCOptions.SharePath, "DMS_Work_Dir", mgrNameClean);
-
-            return udtHPCOptions;
-
-        }
-
         /// <summary>
         /// Get the name of the split fasta file to use for this job
         /// </summary>
@@ -3691,19 +3576,6 @@ namespace AnalysisManagerBase
         /// <remarks>Stores the name of the FASTA file as a new job parameter named "generatedFastaName" in section "PeptideSearch"</remarks>
         protected bool RetrieveOrgDB(string LocalOrgDBFolder)
         {
-            var udtHPCOptions = new udtHPCOptionsType();
-            return RetrieveOrgDB(LocalOrgDBFolder, udtHPCOptions);
-        }
-
-        /// <summary>
-        /// Create a fasta file for Sequest, X!Tandem, Inspect, or MSGFPlus analysis
-        /// </summary>
-        /// <param name="LocalOrgDBFolder">Folder on analysis machine where fasta files are stored</param>
-        /// <param name="udtHPCOptions"></param>
-        /// <returns>TRUE for success; FALSE for failure</returns>
-        /// <remarks>Stores the name of the FASTA file as a new job parameter named "generatedFastaName" in section "PeptideSearch"</remarks>
-        protected bool RetrieveOrgDB(string LocalOrgDBFolder, udtHPCOptionsType udtHPCOptions)
-        {
 
             Console.WriteLine();
             if (m_DebugLevel >= 3)
@@ -3723,23 +3595,20 @@ namespace AnalysisManagerBase
                     requiredFreeSpaceMB = LookupLegacyDBDiskSpaceRequiredMB(proteinCollectionInfo);
                 }
 
-                if (!udtHPCOptions.UsingHPC)
+                // Delete old fasta files and suffix array files if getting low on disk space
+                // Do not delete any files related to the current Legacy Fasta file (if defined)
+
+                const int freeSpaceThresholdPercent = 20;
+
+                var legacyFastaFileBaseName = string.Empty;
+
+                if (proteinCollectionInfo.UsingLegacyFasta && !string.IsNullOrWhiteSpace(proteinCollectionInfo.LegacyFastaName) &&
+                    proteinCollectionInfo.LegacyFastaName.ToLower() != "na")
                 {
-                    // Delete old fasta files and suffix array files if getting low on disk space
-                    // Do not delete any files related to the current Legacy Fasta file (if defined)
-
-                    const int freeSpaceThresholdPercent = 20;
-
-                    var legacyFastaFileBaseName = string.Empty;
-
-                    if (proteinCollectionInfo.UsingLegacyFasta && !string.IsNullOrWhiteSpace(proteinCollectionInfo.LegacyFastaName) &&
-                        proteinCollectionInfo.LegacyFastaName.ToLower() != "na")
-                    {
-                        legacyFastaFileBaseName = Path.GetFileNameWithoutExtension(proteinCollectionInfo.LegacyFastaName);
-                    }
-
-                    PurgeFastaFilesIfLowFreeSpace(LocalOrgDBFolder, freeSpaceThresholdPercent, requiredFreeSpaceMB, legacyFastaFileBaseName);
+                    legacyFastaFileBaseName = Path.GetFileNameWithoutExtension(proteinCollectionInfo.LegacyFastaName);
                 }
+
+                PurgeFastaFilesIfLowFreeSpace(LocalOrgDBFolder, freeSpaceThresholdPercent, requiredFreeSpaceMB, legacyFastaFileBaseName);
 
                 // Make a new fasta file from scratch
                 if (!CreateFastaFile(proteinCollectionInfo, LocalOrgDBFolder))
@@ -3756,13 +3625,9 @@ namespace AnalysisManagerBase
                     return false;
                 }
 
-                if (!udtHPCOptions.UsingHPC)
-                {
-                    // Delete old fasta files and suffix array files if getting low on disk space
-                    // No need to pass a value for legacyFastaFileBaseName because a .fasta.LastUsed file will have been created/updated by CreateFastaFile
-                    const int freeSpaceThresholdPercent = 20;
-                    PurgeFastaFilesIfLowFreeSpace(LocalOrgDBFolder, freeSpaceThresholdPercent, 0, "");
-                }
+                // Delete old fasta files and suffix array files if getting low on disk space
+                // No need to pass a value for legacyFastaFileBaseName because a .fasta.LastUsed file will have been created/updated by CreateFastaFile
+                PurgeFastaFilesIfLowFreeSpace(LocalOrgDBFolder, freeSpaceThresholdPercent, 0, "");
 
             }
             catch (Exception ex)
