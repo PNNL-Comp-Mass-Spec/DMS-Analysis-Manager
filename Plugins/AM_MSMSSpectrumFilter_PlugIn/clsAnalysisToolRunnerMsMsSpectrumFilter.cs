@@ -22,6 +22,8 @@ namespace MSMSSpectrumFilterAM
 {
     public class clsAnalysisToolRunnerMsMsSpectrumFilter : clsAnalysisToolRunnerBase
     {
+        private const int MAX_RUNTIME_HOURS = 5;
+
         private readonly clsMsMsSpectrumFilter m_MsMsSpectrumFilter;
 
         private string m_ErrMsg = string.Empty;
@@ -30,7 +32,6 @@ namespace MSMSSpectrumFilterAM
         private ProcessResults m_Results;
 
         private string m_DTATextFileName = string.Empty;
-        private System.Threading.Thread m_thThread;
 
         private ProcessStatus m_FilterStatus;
 
@@ -38,7 +39,7 @@ namespace MSMSSpectrumFilterAM
 
         public clsAnalysisToolRunnerMsMsSpectrumFilter()
         {
-            //Initialize MsMsSpectrumFilterDLL.dll
+            // Initialize MsMsSpectrumFilterDLL.dll
             m_MsMsSpectrumFilter = new clsMsMsSpectrumFilter();
             m_MsMsSpectrumFilter.ProgressChanged += m_MsMsSpectrumFilter_ProgressChanged;
             m_MsMsSpectrumFilter.ProgressComplete += m_MsMsSpectrumFilter_ProgressComplete;
@@ -398,33 +399,45 @@ namespace MSMSSpectrumFilterAM
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Instantiate the thread to run MsMsSpectraFilter");
                 }
 
-                //Instantiate the thread to run MsMsSpectraFilter
-                m_thThread = new System.Threading.Thread(FilterDTATextFileWork);
-                m_thThread.Start();
+                // Instantiate the thread to run MsMsSpectraFilter
+                var thread = new System.Threading.Thread(FilterDTATextFileWork);
+                thread.Start();
 
                 if (m_DebugLevel >= 4)
                 {
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Thread started");
                 }
 
-                while (m_thThread.IsAlive)
+                var startTime = DateTime.UtcNow;
+
+                while (true)
                 {
-                    System.Threading.Thread.Sleep(2000);
-                    //Delay for 2 seconds
+                    // Wait for 2 seconds
+                    thread.Join(2000);
+
+                    // Check whether the thread is still running
+                    if (!thread.IsAlive)
+                        break;
+
+                    // Check whether the thread has been running too long
+                    if (!(DateTime.UtcNow.Subtract(startTime).TotalHours > MAX_RUNTIME_HOURS))
+                        continue;
+
+                    LogError("MSFileInfoScanner has run for over " + MAX_RUNTIME_HOURS + " hours; aborting");
+
+                    try
+                    {
+                        thread.Abort();
+                    }
+                    catch
+                    {
+                        // Ignore errors here;
+                    }
+
+                    break;
                 }
-
-                System.Threading.Thread.Sleep(5000);
-                //Delay for 5 seconds
-                PRISM.Processes.clsProgRunner.GarbageCollectNow();
-
-                //Removes the MsMsSpectra Filter object
-                if ((m_thThread != null))
-                {
-                    m_thThread.Abort();
-                    m_thThread = null;
-                }
-
-                //If we reach here, everything must be good
+                
+                // If we reach here, everything must be good
                 m_FilterStatus = ProcessStatus.SF_COMPLETE;
             }
             catch (Exception ex)
