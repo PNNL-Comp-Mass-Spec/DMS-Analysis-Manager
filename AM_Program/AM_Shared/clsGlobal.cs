@@ -1232,7 +1232,7 @@ namespace AnalysisManagerBase
             if (mSystemMemoryInfo == null)
             {
                 mSystemMemoryInfo = new SystemMemoryInfo();
-                RegisterEvents(mSystemMemoryInfo);
+                RegisterEvents(mSystemMemoryInfo, writeDebugEventsToLog: false);
             }
 
             return mSystemMemoryInfo.GetFreeMemoryMB();
