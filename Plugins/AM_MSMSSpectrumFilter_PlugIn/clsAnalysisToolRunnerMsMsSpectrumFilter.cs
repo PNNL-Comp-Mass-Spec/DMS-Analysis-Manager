@@ -49,7 +49,7 @@ namespace MSMSSpectrumFilterAM
         {
             CloseOutType result;
 
-            //Do the base class stuff
+            // Do the base class stuff
             if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -67,7 +67,7 @@ namespace MSMSSpectrumFilterAM
 
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "clsAnalysisToolRunnerMsMsSpectrumFilter.RunTool(), Filtering _Dta.txt file");
 
-            //Verify necessary files are in specified locations
+            // Verify necessary files are in specified locations
             if (!InitSetup())
             {
                 m_Results = ProcessResults.SF_FAILURE;
@@ -106,16 +106,16 @@ namespace MSMSSpectrumFilterAM
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            //Stop the job timer
+            // Stop the job timer
             m_StopTime = DateTime.UtcNow;
 
-            //Add the current job data to the summary file
+            // Add the current job data to the summary file
             if (!UpdateSummaryFile())
             {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
             }
 
-            //Make the results folder
+            // Make the results folder
             if (m_DebugLevel > 3)
             {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMsMsSpectrumFilter.RunTool(), Making results folder");
@@ -124,7 +124,7 @@ namespace MSMSSpectrumFilterAM
             result = MakeResultsFolder();
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
-                //MakeResultsFolder handles posting to local log, so set database error message and exit
+                // MakeResultsFolder handles posting to local log, so set database error message and exit
                 m_message = "Error making results folder";
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -132,7 +132,7 @@ namespace MSMSSpectrumFilterAM
             result = MoveResultFiles();
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
-                //MoveResultFiles moves the result files to the result folder
+                // MoveResultFiles moves the result files to the result folder
                 m_message = "Error making results folder";
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -140,7 +140,7 @@ namespace MSMSSpectrumFilterAM
             result = CopyResultsFolderToServer();
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
-                //TODO: What do we do here?
+                // TODO: What do we do here?
                 return result;
             }
 
@@ -284,7 +284,7 @@ namespace MSMSSpectrumFilterAM
 
         protected virtual int CountDtaFiles(string strDTATextFilePath)
         {
-            //Returns the number of dta files in the _dta.txt file
+            // Returns the number of dta files in the _dta.txt file
 
             // This RegEx matches text of the form:
             // =================================== "File.ScanStart.ScanEnd.Charge.dta" ==================================
@@ -336,12 +336,10 @@ namespace MSMSSpectrumFilterAM
             // Initializes m_MsMsSpectrumFilter, then starts a separate thread to filter the _Dta.txt file in the working folder
             // If ScanStats files are required, will first call GenerateFinniganScanStatsFiles() to generate those files using the .Raw file
 
-            string strParameterFilePath = null;
-
             try
             {
                 // Pre-read the parameter file now, so that we can override some of the settings
-                strParameterFilePath = Path.Combine(m_WorkDir, m_SettingsFileName);
+                var strParameterFilePath = Path.Combine(m_WorkDir, m_SettingsFileName);
 
                 if (m_DebugLevel >= 3)
                 {
@@ -351,7 +349,7 @@ namespace MSMSSpectrumFilterAM
                 if (!m_MsMsSpectrumFilter.LoadParameterFileSettings(strParameterFilePath))
                 {
                     m_ErrMsg = m_MsMsSpectrumFilter.GetErrorMessage();
-                    if (m_ErrMsg == null || m_ErrMsg.Length == 0)
+                    if (string.IsNullOrEmpty(m_ErrMsg))
                     {
                         m_ErrMsg = "Parameter file load error: " + strParameterFilePath;
                     }
@@ -385,12 +383,10 @@ namespace MSMSSpectrumFilterAM
                         m_FilterStatus = ProcessStatus.SF_ERROR;
                         return m_FilterStatus;
                     }
-                    else
+
+                    if (m_DebugLevel >= 4)
                     {
-                        if (m_DebugLevel >= 4)
-                        {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "GenerateFinniganScanStatsFiles returned True");
-                        }
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "GenerateFinniganScanStatsFiles returned True");
                     }
                 }
 
@@ -522,7 +518,7 @@ namespace MSMSSpectrumFilterAM
                         }
                         else
                         {
-                            //Count the number of .Dta files remaining in the _dta.txt file
+                            // Count the number of .Dta files remaining in the _dta.txt file
                             if (!VerifyDtaCreation(strInputFilePath))
                             {
                                 m_Results = ProcessResults.SF_NO_FILES_CREATED;
@@ -676,55 +672,55 @@ namespace MSMSSpectrumFilterAM
 
         protected virtual bool InitSetup()
         {
-            //Initializes module variables and verifies mandatory parameters have been propery specified
+            // Initializes module variables and verifies mandatory parameters have been propery specified
 
-            //Manager parameters
+            // Manager parameters
             if (m_mgrParams == null)
             {
                 m_ErrMsg = "Manager parameters not specified";
                 return false;
             }
 
-            //Job parameters
+            // Job parameters
             if (m_jobParams == null)
             {
                 m_ErrMsg = "Job parameters not specified";
                 return false;
             }
 
-            //Status tools
+            // Status tools
             if (m_StatusTools == null)
             {
                 m_ErrMsg = "Status tools object not set";
                 return false;
             }
 
-            //Set the _DTA.Txt file name
+            // Set the _DTA.Txt file name
             m_DTATextFileName = m_Dataset + "_dta.txt";
 
-            //Set settings file name
-            //This is the job parameters file that contains the settings information
+            // Set settings file name
+            // This is the job parameters file that contains the settings information
             m_SettingsFileName = m_jobParams.GetParam("JobParameters", "genJobParamsFilename");
 
-            //Source folder name
+            // Source folder name
             if (string.IsNullOrEmpty(m_WorkDir))
             {
                 m_ErrMsg = "m_WorkDir variable is empty";
                 return false;
             }
 
-            //Source directory exist?
+            // Source directory exist?
             if (!VerifyDirExists(m_WorkDir))
                 return false;
-            //Error msg handled by VerifyDirExists
+            // Error msg handled by VerifyDirExists
 
-            //Settings file exist?
+            // Settings file exist?
             string SettingsNamePath = Path.Combine(m_WorkDir, m_SettingsFileName);
             if (!VerifyFileExists(SettingsNamePath))
                 return false;
-            //Error msg handled by VerifyFileExists
+            // Error msg handled by VerifyFileExists
 
-            //If we got here, everything's OK
+            // If we got here, everything's OK
             return true;
         }
 
@@ -793,7 +789,7 @@ namespace MSMSSpectrumFilterAM
 
         protected virtual bool VerifyDirExists(string TestDir)
         {
-            //Verifies that the specified directory exists
+            // Verifies that the specified directory exists
             if (Directory.Exists(TestDir))
             {
                 m_ErrMsg = "";
@@ -808,7 +804,7 @@ namespace MSMSSpectrumFilterAM
 
         private bool VerifyDtaCreation(string strDTATextFilePath)
         {
-            //Verify at least one .dta file has been created
+            // Verify at least one .dta file has been created
             if (CountDtaFiles(strDTATextFilePath) < 1)
             {
                 m_ErrMsg = "No dta files remain after filtering";
@@ -822,7 +818,7 @@ namespace MSMSSpectrumFilterAM
 
         protected virtual bool VerifyFileExists(string TestFile)
         {
-            //Verifies specified file exists
+            // Verifies specified file exists
             if (File.Exists(TestFile))
             {
                 m_ErrMsg = "";
@@ -842,11 +838,11 @@ namespace MSMSSpectrumFilterAM
         /// <remarks></remarks>
         protected virtual CloseOutType ZipConcDtaFile()
         {
-            //Zips the concatenated dta file
+            // Zips the concatenated dta file
             string DtaFileName = m_Dataset + "_dta.txt";
             string DtaFilePath = Path.Combine(m_WorkDir, DtaFileName);
 
-            //Verify file exists
+            // Verify file exists
             if (File.Exists(DtaFilePath))
             {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Zipping concatenated spectra file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
@@ -857,7 +853,7 @@ namespace MSMSSpectrumFilterAM
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            //Zip the file
+            // Zip the file
             try
             {
                 if (!base.ZipFile(DtaFilePath, false))
