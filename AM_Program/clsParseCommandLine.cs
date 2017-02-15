@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using ExtensionMethods;
 
 // This class can be used to parse the text following the program name when a 
 //  program is started from the command line
