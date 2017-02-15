@@ -44,11 +44,11 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
         #region "Properties"
 
-        public string ConsoleOutputFileName { get; set; }
+        public string ConsoleOutputFileName { get; set; } = string.Empty;
 
-        public string ConsoleOutputSuffix { get; set; }
+        public string ConsoleOutputSuffix { get; set; } = string.Empty;
 
-        public int DebugLevel { get; set; }
+        public int DebugLevel { get; set; } = 1;
 
         public string ErrorMessage
         {

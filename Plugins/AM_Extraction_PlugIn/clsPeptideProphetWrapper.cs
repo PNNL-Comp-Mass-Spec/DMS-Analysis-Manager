@@ -71,9 +71,9 @@ namespace AnalysisManagerExtractionPlugin
             set { m_InputFile = value; }
         }
 
-        public string Enzyme { get; set; }
+        public string Enzyme { get; set; } = string.Empty;
 
-        public string OutputFolderPath { get; set; }
+        public string OutputFolderPath { get; set; } = string.Empty;
 
         #endregion
 

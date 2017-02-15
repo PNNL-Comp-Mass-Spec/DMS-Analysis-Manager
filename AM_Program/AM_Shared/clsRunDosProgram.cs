@@ -122,13 +122,13 @@ namespace AnalysisManagerBase
         /// Will also fire event ConsoleOutputEvent as new text is written to the console
         /// </summary>
         /// <remarks>If this is true, then no window will be shown, even if CreateNoWindow=False</remarks>
-        public bool CacheStandardOutput { get; set; }
+        public bool CacheStandardOutput { get; set; } = false;
 
         /// <summary>
         /// When true, the program name and command line arguments will be added to the top of the console output file
         /// </summary>
         /// <remarks>Defaults to true</remarks>
-        public bool ConsoleOutputFileIncludesCommandLine { get; set; }
+        public bool ConsoleOutputFileIncludesCommandLine { get; set; } = true;
 
         /// <summary>
         /// File path to which the console output will be written if WriteConsoleOutputToFile is true
@@ -137,24 +137,24 @@ namespace AnalysisManagerBase
         /// <value></value>
         /// <returns></returns>
         /// <remarks></remarks>
-        public string ConsoleOutputFilePath { get; set; }
+        public string ConsoleOutputFilePath { get; set; } = string.Empty;
 
         /// <summary>
         /// Determine if window should be displayed.
         /// Will be forced to True if CacheStandardOutput = True
         /// </summary>
-        public bool CreateNoWindow { get; set; }
+        public bool CreateNoWindow { get; set; } = true;
 
         /// <summary>
         /// Debug level for logging
         /// </summary>
-        public int DebugLevel { get; set; }
+        public int DebugLevel { get; set; } = 0;
 
         /// <summary>
         /// When true, then echoes, in real time, text written to the Console by the external program 
         /// Ignored if CreateNoWindow = False
         /// </summary>
-        public bool EchoOutputToConsole { get; set; }
+        public bool EchoOutputToConsole { get; set; } = true;
 
         /// <summary>
         /// Exit code when process completes.
@@ -235,7 +235,7 @@ namespace AnalysisManagerBase
         /// Defaults to false
         /// If this is true, no window will be shown, even if CreateNoWindow=False
         /// </remarks>
-        public bool WriteConsoleOutputToFile { get; set; }
+        public bool WriteConsoleOutputToFile { get; set; } = false;
 
         #endregion
 
