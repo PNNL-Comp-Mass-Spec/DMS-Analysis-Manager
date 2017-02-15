@@ -6,7 +6,10 @@ using System.Linq;
 namespace AnalysisManagerBase
 {
 
-    [Obsolete("Unused")]
+    /// <summary>
+    /// XML Parameter file reader
+    /// </summary>
+    /// <remarks>This class is used by clsAnalysisToolRunnerDecon2ls</remarks>
     public class clsXMLParamFileReader
     {
 
