@@ -308,21 +308,50 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 {
                     // Make sure the key png files were created
                     var expectedFileExtensions = new List<string> {
-                        "_BPI_MS.png",
-                        "_HighAbu_LCMS.png",
-                        "_LCMS.png",
+                        "_BPI_MS.png|_BPI_MSn.png",
+                        "_HighAbu_LCMS.png|_HighAbu_LCMS_MSn.png",
+                        "_LCMS.png|_LCMS_MSn.png",
                         "_TIC.png"
                     };
 
                     foreach (var fileExtension in expectedFileExtensions)
                     {
-                        var pngFile = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + fileExtension));
-                        if (!pngFile.Exists)
+                        var filesToFind = new List<FileInfo>();
+                        string fileDescription;
+                        if (fileExtension.Contains("|"))
                         {
-                            LogError("QC png file not found: " + pngFile.Name);
+                            fileDescription = "";
+
+                            // fileExtension contains a list of files
+                            // Require that at least once of them exists
+                            foreach (var extension in fileExtension.Split('|'))
+                            {
+                                filesToFind.Add(new FileInfo(Path.Combine(m_WorkDir, m_Dataset + extension)));
+                                if (fileDescription.Length == 0)
+                                    fileDescription = extension;
+                                else
+                                    fileDescription += " or " + extension;
+                            }
+
+                        } else
+                        {
+                            filesToFind.Add(new FileInfo(Path.Combine(m_WorkDir, m_Dataset + fileExtension)));
+                            fileDescription = fileExtension;
+                        }
+
+                        var filesFound = 0;
+                        foreach (var pngFile in filesToFind)
+                        {
+                            if (pngFile.Exists)
+                                filesFound++;
+                        }
+
+                        if (filesFound == 0)
+                        {
+                            LogError("QC png file not found, extension " + fileDescription);
                             return CloseOutType.CLOSEOUT_FAILED;
                         }
-                    }
+                    }                   
 
                     if (m_DebugLevel >= 1)
                     {
