@@ -109,7 +109,8 @@ namespace AnalysisManagerDtaImportPlugIn
             try
             {
                 //Copy the DTA folder to the transfer folder
-                CopyDirectory(SourceFolderNamePath, TargetFolderNamePath);
+                var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
+                objAnalysisResults.CopyDirectory(SourceFolderNamePath, TargetFolderNamePath, false);
 
                 //Now move the DTA folder to succeeded folder
                 Directory.Move(SourceFolderNamePath, CompleteFolderNamePath);
@@ -120,23 +121,6 @@ namespace AnalysisManagerDtaImportPlugIn
             {
                 m_message = clsGlobal.AppendToComment(m_message, "Error copying results folder to " + Path.GetPathRoot(TargetFolderNamePath) + " : " + ex.Message);
                 return CloseOutType.CLOSEOUT_FAILED;
-            }
-        }
-
-        private void CopyDirectory(string srcPath, string destPath)
-        {
-            // TODO: Needs verification
-            var dirInfo = new DirectoryInfo(srcPath);
-            foreach (var dir in dirInfo.EnumerateDirectories())
-            {
-                var newDirName = Path.Combine(destPath, dir.Name);
-                Directory.CreateDirectory(newDirName);
-                CopyDirectory(dir.FullName, newDirName);
-            }
-            foreach (var file in dirInfo.EnumerateFiles())
-            {
-                var newFileName = Path.Combine(destPath, file.Name);
-                File.Copy(file.FullName, newFileName);
             }
         }
 
