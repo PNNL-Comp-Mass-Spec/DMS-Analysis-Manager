@@ -4,7 +4,7 @@ using AnalysisManagerBase;
 
 namespace AnalysisManagerDecon2lsV2PlugIn
 {
-    public class clsDeconToolsQCPlotsGenerator
+    public class clsDeconToolsQCPlotsGenerator : clsEventNotifier
     {
         private readonly int mDebugLevel;
         private string mErrorMessage;
@@ -13,15 +13,13 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         private MSFileInfoScannerInterfaces.iMSFileInfoScanner mMSFileInfoScanner;
         private int mMSFileInfoScannerErrorCount;
 
-        public string ErrorMessage
-        {
-            get { return mErrorMessage; }
-        }
+        private string mInputFilePath;
+        private string mOutputFolderPath;
+        private bool mSuccess;
 
-        public int MSFileInfoScannerErrorCount
-        {
-            get { return mMSFileInfoScannerErrorCount; }
-        }
+        public string ErrorMessage => mErrorMessage;
+
+        public int MSFileInfoScannerErrorCount => mMSFileInfoScannerErrorCount;
 
         public clsDeconToolsQCPlotsGenerator(string MSFileInfoScannerDLLPath, int DebugLevel)
         {
@@ -33,7 +31,6 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
         public bool CreateQCPlots(string strInputFilePath, string strOutputFolderPath)
         {
-            bool blnSuccess = false;
 
             try
             {
@@ -55,7 +52,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 if (!blnSuccess)
                 {
                     mErrorMessage = "Error generating QC Plots using " + strInputFilePath;
-                    string strMsgAddnl = mMSFileInfoScanner.GetErrorMessage();
+                    var strMsgAddnl = mMSFileInfoScanner.GetErrorMessage();
 
                     if (!string.IsNullOrEmpty(strMsgAddnl))
                     {
@@ -77,14 +74,14 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             const string MsDataFileReaderClass = "MSFileInfoScanner.clsMSFileInfoScanner";
 
             MSFileInfoScannerInterfaces.iMSFileInfoScanner objMSFileInfoScanner = null;
-            string msg = null;
+            string msg;
 
             try
             {
                 if (!File.Exists(strMSFileInfoScannerDLLPath))
                 {
                     msg = "DLL not found: " + strMSFileInfoScannerDLLPath;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                    OnErrorEvent(msg);
                 }
                 else
                 {
@@ -95,7 +92,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                         msg = "Loaded MSFileInfoScanner from " + strMSFileInfoScannerDLLPath;
                         if (mDebugLevel >= 2)
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                            OnDebugEvent(msg);
                         }
                     }
                 }
@@ -103,7 +100,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             catch (Exception ex)
             {
                 msg = "Exception loading class " + MsDataFileReaderClass + ": " + ex.Message;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                OnErrorEvent(msg, ex);
             }
 
             return objMSFileInfoScanner;
@@ -116,13 +113,13 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             {
                 // Dynamically load the specified class from strDLLFilePath
                 var assem = System.Reflection.Assembly.LoadFrom(strDLLFilePath);
-                Type dllType = assem.GetType(className, false, true);
+                var dllType = assem.GetType(className, false, true);
                 obj = Activator.CreateInstance(dllType);
             }
             catch (Exception ex)
             {
-                string msg = "Exception loading DLL " + strDLLFilePath + ": " + ex.Message;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                var msg = "Exception loading DLL " + strDLLFilePath + ": " + ex.Message;
+                OnErrorEvent(msg, ex);
             }
             return obj;
         }
@@ -130,14 +127,14 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         private void mMSFileInfoScanner_ErrorEvent(string Message)
         {
             mMSFileInfoScannerErrorCount += 1;
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MSFileInfoScanner error: " + Message);
+            OnErrorEvent("MSFileInfoScanner error: " + Message);
         }
 
         private void mMSFileInfoScanner_MessageEvent(string Message)
         {
             if (mDebugLevel >= 3)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... " + Message);
+                OnDebugEvent(" ... " + Message);
             }
         }
     }

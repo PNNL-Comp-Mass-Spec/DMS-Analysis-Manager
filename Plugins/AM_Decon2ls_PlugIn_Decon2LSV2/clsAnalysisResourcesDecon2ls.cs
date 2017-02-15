@@ -29,9 +29,9 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 return result;
             }
 
-            string strRawDataType = m_jobParams.GetParam("RawDataType");
+            var strRawDataType = m_jobParams.GetParam("RawDataType");
 
-            string msXmlOutputType = m_jobParams.GetParam("MSXMLOutputType");
+            var msXmlOutputType = m_jobParams.GetParam("MSXMLOutputType");
 
             if (!string.IsNullOrWhiteSpace(msXmlOutputType))
             {
@@ -73,7 +73,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             m_jobParams.AddResultFileExtensionToSkip(DOT_MZXML_EXTENSION);
             m_jobParams.AddResultFileExtensionToSkip(DOT_MZML_EXTENSION);
 
-            if (!base.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -153,7 +153,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 return false;
             }
 
-            bool processMSMS = false;
+            bool processMSMS;
             if (!IsMSMSProcessingEnabled(fiParamFile, out processMSMS))
             {
                 return false;
@@ -168,8 +168,8 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             // Open the instrument data file and determine whether it only contains MS/MS spectra
             // If that is the case, update the parameter file to have ProcessMSMS=True
 
-            var countMS1 = 0;
-            var countMSn = 0;
+            int countMS1;
+            int countMSn;
 
             if (!ExamineDatasetScanTypes(out countMS1, out countMSn))
             {
@@ -212,7 +212,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 var eRawDataType = GetRawDataType(rawDataTypeName);
 
                 var datasetFilePath = clsAnalysisToolRunnerDecon2ls.GetInputFilePath(m_WorkingDir, DatasetName, eRawDataType);
-                bool success = false;
+                bool success;
 
                 switch (eRawDataType)
                 {
@@ -258,7 +258,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
                     for (var scanNumber = rawFileReader.FileInfo.ScanStart; scanNumber <= rawFileReader.FileInfo.ScanEnd; scanNumber++)
                     {
-                        clsScanInfo scanInfo = null;
+                        clsScanInfo scanInfo;
                         if (rawFileReader.GetScanInfo(scanNumber, out scanInfo))
                         {
                             if (scanInfo.MSLevel == 1)
@@ -342,10 +342,12 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     // Now write out the XML to strParamFileTemp
                     using (var updatedParamFileWriter = new StreamWriter(new FileStream(deconParamFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                     {
-                        var formattedXmlWriter = new XmlTextWriter(updatedParamFileWriter);
-                        formattedXmlWriter.Indentation = 1;
-                        formattedXmlWriter.IndentChar = '\t';
-                        formattedXmlWriter.Formatting = Formatting.Indented;
+                        var formattedXmlWriter = new XmlTextWriter(updatedParamFileWriter)
+                        {
+                            Indentation = 1,
+                            IndentChar = '\t',
+                            Formatting = Formatting.Indented
+                        };
 
                         updatedXmlDoc.WriteContentTo(formattedXmlWriter);
                     }
