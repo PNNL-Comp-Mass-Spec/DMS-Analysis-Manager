@@ -195,11 +195,11 @@ namespace AnalysisManagerBase
         {
             if (writeDebugEventsToLog)
             {
-                oProcessingClass.DebugEvent += DebugEventHandlerConsoleOnly;
+                oProcessingClass.DebugEvent += DebugEventHandler;
             }
             else
             {
-                oProcessingClass.DebugEvent += DebugEventHandler;
+                oProcessingClass.DebugEvent += DebugEventHandlerConsoleOnly;
             }
 
             oProcessingClass.StatusEvent += StatusEventHandler;
