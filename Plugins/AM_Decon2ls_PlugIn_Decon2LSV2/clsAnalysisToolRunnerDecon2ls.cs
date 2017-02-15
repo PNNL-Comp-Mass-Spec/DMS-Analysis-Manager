@@ -305,12 +305,31 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 }
 
                 var objQCPlotGenerator = new clsDeconToolsQCPlotsGenerator(strMSFileInfoScannerDLLPath, m_DebugLevel);
+                RegisterEvents(objQCPlotGenerator);
 
                 // Create the QC Plot .png files and associated Index.html file
                 blnSuccess = objQCPlotGenerator.CreateQCPlots(strInputFilePath, m_WorkDir);
 
                 if (blnSuccess)
                 {
+                    // Make sure the key png files were created
+                    var expectedFileExtensions = new List<string> {
+                        "_BPI_MS.png",
+                        "_HighAbu_LCMS.png",
+                        "_LCMS.png",
+                        "_TIC.png"
+                    };
+
+                    foreach (var fileExtension in expectedFileExtensions)
+                    {
+                        var pngFile = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + fileExtension));
+                        if (!pngFile.Exists)
+                        {
+                            LogError("QC png file not found: " + pngFile.Name);
+                            return CloseOutType.CLOSEOUT_FAILED;
+                        }
+                    }
+
                     if (m_DebugLevel >= 1)
                     {
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
