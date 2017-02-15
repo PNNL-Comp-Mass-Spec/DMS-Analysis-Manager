@@ -32,21 +32,14 @@ namespace AnalysisManagerMSGFDBPlugIn
 
         #region "Module Variables"
 
-        private bool mToolVersionWritten; // Path to MSGFPlus.jar
+        private bool mToolVersionWritten;
 
+        // Path to MSGFPlus.jar
         private string mMSGFDbProgLoc;
 
-        private string mMSGFDbProgLocHPC; // We always use MSGF+ now
-
-        private const bool mMSGFPlus = true;
-
-        private bool mResultsIncludeAutoAddedDecoyPeptides = false;
+        private bool mResultsIncludeAutoAddedDecoyPeptides;
 
         private string mWorkingDirectoryInUse;
-
-#if EnableHPC
-        private bool mUsingHPC;
-#endif
 
         private bool mMSGFPlusComplete;
         private DateTime mMSGFPlusCompletionTime;
@@ -54,30 +47,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         private clsMSGFDBUtils mMSGFDBUtils;
 
         private clsRunDosProgram mCmdRunner;
-
-#if EnableHPC
-        // Include these references to enable HPC
-        //
-        // <Reference Include="HPC_Connector">
-        //   <HintPath>..\..\AM_Common\HPC_Connector.dll</HintPath>
-        // </Reference>
-        // <Reference Include="HPC_Submit, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-        //   <SpecificVersion>False</SpecificVersion>
-        //   <HintPath>..\..\AM_Common\HPC_Submit.dll</HintPath>
-        // </Reference>
-        // <Reference Include="Microsoft.Hpc.Scheduler, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-        //   <SpecificVersion>False</SpecificVersion>
-        //   <HintPath>..\..\AM_Common\Microsoft.Hpc.Scheduler.dll</HintPath>
-        // </Reference>
-        // <Reference Include="Microsoft.Hpc.Scheduler.Properties, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35" />
-        // <Reference Include="MyEMSLReader">
-        //   <HintPath>..\..\AM_Common\MyEMSLReader.dll</HintPath>
-        // </Reference>
-
-        private HPC_Submit.WindowsHPC2012 mComputeCluster
-        private int mHPCJobID;
-        private System.Timers.Timer mHPCMonitorInitTimer;
-#endif
 
         #endregion
 
@@ -90,7 +59,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
-            var blnTooManySkippedSpectra = false;
+            bool blnTooManySkippedSpectra;
 
             try
             {
@@ -105,15 +74,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMSGFDB.RunTool(): Enter");
                 }
 
-#if EnableHPC
-                mHPCMonitorInitTimer = new System.Timers.Timer(30000);
-                mHPCMonitorInitTimer.Elapsed += mHPCMonitorInitTimer_Elapsed;
-                mHPCMonitorInitTimer.Enabled = false;
-#endif
-
-                // Determine whether or not we'll be running MSGF+ in HPC (high performance computing) mode
-                clsAnalysisResources.udtHPCOptionsType udtHPCOptions = clsAnalysisResources.GetHPCOptions(m_jobParams, m_MachName);
-
                 // Verify that program files exist
 
                 // javaProgLoc will typically be "C:\Program Files\Java\jre8\bin\Java.exe"
@@ -124,10 +84,10 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
 
                 // Run MSGF+ (includes indexing the fasta file)
-                FileInfo fiMSGFPlusResults = null;
-                var blnProcessingError = false;
+                FileInfo fiMSGFPlusResults;
+                bool blnProcessingError;
 
-                var result = RunMSGFPlus(javaProgLoc, udtHPCOptions, out fiMSGFPlusResults, out blnProcessingError, out blnTooManySkippedSpectra);
+                var result = RunMSGFPlus(javaProgLoc, out fiMSGFPlusResults, out blnProcessingError, out blnTooManySkippedSpectra);
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     if (string.IsNullOrEmpty(m_message))
@@ -174,7 +134,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     }
                     else
                     {
-                        result = PostProcessMSGFDBResults(fiMSGFPlusResults.Name, udtHPCOptions);
+                        result = PostProcessMSGFDBResults(fiMSGFPlusResults.Name);
                         if (result != CloseOutType.CLOSEOUT_SUCCESS)
                         {
                             if (string.IsNullOrEmpty(m_message))
@@ -194,10 +154,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                     }
                 }
 
-                // Copy any newly created files from PIC back to the local working directory
-                // ToDo: Uncomment this code if we run the PeptideToProteinMapper on HPC
-                // SynchronizeFolders(udtHPCOptions.WorkDirPath, m_WorkDir)
-
                 if (!mMSGFPlusComplete)
                 {
                     blnProcessingError = true;
@@ -210,7 +166,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 m_progress = clsMSGFDBUtils.PROGRESS_PCT_COMPLETE;
 
                 //Stop the job timer
-                m_StopTime = System.DateTime.UtcNow;
+                m_StopTime = DateTime.UtcNow;
 
                 //Add the current job data to the summary file
                 if (!UpdateSummaryFile())
@@ -221,12 +177,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                 //Make sure objects are released
                 Thread.Sleep(500);         // 500 msec delay
                 PRISM.Processes.clsProgRunner.GarbageCollectNow();
-
-                if (udtHPCOptions.UsingHPC)
-                {
-                    // Delete files in the working directory on PIC
-                    m_FileTools.DeleteDirectoryFiles(udtHPCOptions.WorkDirPath, false);
-                }
 
                 if (blnProcessingError | result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
@@ -270,28 +220,9 @@ namespace AnalysisManagerMSGFDBPlugIn
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-            else
-            {
-                return CloseOutType.CLOSEOUT_SUCCESS;
-            }
-        }
 
-        public static string MakeHPCBatchFile(string workDirPath, string batchFileName, string commandToRun)
-        {
-            const int waitTimeSeconds = 35;
+            return CloseOutType.CLOSEOUT_SUCCESS;
 
-            var batchFilePath = Path.Combine(workDirPath, batchFileName);
-
-            using (var swBatchFile = new StreamWriter(new FileStream(batchFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
-            {
-                swBatchFile.WriteLine("@echo off");
-                swBatchFile.WriteLine(commandToRun);
-                //swBatchFile.WriteLine("ping 1.1.1.1 -n 1 -w " & waitTimeSeconds * 1000 & " > nul")
-                swBatchFile.WriteLine(@"\\picfs.pnl.gov\projects\DMS\DMS_Programs\Utilities\sleep " + waitTimeSeconds);
-                swBatchFile.WriteLine("echo Success");
-            }
-
-            return batchFilePath;
         }
 
         /// <summary>
@@ -299,14 +230,16 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// </summary>
         /// <param name="javaProgLoc"></param>
         /// <param name="fiMSGFPlusResults"></param>
+        /// <param name="blnProcessingError"></param>
+        /// <param name="blnTooManySkippedSpectra"></param>
         /// <returns></returns>
-        /// <remarks></remarks>
-        private CloseOutType RunMSGFPlus(string javaProgLoc, clsAnalysisResources.udtHPCOptionsType udtHPCOptions, out FileInfo fiMSGFPlusResults,
-            out bool blnProcessingError, out bool blnTooManySkippedSpectra)
+        private CloseOutType RunMSGFPlus(
+            string javaProgLoc,
+            out FileInfo fiMSGFPlusResults,
+            out bool blnProcessingError,
+            out bool blnTooManySkippedSpectra)
         {
-            string strMSGFJarfile = null;
-
-            strMSGFJarfile = clsMSGFDBUtils.MSGFPLUS_JAR_NAME;
+            var strMSGFJarfile = clsMSGFDBUtils.MSGFPLUS_JAR_NAME;
 
             fiMSGFPlusResults = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + "_msgfplus.mzid"));
 
@@ -323,26 +256,14 @@ namespace AnalysisManagerMSGFDBPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (udtHPCOptions.UsingHPC)
-            {
-                // Make sure the MSGF+ program is up-to-date on the HPC share
-                // Warning: if MSGF+ is running and the .jar file gets updated, then the running jobs will fail because MSGF+ will throw an exception
-                // This function will store the path to the MSGF+ jar file in mMSGFDbProgLocHPC
-                VerifyHPCMSGFDb(udtHPCOptions);
-            }
-
             // Note: we will store the MSGF+ version info in the database after the first line is written to file MSGFPlus_ConsoleOutput.txt
             mToolVersionWritten = false;
 
-#if EnableHPC
-            mUsingHPC = false;
-#endif
-
             mMSGFPlusComplete = false;
 
-            var eInputFileFormat = eInputFileFormatTypes.Unknown;
-            var strScanTypeFilePath = string.Empty;
-            var strAssumedScanType = string.Empty;
+            eInputFileFormatTypes eInputFileFormat;
+            string strScanTypeFilePath;
+            string strAssumedScanType;
 
             var result = DetermineAssumedScanType(out strAssumedScanType, out eInputFileFormat, out strScanTypeFilePath);
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
@@ -352,7 +273,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
 
             // Initialize mMSGFDBUtils
-            mMSGFDBUtils = new clsMSGFDBUtils(m_mgrParams, m_jobParams, m_JobNum, m_WorkDir, m_DebugLevel, mMSGFPlus);
+            mMSGFDBUtils = new clsMSGFDBUtils(m_mgrParams, m_jobParams, m_JobNum, m_WorkDir, m_DebugLevel, msgfPlus: true);
             RegisterEvents(mMSGFDBUtils);
 
             mMSGFDBUtils.IgnorePreviousErrorEvent += mMSGFDBUtils_IgnorePreviousErrorEvent;
@@ -363,25 +284,12 @@ namespace AnalysisManagerMSGFDBPlugIn
             var javaExePath = string.Copy(javaProgLoc);
             var msgfdbJarFilePath = string.Copy(mMSGFDbProgLoc);
 
-            if (udtHPCOptions.UsingHPC)
-            {
-                if (udtHPCOptions.SharePath.StartsWith(@"\\winhpcfs"))
-                {
-                    javaExePath = @"\\winhpcfs\projects\DMS\jre8\bin\java.exe";
-                }
-                else
-                {
-                    javaExePath = @"\\picfs.pnl.gov\projects\DMS\jre8\bin\java.exe";
-                }
-                msgfdbJarFilePath = mMSGFDbProgLocHPC;
-            }
-
-            var fastaFilePath = string.Empty;
-            float fastaFileSizeKB = 0;
-            bool fastaFileIsDecoy = false;
+            string fastaFilePath;
+            float fastaFileSizeKB;
+            bool fastaFileIsDecoy;
 
             result = mMSGFDBUtils.InitializeFastaFile(javaExePath, msgfdbJarFilePath, out fastaFileSizeKB, out fastaFileIsDecoy, out fastaFilePath,
-                strParameterFilePath, udtHPCOptions);
+                strParameterFilePath);
 
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
@@ -392,16 +300,18 @@ namespace AnalysisManagerMSGFDBPlugIn
             var strInstrumentGroup = m_jobParams.GetJobParameter("JobParameters", "InstrumentGroup", string.Empty);
 
             // Read the MSGFDB Parameter File
-            var strMSGFDbCmdLineOptions = string.Empty;
+            string strMSGFDbCmdLineOptions;
 
             result = mMSGFDBUtils.ParseMSGFPlusParameterFile(fastaFileSizeKB, fastaFileIsDecoy, strAssumedScanType, strScanTypeFilePath,
-                strInstrumentGroup, udtHPCOptions, out strMSGFDbCmdLineOptions);
+                strInstrumentGroup, strParameterFilePath, out strMSGFDbCmdLineOptions);
+
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 // Immediately exit the plugin; results and console output files will not be saved
                 return result;
             }
-            else if (string.IsNullOrEmpty(strMSGFDbCmdLineOptions))
+
+            if (string.IsNullOrEmpty(strMSGFDbCmdLineOptions))
             {
                 if (string.IsNullOrEmpty(m_message))
                 {
@@ -434,15 +344,6 @@ namespace AnalysisManagerMSGFDBPlugIn
             if (javaMemorySize < 512)
                 javaMemorySize = 512;
 
-            if (udtHPCOptions.UsingHPC)
-            {
-                if (javaMemorySize < 10000)
-                {
-                    // Automatically bump up the memory to use to 28 GB  (the machines have 32 GB per socket)
-                    javaMemorySize = 28000;
-                }
-            }
-
             // Set up and execute a program runner to run MSGFDB
             var cmdStr = " -Xmx" + javaMemorySize.ToString() + "M -jar " + msgfdbJarFilePath;
 
@@ -473,39 +374,16 @@ namespace AnalysisManagerMSGFDBPlugIn
             // Make sure the machine has enough free memory to run MSGFDB
             var blnLogFreeMemoryOnSuccess = !(m_DebugLevel < 1);
 
-            if (!udtHPCOptions.UsingHPC)
+            if (!clsAnalysisResources.ValidateFreeMemorySize(javaMemorySize, "MSGF+", blnLogFreeMemoryOnSuccess))
             {
-                if (!clsAnalysisResources.ValidateFreeMemorySize(javaMemorySize, "MSGF+", blnLogFreeMemoryOnSuccess))
-                {
-                    m_message = "Not enough free memory to run MSGF+";
-                    // Immediately exit the plugin; results and console output files will not be saved
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
+                m_message = "Not enough free memory to run MSGF+";
+                // Immediately exit the plugin; results and console output files will not be saved
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
             mWorkingDirectoryInUse = string.Copy(m_WorkDir);
 
-            var blnSuccess = false;
-
-            if (udtHPCOptions.UsingHPC)
-            {
-#if EnableHPC
-                bool criticalError = false;
-                blnSuccess = StartMSGFPlusHPC(javaExePath, msgfdbJarFilePath, fiMSGFPlusResults.Name, cmdStr, udtHPCOptions, out criticalError);
-
-                if (criticalError)
-                {
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
-
-#else
-                throw new Exception("HPC Support is disabled in project AnalysisManagerMSGFDBPlugin");
-#endif
-            }
-            else
-            {
-                blnSuccess = StartMSGFPlusLocal(javaExePath, cmdStr);
-            }
+            var blnSuccess = StartMSGFPlusLocal(javaExePath, cmdStr);
 
             if (!blnSuccess & string.IsNullOrEmpty(mMSGFDBUtils.ConsoleOutputErrorMsg))
             {
@@ -537,12 +415,12 @@ namespace AnalysisManagerMSGFDBPlugIn
                 if (!mMSGFPlusComplete)
                 {
                     mMSGFPlusComplete = true;
-                    mMSGFPlusCompletionTime = System.DateTime.UtcNow;
+                    mMSGFPlusCompletionTime = DateTime.UtcNow;
                 }
             }
             else
             {
-                string msg = null;
+                string msg;
                 if (mMSGFPlusComplete)
                 {
                     msg = "MSGF+ log file reported it was complete, but aborted the ProgRunner since Java was frozen";
@@ -556,8 +434,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                 if (mMSGFPlusComplete)
                 {
                     // Don't treat this as a fatal error
-                    // in particular, HPC jobs don't always close out cleanly
-                    blnProcessingError = false;
                     m_EvalMessage = string.Copy(m_message);
                     m_message = string.Empty;
                 }
@@ -566,7 +442,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     blnProcessingError = true;
                 }
 
-                if (!udtHPCOptions.UsingHPC & !mMSGFPlusComplete)
+                if (!mMSGFPlusComplete)
                 {
                     if (mCmdRunner.ExitCode != 0)
                     {
@@ -591,8 +467,8 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                     LogWarning("MSGF+ finished, but the log file reports " + mMSGFDBUtils.TaskCountCompleted + " / " + mMSGFDBUtils.TaskCountTotal + " completed tasks");
 
-                    var waitStartTime = System.DateTime.UtcNow;
-                    while (System.DateTime.UtcNow.Subtract(waitStartTime).TotalSeconds < 45)
+                    var waitStartTime = DateTime.UtcNow;
+                    while (DateTime.UtcNow.Subtract(waitStartTime).TotalSeconds < 45)
                     {
                         Thread.Sleep(5000);
                         mMSGFDBUtils.ParseMSGFPlusConsoleOutputFile(mWorkingDirectoryInUse);
@@ -606,7 +482,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     if (mMSGFDBUtils.TaskCountCompleted == mMSGFDBUtils.TaskCountTotal)
                     {
                         LogMessage("Reparsing the MSGF+ log file now indicates that all tasks finished " + "(waited " +
-                                   System.DateTime.UtcNow.Subtract(waitStartTime).TotalSeconds.ToString("0") + " seconds)");
+                                   DateTime.UtcNow.Subtract(waitStartTime).TotalSeconds.ToString("0") + " seconds)");
                     }
                     else if (mMSGFDBUtils.TaskCountCompleted > savedCountCompleted)
                     {
@@ -684,19 +560,13 @@ namespace AnalysisManagerMSGFDBPlugIn
                     // If over 20% of the spectra were skipped, and if the source spectra were not centroided,
                     //   then blnTooManySkippedSpectra will be set to True and the job step will be marked as failed
 
-                    double dblFractionSkipped = 0;
-                    string strPercentSkipped = null;
-                    bool spectraAreCentroided = false;
+                    var spectraAreCentroided =
+                        m_jobParams.GetJobParameter("CentroidMSXML", false) ||
+                        m_jobParams.GetJobParameter("CentroidDTAs", false) ||
+                        m_jobParams.GetJobParameter("CentroidMGF", false);
 
-                    // Examine the job parameters to determine if the spectra were definitely centroided by the MSXML_Gen or DTA_Gen tools
-                    if (m_jobParams.GetJobParameter("CentroidMSXML", false) || m_jobParams.GetJobParameter("CentroidDTAs", false) ||
-                        m_jobParams.GetJobParameter("CentroidMGF", false))
-                    {
-                        spectraAreCentroided = true;
-                    }
-
-                    dblFractionSkipped = mMSGFDBUtils.ContinuumSpectraSkipped / (mMSGFDBUtils.ContinuumSpectraSkipped + mMSGFDBUtils.SpectraSearched);
-                    strPercentSkipped = (dblFractionSkipped * 100).ToString("0.0") + "%";
+                    var dblFractionSkipped = mMSGFDBUtils.ContinuumSpectraSkipped / (double)(mMSGFDBUtils.ContinuumSpectraSkipped + mMSGFDBUtils.SpectraSearched);
+                    var strPercentSkipped = (dblFractionSkipped * 100).ToString("0.0") + "%";
 
                     if (dblFractionSkipped > 0.2 & !spectraAreCentroided)
                     {
@@ -712,187 +582,6 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
-
-#if EnableHPC
-        private bool StartMSGFPlusHPC(string javaExePath, string msgfdbJarFilePath, string resultsFileName, string CmdStr, clsAnalysisResources.udtHPCOptionsType udtHPCOptions, out bool criticalError)
-        {
-            mWorkingDirectoryInUse = string.Copy(udtHPCOptions.WorkDirPath);
-            mUsingHPC = true;
-            criticalError = false;
-
-            // Synchronize local files to the remote working directory on PIC
-
-            var lstFileNameFilterSpec = new List<string>();
-            var lstFileNameExclusionSpec = new List<string>
-            {
-                m_Dataset + "_ScanStats.txt",
-                m_Dataset + "_ScanStatsEx.txt",
-                "Mass_Correction_Tags.txt"
-            };
-
-            SynchronizeFolders(m_WorkDir, mWorkingDirectoryInUse, lstFileNameFilterSpec, lstFileNameExclusionSpec);
-
-            var jobStep = m_jobParams.GetJobParameter("StepParameters", "Step", 1);
-
-            var jobName = "MSGF+_Job" + m_JobNum + "_Step" + jobStep;
-
-            var hpcJobInfo = new HPC_Connector.JobToHPC(udtHPCOptions.HeadNode, jobName, taskName: "MSGF+");
-
-            hpcJobInfo.JobParameters.PriorityLevel = HPC_Connector.PriorityLevel.Normal;
-            hpcJobInfo.JobParameters.TemplateName = "DMS"; // If using 32 cores, could use Template "Single"
-            hpcJobInfo.JobParameters.ProjectName = "DMS";
-
-            hpcJobInfo.JobParameters.TargetHardwareUnitType = HPC_Connector.HardwareUnitType.Socket;
-            hpcJobInfo.JobParameters.isExclusive = true;
-
-            // If requesting a socket or a node, there is no need to set the number of cores
-            // hpcJobInfo.JobParameters.MinNumberOfCores = udtHPCOptions.MinimumCores
-            // hpcJobInfo.JobParameters.MaxNumberOfCores = udtHPCOptions.MinimumCores
-
-            if (udtHPCOptions.SharePath.StartsWith(@"\\picfs"))
-            {
-                // April 2014 note: When using picfs.pnl.gov we must reserve an entire node due to file system issues of the Windows Nodes talking to the Isilon file system
-                // Each node has two sockets
-                // Each socket has 16 cores
-                // Thus a node has 32 cores
-                hpcJobInfo.JobParameters.TargetHardwareUnitType = HPC_Connector.HardwareUnitType.Node;
-
-                // Make a batch file that will run the java program, then sleep for 35 seconds, which should allow the file system to release the file handles
-                var batchFilePath = MakeHPCBatchFile(udtHPCOptions.WorkDirPath, "HPC_MSGFPlus_Task.bat", javaExePath + " " + CmdStr);
-                m_jobParams.AddResultFileToSkip(batchFilePath);
-
-                hpcJobInfo.TaskParameters.CommandLine = batchFilePath;
-            }
-            else
-            {
-                // Simply run java; no need to add a delay
-                hpcJobInfo.TaskParameters.CommandLine = javaExePath + " " + CmdStr;
-            }
-
-            hpcJobInfo.TaskParameters.WorkDirectory = udtHPCOptions.WorkDirPath;
-            hpcJobInfo.TaskParameters.StdOutFilePath = Path.Combine(udtHPCOptions.WorkDirPath, clsMSGFDBUtils.MSGFPLUS_CONSOLE_OUTPUT_FILE);
-            hpcJobInfo.TaskParameters.TaskTypeOption = HPC_Connector.HPCTaskType.Basic;
-            hpcJobInfo.TaskParameters.FailJobOnFailure = true;
-
-            // Set the maximum runtime to 3 days
-            // Note that this runtime includes the time the job is queued, plus also the time the job is running
-            hpcJobInfo.JobParameters.MaxRunTimeHours = 72;
-
-            LogMessage(hpcJobInfo.TaskParameters.CommandLine, 1);
-
-            if (mMSGFPlus)
-            {
-                var mzidToTSVTask = new HPC_Connector.ParametersTask("MZID_To_TSV");
-                var tsvFileName = m_Dataset + clsMSGFDBUtils.MSGFPLUS_TSV_SUFFIX;
-                const int tsvConversionJavaMemorySizeMB = 4000;
-
-                var cmdStrConvertToTSV = clsMSGFDBUtils.GetMZIDtoTSVCommandLine(resultsFileName, tsvFileName, udtHPCOptions.WorkDirPath, msgfdbJarFilePath, tsvConversionJavaMemorySizeMB);
-
-                if (udtHPCOptions.SharePath.StartsWith(@"\\picfs"))
-                {
-                    // Make a batch file that will run the java program, then sleep for 35 seconds, which should allow the file system to release the file handles
-                    var tsvBatchFilePath = MakeHPCBatchFile(udtHPCOptions.WorkDirPath, "HPC_TSV_Task.bat", javaExePath + " " + cmdStrConvertToTSV);
-                    m_jobParams.AddResultFileToSkip(tsvBatchFilePath);
-
-                    mzidToTSVTask.CommandLine = tsvBatchFilePath;
-                }
-                else
-                {
-                    // Simply run java; no need to add a delay
-                    mzidToTSVTask.CommandLine = javaExePath + " " + cmdStrConvertToTSV;
-                }
-
-                mzidToTSVTask.WorkDirectory = udtHPCOptions.WorkDirPath;
-                mzidToTSVTask.StdOutFilePath = Path.Combine(udtHPCOptions.WorkDirPath, MZIDToTSV_CONSOLE_OUTPUT_FILE);
-                mzidToTSVTask.TaskTypeOption = HPC_Connector.HPCTaskType.Basic;
-                mzidToTSVTask.FailJobOnFailure = true;
-
-                LogMessage(mzidToTSVTask.CommandLine, 1);
-
-                hpcJobInfo.SubsequentTaskParameters.Add(mzidToTSVTask);
-            }
-
-            var sPICHPCUsername = m_mgrParams.GetParam("PICHPCUser", "");
-            var sPICHPCPassword = m_mgrParams.GetParam("PICHPCPassword", "");
-
-            if (string.IsNullOrEmpty(sPICHPCUsername))
-            {
-                LogError("Manager parameter PICHPCUser is undefined; unable to schedule HPC job");
-                criticalError = true;
-                return false;
-            }
-
-            if (string.IsNullOrEmpty(sPICHPCPassword))
-            {
-                LogError("Manager parameter PICHPCPassword is undefined; unable to schedule HPC job");
-                criticalError = true;
-                return false;
-            }
-
-            mComputeCluster = new HPC_Submit.WindowsHPC2012(sPICHPCUsername, clsGlobal.DecodePassword(sPICHPCPassword));
-            mComputeCluster.ErrorEvent += mComputeCluster_ErrorEvent;
-            mComputeCluster.MessageEvent += mComputeCluster_MessageEvent;
-            mComputeCluster.ProgressEvent += mComputeCluster_ProgressEvent;
-
-            mHPCJobID = mComputeCluster.Send(hpcJobInfo);
-
-            bool blnSuccess = false;
-
-            if (mHPCJobID <= 0)
-            {
-                LogError("MSGF+ Job was not created in HPC: " + mComputeCluster.ErrorMessage);
-                blnSuccess = false;
-            }
-            else
-            {
-                blnSuccess = true;
-            }
-
-            if (blnSuccess)
-            {
-                if (mComputeCluster.Scheduler == null)
-                {
-                    LogError("Error: HPC Scheduler is null for MSGF+");
-                    blnSuccess = false;
-                }
-            }
-
-            if (blnSuccess)
-            {
-                var hpcJob = mComputeCluster.Scheduler.OpenJob(mHPCJobID);
-
-                mHPCMonitorInitTimer.Enabled = true;
-
-                blnSuccess = mComputeCluster.MonitorJob(hpcJob);
-
-                if (!blnSuccess)
-                {
-                    var msg = "HPC Job Monitor returned false";
-                    if (!string.IsNullOrWhiteSpace(mComputeCluster.ErrorMessage))
-                    {
-                        msg += ": " + mComputeCluster.ErrorMessage;
-                    }
-                    LogError(msg);
-                }
-
-                // Copy any newly created files from PIC back to the local working directory
-                SynchronizeFolders(udtHPCOptions.WorkDirPath, m_WorkDir);
-
-                // Rename the Tool_Version_Info file
-                var fiToolVersionInfo = new FileInfo(Path.Combine(m_WorkDir, "Tool_Version_Info_MSGFPLUS_HPC.txt"));
-                if (!fiToolVersionInfo.Exists)
-                {
-                    LogWarning("ToolVersionInfo file not found; this will lead to problems with IDPicker: " + fiToolVersionInfo.FullName);
-                }
-                else
-                {
-                    fiToolVersionInfo.MoveTo(Path.Combine(m_WorkDir, "Tool_Version_Info_MSGFPlus.txt"));
-                }
-            }
-
-            return blnSuccess;
-        }
-#endif
 
         private bool StartMSGFPlusLocal(string javaExePath, string cmdStr)
         {
@@ -928,51 +617,31 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="strMZIDFileName"></param>
         /// <returns>The name of the .tsv file if successful; empty string if an error</returns>
         /// <remarks></remarks>
-        private string ConvertMZIDToTSV(string strMZIDFileName, clsAnalysisResources.udtHPCOptionsType udtHPCOptions)
+        private string ConvertMZIDToTSV(string strMZIDFileName)
         {
-            var blnConversionRequired = true;
-
             var strTSVFilePath = Path.Combine(m_WorkDir, m_Dataset + clsMSGFDBUtils.MSGFPLUS_TSV_SUFFIX);
 
-            if (udtHPCOptions.UsingHPC)
-            {
-                // The TSV file should have already been created by the HPC job, then copied locally via SynchronizeFolders
+            // Determine the path to the MzidToTsvConverter
+            var mzidToTsvConverterProgLoc = DetermineProgramLocation("MzidToTsvConverter", "MzidToTsvConverterProgLoc", "MzidToTsvConverter.exe");
 
-                var fiTSVFile = new FileInfo(strTSVFilePath);
-                if (fiTSVFile.Exists)
+            if (string.IsNullOrEmpty(mzidToTsvConverterProgLoc))
+            {
+                if (string.IsNullOrEmpty(m_message))
                 {
-                    blnConversionRequired = false;
+                    LogError("Parameter 'MzidToTsvConverter' not defined for this manager");
                 }
-                else
-                {
-                    LogWarning("MSGF+ TSV file was not created by HPC; missing " + fiTSVFile.Name);
-                }
+                return string.Empty;
             }
 
-            if (blnConversionRequired)
+            strTSVFilePath = mMSGFDBUtils.ConvertMZIDToTSV(mzidToTsvConverterProgLoc, m_Dataset, strMZIDFileName);
+
+            if (string.IsNullOrEmpty(strTSVFilePath))
             {
-                // Determine the path to the MzidToTsvConverter
-                var mzidToTsvConverterProgLoc = DetermineProgramLocation("MzidToTsvConverter", "MzidToTsvConverterProgLoc", "MzidToTsvConverter.exe");
-
-                if (string.IsNullOrEmpty(mzidToTsvConverterProgLoc))
+                if (string.IsNullOrEmpty(m_message))
                 {
-                    if (string.IsNullOrEmpty(m_message))
-                    {
-                        LogError("Parameter 'MzidToTsvConverter' not defined for this manager");
-                    }
-                    return string.Empty;
+                    LogError("Error calling mMSGFDBUtils.ConvertMZIDToTSV; path not returned");
                 }
-
-                strTSVFilePath = mMSGFDBUtils.ConvertMZIDToTSV(mzidToTsvConverterProgLoc, m_Dataset, strMZIDFileName);
-
-                if (string.IsNullOrEmpty(strTSVFilePath))
-                {
-                    if (string.IsNullOrEmpty(m_message))
-                    {
-                        LogError("Error calling mMSGFDBUtils.ConvertMZIDToTSV; path not returned");
-                    }
-                    return string.Empty;
-                }
+                return string.Empty;
             }
 
             var splitFastaEnabled = m_jobParams.GetJobParameter("SplitFasta", false);
@@ -982,10 +651,9 @@ namespace AnalysisManagerMSGFDBPlugIn
                 var tsvFileName = ParallelMSGFPlusRenameFile(Path.GetFileName(strTSVFilePath));
                 return tsvFileName;
             }
-            else
-            {
-                return Path.GetFileName(strTSVFilePath);
-            }
+
+            return Path.GetFileName(strTSVFilePath);
+
         }
 
         private void CopyFailedResultsToArchiveFolder()
@@ -1001,8 +669,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 m_DebugLevel = 2;
 
             // Try to save whatever files are in the work directory (however, delete the _DTA.txt and _DTA.zip files first)
-            string strFolderPathToArchive = null;
-            strFolderPathToArchive = string.Copy(m_WorkDir);
+            var strFolderPathToArchive = string.Copy(m_WorkDir);
 
             mMSGFDBUtils.DeleteFileInWorkDir(m_Dataset + "_dta.txt");
             mMSGFDBUtils.DeleteFileInWorkDir(m_Dataset + "_dta.zip");
@@ -1040,28 +707,25 @@ namespace AnalysisManagerMSGFDBPlugIn
                 strScanTypeFilePath = objScanTypeFileCreator.ScanTypeFilePath;
                 return true;
             }
-            else
+
+            var strErrorMessage = "Error creating scan type file: " + objScanTypeFileCreator.ErrorMessage;
+            var detailedMessage = string.Empty;
+
+            if (!string.IsNullOrEmpty(objScanTypeFileCreator.ExceptionDetails))
             {
-                var strErrorMessage = "Error creating scan type file: " + objScanTypeFileCreator.ErrorMessage;
-                var detailedMessage = string.Empty;
-
-                if (!string.IsNullOrEmpty(objScanTypeFileCreator.ExceptionDetails))
-                {
-                    detailedMessage += "; " + objScanTypeFileCreator.ExceptionDetails;
-                }
-
-                LogError(strErrorMessage, detailedMessage);
-                return false;
+                detailedMessage += "; " + objScanTypeFileCreator.ExceptionDetails;
             }
+
+            LogError(strErrorMessage, detailedMessage);
+            return false;
         }
 
         private CloseOutType DetermineAssumedScanType(out string strAssumedScanType, out eInputFileFormatTypes eInputFileFormat,
             out string strScanTypeFilePath)
         {
-            string strScriptNameLCase = null;
             strAssumedScanType = string.Empty;
 
-            strScriptNameLCase = m_jobParams.GetParam("ToolName").ToLower();
+            var strScriptNameLCase = m_jobParams.GetParam("ToolName").ToLower();
             strScanTypeFilePath = string.Empty;
 
             if (strScriptNameLCase.Contains("mzxml") || strScriptNameLCase.Contains("msgfplus_bruker"))
@@ -1106,9 +770,9 @@ namespace AnalysisManagerMSGFDBPlugIn
             UpdateStatusFile();
 
             // Parse the console output file every 30 seconds
-            if (System.DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= SECONDS_BETWEEN_UPDATE)
+            if (DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= SECONDS_BETWEEN_UPDATE)
             {
-                dtLastConsoleOutputParse = System.DateTime.UtcNow;
+                dtLastConsoleOutputParse = DateTime.UtcNow;
 
                 ParseConsoleOutputFile(mWorkingDirectoryInUse);
                 if (!mToolVersionWritten && !string.IsNullOrWhiteSpace(mMSGFDBUtils.MSGFPlusVersion))
@@ -1125,11 +789,11 @@ namespace AnalysisManagerMSGFDBPlugIn
                     if (!mMSGFPlusComplete)
                     {
                         mMSGFPlusComplete = true;
-                        mMSGFPlusCompletionTime = System.DateTime.UtcNow;
+                        mMSGFPlusCompletionTime = DateTime.UtcNow;
                     }
                     else
                     {
-                        if (System.DateTime.UtcNow.Subtract(mMSGFPlusCompletionTime).TotalMinutes >= 5)
+                        if (DateTime.UtcNow.Subtract(mMSGFPlusCompletionTime).TotalMinutes >= 5)
                         {
                             // MSGF+ is stuck at 96% complete and has been that way for 5 minutes
                             // Java is likely frozen and thus the process should be aborted
@@ -1139,18 +803,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                             // Bump up mMSGFPlusCompletionTime by one hour
                             // This will prevent this function from logging the above message every 30 seconds if the .abort command fails
                             mMSGFPlusCompletionTime = mMSGFPlusCompletionTime.AddHours(1);
-#if EnableHPC
-                            if (mUsingHPC)
-                            {
-                                mComputeCluster.AbortNow();
-                            }
-                            else
-                            {
-                                CmdRunner.AbortProgramNow();
-                            }
-#else
                             mCmdRunner.AbortProgramNow();
-#endif
                         }
                     }
                 }
@@ -1224,10 +877,9 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Convert the .mzid file to a TSV file and create the PeptideToProtein map file (Dataset_msgfplus_PepToProtMap.txt)
         /// </summary>
         /// <param name="resultsFileName"></param>
-        /// <param name="udtHPCOptions"></param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>Assumes that the calling function has verified that resultsFileName exists</remarks>
-        private CloseOutType PostProcessMSGFDBResults(string resultsFileName, clsAnalysisResources.udtHPCOptionsType udtHPCOptions)
+        private CloseOutType PostProcessMSGFDBResults(string resultsFileName)
         {
             var currentTask = "Starting";
 
@@ -1252,20 +904,14 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return result;
                 }
 
-                if (!mMSGFPlus)
-                {
-                    m_jobParams.AddResultFileToSkip(resultsFileName + ".temp.tsv");
-                }
-
-                string msgfPlusResultsFileName = null;
+                string msgfPlusResultsFileName;
                 if (Path.GetExtension(resultsFileName).ToLower() == ".mzid")
                 {
                     // Convert the .mzid file to a .tsv file
-                    // If running on HPC this should have already happened, but we need to call ConvertMZIDToTSV() anyway to possibly rename the .tsv file
 
                     currentTask = "Calling ConvertMZIDToTSV";
                     UpdateStatusRunning(clsMSGFDBUtils.PROGRESS_PCT_MSGFPLUS_CONVERT_MZID_TO_TSV);
-                    msgfPlusResultsFileName = ConvertMZIDToTSV(resultsFileName, udtHPCOptions);
+                    msgfPlusResultsFileName = ConvertMZIDToTSV(resultsFileName);
 
                     if (string.IsNullOrEmpty(msgfPlusResultsFileName))
                     {
@@ -1309,18 +955,10 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
 
                 // Create the Peptide to Protein map file, Dataset_msgfplus_PepToProtMap.txt
-                // ToDo: If udtHPCOptions.UsingPIC = True, then run this on PIC by calling 64-bit PeptideToProteinMapper.exe
 
                 UpdateStatusRunning(clsMSGFDBUtils.PROGRESS_PCT_MSGFPLUS_MAPPING_PEPTIDES_TO_PROTEINS);
 
                 var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
-
-                if (udtHPCOptions.UsingHPC)
-                {
-                    // Override the OrgDbDir to point to Picfs
-                    localOrgDbFolder = Path.Combine(udtHPCOptions.SharePath, "DMS_Temp_Org");
-                }
-
                 currentTask = "Calling CreatePeptideToProteinMapping";
                 result = mMSGFDBUtils.CreatePeptideToProteinMapping(msgfPlusResultsFileName, mResultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder);
                 if (result != CloseOutType.CLOSEOUT_SUCCESS & result != CloseOutType.CLOSEOUT_NO_DATA)
@@ -1332,7 +970,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
             catch (Exception ex)
             {
-                LogError("Error in PostProcessMSGFDBResults", ex);
+                LogError("Error in PostProcessMSGFDBResults (CurrentTask = " + currentTask + ")", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }
@@ -1343,68 +981,26 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <remarks></remarks>
         private bool StoreToolVersionInfo()
         {
-            string strToolVersionInfo = null;
-
             LogMessage("Determining tool version info", 2);
 
-            strToolVersionInfo = string.Copy(mMSGFDBUtils.MSGFPlusVersion);
+            var strToolVersionInfo = string.Copy(mMSGFDBUtils.MSGFPlusVersion);
 
             // Store paths to key files in ioToolFiles
-            List<FileInfo> ioToolFiles = new List<FileInfo>();
-            ioToolFiles.Add(new FileInfo(mMSGFDbProgLoc));
+            var ioToolFiles = new List<FileInfo> {
+                new FileInfo(mMSGFDbProgLoc)
+            };
 
             try
             {
                 // Need to pass blnSaveToolVersionTextFile to True so that the ToolVersionInfo file gets created
                 // The PeptideListToXML program uses that file when creating .pepXML files
-                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile: true);
+                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile: true);
             }
             catch (Exception ex)
             {
                 LogError("Exception calling SetStepTaskToolVersion", ex);
                 return false;
             }
-        }
-
-        private bool VerifyHPCMSGFDb(clsAnalysisResources.udtHPCOptionsType udtHPCOptions)
-        {
-            try
-            {
-                // Make sure the copy of MSGF+ is up-to-date on PICfs
-                var fiMSGFDbProg = new FileInfo(mMSGFDbProgLoc);
-                var strMSGFDbRelativePath = fiMSGFDbProg.Directory.FullName;
-                var chDMSProgramsIndex = strMSGFDbRelativePath.ToLower().IndexOf("\\dms_programs\\", StringComparison.Ordinal);
-
-                if (chDMSProgramsIndex < 0)
-                {
-                    m_message = "Unable to determine the relative path to the MSGF+ program folder; could not find \\dms_programs\\ in " +
-                                strMSGFDbRelativePath;
-                    return false;
-                }
-
-                strMSGFDbRelativePath = strMSGFDbRelativePath.Substring(chDMSProgramsIndex + 1);
-
-                var strTargetDirectory = Path.Combine(udtHPCOptions.SharePath, strMSGFDbRelativePath);
-                mMSGFDbProgLocHPC = Path.Combine(strTargetDirectory, fiMSGFDbProg.Name);
-
-                var success = SynchronizeFolders(fiMSGFDbProg.Directory.FullName, strTargetDirectory, fiMSGFDbProg.Name);
-
-                if (!success)
-                {
-                    if (string.IsNullOrWhiteSpace(m_message))
-                    {
-                        m_message = "SynchronizeFolders returned false validating " + fiMSGFDbProg.Name + " on HPC";
-                    }
-                    return false;
-                }
-            }
-            catch (Exception ex)
-            {
-                LogError("Error in VerifyHPCMSGFDb", ex);
-                return false;
-            }
-
-            return true;
         }
 
         #endregion
@@ -1424,38 +1020,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         {
             m_message = string.Empty;
         }
-
-#if EnableHPC
-
-        private void mComputeCluster_ErrorEvent(object sender, HPC_Submit.MessageEventArgs e)
-        {
-            LogError(e.Message, 0, true);
-        }
-
-        private void mComputeCluster_MessageEvent(object sender, HPC_Submit.MessageEventArgs e)
-        {
-            LogMessage(e.Message);
-        }
-
-        private void mComputeCluster_ProgressEvent(object sender, HPC_Submit.ProgressEventArgs e)
-        {
-            mHPCMonitorInitTimer.Enabled = false;
-            MonitorProgress();
-        }
-
-        /// <summary>
-        /// This timer is started just before the call to mComputeCluster.MonitorJob
-        /// The event will fire very 30 seconds, allowing the manager to update its status
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        /// <remarks>When event mComputeCluster.ProgressEvent fires, it will disable this timer</remarks>
-        private void mHPCMonitorInitTimer_Elapsed(object sender, Timers.ElapsedEventArgs e)
-        {
-            UpdateStatusRunning();
-        }
-
-#endif
 
         #endregion
     }

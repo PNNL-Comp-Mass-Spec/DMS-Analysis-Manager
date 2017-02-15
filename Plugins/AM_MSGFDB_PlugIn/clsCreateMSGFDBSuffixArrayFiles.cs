@@ -31,43 +31,24 @@ namespace AnalysisManagerMSGFDBPlugIn
         private string mErrorMessage = string.Empty;
         private readonly string mMgrName;
 
-        private string mPICHPCUser;
-        private string mPICHPCPassword;
-
-#if EnableHPC
-        private HPC_Submit.WindowsHPC2012 mComputeCluster;
-#endif
-
         #endregion
 
-        public string ErrorMessage
-        {
-            get { return mErrorMessage; }
-        }
+        public string ErrorMessage => mErrorMessage;
 
         /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="strManagerName"></param>
-        public clsCreateMSGFDBSuffixArrayFiles(string strManagerName) : this(strManagerName, string.Empty, string.Empty)
-        {
-        }
-
-        /// <summary>
-        /// Constructor
-        /// </summary>
-        /// <param name="strManagerName"></param>
-        public clsCreateMSGFDBSuffixArrayFiles(string strManagerName, string sPICHPCUser, string sPICHPCPassword)
+        public clsCreateMSGFDBSuffixArrayFiles(string strManagerName)
         {
             mMgrName = strManagerName;
-            mPICHPCUser = sPICHPCUser;
-            mPICHPCPassword = sPICHPCPassword;
         }
 
         private CloseOutType CopyExistingIndexFilesFromRemote(FileInfo fiFastaFile, bool blnUsingLegacyFasta, string strRemoteIndexFolderPath,
-            bool blnCheckForLockFile, int intDebugLevel, float sngMaxWaitTimeHours, out bool diskFreeSpaceBelowThreshold)
+                                                              bool blnCheckForLockFile, int intDebugLevel, float sngMaxWaitTimeHours,
+                                                              out bool diskFreeSpaceBelowThreshold)
         {
-            var blnSuccess = false;
+            bool blnSuccess;
 
             diskFreeSpaceBelowThreshold = false;
 
@@ -83,13 +64,15 @@ namespace AnalysisManagerMSGFDBPlugIn
                 if (blnCheckForLockFile)
                 {
                     // Look for an existing lock file
-                    var fiRemoteLockFile1 = new FileInfo(Path.Combine(diRemoteIndexFolderPath.FullName, fiFastaFile.Name + MSGF_PLUS_INDEX_FILE_INFO_SUFFIX + ".lock"));
+                    var fiRemoteLockFile1 =
+                        new FileInfo(Path.Combine(diRemoteIndexFolderPath.FullName, fiFastaFile.Name + MSGF_PLUS_INDEX_FILE_INFO_SUFFIX + ".lock"));
 
                     WaitForExistingLockfile(fiRemoteLockFile1, intDebugLevel, sngMaxWaitTimeHours);
                 }
 
                 // Look for the .MSGFPlusIndexFileInfo file for this fasta file
-                var fiMSGFPlusIndexFileInfo = new FileInfo(Path.Combine(diRemoteIndexFolderPath.FullName, fiFastaFile.Name + MSGF_PLUS_INDEX_FILE_INFO_SUFFIX));
+                var fiMSGFPlusIndexFileInfo =
+                    new FileInfo(Path.Combine(diRemoteIndexFolderPath.FullName, fiFastaFile.Name + MSGF_PLUS_INDEX_FILE_INFO_SUFFIX));
 
                 long fileSizeTotalKB = 0;
 
@@ -104,20 +87,22 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 var dctFilesToCopy = new Dictionary<string, long>();
 
-                using (var srInFile = new StreamReader(new FileStream(fiMSGFPlusIndexFileInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (
+                    var srInFile =
+                        new StreamReader(new FileStream(fiMSGFPlusIndexFileInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    string strLineIn = null;
-
                     while (!srInFile.EndOfStream)
                     {
-                        strLineIn = srInFile.ReadLine();
+                        var strLineIn = srInFile.ReadLine();
+                        if (string.IsNullOrEmpty(strLineIn))
+                            continue;
 
                         var lstData = strLineIn.Split('\t').ToList();
 
                         if (lstData.Count >= 3)
                         {
                             // Add this file to the list of files to copy
-                            long intFileSizeBytes = 0;
+                            long intFileSizeBytes;
                             if (long.TryParse(lstData[1], out intFileSizeBytes))
                             {
                                 dctFilesToCopy.Add(lstData[0], intFileSizeBytes);
@@ -127,7 +112,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     }
                 }
 
-                bool blnFilesAreValid = false;
+                bool blnFilesAreValid;
 
                 if (dctFilesToCopy.Count == 0)
                 {
@@ -138,7 +123,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     // Confirm that each file in dctFilesToCopy exists on the remote server
                     // If using a legacy fasta file, must also confirm that each file is newer than the fasta file that was indexed
                     blnFilesAreValid = ValidateFiles(diRemoteIndexFolderPath.FullName, dctFilesToCopy, blnUsingLegacyFasta,
-                        fiFastaFile.LastWriteTimeUtc, true);
+                                                     fiFastaFile.LastWriteTimeUtc, true);
                 }
 
                 if (!blnFilesAreValid)
@@ -155,14 +140,14 @@ namespace AnalysisManagerMSGFDBPlugIn
                 var strManager = GetPseudoManagerName();
 
                 var filesCopied = 0;
-                var dtLastStatusUpdate = System.DateTime.UtcNow;
+                var dtLastStatusUpdate = DateTime.UtcNow;
 
                 var oFileTools = new PRISM.Files.clsFileTools(strManager, intDebugLevel);
 
                 // Compute the total disk space required
                 long fileSizeTotalBytes = 0;
 
-                foreach (KeyValuePair<string, long> entry in dctFilesToCopy)
+                foreach (var entry in dctFilesToCopy)
                 {
                     var fiSourceFile = new FileInfo(Path.Combine(diRemoteIndexFolderPath.FullName, entry.Key));
                     fileSizeTotalBytes += fiSourceFile.Length;
@@ -173,18 +158,20 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // Convert fileSizeTotalBytes to MB, but add on a Default_Min_free_Space to assure we'll still have enough free space after copying over the files
                 var minFreeSpaceMB = (int)(fileSizeTotalBytes / 1024.0 / 1024.0 + DEFAULT_ORG_DB_DIR_MIN_FREE_SPACE_MB);
 
-                diskFreeSpaceBelowThreshold = !clsGlobal.ValidateFreeDiskSpace("Organism DB directory", fiFastaFile.Directory.FullName, minFreeSpaceMB, clsLogTools.LoggerTypes.LogFile, out mErrorMessage);
+                diskFreeSpaceBelowThreshold =
+                    !clsGlobal.ValidateFreeDiskSpace("Organism DB directory", fiFastaFile.Directory.FullName, minFreeSpaceMB,
+                                                     clsLogTools.LoggerTypes.LogFile, out mErrorMessage);
 
                 if (diskFreeSpaceBelowThreshold)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                FileInfo fiRemoteLockFile2 = null;
-                bool blnRemoteLockFileCreated = false;
+                FileInfo fiRemoteLockFile2;
 
-                blnRemoteLockFileCreated = CreateRemoteSuffixArrayLockFile(fiFastaFile.Name, fiFastaFile.Directory.FullName, out fiRemoteLockFile2,
-                    intDebugLevel, sngMaxWaitTimeHours);
+                var blnRemoteLockFileCreated = CreateRemoteSuffixArrayLockFile(
+                    fiFastaFile.Name, fiFastaFile.Directory.FullName,
+                    out fiRemoteLockFile2, intDebugLevel, sngMaxWaitTimeHours);
 
                 if (blnRemoteLockFileCreated)
                 {
@@ -193,7 +180,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                     // then we should once again check to see if the required files exist
 
                     // Now confirm that each file was successfully copied locally
-                    blnSuccess = ValidateFiles(fiFastaFile.Directory.FullName, dctFilesToCopy, blnUsingLegacyFasta, fiFastaFile.LastWriteTimeUtc, false);
+                    blnSuccess = ValidateFiles(fiFastaFile.Directory.FullName, dctFilesToCopy, blnUsingLegacyFasta, fiFastaFile.LastWriteTimeUtc,
+                                               false);
                     if (blnSuccess)
                     {
                         // Files now exist
@@ -202,7 +190,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     }
                 }
 
-                foreach (KeyValuePair<string, long> entry in dctFilesToCopy)
+                foreach (var entry in dctFilesToCopy)
                 {
                     var fiSourceFile = new FileInfo(Path.Combine(diRemoteIndexFolderPath.FullName, entry.Key));
 
@@ -211,9 +199,9 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                     filesCopied += 1;
 
-                    if (intDebugLevel >= 1 && System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 30)
+                    if (intDebugLevel >= 1 && DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 30)
                     {
-                        dtLastStatusUpdate = System.DateTime.UtcNow;
+                        dtLastStatusUpdate = DateTime.UtcNow;
                         OnStatusEvent("Retrieved " + filesCopied + " / " + dctFilesToCopy.Count + " index files");
                     }
                 }
@@ -233,19 +221,19 @@ namespace AnalysisManagerMSGFDBPlugIn
             {
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
-            else
-            {
-                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
-            }
+
+            return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+
         }
 
         private bool CopyIndexFilesToRemote(FileInfo fiFastaFile, string strRemoteIndexFolderPath, int intDebugLevel)
         {
-            var strErrorMessage = string.Empty;
+            string strErrorMessage;
             var strManager = GetPseudoManagerName();
             const bool createIndexFileForExistingFiles = false;
 
-            var success = CopyIndexFilesToRemote(fiFastaFile, strRemoteIndexFolderPath, intDebugLevel, strManager, createIndexFileForExistingFiles, out strErrorMessage);
+            var success = CopyIndexFilesToRemote(fiFastaFile, strRemoteIndexFolderPath, intDebugLevel, strManager, createIndexFileForExistingFiles,
+                                                 out strErrorMessage);
             if (!success)
             {
                 OnErrorEvent(strErrorMessage);
@@ -266,9 +254,8 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <returns></returns>
         /// <remarks>This function is used both by this class and by the MSGFPlusIndexFileCopier console application</remarks>
         public static bool CopyIndexFilesToRemote(FileInfo fiFastaFile, string remoteIndexFolderPath, int debugLevel, string managerName,
-            bool createIndexFileForExistingFiles, out string strErrorMessage)
+                                                  bool createIndexFileForExistingFiles, out string strErrorMessage)
         {
-            var blnSuccess = false;
             strErrorMessage = string.Empty;
 
             try
@@ -297,74 +284,66 @@ namespace AnalysisManagerMSGFDBPlugIn
                 var lstFileInfo = new List<string>();
 
                 // Find the index files for fiFastaFile
-                foreach (FileInfo fiSourceFile in fiFastaFile.Directory.GetFiles(Path.GetFileNameWithoutExtension(fiFastaFile.Name) + ".*"))
+                foreach (var fiSourceFile in fiFastaFile.Directory.GetFiles(Path.GetFileNameWithoutExtension(fiFastaFile.Name) + ".*"))
                 {
                     if (fiSourceFile.FullName != fiFastaFile.FullName)
                     {
                         if (fiSourceFile.Extension != ".hashcheck" && fiSourceFile.Extension != ".MSGFPlusIndexFileInfo")
                         {
                             dctFilesToCopy.Add(fiSourceFile.Name, fiSourceFile.Length);
-                            lstFileInfo.Add(fiSourceFile.Name + "\t" + fiSourceFile.Length + "\t" + fiSourceFile.LastWriteTimeUtc.ToString(DATE_TIME_FORMAT));
+                            lstFileInfo.Add(fiSourceFile.Name + "\t" + fiSourceFile.Length + "\t" +
+                                            fiSourceFile.LastWriteTimeUtc.ToString(DATE_TIME_FORMAT));
                         }
                     }
                 }
 
-                if (createIndexFileForExistingFiles)
-                {
-                    blnSuccess = true;
-                }
-                else
+                if (!createIndexFileForExistingFiles)
                 {
                     // Copy up each file
                     var oFileTools = new PRISM.Files.clsFileTools(managerName, debugLevel);
 
-                    foreach (KeyValuePair<string, long> entry in dctFilesToCopy)
+                    foreach (var entry in dctFilesToCopy)
                     {
-                        string strSourceFilePath = null;
-                        string strTargetFilePath = null;
+                        var strSourceFilePath = Path.Combine(fiFastaFile.Directory.FullName, entry.Key);
+                        var strTargetFilePath = Path.Combine(diRemoteIndexFolderPath.FullName, entry.Key);
 
-                        strSourceFilePath = Path.Combine(fiFastaFile.Directory.FullName, entry.Key);
-                        strTargetFilePath = Path.Combine(diRemoteIndexFolderPath.FullName, entry.Key);
-
-                        blnSuccess = oFileTools.CopyFileUsingLocks(strSourceFilePath, strTargetFilePath, managerName, true);
-                        if (!blnSuccess)
+                        var success = oFileTools.CopyFileUsingLocks(strSourceFilePath, strTargetFilePath, managerName, true);
+                        if (!success)
                         {
                             strErrorMessage = "CopyFileUsingLocks returned false copying to " + strTargetFilePath;
-                            break;
+                            return false;
                         }
                     }
                 }
 
-                if (blnSuccess)
+                // Create the .MSGFPlusIndexFileInfo file for this fasta file
+                var fiMSGFPlusIndexFileInfo = new FileInfo(Path.Combine(
+                    diRemoteIndexFolderPath.FullName,
+                    fiFastaFile.Name + MSGF_PLUS_INDEX_FILE_INFO_SUFFIX));
+
+                using (var swOutFile = new StreamWriter(new FileStream(fiMSGFPlusIndexFileInfo.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    // Create the .MSGFPlusIndexFileInfo file for this fasta file
-                    var fiMSGFPlusIndexFileInfo = new FileInfo(Path.Combine(diRemoteIndexFolderPath.FullName, fiFastaFile.Name + MSGF_PLUS_INDEX_FILE_INFO_SUFFIX));
-
-                    using (var swOutFile = new StreamWriter(new FileStream(fiMSGFPlusIndexFileInfo.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                    foreach (var entry in lstFileInfo)
                     {
-                        foreach (var entry in lstFileInfo)
-                        {
-                            swOutFile.WriteLine(entry);
-                        }
+                        swOutFile.WriteLine(entry);
                     }
-
-                    blnSuccess = true;
                 }
+
+                return true;
             }
             catch (Exception ex)
             {
                 strErrorMessage = "Exception in CopyIndexFilesToRemote; " + ex.Message;
-                blnSuccess = false;
+                return false;
             }
 
-            return blnSuccess;
         }
 
         /// <summary>
         /// Convert .Fasta file to indexed DB files compatible with MSGFPlus
         /// Will copy the files from strMSGFPlusIndexFilesFolderPathBase if they exist
         /// </summary>
-        /// <param name="strLogfileDir"></param>
+        /// <param name="strLogFileDir"></param>
         /// <param name="intDebugLevel"></param>
         /// <param name="JobNum"></param>
         /// <param name="javaProgLoc"></param>
@@ -376,16 +355,12 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <returns>CloseOutType enum indicating success or failure</returns>
         /// <remarks></remarks>
         public CloseOutType CreateSuffixArrayFiles(string strLogFileDir, int intDebugLevel, string JobNum, string javaProgLoc, string msgfDbProgLoc,
-            string strFASTAFilePath, bool blnFastaFileIsDecoy, string strMSGFPlusIndexFilesFolderPathBase,
-            string strMSGFPlusIndexFilesFolderPathLegacyDB, clsAnalysisResources.udtHPCOptionsType udtHPCOptions)
+                                                   string strFASTAFilePath, bool blnFastaFileIsDecoy, string strMSGFPlusIndexFilesFolderPathBase,
+                                                   string strMSGFPlusIndexFilesFolderPathLegacyDB)
         {
             const float MAX_WAITTIME_HOURS = 1.0f;
 
-            string strOutputNameBase = null;
-
-            string dbSarrayFilename = null;
-
-            float sngMaxWaitTimeHours = MAX_WAITTIME_HOURS;
+            var sngMaxWaitTimeHours = MAX_WAITTIME_HOURS;
 
             var strCurrentTask = "Initializing";
             CloseOutType eResult;
@@ -397,7 +372,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 if (intDebugLevel > 4)
                 {
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                        "clsCreateMSGFDBSuffixArrayFiles.CreateIndexedDbFiles(): Enter");
+                                         "clsCreateMSGFDBSuffixArrayFiles.CreateIndexedDbFiles(): Enter");
                 }
 
                 var fiFastaFile = new FileInfo(strFASTAFilePath);
@@ -415,16 +390,10 @@ namespace AnalysisManagerMSGFDBPlugIn
                 var blnUsingLegacyFasta = !reProtectionCollectionFasta.IsMatch(fiFastaFile.Name);
 
                 //  Look for existing suffix array files
-                strOutputNameBase = Path.GetFileNameWithoutExtension(fiFastaFile.Name);
+                var strOutputNameBase = Path.GetFileNameWithoutExtension(fiFastaFile.Name);
 
                 var fiLockFile = new FileInfo(Path.Combine(fiFastaFile.DirectoryName, strOutputNameBase + "_csarr.lock"));
-                dbSarrayFilename = Path.Combine(fiFastaFile.DirectoryName, strOutputNameBase + ".csarr");
-
-                if (udtHPCOptions.UsingHPC)
-                {
-                    // Increase the maximum wait time to 24 hours; useful in case another manager has created a BuildSA job, and that job is stuck in the queue
-                    sngMaxWaitTimeHours = 24;
-                }
+                var dbSarrayFilename = Path.Combine(fiFastaFile.DirectoryName, strOutputNameBase + ".csarr");
 
                 // Check to see if another Analysis Manager is already creating the indexed DB files
                 strCurrentTask = "Looking for lock file " + fiLockFile.FullName;
@@ -445,49 +414,47 @@ namespace AnalysisManagerMSGFDBPlugIn
                 {
                     blnReindexingRequired = true;
 
-                        for (var intIndex = 0; intIndex <= fiLegacyIndexedFiles.Length - 1; intIndex++)
-                        {
-                            strCurrentTask = "Deleting indexed file created by legacy MSGFDB: " + fiLegacyIndexedFiles[intIndex].FullName;
-                            if (intDebugLevel >= 1)
-                            {
-                                OnStatusEvent(strCurrentTask);
-                            }
-                            fiLegacyIndexedFiles[intIndex].Delete();
-                        }
-                    }
-                    else
+                    for (var intIndex = 0; intIndex <= fiLegacyIndexedFiles.Length - 1; intIndex++)
                     {
-                        // Open the FastaFileName.canno file and read the first two lines
-                        // If there is a number on the first line but the second line starts with the letter A, then this file was created with the legacy MSGFDB
-                        var fiCAnnoFile = new FileInfo(Path.Combine(fiFastaFile.DirectoryName, strOutputNameBase + ".canno"));
-                        if (fiCAnnoFile.Exists)
+                        strCurrentTask = "Deleting indexed file created by legacy MSGFDB: " + fiLegacyIndexedFiles[intIndex].FullName;
+                        if (intDebugLevel >= 1)
                         {
-                            strCurrentTask = "Examining first two lines of " + fiCAnnoFile.FullName;
-                            using (var srCannoFile = new StreamReader(new FileStream(fiCAnnoFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                            OnStatusEvent(strCurrentTask);
+                        }
+                        fiLegacyIndexedFiles[intIndex].Delete();
+                    }
+                }
+                else
+                {
+                    // Open the FastaFileName.canno file and read the first two lines
+                    // If there is a number on the first line but the second line starts with the letter A, then this file was created with the legacy MSGFDB
+                    var fiCAnnoFile = new FileInfo(Path.Combine(fiFastaFile.DirectoryName, strOutputNameBase + ".canno"));
+                    if (fiCAnnoFile.Exists)
+                    {
+                        strCurrentTask = "Examining first two lines of " + fiCAnnoFile.FullName;
+                        using (
+                            var srCannoFile =
+                                new StreamReader(new FileStream(fiCAnnoFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                        {
+                            if (!srCannoFile.EndOfStream)
                             {
+                                var strLine1 = srCannoFile.ReadLine();
+
                                 if (!srCannoFile.EndOfStream)
                                 {
-                                    string strLine1 = null;
-                                    string strLine2 = null;
-                                    int intLine1Value = 0;
+                                    var strLine2 = srCannoFile.ReadLine();
 
-                                    strLine1 = srCannoFile.ReadLine();
-
-                                    if (!srCannoFile.EndOfStream)
+                                    int intLine1Value;
+                                    if (int.TryParse(strLine1, out intLine1Value))
                                     {
-                                        strLine2 = srCannoFile.ReadLine();
-
-                                        if (int.TryParse(strLine1, out intLine1Value))
+                                        if (strLine2 != null && char.IsLetter(strLine2[0]))
                                         {
-                                            if (char.IsLetter(strLine2[0]))
+                                            strCurrentTask = "Legacy MSGFDB indexed file found (" + fiCAnnoFile.Name + "); re-indexing";
+                                            if (intDebugLevel >= 1)
                                             {
-                                                strCurrentTask = "Legacy MSGFDB indexed file found (" + fiCAnnoFile.Name + "); re-indexing";
-                                                if (intDebugLevel >= 1)
-                                                {
-                                                    OnStatusEvent(strCurrentTask);
-                                                }
-                                                blnReindexingRequired = true;
+                                                OnStatusEvent(strCurrentTask);
                                             }
+                                            blnReindexingRequired = true;
                                         }
                                     }
                                 }
@@ -502,8 +469,8 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (!blnReindexingRequired)
                 {
-                    var strExistingFiles = string.Empty;
-                    var strMissingFiles = string.Empty;
+                    string strExistingFiles;
+                    string strMissingFiles;
 
                     strCurrentTask = "Validating that expected files exist";
                     var lstExistingFiles = FindExistingSuffixArrayFiles(blnFastaFileIsDecoy, msgfPlus, strOutputNameBase, fiFastaFile.DirectoryName,
@@ -532,8 +499,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                         // We can't do this for programatically generated fasta files (that use protein collections)
                         //   since their modification date will be the time that the file was created
 
-                        blnReindexingRequired = false;
-
                         foreach (var fiIndexFile in lstExistingFiles)
                         {
                             if (fiIndexFile.LastWriteTimeUtc < fiFastaFile.LastWriteTimeUtc.AddSeconds(-0.1))
@@ -555,16 +520,14 @@ namespace AnalysisManagerMSGFDBPlugIn
                     // Copy them from strMSGFPlusIndexFilesFolderPathBase or strMSGFPlusIndexFilesFolderPathLegacyDB if possible
                     // Otherwise, create new index files
 
-                    string strRemoteIndexFolderPath = null;
-                    strRemoteIndexFolderPath = DetermineRemoteMSGFPlusIndexFilesFolderPath(fiFastaFile.Name, strMSGFPlusIndexFilesFolderPathBase,
-                        strMSGFPlusIndexFilesFolderPathLegacyDB);
+                    var strRemoteIndexFolderPath = DetermineRemoteMSGFPlusIndexFilesFolderPath(
+                        fiFastaFile.Name, strMSGFPlusIndexFilesFolderPathBase, strMSGFPlusIndexFilesFolderPathLegacyDB);
 
-                    bool blnCheckForLockFile = false;
-                    var diskFreeSpaceBelowThreshold = false;
+                    bool diskFreeSpaceBelowThreshold;
 
-                    blnCheckForLockFile = true;
+                    var blnCheckForLockFile = true;
                     eResult = CopyExistingIndexFilesFromRemote(fiFastaFile, blnUsingLegacyFasta, strRemoteIndexFolderPath, blnCheckForLockFile,
-                        intDebugLevel, sngMaxWaitTimeHours, out diskFreeSpaceBelowThreshold);
+                                                               intDebugLevel, sngMaxWaitTimeHours, out diskFreeSpaceBelowThreshold);
 
                     if (diskFreeSpaceBelowThreshold)
                     {
@@ -578,12 +541,11 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                         // Create a remote lock file
 
-                        FileInfo fiRemoteLockFile = null;
-                        bool blnRemoteLockFileCreated = false;
+                        FileInfo fiRemoteLockFile;
 
                         strCurrentTask = "Create the remote lock file";
-                        blnRemoteLockFileCreated = CreateRemoteSuffixArrayLockFile(fiFastaFile.Name, strRemoteIndexFolderPath, out fiRemoteLockFile,
-                            intDebugLevel, sngMaxWaitTimeHours);
+                        var blnRemoteLockFileCreated = CreateRemoteSuffixArrayLockFile(fiFastaFile.Name, strRemoteIndexFolderPath, out fiRemoteLockFile,
+                                                                                        intDebugLevel, sngMaxWaitTimeHours);
 
                         if (blnRemoteLockFileCreated)
                         {
@@ -592,7 +554,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                             blnCheckForLockFile = false;
                             eResult = CopyExistingIndexFilesFromRemote(fiFastaFile, blnUsingLegacyFasta, strRemoteIndexFolderPath, blnCheckForLockFile,
-                                intDebugLevel, sngMaxWaitTimeHours, out diskFreeSpaceBelowThreshold);
+                                                                       intDebugLevel, sngMaxWaitTimeHours, out diskFreeSpaceBelowThreshold);
 
                             if (eResult == CloseOutType.CLOSEOUT_SUCCESS)
                             {
@@ -672,9 +634,9 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 // Determine the amount of ram to reserve for BuildSA
                 // Examine the size of the .Fasta file to determine how much ram to reserve
-                int intJavaMemorySizeMB = 0;
+                int intJavaMemorySizeMB;
 
-                var intFastaFileSizeMB = Convert.ToInt32(fiFastaFile.Length / 1024.0 / 1024.0);
+                var intFastaFileSizeMB = (int)(fiFastaFile.Length / 1024.0 / 1024.0);
 
                 if (intFastaFileSizeMB <= 125)
                 {
@@ -693,20 +655,13 @@ namespace AnalysisManagerMSGFDBPlugIn
                     intJavaMemorySizeMB = 12000;
                 }
 
-                if (udtHPCOptions.UsingHPC)
-                {
-                    intJavaMemorySizeMB = udtHPCOptions.MinimumMemoryMB;
-                }
-                else
-                {
-                    strCurrentTask = "Verify free memory";
+                strCurrentTask = "Verify free memory";
 
-                    // Make sure the machine has enough free memory to run BuildSA
-                    if (!clsAnalysisResources.ValidateFreeMemorySize(intJavaMemorySizeMB, "BuildSA", false))
-                    {
-                        mErrorMessage = "Cannot run BuildSA since less than " + intJavaMemorySizeMB + " MB of free memory";
-                        return CloseOutType.CLOSEOUT_FAILED;
-                    }
+                // Make sure the machine has enough free memory to run BuildSA
+                if (!clsAnalysisResources.ValidateFreeMemorySize(intJavaMemorySizeMB, "BuildSA", false))
+                {
+                    mErrorMessage = "Cannot run BuildSA since less than " + intJavaMemorySizeMB + " MB of free memory";
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // Create a lock file
@@ -733,9 +688,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
 
                 // Create a lock file in the folder that the index files will be created
-                bool success = false;
                 strCurrentTask = "Create the local lock file: " + fiLockFile.FullName;
-                success = CreateLockFile(fiLockFile.FullName);
+                var success = CreateLockFile(fiLockFile.FullName);
                 if (!success)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -792,118 +746,26 @@ namespace AnalysisManagerMSGFDBPlugIn
                     OnStatusEvent(JavaProgLoc + " " + CmdStr);
                 }
 
-                var consoleOutputFilePath = string.Empty;
-
-                if (udtHPCOptions.UsingHPC)
+                var consoleOutputFilePath = Path.Combine(strLogFileDir, "MSGFDB_BuildSA_ConsoleOutput.txt");
+                var objBuildSA = new clsRunDosProgram(fiFastaFile.DirectoryName)
                 {
-#if EnableHPC
-                    var jobName = "BuildSA_" + fiFastaFile.Name;
-                    const string taskName = "BuildSA";
+                    CreateNoWindow = true,
+                    CacheStandardOutput = true,
+                    EchoOutputToConsole = true,
+                    WriteConsoleOutputToFile = true,
+                    ConsoleOutputFilePath = consoleOutputFilePath
+                };
+                objBuildSA.ErrorEvent += CmdRunner_ErrorEvent;
 
-                    var buildSAJobInfo = new HPC_Connector.JobToHPC(udtHPCOptions.HeadNode, jobName, taskName);
+                strCurrentTask = "Run BuildSA using " + CmdStr;
 
-                    buildSAJobInfo.JobParameters.PriorityLevel = HPC_Connector.PriorityLevel.Normal;
-                    buildSAJobInfo.JobParameters.TemplateName = "DMS"; // If using 32 cores, could use Template "Single"
-                    buildSAJobInfo.JobParameters.ProjectName = "DMS";
-
-                    // April 2014 note: If using picfs.pnl.gov then we must reserve an entire node due to file system issues of the Windows Nodes talking to the Isilon file system
-                    // Furthermore, we must set ".isExclusive" to True
-                    // Note that each node has two sockets
-
-                    //buildSAJobInfo.JobParameters.TargetHardwareUnitType = HPC_Connector.HardwareUnitType.Socket
-                    buildSAJobInfo.JobParameters.TargetHardwareUnitType = HPC_Connector.HardwareUnitType.Node;
-                    buildSAJobInfo.JobParameters.isExclusive = true;
-
-                    // If requesting a socket or a node, there is no need to set the number of cores
-                    // buildSAJobInfo.JobParameters.MinNumberOfCores = 0
-                    // buildSAJobInfo.JobParameters.MaxNumberOfCores = 0
-
-                    // Make a batch file that will run the java program, then issue a Ping command with a delay, which will allow the file system to release the file handles
-                    var batchFilePath = clsAnalysisToolRunnerMSGFDB.MakeHPCBatchFile(udtHPCOptions.WorkDirPath, "HPC_SuffixAray_Task.bat", JavaProgLoc + " " + CmdStr);
-
-                    buildSAJobInfo.TaskParameters.CommandLine = batchFilePath;
-                    buildSAJobInfo.TaskParameters.WorkDirectory = udtHPCOptions.WorkDirPath;
-                    buildSAJobInfo.TaskParameters.StdOutFilePath = Path.Combine(udtHPCOptions.WorkDirPath, "MSGFDB_BuildSA_ConsoleOutput.txt");
-                    buildSAJobInfo.TaskParameters.TaskTypeOption = HPC_Connector.HPCTaskType.Basic;
-                    buildSAJobInfo.TaskParameters.FailJobOnFailure = true;
-
-                    if (string.IsNullOrEmpty(mPICHPCUser))
-                    {
-                        mComputeCluster = new HPC_Submit.WindowsHPC2012();
-                    }
-                    else
-                    {
-                        mComputeCluster = new HPC_Submit.WindowsHPC2012(mPICHPCUser, clsGlobal.DecodePassword(mPICHPCPassword));
-                    }
-
-                    mComputeCluster.ErrorEvent += mComputeCluster_ErrorEvent;
-                    mComputeCluster.MessageEvent += mComputeCluster_MessageEvent;
-                    mComputeCluster.ProgressEvent += mComputeCluster_ProgressEvent;
-
-                    var jobID = mComputeCluster.Send(buildSAJobInfo);
-
-                    if (jobID <= 0)
-                    {
-                        mErrorMessage = "BuildSA Job was not created in HPC: " + mComputeCluster.ErrorMessage;
-                        DeleteLockFile(fiLockFile);
-                        return CloseOutType.CLOSEOUT_FAILED;
-                    }
-
-                    if (mComputeCluster.Scheduler == null)
-                    {
-                        mErrorMessage = "Error: HPC Scheduler is null for BuildSA Job";
-                        DeleteLockFile(fiLockFile);
-                        return CloseOutType.CLOSEOUT_FAILED;
-                    }
-
-                    var buildSAJob = mComputeCluster.Scheduler.OpenJob(jobID);
-
-                    success = mComputeCluster.MonitorJob(buildSAJob);
-                    if (!success)
-                    {
-                        mErrorMessage = "HPC Job Monitor returned false: " + mComputeCluster.ErrorMessage;
-                        OnErrorEvent(mErrorMessage);
-                    }
-
-                    try
-                    {
-                        File.Delete(batchFilePath);
-                    }
-                    catch (Exception ex)
-                    {
-                        // Ignore errors here
-                    }
-#else
-                    throw new Exception("HPC Support is disabled in project AnalysisManagerMSGFDBPlugin");
-#endif
-                }
-                else
-                {
-                    consoleOutputFilePath = Path.Combine(strLogFileDir, "MSGFDB_BuildSA_ConsoleOutput.txt");
-                    var objBuildSA = new clsRunDosProgram(fiFastaFile.DirectoryName)
-                    {
-                        CreateNoWindow = true,
-                        CacheStandardOutput = true,
-                        EchoOutputToConsole = true,
-                        WriteConsoleOutputToFile = true,
-                        ConsoleOutputFilePath = consoleOutputFilePath
-                    };
-                    objBuildSA.ErrorEvent += CmdRunner_ErrorEvent;
-
-                    strCurrentTask = "Run BuildSA using " + CmdStr;
-
-                    // Run BuildSA and wait for it to exit
-                    // This process generally doesn't take that long so we do not track CPU usage
-                    success = objBuildSA.RunProgram(JavaProgLoc, CmdStr, "BuildSA", true);
-                }
+                // Run BuildSA and wait for it to exit
+                // This process generally doesn't take that long so we do not track CPU usage
+                success = objBuildSA.RunProgram(JavaProgLoc, CmdStr, "BuildSA", true);
 
                 if (!success)
                 {
                     mErrorMessage = "Error running BuildSA with " + Path.GetFileName(msgfDbProgLoc) + " for " + fiFastaFile.Name;
-                    if (udtHPCOptions.UsingHPC)
-                    {
-                        mErrorMessage += " using HPC";
-                    }
 
                     if (!string.IsNullOrWhiteSpace(consoleOutputFilePath))
                     {
@@ -919,12 +781,10 @@ namespace AnalysisManagerMSGFDBPlugIn
                     DeleteLockFile(fiLockFile);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
-                else
+
+                if (intDebugLevel >= 1)
                 {
-                    if (intDebugLevel >= 1)
-                    {
-                        OnStatusEvent("Created suffix array files for " + fiFastaFile.Name);
-                    }
+                    OnStatusEvent("Created suffix array files for " + fiFastaFile.Name);
                 }
 
                 if (intDebugLevel >= 3)
@@ -956,7 +816,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             {
                 using (var swLockFile = new StreamWriter(strLockFilePath))
                 {
-                    swLockFile.WriteLine("Date: " + System.DateTime.Now.ToString());
+                    swLockFile.WriteLine("Date: " + DateTime.Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
                     swLockFile.WriteLine("Manager: " + mMgrName);
                 }
             }
@@ -971,7 +831,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         }
 
         private bool CreateRemoteSuffixArrayLockFile(string strFastaFileName, string strRemoteIndexFolderPath, out FileInfo fiRemoteLockFile,
-            int intDebugLevel, float sngMaxWaitTimeHours)
+                                                     int intDebugLevel, float sngMaxWaitTimeHours)
         {
             // ReSharper disable once RedundantAssignment
             var strCurrentTask = "Initializing";
@@ -988,7 +848,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                 return false;
             }
 
-            fiRemoteLockFile = new FileInfo(Path.Combine(diRemoteIndexFolderPath.FullName, strFastaFileName + MSGF_PLUS_INDEX_FILE_INFO_SUFFIX + ".lock"));
+            fiRemoteLockFile =
+                new FileInfo(Path.Combine(diRemoteIndexFolderPath.FullName, strFastaFileName + MSGF_PLUS_INDEX_FILE_INFO_SUFFIX + ".lock"));
 
             strCurrentTask = "Looking for lock file " + fiRemoteLockFile.FullName;
             WaitForExistingLockfile(fiRemoteLockFile, intDebugLevel, sngMaxWaitTimeHours);
@@ -1008,7 +869,8 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Exception creating remote MSGF+ suffix array lock file at " + diRemoteIndexFolderPath.FullName + "; " + strCurrentTask, ex);
+                OnErrorEvent("Exception creating remote MSGF+ suffix array lock file at " + diRemoteIndexFolderPath.FullName + "; " + strCurrentTask,
+                             ex);
                 return false;
             }
 
@@ -1025,14 +887,14 @@ namespace AnalysisManagerMSGFDBPlugIn
                     fiLockFile.Delete();
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Ignore errors here
             }
         }
 
         private string DetermineRemoteMSGFPlusIndexFilesFolderPath(string strFastaFileName, string strMSGFPlusIndexFilesFolderPathBase,
-            string strMSGFPlusIndexFilesFolderPathLegacyDB)
+                                                                   string strMSGFPlusIndexFilesFolderPathLegacyDB)
         {
             var reExtractNum = new Regex(@"^ID_(\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
@@ -1043,7 +905,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             var reMatch = reExtractNum.Match(strFastaFileName);
             if (reMatch.Success)
             {
-                int intGeneratedFastaFileNumber = 0;
+                int intGeneratedFastaFileNumber;
 
                 if (int.TryParse(reMatch.Groups[1].Value, out intGeneratedFastaFileNumber))
                 {
@@ -1169,8 +1031,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
         private string GetPseudoManagerName()
         {
-            string strMgrName = null;
-            strMgrName = mMgrName + "_CreateMSGFDBSuffixArrayFiles";
+            var strMgrName = mMgrName + "_CreateMSGFDBSuffixArrayFiles";
 
             return strMgrName;
         }
@@ -1181,16 +1042,14 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             var fiJarFile = new FileInfo(MSGFDBJarFilePath);
 
-            if (string.Compare(fiJarFile.Name, MSGFDB_JAR_NAME, true) == 0)
+            if (string.Compare(fiJarFile.Name, MSGFDB_JAR_NAME, StringComparison.InvariantCultureIgnoreCase) == 0)
             {
                 // Not MSGF+
                 return false;
             }
-            else
-            {
-                // Using MSGF+
-                return true;
-            }
+            
+            // Using MSGF+
+            return true;
         }
 
         /// <summary>
@@ -1214,7 +1073,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     while (!srReader.EndOfStream)
                     {
                         var dataLine = srReader.ReadLine();
-                        if (dataLine.StartsWith("Error"))
+                        if (dataLine != null && dataLine.StartsWith("Error"))
                         {
                             OnErrorEvent("BuildSA reports: " + dataLine);
                             if (dataLine.Contains("too many redundant proteins"))
@@ -1246,9 +1105,9 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <returns>True if all files are found and are the right size</returns>
         /// <remarks></remarks>
         private bool ValidateFiles(string strFolderPathToCheck, Dictionary<string, long> dctFilesToCopy, bool blnUsingLegacyFasta,
-            DateTime dtMinWriteTimeThresholdUTC, bool verifyingRemoteFolder)
+                                   DateTime dtMinWriteTimeThresholdUTC, bool verifyingRemoteFolder)
         {
-            string sourceDescription = null;
+            string sourceDescription;
             if (verifyingRemoteFolder)
             {
                 sourceDescription = "Remote MSGF+ index file";
@@ -1258,7 +1117,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 sourceDescription = "Local MSGF+ index file";
             }
 
-            foreach (KeyValuePair<string, long> entry in dctFilesToCopy)
+            foreach (var entry in dctFilesToCopy)
             {
                 var fiSourceFile = new FileInfo(Path.Combine(strFolderPathToCheck, entry.Key));
 
@@ -1269,7 +1128,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                     OnWarningEvent(sourceDescription + " not found: " + fiSourceFile.FullName);
                     return false;
                 }
-                else if (fiSourceFile.Length != entry.Value)
+
+                if (fiSourceFile.Length != entry.Value)
                 {
                     // Remote MSGF+ index file is not the expected size
                     // Local MSGF+ index file is not the expected size
@@ -1277,7 +1137,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                                    " bytes but is actually " + fiSourceFile.Length + " bytes");
                     return false;
                 }
-                else if (blnUsingLegacyFasta)
+
+                if (blnUsingLegacyFasta)
                 {
                     // Require that the index files be newer than the fasta file
                     if (fiSourceFile.LastWriteTimeUtc < dtMinWriteTimeThresholdUTC.AddSeconds(-0.1))
@@ -1297,12 +1158,14 @@ namespace AnalysisManagerMSGFDBPlugIn
         private void WaitForExistingLockfile(FileInfo fiLockFile, int intDebugLevel, float sngMaxWaitTimeHours)
         {
             // Check to see if another Analysis Manager is already creating the indexed DB files
-            if (fiLockFile.Exists && System.DateTime.UtcNow.Subtract(fiLockFile.LastWriteTimeUtc).TotalMinutes >= 60)
+            if (fiLockFile.Exists && DateTime.UtcNow.Subtract(fiLockFile.LastWriteTimeUtc).TotalMinutes >= 60)
             {
                 // Lock file is over 60 minutes old; delete it
                 if (intDebugLevel >= 1)
                 {
-                    OnStatusEvent("Lock file is over 60 minutes old (created " + fiLockFile.LastWriteTime.ToString() + "); deleting " + fiLockFile.FullName);
+                    OnStatusEvent("Lock file is over 60 minutes old (created " + 
+                        fiLockFile.LastWriteTime.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT) + "); " + 
+                        "deleting " + fiLockFile.FullName);
                 }
                 DeleteLockFile(fiLockFile);
             }
@@ -1321,24 +1184,21 @@ namespace AnalysisManagerMSGFDBPlugIn
                     // Sleep for 2 seconds
                     Thread.Sleep(2000);
 
-                    if (System.DateTime.UtcNow.Subtract(fiLockFile.CreationTimeUtc).TotalHours >= sngMaxWaitTimeHours)
+                    if (DateTime.UtcNow.Subtract(fiLockFile.CreationTimeUtc).TotalHours >= sngMaxWaitTimeHours)
                     {
                         blnStaleFile = true;
                         break;
                     }
-                    else
-                    {
-                        fiLockFile.Refresh();
-                    }
+
+                    fiLockFile.Refresh();
                 }
 
                 // If the duration time has exceeded sngMaxWaitTimeHours, delete the lock file and try again with this manager
                 if (blnStaleFile)
                 {
-                    string strLogMessage = null;
-                    strLogMessage = "Waited over " + sngMaxWaitTimeHours.ToString("0.0") +
-                                    " hour(s) for lock file to be deleted, but it is still present; " + "deleting the file now and continuing: " +
-                                    fiLockFile.FullName;
+                    var strLogMessage = "Waited over " + sngMaxWaitTimeHours.ToString("0.0") +
+                                        " hour(s) for lock file to be deleted, but it is still present; " + "deleting the file now and continuing: " +
+                                           fiLockFile.FullName;
                     OnWarningEvent(strLogMessage);
                     DeleteLockFile(fiLockFile);
                 }
@@ -1356,29 +1216,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         {
             OnErrorEvent(strMessage, ex);
         }
-
-#if EnableHPC
-        private void mComputeCluster_ErrorEvent(object sender, HPC_Submit.MessageEventArgs e)
-        {
-            OnErrorEvent(e.Message);
-        }
-
-        private void mComputeCluster_MessageEvent(object sender, HPC_Submit.MessageEventArgs e)
-        {
-            OnStatusEvent(e.Message);
-        }
-
-        private DateTime dtLastStatusUpdate = DateTime.MaxValue;
-
-        private void mComputeCluster_ProgressEvent(object sender, HPC_Submit.ProgressEventArgs e)
-        {
-            if (System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 60)
-            {
-                dtLastStatusUpdate = System.DateTime.UtcNow;
-                OnStatusEvent("Running BuildSA with HPC, " + (e.HoursElapsed * 60).ToString("0.00") + " minutes elapsed");
-            }
-        }
-#endif
 
         #endregion
     }

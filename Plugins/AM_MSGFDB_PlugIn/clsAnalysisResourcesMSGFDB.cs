@@ -40,64 +40,21 @@ namespace AnalysisManagerMSGFDBPlugIn
                 {
                     return result;
                 }
-
-                currentTask = "GetHPCOptions";
-
-                // Determine whether or not we'll be running MSGF+ in HPC (high performance computing) mode
-                udtHPCOptionsType udtHPCOptions = GetHPCOptions(m_jobParams, m_MgrName);
-
-                if (udtHPCOptions.UsingHPC)
+                
+                // Make sure the machine has enough free memory to run MSGF+
+                currentTask = "ValidateFreeMemorySize";
+                if (!ValidateFreeMemorySize("MSGFDBJavaMemorySize", "MSGF+", false))
                 {
-                    // Make sure the HPC working directory exists and that it is empty
-                    currentTask = "Verify " + udtHPCOptions.WorkDirPath;
-
-                    var diPicFsWorkDir = new DirectoryInfo(udtHPCOptions.WorkDirPath);
-                    if (diPicFsWorkDir.Exists)
-                    {
-                        const bool blnDeleteFolderIfEmpty = false;
-                        m_FileTools.DeleteDirectoryFiles(diPicFsWorkDir.FullName, blnDeleteFolderIfEmpty);
-                    }
-                    else
-                    {
-                        currentTask = "Create " + udtHPCOptions.WorkDirPath;
-
-                        try
-                        {
-                            diPicFsWorkDir.Create();
-                        }
-                        catch (Exception ex)
-                        {
-                            LogError("Unable to create folder " + udtHPCOptions.WorkDirPath + ": " + ex.Message, ex);
-
-                            CheckParentFolder(diPicFsWorkDir);
-
-                            return CloseOutType.CLOSEOUT_FAILED;
-                        }
-                    }
-                }
-                else
-                {
-                    // Make sure the machine has enough free memory to run MSGF+
-                    currentTask = "ValidateFreeMemorySize";
-                    if (!ValidateFreeMemorySize("MSGFDBJavaMemorySize", "MSGF+", false))
-                    {
-                        m_message = "Not enough free memory to run MSGFDB";
-                        return CloseOutType.CLOSEOUT_FAILED;
-                    }
+                    m_message = "Not enough free memory to run MSGFDB";
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // Retrieve the Fasta file
                 var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
 
-                if (udtHPCOptions.UsingHPC)
-                {
-                    // Override the OrgDbDir to point to Picfs, specifically \\winhpcfs\projects\DMS\DMS_Temp_Org
-                    localOrgDbFolder = Path.Combine(udtHPCOptions.SharePath, "DMS_Temp_Org");
-                }
-
                 currentTask = "RetrieveOrgDB to " + localOrgDbFolder;
 
-                if (!RetrieveOrgDB(localOrgDbFolder, udtHPCOptions))
+                if (!RetrieveOrgDB(localOrgDbFolder))
                     return CloseOutType.CLOSEOUT_FAILED;
 
                 LogMessage("Getting param file", 2);
@@ -168,7 +125,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
             catch (Exception ex)
             {
-                LogError("Exception in GetResources: " + ex.Message, ex);
+                LogError("Exception in GetResources (CurrentTask = " + currentTask + ")", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }

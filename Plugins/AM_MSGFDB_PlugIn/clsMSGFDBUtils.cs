@@ -1262,39 +1262,25 @@ namespace AnalysisManagerMSGFDBPlugIn
             return strValueIfNotFound;
         }
 
-        public CloseOutType InitializeFastaFile(string javaProgLoc, string msgfDbProgLoc, out float fastaFileSizeKB, out bool fastaFileIsDecoy, out string fastaFilePath)
-        {
-            var udtHPCOptions = new clsAnalysisResources.udtHPCOptionsType();
-
-            return InitializeFastaFile(javaProgLoc, msgfDbProgLoc, out fastaFileSizeKB, out fastaFileIsDecoy, out fastaFilePath, string.Empty, udtHPCOptions);
-        }
-
         public CloseOutType InitializeFastaFile(string javaProgLoc, string msgfDbProgLoc, out float fastaFileSizeKB, out bool fastaFileIsDecoy,
-            out string fastaFilePath, string strMSGFDBParameterFilePath, clsAnalysisResources.udtHPCOptionsType udtHPCOptions)
+            out string fastaFilePath, string strMSGFDBParameterFilePath)
         {
             return InitializeFastaFile(javaProgLoc, msgfDbProgLoc, out fastaFileSizeKB, out fastaFileIsDecoy, out fastaFilePath,
-                strMSGFDBParameterFilePath, udtHPCOptions, 0);
+                strMSGFDBParameterFilePath, 0);
         }
 
         public CloseOutType InitializeFastaFile(string javaProgLoc, string msgfDbProgLoc, out float fastaFileSizeKB, out bool fastaFileIsDecoy,
-            out string fastaFilePath, string strMSGFDBParameterFilePath, clsAnalysisResources.udtHPCOptionsType udtHPCOptions, int maxFastaFileSizeMB)
+            out string fastaFilePath, string strMSGFDBParameterFilePath, int maxFastaFileSizeMB)
         {
             var oRand = new Random();
 
             var strMgrName = m_mgrParams.GetParam("MgrName", "Undefined-Manager");
-            var sPICHPCUsername = m_mgrParams.GetParam("PICHPCUser", "");
-            var sPICHPCPassword = m_mgrParams.GetParam("PICHPCPassword", "");
 
-            var objIndexedDBCreator = new clsCreateMSGFDBSuffixArrayFiles(strMgrName, sPICHPCUsername, sPICHPCPassword);
+            var objIndexedDBCreator = new clsCreateMSGFDBSuffixArrayFiles(strMgrName);
             RegisterEvents(objIndexedDBCreator);
 
             // Define the path to the fasta file
             var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
-            if (udtHPCOptions.UsingHPC)
-            {
-                // Override the OrgDB folder to point to Picfs, specifically \\winhpcfs\projects\DMS\DMS_Temp_Org
-                localOrgDbFolder = Path.Combine(udtHPCOptions.SharePath, "DMS_Temp_Org");
-            }
             fastaFilePath = Path.Combine(localOrgDbFolder, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"));
 
             fastaFileSizeKB = 0;
@@ -1435,7 +1421,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 // Note that fastaFilePath will get updated by the IndexedDBCreator if we're running Legacy MSGFDB
                 var result = objIndexedDBCreator.CreateSuffixArrayFiles(m_WorkDir, m_DebugLevel, m_JobNum, javaProgLoc, msgfDbProgLoc, fastaFilePath,
-                    fastaFileIsDecoy, strMSGFPlusIndexFilesFolderPath, strMSGFPlusIndexFilesFolderPathLegacyDB, udtHPCOptions);
+                    fastaFileIsDecoy, strMSGFPlusIndexFilesFolderPath, strMSGFPlusIndexFilesFolderPathLegacyDB);
 
                 if (result == CloseOutType.CLOSEOUT_SUCCESS)
                 {
@@ -2082,28 +2068,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             return blnSuccess;
         }
-
-        /// <summary>
-        /// Read the MSGFDB options file and convert the options to command line switches
-        /// </summary>
-        /// <param name="fastaFileSizeKB">Size of the .Fasta file, in KB</param>
-        /// <param name="fastaFileIsDecoy">True if the fasta file has had forward and reverse index files created</param>
-        /// <param name="strAssumedScanType">Empty string if no assumed scan type; otherwise CID, ETD, or HCD</param>
-        /// <param name="strScanTypeFilePath">The path to the ScanType file (which lists the scan type for each scan); should be empty string if no ScanType file</param>
-        /// <param name="strInstrumentGroup">DMS Instrument Group name</param>
-        /// <param name="strMSGFDbCmdLineOptions">Output: MSGFDb command line arguments</param>
-        /// <returns>Options string if success; empty string if an error</returns>
-        /// <remarks></remarks>
-        public CloseOutType ParseMSGFPlusParameterFile(float fastaFileSizeKB, bool fastaFileIsDecoy, string strAssumedScanType,
-            string strScanTypeFilePath, string strInstrumentGroup, clsAnalysisResources.udtHPCOptionsType udtHPCOptions,
-            out string strMSGFDbCmdLineOptions)
-        {
-            var strParameterFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"));
-
-            return ParseMSGFPlusParameterFile(fastaFileSizeKB, fastaFileIsDecoy, strAssumedScanType, strScanTypeFilePath, strInstrumentGroup,
-                strParameterFilePath, udtHPCOptions, out strMSGFDbCmdLineOptions);
-        }
-
+       
         /// <summary>
         /// Read the MS-GF+ options file and convert the options to command line switches
         /// </summary>
@@ -2117,13 +2082,13 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <returns>Options string if success; empty string if an error</returns>
         /// <remarks></remarks>
         public CloseOutType ParseMSGFPlusParameterFile(float fastaFileSizeKB, bool fastaFileIsDecoy, string strAssumedScanType,
-            string strScanTypeFilePath, string instrumentGroup, string strParameterFilePath, clsAnalysisResources.udtHPCOptionsType udtHPCOptions,
+            string strScanTypeFilePath, string instrumentGroup, string strParameterFilePath,
             out string strMSGFDbCmdLineOptions)
         {
             var overrideParams = new Dictionary<string, string>();
 
             return ParseMSGFPlusParameterFile(fastaFileSizeKB, fastaFileIsDecoy, strAssumedScanType, strScanTypeFilePath, instrumentGroup,
-                strParameterFilePath, udtHPCOptions, overrideParams, out strMSGFDbCmdLineOptions);
+                strParameterFilePath, overrideParams, out strMSGFDbCmdLineOptions);
         }
 
         /// <summary>
@@ -2140,12 +2105,11 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <returns>Options string if success; empty string if an error</returns>
         /// <remarks></remarks>
         public CloseOutType ParseMSGFPlusParameterFile(float fastaFileSizeKB, bool fastaFileIsDecoy, string strAssumedScanType,
-            string strScanTypeFilePath, string instrumentGroup, string strParameterFilePath, clsAnalysisResources.udtHPCOptionsType udtHPCOptions,
+            string strScanTypeFilePath, string instrumentGroup, string strParameterFilePath,
             Dictionary<string, string> overrideParams, out string strMSGFDbCmdLineOptions)
         {
             const int SMALL_FASTA_FILE_THRESHOLD_KB = 20;
 
-            string strLineIn = null;
 
             int intValue = 0;
 
@@ -2490,15 +2454,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 limitCoreUsage = true;
             }
 
-            if (udtHPCOptions.UsingHPC)
-            {
-                // Do not define the thread count when running on HPC; MS-GF+ should use all 16 cores (or all 32 cores)
-                if (intParamFileThreadCount > 0)
-                    intParamFileThreadCount = 0;
-
-                OnStatusEvent("Running on HPC; " + strSearchEngineName + " will use all available cores");
-            }
-            else if (intParamFileThreadCount <= 0 || limitCoreUsage)
+            if (intParamFileThreadCount <= 0 || limitCoreUsage)
             {
                 // Set intParamFileThreadCount to the number of cores on this computer
                 // However, do not exceed 8 cores because this can actually slow down MS-GF+ due to context switching

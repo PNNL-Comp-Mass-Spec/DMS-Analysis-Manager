@@ -401,12 +401,10 @@ namespace AnalysisManagerMzRefineryPlugIn
             float fastaFileSizeKB = 0;
             bool fastaFileIsDecoy = false;
 
-            clsAnalysisResources.udtHPCOptionsType udtHPCOptions = clsAnalysisResources.GetHPCOptions(m_jobParams, m_MachName);
-
             const int maxFastaFileSizeMB = 50;
 
             // Initialize the fasta file; truncating it if it is over 50 MB in size
-            var result = mMSGFDBUtils.InitializeFastaFile(javaExePath, msgfplusJarFilePath, out fastaFileSizeKB, out fastaFileIsDecoy, out fastaFilePath, strParameterFilePath, udtHPCOptions, maxFastaFileSizeMB);
+            var result = mMSGFDBUtils.InitializeFastaFile(javaExePath, msgfplusJarFilePath, out fastaFileSizeKB, out fastaFileIsDecoy, out fastaFilePath, strParameterFilePath, maxFastaFileSizeMB);
 
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
@@ -429,7 +427,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 }
             }
 
-            result = mMSGFDBUtils.ParseMSGFPlusParameterFile(fastaFileSizeKB, fastaFileIsDecoy, strAssumedScanType, strScanTypeFilePath, strInstrumentGroup, strParameterFilePath, udtHPCOptions, overrideParams, out strMSGFPlusCmdLineOptions);
+            result = mMSGFDBUtils.ParseMSGFPlusParameterFile(fastaFileSizeKB, fastaFileIsDecoy, strAssumedScanType, strScanTypeFilePath, strInstrumentGroup, strParameterFilePath, overrideParams, out strMSGFPlusCmdLineOptions);
 
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
