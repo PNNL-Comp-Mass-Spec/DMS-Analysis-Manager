@@ -132,7 +132,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
             try
             {
-                numOfResultFiles = Convert.ToInt32(m_jobParams.GetParam("NumberOfClonedSteps"));
+                numOfResultFiles = m_jobParams.GetJobParameter("NumberOfClonedSteps", 0);
             }
             catch (Exception ex)
             {

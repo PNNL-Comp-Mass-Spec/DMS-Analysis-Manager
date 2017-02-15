@@ -660,7 +660,7 @@ namespace AnalysisManagerProg
 
                 //const bool blnMsgfPlus = true;
                 //var strJobNum = "12345";
-                //var intDebugLevel = Convert.ToInt16(m_mgrParams.GetParam("debuglevel", 1));
+                //var intDebugLevel = (short)(m_mgrParams.GetParam("debuglevel", 1));
 
                 //var JavaProgLoc = @"C:\Program Files\Java\jre8\bin\java.exe";
                 //var MSGFDbProgLoc = @"C:\DMS_Programs\MSGFDB\MSGFPlus.jar";

@@ -322,7 +322,7 @@ namespace AnalysisManagerMODPlusPlugin
                     totalSpectra = 1;
 
                 // Value between 0 and 100
-                var progressComplete = Math.Round(spectraSearched / Convert.ToDouble(totalSpectra) * 100);
+                var progressComplete = Math.Round(spectraSearched / (float)totalSpectra * 100);
 
                 if (progressComplete > mProgress)
                 {

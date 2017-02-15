@@ -412,7 +412,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                                             var percentComplete = 0;
                                             if (totalSpectrumCount > 0)
                                             {
-                                                percentComplete = Convert.ToInt32(spectraRead / Convert.ToDouble(totalSpectrumCount) * 100);
+                                                percentComplete = (int)(spectraRead / (float)totalSpectrumCount * 100);
                                             }
 
                                             OnProgressUpdate(string.Format("{0} spectra read; {1}% complete", spectraRead, percentComplete),

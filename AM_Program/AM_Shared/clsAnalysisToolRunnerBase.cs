@@ -213,7 +213,7 @@ namespace AnalysisManagerBase
 
             RegisterEvents(m_MyEMSLUtilities);
 
-            m_DebugLevel = Convert.ToInt16(m_mgrParams.GetParam("debuglevel", 1));
+            m_DebugLevel = (short)(m_mgrParams.GetParam("debuglevel", 1));
             m_StatusTools.Tool = m_jobParams.GetCurrentJobToolDescription();
 
             m_SummaryFile = summaryFile;
@@ -293,7 +293,7 @@ namespace AnalysisManagerBase
                 return currentTaskProgressAtEnd;
             }
 
-            return Convert.ToSingle(currentTaskProgressAtStart + (subTaskProgress / 100.0) * (currentTaskProgressAtEnd - currentTaskProgressAtStart));
+            return (float)(currentTaskProgressAtStart + (subTaskProgress / 100.0) * (currentTaskProgressAtEnd - currentTaskProgressAtStart));
         }
 
         /// <summary>
@@ -317,8 +317,9 @@ namespace AnalysisManagerBase
                 return currentTaskProgressAtEnd;
             }
 
-            return Convert.ToSingle(currentTaskProgressAtStart +
-                (currentTaskItemsProcessed / (float)currentTaskTotalItems) * (currentTaskProgressAtEnd - currentTaskProgressAtStart));
+            return currentTaskProgressAtStart + 
+                currentTaskItemsProcessed / (float)currentTaskTotalItems * (currentTaskProgressAtEnd - currentTaskProgressAtStart);
+
         }
 
         /// <summary>
@@ -341,7 +342,7 @@ namespace AnalysisManagerBase
             var maxThreadsBasedOnMemory = freeMemoryMB / memorySizeMBPerThread;
 
             // Round up maxThreadsBasedOnMemory only if it is within 0.2 of the next highest integer
-            var maxThreadsRoundedUp = Convert.ToInt32(Math.Ceiling(maxThreadsBasedOnMemory));
+            var maxThreadsRoundedUp = (int)Math.Ceiling(maxThreadsBasedOnMemory);
             if (maxThreadsRoundedUp - maxThreadsBasedOnMemory <= 0.2)
             {
                 maxThreadsBasedOnMemory = maxThreadsRoundedUp;
@@ -353,7 +354,7 @@ namespace AnalysisManagerBase
 
             if (maxThreadsBasedOnMemory < maxThreadsToAllow)
             {
-                maxThreadsToAllow = Convert.ToInt32(Math.Round(maxThreadsBasedOnMemory));
+                maxThreadsToAllow = (int)Math.Round(maxThreadsBasedOnMemory);
             }
 
             return maxThreadsToAllow;
@@ -1967,7 +1968,7 @@ namespace AnalysisManagerBase
                     // Value is similar to 90%
                     // Convert to a double, then compute the number of cores to use
                     var coreCountPct = Convert.ToDouble(reMatch.Groups[1].Value);
-                    coreCount = Convert.ToInt32(Math.Round(coreCountPct / 100.0 * coresOnMachine));
+                    coreCount = (int)Math.Round(coreCountPct / 100.0 * coresOnMachine);
                     if (coreCount < 1)
                         coreCount = 1;
                 }
@@ -2290,8 +2291,8 @@ namespace AnalysisManagerBase
                     {
                         foreach (var chChar in Path.GetFileName(tmpFileName))
                         {
-                            var intAscValue = Convert.ToInt32(chChar);
-                            if (intAscValue <= 31 | intAscValue >= 128)
+                            var asciiValue = (int)chChar;
+                            if (asciiValue <= 31 | asciiValue >= 128)
                             {
                                 // Invalid character found
                                 okToMove = false;

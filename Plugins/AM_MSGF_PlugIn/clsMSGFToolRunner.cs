@@ -1092,7 +1092,7 @@ namespace AnalysisManagerMSGFPlugin
 
                 if (intLinesRead >= 2 && intPrecursorMassErrorCount > 0)
                 {
-                    sngPercentDataPrecursorMassError = Convert.ToSingle(intPrecursorMassErrorCount / intLinesRead * 100);
+                    sngPercentDataPrecursorMassError = intPrecursorMassErrorCount / (float)intLinesRead * 100f;
 
                     Msg = sngPercentDataPrecursorMassError.ToString("0.0") +
                           "% of the data processed by MSGF has a precursor mass 10 or more Da away from the computed peptide mass";
@@ -1481,7 +1481,7 @@ namespace AnalysisManagerMSGFPlugin
             {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
                     "MGF Index-to-scan lookup failed for " + intMGFLookupErrorCount + " entries in the MSGF result file");
-                if (intLinesRead > 0 && intMGFLookupErrorCount / Convert.ToSingle(intLinesRead) > 0.1)
+                if (intLinesRead > 0 && intMGFLookupErrorCount / (float)intLinesRead > 0.1)
                 {
                     blnTooManyErrors = true;
                 }
@@ -1925,7 +1925,7 @@ namespace AnalysisManagerMSGFPlugin
             {
                 blnUseSegments = false;
                 strSegmentUsageMessage = "Not using MSGF segments since MSGFInputFileLineCount is <= " + intMSGFEntriesPerSegment + " * " +
-                                         Convert.ToInt32(MSGF_SEGMENT_OVERFLOW_MARGIN * 100).ToString() + "%";
+                                         (int)(MSGF_SEGMENT_OVERFLOW_MARGIN * 100) + "%";
             }
             else
             {
@@ -2664,7 +2664,7 @@ namespace AnalysisManagerMSGFPlugin
                     }
                 }
 
-                m_progress = Convert.ToSingle(PROGRESS_PCT_MSGF_START + (PROGRESS_PCT_MSGF_COMPLETE - PROGRESS_PCT_MSGF_START) * dblFraction);
+                m_progress = (float)(PROGRESS_PCT_MSGF_START + (PROGRESS_PCT_MSGF_COMPLETE - PROGRESS_PCT_MSGF_START) * dblFraction);
                 m_StatusTools.UpdateAndWrite(m_progress);
             }
             catch (Exception ex)

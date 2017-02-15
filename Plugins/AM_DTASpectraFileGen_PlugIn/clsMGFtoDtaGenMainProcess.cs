@@ -210,10 +210,11 @@ namespace DTASpectraFileGen
 
             // Value between 0 and 100
             mMGFtoDTA.ThresholdIonPctForSingleCharge = m_JobParams.GetJobParameter("ThresholdIonPctForSingleCharge",
-                Convert.ToInt32(mMGFtoDTA.ThresholdIonPctForSingleCharge));
+                (int)mMGFtoDTA.ThresholdIonPctForSingleCharge);
+
             // Value between 0 and 100
             mMGFtoDTA.ThresholdIonPctForDoubleCharge = m_JobParams.GetJobParameter("ThresholdIonPctForDoubleCharge",
-                Convert.ToInt32(mMGFtoDTA.ThresholdIonPctForDoubleCharge));
+                (int)mMGFtoDTA.ThresholdIonPctForDoubleCharge);
 
             blnSuccess = mMGFtoDTA.ProcessFile(strInputFilePathFull, strOutputFolderPath);
 

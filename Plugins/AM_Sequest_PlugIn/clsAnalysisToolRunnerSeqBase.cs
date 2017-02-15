@@ -329,7 +329,7 @@ namespace AnalysisManagerSequestPlugin
             // Calculate % complete (value between 0 and 100)
             if (m_DtaCount > 0)
             {
-                m_progress = 100f * Convert.ToSingle(OutFileCount / m_DtaCount);
+                m_progress = 100f * (OutFileCount / (float)m_DtaCount);
             }
             else
             {
@@ -1251,7 +1251,7 @@ namespace AnalysisManagerSequestPlugin
                         if (intNodeCountThisHost < 1)
                             intNodeCountThisHost = 1;
 
-                        sngProcessingRate = Convert.ToSingle(objItem.Value / intNodeCountThisHost);
+                        sngProcessingRate = objItem.Value / (float)intNodeCountThisHost;
                         dctHostProcessingRate.Add(objItem.Key, sngProcessingRate);
                     }
 
@@ -1265,7 +1265,7 @@ namespace AnalysisManagerSequestPlugin
                     {
                         // Count the number of hosts that had a processing rate fewer than LOW_THRESHOLD_MULTIPLIER times the the median value
                         intWarningCount = 0;
-                        sngThresholdRate = Convert.ToSingle(LOW_THRESHOLD_MULTIPLIER * sngProcessingRateMedian);
+                        sngThresholdRate = (float)(LOW_THRESHOLD_MULTIPLIER * sngProcessingRateMedian);
 
                         foreach (KeyValuePair<string, float> objItem in dctHostProcessingRate)
                         {
@@ -1292,7 +1292,7 @@ namespace AnalysisManagerSequestPlugin
                         // Count the number of nodes that had a processing rate more than HIGH_THRESHOLD_MULTIPLIER times the median value
                         // When comparing hosts, have to scale by the number of active nodes on each host
                         intWarningCount = 0;
-                        sngThresholdRate = Convert.ToSingle(HIGH_THRESHOLD_MULTIPLIER * sngProcessingRateMedian);
+                        sngThresholdRate = (float)(HIGH_THRESHOLD_MULTIPLIER * sngProcessingRateMedian);
 
                         foreach (KeyValuePair<string, float> objItem in dctHostProcessingRate)
                         {
@@ -1405,7 +1405,7 @@ namespace AnalysisManagerSequestPlugin
             }
             else
             {
-                intMidpoint = Convert.ToInt32(Math.Floor((double) lstSortedValues.Count / 2));
+                intMidpoint = (int)Math.Floor(lstSortedValues.Count / 2f);
 
                 if (lstSortedValues.Count % 2 == 0)
                 {

@@ -748,7 +748,7 @@ namespace AnalysisManagerBase
                 dtLastUpdate = DateTime.UtcNow;
                 sngRunTimeHours = GetRunTime();
 
-                CpuUtilization = Convert.ToInt32(GetCPUUtilization());
+                CpuUtilization = (int)GetCPUUtilization();
                 m_FreeMemoryMB = GetFreeMemoryMB();
             }
             catch (Exception)
@@ -1237,7 +1237,7 @@ namespace AnalysisManagerBase
         private float GetRunTime()
         {
 
-            return Convert.ToSingle(DateTime.UtcNow.Subtract(TaskStartTime).TotalHours);
+            return (float)DateTime.UtcNow.Subtract(TaskStartTime).TotalHours;
 
         }
 

@@ -177,22 +177,22 @@ namespace AnalysisManagerBase
 
             for (var i = 0; i <= pwdChars.Length - 1; i++)
             {
-                pwdBytes.Add(Convert.ToByte(pwdChars[i]));
+                pwdBytes.Add((byte)pwdChars[i]);
             }
 
             // Modify the byte array by shifting alternating bytes up or down and convert back to char, and add to output string
 
             for (var byteCntr = 0; byteCntr <= pwdBytes.Count - 1; byteCntr++)
             {
-                if ((byteCntr % 2) == 0)
+                if (byteCntr % 2 == 0)
                 {
-                    pwdBytes[byteCntr] += Convert.ToByte(1);
+                    pwdBytes[byteCntr] += 1;
                 }
                 else
                 {
-                    pwdBytes[byteCntr] -= Convert.ToByte(1);
+                    pwdBytes[byteCntr] -= 1;
                 }
-                pwdCharsAdj.Add(Convert.ToChar(pwdBytes[byteCntr]));
+                pwdCharsAdj.Add((char)pwdBytes[byteCntr]);
             }
 
             return String.Join("", pwdCharsAdj);
@@ -1843,7 +1843,7 @@ namespace AnalysisManagerBase
             if (freeSpaceMB < minFreeSpaceMB)
             {
                 // Example error message: Organism DB directory drive has less than 6858 MB free: 5794 MB
-                errorMessage = $"{directoryDescription} drive has less than {minFreeSpaceMB} MB free: {Convert.ToInt32(freeSpaceMB)} MB";
+                errorMessage = $"{directoryDescription} drive has less than {minFreeSpaceMB} MB free: {(int)freeSpaceMB} MB";
                 Console.WriteLine(errorMessage);
                 LogError(errorMessage);
                 return false;

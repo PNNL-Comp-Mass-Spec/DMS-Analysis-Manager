@@ -520,7 +520,7 @@ namespace AnalysisManagerProSightQuantPlugIn
                 // Bump up the effective progress if finding features in positive or negative data
                 if (intEffectiveProgress == PROGRESS_TARGETED_WORKFLOWS_PEAKS_LOADED)
                 {
-                    sngEffectiveProgress += Convert.ToSingle((PROGRESS_TARGETED_WORKFLOWS_PROCESSING_COMPLETE - PROGRESS_TARGETED_WORKFLOWS_PEAKS_LOADED) * dblSubProgressAddon);
+                    sngEffectiveProgress += (float)((PROGRESS_TARGETED_WORKFLOWS_PROCESSING_COMPLETE - PROGRESS_TARGETED_WORKFLOWS_PEAKS_LOADED) * dblSubProgressAddon);
                 }
 
                 if (m_progress < sngEffectiveProgress)

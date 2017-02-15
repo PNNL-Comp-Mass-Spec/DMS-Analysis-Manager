@@ -462,7 +462,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                 {
                     // Compute the average scan gap
                     int scanGapSum = lstScanGaps.Sum();
-                    var scanGapAverage = scanGapSum / Convert.ToDouble(lstScanGaps.Count());
+                    var scanGapAverage = scanGapSum / (float)lstScanGaps.Count;
 
                     if (scanGapAverage >= 2)
                     {

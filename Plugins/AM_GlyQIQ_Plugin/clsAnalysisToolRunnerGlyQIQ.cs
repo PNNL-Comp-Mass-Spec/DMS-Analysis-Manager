@@ -830,7 +830,7 @@ namespace AnalysisManagerGlyQIQPlugin
                             progressSum += glyQRunner.Value.Progress;
                         }
 
-                        var subTaskProgress = Convert.ToSingle(progressSum / mGlyQRunners.Count);
+                        var subTaskProgress = (float)(progressSum / mGlyQRunners.Count);
                         var updatedProgress = ComputeIncrementalProgress(PROGRESS_PCT_STARTING, PROGRESS_PCT_COMPLETE, subTaskProgress);
                         if (updatedProgress > m_progress)
                         {

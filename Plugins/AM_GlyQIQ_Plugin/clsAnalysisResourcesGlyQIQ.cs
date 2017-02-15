@@ -523,7 +523,7 @@ namespace AnalysisManagerGlyQIQPlugin
                     }
 
                     // When targetsWritten reaches nextThreshold, we will switch to the next file
-                    var nextThreshold = Convert.ToInt32(Math.Floor(numTargets / Convert.ToSingle(mGlyQIQParams.WorkingParameterFolders.Count)));
+                    var nextThreshold = (int)Math.Floor(numTargets / (float)mGlyQIQParams.WorkingParameterFolders.Count);
                     if (nextThreshold < 1)
                         nextThreshold = 1;
 
@@ -550,7 +550,7 @@ namespace AnalysisManagerGlyQIQPlugin
                             // Advance the output file index
                             outputFileIndex += 1;
 
-                            var newThreshold = Convert.ToInt32(Math.Floor(numTargets / Convert.ToSingle(mGlyQIQParams.WorkingParameterFolders.Count) * (outputFileIndex + 1)));
+                            var newThreshold = (int)Math.Floor(numTargets / (float)mGlyQIQParams.WorkingParameterFolders.Count * (outputFileIndex + 1));
                             if (newThreshold > nextThreshold)
                             {
                                 nextThreshold = newThreshold;

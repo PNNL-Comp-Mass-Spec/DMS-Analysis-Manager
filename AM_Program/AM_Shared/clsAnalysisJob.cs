@@ -369,7 +369,7 @@ namespace AnalysisManagerBase
         /// <returns>Value for specified parameter; ValueIfMissing if not found</returns>
         public short GetJobParameter(string Name, short ValueIfMissing)
         {
-            return Convert.ToInt16(GetJobParameter(Name, Convert.ToInt32(ValueIfMissing)));
+            return (short)(GetJobParameter(Name, (int)ValueIfMissing));
         }
 
         /// <summary>
@@ -986,7 +986,7 @@ namespace AnalysisManagerBase
         /// <param name="EvalMessage">Evaluation message ("" if no special message)</param>
         public override void CloseTask(CloseOutType CloseOut, string CompMsg, int EvalCode, string EvalMessage)
         {
-            var CompCode = Convert.ToInt32(CloseOut);
+            var CompCode = (int)CloseOut;
 
             if (EvalMessage == null)
                 EvalMessage = string.Empty;

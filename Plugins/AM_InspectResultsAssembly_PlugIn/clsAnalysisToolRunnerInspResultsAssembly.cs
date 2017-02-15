@@ -918,7 +918,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 {
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
                         "Rescored Inspect results file created; size is " +
-                        (fiRescoredFile.Length / Convert.ToDouble(fiOriginalFile.Length) * 100).ToString("0.0") + "% of the original (" +
+                        (fiRescoredFile.Length / (float)fiOriginalFile.Length * 100).ToString("0.0") + "% of the original (" +
                         fiRescoredFile.Length + " bytes vs. " + fiOriginalFile.Length + " bytes in original)");
                 }
             }
@@ -1484,7 +1484,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             float sngEndPercent = mPercentCompleteStartLevels[(int) eInspectResultsProcessingSteps.CreatePeptideToProteinMapping + 1];
             float sngPercentCompleteEffective = 0;
 
-            sngPercentCompleteEffective = sngStartPercent + Convert.ToSingle(percentComplete / 100.0 * (sngEndPercent - sngStartPercent));
+            sngPercentCompleteEffective = sngStartPercent + (float)(percentComplete / 100.0 * (sngEndPercent - sngStartPercent));
 
             UpdateStatusFile(sngPercentCompleteEffective);
 

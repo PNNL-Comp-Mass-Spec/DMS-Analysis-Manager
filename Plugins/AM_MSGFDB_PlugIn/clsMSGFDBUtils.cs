@@ -1302,7 +1302,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
-            fastaFileSizeKB = Convert.ToSingle(fiFastaFile.Length / 1024.0);
+            fastaFileSizeKB = (float)(fiFastaFile.Length / 1024.0);
 
             var strProteinOptions = m_jobParams.GetParam("ProteinOptions");
 
@@ -1407,7 +1407,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 fastaFilePath = fastaFilePathTrimmed;
 
                 fiFastaFile.Refresh();
-                fastaFileSizeKB = Convert.ToSingle(fiFastaFile.Length / 1024.0);
+                fastaFileSizeKB = (float)(fiFastaFile.Length / 1024.0);
             }
 
             if (m_DebugLevel >= 3 || (m_DebugLevel >= 1 & fastaFileSizeKB > 500))
@@ -2501,7 +2501,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (limitCoreUsage)
                 {
-                    var maxAllowedCores = Convert.ToInt32(Math.Floor(coreCount * 0.75));
+                    var maxAllowedCores = (int)Math.Floor(coreCount * 0.75);
                     if (intParamFileThreadCount > 0 && intParamFileThreadCount < maxAllowedCores)
                     {
                         // Leave intParamFileThreadCount unchanged

@@ -279,7 +279,7 @@ namespace AnalysisManagerProg
             m_FileWatcher.Changed += m_FileWatcher_Changed;
 
             // Get the debug level
-            m_DebugLevel = Convert.ToInt16(m_MgrSettings.GetParam("debuglevel", 2));
+            m_DebugLevel = (short)(m_MgrSettings.GetParam("debuglevel", 2));
 
             // Make sure that the manager name matches the machine name (with a few exceptions)
 
@@ -344,7 +344,7 @@ namespace AnalysisManagerProg
                 if (TraceMode)
                     ShowTraceMessage("Entering clsMainProcess.DoAnalysis Try/Catch block");
 
-                var maxLoopCount = Convert.ToInt32(m_MgrSettings.GetParam("maxrepetitions"));
+                var maxLoopCount = m_MgrSettings.GetParam("maxrepetitions", 1);
                 var requestJobs = true;
                 var oneTaskStarted = false;
                 var oneTaskPerformed = false;
@@ -611,7 +611,7 @@ namespace AnalysisManagerProg
                             break;
                         default:
                             // Shouldn't ever get here
-                            LogError("clsMainProcess.DoAnalysis; Invalid request result: " + Convert.ToInt32(taskReturn).ToString());
+                            LogError("clsMainProcess.DoAnalysis; Invalid request result: " + (int)taskReturn);
                             return;
                     }
 

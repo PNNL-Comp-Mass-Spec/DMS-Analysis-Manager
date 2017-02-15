@@ -1889,7 +1889,7 @@ namespace AnalysisManagerExtractionPlugin
 
             // Check the size of the Syn file
             // If it is too large, then we will need to break it up into multiple parts, process each part separately, and then combine the results
-            sngParentSynFileSizeMB = Convert.ToSingle(fiSynFile.Length / 1024.0 / 1024.0);
+            sngParentSynFileSizeMB = (float)(fiSynFile.Length / 1024.0 / 1024.0);
             if (sngParentSynFileSizeMB <= SYN_FILE_MAX_SIZE_MB)
             {
                 strFileList = new string[1];
@@ -2289,7 +2289,7 @@ namespace AnalysisManagerExtractionPlugin
                 else
                 {
                     // Determine the number of parts to split the file into
-                    intSplitCount = Convert.ToInt32(Math.Ceiling(fiFileInfo.Length / Convert.ToDouble(lngMaxSizeBytes)));
+                    intSplitCount = (int)Math.Ceiling(fiFileInfo.Length / (float)lngMaxSizeBytes);
 
                     if (intSplitCount < 2)
                     {
@@ -2512,7 +2512,7 @@ namespace AnalysisManagerExtractionPlugin
         private void m_PeptideProphet_PeptideProphetRunning(string PepProphetStatus, float PercentComplete)
         {
             const int PEPPROPHET_DETAILED_LOG_INTERVAL_SECONDS = 60;
-            m_progress = SEQUEST_PROGRESS_PHRP_DONE + Convert.ToSingle(PercentComplete / 3.0);
+            m_progress = SEQUEST_PROGRESS_PHRP_DONE + (float)(PercentComplete / 3.0);
             m_StatusTools.UpdateAndWrite(m_progress);
 
             if (m_DebugLevel >= 4)
@@ -2533,7 +2533,7 @@ namespace AnalysisManagerExtractionPlugin
             const int PHRP_LOG_INTERVAL_SECONDS = 180;
             const int PHRP_DETAILED_LOG_INTERVAL_SECONDS = 20;
 
-            m_progress = SEQUEST_PROGRESS_EXTRACTION_DONE + Convert.ToSingle(percentComplete / 3.0);
+            m_progress = SEQUEST_PROGRESS_EXTRACTION_DONE + (float)(percentComplete / 3.0);
             m_StatusTools.UpdateAndWrite(m_progress);
 
             if (m_DebugLevel >= 1)

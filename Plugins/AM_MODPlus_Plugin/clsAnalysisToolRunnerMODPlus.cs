@@ -1026,8 +1026,8 @@ namespace AnalysisManagerMODPlusPlugin
                             }
                         }
 
-                        var subTaskProgress = Convert.ToSingle(progressSum / mMODPlusRunners.Count);
-                        var updatedProgress = ComputeIncrementalProgress(PROGRESS_PCT_MODPLUS_STARTING, PROGRESS_PCT_MODPLUS_COMPLETE, subTaskProgress);
+                        var subTaskProgress = progressSum / mMODPlusRunners.Count;
+                        var updatedProgress = ComputeIncrementalProgress(PROGRESS_PCT_MODPLUS_STARTING, PROGRESS_PCT_MODPLUS_COMPLETE, (float)subTaskProgress);
                         if (updatedProgress > m_progress)
                         {
                             // This progress will get written to the status file and sent to the messaging queue by UpdateStatusFile()

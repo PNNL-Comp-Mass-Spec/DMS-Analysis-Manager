@@ -756,7 +756,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                                 {
                                     if (int.TryParse(oMatch.Groups[2].Value, out intSubProgressCountTotal))
                                     {
-                                        dblSubProgressAddon = intSubProgressCount / Convert.ToDouble(intSubProgressCountTotal);
+                                        dblSubProgressAddon = intSubProgressCount / (double)intSubProgressCountTotal;
                                     }
                                 }
                             }
@@ -769,11 +769,11 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 // Bump up the effective progress if finding features in positive or negative data
                 if (intEffectiveProgress == PROGRESS_PCT_LIPID_TOOLS_FINDING_POSITIVE_FEATURES)
                 {
-                    sngEffectiveProgress += Convert.ToSingle((PROGRESS_PCT_LIPID_TOOLS_FINDING_NEGATIVE_FEATURES - PROGRESS_PCT_LIPID_TOOLS_FINDING_POSITIVE_FEATURES) * dblSubProgressAddon);
+                    sngEffectiveProgress += (float)((PROGRESS_PCT_LIPID_TOOLS_FINDING_NEGATIVE_FEATURES - PROGRESS_PCT_LIPID_TOOLS_FINDING_POSITIVE_FEATURES) * dblSubProgressAddon);
                 }
                 else if (intEffectiveProgress == PROGRESS_PCT_LIPID_TOOLS_FINDING_NEGATIVE_FEATURES)
                 {
-                    sngEffectiveProgress += Convert.ToSingle((PROGRESS_PCT_LIPID_TOOLS_ALIGNING_FEATURES - PROGRESS_PCT_LIPID_TOOLS_FINDING_NEGATIVE_FEATURES) * dblSubProgressAddon);
+                    sngEffectiveProgress += (float)((PROGRESS_PCT_LIPID_TOOLS_ALIGNING_FEATURES - PROGRESS_PCT_LIPID_TOOLS_FINDING_NEGATIVE_FEATURES) * dblSubProgressAddon);
                 }
 
                 if (m_progress < sngEffectiveProgress)

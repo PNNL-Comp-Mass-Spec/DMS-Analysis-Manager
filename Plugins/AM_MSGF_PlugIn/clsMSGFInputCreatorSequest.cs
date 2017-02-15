@@ -70,7 +70,7 @@ namespace AnalysisManagerMSGFPlugin
             dblXCorr = objPSM.GetScoreDbl(clsPHRPParserSequest.DATA_COLUMN_XCorr);
 
             intCleavageState = clsPeptideCleavageStateCalculator.CleavageStateToShort(objPSM.CleavageState);
-            intCleavageStateAlt = Convert.ToInt16(objPSM.GetScoreInt(clsPHRPParserSequest.DATA_COLUMN_NumTrypticEnds, 0));
+            intCleavageStateAlt = (short)objPSM.GetScoreInt(clsPHRPParserSequest.DATA_COLUMN_NumTrypticEnds, 0);
 
             if (intCleavageStateAlt > intCleavageState)
             {

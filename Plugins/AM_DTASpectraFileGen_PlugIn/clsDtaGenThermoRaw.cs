@@ -379,8 +379,8 @@ namespace DTASpectraFileGen
 
             var CreateDefaultCharges = m_JobParams.GetJobParameter("Charges", "CreateDefaultCharges", true);
 
-            var ExplicitChargeStart = Convert.ToInt16(m_JobParams.GetJobParameter("Charges", "ExplicitChargeStart", 0));
-            var ExplicitChargeEnd = Convert.ToInt16(m_JobParams.GetJobParameter("Charges", "ExplicitChargeEnd", 0));
+            var ExplicitChargeStart = (short)m_JobParams.GetJobParameter("Charges", "ExplicitChargeStart", 0);
+            var ExplicitChargeEnd = (short)m_JobParams.GetJobParameter("Charges", "ExplicitChargeEnd", 0);
 
             // Get the maximum number of scans in the file
             string RawFile = string.Copy(strInstrumentDataFilePath);
@@ -709,7 +709,7 @@ namespace DTASpectraFileGen
                     int intScanNumber = 0;
                     if (int.TryParse(reMatch.Groups[1].Value, out intScanNumber))
                     {
-                        m_Progress = Convert.ToSingle(intScanNumber / m_MaxScanInFile * 100);
+                        m_Progress = intScanNumber / (float)m_MaxScanInFile * 100f;
                     }
                 }
             }

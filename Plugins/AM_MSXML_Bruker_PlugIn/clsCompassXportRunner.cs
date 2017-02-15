@@ -112,7 +112,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             }
             else
             {
-                intFormatMode = Convert.ToInt32(mOutputType);
+                intFormatMode = (int)mOutputType;
             }
 
             var strMSXmlFormatName = GetMsXmlOutputTypeByID(mOutputType);

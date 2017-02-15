@@ -746,7 +746,7 @@ namespace AnalysisManagerBase
                 }
 
                 // For zip files less than 4 GB in size, perform a full unzip test to confirm that the file is not corrupted
-                var crcCheckThresholdBytes = Convert.ToInt64(crcCheckThresholdGB * 1024 * 1024 * 1024);
+                var crcCheckThresholdBytes = (long)(crcCheckThresholdGB * 1024 * 1024 * 1024);
 
                 if (fiZipFile.Length > crcCheckThresholdBytes)
                 {

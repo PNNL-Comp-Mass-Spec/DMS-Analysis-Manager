@@ -288,7 +288,7 @@ namespace AnalysisManagerPBFGenerator
 
                 if (fiResults.Exists && mInstrumentFileSizeBytes > 0)
                 {
-                    float percentComplete = fiResults.Length / Convert.ToSingle(mInstrumentFileSizeBytes) * 100;
+                    float percentComplete = fiResults.Length / (float)mInstrumentFileSizeBytes * 100;
                     return percentComplete;
                 }
             }

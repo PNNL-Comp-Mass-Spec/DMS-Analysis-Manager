@@ -318,7 +318,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 if (targetsProcessed < 0)
                     targetsProcessed = 0;
 
-                var glyqIqProgress = Math.Round(targetsProcessed / Convert.ToDouble(mTargets.Count) * 100);
+                var glyqIqProgress = Math.Round(targetsProcessed / (float)mTargets.Count * 100);
 
                 if (analysisFinished)
                     glyqIqProgress = 100;

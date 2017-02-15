@@ -58,7 +58,7 @@ namespace AnalysisManagerBase
             m_mgrParams = mgrParams;
             m_jobParams = jobParams;
             m_MgrName = m_mgrParams.GetParam("MgrName", "Undefined-Manager");
-            m_DebugLevel = Convert.ToInt16(m_mgrParams.GetParam("debuglevel", 1));
+            m_DebugLevel = (short)(m_mgrParams.GetParam("debuglevel", 1));
 
             base.InitFileTools(m_MgrName, m_DebugLevel);
 
@@ -238,7 +238,7 @@ namespace AnalysisManagerBase
                     }
                     
                     // Wait several seconds before retrying
-                    Thread.Sleep(Convert.ToInt32(Math.Floor(sngRetryHoldoffSeconds * 1000)));                    
+                    Thread.Sleep((int)(Math.Floor(sngRetryHoldoffSeconds * 1000)));                    
                     
                     PRISM.Processes.clsProgRunner.GarbageCollectNow();
                 }
@@ -404,7 +404,7 @@ namespace AnalysisManagerBase
                     LogError("clsAnalysisResults: error creating folder " + FolderPath, ex);
 
                     // Wait several seconds before retrying
-                    Thread.Sleep(Convert.ToInt32(Math.Floor(sngRetryHoldoffSeconds * 1000)));
+                    Thread.Sleep((int)(Math.Floor(sngRetryHoldoffSeconds * 1000)));
 
                     PRISM.Processes.clsProgRunner.GarbageCollectNow();
                 }
@@ -517,7 +517,7 @@ namespace AnalysisManagerBase
                     LogError("clsAnalysisResults: error looking for folder " + FolderPath, ex);
 
                     // Wait several seconds before retrying
-                    Thread.Sleep(Convert.ToInt32(Math.Floor(sngRetryHoldoffSeconds * 1000)));
+                    Thread.Sleep((int)(Math.Floor(sngRetryHoldoffSeconds * 1000)));
 
                     PRISM.Processes.clsProgRunner.GarbageCollectNow();
                 }

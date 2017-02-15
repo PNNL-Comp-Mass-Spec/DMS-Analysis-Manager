@@ -40,7 +40,7 @@ namespace AnalysisManagerExtractionPlugin
             var blnUpdateLog = false;
 
             // We divide the progress by 3 since creation of the FHT and SYN files takes ~33% of the time, while the remainder is spent running PHRP and PeptideProphet
-            m_Progress = Convert.ToSingle(100.0 * fractionDone / 3.0);
+            m_Progress = (float)(100 * fractionDone / 3f);
 
             if (System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= MIN_STATUS_INTERVAL_SECONDS)
             {
@@ -76,7 +76,7 @@ namespace AnalysisManagerExtractionPlugin
 
         #region "Module variables"
 
-        private readonly int m_DebugLevel;
+        private readonly short m_DebugLevel;
         private readonly IMgrParams m_MgrParams;
         private readonly IJobParams m_JobParams;
         private bool m_ExtractInProgress = false;
@@ -93,12 +93,13 @@ namespace AnalysisManagerExtractionPlugin
         /// </summary>
         /// <param name="MgrParams">IMgrParams object containing manager settings</param>
         /// <param name="JobParams">IJobParams object containing job parameters</param>
+        /// <param name="StatusTools"></param>
         /// <remarks></remarks>
         public clsPeptideExtractWrapper(IMgrParams MgrParams, IJobParams JobParams, ref IStatusFile StatusTools)
         {
             m_JobParams = JobParams;
             m_MgrParams = MgrParams;
-            m_DebugLevel = Convert.ToInt32(m_MgrParams.GetParam("debuglevel"));
+            m_DebugLevel = (short)m_MgrParams.GetParam("debuglevel", 1);
             m_StatusTools = StatusTools;
         }
 

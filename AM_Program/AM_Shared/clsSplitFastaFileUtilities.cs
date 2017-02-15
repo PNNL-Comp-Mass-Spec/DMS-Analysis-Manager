@@ -617,7 +617,7 @@ namespace AnalysisManagerBase
 
         private void mSplitter_ProgressChanged(string taskDescription, float percentComplete)
         {
-            OnProgressUpdate(taskDescription, Convert.ToInt32(percentComplete));
+            OnProgressUpdate(taskDescription, (int)percentComplete);
         }
 
         #endregion

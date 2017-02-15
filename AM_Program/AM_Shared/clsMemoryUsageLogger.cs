@@ -159,7 +159,7 @@ namespace AnalysisManagerBase
                     return 0;
                 }
 
-                return Convert.ToSingle(m_PerfCounterPoolNonpagedBytes.NextValue() / 1024.0 / 1024);
+                return (float)(m_PerfCounterPoolNonpagedBytes.NextValue() / 1024.0 / 1024);
             }
             catch (Exception)
             {
@@ -181,7 +181,7 @@ namespace AnalysisManagerBase
                     return 0;
                 }
 
-                return Convert.ToSingle(m_PerfCounterPoolPagedBytes.NextValue() / 1024.0 / 1024);
+                return (float)(m_PerfCounterPoolPagedBytes.NextValue() / 1024.0 / 1024);
             }
             catch (Exception)
             {
@@ -202,7 +202,7 @@ namespace AnalysisManagerBase
                 var objProcess = Process.GetCurrentProcess();
 
                 // The WorkingSet is the total physical memory usage 
-                return Convert.ToSingle(clsGlobal.BytesToMB(objProcess.WorkingSet64));
+                return (float)(clsGlobal.BytesToMB(objProcess.WorkingSet64));
             }
             catch (Exception)
             {

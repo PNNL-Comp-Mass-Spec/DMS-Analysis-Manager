@@ -86,7 +86,7 @@ namespace DTASpectraFileGen
         public int DebugLevel
         {
             get { return m_DebugLevel; }
-            set { m_DebugLevel = Convert.ToInt16(value); }
+            set { m_DebugLevel = (short)value; }
         }
 
         public int SpectraFileCount
@@ -119,7 +119,7 @@ namespace DTASpectraFileGen
         public virtual void Setup(SpectraFileProcessorParams initParams, clsAnalysisToolRunnerBase toolRunner)
         {
             // Copies all input data required for plugin operation to appropriate memory variables
-            m_DebugLevel = Convert.ToInt16(initParams.DebugLevel);
+            m_DebugLevel = (short)initParams.DebugLevel;
             m_JobParams = initParams.JobParams;
             m_MgrParams = initParams.MgrParams;
             m_StatusTools = initParams.StatusTools;

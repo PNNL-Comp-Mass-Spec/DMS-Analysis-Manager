@@ -274,7 +274,7 @@ namespace AnalysisManagerSequestPlugin
                                 " ... The number of OUT files (" + intOutFileCount + ") is greater than the original DTA count (" + m_DtaCount +
                                 "); we'll consider this a successful job despite the Sequest CmdRunner error");
                         }
-                        else if (intOutFileCount >= Convert.ToInt32(m_DtaCount * 0.999))
+                        else if (intOutFileCount >= (int)(m_DtaCount * 0.999))
                         {
                             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
                                 " ... The number of OUT files (" + intOutFileCount + ") is within 0.1% of the original DTA count (" + m_DtaCount +
@@ -480,7 +480,7 @@ namespace AnalysisManagerSequestPlugin
                             // Examine the number of .dta files that remain
                             int intDTAsRemaining = GetDTAFileCountRemaining();
 
-                            if (intDTAsRemaining <= Convert.ToInt32(m_DtaCount * 0.999))
+                            if (intDTAsRemaining <= (int)(m_DtaCount * 0.999))
                             {
                                 // Just a handful of DTA files remain; assume they're corrupt
                                 var diWorkDir = new DirectoryInfo(m_WorkDir);
@@ -683,7 +683,7 @@ namespace AnalysisManagerSequestPlugin
                     int intNodeCountExpected = 0;
 
                     intNodeCountExpected = m_mgrParams.GetParam("SequestNodeCountExpected", 0);
-                    intNodeCountMinimum = Convert.ToInt32(Math.Floor(0.85 * intNodeCountExpected));
+                    intNodeCountMinimum = (int)Math.Floor(0.85 * intNodeCountExpected);
 
                     if (mSequestNodesSpawned < intNodeCountMinimum)
                     {
@@ -793,7 +793,7 @@ namespace AnalysisManagerSequestPlugin
             }
             else
             {
-                intMidPoint = Convert.ToInt32(Math.Floor((double) sngOutFileProcessingTimes.Length / 2));
+                intMidPoint = (int)Math.Floor(sngOutFileProcessingTimes.Length / 2.0);
             }
 
             return sngOutFileProcessingTimes[intMidPoint];
@@ -1479,8 +1479,8 @@ namespace AnalysisManagerSequestPlugin
             if (mSequestNodeProcessingStats.SearchedFileCount > 0)
             {
                 // Compute average search time
-                mSequestNodeProcessingStats.AvgSearchTime = Convert.ToSingle(mSequestNodeProcessingStats.TotalSearchTimeSeconds) /
-                                                            Convert.ToSingle(mSequestNodeProcessingStats.SearchedFileCount);
+                mSequestNodeProcessingStats.AvgSearchTime = (float)(mSequestNodeProcessingStats.TotalSearchTimeSeconds /
+                                                                    mSequestNodeProcessingStats.SearchedFileCount);
             }
         }
 
@@ -1621,7 +1621,7 @@ namespace AnalysisManagerSequestPlugin
 
                 // Define the minimum node count as 50% of the number of nodes spawned
                 int intActiveNodeCountMinimum = 0;
-                intActiveNodeCountMinimum = Convert.ToInt32(Math.Floor(0.5 * mSequestNodesSpawned));
+                intActiveNodeCountMinimum = (int)Math.Floor(0.5 * mSequestNodesSpawned);
 
                 if (intNodeCountActive < intActiveNodeCountMinimum && !mIgnoreNodeCountActiveErrors)
                 {

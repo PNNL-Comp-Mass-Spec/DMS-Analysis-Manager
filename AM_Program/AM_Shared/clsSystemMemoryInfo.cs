@@ -74,7 +74,7 @@ namespace AnalysisManagerBase
                     var memInfo = new SystemMemoryLookup();
                     var memData = memInfo.MemoryStatus;
 
-                    var freeMemoryMB = Convert.ToSingle(memData.ullAvailPhys / 1024.0 / 1024.0);
+                    var freeMemoryMB = (float)(memData.ullAvailPhys / 1024.0 / 1024.0);
                     OnDebugEvent("Available memory from VB: " + freeMemoryMB + " MB");
 
                     return freeMemoryMB;

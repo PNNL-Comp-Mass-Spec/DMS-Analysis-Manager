@@ -205,7 +205,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 }
 
                 // Compute a % complete value between 0 and 2%
-                var percentComplete = (float)jobsProcessed / jobCountToProcess * 2;
+                var percentComplete = jobsProcessed / (float)jobCountToProcess * 2;
                 m_StatusTools.UpdateAndWrite(percentComplete);
 
                 if (DateTime.UtcNow.Subtract(dtLastProgressUpdate).TotalSeconds >= 30)

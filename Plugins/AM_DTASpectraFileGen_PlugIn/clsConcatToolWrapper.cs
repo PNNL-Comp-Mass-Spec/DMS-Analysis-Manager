@@ -140,7 +140,7 @@ namespace DTASpectraFileGen
 
         private void m_CatTools_Progress(double fractionDone)
         {
-            m_Progress = Convert.ToSingle(100.0 * fractionDone);
+            m_Progress = (float)(100.0 * fractionDone);
         }
 
         #endregion

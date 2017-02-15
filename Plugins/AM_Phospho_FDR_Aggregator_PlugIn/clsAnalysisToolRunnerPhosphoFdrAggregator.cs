@@ -817,8 +817,8 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                     }
                 }
 
-                var percentCompleteStart = mJobFoldersProcessed / Convert.ToSingle(mTotalJobFolders) * 100f;
-                var percentCompleteEnd = (mJobFoldersProcessed + 1) / Convert.ToSingle(mTotalJobFolders) * 100f;
+                var percentCompleteStart = mJobFoldersProcessed / (float)mTotalJobFolders * 100f;
+                var percentCompleteEnd = (mJobFoldersProcessed + 1) / (float)mTotalJobFolders * 100f;
                 var subtaskProgress = ComputeIncrementalProgress(percentCompleteStart, percentCompleteEnd, ascoreProgress);
 
                 var progressComplete = ComputeIncrementalProgress(PROGRESS_PCT_PHOSPHO_FDR_RUNNING, PROGRESS_PCT_PHOSPHO_FDR_COMPLETE, subtaskProgress);
@@ -965,7 +965,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                     }
 
                     mJobFoldersProcessed += 1;
-                    var subTaskProgress = mJobFoldersProcessed / Convert.ToSingle(mTotalJobFolders) * 100f;
+                    var subTaskProgress = mJobFoldersProcessed / (float)mTotalJobFolders * 100f;
 
                     m_progress = ComputeIncrementalProgress(PROGRESS_PCT_PHOSPHO_FDR_RUNNING, PROGRESS_PCT_PHOSPHO_FDR_COMPLETE, subTaskProgress);
                 }

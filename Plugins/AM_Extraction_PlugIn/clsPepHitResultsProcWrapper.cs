@@ -405,7 +405,7 @@ namespace AnalysisManagerExtractionPlugin
 
                     if (progressOverall > m_Progress)
                     {
-                        m_Progress = Convert.ToInt32(progressOverall);
+                        m_Progress = (int)progressOverall;
                         if (ProgressChanged != null)
                         {
                             ProgressChanged("Running PHRP", m_Progress);

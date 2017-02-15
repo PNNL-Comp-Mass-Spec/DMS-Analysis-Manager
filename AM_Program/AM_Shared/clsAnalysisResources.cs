@@ -356,7 +356,7 @@ namespace AnalysisManagerBase
             m_mgrParams = mgrParams;
             m_jobParams = jobParams;
 
-            m_DebugLevel = Convert.ToInt16(m_mgrParams.GetParam("debuglevel", 1));
+            m_DebugLevel = (short)m_mgrParams.GetParam("debuglevel", 1);
             m_FastaToolsCnStr = m_mgrParams.GetParam("fastacnstring");
             m_MgrName = m_mgrParams.GetParam("MgrName", "Undefined-Manager");
 
@@ -1381,7 +1381,7 @@ namespace AnalysisManagerBase
             proteinCount = forwardProteinCount + reverseProteinCount;
             if (proteinCount > 0)
             {
-                fractionDecoy = reverseProteinCount / Convert.ToDouble(proteinCount);
+                fractionDecoy = reverseProteinCount / (double)proteinCount;
             }
 
             return fractionDecoy;
@@ -3007,7 +3007,7 @@ namespace AnalysisManagerBase
                 }
 
                 var localDriveInfo = new DriveInfo(driveLetter);
-                var percentFreeSpaceAtStart = localDriveInfo.AvailableFreeSpace / Convert.ToDouble(localDriveInfo.TotalSize) * 100;
+                var percentFreeSpaceAtStart = localDriveInfo.AvailableFreeSpace / (double)localDriveInfo.TotalSize * 100;
 
                 if ((percentFreeSpaceAtStart >= freeSpaceThresholdPercent))
                 {
@@ -3082,7 +3082,7 @@ namespace AnalysisManagerBase
                 totalBytesPurged += bytesDeleted;
 
                 // Re-check the disk free space
-                var percentFreeSpace = localDriveInfo.AvailableFreeSpace / Convert.ToDouble(localDriveInfo.TotalSize) * 100;
+                var percentFreeSpace = localDriveInfo.AvailableFreeSpace / (double)localDriveInfo.TotalSize * 100;
                 var updatedFreeSpaceGB = clsGlobal.BytesToGB(localDriveInfo.AvailableFreeSpace);
 
                 if (requiredFreeSpaceMB > 0 && updatedFreeSpaceGB * 1024.0 < requiredFreeSpaceMB)
@@ -3196,7 +3196,7 @@ namespace AnalysisManagerBase
 
                 var lstFastaFilesByLastUse = from item in dctFastaFiles orderby item.Value select item.Key;
 
-                var bytesToPurge = Convert.ToInt64(spaceUsageBytes - maxSizeGB * 1024.0 * 1024 * 1024);
+                var bytesToPurge = (long)(spaceUsageBytes - maxSizeGB * 1024.0 * 1024 * 1024);
                 long totalBytesPurged = 0;
 
                 foreach (var fiFileToPurge in lstFastaFilesByLastUse)
@@ -3223,7 +3223,8 @@ namespace AnalysisManagerBase
                         // Keep deleting files
                         if (m_DebugLevel >= 2)
                         {
-                            LogDebugMessage(string.Format("Purging FASTA files: {0:F1} / {1:F1} MB deleted", clsGlobal.BytesToMB(totalBytesPurged), clsGlobal.BytesToMB(bytesToPurge)));
+                            LogDebugMessage(string.Format("Purging FASTA files: {0:F1} / {1:F1} MB deleted", 
+                                clsGlobal.BytesToMB(totalBytesPurged), clsGlobal.BytesToMB(bytesToPurge)));
                         }
                     }
                     else

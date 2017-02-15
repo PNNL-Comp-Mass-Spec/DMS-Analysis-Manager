@@ -1310,7 +1310,7 @@ namespace AnalysisManagerBase
                     datasetsProcessed += 1;
 
                     // Compute a % complete value between 0 and 2%                
-                    var percentComplete = Convert.ToSingle(datasetsProcessed) / datasetsToProcess * 2;
+                    var percentComplete = datasetsProcessed / (float)datasetsToProcess * 2;
                     OnProgressUpdate("Retrieving MzXML files", percentComplete);
 
 

@@ -522,7 +522,7 @@ namespace MSGFResultsSummarizer
 
             if (totalMSnSpectra > 0)
             {
-                mPercentMSnScansNoPSM = (1 - scanList.Count / Convert.ToDouble(totalMSnSpectra)) * 100.0;
+                mPercentMSnScansNoPSM = (1 - scanList.Count / (float)totalMSnSpectra) * 100.0;
             }
             else
             {
@@ -550,7 +550,7 @@ namespace MSGFResultsSummarizer
             }
 
             var missedCleavages = (from item in lstUniqueSequences where item.Value.MissedCleavage select item.Key).Count();
-            var missedCleavageRatio = missedCleavages / Convert.ToSingle(lstUniqueSequences.Count);
+            var missedCleavageRatio = missedCleavages / (float)lstUniqueSequences.Count;
 
             return missedCleavageRatio;
         }
@@ -822,7 +822,7 @@ namespace MSGFResultsSummarizer
                     if (intForwardResults > 0)
                     {
                         // Compute and store the FDR for this entry
-                        var dblFDRThreshold = intDecoyResults / Convert.ToDouble(intForwardResults);
+                        var dblFDRThreshold = intDecoyResults / (float)intForwardResults;
                         lstResultIDtoFDRMap.Add(kvEntry.Value, dblFDRThreshold);
 
                         if (lstMissedResultIDsAtStart.Count > 0)

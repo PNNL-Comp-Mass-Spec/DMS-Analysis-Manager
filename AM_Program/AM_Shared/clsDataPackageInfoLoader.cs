@@ -596,8 +596,9 @@ namespace AnalysisManagerBase
                             string numberOfClonedSteps;
                             if (dataPkgJobParameters.TryGetValue("NumberOfClonedSteps", out numberOfClonedSteps))
                             {
-                                var clonedStepCount = Convert.ToInt32(numberOfClonedSteps);
-                                dataPkgJob.NumberOfClonedSteps = clonedStepCount;
+                                int clonedStepCount;
+                                if (int.TryParse(numberOfClonedSteps, out clonedStepCount))
+                                    dataPkgJob.NumberOfClonedSteps = clonedStepCount;
                             }
 
                             jobsProcessed += 1;

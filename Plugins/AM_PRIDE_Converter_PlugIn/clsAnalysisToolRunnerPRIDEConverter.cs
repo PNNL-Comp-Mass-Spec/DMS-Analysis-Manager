@@ -1258,11 +1258,11 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         var blnValidPSM = true;
                         var blnThresholdChecked = false;
 
-                        var dblMSGFSpecProb = Convert.ToDouble(MSGF_SPECPROB_NOTDEFINED);
-                        var dblFDR = Convert.ToDouble(-1);
-                        var dblPepFDR = Convert.ToDouble(-1);
-                        var dblPValue = Convert.ToDouble(PVALUE_NOTDEFINED);
-                        var dblScoreForCurrentMatch = Convert.ToDouble(100);
+                        var dblMSGFSpecProb = (double)MSGF_SPECPROB_NOTDEFINED;
+                        var dblFDR = -1.0;
+                        var dblPepFDR = -1.0;
+                        var dblPValue = (double)PVALUE_NOTDEFINED;
+                        var dblScoreForCurrentMatch = 100.0;
 
                         // Determine MSGFSpecProb; store 10 if we don't find a valid number
                         if (!double.TryParse(objReader.CurrentPSM.MSGFSpecProb, out dblMSGFSpecProb))

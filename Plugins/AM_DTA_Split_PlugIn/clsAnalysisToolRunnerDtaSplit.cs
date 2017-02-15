@@ -225,7 +225,7 @@ namespace AnalysisManagerDtaSplitPlugIn
 
                 lineEndCharCount = LineEndCharacterCount(fi);
 
-                intTargetSpectraPerSegment = Convert.ToInt32(Math.Ceiling(intSpectraCountExpected / Convert.ToDouble(intSegmentCountToCreate)));
+                intTargetSpectraPerSegment = (int)Math.Ceiling(intSpectraCountExpected / (float)intSegmentCountToCreate);
                 if (intTargetSpectraPerSegment < 1)
                     intTargetSpectraPerSegment = 1;
 
@@ -288,7 +288,7 @@ namespace AnalysisManagerDtaSplitPlugIn
                     if (DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= STATUS_UPDATE_INTERVAL_SECONDS)
                     {
                         dtLastStatusUpdate = DateTime.UtcNow;
-                        sngPercentComplete = (lngBytesRead / Convert.ToSingle(srInFile.BaseStream.Length) * 100);
+                        sngPercentComplete = lngBytesRead / (float)srInFile.BaseStream.Length * 100;
                         UpdateStatusRunning(sngPercentComplete, intSpectraCountRead);
                     }
 

@@ -381,7 +381,7 @@ namespace FileProcessor
 				if (intMillisecondsBetweenDots == 0)
 					intMillisecondsBetweenDots = intMillisecondsToPause;
 
-				intTotalIterations = Convert.ToInt32(Math.Round(intMillisecondsToPause / (double)intMillisecondsBetweenDots, 0));
+				intTotalIterations = (int)Math.Round(intMillisecondsToPause / (double)intMillisecondsBetweenDots, 0);
 			}
 			catch
 			{

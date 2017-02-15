@@ -699,7 +699,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
                             if (mProgressStepPercentComplete.TryGetValue(eProgress + 1, out intProgressNext))
                             {
-                                sngActualProgress += Convert.ToSingle(dblSubProgressPercent * (intProgressNext - intActualProgress) / 100.0);
+                                sngActualProgress += (float)(dblSubProgressPercent * (intProgressNext - intActualProgress) / 100.0);
                             }
 
                         }

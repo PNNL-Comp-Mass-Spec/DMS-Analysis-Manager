@@ -153,7 +153,7 @@ namespace AnalysisManagerBase
                                     var percentComplete = bytesRead / (float)srMgfFile.BaseStream.Length * 100;
                                     if (percentComplete > 100)
                                         percentComplete = 100;
-                                    OnProgressUpdate("Splitting MGF file", Convert.ToInt32(percentComplete));
+                                    OnProgressUpdate("Splitting MGF file", (int)percentComplete);
                                 }
                             }
 

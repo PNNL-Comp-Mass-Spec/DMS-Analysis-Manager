@@ -121,7 +121,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                             if (long.TryParse(lstData[1], out intFileSizeBytes))
                             {
                                 dctFilesToCopy.Add(lstData[0], intFileSizeBytes);
-                                fileSizeTotalKB += Convert.ToInt64(intFileSizeBytes / 1024.0);
+                                fileSizeTotalKB += (long)(intFileSizeBytes / 1024.0);
                             }
                         }
                     }
@@ -171,7 +171,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 const int DEFAULT_ORG_DB_DIR_MIN_FREE_SPACE_MB = 750;
 
                 // Convert fileSizeTotalBytes to MB, but add on a Default_Min_free_Space to assure we'll still have enough free space after copying over the files
-                var minFreeSpaceMB = Convert.ToInt32(fileSizeTotalBytes / 1024.0 / 1024.0 + DEFAULT_ORG_DB_DIR_MIN_FREE_SPACE_MB);
+                var minFreeSpaceMB = (int)(fileSizeTotalBytes / 1024.0 / 1024.0 + DEFAULT_ORG_DB_DIR_MIN_FREE_SPACE_MB);
 
                 diskFreeSpaceBelowThreshold = !clsGlobal.ValidateFreeDiskSpace("Organism DB directory", fiFastaFile.Directory.FullName, minFreeSpaceMB, clsLogTools.LoggerTypes.LogFile, out mErrorMessage);
 

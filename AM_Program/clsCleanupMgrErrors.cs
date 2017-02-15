@@ -234,7 +234,7 @@ namespace AnalysisManagerProg
 
             try
             {
-                holdoffMilliseconds = Convert.ToInt32(holdoffSeconds * 1000);
+                holdoffMilliseconds = (int)(holdoffSeconds * 1000);
                 if (holdoffMilliseconds < 100)
                     holdoffMilliseconds = 100;
                 if (holdoffMilliseconds > 300000)
