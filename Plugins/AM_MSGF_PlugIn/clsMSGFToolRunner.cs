@@ -2580,7 +2580,7 @@ namespace AnalysisManagerMSGFPlugin
                 }
 
                 var objSummarizer = new clsMSGFResultsSummarizer(eResultType, m_Dataset, intJobNumber, m_WorkDir, strConnectionString);
-                objSummarizer.ErrorEvent += MSGFResultsSummarizer_ErrorHandler;
+                RegisterEvents(objSummarizer);
 
                 objSummarizer.MSGFThreshold = clsMSGFResultsSummarizer.DEFAULT_MSGF_THRESHOLD;
 

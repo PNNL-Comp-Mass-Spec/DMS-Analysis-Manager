@@ -20,10 +20,11 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using PRISM;
 
 namespace MSGFResultsSummarizer
 {
-    public class clsMSGFResultsSummarizer
+    public class clsMSGFResultsSummarizer : clsEventNotifier
     {
         #region "Constants and Enums"
 
@@ -104,14 +105,6 @@ namespace MSGFResultsSummarizer
                 TrypticPeptides = 0;
             }
         }
-
-        #endregion
-
-        #region "Events"
-
-        public event ErrorEventEventHandler ErrorEvent;
-
-        public delegate void ErrorEventEventHandler(string errMsg);
 
         #endregion
 
@@ -1762,10 +1755,7 @@ namespace MSGFResultsSummarizer
         {
             Console.WriteLine(errMsg);
             mErrorMessage = errMsg;
-            if (ErrorEvent != null)
-            {
-                ErrorEvent(errMsg);
-            }
+            OnErrorEvent(errMsg);
         }
 
         /// <summary>
@@ -1909,7 +1899,7 @@ namespace MSGFResultsSummarizer
 
         private void m_ExecuteSP_DebugEvent(string Message)
         {
-            Console.WriteLine(Message);
+            OnDebugEvent(Message);
         }
 
         private void m_ExecuteSP_DBErrorEvent(string errMsg)

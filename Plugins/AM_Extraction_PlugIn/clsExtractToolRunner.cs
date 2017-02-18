@@ -1161,7 +1161,7 @@ namespace AnalysisManagerExtractionPlugin
             }
 
             var objSummarizer = new clsMSGFResultsSummarizer(eResultType, m_Dataset, job, m_WorkDir);
-            objSummarizer.ErrorEvent += MSGFResultsSummarizer_ErrorHandler;
+            RegisterEvents(objSummarizer);
 
             objSummarizer.MSGFThreshold = clsMSGFResultsSummarizer.DEFAULT_MSGF_THRESHOLD;
 
