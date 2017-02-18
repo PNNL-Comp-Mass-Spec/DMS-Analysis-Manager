@@ -213,7 +213,7 @@ namespace AnalysisManagerBase
         protected string m_FastaToolsCnStr = "";
 
         protected string m_FastaFileName = "";
-        protected Protein_Exporter.ExportProteinCollectionsIFC.IGetFASTAFromDMS m_FastaTools;
+        protected Protein_Exporter.clsGetFASTAFromDMS m_FastaTools;
 
         protected readonly clsCDTAUtilities m_CDTAUtilities;
 
@@ -719,6 +719,8 @@ namespace AnalysisManagerBase
                 try
                 {
                     m_FastaTools = new Protein_Exporter.clsGetFASTAFromDMS(m_FastaToolsCnStr);
+                    RegisterEvents(m_FastaTools);
+
                     m_FastaTools.FileGenerationProgress += m_FastaTools_FileGenerationProgress;
                     m_FastaTools.FileGenerationCompleted += m_FastaTools_FileGenerationCompleted;
 
@@ -1162,7 +1164,7 @@ namespace AnalysisManagerBase
                 LogError("Error generating ScanStats files with clsScanStatsGenerator", objScanStatsGenerator.ErrorMessage);
                 if (objScanStatsGenerator.MSFileInfoScannerErrorCount > 0)
                 {
-                    LogMessage("MSFileInfoScanner encountered " + objScanStatsGenerator.MSFileInfoScannerErrorCount.ToString() + " errors");
+                    LogMessage("MSFileInfoScanner encountered " + objScanStatsGenerator.MSFileInfoScannerErrorCount + " errors");
                 }
             }
 
