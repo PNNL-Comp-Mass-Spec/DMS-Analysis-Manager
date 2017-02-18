@@ -29,37 +29,35 @@ namespace AnalysisManagerBase
             /// Example filename: FilePathInfo_Job950000.txt
             /// </summary>
             /// <remarks>No files are actually retrieved when this is set to True</remarks>
-
             public bool CreateJobPathFiles;
+            
             /// <summary>
             /// Set to true to obtain the mzXML file for the dataset associated with this job
             /// </summary>
             /// <remarks>If the .mzXML file does not exist, then retrieves the instrument data file (e.g. Thermo .raw file)</remarks>
-
             public bool RetrieveMzXMLFile;
+            
             /// <summary>
             /// Set to True to retrieve _DTA.txt files (the PRIDE Converter will convert these to .mgf files)
             /// </summary>
             /// <remarks>If the search used a .mzML instead of a _dta.txt file, the .mzML.gz file will be retrieved</remarks>
-
             public bool RetrieveDTAFiles;
+            
             /// <summary>
             /// Set to True to obtain MSGF+ .mzID files
             /// </summary>
             /// <remarks></remarks>
-
             public bool RetrieveMZidFiles;
+            
             /// <summary>
             /// Set to True to obtain .pepXML files (typically stored as _pepXML.zip)
             /// </summary>
             /// <remarks></remarks>
-
             public bool RetrievePepXMLFiles;
             /// <summary>
             /// Set to True to obtain the _syn.txt file and related PHRP files
             /// </summary>
             /// <remarks></remarks>
-
             public bool RetrievePHRPFiles;
             /// <summary>
             /// When True, assume that the instrument file (e.g. .raw file) exists in the dataset storage folder
@@ -292,7 +290,6 @@ namespace AnalysisManagerBase
         /// <param name="splitFastaResultID"></param>
         /// <param name="zipFileCandidates">Potential names of zip files to decompress</param>
         /// <param name="gzipFileCandidates">Potential names of gzip files to decompress</param>
-
         private void GetMzIdFilesToFind(string datasetName, int splitFastaResultID, ICollection<string> zipFileCandidates, ICollection<string> gzipFileCandidates)
         {
             string zipFile;

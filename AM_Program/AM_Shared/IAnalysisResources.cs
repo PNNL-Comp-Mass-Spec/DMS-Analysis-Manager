@@ -29,8 +29,8 @@ namespace AnalysisManagerBase
         /// <param name="statusTools">Status tools object</param>
         /// <param name="myEMSLUtilities">MyEMSL download utilities</param>
         /// <remarks></remarks>
-
         void Setup(IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsMyEMSLUtilities myEMSLUtilities);
+        
         /// <summary>
         /// Main processing function for obtaining the required resources
         /// </summary>
@@ -52,8 +52,8 @@ namespace AnalysisManagerBase
         /// <param name="resourceOption">Option to set</param>
         /// <param name="enabled">True or false</param>
         /// <remarks></remarks>
-
         void SetOption(clsGlobal.eAnalysisResourceOptions resourceOption, bool enabled);
+        
         #endregion
 
     }

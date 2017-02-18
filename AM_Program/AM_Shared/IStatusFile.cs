@@ -136,6 +136,7 @@ namespace AnalysisManagerBase
         int GetProcessID();
 
         void StoreCoreUsageHistory(Queue<KeyValuePair<DateTime, float>> coreUsageHistory);
+
         /// <summary>
         /// 
         /// </summary>
@@ -144,7 +145,6 @@ namespace AnalysisManagerBase
         /// <param name="JobInfo"></param>
         /// <param name="ForceLogToBrokerDB"></param>
         /// <remarks></remarks>
-
         void UpdateClose(string ManagerIdleMessage, IEnumerable<string> recentErrorMessages, string JobInfo, bool ForceLogToBrokerDB);
 
         /// <summary>
@@ -152,7 +152,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="PercentComplete">Job completion percentage (value between 0 and 100)</param>
         /// <remarks></remarks>
-
         void UpdateAndWrite(float PercentComplete);
 
         /// <summary>
@@ -163,8 +162,8 @@ namespace AnalysisManagerBase
         /// <param name="eTaskStatusDetail">Detailed task status</param>
         /// <param name="PercentComplete">Job completion percentage (value between 0 and 100)</param>
         /// <remarks></remarks>
-
         void UpdateAndWrite(EnumMgrStatus eMgrStatus, EnumTaskStatus eTaskStatus, EnumTaskStatusDetail eTaskStatusDetail, float PercentComplete);
+        
         /// <summary>
         /// Update the current status
         /// </summary>
@@ -172,8 +171,8 @@ namespace AnalysisManagerBase
         /// <param name="PercentComplete">VJob completion percentage (value between 0 and 100)</param>
         /// <param name="SpectrumCountTotal">Number of DTA files (i.e., spectra files); relevant for Sequest, X!Tandem, and Inspect</param>
         /// <remarks></remarks>
-
         void UpdateAndWrite(EnumTaskStatus Status, float PercentComplete, int SpectrumCountTotal);
+        
         /// <summary>
         /// Updates status file
         /// </summary>
@@ -187,7 +186,6 @@ namespace AnalysisManagerBase
         /// <param name="RecentJobInfo">Information on the job that started most recently</param>
         /// <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
         /// <remarks></remarks>
-
         void UpdateAndWrite(EnumMgrStatus eMgrStatus, EnumTaskStatus eTaskStatus, EnumTaskStatusDetail eTaskStatusDetail, float PercentComplete, int DTACount, string MostRecentLogMessage, string MostRecentErrorMessage, string RecentJobInfo, bool ForceLogToBrokerDB);
 
         /// <summary>
