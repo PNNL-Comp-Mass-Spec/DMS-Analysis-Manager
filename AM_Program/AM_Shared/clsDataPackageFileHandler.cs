@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading;
 using System.Xml;
 using PHRPReader;
+using PRISM;
 
 namespace AnalysisManagerBase
 {

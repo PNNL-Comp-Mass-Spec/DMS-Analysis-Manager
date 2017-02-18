@@ -86,7 +86,7 @@ namespace AnalysisManagerBase
         public string OutputFolderPath;
         //' Unused: public Specialized.StringDictionary MiscParams;
         public int DebugLevel;
-        public PRISM.Logging.ILogger Logger;
+        public PRISM.ILogger Logger;
         public IMgrParams MgrParams;
         public IJobParams JobParams;
         public IStatusFile StatusTools;
