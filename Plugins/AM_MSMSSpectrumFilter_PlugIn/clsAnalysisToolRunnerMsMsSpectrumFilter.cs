@@ -503,7 +503,7 @@ namespace MSMSSpectrumFilterAM
                         blnFilesMatch = CDTAFilesMatch(strBakFilePath, strInputFilePath);
 
                         System.Threading.Thread.Sleep(250);
-                        PRISM.Processes.clsProgRunner.GarbageCollectNow();
+                        PRISM.clsProgRunner.GarbageCollectNow();
 
                         // Delete the _dta.txt.bak file
                         File.Delete(strBakFilePath);

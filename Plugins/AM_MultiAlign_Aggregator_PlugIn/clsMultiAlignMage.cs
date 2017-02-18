@@ -4,6 +4,7 @@ using System.IO;
 using AnalysisManagerBase;
 using Mage;
 using MageExtExtractionFilters;
+using PRISM;
 
 namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 {

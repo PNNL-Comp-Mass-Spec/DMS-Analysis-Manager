@@ -12,7 +12,7 @@ using System.IO;
 using System.Threading;
 using AnalysisManagerBase;
 using PeptideToProteinMapEngine;
-using PRISM.Processes;
+using PRISM;
 
 namespace AnalysisManagerInspResultsAssemblyPlugIn
 {

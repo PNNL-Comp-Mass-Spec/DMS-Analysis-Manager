@@ -15,7 +15,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Timers;
 using AnalysisManagerBase;
-using PRISM.Processes;
+using PRISM;
 
 namespace AnalysisManagerSequestPlugin
 {

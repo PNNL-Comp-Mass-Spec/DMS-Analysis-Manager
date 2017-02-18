@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
+using PRISM;
 
 namespace AnalysisManagerBase
 {
@@ -27,7 +28,7 @@ namespace AnalysisManagerBase
         private readonly string m_MgrName;
         private readonly clsMyEMSLUtilities m_MyEMSLUtilities;
 
-        private readonly PRISM.Files.clsFileTools m_FileTools;
+        private readonly PRISM.clsFileTools m_FileTools;
 
         #endregion
 
@@ -52,7 +53,7 @@ namespace AnalysisManagerBase
         /// <param name="mgrName"></param>
         /// <param name="debugLevel"></param>
         public clsFileCopyUtilities(
-            PRISM.Files.clsFileTools prismFileTools, 
+            PRISM.clsFileTools prismFileTools, 
             clsMyEMSLUtilities myEmslUtilities, 
             string mgrName,
             short debugLevel)

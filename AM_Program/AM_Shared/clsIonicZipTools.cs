@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using Ionic.Zip;
+using PRISM;
 
 namespace AnalysisManagerBase
 {
@@ -254,7 +255,7 @@ namespace AnalysisManagerBase
                 }
 
                 // Call the garbage collector to assure the handle to the .gz file is released
-                PRISM.Processes.clsProgRunner.GarbageCollectNow();
+                PRISM.clsProgRunner.GarbageCollectNow();
 
             }
             catch (Exception ex)
@@ -337,7 +338,7 @@ namespace AnalysisManagerBase
             }
 
             // Call the garbage collector to assure the handle to the .gz file is released
-            PRISM.Processes.clsProgRunner.GarbageCollectNow();
+            PRISM.clsProgRunner.GarbageCollectNow();
 
             if (DeleteSourceAfterZip)
             {

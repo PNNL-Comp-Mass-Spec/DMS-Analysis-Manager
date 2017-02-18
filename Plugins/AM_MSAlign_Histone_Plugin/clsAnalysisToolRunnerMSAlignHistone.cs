@@ -313,10 +313,11 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                         "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
                 }
 
-                //Make sure objects are released
-                Thread.Sleep(500);
+                // Make sure objects are released
                 // 500 msec delay
-                PRISM.Processes.clsProgRunner.GarbageCollectNow();
+                Thread.Sleep(500);
+                
+                PRISM.clsProgRunner.GarbageCollectNow();
 
                 if (blnProcessingError)
                 {

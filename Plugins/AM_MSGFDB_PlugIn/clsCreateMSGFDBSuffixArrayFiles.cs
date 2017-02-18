@@ -12,6 +12,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using AnalysisManagerBase;
+using PRISM;
 
 namespace AnalysisManagerMSGFDBPlugIn
 {
@@ -142,7 +143,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                 var filesCopied = 0;
                 var dtLastStatusUpdate = DateTime.UtcNow;
 
-                var oFileTools = new PRISM.Files.clsFileTools(strManager, intDebugLevel);
+                var oFileTools = new clsFileTools(strManager, intDebugLevel);
+                RegisterEvents(oFileTools);
 
                 // Compute the total disk space required
                 long fileSizeTotalBytes = 0;
@@ -248,7 +250,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="fiFastaFile"></param>
         /// <param name="remoteIndexFolderPath"></param>
         /// <param name="debugLevel"></param>
-        /// <param name="managerName">Manager name (only required because the constructor for PRISM.Files.clsFileTools requires this)</param>
+        /// <param name="managerName">Manager name (only required because the constructor for PRISM.clsFileTools requires this)</param>
         /// <param name="createIndexFileForExistingFiles">When true, assumes that the index files were previously copied to remoteIndexFolderPath, and we should simply create the .MSGFPlusIndexFileInfo file for the matching files</param>
         /// <param name="strErrorMessage"></param>
         /// <returns></returns>
@@ -300,7 +302,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 if (!createIndexFileForExistingFiles)
                 {
                     // Copy up each file
-                    var oFileTools = new PRISM.Files.clsFileTools(managerName, debugLevel);
+                    var oFileTools = new clsFileTools(managerName, debugLevel);
 
                     foreach (var entry in dctFilesToCopy)
                     {

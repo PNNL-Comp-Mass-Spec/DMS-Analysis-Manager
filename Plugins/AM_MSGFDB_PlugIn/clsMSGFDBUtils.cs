@@ -8,6 +8,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using AnalysisManagerBase;
+using PRISM;
 
 namespace AnalysisManagerMSGFDBPlugIn
 {
@@ -1022,6 +1023,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         }
 
         /// Read the original fasta file to create a decoy fasta file
+        
         /// <summary>
         /// Creates a decoy version of the fasta file specified by strInputFilePath
         /// This new file will include the original proteins plus reversed versions of the original proteins
@@ -1116,7 +1118,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <remarks>Should not be affected by hyperthreading, so a computer with two 4-core chips will report 8 cores</remarks>
         public int GetCoreCount()
         {
-            return PRISM.Processes.clsProgRunner.GetCoreCount();
+            return PRISM.clsProgRunner.GetCoreCount();
         }
 
         private Dictionary<string, string> GetMSFGDBParameterNames()

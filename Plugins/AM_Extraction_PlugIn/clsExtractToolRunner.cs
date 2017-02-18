@@ -2086,7 +2086,7 @@ namespace AnalysisManagerExtractionPlugin
             int intFileIndex = 0;
 
             Thread.Sleep(1000);                       //Delay for 1 second
-            PRISM.Processes.clsProgRunner.GarbageCollectNow();
+            PRISM.clsProgRunner.GarbageCollectNow();
 
             // Delete each file in strFileList
             for (intFileIndex = 0; intFileIndex <= strFileList.Length - 1; intFileIndex++)

@@ -402,7 +402,7 @@ namespace DTASpectraFileGen
                 }
 
                 // Delete the original .mgf file and replace it with strNewMGFFile
-                PRISM.Processes.clsProgRunner.GarbageCollectNow();
+                PRISM.clsProgRunner.GarbageCollectNow();
                 Thread.Sleep(500);
                 clsAnalysisToolRunnerBase.DeleteFileWithRetries(strMGFFilePath, m_DebugLevel);
                 Thread.Sleep(500);

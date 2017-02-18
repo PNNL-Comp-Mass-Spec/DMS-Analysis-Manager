@@ -10,7 +10,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using AnalysisManagerBase;
-using PRISM.Processes;
+using PRISM;
 
 namespace AnalysisManagerDtaRefineryPlugIn
 {

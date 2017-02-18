@@ -76,7 +76,8 @@ namespace AnalysisManagerBase
 
         private readonly clsDataPackageInfoLoader mDataPackageInfoLoader;
         #endregion
-        public readonly PRISM.DataBase.clsExecuteDatabaseSP mPipelineDBProcedureExecutor;
+
+        public readonly PRISM.clsExecuteDatabaseSP mPipelineDBProcedureExecutor;
 
         /// <summary>
         /// Constructor
@@ -90,7 +91,7 @@ namespace AnalysisManagerBase
 
             mDataPackageInfoLoader = new clsDataPackageInfoLoader(brokerDbConnectionString, dataPackageID);
 
-            mPipelineDBProcedureExecutor = new PRISM.DataBase.clsExecuteDatabaseSP(brokerDbConnectionString);
+            mPipelineDBProcedureExecutor = new clsExecuteDatabaseSP(brokerDbConnectionString);
 
             mPipelineDBProcedureExecutor.DebugEvent += ProcedureExecutor_DebugEvent;
             mPipelineDBProcedureExecutor.DBErrorEvent += ProcedureExecutor_DBErrorEvent;

@@ -972,7 +972,7 @@ namespace AnalysisManagerProg
                 {
                     // If there was a problem deleting non result files, return success and let the manager try to delete the files one more time on the next start up
                     // However, wait another 5 seconds before continuing
-                    PRISM.Processes.clsProgRunner.GarbageCollectNow();
+                    PRISM.clsProgRunner.GarbageCollectNow();
                     Thread.Sleep(5000);
 
                     return true;
@@ -2450,7 +2450,7 @@ namespace AnalysisManagerProg
                 }
             }
 
-            var errorCount = workDirFiles.Count(item => !PRISM.Files.clsFileTools.IsVimSwapFile(item.FullName));
+            var errorCount = workDirFiles.Count(item => !PRISM.clsFileTools.IsVimSwapFile(item.FullName));
 
             if (errorCount == 0)
             {
@@ -2515,6 +2515,7 @@ namespace AnalysisManagerProg
         }
 
         #endregion
+        
         /// <summary>
         /// Event handler for file watcher
         /// </summary>

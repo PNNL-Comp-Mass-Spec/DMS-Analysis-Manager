@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Xml;
+using PRISM;
 
 //*********************************************************************************************************
 // Written by Dave Clark for the US Department of Energy 
@@ -466,7 +468,7 @@ namespace AnalysisManagerBase
         /// <returns>Value between 0 and 100</returns>
         /// <remarks>
         /// This is CPU usage for all running applications, not just this application
-        /// For CPU usage of a single application use PRISM.Processes.clsProgRunner.GetCoreUsageByProcessID()
+        /// For CPU usage of a single application use PRISM.clsProgRunner.GetCoreUsageByProcessID()
         /// </remarks>
         private float GetCPUUtilization()
         {
@@ -496,7 +498,7 @@ namespace AnalysisManagerBase
         public int GetCoreCount()
         {
 
-            return PRISM.Processes.clsProgRunner.GetCoreCount();
+            return PRISM.clsProgRunner.GetCoreCount();
 
         }
 
@@ -822,7 +824,12 @@ namespace AnalysisManagerBase
                     {
                         xWriter.WriteStartElement("ProgRunnerCoreUsage");
                         xWriter.WriteAttributeString("Count", m_ProgRunnerCoreUsageHistory.Count.ToString());
-                        foreach (var coreUsageSample in m_ProgRunnerCoreUsageHistory)
+
+                        // Dumping the items from the queue to a list because another thread might
+                        // update m_ProgRunnerCoreUsageHistory while we're iterating over the items
+                        var coreUsageHistory = m_ProgRunnerCoreUsageHistory.ToList();
+
+                        foreach (var coreUsageSample in coreUsageHistory)
                         {
                             xWriter.WriteStartElement("CoreUsageSample");
                             xWriter.WriteAttributeString("Date", coreUsageSample.Key.ToString("yyyy-MM-dd hh:mm:ss tt"));

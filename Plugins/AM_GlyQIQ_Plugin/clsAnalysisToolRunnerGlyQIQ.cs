@@ -63,7 +63,7 @@ namespace AnalysisManagerGlyQIQPlugin
 
         private XRawFileIO mThermoFileReader;
 
-        private PRISM.DataBase.clsExecuteDatabaseSP mStoredProcedureExecutor;
+        private PRISM.clsExecuteDatabaseSP mStoredProcedureExecutor;
 
         #endregion
 
@@ -135,7 +135,7 @@ namespace AnalysisManagerGlyQIQPlugin
 
                 //Make sure objects are released
                 Thread.Sleep(500);        // 500 msec delay
-                PRISM.Processes.clsProgRunner.GarbageCollectNow();
+                PRISM.clsProgRunner.GarbageCollectNow();
 
                 if (!blnSuccess)
                 {
@@ -615,7 +615,7 @@ namespace AnalysisManagerGlyQIQPlugin
                         strConnectionString = dmsConnectionStringOverride;
                     }
 
-                    mStoredProcedureExecutor = new PRISM.DataBase.clsExecuteDatabaseSP(strConnectionString);
+                    mStoredProcedureExecutor = new PRISM.clsExecuteDatabaseSP(strConnectionString);
                     mStoredProcedureExecutor.DebugEvent += m_ExecuteSP_DebugEvent;
                     mStoredProcedureExecutor.DBErrorEvent += m_ExecuteSP_DBErrorEvent;
                 }

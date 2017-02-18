@@ -198,7 +198,7 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
-        /// Deletes all files in working directory (using a 3 second holdoff after calling GC.Collect via PRISM.Processes.clsProgRunner.GarbageCollectNow)
+        /// Deletes all files in working directory (using a 3 second holdoff after calling GC.Collect via PRISM.clsProgRunner.GarbageCollectNow)
         /// </summary>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks></remarks>
@@ -210,7 +210,7 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Deletes all files in working directory
         /// </summary>
-        /// <param name="holdoffSeconds">Number of seconds to wait after calling PRISM.Processes.clsProgRunner.GarbageCollectNow()</param>
+        /// <param name="holdoffSeconds">Number of seconds to wait after calling PRISM.clsProgRunner.GarbageCollectNow()</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks></remarks>
         public bool CleanWorkDir(float holdoffSeconds)
@@ -222,7 +222,7 @@ namespace AnalysisManagerProg
         /// Deletes all files in working directory
         /// </summary>
         /// <param name="workDir">Full path to working directory</param>
-        /// <param name="holdoffSeconds">Number of seconds to wait after calling PRISM.Processes.clsProgRunner.GarbageCollectNow()</param>
+        /// <param name="holdoffSeconds">Number of seconds to wait after calling PRISM.clsProgRunner.GarbageCollectNow()</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks></remarks>
         private bool CleanWorkDir(string workDir, float holdoffSeconds)
@@ -246,7 +246,7 @@ namespace AnalysisManagerProg
             }
 
             // Try to ensure there are no open objects with file handles
-            PRISM.Processes.clsProgRunner.GarbageCollectNow();
+            PRISM.clsProgRunner.GarbageCollectNow();
             System.Threading.Thread.Sleep(holdoffMilliseconds);
 
             // Delete all of the files and folders in the work directory
@@ -264,7 +264,7 @@ namespace AnalysisManagerProg
             const int DELETE_RETRY_COUNT = 3;
 
             var failedDeleteCount = 0;
-            var oFileTools = new PRISM.Files.clsFileTools(mManagerName, mDebugLevel);
+            var oFileTools = new PRISM.clsFileTools(mManagerName, mDebugLevel);
 
             // Delete the files
             try

@@ -129,7 +129,7 @@ namespace AnalysisManagerMODPlusPlugin
 
                 // Make sure objects are released
                 Thread.Sleep(500);        // 500 msec delay
-                PRISM.Processes.clsProgRunner.GarbageCollectNow();
+                PRISM.clsProgRunner.GarbageCollectNow();
 
                 if (!blnSuccess)
                 {

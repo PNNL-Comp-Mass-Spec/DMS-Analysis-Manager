@@ -232,7 +232,7 @@ namespace AnalysisManagerSMAQCPlugIn
                 //Make sure objects are released
                 Thread.Sleep(500);
                 // 1 second delay
-                PRISM.Processes.clsProgRunner.GarbageCollectNow();
+                PRISM.clsProgRunner.GarbageCollectNow();
 
                 if (blnProcessingError | result != CloseOutType.CLOSEOUT_SUCCESS)
                 {

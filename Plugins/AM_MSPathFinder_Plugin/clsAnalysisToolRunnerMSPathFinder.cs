@@ -14,7 +14,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Text;
 using System.Threading;
-using PRISM.Processes;
+using PRISM;
 
 namespace AnalysisManagerMSPathFinderPlugin
 {
@@ -167,7 +167,7 @@ namespace AnalysisManagerMSPathFinderPlugin
 
                 // Make sure objects are released
                 Thread.Sleep(500); // 500 msec delay
-                PRISM.Processes.clsProgRunner.GarbageCollectNow();
+                PRISM.clsProgRunner.GarbageCollectNow();
 
                 if (!blnSuccess)
                 {

@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using AnalysisManagerBase;
-using PRISM.Processes;
+using PRISM;
 
 namespace AnalysisManagerGlyQIQPlugin
 {

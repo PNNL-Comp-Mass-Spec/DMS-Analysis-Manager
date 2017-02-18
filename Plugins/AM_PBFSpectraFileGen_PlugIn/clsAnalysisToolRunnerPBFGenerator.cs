@@ -190,7 +190,7 @@ namespace AnalysisManagerPBFGenerator
                 // Make sure objects are released
                 System.Threading.Thread.Sleep(500);
                 // 500 msec delay
-                PRISM.Processes.clsProgRunner.GarbageCollectNow();
+                PRISM.clsProgRunner.GarbageCollectNow();
 
                 if (!blnSuccess)
                 {

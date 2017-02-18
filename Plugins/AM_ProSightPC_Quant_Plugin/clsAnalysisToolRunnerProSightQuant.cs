@@ -247,7 +247,7 @@ namespace AnalysisManagerProSightQuantPlugIn
 
                 //Make sure objects are released
                 System.Threading.Thread.Sleep(500);         // 1 second delay
-                PRISM.Processes.clsProgRunner.GarbageCollectNow();
+                PRISM.clsProgRunner.GarbageCollectNow();
 
                 if (blnProcessingError | result != CloseOutType.CLOSEOUT_SUCCESS)
                 {

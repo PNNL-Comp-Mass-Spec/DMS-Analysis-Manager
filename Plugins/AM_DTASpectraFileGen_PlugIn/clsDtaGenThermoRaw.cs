@@ -273,7 +273,7 @@ namespace DTASpectraFileGen
 
             // Pause and garbage collect to allow release of file lock on .raw file
             Thread.Sleep(3000);      // 3 second delay
-            PRISM.Processes.clsProgRunner.GarbageCollectNow();
+            PRISM.clsProgRunner.GarbageCollectNow();
 
             return NumScans;
         }

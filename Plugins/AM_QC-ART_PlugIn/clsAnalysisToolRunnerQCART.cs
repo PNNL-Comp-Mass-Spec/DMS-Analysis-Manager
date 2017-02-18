@@ -13,7 +13,7 @@ using System.Text;
 using System.Threading;
 using System.Xml;
 using AnalysisManagerBase;
-using PRISM.DataBase;
+using PRISM;
 
 namespace AnalysisManagerQCARTPlugin
 {
@@ -137,7 +137,7 @@ namespace AnalysisManagerQCARTPlugin
 
                 // Make sure objects are released
                 Thread.Sleep(500);
-                PRISM.Processes.clsProgRunner.GarbageCollectNow();
+                PRISM.clsProgRunner.GarbageCollectNow();
 
                 if (!success)
                 {

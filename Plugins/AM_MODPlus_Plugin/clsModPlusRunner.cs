@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
 using AnalysisManagerBase;
-using PRISM.Processes;
+using PRISM;
 
 namespace AnalysisManagerMODPlusPlugin
 {

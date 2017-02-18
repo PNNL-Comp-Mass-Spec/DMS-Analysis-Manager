@@ -5,7 +5,7 @@ using System.Threading;
 using AnalysisManagerBase;
 using log4net;
 using InterDetect;
-using PRISM.Processes;
+using PRISM;
 
 namespace AnalysisManager_IDM_Plugin
 {

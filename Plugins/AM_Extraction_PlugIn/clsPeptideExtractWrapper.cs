@@ -179,7 +179,7 @@ namespace AnalysisManagerExtractionPlugin
                 //Make sure no stray objects are hanging around
                 m_ExtractTools = null;
                 Thread.Sleep(1000);    //Delay 1 second, then clean up processes
-                PRISM.Processes.clsProgRunner.GarbageCollectNow();
+                PRISM.clsProgRunner.GarbageCollectNow();
             }
         }
 

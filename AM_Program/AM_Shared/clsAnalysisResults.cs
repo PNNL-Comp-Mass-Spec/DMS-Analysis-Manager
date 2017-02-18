@@ -240,7 +240,7 @@ namespace AnalysisManagerBase
                     // Wait several seconds before retrying
                     Thread.Sleep((int)(Math.Floor(sngRetryHoldoffSeconds * 1000)));                    
                     
-                    PRISM.Processes.clsProgRunner.GarbageCollectNow();
+                    PRISM.clsProgRunner.GarbageCollectNow();
                 }
 
                 if (!blnSuccess && blnIncreaseHoldoffOnEachRetry)
@@ -406,7 +406,7 @@ namespace AnalysisManagerBase
                     // Wait several seconds before retrying
                     Thread.Sleep((int)(Math.Floor(sngRetryHoldoffSeconds * 1000)));
 
-                    PRISM.Processes.clsProgRunner.GarbageCollectNow();
+                    PRISM.clsProgRunner.GarbageCollectNow();
                 }
 
                 if (!blnSuccess && blnIncreaseHoldoffOnEachRetry)
@@ -519,7 +519,7 @@ namespace AnalysisManagerBase
                     // Wait several seconds before retrying
                     Thread.Sleep((int)(Math.Floor(sngRetryHoldoffSeconds * 1000)));
 
-                    PRISM.Processes.clsProgRunner.GarbageCollectNow();
+                    PRISM.clsProgRunner.GarbageCollectNow();
                 }
 
                 if (!blnSuccess && blnIncreaseHoldoffOnEachRetry)

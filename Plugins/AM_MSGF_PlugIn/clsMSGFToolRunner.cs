@@ -17,7 +17,7 @@ using System.Linq;
 using System.Threading;
 using System.Xml;
 using MSGFResultsSummarizer;
-using PRISM.Processes;
+using PRISM;
 
 namespace AnalysisManagerMSGFPlugin
 {

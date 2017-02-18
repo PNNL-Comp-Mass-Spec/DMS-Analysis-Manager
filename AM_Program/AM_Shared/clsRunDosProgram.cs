@@ -1,6 +1,6 @@
 using System;
 using System.Threading;
-using PRISM.Processes;
+using PRISM;
 
 //*********************************************************************************************************
 // Written by Dave Clark for the US Department of Energy 
@@ -441,7 +441,7 @@ namespace AnalysisManagerBase
 
                                 OnErrorEvent(msg);
                             }
-                            m_ProgRunner.StopMonitoringProgram(Kill: true);
+                            m_ProgRunner.StopMonitoringProgram(kill: true);
                         }
                     }
 

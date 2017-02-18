@@ -10,7 +10,7 @@ using System.IO;
 using System.Threading;
 using AnalysisManagerBase;
 using MyEMSLReader;
-using PRISM.Processes;
+using PRISM;
 
 namespace AnalysisManagerLCMSFeatureFinderPlugIn
 {

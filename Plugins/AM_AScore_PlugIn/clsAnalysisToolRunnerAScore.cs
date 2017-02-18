@@ -5,7 +5,7 @@ using System;
 using log4net;
 using System.Collections.Generic;
 using Mage;
-using PRISM.Processes;
+using PRISM;
 
 namespace AnalysisManager_AScore_PlugIn
 {

@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Xml;
-using AnalysisManagerBase;
+using PRISM;
 
 namespace AnalysisManagerMsXmlGenPlugIn
 {

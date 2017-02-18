@@ -12,7 +12,7 @@ using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading;
 using AnalysisManagerBase;
-using PRISM.Processes;
+using PRISM;
 
 namespace AnalysisManagerXTandemPlugIn
 {

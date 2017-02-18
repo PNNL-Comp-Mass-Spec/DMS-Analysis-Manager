@@ -1142,7 +1142,7 @@ namespace AnalysisManagerBase
                 }
 
                 Thread.Sleep(125);
-                PRISM.Processes.clsProgRunner.GarbageCollectNow();
+                PRISM.clsProgRunner.GarbageCollectNow();
 
                 if (deleteRawDataFile)
                 {

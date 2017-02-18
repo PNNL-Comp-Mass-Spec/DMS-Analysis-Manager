@@ -2,6 +2,7 @@
 using System;
 using System.IO;
 using System.Threading;
+using PRISM;
 
 namespace AnalysisManagerBase
 {
@@ -198,7 +199,7 @@ namespace AnalysisManagerBase
                     if (blnDeleteSourceFileIfUpdated)
                     {
                         Thread.Sleep(125);
-                        PRISM.Processes.clsProgRunner.GarbageCollectNow();
+                        PRISM.clsProgRunner.GarbageCollectNow();
 
                         fiOriginalFile.Delete();
                     }
@@ -215,7 +216,7 @@ namespace AnalysisManagerBase
                 // No changes were made; nothing to update
                 // However, delete the new file we created
                 Thread.Sleep(125);
-                PRISM.Processes.clsProgRunner.GarbageCollectNow();
+                PRISM.clsProgRunner.GarbageCollectNow();
 
                 fiUpdatedFile.Delete();
 

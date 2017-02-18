@@ -683,7 +683,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
             // Make sure objects are released
             Thread.Sleep(1000);           //1 second delay
-            PRISM.Processes.clsProgRunner.GarbageCollectNow();
+            PRISM.clsProgRunner.GarbageCollectNow();
 
             if (m_DebugLevel > 3)
             {

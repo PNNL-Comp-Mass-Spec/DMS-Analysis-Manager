@@ -506,7 +506,7 @@ namespace AnalysisManagerResultsXferPlugin
                             "Using m_FileTools.MoveDirectory to copy files to " + TargetDir);
                     }
                     ResetTimestampForQueueWaitTimeLogging();
-                    m_FileTools.MoveDirectory(FolderToMove, TargetDir, OverwriteFiles: true);
+                    m_FileTools.MoveDirectory(FolderToMove, TargetDir, overwriteFiles: true);
                 }
             }
             catch (Exception ex)

@@ -100,7 +100,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 //Make sure objects are released
                 //2 second delay
                 Thread.Sleep(2000);
-                PRISM.Processes.clsProgRunner.GarbageCollectNow();
+                PRISM.clsProgRunner.GarbageCollectNow();
 
                 if (!blnSuccess)
                 {

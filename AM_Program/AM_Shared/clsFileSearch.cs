@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using MyEMSLReader;
 using PHRPReader;
+using PRISM;
 
 namespace AnalysisManagerBase
 {
@@ -188,7 +189,7 @@ namespace AnalysisManagerBase
             {
                 // Call the garbage collector, then try to delete the first queued file
                 // Note, do not call WaitForPendingFinalizers since that could block this thread
-                // Thus, do not use PRISM.Processes.clsProgRunner.GarbageCollectNow
+                // Thus, do not use PRISM.clsProgRunner.GarbageCollectNow
                 GC.Collect();
 
                 try
@@ -1491,7 +1492,7 @@ namespace AnalysisManagerBase
             try
             {
                 Thread.Sleep(125);
-                PRISM.Processes.clsProgRunner.GarbageCollectNow();
+                PRISM.clsProgRunner.GarbageCollectNow();
 
                 File.Delete(targetZipFilePath);
             }
@@ -2963,7 +2964,7 @@ namespace AnalysisManagerBase
                 }
 
                 Thread.Sleep(125);
-                PRISM.Processes.clsProgRunner.GarbageCollectNow();
+                PRISM.clsProgRunner.GarbageCollectNow();
 
                 // Delete all s*.zip files in working directory
                 foreach (var zipFilePath in zipFiles)
@@ -3103,7 +3104,7 @@ namespace AnalysisManagerBase
                 {
                     strUnzipperName = Path.GetFileName(strExternalUnzipperFilePath);
 
-                    var UnZipper = new PRISM.Files.ZipTools(outFolderPath, strExternalUnzipperFilePath);
+                    var UnZipper = new PRISM.ZipTools(outFolderPath, strExternalUnzipperFilePath);
 
                     var dtStartTime = DateTime.UtcNow;
                     var blnSuccess = UnZipper.UnzipFile("", zipFilePath, outFolderPath);

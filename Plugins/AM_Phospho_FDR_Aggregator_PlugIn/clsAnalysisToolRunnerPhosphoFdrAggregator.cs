@@ -157,7 +157,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
                 // Make sure objects are released
                 Thread.Sleep(1000);
-                PRISM.Processes.clsProgRunner.GarbageCollectNow();
+                PRISM.clsProgRunner.GarbageCollectNow();
 
                 if (!success)
                 {

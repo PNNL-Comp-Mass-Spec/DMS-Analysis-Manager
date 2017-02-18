@@ -137,7 +137,7 @@ namespace AnalysisManagerMODaPlugIn
 
                 // Make sure objects are released
                 Thread.Sleep(500);        // 500 msec delay
-                PRISM.Processes.clsProgRunner.GarbageCollectNow();
+                PRISM.clsProgRunner.GarbageCollectNow();
 
                 // Trim the console output file to remove the majority of the status messages (since there is currently one per scan)
                 TrimConsoleOutputFile(Path.Combine(m_WorkDir, MODa_CONSOLE_OUTPUT));

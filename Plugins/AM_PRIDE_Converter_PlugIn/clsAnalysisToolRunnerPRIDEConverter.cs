@@ -316,7 +316,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 // Make sure objects are released
                 Thread.Sleep(500);         // 500 msec delay
-                PRISM.Processes.clsProgRunner.GarbageCollectNow();
+                PRISM.clsProgRunner.GarbageCollectNow();
 
                 if (!blnSuccess | jobFailureCount > 0)
                 {
@@ -896,7 +896,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 }
 
                 Thread.Sleep(125);
-                PRISM.Processes.clsProgRunner.GarbageCollectNow();
+                PRISM.clsProgRunner.GarbageCollectNow();
 
                 var fiNewMGFFile = new FileInfo(Path.Combine(m_WorkDir, dataPkgJob.Dataset + ".mgf"));
 
@@ -1130,7 +1130,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 m_jobParams.AddResultFileToSkip(Path.GetFileName(fiMzXmlFilePathLocal.FullName + clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX));
 
                 Thread.Sleep(250);
-                PRISM.Processes.clsProgRunner.GarbageCollectNow();
+                PRISM.clsProgRunner.GarbageCollectNow();
 
                 try
                 {
@@ -4720,7 +4720,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 StoreMzIdSampleInfo(strMzIDFilePath + DOT_GZ, sampleMetadata);
 
                 Thread.Sleep(250);
-                PRISM.Processes.clsProgRunner.GarbageCollectNow();
+                PRISM.clsProgRunner.GarbageCollectNow();
 
                 if (!replaceOriginal)
                 {

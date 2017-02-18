@@ -79,7 +79,7 @@ namespace AnalysisManagerProg
 
             // Make sure objects are released
             System.Threading.Thread.Sleep(500);
-            PRISM.Processes.clsProgRunner.GarbageCollectNow();
+            PRISM.clsProgRunner.GarbageCollectNow();
 
             var result = MakeResultsFolder();
             if (result != CloseOutType.CLOSEOUT_SUCCESS)

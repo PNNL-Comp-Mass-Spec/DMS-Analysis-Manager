@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using MyEMSLReader;
+using PRISM;
 
 namespace AnalysisManagerBase
 {

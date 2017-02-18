@@ -6,6 +6,7 @@ using System.Data.SqlClient;
 using System.IO;
 using System.Threading;
 using FastaFileSplitterDLL;
+using PRISM;
 
 
 namespace AnalysisManagerBase

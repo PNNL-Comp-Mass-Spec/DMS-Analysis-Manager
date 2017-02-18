@@ -133,7 +133,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
 
                 // Make sure objects are released
                 Thread.Sleep(500);
-                PRISM.Processes.clsProgRunner.GarbageCollectNow();
+                PRISM.clsProgRunner.GarbageCollectNow();
 
                 if (!success)
                 {
@@ -248,7 +248,9 @@ namespace AnalysisManagerBrukerDAExportPlugin
             }
             else
             {
-                var fileTools = new PRISM.Files.clsFileTools();
+                var fileTools = new PRISM.clsFileTools();
+                RegisterEvents(fileTools);
+
                 datasetSizeMB = fileTools.GetDirectorySize(dataFolderPath) / 1024.0 / 1024;
             }
 
@@ -595,7 +597,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 var diSubDir = diWorkDir.CreateSubdirectory("FilesToZip");
 
                 Thread.Sleep(100);
-                PRISM.Processes.clsProgRunner.GarbageCollectNow();
+                PRISM.clsProgRunner.GarbageCollectNow();
 
                 foreach (var file in fiSpectraFiles)
                 {

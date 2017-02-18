@@ -60,9 +60,9 @@ namespace AnalysisManagerBase
         protected bool m_TaskWasAssigned = false;
 
         protected string m_Xml_Text;
-        public readonly PRISM.DataBase.clsExecuteDatabaseSP DMSProcedureExecutor;
+        public readonly PRISM.clsExecuteDatabaseSP DMSProcedureExecutor;
 
-        public readonly PRISM.DataBase.clsExecuteDatabaseSP PipelineDBProcedureExecutor;
+        public readonly PRISM.clsExecuteDatabaseSP PipelineDBProcedureExecutor;
         #endregion
 
         #region "Structures"
@@ -116,8 +116,8 @@ namespace AnalysisManagerBase
             
             m_DebugLevel = debugLvl;
 
-            DMSProcedureExecutor = new PRISM.DataBase.clsExecuteDatabaseSP(m_ConnStr);
-            PipelineDBProcedureExecutor = new PRISM.DataBase.clsExecuteDatabaseSP(m_BrokerConnStr);
+            DMSProcedureExecutor = new PRISM.clsExecuteDatabaseSP(m_ConnStr);
+            PipelineDBProcedureExecutor = new PRISM.clsExecuteDatabaseSP(m_BrokerConnStr);
 
             DMSProcedureExecutor.DebugEvent += ProcedureExecutor_DebugEvent;
             PipelineDBProcedureExecutor.DebugEvent += ProcedureExecutor_DebugEvent;

@@ -1,5 +1,6 @@
 ﻿
 using System;
+using PRISM;
 
 namespace AnalysisManagerBase
 {
@@ -11,7 +12,7 @@ namespace AnalysisManagerBase
 
         private DateTime m_LockQueueWaitTimeStart = DateTime.UtcNow;
 
-        protected PRISM.Files.clsFileTools m_FileTools;
+        protected PRISM.clsFileTools m_FileTools;
 
         protected string m_message;
 
@@ -67,12 +68,12 @@ namespace AnalysisManagerBase
         protected void InitFileTools(string mgrName, short debugLevel)
         {
             ResetTimestampForQueueWaitTimeLogging();
-            m_FileTools = new PRISM.Files.clsFileTools(mgrName, debugLevel);
+            m_FileTools = new PRISM.clsFileTools(mgrName, debugLevel);
+            RegisterEvents(m_FileTools);
+
             m_FileTools.LockQueueTimedOut += m_FileTools_LockQueueTimedOut;
             m_FileTools.LockQueueWaitComplete += m_FileTools_LockQueueWaitComplete;
             m_FileTools.WaitingForLockQueue += m_FileTools_WaitingForLockQueue;
-            m_FileTools.DebugEvent += m_FileTools_DebugEvent;
-            m_FileTools.WarningEvent += m_FileTools_WarningEvent;
         }
 
         /// <summary>

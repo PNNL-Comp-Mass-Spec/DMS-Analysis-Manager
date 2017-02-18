@@ -12,7 +12,7 @@ using AScore_DLL.Managers.DatasetManagers;
 using Mage;
 using MageExtExtractionFilters;
 using MyEMSLReader;
-using PRISM.Processes;
+using PRISM;
 using MessageEventArgs = AScore_DLL.MessageEventArgs;
 
 namespace AnalysisManager_AScore_PlugIn

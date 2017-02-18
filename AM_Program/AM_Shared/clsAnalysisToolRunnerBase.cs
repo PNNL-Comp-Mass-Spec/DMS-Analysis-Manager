@@ -57,7 +57,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// access to settings file parameters
         /// </summary>
-        protected readonly PRISM.Files.XmlSettingsFileAccessor m_settingsFileParams = new PRISM.Files.XmlSettingsFileAccessor();
+        protected readonly PRISM.XmlSettingsFileAccessor m_settingsFileParams = new PRISM.XmlSettingsFileAccessor();
 
         /// <summary>
         /// Progress of run (in percent)
@@ -335,7 +335,7 @@ namespace AnalysisManagerBase
             if (memorySizeMBPerThread < 512)
                 memorySizeMBPerThread = 512;
 
-            var maxThreadsToAllow = PRISM.Processes.clsProgRunner.GetCoreCount();
+            var maxThreadsToAllow = PRISM.clsProgRunner.GetCoreCount();
 
             var freeMemoryMB = m_StatusTools.GetFreeMemoryMB();
 
@@ -1076,7 +1076,7 @@ namespace AnalysisManagerBase
                     Thread.Sleep(2000);
 
                     // Do a garbage collection in case something is hanging onto the file that has been closed, but not GC'd 
-                    PRISM.Processes.clsProgRunner.GarbageCollectNow();
+                    PRISM.clsProgRunner.GarbageCollectNow();
                     retryCount += 1;
 
                 }
@@ -1953,7 +1953,7 @@ namespace AnalysisManagerBase
                 threadCountText = threadCountText.Trim();
             }
 
-            var coresOnMachine = PRISM.Processes.clsProgRunner.GetCoreCount();
+            var coresOnMachine = PRISM.clsProgRunner.GetCoreCount();
             int coreCount;
 
             if (threadCountText.ToLower().StartsWith("all"))
@@ -2278,7 +2278,7 @@ namespace AnalysisManagerBase
                         }
                     }
 
-                    if (okToMove && PRISM.Files.clsFileTools.IsVimSwapFile(tmpFileName))
+                    if (okToMove && PRISM.clsFileTools.IsVimSwapFile(tmpFileName))
                     {
                         // VIM swap file; skip it
                         okToMove = false;
@@ -3849,7 +3849,7 @@ namespace AnalysisManagerBase
                 List<int> processIDs;
                 var processID = defaultProcessID;
 
-                var coreUsage = PRISM.Processes.clsProgRunner.GetCoreUsageByProcessName(processName, out processIDs);
+                var coreUsage = PRISM.clsProgRunner.GetCoreUsageByProcessName(processName, out processIDs);
                 if (processIDs.Count > 0)
                 {
                     processID = processIDs.First();

@@ -10,8 +10,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
-using PRISM.DataBase;
-using PRISM.Logging;
+using PRISM;
 
 //*********************************************************************************************************
 // Written by Dave Clark for the US Department of Energy 

@@ -200,7 +200,7 @@ namespace AnalysisManagerMSDeconvPlugIn
 
                 //Make sure objects are released
                 Thread.Sleep(500);        // 500 msec delay
-                PRISM.Processes.clsProgRunner.GarbageCollectNow();
+                PRISM.clsProgRunner.GarbageCollectNow();
 
                 // Trim the console output file to remove the majority of the % finished messages
                 TrimConsoleOutputFile(Path.Combine(m_WorkDir, MSDECONV_CONSOLE_OUTPUT));

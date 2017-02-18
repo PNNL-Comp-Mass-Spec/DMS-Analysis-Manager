@@ -268,7 +268,7 @@ namespace AnalysisManagerMasicPlugin
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strMASICExePath + " " + CmdStr);
             }
 
-            var objMasicProgRunner = new PRISM.Processes.clsProgRunner();
+            var objMasicProgRunner = new PRISM.clsProgRunner();
 
             objMasicProgRunner.CreateNoWindow = true;
             objMasicProgRunner.CacheStandardOutput = false;
@@ -528,7 +528,7 @@ namespace AnalysisManagerMasicPlugin
                 return true;
             }
 
-            var objSettingsFile = new PRISM.Files.XmlSettingsFileAccessor();
+            var objSettingsFile = new PRISM.XmlSettingsFileAccessor();
 
             if (!objSettingsFile.LoadSettings(strParameterFilePath))
             {
@@ -547,7 +547,7 @@ namespace AnalysisManagerMasicPlugin
             }
 
             var bad = false;
-            var includeHeaders = objSettingsFile.GetParam("MasicExportOptions", "IncludeHeaders", false, ref bad);
+            var includeHeaders = objSettingsFile.GetParam("MasicExportOptions", "IncludeHeaders", false, out bad);
 
             if (!includeHeaders)
             {
@@ -559,7 +559,7 @@ namespace AnalysisManagerMasicPlugin
             return true;
         }
 
-        protected bool WaitForJobToFinish(PRISM.Processes.clsProgRunner objMasicProgRunner)
+        protected bool WaitForJobToFinish(PRISM.clsProgRunner objMasicProgRunner)
         {
             const int MAX_RUNTIME_HOURS = 12;
             const int SECONDS_BETWEEN_UPDATE = 15;
@@ -582,7 +582,7 @@ namespace AnalysisManagerMasicPlugin
                 }
                 dtLastUpdate = DateTime.UtcNow;
 
-                if (objMasicProgRunner.State == PRISM.Processes.clsProgRunner.States.NotMonitoring)
+                if (objMasicProgRunner.State == PRISM.clsProgRunner.States.NotMonitoring)
                 {
                     m_JobRunning = false;
                 }
@@ -603,7 +603,7 @@ namespace AnalysisManagerMasicPlugin
                 if (DateTime.UtcNow.Subtract(dtStartTime).TotalHours >= MAX_RUNTIME_HOURS)
                 {
                     // Abort processing
-                    objMasicProgRunner.StopMonitoringProgram(Kill: true);
+                    objMasicProgRunner.StopMonitoringProgram(kill: true);
                     blnAbortedProgram = true;
                 }
             }

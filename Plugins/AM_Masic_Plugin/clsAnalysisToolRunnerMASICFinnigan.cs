@@ -123,7 +123,7 @@ namespace AnalysisManagerMasicPlugin
                 if (File.Exists(strScanStatsFilePath))
                 {
                     Thread.Sleep(250);
-                    PRISM.Processes.clsProgRunner.GarbageCollectNow();
+                    PRISM.clsProgRunner.GarbageCollectNow();
 
                     File.Delete(strScanStatsFilePath);
                     Thread.Sleep(250);

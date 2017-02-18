@@ -187,7 +187,7 @@ namespace AnalysisManagerMSGFPlugin
                 mLogFile.Close();
                 mLogFile = null;
 
-                PRISM.Processes.clsProgRunner.GarbageCollectNow();
+                PRISM.clsProgRunner.GarbageCollectNow();
                 System.Threading.Thread.Sleep(100);
             }
         }
