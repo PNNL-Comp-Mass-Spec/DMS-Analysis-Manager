@@ -32,7 +32,7 @@ namespace AnalysisManagerProg
 {
     static class modMain
     {
-        public const string PROGRAM_DATE = "February 14, 2017";
+        public const string PROGRAM_DATE = "February 17, 2017";
 
         private static bool mCodeTestMode;
         private static bool mCreateWindowsEventLog;
@@ -95,6 +95,7 @@ namespace AnalysisManagerProg
                             // objTest.TestDeleteFiles();
 
                             // objTest.TestLogging();
+                            //objTest.GenerateScanStatsFile();
                         }
                         catch (Exception ex)
                         {
