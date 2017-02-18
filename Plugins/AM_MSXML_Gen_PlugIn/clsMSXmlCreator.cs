@@ -10,6 +10,7 @@
 using System;
 using System.IO;
 using AnalysisManagerBase;
+using PRISM;
 
 namespace AnalysisManagerMsXmlGenPlugIn
 {
@@ -159,8 +160,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
             // Instantiate the processing class
             // Note that mMSXmlGeneratorAppPath should have been populated by StoreToolVersionInfo() by an Analysis Manager plugin using clsAnalysisToolRunnerBase.GetMSXmlGeneratorAppPath()
-            string strMSXmlGeneratorExe = null;
-            strMSXmlGeneratorExe = Path.GetFileName(mMSXmlGeneratorAppPath);
+            string strMSXmlGeneratorExe = Path.GetFileName(mMSXmlGeneratorAppPath);
 
             if (!File.Exists(mMSXmlGeneratorAppPath))
             {

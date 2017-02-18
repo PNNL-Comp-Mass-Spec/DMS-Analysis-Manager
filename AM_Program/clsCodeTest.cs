@@ -9,6 +9,7 @@ using System.Reflection;
 using System.Runtime.Versioning;
 using System.Text.RegularExpressions;
 using AnalysisManagerBase;
+using PRISM;
 
 namespace AnalysisManagerProg
 {
@@ -1125,7 +1126,7 @@ namespace AnalysisManagerProg
         /// </summary>
         public void GenerateScanStatsFile()
         {
-            const string inputFilePath = "QC_Shew_16_01_pt5_run7_11Apr16_Tiger_16-02-05.raw";
+            const string inputFilePath = "QC_Shew_16_01_111_03Feb17_Wally_16-09-27.raw";
             const string workingDir = @"C:\DMS_WorkDir";
 
             var success = GenerateScanStatsFile(Path.Combine(workingDir, inputFilePath), workingDir);
@@ -1147,6 +1148,8 @@ namespace AnalysisManagerProg
             }
 
             var objScanStatsGenerator = new clsScanStatsGenerator(strMSFileInfoScannerDLLPath, m_DebugLevel);
+            RegisterEvents(objScanStatsGenerator);
+
             const int datasetID = 0;
 
             objScanStatsGenerator.ScanStart = 11000;

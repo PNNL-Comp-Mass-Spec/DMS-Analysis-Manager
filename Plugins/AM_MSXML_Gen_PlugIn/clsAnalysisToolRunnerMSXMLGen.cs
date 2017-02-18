@@ -230,6 +230,8 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 }
 
                 // Attach events to msXmlGen
+                RegisterEvents(msXmlGen);
+
                 msXmlGen.LoopWaiting += MSXmlGen_LoopWaiting;
                 msXmlGen.ProgRunnerStarting += MSXmlGen_ProgRunnerStarting;
 
@@ -585,6 +587,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     DebugLevel = m_DebugLevel
                 };
 
+                RegisterEvents(msConvertRunner);
 
                 if (!File.Exists(mMSXmlGeneratorAppPath))
                 {

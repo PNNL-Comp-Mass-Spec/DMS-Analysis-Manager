@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Threading;
-using AnalysisManagerBase;
+using PRISM;
 
 namespace AnalysisManagerDecon2lsV2PlugIn
 {
@@ -41,14 +41,14 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
                 // Initialize the MSFileScanner class
                 mMSFileInfoScanner = LoadMSFileInfoScanner(mMSFileInfoScannerDLLPath);
+                RegisterEvents(mMSFileInfoScanner);
+
                 mMSFileInfoScanner.CheckFileIntegrity = false;
                 mMSFileInfoScanner.CreateDatasetInfoFile = false;
                 mMSFileInfoScanner.CreateScanStatsFile = false;
                 mMSFileInfoScanner.SaveLCMS2DPlots = true;
                 mMSFileInfoScanner.SaveTICAndBPIPlots = true;
-                mMSFileInfoScanner.UpdateDatasetStatsTextFile = false;
-                mMSFileInfoScanner.ErrorEvent += mMSFileInfoScanner_ErrorEvent;
-                mMSFileInfoScanner.MessageEvent += mMSFileInfoScanner_MessageEvent;
+                mMSFileInfoScanner.UpdateDatasetStatsTextFile = false;                
 
                 mInputFilePath = strInputFilePath;
                 mOutputFolderPath = strOutputFolderPath;
