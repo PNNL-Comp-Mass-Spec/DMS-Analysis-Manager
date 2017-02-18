@@ -18,7 +18,7 @@ namespace AnalysisManagerProg
     public class clsCodeTest : clsLoggerBase
     {
         private const string WORKING_DIRECTORY = @"C:\DMS_WorkDir";
-        private Protein_Exporter.ExportProteinCollectionsIFC.IGetFASTAFromDMS m_FastaTools;
+        private Protein_Exporter.clsGetFASTAFromDMS m_FastaTools;
         private bool m_GenerationComplete;
         private readonly string m_FastaToolsCnStr = "Data Source=proteinseqs;Initial Catalog=Protein_Sequences;Integrated Security=SSPI;";
         private string m_FastaFileName = "";
@@ -642,14 +642,15 @@ namespace AnalysisManagerProg
             var strProteinCollectionList = "Geobacter_bemidjiensis_Bem_T_2006-10-10,Geobacter_lovelyi_SZ_2007-06-19,Geobacter_metallireducens_GS-15_2007-10-02,Geobacter_sp_";
             var strProteinOptions = "seq_direction=forward,filetype=fasta";
 
+            // Test a 2 MB fasta file:
+            strProteinCollectionList = "Micrococcus_luteus_NCTC2665_Uniprot_20160119,Tryp_Pig_Bov";
+
             // Test a 34 MB fasta file
-            strProteinCollectionList = "nr_ribosomal_2010-08-17,Tryp_Pig";
-            strProteinOptions = "seq_direction=forward,filetype=fasta";
+            // strProteinCollectionList = "nr_ribosomal_2010-08-17,Tryp_Pig";
 
             // Test 100 MB fasta file
             // strLegacyFasta = "na"
             // strProteinCollectionList = "GWB1_Rifle_2011_9_13_0_1_2013-03-27,Tryp_Pig_Bov"
-            // strProteinOptions = "seq_direction=forward,filetype=fasta"
 
             var blnSuccess = TestProteinDBExport(destFolder, "na", strProteinCollectionList, strProteinOptions);
 
@@ -701,6 +702,8 @@ namespace AnalysisManagerProg
                     return false;
                 }
                 m_FastaTools = new Protein_Exporter.clsGetFASTAFromDMS(m_FastaToolsCnStr);
+                RegisterEvents(m_FastaTools);
+
                 m_FastaTools.FileGenerationStarted += m_FastaTools_FileGenerationStarted;
                 m_FastaTools.FileGenerationCompleted += m_FastaTools_FileGenerationCompleted;
                 m_FastaTools.FileGenerationProgress += m_FastaTools_FileGenerationProgress;
