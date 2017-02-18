@@ -495,6 +495,41 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
+        /// Test copying a results folder to the Failed Results folder on the current machine
+        /// </summary>
+        public void TestArchiveFailedResults()
+        {
+            clsAnalysisJob objJobParams;
+            clsMyEMSLUtilities myEMSLUtilities;
+
+            var objToolRunner = GetCodeTestToolRunner(out objJobParams, out myEMSLUtilities);
+
+            var resFolderName = Path.Combine(WORKING_DIRECTORY, "TestResults");
+            var resultsFolder = new DirectoryInfo(resFolderName);
+            if (!resultsFolder.Exists)
+                resultsFolder.Create();
+
+            var rand = new Random();
+
+            for (var i = 0; i < 5; i++)
+            {
+                var outFilePath = Path.Combine(resultsFolder.FullName, "TestOutFile" + i + ".txt");
+                using (var outFile = new StreamWriter(new FileStream(outFilePath, FileMode.Create, FileAccess.Write)))
+                {
+                    outFile.WriteLine("Scan\tIntensity");
+
+                    for (var j = 1; j < 1000; j++)
+                    {
+                        outFile.WriteLine("{0}\t{1}", j, rand.Next(0,10000));
+                    }
+                }
+            }
+
+            var objAnalysisResults = new clsAnalysisResults(m_mgrParams, objJobParams);
+            objAnalysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(WORKING_DIRECTORY, resFolderName));
+        }
+
+        /// <summary>
         /// Archive a Sequest parameter ifle by copying to \\gigasax\dms_parameter_Files\Sequest
         /// </summary>
         public void TestArchiveFileStart()

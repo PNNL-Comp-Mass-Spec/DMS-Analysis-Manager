@@ -91,11 +91,12 @@ namespace AnalysisManagerProg
                         {
                             // objTest.SystemMemoryUsage();
                             // objTest.TestDTASplit();
-                            objTest.TestProteinDBExport(@"C:\DMS_Temp_Org");
+                            // objTest.TestProteinDBExport(@"C:\DMS_Temp_Org");
                             // objTest.TestDeleteFiles();
-
                             // objTest.TestLogging();
-                            //objTest.GenerateScanStatsFile();
+                            // objTest.GenerateScanStatsFile();
+
+                            objTest.TestArchiveFailedResults();
                         }
                         catch (Exception ex)
                         {
