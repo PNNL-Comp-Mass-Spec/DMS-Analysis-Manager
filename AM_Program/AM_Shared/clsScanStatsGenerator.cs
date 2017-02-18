@@ -1,6 +1,7 @@
 ﻿
 using System;
 using System.IO;
+using PRISM;
 
 namespace AnalysisManagerBase
 {
@@ -73,9 +74,7 @@ namespace AnalysisManagerBase
 
                 // Initialize the MSFileScanner class
                 mMSFileInfoScanner = LoadMSFileInfoScanner(mMSFileInfoScannerDLLPath);
-
-                mMSFileInfoScanner.ErrorEvent += mMSFileInfoScanner_ErrorEvent;
-                mMSFileInfoScanner.MessageEvent += mMSFileInfoScanner_MessageEvent;
+                RegisterEvents(mMSFileInfoScanner);
 
                 mMSFileInfoScanner.CheckFileIntegrity = false;
                 mMSFileInfoScanner.CreateDatasetInfoFile = false;
