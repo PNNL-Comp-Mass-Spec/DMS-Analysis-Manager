@@ -417,33 +417,16 @@ namespace AnalysisManagerBase
         /// Optionally, can require that a certain file also be present in the folder for it to be deemed valid
         /// If no folder is deemed valid, then returns the path defined by "DatasetStoragePath"
         /// </summary>
-        /// <param name="DSName">Name of the dataset</param>
-        /// <param name="FileNameToFind">Name of a file that must exist in the folder; can contain a wildcard, e.g. *.zip</param>
-        /// <returns>Path to the most appropriate dataset folder</returns>
-        /// <remarks>Although FileNameToFind could be empty, you are highly encouraged to filter by either Filename or by FolderName when using FindValidFolder</remarks>
-        private string FindValidFolder(string DSName, string FileNameToFind)
-        {
-
-            return FindValidFolder(DSName, FileNameToFind, "", DEFAULT_MAX_RETRY_COUNT,
-                logFolderNotFound: true, retrievingInstrumentDataFolder: false);
-
-        }
-
-        /// <summary>
-        /// Determines the most appropriate folder to use to obtain dataset files from
-        /// Optionally, can require that a certain file also be present in the folder for it to be deemed valid
-        /// If no folder is deemed valid, then returns the path defined by "DatasetStoragePath"
-        /// </summary>
-        /// <param name="DSName">Name of the dataset</param>
-        /// <param name="FileNameToFind">Name of a file that must exist in the folder; can contain a wildcard, e.g. *.zip</param>
+        /// <param name="dsName">Name of the dataset</param>
+        /// <param name="fileNameToFind">Name of a file that must exist in the folder; can contain a wildcard, e.g. *.zip</param>
         /// <param name="RetrievingInstrumentDataFolder">Set to True when retrieving an instrument data folder</param>
         /// <returns>Path to the most appropriate dataset folder</returns>
         /// <remarks>Although FileNameToFind could be empty, you are highly encouraged to filter by either Filename or by FolderName when using FindValidFolder</remarks>
-        public string FindValidFolder(string DSName, string FileNameToFind, bool RetrievingInstrumentDataFolder)
+        public string FindValidFolder(string dsName, string fileNameToFind, bool RetrievingInstrumentDataFolder)
         {
 
             const string folderNameToFind = "";
-            return FindValidFolder(DSName, FileNameToFind, folderNameToFind, DEFAULT_MAX_RETRY_COUNT,
+            return FindValidFolder(dsName, fileNameToFind, folderNameToFind, DEFAULT_MAX_RETRY_COUNT,
                 logFolderNotFound: true, retrievingInstrumentDataFolder: RetrievingInstrumentDataFolder);
 
         }
@@ -453,20 +436,20 @@ namespace AnalysisManagerBase
         /// Optionally, can require that a certain file also be present in the folder for it to be deemed valid
         /// If no folder is deemed valid, then returns the path defined by "DatasetStoragePath"
         /// </summary>
-        /// <param name="DSName">Name of the dataset</param>
-        /// <param name="FileNameToFind">Name of a file that must exist in the folder; can contain a wildcard, e.g. *.zip</param>
+        /// <param name="dsName">Name of the dataset</param>
+        /// <param name="fileNameToFind">Name of a file that must exist in the folder; can contain a wildcard, e.g. *.zip</param>
         /// <param name="RetrievingInstrumentDataFolder">Set to True when retrieving an instrument data folder</param>
         /// <param name="assumeUnpurged"></param>
         /// <returns>Path to the most appropriate dataset folder</returns>
         /// <remarks>Although FileNameToFind could be empty, you are highly encouraged to filter by either Filename or by FolderName when using FindValidFolder</remarks>
-        private string FindValidFolder(string DSName, string FileNameToFind, bool RetrievingInstrumentDataFolder, bool assumeUnpurged)
+        private string FindValidFolder(string dsName, string fileNameToFind, bool RetrievingInstrumentDataFolder, bool assumeUnpurged)
         {
 
             const string folderNameToFind = "";
             bool validFolderFound;
             string folderNotFoundMessage;
 
-            return FindValidFolder(DSName, FileNameToFind, folderNameToFind, DEFAULT_MAX_RETRY_COUNT,
+            return FindValidFolder(dsName, fileNameToFind, folderNameToFind, DEFAULT_MAX_RETRY_COUNT,
                 logFolderNotFound: true, retrievingInstrumentDataFolder: RetrievingInstrumentDataFolder,
                 assumeUnpurged: assumeUnpurged,
                 validFolderFound: out validFolderFound, folderNotFoundMessage: out folderNotFoundMessage);
@@ -478,15 +461,15 @@ namespace AnalysisManagerBase
         /// Optionally, can require that a certain file also be present in the folder for it to be deemed valid
         /// If no folder is deemed valid, then returns the path defined by "DatasetStoragePath"
         /// </summary>
-        /// <param name="DSName">Name of the dataset</param>
-        /// <param name="FileNameToFind">Name of a file that must exist in the folder; can contain a wildcard, e.g. *.zip</param>
-        /// <param name="FolderNameToFind">Optional: Name of a folder that must exist in the dataset folder; can contain a wildcard, e.g. SEQ*</param>
+        /// <param name="dsName">Name of the dataset</param>
+        /// <param name="fileNameToFind">Name of a file that must exist in the folder; can contain a wildcard, e.g. *.zip</param>
+        /// <param name="folderNameToFind">Optional: Name of a folder that must exist in the dataset folder; can contain a wildcard, e.g. SEQ*</param>
         /// <returns>Path to the most appropriate dataset folder</returns>
         /// <remarks>Although FileNameToFind and FolderNameToFind could both be empty, you are highly encouraged to filter by either Filename or by FolderName when using FindValidFolder</remarks>
-        private string FindValidFolder(string DSName, string FileNameToFind, string FolderNameToFind)
+        private string FindValidFolder(string dsName, string fileNameToFind, string folderNameToFind)
         {
 
-            return FindValidFolder(DSName, FileNameToFind, FolderNameToFind, DEFAULT_MAX_RETRY_COUNT,
+            return FindValidFolder(dsName, fileNameToFind, folderNameToFind, DEFAULT_MAX_RETRY_COUNT,
                 logFolderNotFound: true, retrievingInstrumentDataFolder: false);
 
         }
@@ -496,17 +479,17 @@ namespace AnalysisManagerBase
         /// Optionally, can require that a certain file also be present in the folder for it to be deemed valid
         /// If no folder is deemed valid, then returns the path defined by "DatasetStoragePath"
         /// </summary>
-        /// <param name="DSName">Name of the dataset</param>
-        /// <param name="FileNameToFind">Name of a file that must exist in the folder; can contain a wildcard, e.g. *.zip</param>
-        /// <param name="FolderNameToFind">Optional: Name of a folder that must exist in the dataset folder; can contain a wildcard, e.g. SEQ*</param>
-        /// <param name="RetrievingInstrumentDataFolder">Set to True when retrieving an instrument data folder</param>
+        /// <param name="dsName">Name of the dataset</param>
+        /// <param name="fileNameToFind">Name of a file that must exist in the folder; can contain a wildcard, e.g. *.zip</param>
+        /// <param name="folderNameToFind">Optional: Name of a folder that must exist in the dataset folder; can contain a wildcard, e.g. SEQ*</param>
+        /// <param name="retrievingInstrumentDataFolder">Set to True when retrieving an instrument data folder</param>
         /// <returns>Path to the most appropriate dataset folder</returns>
         /// <remarks>Although FileNameToFind and FolderNameToFind could both be empty, you are highly encouraged to filter by either Filename or by FolderName when using FindValidFolder</remarks>
-        private string FindValidFolder(string DSName, string FileNameToFind, string FolderNameToFind, bool RetrievingInstrumentDataFolder)
+        private string FindValidFolder(string dsName, string fileNameToFind, string folderNameToFind, bool retrievingInstrumentDataFolder)
         {
 
-            return FindValidFolder(DSName, FileNameToFind, FolderNameToFind, DEFAULT_MAX_RETRY_COUNT,
-                logFolderNotFound: true, retrievingInstrumentDataFolder: RetrievingInstrumentDataFolder);
+            return FindValidFolder(dsName, fileNameToFind, folderNameToFind, DEFAULT_MAX_RETRY_COUNT,
+                logFolderNotFound: true, retrievingInstrumentDataFolder: retrievingInstrumentDataFolder);
 
         }
 
@@ -515,16 +498,16 @@ namespace AnalysisManagerBase
         /// Optionally, can require that a certain file also be present in the folder for it to be deemed valid
         /// If no folder is deemed valid, then returns the path defined by "DatasetStoragePath"
         /// </summary>
-        /// <param name="DSName">Name of the dataset</param>
-        /// <param name="FileNameToFind">Name of a file that must exist in the folder; can contain a wildcard, e.g. *.zip</param>
-        /// <param name="FolderNameToFind">Optional: Name of a folder that must exist in the dataset folder; can contain a wildcard, e.g. SEQ*</param>
-        /// <param name="MaxRetryCount">Maximum number of attempts</param>
-        /// <returns>Path to the most appropriate dataset folder</returns>
+        /// <param name="dsName">Name of the dataset</param>
+        /// <param name="fileNameToFind">Name of a file that must exist in the folder; can contain a wildcard, e.g. *.zip</param>
+        /// <param name="folderNameToFind">Optional: Name of a folder that must exist in the dataset folder; can contain a wildcard, e.g. SEQ*</param>
+        /// <param name="maxRetryCount">Maximum number of attempts</param>
+        /// <returns>Path to the maxRetryCount appropriate dataset folder</returns>
         /// <remarks>Although FileNameToFind and FolderNameToFind could both be empty, you are highly encouraged to filter by either Filename or by FolderName when using FindValidFolder</remarks>
-        public string FindValidFolder(string DSName, string FileNameToFind, string FolderNameToFind, int MaxRetryCount)
+        public string FindValidFolder(string dsName, string fileNameToFind, string folderNameToFind, int maxRetryCount)
         {
 
-            return FindValidFolder(DSName, FileNameToFind, FolderNameToFind, MaxRetryCount,
+            return FindValidFolder(dsName, fileNameToFind, folderNameToFind, maxRetryCount,
                 logFolderNotFound: true, retrievingInstrumentDataFolder: false);
 
         }
