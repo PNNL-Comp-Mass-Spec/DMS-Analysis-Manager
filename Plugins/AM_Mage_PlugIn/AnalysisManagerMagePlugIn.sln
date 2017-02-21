@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManager_Mage_PlugIn", "AnalysisManager_Mage_PlugIn.csproj", "{4AACC633-3F37-4102-AC9D-E23AB1EDC5BF}"
 EndProject
@@ -15,8 +15,8 @@ Global
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{4AACC633-3F37-4102-AC9D-E23AB1EDC5BF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{4AACC633-3F37-4102-AC9D-E23AB1EDC5BF}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{4AACC633-3F37-4102-AC9D-E23AB1EDC5BF}.Debug|x86.ActiveCfg = Debug|x86
-		{4AACC633-3F37-4102-AC9D-E23AB1EDC5BF}.Debug|x86.Build.0 = Debug|x86
+		{4AACC633-3F37-4102-AC9D-E23AB1EDC5BF}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{4AACC633-3F37-4102-AC9D-E23AB1EDC5BF}.Debug|x86.Build.0 = Debug|Any CPU
 		{4AACC633-3F37-4102-AC9D-E23AB1EDC5BF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4AACC633-3F37-4102-AC9D-E23AB1EDC5BF}.Release|Any CPU.Build.0 = Release|Any CPU
 		{4AACC633-3F37-4102-AC9D-E23AB1EDC5BF}.Release|x86.ActiveCfg = Release|Any CPU
