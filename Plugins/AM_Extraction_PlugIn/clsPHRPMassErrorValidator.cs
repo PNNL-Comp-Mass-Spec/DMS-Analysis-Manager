@@ -4,20 +4,21 @@ using System.IO;
 using System.Linq;
 using AnalysisManagerBase;
 using PHRPReader;
+using PRISM;
 
 namespace AnalysisManagerExtractionPlugin
 {
-    public class clsPHRPMassErrorValidator
+    public class clsPHRPMassErrorValidator : clsEventNotifier
     {
         #region "Module variables"
 
-        protected string mErrorMessage = string.Empty;
-        protected readonly int mDebugLevel;
+        private string mErrorMessage = string.Empty;
+        private readonly int mDebugLevel;
 
         // This is a value between 0 and 100
-        protected const double mErrorThresholdPercent = 5;
+        private const double mErrorThresholdPercent = 5;
 
-        protected clsPHRPReader mPHRPReader;
+        private clsPHRPReader mPHRPReader;
 
         #endregion
 
@@ -43,12 +44,12 @@ namespace AnalysisManagerExtractionPlugin
             mDebugLevel = intDebugLevel;
         }
 
-        protected void InformLargeErrorExample(KeyValuePair<double, string> massErrorEntry)
+        private void InformLargeErrorExample(KeyValuePair<double, string> massErrorEntry)
         {
-            ShowErrorMessage("  ... large error example: " + massErrorEntry.Key + " Da for " + massErrorEntry.Value);
+            OnErrorEvent("  ... large error example: " + massErrorEntry.Key + " Da for " + massErrorEntry.Value);
         }
 
-        protected clsSearchEngineParameters LoadSearchEngineParameters(clsPHRPReader objPHRPReader, string strSearchEngineParamFilePath, clsPHRPReader.ePeptideHitResultType eResultType)
+        private clsSearchEngineParameters LoadSearchEngineParameters(clsPHRPReader objPHRPReader, string strSearchEngineParamFilePath, clsPHRPReader.ePeptideHitResultType eResultType)
         {
             clsSearchEngineParameters objSearchEngineParams = null;
             bool blnSuccess = false;
@@ -57,7 +58,7 @@ namespace AnalysisManagerExtractionPlugin
             {
                 if (string.IsNullOrEmpty(strSearchEngineParamFilePath))
                 {
-                    ShowWarningMessage("Search engine parameter file not defined; will assume a maximum tolerance of 10 Da");
+                    OnWarningEvent("Search engine parameter file not defined; will assume a maximum tolerance of 10 Da");
                     objSearchEngineParams = new clsSearchEngineParameters(eResultType.ToString());
                     objSearchEngineParams.AddUpdateParameter("peptide_mass_tol", "10");
                 }
@@ -67,7 +68,7 @@ namespace AnalysisManagerExtractionPlugin
 
                     if (!blnSuccess)
                     {
-                        ShowWarningMessage("Error loading search engine parameter file " + Path.GetFileName(strSearchEngineParamFilePath) +
+                        OnWarningEvent("Error loading search engine parameter file " + Path.GetFileName(strSearchEngineParamFilePath) +
                                            "; will assume a maximum tolerance of 10 Da");
                         objSearchEngineParams = new clsSearchEngineParameters(eResultType.ToString());
                         objSearchEngineParams.AddUpdateParameter("peptide_mass_tol", "10");
@@ -76,30 +77,10 @@ namespace AnalysisManagerExtractionPlugin
             }
             catch (Exception ex)
             {
-                ShowErrorMessage("Error in LoadSearchEngineParameters", ex);
+                OnErrorEvent("Error in LoadSearchEngineParameters", ex);
             }
 
             return objSearchEngineParams;
-        }
-
-        protected void ShowErrorMessage(string strMessage)
-        {
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMessage);
-        }
-
-        protected void ShowErrorMessage(string strMessage, Exception ex)
-        {
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMessage, ex);
-        }
-
-        protected void ShowMessage(string strMessage)
-        {
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, strMessage);
-        }
-
-        protected void ShowWarningMessage(string strWarningMessage)
-        {
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strWarningMessage);
         }
 
         /// <summary>
@@ -139,7 +120,7 @@ namespace AnalysisManagerExtractionPlugin
                     {
                         mErrorMessage = string.Copy(strMessage);
                     }
-                    ShowErrorMessage(strMessage);
+                    OnErrorEvent(strMessage);
                 }
                 if (mPHRPReader.ErrorMessages.Count > 0)
                     return false;
@@ -154,7 +135,7 @@ namespace AnalysisManagerExtractionPlugin
                     }
                     else
                     {
-                        ShowWarningMessage(strMessage);
+                        OnWarningEvent(strMessage);
                     }
                 }
 
@@ -299,7 +280,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 if (intPsmCount == 0)
                 {
-                    ShowWarningMessage("PHRPReader did not find any records in " + Path.GetFileName(strInputFilePath));
+                    OnWarningEvent("PHRPReader did not find any records in " + Path.GetFileName(strInputFilePath));
                     return true;
                 }
 
@@ -309,7 +290,7 @@ namespace AnalysisManagerExtractionPlugin
                 {
                     if (mDebugLevel >= 2)
                     {
-                        ShowMessage("All " + intPsmCount + " peptides have a mass error below " + dblPrecursorMassTolerance.ToString("0.0") + " Da");
+                        OnStatusEvent("All " + intPsmCount + " peptides have a mass error below " + dblPrecursorMassTolerance.ToString("0.0") + " Da");
                     }
                     return true;
                 }
@@ -321,14 +302,14 @@ namespace AnalysisManagerExtractionPlugin
 
                 if (dblPercentInvalid <= mErrorThresholdPercent)
                 {
-                    ShowWarningMessage(warningMessage + "; this value is within tolerance");
+                    OnWarningEvent(warningMessage + "; this value is within tolerance");
 
                     // Blank out mErrorMessage since only a warning
                     mErrorMessage = string.Empty;
                     return true;
                 }
 
-                ShowErrorMessage(warningMessage + "; this value is too large (over " + mErrorThresholdPercent.ToString("0.0") + "%)");
+                OnErrorEvent(warningMessage + "; this value is too large (over " + mErrorThresholdPercent.ToString("0.0") + "%)");
 
                 // Log the first, last, and middle entry in lstLargestMassErrors
                 InformLargeErrorExample(lstLargestMassErrors.First());
@@ -356,7 +337,7 @@ namespace AnalysisManagerExtractionPlugin
             }
             catch (Exception ex)
             {
-                ShowErrorMessage("Error in ValidatePHRPResultMassErrors", ex);
+                OnErrorEvent("Error in ValidatePHRPResultMassErrors", ex);
                 mErrorMessage = "Exception in ValidatePHRPResultMassErrors";
                 return false;
             }
@@ -364,17 +345,17 @@ namespace AnalysisManagerExtractionPlugin
 
         private void mPHRPReader_ErrorEvent(string strErrorMessage)
         {
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strErrorMessage);
+            OnErrorEvent("PHRPReader: " + strErrorMessage);
         }
 
         private void mPHRPReader_MessageEvent(string strMessage)
         {
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, strMessage);
+            OnStatusEvent("PHRPReader: " + strMessage);
         }
 
         private void mPHRPReader_WarningEvent(string strWarningMessage)
         {
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strWarningMessage);
+            OnWarningEvent("PHRPReader: " + strWarningMessage);
         }
     }
 }

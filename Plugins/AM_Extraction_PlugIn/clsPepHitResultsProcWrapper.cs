@@ -10,11 +10,11 @@
 //*********************************************************************************************************
 
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
 using AnalysisManagerBase;
+using PRISM;
 
 namespace AnalysisManagerExtractionPlugin
 {
@@ -22,7 +22,7 @@ namespace AnalysisManagerExtractionPlugin
     /// Calls PeptideHitResultsProcRunner.exe
     /// </summary>
     /// <remarks></remarks>
-    public class clsPepHitResultsProcWrapper
+    public class clsPepHitResultsProcWrapper : clsEventNotifier
     {
         #region "Constants"
 
@@ -39,9 +39,6 @@ namespace AnalysisManagerExtractionPlugin
         private int m_Progress = 0;
         private string m_ErrMsg = string.Empty;
         private string m_PHRPConsoleOutputFilePath;
-
-        // This list tracks the error messages reported by CmdRunner
-        protected ConcurrentBag<string> mCmdRunnerErrors;
 
         #endregion
 
@@ -85,8 +82,6 @@ namespace AnalysisManagerExtractionPlugin
             m_MgrParams = MgrParams;
             m_JobParams = JobParams;
             m_DebugLevel = m_MgrParams.GetParam("debuglevel", 1);
-
-            mCmdRunnerErrors = new ConcurrentBag<string>();
         }
 
         /// <summary>
@@ -188,7 +183,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 if (m_DebugLevel >= 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc + " " + cmdStr);
+                    OnDebugEvent(progLoc + " " + cmdStr);
                 }
 
                 var cmdRunner = new clsRunDosProgram(ioInputFile.DirectoryName)
@@ -199,22 +194,12 @@ namespace AnalysisManagerExtractionPlugin
                     WriteConsoleOutputToFile = true,
                     ConsoleOutputFilePath = m_PHRPConsoleOutputFilePath
                 };
+                RegisterEvents(cmdRunner);
                 cmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
-                cmdRunner.ErrorEvent += CmdRunner_ErrorEvent;
 
                 // Abort PHRP if it runs for over 720 minutes (this generally indicates that it's stuck)
                 const int intMaxRuntimeSeconds = 720 * 60;
                 blnSuccess = cmdRunner.RunProgram(progLoc, cmdStr, "PHRP", true, intMaxRuntimeSeconds);
-
-                if (mCmdRunnerErrors.Count > 0)
-                {
-                    // Append the error messages to the log
-                    // Note that clsProgRunner will have already included them in the ConsoleOutput.txt file
-                    foreach (string strError in mCmdRunnerErrors)
-                    {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "... " + strError);
-                    }
-                }
 
                 if (!blnSuccess)
                 {
@@ -301,7 +286,7 @@ namespace AnalysisManagerExtractionPlugin
                         if (ioInputFile.Directory.GetFiles("*" + strFileName).Length == 0)
                         {
                             m_ErrMsg = "PHRP results file not found: " + strFileName;
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_ErrMsg);
+                            OnErrorEvent(m_ErrMsg);
                             return CloseOutType.CLOSEOUT_FAILED;
                         }
                     }
@@ -319,22 +304,20 @@ namespace AnalysisManagerExtractionPlugin
             }
             catch (Exception ex)
             {
-                var logMessage = "Exception while running the peptide hit results processor: " + ex.Message + "; " +
-                                 clsGlobal.GetExceptionStackTrace(ex);
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, logMessage);
+                OnErrorEvent("Exception while running the peptide hit results processor: " + ex.Message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
             if (m_DebugLevel >= 3)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Peptide hit results processor complete");
+                OnDebugEvent("Peptide hit results processor complete");
             }
 
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        private Regex reProcessing = new Regex(@"Processing: (\d+)");
-        private Regex reProcessingPHRP = new Regex(@"^([0-9.]+)\% complete");
+        private readonly Regex reProcessing = new Regex(@"Processing: (\d+)");
+        private readonly Regex reProcessingPHRP = new Regex(@"^([0-9.]+)\% complete");
 
         private void ParsePHRPConsoleOutputFile()
         {
@@ -415,38 +398,13 @@ namespace AnalysisManagerExtractionPlugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error parsing PHRP Console Output File", ex);
+                OnErrorEvent("Error parsing PHRP Console Output File", ex);
             }
         }
 
         #endregion
 
         #region "Event Handlers"
-
-        private void CmdRunner_ErrorEvent(string NewText, Exception ex)
-        {
-            if ((mCmdRunnerErrors != null))
-            {
-                // Split NewText on newline characters
-                string[] strSplitLine = null;
-                var chNewLineChars = new char[] { '\r', '\n' };
-
-                strSplitLine = NewText.Split(chNewLineChars, StringSplitOptions.RemoveEmptyEntries);
-
-                if ((strSplitLine != null))
-                {
-                    foreach (string strItem in strSplitLine)
-                    {
-                        var strItem2 = strItem.Trim(chNewLineChars);
-
-                        if (!string.IsNullOrEmpty(strItem2))
-                        {
-                            mCmdRunnerErrors.Add(strItem2);
-                        }
-                    }
-                }
-            }
-        }
 
         private DateTime dtLastStatusUpdate = DateTime.MinValue;
 
