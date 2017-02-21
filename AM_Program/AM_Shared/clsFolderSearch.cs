@@ -582,6 +582,8 @@ namespace AnalysisManagerBase
 
                 var instrumentDataPurged = m_jobParams.GetJobParameter("InstrumentDataPurged", 0);
 
+                var datasetFolderName = m_jobParams.GetParam("DatasetFolderName");
+
                 if (retrievingInstrumentDataFolder && instrumentDataPurged != 0 && !assumeUnpurged)
                 {
                     // The instrument data is purged and we're retrieving instrument data
@@ -589,7 +591,9 @@ namespace AnalysisManagerBase
                 }
                 else
                 {
-                    AddPathToCheck(lstPathsToCheck, Path.Combine(m_jobParams.GetParam("DatasetStoragePath"), dsName), true);
+                    AddPathToCheck(lstPathsToCheck, Path.Combine(m_jobParams.GetParam("DatasetStoragePath"), datasetFolderName), true);
+                    if (datasetFolderName != dsName)
+                        AddPathToCheck(lstPathsToCheck, Path.Combine(m_jobParams.GetParam("DatasetStoragePath"), dsName), false);
                 }
 
                 if (!MyEMSLSearchDisabled && !assumeUnpurged)
@@ -606,10 +610,14 @@ namespace AnalysisManagerBase
 #endif
                 if ((m_AuroraAvailable || MyEMSLSearchDisabled) && !assumeUnpurged)
                 {
-                    AddPathToCheck(lstPathsToCheck, Path.Combine(m_jobParams.GetParam("DatasetArchivePath"), dsName), true);
+                    AddPathToCheck(lstPathsToCheck, Path.Combine(m_jobParams.GetParam("DatasetArchivePath"), datasetFolderName), true);
+                    if (datasetFolderName != dsName)
+                        AddPathToCheck(lstPathsToCheck, Path.Combine(m_jobParams.GetParam("DatasetArchivePath"), dsName), false);
                 }
 
-                AddPathToCheck(lstPathsToCheck, Path.Combine(m_jobParams.GetParam("transferFolderPath"), dsName), false);
+                AddPathToCheck(lstPathsToCheck, Path.Combine(m_jobParams.GetParam("transferFolderPath"), datasetFolderName), false);
+                if (datasetFolderName != dsName)
+                    AddPathToCheck(lstPathsToCheck, Path.Combine(m_jobParams.GetParam("transferFolderPath"), dsName), false);
 
                 var blnFileNotFoundEncountered = false;
 
