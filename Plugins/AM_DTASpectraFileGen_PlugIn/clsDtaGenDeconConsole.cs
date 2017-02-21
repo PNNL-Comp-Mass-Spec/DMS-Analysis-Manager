@@ -124,6 +124,8 @@ namespace DTASpectraFileGen
                 MinimumIonsPerSpectrum = 0
             };
 
+            RegisterEvents(oMGFConverter);
+
             var eRawDataType = clsAnalysisResources.GetRawDataType(strRawDataType);
             blnSuccess = oMGFConverter.ConvertMGFtoDTA(eRawDataType, m_Dataset);
 

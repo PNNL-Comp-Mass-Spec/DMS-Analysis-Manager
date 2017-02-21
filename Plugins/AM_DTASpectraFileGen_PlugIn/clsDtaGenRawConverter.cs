@@ -86,6 +86,8 @@ namespace DTASpectraFileGen
                     MinimumIonsPerSpectrum = m_JobParams.GetJobParameter("IonCounts", "IonCount", 0)
                 };
 
+                RegisterEvents(oMGFConverter);
+
                 var eRawDataType = clsAnalysisResources.GetRawDataType(strRawDataType);
                 var blnSuccess = oMGFConverter.ConvertMGFtoDTA(eRawDataType, m_Dataset);
 
