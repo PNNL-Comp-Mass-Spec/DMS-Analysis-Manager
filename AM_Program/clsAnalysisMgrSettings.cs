@@ -171,14 +171,14 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Loads manager settings from the database
         /// </summary>
-        /// <param name="paramDictionary">Manager settings loaded from file AnalysisManagerProg.exe.config</param>
+        /// <param name="configFileSettings">Manager settings loaded from file AnalysisManagerProg.exe.config</param>
         /// <returns>True if successful; False on error</returns>
         /// <remarks></remarks>
-        public bool LoadSettings(Dictionary<string, string> paramDictionary)
+        public bool LoadSettings(Dictionary<string, string> configFileSettings)
         {
             mErrMsg = "";
 
-            mParamDictionary = paramDictionary;
+            mParamDictionary = configFileSettings;
 
             // Test the settings retrieved from the config file
             if (!CheckInitialSettings(mParamDictionary))

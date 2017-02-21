@@ -1281,9 +1281,9 @@ namespace AnalysisManagerBase
                 Console.ForegroundColor = ConsoleColor.Cyan;
                 Console.WriteLine(GetExceptionStackTrace(ex, true));
             }
+
             Console.ResetColor();
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, formattedError, ex);
-
         }
 
         /// <summary>
