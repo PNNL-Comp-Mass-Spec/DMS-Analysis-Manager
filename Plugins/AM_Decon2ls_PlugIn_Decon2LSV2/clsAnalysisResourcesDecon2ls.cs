@@ -218,13 +218,12 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 {
                     case eRawDataTypeConstants.ThermoRawFile:
                         success = ExamineScanTypesInRawFile(datasetFilePath, out countMs1, out countMSn);
-
                         break;
+
                     case eRawDataTypeConstants.UIMF:
-                        //
                         success = ExamineScanTypesInUIMFFile(datasetFilePath, out countMs1, out countMSn);
-
                         break;
+
                     default:
                         // Ignore datasets that are not .raw file or .uimf files
                         success = true;
@@ -256,6 +255,8 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                         return false;
                     }
 
+                    var lastProgress = DateTime.UtcNow;
+
                     for (var scanNumber = rawFileReader.FileInfo.ScanStart; scanNumber <= rawFileReader.FileInfo.ScanEnd; scanNumber++)
                     {
                         clsScanInfo scanInfo;
@@ -269,6 +270,15 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                             {
                                 countMSn += 1;
                             }
+                        }
+
+                        // Write out the latest scan number twice per second
+                        // We're doing this because the rawFileReader can crash the analysis manager abruptly with corrupt .raw files
+                        // It's helpful to determine roughly where the corrupt scan is
+                        if (DateTime.UtcNow.Subtract(lastProgress).TotalMilliseconds >= 500)
+                        {
+                            lastProgress = DateTime.UtcNow;
+                            LogDebug("Examining scan levels in .raw file, scan " + scanNumber, 10);
                         }
                     }
 
