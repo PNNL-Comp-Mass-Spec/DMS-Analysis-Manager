@@ -24,12 +24,7 @@ namespace AnalysisManagerBase
         // msec
         private int m_MonitorInterval = 2000;
 
-        private int m_MaxRuntimeSeconds;
-
-        private int m_ExitCode;
-
         private string m_CachedConsoleErrors = string.Empty;
-        private bool m_AbortProgramNow;
 
         private bool m_AbortProgramPostLogEntry;
 
@@ -49,7 +44,7 @@ namespace AnalysisManagerBase
         public delegate void LoopWaitingEventHandler();
 
         /// <summary>
-        /// Text was written to the console
+        /// Text that was written to the console
         /// </summary>
         /// <remarks></remarks>
         public event ConsoleOutputEventEventHandler ConsoleOutputEvent;
@@ -159,13 +154,13 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Exit code when process completes.
         /// </summary>
-        public int ExitCode => m_ExitCode;
+        public int ExitCode { get; private set; }
 
         /// <summary>
         /// Maximum amount of time (seconds) that the program will be allowed to run; 0 if allowed to run indefinitely
         /// </summary>
         /// <value></value>
-        public int MaxRuntimeSeconds => m_MaxRuntimeSeconds;
+        public int MaxRuntimeSeconds { get; private set; }
 
         /// <summary>
         /// How often (milliseconds) internal monitoring thread checks status of external program
@@ -202,7 +197,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Returns true if program was aborted via call to AbortProgramNow()
         /// </summary>
-        public bool ProgramAborted => m_AbortProgramNow;
+        public bool ProgramAborted { get; private set; }
 
         /// <summary>
         /// Current monitoring state
@@ -244,11 +239,11 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="WorkDir">Workdirectory for input/output files, if any</param>
+        /// <param name="workDir">Workdirectory for input/output files, if any</param>
         /// <remarks></remarks>
-        public clsRunDosProgram(string WorkDir)
+        public clsRunDosProgram(string workDir)
         {
-            this.WorkDir = WorkDir;
+            WorkDir = workDir;
         }
 
         /// <summary>
@@ -267,8 +262,8 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public void AbortProgramNow(bool blnPostLogEntry)
         {
-            m_AbortProgramNow = true;
             m_AbortProgramPostLogEntry = blnPostLogEntry;
+            ProgramAborted = true;
         }
 
         /// <summary>
@@ -324,10 +319,19 @@ namespace AnalysisManagerBase
             return RunProgram(progNameLoc, cmdLine, progName, useResCode);
         }
 
+        /// <summary>
+        /// Runs a program and waits for it to exit
+        /// </summary>
+        /// <param name="progNameLoc">The path to the program to run</param>
+        /// <param name="cmdLine">The arguments to pass to the program, for example: /N=35</param>
+        /// <param name="progName">The name of the program to use for the Window title</param>
+        /// <param name="useResCode">Whether or not to use the result code to determine success or failure of program execution</param>
+        /// <returns>True if success, false if an error</returns>
+        /// <remarks>Ignores the result code reported by the program</remarks>
         public bool RunProgram(string progNameLoc, string cmdLine, string progName, bool useResCode)
         {
-            const int maxRuntime = 0;
-            return RunProgram(progNameLoc, cmdLine, progName, useResCode, maxRuntime);
+            const int maxRuntimeSeconds = 0;
+            return RunProgram(progNameLoc, cmdLine, progName, useResCode, maxRuntimeSeconds);
         }
 
         /// <summary>
@@ -337,20 +341,20 @@ namespace AnalysisManagerBase
         /// <param name="cmdLine">The arguments to pass to the program, for example /N=35</param>
         /// <param name="progName">The name of the program to use for the Window title</param>
         /// <param name="useResCode">If true, then returns False if the ProgRunner ExitCode is non-zero</param>
-        /// <param name="maxRuntime">If a positive number, then program execution will be aborted if the runtime exceeds maxRuntime seconds</param>
+        /// <param name="maxRuntimeSeconds">If a positive number, then program execution will be aborted if the runtime exceeds maxRuntimeSeconds</param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks>maxRuntime will be increased to 15 seconds if it is between 1 and 14 seconds</remarks>
-        public bool RunProgram(string progNameLoc, string cmdLine, string progName, bool useResCode, int maxRuntime)
+        /// <remarks>maxRuntimeSeconds will be increased to 15 seconds if it is between 1 and 14 seconds</remarks>
+        public bool RunProgram(string progNameLoc, string cmdLine, string progName, bool useResCode, int maxRuntimeSeconds)
         {
             // Require a minimum monitoring interval of 250 mseconds
             if (m_MonitorInterval < 250)
                 m_MonitorInterval = 250;
 
-            if (maxRuntime > 0 && maxRuntime < 15)
+            if (maxRuntimeSeconds > 0 && maxRuntimeSeconds < 15)
             {
-                maxRuntime = 15;
+                maxRuntimeSeconds = 15;
             }
-            m_MaxRuntimeSeconds = maxRuntime;
+            MaxRuntimeSeconds = maxRuntimeSeconds;
 
             // Re-instantiate m_ProgRunner each time RunProgram is called since it is disposed of later in this function
             // Also necessary to avoid problems caching the console output
@@ -383,8 +387,8 @@ namespace AnalysisManagerBase
 
             m_CachedConsoleErrors = string.Empty;
 
-            m_AbortProgramNow = false;
             m_AbortProgramPostLogEntry = true;
+            ProgramAborted = false;
 
             var blnRuntimeExceeded = false;
             var blnAbortLogged = false;
@@ -397,7 +401,7 @@ namespace AnalysisManagerBase
                 // Start the program executing
                 m_ProgRunner.StartAndMonitorProgram();
 
-                // Loop until program is complete, or until m_MaxRuntimeSeconds seconds elapses
+                // Loop until program is complete, or until MaxRuntimeSeconds seconds elapses
                 while (m_ProgRunner.State != clsProgRunner.States.NotMonitoring)
                 {
                     if (cachedProcessID == 0)
@@ -406,43 +410,43 @@ namespace AnalysisManagerBase
                     OnLoopWaiting();
                     Thread.Sleep(m_MonitorInterval);
 
-                    if (m_MaxRuntimeSeconds > 0)
+                    if (MaxRuntimeSeconds > 0)
                     {
-                        if (DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds > m_MaxRuntimeSeconds && !m_AbortProgramNow)
+                        if (DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds > MaxRuntimeSeconds && !ProgramAborted)
                         {
-                            m_AbortProgramNow = true;
+                            AbortProgramNow(false);
                             blnRuntimeExceeded = true;
                             OnTimeout();
                         }
+                    }
 
-                        if (m_ProgRunner.State == clsProgRunner.States.StartingProcess &&
-                            DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds > 30 &&
-                            DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds < 90)
-                        {
-                            // It has taken over 30 seconds for the thread to start
-                            // Try re-joining
-                            m_ProgRunner.JoinThreadNow();
-                        }
+                    if (m_ProgRunner.State == clsProgRunner.States.StartingProcess &&
+                        DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds > 30 &&
+                        DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds < 90)
+                    {
+                        // It has taken over 30 seconds for the thread to start
+                        // Try re-joining
+                        m_ProgRunner.JoinThreadNow();
+                    }
 
-                        if (m_AbortProgramNow)
+                    if (ProgramAborted)
+                    {
+                        if (m_AbortProgramPostLogEntry && !blnAbortLogged)
                         {
-                            if (m_AbortProgramPostLogEntry && !blnAbortLogged)
+                            blnAbortLogged = true;
+                            string msg;
+                            if (blnRuntimeExceeded)
                             {
-                                blnAbortLogged = true;
-                                string msg;
-                                if (blnRuntimeExceeded)
-                                {
-                                    msg = "  Aborting ProgRunner for " + progName + " since " + m_MaxRuntimeSeconds + " seconds has elapsed";
-                                }
-                                else
-                                {
-                                    msg = "  Aborting ProgRunner for " + progName + " since AbortProgramNow() was called";
-                                }
-
-                                OnErrorEvent(msg);
+                                msg = "  Aborting ProgRunner for " + progName + " since " + MaxRuntimeSeconds + " seconds has elapsed";
                             }
-                            m_ProgRunner.StopMonitoringProgram(kill: true);
+                            else
+                            {
+                                msg = "  Aborting ProgRunner for " + progName + " since AbortProgramNow() was called";
+                            }
+
+                            OnErrorEvent(msg);
                         }
+                        m_ProgRunner.StopMonitoringProgram(kill: true);
                     }
 
                     clsProgRunner.ClearCachedPerformanceCounterForProcessID(cachedProcessID);
@@ -457,46 +461,51 @@ namespace AnalysisManagerBase
                 return false;
             }
 
-            // Cache the exit code in m_ExitCode
-            m_ExitCode = m_ProgRunner.ExitCode;
+            // Cache the exit code in ExitCode
+            ExitCode = m_ProgRunner.ExitCode;
             m_ProgRunner = null;
 
-            if (useResCode & m_ExitCode != 0)
+            if (useResCode & ExitCode != 0)
             {
-                if ((m_AbortProgramNow && m_AbortProgramPostLogEntry) || !m_AbortProgramNow)
+                if (ProgramAborted && m_AbortProgramPostLogEntry || !ProgramAborted)
                 {
-                    var msg = "  ProgRunner.ExitCode = " + m_ExitCode + " for Program = " + progNameLoc;
+                    var msg = "  ProgRunner.ExitCode = " + ExitCode + " for Program = " + progNameLoc;
                     OnErrorEvent(msg);
                 }
                 return false;
             }
 
-            return !m_AbortProgramNow;
+            if (ProgramAborted)
+            {
+                return false;
+            }
+
+            return true;
         }
 
         #endregion
 
-        void ProgRunner_ConsoleErrorEvent(string NewText)
+        private void ProgRunner_ConsoleErrorEvent(string newText)
         {
-            OnErrorEvent("Console error: " + NewText);
+            OnErrorEvent("Console error: " + newText);
 
             if (string.IsNullOrWhiteSpace(m_CachedConsoleErrors))
             {
-                m_CachedConsoleErrors = NewText;
+                m_CachedConsoleErrors = newText;
             }
             else
             {
-                m_CachedConsoleErrors += Environment.NewLine + NewText;
+                m_CachedConsoleErrors += Environment.NewLine + newText;
             }
 
         }
 
-        void ProgRunner_ConsoleOutputEvent(string newText)
+        private void ProgRunner_ConsoleOutputEvent(string newText)
         {
             ConsoleOutputEvent?.Invoke(newText);
         }
 
-        void ProgRunner_ProgChanged(clsProgRunner obj)
+        private void ProgRunner_ProgChanged(clsProgRunner obj)
         {
             // This event is ignored by this class
         }
