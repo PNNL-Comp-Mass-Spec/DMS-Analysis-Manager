@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using AnalysisManagerBase;
 
 namespace TestMagePlugIn {
@@ -99,7 +97,7 @@ namespace TestMagePlugIn {
             }
         }
 
-        public IStatusFile.EnumMgrStatus MgrStatus {
+        public EnumMgrStatus MgrStatus {
             get {
                 throw new NotImplementedException();
             }
@@ -135,7 +133,7 @@ namespace TestMagePlugIn {
             }
         }
 
-        public IStatusFile.EnumTaskStatus TaskStatus {
+        public EnumTaskStatus TaskStatus {
             get {
                 throw new NotImplementedException();
             }
@@ -144,7 +142,7 @@ namespace TestMagePlugIn {
             }
         }
 
-        public IStatusFile.EnumTaskStatusDetail TaskStatusDetail {
+        public EnumTaskStatusDetail TaskStatusDetail {
             get {
                 throw new NotImplementedException();
             }
@@ -176,17 +174,17 @@ namespace TestMagePlugIn {
             throw new NotImplementedException();
         }
 
-        public void UpdateAndWrite(IStatusFile.EnumMgrStatus mgrStatus, IStatusFile.EnumTaskStatus taskStatus, IStatusFile.EnumTaskStatusDetail taskDetailStatus, float PercentComplete, int DTACount, string MostRecentLogMessage, string MostRecentErrorMessage, string MostRecentJobInfo, bool ForceLogToBrokerDB) {
+        public void UpdateAndWrite(EnumMgrStatus mgrStatus, EnumTaskStatus taskStatus, EnumTaskStatusDetail taskDetailStatus, float PercentComplete, int DTACount, string MostRecentLogMessage, string MostRecentErrorMessage, string MostRecentJobInfo, bool ForceLogToBrokerDB) {
             // This would update a status file; instead, do nothing
             return;
         }
 
-        public void UpdateAndWrite(IStatusFile.EnumTaskStatus Status, float PercentComplete, int SpectrumCount) {
+        public void UpdateAndWrite(EnumTaskStatus Status, float PercentComplete, int SpectrumCount) {
             // This would update a status file; instead, do nothing
             return;
         }
 
-        public void UpdateAndWrite(IStatusFile.EnumMgrStatus mgrStatus, IStatusFile.EnumTaskStatus taskStatus, IStatusFile.EnumTaskStatusDetail taskDetailStatus, float PercentComplete) {
+        public void UpdateAndWrite(EnumMgrStatus mgrStatus, EnumTaskStatus taskStatus, EnumTaskStatusDetail taskDetailStatus, float PercentComplete) {
             // This would update a status file; instead, do nothing
             return;
         }
@@ -200,15 +198,15 @@ namespace TestMagePlugIn {
             throw new NotImplementedException();
         }
 
-        public void UpdateDisabled(IStatusFile.EnumMgrStatus ManagerStatus, string ManagerDisableMessage, ref string[] RecentErrorMessages, string MostRecentJobInfo) {
+        public void UpdateDisabled(EnumMgrStatus ManagerStatus, string ManagerDisableMessage, ref string[] RecentErrorMessages, string MostRecentJobInfo) {
             throw new NotImplementedException();
         }
 
-        public void UpdateDisabled(IStatusFile.EnumMgrStatus ManagerStatus, string ManagerDisableMessage) {
+        public void UpdateDisabled(EnumMgrStatus ManagerStatus, string ManagerDisableMessage) {
             throw new NotImplementedException();
         }
 
-        public void UpdateDisabled(IStatusFile.EnumMgrStatus ManagerStatus) {
+        public void UpdateDisabled(EnumMgrStatus ManagerStatus) {
             throw new NotImplementedException();
         }
 
@@ -243,6 +241,34 @@ namespace TestMagePlugIn {
         public void WriteStatusFile() {
             throw new NotImplementedException();
         }
+
+        public void StoreCoreUsageHistory(Queue<KeyValuePair<DateTime, float>> coreUsageHistory)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void UpdateClose(string ManagerIdleMessage, IEnumerable<string> recentErrorMessages, string JobInfo, bool ForceLogToBrokerDB)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void UpdateIdle(string ManagerIdleMessage, IEnumerable<string> recentErrorMessages, string RecentJobInfo, bool ForceLogToBrokerDB)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void UpdateDisabled(EnumMgrStatus ManagerStatus, string ManagerDisableMessage, IEnumerable<string> recentErrorMessages, string RecentJobInfo)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void UpdateFlagFileExists(IEnumerable<string> recentErrorMessages, string RecentJobInfo)
+        {
+            throw new NotImplementedException();
+        }
+
+        public int ProgRunnerProcessID { get; set; }
+        public float ProgRunnerCoreUsage { get; set; }
 
         #endregion
     }

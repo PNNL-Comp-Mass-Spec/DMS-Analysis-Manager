@@ -184,7 +184,7 @@ namespace TestMagePlugIn {
         }
 
         private bool TestRunOperation(MageAMOperations ops, string operationName) {
-            String LogFileName = Path.Combine(mWorkDir, "Mage_Log");
+            string LogFileName = Path.Combine(mWorkDir, "Mage_Log");
             log4net.GlobalContext.Properties["LogName"] = LogFileName;
             clsLogTools.ChangeLogFileName(LogFileName);
 

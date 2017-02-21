@@ -1,13 +1,5 @@
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
 using System.Windows.Forms;
-using Mage;
-using AnalysisManager_Mage_PlugIn;
 
 namespace TestMagePlugIn {
     public partial class Form1 : Form {
@@ -18,7 +10,7 @@ namespace TestMagePlugIn {
         private void Test_Tool_Runner_Click(object sender, EventArgs e) {
             TestToolRunnerMage ttr = new TestToolRunnerMage();
 
-            AnalysisManagerBase.IJobParams.CloseOutType eResult;
+            AnalysisManagerBase.CloseOutType eResult;
             eResult = ttr.TestIMPROVJob();
 
             System.Windows.Forms.MessageBox.Show("Test complete: " + eResult.ToString());

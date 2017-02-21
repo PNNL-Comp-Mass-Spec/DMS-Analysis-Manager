@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using AnalysisManagerBase;
 
 
@@ -12,7 +10,7 @@ namespace TestMagePlugIn {
         private Dictionary<string, string> mParms;
 
         // List of file extensions to NOT move to the result folder; comparison checks if the end of the filename matches any entry ResultFileExtensionsToSkip
-        protected SortedSet<String> m_ResultFileExtensionsToSkip = new SortedSet<String>(StringComparer.CurrentCultureIgnoreCase);
+        protected SortedSet<string> m_ResultFileExtensionsToSkip = new SortedSet<string>(StringComparer.CurrentCultureIgnoreCase);
 
         public JobParamsStub(Dictionary<string, string> parms) {
             mParms = parms;
@@ -32,7 +30,7 @@ namespace TestMagePlugIn {
         {
             get
             {
-                return new SortedSet<String>();
+                return new SortedSet<string>();
             }
         }
 
@@ -40,7 +38,7 @@ namespace TestMagePlugIn {
         {
             get
             {
-                return new SortedSet<String>();
+                return new SortedSet<string>();
             }
         }
 
@@ -56,7 +54,7 @@ namespace TestMagePlugIn {
         {
             get
             {
-                return new SortedSet<String>();
+                return new SortedSet<string>();
             }
         }
 
@@ -100,12 +98,12 @@ namespace TestMagePlugIn {
             throw new NotImplementedException();
         }
 
-        public void CloseTask(IJobParams.CloseOutType CloseOut, string CompMsg)
+        public void CloseTask(CloseOutType CloseOut, string CompMsg)
         {
             throw new NotImplementedException();
         }
 
-        public void CloseTask(IJobParams.CloseOutType CloseOut, string CompMsg, int EvalCode, string EvalMessage)
+        public void CloseTask(CloseOutType CloseOut, string CompMsg, int EvalCode, string EvalMessage)
         {
             throw new NotImplementedException();
         }
@@ -271,8 +269,27 @@ namespace TestMagePlugIn {
                 mParms.Add(KeyName, Value);
         }
 
+        /// <summary>
+        /// Add or update a parameter; note that Section is ignored by this class
+        /// </summary>
+        /// <param name="Section">Section name (ignored)</param>
+        /// <param name="KeyName">Parameter name</param>
+        /// <param name="Value">Parameter value</param>
         public void SetParam(string Section, string KeyName, string Value) {			
             SetParam(KeyName, Value);
+        }
+
+        /// <summary>
+        /// Add or update a parameter; note that ParamSection is ignored by this class
+        /// </summary>
+        /// <param name="ParamSection">Section name (ignored)</param>
+        /// <param name="ParamName">Parameter name</param>
+        /// <param name="ParamValue">Parameter value</param>
+        /// <returns></returns>
+        public bool AddAdditionalParameter(string ParamSection, string ParamName, bool ParamValue)
+        {
+            SetParam(ParamSection, ParamName, ParamValue.ToString());
+            return true;
         }
 
         #endregion

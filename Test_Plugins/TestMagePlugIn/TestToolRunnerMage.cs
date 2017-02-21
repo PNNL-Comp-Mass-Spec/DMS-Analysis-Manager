@@ -6,11 +6,15 @@ using AnalysisManager_Mage_PlugIn;
 
 namespace TestMagePlugIn {
 
-    class TestToolRunnerMage {
+    class TestToolRunnerMage
+    {
+
+        private const int DEBUG_LEVEL = 1;
+        private const string WORK_DIR = @"C:\DMS_WorkDir";
 
         private readonly Dictionary<string, string> mMgrParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
-                { "debuglevel", "0" },
-                { "workdir", @"C:\DMS_WorkDir" },
+                { "debuglevel", DEBUG_LEVEL.ToString() },
+                { "workdir", WORK_DIR },
                 { "logfilename", "AM_AnalysisManager_Log" },
                 { "connectionstring", "Data Source=gigasax;Initial Catalog=DMS5_T3;Integrated Security=SSPI;" },
                 { "MgrName", "Test_harness" },
@@ -35,23 +39,24 @@ namespace TestMagePlugIn {
                 { "MageFDRFiles", "Iteration_Table.txt,T_FDR_1percent.txt,T_FDR_0pt1percent.txt,T_FDR_5percent.txt,T_FDR_10percent.txt" }
             };
 
-        public IJobParams.CloseOutType TestIMPROVJob()
+        public CloseOutType TestIMPROVJob()
         {
-            clsAnalysisResourcesMage mageResourcer = new clsAnalysisResourcesMage();
-            clsAnalysisToolRunnerMage mageToolRunner = new clsAnalysisToolRunnerMage();
-            clsSummaryFile summaryFile = new clsSummaryFile();
+            var mageResourcer = new clsAnalysisResourcesMage();
+            var mageToolRunner = new clsAnalysisToolRunnerMage();
+            var summaryFile = new clsSummaryFile();
 
             IMgrParams mgrParams = new MgrParamsStub(mMgrParms);
             IJobParams jobParams = new JobParamsStub(mIMPROVJobParms);
-            StatusFileStub statusFile = new StatusFileStub();
+            var statusFile = new StatusFileStub();
+            var myEmslUtils = new clsMyEMSLUtilities(DEBUG_LEVEL, WORK_DIR);
 
-            mageResourcer.Setup(mgrParams, jobParams);
+            mageResourcer.Setup(mgrParams, jobParams, statusFile, myEmslUtils);
             var eResult = mageResourcer.GetResources();
 
-            if (eResult != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
                 return eResult;
 
-            mageToolRunner.Setup(mgrParams, jobParams, statusFile, ref summaryFile);
+            mageToolRunner.Setup(mgrParams, jobParams, statusFile, summaryFile, myEmslUtils);
             eResult = mageToolRunner.RunTool();
 
             return eResult;
