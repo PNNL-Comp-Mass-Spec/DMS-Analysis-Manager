@@ -994,26 +994,29 @@ namespace AnalysisManagerExtractionPlugin
             CloseOutType eResult;
             string strSynFilePath = null;
 
-            m_PHRP = new clsPepHitResultsProcWrapper(m_mgrParams, m_jobParams);
-            m_PHRP.ProgressChanged += m_PHRP_ProgressChanged;
+            var phrp = new clsPepHitResultsProcWrapper(m_mgrParams, m_jobParams);
+            RegisterEvents(phrp);
+
+            phrp.ProgressUpdate -= ProgressUpdateHandler;
+            phrp.ProgressChanged += PHRP_ProgressChanged;
 
             // Run the processor
             if (m_DebugLevel > 3)
             {
                 msg = "clsExtractToolRunner.RunPhrpForSequest(); Starting PHRP";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                LogDebug(msg);
             }
             try
             {
                 string strTargetFilePath = Path.Combine(m_WorkDir, m_Dataset + "_syn.txt");
                 strSynFilePath = string.Copy(strTargetFilePath);
 
-                eResult = m_PHRP.ExtractDataFromResults(strTargetFilePath, mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_SEQUEST);
+                eResult = phrp.ExtractDataFromResults(strTargetFilePath, mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_SEQUEST);
             }
             catch (Exception ex)
             {
                 msg = "clsExtractToolRunner.RunPhrpForSequest(); Exception running PHRP: " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex);
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                LogError(msg);
                 m_message = clsGlobal.AppendToComment(m_message, "Exception running PHRP");
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -1021,9 +1024,9 @@ namespace AnalysisManagerExtractionPlugin
             if ((eResult != CloseOutType.CLOSEOUT_SUCCESS))
             {
                 msg = "Error running PHRP";
-                if (!string.IsNullOrWhiteSpace(m_PHRP.ErrMsg))
-                    msg += "; " + m_PHRP.ErrMsg;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                if (!string.IsNullOrWhiteSpace(phrp.ErrMsg))
+                    msg += "; " + phrp.ErrMsg;
+                LogDebug(msg);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -1044,14 +1047,17 @@ namespace AnalysisManagerExtractionPlugin
             string msg = null;
             string strSynFilePath = null;
 
-            m_PHRP = new clsPepHitResultsProcWrapper(m_mgrParams, m_jobParams);
-            m_PHRP.ProgressChanged += m_PHRP_ProgressChanged;
+            var phrp = new clsPepHitResultsProcWrapper(m_mgrParams, m_jobParams);
+            RegisterEvents(phrp);
+
+            phrp.ProgressUpdate -= ProgressUpdateHandler;
+            phrp.ProgressChanged += PHRP_ProgressChanged;
 
             // Run the processor
             if (m_DebugLevel > 2)
             {
                 msg = "clsExtractToolRunner.RunPhrpForXTandem(); Starting PHRP";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                LogDebug(msg);
             }
 
             try
@@ -1059,22 +1065,20 @@ namespace AnalysisManagerExtractionPlugin
                 string strTargetFilePath = Path.Combine(m_WorkDir, m_Dataset + "_xt.xml");
                 strSynFilePath = Path.Combine(m_WorkDir, m_Dataset + "_xt.txt");
 
-                var eResult = m_PHRP.ExtractDataFromResults(strTargetFilePath, mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_XTANDEM);
+                var eResult = phrp.ExtractDataFromResults(strTargetFilePath, mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_XTANDEM);
 
                 if ((eResult != CloseOutType.CLOSEOUT_SUCCESS))
                 {
                     msg = "Error running PHRP";
-                    if (!string.IsNullOrWhiteSpace(m_PHRP.ErrMsg))
-                        msg += "; " + m_PHRP.ErrMsg;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                    if (!string.IsNullOrWhiteSpace(phrp.ErrMsg))
+                        msg += "; " + phrp.ErrMsg;
+                    LogDebug(msg);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
             }
             catch (Exception ex)
             {
-                msg = "clsExtractToolRunner.RunPhrpForXTandem(); Exception running PHRP: " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex);
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-                m_message = clsGlobal.AppendToComment(m_message, "Exception running PHRP");
+                LogError("Exception running PHRP: " + ex.Message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -1092,19 +1096,19 @@ namespace AnalysisManagerExtractionPlugin
 
         private CloseOutType RunPhrpForMSAlign()
         {
-            string msg = null;
-
             string strTargetFilePath = null;
             string strSynFilePath = null;
 
-            m_PHRP = new clsPepHitResultsProcWrapper(m_mgrParams, m_jobParams);
-            m_PHRP.ProgressChanged += m_PHRP_ProgressChanged;
+            var phrp = new clsPepHitResultsProcWrapper(m_mgrParams, m_jobParams);
+            RegisterEvents(phrp);
+
+            phrp.ProgressUpdate -= ProgressUpdateHandler;
+            phrp.ProgressChanged += PHRP_ProgressChanged;
 
             // Run the processor
             if (m_DebugLevel > 3)
             {
-                msg = "clsExtractToolRunner.RunPhrpForMSAlign(); Starting PHRP";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                LogDebug("clsExtractToolRunner.RunPhrpForMSAlign(); Starting PHRP");
             }
 
             try
@@ -1113,22 +1117,20 @@ namespace AnalysisManagerExtractionPlugin
                 strTargetFilePath = Path.Combine(m_WorkDir, m_Dataset + "_MSAlign_ResultTable.txt");
                 strSynFilePath = Path.Combine(m_WorkDir, m_Dataset + "_msalign_syn.txt");
 
-                var eResult = m_PHRP.ExtractDataFromResults(strTargetFilePath, mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_MSALIGN);
+                var eResult = phrp.ExtractDataFromResults(strTargetFilePath, mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_MSALIGN);
 
                 if ((eResult != CloseOutType.CLOSEOUT_SUCCESS))
                 {
-                    msg = "Error running PHRP";
-                    if (!string.IsNullOrWhiteSpace(m_PHRP.ErrMsg))
-                        msg += "; " + m_PHRP.ErrMsg;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                    var msg = "Error running PHRP";
+                    if (!string.IsNullOrWhiteSpace(phrp.ErrMsg))
+                        msg += "; " + phrp.ErrMsg;
+                    LogWarning(msg);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
             }
             catch (Exception ex)
             {
-                msg = "clsExtractToolRunner.RunPhrpForMSAlign(); Exception running PHRP: " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex);
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-                m_message = clsGlobal.AppendToComment(m_message, "Exception running PHRP");
+                LogError("clsExtractToolRunner.RunPhrpForMSAlign(); Exception running PHRP: " + ex.Message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -1145,12 +1147,12 @@ namespace AnalysisManagerExtractionPlugin
             else
             {
                 blnPostResultsToDB = false;
-                msg = "Job number is not numeric: " + m_JobNum + "; will not be able to post PSM results to the database";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                LogError("Job number is not numeric: " + m_JobNum + "; will not be able to post PSM results to the database");
             }
 
             var objSummarizer = new clsMSGFResultsSummarizer(eResultType, m_Dataset, job, m_WorkDir);
             RegisterEvents(objSummarizer);
+            objSummarizer.ErrorEvent += MSGFResultsSummarizer_ErrorHandler;
 
             objSummarizer.MSGFThreshold = clsMSGFResultsSummarizer.DEFAULT_MSGF_THRESHOLD;
 
@@ -1172,7 +1174,7 @@ namespace AnalysisManagerExtractionPlugin
                     LogError("Error summarizing the PSMs: " + objSummarizer.ErrorMessage);
                 }
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "RunPhrpForMSAlign: " + m_message);
+                LogError("RunPhrpForMSAlign: " + m_message);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -1192,18 +1194,18 @@ namespace AnalysisManagerExtractionPlugin
         {
             var currentStep = "Initializing";
 
-            string msg = null;
-
             try
             {
-                m_PHRP = new clsPepHitResultsProcWrapper(m_mgrParams, m_jobParams);
-                m_PHRP.ProgressChanged += m_PHRP_ProgressChanged;
+                var phrp = new clsPepHitResultsProcWrapper(m_mgrParams, m_jobParams);
+                RegisterEvents(phrp);
+
+                phrp.ProgressUpdate -= ProgressUpdateHandler;
+                phrp.ProgressChanged += PHRP_ProgressChanged;
 
                 // Run the processor
                 if (m_DebugLevel > 3)
                 {
-                    msg = "clsExtractToolRunner.RunPhrpForMODa(); Starting PHRP";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                    LogDebug("clsExtractToolRunner.RunPhrpForMODa(); Starting PHRP");
                 }
 
                 try
@@ -1227,15 +1229,15 @@ namespace AnalysisManagerExtractionPlugin
                     const bool CreateFirstHitsFile = true;
                     const bool CreateSynopsisFile = true;
 
-                    var eResult = m_PHRP.ExtractDataFromResults(strFilteredMODaResultsFilePath, CreateFirstHitsFile, CreateSynopsisFile,
+                    var eResult = phrp.ExtractDataFromResults(strFilteredMODaResultsFilePath, CreateFirstHitsFile, CreateSynopsisFile,
                         mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_MODA);
 
                     if ((eResult != CloseOutType.CLOSEOUT_SUCCESS))
                     {
-                        msg = "Error running PHRP";
-                        if (!string.IsNullOrWhiteSpace(m_PHRP.ErrMsg))
-                            msg += "; " + m_PHRP.ErrMsg;
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                        var msg = "Error running PHRP";
+                        if (!string.IsNullOrWhiteSpace(phrp.ErrMsg))
+                            msg += "; " + phrp.ErrMsg;
+                        LogWarning(msg);
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
 
@@ -1253,8 +1255,7 @@ namespace AnalysisManagerExtractionPlugin
                 }
                 catch (Exception ex)
                 {
-                    msg = "clsExtractToolRunner.RunPhrpForMODa(); Exception running PHRP: " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex);
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                    LogError("clsExtractToolRunner.RunPhrpForMODa(); Exception running PHRP: " + ex.Message, ex);
                     m_message = clsGlobal.AppendToComment(m_message, "Exception running PHRP");
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -1269,7 +1270,7 @@ namespace AnalysisManagerExtractionPlugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in RunPhrpForMODa at step " + currentStep, ex);
+                LogError("Error in RunPhrpForMODa at step " + currentStep, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -1280,18 +1281,18 @@ namespace AnalysisManagerExtractionPlugin
         {
             var currentStep = "Initializing";
 
-            string msg = null;
-
             try
             {
-                m_PHRP = new clsPepHitResultsProcWrapper(m_mgrParams, m_jobParams);
-                m_PHRP.ProgressChanged += m_PHRP_ProgressChanged;
+                var phrp = new clsPepHitResultsProcWrapper(m_mgrParams, m_jobParams);
+                RegisterEvents(phrp);
+
+                phrp.ProgressUpdate -= ProgressUpdateHandler;
+                phrp.ProgressChanged += PHRP_ProgressChanged;
 
                 // Run the processor
                 if (m_DebugLevel > 3)
                 {
-                    msg = "clsExtractToolRunner.RunPhrpForMODPlus(); Starting PHRP";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                    LogDebug("clsExtractToolRunner.RunPhrpForMODPlus(); Starting PHRP");
                 }
 
                 try
@@ -1315,15 +1316,15 @@ namespace AnalysisManagerExtractionPlugin
                     const bool CreateFirstHitsFile = false;
                     const bool CreateSynopsisFile = true;
 
-                    var eResult = m_PHRP.ExtractDataFromResults(filteredMODPlusResultsFilePath, CreateFirstHitsFile, CreateSynopsisFile,
+                    var eResult = phrp.ExtractDataFromResults(filteredMODPlusResultsFilePath, CreateFirstHitsFile, CreateSynopsisFile,
                         mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_MODPLUS);
 
-                    if ((eResult != CloseOutType.CLOSEOUT_SUCCESS))
+                    if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
                     {
-                        msg = "Error running PHRP";
-                        if (!string.IsNullOrWhiteSpace(m_PHRP.ErrMsg))
-                            msg += "; " + m_PHRP.ErrMsg;
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                        var msg = "Error running PHRP";
+                        if (!string.IsNullOrWhiteSpace(phrp.ErrMsg))
+                            msg += "; " + phrp.ErrMsg;
+                        LogWarning(msg);
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
 
@@ -1338,9 +1339,7 @@ namespace AnalysisManagerExtractionPlugin
                 }
                 catch (Exception ex)
                 {
-                    msg = "clsExtractToolRunner.RunPhrpForMODPlus(); Exception running PHRP: " + ex.Message + "; " +
-                          clsGlobal.GetExceptionStackTrace(ex);
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                    LogError("clsExtractToolRunner.RunPhrpForMODPlus(); Exception running PHRP: " + ex.Message, ex);
                     m_message = clsGlobal.AppendToComment(m_message, "Exception running PHRP");
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -1355,7 +1354,7 @@ namespace AnalysisManagerExtractionPlugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in RunPhrpForMODPlus at step " + currentStep, ex);
+                LogError("Error in RunPhrpForMODPlus at step " + currentStep, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -1366,21 +1365,21 @@ namespace AnalysisManagerExtractionPlugin
         {
             var currentStep = "Initializing";
 
-            string msg = null;
-
             string strTargetFilePath = null;
             string strSynFilePath = null;
 
             try
             {
-                m_PHRP = new clsPepHitResultsProcWrapper(m_mgrParams, m_jobParams);
-                m_PHRP.ProgressChanged += m_PHRP_ProgressChanged;
+                var phrp = new clsPepHitResultsProcWrapper(m_mgrParams, m_jobParams);
+                RegisterEvents(phrp);
+
+                phrp.ProgressUpdate -= ProgressUpdateHandler;
+                phrp.ProgressChanged += PHRP_ProgressChanged;
 
                 // Run the processor
                 if (m_DebugLevel > 3)
                 {
-                    msg = "clsExtractToolRunner.RunPhrpForMSGFPlus(); Starting PHRP";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                    LogDebug("clsExtractToolRunner.RunPhrpForMSGFPlus(); Starting PHRP");
                 }
 
                 try
@@ -1454,8 +1453,7 @@ namespace AnalysisManagerExtractionPlugin
 
                                 if (skipPeptideToProteinMapping)
                                 {
-                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
-                                        "Skipping PeptideToProteinMapping since job parameter SkipPeptideToProteinMapping is True");
+                                    LogMessage("Skipping PeptideToProteinMapping since job parameter SkipPeptideToProteinMapping is True");
                                 }
                                 else
                                 {
@@ -1507,15 +1505,15 @@ namespace AnalysisManagerExtractionPlugin
                     var createMSGFPlusFirstHitsFile = true;
                     var createMSGFPlusSynopsisFile = true;
 
-                    eResult = m_PHRP.ExtractDataFromResults(strTargetFilePath, createMSGFPlusFirstHitsFile, createMSGFPlusSynopsisFile,
+                    eResult = phrp.ExtractDataFromResults(strTargetFilePath, createMSGFPlusFirstHitsFile, createMSGFPlusSynopsisFile,
                         mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_MSGFPLUS);
 
                     if ((eResult != CloseOutType.CLOSEOUT_SUCCESS))
                     {
-                        msg = "Error running PHRP";
-                        if (!string.IsNullOrWhiteSpace(m_PHRP.ErrMsg))
-                            msg += "; " + m_PHRP.ErrMsg;
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                        var msg = "Error running PHRP";
+                        if (!string.IsNullOrWhiteSpace(phrp.ErrMsg))
+                            msg += "; " + phrp.ErrMsg;
+                        LogWarning(msg);
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
 
@@ -1539,9 +1537,7 @@ namespace AnalysisManagerExtractionPlugin
                 }
                 catch (Exception ex)
                 {
-                    msg = "clsExtractToolRunner.RunPhrpForMSGFPlus(); Exception running PHRP: " + ex.Message + "; " +
-                          clsGlobal.GetExceptionStackTrace(ex);
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                    LogError("clsExtractToolRunner.RunPhrpForMSGFPlus(); Exception running PHRP: " + ex.Message, ex);
                     m_message = clsGlobal.AppendToComment(m_message, "Exception running PHRP");
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -1559,8 +1555,7 @@ namespace AnalysisManagerExtractionPlugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                    "Error in RunPhrpForMSGFPlus at step " + currentStep, ex);
+                LogError("Error in RunPhrpForMSGFPlus at step " + currentStep, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }
@@ -1569,18 +1564,18 @@ namespace AnalysisManagerExtractionPlugin
         {
             var currentStep = "Initializing";
 
-            string msg = null;
-
             try
             {
-                m_PHRP = new clsPepHitResultsProcWrapper(m_mgrParams, m_jobParams);
-                m_PHRP.ProgressChanged += m_PHRP_ProgressChanged;
+                var phrp = new clsPepHitResultsProcWrapper(m_mgrParams, m_jobParams);
+                RegisterEvents(phrp);
+
+                phrp.ProgressUpdate -= ProgressUpdateHandler;
+                phrp.ProgressChanged += PHRP_ProgressChanged;
 
                 // Run the processor
                 if (m_DebugLevel > 3)
                 {
-                    msg = "clsExtractToolRunner.RunPhrpForMODa(); Starting PHRP";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                    LogDebug("clsExtractToolRunner.RunPhrpForMODa(); Starting PHRP");
                 }
 
                 var strSynFilePath = Path.Combine(m_WorkDir, m_Dataset + "_mspath_syn.txt");
@@ -1605,15 +1600,15 @@ namespace AnalysisManagerExtractionPlugin
                     const bool CreateFirstHitsFile = false;
                     const bool CreateSynopsisFile = true;
 
-                    var eResult = m_PHRP.ExtractDataFromResults(msPathFinderResultsFilePath, CreateFirstHitsFile, CreateSynopsisFile,
+                    var eResult = phrp.ExtractDataFromResults(msPathFinderResultsFilePath, CreateFirstHitsFile, CreateSynopsisFile,
                         mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_MSPATHFINDER);
 
                     if ((eResult != CloseOutType.CLOSEOUT_SUCCESS))
                     {
-                        msg = "Error running PHRP";
-                        if (!string.IsNullOrWhiteSpace(m_PHRP.ErrMsg))
-                            msg += "; " + m_PHRP.ErrMsg;
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                        var msg = "Error running PHRP";
+                        if (!string.IsNullOrWhiteSpace(phrp.ErrMsg))
+                            msg += "; " + phrp.ErrMsg;
+                        LogWarning(msg);
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
 
@@ -1628,8 +1623,7 @@ namespace AnalysisManagerExtractionPlugin
                 }
                 catch (Exception ex)
                 {
-                    msg = "clsExtractToolRunner.RunPhrpForMODa(); Exception running PHRP: " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex);
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                    LogError("clsExtractToolRunner.RunPhrpForMODa(); Exception running PHRP: " + ex.Message, ex);
                     m_message = clsGlobal.AppendToComment(m_message, "Exception running PHRP");
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -1647,7 +1641,7 @@ namespace AnalysisManagerExtractionPlugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in RunPhrpForMODa at step " + currentStep, ex);
+                LogError("Error in RunPhrpForMODa at step " + currentStep, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }
@@ -1676,8 +1670,7 @@ namespace AnalysisManagerExtractionPlugin
             var zippedConsoleOutputFilePath = Path.Combine(diWorkingDirectory.FullName, "MSGFPlus_ConsoleOutput_Files.zip");
             if (!m_IonicZipTools.ZipDirectory(diConsoleOutputFiles.FullName, zippedConsoleOutputFilePath))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                    "Problem zipping the ConsoleOutput files; will not delete the separate copies from the transfer folder");
+                LogError("Problem zipping the ConsoleOutput files; will not delete the separate copies from the transfer folder");
                 return;
             }
 
@@ -1704,8 +1697,6 @@ namespace AnalysisManagerExtractionPlugin
 
         private CloseOutType RunPhrpForInSpecT()
         {
-            string msg = null;
-
             bool CreateInspectFirstHitsFile = false;
             bool CreateInspectSynopsisFile = false;
 
@@ -1714,14 +1705,16 @@ namespace AnalysisManagerExtractionPlugin
 
             bool blnSuccess = false;
 
-            m_PHRP = new clsPepHitResultsProcWrapper(m_mgrParams, m_jobParams);
-            m_PHRP.ProgressChanged += m_PHRP_ProgressChanged;
+            var phrp = new clsPepHitResultsProcWrapper(m_mgrParams, m_jobParams);
+            RegisterEvents(phrp);
+
+            phrp.ProgressUpdate -= ProgressUpdateHandler;
+            phrp.ProgressChanged += PHRP_ProgressChanged;
 
             // Run the processor
             if (m_DebugLevel > 3)
             {
-                msg = "clsExtractToolRunner.RunPhrpForInSpecT(); Starting PHRP";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                LogDebug("clsExtractToolRunner.RunPhrpForInSpecT(); Starting PHRP");
             }
 
             try
@@ -1743,15 +1736,15 @@ namespace AnalysisManagerExtractionPlugin
                 CreateInspectFirstHitsFile = true;
                 CreateInspectSynopsisFile = false;
                 strTargetFilePath = Path.Combine(m_WorkDir, m_Dataset + "_inspect.txt");
-                var eResult = m_PHRP.ExtractDataFromResults(strTargetFilePath, CreateInspectFirstHitsFile, CreateInspectSynopsisFile,
+                var eResult = phrp.ExtractDataFromResults(strTargetFilePath, CreateInspectFirstHitsFile, CreateInspectSynopsisFile,
                     mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_INSPECT);
 
-                if ((eResult != CloseOutType.CLOSEOUT_SUCCESS))
+                if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
                 {
-                    msg = "Error running PHRP";
-                    if (!string.IsNullOrWhiteSpace(m_PHRP.ErrMsg))
-                        msg += "; " + m_PHRP.ErrMsg;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                    var msg = "Error running PHRP";
+                    if (!string.IsNullOrWhiteSpace(phrp.ErrMsg))
+                        msg += "; " + phrp.ErrMsg;
+                    LogWarning(msg);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -1775,15 +1768,15 @@ namespace AnalysisManagerExtractionPlugin
                 strTargetFilePath = Path.Combine(m_WorkDir, m_Dataset + "_inspect.txt");
                 strSynFilePath = Path.Combine(m_WorkDir, m_Dataset + "_inspect_syn.txt");
 
-                eResult = m_PHRP.ExtractDataFromResults(strTargetFilePath, CreateInspectFirstHitsFile, CreateInspectSynopsisFile,
+                eResult = phrp.ExtractDataFromResults(strTargetFilePath, CreateInspectFirstHitsFile, CreateInspectSynopsisFile,
                     mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_INSPECT);
 
-                if ((eResult != CloseOutType.CLOSEOUT_SUCCESS))
+                if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
                 {
-                    msg = "Error running PHRP";
-                    if (!string.IsNullOrWhiteSpace(m_PHRP.ErrMsg))
-                        msg += "; " + m_PHRP.ErrMsg;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                    var msg = "Error running PHRP";
+                    if (!string.IsNullOrWhiteSpace(phrp.ErrMsg))
+                        msg += "; " + phrp.ErrMsg;
+                    LogWarning(msg);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
