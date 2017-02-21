@@ -102,7 +102,7 @@ namespace AnalysisManagerInSpecTPlugIn
 
                 if (m_DebugLevel > 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerIN.RunTool(): Enter");
+                    LogDebug("clsAnalysisToolRunnerIN.RunTool(): Enter");
                 }
 
                 InspectDir = m_mgrParams.GetParam("inspectdir");
@@ -111,7 +111,7 @@ namespace AnalysisManagerInSpecTPlugIn
                 // Store the Inspect version info in the database
                 if (!StoreToolVersionInfo(InspectDir))
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "Aborting since StoreToolVersionInfo returned false");
                     m_message = "Error determining Inspect version";
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -119,7 +119,7 @@ namespace AnalysisManagerInSpecTPlugIn
 
                 if (m_DebugLevel >= 3)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Indexing Fasta file to create .trie file");
+                    LogMessage("Indexing Fasta file to create .trie file");
                 }
 
                 // Index the fasta file to create the .trie file
@@ -162,7 +162,7 @@ namespace AnalysisManagerInSpecTPlugIn
 
                 if (m_DebugLevel >= 3)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "Running " + strParallelizedText + " inspect on " + Path.GetFileName(mInspectConcatenatedDtaFilePath));
                 }
 
@@ -303,7 +303,7 @@ namespace AnalysisManagerInSpecTPlugIn
 
                 if (m_DebugLevel >= 3)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Inspect input spectra: " + strInputSpectra);
+                    LogDebug("Inspect input spectra: " + strInputSpectra);
                 }
 
                 swInspectInputFile.WriteLine("spectra," + strInputSpectra);
@@ -328,16 +328,16 @@ namespace AnalysisManagerInSpecTPlugIn
 
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "Created Inspect input file '" + inputFilename + "' using '" + ParamFilename + "'");
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "Using DB '" + dbFilePath + "' and input spectra '" + strInputSpectra + "'");
                 }
             }
             catch (Exception ex)
             {
                 // Let the user know what went wrong.
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "clsAnalysisToolRunnerIN.BuildInspectInputFile-> error while writing file: " + ex.Message);
                 return string.Empty;
             }
@@ -371,7 +371,7 @@ namespace AnalysisManagerInSpecTPlugIn
         //    }
         //    catch (Exception ex)
         //    {
-        //        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+        //        LogError(
         //            "clsAnalysisToolRunnerIN.ExtractScanCountValueFromMzXML, Error determining the scan count in the .mzXML file: " + ex.Message);
         //        return 0;
         //    }
@@ -426,7 +426,7 @@ namespace AnalysisManagerInSpecTPlugIn
             {
                 if (m_DebugLevel > 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "clsAnalysisToolRunnerIN.ParseInspectErrorsFile(): Reading " + errorFilename);
                 }
 
@@ -469,7 +469,7 @@ namespace AnalysisManagerInSpecTPlugIn
                         if (!htMessages.Contains(strLineIn))
                         {
                             htMessages.Add(strLineIn, 1);
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Inspect warning/error: " + strLineIn);
+                            LogWarning("Inspect warning/error: " + strLineIn);
                         }
                     }
                 }
@@ -483,7 +483,7 @@ namespace AnalysisManagerInSpecTPlugIn
             }
             catch (Exception)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "clsAnalysisToolRunnerIN.ParseInspectErrorsFile, Error reading the Inspect _errors.txt file (" + errorFilename + ")");
                 return false;
             }
@@ -515,14 +515,14 @@ namespace AnalysisManagerInSpecTPlugIn
 
             if (m_DebugLevel > 4)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerIN.RunInSpecT(): Enter");
+                LogDebug("clsAnalysisToolRunnerIN.RunInSpecT(): Enter");
             }
 
             // verify that program file exists
             string progLoc = Path.Combine(InspectDir, INSPECT_EXE_NAME);
             if (!File.Exists(progLoc))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find Inspect program file: " + progLoc);
+                LogError("Cannot find Inspect program file: " + progLoc);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -532,13 +532,13 @@ namespace AnalysisManagerInSpecTPlugIn
             InitializeInspectSearchLogFileWatcher(m_WorkDir);
 
             // Let the user know what went wrong.
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Starting Inspect");
+            LogMessage("Starting Inspect");
 
             // Set up and execute a program runner to run Inspect.exe
             CmdStr = " -i " + mInspectCustomParamFileName + " -o " + mInspectResultsFilePath + " -e " + mInspectErrorFilePath;
             if (m_DebugLevel >= 1)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc + " " + CmdStr);
+                LogDebug(progLoc + " " + CmdStr);
             }
 
             mCmdRunner.CreateNoWindow = true;
@@ -552,12 +552,12 @@ namespace AnalysisManagerInSpecTPlugIn
             {
                 if (mCmdRunner.ExitCode != 0)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                    LogWarning(
                         "Inspect returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
                 }
                 else
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to Inspect failed (but exit code is 0)");
+                    LogWarning("Call to Inspect failed (but exit code is 0)");
                 }
 
                 switch (mCmdRunner.ExitCode)
@@ -565,18 +565,18 @@ namespace AnalysisManagerInSpecTPlugIn
                     case -1073741819:
                         // Corresponds to message "{W0010} .\PValue.c:453:Only 182 top-scoring matches for charge state; not recalibrating the p-value curve."
                         // This is a warning, and not an error
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                        LogWarning(
                             "Exit code indicates message from PValue.c concerning not enough top-scoring matches for a given charge state; we ignore this error since it only affects the p-values");
                         blnSuccess = true;
                         break;
                     case -1073741510:
                         // Corresponds to the user pressing Ctrl+Break to stop Inspect
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                        LogError(
                             "Exit code indicates user pressed Ctrl+Break; job failed");
                         break;
                     default:
                         // Any other code
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unknown exit code; job failed");
+                        LogError("Unknown exit code; job failed");
                         blnSuccess = false;
                         break;
                 }
@@ -585,12 +585,12 @@ namespace AnalysisManagerInSpecTPlugIn
                 {
                     if (mInspectSearchLogMostRecentEntry.Length > 0)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                        LogWarning(
                             "Most recent Inspect search log entry: " + mInspectSearchLogMostRecentEntry);
                     }
                     else
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Most recent Inspect search log entry: n/a");
+                        LogWarning("Most recent Inspect search log entry: n/a");
                     }
                 }
             }
@@ -625,7 +625,7 @@ namespace AnalysisManagerInSpecTPlugIn
             }
             else
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Inspect results file not found; job failed: " + Path.GetFileName(mInspectResultsFilePath));
                 blnSuccess = false;
             }
@@ -694,7 +694,7 @@ namespace AnalysisManagerInSpecTPlugIn
                             // Store the new search log entry in the log
                             if (mInspectSearchLogMostRecentEntry.Length == 0 || mInspectSearchLogMostRecentEntry != strLastEntry)
                             {
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                LogDebug(
                                     "Inspect search log entry: " + strLastEntry);
                             }
                         }
@@ -719,7 +719,7 @@ namespace AnalysisManagerInSpecTPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "clsAnalysisToolRunnerIN.ParseInspectSearchLogFile, error reading Inspect search log" + ex.Message);
             }
         }
@@ -734,7 +734,7 @@ namespace AnalysisManagerInSpecTPlugIn
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+                LogDebug("Determining tool version info");
             }
 
             // Store paths to key files in ioToolFiles
@@ -747,7 +747,7 @@ namespace AnalysisManagerInSpecTPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }

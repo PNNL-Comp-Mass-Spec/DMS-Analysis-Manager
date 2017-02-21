@@ -78,13 +78,13 @@ namespace AnalysisManagerLipidMapSearchPlugIn
             if (string.IsNullOrEmpty(strDeconToolsFolderName))
             {
                 m_message = "InputFolderName step parameter not found; this is unexpected";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                LogError(m_message);
                 return false;
             }
             else if (!strDeconToolsFolderName.ToUpper().StartsWith("DLS"))
             {
                 m_message = "InputFolderName step parameter is not a DeconTools folder; it should start with DLS and is auto-determined by the SourceJob SpecialProcessing text";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                LogError(m_message);
                 return false;
             }
 
@@ -97,13 +97,13 @@ namespace AnalysisManagerLipidMapSearchPlugIn
             if (string.IsNullOrEmpty(strDatasetFolder))
             {
                 m_message = "DatasetStoragePath job parameter not found; this is unexpected";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                LogError(m_message);
                 return false;
             }
             else if (string.IsNullOrEmpty(strDatasetFolderArchive))
             {
                 m_message = "DatasetArchivePath job parameter not found; this is unexpected";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                LogError(m_message);
                 return false;
             }
 
@@ -112,7 +112,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                LogDebug(
                     "Retrieving the dataset's .Raw file and DeconTools _peaks.txt file");
             }
 
@@ -148,7 +148,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
             if (!int.TryParse(strSourceJob2, out intSourceJob2))
             {
                 m_message = "SourceJob2 is not numeric";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                LogError(m_message);
                 return false;
             }
 
@@ -163,7 +163,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
             if (string.IsNullOrEmpty(strDataset2))
             {
                 m_message = "SourceJob2Dataset job parameter not found; this is unexpected";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                LogError(m_message);
                 return false;
             }
 
@@ -176,13 +176,13 @@ namespace AnalysisManagerLipidMapSearchPlugIn
             if (string.IsNullOrEmpty(strInputFolder))
             {
                 m_message = "SourceJob2FolderPath job parameter not found; this is unexpected";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                LogError(m_message);
                 return false;
             }
             else if (string.IsNullOrEmpty(strInputFolderArchive))
             {
                 m_message = "SourceJob2FolderPathArchive job parameter not found; this is unexpected";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                LogError(m_message);
                 return false;
             }
 
@@ -192,19 +192,19 @@ namespace AnalysisManagerLipidMapSearchPlugIn
             if (!diInputFolder.Name.ToUpper().StartsWith("DLS"))
             {
                 m_message = "SourceJob2FolderPath is not a DeconTools folder; the last folder should start with DLS and is auto-determined by the SourceJob2 SpecialProcessing text";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                LogError(m_message);
                 return false;
             }
             else if (!diInputFolderArchive.Name.ToUpper().StartsWith("DLS"))
             {
                 m_message = "SourceJob2FolderPathArchive is not a DeconTools folder; the last folder should start with DLS and is auto-determined by the SourceJob2 SpecialProcessing text";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                LogError(m_message);
                 return false;
             }
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                LogDebug(
                     "Retrieving the second dataset's .Raw file and DeconTools _peaks.txt file");
             }
 

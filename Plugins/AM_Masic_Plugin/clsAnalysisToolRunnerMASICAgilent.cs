@@ -50,7 +50,7 @@ namespace AnalysisManagerMasicPlugin
                 // Unable to resolve the file path
                 m_ErrorMessage = "Could not find " + strMgfFileName + " or " + strMgfFileName + clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX +
                                  " in the working folder; unable to run MASIC";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_ErrorMessage);
+                LogError(m_ErrorMessage);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 

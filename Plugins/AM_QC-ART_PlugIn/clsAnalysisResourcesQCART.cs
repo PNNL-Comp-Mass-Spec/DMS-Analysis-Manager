@@ -713,7 +713,7 @@ namespace AnalysisManagerQCARTPlugin
                 if (fiBaselineMetadata.Directory == null)
                 {
                     var warningMessage = "QC-ART baseline metadata file directory is null";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, warningMessage);
+                    LogError(warningMessage);
                     return false;
                 }
 
@@ -725,7 +725,7 @@ namespace AnalysisManagerQCARTPlugin
                 {
                     var warningMessage = "BaselineDataCacheFile node not found in the QC-ART baseline results metadata file; " +
                                          "expected at <Parameters><Results><BaselineDataCacheFile>";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, warningMessage);
+                    LogError(warningMessage);
                     return false;
                 }
 
@@ -733,7 +733,7 @@ namespace AnalysisManagerQCARTPlugin
                 if (string.IsNullOrWhiteSpace(baselineDataCacheFileName))
                 {
                     var warningMessage = "BaselineDataCacheFile node is empty in the QC-ART baseline results metadata file";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, warningMessage);
+                    LogError(warningMessage);
                     return false;
                 }
 
@@ -744,10 +744,10 @@ namespace AnalysisManagerQCARTPlugin
                 if (!fiBaselineResultsFileSource.Exists || fiBaselineResultsFileSource.Directory == null)
                 {
                     var warningMessage = "QC-ART baseline results data file not found: " + baselineResultsFilePath;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, warningMessage);
+                    LogError(warningMessage);
 
                     warningMessage = "Deleting invalid QC-ART baseline metadata file: " + fiBaselineMetadata.FullName;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, warningMessage);
+                    LogError(warningMessage);
 
                     fiBaselineMetadata.Delete();
                     return false;
@@ -838,7 +838,7 @@ namespace AnalysisManagerQCARTPlugin
                 {
                     m_message = "Excessive failures attempting to retrieve QC metric data from database";
                     errorMessage = "RetrieveQCMetricsFromDB; " + m_message;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage);
+                    LogError(errorMessage);
                     resultSet.Dispose();
                     return false;
                 }

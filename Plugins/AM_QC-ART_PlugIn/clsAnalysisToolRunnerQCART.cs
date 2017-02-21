@@ -60,7 +60,7 @@ namespace AnalysisManagerQCARTPlugin
 
                 if (m_DebugLevel > 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerQCART.RunTool(): Enter");
+                    LogDebug("clsAnalysisToolRunnerQCART.RunTool(): Enter");
                 }
 
                 // Initialize classwide variables 
@@ -80,7 +80,7 @@ namespace AnalysisManagerQCARTPlugin
                 if (!Directory.Exists(rProgLocFromRegistry))
                 {
                     m_message = "R folder not found (path determined from the Windows Registry)";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + " at " + rProgLocFromRegistry);
+                    LogError(m_message + " at " + rProgLocFromRegistry);
                     DeleteLockFileIfRequired();
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -90,7 +90,7 @@ namespace AnalysisManagerQCARTPlugin
                 // Store the R.exe version info in the database
                 if (!StoreToolVersionInfo(rProgLoc))
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
+                    LogError("Aborting since StoreToolVersionInfo returned false");
                     m_message = "Error determining R version";
                     DeleteLockFileIfRequired();
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -132,7 +132,7 @@ namespace AnalysisManagerQCARTPlugin
                 // Add the current job data to the summary file
                 // if (!UpdateSummaryFile())
                 // {
-                //    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
+                //    LogWarning("Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
                 // }
 
                 // Make sure objects are released
@@ -184,7 +184,7 @@ namespace AnalysisManagerQCARTPlugin
             catch (Exception ex)
             {
                 m_message = "Error in QCARTPlugin->RunTool";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -258,7 +258,7 @@ namespace AnalysisManagerQCARTPlugin
             if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
+            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
 
             // Bump up the debug level if less than 2
             if (m_DebugLevel < 2)
@@ -351,7 +351,7 @@ namespace AnalysisManagerQCARTPlugin
                 catch (Exception ex)
                 {
                     m_message = "Exception copying the baseline metadata file to the cache folder";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                    LogError(m_message + ": " + ex.Message);
                     return false;
                 }
 
@@ -363,7 +363,7 @@ namespace AnalysisManagerQCARTPlugin
                 catch (Exception ex)
                 {
                     m_message = "Exception copying the baseline data cache file to the cache folder";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                    LogError(m_message + ": " + ex.Message);
                     return false;
                 }
 
@@ -374,7 +374,7 @@ namespace AnalysisManagerQCARTPlugin
             catch (Exception ex)
             {
                 m_message = "Exception creating the baseline metrics metadata file";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                LogError(m_message + ": " + ex.Message);
                 return false;
             }
         }
@@ -477,7 +477,7 @@ namespace AnalysisManagerQCARTPlugin
             catch (Exception ex)
             {
                 m_message = "Exception loading QC-ART results";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                LogError(m_message + ": " + ex.Message);
                 return false;              
             }
         }
@@ -502,7 +502,7 @@ namespace AnalysisManagerQCARTPlugin
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    LogError("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
             }
 
@@ -559,7 +559,7 @@ namespace AnalysisManagerQCARTPlugin
                 if (!fiNewBaselineData.Exists)
                 {
                     m_message = "QC-ART Processing error: new baseline data file not found";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + fiNewBaselineData.Name);
+                    LogError(m_message + ": " + fiNewBaselineData.Name);
                 }
 
                 success = CreateBaselineMetricsMetadataFile(datasetNamesAndJobs, fiNewBaselineData);
@@ -572,7 +572,7 @@ namespace AnalysisManagerQCARTPlugin
             catch (Exception ex)
             {
                 m_message = "Exception post processing results";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                LogError(m_message + ": " + ex.Message);
                 return false;              
             }
         }
@@ -588,7 +588,7 @@ namespace AnalysisManagerQCARTPlugin
 
             if (m_DebugLevel >= 1)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, rProgLoc + " " + cmdStr);
+                LogDebug(rProgLoc + " " + cmdStr);
             }
 
             // Not used by this plugin
@@ -624,7 +624,7 @@ namespace AnalysisManagerQCARTPlugin
            
             if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                                      mConsoleOutputErrorMsg);
             }
 
@@ -636,7 +636,7 @@ namespace AnalysisManagerQCARTPlugin
 
             if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                                      mConsoleOutputErrorMsg);
             }
             */
@@ -648,16 +648,16 @@ namespace AnalysisManagerQCARTPlugin
 
             m_message = "Error running QC-ART";
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ", job " + m_JobNum);
+            LogError(m_message + ", job " + m_JobNum);
 
             if (cmdRunner.ExitCode != 0)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                LogWarning(
                                      "R.exe returned a non-zero exit code: " + cmdRunner.ExitCode);
             }
             else
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                LogWarning(
                                      "R.exe failed (but exit code is 0)");
             }
 
@@ -747,7 +747,7 @@ namespace AnalysisManagerQCARTPlugin
             catch (Exception ex)
             {
                 m_message = "Exception storing QCART Results in database";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                LogError(m_message + ": " + ex.Message);
                 return false;
             }
 
@@ -764,7 +764,7 @@ namespace AnalysisManagerQCARTPlugin
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+                LogDebug("Determining tool version info");
             }
 
             var fiProgram = new FileInfo(strProgLoc);
@@ -777,7 +777,7 @@ namespace AnalysisManagerQCARTPlugin
                 }
                 catch (Exception ex)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion", ex);
+                    LogError("Exception calling SetStepTaskToolVersion", ex);
                     return false;
                 }
 
@@ -798,7 +798,7 @@ namespace AnalysisManagerQCARTPlugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion", ex);
+                LogError("Exception calling SetStepTaskToolVersion", ex);
                 return false;
             }
 

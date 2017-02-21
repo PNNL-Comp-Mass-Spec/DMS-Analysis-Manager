@@ -235,7 +235,7 @@ namespace AnalysisManagerExtractionPlugin
             if (!CopyFileToWorkDir("default_input.xml", m_jobParams.GetParam("ParmFileStoragePath"), m_WorkingDir))
             {
                 const string Msg = "Failed retrieving default_input.xml file.";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg);
+                LogError(Msg);
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
             }
 
@@ -275,7 +275,7 @@ namespace AnalysisManagerExtractionPlugin
                 // See if IgnorePeptideToProteinMapError=True
                 if (m_jobParams.GetJobParameter("IgnorePeptideToProteinMapError", false))
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                    LogWarning(
                         "Ignoring missing _PepToProtMap.txt file since 'IgnorePeptideToProteinMapError' = True");
                 }
                 else
@@ -373,7 +373,7 @@ namespace AnalysisManagerExtractionPlugin
                     numberOfClonedSteps = m_jobParams.GetJobParameter("NumberOfClonedSteps", 0);
                     if (numberOfClonedSteps == 0)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                        LogError(
                             "Settings file is missing parameter NumberOfClonedSteps; cannot retrieve MSGFPlus results");
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
@@ -429,7 +429,7 @@ namespace AnalysisManagerExtractionPlugin
                             else
                             {
                                 // File not found; log a warning
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                                LogWarning(
                                     "Could not find the _msgfplus.mzid.gz, _msgfplus.zip file, or the _msgfdb.zip file; assuming we're running MSGF+");
                                 mzidSuffix = ".mzid.gz";
                             }
@@ -551,12 +551,12 @@ namespace AnalysisManagerExtractionPlugin
                         // See if IgnorePeptideToProteinMapError=True
                         if (m_jobParams.GetJobParameter("IgnorePeptideToProteinMapError", false))
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                            LogWarning(
                                 "Ignoring missing _PepToProtMap.txt file since 'IgnorePeptideToProteinMapError' = True");
                         }
                         else if (m_jobParams.GetJobParameter("SkipProteinMods", false))
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                            LogWarning(
                                 "Ignoring missing _PepToProtMap.txt file since 'SkipProteinMods' = True");
                         }
                         else
@@ -664,7 +664,7 @@ namespace AnalysisManagerExtractionPlugin
         //        if (ioSubfolders.Length == 0)
         //        {
         //            m_message = "MassCorrectionTags folder not found at " + ioFolderInfo.FullName;
-        //            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+        //            LogError(m_message);
         //            return false;
         //        }
         //
@@ -672,13 +672,13 @@ namespace AnalysisManagerExtractionPlugin
         //        if (ioFiles.Length == 0)
         //        {
         //            m_message = MASS_CORRECTION_TAGS_FILENAME + " file not found at " + ioSubfolders[0].FullName;
-        //            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+        //            LogError(m_message);
         //            return false;
         //        }
         //
         //        if (m_DebugLevel >= 1)
         //        {
-        //            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+        //            LogError(
         //                "Retrieving default Mass Correction Tags file from " + ioFiles[0].FullName);
         //        }
         //
@@ -687,7 +687,7 @@ namespace AnalysisManagerExtractionPlugin
         //    catch (Exception ex)
         //    {
         //        m_message = "Error retrieving " + MASS_CORRECTION_TAGS_FILENAME;
-        //        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+        //        LogError(m_message + ": " + ex.Message);
         //        return false;
         //    }
         //
@@ -745,7 +745,7 @@ namespace AnalysisManagerExtractionPlugin
                 if (!fiModDefsFile.Exists & ResultType != RESULT_TYPE_MSALIGN)
                 {
                     m_message = "Unable to create the ModDefs.txt file; update T_Param_File_Mass_Mods";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                    LogWarning(
                         "Unable to create the ModDefs.txt file; define the modifications in table T_Param_File_Mass_Mods for parameter file " +
                         strParamFileName);
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -835,7 +835,7 @@ namespace AnalysisManagerExtractionPlugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in RetrieveToolVersionFile: " + ex.Message);
+                LogError("Error in RetrieveToolVersionFile: " + ex.Message);
                 return false;
             }
 

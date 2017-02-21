@@ -181,7 +181,7 @@ namespace DTASpectraFileGen
 
             if (m_DebugLevel > 0)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Converting .MGF file to _DTA.txt");
+                OnDebugEvent("Converting .MGF file to _DTA.txt");
             }
 
             mMGFtoDTA = new MascotGenericFileToDTA.clsMGFtoDTA

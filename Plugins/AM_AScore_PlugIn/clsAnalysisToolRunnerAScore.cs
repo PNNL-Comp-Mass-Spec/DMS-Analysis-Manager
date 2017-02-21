@@ -39,7 +39,7 @@ namespace AnalysisManager_AScore_PlugIn
                 // Store the AScore version info in the database
                 if (!StoreToolVersionInfo())
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
+                    LogError("Aborting since StoreToolVersionInfo returned false");
                     m_message = "Error determining AScore version";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -59,7 +59,7 @@ namespace AnalysisManager_AScore_PlugIn
                     m_StatusTools.UpdateAndWrite(EnumMgrStatus.RUNNING, EnumTaskStatus.RUNNING,
                                                  EnumTaskStatusDetail.RUNNING_TOOL, m_progress);
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_CurrentAScoreTask);
+                    LogMessage(m_CurrentAScoreTask);
 
                     //Change the name of the log file for the local log file to the plugin log filename
                     String LogFileName = Path.Combine(m_WorkDir, "Ascore_Log");
@@ -79,8 +79,7 @@ namespace AnalysisManager_AScore_PlugIn
 
                         if (!success && !string.IsNullOrWhiteSpace(m_message))
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                                 "Error running AScore: " + m_message);
+                            LogError("Error running AScore: " + m_message);
                         }
 
                         if (success)
@@ -100,8 +99,7 @@ namespace AnalysisManager_AScore_PlugIn
                         GlobalContext.Properties["LogName"] = LogFileName;
                         clsLogTools.ChangeLogFileName(LogFileName);
 
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                                             "Error running AScore: " + ex.Message);
+                        LogError("Error running AScore: " + ex.Message, ex);
                         success = false;
                         m_message = "Error running AScore";
                     }
@@ -114,7 +112,7 @@ namespace AnalysisManager_AScore_PlugIn
                 //Add the current job data to the summary file
                 if (!UpdateSummaryFile())
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
+                    LogWarning("Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
                 }
 
                 //Make sure objects are released
@@ -161,7 +159,7 @@ namespace AnalysisManager_AScore_PlugIn
             catch (Exception ex)
             {
                 m_message = "Error in AScorePlugin->RunTool";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
 
             }
@@ -178,7 +176,7 @@ namespace AnalysisManager_AScore_PlugIn
                 if (!sqlLiteDB.Exists)
                 {
                     m_message = "Cannot export AScore results since Results.db3 does not exist";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                    LogError(m_message);
                     return false;
                 }
 
@@ -192,7 +190,7 @@ namespace AnalysisManager_AScore_PlugIn
             catch (Exception ex)
             {
                 m_message = "Error in AScorePlugin->ExportAScoreResults";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 return false;
             }
 
@@ -215,7 +213,7 @@ namespace AnalysisManager_AScore_PlugIn
             };
 
             var msg = "Exporting table t_results_ascore to " + Path.GetFileName(writer.FilePath);
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, msg);
+            LogMessage(msg);
 
             ProcessingPipeline pipeline = ProcessingPipeline.Assemble("ExportTable", reader, writer);
             pipeline.RunRoot(null);
@@ -273,7 +271,7 @@ namespace AnalysisManager_AScore_PlugIn
             if (string.IsNullOrEmpty(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
+            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
 
             // Bump up the debug level if less than 2
             if (m_DebugLevel < 2)
@@ -339,7 +337,7 @@ namespace AnalysisManager_AScore_PlugIn
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+                LogDebug("Determining tool version info");
             }
 
             // Lookup the version of the DLL
@@ -357,7 +355,7 @@ namespace AnalysisManager_AScore_PlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message, ex);
                 return false;
             }
 

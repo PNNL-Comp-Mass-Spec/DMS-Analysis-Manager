@@ -33,7 +33,7 @@ namespace AnalysisManagerOMSSAPlugIn
             // OMSSA just copies its parameter file from the central repository
             //	This will eventually be replaced by Ken Auberry dll call to make param file on the fly
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting param file");
+            LogMessage("Getting param file");
 
             //Retrieve param file
             if (!FileSearch.RetrieveFile(m_jobParams.GetParam("ParmFileName"), m_jobParams.GetParam("ParmFileStoragePath")))
@@ -44,7 +44,7 @@ namespace AnalysisManagerOMSSAPlugIn
             if (!success)
             {
                 const string msg = "clsAnalysisResourcesOM.GetResources(), failed converting fasta file to OMSSA format.";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                LogError(msg);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -69,7 +69,7 @@ namespace AnalysisManagerOMSSAPlugIn
             if (!success)
             {
                 const string Msg = "clsAnalysisResourcesOM.GetResources(), failed converting dta file to xml format.";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg);
+                LogError(Msg);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -86,7 +86,7 @@ namespace AnalysisManagerOMSSAPlugIn
             if (!success)
             {
                 string msg = "clsAnalysisResourcesOM.GetResources(), failed making input file: " + errorMessage;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                LogError(msg);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -101,14 +101,14 @@ namespace AnalysisManagerOMSSAPlugIn
                 string OrgDBName = m_jobParams.GetParam("PeptideSearch", "generatedFastaName");
                 string LocalOrgDBFolder = m_mgrParams.GetParam("orgdbdir");
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running formatdb.exe");
+                LogMessage("Running formatdb.exe");
 
                 mCmdRunner = new clsRunDosProgram(m_WorkingDir);
                 RegisterEvents(mCmdRunner);
 
                 if (m_DebugLevel > 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "clsAnalysisToolRunnerOM.OperateAnalysisTool(): Enter");
                 }
 
@@ -118,7 +118,7 @@ namespace AnalysisManagerOMSSAPlugIn
                 {
                     if (progLoc.Length == 0)
                         progLoc = "Parameter 'formatdbprogloc' not defined for this manager";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find OMSSA program file: " + progLoc);
+                    LogError("Cannot find OMSSA program file: " + progLoc);
                     return false;
                 }
 
@@ -128,7 +128,7 @@ namespace AnalysisManagerOMSSAPlugIn
 
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Starting FormatDb: " + progLoc + " " + cmdStr);
+                    LogDebug("Starting FormatDb: " + progLoc + " " + cmdStr);
                 }
 
                 if (!mCmdRunner.RunProgram(progLoc, cmdStr, "FormatDb", true))
@@ -140,7 +140,7 @@ namespace AnalysisManagerOMSSAPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "clsAnalysisResourcesOM.ConvertOMSSAFastaFile, FormatDB error. " + ex.Message);
             }
 
@@ -167,7 +167,7 @@ namespace AnalysisManagerOMSSAPlugIn
 
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "Converting _DTA.txt file to DTA XML file using the DtaTextConverter");
                 }
 
@@ -175,21 +175,21 @@ namespace AnalysisManagerOMSSAPlugIn
 
                 if (!blnSuccess)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "Error calling DtaTextConverter: " + objDtaConverter.GetErrorMessage());
                 }
                 else
                 {
                     if (m_DebugLevel >= 1)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        LogDebug(
                             "DTA XML file created for " + Path.GetFileName(SourceFilePath));
                     }
                 }
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "clsAnalysisResourcesOM.ConvertDtaToXml, File conversion error. " + ex.Message);
             }
 

@@ -66,7 +66,7 @@ namespace AnalysisManagerMODaPlugIn
 
                 if (m_DebugLevel > 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMODa.RunTool(): Enter");
+                    LogDebug("clsAnalysisToolRunnerMODa.RunTool(): Enter");
                 }
 
                 mMODaResultsFilePath = string.Empty;
@@ -129,7 +129,7 @@ namespace AnalysisManagerMODaPlugIn
                 // Add the current job data to the summary file
                 if (!UpdateSummaryFile())
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                    LogWarning(
                         "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
                 }
 
@@ -176,7 +176,7 @@ namespace AnalysisManagerMODaPlugIn
             catch (Exception ex)
             {
                 m_message = "Error in MODaPlugin->RunTool";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -211,7 +211,7 @@ namespace AnalysisManagerMODaPlugIn
                 return false;
             }
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MODa");
+            LogMessage("Running MODa");
 
             // Lookup the amount of memory to reserve for Java; default to 2 GB
             intJavaMemorySize = m_jobParams.GetJobParameter("MODaJavaMemorySize", 2000);
@@ -226,7 +226,7 @@ namespace AnalysisManagerMODaPlugIn
             CmdStr += " -i " + paramFilePath;
             CmdStr += " -o " + mMODaResultsFilePath;
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, JavaProgLoc + " " + CmdStr);
+            LogDebug(JavaProgLoc + " " + CmdStr);
 
             mCmdRunner = new clsRunDosProgram(m_WorkDir);
             RegisterEvents(mCmdRunner);
@@ -257,7 +257,7 @@ namespace AnalysisManagerMODaPlugIn
 
             if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg);
+                LogError(mConsoleOutputErrorMsg);
             }
 
             if (!blnSuccess)
@@ -266,16 +266,16 @@ namespace AnalysisManagerMODaPlugIn
                 Msg = "Error running MODa";
                 m_message = clsGlobal.AppendToComment(m_message, Msg);
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg + ", job " + m_JobNum);
+                LogError(Msg + ", job " + m_JobNum);
 
                 if (mCmdRunner.ExitCode != 0)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                    LogWarning(
                         "MODa returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
                 }
                 else
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to MODa failed (but exit code is 0)");
+                    LogWarning("Call to MODa failed (but exit code is 0)");
                 }
 
                 return false;
@@ -285,7 +285,7 @@ namespace AnalysisManagerMODaPlugIn
             m_StatusTools.UpdateAndWrite(m_progress);
             if (m_DebugLevel >= 3)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MODa Search Complete");
+                LogDebug("MODa Search Complete");
             }
 
             return true;
@@ -297,7 +297,7 @@ namespace AnalysisManagerMODaPlugIn
             if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+            LogWarning(
                 "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
 
             // Bump up the debug level if less than 2
@@ -371,7 +371,7 @@ namespace AnalysisManagerMODaPlugIn
                 {
                     if (m_DebugLevel >= 4)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        LogDebug(
                             "Console output file not found: " + strConsoleOutputFilePath);
                     }
 
@@ -380,7 +380,7 @@ namespace AnalysisManagerMODaPlugIn
 
                 if (m_DebugLevel >= 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing file " + strConsoleOutputFilePath);
+                    LogDebug("Parsing file " + strConsoleOutputFilePath);
                 }
 
                 string strLineIn = null;
@@ -484,7 +484,7 @@ namespace AnalysisManagerMODaPlugIn
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
             }
@@ -500,7 +500,7 @@ namespace AnalysisManagerMODaPlugIn
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+                LogDebug("Determining tool version info");
             }
 
             strToolVersionInfo = string.Copy(mMODaVersion);
@@ -516,7 +516,7 @@ namespace AnalysisManagerMODaPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
@@ -535,7 +535,7 @@ namespace AnalysisManagerMODaPlugIn
                 {
                     if (m_DebugLevel >= 4)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        LogDebug(
                             "Console output file not found: " + strConsoleOutputFilePath);
                     }
 
@@ -544,7 +544,7 @@ namespace AnalysisManagerMODaPlugIn
 
                 if (m_DebugLevel >= 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "Trimming console output file at " + strConsoleOutputFilePath);
                 }
 
@@ -595,7 +595,7 @@ namespace AnalysisManagerMODaPlugIn
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "Error trimming console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
             }
@@ -685,7 +685,7 @@ namespace AnalysisManagerMODaPlugIn
             catch (Exception ex)
             {
                 m_message = "Exception in UpdateParameterFile";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in UpdateParameterFile: " + ex.Message);
+                LogError("Exception in UpdateParameterFile: " + ex.Message);
                 return false;
             }
 

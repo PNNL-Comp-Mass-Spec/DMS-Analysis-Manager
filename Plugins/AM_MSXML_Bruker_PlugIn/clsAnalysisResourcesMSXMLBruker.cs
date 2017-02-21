@@ -39,7 +39,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
                 // This dataset type is acceptable
                 default:
                     m_message = "Dataset type " + strRawDataType + " is not supported";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "clsDtaGenResources.GetResources: " + m_message + "; must be " + RAW_DATA_TYPE_BRUKER_FT_FOLDER + " or " +
                         RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER);
 
@@ -48,7 +48,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
 
             if (!FileSearch.RetrieveSpectra(strRawDataType))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                LogDebug(
                     "clsDtaGenResources.GetResources: Error occurred retrieving spectra.");
                 return CloseOutType.CLOSEOUT_FAILED;
             }

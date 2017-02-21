@@ -44,7 +44,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
 
             // Retrieve the MSAlign file
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting data files");
+            LogMessage("Getting data files");
             var fileToGet = DatasetName + MSDECONV_MSALIGN_FILE_SUFFIX;
             if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, false))
             {

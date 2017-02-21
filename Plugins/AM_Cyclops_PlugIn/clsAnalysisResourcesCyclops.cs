@@ -23,7 +23,7 @@ namespace AnalysisManager_Cyclops_PlugIn
 
                 if (m_DebugLevel >= 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving input files");
+                    LogMessage("Retrieving input files");
                 }
 
                 var dirLocalRScriptFolder = new DirectoryInfo(Path.Combine(m_WorkingDir, "R_Scripts"));
@@ -44,7 +44,7 @@ namespace AnalysisManager_Cyclops_PlugIn
                 if (string.IsNullOrEmpty(strCyclopsWorkflowFileName))
                 {
                     m_message = "Parameter CyclopsWorkflowName not defined in the job parameters for this job";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + "; unable to continue");
+                    LogError(m_message + "; unable to continue");
                     return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                 }
 
@@ -79,26 +79,26 @@ namespace AnalysisManager_Cyclops_PlugIn
                 if (!diRemoteRScriptFolder.Exists)
                 {
                     m_message = "R Script folder not found: " + diRemoteRScriptFolder.FullName;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                    LogError(m_message);
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
                 if (m_DebugLevel >= 2)
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copying FROM: " + diRemoteRScriptFolder.FullName);
+                    LogMessage("Copying FROM: " + diRemoteRScriptFolder.FullName);
 
                 foreach (var fileSystemInfo in diRemoteRScriptFolder.GetFileSystemInfos("*.R"))
                 {
                     var diRFile = (FileInfo)fileSystemInfo;
 
                     if (m_DebugLevel >= 3)
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copying " + diRFile.Name + " to " + dirLocalRScriptFolder.FullName);
+                        LogMessage("Copying " + diRFile.Name + " to " + dirLocalRScriptFolder.FullName);
 
                     diRFile.CopyTo(Path.Combine(dirLocalRScriptFolder.FullName, diRFile.Name));
                 }
 
                 var strCyclopsWorkflowDirectory = Path.Combine(strDMSWorkflowsFolderPath, "Cyclops", analysisType);
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving workflow file: " + Path.Combine(strCyclopsWorkflowDirectory, strCyclopsWorkflowFileName));
+                LogMessage("Retrieving workflow file: " + Path.Combine(strCyclopsWorkflowDirectory, strCyclopsWorkflowFileName));
 
                 // Now copy the Cyclops workflow file to the working directory
                 if (!CopyFileToWorkDir(strCyclopsWorkflowFileName, strCyclopsWorkflowDirectory, m_WorkingDir))
@@ -117,7 +117,7 @@ namespace AnalysisManager_Cyclops_PlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception retrieving resources", ex);
+                LogError("Exception retrieving resources", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 

@@ -122,7 +122,7 @@ namespace AnalysisManagerGlyQIQPlugin
             catch (Exception ex)
             {
                 m_message = "Exception counting the targets in " + Path.GetFileName(targetsFilePath);
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                LogError(m_message + ": " + ex.Message);
                 return 0;
             }
         }
@@ -133,7 +133,7 @@ namespace AnalysisManagerGlyQIQPlugin
             {
                 // Define the output file name
                 mGlyQIQParams.ConsoleOperatingParametersFileName = GLYQIQ_PARAMS_FILE_PREFIX + DatasetName + ".txt";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                LogMessage(
                     "Creating the Operating Parameters file, " + mGlyQIQParams.ConsoleOperatingParametersFileName);
 
                 foreach (var workingDirectory in mGlyQIQParams.WorkingParameterFolders)
@@ -161,7 +161,7 @@ namespace AnalysisManagerGlyQIQPlugin
             catch (Exception ex)
             {
                 m_message = "Exception in CreateConsoleOperatingParametersFile";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                LogError(m_message + ": " + ex.Message);
                 return false;
             }
         }
@@ -170,14 +170,14 @@ namespace AnalysisManagerGlyQIQPlugin
         {
             try
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Creating the Launcher batch files");
+                LogMessage("Creating the Launcher batch files");
 
                 // Determine the path to the IQGlyQ program
 
                 var progLoc = clsAnalysisToolRunnerBase.DetermineProgramLocation("GlyQIQ", "GlyQIQProgLoc", "IQGlyQ_Console.exe", "", m_mgrParams, out m_message);
                 if (string.IsNullOrEmpty(progLoc))
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "DetermineProgramLocation returned an empty string: " + m_message);
                     return false;
                 }
@@ -230,7 +230,7 @@ namespace AnalysisManagerGlyQIQPlugin
             catch (Exception ex)
             {
                 m_message = "Exception in CreateLauncherBatchFiles";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                LogError(m_message + ": " + ex.Message);
                 return false;
             }
         }
@@ -266,7 +266,7 @@ namespace AnalysisManagerGlyQIQPlugin
             catch (Exception ex)
             {
                 m_message = "Exception in CreateSubFolders";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                LogError(m_message + ": " + ex.Message);
                 return new Dictionary<int, DirectoryInfo>();
             }
         }
@@ -414,7 +414,7 @@ namespace AnalysisManagerGlyQIQPlugin
             catch (Exception ex)
             {
                 m_message = "Exception in RetrieveGlyQIQParameters";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                LogError(m_message + ": " + ex.Message);
                 return false;
             }
         }
@@ -466,7 +466,7 @@ namespace AnalysisManagerGlyQIQPlugin
                         m_message = "Error retrieving instrument data file";
                     }
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "clsAnalysisResourcesGlyQIQ.GetResources: " + m_message);
                     return false;
                 }
@@ -481,7 +481,7 @@ namespace AnalysisManagerGlyQIQPlugin
             catch (Exception ex)
             {
                 m_message = "Exception in RetrievePeaksAndRawData";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                LogError(m_message + ": " + ex.Message);
                 return false;
             }
         }
@@ -573,7 +573,7 @@ namespace AnalysisManagerGlyQIQPlugin
             catch (Exception ex)
             {
                 m_message = "Exception in SplitTargetsFile";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                LogError(m_message + ": " + ex.Message);
                 return new Dictionary<int, FileInfo>();
             }
         }

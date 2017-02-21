@@ -72,7 +72,7 @@ namespace AnalysisManagerSMAQCPlugIn
                 if (!fiSourceFile.Exists)
                 {
                     m_message = "LLRC RData file not found: " + fiSourceFile.FullName;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                    LogError(m_message);
                     return false;
                 }
                 else
@@ -106,7 +106,7 @@ namespace AnalysisManagerSMAQCPlugIn
             {
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "Retrieving the MASIC files by searching for any valid MASIC folder");
                 }
 
@@ -118,7 +118,7 @@ namespace AnalysisManagerSMAQCPlugIn
             {
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "Retrieving the MASIC files from " + strMASICResultsFolderName);
                 }
 
@@ -190,7 +190,7 @@ namespace AnalysisManagerSMAQCPlugIn
             if (string.IsNullOrEmpty(strInputFolder))
             {
                 m_message = "InputFolder step parameter not found; this is unexpected";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                LogError(m_message);
                 return false;
             }
 
@@ -209,13 +209,13 @@ namespace AnalysisManagerSMAQCPlugIn
             else
             {
                 m_message = "InputFolder is not an X!Tandem, Sequest, or MSGF+ folder; it should start with XTM, Seq, or MSG and is auto-determined by the SourceJob SpecialProcessing text";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                LogError(m_message);
                 return false;
             }
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Retrieving the PHRP files");
+                LogDebug("Retrieving the PHRP files");
             }
 
             string strSynopsisFileName = null;

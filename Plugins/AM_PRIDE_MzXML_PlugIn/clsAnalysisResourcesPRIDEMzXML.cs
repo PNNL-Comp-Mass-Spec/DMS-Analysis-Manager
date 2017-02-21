@@ -26,14 +26,14 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
                 }
             }
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting PRIDE MzXML Input file");
+            LogMessage("Getting PRIDE MzXML Input file");
 
             if (!FileSearch.RetrieveFile(m_jobParams.GetParam("PRIDEMzXMLInputFile"), m_jobParams.GetParam("transferFolderPath")))
                 return CloseOutType.CLOSEOUT_FAILED;
 
             m_jobParams.AddResultFileToSkip(m_jobParams.GetParam("PRIDEMzXMLInputFile"));
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving input files");
+            LogMessage("Retrieving input files");
 
             Dictionary<int, clsDataPackageJobInfo> dctDataPackageJobs = null;
 

@@ -95,7 +95,7 @@ namespace AnalysisManagerSequestPlugin
             UpdateStatusRunning(m_progress, m_DtaCount);
 
             //Make the .out files
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+            LogMessage(
                 "Making OUT files, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
             try
             {
@@ -107,7 +107,7 @@ namespace AnalysisManagerSequestPlugin
             }
             catch (Exception Err)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "clsAnalysisToolRunnerSeqBase.RunTool(), Exception making OUT files, " + Err.Message + "; " +
                     clsGlobal.GetExceptionStackTrace(Err));
                 blnProcessingError = true;
@@ -131,7 +131,7 @@ namespace AnalysisManagerSequestPlugin
             //Add the current job data to the summary file
             if (!UpdateSummaryFile())
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                LogWarning(
                     "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
             }
 
@@ -192,7 +192,7 @@ namespace AnalysisManagerSequestPlugin
             if (!base.RemoveNonResultServerFiles())
             {
                 // Do not treat this as a fatal error
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                LogWarning(
                     "Error deleting .tmp files in folder " + m_jobParams.GetParam("JobParameters", "transferFolderPath"));
             }
 
@@ -356,14 +356,14 @@ namespace AnalysisManagerSequestPlugin
                 {
                     // Parse the _out.txt.tmp to determine the .out files that it contains
                     lstDTAsToSkip = ConstructDTASkipList(strConcatenatedTempFilePath);
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                    LogMessage(
                         "Splitting concatenated DTA file (skipping " + lstDTAsToSkip.Count.ToString("#,##0") +
                         " existing DTAs with existing .Out files)");
                 }
                 else
                 {
                     lstDTAsToSkip = new SortedSet<string>();
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Splitting concatenated DTA file");
+                    LogMessage("Splitting concatenated DTA file");
                 }
 
                 // Now split the DTA file, skipping DTAs corresponding to .Out files that were copied over
@@ -374,7 +374,7 @@ namespace AnalysisManagerSequestPlugin
                 if (!blnSuccess)
                 {
                     m_message = "SplitCattedDTAsOnly returned false";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_message + "; aborting");
+                    LogDebug(m_message + "; aborting");
                     return false;
                 }
 
@@ -383,13 +383,13 @@ namespace AnalysisManagerSequestPlugin
 
                 if (m_DebugLevel >= 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "Completed splitting concatenated DTA file, created " + GetDTAFileCountRemaining().ToString("#,##0") + " DTAs");
                 }
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Error in CheckForExistingConcatenatedOutFile: " + ex.Message);
                 return false;
             }
@@ -424,7 +424,7 @@ namespace AnalysisManagerSequestPlugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in ConstructDTASkipList: " + ex.Message);
+                LogError("Error in ConstructDTASkipList: " + ex.Message);
                 throw new Exception("Error parsing temporary concatenated temp file", ex);
             }
 
@@ -437,7 +437,7 @@ namespace AnalysisManagerSequestPlugin
             if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+            LogWarning(
                 "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
 
             // Bump up the debug level if less than 2
@@ -538,7 +538,7 @@ namespace AnalysisManagerSequestPlugin
                 RunProgs[ProcIndx].Arguments = CmdStr + DumStr;
                 RunProgs[ProcIndx].WorkDir = m_WorkDir;
                 Textfiles[ProcIndx] = new StreamWriter(DumStr, false);
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                LogDebug(
                     m_mgrParams.GetParam("seqprogloc") + CmdStr + DumStr);
             }
 
@@ -557,7 +557,7 @@ namespace AnalysisManagerSequestPlugin
             {
                 if (m_DebugLevel >= 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "clsAnalysisToolRunnerSeqBase.MakeOutFiles: Closing FileList" + ProcIndx);
                 }
                 try
@@ -567,7 +567,7 @@ namespace AnalysisManagerSequestPlugin
                 }
                 catch (Exception Err)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "clsAnalysisToolRunnerSeqBase.MakeOutFiles: " + Err.Message + "; " + clsGlobal.GetExceptionStackTrace(Err));
                 }
             }
@@ -595,7 +595,7 @@ namespace AnalysisManagerSequestPlugin
                 {
                     if (m_DebugLevel > 4)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        LogDebug(
                             "clsAnalysisToolRunnerSeqBase.MakeOutFiles(): RunProgs(" + ProcIndx.ToString() + ").State = " +
                             RunProgs[ProcIndx].State.ToString());
                     }
@@ -603,7 +603,7 @@ namespace AnalysisManagerSequestPlugin
                     {
                         if (m_DebugLevel > 4)
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                            LogDebug(
                                 "clsAnalysisToolRunnerSeqBase.MakeOutFiles()_2: RunProgs(" + ProcIndx.ToString() + ").State = " +
                                 RunProgs[ProcIndx].State.ToString());
                         }
@@ -611,7 +611,7 @@ namespace AnalysisManagerSequestPlugin
                         {
                             if (m_DebugLevel > 4)
                             {
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                LogDebug(
                                     "clsAnalysisToolRunnerSeqBase.MakeOutFiles()_3: RunProgs(" + ProcIndx.ToString() + ").State = " +
                                     RunProgs[ProcIndx].State.ToString());
                             }
@@ -622,7 +622,7 @@ namespace AnalysisManagerSequestPlugin
                         {
                             if (m_DebugLevel >= 1)
                             {
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                LogDebug(
                                     "clsAnalysisToolRunnerSeqBase.MakeOutFiles()_4: RunProgs(" + ProcIndx.ToString() + ").State = " +
                                     RunProgs[ProcIndx].State.ToString());
                             }
@@ -636,7 +636,7 @@ namespace AnalysisManagerSequestPlugin
             //Clean up our object references
             if (m_DebugLevel >= 1)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                LogDebug(
                     "clsAnalysisToolRunnerSeqBase.MakeOutFiles(), cleaning up runprog object references");
             }
             for (ProcIndx = 0; ProcIndx <= RunProgs.GetUpperBound(0); ProcIndx++)
@@ -644,7 +644,7 @@ namespace AnalysisManagerSequestPlugin
                 RunProgs[ProcIndx] = null;
                 if (m_DebugLevel >= 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "Set RunProgs(" + ProcIndx.ToString() + ") to Nothing");
                 }
             }
@@ -656,7 +656,7 @@ namespace AnalysisManagerSequestPlugin
             //Verify out file creation
             if (m_DebugLevel >= 1)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                LogDebug(
                     "clsAnalysisToolRunnerSeqBase.MakeOutFiles(), verifying out file creation");
             }
 
@@ -712,7 +712,7 @@ namespace AnalysisManagerSequestPlugin
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Concatenating .out files");
+                LogDebug("Concatenating .out files");
             }
 
             intRetriesRemaining = MAX_RETRY_ATTEMPTS;
@@ -730,7 +730,7 @@ namespace AnalysisManagerSequestPlugin
                     if (DateTime.UtcNow.Subtract(dtInterlockWaitStartTime).TotalMinutes >= MAX_INTERLOCK_WAIT_TIME_MINUTES)
                     {
                         m_message = "Unable to verify that all .out files have been appended to the _out.txt.tmp file";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        LogDebug(
                             m_message + ": ConcatOutFiles has waited over " + MAX_INTERLOCK_WAIT_TIME_MINUTES +
                             " minutes for mOutFileHandlerInUse to be zero; aborting");
                         return false;
@@ -740,7 +740,7 @@ namespace AnalysisManagerSequestPlugin
                         dtInterlockWaitStartTime = DateTime.UtcNow;
                         if (m_DebugLevel >= 1)
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                            LogDebug(
                                 "ConcatOutFiles is waiting for mOutFileHandlerInUse to be zero");
                         }
                     }
@@ -770,7 +770,7 @@ namespace AnalysisManagerSequestPlugin
                 }
                 catch (Exception ex)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                    LogWarning(
                         "Error appending .out files to the _out.txt.tmp file" + ": " + ex.Message);
                     Thread.Sleep(oRandom.Next(15, 30) * 1000);           // Delay for a random length between 15 and 30 seconds
                     blnSuccess = false;
@@ -782,7 +782,7 @@ namespace AnalysisManagerSequestPlugin
             if (!blnSuccess)
             {
                 m_message = "Error appending .out files to the _out.txt.tmp file";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     m_message + "; aborting after " + MAX_RETRY_ATTEMPTS + " attempts");
                 return false;
             }
@@ -804,7 +804,7 @@ namespace AnalysisManagerSequestPlugin
 
                 if (File.Exists(strOutFilePathNew))
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Existing _out.txt file found; overrwriting");
+                    LogWarning("Existing _out.txt file found; overrwriting");
                     File.Delete(strOutFilePathNew);
                 }
 
@@ -813,7 +813,7 @@ namespace AnalysisManagerSequestPlugin
             catch (Exception ex)
             {
                 m_message = "Error renaming _out.txt.tmp file to _out.txt file";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                LogError(m_message + ": " + ex.Message);
                 return false;
             }
 
@@ -834,7 +834,7 @@ namespace AnalysisManagerSequestPlugin
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+                LogDebug("Determining tool version info");
             }
 
             // Lookup the version of the Param file generator
@@ -864,7 +864,7 @@ namespace AnalysisManagerSequestPlugin
 
                                     if (m_DebugLevel >= 2)
                                     {
-                                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                        LogDebug(
                                             "Sequest Version: " + strToolVersionInfo);
                                     }
 
@@ -877,7 +877,7 @@ namespace AnalysisManagerSequestPlugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Exception parsing .Out file in StoreToolVersionInfo: " + ex.Message);
             }
 
@@ -888,7 +888,7 @@ namespace AnalysisManagerSequestPlugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Exception adding Sequest .Exe to ioToolFiles in StoreToolVersionInfo: " + ex.Message);
             }
 
@@ -899,7 +899,7 @@ namespace AnalysisManagerSequestPlugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
@@ -928,7 +928,7 @@ namespace AnalysisManagerSequestPlugin
                 if (ioFiles.Length == 0)
                 {
                     m_message = "No .DTA files are present";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                    LogError(m_message);
                     return false;
                 }
                 else
@@ -965,7 +965,7 @@ namespace AnalysisManagerSequestPlugin
                         {
                             m_message = ioFiles.Length.ToString() + " .DTA files are present, but each is empty";
                         }
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                        LogError(m_message);
                         return false;
                     }
                 }
@@ -973,7 +973,7 @@ namespace AnalysisManagerSequestPlugin
             catch (Exception ex)
             {
                 m_message = "Exception in ValidateDTAFiles";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                LogError(m_message + ": " + ex.Message);
                 return false;
             }
 
@@ -1034,7 +1034,7 @@ namespace AnalysisManagerSequestPlugin
                     strProcessingMsg = "Sequest.log file not found; cannot verify the sequest node count";
                     if (blnLogToConsole)
                         Console.WriteLine(strProcessingMsg + ": " + strLogFilePath);
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strProcessingMsg);
+                    LogWarning(strProcessingMsg);
                     return false;
                 }
 
@@ -1089,7 +1089,7 @@ namespace AnalysisManagerSequestPlugin
                                     strProcessingMsg = "Unable to parse out the Host Count from the 'Starting the SEQUEST task ...' entry in the Sequest.log file";
                                     if (blnLogToConsole)
                                         Console.WriteLine(strProcessingMsg);
-                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strProcessingMsg);
+                                    LogWarning(strProcessingMsg);
                                 }
                             }
                             else
@@ -1102,7 +1102,7 @@ namespace AnalysisManagerSequestPlugin
                                         strProcessingMsg = "Unable to parse out the Node Count from the 'Waiting for ready messages ...' entry in the Sequest.log file";
                                         if (blnLogToConsole)
                                             Console.WriteLine(strProcessingMsg);
-                                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strProcessingMsg);
+                                        LogWarning(strProcessingMsg);
                                     }
                                 }
                                 else
@@ -1131,7 +1131,7 @@ namespace AnalysisManagerSequestPlugin
                                                 strProcessingMsg = "Unable to parse out the Active Node Count from the 'Spawned xx slave processes ...' entry in the Sequest.log file";
                                                 if (blnLogToConsole)
                                                     Console.WriteLine(strProcessingMsg);
-                                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strProcessingMsg);
+                                                LogWarning(strProcessingMsg);
                                             }
                                         }
                                         else
@@ -1176,7 +1176,7 @@ namespace AnalysisManagerSequestPlugin
                     {
                         if (blnLogToConsole)
                             Console.WriteLine(strProcessingMsg);
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strProcessingMsg);
+                        LogDebug(strProcessingMsg);
                     }
                     m_EvalMessage = string.Copy(strProcessingMsg);
 
@@ -1185,7 +1185,7 @@ namespace AnalysisManagerSequestPlugin
                         strProcessingMsg = "Error: NodeCountActive less than expected value (" + intNodeCountActive + " vs. " + intNodeCountExpected + ")";
                         if (blnLogToConsole)
                             Console.WriteLine(strProcessingMsg);
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strProcessingMsg);
+                        LogError(strProcessingMsg);
 
                         // Update the evaluation message and evaluation code
                         // These will be used by sub CloseTask in clsAnalysisJob
@@ -1204,7 +1204,7 @@ namespace AnalysisManagerSequestPlugin
                             strProcessingMsg = "Warning: NodeCountStarted (" + intNodeCountStarted + ") <> NodeCountActive";
                             if (blnLogToConsole)
                                 Console.WriteLine(strProcessingMsg);
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strProcessingMsg);
+                            LogWarning(strProcessingMsg);
                             m_EvalMessage += "; " + strProcessingMsg;
                             m_EvalCode = m_EvalCode | ERROR_CODE_B;
 
@@ -1223,7 +1223,7 @@ namespace AnalysisManagerSequestPlugin
                             strProcessingMsg = "Error: only " + dctHostCounts.Count + " host" + CheckForPlurality(dctHostCounts.Count) + " processed DTAs";
                             if (blnLogToConsole)
                                 Console.WriteLine(strProcessingMsg);
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strProcessingMsg);
+                            LogError(strProcessingMsg);
                             m_EvalMessage += "; " + strProcessingMsg;
                             m_EvalCode = m_EvalCode | ERROR_CODE_C;
                         }
@@ -1282,7 +1282,7 @@ namespace AnalysisManagerSequestPlugin
                                                " times the median value of " + sngProcessingRateMedian.ToString("0.0");
                             if (blnLogToConsole)
                                 Console.WriteLine(strProcessingMsg);
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strProcessingMsg);
+                            LogWarning(strProcessingMsg);
 
                             m_EvalMessage += "; " + strProcessingMsg;
                             m_EvalCode = m_EvalCode | ERROR_CODE_D;
@@ -1309,7 +1309,7 @@ namespace AnalysisManagerSequestPlugin
                                                " times the median value of " + sngProcessingRateMedian.ToString("0.0");
                             if (blnLogToConsole)
                                 Console.WriteLine(strProcessingMsg);
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strProcessingMsg);
+                            LogWarning(strProcessingMsg);
 
                             m_EvalMessage += "; " + strProcessingMsg;
                             m_EvalCode = m_EvalCode | ERROR_CODE_E;
@@ -1339,7 +1339,7 @@ namespace AnalysisManagerSequestPlugin
 
                             if (blnLogToConsole)
                                 Console.WriteLine(strProcessingMsg);
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strProcessingMsg);
+                            LogDebug(strProcessingMsg);
                         }
                     }
                 }
@@ -1355,7 +1355,7 @@ namespace AnalysisManagerSequestPlugin
                         Console.WriteLine("====================================================================");
                     }
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strProcessingMsg);
+                    LogError(strProcessingMsg);
                     return false;
                 }
             }
@@ -1371,7 +1371,7 @@ namespace AnalysisManagerSequestPlugin
                     Console.WriteLine("====================================================================");
                 }
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strProcessingMsg);
+                LogError(strProcessingMsg);
                 return false;
             }
 
@@ -1432,14 +1432,14 @@ namespace AnalysisManagerSequestPlugin
             string OutFileName = m_Dataset + "_out.txt";
             string OutFilePath = Path.Combine(WorkDir, OutFileName);
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+            LogMessage(
                 "Zipping concatenated output file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
 
             //Verify file exists
             if (!File.Exists(OutFilePath))
             {
                 m_message = "Unable to find concatenated .out file";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                LogError(m_message);
                 return false;
             }
 
@@ -1450,7 +1450,7 @@ namespace AnalysisManagerSequestPlugin
                 {
                     m_message = "Error zipping concat out file";
                     string Msg = m_message + ", job " + m_JobNum + ", step " + m_jobParams.GetParam("Step");
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg);
+                    LogError(Msg);
                     return false;
                 }
             }
@@ -1459,7 +1459,7 @@ namespace AnalysisManagerSequestPlugin
                 m_message = "Exception zipping concat out file";
                 string Msg = m_message + ", job " + m_JobNum + ", step " + m_jobParams.GetParam("Step") + ": " + ex.Message + "; " +
                              clsGlobal.GetExceptionStackTrace(ex);
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg);
+                LogError(Msg);
                 return false;
             }
 
@@ -1467,7 +1467,7 @@ namespace AnalysisManagerSequestPlugin
 
             if (m_DebugLevel >= 1)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... successfully zipped");
+                LogDebug(" ... successfully zipped");
             }
 
             return true;

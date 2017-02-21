@@ -58,14 +58,13 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
             if (m_DebugLevel > 4)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerDtaRefinery.RunTool(): Enter");
+                LogDebug("clsAnalysisToolRunnerDtaRefinery.RunTool(): Enter");
             }
 
             // Store the DTARefinery and X!Tandem version info in the database
             if (!StoreToolVersionInfo())
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                    "Aborting since StoreToolVersionInfo returned false");
+                LogError("Aborting since StoreToolVersionInfo returned false");
                 m_message = "Error determining DTA Refinery version";
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -78,7 +77,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running DTA_Refinery");
+                LogMessage("Running DTA_Refinery");
             }
 
             mCmdRunner = new clsRunDosProgram(m_WorkDir);
@@ -96,7 +95,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             {
                 if (progLoc.Length == 0)
                     progLoc = "Parameter 'DTARefineryLoc' not defined for this manager";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find DTA_Refinery program file: " + progLoc);
+                LogError("Cannot find DTA_Refinery program file: " + progLoc);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -120,7 +119,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             {
                 if (m_DebugLevel >= 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strBatchFileCmdLine);
+                    LogDebug(strBatchFileCmdLine);
                 }
 
                 swBatchFile.WriteLine(strBatchFileCmdLine);
@@ -164,13 +163,13 @@ namespace AnalysisManagerDtaRefineryPlugIn
                     }
                 }
 
-                m_message = "Error running DTARefinery";
+                var msg = "Error running DTARefinery";
                 if (!string.IsNullOrWhiteSpace(consoleOutputErrorMessage))
                 {
-                    m_message += ": " + consoleOutputErrorMessage;
+                    msg += ": " + consoleOutputErrorMessage;
                 }
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                LogError(msg);
 
                 ValidateDTARefineryLogFile();
 
@@ -261,7 +260,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             if (string.IsNullOrEmpty(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+            LogWarning(
                 "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
 
             // Bump up the debug level if less than 2
@@ -312,7 +311,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 var fiSourceFile = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + "_dta_DtaRefineryLog.txt"));
                 if (!fiSourceFile.Exists)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "DTA_Refinery log file not found by IsXtandenFinished: " + fiSourceFile.Name);
                     return false;
                 }
@@ -339,8 +338,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             }
             catch (Exception ex)
             {
-                m_message = "Exception in IsXTandemFinished";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                LogError("Exception in IsXTandemFinished: " + ex.Message);
                 return false;
             }
         }
@@ -355,7 +353,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+                LogDebug("Determining tool version info");
             }
 
             // Store paths to key files in ioToolFiles
@@ -371,8 +369,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             }
             else
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                    "DTARefinery not found: " + ioDtaRefineryFileInfo.FullName);
+                LogError("DTARefinery not found: " + ioDtaRefineryFileInfo.FullName);
                 return false;
             }
 
@@ -382,8 +379,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                    "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message, ex);
                 return false;
             }
         }
@@ -400,8 +396,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 var fiSourceFile = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + "_dta_DtaRefineryLog.txt"));
                 if (!fiSourceFile.Exists)
                 {
-                    m_message = "DtaRefinery Log file not found";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + " (" + fiSourceFile.Name + ")");
+                    LogError("DtaRefinery Log file not found (" + fiSourceFile.Name + ")");
                     return false;
                 }
 
@@ -418,13 +413,12 @@ namespace AnalysisManagerDtaRefineryPlugIn
                                 strLineIn = srSourceFile.ReadLine();
                                 if (strLineIn.StartsWith("stop processing"))
                                 {
-                                    m_message = "X!Tandem identified fewer than 2 peptides; unable to use DTARefinery with this dataset";
-                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                                    LogError("X!Tandem identified fewer than 2 peptides; unable to use DTARefinery with this dataset");
                                     return false;
                                 }
                             }
 
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                            LogWarning(
                                 "Encountered message 'number of spectra identified less than 2' but did not find 'stop processing' on the next line; DTARefinery likely did not complete properly");
                         }
                     }
@@ -432,8 +426,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             }
             catch (Exception ex)
             {
-                m_message = "Exception in ValidateDTARefineryLogFile";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                LogError("Exception in ValidateDTARefineryLogFile: " + ex.Message, ex);
                 return false;
             }
 
@@ -476,10 +469,9 @@ namespace AnalysisManagerDtaRefineryPlugIn
                     }
                 }
             }
-            catch (Exception Err)
+            catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                    "clsAnalysisToolRunnerDtaRefinery.ZipMainOutputFile, Error deleting _om.omx file, job " + m_JobNum + Err.Message);
+                LogError("Error deleting _om.omx file: " + ex.Message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -490,9 +482,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
                 if (!ioFile.Exists)
                 {
-                    var Msg = "DTARefinery output file not found";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg + ": " + ioFile.Name);
-                    m_message = clsGlobal.AppendToComment(m_message, Msg);
+                    LogError("DTARefinery output file not found: " + ioFile.Name);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -502,25 +492,19 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 {
                     if (!base.ZipFile(ioFile.FullName, true))
                     {
-                        var Msg = "Error zipping DTARefinery output file";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg + ": " + ioFile.FullName);
-                        m_message = clsGlobal.AppendToComment(m_message, Msg);
+                        LogError("Error zipping DTARefinery output file: " + ioFile.FullName);
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
                 }
                 catch (Exception ex)
                 {
-                    string Msg = "clsAnalysisToolRunnerDtaRefinery.ZipMainOutputFile, Error zipping DTARefinery output file: " + ex.Message;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg);
-                    m_message = clsGlobal.AppendToComment(m_message, "Error zipping DTARefinery output file");
+                    LogError("Error zipping DTARefinery output file: " + ex.Message, ex);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
             }
             catch (Exception ex)
             {
-                string Msg = "clsAnalysisToolRunnerDtaRefinery.ZipMainOutputFile, Error renaming DTARefinery output file: " + ex.Message;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg);
-                m_message = clsGlobal.AppendToComment(m_message, "Error renaming DTARefinery output file");
+                LogError("Error renaming DTARefinery output file: " + ex.Message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 

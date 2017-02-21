@@ -90,7 +90,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                 if (m_DebugLevel > 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMzRefinery.RunTool(): Enter");
+                    LogDebug("clsAnalysisToolRunnerMzRefinery.RunTool(): Enter");
                 }
 
                 // Initialize class-wide variables that will be updated later
@@ -244,7 +244,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                         catch (Exception ex)
                         {
                             // Treat this as a warning
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error generating PPMError plots for debugging purposes", ex);
+                            LogWarning("Error generating PPMError plots for debugging purposes: " + ex.Message);
                         }
                     }
 
@@ -264,7 +264,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 //Add the current job data to the summary file
                 if (!UpdateSummaryFile())
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
+                    LogWarning("Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
                 }
 
                 mCmdRunner = null;
@@ -328,7 +328,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 if (processingError)
                 {
                     // If we get here, MSGF+ succeeded, but MzRefinery or PostProcessing failed
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Processing failed; see results at " + m_jobParams.GetParam("transferFolderPath"));
+                    LogWarning("Processing failed; see results at " + m_jobParams.GetParam("transferFolderPath"));
                     if (m_UnableToUseMzRefinery)
                     {
                         return CloseOutType.CLOSEOUT_UNABLE_TO_USE_MZ_REFINERY;
@@ -342,7 +342,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             catch (Exception ex)
             {
                 m_message = "Error in MzRefineryPlugin->RunTool";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -453,7 +453,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             var resultsFileName = m_Dataset + MSGFPLUS_MZID_SUFFIX;
             fiMSGFPlusResults = new FileInfo(Path.Combine(m_WorkDir, resultsFileName));
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running " + strSearchEngineName);
+            LogMessage("Running " + strSearchEngineName);
 
             // If an MSGF+ analysis crashes with an "out-of-memory" error, then we need to reserve more memory for Java
             // The amount of memory required depends on both the fasta file size and the size of the input .mzML file, since data from all spectra are cached in memory
@@ -502,7 +502,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             if (!string.IsNullOrEmpty(mMSGFDBUtils.ConsoleOutputErrorMsg))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mMSGFDBUtils.ConsoleOutputErrorMsg);
+                LogError(mMSGFDBUtils.ConsoleOutputErrorMsg);
             }
 
             var blnProcessingError = false;
@@ -528,7 +528,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 }
                 m_message = clsGlobal.AppendToComment(m_message, msg);
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg + ", job " + m_JobNum);
+                LogError(msg + ", job " + m_JobNum);
 
                 if (mMSGFPlusComplete)
                 {
@@ -546,11 +546,11 @@ namespace AnalysisManagerMzRefineryPlugIn
                 {
                     if (mCmdRunner.ExitCode != 0)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strSearchEngineName + " returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
+                        LogWarning(strSearchEngineName + " returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
                     }
                     else
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to " + strSearchEngineName + " failed (but exit code is 0)");
+                        LogWarning("Call to " + strSearchEngineName + " failed (but exit code is 0)");
                     }
                 }
             }
@@ -561,7 +561,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 m_StatusTools.UpdateAndWrite(m_progress);
                 if (m_DebugLevel >= 3)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSGF+ Search Complete");
+                    LogDebug("MSGF+ Search Complete");
                 }
             }
 
@@ -593,7 +593,7 @@ namespace AnalysisManagerMzRefineryPlugIn
         {
             if (m_DebugLevel >= 1)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, javaExePath + " " + CmdStr);
+                LogDebug(javaExePath + " " + CmdStr);
             }
 
             mCmdRunner = new clsRunDosProgram(m_WorkDir);
@@ -638,7 +638,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             catch (Exception ex)
             {
                 m_message = "Error compressing the .mzID file";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 return false;
             }
 
@@ -651,7 +651,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
+            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
 
             // Bump up the debug level if less than 2
             if (m_DebugLevel < 2)
@@ -726,7 +726,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in ExtractMzRefinerOptionsFromParameterFile", ex);
+                LogError("Error in ExtractMzRefinerOptionsFromParameterFile", ex);
                 return false;
             }
 
@@ -769,7 +769,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                             // MSGF+ is stuck at 96% complete and has been that way for 5 minutes
                             // Java is likely frozen and thus the process should be aborted
                             var warningMessage = "MSGF+ has been stuck at " + clsMSGFDBUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE.ToString("0") + "% complete for 5 minutes; aborting since Java appears frozen";
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, warningMessage);
+                            LogWarning(warningMessage);
 
                             // Bump up mMSGFPlusCompletionTime by one hour
                             // This will prevent this function from logging the above message every 30 seconds if the .abort command fails
@@ -811,7 +811,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error parsing MSGF+ console output file: " + ex.Message);
+                    LogError("Error parsing MSGF+ console output file: " + ex.Message);
                 }
             }
         }
@@ -909,7 +909,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 {
                     if (m_DebugLevel >= 4)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Console output file not found: " + strConsoleOutputFilePath);
+                        LogDebug("Console output file not found: " + strConsoleOutputFilePath);
                     }
 
                     return;
@@ -917,7 +917,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                 if (m_DebugLevel >= 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing file " + strConsoleOutputFilePath);
+                    LogDebug("Parsing file " + strConsoleOutputFilePath);
                 }
 
                 mConsoleOutputErrorMsg = string.Empty;
@@ -950,12 +950,12 @@ namespace AnalysisManagerMzRefineryPlugIn
                             else if (strDataLine.StartsWith("Low number of good identifications found"))
                             {
                                 m_EvalMessage = strDataLine;
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "MzRefinery warning: " + strDataLine);
+                                LogMessage("MzRefinery warning: " + strDataLine);
                             }
                             else if (strDataLine.StartsWith("Excluding file") && strDataLine.EndsWith("from data set"))
                             {
                                 m_message = "Fewer than 100 matches after filtering; cannot use MzRefinery on this dataset";
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                                LogError(m_message);
                             }
                             else
                             {
@@ -999,7 +999,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error parsing MzRefinery console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    LogError("Error parsing MzRefinery console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
             }
         }
@@ -1031,7 +1031,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             catch (Exception ex)
             {
                 m_message = "Error creating PPM Error charters";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 return false;
             }
 
@@ -1046,7 +1046,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             catch (Exception ex)
             {
                 m_message = "Error replacing the original .mzML file with the updated version; cannot delete original";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 return false;
             }
 
@@ -1058,7 +1058,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             catch (Exception ex)
             {
                 m_message = "Error replacing the original .mzML file with the updated version; cannot rename the fixed file";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 return false;
             }
 
@@ -1076,7 +1076,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             catch (Exception ex)
             {
                 m_message = "Error compressing the fixed .mzXML/.mzML file";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 return false;
             }
 
@@ -1108,7 +1108,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             catch (Exception ex)
             {
                 m_message = "Error copying the .mzML.gz file to the remote cache folder";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 return false;
             }
 
@@ -1122,7 +1122,7 @@ namespace AnalysisManagerMzRefineryPlugIn
         {
             mConsoleOutputErrorMsg = string.Empty;
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MzRefinery using MSConvert");
+            LogMessage("Running MzRefinery using MSConvert");
 
             // Set up and execute a program runner to run MSConvert
             // Provide the path to the .mzML file plus the --filter switch with the information required to run MzRefiner
@@ -1148,7 +1148,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             if (m_DebugLevel >= 1)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, mMSConvertProgLoc + cmdStr);
+                LogDebug(mMSConvertProgLoc + cmdStr);
             }
 
             mCmdRunner = new clsRunDosProgram(m_WorkDir);
@@ -1193,7 +1193,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 var logMessage = "MzRefinery " + mMzRefineryCorrectionMode.Replace("...", "").TrimEnd('.');
                 logMessage += ", " + mMzRefinerGoodDataPoints + " points had SpecEValue <= " + mMzRefinerSpecEValueThreshold.ToString("0.###E+00");
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, logMessage);
+                LogMessage(logMessage);
             }
 
             if (!string.IsNullOrWhiteSpace(mCmdRunner.CachedConsoleErrors))
@@ -1208,25 +1208,25 @@ namespace AnalysisManagerMzRefineryPlugIn
                 }
                 else
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, consoleError);
+                    LogError(consoleError);
                 }
                 blnSuccess = false;
             }
 
             if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg);
+                LogError(mConsoleOutputErrorMsg);
                 if (mConsoleOutputErrorMsg.Contains("No high-resolution data in input file"))
                 {
                     m_message = "No high-resolution data in input file; cannot use MzRefinery on this dataset";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                    LogError(m_message);
                     m_UnableToUseMzRefinery = true;
                     m_ForceGeneratePPMErrorPlots = false;
                 }
                 else if (mConsoleOutputErrorMsg.Contains("No significant peak (ppm error histogram) found"))
                 {
                     m_message = "Signficant peak not found in the ppm error histogram; cannot use MzRefinery on this dataset";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                    LogError(m_message);
                     m_UnableToUseMzRefinery = true;
                     m_ForceGeneratePPMErrorPlots = true;
                 }
@@ -1245,7 +1245,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                     if (string.IsNullOrEmpty(m_message))
                     {
                         m_message = "MSGF+ identified too few peptides; unable to use MzRefinery with this dataset";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                        LogError(m_message);
                         m_ForceGeneratePPMErrorPlots = true;
                     }
                 }
@@ -1254,17 +1254,17 @@ namespace AnalysisManagerMzRefineryPlugIn
                     m_message = Msg;
                 }
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg + ", job " + m_JobNum);
+                LogError(Msg + ", job " + m_JobNum);
 
                 if (!m_UnableToUseMzRefinery)
                 {
                     if (mCmdRunner.ExitCode != 0)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSConvert/MzRefinery returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
+                        LogWarning("MSConvert/MzRefinery returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
                     }
                     else
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to MSConvert/MzRefinery failed (but exit code is 0)");
+                        LogWarning("Call to MSConvert/MzRefinery failed (but exit code is 0)");
                     }
                 }
 
@@ -1275,7 +1275,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             m_StatusTools.UpdateAndWrite(m_progress);
             if (m_DebugLevel >= 3)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MzRefinery Complete");
+                LogDebug("MzRefinery Complete");
             }
 
             return true;
@@ -1283,14 +1283,14 @@ namespace AnalysisManagerMzRefineryPlugIn
 
         private bool StartPpmErrorCharter(FileInfo fiMSGFPlusResults)
         {
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running PPMErrorCharter");
+            LogMessage("Running PPMErrorCharter");
 
             // Set up and execute a program runner to run the PPMErrorCharter
             var cmdStr = " " + fiMSGFPlusResults.FullName + " " + mMzRefinerSpecEValueThreshold.ToString("0.###E+00");
 
             if (m_DebugLevel >= 1)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, mPpmErrorCharterProgLoc + cmdStr);
+                LogDebug(mPpmErrorCharterProgLoc + cmdStr);
             }
 
             mCmdRunner = new clsRunDosProgram(m_WorkDir);
@@ -1317,15 +1317,15 @@ namespace AnalysisManagerMzRefineryPlugIn
                 Msg = "Error running PPMErrorCharter";
                 m_message = clsGlobal.AppendToComment(m_message, Msg);
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg + ", job " + m_JobNum);
+                LogError(Msg + ", job " + m_JobNum);
 
                 if (mCmdRunner.ExitCode != 0)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "PPMErrorCharter returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
+                    LogWarning("PPMErrorCharter returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
                 }
                 else
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to PPMErrorCharter failed (but exit code is 0)");
+                    LogWarning("Call to PPMErrorCharter failed (but exit code is 0)");
                 }
 
                 return false;
@@ -1342,7 +1342,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 if (!fiChart.Exists)
                 {
                     m_message = "PPMError chart not found: " + fiChart.Name;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                    LogError(m_message);
                     return false;
                 }
             }
@@ -1351,7 +1351,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             m_StatusTools.UpdateAndWrite(m_progress);
             if (m_DebugLevel >= 3)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "PPMErrorCharter Complete");
+                LogDebug("PPMErrorCharter Complete");
             }
 
             return true;
@@ -1398,7 +1398,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+                LogDebug("Determining tool version info");
             }
 
             strToolVersionInfo = string.Copy(mMSGFDBUtils.MSGFPlusVersion);
@@ -1415,7 +1415,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
         }

@@ -74,7 +74,7 @@ namespace MSMSSpectrumFilterAM
             {
                 if (m_DebugLevel >= 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "GetResources: MSLevelFilter is defined (" + strMSLevelFilter + "); will retrieve or generate the ScanStats files");
+                    LogDebug("GetResources: MSLevelFilter is defined (" + strMSLevelFilter + "); will retrieve or generate the ScanStats files");
                 }
                 blnNeedScanStatsFiles = true;
             }
@@ -83,7 +83,7 @@ namespace MSMSSpectrumFilterAM
             {
                 if (m_DebugLevel >= 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "GetResources: ScanTypeFilter is defined (" + strScanTypeFilter + " with match type " + strScanTypeMatchType + "); will retrieve or generate the ScanStats files");
+                    LogDebug("GetResources: ScanTypeFilter is defined (" + strScanTypeFilter + " with match type " + strScanTypeMatchType + "); will retrieve or generate the ScanStats files");
                 }
                 blnNeedScanStatsFiles = true;
             }
@@ -92,7 +92,7 @@ namespace MSMSSpectrumFilterAM
             {
                 if (m_DebugLevel >= 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "GetResources: MSCollisionModeFilter is defined (" + strMSCollisionModeFilter + " with match type " + strMSCollisionModeMatchType + "); will retrieve or generate the ScanStats files");
+                    LogDebug("GetResources: MSCollisionModeFilter is defined (" + strMSCollisionModeFilter + " with match type " + strMSCollisionModeMatchType + "); will retrieve or generate the ScanStats files");
                 }
                 blnNeedScanStatsFiles = true;
             }
@@ -153,7 +153,7 @@ namespace MSMSSpectrumFilterAM
 
                     if (!FileSearch.RetrieveSpectra(RawDataType, CreateStoragePathInfoOnly))
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisResourcesMsMsSpectrumFilter.GetResources: Error occurred retrieving spectra.");
+                        LogDebug("clsAnalysisResourcesMsMsSpectrumFilter.GetResources: Error occurred retrieving spectra.");
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
                 }
@@ -190,7 +190,7 @@ namespace MSMSSpectrumFilterAM
             {
                 if (!diDatasetFolder.Exists)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Dataset folder not found: " + strDatasetFolderPath);
+                    LogError("Dataset folder not found: " + strDatasetFolderPath);
                 }
 
                 var lstFiles = diDatasetFolder.GetFiles(DatasetName + "_ScanStats.txt", SearchOption.AllDirectories).ToList();
@@ -199,7 +199,7 @@ namespace MSMSSpectrumFilterAM
                 {
                     if (m_DebugLevel >= 2)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "No _ScanStats.txt files were found in subfolders below " + strDatasetFolderPath);
+                        LogWarning("No _ScanStats.txt files were found in subfolders below " + strDatasetFolderPath);
                     }
                     return false;
                 }
@@ -222,7 +222,7 @@ namespace MSMSSpectrumFilterAM
                     {
                         if (m_DebugLevel >= 1)
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "The newest _ScanStats.txt file for this dataset does not contain column " + clsMsMsSpectrumFilter.SCANSTATS_COL_SCAN_TYPE_NAME + "; will need to re-generate the file using the .Raw file");
+                            LogMessage("The newest _ScanStats.txt file for this dataset does not contain column " + clsMsMsSpectrumFilter.SCANSTATS_COL_SCAN_TYPE_NAME + "; will need to re-generate the file using the .Raw file");
                         }
                         return false;
                     }
@@ -238,7 +238,7 @@ namespace MSMSSpectrumFilterAM
 
                     if (m_DebugLevel >= 1)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Using existing _ScanStats.txt from " + fiNewestScanStatsFile.FullName);
+                        LogMessage("Using existing _ScanStats.txt from " + fiNewestScanStatsFile.FullName);
                     }
 
                     blnFilesFound = true;
@@ -247,14 +247,14 @@ namespace MSMSSpectrumFilterAM
                 {
                     if (m_DebugLevel >= 1)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "The _ScanStats.txt file was found at " + fiNewestScanStatsFile.FullName + " but the _ScanStatsEx.txt file was not present");
+                        LogWarning("The _ScanStats.txt file was found at " + fiNewestScanStatsFile.FullName + " but the _ScanStatsEx.txt file was not present");
                     }
                     return false;
                 }
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in FindExistingScanStatsFile", ex);
+                LogError("Exception in FindExistingScanStatsFile", ex);
                 return false;
             }
 

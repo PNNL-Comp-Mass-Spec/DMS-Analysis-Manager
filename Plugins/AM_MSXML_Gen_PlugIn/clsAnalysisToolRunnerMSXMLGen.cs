@@ -52,7 +52,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             // Store the ReAdW or MSConvert version info in the database
             if (!StoreToolVersionInfo())
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Aborting since StoreToolVersionInfo returned false");
                 LogError("Error determining MSXMLGen version");
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -133,7 +133,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             {
                 if (m_DebugLevel > 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "clsAnalysisToolRunnerMSXMLGen.CreateMSXMLFile(): Enter");
                 }
 
@@ -150,7 +150,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                         mMSXmlOutputFileType = clsAnalysisResources.MSXMLOutputTypeConstants.mzML;
                         break;
                     default:
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                        LogWarning(
                             "msXmlFormat string is not mzXML or mzML (" + msXmlFormat + "); will default to mzXML");
                         mMSXmlOutputFileType = clsAnalysisResources.MSXMLOutputTypeConstants.mzXML;
                         break;
@@ -183,7 +183,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                 if (string.IsNullOrEmpty(mMSXmlGeneratorAppPath))
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                    LogWarning(
                         "mMSXmlGeneratorAppPath is empty; this is unexpected");
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -336,7 +336,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 }
 
                 // Compress the file using GZip
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "GZipping " + fiMSXmlFile.Name);
+                LogMessage("GZipping " + fiMSXmlFile.Name);
 
                 // Note that if this process turns out to be slow, we can have MSConvert do this for us using --gzip
                 // However, that will not work if RecalculatePrecursors is true
@@ -488,7 +488,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "RawConverter error", ex);
+                LogError("RawConverter error", ex);
                 m_message = "Exception running RawConverter";
                 mgfFile = null;
                 return false;
@@ -555,7 +555,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             {
                 if (m_DebugLevel > 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Re-index the mzML file using MSConvert");
+                    LogDebug("Re-index the mzML file using MSConvert");
                 }
 
                 var msXmlGenerator = m_jobParams.GetParam("MSXMLGenerator");
@@ -647,7 +647,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+                LogDebug("Determining tool version info");
             }
 
             // Store paths to key files in ioToolFiles
@@ -733,7 +733,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// <remarks></remarks>
         private void MSXmlGen_ProgRunnerStarting(string CommandLine)
         {
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, CommandLine);
+            LogDebug(CommandLine);
         }
 
         #endregion

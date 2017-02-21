@@ -42,7 +42,7 @@ namespace AnalysisManagerResultsCleanupPlugin
                 // Store the AnalysisManager version info in the database
                 if (!StoreToolVersionInfo())
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "Aborting since StoreToolVersionInfo returned false");
                     m_message = "Error determining AnalysisManager version";
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -65,7 +65,7 @@ namespace AnalysisManagerResultsCleanupPlugin
             catch (Exception ex)
             {
                 m_message = "Error in clsAnalysisToolRunnerResultsCleanup->RunTool";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                LogError(m_message + ": " + ex.Message);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -87,13 +87,13 @@ namespace AnalysisManagerResultsCleanupPlugin
                 if (string.IsNullOrWhiteSpace(strTransferDirectoryPath))
                 {
                     m_message = "transferFolderPath not defined";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                    LogError(m_message);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
                 else if (string.IsNullOrWhiteSpace(strResultsFolderName))
                 {
                     m_message = "InputFolderName not defined";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                    LogError(m_message);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -102,7 +102,7 @@ namespace AnalysisManagerResultsCleanupPlugin
                 if (!diTransferFolder.Exists)
                 {
                     m_message = "transferFolder not found at " + strTransferDirectoryPath;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                    LogError(m_message);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -112,7 +112,7 @@ namespace AnalysisManagerResultsCleanupPlugin
             catch (Exception ex)
             {
                 m_message = "Error in PerformResultsCleanup";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                LogError(m_message + ": " + ex.Message);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -167,32 +167,32 @@ namespace AnalysisManagerResultsCleanupPlugin
                         }
                         catch (Exception ex)
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                            LogWarning(
                                 "Error deleting extra " + RESULTS_DB3_FILE + " file: " + ex.Message);
                         }
                     }
 
                     m_EvalMessage = "Deleted " + intFileCountDeleted + " extra " + RESULTS_DB3_FILE + " " +
                                     clsGlobal.CheckPlural(intFileCountDeleted, "file", "files");
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                    LogMessage(
                         m_EvalMessage + " from " + diResultsFolder.FullName);
                 }
                 else if (dctResultsFiles.Count == 1)
                 {
                     m_EvalMessage = "Results folder has just one " + RESULTS_DB3_FILE + " file";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_EvalMessage);
+                    LogMessage(m_EvalMessage);
                 }
                 else
                 {
                     if (intStepFolderCount > 0)
                     {
                         m_EvalMessage = "None of the Step_# folders has a " + RESULTS_DB3_FILE + " file";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_EvalMessage);
+                        LogWarning(m_EvalMessage);
                     }
                     else
                     {
                         m_message = "Results folder does not have any Step_# folders";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + diResultsFolder.FullName);
+                        LogError(m_message + ": " + diResultsFolder.FullName);
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
                 }
@@ -200,7 +200,7 @@ namespace AnalysisManagerResultsCleanupPlugin
             catch (Exception ex)
             {
                 m_message = "Error in RemoveOldResultsDb3Files";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                LogError(m_message + ": " + ex.Message);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -218,7 +218,7 @@ namespace AnalysisManagerResultsCleanupPlugin
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+                LogDebug("Determining tool version info");
             }
 
             // Lookup the version of the Analysis Manager
@@ -244,7 +244,7 @@ namespace AnalysisManagerResultsCleanupPlugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }

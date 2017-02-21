@@ -161,7 +161,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                             {
                                 m_message = "mzXML/mzML file not found for dataset " + udtJobInfo.Dataset +
                                             " and dataset file type is not a .Raw file and we thus cannot auto-create the missing mzXML file";
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                                LogError(m_message);
                                 return false;
                             }
                         }
@@ -186,7 +186,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                         if (!dctDatasetRawFilePaths.ContainsKey(udtJobInfo.Dataset))
                         {
                             var msg = "Instrument data file not found for dataset " + udtJobInfo.Dataset;
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                            LogError(msg);
                         }
                     }
                 }
@@ -218,7 +218,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
                     progressMsg += ": " + jobsProcessed + " / " + jobCountToProcess + " jobs";
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, progressMsg);
+                    LogMessage(progressMsg);
                 }
 
 
@@ -326,7 +326,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
             catch (Exception ex)
             {
                 m_message = "Exception in FindMissingMzXmlFiles";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                LogError(m_message + ": " + ex.Message);
             }
 
         }
@@ -369,7 +369,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                         if (string.IsNullOrEmpty(strOrgDBNameGenerated))
                         {
                             m_message = "FASTA file was not generated when RetrieveFastaFiles called RetrieveOrgDB";
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                            LogError(
                                                  m_message + " (class clsAnalysisResourcesRepoPkgr)");
                             return false;
                         }
@@ -377,7 +377,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                         {
                             m_message = "Generated FASTA file name (" + strOrgDBNameGenerated + ") does not match expected fasta file name (" +
                                         udtJob.OrganismDBName + "); aborting";
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                            LogError(
                                                  m_message + " (class clsAnalysisResourcesRepoPkgr)");
                             return false;
                         }
@@ -400,7 +400,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
             catch (Exception ex)
             {
                 m_message = "Exception in RetrieveFastaFiles";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 return false;
             }
             return true;

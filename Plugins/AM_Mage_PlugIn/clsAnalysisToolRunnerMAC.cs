@@ -36,7 +36,7 @@ namespace AnalysisManager_Mage_PlugIn
                 // Store the MAC tool version info in the database
                 StoreToolVersionInfo();
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MAC Plugin");
+                LogMessage("Running MAC Plugin");
 
 
                 bool blnSuccess;
@@ -48,7 +48,7 @@ namespace AnalysisManager_Mage_PlugIn
 
                     if (!blnSuccess && !string.IsNullOrWhiteSpace(m_message))
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running MAC: " + m_message);
+                        LogError("Error running MAC: " + m_message);
                     }
                 }
                 catch (Exception ex)
@@ -58,7 +58,7 @@ namespace AnalysisManager_Mage_PlugIn
                     log4net.GlobalContext.Properties["LogName"] = logFileName;
                     clsLogTools.ChangeLogFileName(logFileName);
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running MAC: " + ex.Message, ex);
+                    LogError("Error running MAC: " + ex.Message, ex);
                     blnSuccess = false;
 
                     m_message = "Error running MAC: " + ex.Message;
@@ -77,7 +77,7 @@ namespace AnalysisManager_Mage_PlugIn
                 //Add the current job data to the summary file
                 if (!UpdateSummaryFile())
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
+                    LogWarning("Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
                 }
 
                 //Make sure objects are released
@@ -125,7 +125,7 @@ namespace AnalysisManager_Mage_PlugIn
             catch (Exception ex)
             {
                 m_message = "Error in MAC Plugin->RunTool";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -146,7 +146,7 @@ namespace AnalysisManager_Mage_PlugIn
             if (string.IsNullOrEmpty(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
+            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
 
             // Bump up the debug level if less than 2
             if (m_DebugLevel < 2)
@@ -185,7 +185,7 @@ namespace AnalysisManager_Mage_PlugIn
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info for primary tool assembly");
+                LogDebug("Determining tool version info for primary tool assembly");
             }
 
             try
@@ -194,7 +194,7 @@ namespace AnalysisManager_Mage_PlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for primary tool assembly: " + ex.Message);
+                LogError("Exception determining Assembly info for primary tool assembly: " + ex.Message);
                 return false;
             }
 
@@ -207,7 +207,7 @@ namespace AnalysisManager_Mage_PlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
 
@@ -272,7 +272,7 @@ namespace AnalysisManager_Mage_PlugIn
             {
                 errorMessage = "threw an exception while querying";
                 exceptionDetail = ex.Message;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception confirming table's columns in SqLite file: " + ex.Message);
+                LogError("Exception confirming table's columns in SqLite file: " + ex.Message);
                 return false;
             }
 
@@ -303,7 +303,7 @@ namespace AnalysisManager_Mage_PlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception looking for table in SqLite file: " + ex.Message);
+                LogError("Exception looking for table in SqLite file: " + ex.Message);
                 return false;
             }
 

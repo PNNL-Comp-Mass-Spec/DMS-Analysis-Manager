@@ -123,7 +123,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 mPEKtoCSVConverter.ErrorEvent += mPEKtoCSVConverter_ErrorEvent;
                 mPEKtoCSVConverter.MessageEvent += mPEKtoCSVConverter_MessageEvent;
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                LogMessage(
                     "Creating _isos.csv and _scans.csv files using the PEK file");
                 mLastPekToCsvPercentCompleteTime = DateTime.UtcNow;
 
@@ -137,7 +137,7 @@ namespace AnalysisManagerICR2LSPlugIn
             catch (Exception ex)
             {
                 m_message = "Error converting the PEK file to DeconTools-compatible _isos.csv";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                LogError(m_message + ": " + ex.Message);
                 return false;
             }
         }
@@ -186,7 +186,7 @@ namespace AnalysisManagerICR2LSPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Exception copying the interim .PEK file to the transfer folder: " + ex.Message);
             }
         }
@@ -240,7 +240,7 @@ namespace AnalysisManagerICR2LSPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in GetLastScanInPEKFile: " + ex.Message);
+                LogError("Exception in GetLastScanInPEKFile: " + ex.Message);
                 return 0;
             }
         }
@@ -379,7 +379,7 @@ namespace AnalysisManagerICR2LSPlugIn
                             if (DateTime.UtcNow.Subtract(mLastInvalidStatusFiletime).TotalMinutes >= 15)
                             {
                                 mLastInvalidStatusFiletime = DateTime.UtcNow;
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                                LogWarning(
                                     "Invalid processing state reported by ICR2LS: " + strProcessingState);
                             }
                         }
@@ -405,7 +405,7 @@ namespace AnalysisManagerICR2LSPlugIn
                     if (DateTime.UtcNow.Subtract(mLastMissingStatusFiletime).TotalMinutes >= 60)
                     {
                         mLastMissingStatusFiletime = DateTime.UtcNow;
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                        LogWarning(
                             "ICR2LS Status.Log file not found: " + strStatusFilePath);
                     }
 
@@ -419,7 +419,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 if (DateTime.UtcNow.Subtract(mLastErrorPostingTime).TotalMinutes >= 60)
                 {
                     mLastErrorPostingTime = DateTime.UtcNow;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                    LogWarning(
                         "Error reading the ICR2LS Status.Log file (" + strStatusFilePath + "): " + ex.Message);
                 }
             }
@@ -566,13 +566,13 @@ namespace AnalysisManagerICR2LSPlugIn
 
             if (string.IsNullOrEmpty(strExeFilePath))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Job parameter ICR2LSprogloc is not defined; unable to run ICR-2LS");
                 return false;
             }
             else if (!File.Exists(strExeFilePath))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "ICR-2LS path not found: " + strExeFilePath);
+                LogError("ICR-2LS path not found: " + strExeFilePath);
                 return false;
             }
 
@@ -626,7 +626,7 @@ namespace AnalysisManagerICR2LSPlugIn
 
                     if (string.IsNullOrEmpty(strApexAcqFilePath))
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                        LogError(
                             "Could not find the " + APEX_ACQUISITION_METHOD_FILE + " file in folder " + instrumentFilePath);
                         return false;
                     }
@@ -667,7 +667,7 @@ namespace AnalysisManagerICR2LSPlugIn
                     break;
                 default:
                     // Unknown mode
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "Unknown ICR2LS processing Mode: " + eICR2LSMode.ToString());
                     return false;
             }
@@ -709,7 +709,7 @@ namespace AnalysisManagerICR2LSPlugIn
             // Set up and execute a program runner to run ICR2LS.exe
             if (m_DebugLevel >= 1)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strExeFilePath + strArguments);
+                LogDebug(strExeFilePath + strArguments);
             }
 
             if (strArguments.Length > 250)
@@ -727,9 +727,9 @@ namespace AnalysisManagerICR2LSPlugIn
 
                 if (m_DebugLevel >= 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "Command line is over 250 characters long; will use /R instead");
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  " + strExeFilePath + " " + strArguments);
+                    LogDebug("  " + strExeFilePath + " " + strArguments);
                 }
             }
 
@@ -757,19 +757,19 @@ namespace AnalysisManagerICR2LSPlugIn
                 // ProgRunner returned false, check the Exit Code
                 if (mCmdRunner.ExitCode != 0)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                    LogWarning(
                         "ICR2LS.exe returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
                 }
                 else
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to ICR2LS.exe failed (but exit code is 0)");
+                    LogWarning("Call to ICR2LS.exe failed (but exit code is 0)");
                 }
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                LogWarning(
                     "Most recent ICR-2LS State: " + mICR2LSStatus.ProcessingState + " with " + mICR2LSStatus.ScansProcessed + " scans processed (" +
                     mICR2LSStatus.PercentComplete.ToString("0.0") + "% done); Status = " + mICR2LSStatus.ProcessingStatus);
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running ICR-2LS.exe: " + m_JobNum);
+                LogError("Error running ICR-2LS.exe: " + m_JobNum);
             }
             else
             {
@@ -794,7 +794,7 @@ namespace AnalysisManagerICR2LSPlugIn
 
                     if (m_progress >= 100)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                        LogWarning(
                             "Progress reported by ICR-2LS is 100%, so will assume the job is complete");
                         blnSuccess = true;
                     }
@@ -807,7 +807,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 {
                     if (m_DebugLevel > 0)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        LogDebug(
                             "Processing state Finished; Processed " + mICR2LSStatus.ScansProcessed + " scans");
                     }
                     blnSuccess = true;
@@ -827,14 +827,14 @@ namespace AnalysisManagerICR2LSPlugIn
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+                LogDebug("Determining tool version info");
             }
 
             var progLoc = m_mgrParams.GetParam("ICR2LSprogloc");
             if (string.IsNullOrEmpty(progLoc))
             {
                 m_message = "Manager parameter ICR2LSprogloc is not defined";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in SetStepTaskToolVersion: " + m_message);
+                LogError("Error in SetStepTaskToolVersion: " + m_message);
                 return false;
             }
 
@@ -848,7 +848,7 @@ namespace AnalysisManagerICR2LSPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
@@ -920,13 +920,13 @@ namespace AnalysisManagerICR2LSPlugIn
                 }
                 else
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "Error in VerifyPEKFileExists; folder not found: " + strFolderPath);
                 }
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in VerifyPEKFileExists: " + ex.Message);
+                LogError("Exception in VerifyPEKFileExists: " + ex.Message);
             }
 
             return blnMatchFound;
@@ -958,7 +958,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 {
                     mLastStatusLogTime = DateTime.UtcNow;
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "clsAnalysisToolRunnerICRBase.CmdRunner_LoopWaiting(); " + "Processing Time = " +
                         DateTime.UtcNow.Subtract(m_StartTime).TotalMinutes.ToString("0.0") + " minutes; " + "Progress = " +
                         m_progress.ToString("0.00") + "; " + "Scans Processed = " + mICR2LSStatus.ScansProcessed.ToString());
@@ -979,7 +979,7 @@ namespace AnalysisManagerICR2LSPlugIn
 
         private void mPEKtoCSVConverter_ErrorEvent(object sender, PEKtoCSVConverter.PEKtoCSVConverter.MessageEventArgs e)
         {
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "PEKtoCSVConverter error: " + e.Message);
+            LogError("PEKtoCSVConverter error: " + e.Message);
             clsGlobal.AppendToComment(m_message, e.Message);
         }
 
@@ -996,7 +996,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 mLastPekToCsvPercentCompleteTime = DateTime.UtcNow;
             }
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, e.Message);
+            LogMessage(e.Message);
         }
     }
 }

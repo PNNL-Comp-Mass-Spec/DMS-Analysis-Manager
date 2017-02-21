@@ -90,7 +90,7 @@ namespace AnalysisManagerInSpecTPlugIn
                 parallelZipNum = Convert.ToInt32(stepNum) - Convert.ToInt32(CloneStepRenum) + 1;
                 DtaResultFileName = DatasetName + "_" + Convert.ToString(parallelZipNum) + "_dta.txt";
                 isParallelized = true;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                LogMessage(
                     "Processing parallelized Inspect segment " + parallelZipNum.ToString());
             }
 
@@ -101,7 +101,7 @@ namespace AnalysisManagerInSpecTPlugIn
                 // No folder found containing the zipped DTA files (error will have already been logged)
                 if (m_DebugLevel >= 3)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "FindDataFile returned False for " + DtaResultFileName);
                 }
                 return false;
@@ -113,7 +113,7 @@ namespace AnalysisManagerInSpecTPlugIn
                 {
                     if (m_DebugLevel >= 1)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                        LogMessage(
                             "Downloaded " + m_MyEMSLUtilities.DownloadedFiles.First().Value.Filename + " from MyEMSL");
                     }
                 }
@@ -130,7 +130,7 @@ namespace AnalysisManagerInSpecTPlugIn
                     // Error copying file (error will have already been logged)
                     if (m_DebugLevel >= 3)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                        LogError(
                             "CopyFileToWorkDir returned False for " + DtaResultFileName + " using folder " + DtaResultFolderName);
                     }
                     return false;
@@ -143,12 +143,12 @@ namespace AnalysisManagerInSpecTPlugIn
             if (!isParallelized || Path.GetExtension(DtaResultFileName).ToLower() == ".zip")
             {
                 //Unzip concatenated DTA file
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Unzipping concatenated DTA file");
+                LogMessage("Unzipping concatenated DTA file");
                 if (UnzipFileStart(Path.Combine(m_WorkingDir, DtaResultFileName), m_WorkingDir, "clsAnalysisResourcesIN.RetrieveDtaFiles", false))
                 {
                     if (m_DebugLevel >= 1)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Concatenated DTA file unzipped");
+                        LogDebug("Concatenated DTA file unzipped");
                     }
                 }
             }

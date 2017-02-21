@@ -111,7 +111,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
                 if (m_DebugLevel > 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "clsAnalysisToolRunnerIDPicker.RunTool(): Enter");
                 }
 
@@ -167,7 +167,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 {
                     // Fasta file not found
                     m_message = "Fasta file not found: " + fiFastaFile.Name;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Fasta file not found: " + fiFastaFile.FullName);
+                    LogError("Fasta file not found: " + fiFastaFile.FullName);
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
@@ -186,7 +186,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 // This function updates mPeptideListToXMLExePath and mIDPickerProgramFolder
                 if (!StoreToolVersionInfo(progLocQonvert, blnSkipIDPicker))
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "Aborting since StoreToolVersionInfo returned false");
                     m_message = "Error determining IDPicker version";
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -200,7 +200,7 @@ namespace AnalysisManagerIDPickerPlugIn
                     {
                         m_message = "Error creating PepXML file";
                     }
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "Error creating PepXML file for job " + m_JobNum);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -308,7 +308,7 @@ namespace AnalysisManagerIDPickerPlugIn
             catch (Exception ex)
             {
                 m_message = "Exception in IDPickerPlugin->RunTool";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -532,7 +532,7 @@ namespace AnalysisManagerIDPickerPlugIn
             catch (Exception ex)
             {
                 m_message = "Exception in IDPickerPlugin->CreateAssembleFile";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 return false;
             }
 
@@ -622,7 +622,7 @@ namespace AnalysisManagerIDPickerPlugIn
                     if (!File.Exists(mPepXMLFilePath))
                     {
                         m_message = "Error creating PepXML file";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ", job " + m_JobNum);
+                        LogError(m_message + ", job " + m_JobNum);
                         blnSuccess = false;
                     }
                     else
@@ -634,7 +634,7 @@ namespace AnalysisManagerIDPickerPlugIn
             catch (Exception ex)
             {
                 m_message = "Exception in IDPickerPlugin->CreatePepXMLFile";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 return false;
             }
 
@@ -660,7 +660,7 @@ namespace AnalysisManagerIDPickerPlugIn
             {
                 if (m_DebugLevel >= 3)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Looking for decoy proteins in the fasta file");
+                    LogDebug("Looking for decoy proteins in the fasta file");
                 }
 
                 var lstReversedProteinPrefixes = new SortedSet<string>();
@@ -729,7 +729,7 @@ namespace AnalysisManagerIDPickerPlugIn
             catch (Exception ex)
             {
                 m_message = "Exception in IDPickerPlugin->DetermineDecoyProteinPrefix";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 return false;
             }
 
@@ -823,7 +823,7 @@ namespace AnalysisManagerIDPickerPlugIn
             catch (Exception ex)
             {
                 m_message = "Exception in IDPickerPlugin->LoadIDPickerOptions";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 return false;
             }
 
@@ -841,7 +841,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
                 if (m_DebugLevel >= 3)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "Looking for decoy proteins in the MSGFDB synopsis file");
                 }
 
@@ -858,7 +858,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
                                 if (m_DebugLevel >= 4)
                                 {
-                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                    LogDebug(
                                         "Decoy protein prefix found: " + strDecoyPrefix);
                                 }
 
@@ -876,7 +876,7 @@ namespace AnalysisManagerIDPickerPlugIn
             catch (Exception ex)
             {
                 m_message = "Exception in IDPickerPlugin->LookForDecoyProteinsInMSGFDBResults";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 return false;
             }
 
@@ -940,7 +940,7 @@ namespace AnalysisManagerIDPickerPlugIn
                     if (!blnSuccess)
                     {
                         blnErrorEncountered = true;
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                        LogError(
                             "Unable to move " + fiFile.Name + " into the IDPicker subfolder; tried " + (intAttempts - 1).ToString() + " times");
                     }
                 }
@@ -1017,7 +1017,7 @@ namespace AnalysisManagerIDPickerPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Exception in ParseConsoleOutputFileForErrors: " + ex.Message);
             }
         }
@@ -1077,7 +1077,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 if (!File.Exists(mIdpAssembleFilePath))
                 {
                     m_message = "IDPicker Assemble results file not found";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + " at " + mIdpAssembleFilePath);
+                    LogError(m_message + " at " + mIdpAssembleFilePath);
                     blnSuccess = false;
                 }
                 else
@@ -1148,7 +1148,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 if (!File.Exists(mIdpXMLFilePath))
                 {
                     m_message = "IDPicker Qonvert results file not found";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + " at " + mIdpXMLFilePath);
+                    LogError(m_message + " at " + mIdpXMLFilePath);
                     blnSuccess = false;
                 }
             }
@@ -1205,7 +1205,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 if (!diReportFolder.Exists)
                 {
                     m_message = "IDPicker report folder file not found";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + " at " + diReportFolder.FullName);
+                    LogError(m_message + " at " + diReportFolder.FullName);
                     blnSuccess = false;
                 }
 
@@ -1223,7 +1223,7 @@ namespace AnalysisManagerIDPickerPlugIn
                     if (!blnTSVFileFound)
                     {
                         m_message = "IDPicker report folder does not contain any TSV files";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + "; " + diReportFolder.FullName);
+                        LogError(m_message + "; " + diReportFolder.FullName);
                         blnSuccess = false;
                     }
                 }
@@ -1373,7 +1373,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 {
                     if (!strError.ToLower().StartsWith("warning"))
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "... " + strError);
+                        LogError("... " + strError);
                     }
                 }
             }
@@ -1386,7 +1386,7 @@ namespace AnalysisManagerIDPickerPlugIn
                     m_message += ": " + mCmdRunnerErrors.First();
                 }
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                LogError(m_message);
 
                 if (cmdRunner.ExitCode != 0)
                 {
@@ -1402,7 +1402,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 m_StatusTools.UpdateAndWrite(m_progress);
                 if (m_DebugLevel >= 3)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strProgramDescription + " Complete");
+                    LogDebug(strProgramDescription + " Complete");
                 }
             }
 
@@ -1422,7 +1422,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+                LogDebug("Determining tool version info");
             }
 
             // We will store paths to key files in ioToolFiles
@@ -1449,7 +1449,7 @@ namespace AnalysisManagerIDPickerPlugIn
                     }
                     catch (Exception ex)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                        LogError(
                             "Exception calling SetStepTaskToolVersion: " + ex.Message);
                         return false;
                     }
@@ -1482,7 +1482,7 @@ namespace AnalysisManagerIDPickerPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
@@ -1499,7 +1499,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 if (!base.ZipFile(mPepXMLFilePath, false, strZippedPepXMLFilePath))
                 {
                     string Msg = "Error zipping PepXML file, job " + m_JobNum;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg);
+                    LogError(Msg);
                     m_message = clsGlobal.AppendToComment(m_message, "Error zipping PepXML file");
                     return false;
                 }
@@ -1510,7 +1510,7 @@ namespace AnalysisManagerIDPickerPlugIn
             catch (Exception ex)
             {
                 string Msg = "clsAnalysisToolRunnerIDPicker.ZipPepXMLFile, Exception zipping output files, job " + m_JobNum + ": " + ex.Message;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg);
+                LogError(Msg);
                 m_message = clsGlobal.AppendToComment(m_message, "Error zipping PepXML file");
                 return false;
             }

@@ -105,7 +105,7 @@ namespace AnalysisManagerMSAlignPlugIn
 
                 if (m_DebugLevel > 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMSAlign.RunTool(): Enter");
+                    LogDebug("clsAnalysisToolRunnerMSAlign.RunTool(): Enter");
                 }
 
                 // Verify that program files exist
@@ -169,7 +169,7 @@ namespace AnalysisManagerMSAlignPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MSAlign");
+                LogMessage("Running MSAlign");
 
                 // Lookup the amount of memory to reserve for Java; default to 2 GB
                 intJavaMemorySize = m_jobParams.GetJobParameter("MSAlignJavaMemorySize", 2000);
@@ -186,7 +186,7 @@ namespace AnalysisManagerMSAlignPlugIn
                     CmdStr = " -Xmx" + intJavaMemorySize.ToString() + "M -classpath jar\\*; edu.ucsd.msalign.align.console.MsAlignPipeline .\\";
                 }
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, JavaProgLoc + " " + CmdStr);
+                LogDebug(JavaProgLoc + " " + CmdStr);
 
                 mCmdRunner = new clsRunDosProgram(mMSAlignWorkFolderPath);
                 RegisterEvents(mCmdRunner);
@@ -224,7 +224,7 @@ namespace AnalysisManagerMSAlignPlugIn
 
                 if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg);
+                    LogError(mConsoleOutputErrorMsg);
                 }
 
                 if (!blnSuccess)
@@ -233,16 +233,16 @@ namespace AnalysisManagerMSAlignPlugIn
                     Msg = "Error running MSAlign";
                     m_message = clsGlobal.AppendToComment(m_message, Msg);
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg + ", job " + m_JobNum);
+                    LogError(Msg + ", job " + m_JobNum);
 
                     if (mCmdRunner.ExitCode != 0)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                        LogWarning(
                             "MSAlign returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
                     }
                     else
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                        LogWarning(
                             "Call to MSAlign failed (but exit code is 0)");
                     }
 
@@ -286,7 +286,7 @@ namespace AnalysisManagerMSAlignPlugIn
                     m_StatusTools.UpdateAndWrite(m_progress);
                     if (m_DebugLevel >= 3)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSAlign Search Complete");
+                        LogDebug("MSAlign Search Complete");
                     }
                 }
 
@@ -298,7 +298,7 @@ namespace AnalysisManagerMSAlignPlugIn
                 //Add the current job data to the summary file
                 if (!UpdateSummaryFile())
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                    LogWarning(
                         "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
                 }
 
@@ -348,7 +348,7 @@ namespace AnalysisManagerMSAlignPlugIn
             catch (Exception ex)
             {
                 m_message = "Error in MSAlignPlugin->RunTool";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -364,7 +364,7 @@ namespace AnalysisManagerMSAlignPlugIn
 
                 if (m_DebugLevel >= 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                    LogMessage(
                         "Adding header line to MSAlign_ResultTable.txt file");
                 }
 
@@ -399,7 +399,7 @@ namespace AnalysisManagerMSAlignPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Exception in AddResultTableHeaderLine: " + ex.Message);
                 return false;
             }
@@ -438,7 +438,7 @@ namespace AnalysisManagerMSAlignPlugIn
 
                         if (intWarningCount < 5 && strProteinResidues.GetHashCode() != oReader.ProteinSequence.GetHashCode())
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                            LogWarning(
                                 "Changed invalid residues to '-' in protein " + oReader.ProteinName);
                             intWarningCount += 1;
                         }
@@ -459,7 +459,7 @@ namespace AnalysisManagerMSAlignPlugIn
             catch (Exception ex)
             {
                 m_message = "Exception in CopyFastaCheckResidues";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                LogError(m_message + ": " + ex.Message);
                 return false;
             }
 
@@ -472,7 +472,7 @@ namespace AnalysisManagerMSAlignPlugIn
             if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+            LogWarning(
                 "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
 
             // Bump up the debug level if less than 2
@@ -518,7 +518,7 @@ namespace AnalysisManagerMSAlignPlugIn
 
                 if (!fiMSAlignJarFile.Exists)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "MSAlign .Jar file not found: " + fiMSAlignJarFile.FullName);
                     return false;
                 }
@@ -527,7 +527,7 @@ namespace AnalysisManagerMSAlignPlugIn
                 var diMSAlignSrc = new DirectoryInfo(fiMSAlignJarFile.Directory.Parent.FullName);
                 var diMSAlignWork = new DirectoryInfo(Path.Combine(m_WorkDir, "MSAlign"));
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copying MSAlign program file to the Work Directory");
+                LogMessage("Copying MSAlign program file to the Work Directory");
 
                 // Make sure the folder doesn't already exit
                 if (diMSAlignWork.Exists)
@@ -570,7 +570,7 @@ namespace AnalysisManagerMSAlignPlugIn
 
                     if (diSubfolder.Length == 0)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                        LogError(
                             "Source MSAlign subfolder not found: " + strTargetSubfolder);
                         return false;
                     }
@@ -583,7 +583,7 @@ namespace AnalysisManagerMSAlignPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Exception in CopyMSAlignProgramFiles: " + ex.Message);
                 return false;
             }
@@ -693,7 +693,7 @@ namespace AnalysisManagerMSAlignPlugIn
                                             m_message = "Must specify an explicit scan type for " + strKeyName +
                                                         " in the MSAlign parameter file (CID, HCD, or ETD)";
 
-                                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + "; this is required because Bruker-created mzXML files do not include activationMethod information in the precursorMz tag");
+                                            LogError(m_message + "; this is required because Bruker-created mzXML files do not include activationMethod information in the precursorMz tag");
 
                                             return false;
                                         }
@@ -712,7 +712,7 @@ namespace AnalysisManagerMSAlignPlugIn
                                         {
                                             m_message = "MSAlign parameter file contains searchType=TARGET+DECOY; protein options for this analysis job must contain seq_direction=forward, not seq_direction=decoy";
 
-                                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                                            LogError(m_message);
 
                                             return false;
                                         }
@@ -765,7 +765,7 @@ namespace AnalysisManagerMSAlignPlugIn
                                                         // Legacy mode does not support "FILE"
                                                         // Auto-switch to CID and log a warning message
                                                         strValue = "CID";
-                                                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                                                        LogWarning(
                                                             "Using instrument mode 'CID' since v0.5 of MSAlign does not support reading the activation mode from the msalign file");
                                                     }
                                                 }
@@ -787,7 +787,7 @@ namespace AnalysisManagerMSAlignPlugIn
                                                     else
                                                     {
                                                         m_message = "MSAlign parameter file contains a non-EValue cutoff value; this is not compatible with MSAlign v0.5";
-                                                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                                                        LogError(m_message);
                                                         return false;
                                                     }
                                                 }
@@ -820,7 +820,7 @@ namespace AnalysisManagerMSAlignPlugIn
                                                 else
                                                 {
                                                     m_message = "MSAlign parameter file contains a non-EValue cutoff value; this is not compatible with MSAlign v0.6";
-                                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                                                    LogError(m_message);
                                                     return false;
                                                 }
                                             }
@@ -864,7 +864,7 @@ namespace AnalysisManagerMSAlignPlugIn
             catch (Exception ex)
             {
                 m_message = "Exception in CreateInputPropertiesFile";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Exception in CreateInputPropertiesFile: " + ex.Message);
                 return false;
             }
@@ -895,7 +895,7 @@ namespace AnalysisManagerMSAlignPlugIn
                 if (!fiFastaFile.Exists)
                 {
                     // Fasta file not found
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Fasta file not found: " + fiFastaFile.FullName);
+                    LogError("Fasta file not found: " + fiFastaFile.FullName);
                     return false;
                 }
 
@@ -905,7 +905,7 @@ namespace AnalysisManagerMSAlignPlugIn
                 {
                     if (string.IsNullOrEmpty(m_message))
                         m_message = "CopyFastaCheckResidues returned false";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                    LogError(m_message);
                     return false;
                 }
 
@@ -913,7 +913,7 @@ namespace AnalysisManagerMSAlignPlugIn
                 fiFiles = fiSourceFolder.GetFiles("*" + clsAnalysisResourcesMSAlign.MSDECONV_MSALIGN_FILE_SUFFIX);
                 if (fiFiles.Length == 0)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "MSAlign file not found in work directory");
+                    LogError("MSAlign file not found in work directory");
                     return false;
                 }
                 else
@@ -939,7 +939,7 @@ namespace AnalysisManagerMSAlignPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Exception in InitializeMSInputFolder: " + ex.Message);
                 return false;
             }
@@ -968,7 +968,7 @@ namespace AnalysisManagerMSAlignPlugIn
                 {
                     if (m_DebugLevel >= 4)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        LogDebug(
                             "Console output file not found: " + strConsoleOutputFilePath);
                     }
 
@@ -977,7 +977,7 @@ namespace AnalysisManagerMSAlignPlugIn
 
                 if (m_DebugLevel >= 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing file " + strConsoleOutputFilePath);
+                    LogDebug("Parsing file " + strConsoleOutputFilePath);
                 }
 
                 string strLineIn = null;
@@ -1006,7 +1006,7 @@ namespace AnalysisManagerMSAlignPlugIn
                                 {
                                     if (m_DebugLevel >= 2 && string.IsNullOrWhiteSpace(mMSAlignVersion))
                                     {
-                                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                        LogDebug(
                                             "MSAlign version: " + strLineIn);
                                     }
 
@@ -1059,7 +1059,7 @@ namespace AnalysisManagerMSAlignPlugIn
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
             }
@@ -1073,7 +1073,7 @@ namespace AnalysisManagerMSAlignPlugIn
         {
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+                LogDebug("Determining tool version info");
             }
 
             var strToolVersionInfo = string.Copy(mMSAlignVersion);
@@ -1088,7 +1088,7 @@ namespace AnalysisManagerMSAlignPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
@@ -1109,7 +1109,7 @@ namespace AnalysisManagerMSAlignPlugIn
                 {
                     if (m_DebugLevel >= 4)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        LogDebug(
                             "Console output file not found: " + strConsoleOutputFilePath);
                     }
 
@@ -1118,7 +1118,7 @@ namespace AnalysisManagerMSAlignPlugIn
 
                 if (m_DebugLevel >= 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "Trimming console output file at " + strConsoleOutputFilePath);
                 }
 
@@ -1189,7 +1189,7 @@ namespace AnalysisManagerMSAlignPlugIn
                 {
                     if (m_DebugLevel >= 1)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                        LogError(
                             "Error replacing original console output file (" + strConsoleOutputFilePath + ") with trimmed version: " + ex.Message);
                     }
                 }
@@ -1199,7 +1199,7 @@ namespace AnalysisManagerMSAlignPlugIn
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "Error trimming console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
             }
@@ -1229,7 +1229,7 @@ namespace AnalysisManagerMSAlignPlugIn
                             m_message = clsGlobal.AppendToComment(m_message, Msg);
                         }
 
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                        LogError(
                             Msg + " (" + strResultFilePath + ")" + ", job " + m_JobNum);
                         blnProcessingError = true;
                     }
@@ -1264,7 +1264,7 @@ namespace AnalysisManagerMSAlignPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Exception in ValidateAndCopyResultFiles: " + ex.Message);
                 return false;
             }
@@ -1292,7 +1292,7 @@ namespace AnalysisManagerMSAlignPlugIn
                 {
                     if (m_DebugLevel >= 2)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                        LogWarning(
                             "MSAlign_ResultTable.txt file not found: " + strSourceFilePath);
                     }
                     return false;
@@ -1300,7 +1300,7 @@ namespace AnalysisManagerMSAlignPlugIn
 
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                    LogMessage(
                         "Validating that the MSAlign_ResultTable.txt file is not empty");
                 }
 
@@ -1339,13 +1339,13 @@ namespace AnalysisManagerMSAlignPlugIn
                     Msg = "MSAlign_ResultTable.txt file is empty";
                     m_message = clsGlobal.AppendToComment(m_message, Msg);
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg + ", job " + m_JobNum);
+                    LogError(Msg + ", job " + m_JobNum);
                     return false;
                 }
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Exception in ValidateResultTableFile: " + ex.Message);
                 return false;
             }
@@ -1369,7 +1369,7 @@ namespace AnalysisManagerMSAlignPlugIn
                 {
                     if (m_DebugLevel >= 1)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                        LogWarning(
                             "MSAlign results folder is empty; nothing to zip: " + strSourceFolderPath);
                     }
                     return false;
@@ -1383,7 +1383,7 @@ namespace AnalysisManagerMSAlignPlugIn
                     {
                         strLogMessage += ": " + strTargetFilePath;
                     }
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, strLogMessage);
+                    LogMessage(strLogMessage);
                 }
 
                 var objZipper = new Ionic.Zip.ZipFile(strTargetFilePath);
@@ -1393,7 +1393,7 @@ namespace AnalysisManagerMSAlignPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Exception in ZipMSAlignResultFolder: " + ex.Message);
                 return false;
             }

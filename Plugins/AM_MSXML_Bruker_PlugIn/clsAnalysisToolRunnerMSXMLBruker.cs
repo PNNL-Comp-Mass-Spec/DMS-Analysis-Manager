@@ -58,7 +58,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             // Store the CompassXport version info in the database
             if (!StoreToolVersionInfo())
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Aborting since StoreToolVersionInfo returned false");
                 if (string.IsNullOrEmpty(m_message))
                 {
@@ -113,13 +113,13 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             //Delete the raw data files
             if (m_DebugLevel > 3)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                LogDebug(
                     "clsAnalysisToolRunnerMSXMLBruker.RunTool(), Deleting raw data file");
             }
 
             if (DeleteRawDataFiles() != CloseOutType.CLOSEOUT_SUCCESS)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "clsAnalysisToolRunnerMSXMLBruker.RunTool(), Problem deleting raw data files: " + m_message);
 
                 if (!string.IsNullOrEmpty(processingErrorMessage))
@@ -136,7 +136,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             //Update the job summary file
             if (m_DebugLevel > 3)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                LogDebug(
                     "clsAnalysisToolRunnerMSXMLBruker.RunTool(), Updating summary file");
             }
             UpdateSummaryFile();
@@ -144,7 +144,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             //Make the results folder
             if (m_DebugLevel > 3)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                LogDebug(
                     "clsAnalysisToolRunnerMSXMLBruker.RunTool(), Making results folder");
             }
 
@@ -192,7 +192,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
         {
             if (m_DebugLevel > 4)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                LogDebug(
                     "clsAnalysisToolRunnerMSXMLGen.CreateMSXmlFile(): Enter");
             }
 
@@ -217,28 +217,28 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
                 if (string.IsNullOrEmpty(CompassXportProgramPath))
                 {
                     m_message = "Manager parameter CompassXportLoc is not defined in the Manager Control DB";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                    LogError(m_message);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 if (!File.Exists(CompassXportProgramPath))
                 {
                     m_message = "CompassXport program not found";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + " at " + CompassXportProgramPath);
+                    LogError(m_message + " at " + CompassXportProgramPath);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
             }
             else
             {
                 m_message = "Invalid value for MSXMLGenerator: " + msXmlGenerator;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                LogError(m_message);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
             var eOutputType = clsCompassXportRunner.GetMsXmlOutputTypeByName(msXmlFormat);
             if (eOutputType == clsCompassXportRunner.MSXMLOutputTypeConstants.Invalid)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                LogWarning(
                     "msXmlFormat string is not recognized (" + msXmlFormat + "); it is typically mzXML, mzML, or CSV; will default to mzXML");
                 eOutputType = clsCompassXportRunner.MSXMLOutputTypeConstants.mzXML;
             }
@@ -257,12 +257,12 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
 
             if (!blnSuccess)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, mCompassXportRunner.ErrorMessage);
+                LogWarning(mCompassXportRunner.ErrorMessage);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
             else if (mCompassXportRunner.ErrorMessage.Length > 0)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, mCompassXportRunner.ErrorMessage);
+                LogWarning(mCompassXportRunner.ErrorMessage);
             }
 
             if (eOutputType != clsCompassXportRunner.MSXMLOutputTypeConstants.CSV)
@@ -273,7 +273,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
                 }
 
                 m_message = "MSXml results file not found: " + fiResultsFile.FullName;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                LogError(m_message);
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
@@ -291,7 +291,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             m_message = "CompassXport created " + fiFiles.Count.ToString() +
                         " CSV files. The CSV conversion mode is only appropriate for datasets with fewer than " + MAX_CSV_FILES +
                         " spectra; create a mzXML file instead (e.g., settings file mzXML_Bruker.xml)";
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+            LogError(m_message);
 
             foreach (var fiFile in fiFiles)
             {
@@ -311,7 +311,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
         private CloseOutType PostProcessMsXmlFile(FileInfo fiResultsFile)
         {
             // Compress the file using GZip
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "GZipping " + fiResultsFile.Name);
+            LogMessage("GZipping " + fiResultsFile.Name);
             fiResultsFile = GZipFile(fiResultsFile);
 
             if (fiResultsFile == null)
@@ -353,7 +353,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+                LogDebug("Determining tool version info");
             }
 
             // Store paths to key files in ioToolFiles
@@ -367,7 +367,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
                 if (string.IsNullOrEmpty(compassXportPath))
                 {
                     m_message = "Path defined by manager param CompassXportLoc is empty";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                    LogError(m_message);
                     return false;
                 }
 
@@ -378,7 +378,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
                 catch (Exception ex)
                 {
                     m_message = "Path defined by manager param CompassXportLoc is invalid: " + compassXportPath;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + "; " + ex.Message);
+                    LogError(m_message + "; " + ex.Message);
                     return false;
                 }
             }
@@ -393,7 +393,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
                     m_message = "Invalid value for MSXMLGenerator, should be " + COMPASS_XPORT + ", not " + msXmlGenerator;
                 }
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                LogError(m_message);
                 return false;
             }
 
@@ -403,7 +403,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
@@ -431,7 +431,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
         /// <remarks></remarks>
         private void mCompassXportRunner_ProgRunnerStarting(string CommandLine)
         {
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, CommandLine);
+            LogDebug(CommandLine);
         }
 
         #endregion

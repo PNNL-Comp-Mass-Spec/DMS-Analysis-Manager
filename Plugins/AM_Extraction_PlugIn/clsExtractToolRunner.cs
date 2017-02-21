@@ -43,7 +43,6 @@ namespace AnalysisManagerExtractionPlugin
         #region "Module variables"
 
         protected clsPeptideProphetWrapper m_PeptideProphet;
-        protected clsPepHitResultsProcWrapper m_PHRP;
 
         protected clsMSGFDBUtils mMSGFDBUtils;
         protected bool mMSGFDBUtilsError;
@@ -61,7 +60,6 @@ namespace AnalysisManagerExtractionPlugin
         /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
-            string msg = null;
 
             var strCurrentAction = "preparing for extraction";
             bool blnProcessingError = false;
@@ -76,16 +74,14 @@ namespace AnalysisManagerExtractionPlugin
 
                 if (m_DebugLevel > 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "clsAnalysisToolRunnerDeconPeakDetector.RunTool(): Enter");
                 }
 
                 // Store the AnalysisManager version info in the database
                 if (!StoreToolVersionInfo())
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                        "Aborting since StoreToolVersionInfo returned false");
-                    LogError("Error determining version of Data Extraction tools");
+                    LogError("Aborting since StoreToolVersionInfo returned false for Data Extraction");
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -216,16 +212,16 @@ namespace AnalysisManagerExtractionPlugin
                         break;
                     default:
                         // Should never get here - invalid result type specified
-                        msg = "Invalid ResultType specified: " + m_jobParams.GetParam("ResultType");
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsExtractToolRunner.RunTool(); " + msg);
+                        var msg = "Invalid ResultType specified: " + m_jobParams.GetParam("ResultType");
+                        LogError("clsExtractToolRunner.RunTool(); " + msg);
                         m_message = clsGlobal.AppendToComment(m_message, msg);
                         return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 if (eResult != CloseOutType.CLOSEOUT_SUCCESS & eResult != CloseOutType.CLOSEOUT_NO_DATA)
                 {
-                    msg = "Error " + strCurrentAction;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsExtractToolRunner.RunTool(); " + msg);
+                    var msg = "Error " + strCurrentAction;
+                    LogError("clsExtractToolRunner.RunTool(); " + msg);
                     m_message = clsGlobal.AppendToComment(m_message, msg);
                     blnProcessingError = true;
                 }
@@ -252,7 +248,7 @@ namespace AnalysisManagerExtractionPlugin
                 // Add the current job data to the summary file
                 if (!UpdateSummaryFile())
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                    LogWarning(
                         "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
                 }
 
@@ -294,8 +290,7 @@ namespace AnalysisManagerExtractionPlugin
             }
             catch (Exception ex)
             {
-                msg = "Exception running extraction tool: " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex);
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                LogError("Exception running extraction tool: " + ex.Message, ex);
                 m_message = clsGlobal.AppendToComment(m_message, "Exception running extraction tool");
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -369,7 +364,7 @@ namespace AnalysisManagerExtractionPlugin
 
                     if (m_DebugLevel >= 1)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                        LogMessage(
                             "Verifying the decoy prefix in " + fiFastaFile.Name);
                     }
 
@@ -397,7 +392,7 @@ namespace AnalysisManagerExtractionPlugin
                                         " as defined by job parameter MODPlusDecoyPrefix because " + (bestPrefix.Key * 100).ToString("0") +
                                         "% of the proteins start with " + bestPrefix.Value;
 
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_EvalMessage);
+                        LogMessage(m_EvalMessage);
 
                         decoyPrefixJobParam = bestPrefix.Value;
                     }
@@ -419,7 +414,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                    LogMessage(
                         "Filtering MODa/MODPlus Results with FDR threshold " + fdrThreshold.ToString("0.00"));
                 }
 
@@ -453,7 +448,7 @@ namespace AnalysisManagerExtractionPlugin
                 // Example command line:
                 // "C:\Program Files\Java\jre8\bin\java.exe" -Xmx1000M -jar C:\DMS_Programs\MODa\anal_moda.jar -i "E:\DMS_WorkDir3\QC_Shew_13_04_pt1_1_2_45min_14Nov13_Leopard_13-05-21_moda.txt" -p "E:\DMS_WorkDir3\MODa_PartTryp_Par20ppm_Frag0pt6Da" -fdr 0.05 -d XXX_
                 // "C:\Program Files\Java\jre8\bin\java.exe" -Xmx1000M -jar C:\DMS_Programs\MODPlus\tda_plus.jar -i "E:\DMS_WorkDir3\QC_Shew_13_04_pt1_1_2_45min_14Nov13_Leopard_13-05-21_modp.txt" -fdr 0.05 -d Reversed_
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, JavaProgLoc + " " + cmdStr);
+                LogDebug(JavaProgLoc + " " + cmdStr);
 
                 var progRunner = new clsRunDosProgram(m_WorkDir)
                 {
@@ -470,17 +465,17 @@ namespace AnalysisManagerExtractionPlugin
                 if (!blnSuccess)
                 {
                     var msg = "Error parsing and filtering " + toolName + " results";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg + ", job " + m_JobNum);
+                    LogError(msg + ", job " + m_JobNum);
                     m_message = clsGlobal.AppendToComment(m_message, msg);
 
                     if (progRunner.ExitCode != 0)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                        LogWarning(
                             modxFilterJarName + " returned a non-zero exit code: " + progRunner.ExitCode.ToString());
                     }
                     else
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                        LogWarning(
                             "Call to " + modxFilterJarName + " failed (but exit code is 0)");
                     }
 
@@ -601,7 +596,7 @@ namespace AnalysisManagerExtractionPlugin
         /// <returns></returns>
         private CloseOutType CreateMSGFPlusResultsProteinToPeptideMappingFile(string resultsFileName)
         {
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Creating the missing _PepToProtMap.txt file");
+            LogMessage("Creating the missing _PepToProtMap.txt file");
 
             var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
             if (mMSGFDBUtils == null)
@@ -675,7 +670,7 @@ namespace AnalysisManagerExtractionPlugin
 
                         if (m_DebugLevel >= 2)
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Caching data from " + sourceFilePath);
+                            LogDebug("Caching data from " + sourceFilePath);
                         }
 
                         using (var srSourceFile = new StreamReader(new FileStream(sourceFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
@@ -737,13 +732,13 @@ namespace AnalysisManagerExtractionPlugin
                                     {
                                         if (warningsLogged < 10)
                                         {
-                                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                                            LogWarning(
                                                 "SpecEValue was not numeric: " + specEValueText + " in " + strLineIn);
                                             warningsLogged += 1;
 
                                             if (warningsLogged >= 10)
                                             {
-                                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                                                LogWarning(
                                                     "Additional warnings will not be logged");
                                             }
                                         }
@@ -785,7 +780,7 @@ namespace AnalysisManagerExtractionPlugin
 
                     if (m_DebugLevel >= 2)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        LogDebug(
                             "Sorting results for " + dctScanChargeBestScore.Count + " lines of scan/charge combos");
                     }
 
@@ -817,7 +812,7 @@ namespace AnalysisManagerExtractionPlugin
 
                     if (m_DebugLevel >= 1)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                        LogMessage(
                             "Read " + totalLinesProcessed + " data lines from " + numberOfClonedSteps + " MSGF+ .tsv files; wrote " +
                             filterPassingPSMCount + " PSMs to the merged file");
                     }
@@ -860,7 +855,7 @@ namespace AnalysisManagerExtractionPlugin
 
                         if (m_DebugLevel >= 2)
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Caching data from " + sourceFilePath);
+                            LogDebug("Caching data from " + sourceFilePath);
                         }
 
                         using (var srSourceFile = new StreamReader(new FileStream(sourceFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
@@ -920,7 +915,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 if (m_DebugLevel >= 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                    LogMessage(
                         "Read " + totalLinesProcessed + " data lines from " + numberOfClonedSteps + " _PepToProtMap files; now sorting the " +
                         totalLinesToWrite + " merged peptides using FlexibleFileSortUtility.dll");
                 }
@@ -951,13 +946,12 @@ namespace AnalysisManagerExtractionPlugin
         /// <remarks></remarks>
         private CloseOutType PerformPeptideExtraction()
         {
-            string msg = null;
             clsPeptideExtractWrapper pepExtractTool = new clsPeptideExtractWrapper(m_mgrParams, m_jobParams, ref m_StatusTools);
 
             //Run the extractor
             if (m_DebugLevel > 3)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                LogDebug(
                     "clsExtractToolRunner.PerformPeptideExtraction(); Starting peptide extraction");
             }
 
@@ -968,10 +962,7 @@ namespace AnalysisManagerExtractionPlugin
                 if ((eResult != CloseOutType.CLOSEOUT_SUCCESS) & (eResult != CloseOutType.CLOSEOUT_NO_DATA))
                 {
                     //log error and return result calling routine handles the error appropriately
-                    msg = "Error encountered during extraction";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                        "clsExtractToolRunner.PerformPeptideExtraction(); " + msg);
-                    m_message = clsGlobal.AppendToComment(m_message, msg);
+                    LogError("Error encountered during extraction");
                     return eResult;
                 }
 
@@ -985,9 +976,7 @@ namespace AnalysisManagerExtractionPlugin
             }
             catch (Exception ex)
             {
-                msg = "clsExtractToolRunner.PerformPeptideExtraction(); Exception running extraction tool: " + ex.Message + "; " +
-                      clsGlobal.GetExceptionStackTrace(ex);
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                LogError("clsExtractToolRunner.PerformPeptideExtraction(); Exception running extraction tool: " + ex.Message, ex);
                 m_message = clsGlobal.AppendToComment(m_message, "Exception running extraction tool");
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -1810,8 +1799,7 @@ namespace AnalysisManagerExtractionPlugin
             }
             catch (Exception ex)
             {
-                msg = "clsExtractToolRunner.RunPhrpForInSpecT(); Exception running PHRP: " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex);
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                LogError("clsExtractToolRunner.RunPhrpForInSpecT(); Exception running PHRP: " + ex.Message, ex);
                 m_message = clsGlobal.AppendToComment(m_message, "Exception running PHRP");
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -1832,8 +1820,6 @@ namespace AnalysisManagerExtractionPlugin
         {
             const int SYN_FILE_MAX_SIZE_MB = 200;
             const string PEPPROPHET_RESULT_FILE_SUFFIX = "_PepProphet.txt";
-
-            string msg = null;
 
             string SynFile = null;
             string[] strFileList = null;
@@ -1872,8 +1858,7 @@ namespace AnalysisManagerExtractionPlugin
 
             if (m_DebugLevel >= 3)
             {
-                msg = "clsExtractToolRunner.RunPeptideProphet(); Starting Peptide Prophet";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msg);
+                LogDebug("clsExtractToolRunner.RunPeptideProphet(); Starting Peptide Prophet");
             }
 
             SynFile = Path.Combine(m_WorkDir, m_Dataset + "_syn.txt");
@@ -1882,8 +1867,7 @@ namespace AnalysisManagerExtractionPlugin
             var fiSynFile = new FileInfo(SynFile);
             if (!fiSynFile.Exists)
             {
-                msg = "clsExtractToolRunner.RunPeptideProphet(); Syn file " + SynFile + " not found; unable to run peptide prophet";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                LogError("clsExtractToolRunner.RunPeptideProphet(); Syn file " + SynFile + " not found; unable to run peptide prophet");
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -1899,7 +1883,7 @@ namespace AnalysisManagerExtractionPlugin
             {
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "Synopsis file is " + sngParentSynFileSizeMB.ToString("0.0") +
                         " MB, which is larger than the maximum size for peptide prophet (" + SYN_FILE_MAX_SIZE_MB +
                         " MB); splitting into multiple sections");
@@ -1913,25 +1897,23 @@ namespace AnalysisManagerExtractionPlugin
                 {
                     if (m_DebugLevel >= 3)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        LogDebug(
                             "Synopsis file was split into " + strFileList.Length + " sections by SplitFileRoundRobin");
                     }
                 }
                 else
                 {
-                    msg = "Error splitting synopsis file that is over " + SYN_FILE_MAX_SIZE_MB + " MB in size";
+                    var msg = "Error splitting synopsis file that is over " + SYN_FILE_MAX_SIZE_MB + " MB in size";
 
                     if (blnIgnorePeptideProphetErrors)
                     {
                         msg += "; Ignoring the error since 'IgnorePeptideProphetErrors' = True";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+                        LogWarning(msg);
                         return CloseOutType.CLOSEOUT_SUCCESS;
                     }
-                    else
-                    {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
-                        return CloseOutType.CLOSEOUT_FAILED;
-                    }
+
+                    LogError(msg);
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
             }
 
@@ -1956,7 +1938,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 if (m_DebugLevel >= 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "Running peptide prophet on file " + strSynFileNameAndSize);
                 }
 
@@ -1970,29 +1952,28 @@ namespace AnalysisManagerExtractionPlugin
 
                     if (m_DebugLevel >= 3)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        LogDebug(
                             "Peptide prophet processing complete; checking for file " + strPepProphetOutputFilePath);
                     }
 
                     if (!File.Exists(strPepProphetOutputFilePath))
                     {
-                        msg = "clsExtractToolRunner.RunPeptideProphet(); Peptide Prophet output file not found for synopsis file " + strSynFileNameAndSize;
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                        LogError("clsExtractToolRunner.RunPeptideProphet(); Peptide Prophet output file not found for synopsis file " +
+                                 strSynFileNameAndSize);
 
-                        msg = m_PeptideProphet.ErrMsg;
-                        if (msg.Length > 0)
+                        if (!string.IsNullOrEmpty(m_PeptideProphet.ErrMsg))
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                            LogError(m_PeptideProphet.ErrMsg);
                         }
 
                         if (blnIgnorePeptideProphetErrors)
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                            LogWarning(
                                 "Ignoring peptide prophet execution error since 'IgnorePeptideProphetErrors' = True");
                         }
                         else
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                            LogWarning(
                                 "To ignore this error, update this job to use a settings file that has 'IgnorePeptideProphetErrors' set to True");
                             eResult = CloseOutType.CLOSEOUT_FAILED;
                             break;
@@ -2001,12 +1982,11 @@ namespace AnalysisManagerExtractionPlugin
                 }
                 else
                 {
-                    msg = "clsExtractToolRunner.RunPeptideProphet(); Error running Peptide Prophet on file " + strSynFileNameAndSize + ": " + m_PeptideProphet.ErrMsg;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                    LogError("clsExtractToolRunner.RunPeptideProphet(); Error running Peptide Prophet on file " + strSynFileNameAndSize + ": " + m_PeptideProphet.ErrMsg);
 
                     if (blnIgnorePeptideProphetErrors)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Ignoring peptide prophet execution error since 'IgnorePeptideProphetErrors' = True");
+                        LogWarning("Ignoring peptide prophet execution error since 'IgnorePeptideProphetErrors' = True");
                     }
                     else
                     {
@@ -2041,7 +2021,7 @@ namespace AnalysisManagerExtractionPlugin
 
                     if (m_DebugLevel >= 2)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        LogDebug(
                             "Combining " + strFileList.Length + " separate Peptide Prophet result files to create " +
                             Path.GetFileName(strPepProphetOutputFilePath));
                     }
@@ -2057,16 +2037,16 @@ namespace AnalysisManagerExtractionPlugin
                     }
                     else
                     {
-                        msg = "Error interleaving the peptide prophet result files (FileCount=" + strFileList.Length + ")";
+                        var msg = "Error interleaving the peptide prophet result files (FileCount=" + strFileList.Length + ")";
                         if (blnIgnorePeptideProphetErrors)
                         {
                             msg += "; Ignoring the error since 'IgnorePeptideProphetErrors' = True";
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+                            LogWarning(msg);
                             eResult = CloseOutType.CLOSEOUT_SUCCESS;
                         }
                         else
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                            LogError(msg);
                             eResult = CloseOutType.CLOSEOUT_FAILED;
                         }
                     }
@@ -2093,7 +2073,7 @@ namespace AnalysisManagerExtractionPlugin
             {
                 if (m_DebugLevel >= 5)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Deleting file " + strFileList[intFileIndex]);
+                    LogDebug("Deleting file " + strFileList[intFileIndex]);
                 }
                 try
                 {
@@ -2101,8 +2081,7 @@ namespace AnalysisManagerExtractionPlugin
                 }
                 catch (Exception ex)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                        "Error deleting file " + Path.GetFileName(strFileList[intFileIndex]) + ": " + ex.Message);
+                    LogError("Error deleting file " + Path.GetFileName(strFileList[intFileIndex]) + ": " + ex.Message, ex);
                 }
             }
         }
@@ -2119,7 +2098,6 @@ namespace AnalysisManagerExtractionPlugin
         /// <remarks></remarks>
         protected bool InterleaveFiles(ref string[] strFileList, string strCombinedFilePath, bool blnLookForHeaderLine)
         {
-            string msg = null;
 
             int intFileCount = 0;
             StreamReader[] srInFiles = null;
@@ -2159,8 +2137,7 @@ namespace AnalysisManagerExtractionPlugin
                     else
                     {
                         // File not found; unable to continue
-                        msg = "Source peptide prophet file not found, unable to continue: " + strFileList[intIndex];
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                        LogError("Source peptide prophet file not found, unable to continue: " + strFileList[intIndex]);
                         return false;
                     }
                 }
@@ -2234,8 +2211,7 @@ namespace AnalysisManagerExtractionPlugin
             }
             catch (Exception ex)
             {
-                msg = "Exception in clsExtractToolRunner.InterleaveFiles: " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex);
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                LogError("Exception in clsExtractToolRunner.InterleaveFiles: " + ex.Message, ex);
                 m_message = clsGlobal.AppendToComment(m_message, "Exception in InterleaveFiles");
                 blnSuccess = false;
             }
@@ -2261,7 +2237,6 @@ namespace AnalysisManagerExtractionPlugin
             int intLinesRead = 0;
             int intTargetFileIndex = 0;
 
-            string msg = null;
             string strLineIn = null;
             string[] strSplitLine = null;
 
@@ -2366,8 +2341,7 @@ namespace AnalysisManagerExtractionPlugin
             }
             catch (Exception ex)
             {
-                msg = "Exception in clsExtractToolRunner.SplitFileRoundRobin: " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex);
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                LogError("Exception in clsExtractToolRunner.SplitFileRoundRobin: " + ex.Message, ex);
                 m_message = clsGlobal.AppendToComment(m_message, "Exception in SplitFileRoundRobin");
                 blnSuccess = false;
             }
@@ -2386,7 +2360,7 @@ namespace AnalysisManagerExtractionPlugin
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+                LogDebug("Determining tool version info");
             }
 
             // Lookup the version of the PeptideHitResultsProcessor
@@ -2403,14 +2377,13 @@ namespace AnalysisManagerExtractionPlugin
                 }
                 else
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "PHRP folder not found at " + progLoc);
+                    LogError("PHRP folder not found at " + progLoc);
                     return false;
                 }
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                    "Exception determining Assembly info for the PeptideHitResultsProcessor: " + ex.Message);
+                LogError("Exception determining Assembly info for the PeptideHitResultsProcessor: " + ex.Message, ex);
                 return false;
             }
 
@@ -2450,8 +2423,7 @@ namespace AnalysisManagerExtractionPlugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                    "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message, ex);
                 return false;
             }
         }
@@ -2464,6 +2436,8 @@ namespace AnalysisManagerExtractionPlugin
             try
             {
                 var oValidator = new clsPHRPMassErrorValidator(m_DebugLevel);
+                RegisterEvents(oValidator);
+
                 var paramFilePath = Path.Combine(m_WorkDir, strSearchEngineParamFileName);
 
                 blnSuccess = oValidator.ValidatePHRPResultMassErrors(strInputFilePath, eResultType, paramFilePath);
@@ -2520,7 +2494,7 @@ namespace AnalysisManagerExtractionPlugin
                 if (System.DateTime.UtcNow.Subtract(dtLastPepProphetStatusLog).TotalSeconds >= PEPPROPHET_DETAILED_LOG_INTERVAL_SECONDS)
                 {
                     dtLastPepProphetStatusLog = System.DateTime.UtcNow;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "Running peptide prophet: " + PepProphetStatus + "; " + PercentComplete + "% complete");
                 }
             }
@@ -2528,7 +2502,7 @@ namespace AnalysisManagerExtractionPlugin
 
         private DateTime dtLastPHRPStatusLog = DateTime.MinValue;
 
-        private void m_PHRP_ProgressChanged(string taskDescription, float percentComplete)
+        private void PHRP_ProgressChanged(string taskDescription, float percentComplete)
         {
             const int PHRP_LOG_INTERVAL_SECONDS = 180;
             const int PHRP_DETAILED_LOG_INTERVAL_SECONDS = 20;
@@ -2542,7 +2516,7 @@ namespace AnalysisManagerExtractionPlugin
                     System.DateTime.UtcNow.Subtract(dtLastPHRPStatusLog).TotalSeconds >= PHRP_LOG_INTERVAL_SECONDS)
                 {
                     dtLastPHRPStatusLog = System.DateTime.UtcNow;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "Running PHRP: " + taskDescription + "; " + percentComplete + "% complete");
                 }
             }
@@ -2557,16 +2531,14 @@ namespace AnalysisManagerExtractionPlugin
         /// Event handler for the MSGResultsSummarizer
         /// </summary>
         /// <param name="errorMessage"></param>
-        private void MSGFResultsSummarizer_ErrorHandler(string errorMessage)
+        /// <param name="ex"></param>
+        private void MSGFResultsSummarizer_ErrorHandler(string errorMessage, Exception ex)
         {
             if (Message.ToLower().Contains("permission was denied"))
             {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, errorMessage);
             }
-            else
-            {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage);
-            }
+            
         }
 
         #endregion

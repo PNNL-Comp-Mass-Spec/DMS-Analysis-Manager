@@ -21,7 +21,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
 
         public override CloseOutType GetResources()
         {
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting required files");
+            LogMessage("Getting required files");
 
             // Retrieve shared resources, including the JobParameters file from the previous job step
             var result = GetSharedResources();
@@ -52,7 +52,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
             var strLCMSFFIniFileName = m_jobParams.GetParam("LCMSFeatureFinderIniFile");
             if (strLCMSFFIniFileName == null || strLCMSFFIniFileName.Length == 0)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "LCMSFeatureFinderIniFile not defined in the settings for this job; unable to continue");
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
             }
@@ -62,7 +62,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
             if (strFFIniFileStoragePath == null || strFFIniFileStoragePath.Length == 0)
             {
                 strFFIniFileStoragePath = "\\\\gigasax\\DMS_Parameter_Files\\LCMSFeatureFinder";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                LogWarning(
                     "Parameter '" + strParamFileStoragePathKeyName +
                     "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " + strFFIniFileStoragePath);
             }
@@ -80,13 +80,13 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
             {
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Retrieving .UIMF file");
+                    LogDebug("Retrieving .UIMF file");
                 }
 
                 // IMS data; need to get the .UIMF file
                 if (!FileSearch.RetrieveSpectra(strRawDataType))
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "clsAnalysisResourcesDecon2ls.GetResources: Error occurred retrieving spectra.");
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -94,7 +94,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
                 {
                     if (m_DebugLevel >= 1)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Retrieved .UIMF file");
+                        LogDebug("Retrieved .UIMF file");
                     }
                 }
 
@@ -118,7 +118,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
                 {
                     m_message = Msg;
                 }
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg);
+                LogError(Msg);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -210,7 +210,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
                                         {
                                             m_message = "Entry for " + FILTER_FILE_NAME_KEY + " in " + strLCMSFFIniFileName +
                                                         " points to an invalid file: " + strValue;
-                                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                                            LogError(m_message);
                                             result = false;
                                             break;
                                         }
@@ -239,7 +239,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
                     }
                     catch (Exception ex)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                        LogError(
                             "clsAnalysisResourcesLCMSFF.UpdateFeatureFinderIniFile, Error opening the .Ini file to customize (" + strLCMSFFIniFileName +
                             "): " + ex.Message);
                         result = false;
@@ -262,7 +262,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "clsAnalysisResourcesLCMSFF.UpdateFeatureFinderIniFile, Error opening the .Ini file to customize (" + strLCMSFFIniFileName + "): " +
                     ex.Message);
                 result = false;

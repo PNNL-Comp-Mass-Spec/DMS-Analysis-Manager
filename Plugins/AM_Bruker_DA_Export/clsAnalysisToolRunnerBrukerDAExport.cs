@@ -57,7 +57,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
 
                 if (m_DebugLevel > 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerBrukerDAExport.RunTool(): Enter");
+                    LogDebug("clsAnalysisToolRunnerBrukerDAExport.RunTool(): Enter");
                 }
 
                 // Initialize classwide variables               
@@ -75,7 +75,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 // Store the DataAnalysis.exe version info in the database
                 if (!StoreToolVersionInfo(progLoc))
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
+                    LogError("Aborting since StoreToolVersionInfo returned false");
                     m_message = "Error determining Bruker DataAnalysis version";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -128,7 +128,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 // Add the current job data to the summary file
                 // if (!UpdateSummaryFile())
                 // {
-                //    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
+                //    LogWarning("Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
                 // }
 
                 // Make sure objects are released
@@ -170,7 +170,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
             catch (Exception ex)
             {
                 m_message = "Error in BrukerDAExportPlugin->RunTool";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -184,7 +184,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
             if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
+            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
 
             // Bump up the debug level if less than 2
             if (m_DebugLevel < 2)
@@ -286,13 +286,13 @@ namespace AnalysisManagerBrukerDAExportPlugin
                         break;
                     default:
                         m_message = "Dataset type " + strRawDataType + " is not supported";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "ExportSpectraUsingScript: " + m_message);
+                        LogWarning("ExportSpectraUsingScript: " + m_message);
                         return false;
                 }
 
                 var outputPathBase = Path.Combine(m_WorkDir, m_Dataset + "_scan");
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Exporting spectra using Bruker DataAnalysis");
+                LogMessage("Exporting spectra using Bruker DataAnalysis");
 
                 // Set up and execute a program runner to run the export script
 
@@ -308,7 +308,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
 
                 if (m_DebugLevel >= 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc + " " + cmdStr);
+                    LogDebug(progLoc + " " + cmdStr);
                 }
 
                 var cmdRunner = new clsRunDosProgram(m_WorkDir)
@@ -342,7 +342,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
 
                 if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg);
+                    LogError(mConsoleOutputErrorMsg);
                 }
 
                 // Parse the console output file one more time to check for errors
@@ -351,7 +351,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
 
                 if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg);
+                    LogError(mConsoleOutputErrorMsg);
                     success = false;
                 }
 
@@ -370,17 +370,15 @@ namespace AnalysisManagerBrukerDAExportPlugin
                     }
                     m_message = clsGlobal.AppendToComment(m_message, msg);
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg + ", job " + m_JobNum);
+                    LogError(msg + ", job " + m_JobNum);
 
                     if (cmdRunner.ExitCode != 0)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
-                            "Export script returned a non-zero exit code: " + cmdRunner.ExitCode);
+                        LogWarning("Export script returned a non-zero exit code: " + cmdRunner.ExitCode);
                     }
                     else
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
-                            "Export failed (but exit code is 0)");
+                        LogWarning("Export failed (but exit code is 0)");
                     }
 
                     return false;
@@ -395,7 +393,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 m_StatusTools.UpdateAndWrite(m_progress);
                 if (m_DebugLevel >= 3)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Bruker spectrum export Complete");
+                    LogDebug("Bruker spectrum export Complete");
                 }
 
                 return true;
@@ -404,7 +402,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
             catch (Exception ex)
             {
                 m_message = "Error in BrukerDAExportPlugin->ExportSpectraUsingScript";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 return false;
             }
 
@@ -440,7 +438,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
             catch (Exception ex)
             {
                 m_message = "Error in BrukerDAExportPlugin->FindDataAnlaysisProgram";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 return string.Empty;
             }
 
@@ -481,7 +479,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 {
                     if (m_DebugLevel >= 4)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Console output file not found: " + strConsoleOutputFilePath);
+                        LogDebug("Console output file not found: " + strConsoleOutputFilePath);
                     }
 
                     return;
@@ -489,7 +487,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
 
                 if (m_DebugLevel >= 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing file " + strConsoleOutputFilePath);
+                    LogDebug("Parsing file " + strConsoleOutputFilePath);
                 }
 
                 // Value between 0 and 100
@@ -544,7 +542,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                     if (m_DebugLevel >= 3 || DateTime.UtcNow.Subtract(mLastProgressWriteTime).TotalMinutes >= 20)
                     {
                         mLastProgressWriteTime = DateTime.UtcNow;
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... " + m_progress.ToString("0") + "% complete");
+                        LogDebug(" ... " + m_progress.ToString("0") + "% complete");
                     }
                 }
 
@@ -554,7 +552,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    LogWarning("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
             }
 
@@ -620,7 +618,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
             catch (Exception ex)
             {
                 m_message = "Error in BrukerDAExportPlugin->PostProcessExportedSpectra";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 return false;
             }
 
@@ -638,7 +636,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+                LogDebug("Determining tool version info");
             }
 
             var fiProgram = new FileInfo(strProgLoc);
@@ -651,7 +649,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 }
                 catch (Exception ex)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion", ex);
+                    LogError("Exception calling SetStepTaskToolVersion", ex);
                     return false;
                 }
 
@@ -677,7 +675,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion", ex);
+                LogError("Exception calling SetStepTaskToolVersion", ex);
                 return false;
             }
 

@@ -102,7 +102,7 @@ namespace AnalysisManagerMSGFPlugin
             }
             else
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Invalid tool result type (not supported by MSGF): " + resultType);
+                LogError("Invalid tool result type (not supported by MSGF): " + resultType);
                 blnSuccess = false;
             }
 
@@ -165,7 +165,7 @@ namespace AnalysisManagerMSGFPlugin
                         // This is a valid data type
                         default:
                             m_message = "Dataset type " + rawDataType + " is not supported by MSGF";
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                            LogDebug(
                                 m_message + "; must be one of the following: " + RAW_DATA_TYPE_DOT_RAW_FILES + ", " + RAW_DATA_TYPE_DOT_MZML_FILES +
                                 ", " + RAW_DATA_TYPE_DOT_MZXML_FILES);
                             return CloseOutType.CLOSEOUT_FAILED;
@@ -257,12 +257,12 @@ namespace AnalysisManagerMSGFPlugin
                 {
                     if (m_jobParams.GetJobParameter("IgnorePeptideToProteinMapError", false))
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                        LogWarning(
                             "Ignoring missing _PepToProtMapMTS.txt file since 'IgnorePeptideToProteinMapError' = True");
                     }
                     else if (m_jobParams.GetJobParameter("SkipProteinMods", false))
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                        LogWarning(
                             "Ignoring missing _PepToProtMapMTS.txt file since 'SkipProteinMods' = True");
                     }
                     else
@@ -379,7 +379,7 @@ namespace AnalysisManagerMSGFPlugin
                 }
                 else
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                    LogWarning(
                         "SeqInfo file not found (" + fileToGet + "); modifications will be inferred using the ModSummary.txt file");
                 }
             }
@@ -390,7 +390,7 @@ namespace AnalysisManagerMSGFPlugin
                 if (!FileSearch.FindAndRetrieveMiscFiles(strFileToFind, false))
                 {
                     m_message = "Instrument data not found: " + strFileToFind;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "clsAnalysisResourcesMSGF.GetResources: " + m_message);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -414,7 +414,7 @@ namespace AnalysisManagerMSGFPlugin
                     // .mzXML file found and copied locally; no need to retrieve the .Raw file
                     if (m_DebugLevel >= 1)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                        LogMessage(
                             "Existing .mzXML file found: " + strMzXMLFilePath);
                     }
 
@@ -444,7 +444,7 @@ namespace AnalysisManagerMSGFPlugin
                     }
                     else
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                        LogError(
                             "clsAnalysisResourcesMSGF.GetResources: Error occurred retrieving spectra.");
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
@@ -484,7 +484,7 @@ namespace AnalysisManagerMSGFPlugin
             catch (Exception ex)
             {
                 string Msg = "Error creating empty ResultToSeqMap file: " + ex.Message;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg);
+                LogError(Msg);
                 return false;
             }
 
@@ -506,7 +506,7 @@ namespace AnalysisManagerMSGFPlugin
             catch (Exception ex)
             {
                 string Msg = "Error creating empty SeqToProteinMap file: " + ex.Message;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg);
+                LogError(Msg);
                 return false;
             }
 

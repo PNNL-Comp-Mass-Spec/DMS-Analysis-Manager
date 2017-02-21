@@ -111,14 +111,14 @@ namespace AnalysisManagerMODaPlugIn
                 if (!fiCDTAFile.Exists)
                 {
                     m_message = "_dta.txt file not found; cannot convert to .mgf";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + fiCDTAFile.FullName);
+                    LogError(m_message + ": " + fiCDTAFile.FullName);
                     return false;
                 }
 
                 if (!mDTAtoMGF.ProcessFile(fiCDTAFile.FullName))
                 {
                     m_message = "Error converting " + fiCDTAFile.Name + " to a .mgf file";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + mDTAtoMGF.GetErrorMessage());
+                    LogError(m_message + ": " + mDTAtoMGF.GetErrorMessage());
                     return false;
                 }
                 else
@@ -143,7 +143,7 @@ namespace AnalysisManagerMODaPlugIn
                 {
                     // MGF file was not created
                     m_message = "A .mgf file was not created using the _dta.txt file; unable to run MODa";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + mDTAtoMGF.GetErrorMessage());
+                    LogError(m_message + ": " + mDTAtoMGF.GetErrorMessage());
                     return false;
                 }
 
@@ -152,7 +152,7 @@ namespace AnalysisManagerMODaPlugIn
             catch (Exception ex)
             {
                 m_message = "Exception in ConvertCDTAToMGF";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 return false;
             }
 

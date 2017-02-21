@@ -168,7 +168,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             catch (Exception ex)
             {
                 m_message = "Exception in FindMissingMzXmlFiles";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                LogError(m_message + ": " + ex.Message);
             }
         }
 
@@ -185,7 +185,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             {
                 if (WarnIfJobParamMissing)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                    clsGlobal.LogWarning(
                         "Job parameter " + JOB_PARAM_MSGF_REPORT_TEMPLATE_FILENAME + " is empty; will assume " + strTemplateFileName);
                 }
                 strTemplateFileName = DEFAULT_MSGF_REPORT_TEMPLATE_FILENAME;
@@ -203,7 +203,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 strTemplateFileName = DEFAULT_PX_SUBMISSION_TEMPLATE_FILENAME;
                 if (WarnIfJobParamMissing)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                    clsGlobal.LogWarning(
                         "Job parameter " + JOB_PARAM_PX_SUBMISSION_TEMPLATE_FILENAME + " is empty; will assume " + strTemplateFileName);
                 }
             }
@@ -255,7 +255,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         if (string.IsNullOrEmpty(strOrgDBNameGenerated))
                         {
                             m_message = "FASTA file was not generated when RetrieveFastaFiles called RetrieveOrgDB";
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                            LogError(
                                 m_message + " (class clsAnalysisResourcesPRIDEConverter)");
                             OverrideCurrentDatasetAndJobInfo(currentDatasetAndJobInfo);
                             return false;
@@ -270,7 +270,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                             m_message = "Generated FASTA file name (" + strOrgDBNameGenerated + ") does not match expected fasta file name (" +
                                         dataPkgJob.OrganismDBName + "); aborting";
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                            LogError(
                                 m_message + " (class clsAnalysisResourcesPRIDEConverter)");
                             OverrideCurrentDatasetAndJobInfo(currentDatasetAndJobInfo);
                             return false;
@@ -290,7 +290,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             catch (Exception ex)
             {
                 m_message = "Exception in RetrieveFastaFiles";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 return false;
             }
 
@@ -313,7 +313,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 if (string.IsNullOrEmpty(strDataPackagePath))
                 {
                     m_message = "Job parameter transferFolderPath is missing; unable to determine the data package folder path";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                    LogError(m_message);
                     return false;
                 }
 
@@ -349,7 +349,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     string strParamFileStoragePath = m_jobParams.GetParam("ParmFileStoragePath");
                     strTemplateFileName = DEFAULT_MSGF_REPORT_TEMPLATE_FILENAME;
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                    LogWarning(
                         "MSGF Report template file not found in the data package folder; retrieving " + strTemplateFileName + "from " +
                         strParamFileStoragePath);
 
@@ -370,7 +370,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             catch (Exception ex)
             {
                 m_message = "Exception in RetrieveMSGFReportTemplateFile";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 return false;
             }
 
@@ -393,7 +393,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 if (string.IsNullOrEmpty(transferFolderPath))
                 {
                     m_message = "Job parameter transferFolderPath is missing; unable to determine the data package folder path";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                    LogError(m_message);
                     return false;
                 }
 
@@ -445,7 +445,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     }
                     strTemplateFileName = DEFAULT_PX_SUBMISSION_TEMPLATE_FILENAME;
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                    LogWarning(
                         "PX Submission template file not found in the data package folder; retrieving " + strTemplateFileName + " from " +
                         strParamFileStoragePath);
 
@@ -467,7 +467,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             catch (Exception ex)
             {
                 m_message = "Exception in RetrievePXSubmissionTemplateFile";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 return false;
             }
 

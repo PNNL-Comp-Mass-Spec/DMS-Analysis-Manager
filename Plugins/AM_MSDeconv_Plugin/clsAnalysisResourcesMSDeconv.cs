@@ -27,7 +27,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting mzXML file");
+            LogMessage("Getting mzXML file");
 
             //var eResult = GetMzXMLFile();
             //if (eResult != CloseOutType.CLOSEOUT_SUCCESS)

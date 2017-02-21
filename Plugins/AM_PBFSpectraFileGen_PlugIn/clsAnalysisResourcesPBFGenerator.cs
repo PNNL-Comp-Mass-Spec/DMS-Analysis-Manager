@@ -59,7 +59,7 @@ namespace AnalysisManagerPBFGenerator
                         m_message = "Error retrieving instrument data file";
                     }
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsAnalysisResourcesPBFGenerator.GetResources: " + m_message);
+                    LogError("clsAnalysisResourcesPBFGenerator.GetResources: " + m_message);
                     return false;
                 }
 
@@ -77,7 +77,7 @@ namespace AnalysisManagerPBFGenerator
             catch (Exception ex)
             {
                 m_message = "Exception in RetrieveInstrumentData: " + ex.Message;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
+                LogError(m_message + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
                 return false;
             }
         }

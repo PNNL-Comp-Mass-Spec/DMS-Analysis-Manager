@@ -29,7 +29,7 @@ namespace AnalysisManager_Ape_PlugIn
                 // Store the Ape version info in the database
                 if (!StoreToolVersionInfo())
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
+                    LogError("Aborting since StoreToolVersionInfo returned false");
                     m_message = "Error determining Ape version";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -38,7 +38,7 @@ namespace AnalysisManager_Ape_PlugIn
                 m_LastStatusUpdateTime = DateTime.UtcNow;
                 UpdateStatusRunning();
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_CurrentApeTask);
+                LogMessage(m_CurrentApeTask);
 
                 //Change the name of the log file for the local log file to the plugin log filename
                 String LogFileName = Path.Combine(m_WorkDir, "Ape_Log");
@@ -58,9 +58,9 @@ namespace AnalysisManager_Ape_PlugIn
 
                     if (!blnSuccess) {
                         if (string.IsNullOrWhiteSpace(m_message))
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running Ape");
+                            LogError("Error running Ape");
                         else
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running Ape: " + m_message);
+                            LogError("Error running Ape: " + m_message);
                     }
                 }
                 catch (Exception ex)
@@ -70,7 +70,7 @@ namespace AnalysisManager_Ape_PlugIn
                     log4net.GlobalContext.Properties["LogName"] = LogFileName;
                     clsLogTools.ChangeLogFileName(LogFileName);
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running Ape: " + ex.Message);
+                    LogError("Error running Ape: " + ex.Message);
                     blnSuccess = false;
                     m_message = "Error running Ape";
                 }
@@ -82,7 +82,7 @@ namespace AnalysisManager_Ape_PlugIn
                 //Add the current job data to the summary file
                 if (!UpdateSummaryFile())
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
+                    LogWarning("Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
                 }
 
                 //Make sure objects are released
@@ -127,7 +127,7 @@ namespace AnalysisManager_Ape_PlugIn
 
             } catch (Exception ex) {
                 m_message = "Error in ApePlugin->RunTool";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
 
             }
@@ -160,7 +160,7 @@ namespace AnalysisManager_Ape_PlugIn
             if (string.IsNullOrEmpty(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
+            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
 
             // Bump up the debug level if less than 2
             if (m_DebugLevel < 2)
@@ -212,7 +212,7 @@ namespace AnalysisManager_Ape_PlugIn
             string strToolVersionInfo = string.Empty;
 
             if (m_DebugLevel >= 2) {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+                LogDebug("Determining tool version info");
             }
 
             try
@@ -224,7 +224,7 @@ namespace AnalysisManager_Ape_PlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for Ape: " + ex.Message);
+                LogError("Exception determining Assembly info for Ape: " + ex.Message, ex);
                 return false;
             }
 
@@ -238,7 +238,7 @@ namespace AnalysisManager_Ape_PlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message, ex);
                 return false;
             }
 

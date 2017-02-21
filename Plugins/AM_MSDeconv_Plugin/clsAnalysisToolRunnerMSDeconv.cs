@@ -60,7 +60,7 @@ namespace AnalysisManagerMSDeconvPlugIn
 
                 if (m_DebugLevel > 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "clsAnalysisToolRunnerMSDeconv.RunTool(): Enter");
                 }
 
@@ -118,7 +118,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                         break;
                     default:
                         m_message = "Invalid output format: " + strOutputFormat;
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                        LogError(m_message);
                         return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -132,16 +132,16 @@ namespace AnalysisManagerMSDeconvPlugIn
                     Msg = "Error running MSDeconv";
                     m_message = clsGlobal.AppendToComment(m_message, Msg);
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg + ", job " + m_JobNum);
+                    LogError(Msg + ", job " + m_JobNum);
 
                     if (mCmdRunner.ExitCode != 0)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                        LogWarning(
                             "MSDeconv returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
                     }
                     else
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                        LogWarning(
                             "Call to MSDeconv failed (but exit code is 0)");
                     }
 
@@ -158,7 +158,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                         Msg = "MSDeconv results file not found";
                         m_message = clsGlobal.AppendToComment(m_message, Msg);
 
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                        LogError(
                             Msg + " (" + resultsFileName + ")" + ", job " + m_JobNum);
 
                         blnProcessingError = true;
@@ -169,7 +169,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                         Msg = "MSDeconv results file is empty; assure that the input .mzXML file has MS/MS spectra";
                         m_message = clsGlobal.AppendToComment(m_message, Msg);
 
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                        LogError(
                             Msg + " (" + resultsFileName + ")" + ", job " + m_JobNum);
 
                         blnProcessingError = true;
@@ -179,7 +179,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                         m_StatusTools.UpdateAndWrite(m_progress);
                         if (m_DebugLevel >= 3)
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSDeconv Search Complete");
+                            LogDebug("MSDeconv Search Complete");
                         }
                     }
                 }
@@ -192,7 +192,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                 //Add the current job data to the summary file
                 if (!UpdateSummaryFile())
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                    LogWarning(
                         "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
                 }
 
@@ -252,7 +252,7 @@ namespace AnalysisManagerMSDeconvPlugIn
             if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+            LogWarning(
                 "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
 
             // Bump up the debug level if less than 2
@@ -325,7 +325,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                 {
                     if (m_DebugLevel >= 4)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        LogDebug(
                             "Console output file not found: " + strConsoleOutputFilePath);
                     }
 
@@ -334,7 +334,7 @@ namespace AnalysisManagerMSDeconvPlugIn
 
                 if (m_DebugLevel >= 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing file " + strConsoleOutputFilePath);
+                    LogDebug("Parsing file " + strConsoleOutputFilePath);
                 }
 
                 string strLineIn = null;
@@ -363,7 +363,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                                 {
                                     if (m_DebugLevel >= 2 && string.IsNullOrWhiteSpace(mMSDeconvVersion))
                                     {
-                                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                        LogDebug(
                                             "MSDeconv version: " + strLineIn);
                                     }
 
@@ -418,7 +418,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
             }
@@ -476,7 +476,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                         fiMzXmlFile.Refresh();
                         m_jobParams.AddResultFileToSkip(fiMzXmlFile.Name);
 
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                        LogMessage(
                             "The mzXML file has an average scan gap of " + scanGapAverage.ToString("0.0") +
                             " scans; will update the file's scan numbers to be 1, 2, 3, etc.");
 
@@ -504,7 +504,7 @@ namespace AnalysisManagerMSDeconvPlugIn
             catch (Exception ex)
             {
                 m_message = "Error renumbering the mzXML file: " + ex.Message;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in RenumberMzXMLIfRequired", ex);
+                LogError("Error in RenumberMzXMLIfRequired", ex);
                 return false;
             }
         }
@@ -518,7 +518,7 @@ namespace AnalysisManagerMSDeconvPlugIn
 
             var blnIncludeMS1Spectra = m_jobParams.GetJobParameter("MSDeconvIncludeMS1", false);
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MSDeconv");
+            LogMessage("Running MSDeconv");
 
             // Lookup the amount of memory to reserve for Java; default to 2 GB
             var intJavaMemorySize = m_jobParams.GetJobParameter("MSDeconvJavaMemorySize", 2000);
@@ -538,7 +538,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                 CmdStr += " -l";
             }
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, JavaProgLoc + " " + CmdStr);
+            LogDebug(JavaProgLoc + " " + CmdStr);
 
             mCmdRunner = new clsRunDosProgram(m_WorkDir);
             RegisterEvents(mCmdRunner);
@@ -566,7 +566,7 @@ namespace AnalysisManagerMSDeconvPlugIn
 
             if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg);
+                LogError(mConsoleOutputErrorMsg);
             }
 
             return blnSuccess;
@@ -581,7 +581,7 @@ namespace AnalysisManagerMSDeconvPlugIn
         {
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+                LogDebug("Determining tool version info");
             }
 
             var strToolVersionInfo = string.Copy(mMSDeconvVersion);
@@ -596,7 +596,7 @@ namespace AnalysisManagerMSDeconvPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
@@ -617,7 +617,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                 {
                     if (m_DebugLevel >= 4)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        LogDebug(
                             "Console output file not found: " + strConsoleOutputFilePath);
                     }
 
@@ -626,7 +626,7 @@ namespace AnalysisManagerMSDeconvPlugIn
 
                 if (m_DebugLevel >= 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "Trimming console output file at " + strConsoleOutputFilePath);
                 }
 
@@ -697,7 +697,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                 {
                     if (m_DebugLevel >= 1)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                        LogError(
                             "Error replacing original console output file (" + strConsoleOutputFilePath + ") with trimmed version: " + ex.Message);
                     }
                 }
@@ -707,7 +707,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "Error trimming console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
             }

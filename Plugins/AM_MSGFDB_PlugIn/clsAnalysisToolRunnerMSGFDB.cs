@@ -71,7 +71,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (m_DebugLevel > 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMSGFDB.RunTool(): Enter");
+                    LogDebug("clsAnalysisToolRunnerMSGFDB.RunTool(): Enter");
                 }
 
                 // Verify that program files exist

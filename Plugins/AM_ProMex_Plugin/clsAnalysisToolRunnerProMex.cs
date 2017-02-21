@@ -61,7 +61,7 @@ namespace AnalysisManagerProMexPlugIn
 
                 if (m_DebugLevel > 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerProMex.RunTool(): Enter");
+                    LogDebug("clsAnalysisToolRunnerProMex.RunTool(): Enter");
                 }
 
                 // Determine the path to the ProMex program
@@ -76,7 +76,7 @@ namespace AnalysisManagerProMexPlugIn
                 // Store the ProMex version info in the database
                 if (!StoreToolVersionInfo(progLoc))
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "Aborting since StoreToolVersionInfo returned false");
                     m_message = "Error determining ProMex version";
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -120,7 +120,7 @@ namespace AnalysisManagerProMexPlugIn
                 //Add the current job data to the summary file
                 if (!UpdateSummaryFile())
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                    LogWarning(
                         "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
                 }
 
@@ -167,7 +167,7 @@ namespace AnalysisManagerProMexPlugIn
             catch (Exception ex)
             {
                 m_message = "Error in ProMexPlugin->RunTool";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -180,7 +180,7 @@ namespace AnalysisManagerProMexPlugIn
             if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+            LogWarning(
                 "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
 
             // Bump up the debug level if less than 2
@@ -274,7 +274,7 @@ namespace AnalysisManagerProMexPlugIn
                 {
                     if (m_DebugLevel >= 4)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        LogDebug(
                             "Console output file not found: " + strConsoleOutputFilePath);
                     }
 
@@ -283,7 +283,7 @@ namespace AnalysisManagerProMexPlugIn
 
                 if (m_DebugLevel >= 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing file " + strConsoleOutputFilePath);
+                    LogDebug("Parsing file " + strConsoleOutputFilePath);
                 }
 
                 // Value between 0 and 100
@@ -341,7 +341,7 @@ namespace AnalysisManagerProMexPlugIn
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
             }
@@ -394,7 +394,7 @@ namespace AnalysisManagerProMexPlugIn
                             }
                             else
                             {
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                                LogWarning(
                                     "Ignoring parameter '" + kvSetting.Key + "' since not recognized as a valid ProMex parameter");
                             }
                         }
@@ -404,7 +404,7 @@ namespace AnalysisManagerProMexPlugIn
             catch (Exception)
             {
                 m_message = "Exception reading ProMex parameter file";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                LogError(m_message);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -499,7 +499,7 @@ namespace AnalysisManagerProMexPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception examining the ms1ft file: " + ex.Message);
+                LogError("Exception examining the ms1ft file: " + ex.Message);
                 return false;
             }
         }
@@ -544,7 +544,7 @@ namespace AnalysisManagerProMexPlugIn
                 msFilePath = Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_PBF_EXTENSION);
             }
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running ProMex");
+            LogMessage("Running ProMex");
 
             //Set up and execute a program runner to run ProMex
 
@@ -553,7 +553,7 @@ namespace AnalysisManagerProMexPlugIn
 
             if (m_DebugLevel >= 1)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc + CmdStr);
+                LogDebug(progLoc + CmdStr);
             }
 
             mCmdRunner = new clsRunDosProgram(m_WorkDir);
@@ -591,7 +591,7 @@ namespace AnalysisManagerProMexPlugIn
 
             if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg);
+                LogError(mConsoleOutputErrorMsg);
             }
 
             if (!blnSuccess)
@@ -599,16 +599,16 @@ namespace AnalysisManagerProMexPlugIn
                 var Msg = "Error running ProMex";
                 m_message = clsGlobal.AppendToComment(m_message, Msg);
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg + ", job " + m_JobNum);
+                LogError(Msg + ", job " + m_JobNum);
 
                 if (mCmdRunner.ExitCode != 0)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                    LogWarning(
                         "ProMex returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
                 }
                 else
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to ProMex failed (but exit code is 0)");
+                    LogWarning("Call to ProMex failed (but exit code is 0)");
                 }
 
                 return false;
@@ -632,7 +632,7 @@ namespace AnalysisManagerProMexPlugIn
             m_StatusTools.UpdateAndWrite(m_progress);
             if (m_DebugLevel >= 3)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "ProMex Search Complete");
+                LogDebug("ProMex Search Complete");
             }
 
             return true;
@@ -702,7 +702,7 @@ namespace AnalysisManagerProMexPlugIn
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+                LogDebug("Determining tool version info");
             }
 
             var fiProgram = new FileInfo(strProgLoc);
@@ -715,7 +715,7 @@ namespace AnalysisManagerProMexPlugIn
                 }
                 catch (Exception ex)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "Exception calling SetStepTaskToolVersion: " + ex.Message);
                     return false;
                 }
@@ -738,7 +738,7 @@ namespace AnalysisManagerProMexPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }

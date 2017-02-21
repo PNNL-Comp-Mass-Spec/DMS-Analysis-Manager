@@ -26,7 +26,7 @@ namespace AnalysisManager_IDM_Plugin
 
                 if (m_DebugLevel >= 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving input files");
+                    LogMessage("Retrieving input files");
                 }
 
                 var dataPackageFolderPath = Path.Combine(m_jobParams.GetParam("transferFolderPath"), m_jobParams.GetParam("OutputFolderName"));
@@ -54,7 +54,7 @@ namespace AnalysisManager_IDM_Plugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception retrieving resources", ex);
+                LogError("Exception retrieving resources", ex);
             }
 
             return CloseOutType.CLOSEOUT_SUCCESS;

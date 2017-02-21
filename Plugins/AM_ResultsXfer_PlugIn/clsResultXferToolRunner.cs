@@ -42,7 +42,7 @@ namespace AnalysisManagerResultsXferPlugin
                 // Store the AnalysisManager version info in the database
                 if (!StoreToolVersionInfo())
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "Aborting since StoreToolVersionInfo returned false");
                     m_message = "Error determining AnalysisManager version";
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -121,7 +121,7 @@ namespace AnalysisManagerResultsXferPlugin
                     {
                         if (m_DebugLevel >= 3)
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                            LogDebug(
                                 "Deleting empty dataset folder in transfer directory: " + diTransferFolder.FullName);
                         }
 
@@ -132,14 +132,14 @@ namespace AnalysisManagerResultsXferPlugin
                         // Log this exception, but don't treat it is a job failure
                         var msg = "clsResultXferToolRunner.RunTool(); Exception deleting dataset folder " + m_jobParams.GetParam("DatasetFolderName") +
                                   " in xfer folder(another results manager may have deleted it): " + ex.Message;
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+                        LogWarning(msg);
                     }
                 }
                 else
                 {
                     if (m_DebugLevel >= 3)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        LogDebug(
                             "Dataset folder in transfer directory still has files/folders; will not delete: " + diTransferFolder.FullName);
                     }
                 }
@@ -149,7 +149,7 @@ namespace AnalysisManagerResultsXferPlugin
                 // Log this exception, but don't treat it is a job failure
                 var msg = "clsResultXferToolRunner.RunTool(); Exception looking for dataset folder " + m_jobParams.GetParam("DatasetFolderName") +
                           " in xfer folder (another results manager may have deleted it): " + ex.Message;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+                LogWarning(msg);
             }
         }
 
@@ -217,7 +217,7 @@ namespace AnalysisManagerResultsXferPlugin
             if (!blnSuccess)
             {
                 strMsg = "LookupLocalPath; Excessive failures attempting to retrieve folder info from database";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMsg);
+                LogError(strMsg);
                 return string.Empty;
             }
 
@@ -230,7 +230,7 @@ namespace AnalysisManagerResultsXferPlugin
 
             // No data was returned
             strMsg = "LookupLocalPath; could not resolve a local volume name for path '" + uncFolderPath + "' on server " + serverName;
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMsg);
+            LogError(strMsg);
             return string.Empty;
         }
 
@@ -269,7 +269,7 @@ namespace AnalysisManagerResultsXferPlugin
 
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "Moving files locally to " + diTargetFolder.FullName);
                 }
 
@@ -285,7 +285,7 @@ namespace AnalysisManagerResultsXferPlugin
                             {
                                 if (m_DebugLevel >= 2)
                                 {
-                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                    LogDebug(
                                         "Skipping existing file: " + fiTargetFile.FullName);
                                 }
                                 continue;
@@ -302,7 +302,7 @@ namespace AnalysisManagerResultsXferPlugin
                         {
                             errorMessage = "Error moving file " + fiSourceFile.Name + ": " + ex.Message;
                         }
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                        LogError(
                             "Error moving file " + fiSourceFile.Name + ": " + ex.Message);
                         success = false;
                     }
@@ -335,14 +335,14 @@ namespace AnalysisManagerResultsXferPlugin
                     catch (Exception ex)
                     {
                         // Log a warning, but ignore this error
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
-                            "Unable to delete folder " + diSourceFolder.FullName, ex);
+                        LogWarning(
+                            "Unable to delete folder " + diSourceFolder.FullName + ": " + ex);
                     }
                 }
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Error moving directory " + sourceFolderpath + ": " + ex.Message);
                 success = false;
             }
@@ -378,7 +378,7 @@ namespace AnalysisManagerResultsXferPlugin
                 {
                     if (string.IsNullOrWhiteSpace(m_message))
                         m_message = "Unknown error calling ChangeFolderPathsToLocal";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                    LogError(m_message);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -393,12 +393,12 @@ namespace AnalysisManagerResultsXferPlugin
             {
                 msg = "clsResultXferToolRunner.PerformResultsXfer(); results folder " + FolderToMove + " not found";
                 m_message = clsGlobal.AppendToComment(m_message, "results folder not found");
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                LogError(msg);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
             else if (m_DebugLevel >= 4)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Results folder to move: " + FolderToMove);
+                LogDebug("Results folder to move: " + FolderToMove);
             }
 
             // Verify dataset folder exists on storage server
@@ -408,7 +408,7 @@ namespace AnalysisManagerResultsXferPlugin
             if (!diDatasetFolder.Exists)
             {
                 msg = "clsResultXferToolRunner.PerformResultsXfer(); dataset folder " + DatasetDir + " not found; will attempt to make it";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+                LogWarning(msg);
 
                 try
                 {
@@ -445,7 +445,7 @@ namespace AnalysisManagerResultsXferPlugin
                             msg = "clsResultXferToolRunner.PerformResultsXfer(); error trying to create missing dataset folder " + DatasetDir +
                                   ": folder creation failed for unknown reason";
                             m_message = clsGlobal.AppendToComment(m_message, "error trying to create missing dataset folder");
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                            LogError(msg);
                             return CloseOutType.CLOSEOUT_FAILED;
                         }
                     }
@@ -454,7 +454,7 @@ namespace AnalysisManagerResultsXferPlugin
                         msg = "clsResultXferToolRunner.PerformResultsXfer(); parent folder not found: " + diDatasetFolder.Parent.FullName +
                               "; unable to continue";
                         m_message = clsGlobal.AppendToComment(m_message, "parent folder not found: " + diDatasetFolder.Parent.FullName);
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                        LogError(msg);
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
                 }
@@ -463,14 +463,14 @@ namespace AnalysisManagerResultsXferPlugin
                     msg = "clsResultXferToolRunner.PerformResultsXfer(); error trying to create missing dataset folder " + DatasetDir + ": " +
                           ex.Message;
                     m_message = clsGlobal.AppendToComment(m_message, "exception trying to create missing dataset folder");
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                    LogError(msg);
 
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
             }
             else if (m_DebugLevel >= 4)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Dataset folder path: " + DatasetDir);
+                LogDebug("Dataset folder path: " + DatasetDir);
             }
 
             TargetDir = Path.Combine(DatasetDir, m_jobParams.GetParam("inputfoldername"));
@@ -479,7 +479,7 @@ namespace AnalysisManagerResultsXferPlugin
             if (Directory.Exists(TargetDir))
             {
                 msg = "Warning: overwriting existing results folder: " + TargetDir;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+                LogWarning(msg);
             }
 
             // Move the directory
@@ -487,7 +487,7 @@ namespace AnalysisManagerResultsXferPlugin
             {
                 if (m_DebugLevel >= 3)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "Moving '" + FolderToMove + "' to '" + TargetDir + "'");
                 }
 
@@ -502,7 +502,7 @@ namespace AnalysisManagerResultsXferPlugin
                     // Call MoveDirectory, which will copy the files using locks
                     if (m_DebugLevel >= 2)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        LogDebug(
                             "Using m_FileTools.MoveDirectory to copy files to " + TargetDir);
                     }
                     ResetTimestampForQueueWaitTimeLogging();
@@ -513,7 +513,7 @@ namespace AnalysisManagerResultsXferPlugin
             {
                 msg = "clsResultXferToolRunner.PerformResultsXfer(); Exception moving results folder " + FolderToMove + ": " + ex.Message;
                 m_message = clsGlobal.AppendToComment(m_message, "exception moving results folder");
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                LogError(msg);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -531,7 +531,7 @@ namespace AnalysisManagerResultsXferPlugin
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+                LogDebug("Determining tool version info");
             }
 
             // Lookup the version of the Analysis Manager
@@ -557,7 +557,7 @@ namespace AnalysisManagerResultsXferPlugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }

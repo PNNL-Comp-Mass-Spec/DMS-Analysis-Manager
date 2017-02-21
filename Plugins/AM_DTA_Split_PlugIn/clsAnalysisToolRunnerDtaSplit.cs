@@ -62,8 +62,7 @@ namespace AnalysisManagerDtaSplitPlugIn
                 // Store the AnalysisManager version info in the database
                 if (!StoreToolVersionInfo())
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                        "Aborting since StoreToolVersionInfo returned false");
+                    LogError("Aborting since StoreToolVersionInfo returned false");
                     m_message = "Error determining DtaSplit version";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -81,14 +80,14 @@ namespace AnalysisManagerDtaSplitPlugIn
                     intSegmentCountToCreate = m_jobParams.GetJobParameter("NumberOfClonedSteps", 0);
                     if (intSegmentCountToCreate == 0)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                        LogWarning(
                             "Setting 'NumberOfClonedSteps' not found in the job parameters; will assume NumberOfClonedSteps=4");
                         intSegmentCountToCreate = 4;
                     }
                 }
                 catch (Exception)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                    LogWarning(
                         "Setting 'NumberOfClonedSteps' is not numeric in the job parameters; will assume NumberOfClonedSteps=4");
                     intSegmentCountToCreate = 4;
                 }
@@ -192,7 +191,7 @@ namespace AnalysisManagerDtaSplitPlugIn
 
                     if (intSpectraCountExpected == 0)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                        LogWarning(
                             "CountSpectraInCattedDtaFile returned a spectrum count of 0; this is unexpected");
                     }
                 }
@@ -215,8 +214,7 @@ namespace AnalysisManagerDtaSplitPlugIn
                     {
                         if (strSourceFilePath == null)
                             strSourceFilePath = "??";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                            "Error in SplitCattedDtaFileIntoSegments renaming file: " + strSourceFilePath + " to _1_dta.txt; " + ex.Message);
+                        LogError("Error in SplitCattedDtaFileIntoSegments renaming file: " + strSourceFilePath + " to _1_dta.txt; " + ex.Message, ex);
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
 
@@ -232,7 +230,7 @@ namespace AnalysisManagerDtaSplitPlugIn
                 if (m_DebugLevel >= 1)
                 {
                     strSegmentDescription = "spectra per segment = " + intTargetSpectraPerSegment;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "Splitting " + Path.GetFileName(strSourceFilePath) + " into " + intSegmentCountToCreate + " segments; " +
                         strSegmentDescription);
                 }
@@ -307,8 +305,7 @@ namespace AnalysisManagerDtaSplitPlugIn
             {
                 if (strSourceFilePath == null)
                     strSourceFilePath = "??";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                    "Error in SplitCattedDtaFileIntoSegments reading file: " + strSourceFilePath + "; " + ex.Message);
+                LogError("Error in SplitCattedDtaFileIntoSegments reading file: " + strSourceFilePath + "; " + ex.Message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -334,7 +331,7 @@ namespace AnalysisManagerDtaSplitPlugIn
 
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "Counting the number of spectra in the source _Dta.txt file: " + Path.GetFileName(strSourceFilePath));
                 }
 
@@ -354,7 +351,7 @@ namespace AnalysisManagerDtaSplitPlugIn
 
                     if (m_DebugLevel >= 1)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        LogDebug(
                             "Spectrum count in source _Dta.txt file: " + intSpectraCount);
                     }
                 }
@@ -363,8 +360,7 @@ namespace AnalysisManagerDtaSplitPlugIn
             {
                 if (strSourceFilePath == null)
                     strSourceFilePath = "??";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                    "Error counting the number of spectra in '" + strSourceFilePath + "'; " + ex.Message);
+                LogError("Error counting the number of spectra in '" + strSourceFilePath + "'; " + ex.Message, ex);
                 intSpectraCount = 0;
             }
 
@@ -385,13 +381,13 @@ namespace AnalysisManagerDtaSplitPlugIn
 
                 if (File.Exists(strFilePath))
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                    LogWarning(
                         "Warning: Split DTA file already exists " + strFilePath);
                 }
 
                 if (m_DebugLevel >= 3)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating split DTA file " + strFileName);
+                    LogDebug("Creating split DTA file " + strFileName);
                 }
 
                 swOutFile = new StreamWriter(strFilePath, false);
@@ -400,8 +396,7 @@ namespace AnalysisManagerDtaSplitPlugIn
             {
                 if (strFileName == null)
                     strFileName = "??";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                    "Error in CreateNewSplitDTAFile creating file: " + strFileName + "; " + ex.Message);
+                LogError("Error in CreateNewSplitDTAFile creating file: " + strFileName + "; " + ex.Message, ex);
             }
 
             return swOutFile;
@@ -473,7 +468,7 @@ namespace AnalysisManagerDtaSplitPlugIn
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+                LogDebug("Determining tool version info");
             }
 
             // Lookup the version of the AnalysisManagerDtaSplitPlugIn
@@ -492,8 +487,7 @@ namespace AnalysisManagerDtaSplitPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                    "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message, ex);
                 return false;
             }
         }

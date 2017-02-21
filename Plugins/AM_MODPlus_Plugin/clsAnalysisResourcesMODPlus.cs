@@ -57,7 +57,7 @@ namespace AnalysisManagerMODPlusPlugin
             catch (Exception ex)
             {
                 m_message = "Exception in GetResources: " + ex.Message;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     m_message + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -119,7 +119,7 @@ namespace AnalysisManagerMODPlusPlugin
 
                 m_jobParams.AddAdditionalParameter("MODPlus", MOD_PLUS_RUNTIME_PARAM_FASTA_FILE_IS_DECOY, "True");
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting param file");
+                LogMessage("Getting param file");
 
                 // Retrieve the parameter file
                 // This will also obtain the _ModDefs.txt file using query
@@ -141,7 +141,7 @@ namespace AnalysisManagerMODPlusPlugin
             catch (Exception ex)
             {
                 m_message = "Exception in RetrieveFastaAndParamFile: " + ex.Message;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     m_message + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
                 return false;
             }

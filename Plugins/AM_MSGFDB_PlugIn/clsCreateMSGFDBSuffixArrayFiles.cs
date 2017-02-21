@@ -373,8 +373,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (intDebugLevel > 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                         "clsCreateMSGFDBSuffixArrayFiles.CreateIndexedDbFiles(): Enter");
+                    OnDebugEvent("clsCreateMSGFDBSuffixArrayFiles.CreateIndexedDbFiles(): Enter");
                 }
 
                 var fiFastaFile = new FileInfo(strFASTAFilePath);

@@ -57,7 +57,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
 
                 if (m_DebugLevel > 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMetaboliteDetector.RunTool(): Enter");
+                    LogDebug("clsAnalysisToolRunnerMetaboliteDetector.RunTool(): Enter");
                 }
 
                 // Determine the path to the MetaboliteDetector program
@@ -70,7 +70,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                 // Store the MetaboliteDetector version info in the database
                 if (!StoreToolVersionInfo(mMetaboliteDetectorProgLoc))
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
+                    LogError("Aborting since StoreToolVersionInfo returned false");
                     m_message = "Error determining MetaboliteDetector version";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -105,7 +105,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                 // Add the current job data to the summary file
                 // if (!UpdateSummaryFile())
                 // {
-                //    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
+                //    LogWarning("Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
                 // }
 
                 // Make sure objects are released
@@ -151,7 +151,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
             catch (Exception ex)
             {
                 m_message = "Error in MetaboliteDetectorPlugin->RunTool";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -163,7 +163,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
             if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
+            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
 
             // Bump up the debug level if less than 2
             if (m_DebugLevel < 2)
@@ -204,7 +204,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                 {
                     if (m_DebugLevel >= 4)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Console output file not found: " + strConsoleOutputFilePath);
+                        LogDebug("Console output file not found: " + strConsoleOutputFilePath);
                     }
 
                     return;
@@ -212,7 +212,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
 
                 if (m_DebugLevel >= 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing file " + strConsoleOutputFilePath);
+                    LogDebug("Parsing file " + strConsoleOutputFilePath);
                 }
 
                 using (var srInFile = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
@@ -240,7 +240,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    LogError("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
             }
 
@@ -271,7 +271,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
             catch (Exception ex)
             {
                 m_message = "Exception post processing results";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                LogError(m_message + ": " + ex.Message);
                 return false;              
             }
         }
@@ -284,7 +284,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
 
             if (m_DebugLevel >= 1)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, cmdStr);
+                LogDebug(cmdStr);
             }
 
             mConsoleOutputFile = Path.Combine(m_WorkDir, METABOLITE_DETECTOR_CONSOLE_OUTPUT);
@@ -316,7 +316,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
            
             if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                                      mConsoleOutputErrorMsg);
             }
             
@@ -327,7 +327,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
 
             if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg);
+                LogError(mConsoleOutputErrorMsg);
             }
 
             if (success)
@@ -337,16 +337,16 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
 
             m_message = "Error running MetaboliteDetector";
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ", job " + m_JobNum);
+            LogError(m_message + ", job " + m_JobNum);
 
             if (cmdRunner.ExitCode != 0)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                LogWarning(
                                      "MetaboliteDetector returned a non-zero exit code: " + cmdRunner.ExitCode);
             }
             else
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                LogWarning(
                                      "MetaboliteDetector failed (but exit code is 0)");
             }
 
@@ -385,7 +385,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+                LogDebug("Determining tool version info");
             }
 
             var fiProgram = new FileInfo(strProgLoc);
@@ -398,7 +398,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                 }
                 catch (Exception ex)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion", ex);
+                    LogError("Exception calling SetStepTaskToolVersion", ex);
                     return false;
                 }
 
@@ -419,7 +419,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion", ex);
+                LogError("Exception calling SetStepTaskToolVersion", ex);
                 return false;
             }
 

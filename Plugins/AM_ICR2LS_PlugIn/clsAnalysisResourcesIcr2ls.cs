@@ -38,7 +38,7 @@ namespace AnalysisManagerICR2LSPlugIn
             // Get input data file
             if (!FileSearch.RetrieveSpectra(m_jobParams.GetParam("RawDataType")))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                LogDebug(
                     "clsAnalysisResourcesIcr2ls.GetResources: Error occurred retrieving spectra.");
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -99,14 +99,14 @@ namespace AnalysisManagerICR2LSPlugIn
                         {
                             var diSourceFolder = new DirectoryInfo(serFileOrFolderPath);
 
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                            LogMessage(
                                 "Copying 0.ser folder from archive to working directory: " + serFileOrFolderPath);
                             ResetTimestampForQueueWaitTimeLogging();
                             m_FileTools.CopyDirectory(serFileOrFolderPath, Path.Combine(strLocalDatasetFolderPath, diSourceFolder.Name));
 
                             if (m_DebugLevel >= 1)
                             {
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                                LogMessage(
                                     "Successfully copied 0.ser folder in " + System.DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds.ToString("0") +
                                     " seconds");
                             }
@@ -115,7 +115,7 @@ namespace AnalysisManagerICR2LSPlugIn
                         {
                             var fiSourceFile = new FileInfo(serFileOrFolderPath);
 
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                            LogMessage(
                                 "Copying " + Path.GetFileName(serFileOrFolderPath) + " file from archive to working directory: " + serFileOrFolderPath);
 
                             if (!CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName, strLocalDatasetFolderPath, clsLogTools.LogLevels.ERROR))
@@ -126,7 +126,7 @@ namespace AnalysisManagerICR2LSPlugIn
                             {
                                 if (m_DebugLevel >= 1)
                                 {
-                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                                    LogMessage(
                                         "Successfully copied " + Path.GetFileName(serFileOrFolderPath) + " file in " +
                                         System.DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds.ToString("0") + " seconds");
                                 }
@@ -140,7 +140,7 @@ namespace AnalysisManagerICR2LSPlugIn
             catch (Exception ex)
             {
                 m_message = "Exception in GetBrukerSerFile";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                LogError(m_message + ": " + ex.Message);
                 return false;
             }
         }
@@ -211,7 +211,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 if (string.IsNullOrWhiteSpace(transferFolderPath))
                 {
                     // Transfer folder path is not defined
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                    LogWarning(
                         "transferFolderPath is empty; this is unexpected");
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -223,7 +223,7 @@ namespace AnalysisManagerICR2LSPlugIn
 
                 if (m_DebugLevel >= 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "Checking for " + clsAnalysisToolRunnerICRBase.PEK_TEMP_FILE + " file at " + transferFolderPath);
                 }
 
@@ -234,7 +234,7 @@ namespace AnalysisManagerICR2LSPlugIn
                     // Transfer folder not found; return false
                     if (m_DebugLevel >= 4)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        LogDebug(
                             "  ... Transfer folder not found: " + diSourceFolder.FullName);
                     }
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -247,7 +247,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 {
                     if (m_DebugLevel >= 4)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        LogDebug(
                             "  ... " + clsAnalysisToolRunnerICRBase.PEK_TEMP_FILE + " file not found");
                     }
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -255,7 +255,7 @@ namespace AnalysisManagerICR2LSPlugIn
 
                 if (m_DebugLevel >= 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         clsAnalysisToolRunnerICRBase.PEK_TEMP_FILE + " file found for job " + strJob + " (file size = " +
                         (fiTempPekFile.Length / 1024.0).ToString("#,##0") + " KB)");
                 }
@@ -267,7 +267,7 @@ namespace AnalysisManagerICR2LSPlugIn
 
                     if (m_DebugLevel >= 1)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        LogDebug(
                             "Copied " + fiTempPekFile.Name + " locally; will resume ICR-2LS analysis");
                     }
 
@@ -279,7 +279,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 {
                     // Error copying the file; treat this as a failed job
                     m_message = " Exception copying " + clsAnalysisToolRunnerICRBase.PEK_TEMP_FILE + " file locally";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "  ... Exception copying " + fiTempPekFile.FullName + " locally; unable to resume: " + ex.Message);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -289,7 +289,7 @@ namespace AnalysisManagerICR2LSPlugIn
             catch (Exception ex)
             {
                 m_message = "Exception in RetrieveExistingTempPEKFile";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                LogError(m_message + ": " + ex.Message);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }

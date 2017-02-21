@@ -58,7 +58,7 @@ namespace AnalysisManagerPBFGenerator
 
                 if (m_DebugLevel > 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerPBFGenerator.RunTool(): Enter");
+                    LogDebug("clsAnalysisToolRunnerPBFGenerator.RunTool(): Enter");
                 }
 
                 // Determine the path to the PbfGen program
@@ -73,7 +73,7 @@ namespace AnalysisManagerPBFGenerator
                 // Store the PBFGen version info in the database
                 if (!StoreToolVersionInfo(progLoc))
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
+                    LogError("Aborting since StoreToolVersionInfo returned false");
                     LogError("Error determining PBFGen version");
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -184,7 +184,7 @@ namespace AnalysisManagerPBFGenerator
                 // Add the current job data to the summary file
                 if (!UpdateSummaryFile())
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
+                    LogWarning("Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
                 }
 
                 // Make sure objects are released
@@ -228,7 +228,7 @@ namespace AnalysisManagerPBFGenerator
             catch (Exception ex)
             {
                 m_message = "Error in clsAnalysisToolRunnerPBFGenerator->RunTool";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -241,7 +241,7 @@ namespace AnalysisManagerPBFGenerator
             if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
+            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
 
             // Bump up the debug level if less than 2
             if (m_DebugLevel < 2)
@@ -318,7 +318,7 @@ namespace AnalysisManagerPBFGenerator
                 {
                     if (m_DebugLevel >= 4)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Console output file not found: " + strConsoleOutputFilePath);
+                        LogDebug("Console output file not found: " + strConsoleOutputFilePath);
                     }
 
                     return;
@@ -326,7 +326,7 @@ namespace AnalysisManagerPBFGenerator
 
                 if (m_DebugLevel >= 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing file " + strConsoleOutputFilePath);
+                    LogDebug("Parsing file " + strConsoleOutputFilePath);
                 }
 
                 mConsoleOutputErrorMsg = string.Empty;
@@ -374,7 +374,7 @@ namespace AnalysisManagerPBFGenerator
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    LogError("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
             }
         }
@@ -411,7 +411,7 @@ namespace AnalysisManagerPBFGenerator
             // Cache the full path to the expected output file
             mResultsFilePath = Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_PBF_EXTENSION);
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running PBFGen to create the PBF file");
+            LogMessage("Running PBFGen to create the PBF file");
 
             //Set up and execute a program runner to run PBFGen
             CmdStr = " -s " + rawFilePath;
@@ -419,7 +419,7 @@ namespace AnalysisManagerPBFGenerator
 
             if (m_DebugLevel >= 1)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc + CmdStr);
+                LogDebug(progLoc + CmdStr);
             }
 
             var cmdRunner = new clsRunDosProgram(m_WorkDir);
@@ -450,7 +450,7 @@ namespace AnalysisManagerPBFGenerator
 
             if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg);
+                LogError(mConsoleOutputErrorMsg);
             }
 
             // Parse the console output file one more time to check for errors and to update mPbfFormatVersion
@@ -459,7 +459,7 @@ namespace AnalysisManagerPBFGenerator
 
             if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg);
+                LogError(mConsoleOutputErrorMsg);
             }
 
             if (!blnSuccess)
@@ -468,7 +468,7 @@ namespace AnalysisManagerPBFGenerator
                 Msg = "Error running PBFGen to create a PBF file";
                 m_message = clsGlobal.AppendToComment(m_message, Msg);
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg + ", job " + m_JobNum);
+                LogError(Msg + ", job " + m_JobNum);
 
                 if (cmdRunner.ExitCode != 0)
                 {
@@ -486,7 +486,7 @@ namespace AnalysisManagerPBFGenerator
             m_StatusTools.UpdateAndWrite(m_progress);
             if (m_DebugLevel >= 3)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "PBF Generation Complete");
+                LogDebug("PBF Generation Complete");
             }
 
             return true;
@@ -503,7 +503,7 @@ namespace AnalysisManagerPBFGenerator
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+                LogDebug("Determining tool version info");
             }
 
             var fiProgram = new FileInfo(strProgLoc);
@@ -516,7 +516,7 @@ namespace AnalysisManagerPBFGenerator
                 }
                 catch (Exception ex)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                    LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                     return false;
                 }
 
@@ -540,7 +540,7 @@ namespace AnalysisManagerPBFGenerator
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
         }

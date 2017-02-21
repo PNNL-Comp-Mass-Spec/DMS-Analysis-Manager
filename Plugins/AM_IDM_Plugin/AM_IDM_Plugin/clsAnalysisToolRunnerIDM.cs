@@ -45,7 +45,7 @@ namespace AnalysisManager_IDM_Plugin
 
                         if (m_DebugLevel >= 1)
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copying table t_precursor_interference from " + fiIDMResultsDB.Name + " to Results.db3");
+                            LogMessage("Copying table t_precursor_interference from " + fiIDMResultsDB.Name + " to Results.db3");
                         }
 
                         success = sqLiteUtils.CloneDB(fiIDMResultsDB.FullName, Path.Combine(m_WorkDir, "Results.db3"), appendToExistingDB: true);
@@ -58,13 +58,13 @@ namespace AnalysisManager_IDM_Plugin
                     }
                     catch (Exception ex)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, ex.Message + "; will run IDM instead of using existing results");
+                        LogError(ex.Message + "; will run IDM instead of using existing results");
                     }
                 }
 
                 if (!skipIDM)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running IDM");
+                    LogMessage("Running IDM");
 
                     // Store the Version info in the database
                     StoreToolVersionInfo();
@@ -74,7 +74,7 @@ namespace AnalysisManager_IDM_Plugin
 
                     if (m_DebugLevel > 4)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerIDM.RunTool(): Enter");
+                        LogDebug("clsAnalysisToolRunnerIDM.RunTool(): Enter");
                     }
 
                     //Change the name of the log file for the local log file to the plug in log filename
@@ -106,7 +106,7 @@ namespace AnalysisManager_IDM_Plugin
                         GlobalContext.Properties["LogName"] = LogFileName;
                         clsLogTools.ChangeLogFileName(LogFileName);
 
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running IDM: " + ex.Message);
+                        LogError("Error running IDM: " + ex.Message);
                         success = false;
                     }
                 }
@@ -118,7 +118,7 @@ namespace AnalysisManager_IDM_Plugin
                 //Add the current job data to the summary file
                 if (!UpdateSummaryFile())
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
+                    LogWarning("Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
                 }
 
                 //Make sure objects are released
@@ -162,7 +162,7 @@ namespace AnalysisManager_IDM_Plugin
             catch (Exception ex)
             {
                 m_message = "Error in IDMPlugin->RunTool";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -176,7 +176,7 @@ namespace AnalysisManager_IDM_Plugin
             if (string.IsNullOrEmpty(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
+            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
 
             // Bump up the debug level if less than 2
             if (m_DebugLevel < 2)
@@ -246,7 +246,7 @@ namespace AnalysisManager_IDM_Plugin
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+                LogDebug("Determining tool version info");
             }
 
             // Lookup the version of the DLL
@@ -264,7 +264,7 @@ namespace AnalysisManager_IDM_Plugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
 

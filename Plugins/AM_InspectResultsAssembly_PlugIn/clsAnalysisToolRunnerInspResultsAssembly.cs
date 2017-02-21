@@ -112,7 +112,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             {
                 if (m_DebugLevel > 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "clsAnalysisToolRunnerInspResultsAssembly.RunTool(): Enter");
                 }
 
@@ -122,7 +122,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 // Store the AnalysisManager version info in the database
                 if (!StoreToolVersionInfo())
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "Aborting since StoreToolVersionInfo returned false");
                     m_message = "Error determining Inspect Results Assembly version";
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -153,7 +153,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
                     if (m_DebugLevel >= 1)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        LogDebug(
                             "Assembling parallelized inspect files; file count = " + intNumResultFiles.ToString());
                     }
 
@@ -209,7 +209,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 //Add the current job data to the summary file
                 if (!UpdateSummaryFile())
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                    LogWarning(
                         "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
                 }
 
@@ -254,7 +254,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 {
                     if (!base.RemoveNonResultServerFiles())
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                        LogWarning(
                             "Error deleting non Result files from directory on server, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
@@ -267,9 +267,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             }
             catch (Exception ex)
             {
-                string Msg = null;
-                Msg = "clsMSGFToolRunner.RunTool(); Exception during Inspect Results Assembly: " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex);
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg);
+                LogError("clsMSGFToolRunner.RunTool(); Exception during Inspect Results Assembly: " + ex.Message, ex);
                 m_message = clsGlobal.AppendToComment(m_message, "Exception during Inspect Results Assembly");
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -301,7 +299,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             {
                 if (m_DebugLevel >= 3)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Assembling parallelized inspect result files");
+                    LogDebug("Assembling parallelized inspect result files");
                 }
 
                 UpdateStatusRunning(mPercentCompleteStartLevels[(int) eInspectResultsProcessingSteps.AssembleResults]);
@@ -315,7 +313,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
                 if (m_DebugLevel >= 3)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Assembling parallelized inspect error files");
+                    LogDebug("Assembling parallelized inspect error files");
                 }
 
                 strFileName = m_Dataset + "_error.txt";
@@ -328,7 +326,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
                 if (m_DebugLevel >= 3)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "Assembling parallelized inspect search log files");
                 }
 
@@ -342,7 +340,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
                 if (m_DebugLevel >= 3)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "Assembling parallelized inspect console output files");
                 }
 
@@ -368,7 +366,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             catch (Exception ex)
             {
                 m_message = "Error in InspectResultsAssembly->AssembleResults";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                LogError(m_message + ": " + ex.Message);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -443,7 +441,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                             break;
                         default:
                             // Unknown ResultFileType
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                            LogError(
                                 "clsAnalysisToolRunnerInspResultsAssembly->AssembleFiles: Unknown Inspect Result File Type: " + resFileType.ToString());
                             error = true;
                             break;
@@ -547,7 +545,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             catch (Exception ex)
             {
                 m_message = "Error in InspectResultsAssembly->AssembleFiles";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                LogError(m_message + ": " + ex.Message);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -559,7 +557,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             if (File.Exists(exportFilePath))
             {
                 //post error to log
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "clsAnalysisToolRunnerInspResultsAssembly->createNewExportFile: Export file already exists (" + exportFilePath +
                     "); this is unexpected");
                 return null;
@@ -606,7 +604,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 {
                     // File is empty or only contains a header line
                     m_message = "No results above threshold";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "No results above threshold; filtered inspect results file is empty");
                     return CloseOutType.CLOSEOUT_NO_DATA;
                 }
@@ -615,8 +613,8 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             {
                 m_message = "Error validating Inspect results file contents in InspectResultsAssembly->CreatePeptideToProteinMapping";
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                    m_message + ", job " + m_JobNum + "; " + clsGlobal.GetExceptionStackTrace(ex));
+                LogError(m_message + ", job " + m_JobNum, ex);
+
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -624,7 +622,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             {
                 if (m_DebugLevel >= 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating peptide to protein map file");
+                    LogDebug("Creating peptide to protein map file");
                 }
 
                 blnIgnorePeptideToProteinMapperErrors = m_jobParams.GetJobParameter("IgnorePeptideToProteinMapError", false);
@@ -664,17 +662,17 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 {
                     if (m_DebugLevel >= 2)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Peptide to protein mapping complete");
+                        LogDebug("Peptide to protein mapping complete");
                     }
                 }
                 else
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "Error running clsPeptideToProteinMapEngine: " + mPeptideToProteinMapper.GetErrorMessage());
 
                     if (blnIgnorePeptideToProteinMapperErrors)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                        LogWarning(
                             "Ignoring protein mapping error since 'IgnorePeptideToProteinMapError' = True");
                         return CloseOutType.CLOSEOUT_SUCCESS;
                     }
@@ -688,13 +686,12 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             {
                 m_message = "Error in InspectResultsAssembly->CreatePeptideToProteinMapping";
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                    "clsAnalysisToolRunnerInspResultsAssembly.CreatePeptideToProteinMapping, Error running clsPeptideToProteinMapEngine, job " +
-                    m_JobNum + "; " + clsGlobal.GetExceptionStackTrace(ex));
+                LogError("clsAnalysisToolRunnerInspResultsAssembly.CreatePeptideToProteinMapping, Error running clsPeptideToProteinMapEngine, job " +
+                    m_JobNum, ex);
 
                 if (blnIgnorePeptideToProteinMapperErrors)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                    LogWarning(
                         "Ignoring protein mapping error since 'IgnorePeptideToProteinMapError' = True");
                     return CloseOutType.CLOSEOUT_SUCCESS;
                 }
@@ -729,7 +726,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
                 if (m_DebugLevel > 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "clsAnalysisToolRunnerInspResultsAssembly.ExtractModInfoFromInspectParamFile(): Reading " + strInspectParameterFilePath);
                 }
 
@@ -786,7 +783,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             catch (Exception ex)
             {
                 m_message = "Error in InspectResultsAssembly->ExtractModInfoFromInspectParamFile";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                LogError(m_message + ": " + ex.Message);
                 return false;
             }
 
@@ -854,7 +851,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
             if (!fiFileInfo.Exists)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Inspect results file not found; nothing to zip: " + fiFileInfo.FullName);
                 return false;
             }
@@ -862,7 +859,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             strTargetFilePath = Path.Combine(m_WorkDir, mInspectResultsFileName);
             if (m_DebugLevel >= 3)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                LogDebug(
                     "Renaming " + fiFileInfo.FullName + " to " + strTargetFilePath);
             }
 
@@ -901,7 +898,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
                 if (!fiRescoredFile.Exists)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "Rescored Inspect Results file not found: " + fiRescoredFile.FullName);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -909,14 +906,14 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 if (fiOriginalFile.Length == 0)
                 {
                     // Assembled inspect results file is 0-bytes; this is unexpected
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "Assembled Inspect Results file is 0 bytes: " + fiOriginalFile.FullName);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 if (m_DebugLevel >= 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "Rescored Inspect results file created; size is " +
                         (fiRescoredFile.Length / (float)fiOriginalFile.Length * 100).ToString("0.0") + "% of the original (" +
                         fiRescoredFile.Length + " bytes vs. " + fiOriginalFile.Length + " bytes in original)");
@@ -925,7 +922,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             catch (Exception ex)
             {
                 m_message = "Error in InspectResultsAssembly->RescoreAssembledInspectResults";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                LogError(m_message + ": " + ex.Message);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -960,7 +957,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
             if (m_DebugLevel > 4)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                LogDebug(
                     "clsAnalysisToolRunnerInspResultsAssembly.RunpValue(): Enter");
             }
 
@@ -968,7 +965,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             string progLoc = pythonProgLoc;
             if (!File.Exists(progLoc))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find python.exe program file: " + progLoc);
+                LogError("Cannot find python.exe program file: " + progLoc);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -976,7 +973,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             string pvalueScriptPath = Path.Combine(InspectDir, PVALUE_MINLENGTH5_SCRIPT);
             if (!File.Exists(pvalueScriptPath))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find PValue script: " + pvalueScriptPath);
+                LogError("Cannot find PValue script: " + pvalueScriptPath);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -1026,7 +1023,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
             if (m_DebugLevel >= 1)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc + " " + CmdStr);
+                LogDebug(progLoc + " " + CmdStr);
             }
 
             cmdRunner.CreateNoWindow = true;
@@ -1044,7 +1041,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             if (cmdRunner.ExitCode != 0)
             {
                 // Note: Log the non-zero exit code as an error, but return CLOSEOUT_SUCCESS anyway
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     Path.GetFileName(pvalueScriptPath) + " returned a non-zero exit code: " + cmdRunner.ExitCode.ToString());
             }
 
@@ -1063,7 +1060,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+                LogDebug("Determining tool version info");
             }
 
             // Lookup the version of the Inspect Results Assembly Plugin
@@ -1103,7 +1100,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
@@ -1141,7 +1138,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             {
                 if (m_DebugLevel > 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "clsAnalysisToolRunnerInspResultsAssembly.UpdatePTModsFile(): Enter ");
                 }
 
@@ -1162,14 +1159,14 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
                         if (m_DebugLevel > 4)
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                            LogDebug(
                                 "clsAnalysisToolRunnerInspResultsAssembly.UpdatePTModsFile(): Open " + strPTModsFilePath);
                         }
                         var srInFile = new StreamReader(new FileStream(strPTModsFilePath, FileMode.Open, FileAccess.Read, FileShare.Read));
 
                         if (m_DebugLevel > 4)
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                            LogDebug(
                                 "clsAnalysisToolRunnerInspResultsAssembly.UpdatePTModsFile(): Create " + strPTModsFilePathNew);
                         }
                         var swOutFile = new StreamWriter(new FileStream(strPTModsFilePathNew, FileMode.Create, FileAccess.Write, FileShare.Read));
@@ -1224,7 +1221,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
                                                     if (m_DebugLevel > 4)
                                                     {
-                                                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                                        LogDebug(
                                                             "clsAnalysisToolRunnerInspResultsAssembly.UpdatePTModsFile(): Mod def in PTMods.txt doesn't match required mod def; updating to: " +
                                                             strLineIn);
                                                     }
@@ -1294,7 +1291,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                             }
                             catch (Exception ex)
                             {
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                LogError(
                                     "clsAnalysisToolRunnerInspResultsAssembly.UpdatePTModsFile, Error swapping in the new PTMods.txt file : " +
                                     m_JobNum + "; " + ex.Message);
                                 return false;
@@ -1319,7 +1316,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             catch (Exception ex)
             {
                 m_message = "Error in InspectResultsAssembly->UpdatePTModsFile";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                LogError(m_message + ": " + ex.Message);
                 return false;
             }
 
@@ -1371,7 +1368,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                             // Verify that strSplitLine[3] is "Protein"
                             if (!strSplitLine[3].ToLower().StartsWith("protein"))
                             {
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                                LogWarning(
                                     "The fourth column in the Inspect results file does not start with 'Protein'; this is unexpected");
                             }
                         }
@@ -1395,7 +1392,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
                     if (intDecoyProteinCount == 0)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                        LogWarning(
                             "The job has 'InspectUsesShuffledDB' set to True in the Settings file, but none of the proteins in the result file starts with XXX.  Will assume the fasta file did NOT have shuffled proteins, and will thus NOT use '-S 0.5' when calling " +
                             PVALUE_MINLENGTH5_SCRIPT);
                         blnShuffledDBUsed = false;
@@ -1404,7 +1401,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 catch (Exception ex)
                 {
                     m_message = "Error in InspectResultsAssembly->strInspectResultsPath";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                    LogError(m_message + ": " + ex.Message);
                 }
             }
 
@@ -1465,7 +1462,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             catch (Exception ex)
             {
                 m_message = "Error in InspectResultsAssembly->ZipInspectResults";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                LogError(m_message + ": " + ex.Message);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 

@@ -32,7 +32,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 }
             }
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting param file");
+            LogMessage("Getting param file");
 
             var paramFilesCopied = 0;
 
@@ -54,11 +54,11 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             if (paramFilesCopied == 0)
             {
                 m_message = "One more more of these job parameters must define a valid AScore parameter file name: AScoreCIDParamFile, AScoreETDParamFile, or AScoreHCDParamFile";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                LogError(m_message);
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving input files");
+            LogMessage("Retrieving input files");
 
             Dictionary<int, clsDataPackageJobInfo> dctDataPackageJobs = null;
 
@@ -108,7 +108,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             catch (Exception ex)
             {
                 m_message = "Error in CacheDataPackageInfo";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in CacheDataPackageInfo: " + ex.Message);
+                LogError("Error in CacheDataPackageInfo: " + ex.Message);
                 return false;
             }
 

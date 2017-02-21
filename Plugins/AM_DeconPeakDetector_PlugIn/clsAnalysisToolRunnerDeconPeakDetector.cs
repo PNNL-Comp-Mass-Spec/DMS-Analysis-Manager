@@ -57,7 +57,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
 
                 if (m_DebugLevel > 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "clsAnalysisToolRunnerDeconPeakDetector.RunTool(): Enter");
                 }
 
@@ -76,8 +76,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
                 m_message = string.Empty;
                 if (!StoreToolVersionInfo(progLoc))
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                        "Aborting since StoreToolVersionInfo returned false");
+                    LogError("Aborting since StoreToolVersionInfo returned false");
                     if (string.IsNullOrEmpty(m_message))
                     {
                         m_message = "Error determining DeconPeakDetector version";
@@ -118,7 +117,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
                 //Add the current job data to the summary file
                 if (!UpdateSummaryFile())
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                    LogWarning(
                         "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
                 }
 
@@ -156,8 +155,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
             }
             catch (Exception ex)
             {
-                m_message = "Error in DeconPeakDetectorPlugin->RunTool";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError("Error in DeconPeakDetectorPlugin->RunTool", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -191,7 +189,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
                 {
                     if (m_DebugLevel >= 4)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        LogDebug(
                             "Console output file not found: " + strConsoleOutputFilePath);
                     }
 
@@ -200,7 +198,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
 
                 if (m_DebugLevel >= 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing file " + strConsoleOutputFilePath);
+                    LogDebug("Parsing file " + strConsoleOutputFilePath);
                 }
 
                 string strLineIn = null;
@@ -236,8 +234,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                        "Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    LogWarning("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
             }
         }
@@ -265,14 +262,14 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
                 return false;
             }
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running DeconPeakDetector");
+            LogMessage("Running DeconPeakDetector");
 
             //Set up and execute a program runner to run the Peak Detector
             CmdStr = m_Dataset + clsAnalysisResources.DOT_RAW_EXTENSION;
             CmdStr += " /P:" + PossiblyQuotePath(paramFilePath);
             CmdStr += " /O:" + PossiblyQuotePath(m_WorkDir);
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strPeakDetectorProgLoc + " " + CmdStr);
+            LogDebug(strPeakDetectorProgLoc + " " + CmdStr);
 
             mCmdRunner = new clsRunDosProgram(m_WorkDir);
             RegisterEvents(mCmdRunner);
@@ -291,7 +288,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
 
             if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg);
+                LogError(mConsoleOutputErrorMsg);
             }
 
             if (!blnSuccess)
@@ -300,16 +297,16 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
                 Msg = "Error running DeconPeakDetector";
                 m_message = clsGlobal.AppendToComment(m_message, Msg);
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg + ", job " + m_JobNum);
+                LogError(Msg + ", job " + m_JobNum);
 
                 if (mCmdRunner.ExitCode != 0)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                    LogWarning(
                         "PeakDetector returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
                 }
                 else
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                    LogWarning(
                         "Call to PeakDetector failed (but exit code is 0)");
                 }
 
@@ -320,7 +317,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
             m_StatusTools.UpdateAndWrite(m_progress);
             if (m_DebugLevel >= 3)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "DeconPeakDetector Search Complete");
+                LogDebug("DeconPeakDetector Search Complete");
             }
 
             return true;
@@ -336,7 +333,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+                LogDebug("Determining tool version info");
             }
 
             // Lookup the version of the DeconConsole application
@@ -360,8 +357,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                    "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message, ex);
                 return false;
             }
         }

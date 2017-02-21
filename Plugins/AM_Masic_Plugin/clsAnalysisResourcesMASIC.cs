@@ -48,7 +48,7 @@ namespace AnalysisManagerMasicPlugin
 
             if (!FileSearch.RetrieveSpectra(RawDataType, CreateStoragePathInfoOnly))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                LogDebug(
                     "clsAnalysisResourcesDecon2ls.GetResources: Error occurred retrieving spectra.");
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -68,7 +68,7 @@ namespace AnalysisManagerMasicPlugin
                     // Unable to resolve the file path
                     m_message = "Could not find " + strRawFileName + " or " + strRawFileName + STORAGE_PATH_INFO_FILE_SUFFIX +
                                 " in the working folder; unable to run MASIC";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                    LogError(m_message);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -78,7 +78,7 @@ namespace AnalysisManagerMasicPlugin
                 //
                 //if (clsAnalysisToolRunnerMASICFinnigan.NeedToConvertRawToMzXML(fiInputFile))
                 //{
-                //    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Generating the ScanStats files from the .Raw file since it is over 2 GB (and MASIC will therefore process a .mzXML file)");
+                //    LogMessage("Generating the ScanStats files from the .Raw file since it is over 2 GB (and MASIC will therefore process a .mzXML file)");
                 //
                 //    if (!GenerateScanStatsFile(deleteRawDataFile: false))
                 //    {

@@ -58,14 +58,14 @@ namespace MSMSSpectrumFilterAM
             // Store the MSMSSpectrumFilter version info in the database
             if (!StoreToolVersionInfo())
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
+                LogError("Aborting since StoreToolVersionInfo returned false");
                 m_message = "Error determining MSMSSpectrumFilter version";
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
             m_FilterStatus = ProcessStatus.SF_STARTING;
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "clsAnalysisToolRunnerMsMsSpectrumFilter.RunTool(), Filtering _Dta.txt file");
+            LogMessage("clsAnalysisToolRunnerMsMsSpectrumFilter.RunTool(), Filtering _Dta.txt file");
 
             // Verify necessary files are in specified locations
             if (!InitSetup())
@@ -86,7 +86,7 @@ namespace MSMSSpectrumFilterAM
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMsMsSpectrumFilter.RunTool(), Filtering complete");
+                LogDebug("clsAnalysisToolRunnerMsMsSpectrumFilter.RunTool(), Filtering complete");
             }
 
             // Zip the filtered _Dta.txt file
@@ -118,7 +118,7 @@ namespace MSMSSpectrumFilterAM
             // Make the results folder
             if (m_DebugLevel > 3)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMsMsSpectrumFilter.RunTool(), Making results folder");
+                LogDebug("clsAnalysisToolRunnerMsMsSpectrumFilter.RunTool(), Making results folder");
             }
 
             result = MakeResultsFolder();
@@ -162,7 +162,7 @@ namespace MSMSSpectrumFilterAM
                 {
                     if (m_DebugLevel >= 2)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Filtered CDTA file's size differs by more than 10 bytes vs. the original CDTA file (" + fiFilteredCDTA.Length + " vs. " + fiOriginalCDTA.Length + "); assuming the files do not match");
+                        LogMessage("Filtered CDTA file's size differs by more than 10 bytes vs. the original CDTA file (" + fiFilteredCDTA.Length + " vs. " + fiOriginalCDTA.Length + "); assuming the files do not match");
                     }
                     return false;
                 }
@@ -170,7 +170,7 @@ namespace MSMSSpectrumFilterAM
                 {
                     if (m_DebugLevel >= 2)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Comparing original CDTA file to filtered CDTA file to see if they contain the same spectral data");
+                        LogMessage("Comparing original CDTA file to filtered CDTA file to see if they contain the same spectral data");
                     }
                 }
 
@@ -181,13 +181,13 @@ namespace MSMSSpectrumFilterAM
 
                 if (!objFilteredCDTA.OpenFile(strFilteredCDTA))
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in CDTAFilesMatch opening " + strFilteredCDTA);
+                    LogError("Error in CDTAFilesMatch opening " + strFilteredCDTA);
                     return false;
                 }
 
                 if (!objOriginalCDTA.OpenFile(strOriginalCDTA))
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in CDTAFilesMatch opening " + strOriginalCDTA);
+                    LogError("Error in CDTAFilesMatch opening " + strOriginalCDTA);
                     return false;
                 }
 
@@ -214,7 +214,7 @@ namespace MSMSSpectrumFilterAM
                         {
                             if (m_DebugLevel >= 2)
                             {
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Spectrum " + intOriginalCDTASpectra + " in the original CDTA file has a different spectrum header vs. spectrum " + intFilteredCDTASpectra + " in the filtered CDTA file; files do not match");
+                                LogMessage("Spectrum " + intOriginalCDTASpectra + " in the original CDTA file has a different spectrum header vs. spectrum " + intFilteredCDTASpectra + " in the filtered CDTA file; files do not match");
                             }
                             return false;
                         }
@@ -223,7 +223,7 @@ namespace MSMSSpectrumFilterAM
                         {
                             if (m_DebugLevel >= 2)
                             {
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Spectrum " + intOriginalCDTASpectra + " in the original CDTA file has a different number of ions (" + msmsDataListOrig.Count + " vs. " + msmsDataListFilt.Count + "); files do not match");
+                                LogMessage("Spectrum " + intOriginalCDTASpectra + " in the original CDTA file has a different number of ions (" + msmsDataListOrig.Count + " vs. " + msmsDataListFilt.Count + "); files do not match");
                             }
                             return false;
                         }
@@ -234,7 +234,7 @@ namespace MSMSSpectrumFilterAM
                             {
                                 if (m_DebugLevel >= 2)
                                 {
-                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Spectrum " + intOriginalCDTASpectra + " in the original CDTA file has different ion mass or abundance values; files do not match");
+                                    LogMessage("Spectrum " + intOriginalCDTASpectra + " in the original CDTA file has different ion mass or abundance values; files do not match");
                                 }
                                 return false;
                             }
@@ -245,7 +245,7 @@ namespace MSMSSpectrumFilterAM
                         // Original CDTA file has more spectra than the filtered one
                         if (m_DebugLevel >= 2)
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Original CDTA file has more spectra than the filtered one (" + intOriginalCDTASpectra + " vs. " + intFilteredCDTASpectra + "); files do not match");
+                            LogMessage("Original CDTA file has more spectra than the filtered one (" + intOriginalCDTASpectra + " vs. " + intFilteredCDTASpectra + "); files do not match");
                         }
                         return false;
                     }
@@ -262,7 +262,7 @@ namespace MSMSSpectrumFilterAM
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in CDTAFilesMatch", ex);
+                LogError("Exception in CDTAFilesMatch", ex);
                 return false;
             }
             finally
@@ -343,7 +343,7 @@ namespace MSMSSpectrumFilterAM
 
                 if (m_DebugLevel >= 3)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Loading parameter file: " + strParameterFilePath);
+                    LogDebug("Loading parameter file: " + strParameterFilePath);
                 }
 
                 if (!m_MsMsSpectrumFilter.LoadParameterFileSettings(strParameterFilePath))
@@ -370,14 +370,14 @@ namespace MSMSSpectrumFilterAM
                 {
                     if (m_DebugLevel >= 4)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Calling GenerateFinniganScanStatsFiles");
+                        LogDebug("Calling GenerateFinniganScanStatsFiles");
                     }
 
                     if (!GenerateFinniganScanStatsFiles())
                     {
                         if (m_DebugLevel >= 4)
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "GenerateFinniganScanStatsFiles returned False");
+                            LogDebug("GenerateFinniganScanStatsFiles returned False");
                         }
 
                         m_FilterStatus = ProcessStatus.SF_ERROR;
@@ -386,13 +386,13 @@ namespace MSMSSpectrumFilterAM
 
                     if (m_DebugLevel >= 4)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "GenerateFinniganScanStatsFiles returned True");
+                        LogDebug("GenerateFinniganScanStatsFiles returned True");
                     }
                 }
 
                 if (m_DebugLevel >= 3)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Instantiate the thread to run MsMsSpectraFilter");
+                    LogDebug("Instantiate the thread to run MsMsSpectraFilter");
                 }
 
                 // Instantiate the thread to run MsMsSpectraFilter
@@ -401,7 +401,7 @@ namespace MSMSSpectrumFilterAM
 
                 if (m_DebugLevel >= 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Thread started");
+                    LogDebug("Thread started");
                 }
 
                 var startTime = DateTime.UtcNow;
@@ -457,14 +457,14 @@ namespace MSMSSpectrumFilterAM
             {
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  Spectrum Filter Mode: " + m_MsMsSpectrumFilter.SpectrumFilterMode);
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  MS Level Filter: " + m_MsMsSpectrumFilter.MSLevelFilter);
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  ScanTypeFilter: " + m_MsMsSpectrumFilter.ScanTypeFilter + " (match type " + m_MsMsSpectrumFilter.ScanTypeMatchType + ")");
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  MSCollisionModeFilter: " + m_MsMsSpectrumFilter.MSCollisionModeFilter + " (match type " + m_MsMsSpectrumFilter.MSCollisionModeMatchType + ")");
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  MinimumIonCount: " + m_MsMsSpectrumFilter.MinimumIonCount);
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  IonFilter_RemovePrecursor: " + m_MsMsSpectrumFilter.IonFilter_RemovePrecursor);
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  IonFilter_RemoveChargeReducedPrecursors: " + m_MsMsSpectrumFilter.IonFilter_RemoveChargeReducedPrecursors);
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  IonFilter_RemoveNeutralLossesFromChargeReducedPrecursors: " + m_MsMsSpectrumFilter.IonFilter_RemoveNeutralLossesFromChargeReducedPrecursors);
+                    LogDebug("  Spectrum Filter Mode: " + m_MsMsSpectrumFilter.SpectrumFilterMode);
+                    LogDebug("  MS Level Filter: " + m_MsMsSpectrumFilter.MSLevelFilter);
+                    LogDebug("  ScanTypeFilter: " + m_MsMsSpectrumFilter.ScanTypeFilter + " (match type " + m_MsMsSpectrumFilter.ScanTypeMatchType + ")");
+                    LogDebug("  MSCollisionModeFilter: " + m_MsMsSpectrumFilter.MSCollisionModeFilter + " (match type " + m_MsMsSpectrumFilter.MSCollisionModeMatchType + ")");
+                    LogDebug("  MinimumIonCount: " + m_MsMsSpectrumFilter.MinimumIonCount);
+                    LogDebug("  IonFilter_RemovePrecursor: " + m_MsMsSpectrumFilter.IonFilter_RemovePrecursor);
+                    LogDebug("  IonFilter_RemoveChargeReducedPrecursors: " + m_MsMsSpectrumFilter.IonFilter_RemoveChargeReducedPrecursors);
+                    LogDebug("  IonFilter_RemoveNeutralLossesFromChargeReducedPrecursors: " + m_MsMsSpectrumFilter.IonFilter_RemoveNeutralLossesFromChargeReducedPrecursors);
                 }
 
                 // Define the input file name
@@ -472,7 +472,7 @@ namespace MSMSSpectrumFilterAM
 
                 if (m_DebugLevel >= 3)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Call ProcessFilesWildcard for: " + strInputFilePath);
+                    LogDebug("Call ProcessFilesWildcard for: " + strInputFilePath);
                 }
 
                 blnSuccess = m_MsMsSpectrumFilter.ProcessFilesWildcard(strInputFilePath, m_WorkDir, "");
@@ -483,7 +483,7 @@ namespace MSMSSpectrumFilterAM
                     {
                         if (m_DebugLevel >= 3)
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "ProcessFilesWildcard returned True; now calling .SortSpectrumQualityTextFile");
+                            LogDebug("ProcessFilesWildcard returned True; now calling .SortSpectrumQualityTextFile");
                         }
 
                         // Sort the report file (this also closes the file)
@@ -510,7 +510,7 @@ namespace MSMSSpectrumFilterAM
 
                         if (blnFilesMatch)
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "The filtered CDTA file matches the original CDTA file (same number of spectra and same spectral data); the filtered CDTA file will not be retained");
+                            LogMessage("The filtered CDTA file matches the original CDTA file (same number of spectra and same spectral data); the filtered CDTA file will not be retained");
 
                             File.Delete(strInputFilePath);
 
@@ -578,7 +578,7 @@ namespace MSMSSpectrumFilterAM
 
                 if (m_DebugLevel >= 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Looking for the _ScanStats.txt files for dataset " + m_Dataset);
+                    LogDebug("Looking for the _ScanStats.txt files for dataset " + m_Dataset);
                 }
 
                 blnScanStatsFilesExist = clsMsMsSpectrumFilter.CheckForExistingScanStatsFiles(m_WorkDir, m_Dataset);
@@ -586,12 +586,12 @@ namespace MSMSSpectrumFilterAM
                 {
                     if (m_DebugLevel >= 1)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "_ScanStats.txt files found for dataset " + m_Dataset);
+                        LogMessage("_ScanStats.txt files found for dataset " + m_Dataset);
                     }
                     return true;
                 }
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Creating the _ScanStats.txt files for dataset " + m_Dataset);
+                LogMessage("Creating the _ScanStats.txt files for dataset " + m_Dataset);
 
                 // Determine the path to the .Raw file
                 strRawFileName = m_Dataset + ".raw";
@@ -618,14 +618,14 @@ namespace MSMSSpectrumFilterAM
 
                 if (m_DebugLevel >= 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Generating _ScanStats.txt file using " + strFinniganRawFilePath);
+                    LogMessage("Generating _ScanStats.txt file using " + strFinniganRawFilePath);
                 }
 
                 if (!m_MsMsSpectrumFilter.GenerateFinniganScanStatsFiles(strFinniganRawFilePath, m_WorkDir))
                 {
                     if (m_DebugLevel >= 3)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "GenerateFinniganScanStatsFiles returned False");
+                        LogDebug("GenerateFinniganScanStatsFiles returned False");
                     }
 
                     m_ErrMsg = m_MsMsSpectrumFilter.GetErrorMessage();
@@ -641,7 +641,7 @@ namespace MSMSSpectrumFilterAM
                 {
                     if (m_DebugLevel >= 4)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "GenerateFinniganScanStatsFiles returned True");
+                        LogDebug("GenerateFinniganScanStatsFiles returned True");
                     }
                     blnSuccess = true;
                 }
@@ -743,7 +743,7 @@ namespace MSMSSpectrumFilterAM
             Trace.WriteLine(DateTime.Now.ToLongTimeString() + "; " + m_ErrMsg, strSource);
             Console.WriteLine(DateTime.Now.ToLongTimeString() + "; " + m_ErrMsg, strSource);
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_ErrMsg + ex.Message);
+            LogError(m_ErrMsg + ex.Message);
         }
 
         /// <summary>
@@ -757,7 +757,7 @@ namespace MSMSSpectrumFilterAM
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+                LogDebug("Determining tool version info");
             }
 
             // Lookup the version of the MSMSSpectrumFilterAM
@@ -782,7 +782,7 @@ namespace MSMSSpectrumFilterAM
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
         }
@@ -845,11 +845,11 @@ namespace MSMSSpectrumFilterAM
             // Verify file exists
             if (File.Exists(DtaFilePath))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Zipping concatenated spectra file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
+                LogMessage("Zipping concatenated spectra file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
             }
             else
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Unable to find concatenated dta file");
+                LogError("Unable to find concatenated dta file");
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -859,14 +859,14 @@ namespace MSMSSpectrumFilterAM
                 if (!base.ZipFile(DtaFilePath, false))
                 {
                     string Msg = "Error zipping concat dta file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step");
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg);
+                    LogError(Msg);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
             }
             catch (Exception ex)
             {
                 string Msg = "Exception zipping concat dta file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step") + ": " + ex.Message;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg);
+                LogError(Msg);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 

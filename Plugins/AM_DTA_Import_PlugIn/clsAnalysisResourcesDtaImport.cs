@@ -72,7 +72,7 @@ namespace AnalysisManagerDtaImportPlugIn
                     {
                         if (m_DebugLevel >= 1)
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Manual DTA file unzipped");
+                            LogMessage("Manual DTA file unzipped");
                         }
                     }
                     else

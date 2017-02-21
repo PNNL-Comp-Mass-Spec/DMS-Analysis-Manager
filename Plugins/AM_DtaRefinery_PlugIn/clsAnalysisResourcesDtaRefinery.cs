@@ -33,7 +33,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
             //This will eventually be replaced by Ken Auberry dll call to make param file on the fly
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting param file");
+            LogMessage("Getting param file");
 
             //Retrieve param file
             var strParamFileName = m_jobParams.GetParam("ParmFileName");
@@ -116,7 +116,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             var toolName = m_jobParams.GetParam("ToolName");
             if (toolName.StartsWith("MSGFPlus", StringComparison.CurrentCultureIgnoreCase))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                LogMessage(
                     "Validating that the _dta.txt file has centroided spectra (required by MSGF+)");
                 if (!ValidateCDTAFileIsCentroided(strCDTAPath))
                 {
@@ -143,7 +143,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             if (!success)
             {
                 string msg = "clsAnalysisResourcesDtaRefinery.GetResources(), failed making input file: " + strErrorMessage;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                LogError(msg);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -165,7 +165,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                     // We'll continue on, but log a warning
                     if (m_DebugLevel >= 1)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                        LogWarning(
                             "Could not find the DeconMSn Log file named " + deconMSnLogFileName);
                     }
                     deconMSnLogFileName = string.Empty;
@@ -177,7 +177,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                         // Error copying file (error will have already been logged)
                         if (m_DebugLevel >= 3)
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                            LogError(
                                 "CopyFileToWorkDir returned False for " + deconMSnLogFileName + " using folder " + sourceFolderPath);
                         }
                         // Ignore the error and continue
@@ -193,7 +193,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                     // We'll continue on, but log a warning
                     if (m_DebugLevel >= 1)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                        LogWarning(
                             "Could not find the DeconMSn Profile file named " + deconMSnProfileFileName);
                     }
                     deconMSnProfileFileName = string.Empty;
@@ -205,7 +205,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                         // Error copying file (error will have already been logged)
                         if (m_DebugLevel >= 3)
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                            LogError(
                                 "CopyFileToWorkDir returned False for " + deconMSnProfileFileName + " using folder " + sourceFolderPath);
                         }
                         // Ignore the error and continue
@@ -235,7 +235,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in RetrieveDeconMSnLogFiles: " + ex.Message);
+                LogError("Error in RetrieveDeconMSnLogFiles: " + ex.Message);
                 return false;
             }
 
@@ -254,7 +254,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 {
                     if (m_DebugLevel >= 1)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                        LogWarning(
                             fileDescription +
                             " does not have any tab-delimited lines that start with a number; file will be deleted so that DTARefinery can proceed without considering TIC or ion intensity");
                     }
@@ -340,12 +340,12 @@ namespace AnalysisManagerDtaRefineryPlugIn
             {
                 if (string.IsNullOrEmpty(oValidator.ErrorMessage))
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "clsDeconMSnLogFileValidator.ValidateFile returned false");
                 }
                 else
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, oValidator.ErrorMessage);
+                    LogError(oValidator.ErrorMessage);
                 }
                 return false;
             }
@@ -353,7 +353,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             {
                 if (oValidator.FileUpdated)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                    LogWarning(
                         "clsDeconMSnLogFileValidator.ValidateFile updated one or more rows in the DeconMSn_Log.txt file to replace values with intensities of 0 with 1");
                 }
             }

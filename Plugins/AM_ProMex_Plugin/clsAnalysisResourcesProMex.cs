@@ -59,7 +59,7 @@ namespace AnalysisManagerProMexPlugIn
                 if (string.IsNullOrEmpty(paramFileName))
                 {
                     m_message = "Job Parameter File name is empty";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                    LogError(m_message);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -73,7 +73,7 @@ namespace AnalysisManagerProMexPlugIn
                 {
                     // Settings file does not contain parameter ProMexParamFile
                     m_message = "Parameter 'ProMexParamFile' is not defined in the settings file for this job";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                    LogError(m_message);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
             }
@@ -150,7 +150,7 @@ namespace AnalysisManagerProMexPlugIn
             catch (Exception ex)
             {
                 m_message = "Exception in RetrieveMzMLFile: " + ex.Message;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     m_message + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -179,7 +179,7 @@ namespace AnalysisManagerProMexPlugIn
             catch (Exception ex)
             {
                 m_message = "Exception in RetrievePBFFile: " + ex.Message;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     m_message + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
                 return CloseOutType.CLOSEOUT_FAILED;
             }

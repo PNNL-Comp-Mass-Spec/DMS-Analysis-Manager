@@ -222,7 +222,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 if (m_DebugLevel > 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "clsAnalysisToolRunnerPRIDEConverter.RunTool(): Enter");
                 }
 
@@ -244,7 +244,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 mCacheFolderPath = m_jobParams.GetJobParameter("CacheFolderPath", "\\\\protoapps\\PeptideAtlas_Staging");
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running PRIDEConverter");
+                LogMessage("Running PRIDEConverter");
 
                 // Initialize dctDataPackageDatasets
                 Dictionary<int, clsDataPackageDatasetInfo> dctDataPackageDatasets = null;
@@ -301,7 +301,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 {
                     if (m_DebugLevel >= 3)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "PRIDEConverter Complete");
+                        LogDebug("PRIDEConverter Complete");
                     }
                 }
 
@@ -422,7 +422,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     if (DateTime.UtcNow.Subtract(dtLastLogTime).TotalMinutes >= 5 || m_DebugLevel >= 2)
                     {
                         dtLastLogTime = DateTime.UtcNow;
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        LogDebug(
                             " ... processed " + jobsProcessed + " / " + mDataPackagePeptideHitJobs.Count + " jobs");
                     }
                 }
@@ -2169,7 +2169,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     }
                 }
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strRecentElements);
+                LogDebug(strRecentElements);
 
                 return string.Empty;
             }
@@ -2457,7 +2457,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 strCurrentTask = "Running PRIDE Converter for job " + intJob + ", " + strDataset;
                 if (m_DebugLevel >= 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, strCurrentTask);
+                    LogMessage(strCurrentTask);
                 }
 
                 blnSuccess = RunPrideConverter(intJob, strDataset, strMsgfResultsFilePath, strMzXMLFilePath, strPrideReportXMLFilePath);
@@ -2516,39 +2516,39 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 if (m_DebugLevel >= 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Creating PXSubmission file: " + strPXFilePath);
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogMessage("Creating PXSubmission file: " + strPXFilePath);
+                    LogDebug(
                         " Result stats: " + intPrideXmlFilesCreated + " Result (.msgf-pride.xml) files");
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         " Result stats: " + intRawFilesStored + " Raw files");
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         " Result stats: " + intPeakFilesStored + " Peak (.mgf) files");
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         " Result stats: " + intMzIDFilesStored + " Search (.mzid.gz) files");
                 }
 
                 if (intMzIDFilesStored == 0 && intPrideXmlFilesCreated == 0)
                 {
                     strSubmissionType = PARTIAL_SUBMISSION;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                    LogMessage(
                         "Did not create any Pride XML result files; submission type is " + strSubmissionType);
                 }
                 else if (intPrideXmlFilesCreated > 0 && intMzIDFilesStored > intPrideXmlFilesCreated)
                 {
                     strSubmissionType = PARTIAL_SUBMISSION;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                    LogMessage(
                         "Stored more Search (.mzid.gz) files than Pride XML result files; submission type is " + strSubmissionType);
                 }
                 else if (intPrideXmlFilesCreated > 0 && intRawFilesStored > intPrideXmlFilesCreated)
                 {
                     strSubmissionType = PARTIAL_SUBMISSION;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                    LogMessage(
                         "Stored more Raw files than Pride XML result files; submission type is " + strSubmissionType);
                 }
                 else if (intMzIDFilesStored == 0)
                 {
                     strSubmissionType = PARTIAL_SUBMISSION;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                    LogMessage(
                         "Did not have any .mzid.gz files and did not create any Pride XML result files; submission type is " + strSubmissionType);
                 }
                 else
@@ -3128,7 +3128,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, mJavaProgLoc + " " + CmdStr);
+                LogDebug(mJavaProgLoc + " " + CmdStr);
             }
 
             mCmdRunner.CreateNoWindow = false;
@@ -3359,7 +3359,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 {
                     if (m_DebugLevel >= 4)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        LogDebug(
                             "Console output file not found: " + strConsoleOutputFilePath);
                     }
 
@@ -3368,7 +3368,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 if (m_DebugLevel >= 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing file " + strConsoleOutputFilePath);
+                    LogDebug("Parsing file " + strConsoleOutputFilePath);
                 }
 
                 string strLineIn = null;
@@ -3402,7 +3402,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                     Console.WriteLine("Error parsing console output file (" + Path.GetFileName(strConsoleOutputFilePath) + ")");
                 }
@@ -4006,7 +4006,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             if (m_DebugLevel >= 1)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                LogMessage(
                     "Running PrideConverter on " + Path.GetFileName(strMsgfResultsFilePath));
             }
 
@@ -4021,7 +4021,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             CmdStr += " -reportOnlyIdentifiedSpectra";
             CmdStr += " -debug";
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, mJavaProgLoc + " " + CmdStr);
+            LogDebug(mJavaProgLoc + " " + CmdStr);
 
             mCmdRunner.CreateNoWindow = false;
             mCmdRunner.CacheStandardOutput = false;
@@ -4046,14 +4046,14 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 }
                 else
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg);
+                    LogError(mConsoleOutputErrorMsg);
                     Console.WriteLine(mConsoleOutputErrorMsg);
                 }
             }
 
             if (!blnSuccess)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Error running PrideConverter, dataset " + strDataset + ", job " + intJob);
                 if (string.IsNullOrWhiteSpace(m_message))
                 {
@@ -4114,7 +4114,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+                LogDebug("Determining tool version info");
             }
 
             // Store paths to key files in ioToolFiles
@@ -4133,7 +4133,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     catch (Exception ex)
                     {
                         var msg = "Exception calling SetStepTaskToolVersion: " + ex.Message;
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+                        LogError(msg);
                         Console.WriteLine(msg);
                         return false;
                     }
@@ -4770,7 +4770,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     }
                 }
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strRecentElements);
+                LogDebug(strRecentElements);
 
                 strMzIDFilePath = string.Empty;
                 return false;

@@ -218,8 +218,8 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     // Make sure the Isos File exists
                     if (!File.Exists(IsosFilePath))
                     {
-                        m_message = "DeconTools Isos file Not Found";
-                        LogError(m_message, m_message + ": " + IsosFilePath);
+                        var msg = "DeconTools Isos file Not Found";
+                        LogError(msg, msg + ": " + IsosFilePath);
                         return CloseOutType.CLOSEOUT_NO_OUT_FILES;
                     }
 

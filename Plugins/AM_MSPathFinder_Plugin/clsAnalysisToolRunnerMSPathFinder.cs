@@ -87,7 +87,7 @@ namespace AnalysisManagerMSPathFinderPlugin
 
                 if (m_DebugLevel > 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMSPathFinder.RunTool(): Enter");
+                    LogDebug("clsAnalysisToolRunnerMSPathFinder.RunTool(): Enter");
                 }
 
                 // Determine the path to the MSPathFinder program (Top-down version)
@@ -101,7 +101,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                 // Store the MSPathFinder version info in the database
                 if (!StoreToolVersionInfo(progLoc))
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
+                    LogError("Aborting since StoreToolVersionInfo returned false");
                     m_message = "Error determining MSPathFinder version";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -160,7 +160,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                 // Add the current job data to the summary file
                 if (!UpdateSummaryFile())
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
+                    LogWarning("Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
                 }
 
                 mCmdRunner = null;
@@ -203,7 +203,7 @@ namespace AnalysisManagerMSPathFinderPlugin
             catch (Exception ex)
             {
                 m_message = "Error in MSPathFinderPlugin->RunTool";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -216,7 +216,7 @@ namespace AnalysisManagerMSPathFinderPlugin
             if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
+            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
 
             // Bump up the debug level if less than 2
             if (m_DebugLevel < 2)
@@ -443,7 +443,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                 {
                     if (m_DebugLevel >= 4)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Console output file not found: " + strConsoleOutputFilePath);
+                        LogDebug("Console output file not found: " + strConsoleOutputFilePath);
                     }
 
                     return;
@@ -451,7 +451,7 @@ namespace AnalysisManagerMSPathFinderPlugin
 
                 if (m_DebugLevel >= 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing file " + strConsoleOutputFilePath);
+                    LogDebug("Parsing file " + strConsoleOutputFilePath);
                 }
 
                 // progressComplete values are between 0 and 100
@@ -656,7 +656,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    LogError("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
             }
         }
@@ -765,7 +765,7 @@ namespace AnalysisManagerMSPathFinderPlugin
             catch (Exception ex)
             {
                 errMsg = "Exception creating MSPathFinder Mods file";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errMsg, ex);
+                LogError(errMsg, ex);
                 blnSuccess = false;
             }
 
@@ -861,7 +861,7 @@ namespace AnalysisManagerMSPathFinderPlugin
             catch (Exception ex)
             {
                 m_message = "Exception reading MSPathFinder parameter file";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -989,7 +989,7 @@ namespace AnalysisManagerMSPathFinderPlugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception preparing the MSPathFinder results for zipping: " + ex.Message);
+                LogError("Exception preparing the MSPathFinder results for zipping: " + ex.Message);
                 return false;
             }
 
@@ -1016,7 +1016,7 @@ namespace AnalysisManagerMSPathFinderPlugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception zipping the MSPathFinder results: " + ex.Message);
+                LogError("Exception zipping the MSPathFinder results: " + ex.Message);
                 return false;
             }
         }
@@ -1055,7 +1055,7 @@ namespace AnalysisManagerMSPathFinderPlugin
             var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
             var fastaFilePath = Path.Combine(localOrgDbFolder, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"));
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MSPathFinder");
+            LogMessage("Running MSPathFinder");
 
             //Set up and execute a program runner to run MSPathFinder
 
@@ -1067,7 +1067,7 @@ namespace AnalysisManagerMSPathFinderPlugin
 
             if (m_DebugLevel >= 1)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc + " " + CmdStr);
+                LogDebug(progLoc + " " + CmdStr);
             }
 
             mCmdRunner = new clsRunDosProgram(m_WorkDir);
@@ -1105,7 +1105,7 @@ namespace AnalysisManagerMSPathFinderPlugin
 
             if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg);
+                LogError(mConsoleOutputErrorMsg);
             }
 
             if (!success)
@@ -1124,15 +1124,15 @@ namespace AnalysisManagerMSPathFinderPlugin
 
                 m_message = clsGlobal.AppendToComment(m_message, msg);
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg + ", job " + m_JobNum);
+                LogError(msg + ", job " + m_JobNum);
 
                 if (mCmdRunner.ExitCode != 0)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "MSPathFinder returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
+                    LogWarning("MSPathFinder returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
                 }
                 else
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to MSPathFinder failed (but exit code is 0)");
+                    LogWarning("Call to MSPathFinder failed (but exit code is 0)");
                 }
 
                 return false;
@@ -1142,7 +1142,7 @@ namespace AnalysisManagerMSPathFinderPlugin
             m_StatusTools.UpdateAndWrite(m_progress);
             if (m_DebugLevel >= 3)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSPathFinder Search Complete");
+                LogDebug("MSPathFinder Search Complete");
             }
 
             return true;
@@ -1159,7 +1159,7 @@ namespace AnalysisManagerMSPathFinderPlugin
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+                LogDebug("Determining tool version info");
             }
 
             var fiProgram = new FileInfo(strProgLoc);
@@ -1172,7 +1172,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                 }
                 catch (Exception ex)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                    LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                     return false;
                 }
             }
@@ -1195,7 +1195,7 @@ namespace AnalysisManagerMSPathFinderPlugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
         }

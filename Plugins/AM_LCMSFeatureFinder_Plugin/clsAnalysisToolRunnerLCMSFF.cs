@@ -46,7 +46,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running LCMSFeatureFinder");
+            LogMessage("Running LCMSFeatureFinder");
 
             mCmdRunner = new clsRunDosProgram(m_WorkDir);
             RegisterEvents(mCmdRunner);
@@ -65,7 +65,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
             blnSuccess = StoreToolVersionInfo(progLoc);
             if (!blnSuccess)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Aborting since StoreToolVersionInfo returned false");
                 m_message = "Error determining LCMS FeatureFinder version";
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -75,7 +75,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
             CmdStr = Path.Combine(m_WorkDir, m_jobParams.GetParam("LCMSFeatureFinderIniFile"));
             if (m_DebugLevel >= 1)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc + " " + CmdStr);
+                LogDebug(progLoc + " " + CmdStr);
             }
 
             mCmdRunner.CreateNoWindow = true;
@@ -87,7 +87,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
             if (!mCmdRunner.RunProgram(progLoc, CmdStr, "LCMSFeatureFinder", true))
             {
                 m_message = "Error running LCMSFeatureFinder";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ", job " + m_JobNum);
+                LogError(m_message + ", job " + m_JobNum);
                 blnSuccess = false;
             }
             else
@@ -102,7 +102,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
             //Add the current job data to the summary file
             if (!UpdateSummaryFile())
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                LogWarning(
                     "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
             }
 
@@ -150,7 +150,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
             if (string.IsNullOrEmpty(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+            LogWarning(
                 "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
 
             // Bump up the debug level if less than 2
@@ -211,7 +211,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+                LogDebug("Determining tool version info");
             }
 
             var ioFeatureFinderInfo = new FileInfo(strFeatureFinderProgLoc);
@@ -224,7 +224,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
                 }
                 catch (Exception ex)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "Exception calling SetStepTaskToolVersion: " + ex.Message);
                     return false;
                 }
@@ -259,7 +259,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }

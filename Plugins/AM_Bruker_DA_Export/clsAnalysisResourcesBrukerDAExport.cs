@@ -49,7 +49,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 if (string.IsNullOrWhiteSpace(exportScriptStoragePath))
                 {
                     exportScriptStoragePath = @"F:\My Documents\Gigasax_Data\DMS_Parameter_Files\Bruker_Data_Analysis";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Parameter '" + paramFileStoragePathKeyName + "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " + exportScriptStoragePath);
+                    LogWarning("Parameter '" + paramFileStoragePathKeyName + "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " + exportScriptStoragePath);
                 }
 
                 if (!FileSearch.RetrieveFile(exportScriptName, exportScriptStoragePath))
@@ -75,13 +75,13 @@ namespace AnalysisManagerBrukerDAExportPlugin
 
                             if (!FileSearch.RetrieveSpectra(strRawDataType))
                             {
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "AnalysisManagerBrukerDAExportPlugin.GetResources: Error occurred retrieving spectra.");
+                                LogError("AnalysisManagerBrukerDAExportPlugin.GetResources: Error occurred retrieving spectra.");
                                 return CloseOutType.CLOSEOUT_FAILED;
                             }
                             break;
                         default:
                             m_message = "Dataset type " + strRawDataType + " is not supported";
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                            LogWarning(
                                 "AnalysisManagerBrukerDAExportPlugin.GetResources: " + m_message + "; must be " +
                                 RAW_DATA_TYPE_DOT_D_FOLDERS + " or " + RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER);
                             return CloseOutType.CLOSEOUT_FAILED;

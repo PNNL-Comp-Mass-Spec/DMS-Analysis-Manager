@@ -28,7 +28,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MultiAlign Aggregator");
+                LogMessage("Running MultiAlign Aggregator");
 
                 // Determine the path to the LCMSFeatureFinder folder
                 var progLoc = DetermineProgramLocation("MultiAlign", "MultiAlignProgLoc", "MultiAlignConsole.exe");
@@ -41,7 +41,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 // Store the MultiAlign version info in the database
                 if (!StoreToolVersionInfo(progLoc))
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
+                    LogError("Aborting since StoreToolVersionInfo returned false");
                     m_message = "Error determining MultiAlign version";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -50,7 +50,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 m_LastStatusUpdateTime = DateTime.UtcNow;
                 UpdateStatusRunning(m_progress);
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_CurrentMultiAlignTask);
+                LogMessage(m_CurrentMultiAlignTask);
 
                 // Change the name of the log file for the local log file to the plugin log filename
                 var LogFileName = Path.Combine(m_WorkDir, "MultiAlign_Log");
@@ -75,7 +75,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
                 if (blnSuccess)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "MultiAlign complete");
+                    LogMessage("MultiAlign complete");
                 }
                 else
                 {
@@ -84,7 +84,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                     else
                         m_message = "Error running MultiAlign: " + m_message;
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                    LogError(m_message);
                 }
 
                 //Stop the job timer
@@ -94,7 +94,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 //Add the current job data to the summary file
                 if (!UpdateSummaryFile())
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
+                    LogWarning("Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
                 }
 
                 //Make sure objects are released
@@ -143,7 +143,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                     }
                     catch (Exception ex)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Exception moving Plot Folder " + diPlotsFolder.FullName + ": " + ex.Message);
+                        LogWarning("Exception moving Plot Folder " + diPlotsFolder.FullName + ": " + ex.Message);
                         m_FileTools.CopyDirectory(diPlotsFolder.FullName, strTargetFolderPath, true);
                     }
 
@@ -162,7 +162,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             catch (Exception ex)
             {
                 m_message = "Error in MultiAlignPlugin->RunTool";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
 
             }
@@ -197,7 +197,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             catch (Exception ex)
             {
                 m_message = "Unknown error running MultiAlign: " + ex.Message;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                LogError(m_message);
                 return false;
             }
 
@@ -214,7 +214,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             if (string.IsNullOrEmpty(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
+            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
 
             // Bump up the debug level if less than 2
             if (m_DebugLevel < 2)
@@ -267,7 +267,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+                LogDebug("Determining tool version info");
             }
 
             var ioMultiAlignInfo = new FileInfo(strMultiAlignProgLoc);
@@ -280,7 +280,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 }
                 catch (Exception ex)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                    LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                     return false;
                 }
 
@@ -318,7 +318,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
 
@@ -355,21 +355,21 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
                     if (pngFileCount == 0)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "No .PNG files were found in the Plots folder");
+                        LogWarning("No .PNG files were found in the Plots folder");
                         return true;
                     }
 
                     if (pngFileCount == 1)
                     {
                         if (m_DebugLevel >= 2)
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Only 1 .PNG file exists in the Plots folder; file will not be zipped");
+                            LogMessage("Only 1 .PNG file exists in the Plots folder; file will not be zipped");
                         return true;
                     }
 
                     if (pngFileCount < fileCountThreshold)
                     {
                         if (m_DebugLevel >= 2)
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Only " + pngFileCount + " .PNG files exist in the Plots folder; files will not be zipped");
+                            LogMessage("Only " + pngFileCount + " .PNG files exist in the Plots folder; files will not be zipped");
                         return true;
                     }
 
@@ -383,7 +383,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                         if (!string.IsNullOrEmpty(m_IonicZipTools.Message))
                             Msg += ": " + m_IonicZipTools.Message;
 
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg);
+                        LogError(Msg);
                         m_message = clsGlobal.AppendToComment(m_message, Msg);
                         return false;
                     }
@@ -400,9 +400,9 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                         {
                             errorCount++;
                             if (errorCount < 10)
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception deleting file " + fiFile.Name + ": " + ex.Message);
+                                LogError("Exception deleting file " + fiFile.Name + ": " + ex.Message);
                             else if (errorCount == 10)
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Over 10 exceptions deleting plot files; additional exceptions will not be logged");
+                                LogError("Over 10 exceptions deleting plot files; additional exceptions will not be logged");
                         }
 
                     }
@@ -412,7 +412,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             catch (Exception ex)
             {
                 var Msg = "Exception zipping plot files, job " + m_JobNum + ": " + ex.Message;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg);
+                LogError(Msg);
                 m_message = clsGlobal.AppendToComment(m_message, "Error zipping the plot files");
                 return false;
             }

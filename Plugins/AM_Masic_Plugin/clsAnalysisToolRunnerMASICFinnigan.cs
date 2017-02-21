@@ -64,7 +64,7 @@ namespace AnalysisManagerMasicPlugin
                 // Unable to resolve the file path
                 m_ErrorMessage = "Could not find " + strRawFileName + " or " + strRawFileName + clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX +
                                  " in the working folder; unable to run MASIC";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_ErrorMessage);
+                LogError(m_ErrorMessage);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -74,7 +74,7 @@ namespace AnalysisManagerMasicPlugin
             {
                 // Unable to resolve the file path
                 m_ErrorMessage = "Could not find " + fiInputFile.FullName + "; unable to run MASIC";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_ErrorMessage);
+                LogError(m_ErrorMessage);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -148,7 +148,7 @@ namespace AnalysisManagerMasicPlugin
             catch (Exception ex)
             {
                 m_message = "Error replacing the ScanStats files created from the mzXML file with the ScanStats files created from the .Raw file";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     m_message + " (ReplaceScanStatsFiles): " + ex.Message);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -234,7 +234,7 @@ namespace AnalysisManagerMasicPlugin
 
             try
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                LogMessage(
                     ".Raw file is over 2 GB; converting to a centroided .mzXML file");
 
                 // The ScanStats file should have been created by clsAnalysisResourcesMASIC
@@ -245,7 +245,7 @@ namespace AnalysisManagerMasicPlugin
                 if (!fiScanStatsOverrideFile.Exists)
                 {
                     m_message = "ScanStats file not found (should have been created by clsAnalysisResourcesMASIC)";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         m_message + ": " + fiScanStatsOverrideFile.FullName);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -268,7 +268,7 @@ namespace AnalysisManagerMasicPlugin
                 {
                     if (string.IsNullOrEmpty(m_message))
                         m_message = "Empty path returned by ConvertRawToMzXML for " + fiInputFile.FullName;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                    LogError(m_message);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -279,7 +279,7 @@ namespace AnalysisManagerMasicPlugin
             catch (Exception ex)
             {
                 m_message = "Error preparing to convert the Raw file to a MzXML file";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     m_message + " (StartConvertRawToMzXML): " + ex.Message);
                 fiScanStatsOverrideFile = null;
                 fiScanStatsExOverrideFile = null;

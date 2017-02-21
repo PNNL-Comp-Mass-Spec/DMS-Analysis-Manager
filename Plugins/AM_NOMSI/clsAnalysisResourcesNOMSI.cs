@@ -84,7 +84,7 @@ namespace AnalysisManagerNOMSIPlugin
             catch (Exception ex)
             {
                 m_message = "Exception in GetResources: " + ex.Message;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                                      m_message + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
 
                 return CloseOutType.CLOSEOUT_FAILED;

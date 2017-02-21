@@ -77,7 +77,7 @@ namespace AnalysisManagerXTandemPlugIn
                 return CloseOutType.CLOSEOUT_NO_DTA_FILES;
             }
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running XTandem");
+            LogMessage("Running XTandem");
 
             mCmdRunner = new clsRunDosProgram(m_WorkDir);
             RegisterEvents(mCmdRunner);
@@ -85,7 +85,7 @@ namespace AnalysisManagerXTandemPlugIn
 
             if (m_DebugLevel > 4)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                LogDebug(
                     "clsAnalysisToolRunnerXT.OperateAnalysisTool(): Enter");
             }
 
@@ -94,7 +94,7 @@ namespace AnalysisManagerXTandemPlugIn
             if (progLoc.Length == 0)
             {
                 m_message = "Parameter 'xtprogloc' not defined for this manager";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                LogError(m_message);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -108,7 +108,7 @@ namespace AnalysisManagerXTandemPlugIn
             else if (!File.Exists(progLoc))
             {
                 m_message = "Cannot find XTandem program file";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + progLoc);
+                LogError(m_message + ": " + progLoc);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -136,16 +136,16 @@ namespace AnalysisManagerXTandemPlugIn
 
             if (!blnSuccess)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running XTandem, job " + m_JobNum);
+                LogError("Error running XTandem, job " + m_JobNum);
 
                 if (mCmdRunner.ExitCode != 0)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                    LogWarning(
                         "Tandem.exe returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
                 }
                 else
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to Tandem.exe failed (but exit code is 0)");
+                    LogWarning("Call to Tandem.exe failed (but exit code is 0)");
                 }
 
                 // Note: Job 553883 returned error code -1073740777, which indicated that the _xt.xml file was not fully written
@@ -160,13 +160,13 @@ namespace AnalysisManagerXTandemPlugIn
             if (mXTandemResultsCount < 0)
             {
                 m_message = "X!Tandem did not report a \"Valid models\" count";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                LogError(m_message);
                 blnNoResults = true;
             }
             else if (mXTandemResultsCount == 0)
             {
                 m_message = "No results above threshold";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                LogError(m_message);
                 blnNoResults = true;
             }
 
@@ -176,7 +176,7 @@ namespace AnalysisManagerXTandemPlugIn
             //Add the current job data to the summary file
             if (!UpdateSummaryFile())
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                LogWarning(
                     "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
             }
 
@@ -235,7 +235,7 @@ namespace AnalysisManagerXTandemPlugIn
             if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+            LogWarning(
                 "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
 
             // Bump up the debug level if less than 2
@@ -282,7 +282,7 @@ namespace AnalysisManagerXTandemPlugIn
         {
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+                LogDebug("Determining tool version info");
             }
 
             var strToolVersionInfo = string.Copy(mXTandemVersion);
@@ -297,7 +297,7 @@ namespace AnalysisManagerXTandemPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
@@ -327,7 +327,7 @@ namespace AnalysisManagerXTandemPlugIn
                 else
                 {
                     m_message = "XTandem program path does not contain \\bin\\";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + progLoc);
+                    LogError(m_message + ": " + progLoc);
                     progLoc = string.Empty;
                 }
             }
@@ -350,7 +350,7 @@ namespace AnalysisManagerXTandemPlugIn
                 {
                     if (m_DebugLevel >= 4)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        LogDebug(
                             "Console output file not found: " + strConsoleOutputFilePath);
                     }
 
@@ -359,7 +359,7 @@ namespace AnalysisManagerXTandemPlugIn
 
                 if (m_DebugLevel >= 3)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing file " + strConsoleOutputFilePath);
+                    LogDebug("Parsing file " + strConsoleOutputFilePath);
                 }
 
                 using (var srInFile = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
@@ -381,7 +381,7 @@ namespace AnalysisManagerXTandemPlugIn
 
                             if (m_DebugLevel >= 2)
                             {
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "X!Tandem version: " + strLineIn);
+                                LogDebug("X!Tandem version: " + strLineIn);
                             }
 
                             mXTandemVersion = string.Copy(strLineIn);
@@ -442,7 +442,7 @@ namespace AnalysisManagerXTandemPlugIn
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
             }
@@ -467,7 +467,7 @@ namespace AnalysisManagerXTandemPlugIn
                     if (!base.ZipFile(TmpFilePath, true))
                     {
                         string Msg = "Error zipping output files, job " + m_JobNum;
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg);
+                        LogError(Msg);
                         m_message = clsGlobal.AppendToComment(m_message, "Error zipping output files");
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
@@ -476,7 +476,7 @@ namespace AnalysisManagerXTandemPlugIn
             catch (Exception ex)
             {
                 string Msg = "clsAnalysisToolRunnerXT.ZipMainOutputFile, Exception zipping output files, job " + m_JobNum + ": " + ex.Message;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg);
+                LogError(Msg);
                 m_message = clsGlobal.AppendToComment(m_message, "Error zipping output files");
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -493,7 +493,7 @@ namespace AnalysisManagerXTandemPlugIn
             }
             catch (Exception Err)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "clsAnalysisToolRunnerXT.ZipMainOutputFile, Error deleting _xt.xml file, job " + m_JobNum + Err.Message);
                 return CloseOutType.CLOSEOUT_FAILED;
             }

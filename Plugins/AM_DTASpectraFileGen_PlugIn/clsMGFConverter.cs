@@ -4,10 +4,11 @@ using System.IO;
 using System.Threading;
 using System.Xml;
 using AnalysisManagerBase;
+using PRISM;
 
 namespace DTASpectraFileGen
 {
-    public class clsMGFConverter
+    public class clsMGFConverter : clsEventNotifier
     {
         #region "Structures"
 
@@ -103,7 +104,7 @@ namespace DTASpectraFileGen
 
             if (m_DebugLevel > 0)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Converting .MGF file to _DTA.txt");
+                OnDebugEvent("Converting .MGF file to _DTA.txt");
             }
 
             strMGFFilePath = Path.Combine(m_WorkDir, strDatasetName + clsAnalysisResources.DOT_MGF_EXTENSION);
@@ -332,7 +333,7 @@ namespace DTASpectraFileGen
 
                 if (m_DebugLevel >= 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    OnDebugEvent(
                         "Parsing the .mzML file to create the spectrum ID to scan number mapping");
                 }
 
@@ -340,20 +341,21 @@ namespace DTASpectraFileGen
 
                 if (!blnSuccess)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "ParseMzMLFile returned false; aborting");
+                    OnErrorEvent("ParseMzMLFile returned false; aborting");
                     return false;
                 }
-                else if (!blnAutoNumberScans)
+
+                if (!blnAutoNumberScans)
                 {
                     // Nothing to update; exit this function
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                    OnStatusEvent(
                         "Spectrum IDs in the mzML file were in the format StartScan.EndScan.Charge; no need to update the MGF file");
                     return true;
                 }
 
                 if (m_DebugLevel >= 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Updating the Title lines in the MGF file");
+                    OnDebugEvent("Updating the Title lines in the MGF file");
                 }
 
                 strNewMGFFile = Path.GetTempFileName();
@@ -397,7 +399,7 @@ namespace DTASpectraFileGen
 
                 if (m_DebugLevel >= 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    OnDebugEvent(
                         "Update complete; replacing the original .MGF file");
                 }
 
@@ -415,7 +417,7 @@ namespace DTASpectraFileGen
             catch (Exception ex)
             {
                 m_ErrMsg = "Error updating the MGF file title lines using the .mzML file";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_ErrMsg + ": " + ex.Message);
+                OnErrorEvent(m_ErrMsg + ": " + ex.Message);
                 blnSuccess = false;
             }
 
@@ -424,6 +426,8 @@ namespace DTASpectraFileGen
 
         private void mMGFtoDTA_ErrorEvent(string strMessage)
         {
+            OnErrorEvent(strMessage);
+
             if (string.IsNullOrEmpty(m_ErrMsg))
             {
                 m_ErrMsg = "MGFtoDTA_Error: " + strMessage;

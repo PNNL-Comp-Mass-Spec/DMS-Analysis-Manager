@@ -62,7 +62,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 {
                     if (m_DebugLevel >= 3)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                        LogError(
                             "RetrieveFile returned False for " + zippedResultName + " using folder " + transferFolderName);
                     }
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -71,13 +71,13 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 // Unzip Inspect result file
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Unzipping Inspect result file");
+                    LogMessage("Unzipping Inspect result file");
                 }
                 if (UnzipFileStart(Path.Combine(m_WorkingDir, zippedResultName), m_WorkingDir, "clsAnalysisResourcesInspResultsAssembly.GetResources", false))
                 {
                     if (m_DebugLevel >= 1)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Inspect result file unzipped");
+                        LogMessage("Inspect result file unzipped");
                     }
                 }
 
@@ -86,7 +86,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 {
                     if (m_DebugLevel >= 3)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                        LogError(
                             "RetrieveFile returned False for " + searchLogResultName + " using folder " + transferFolderName);
                     }
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -141,7 +141,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
             if (numOfResultFiles < 1)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Job parameter 'NumberOfClonedSteps' is empty or 0; unable to continue");
                 return false;
             }
@@ -159,7 +159,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                         // Error copying file (error will have already been logged)
                         if (m_DebugLevel >= 3)
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                            LogError(
                                 "CopyFileToWorkDir returned False for " + InspectResultsFile + " using folder " + transferFolderName);
                         }
                         return false;
@@ -200,7 +200,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                             // Error copying file (error will have already been logged)
                             if (m_DebugLevel >= 3)
                             {
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                LogError(
                                     "CopyFileToWorkDir returned False for " + strFileName + " using folder " + transferFolderName);
                             }
                             return false;
@@ -216,7 +216,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 }
             }
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+            LogMessage(
                 "Multi Inspect Result Files copied to local working directory; copied " + intFileCopyCount + " files");
 
             return true;

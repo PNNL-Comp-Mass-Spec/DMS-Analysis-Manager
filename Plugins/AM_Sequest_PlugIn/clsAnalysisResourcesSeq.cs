@@ -44,7 +44,7 @@ namespace AnalysisManagerSequestPlugin
 
                 if (m_DebugLevel >= 3)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "Verifying that the Sequest parameter file " + m_jobParams.GetParam("ParmFileName") + " exists in " + strTargetFolderPath);
                 }
 
@@ -85,7 +85,7 @@ namespace AnalysisManagerSequestPlugin
             {
                 if (m_DebugLevel >= 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "Sequest parameter file not found in archive folder; copying to " + strTargetFilePath);
                 }
 
@@ -102,7 +102,7 @@ namespace AnalysisManagerSequestPlugin
                 {
                     if (m_DebugLevel >= 1)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        LogDebug(
                             "Sequest parameter file in archive folder doesn't match parameter file for current job; renaming old file and copying new file to " +
                             strTargetFilePath);
                     }
@@ -129,7 +129,7 @@ namespace AnalysisManagerSequestPlugin
 
                     if (m_DebugLevel >= 2)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        LogDebug(
                             "Renaming " + strTargetFilePath + " to " + strNewPath);
                     }
 
@@ -145,7 +145,7 @@ namespace AnalysisManagerSequestPlugin
 
                 if (m_DebugLevel >= 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "Copying " + strSrcFilePath + " to " + strTargetFilePath);
                 }
 
@@ -173,7 +173,7 @@ namespace AnalysisManagerSequestPlugin
                 if (string.IsNullOrWhiteSpace(transferFolderPath))
                 {
                     // Transfer folder path is not defined
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                    LogWarning(
                         "transferFolderPath is empty; this is unexpected");
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -185,7 +185,7 @@ namespace AnalysisManagerSequestPlugin
 
                 if (m_DebugLevel >= 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "Checking for " + clsAnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE + " file at " + transferFolderPath);
                 }
 
@@ -196,7 +196,7 @@ namespace AnalysisManagerSequestPlugin
                     // Transfer folder not found; return false
                     if (m_DebugLevel >= 4)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        LogDebug(
                             "  ... Transfer folder not found: " + diSourceFolder.FullName);
                     }
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -210,7 +210,7 @@ namespace AnalysisManagerSequestPlugin
                 {
                     if (m_DebugLevel >= 4)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        LogDebug(
                             "  ... " + clsAnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE + " file not found");
                     }
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -218,7 +218,7 @@ namespace AnalysisManagerSequestPlugin
 
                 if (m_DebugLevel >= 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         clsAnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE + " file found for job " + strJob + " (file size = " +
                         (fiTempOutFile.Length / 1024.0).ToString("#,##0") +
                         " KB); comparing JobParameters.xml file and Sequest parameter file to local copies");
@@ -255,7 +255,7 @@ namespace AnalysisManagerSequestPlugin
 
                     if (m_DebugLevel >= 1)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        LogDebug(
                             "Copied " + fiTempOutFile.Name + " locally; will resume Sequest analysis");
                     }
 
@@ -267,7 +267,7 @@ namespace AnalysisManagerSequestPlugin
                 {
                     // Error copying the file; treat this as a failed job
                     m_message = " Exception copying " + clsAnalysisToolRunnerSeqBase.CONCATENATED_OUT_TEMP_FILE + " file locally";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "  ... Exception copying " + fiTempOutFile.FullName + " locally; unable to resume: " + ex.Message);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -292,7 +292,7 @@ namespace AnalysisManagerSequestPlugin
 
                         if (m_DebugLevel >= 3)
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                            LogDebug(
                                 "Copied " + Path.GetFileName(fiFirstLogFile.Name) + " locally, renaming to " + strExistingSeqLogFileRenamed);
                         }
 
@@ -312,7 +312,7 @@ namespace AnalysisManagerSequestPlugin
             catch (Exception ex)
             {
                 m_message = "Error in CheckForExistingConcatenatedOutFile";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Error in CheckForExistingConcatenatedOutFile: " + ex.Message);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -324,7 +324,7 @@ namespace AnalysisManagerSequestPlugin
             {
                 if (m_DebugLevel >= 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "  ... " + strFileDescription + " file not found remotely; unable to resume: " + strRemoteFilePath);
                 }
                 return false;
@@ -334,7 +334,7 @@ namespace AnalysisManagerSequestPlugin
             {
                 if (m_DebugLevel >= 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "  ... " + strFileDescription + " file not found locally; unable to resume: " + strLocalFilePath);
                 }
                 return false;
@@ -348,7 +348,7 @@ namespace AnalysisManagerSequestPlugin
             }
             else
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                LogDebug(
                     "  ... " + strFileDescription + " file at " + strRemoteFilePath + " doesn't match local file; unable to resume");
                 return false;
             }
@@ -447,7 +447,7 @@ namespace AnalysisManagerSequestPlugin
 
             string strLogMessage = null;
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+            LogMessage(
                 "Copying database to nodes: " + Path.GetFileName(OrgDBName));
 
             //Get the list of nodes from the hosts file
@@ -455,7 +455,7 @@ namespace AnalysisManagerSequestPlugin
             if (Nodes == null || Nodes.Count == 0)
             {
                 m_message = "Unable to determine node names from host file";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + HostFilePath);
+                LogError(m_message + ": " + HostFilePath);
                 return false;
             }
 
@@ -464,7 +464,7 @@ namespace AnalysisManagerSequestPlugin
             if (!File.Exists(OrgDBFilePath))
             {
                 m_message = "Database file can't be found on master";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + OrgDBFilePath);
+                LogError(m_message + ": " + OrgDBFilePath);
                 return false;
             }
 
@@ -500,7 +500,7 @@ namespace AnalysisManagerSequestPlugin
             if (intNodeCountProcessed == 0)
             {
                 m_message = "The Nodes collection is empty; unable to continue";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                LogError(m_message);
                 return false;
             }
 
@@ -515,7 +515,7 @@ namespace AnalysisManagerSequestPlugin
                     strLogMessage += "s";
                 strLogMessage += " (" + dblNodeCountSuccessPct.ToString("0") + "% succeeded)";
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strLogMessage);
+                LogError(strLogMessage);
 
                 if (dblNodeCountSuccessPct < MINIMUM_NODE_SUCCESS_PCT)
                 {
@@ -529,13 +529,13 @@ namespace AnalysisManagerSequestPlugin
                         m_message = "see " + m_MgrName + " manager log for details";
                     }
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "Aborting since did not succeed on at least " + MINIMUM_NODE_SUCCESS_PCT.ToString() + "% of the nodes");
                     return false;
                 }
                 else
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "Warning, will continue analysis using the remaining nodes");
 
                     // Decrement intNodeCountProcessed by intNodeCountFailed so the stats in the next If / EndIf block are valid
@@ -547,7 +547,7 @@ namespace AnalysisManagerSequestPlugin
             {
                 if (intNodeCountFileAlreadyExists == 0)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                    LogMessage(
                         "Copied database to " + intNodeCountProcessed.ToString() + " nodes");
                 }
                 else
@@ -559,7 +559,7 @@ namespace AnalysisManagerSequestPlugin
                         strLogMessage += " (newly copied to " + (intNodeCountProcessed - intNodeCountFileAlreadyExists).ToString() + " nodes)";
                     }
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, strLogMessage);
+                    LogMessage(strLogMessage);
                 }
             }
 
@@ -608,7 +608,7 @@ namespace AnalysisManagerSequestPlugin
             }
             catch (Exception Err)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Error reading cluster config file '" + HostFilePath + "': " + Err.Message);
                 return null;
             }
@@ -634,11 +634,11 @@ namespace AnalysisManagerSequestPlugin
 
                 if (m_DebugLevel > DETAILED_LOG_THRESHOLD)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "Comparing files: " + ioFileA.FullName + " vs. " + ioFileB.FullName);
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         " ... file sizes: " + ioFileA.Length.ToString() + " vs. " + ioFileB.Length.ToString());
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         " ... file dates: " + ioFileA.LastWriteTimeUtc.ToString() + " vs. " + ioFileB.LastWriteTimeUtc.ToString());
                 }
 
@@ -650,7 +650,7 @@ namespace AnalysisManagerSequestPlugin
                         // Dates match
                         if (m_DebugLevel > DETAILED_LOG_THRESHOLD)
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                            LogDebug(
                                 " ... sizes match and dates match exactly");
                         }
 
@@ -667,7 +667,7 @@ namespace AnalysisManagerSequestPlugin
 
                             if (m_DebugLevel > DETAILED_LOG_THRESHOLD)
                             {
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                LogDebug(
                                     " ... sizes match and dates match within 2 seconds (" + dblSecondDiff.ToString("0.0") + " seconds apart)");
                             }
 
@@ -679,7 +679,7 @@ namespace AnalysisManagerSequestPlugin
 
                             if (m_DebugLevel > DETAILED_LOG_THRESHOLD)
                             {
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                LogDebug(
                                     " ... sizes match and dates match within 1 hour (" + dblSecondDiff.ToString("0.0") + " seconds apart)");
                             }
 
@@ -692,10 +692,10 @@ namespace AnalysisManagerSequestPlugin
                                 if (m_DebugLevel == DETAILED_LOG_THRESHOLD)
                                 {
                                     // This message didn't get logged above; log it now.
-                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                    LogDebug(
                                         "Comparing files: " + ioFileA.FullName + " vs. " + ioFileB.FullName);
                                 }
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                LogDebug(
                                     " ... sizes match but times do not match within 2 seconds or 1 hour (" + dblSecondDiff.ToString("0.0") +
                                     " seconds apart)");
                             }
@@ -726,7 +726,7 @@ namespace AnalysisManagerSequestPlugin
 
             if (m_DebugLevel > 3)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Verifying database " + DestPath);
+                LogMessage("Verifying database " + DestPath);
             }
 
             string DestFile = Path.Combine(DestPath, Path.GetFileName(OrgDBFilePath));
@@ -757,7 +757,7 @@ namespace AnalysisManagerSequestPlugin
                     //Copy the file
                     if (m_DebugLevel > 3)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copying database file " + DestFile);
+                        LogMessage("Copying database file " + DestFile);
                     }
                     File.Copy(OrgDBFilePath, DestFile, true);
                     //Now everything is in its proper place, so return
@@ -768,7 +768,7 @@ namespace AnalysisManagerSequestPlugin
                     //File existed and was current, so everybody's happy
                     if (m_DebugLevel >= 3)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                        LogMessage(
                             "Database file at " + DestPath + " matches the source file's date and time; will not re-copy");
                     }
                     return true;
@@ -777,7 +777,7 @@ namespace AnalysisManagerSequestPlugin
             catch (Exception Err)
             {
                 //Something bad happened
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Error copying database file to " + DestFile + ": " + Err.Message);
                 if (Err.Message.Contains("not enough space"))
                 {

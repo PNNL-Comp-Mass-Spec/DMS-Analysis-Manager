@@ -72,7 +72,7 @@ namespace AnalysisManagerMODPlusPlugin
 
                 if (m_DebugLevel > 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerMODPlus.RunTool(): Enter");
+                    LogDebug("clsAnalysisToolRunnerMODPlus.RunTool(): Enter");
                 }
 
                 // Verify that program files exist
@@ -123,7 +123,7 @@ namespace AnalysisManagerMODPlusPlugin
                 // Add the current job data to the summary file
                 if (!UpdateSummaryFile())
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                    LogWarning(
                         "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
                 }
 
@@ -230,7 +230,7 @@ namespace AnalysisManagerMODPlusPlugin
             if (m_DebugLevel >= 1)
             {
                 // C:\DMS_Programs\ProteoWizard\msconvert.exe --mgf --outfile Dataset.mgf Dataset.mzML
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, msConvertProgLoc + " " + cmdStr);
+                LogDebug(msConvertProgLoc + " " + cmdStr);
             }
 
             var msConvertRunner = new clsRunDosProgram(m_WorkDir);
@@ -255,7 +255,7 @@ namespace AnalysisManagerMODPlusPlugin
             {
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "MSConvert.exe successfully created " + fiMgfFile.Name);
                 }
                 return true;
@@ -265,16 +265,16 @@ namespace AnalysisManagerMODPlusPlugin
             msg = "Error running MSConvert";
             m_message = clsGlobal.AppendToComment(m_message, msg);
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg + ", job " + m_JobNum);
+            LogError(msg + ", job " + m_JobNum);
 
             if (msConvertRunner.ExitCode != 0)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                LogWarning(
                     "MSConvert returned a non-zero exit code: " + msConvertRunner.ExitCode.ToString());
             }
             else
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to MSConvert failed (but exit code is 0)");
+                LogWarning("Call to MSConvert failed (but exit code is 0)");
             }
 
             return false;
@@ -286,7 +286,7 @@ namespace AnalysisManagerMODPlusPlugin
             if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+            LogWarning(
                 "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
 
             // Bump up the debug level if less than 2
@@ -474,7 +474,7 @@ namespace AnalysisManagerMODPlusPlugin
                     // Auto-change it
                     nodeList[0].Attributes["msms"].Value = instrumentResolutionMsMs;
                     m_EvalMessage = clsGlobal.AppendToComment(m_EvalMessage, "Auto-switched to low resolution mode for MS/MS data");
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_EvalMessage);
+                    LogWarning(m_EvalMessage);
                 }
             }
             else
@@ -619,7 +619,7 @@ namespace AnalysisManagerMODPlusPlugin
 
                 if (m_DebugLevel >= 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Merging the results files");
+                    LogMessage("Merging the results files");
                 }
 
                 foreach (var modPlusRunner in mMODPlusRunners)
@@ -636,7 +636,7 @@ namespace AnalysisManagerMODPlusPlugin
                         // Result file not found for the current thread
                         // Log an error, but continue to combine the files
                         m_message = clsGlobal.AppendToComment(m_message, "Result file not found for thread " + modPlusRunner.Key);
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                        LogError(m_message);
                         successOverall = false;
                         continue;
                     }
@@ -645,7 +645,7 @@ namespace AnalysisManagerMODPlusPlugin
                         // 0-byte result file
                         // Log an error, but continue to combine the files
                         m_message = clsGlobal.AppendToComment(m_message, "Result file is empty for thread " + modPlusRunner.Key);
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                        LogError(m_message);
                         successOverall = false;
                         continue;
                     }
@@ -738,7 +738,7 @@ namespace AnalysisManagerMODPlusPlugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Exception preparing the MODPlus results for zipping: " + ex.Message);
                 return false;
             }
@@ -772,7 +772,7 @@ namespace AnalysisManagerMODPlusPlugin
         {
             if (m_DebugLevel >= 1)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                LogDebug(
                     "Splitting mgf file into " + threadCount + " parts: " + fiMgfFile.Name);
             }
 
@@ -911,7 +911,7 @@ namespace AnalysisManagerMODPlusPlugin
 
                 currentTask = " Set up and execute a program runner to run each MODPlus instance";
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                LogMessage(
                     "Running MODPlus using " + paramFileList.Count + " threads");
 
                 m_progress = PROGRESS_PCT_MODPLUS_STARTING;
@@ -926,7 +926,7 @@ namespace AnalysisManagerMODPlusPlugin
 
                     currentTask = "LaunchingModPlus, thread " + threadNum;
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, currentTask);
+                    LogDebug(currentTask);
 
                     var modPlusRunner = new clsMODPlusRunner(m_Dataset, threadNum, m_WorkDir, paramFile.Value, javaProgLoc, mMODPlusProgLoc);
 
@@ -972,7 +972,7 @@ namespace AnalysisManagerMODPlusPlugin
                             if (!completedThreads.Contains(modPlusRunner.Key))
                             {
                                 completedThreads.Add(modPlusRunner.Key);
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                LogDebug(
                                     "MODPlus thread " + modPlusRunner.Key + " is now complete");
                             }
                         }
@@ -989,7 +989,7 @@ namespace AnalysisManagerMODPlusPlugin
                                 modPlusRunner.Value.CommandLineArgsLogged = true;
 
                                 // "C:\Program Files\Java\jre8\bin\java.exe" -Xmx3G -jar C:\DMS_Programs\MODPlus\modp_pnnl.jar -i MODPlus_Params_Part1.xml -o E:\DMS_WorkDir2\Dataset_Part1_modp.txt  > MODPlus_ConsoleOutput_Part1.txt
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                LogDebug(
                                     javaProgLoc + " " + modPlusRunner.Value.CommandLineArgs);
                             }
                         }
@@ -1070,7 +1070,7 @@ namespace AnalysisManagerMODPlusPlugin
                         // Note that clsProgRunner will have already included these errors in the ConsoleOutput.txt file
                         var consoleError = "Console error for thread " + modPlusRunner.Key + ": " +
                                            progRunner.CachedConsoleErrors.Replace(Environment.NewLine, "; ");
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, consoleError);
+                        LogError(consoleError);
                         blnSuccess = false;
                     }
 
@@ -1087,16 +1087,16 @@ namespace AnalysisManagerMODPlusPlugin
                     msg = "Error running MODPlus";
                     m_message = clsGlobal.AppendToComment(m_message, msg);
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg + ", job " + m_JobNum);
+                    LogError(msg + ", job " + m_JobNum);
 
                     if (exitCode != 0)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                        LogWarning(
                             "MODPlus returned a non-zero exit code: " + exitCode.ToString());
                     }
                     else
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                        LogWarning(
                             "Call to MODPlus failed (but exit code is 0)");
                     }
 
@@ -1108,7 +1108,7 @@ namespace AnalysisManagerMODPlusPlugin
                 m_StatusTools.UpdateAndWrite(m_progress);
                 if (m_DebugLevel >= 3)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MODPlus Analysis Complete");
+                    LogDebug("MODPlus Analysis Complete");
                 }
 
                 return true;
@@ -1130,7 +1130,7 @@ namespace AnalysisManagerMODPlusPlugin
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+                LogDebug("Determining tool version info");
             }
 
             strToolVersionInfo = string.Copy(mMODPlusVersion);
@@ -1148,7 +1148,7 @@ namespace AnalysisManagerMODPlusPlugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }

@@ -148,7 +148,7 @@ namespace AnalysisManagerMSGFPlugin
                 // Result type is not supported
                 var msg = "ResultType is not supported by MSGF: " + m_jobParams.GetParam("ResultType");
                 m_message = clsGlobal.AppendToComment(m_message, msg);
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMSGFToolRunner.RunTool(); " + msg);
+                LogError("clsMSGFToolRunner.RunTool(); " + msg);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -260,7 +260,7 @@ namespace AnalysisManagerMSGFPlugin
                 //Add the current job data to the summary file
                 if (!UpdateSummaryFile())
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                    LogWarning(
                         "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
                 }
 
@@ -310,7 +310,7 @@ namespace AnalysisManagerMSGFPlugin
             catch (Exception ex)
             {
                 var errMsg = "clsMSGFToolRunner.RunTool(); Exception running MSGF: " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex);
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errMsg);
+                LogError(errMsg);
                 m_message = clsGlobal.AppendToComment(m_message, "Exception running MSGF");
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -347,7 +347,7 @@ namespace AnalysisManagerMSGFPlugin
 
             if (string.IsNullOrEmpty(strSearchToolParamFilePath))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "PeptideHit param file path is empty; unable to continue");
                 return false;
             }
@@ -365,7 +365,7 @@ namespace AnalysisManagerMSGFPlugin
 
                     break;
                 case clsPHRPReader.ePeptideHitResultType.Inspect:
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "Inspect does not support ETD data processing; will set mETDMode to False");
                     blnSuccess = true;
 
@@ -375,13 +375,13 @@ namespace AnalysisManagerMSGFPlugin
 
                     break;
                 case clsPHRPReader.ePeptideHitResultType.MODa:
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "MODa does not support ETD data processing; will set mETDMode to False");
                     blnSuccess = true;
 
                     break;
                 case clsPHRPReader.ePeptideHitResultType.MODPlus:
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "MODPlus does not support ETD data processing; will set mETDMode to False");
                     blnSuccess = true;
 
@@ -393,7 +393,7 @@ namespace AnalysisManagerMSGFPlugin
 
             if (mETDMode)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                LogDebug(
                     "ETD search mode has been enabled since c and z ions were used for the peptide search");
             }
 
@@ -417,7 +417,7 @@ namespace AnalysisManagerMSGFPlugin
 
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "Reading the MSGF-DB parameter file: " + strSearchToolParamFilePath);
                 }
 
@@ -436,7 +436,7 @@ namespace AnalysisManagerMSGFPlugin
 
                             if (m_DebugLevel >= 3)
                             {
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                LogDebug(
                                     "MSGFDB " + MSGFDB_FRAG_METHOD_TAG + " line found: " + strLineIn);
                             }
 
@@ -465,7 +465,7 @@ namespace AnalysisManagerMSGFPlugin
                             }
                             else
                             {
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                                LogWarning(
                                     "MSGFDB " + MSGFDB_FRAG_METHOD_TAG +
                                      " line does not have an equals sign; will assume not using ETD ions: " +
                                     strLineIn);
@@ -481,7 +481,7 @@ namespace AnalysisManagerMSGFPlugin
             {
                 string Msg = null;
                 Msg = "Error reading the MSGFDB param file: " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex);
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg);
+                LogError(Msg);
                 m_message = clsGlobal.AppendToComment(m_message, "Exception reading MSGFDB parameter file");
                 return false;
             }
@@ -515,7 +515,7 @@ namespace AnalysisManagerMSGFPlugin
 
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "Reading the Sequest parameter file: " + strSearchToolParamFilePath);
                 }
 
@@ -538,7 +538,7 @@ namespace AnalysisManagerMSGFPlugin
 
                             if (m_DebugLevel >= 3)
                             {
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                LogDebug(
                                     "Sequest " + SEQUEST_ION_SERIES_TAG + " line found: " + strLineIn);
                             }
 
@@ -561,7 +561,7 @@ namespace AnalysisManagerMSGFPlugin
 
                                     if (m_DebugLevel >= 3)
                                     {
-                                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                        LogDebug(
                                             "Sequest " + SEQUEST_ION_SERIES_TAG + " line has c-ion weighting = " + dblCWeight +
                                             " and z-ion weighting = " + dblZWeight);
                                     }
@@ -573,14 +573,14 @@ namespace AnalysisManagerMSGFPlugin
                                 }
                                 else
                                 {
-                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                                    LogWarning(
                                         "Sequest " + SEQUEST_ION_SERIES_TAG + " line does not have 11 numbers; will assume not using ETD ions: " +
                                         strLineIn);
                                 }
                             }
                             else
                             {
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                                LogWarning(
                                     "Sequest " + SEQUEST_ION_SERIES_TAG + " line does not have an equals sign; will assume not using ETD ions: " +
                                     strLineIn);
                             }
@@ -595,7 +595,7 @@ namespace AnalysisManagerMSGFPlugin
             {
                 string Msg = null;
                 Msg = "Error reading the Sequest param file: " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex);
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg);
+                LogError(Msg);
                 m_message = clsGlobal.AppendToComment(m_message, "Exception reading Sequest parameter file");
                 return false;
             }
@@ -622,7 +622,7 @@ namespace AnalysisManagerMSGFPlugin
 
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "Reading the X!Tandem parameter file: " + strSearchToolParamFilePath);
                 }
 
@@ -680,7 +680,7 @@ namespace AnalysisManagerMSGFPlugin
             {
                 string Msg = null;
                 Msg = "Error reading the X!Tandem param file: " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex);
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg);
+                LogError(Msg);
                 m_message = clsGlobal.AppendToComment(m_message, "Exception reading X!Tandem parameter file");
 
                 return false;
@@ -780,7 +780,7 @@ namespace AnalysisManagerMSGFPlugin
                     // Should never get here; invalid result type specified
                     Msg = "Invalid PeptideHit ResultType specified: " + eResultType;
                     m_message = clsGlobal.AppendToComment(m_message, Msg);
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "clsMSGFToolRunner.CreateMSGFInputFile(); " + Msg);
 
                     blnSuccess = false;
@@ -803,7 +803,7 @@ namespace AnalysisManagerMSGFPlugin
 
                 if (m_DebugLevel >= 3)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating the MSGF Input file");
+                    LogDebug("Creating the MSGF Input file");
                 }
 
                 blnSuccess = mMSGFInputCreator.CreateMSGFInputFileUsingPHRPResultFiles();
@@ -812,14 +812,14 @@ namespace AnalysisManagerMSGFPlugin
 
                 if (!blnSuccess)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "mMSGFInputCreator.MSGFDataFileLineCount returned False");
                 }
                 else
                 {
                     if (m_DebugLevel >= 2)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        LogDebug(
                             "CreateMSGFInputFileUsingPHRPResultFile complete; " + intMSGFInputFileLineCount + " lines of data");
                     }
                 }
@@ -995,7 +995,7 @@ namespace AnalysisManagerMSGFPlugin
                 {
                     m_message = "Error determining MSGF program location";
                 }
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                LogError(m_message);
                 return false;
             }
 
@@ -1100,14 +1100,14 @@ namespace AnalysisManagerMSGFPlugin
                     if (sngPercentDataPrecursorMassError >= MAX_ALLOWABLE_PRECURSOR_MASS_ERRORS_PERCENT)
                     {
                         Msg += "; this likely indicates a static or dynamic mod definition is missing from the PHRP _ModSummary.txt file";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg);
+                        LogError(Msg);
                         blnTooManyPrecursorMassMismatches = true;
                     }
                     else
                     {
                         Msg += "; this is below the error threshold of " + MAX_ALLOWABLE_PRECURSOR_MASS_ERRORS_PERCENT +
                                "% and thus is only a warning (note that static and dynamic mod info is loaded from the PHRP _ModSummary.txt file)";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, Msg);
+                        LogWarning(Msg);
                     }
                 }
             }
@@ -1149,7 +1149,7 @@ namespace AnalysisManagerMSGFPlugin
             {
                 if (string.IsNullOrEmpty(strMSGFResultsFilePath))
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "MSGF Results File path is empty; unable to continue");
                     return false;
                 }
@@ -1158,7 +1158,7 @@ namespace AnalysisManagerMSGFPlugin
 
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSGF complete; post-processing the results");
+                    LogDebug("MSGF complete; post-processing the results");
                 }
 
                 fiInputFile = new FileInfo(strMSGFResultsFilePath);
@@ -1174,7 +1174,7 @@ namespace AnalysisManagerMSGFPlugin
             catch (Exception ex)
             {
                 var errMsg = "Error post-processing the MSGF Results file: " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex);
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errMsg);
+                LogError(errMsg);
                 m_message = clsGlobal.AppendToComment(m_message, "Exception post-processing the MSGF Results file");
 
                 return false;
@@ -1202,7 +1202,7 @@ namespace AnalysisManagerMSGFPlugin
             catch (Exception ex)
             {
                 var errMsg = "Error replacing the original MSGF Results file with the post-processed one: " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex);
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errMsg);
+                LogError(errMsg);
                 m_message = clsGlobal.AppendToComment(m_message, "Exception post-processing the MSGF Results file");
 
                 return false;
@@ -1369,7 +1369,7 @@ namespace AnalysisManagerMSGFPlugin
                                     intMGFLookupErrorCount += 1;
 
                                     // Log the first 5 instances to the log file as warnings
-                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                                    LogWarning(
                                         "Unable to determine the scan number for MGF spectrum index " + strScan + " on line  " + intLinesRead +
                                         " in the result file");
                                 }
@@ -1404,7 +1404,7 @@ namespace AnalysisManagerMSGFPlugin
                                         strOriginalPeptideInfo = string.Empty;
                                     }
 
-                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                                    LogWarning(
                                         "MSGF SpecProb is not numeric on line " + intLinesRead + " in the result file: " + strSpecProb +
                                         " (parent peptide " + strPeptide + ", Scan " + strScan + ", Result_ID " + strResultID + strOriginalPeptideInfo +
                                         ")");
@@ -1473,13 +1473,13 @@ namespace AnalysisManagerMSGFPlugin
 
             if (intSpecProbErrorCount > 1)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                LogWarning(
                     "MSGF SpecProb was not numeric for " + intSpecProbErrorCount + " entries in the MSGF result file");
             }
 
             if (intMGFLookupErrorCount > 1)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "MGF Index-to-scan lookup failed for " + intMGFLookupErrorCount + " entries in the MSGF result file");
                 if (intLinesRead > 0 && intMGFLookupErrorCount / (float)intLinesRead > 0.1)
                 {
@@ -1533,7 +1533,7 @@ namespace AnalysisManagerMSGFPlugin
             {
                 Msg = "Error examining param file to determine if ETD mode was enabled)";
                 m_message = clsGlobal.AppendToComment(m_message, Msg);
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "clsMSGFToolRunner.RunTool(); " + Msg);
+                LogError("clsMSGFToolRunner.RunTool(); " + Msg);
                 return false;
             }
             else
@@ -1601,19 +1601,19 @@ namespace AnalysisManagerMSGFPlugin
 
                     if (m_DebugLevel >= 1)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        LogDebug(
                             "UseExistingMSGFResults = True; will look for pre-generated MSGF results file in the transfer folder");
                     }
 
                     if (RetrievePreGeneratedDataFile(Path.GetFileName(mMSGFResultsFilePath)))
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        LogDebug(
                             "Pre-generated MSGF results file successfully copied to the work directory");
                         blnSuccess = true;
                     }
                     else
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Pre-generated MSGF results file not found");
+                        LogDebug("Pre-generated MSGF results file not found");
                         blnSuccess = false;
                     }
                 }
@@ -1673,7 +1673,7 @@ namespace AnalysisManagerMSGFPlugin
 
                 if (m_DebugLevel >= 3)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Looking for folder " + strFolderToCheck);
+                    LogDebug("Looking for folder " + strFolderToCheck);
                 }
 
                 // Look for strFileNameToFind in strFolderToCheck
@@ -1683,13 +1683,13 @@ namespace AnalysisManagerMSGFPlugin
 
                     if (m_DebugLevel >= 1)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Looking for file " + strFilePathSource);
+                        LogDebug("Looking for file " + strFilePathSource);
                     }
 
                     if (File.Exists(strFilePathSource))
                     {
                         strFilePathTarget = Path.Combine(m_WorkDir, strFileNameToFind);
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        LogDebug(
                             "Copying file " + strFilePathSource + " to " + strFilePathTarget);
 
                         File.Copy(strFilePathSource, strFilePathTarget, true);
@@ -1701,8 +1701,8 @@ namespace AnalysisManagerMSGFPlugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
-                    "Exception finding file " + strFileNameToFind + " in folder " + strFolderToCheck, ex);
+                LogWarning(
+                    "Exception finding file " + strFileNameToFind + " in folder " + strFolderToCheck + ": "+  ex);
                 return false;
             }
 
@@ -1752,7 +1752,7 @@ namespace AnalysisManagerMSGFPlugin
                                 if (intCollisionModeColIndex < 0)
                                 {
                                     // Collision_Mode column not found; this is unexpected
-                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                    LogError(
                                         "Collision_Mode column not found in the MSGF input file for MSGFDB data; unable to continue");
                                     srSourceFile.Close();
                                     return false;
@@ -1829,7 +1829,7 @@ namespace AnalysisManagerMSGFPlugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in RunMSGFonMSGFDB", ex);
+                LogError("Exception in RunMSGFonMSGFDB", ex);
                 return false;
             }
         }
@@ -1895,7 +1895,7 @@ namespace AnalysisManagerMSGFPlugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in RunMSGFonMSGFDBCachedData", ex);
+                LogError("Exception in RunMSGFonMSGFDBCachedData", ex);
                 return false;
             }
 
@@ -1912,7 +1912,7 @@ namespace AnalysisManagerMSGFPlugin
             intMSGFEntriesPerSegment = m_jobParams.GetJobParameter("MSGFEntriesPerSegment", MSGF_SEGMENT_ENTRY_COUNT);
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                LogDebug(
                     "MSGFInputFileLineCount = " + intMSGFInputFileLineCount + "; MSGFEntriesPerSegment = " + intMSGFEntriesPerSegment);
             }
 
@@ -1941,7 +1941,7 @@ namespace AnalysisManagerMSGFPlugin
             {
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, strSegmentUsageMessage);
+                    LogMessage(strSegmentUsageMessage);
                 }
 
                 // Do not use segments
@@ -1957,7 +1957,7 @@ namespace AnalysisManagerMSGFPlugin
 
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                    LogMessage(
                         strSegmentUsageMessage + "; segment count = " + lstSegmentFileInfo.Count);
                 }
 
@@ -1989,7 +1989,7 @@ namespace AnalysisManagerMSGFPlugin
                 {
                     if (m_DebugLevel >= 2)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Deleting MSGF segment files");
+                        LogDebug("Deleting MSGF segment files");
                     }
 
                     // Delete the segment files
@@ -2017,8 +2017,8 @@ namespace AnalysisManagerMSGFPlugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
-                    "Unable to delete the " + MSGF_CONSOLE_OUTPUT + " file", ex);
+                LogWarning(
+                    "Unable to delete the " + MSGF_CONSOLE_OUTPUT + " file: " + ex);
             }
 
             return blnSuccess;
@@ -2031,14 +2031,14 @@ namespace AnalysisManagerMSGFPlugin
 
             if (string.IsNullOrEmpty(strInputFilePath))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "strInputFilePath has not been defined; unable to continue");
                 return false;
             }
 
             if (string.IsNullOrEmpty(strResultsFilePath))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "strResultsFilePath has not been defined; unable to continue");
                 return false;
             }
@@ -2058,7 +2058,7 @@ namespace AnalysisManagerMSGFPlugin
 
             if (m_DebugLevel >= 1)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                LogMessage(
                     "Running MSGF on " + Path.GetFileName(strInputFilePath));
             }
 
@@ -2140,7 +2140,7 @@ namespace AnalysisManagerMSGFPlugin
             CmdStr += " -p 1";
             // SpecProbThreshold threshold of 1, i.e., do not filter results by the computed SpecProb value
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, mJavaProgLoc + " " + CmdStr);
+            LogDebug(mJavaProgLoc + " " + CmdStr);
 
             mMSGFRunner = new clsRunDosProgram(m_WorkDir)
             {
@@ -2176,12 +2176,12 @@ namespace AnalysisManagerMSGFPlugin
 
             if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg);
+                LogError(mConsoleOutputErrorMsg);
             }
 
             if (!blnSuccess)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running MSGF, job " + m_JobNum);
+                LogError("Error running MSGF, job " + m_JobNum);
             }
 
             return blnSuccess;
@@ -2229,7 +2229,7 @@ namespace AnalysisManagerMSGFPlugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception combining MSGF result files", ex);
+                LogError("Exception combining MSGF result files", ex);
                 return false;
             }
 
@@ -2277,7 +2277,7 @@ namespace AnalysisManagerMSGFPlugin
                                     if (intMSGFSpecProbColIndex < 0)
                                     {
                                         // Match not found; abort
-                                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                        LogError(
                                             "SpecProb column not found in file " + strMSGFResultsFilePath);
                                         blnSuccess = false;
                                         break;
@@ -2312,7 +2312,7 @@ namespace AnalysisManagerMSGFPlugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in LoadMSGFResults: " + ex.Message);
+                LogError("Exception in LoadMSGFResults: " + ex.Message);
                 return false;
             }
         }
@@ -2334,7 +2334,7 @@ namespace AnalysisManagerMSGFPlugin
                 {
                     if (m_DebugLevel >= 4)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        LogDebug(
                             "Console output file not found: " + strConsoleOutputFilePath);
                     }
 
@@ -2343,7 +2343,7 @@ namespace AnalysisManagerMSGFPlugin
 
                 if (m_DebugLevel >= 3)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing file " + strConsoleOutputFilePath);
+                    LogDebug("Parsing file " + strConsoleOutputFilePath);
                 }
 
                 string strLineIn = null;
@@ -2368,7 +2368,7 @@ namespace AnalysisManagerMSGFPlugin
 
                                 if (m_DebugLevel >= 2)
                                 {
-                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MSGF version: " + strLineIn);
+                                    LogDebug("MSGF version: " + strLineIn);
                                 }
 
                                 mMSGFVersion = string.Copy(strLineIn);
@@ -2393,7 +2393,7 @@ namespace AnalysisManagerMSGFPlugin
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
             }
@@ -2478,7 +2478,7 @@ namespace AnalysisManagerMSGFPlugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception splitting MSGF input file", ex);
+                LogError("Exception splitting MSGF input file", ex);
                 return false;
             }
 
@@ -2495,7 +2495,7 @@ namespace AnalysisManagerMSGFPlugin
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+                LogDebug("Determining tool version info");
             }
 
             strToolVersionInfo = string.Copy(mMSGFVersion);
@@ -2512,7 +2512,7 @@ namespace AnalysisManagerMSGFPlugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion", ex);
+                LogError("Exception calling SetStepTaskToolVersion", ex);
                 return false;
             }
         }
@@ -2527,7 +2527,7 @@ namespace AnalysisManagerMSGFPlugin
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+                LogDebug("Determining tool version info");
             }
 
             // Lookup the version of AnalysisManagerMSGFPlugin
@@ -2550,7 +2550,7 @@ namespace AnalysisManagerMSGFPlugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
@@ -2576,7 +2576,7 @@ namespace AnalysisManagerMSGFPlugin
                 {
                     blnPostResultsToDB = false;
                     m_message = "Job number is not numeric: " + m_JobNum + "; will not be able to post PSM results to the database";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                    LogError(m_message);
                 }
 
                 var objSummarizer = new clsMSGFResultsSummarizer(eResultType, m_Dataset, intJobNumber, m_WorkDir, strConnectionString);
@@ -2602,7 +2602,7 @@ namespace AnalysisManagerMSGFPlugin
 
                     errMsg += "; input file name: " + objSummarizer.MSGFSynopsisFileName;
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errMsg);
+                    LogError(errMsg);
                 }
                 else
                 {
@@ -2616,7 +2616,7 @@ namespace AnalysisManagerMSGFPlugin
             {
                 var errMsg = "Exception summarizing the MSGF results";
                 m_message = clsGlobal.AppendToComment(m_message, errMsg);
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errMsg + ": " + ex.Message);
+                LogError(errMsg + ": " + ex.Message);
                 return false;
             }
 
@@ -2673,7 +2673,7 @@ namespace AnalysisManagerMSGFPlugin
                 intErrorCount += 1;
                 if (intErrorCount <= 3)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "Error counting the number of lines in the MSGF results file, " + strMSGFResultsFilePath, ex);
                 }
             }
@@ -2698,7 +2698,7 @@ namespace AnalysisManagerMSGFPlugin
 
                 if (!fiProteinModsFile.Exists)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                    LogWarning(
                         "PHRP ProteinMods.txt file not found: " + fiProteinModsFile.Name);
                     blnSuccess = true;
                 }
@@ -2793,7 +2793,7 @@ namespace AnalysisManagerMSGFPlugin
                                 fiProteinModsFileNew.MoveTo(fiProteinModsFile.FullName);
                                 if (m_DebugLevel >= 2)
                                 {
-                                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                                    LogMessage(
                                         "Updated MSGF_SpecProb values in the ProteinMods.txt file");
                                 }
 
@@ -2803,7 +2803,7 @@ namespace AnalysisManagerMSGFPlugin
                             {
                                 Msg = "Error updating the ProteinMods.txt file; cannot rename new version";
                                 m_message = clsGlobal.AppendToComment(m_message, Msg);
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg + ": " + ex.Message);
+                                LogError(Msg + ": " + ex.Message);
                                 return false;
                             }
                         }
@@ -2811,7 +2811,7 @@ namespace AnalysisManagerMSGFPlugin
                         {
                             Msg = "Error updating the ProteinMods.txt file; cannot delete old version";
                             m_message = clsGlobal.AppendToComment(m_message, Msg);
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg + ": " + ex.Message);
+                            LogError(Msg + ": " + ex.Message);
                             return false;
                         }
                     }
@@ -2821,7 +2821,7 @@ namespace AnalysisManagerMSGFPlugin
             {
                 Msg = "Exception updating the ProteinMods.txt file";
                 m_message = clsGlobal.AppendToComment(m_message, Msg);
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg + ": " + ex.Message);
+                LogError(Msg + ": " + ex.Message);
                 return false;
             }
 
@@ -2849,7 +2849,7 @@ namespace AnalysisManagerMSGFPlugin
             mMSGFInputCreatorErrorCount += 1;
             if (mMSGFInputCreatorErrorCount < 10 || mMSGFInputCreatorErrorCount % 1000 == 0)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Error reported by MSGFInputCreator; " + strErrorMessage + " (ErrorCount=" + mMSGFInputCreatorErrorCount + ")");
             }
         }
@@ -2864,7 +2864,7 @@ namespace AnalysisManagerMSGFPlugin
             mMSGFInputCreatorWarningCount += 1;
             if (mMSGFInputCreatorWarningCount < 10 || mMSGFInputCreatorWarningCount % 1000 == 0)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                LogWarning(
                     "Warning reported by MSGFInputCreator; " + strWarningMessage + " (WarnCount=" + mMSGFInputCreatorWarningCount + ")");
             }
         }
@@ -2881,7 +2881,7 @@ namespace AnalysisManagerMSGFPlugin
             }
             else
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, errorMessage);
+                LogError(errorMessage);
             }
         }
 

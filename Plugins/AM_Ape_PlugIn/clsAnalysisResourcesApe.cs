@@ -21,7 +21,7 @@ namespace AnalysisManager_Ape_PlugIn
 
             if (m_DebugLevel >= 1)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving input files");
+                LogMessage("Retrieving input files");
             }
 
             return CloseOutType.CLOSEOUT_SUCCESS;
@@ -97,7 +97,7 @@ namespace AnalysisManager_Ape_PlugIn
             string analysisType = m_jobParams.GetParam("AnalysisType");
 
             string strStepInputFolderPath = Path.Combine(dataPackageFolderPath, m_jobParams.GetParam("StepInputFolderName"));
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving SQlite database: " + System.IO.Path.Combine(strStepInputFolderPath, "Results.db3"));
+            LogMessage("Retrieving SQlite database: " + System.IO.Path.Combine(strStepInputFolderPath, "Results.db3"));
             if (!CopyFileToWorkDir("Results.db3", strStepInputFolderPath, m_WorkingDir))
             {
                 //Errors were reported in function call, so just return
@@ -111,14 +111,14 @@ namespace AnalysisManager_Ape_PlugIn
             // Retrieve the Workflow file name specified for this job
             if (string.IsNullOrEmpty(strApeWorkflowFileName))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Parameter ApeWorkflowName not defined in the job parameters for this job; unable to continue");
+                LogError("Parameter ApeWorkflowName not defined in the job parameters for this job; unable to continue");
                 return false;
             }
 
             string strDMSWorkflowsFolderPath = m_mgrParams.GetParam("DMSWorkflowsFolderPath", @"\\gigasax\DMS_Workflows");
             string strApeWorkflowDirectory = Path.Combine(strDMSWorkflowsFolderPath, "Ape", analysisType);
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving workflow file: " + System.IO.Path.Combine(strApeWorkflowDirectory, strApeWorkflowFileName));
+            LogMessage("Retrieving workflow file: " + System.IO.Path.Combine(strApeWorkflowDirectory, strApeWorkflowFileName));
 
             // Now copy the Ape workflow file to the working directory
             if (!CopyFileToWorkDir(strApeWorkflowFileName, strApeWorkflowDirectory, m_WorkingDir))

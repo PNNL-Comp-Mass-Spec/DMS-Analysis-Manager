@@ -32,7 +32,7 @@ namespace AnalysisManagerXTandemPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
 
             // XTandem just copies its parameter file from the central repository
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting param file");
+            LogMessage("Getting param file");
 
             //Retrieve param file
             if (!RetrieveGeneratedParamFile(m_jobParams.GetParam("ParmFileName")))
@@ -77,7 +77,7 @@ namespace AnalysisManagerXTandemPlugIn
             if (!success)
             {
                 const string Msg = "clsAnalysisResourcesXT.GetResources(), failed retrieving taxonomy_base.xml file.";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg);
+                LogError(Msg);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -85,7 +85,7 @@ namespace AnalysisManagerXTandemPlugIn
             if (!success)
             {
                 const string Msg = "clsAnalysisResourcesXT.GetResources(), failed retrieving input_base.xml file.";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg);
+                LogError(Msg);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -93,7 +93,7 @@ namespace AnalysisManagerXTandemPlugIn
             if (!success)
             {
                 const string Msg = "clsAnalysisResourcesXT.GetResources(), failed retrieving default_input.xml file.";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg);
+                LogError(Msg);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -107,7 +107,7 @@ namespace AnalysisManagerXTandemPlugIn
             if (!success)
             {
                 const string Msg = "clsAnalysisResourcesXT.GetResources(), failed making taxonomy file.";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg);
+                LogError(Msg);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -116,7 +116,7 @@ namespace AnalysisManagerXTandemPlugIn
             if (!success)
             {
                 const string Msg = "clsAnalysisResourcesXT.GetResources(), failed making input file.";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg);
+                LogError(Msg);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -160,7 +160,7 @@ namespace AnalysisManagerXTandemPlugIn
             catch (Exception E)
             {
                 // Let the user know what went wrong.
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "clsAnalysisResourcesXT.MakeTaxonomyFile, The file could not be read" + E.Message);
             }
 
@@ -230,7 +230,7 @@ namespace AnalysisManagerXTandemPlugIn
             catch (Exception E)
             {
                 // Let the user know what went wrong.
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "clxAnalysisResourcesXT.MakeInputFile, The file could not be read" + E.Message);
                 result = false;
             }
@@ -265,7 +265,7 @@ namespace AnalysisManagerXTandemPlugIn
                 if (!ioFileInfo.Exists)
                 {
                     m_message = "_DTA.txt file not found: " + strInputFilePath;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                    LogError(m_message);
                     return false;
                 }
 
@@ -275,7 +275,7 @@ namespace AnalysisManagerXTandemPlugIn
 
                     strMessage = ioFileInfo.Name + " is " + (ioFileInfo.Length / 1024.0 / 1024 / 1024).ToString("0.00") +
                                  " GB in size; will now condense it by combining data points with consecutive zero-intensity values";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, strMessage);
+                    LogMessage(strMessage);
 
                     mCDTACondenser = new CondenseCDTAFile.clsCDTAFileCondenser();
                     mCDTACondenser.ProgressChanged += mCDTACondenser_ProgressChanged;
@@ -285,7 +285,7 @@ namespace AnalysisManagerXTandemPlugIn
                     if (!blnSuccess)
                     {
                         m_message = "Error condensing _DTA.txt file: " + mCDTACondenser.GetErrorMessage();
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                        LogError(m_message);
                         return false;
                     }
                     else
@@ -299,7 +299,7 @@ namespace AnalysisManagerXTandemPlugIn
                         {
                             strMessage = "Condensing complete; size of the new _dta.txt file is " +
                                          (ioFileInfo.Length / 1024.0 / 1024 / 1024).ToString("0.00") + " GB";
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, strMessage);
+                            LogMessage(strMessage);
                         }
 
                         try
@@ -309,7 +309,7 @@ namespace AnalysisManagerXTandemPlugIn
                             if (m_DebugLevel >= 2)
                             {
                                 strMessage = "Now deleting file " + strFilePathOld;
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, strMessage);
+                                LogMessage(strMessage);
                             }
 
                             ioFileInfo = new FileInfo(strFilePathOld);
@@ -320,13 +320,13 @@ namespace AnalysisManagerXTandemPlugIn
                             else
                             {
                                 strMessage = "Old _DTA.txt file not found:" + ioFileInfo.FullName + "; cannot delete";
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strMessage);
+                                LogWarning(strMessage);
                             }
                         }
                         catch (Exception ex)
                         {
                             // Error deleting the file; log it but keep processing
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                            LogError(
                                 "Exception deleting _dta_old.txt file: " + ex.Message);
                         }
                     }
@@ -337,7 +337,7 @@ namespace AnalysisManagerXTandemPlugIn
             catch (Exception ex)
             {
                 m_message = "Exception in ValidateDTATextFileSize";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                LogError(m_message + ": " + ex.Message);
                 return false;
             }
 
@@ -355,7 +355,7 @@ namespace AnalysisManagerXTandemPlugIn
                 {
                     dtLastUpdateTime = DateTime.UtcNow;
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         " ... " + percentComplete.ToString("0.00") + "% complete");
                 }
             }

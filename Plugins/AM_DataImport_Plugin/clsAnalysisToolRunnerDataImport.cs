@@ -46,8 +46,7 @@ namespace AnalysisManagerDataImportPlugIn
                 // Store the AnalysisManagerDataImportPlugIn version info in the database
                 if (!StoreToolVersionInfo())
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                        "Aborting since StoreToolVersionInfo returned false");
+                    LogError("Aborting since StoreToolVersionInfo returned false");
                     m_message = "Error determining AnalysisManagerDataImportPlugIn version";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -106,8 +105,7 @@ namespace AnalysisManagerDataImportPlugIn
             }
             catch (Exception ex)
             {
-                m_message = "Error in DataImportPlugin->RunTool: " + ex.Message;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                LogError("Error in DataImportPlugin->RunTool: " + ex.Message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -143,7 +141,7 @@ namespace AnalysisManagerDataImportPlugIn
                 if (mSourceFiles == null || mSourceFiles.Count == 0)
                 {
                     // Nothing to do
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                    LogWarning(
                         "mSourceFiles is empty; nothing for MoveImportedFiles to do");
                     return true;
                 }
@@ -171,7 +169,7 @@ namespace AnalysisManagerDataImportPlugIn
                     }
                     catch (Exception ex)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                        LogWarning(
                             "Error moving file " + fiFile.Name + " to " + strTargetFilePath + ": " + ex.Message);
                         return false;
                     }
@@ -179,8 +177,7 @@ namespace AnalysisManagerDataImportPlugIn
             }
             catch (Exception ex)
             {
-                m_message = "Error moving files to " + strTargetFolder + ":" + ex.Message;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                LogError("Error moving files to " + strTargetFolder + ":" + ex.Message, ex);
                 return false;
             }
 
@@ -230,23 +227,21 @@ namespace AnalysisManagerDataImportPlugIn
 
                 if (string.IsNullOrEmpty(strSharePath))
                 {
-                    m_message = clsAnalysisToolRunnerBase.NotifyMissingParameter(m_jobParams, "DataImportSharePath");
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                    LogError(clsAnalysisToolRunnerBase.NotifyMissingParameter(m_jobParams, "DataImportSharePath"));
                     return false;
                 }
 
                 if (string.IsNullOrEmpty(strDataImportFolder))
                 {
                     strMessage = "DataImportFolder not defined in the Special_Processing parameters or the settings file for this job; will assume the input folder is the dataset name";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, m_message);
+                    LogMessage(m_message);
                     strDataImportFolder = string.Copy(m_Dataset);
                 }
 
                 var fiSourceShare = new DirectoryInfo(strSharePath);
                 if (!fiSourceShare.Exists)
                 {
-                    m_message = "Data Import Share not found: " + fiSourceShare.FullName;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                    LogError("Data Import Share not found: " + fiSourceShare.FullName);
                     return false;
                 }
 
@@ -254,8 +249,7 @@ namespace AnalysisManagerDataImportPlugIn
                 var fiSourceFolder = new DirectoryInfo(strSourceFolderPath);
                 if (!fiSourceFolder.Exists)
                 {
-                    m_message = "Data Import Folder not found: " + fiSourceFolder.FullName;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                    LogError("Data Import Folder not found: " + fiSourceFolder.FullName);
                     return false;
                 }
 
@@ -270,24 +264,24 @@ namespace AnalysisManagerDataImportPlugIn
                     }
                     catch (Exception ex)
                     {
-                        m_message = "Error copying file " + fiFile.Name + ": " + ex.Message;
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                        LogError("Error copying file " + fiFile.Name + ": " + ex.Message, ex);
                         return false;
                     }
                 }
 
                 if (mSourceFiles.Count == 0)
                 {
+                    string msg;
                     if (strSourceFileSpec == MATCH_ALL_FILES)
                     {
-                        m_message = "Source folder was empty; nothing to copy: " + fiSourceFolder.FullName;
+                        msg = "Source folder was empty; nothing to copy: " + fiSourceFolder.FullName;
                     }
                     else
                     {
-                        m_message = "No files matching " + strSourceFileSpec + " were found in the source folder: " + fiSourceFolder.FullName;
+                        msg = "No files matching " + strSourceFileSpec + " were found in the source folder: " + fiSourceFolder.FullName;
                     }
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                    LogError(msg);
                     return false;
                 }
                 else
@@ -299,14 +293,13 @@ namespace AnalysisManagerDataImportPlugIn
 
                     if (m_DebugLevel >= 2)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, strMessage);
+                        LogMessage(strMessage);
                     }
                 }
             }
             catch (Exception ex)
             {
-                m_message = "Error importing data files: " + ex.Message;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                LogError("Error importing data files: " + ex.Message, ex);
                 return false;
             }
 
@@ -324,7 +317,7 @@ namespace AnalysisManagerDataImportPlugIn
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+                LogDebug("Determining tool version info");
             }
 
             // Lookup the version of AnalysisManagerDataImportPlugIn
@@ -343,8 +336,7 @@ namespace AnalysisManagerDataImportPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                    "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message, ex);
                 return false;
             }
         }

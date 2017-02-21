@@ -61,7 +61,7 @@ namespace AnalysisManagerNOMSIPlugin
 
                 if (m_DebugLevel > 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerNOMSI.RunTool(): Enter");
+                    LogDebug("clsAnalysisToolRunnerNOMSI.RunTool(): Enter");
                 }
 
                 // Initialize classwide variables
@@ -82,7 +82,7 @@ namespace AnalysisManagerNOMSIPlugin
                 // Store the NOMSI.exe version info in the database
                 if (!StoreToolVersionInfo(progLoc))
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
+                    LogError("Aborting since StoreToolVersionInfo returned false");
                     m_message = "Error determining NOMSI version";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -145,7 +145,7 @@ namespace AnalysisManagerNOMSIPlugin
                 // Add the current job data to the summary file
                 // if (!UpdateSummaryFile())
                 // {
-                //    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
+                //    LogWarning("Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
                 // }
 
                 // Make sure objects are released
@@ -191,7 +191,7 @@ namespace AnalysisManagerNOMSIPlugin
             catch (Exception ex)
             {
                 m_message = "Error in NOMSIPlugin->RunTool";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -203,7 +203,7 @@ namespace AnalysisManagerNOMSIPlugin
             if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
+            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
 
             // Bump up the debug level if less than 2
             if (m_DebugLevel < 2)
@@ -309,7 +309,7 @@ namespace AnalysisManagerNOMSIPlugin
                 {
                     if (m_DebugLevel >= 4)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Console output file not found: " + strConsoleOutputFilePath);
+                        LogDebug("Console output file not found: " + strConsoleOutputFilePath);
                     }
 
                     return;
@@ -317,7 +317,7 @@ namespace AnalysisManagerNOMSIPlugin
 
                 if (m_DebugLevel >= 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing file " + strConsoleOutputFilePath);
+                    LogDebug("Parsing file " + strConsoleOutputFilePath);
                 }
 
                 using (var srInFile = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
@@ -367,7 +367,7 @@ namespace AnalysisManagerNOMSIPlugin
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    LogError("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
             }
 
@@ -434,7 +434,7 @@ namespace AnalysisManagerNOMSIPlugin
 
             if (m_DebugLevel >= 1)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc + " " + cmdStr);
+                LogDebug(progLoc + " " + cmdStr);
             }
 
             scanNumber = filesProcessed;
@@ -479,7 +479,7 @@ namespace AnalysisManagerNOMSIPlugin
 
             if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                                      mConsoleOutputErrorMsg);
             }
 
@@ -501,7 +501,7 @@ namespace AnalysisManagerNOMSIPlugin
 
             if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                                      mConsoleOutputErrorMsg);
             }
 
@@ -513,17 +513,17 @@ namespace AnalysisManagerNOMSIPlugin
             var msg = "Error processing scan " + scanNumber + " using NOMSI";
             m_message = clsGlobal.AppendToComment(m_message, msg);
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+            LogError(
                                  msg + ", job " + m_JobNum);
 
             if (cmdRunner.ExitCode != 0)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                LogWarning(
                                      "NOMSI returned a non-zero exit code: " + cmdRunner.ExitCode);
             }
             else
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                LogWarning(
                                      "NOMSI failed (but exit code is 0)");
             }
 
@@ -540,7 +540,7 @@ namespace AnalysisManagerNOMSIPlugin
 
                 mConsoleOutputErrorMsg = string.Empty;
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Processing data using NOMSI");
+                LogMessage("Processing data using NOMSI");
 
                 var paramFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"));
 
@@ -600,7 +600,7 @@ namespace AnalysisManagerNOMSIPlugin
                 m_StatusTools.UpdateAndWrite(m_progress);
                 if (m_DebugLevel >= 3)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "NOMSI processing Complete");
+                    LogDebug("NOMSI processing Complete");
                 }
 
                 if (fileCountNoPeaks <= 0)
@@ -633,7 +633,7 @@ namespace AnalysisManagerNOMSIPlugin
             catch (Exception ex)
             {
                 m_message = "Error in NOMSIPlugin->StartNOMSI";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 return false;
             }
 
@@ -671,7 +671,7 @@ namespace AnalysisManagerNOMSIPlugin
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+                LogDebug("Determining tool version info");
             }
 
             var fiProgram = new FileInfo(strProgLoc);
@@ -684,7 +684,7 @@ namespace AnalysisManagerNOMSIPlugin
                 }
                 catch (Exception ex)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion", ex);
+                    LogError("Exception calling SetStepTaskToolVersion", ex);
                     return false;
                 }
 
@@ -705,7 +705,7 @@ namespace AnalysisManagerNOMSIPlugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion", ex);
+                LogError("Exception calling SetStepTaskToolVersion", ex);
                 return false;
             }
 
@@ -726,7 +726,7 @@ namespace AnalysisManagerNOMSIPlugin
                 {
                     // Leave the parameter file unchanged
                     m_EvalMessage = "Warning: targets file was empty; parameter file used as-is";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_EvalMessage);
+                    LogWarning(m_EvalMessage);
                     return true;
                 }
 
@@ -767,7 +767,7 @@ namespace AnalysisManagerNOMSIPlugin
             catch (Exception ex)
             {
                 m_message = "Error in NOMSIPlugin->UpdateParameterFile";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 return false;
             }
         }

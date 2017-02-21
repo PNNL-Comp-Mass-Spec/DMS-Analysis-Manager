@@ -58,7 +58,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 // Store the RepoPkgr version info in the database
                 if (!StoreToolVersionInfo())
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
+                    LogError("Aborting since StoreToolVersionInfo returned false");
                     m_message = "Error determining RepoPkgr version";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -73,7 +73,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
             catch (Exception ex)
             {
                 m_message = "Error in RepoPkgr Plugin->RunTool";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }
@@ -153,15 +153,15 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
                 if (dataPkgJobCountMatch == 0)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Did not find any MSGF+ jobs in data package " + _mgr.DataPkgId + "; auto-setting _bIncludeSequestResults to True");
+                    LogWarning("Did not find any MSGF+ jobs in data package " + _mgr.DataPkgId + "; auto-setting _bIncludeSequestResults to True");
                     _bIncludeSequestResults = true;
                 }
                 else
                 {
                     if (dataPkgFileCountMatch == 0)
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Found " + dataPkgJobCountMatch + " MSGF+ jobs in data package " + _mgr.DataPkgId + " but did not find any candidate files to copy");
+                        LogWarning("Found " + dataPkgJobCountMatch + " MSGF+ jobs in data package " + _mgr.DataPkgId + " but did not find any candidate files to copy");
                     else
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copied " + dataPkgFileCountMatch + " files for " + dataPkgJobCountMatch + " MSGF+ jobs in data package " + _mgr.DataPkgId);
+                        LogMessage("Copied " + dataPkgFileCountMatch + " files for " + dataPkgJobCountMatch + " MSGF+ jobs in data package " + _mgr.DataPkgId);
                 }
             }
             m_progress = PROGRESS_PCT_MSGF_PLUS_RESULTS_COPIED;
@@ -176,14 +176,14 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
                 if (dataPkgJobCountMatch == 0)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Did not find any SEQUEST jobs in data package " + _mgr.DataPkgId);
+                    LogWarning("Did not find any SEQUEST jobs in data package " + _mgr.DataPkgId);
                 }
                 else
                 {
                     if (dataPkgFileCountMatch == 0)
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Found " + dataPkgJobCountMatch + " SEQUEST jobs in data package " + _mgr.DataPkgId + " but did not find any candidate files to copy");
+                        LogWarning("Found " + dataPkgJobCountMatch + " SEQUEST jobs in data package " + _mgr.DataPkgId + " but did not find any candidate files to copy");
                     else
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Copied " + dataPkgFileCountMatch + " files for " + dataPkgJobCountMatch + " SEQUEST jobs in data package " + _mgr.DataPkgId);
+                        LogMessage("Copied " + dataPkgFileCountMatch + " files for " + dataPkgJobCountMatch + " SEQUEST jobs in data package " + _mgr.DataPkgId);
                 }
             }
             m_progress = PROGRESS_PCT_SEQUEST_RESULTS_COPIED;
@@ -196,7 +196,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 var zipFileCountConverted = FileUtils.ConvertZipsToGZips(Path.Combine(_outputResultsFolderPath, @"MSGFPlus_Results\MZID_Files"), m_WorkDir);
 
                 if (zipFileCountConverted > 0)
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Converted " + zipFileCountConverted + " _msgfplus.zip files to .mzid.gz files");
+                    LogMessage("Converted " + zipFileCountConverted + " _msgfplus.zip files to .mzid.gz files");
             }
             m_progress = PROGRESS_PCT_MZID_RESULTS_COPIED;
             m_StatusTools.UpdateAndWrite(m_progress);
@@ -212,13 +212,13 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 {
                     m_message = "Data package " + _mgr.DataPkgId +
                                 " does not have any analysis jobs associated with it; please add some MASIC or DeconTools jobs then reset this job";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                    LogError(m_message);
                     return false;
                 }
 
 
                 var msg = "Data package " + _mgr.DataPkgId + " has " + dataPkgJobCountMatch + " associated jobs, but no instrument data files were retrieved";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
+                LogWarning(msg);
 
             }
             m_progress = PROGRESS_PCT_INSTRUMENT_DATA_COPIED;
@@ -337,7 +337,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 if (!dctDatasetRawFilePaths.ContainsKey(datasetName))
                 {
                     m_message = "Dataset " + datasetName + " not found in job parameter " + clsAnalysisResources.JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS + "; unable to create the missing .mzXML file";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                    LogError(m_message);
                     return string.Empty;
                 }
 
@@ -352,7 +352,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 if (string.IsNullOrEmpty(strDatasetFilePathRemote))
                 {
                     m_message = "Dataset " + datasetName + " has an empty instrument file path in dctDatasetRawFilePaths";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                    LogError(m_message);
                     return string.Empty;
                 }
 
@@ -427,7 +427,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 if (!fiMzXmlFileGZipped.Exists)
                 {
                     m_message = "Compressed .mzXML file not found: " + fiMzXmlFileGZipped.FullName;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                    LogError(m_message);
                     return string.Empty;
                 }
 
@@ -450,7 +450,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
             catch (Exception ex)
             {
                 m_message = "Exception in CreateMzXMLFileIfMissing";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 return string.Empty;
             }
 
@@ -465,7 +465,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to delete file " + filePath + ": " + ex.Message);
+                LogWarning("Unable to delete file " + filePath + ": " + ex.Message);
             }
         }
 
@@ -510,7 +510,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                     var fiTargetFile = new FileInfo(Path.Combine(instrumentDataFolderPath, Path.GetFileName(mzXmlFilePathLocal)));
 
                     if (fiTargetFile.Exists && fiTargetFile.Length == fiMzXmlFileSource.Length)
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Skipping .mzXML file since already present in the target folder: " + fiTargetFile.FullName);
+                        LogDebug("Skipping .mzXML file since already present in the target folder: " + fiTargetFile.FullName);
                     else
                         m_FileTools.CopyFileUsingLocks(mzXmlFilePathLocal, fiTargetFile.FullName, m_MachName);
 
@@ -549,7 +549,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                         var fiTargetFile = new FileInfo(Path.Combine(instrumentDataFolderPath, fiDatasetFile.Name));
 
                         if (fiTargetFile.Exists && fiTargetFile.Length == fiDatasetFile.Length)
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Skipping instrument file since already present in the target folder: " + fiTargetFile.FullName);
+                            LogDebug("Skipping instrument file since already present in the target folder: " + fiTargetFile.FullName);
                         else
                             m_FileTools.CopyFileUsingLocks(strDatasetFilePathSource, fiTargetFile.FullName, m_MachName);
                     }
@@ -574,7 +574,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error retrieving instrument data for " + datasetName, ex);
+                LogError("Error retrieving instrument data for " + datasetName, ex);
                 return false;
             }
 
@@ -657,7 +657,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 if (!File.Exists(strStoragePathInfoFilePath))
                 {
                     m_message = "StoragePathInfo file not found";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + strStoragePathInfoFilePath);
+                    LogError(m_message + ": " + strStoragePathInfoFilePath);
                     return false;
                 }
 
@@ -672,7 +672,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 if (string.IsNullOrEmpty(strSourceFilePath))
                 {
                     m_message = "StoragePathInfo file was empty";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + strStoragePathInfoFilePath);
+                    LogError(m_message + ": " + strStoragePathInfoFilePath);
                     return false;
                 }
 
@@ -691,7 +691,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
             catch (Exception ex)
             {
                 m_message = "Error in RetrieveStoragePathInfoTargetFile";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 return false;
             }
 
@@ -716,7 +716,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion", ex);
+                LogError("Exception calling SetStepTaskToolVersion", ex);
                 return false;
             }
 
@@ -747,7 +747,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 var proteinSeqsDBConnectionString = m_mgrParams.GetParam("fastacnstring");
                 if (string.IsNullOrWhiteSpace(proteinSeqsDBConnectionString))
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                                             "Error in UpdateOrgDBNameIfRequired: manager parameter fastacnstring is not defined");
                     return orgDbName;
                 }
@@ -781,7 +781,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                     catch (Exception ex)
                     {
                         retryCount -= 1;
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                        LogError(
                                              "Exception getting protein collection info from Protein Sequences database for Archived_File_ID = " +
                                              fileID, ex);
 
@@ -799,7 +799,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in UpdateOrgDBNameIfRequired", ex);
+                LogError("Exception in UpdateOrgDBNameIfRequired", ex);
             }
 
             return orgDbName;

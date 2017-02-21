@@ -45,7 +45,7 @@ namespace AnalysisManagerMultiAlignPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MultiAlign");
+            LogMessage("Running MultiAlign");
 
             mCmdRunner = new clsRunDosProgram(m_WorkDir);
             RegisterEvents(mCmdRunner);
@@ -53,7 +53,7 @@ namespace AnalysisManagerMultiAlignPlugIn
 
             if (m_DebugLevel > 4)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                LogDebug(
                     "clsAnalysisToolRunnerMultiAlign.OperateAnalysisTool(): Enter");
             }
 
@@ -69,7 +69,7 @@ namespace AnalysisManagerMultiAlignPlugIn
             // Store the MultiAlign version info in the database
             if (!StoreToolVersionInfo(progLoc))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Aborting since StoreToolVersionInfo returned false");
                 m_message = "Error determining MultiAlign version";
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -82,7 +82,7 @@ namespace AnalysisManagerMultiAlignPlugIn
             CmdStr = " input.txt " + Path.Combine(m_WorkDir, m_jobParams.GetParam("ParmFileName")) + " " + m_WorkDir + " " + MultiAlignDatabaseName;
             if (m_DebugLevel >= 1)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc + " " + CmdStr);
+                LogDebug(progLoc + " " + CmdStr);
             }
 
             mCmdRunner.CreateNoWindow = true;
@@ -94,7 +94,7 @@ namespace AnalysisManagerMultiAlignPlugIn
             if (!mCmdRunner.RunProgram(progLoc, CmdStr, "MultiAlign", true))
             {
                 m_message = "Error running MultiAlign";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ", job " + m_JobNum);
+                LogError(m_message + ", job " + m_JobNum);
                 blnSuccess = false;
             }
             else
@@ -109,7 +109,7 @@ namespace AnalysisManagerMultiAlignPlugIn
             //Add the current job data to the summary file
             if (!UpdateSummaryFile())
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                LogWarning(
                     "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
             }
 
@@ -196,7 +196,7 @@ namespace AnalysisManagerMultiAlignPlugIn
             if (string.IsNullOrEmpty(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+            LogWarning(
                 "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
 
             // Bump up the debug level if less than 2
@@ -246,7 +246,7 @@ namespace AnalysisManagerMultiAlignPlugIn
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+                LogDebug("Determining tool version info");
             }
 
             var ioMultiAlignProg = new FileInfo(strMultiAlignProgLoc);
@@ -259,7 +259,7 @@ namespace AnalysisManagerMultiAlignPlugIn
                 }
                 catch (Exception ex)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "Exception calling SetStepTaskToolVersion: " + ex.Message);
                     return false;
                 }
@@ -300,7 +300,7 @@ namespace AnalysisManagerMultiAlignPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }

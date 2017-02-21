@@ -77,7 +77,7 @@ namespace AnalysisManagerIDPickerPlugIn
                     var noScanStats = m_jobParams.GetJobParameter("PepXMLNoScanStats", false);
                     if (noScanStats)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                        LogMessage(
                             "Not retrieving MASIC files since PepXMLNoScanStats is True");
                     }
                     else
@@ -119,7 +119,7 @@ namespace AnalysisManagerIDPickerPlugIn
                     if (string.IsNullOrEmpty(m_message))
                     {
                         m_message = "Unable to determine the legacy fasta file name";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                        LogError(m_message);
                     }
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -148,7 +148,7 @@ namespace AnalysisManagerIDPickerPlugIn
             if (string.IsNullOrWhiteSpace(dmsConnectionString))
             {
                 m_message = "Error in LookupLegacyFastaFileName: manager parameter connectionstring is not defined";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                LogError(m_message);
                 return string.Empty;
             }
 
@@ -193,7 +193,7 @@ namespace AnalysisManagerIDPickerPlugIn
                   eResultType == clsPHRPReader.ePeptideHitResultType.MODa || eResultType == clsPHRPReader.ePeptideHitResultType.MODPlus))
             {
                 m_message = "Invalid tool result type (not supported by IDPicker): " + strResultType;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                LogError(m_message);
                 eReturnCode = CloseOutType.CLOSEOUT_FAILED;
                 return false;
             }
@@ -205,7 +205,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                LogDebug(
                     "Retrieving the " + eResultType.ToString() + " files");
             }
 
@@ -292,7 +292,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 if (!fiFile.Exists)
                 {
                     m_message = "File " + item.Key + " not found; unable to rename to " + item.Value;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                    LogError(m_message);
                     eReturnCode = CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                     return false;
                 }
@@ -305,7 +305,7 @@ namespace AnalysisManagerIDPickerPlugIn
                     catch (Exception ex)
                     {
                         m_message = "Error renaming file " + item.Key + " to " + item.Value;
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + "; " + ex.Message);
+                        LogError(m_message + "; " + ex.Message);
                         eReturnCode = CloseOutType.CLOSEOUT_FAILED;
                         return false;
                     }
@@ -410,7 +410,7 @@ namespace AnalysisManagerIDPickerPlugIn
             {
                 if (m_DebugLevel >= 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                    LogMessage(
                         "Retrieved MASIC ScanStats and ScanStatsEx files");
                 }
             }

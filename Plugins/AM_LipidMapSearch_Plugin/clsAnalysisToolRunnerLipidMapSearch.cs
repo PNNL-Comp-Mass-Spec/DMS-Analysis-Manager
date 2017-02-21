@@ -67,7 +67,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
 
                 if (m_DebugLevel > 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "clsAnalysisToolRunnerLipidMapSearch.RunTool(): Enter");
                 }
 
@@ -82,7 +82,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 // Store the LipidTools version info in the database
                 if (!StoreToolVersionInfo(mLipidToolsProgLoc))
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "Aborting since StoreToolVersionInfo returned false");
                     m_message = "Error determining LipidTools version";
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -93,7 +93,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
 
                 if (!GetLipidMapsDatabase())
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "Aborting since GetLipidMapsDatabase returned false");
                     if (string.IsNullOrEmpty(m_message))
                     {
@@ -110,7 +110,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 var strParameterFileName = m_jobParams.GetParam("parmFileName");
                 var strParameterFilePath = Path.Combine(m_WorkDir, strParameterFileName);
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running LipidTools");
+                LogMessage("Running LipidTools");
 
                 //Set up and execute a program runner to run LipidTools
                 var cmdStr = " -db " + PossiblyQuotePath(Path.Combine(m_WorkDir, mLipidMapsDBFilename)) + " -NoDBUpdate";
@@ -141,7 +141,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
 
                 if (m_DebugLevel >= 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, mLipidToolsProgLoc + cmdStr);
+                    LogDebug(mLipidToolsProgLoc + cmdStr);
                 }
 
                 mCmdRunner = new clsRunDosProgram(m_WorkDir);
@@ -175,7 +175,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
 
                 if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg);
+                    LogError(mConsoleOutputErrorMsg);
                 }
 
                 // Append a line to the console output file listing the name of the LipidMapsDB that we used
@@ -194,16 +194,16 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                     var msg = "Error running LipidTools";
                     m_message = clsGlobal.AppendToComment(m_message, msg);
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg + ", job " + m_JobNum);
+                    LogError(msg + ", job " + m_JobNum);
 
                     if (mCmdRunner.ExitCode != 0)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                        LogWarning(
                             "LipidTools returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
                     }
                     else
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                        LogWarning(
                             "Call to LipidTools failed (but exit code is 0)");
                     }
 
@@ -215,7 +215,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                     m_StatusTools.UpdateAndWrite(m_progress);
                     if (m_DebugLevel >= 3)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "LipidTools Search Complete");
+                        LogDebug("LipidTools Search Complete");
                     }
                 }
 
@@ -227,7 +227,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 //Add the current job data to the summary file
                 if (!UpdateSummaryFile())
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                    LogWarning(
                         "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
                 }
 
@@ -277,7 +277,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
             catch (Exception ex)
             {
                 m_message = "Exception in LipidMapSearchPlugin->RunTool";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -290,7 +290,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
             if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+            LogWarning(
                 "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
 
             // Bump up the debug level if less than 2
@@ -397,13 +397,13 @@ namespace AnalysisManagerLipidMapSearchPlugIn
             bool blnSuccess = false;
             string strLipidMapsDBFileLocal = Path.Combine(m_WorkDir, LIPID_MAPS_DB_FILENAME_PREFIX + strTimeStamp + ".txt");
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Downloading latest LipidMaps database");
+            LogMessage("Downloading latest LipidMaps database");
 
             cmdStr = " -UpdateDBOnly -db " + PossiblyQuotePath(strLipidMapsDBFileLocal);
 
             if (m_DebugLevel >= 1)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, mLipidToolsProgLoc + cmdStr);
+                LogDebug(mLipidToolsProgLoc + cmdStr);
             }
 
             mCmdRunner = new clsRunDosProgram(m_WorkDir);
@@ -420,16 +420,16 @@ namespace AnalysisManagerLipidMapSearchPlugIn
             if (!blnSuccess)
             {
                 m_message = "Error downloading the latest LipidMaps DB using LipidTools";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                LogError(m_message);
 
                 if (mCmdRunner.ExitCode != 0)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                    LogWarning(
                         "LipidTools returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
                 }
                 else
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to LipidTools failed (but exit code is 0)");
+                    LogWarning("Call to LipidTools failed (but exit code is 0)");
                 }
 
                 return string.Empty;
@@ -444,7 +444,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 // The hashes match; we'll update the timestamp of the hashcheck file below
                 if (m_DebugLevel >= 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                    LogMessage(
                         "Hash code of the newly downloaded database matches the hash for " + strNewestLipidMapsDBFileName + ": " +
                         strNewestLipidMapsDBFileHash);
                 }
@@ -478,10 +478,10 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                     }
                     catch (Exception ex)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                        LogError(
                             "Exception copying Lipid Maps DB to server; attempt=" + intCopyAttempts + ": " + ex.Message);
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Source path: " + strLipidMapsDBFileLocal);
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Target path: " + strLipidMapsDBFileTarget);
+                        LogDebug("Source path: " + strLipidMapsDBFileLocal);
+                        LogDebug("Target path: " + strLipidMapsDBFileTarget);
                         // Wait 5 seconds, then try again
                         Thread.Sleep(5000);
                     }
@@ -559,7 +559,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 if (string.IsNullOrEmpty(strParamFileFolderPath))
                 {
                     m_message = "Parameter 'ParmFileStoragePath' is empty";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         m_message + "; unable to get the LipidMaps database");
                     return false;
                 }
@@ -569,7 +569,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 if (!diLipidMapsDBFolder.Exists)
                 {
                     m_message = "LipidMaps database folder not found";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + diLipidMapsDBFolder.FullName);
+                    LogError(m_message + ": " + diLipidMapsDBFolder.FullName);
                     return false;
                 }
 
@@ -599,7 +599,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                         }
                         catch (Exception ex)
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                            LogError(
                                 "Exception downloading Lipid Maps DB; attempt=" + intDownloadAttempts + ": " + ex.Message);
                             // Wait 5 seconds, then try again
                             Thread.Sleep(5000);
@@ -625,7 +625,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 {
                     if (m_DebugLevel >= 1)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                        LogMessage(
                             "Copying lipid Maps DB locally: " + strSourceFilePath);
                     }
                     File.Copy(strSourceFilePath, strTargetFilePath);
@@ -633,7 +633,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception obtaining lipid Maps DB: " + ex.Message);
+                LogError("Exception obtaining lipid Maps DB: " + ex.Message);
                 return false;
             }
 
@@ -704,7 +704,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 {
                     if (m_DebugLevel >= 4)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        LogDebug(
                             "Console output file not found: " + strConsoleOutputFilePath);
                     }
 
@@ -713,7 +713,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
 
                 if (m_DebugLevel >= 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing file " + strConsoleOutputFilePath);
+                    LogDebug("Parsing file " + strConsoleOutputFilePath);
                 }
 
                 string strLineIn = null;
@@ -786,7 +786,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
             }
@@ -868,7 +868,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                         else
                         {
                             // Ignore the option
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                            LogWarning(
                                 "Unrecognized setting in the LipidMaps parameter file: " + strKey);
                         }
                     }
@@ -876,7 +876,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Exception reading LipidMaps parameter file: " + ex.Message);
                 return string.Empty;
             }
@@ -923,7 +923,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
             catch (Exception ex)
             {
                 m_message = "Exception zipping the plot data text files";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                LogError(m_message + ": " + ex.Message);
                 return false;
             }
 
@@ -934,7 +934,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 if (!fiExcelFile.Exists)
                 {
                     m_message = "Excel results file not found";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + fiExcelFile.Name);
+                    LogError(m_message + ": " + fiExcelFile.Name);
                     return false;
                 }
 
@@ -943,7 +943,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
             catch (Exception ex)
             {
                 m_message = "Exception renaming Excel results file";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                LogError(m_message + ": " + ex.Message);
                 return false;
             }
 
@@ -961,7 +961,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+                LogDebug("Determining tool version info");
             }
 
             var ioLipidTools = new FileInfo(strLipidToolsProgLoc);
@@ -974,7 +974,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 }
                 catch (Exception ex)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "Exception calling SetStepTaskToolVersion: " + ex.Message);
                     return false;
                 }
@@ -995,7 +995,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }

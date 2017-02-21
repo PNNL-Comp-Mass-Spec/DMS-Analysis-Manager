@@ -22,7 +22,7 @@ namespace AnalysisManagerMultiAlignPlugIn
                 return result;
             }
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting required files");
+            LogMessage("Getting required files");
 
             string strInputFileExtension = string.Empty;
 
@@ -54,7 +54,7 @@ namespace AnalysisManagerMultiAlignPlugIn
             var multialignParamFileName = m_jobParams.GetParam("ParmFileName");
             if (multialignParamFileName == null || multialignParamFileName.Length == 0)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "MultiAlign ParmFileName not defined in the settings for this job; unable to continue");
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
             }
@@ -64,7 +64,7 @@ namespace AnalysisManagerMultiAlignPlugIn
             if (multialignParameterFileStoragePath == null || multialignParameterFileStoragePath.Length == 0)
             {
                 multialignParameterFileStoragePath = "\\\\gigasax\\DMS_Parameter_Files\\MultiAlign";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                LogWarning(
                     "Parameter '" + paramFileStoragePathKeyName +
                     "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " +
                     multialignParameterFileStoragePath);
@@ -121,7 +121,7 @@ namespace AnalysisManagerMultiAlignPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "clsAnalysisResourcesMultiAlign.BuildMultiAlignInputTextFile, Error buliding the input .txt file (" + INPUT_FILENAME + "): " +
                     ex.Message);
                 blnSuccess = false;

@@ -61,7 +61,7 @@ namespace AnalysisManagerOMSSAPlugIn
             // Store the OMSSA version info in the database
             if (!StoreToolVersionInfo())
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Aborting since StoreToolVersionInfo returned false");
                 m_message = "Error determining OMSSA version";
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -73,7 +73,7 @@ namespace AnalysisManagerOMSSAPlugIn
                 return CloseOutType.CLOSEOUT_NO_DTA_FILES;
             }
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running OMSSA");
+            LogMessage("Running OMSSA");
 
             var cmdRunner = new clsRunDosProgram(m_WorkDir);
             RegisterEvents(cmdRunner);
@@ -81,7 +81,7 @@ namespace AnalysisManagerOMSSAPlugIn
 
             if (m_DebugLevel > 4)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                LogDebug(
                     "clsAnalysisToolRunnerOM.OperateAnalysisTool(): Enter");
             }
 
@@ -91,7 +91,7 @@ namespace AnalysisManagerOMSSAPlugIn
             {
                 if (progLoc.Length == 0)
                     progLoc = "Parameter 'OMSSAprogloc' not defined for this manager";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Cannot find OMSSA program file: " + progLoc);
+                LogError("Cannot find OMSSA program file: " + progLoc);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -117,7 +117,7 @@ namespace AnalysisManagerOMSSAPlugIn
 
             if (m_DebugLevel >= 1)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Starting OMSSA: " + progLoc + " " + CmdStr);
+                LogDebug("Starting OMSSA: " + progLoc + " " + CmdStr);
             }
 
             cmdRunner.CreateNoWindow = true;
@@ -260,7 +260,7 @@ namespace AnalysisManagerOMSSAPlugIn
             {
                 // set up formatdb.exe to reference the organsim DB file (fasta)
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running OMSSA2PepXml");
+                LogMessage("Running OMSSA2PepXml");
 
                 var cmdRunner = new clsRunDosProgram(m_WorkDir);
                 RegisterEvents(cmdRunner);
@@ -268,7 +268,7 @@ namespace AnalysisManagerOMSSAPlugIn
 
                 if (m_DebugLevel > 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "clsAnalysisToolRunnerOM.ConvertOMSSA2PepXmlFile(): Enter");
                 }
 
@@ -278,7 +278,7 @@ namespace AnalysisManagerOMSSAPlugIn
                 {
                     if (progLoc.Length == 0)
                         progLoc = "Parameter 'omssa2pepprogloc' not defined for this manager";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "Cannot find OMSSA2PepXml program file: " + progLoc);
                     return false;
                 }
@@ -292,7 +292,7 @@ namespace AnalysisManagerOMSSAPlugIn
 
                 if (m_DebugLevel >= 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "Starting OMSSA2PepXml: " + progLoc + " " + CmdStr);
                 }
 
@@ -311,7 +311,7 @@ namespace AnalysisManagerOMSSAPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "clsAnalysisToolRunnerOM.ConvertOMSSA2PepXmlFile, exception, " + ex.Message);
             }
 
@@ -328,7 +328,7 @@ namespace AnalysisManagerOMSSAPlugIn
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+                LogDebug("Determining tool version info");
             }
 
             // Store paths to key files in ioToolFiles
@@ -342,7 +342,7 @@ namespace AnalysisManagerOMSSAPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }

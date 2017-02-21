@@ -46,13 +46,13 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
             // Store the MSDataFileTrimmer version info in the database
             if (!StoreToolVersionInfo())
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Aborting since StoreToolVersionInfo returned false");
                 m_message = "Error determining MSDataFileTrimmer version";
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running MSDataFileTrimmer");
+            LogMessage("Running MSDataFileTrimmer");
 
             mCmdRunner = new clsRunDosProgram(m_WorkDir);
             RegisterEvents(mCmdRunner);
@@ -60,7 +60,7 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
 
             if (m_DebugLevel > 4)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerPRIDEMzXML.RunTool(): Enter");
+                LogDebug("clsAnalysisToolRunnerPRIDEMzXML.RunTool(): Enter");
             }
 
             // verify that program file exists
@@ -70,7 +70,7 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
             {
                 if (progLoc.Length == 0)
                     progLoc = "Parameter 'MSDataFileTrimmerprogloc' not defined for this manager";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Cannot find MSDataFileTrimmer program file: " + progLoc);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -154,7 +154,7 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
             if (string.IsNullOrEmpty(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+            LogWarning(
                 "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
 
             // Bump up the debug level if less than 2
@@ -193,7 +193,7 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+                LogDebug("Determining tool version info");
             }
 
             // Store paths to key files in ioToolFiles
@@ -206,7 +206,7 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }

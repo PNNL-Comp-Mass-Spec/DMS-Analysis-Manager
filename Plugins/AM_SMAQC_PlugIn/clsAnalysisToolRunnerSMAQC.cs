@@ -62,7 +62,7 @@ namespace AnalysisManagerSMAQCPlugIn
 
                 if (m_DebugLevel > 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerSMAQC.RunTool(): Enter");
+                    LogDebug("clsAnalysisToolRunnerSMAQC.RunTool(): Enter");
                 }
 
                 // Determine the path to the SMAQC program
@@ -77,7 +77,7 @@ namespace AnalysisManagerSMAQCPlugIn
                 // Store the SMAQC version info in the database
                 if (!StoreToolVersionInfo(progLoc))
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "Aborting since StoreToolVersionInfo returned false");
                     m_message = "Error determining SMAQC version";
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -98,7 +98,7 @@ namespace AnalysisManagerSMAQCPlugIn
 
                 var resultsFilePath = Path.Combine(m_WorkDir, m_Dataset + "_SMAQC.txt");
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running SMAQC");
+                LogMessage("Running SMAQC");
 
                 //Set up and execute a program runner to run SMAQC
                 var CmdStr = PossiblyQuotePath(m_WorkDir);                       // Path to folder containing input files
@@ -111,7 +111,7 @@ namespace AnalysisManagerSMAQCPlugIn
 
                 if (m_DebugLevel >= 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc + " " + CmdStr);
+                    LogDebug(progLoc + " " + CmdStr);
                 }
 
                 mCmdRunner = new clsRunDosProgram(m_WorkDir)
@@ -148,7 +148,7 @@ namespace AnalysisManagerSMAQCPlugIn
 
                 if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg);
+                    LogError(mConsoleOutputErrorMsg);
                 }
 
                 if (!blnSuccess)
@@ -157,16 +157,16 @@ namespace AnalysisManagerSMAQCPlugIn
                     Msg = "Error running SMAQC";
                     m_message = clsGlobal.AppendToComment(m_message, Msg);
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg + ", job " + m_JobNum);
+                    LogError(Msg + ", job " + m_JobNum);
 
                     if (mCmdRunner.ExitCode != 0)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                        LogWarning(
                             "SMAQC returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
                     }
                     else
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to SMAQC failed (but exit code is 0)");
+                        LogWarning("Call to SMAQC failed (but exit code is 0)");
                     }
 
                     blnProcessingError = true;
@@ -177,7 +177,7 @@ namespace AnalysisManagerSMAQCPlugIn
                     m_StatusTools.UpdateAndWrite(m_progress);
                     if (m_DebugLevel >= 3)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "SMAQC Search Complete");
+                        LogDebug("SMAQC Search Complete");
                     }
                 }
 
@@ -225,7 +225,7 @@ namespace AnalysisManagerSMAQCPlugIn
                 //Add the current job data to the summary file
                 if (!UpdateSummaryFile())
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                    LogWarning(
                         "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
                 }
 
@@ -271,7 +271,7 @@ namespace AnalysisManagerSMAQCPlugIn
             catch (Exception ex)
             {
                 m_message = "Exception in SMAQCPlugin->RunTool";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -300,14 +300,14 @@ namespace AnalysisManagerSMAQCPlugIn
 
             if (intDatasetID < 0)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Job parameter DatasetID is missing; cannot compute LLRC");
                 return false;
             }
 
             lstDatasetIDs.Add(intDatasetID);
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running LLRC to compute QCDM");
+            LogMessage("Running LLRC to compute QCDM");
 
             var oLLRC = new LLRC.LLRCWrapper();
             oLLRC.PostToDB = true;
@@ -326,11 +326,11 @@ namespace AnalysisManagerSMAQCPlugIn
             if (!blnSuccess)
             {
                 m_EvalMessage = "Error running LLRC: " + oLLRC.ErrorMessage;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, m_EvalMessage);
+                LogWarning(m_EvalMessage);
             }
             else if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "LLRC Succeeded");
+                LogMessage("LLRC Succeeded");
             }
 
             return blnSuccess;
@@ -395,7 +395,7 @@ namespace AnalysisManagerSMAQCPlugIn
                     m_message = "clsAnalysisToolRunnerSMAQC.LookupInstrumentIDFromDB; Exception obtaining InstrumentID from the database: " +
                                 ex.Message + "; ConnectionString: " + ConnectionString;
                     m_message += ", RetryCount = " + RetryCount.ToString();
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                    LogError(m_message);
                     Thread.Sleep(5000);             //Delay for 5 second before trying again
                 }
             }
@@ -404,7 +404,7 @@ namespace AnalysisManagerSMAQCPlugIn
             if (RetryCount < 1)
             {
                 m_message = "clsAnalysisToolRunnerSMAQC.LookupInstrumentIDFromDB; Excessive failures obtaining InstrumentID from the database";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                LogError(m_message);
                 return false;
             }
             else
@@ -423,7 +423,7 @@ namespace AnalysisManagerSMAQCPlugIn
             if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+            LogWarning(
                 "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
 
             // Bump up the debug level if less than 2
@@ -502,7 +502,7 @@ namespace AnalysisManagerSMAQCPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Error converting SMAQC results to XML: " + ex.Message);
                 m_message = "Error converting SMAQC results to XML";
                 return false;
@@ -540,13 +540,13 @@ namespace AnalysisManagerSMAQCPlugIn
             if (!File.Exists(ResultsFilePath))
             {
                 m_message = "SMAQC Results file not found";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_message + ": " + ResultsFilePath);
+                LogDebug(m_message + ": " + ResultsFilePath);
                 return lstResults;
             }
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing SMAQC Results file " + ResultsFilePath);
+                LogDebug("Parsing SMAQC Results file " + ResultsFilePath);
             }
 
             string strLineIn = null;
@@ -632,7 +632,7 @@ namespace AnalysisManagerSMAQCPlugIn
                 {
                     if (m_DebugLevel >= 4)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        LogDebug(
                             "Console output file not found: " + strConsoleOutputFilePath);
                     }
 
@@ -641,7 +641,7 @@ namespace AnalysisManagerSMAQCPlugIn
 
                 if (m_DebugLevel >= 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing file " + strConsoleOutputFilePath);
+                    LogDebug("Parsing file " + strConsoleOutputFilePath);
                 }
 
                 float sngEffectiveProgress = 0;
@@ -724,7 +724,7 @@ namespace AnalysisManagerSMAQCPlugIn
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
             }
@@ -758,7 +758,7 @@ namespace AnalysisManagerSMAQCPlugIn
             {
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "Posting SMAQC Results to the database (using Dataset ID " + intDatasetID.ToString() + ")");
                 }
 
@@ -799,14 +799,14 @@ namespace AnalysisManagerSMAQCPlugIn
                 else
                 {
                     m_message = "Error storing SMAQC Results in database, " + STORE_SMAQC_RESULTS_SP_NAME + " returned " + ResCode.ToString();
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                    LogError(m_message);
                     blnSuccess = false;
                 }
             }
             catch (Exception ex)
             {
                 m_message = "Exception storing SMAQC Results in database";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 blnSuccess = false;
             }
 
@@ -851,7 +851,7 @@ namespace AnalysisManagerSMAQCPlugIn
             catch (Exception ex)
             {
                 m_message = "Exception parsing SMAQC results";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Exception parsing SMAQC results and posting to the database", ex);
                 blnSuccess = false;
             }
@@ -889,7 +889,7 @@ namespace AnalysisManagerSMAQCPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception renaming SMAQC log file", ex);
+                LogError("Exception renaming SMAQC log file", ex);
             }
 
             return string.Empty;
@@ -906,7 +906,7 @@ namespace AnalysisManagerSMAQCPlugIn
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+                LogDebug("Determining tool version info");
             }
 
             var ioSMAQC = new FileInfo(strSMAQCProgLoc);
@@ -919,7 +919,7 @@ namespace AnalysisManagerSMAQCPlugIn
                 }
                 catch (Exception ex)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "Exception calling SetStepTaskToolVersion: " + ex.Message);
                     return false;
                 }
@@ -950,7 +950,7 @@ namespace AnalysisManagerSMAQCPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }

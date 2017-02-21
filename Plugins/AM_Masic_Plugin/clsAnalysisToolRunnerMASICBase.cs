@@ -59,7 +59,7 @@ namespace AnalysisManagerMasicPlugin
 
                 if (m_DebugLevel >= 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "Checking capitalization of the the MASIC Log File: should be " + strLogFileNameCorrectCase + "; is currently " +
                         ioFileInfo.Name);
                 }
@@ -69,7 +69,7 @@ namespace AnalysisManagerMasicPlugin
                     // Need to fix the case
                     if (m_DebugLevel >= 1)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        LogDebug(
                             "Fixing capitalization of the MASIC Log File: " + strLogFileNameCorrectCase + " instead of " + ioFileInfo.Name);
                     }
                     ioFileInfo.MoveTo(Path.Combine(ioFileInfo.Directory.Name, strLogFileNameCorrectCase));
@@ -78,7 +78,7 @@ namespace AnalysisManagerMasicPlugin
             catch (Exception ex)
             {
                 // Ignore errors here
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Error fixing capitalization of the MASIC Log File at " + strLogFilePath + ": " + ex.Message);
             }
 
@@ -103,11 +103,11 @@ namespace AnalysisManagerMasicPlugin
                     {
                         if (intErrorCount == 0)
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                            LogError(
                                 "Errors found in the MASIC Log File for job " + m_JobNum);
                         }
 
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, " ... " + strLineIn);
+                        LogError(" ... " + strLineIn);
 
                         intErrorCount += 1;
                     }
@@ -117,7 +117,7 @@ namespace AnalysisManagerMasicPlugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Error reading MASIC Log File at '" + strLogFilePath + "'; " + ex.Message);
             }
         }
@@ -132,7 +132,7 @@ namespace AnalysisManagerMasicPlugin
             // Store the MASIC version info in the database
             if (!StoreToolVersionInfo())
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Aborting since StoreToolVersionInfo returned false");
                 m_message = "Error determining MASIC version";
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -143,7 +143,7 @@ namespace AnalysisManagerMasicPlugin
             m_message = string.Empty;
 
             //Make the SIC's
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Calling MASIC to create the SIC files, job " + m_JobNum);
+            LogMessage("Calling MASIC to create the SIC files, job " + m_JobNum);
             try
             {
                 // Note that RunMASIC will populate the File Path variables, then will call
@@ -156,7 +156,7 @@ namespace AnalysisManagerMasicPlugin
             }
             catch (Exception Err)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "clsAnalysisToolRunnerMASICBase.RunTool(), Exception calling MASIC to create the SIC files, " + Err.Message);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -173,7 +173,7 @@ namespace AnalysisManagerMasicPlugin
             //Make the results folder
             if (m_DebugLevel > 3)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                LogDebug(
                     "clsAnalysisToolRunnerMASICBase.RunTool(), Making results folder");
             }
 
@@ -233,14 +233,14 @@ namespace AnalysisManagerMasicPlugin
                 strMASICExePath = m_mgrParams.GetParam("masicprogloc");
                 if (!File.Exists(strMASICExePath))
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); MASIC not found at: " + strMASICExePath);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
             }
             catch (Exception)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); Error looking for MASIC .Exe at " + strMASICExePath);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -265,7 +265,7 @@ namespace AnalysisManagerMasicPlugin
 
             if (m_DebugLevel >= 1)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, strMASICExePath + " " + CmdStr);
+                LogDebug(strMASICExePath + " " + CmdStr);
             }
 
             var objMasicProgRunner = new PRISM.clsProgRunner();
@@ -302,19 +302,19 @@ namespace AnalysisManagerMasicPlugin
             {
                 if (m_DebugLevel > 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "WaitForJobToFinish returned False");
+                    LogError("WaitForJobToFinish returned False");
                 }
 
                 if ((m_ErrorMessage != null) && m_ErrorMessage.Length > 0)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); Masic Error message: " + m_ErrorMessage);
                     if (string.IsNullOrEmpty(m_message))
                         m_message = m_ErrorMessage;
                 }
                 else
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); Masic Error message is blank");
                     if (string.IsNullOrEmpty(m_message))
                         m_message = "Unknown error running MASIC";
@@ -325,7 +325,7 @@ namespace AnalysisManagerMasicPlugin
             {
                 if (m_DebugLevel > 0)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); m_ProcessStep=" + m_ProcessStep);
                 }
                 return CloseOutType.CLOSEOUT_SUCCESS;
@@ -490,7 +490,7 @@ namespace AnalysisManagerMasicPlugin
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+                LogDebug("Determining tool version info");
             }
 
             // Lookup the version of MASIC
@@ -508,7 +508,7 @@ namespace AnalysisManagerMasicPlugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
@@ -523,7 +523,7 @@ namespace AnalysisManagerMasicPlugin
         {
             if (string.IsNullOrWhiteSpace(strParameterFilePath))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                LogWarning(
                     "The MASIC Parameter File path is empty; nothing to validate");
                 return true;
             }
@@ -532,14 +532,14 @@ namespace AnalysisManagerMasicPlugin
 
             if (!objSettingsFile.LoadSettings(strParameterFilePath))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Error loading parameter file " + strParameterFilePath);
                 return false;
             }
 
             if (!objSettingsFile.SectionPresent("MasicExportOptions"))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                LogWarning(
                     "MasicExportOptions section not found in " + strParameterFilePath);
                 objSettingsFile.SetParam("MasicExportOptions", "IncludeHeaders", "True");
                 objSettingsFile.SaveSettings();
@@ -610,26 +610,26 @@ namespace AnalysisManagerMasicPlugin
 
             if (m_DebugLevel > 0)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                LogDebug(
                     "clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); MASIC process has ended");
             }
 
             if (blnAbortedProgram)
             {
                 m_ErrorMessage = "Aborted MASIC processing since over " + MAX_RUNTIME_HOURS + " hours have elapsed";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); " + m_ErrorMessage);
                 return false;
             }
             else if ((int) objMasicProgRunner.State == 10)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); objMasicProgRunner.State = 10");
                 return false;
             }
             else if (objMasicProgRunner.ExitCode != 0)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); objMasicProgRunner.ExitCode is nonzero: " + objMasicProgRunner.ExitCode);
 
                 // See if a _SICs.XML file was created
@@ -644,14 +644,14 @@ namespace AnalysisManagerMasicPlugin
                     // As long as the _SICs.xml file was created, we can safely ignore this error
                     if (blnSICsXMLFileExists)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                        LogWarning(
                             "clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); " + SICS_XML_FILE_SUFFIX +
                             " file found, so ignoring non-zero exit code");
                         return true;
                     }
                     else
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                        LogError(
                             "clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); " + SICS_XML_FILE_SUFFIX + " file not found");
                         return false;
                     }

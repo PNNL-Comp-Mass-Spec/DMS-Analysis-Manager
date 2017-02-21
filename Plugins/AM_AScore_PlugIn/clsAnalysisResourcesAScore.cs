@@ -31,12 +31,12 @@ namespace AnalysisManager_AScore_PlugIn
 
             if (m_DebugLevel > 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "No input files to retrieve; AScore accesses the files over the network");
+                LogMessage("No input files to retrieve; AScore accesses the files over the network");
             }
 
             if (!RetrieveFastaFile())
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Unable to retrieve the fasta file; AScore results will not have protein information");		        
+                LogWarning("Unable to retrieve the fasta file; AScore results will not have protein information");		        
             }
 
             return CloseOutType.CLOSEOUT_SUCCESS;
@@ -67,7 +67,7 @@ namespace AnalysisManager_AScore_PlugIn
             catch (Exception ex)
             {
                 m_message = "Exception in RetrieveFastaAndParamFile: " + ex.Message;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
+                LogError(m_message + "; task = " + currentTask, ex);
                 return false;
             }
 
@@ -147,7 +147,7 @@ namespace AnalysisManager_AScore_PlugIn
         //        }
         //    }
 
-        //    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting AScoreCIDParamFile param file");
+        //    LogMessage("Getting AScoreCIDParamFile param file");
 
         //    if (!string.IsNullOrEmpty(m_jobParams.GetParam("AScoreCIDParamFile")))
         //    {
@@ -157,7 +157,7 @@ namespace AnalysisManager_AScore_PlugIn
         //        }
         //    }
 
-        //    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting AScoreETDParamFile param file");
+        //    LogMessage("Getting AScoreETDParamFile param file");
 
         //    if (!string.IsNullOrEmpty(m_jobParams.GetParam("AScoreETDParamFile")))
         //    {
@@ -167,7 +167,7 @@ namespace AnalysisManager_AScore_PlugIn
         //        }
         //    }
 
-        //    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting AScoreHCDParamFile param file");
+        //    LogMessage("Getting AScoreHCDParamFile param file");
 
         //    if (!string.IsNullOrEmpty(m_jobParams.GetParam("AScoreHCDParamFile")))
         //    {
@@ -177,7 +177,7 @@ namespace AnalysisManager_AScore_PlugIn
         //        }
         //    }
 
-        //    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting AScoreHCDParamFile param file");
+        //    LogMessage("Getting AScoreHCDParamFile param file");
 
         //    {
         //        Dictionary<int, udtDataPackageJobInfoType> dctDataPackageJobs;

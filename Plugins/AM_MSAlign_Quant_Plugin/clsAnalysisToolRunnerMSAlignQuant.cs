@@ -64,7 +64,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
 
                 if (m_DebugLevel > 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "clsAnalysisToolRunnerMSAlignQuant.RunTool(): Enter");
                 }
 
@@ -80,7 +80,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 // Store the TargetedWorkflowsConsole version info in the database
                 if (!StoreToolVersionInfo(mTargetedWorkflowsProgLoc))
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "Aborting since StoreToolVersionInfo returned false");
                     m_message = "Error determining TargetedWorkflowsConsole version";
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -92,7 +92,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 strTargetedQuantParamFilePath = CreateTargetedQuantParamFile();
                 if (string.IsNullOrEmpty(strTargetedQuantParamFilePath))
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "Aborting since CreateTargetedQuantParamFile returned false");
                     if (string.IsNullOrEmpty(m_message))
                     {
@@ -103,7 +103,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
 
                 mConsoleOutputErrorMsg = string.Empty;
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running TargetedWorkflowsConsole");
+                LogMessage("Running TargetedWorkflowsConsole");
 
                 // Set up and execute a program runner to run TargetedWorkflowsConsole
                 string strRawDataType = m_jobParams.GetParam("RawDataType");
@@ -121,7 +121,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                         break;
                     default:
                         m_message = "Dataset type " + strRawDataType + " is not supported";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_message);
+                        LogDebug(m_message);
                         return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -129,7 +129,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
 
                 if (m_DebugLevel >= 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, mTargetedWorkflowsProgLoc + cmdStr);
+                    LogDebug(mTargetedWorkflowsProgLoc + cmdStr);
                 }
 
                 mCmdRunner = new clsRunDosProgram(m_WorkDir);
@@ -163,7 +163,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
 
                 if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg);
+                    LogError(mConsoleOutputErrorMsg);
                 }
 
                 if (blnSuccess)
@@ -174,7 +174,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                     if (!File.Exists(Path.Combine(m_WorkDir, strOutputFileName)))
                     {
                         m_message = "MSAlign_Quant result file not found (" + strOutputFileName + ")";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                        LogError(m_message);
                         blnSuccess = false;
                     }
                 }
@@ -192,16 +192,16 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                         m_message = clsGlobal.AppendToComment(m_message, msg);
                     }
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg + ", job " + m_JobNum);
+                    LogError(msg + ", job " + m_JobNum);
 
                     if (mCmdRunner.ExitCode != 0)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                        LogWarning(
                             "TargetedWorkflowsConsole returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
                     }
                     else
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                        LogWarning(
                             "Call to TargetedWorkflowsConsole failed (but exit code is 0)");
                     }
 
@@ -213,7 +213,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                     m_StatusTools.UpdateAndWrite(m_progress);
                     if (m_DebugLevel >= 3)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        LogDebug(
                             "TargetedWorkflowsConsole Quantitation Complete");
                     }
 
@@ -238,7 +238,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 //Add the current job data to the summary file
                 if (!UpdateSummaryFile())
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                    LogWarning(
                         "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
                 }
 
@@ -281,7 +281,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
             catch (Exception ex)
             {
                 m_message = "Exception in MSAlignQuantPlugin->RunTool";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -294,7 +294,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
             if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+            LogWarning(
                 "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
 
             // Bump up the debug level if less than 2
@@ -394,7 +394,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
             catch (Exception ex)
             {
                 m_message = "Exception creating " + TARGETED_QUANT_XML_FILE_NAME;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                LogError(m_message + ": " + ex.Message);
                 return string.Empty;
             }
 
@@ -448,7 +448,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 {
                     if (m_DebugLevel >= 4)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        LogDebug(
                             "Console output file not found: " + strConsoleOutputFilePath);
                     }
 
@@ -457,7 +457,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
 
                 if (m_DebugLevel >= 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing file " + strConsoleOutputFilePath);
+                    LogDebug("Parsing file " + strConsoleOutputFilePath);
                 }
 
                 string strLineIn = null;
@@ -555,7 +555,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
             }
@@ -572,7 +572,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+                LogDebug("Determining tool version info");
             }
 
             var ioTargetedWorkflowsConsole = new FileInfo(strTargetedWorkflowsConsoleProgLoc);
@@ -585,7 +585,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 }
                 catch (Exception ex)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "Exception calling SetStepTaskToolVersion: " + ex.Message);
                     return false;
                 }
@@ -609,7 +609,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }

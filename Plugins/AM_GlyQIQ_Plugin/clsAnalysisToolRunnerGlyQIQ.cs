@@ -86,7 +86,7 @@ namespace AnalysisManagerGlyQIQPlugin
 
                 if (m_DebugLevel > 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerGlyQIQ.RunTool(): Enter");
+                    LogDebug("clsAnalysisToolRunnerGlyQIQ.RunTool(): Enter");
                 }
 
                 // Determine the path to the IQGlyQ program
@@ -101,7 +101,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 // Store the GlyQ-IQ version info in the database
                 if (!StoreToolVersionInfo(progLoc))
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "Aborting since StoreToolVersionInfo returned false");
                     if (string.IsNullOrEmpty(m_message))
                     {
@@ -129,7 +129,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 //Add the current job data to the summary file
                 if (!UpdateSummaryFile())
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                    LogWarning(
                         "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
                 }
 
@@ -168,7 +168,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 // It is now safe to delete the _peaks.txt file that is in the transfer folder
                 if (m_DebugLevel >= 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "Deleting the _peaks.txt file from the Results Transfer folder");
                 }
 
@@ -177,7 +177,7 @@ namespace AnalysisManagerGlyQIQPlugin
             catch (Exception ex)
             {
                 m_message = "Error in GlyQIQ->RunTool";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -195,7 +195,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 if (!diResultsFolder.Exists)
                 {
                     m_message = "Results folder not found: " + diResultsFolder.FullName;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                    LogError(m_message);
                     return false;
                 }
 
@@ -217,7 +217,7 @@ namespace AnalysisManagerGlyQIQPlugin
                             {
                                 m_message = "Result file not found: " + fiResultFile.Name;
                             }
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Result file not found: " + fiResultFile.FullName);
+                            LogError("Result file not found: " + fiResultFile.FullName);
                             blnSuccess = false;
                             continue;
                         }
@@ -262,7 +262,7 @@ namespace AnalysisManagerGlyQIQPlugin
             catch (Exception ex)
             {
                 m_message = "Exception in CombineResultFiles: " + ex.Message;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                LogError(m_message);
                 return false;
             }
         }
@@ -273,7 +273,7 @@ namespace AnalysisManagerGlyQIQPlugin
             {
                 if (m_DebugLevel >= 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "Counting the number of MS/MS spectra in " + Path.GetFileName(rawFilePath));
                 }
 
@@ -313,8 +313,8 @@ namespace AnalysisManagerGlyQIQPlugin
 
                 if (m_DebugLevel >= 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... MS1 spectra: " + ms1ScanCount);
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... MS2 spectra: " + ms2ScanCount);
+                    LogDebug(" ... MS1 spectra: " + ms1ScanCount);
+                    LogDebug(" ... MS2 spectra: " + ms2ScanCount);
                 }
 
                 if (ms2ScanCount > 0)
@@ -329,7 +329,7 @@ namespace AnalysisManagerGlyQIQPlugin
             catch (Exception ex)
             {
                 m_message = "Exception in CountMsMsSpectra: " + ex.Message;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                LogError(m_message);
                 return 0;
             }
         }
@@ -428,7 +428,7 @@ namespace AnalysisManagerGlyQIQPlugin
             catch (Exception ex)
             {
                 m_message = "Exception in ExamineFilteredResults";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                LogError(m_message + ": " + ex.Message);
                 return false;
             }
         }
@@ -511,7 +511,7 @@ namespace AnalysisManagerGlyQIQPlugin
             catch (Exception ex)
             {
                 m_message = "Exception creating GlyQIq_Automation_Files.zip";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                LogError(m_message + ": " + ex.Message);
                 return false;
             }
 
@@ -631,7 +631,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 }
                 else
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "Error storing PSM Results in database, " + STORE_JOB_PSM_RESULTS_SP_NAME + " returned " + ResCode);
                     clsGlobal.AppendToComment(m_message, "Error storing PSM Results in database");
 
@@ -640,7 +640,7 @@ namespace AnalysisManagerGlyQIQPlugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Exception storing PSM Results in database: " + ex.Message);
                 blnSuccess = false;
             }
@@ -718,7 +718,7 @@ namespace AnalysisManagerGlyQIQPlugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Exception in PruneConsoleOutputFiles: " + ex.Message);
             }
         }
@@ -766,7 +766,7 @@ namespace AnalysisManagerGlyQIQPlugin
                     var batchFilePath = Path.Combine(m_WorkDir, clsAnalysisResourcesGlyQIQ.START_PROGRAM_BATCH_FILE_PREFIX + core + ".bat");
 
                     currentTask = "Launching GlyQ-IQ, core " + core;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, currentTask + ": " + batchFilePath);
+                    LogDebug(currentTask + ": " + batchFilePath);
 
                     var glyQRunner = new clsGlyQIqRunner(m_WorkDir, core, batchFilePath);
                     glyQRunner.CmdRunnerWaiting += CmdRunner_LoopWaiting;
@@ -804,7 +804,7 @@ namespace AnalysisManagerGlyQIQPlugin
                             if (!completedCores.Contains(glyQRunner.Key))
                             {
                                 completedCores.Add(glyQRunner.Key);
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                LogDebug(
                                     "GlyQ-IQ processing core " + glyQRunner.Key + " is now complete");
                             }
                         }
@@ -858,7 +858,7 @@ namespace AnalysisManagerGlyQIQPlugin
 
                     foreach (var cachedError in progRunner.CachedConsoleErrors)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                        LogError(
                             "Core " + glyQRunner.Key + ": " + cachedError);
                         blnSuccess = false;
                     }
@@ -875,16 +875,16 @@ namespace AnalysisManagerGlyQIQPlugin
                     Msg = "Error running GlyQ-IQ";
                     m_message = clsGlobal.AppendToComment(m_message, Msg);
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Msg + ", job " + m_JobNum);
+                    LogError(Msg + ", job " + m_JobNum);
 
                     if (exitCode != 0)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                        LogWarning(
                             "GlyQ-IQ returned a non-zero exit code: " + exitCode.ToString());
                     }
                     else
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                        LogWarning(
                             "Call to GlyQ-IQ failed (but exit code is 0)");
                     }
 
@@ -896,7 +896,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 m_StatusTools.UpdateAndWrite(m_progress);
                 if (m_DebugLevel >= 3)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "GlyQ-IQ Analysis Complete");
+                    LogDebug("GlyQ-IQ Analysis Complete");
                 }
 
                 return true;
@@ -904,7 +904,7 @@ namespace AnalysisManagerGlyQIQPlugin
             catch (Exception ex)
             {
                 m_message = "Error in RunGlyQIQ while " + currentTask;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ex.Message);
+                LogError(m_message + ": " + ex.Message);
                 return false;
             }
         }
@@ -920,7 +920,7 @@ namespace AnalysisManagerGlyQIQPlugin
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+                LogDebug("Determining tool version info");
             }
 
             var fiProgram = new FileInfo(strProgLoc);
@@ -933,7 +933,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 }
                 catch (Exception ex)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "Exception calling SetStepTaskToolVersion: " + ex.Message);
                     return false;
                 }
@@ -963,7 +963,7 @@ namespace AnalysisManagerGlyQIQPlugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
@@ -975,12 +975,12 @@ namespace AnalysisManagerGlyQIQPlugin
 
         private void m_ExecuteSP_DebugEvent(string errorMessage)
         {
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "StoredProcedureExecutor: " + errorMessage);
+            LogDebug("StoredProcedureExecutor: " + errorMessage);
         }
 
         private void m_ExecuteSP_DBErrorEvent(string errorMessage)
         {
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "StoredProcedureExecutor: " + errorMessage);
+            LogError("StoredProcedureExecutor: " + errorMessage);
 
             if (Message.Contains("permission was denied"))
             {
@@ -990,12 +990,12 @@ namespace AnalysisManagerGlyQIQPlugin
 
         private void mThermoFileReader_ReportError(string strMessage)
         {
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, Message);
+            LogError(Message);
         }
 
         private void mThermoFileReader_ReportWarning(string strMessage)
         {
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, Message);
+            LogWarning(Message);
         }
 
         /// <summary>

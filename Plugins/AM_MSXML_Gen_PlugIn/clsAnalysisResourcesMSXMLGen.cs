@@ -73,14 +73,14 @@ namespace AnalysisManagerMsXmlGenPlugIn
                             }
                             else
                             {
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                LogDebug(
                                     "clsAnalysisResourcesMSXMLGen.GetResources: Error occurred retrieving spectra.");
                                 return CloseOutType.CLOSEOUT_FAILED;
                             }
                             break;
                         default:
                             m_message = "Dataset type " + strRawDataType + " is not supported";
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                            LogDebug(
                                 "clsAnalysisResourcesMSXMLGen.GetResources: " + m_message + "; must be " + RAW_DATA_TYPE_DOT_RAW_FILES + ", " +
                                 RAW_DATA_TYPE_DOT_D_FOLDERS + ", " + RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER + ", or " + RAW_DATA_TYPE_BRUKER_FT_FOLDER);
 
@@ -122,7 +122,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     if (string.IsNullOrWhiteSpace(mzMLRefineryParmFileStoragePath))
                     {
                         mzMLRefineryParmFileStoragePath = "\\\\gigasax\\dms_parameter_Files\\MzMLRefinery";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                        LogWarning(
                             "Parameter '" + paramFileStoragePathKeyName +
                             "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " +
                             mzMLRefineryParmFileStoragePath);
@@ -138,7 +138,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             catch (Exception ex)
             {
                 m_message = "Exception in GetResources: " + ex.Message;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     m_message + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
                 return CloseOutType.CLOSEOUT_FAILED;
             }

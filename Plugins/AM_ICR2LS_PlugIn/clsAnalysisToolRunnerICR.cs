@@ -70,7 +70,7 @@ namespace AnalysisManagerICR2LSPlugIn
 
                 if (!StoreToolVersionInfo())
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "Aborting since StoreToolVersionInfo returned false");
                     m_message = "Error determining ICR2LS version";
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -85,7 +85,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 {
                     //Param file wasn't specified, but is required for ICR-2LS analysis
                     m_message = "ICR-2LS Param file not found";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ParamFilePath);
+                    LogError(m_message + ": " + ParamFilePath);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -140,7 +140,7 @@ namespace AnalysisManagerICR2LSPlugIn
                     if (blnBrukerFT)
                     {
                         m_message = "ser file or fid file not found; unable to process with ICR-2LS";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                        LogError(m_message);
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
                     else
@@ -149,7 +149,7 @@ namespace AnalysisManagerICR2LSPlugIn
                         //  and in that folder will be unzipped contents of the s-folders (one file per spectrum)
                         if (m_DebugLevel >= 1)
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                            LogDebug(
                                 "Did not find a ser file, fid file, or 0.ser folder; assuming we are processing zipped s-folders");
                         }
                     }
@@ -160,12 +160,12 @@ namespace AnalysisManagerICR2LSPlugIn
                     {
                         if (blnIsFolder)
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                            LogDebug(
                                 "0.ser folder found: " + SerFileOrFolderPath);
                         }
                         else
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                            LogDebug(
                                 Path.GetFileName(SerFileOrFolderPath) + " file found: " + SerFileOrFolderPath);
                         }
                     }
@@ -190,7 +190,7 @@ namespace AnalysisManagerICR2LSPlugIn
                         MaxScan);
                     if (!blnSuccess)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                        LogError(
                             "Error running ICR-2LS on " + strSerTypeName + " " + SerFileOrFolderPath);
                     }
                 }
@@ -200,7 +200,7 @@ namespace AnalysisManagerICR2LSPlugIn
                     if (!Directory.Exists(DSNamePath))
                     {
                         m_message = "Data file folder not found: " + DSNamePath;
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                        LogError(m_message);
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
 
@@ -211,7 +211,7 @@ namespace AnalysisManagerICR2LSPlugIn
 
                     if (!blnSuccess)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                        LogError(
                             "Error running ICR-2LS on zipped s-files in " + DSNamePath);
                     }
                 }
@@ -223,7 +223,7 @@ namespace AnalysisManagerICR2LSPlugIn
                     if (VerifyPEKFileExists(m_WorkDir, m_Dataset))
                     {
                         m_message = "ICR-2LS returned false (see .PEK file in Failed results folder)";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        LogDebug(
                             ".Pek file was found, so will save results to the failed results archive folder");
 
                         PerfPostAnalysisTasks(false);
@@ -284,7 +284,7 @@ namespace AnalysisManagerICR2LSPlugIn
                     //If problem is locked file, retry
                     if (m_DebugLevel > 0)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                        LogError(
                             "Error deleting data file, attempt #" + RetryCount.ToString());
                     }
                     ErrMsg = ex.Message;
@@ -292,7 +292,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 }
                 catch (Exception ex)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "Error deleting raw data files, job " + m_JobNum + ": " + ex.Message);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -346,7 +346,7 @@ namespace AnalysisManagerICR2LSPlugIn
                                     {
                                         if (m_DebugLevel >= 1)
                                         {
-                                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                            LogDebug(
                                                 "Renaming " + strExtension + " file from " + fiFile.Name + " to " + strDesiredName);
                                         }
 
@@ -355,7 +355,7 @@ namespace AnalysisManagerICR2LSPlugIn
                                     catch (Exception ex)
                                     {
                                         // Rename failed; that means the correct file already exists; this is OK
-                                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                                        LogError(
                                             "Rename failed: " + ex.Message);
                                     }
                                 }
@@ -367,13 +367,13 @@ namespace AnalysisManagerICR2LSPlugIn
                 }
                 else
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "Error in FixICR2LSResultFileNames; folder not found: " + strFolderPath);
                 }
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Exception in FixICR2LSResultFileNames: " + ex.Message);
             }
         }

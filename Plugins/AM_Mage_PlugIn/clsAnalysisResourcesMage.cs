@@ -149,7 +149,7 @@ namespace AnalysisManager_Mage_PlugIn
                 msg += "; required for IDM";
 
             m_message = clsGlobal.AppendToComment(m_message, msg);
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, msg);
+            LogError(msg);
 
             return false;
         }

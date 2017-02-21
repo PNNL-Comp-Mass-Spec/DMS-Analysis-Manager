@@ -70,7 +70,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 if (string.IsNullOrWhiteSpace(mzRefineryParmFileStoragePath))
                 {
                     mzRefineryParmFileStoragePath = "\\\\gigasax\\dms_parameter_Files\\MzRefinery";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Parameter '" + paramFileStoragePathKeyName + "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " + mzRefineryParmFileStoragePath);
+                    LogWarning("Parameter '" + paramFileStoragePathKeyName + "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " + mzRefineryParmFileStoragePath);
                 }
 
                 if (!FileSearch.RetrieveFile(mzRefParamFile, mzRefineryParmFileStoragePath))
@@ -89,7 +89,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             catch (Exception ex)
             {
                 m_message = "Exception in GetResources: " + ex.Message;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
+                LogError(m_message + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -109,14 +109,14 @@ namespace AnalysisManagerMzRefineryPlugIn
             if (string.IsNullOrWhiteSpace(resultsFolderName))
             {
                 m_message = "Results folder not defined (job parameter OutputFolderName)";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                LogError(m_message);
                 return false;
             }
 
             if (string.IsNullOrWhiteSpace(transferFolderPath))
             {
                 m_message = "Transfer folder not defined (job parameter transferFolderPath)";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                LogError(m_message);
                 return false;
             }
 
@@ -141,7 +141,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             if (!fiMSGFPlusResults.Exists)
             {
                 // This is unusual; typically if the mzid.gz file exists there should be a ConsoleOutput file
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Found " + fiMSGFPlusResults.FullName + " but did not find " + fiMSGFPlusConsoleOutput.Name + "; will re-run MSGF+");
+                LogWarning("Found " + fiMSGFPlusResults.FullName + " but did not find " + fiMSGFPlusConsoleOutput.Name + "; will re-run MSGF+");
                 return true;
             }
 
@@ -149,14 +149,14 @@ namespace AnalysisManagerMzRefineryPlugIn
             if (!fiMzRefParamFile.Exists)
             {
                 // This is unusual; typically if the mzid.gz file exists there should be a MzRefinery parameter file
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Found " + fiMSGFPlusResults.FullName + " but did not find " + fiMzRefParamFile.Name + "; will re-run MSGF+");
+                LogWarning("Found " + fiMSGFPlusResults.FullName + " but did not find " + fiMzRefParamFile.Name + "; will re-run MSGF+");
                 return true;
             }
 
             // Compare the remote parameter file and the local one to make sure they match
             if (!clsGlobal.TextFilesMatch(fiMzRefParamFile.FullName, Path.Combine(m_WorkingDir, mzRefParamFileName), true))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "MzRefinery parameter file in transfer folder does not match the official MzRefinery paramter file; will re-run MSGF+");
+                LogMessage("MzRefinery parameter file in transfer folder does not match the official MzRefinery paramter file; will re-run MSGF+");
                 return true;
             }
 
@@ -170,7 +170,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             localFilePath = Path.Combine(m_WorkingDir, fiMSGFPlusConsoleOutput.Name);
             fiMSGFPlusConsoleOutput.CopyTo(localFilePath, true);
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Found existing MSGF+ results to use for MzRefinery");
+            LogMessage("Found existing MSGF+ results to use for MzRefinery");
 
             return true;
         }

@@ -43,7 +43,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
                     m_message = "Error retrieving instrument data file";
                 }
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsDtaGenResources.GetResources: " + m_message);
+                LogDebug("clsDtaGenResources.GetResources: " + m_message);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 

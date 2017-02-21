@@ -104,7 +104,7 @@ namespace AnalysisManagerMSPathFinderPlugin
             catch (Exception ex)
             {
                 m_message = "Exception in RetrieveExistingSearchResults: " + ex.Message;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 return false;
             }
 
@@ -126,7 +126,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                 if (!RetrieveOrgDB(localOrgDbFolder))
                     return false;
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Getting param file");
+                LogMessage("Getting param file");
 
                 // Retrieve the parameter file
                 // This will also obtain the _ModDefs.txt file using query
@@ -148,7 +148,7 @@ namespace AnalysisManagerMSPathFinderPlugin
             catch (Exception ex)
             {
                 m_message = "Exception in RetrieveFastaAndParamFile: " + ex.Message;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
+                LogError(m_message + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
                 return false;
             }
         }
@@ -221,7 +221,7 @@ namespace AnalysisManagerMSPathFinderPlugin
             catch (Exception ex)
             {
                 m_message = "Exception in RetrievePBFFile: " + ex.Message;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + "; task = " + currentTask, ex);
+                LogError(m_message + "; task = " + currentTask, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }
@@ -243,7 +243,7 @@ namespace AnalysisManagerMSPathFinderPlugin
             catch (Exception ex)
             {
                 m_message = "Exception in RetrieveProMexFeaturesFile: " + ex.Message;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 

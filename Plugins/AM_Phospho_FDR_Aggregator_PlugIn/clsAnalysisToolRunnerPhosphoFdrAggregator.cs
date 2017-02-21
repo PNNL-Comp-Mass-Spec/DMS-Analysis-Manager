@@ -87,7 +87,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
                 if (m_DebugLevel > 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    LogDebug(
                         "clsAnalysisToolRunnerPhosphoFdrAggregator.RunTool(): Enter");
                 }
 
@@ -99,14 +99,14 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                     if (string.IsNullOrWhiteSpace(progLocAScore))
                         progLocAScore = "Parameter 'AScoreprogloc' not defined for this manager";
                     m_message = "Cannot find AScore program file";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + progLocAScore);
+                    LogError(m_message + ": " + progLocAScore);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // Store the AScore version info in the database
                 if (!StoreToolVersionInfo(progLocAScore))
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "Aborting since StoreToolVersionInfo returned false");
                     m_message = "Error determining AScore version";
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -196,7 +196,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             catch (Exception ex)
             {
                 m_message = "Error in PhosphoFdrAggregator->RunTool";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -216,7 +216,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                     m_EvalMessage = clsGlobal.AppendToComment(m_EvalMessage, warningMessage);
 
                     warningMessage += "; cannot add MSGF_SpecProb values to the " + fileTypeTag + " file; " + fiMsgfFile.FullName;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, warningMessage);
+                    LogWarning(warningMessage);
                     return true;
                 }
 
@@ -237,7 +237,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 if (lookupSink.Values.Count == 0)
                 {
                     m_message = fiMsgfFile.Name + " was empty for job " + jobNumber;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                    LogError(m_message);
                     return false;
                 }
 
@@ -264,14 +264,14 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 if (!fiUpdatedfile.Exists)
                 {
                     m_message = "Mage did not create " + fiUpdatedfile.Name + " for job " + jobNumber;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                    LogError(m_message);
                     return false;
                 }
 
                 if (fiUpdatedfile.Length == 0)
                 {
                     m_message = fiUpdatedfile.Name + " is 0 bytes for job " + jobNumber;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                    LogError(m_message);
                     return false;
                 }
 
@@ -288,7 +288,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in AddMSGFSpecProbValues: " + ex.Message);
+                LogError("Error in AddMSGFSpecProbValues: " + ex.Message);
                 return false;
             }
         }
@@ -360,7 +360,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "ConcatenateLogFiles: " + ex.Message);
+                LogError("ConcatenateLogFiles: " + ex.Message);
                 return false;
             }
 
@@ -445,7 +445,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             catch (Exception ex)
             {
                 m_message = "File could not be concatenated: " + currentFile;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "ConcatenateResultFiles, " + m_message + ": " + ex.Message);
                 return false;
             }
@@ -457,7 +457,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+            LogWarning(
                 "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
 
             // Bump up the debug level if less than 2
@@ -556,7 +556,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             if (string.IsNullOrWhiteSpace(bestAScoreParamFileName))
             {
                 m_message = "Programming bug, AScore parameter file not found in ProcessSynopsisFiles (clsAnalysisResourcesPhosphoFdrAggregator.GetResources should have already flagged this as an error)";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                LogError(m_message);
                 return string.Empty;
             }
 
@@ -769,7 +769,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 {
                     if (m_DebugLevel >= 4)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        LogDebug(
                             "Console output file not found: " + strConsoleOutputFilePath);
                     }
 
@@ -778,7 +778,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
                 if (m_DebugLevel >= 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing file " + strConsoleOutputFilePath);
+                    LogDebug("Parsing file " + strConsoleOutputFilePath);
                 }
 
                 // Value between 0 and 100
@@ -833,7 +833,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
             }
@@ -895,7 +895,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                     {
                         m_message = "Job " + udtJobMetadata.Job + " not found in packed job parameter " +
                                     clsAnalysisResources.JOB_PARAM_DICTIONARY_JOB_DATASET_MAP;
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                        LogError(
                             "Error in ProcessSynopsisFiles: " + m_message);
                         return false;
                     }
@@ -983,7 +983,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             {
                 if (string.IsNullOrEmpty(m_message))
                     m_message = "Error in ProcessSynopsisFiles";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error in ProcessSynopsisFiles: " + ex.Message);
+                LogError("Error in ProcessSynopsisFiles: " + ex.Message);
                 return false;
             }
 
@@ -1034,7 +1034,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
             if (m_DebugLevel >= 1)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, progLoc + cmdStr);
+                LogDebug(progLoc + cmdStr);
             }
 
             mCmdRunner = new clsRunDosProgram(m_WorkDir);
@@ -1072,7 +1072,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
             if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg);
+                LogError(mConsoleOutputErrorMsg);
             }
 
             // Parse the console output file one more time to check for errors
@@ -1081,7 +1081,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
             if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mConsoleOutputErrorMsg);
+                LogError(mConsoleOutputErrorMsg);
             }
 
             if (!blnSuccess)
@@ -1089,17 +1089,17 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 string msg = "Error running AScore for job " + udtJobMetadata.Job;
                 m_message = clsGlobal.AppendToComment(m_message, msg);
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     msg + ", file " + fiSourceFile.Name + ", data package job " + udtJobMetadata.Job);
 
                 if (mCmdRunner.ExitCode != 0)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                    LogWarning(
                         "AScore returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
                 }
                 else
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Call to AScore failed (but exit code is 0)");
+                    LogWarning("Call to AScore failed (but exit code is 0)");
                 }
 
                 return false;
@@ -1108,7 +1108,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             m_StatusTools.UpdateAndWrite(m_progress);
             if (m_DebugLevel >= 3)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                LogDebug(
                     "AScore search complete for data package job " + udtJobMetadata.Job);
             }
 
@@ -1126,7 +1126,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+                LogDebug("Determining tool version info");
             }
 
             var fiProgram = new FileInfo(strProgLoc);
@@ -1139,7 +1139,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 }
                 catch (Exception ex)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                    LogError(
                         "Exception calling SetStepTaskToolVersion: " + ex.Message);
                     return false;
                 }
@@ -1162,7 +1162,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                LogError(
                     "Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }

@@ -54,7 +54,6 @@ namespace DTASpectraFileGen
                     LogError(strErrorMessage);
                 }
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
                 return CloseOutType.CLOSEOUT_NO_SETTINGS_FILE;
             }
 
@@ -131,7 +130,7 @@ namespace DTASpectraFileGen
 
                             m_jobParams.AddAdditionalParameter("JobParameters", USING_EXISTING_DECONMSN_RESULTS, "True");
 
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                            LogMessage(
                                 "Found pre-existing DeconMSn results; will not re-run DeconMSn if they are valid");
 
                             fileToFind = DatasetName + "_profile.txt";
@@ -158,13 +157,13 @@ namespace DTASpectraFileGen
 
                 fiZippedDtaFile.MoveTo(tempZipFilePath);
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                LogMessage(
                     "Unzipping file " + Path.GetFileName(zippedDTAFilePath));
                 if (UnzipFileStart(tempZipFilePath, m_WorkingDir, "clsDtaGenResources", false))
                 {
                     if (m_DebugLevel >= 1)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO,
+                        LogMessage(
                             "Unzipped file " + Path.GetFileName(zippedDTAFilePath));
                     }
 
@@ -187,7 +186,7 @@ namespace DTASpectraFileGen
                 if (strParamFileStoragePath == null || strParamFileStoragePath.Length == 0)
                 {
                     strParamFileStoragePath = @"\\gigasax\DMS_Parameter_Files\DTA_Gen";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                    LogWarning(
                         "Parameter '" + strParamFileStoragePathKeyName +
                         "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " +
                         strParamFileStoragePath);

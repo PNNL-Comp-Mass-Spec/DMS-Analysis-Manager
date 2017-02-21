@@ -30,20 +30,20 @@ namespace AnalysisManager_Cyclops_PlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Running Cyclops");
+                LogMessage("Running Cyclops");
                 m_progress = PROGRESS_PCT_CYCLOPS_START;
                 UpdateStatusRunning();
 
 
                 if (m_DebugLevel > 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsAnalysisToolRunnerApe.RunTool(): Enter");
+                    LogDebug("clsAnalysisToolRunnerApe.RunTool(): Enter");
                 }
 
                 // Store the Cyclops version info in the database
                 if (!StoreToolVersionInfo())
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Aborting since StoreToolVersionInfo returned false");
+                    LogError("Aborting since StoreToolVersionInfo returned false");
                     m_message = "Error determining Cyclops version";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -56,7 +56,7 @@ namespace AnalysisManager_Cyclops_PlugIn
                 if (!Directory.Exists(rProgLocFromRegistry))
                 {
                     m_message = "R folder not found (path determined from the Windows Registry)";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + " at " + rProgLocFromRegistry);
+                    LogError(m_message + " at " + rProgLocFromRegistry);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -108,7 +108,7 @@ namespace AnalysisManager_Cyclops_PlugIn
                 catch (Exception ex)
                 {
                     AppendToCyclopsLog("Error running Cyclops: " + ex.Message);
-                    LogError("Error running Cyclops: " + ex.Message);
+                    LogError("Error running Cyclops: " + ex.Message, ex);
                     blnSuccess = false;
                 }
 
@@ -121,7 +121,7 @@ namespace AnalysisManager_Cyclops_PlugIn
                 // Add the current job data to the summary file
                 if (!UpdateSummaryFile())
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
+                    LogWarning("Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
                 }
 
                 // Make sure objects are released
@@ -177,7 +177,7 @@ namespace AnalysisManager_Cyclops_PlugIn
             catch (Exception ex)
             {
                 m_message = "Error in CyclopsPlugin->RunTool";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message, ex);
+                LogError(m_message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -238,7 +238,7 @@ namespace AnalysisManager_Cyclops_PlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in PossiblyDeleteCyclopsLogFile: " + ex.Message);
+                LogError("Exception in PossiblyDeleteCyclopsLogFile: " + ex.Message, ex);
             }
         }
 
@@ -257,7 +257,7 @@ namespace AnalysisManager_Cyclops_PlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in AppendToCyclopsLog: " + ex.Message);
+                LogError("Exception in AppendToCyclopsLog: " + ex.Message, ex);
             }
         }
 
@@ -267,7 +267,7 @@ namespace AnalysisManager_Cyclops_PlugIn
             if (string.IsNullOrEmpty(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
+            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
 
             // Bump up the debug level if less than 2
             if (m_DebugLevel < 2)
@@ -320,7 +320,7 @@ namespace AnalysisManager_Cyclops_PlugIn
 
             if (m_DebugLevel >= 2)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Determining tool version info");
+                LogDebug("Determining tool version info");
             }
 
             try
@@ -332,7 +332,7 @@ namespace AnalysisManager_Cyclops_PlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception determining Assembly info for Cyclops: " + ex.Message);
+                LogError("Exception determining Assembly info for Cyclops: " + ex.Message, ex);
                 return false;
             }
 
@@ -348,7 +348,7 @@ namespace AnalysisManager_Cyclops_PlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message, ex);
                 return false;
             }
 
@@ -387,7 +387,7 @@ namespace AnalysisManager_Cyclops_PlugIn
             // Cyclops messages sometimes contain a carriage return followed by a stack trace
             // We don't want that information in m_message so split on \r and \n
             var messageParts = e.Message.Split('\r', '\n');
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, messageParts[0]);
+            LogWarning(messageParts[0]);
         }
 
         private void cyclops_MessageEvent(object sender, MessageEventArgs e)
