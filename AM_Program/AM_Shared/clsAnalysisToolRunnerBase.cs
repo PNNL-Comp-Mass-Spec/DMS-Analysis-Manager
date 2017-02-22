@@ -3773,7 +3773,8 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                LogMessage("Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("StepParameters", "Step") + ": " + ex.Message);
+                LogError("Error updating the summary file", 
+                         "Error updating the summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("StepParameters", "Step") + ": " + ex.Message);
                 return false;
             }
 

@@ -785,10 +785,15 @@ namespace AnalysisManagerICR2LSPlugIn
                         eLogLevel = clsLogTools.LogLevels.WARN;
                     }
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, eLogLevel,
-                        "ICR-2LS processing state not Finished: " + mICR2LSStatus.ProcessingState + "; Processed " + mICR2LSStatus.ScansProcessed +
-                        " scans (" + mICR2LSStatus.PercentComplete.ToString("0.0") + "% complete); Status = " + mICR2LSStatus.ProcessingStatus);
-
+                    var msg = "ICR-2LS processing state not Finished: " + mICR2LSStatus.ProcessingState + "; Processed " + 
+                        mICR2LSStatus.ScansProcessed + " scans (" + mICR2LSStatus.PercentComplete.ToString("0.0") + "% complete); " + 
+                        "Status = " + mICR2LSStatus.ProcessingStatus;
+                    
+                    if (eLogLevel == clsLogTools.LogLevels.WARN)
+                        LogWarning(msg);
+                    else
+                        LogError(msg);
+                        
                     if (m_progress >= 100)
                     {
                         LogWarning(

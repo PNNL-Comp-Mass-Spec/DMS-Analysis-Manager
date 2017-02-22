@@ -597,7 +597,7 @@ namespace AnalysisManagerInSpecTPlugIn
 
             if (!blnSuccess)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running Inspect : " + m_JobNum);
+                LogError("Error running Inspect");
             }
             else
             {

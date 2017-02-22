@@ -129,7 +129,7 @@ namespace AnalysisManagerOMSSAPlugIn
 
             if (!cmdRunner.RunProgram(progLoc, CmdStr, "OMSSA", true))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running OMSSA, job " + m_JobNum);
+                LogError("Error running OMSSA");
                 blnProcessingError = true;
             }
 
@@ -301,7 +301,7 @@ namespace AnalysisManagerOMSSAPlugIn
 
                 if (!cmdRunner.RunProgram(progLoc, CmdStr, "OMSSA2PepXml", true))
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running OMSSA2PepXml, job " + m_JobNum);
+                    LogError("Error running OMSSA2PepXml");
                     return false;
                 }
             }

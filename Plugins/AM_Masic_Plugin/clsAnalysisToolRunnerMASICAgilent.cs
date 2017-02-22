@@ -89,7 +89,7 @@ namespace AnalysisManagerMasicPlugin
             }
             catch (Exception)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error deleting .mgf file, job " + m_JobNum);
+                LogError("Error deleting .mgf file");
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 

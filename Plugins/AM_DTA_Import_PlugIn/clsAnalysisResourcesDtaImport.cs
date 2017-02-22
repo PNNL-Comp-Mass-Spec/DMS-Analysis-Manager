@@ -76,8 +76,7 @@ namespace AnalysisManagerDtaImportPlugIn
                     }
                     else
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN,
-                            "An error occurred while unzipping the DTA file: " + Path.Combine(SourceFolderNamePath, zipFileName));
+                        LogError("An error occurred while unzipping the DTA file");
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
                 }
@@ -86,15 +85,13 @@ namespace AnalysisManagerDtaImportPlugIn
                 fileEntries = Directory.GetFiles(m_WorkingDir, txtFileName);
                 if (fileEntries.Length < 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN,
-                        "DTA text file in the zip file was named incorrectly or not valid: " + Path.Combine(SourceFolderNamePath, txtFileName));
+                    LogError("DTA text file in the zip file was named incorrectly or not valid");
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN,
-                    "An exception occurred while validating manually created DTA zip file. " + SourceFolderNamePath + " : " + ex.Message);
+                LogError("An exception occurred while validating manually created DTA zip file", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 

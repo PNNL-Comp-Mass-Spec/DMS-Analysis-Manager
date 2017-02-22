@@ -37,7 +37,7 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
         /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
-            //Do the base class stuff
+            // Do the base class stuff
             if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -89,7 +89,7 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
 
             if (!mCmdRunner.RunProgram(progLoc, CmdStr, "MSDataFileTrimmer", true))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error running MSDataFileTrimmer, job " + m_JobNum);
+                LogError("Error running MSDataFileTrimmer");
 
                 // Move the source files and any results to the Failed Job folder
                 // Useful for debugging XTandem problems
@@ -98,7 +98,7 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            //Stop the job timer
+            // Stop the job timer
             m_StopTime = DateTime.UtcNow;
 
             // Add the current job data to the summary file
@@ -120,7 +120,7 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
 
             string[] DumFiles = null;
 
-            //update list of files to be deleted after run
+            // Update list of files to be deleted after run
             DumFiles = Directory.GetFiles(m_WorkDir, "*_grouped*");
             foreach (string FileToSave in DumFiles)
             {
