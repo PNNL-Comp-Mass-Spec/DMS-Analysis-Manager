@@ -144,35 +144,6 @@ namespace AnalysisManagerBase
 
         #region "Event Handlers"
 
-        private void m_FileTools_DebugEvent(string currentTask, string taskDetail)
-        {
-            if (m_DebugLevel >= 1)
-            {
-                clsGlobal.LogDebug(currentTask, false);
-                if (!string.IsNullOrWhiteSpace(taskDetail) && !currentTask.Contains(taskDetail))
-                    clsGlobal.LogDebug(" " + taskDetail, false);
-
-                if (m_DebugLevel >= 2)
-                {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, currentTask + "; " + taskDetail);
-                }
-                else
-                {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, currentTask);
-                }
-            }
-        }
-
-        private void m_FileTools_WarningEvent(string warningMessage, string warningDetail)
-        {
-            if (m_DebugLevel >= 1)
-            {
-                clsGlobal.LogWarning(warningMessage);
-                if (!string.IsNullOrWhiteSpace(warningDetail) && !warningMessage.Contains(warningDetail))
-                    clsGlobal.LogWarning("  " + warningDetail);
-            }
-        }
-
         private void m_FileTools_LockQueueTimedOut(string sourceFilePath, string targetFilePath, double waitTimeMinutes)
         {
             if (m_DebugLevel >= 1)
