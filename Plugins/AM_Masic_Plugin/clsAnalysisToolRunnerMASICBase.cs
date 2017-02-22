@@ -25,7 +25,7 @@ namespace AnalysisManagerMasicPlugin
 
         protected const string SICS_XML_FILE_SUFFIX = "_SICs.xml";
 
-        //Job running status variable
+        // Job running status variable
         protected bool m_JobRunning;
 
         protected string m_ErrorMessage = string.Empty;
@@ -126,7 +126,7 @@ namespace AnalysisManagerMasicPlugin
         {
             CloseOutType eStepResult;
 
-            //Call base class for initial setup
+            // Call base class for initial setup
             base.RunTool();
 
             // Store the MASIC version info in the database
@@ -138,11 +138,11 @@ namespace AnalysisManagerMasicPlugin
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            //Start the job timer
+            // Start the job timer
             m_StartTime = DateTime.UtcNow;
             m_message = string.Empty;
 
-            //Make the SIC's
+            // Make the SIC's
             LogMessage("Calling MASIC to create the SIC files, job " + m_JobNum);
             try
             {
@@ -164,13 +164,13 @@ namespace AnalysisManagerMasicPlugin
             m_progress = 100;
             UpdateStatusFile();
 
-            //Run the cleanup routine from the base class
+            // Run the cleanup routine from the base class
             if (PerfPostAnalysisTasks("SIC") != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            //Make the results folder
+            // Make the results folder
             if (m_DebugLevel > 3)
             {
                 LogDebug(
@@ -180,7 +180,7 @@ namespace AnalysisManagerMasicPlugin
             eStepResult = MakeResultsFolder();
             if (eStepResult != CloseOutType.CLOSEOUT_SUCCESS)
             {
-                //MakeResultsFolder handles posting to local log, so set database error message and exit
+                // MakeResultsFolder handles posting to local log, so set database error message and exit
                 m_message = "Error making results folder";
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -284,11 +284,11 @@ namespace AnalysisManagerMasicPlugin
 
             objMasicProgRunner.StartAndMonitorProgram();
 
-            //Wait for the job to complete
+            // Wait for the job to complete
             blnSuccess = WaitForJobToFinish(objMasicProgRunner);
 
             objMasicProgRunner = null;
-            Thread.Sleep(3000);                //Delay for 3 seconds to make sure program exits
+            Thread.Sleep(3000);                // Delay for 3 seconds to make sure program exits
 
             if (!string.IsNullOrEmpty(m_MASICLogFileName))
             {
@@ -297,7 +297,7 @@ namespace AnalysisManagerMasicPlugin
                 ExtractErrorsFromMASICLogFile(Path.Combine(m_WorkDir, m_MASICLogFileName));
             }
 
-            //Verify MASIC exited due to job completion
+            // Verify MASIC exited due to job completion
             if (!blnSuccess)
             {
                 if (m_DebugLevel > 1)
@@ -338,8 +338,8 @@ namespace AnalysisManagerMasicPlugin
 
         protected virtual void CalculateNewStatus(string strMasicProgLoc)
         {
-            //Calculates status information for progress file
-            //Does this by reading the MasicStatus.xml file
+            // Calculates status information for progress file
+            // Does this by reading the MasicStatus.xml file
 
             string strPath = null;
 
@@ -426,22 +426,22 @@ namespace AnalysisManagerMasicPlugin
         {
             string[] FoundFiles = null;
 
-            //Stop the job timer
+            // Stop the job timer
             m_StopTime = DateTime.UtcNow;
 
-            //Get rid of raw data file
+            // Get rid of raw data file
             var StepResult = DeleteDataFile();
             if (StepResult != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return StepResult;
             }
 
-            //Zip the _SICs.XML file (if it exists; it won't if SkipSICProcessing = True in the parameter file)
+            // Zip the _SICs.XML file (if it exists; it won't if SkipSICProcessing = True in the parameter file)
             FoundFiles = Directory.GetFiles(m_WorkDir, "*" + SICS_XML_FILE_SUFFIX);
 
             if (FoundFiles.Length > 0)
             {
-                //Setup zipper
+                // Setup zipper
 
                 string ZipFileName = null;
 
@@ -449,15 +449,14 @@ namespace AnalysisManagerMasicPlugin
 
                 if (!base.ZipFile(FoundFiles[0], true, Path.Combine(m_WorkDir, ZipFileName)))
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR,
-                        "Error zipping " + Path.GetFileName(FoundFiles[0]) + ", job " + m_JobNum);
+                    LogErrorToDatabase("Error zipping " + Path.GetFileName(FoundFiles[0]) + ", job " + m_JobNum);
                     m_message = clsGlobal.AppendToComment(m_message, "Error zipping " + SICS_XML_FILE_SUFFIX + " file");
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
             }
 
-            //Add all the extensions of the files to delete after run
-            m_jobParams.AddResultFileExtensionToSkip(SICS_XML_FILE_SUFFIX); //Unzipped, concatenated DTA
+            // Add all the extensions of the files to delete after run
+            m_jobParams.AddResultFileExtensionToSkip(SICS_XML_FILE_SUFFIX); // Unzipped, concatenated DTA
 
             //Add the current job data to the summary file
             try
@@ -568,7 +567,7 @@ namespace AnalysisManagerMasicPlugin
             DateTime dtStartTime = DateTime.UtcNow;
             var blnAbortedProgram = false;
 
-            //Wait for completion
+            // Wait for completion
             m_JobRunning = true;
 
             var dtLastUpdate = DateTime.UtcNow;

@@ -975,7 +975,7 @@ namespace AnalysisManagerQCARTPlugin
                 if (!clsGlobal.IsMatch(DatasetName, targetDatasetName))
                 {
                     var warningMessage = "Warning: SourceJob2Dataset for job " + m_JobNum + " does not match the dataset for this job; it is instead " + targetDatasetName;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, warningMessage);
+                    LogErrorToDatabase(warningMessage);
                 }
 
                 var inputFolderNameCached = m_jobParams.GetJobParameter("JobParameters", "inputFolderName", string.Empty);

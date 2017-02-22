@@ -77,7 +77,14 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Update m_message with an error message and record the error in the manager's log file
+        /// Log an error to the database and the local log file
+        /// </summary>
+        /// <param name="errorMessage">Error message</param>
+        /// <remarks>Does not update m_message</remarks>
+        protected void LogErrorToDatabase(string errorMessage)
+        {
+            base.LogError(errorMessage, logToDb: true);
+        }
         /// </summary>
         /// <param name="errorMessage">Error message</param>
         /// <param name="logToDb">When true, log the message to the database and the local log file</param>

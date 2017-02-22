@@ -1371,16 +1371,18 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             if (!blnSuccess)
             {
+                string msg;
                 if (string.IsNullOrEmpty(oMassErrorExtractor.ErrorMessage))
                 {
-                    m_message = "Error parsing PMM Error Charter output to extract mass error stats";
+                    msg = "Error parsing PMM Error Charter output to extract mass error stats";
                 }
                 else
                 {
-                    m_message = oMassErrorExtractor.ErrorMessage;
+                    msg = oMassErrorExtractor.ErrorMessage;
                 }
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, m_message + ", job " + m_JobNum);
+                LogErrorToDatabase(msg + ", job " + m_JobNum);
+                m_message = msg;
             }
 
             m_jobParams.AddResultFileToSkip(ERROR_CHARTER_CONSOLE_OUTPUT_FILE);

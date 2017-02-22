@@ -48,10 +48,9 @@ namespace AnalysisManagerDtaImportPlugIn
                 //Determine if Dta folder in source directory exists
                 if (!Directory.Exists(SourceFolderNamePath))
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN,
-                        "Source Directory for Manually created Dta does not exist: " + SourceFolderNamePath);
+                    m_message = "Source Directory for Manually created Dta does not exist";
+                    LogErrorToDatabase(m_message + ": " + SourceFolderNamePath);
                     return CloseOutType.CLOSEOUT_FAILED;
-                    //TODO: Handle errors
                 }
 
                 string zipFileName = DatasetName + "_dta.zip";
@@ -60,8 +59,8 @@ namespace AnalysisManagerDtaImportPlugIn
                 // Process the list of files found in the directory.
                 if (fileEntries.Length < 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN,
-                        "DTA zip file was not found in source directory: " + Path.Combine(SourceFolderNamePath, zipFileName));
+                    m_message = "DTA zip file was not found in source directory";
+                    LogErrorToDatabase(m_message + ": " + Path.Combine(SourceFolderNamePath, zipFileName));
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 

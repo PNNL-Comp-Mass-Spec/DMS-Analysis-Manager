@@ -662,9 +662,9 @@ namespace AnalysisManagerSequestPlugin
 
             if (GetOUTFileCountRemaining() < 1)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR,
-                    "No OUT files created, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
-                m_message = clsGlobal.AppendToComment(m_message, "No OUT files created");
+                var msg = "No OUT files created";
+                LogErrorToDatabase(msg + ", job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
+                m_message = clsGlobal.AppendToComment(m_message, msg);
                 return CloseOutType.CLOSEOUT_NO_OUT_FILES;
             }
             else

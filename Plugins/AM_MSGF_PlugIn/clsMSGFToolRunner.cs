@@ -2873,16 +2873,13 @@ namespace AnalysisManagerMSGFPlugin
         /// Event handler for the MSGResultsSummarizer
         /// </summary>
         /// <param name="errorMessage"></param>
-        private void MSGFResultsSummarizer_ErrorHandler(string errorMessage)
+        /// <param name="ex"></param>
+        private void MSGFResultsSummarizer_ErrorHandler(string errorMessage, Exception ex)
         {
             if (Message.ToLower().Contains("permission was denied"))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, errorMessage);
-            }
-            else
-            {
-                LogError(errorMessage);
-            }
+                LogErrorToDatabase(errorMessage);
+            }           
         }
 
         private DateTime dtLastUpdateTime = DateTime.MinValue;

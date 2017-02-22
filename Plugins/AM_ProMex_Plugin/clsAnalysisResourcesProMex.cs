@@ -36,11 +36,10 @@ namespace AnalysisManagerProMexPlugIn
             proMexParmFileStoragePath = m_mgrParams.GetParam(paramFileStoragePathKeyName);
             if (string.IsNullOrEmpty(proMexParmFileStoragePath))
             {
-                proMexParmFileStoragePath = "C:\\DMS_Programs\\ProMex";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN,
-                    "Parameter '" + paramFileStoragePathKeyName +
-                    "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " +
-                    proMexParmFileStoragePath);
+                proMexParmFileStoragePath = @"C:\DMS_Programs\ProMex";
+                LogErrorToDatabase("Parameter '" + paramFileStoragePathKeyName +
+                    "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); " +
+                    "will assume: " + proMexParmFileStoragePath);
             }
 
             string paramFileName = null;

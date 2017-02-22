@@ -232,7 +232,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 m_jobParams.AddAdditionalParameter("JobParameters", clsAnalysisToolRunnerRepoPkgr.WARNING_INSTRUMENT_DATA_MISSING, msg);
 
                 msg += " (pipeline job " + jobId + ")";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, msg);
+                LogErrorToDatabase(msg);
             }
 
             // Restore the dataset and job info for this aggregation job

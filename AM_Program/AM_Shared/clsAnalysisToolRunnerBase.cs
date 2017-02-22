@@ -663,7 +663,8 @@ namespace AnalysisManagerBase
                 if (string.IsNullOrEmpty(m_ResFolderName))
                 {
                     // Log this error to the database (the logger will also update the local log file)
-                    LogError("Results folder name is not defined, job " + m_jobParams.GetParam("StepParameters", "Job"), true);
+                    LogErrorToDatabase("Results folder name is not defined, job " + m_jobParams.GetParam("StepParameters", "Job"));
+                    m_message = "Results folder name is not defined";
 
                     // Without a source folder; there isn't much we can do
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -675,7 +676,8 @@ namespace AnalysisManagerBase
                 if (!Directory.Exists(sourceFolderPath))
                 {
                     // Log this error to the database
-                    LogError("Results folder not found, job " + m_jobParams.GetParam("StepParameters", "Job") + ", folder " + sourceFolderPath, true);
+                    LogErrorToDatabase("Results folder not found, job " + m_jobParams.GetParam("StepParameters", "Job") + ", folder " + sourceFolderPath);
+                    m_message = "Results folder not found: " + sourceFolderPath;
 
                     // Without a source folder; there isn't much we can do
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -2415,9 +2417,7 @@ namespace AnalysisManagerBase
                     LogMessage("Results folder name = " + resFolderNamePath);
                 }
 
-                // Log this error to the database
-                // Do not use LogError(errorMessage, logToDb: true) because that would update m_message to include the job number
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, "Error moving results files, job " + m_JobNum + ex.Message);
+                LogErrorToDatabase("Error moving results files, job " + m_JobNum + ex.Message);
                 m_message = clsGlobal.AppendToComment(m_message, "Error moving results files");
 
                 blnErrorEncountered = true;

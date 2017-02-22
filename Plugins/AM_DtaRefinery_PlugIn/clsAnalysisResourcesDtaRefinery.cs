@@ -50,11 +50,10 @@ namespace AnalysisManagerDtaRefineryPlugIn
             strDtaRefineryParmFileStoragePath = m_mgrParams.GetParam(strParamFileStoragePathKeyName);
             if (string.IsNullOrEmpty(strDtaRefineryParmFileStoragePath))
             {
-                strDtaRefineryParmFileStoragePath = "\\\\gigasax\\dms_parameter_Files\\DTARefinery";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN,
-                    "Parameter '" + strParamFileStoragePathKeyName +
-                    "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " +
-                    strDtaRefineryParmFileStoragePath);
+                strDtaRefineryParmFileStoragePath = @"\\gigasax\dms_parameter_Files\DTARefinery";
+                LogErrorToDatabase("Parameter '" + strParamFileStoragePathKeyName +
+                    "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); " +
+                    "will assume: " + strDtaRefineryParmFileStoragePath);
             }
 
             //Retrieve settings files aka default file that will have values overwritten by parameter file values
