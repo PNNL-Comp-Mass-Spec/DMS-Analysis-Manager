@@ -21,9 +21,9 @@ namespace AnalysisManagerMSAlignQuantPlugIn
 
             var strParamFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "MSAlign_Quant";
             var strParamFileStoragePath = m_mgrParams.GetParam(strParamFileStoragePathKeyName);
-            if (strParamFileStoragePath == null || strParamFileStoragePath.Length == 0)
+            if (string.IsNullOrEmpty(strParamFileStoragePath))
             {
-                strParamFileStoragePath = "\\\\gigasax\\DMS_Parameter_Files\\DeconToolsWorkflows";
+                strParamFileStoragePath = @"\\gigasax\DMS_Parameter_Files\DeconToolsWorkflows";
                 LogWarning(
                     "Parameter '" + strParamFileStoragePathKeyName +
                     "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " + strParamFileStoragePath);

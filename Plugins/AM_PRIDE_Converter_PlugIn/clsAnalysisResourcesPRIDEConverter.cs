@@ -354,7 +354,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         strParamFileStoragePath);
 
                     if (string.IsNullOrEmpty(strParamFileStoragePath))
-                        strParamFileStoragePath = "\\\\gigasax\\dms_parameter_Files\\PRIDE_Converter";
+                        strParamFileStoragePath = @"\\gigasax\dms_parameter_Files\PRIDE_Converter";
 
                     if (!FileSearch.RetrieveFile(strTemplateFileName, strParamFileStoragePath))
                     {

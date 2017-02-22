@@ -69,7 +69,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 var mzRefineryParmFileStoragePath = m_mgrParams.GetParam(paramFileStoragePathKeyName);
                 if (string.IsNullOrWhiteSpace(mzRefineryParmFileStoragePath))
                 {
-                    mzRefineryParmFileStoragePath = "\\\\gigasax\\dms_parameter_Files\\MzRefinery";
+                    mzRefineryParmFileStoragePath = @"\\gigasax\dms_parameter_Files\MzRefinery";
                     LogWarning("Parameter '" + paramFileStoragePathKeyName + "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " + mzRefineryParmFileStoragePath);
                 }
 

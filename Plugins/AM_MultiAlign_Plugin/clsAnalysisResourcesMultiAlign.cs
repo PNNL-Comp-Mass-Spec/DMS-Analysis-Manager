@@ -52,7 +52,7 @@ namespace AnalysisManagerMultiAlignPlugIn
 
             // Retrieve the MultiAlign Parameter .xml file specified for this job
             var multialignParamFileName = m_jobParams.GetParam("ParmFileName");
-            if (multialignParamFileName == null || multialignParamFileName.Length == 0)
+            if (string.IsNullOrEmpty(multialignParamFileName))
             {
                 LogError(
                     "MultiAlign ParmFileName not defined in the settings for this job; unable to continue");
@@ -61,9 +61,9 @@ namespace AnalysisManagerMultiAlignPlugIn
 
             var paramFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "MultiAlign";
             var multialignParameterFileStoragePath = m_mgrParams.GetParam(paramFileStoragePathKeyName);
-            if (multialignParameterFileStoragePath == null || multialignParameterFileStoragePath.Length == 0)
+            if (string.IsNullOrEmpty(multialignParameterFileStoragePath))
             {
-                multialignParameterFileStoragePath = "\\\\gigasax\\DMS_Parameter_Files\\MultiAlign";
+                multialignParameterFileStoragePath = @"\\gigasax\DMS_Parameter_Files\MultiAlign";
                 LogWarning(
                     "Parameter '" + paramFileStoragePathKeyName +
                     "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " +

@@ -754,7 +754,7 @@ namespace AnalysisManagerExtractionPlugin
                 m_jobParams.AddResultFileToSkip(strParamFileName);
                 m_jobParams.AddResultFileToSkip(MASS_CORRECTION_TAGS_FILENAME);
 
-                var logModFilesFileNotFound = !(ResultType != RESULT_TYPE_MSALIGN);
+                var logModFilesFileNotFound = (ResultType == RESULT_TYPE_MSALIGN);
 
                 // Check whether the newly generated ModDefs file matches the existing one
                 // If it doesn't match, or if the existing one is missing, then we need to keep the file
@@ -769,7 +769,7 @@ namespace AnalysisManagerExtractionPlugin
                         m_jobParams.AddResultFileToSkip(ModDefsFilename);
                     }
                 }
-                else if (remoteModDefsFolder.ToLower().StartsWith("\\\\proto"))
+                else if (remoteModDefsFolder.ToLower().StartsWith(@"\\proto"))
                 {
                     if (clsGlobal.FilesMatch(fiModDefsFile.FullName, Path.Combine(remoteModDefsFolder, ModDefsFilename)))
                     {

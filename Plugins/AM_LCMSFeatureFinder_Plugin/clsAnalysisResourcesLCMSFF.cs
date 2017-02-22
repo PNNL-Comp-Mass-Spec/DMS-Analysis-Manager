@@ -50,18 +50,17 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
 
             // Retrieve the LCMSFeatureFinder .Ini file specified for this job
             var strLCMSFFIniFileName = m_jobParams.GetParam("LCMSFeatureFinderIniFile");
-            if (strLCMSFFIniFileName == null || strLCMSFFIniFileName.Length == 0)
+            if (string.IsNullOrEmpty(strLCMSFFIniFileName))
             {
-                LogError(
-                    "LCMSFeatureFinderIniFile not defined in the settings for this job; unable to continue");
+                LogError("LCMSFeatureFinderIniFile not defined in the settings for this job; unable to continue");
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
             }
 
             var strParamFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "LCMSFeatureFinder";
             var strFFIniFileStoragePath = m_mgrParams.GetParam(strParamFileStoragePathKeyName);
-            if (strFFIniFileStoragePath == null || strFFIniFileStoragePath.Length == 0)
+            if (string.IsNullOrEmpty(strFFIniFileStoragePath))
             {
-                strFFIniFileStoragePath = "\\\\gigasax\\DMS_Parameter_Files\\LCMSFeatureFinder";
+                strFFIniFileStoragePath = @"\\gigasax\DMS_Parameter_Files\LCMSFeatureFinder";
                 LogWarning(
                     "Parameter '" + strParamFileStoragePathKeyName +
                     "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " + strFFIniFileStoragePath);

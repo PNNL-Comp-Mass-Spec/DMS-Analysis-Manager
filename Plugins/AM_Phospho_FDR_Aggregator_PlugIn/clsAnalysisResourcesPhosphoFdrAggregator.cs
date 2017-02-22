@@ -145,7 +145,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 // File not found in the transfer folder
                 // Look in the AScore parameter folder on Gigasax, \\gigasax\DMS_Parameter_Files\AScore
 
-                var paramFileFolder = m_jobParams.GetJobParameter("ParamFileStoragePath", "\\\\gigasax\\DMS_Parameter_Files\\AScore");
+                var paramFileFolder = m_jobParams.GetJobParameter("ParamFileStoragePath", @"\\gigasax\DMS_Parameter_Files\AScore");
                 success = FileSearch.RetrieveFile(paramFileName, paramFileFolder, 2, clsLogTools.LogLevels.ERROR);
             }
 

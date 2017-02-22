@@ -81,7 +81,7 @@ namespace AnalysisManagerResultsXferPlugin
             var datasetStorageVolServer = LookupLocalPath(serverName, datasetStoragePath, "raw-storage", connectionString);
             if (string.IsNullOrWhiteSpace(datasetStorageVolServer))
             {
-                m_message = "Unable to determine the local drive letter for " + Path.Combine("\\\\" + serverName, datasetStoragePath);
+                m_message = "Unable to determine the local drive letter for " + Path.Combine(@"\\" + serverName, datasetStoragePath);
                 return false;
             }
             else
@@ -92,7 +92,7 @@ namespace AnalysisManagerResultsXferPlugin
             var transferVolServer = LookupLocalPath(serverName, transferFolderPath, "results_transfer", connectionString);
             if (string.IsNullOrWhiteSpace(transferVolServer))
             {
-                m_message = "Unable to determine the local drive letter for " + Path.Combine("\\\\" + serverName, transferFolderPath);
+                m_message = "Unable to determine the local drive letter for " + Path.Combine(@"\\" + serverName, transferFolderPath);
                 return false;
             }
             else
@@ -157,7 +157,7 @@ namespace AnalysisManagerResultsXferPlugin
         {
             var charIndex = uncFolderPath.IndexOf('\\', 2);
 
-            if (charIndex < 0 || !uncFolderPath.StartsWith("\\\\"))
+            if (charIndex < 0 || !uncFolderPath.StartsWith(@"\\"))
             {
                 return string.Empty;
             }
@@ -169,9 +169,9 @@ namespace AnalysisManagerResultsXferPlugin
         protected string LookupLocalPath(string serverName, string uncFolderPath, string folderFunction, string connectionString)
         {
             const short retryCount = 3;
-            string strMsg = null;
+            string strMsg;
 
-            if (!uncFolderPath.StartsWith("\\\\"))
+            if (!uncFolderPath.StartsWith(@"\\"))
             {
                 // Not a network path; cannot convert
                 return string.Empty;
@@ -249,13 +249,13 @@ namespace AnalysisManagerResultsXferPlugin
 
             try
             {
-                if (sourceFolderpath.StartsWith("\\\\"))
+                if (sourceFolderpath.StartsWith(@"\\"))
                 {
                     m_message = "MoveFilesLocally cannot be used with files on network shares; " + sourceFolderpath;
                     return false;
                 }
 
-                if (targetFolderPath.StartsWith("\\\\"))
+                if (targetFolderPath.StartsWith(@"\\"))
                 {
                     m_message = "MoveFilesLocally cannot be used with files on network shares; " + targetFolderPath;
                     return false;

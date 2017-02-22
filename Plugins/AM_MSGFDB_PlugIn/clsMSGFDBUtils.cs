@@ -1374,8 +1374,8 @@ namespace AnalysisManagerMSGFDBPlugIn
             // Either copy them from Gigasax (or Proto-7) or re-create them
             //
             var indexIteration = 0;
-            var strMSGFPlusIndexFilesFolderPath = m_mgrParams.GetParam("MSGFPlusIndexFilesFolderPath", "\\\\gigasax\\MSGFPlus_Index_Files");
-            var strMSGFPlusIndexFilesFolderPathLegacyDB = m_mgrParams.GetParam("MSGFPlusIndexFilesFolderPathLegacyDB", "\\\\proto-7\\MSGFPlus_Index_Files");
+            var strMSGFPlusIndexFilesFolderPath = m_mgrParams.GetParam("MSGFPlusIndexFilesFolderPath", @"\\gigasax\MSGFPlus_Index_Files");
+            var strMSGFPlusIndexFilesFolderPathLegacyDB = m_mgrParams.GetParam("MSGFPlusIndexFilesFolderPathLegacyDB", @"\\proto-7\MSGFPlus_Index_Files");
 
             while (indexIteration <= 2)
             {

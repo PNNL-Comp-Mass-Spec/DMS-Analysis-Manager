@@ -242,7 +242,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 mConsoleOutputErrorMsg = string.Empty;
 
-                mCacheFolderPath = m_jobParams.GetJobParameter("CacheFolderPath", "\\\\protoapps\\PeptideAtlas_Staging");
+                mCacheFolderPath = m_jobParams.GetJobParameter("CacheFolderPath", @"\\protoapps\PeptideAtlas_Staging");
 
                 LogMessage("Running PRIDEConverter");
 

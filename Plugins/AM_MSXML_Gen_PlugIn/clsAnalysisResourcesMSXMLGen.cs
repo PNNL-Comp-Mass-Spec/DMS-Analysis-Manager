@@ -121,7 +121,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     var mzMLRefineryParmFileStoragePath = m_mgrParams.GetParam(paramFileStoragePathKeyName);
                     if (string.IsNullOrWhiteSpace(mzMLRefineryParmFileStoragePath))
                     {
-                        mzMLRefineryParmFileStoragePath = "\\\\gigasax\\dms_parameter_Files\\MzMLRefinery";
+                        mzMLRefineryParmFileStoragePath = @"\\gigasax\dms_parameter_Files\MzMLRefinery";
                         LogWarning(
                             "Parameter '" + paramFileStoragePathKeyName +
                             "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " +
