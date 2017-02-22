@@ -127,11 +127,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 m_StopTime = DateTime.UtcNow;
 
                 //Add the current job data to the summary file
-                if (!UpdateSummaryFile())
-                {
-                    LogWarning(
-                        "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
-                }
+                UpdateSummaryFile();
 
                 //Make sure objects are released
                 Thread.Sleep(500);        // 500 msec delay
@@ -984,7 +980,7 @@ namespace AnalysisManagerGlyQIQPlugin
 
             if (Message.Contains("permission was denied"))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, Message);
+                LogErrorToDatabase(Message);
             }
         }
 

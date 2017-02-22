@@ -262,10 +262,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 m_StopTime = System.DateTime.UtcNow;
 
                 //Add the current job data to the summary file
-                if (!UpdateSummaryFile())
-                {
-                    LogWarning("Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
-                }
+                UpdateSummaryFile();
 
                 mCmdRunner = null;
 

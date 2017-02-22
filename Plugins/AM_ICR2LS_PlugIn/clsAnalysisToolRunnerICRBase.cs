@@ -445,10 +445,7 @@ namespace AnalysisManagerICR2LSPlugIn
             //Stop the job timer
             m_StopTime = DateTime.UtcNow;
 
-            if (!UpdateSummaryFile())
-            {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "Error creating summary file, job " + m_JobNum);
-            }
+            UpdateSummaryFile();
 
             bool pekConversionSuccess = false;
 

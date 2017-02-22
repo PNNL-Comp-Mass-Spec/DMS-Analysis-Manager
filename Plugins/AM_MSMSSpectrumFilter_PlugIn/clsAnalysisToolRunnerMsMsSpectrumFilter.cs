@@ -110,10 +110,7 @@ namespace MSMSSpectrumFilterAM
             m_StopTime = DateTime.UtcNow;
 
             // Add the current job data to the summary file
-            if (!UpdateSummaryFile())
-            {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN, "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
-            }
+            UpdateSummaryFile();
 
             // Make the results folder
             if (m_DebugLevel > 3)
@@ -734,7 +731,7 @@ namespace MSMSSpectrumFilterAM
             }
             else
             {
-                if ((ex.Message != null) && ex.Message.Length > 0)
+                if (!string.IsNullOrEmpty(ex.Message))
                 {
                     m_ErrMsg += "; " + ex.Message;
                 }

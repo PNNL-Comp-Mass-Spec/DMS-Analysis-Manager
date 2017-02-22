@@ -246,11 +246,7 @@ namespace AnalysisManagerExtractionPlugin
                 }
 
                 // Add the current job data to the summary file
-                if (!UpdateSummaryFile())
-                {
-                    LogWarning(
-                        "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
-                }
+                UpdateSummaryFile();
 
                 eResult = MakeResultsFolder();
                 if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
@@ -2529,7 +2525,7 @@ namespace AnalysisManagerExtractionPlugin
         {
             if (Message.ToLower().Contains("permission was denied"))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, errorMessage);
+                LogErrorToDatabase(errorMessage);
             }
             
         }

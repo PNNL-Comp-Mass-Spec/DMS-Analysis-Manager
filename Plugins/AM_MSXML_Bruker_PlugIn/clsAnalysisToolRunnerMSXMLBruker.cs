@@ -139,6 +139,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
                 LogDebug(
                     "clsAnalysisToolRunnerMSXMLBruker.RunTool(), Updating summary file");
             }
+
             UpdateSummaryFile();
 
             //Make the results folder

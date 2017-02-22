@@ -458,21 +458,8 @@ namespace AnalysisManagerMasicPlugin
             // Add all the extensions of the files to delete after run
             m_jobParams.AddResultFileExtensionToSkip(SICS_XML_FILE_SUFFIX); // Unzipped, concatenated DTA
 
-            //Add the current job data to the summary file
-            try
-            {
-                if (!UpdateSummaryFile())
-                {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN,
-                        "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
-                }
-            }
-            catch (Exception)
-            {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN,
-                    "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
-                return CloseOutType.CLOSEOUT_FAILED;
-            }
+            // Add the current job data to the summary file
+            UpdateSummaryFile();
 
             return CloseOutType.CLOSEOUT_SUCCESS;
         }

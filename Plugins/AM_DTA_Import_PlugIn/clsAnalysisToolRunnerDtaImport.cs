@@ -48,11 +48,7 @@ namespace AnalysisManagerDtaImportPlugIn
                 m_StopTime = System.DateTime.UtcNow;
 
                 //Add the current job data to the summary file
-                if (!UpdateSummaryFile())
-                {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN,
-                        "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
-                }
+                UpdateSummaryFile();
             }
             catch (Exception ex)
             {

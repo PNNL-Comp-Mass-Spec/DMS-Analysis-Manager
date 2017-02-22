@@ -79,17 +79,7 @@ namespace DTASpectraFileGen
             m_StopTime = DateTime.UtcNow;
 
             // Add the current job data to the summary file
-            try
-            {
-                if (!UpdateSummaryFile())
-                {
-                    LogWarning("Error creating summary file, job " + m_JobNum + ", step " + m_StepNum);
-                }
-            }
-            catch (Exception ex)
-            {
-                LogWarning("Error creating summary file, job " + m_JobNum + ", step " + m_StepNum + ": " + ex.Message);
-            }
+            UpdateSummaryFile();
 
             // Get rid of raw data file
             result = DeleteDataFile();
@@ -331,17 +321,7 @@ namespace DTASpectraFileGen
             }
 
             //Add the current job data to the summary file
-            try
-            {
-                if (!UpdateSummaryFile())
-                {
-                    LogWarning("Error creating summary file, job " + m_JobNum + ", step " + m_StepNum);
-                }
-            }
-            catch (Exception ex)
-            {
-                LogWarning("Error creating summary file, job " + m_JobNum + ", step " + m_StepNum + ": " + ex.Message);
-            }
+            UpdateSummaryFile();
 
             //Delete .dta files
             string[] FileList = null;

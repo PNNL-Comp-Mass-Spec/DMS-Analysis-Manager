@@ -184,11 +184,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             m_StopTime = DateTime.UtcNow;
 
             //Add the current job data to the summary file
-            if (!UpdateSummaryFile())
-            {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.WARN,
-                    "Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
-            }
+            UpdateSummaryFile();
 
             //Make sure objects are released
             Thread.Sleep(500);         // 1 second delay
@@ -212,8 +208,8 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
                 if (!blnSuccess)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR,
-                        "Error parsing DTA refinery log file to extract mass error stats, job " + m_JobNum);
+                    m_message = "Error parsing DTA refinery log file to extract mass error stats";
+                    LogErrorToDatabase(m_message + ", job " + m_JobNum);
                 }
 
                 //Zip the output file

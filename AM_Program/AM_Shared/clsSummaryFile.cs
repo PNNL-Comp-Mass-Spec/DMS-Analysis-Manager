@@ -21,12 +21,13 @@ namespace AnalysisManagerBase
     {
 
         #region "Module Variables"
-        // ReSharper disable once FieldCanBeMadeReadOnly.Local
-        private List<string> m_lines = new List<string>();
+        
+        private readonly List<string> m_lines = new List<string>();
 
         #endregion
 
         #region "Methods"
+
         /// <summary>
         /// Clears summary file data
         /// </summary>
@@ -49,9 +50,9 @@ namespace AnalysisManagerBase
                 using (var swSummaryFile = new StreamWriter(new FileStream(AnalysisSummaryFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
 
-                    foreach (var DumString in m_lines)
+                    foreach (var outLine in m_lines)
                     {
-                        swSummaryFile.WriteLine(DumString);
+                        swSummaryFile.WriteLine(outLine);
                     }
 
                 }
@@ -74,6 +75,7 @@ namespace AnalysisManagerBase
         {
             m_lines.Add(line);
         }
+
         #endregion
 
     }

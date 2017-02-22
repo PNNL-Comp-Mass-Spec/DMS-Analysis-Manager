@@ -182,10 +182,7 @@ namespace AnalysisManagerPBFGenerator
                 m_StopTime = DateTime.UtcNow;
 
                 // Add the current job data to the summary file
-                if (!UpdateSummaryFile())
-                {
-                    LogWarning("Error creating summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
-                }
+                UpdateSummaryFile();
 
                 // Make sure objects are released
                 System.Threading.Thread.Sleep(500);

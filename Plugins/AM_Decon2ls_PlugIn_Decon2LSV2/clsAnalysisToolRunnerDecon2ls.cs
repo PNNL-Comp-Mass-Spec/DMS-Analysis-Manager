@@ -562,6 +562,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             {
                 LogDebug("clsAnalysisToolRunnerDecon2lsBase.RunTool(), Updating summary file");
             }
+
             UpdateSummaryFile();
 
             // Make the results folder
