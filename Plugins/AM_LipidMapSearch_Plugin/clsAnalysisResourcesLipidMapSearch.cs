@@ -245,38 +245,6 @@ namespace AnalysisManagerLipidMapSearchPlugIn
 
             m_jobParams.AddResultFileExtensionToSkip(DECONTOOLS_PEAKS_FILE_SUFFIX);
 
-            //if (false)
-            //{
-            //    // Copy the _Peaks.txt file
-            //    // For jobs run after August 23, 2012, this file will be zipped
-            //
-            //    var blnUnzipPeaksFile = false;
-            //    strFileToFind = Path.ChangeExtension(strDatasetName + DECONTOOLS_PEAKS_FILE_SUFFIX, "zip");
-            //
-            //    if (CopyFileToWorkDir(strFileToFind, Path.Combine(strDatasetFolderPath, strDeconToolsFolderName), m_WorkingDir, clsLogTools.LogLevels.INFO))
-            //    {
-            //        blnUnzipPeaksFile = true;
-            //    }
-            //    else
-            //    {
-            //        // _Peaks.zip file not found on the storage server; try the archive
-            //        if (CopyFileToWorkDir(strFileToFind, Path.Combine(strDatasetFolderPathArchive, strDeconToolsFolderName), m_WorkingDir, clsLogTools.LogLevels.INFO))
-            //        {
-            //            blnUnzipPeaksFile = true;
-            //        }
-            //        else
-            //        {
-            //            // _Peaks.zip file still not found; this is OK, since LipidTools.exe can generate it using the .Raw file
-            //        }
-            //    }
-            //
-            //    if (blnUnzipPeaksFile)
-            //    {
-            //        m_jobParams.AddResultFileToSkip(strFileToFind);
-            //        UnzipFileStart(Path.Combine(m_WorkingDir, strFileToFind), m_WorkingDir, "RetrieveDatasetAndPeaksFile", false);
-            //    }
-            //}
-
             return true;
         }
     }
