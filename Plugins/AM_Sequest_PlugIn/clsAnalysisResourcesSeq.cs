@@ -58,8 +58,7 @@ namespace AnalysisManagerSequestPlugin
                     strTargetFolderPath = "??";
 
                 m_message = "Error archiving param file to ParmFileStoragePath";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR,
-                    m_message + ": " + strSrcFilePath + " --> " + strTargetFolderPath + ex.Message);
+                LogErrorToDatabase(m_message + ": " + strSrcFilePath + " --> " + strTargetFolderPath + ": " + ex.Message);
             }
         }
 

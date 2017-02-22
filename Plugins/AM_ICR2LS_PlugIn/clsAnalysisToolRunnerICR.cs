@@ -256,8 +256,7 @@ namespace AnalysisManagerICR2LSPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR,
-                    "Error in clsAnalysisToolRunnerICR: " + ex.Message + "; task = " + currentTask);
+                LogError("Error running ICR-2LS, current task " + currentTask, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }
@@ -299,8 +298,7 @@ namespace AnalysisManagerICR2LSPlugIn
             }
 
             //If we got to here, then we've exceeded the max retry limit
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR,
-                "Unable to delete raw data file after multiple tries, job " + m_JobNum + ", Error " + ErrMsg);
+            LogError("Unable to delete raw data file after multiple tries: " + ErrMsg);
             return CloseOutType.CLOSEOUT_FAILED;
         }
 

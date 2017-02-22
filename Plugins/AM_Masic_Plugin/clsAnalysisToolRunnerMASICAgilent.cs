@@ -71,10 +71,9 @@ namespace AnalysisManagerMasicPlugin
                     DeleteFileWithRetries(MyFile);
                 }
             }
-            catch (Exception Err)
+            catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR,
-                    "Error deleting .cdf file, job " + m_JobNum + Err.Message);
+                LogError("Error deleting .cdf file", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 

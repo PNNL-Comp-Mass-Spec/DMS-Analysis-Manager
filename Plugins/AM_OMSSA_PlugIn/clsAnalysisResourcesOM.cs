@@ -133,8 +133,7 @@ namespace AnalysisManagerOMSSAPlugIn
 
                 if (!mCmdRunner.RunProgram(progLoc, cmdStr, "FormatDb", true))
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR,
-                        "Error running FormatDb for fasta file " + OrgDBName);
+                    LogError("Error running FormatDb for fasta file " + OrgDBName);
                     return false;
                 }
             }

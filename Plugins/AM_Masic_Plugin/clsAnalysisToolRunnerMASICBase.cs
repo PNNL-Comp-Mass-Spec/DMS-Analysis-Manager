@@ -44,7 +44,6 @@ namespace AnalysisManagerMasicPlugin
         protected void ExtractErrorsFromMASICLogFile(string strLogFilePath)
         {
             // Read the most recent MASIC_Log file and look for any lines with the text "Error"
-            // Use clsLogTools.WriteLog to write these to the log
 
             string strLineIn = null;
             int intErrorCount = 0;
@@ -59,9 +58,8 @@ namespace AnalysisManagerMasicPlugin
 
                 if (m_DebugLevel >= 1)
                 {
-                    LogDebug(
-                        "Checking capitalization of the the MASIC Log File: should be " + strLogFileNameCorrectCase + "; is currently " +
-                        ioFileInfo.Name);
+                    LogDebug("Checking capitalization of the the MASIC Log File: should be " + strLogFileNameCorrectCase + 
+                             "; is currently " + ioFileInfo.Name);
                 }
 
                 if (ioFileInfo.Name != strLogFileNameCorrectCase)
@@ -69,8 +67,7 @@ namespace AnalysisManagerMasicPlugin
                     // Need to fix the case
                     if (m_DebugLevel >= 1)
                     {
-                        LogDebug(
-                            "Fixing capitalization of the MASIC Log File: " + strLogFileNameCorrectCase + " instead of " + ioFileInfo.Name);
+                        LogDebug("Fixing capitalization of the MASIC Log File: " + strLogFileNameCorrectCase + " instead of " + ioFileInfo.Name);
                     }
                     ioFileInfo.MoveTo(Path.Combine(ioFileInfo.Directory.Name, strLogFileNameCorrectCase));
                 }
@@ -78,8 +75,7 @@ namespace AnalysisManagerMasicPlugin
             catch (Exception ex)
             {
                 // Ignore errors here
-                LogError(
-                    "Error fixing capitalization of the MASIC Log File at " + strLogFilePath + ": " + ex.Message);
+                LogError("Error fixing capitalization of the MASIC Log File at " + strLogFilePath + ": " + ex.Message);
             }
 
             try
@@ -103,11 +99,10 @@ namespace AnalysisManagerMasicPlugin
                     {
                         if (intErrorCount == 0)
                         {
-                            LogError(
-                                "Errors found in the MASIC Log File for job " + m_JobNum);
+                            LogError("Errors found in the MASIC Log File");
                         }
 
-                        LogError(" ... " + strLineIn);
+                        LogWarning(" ... " + strLineIn);
 
                         intErrorCount += 1;
                     }
@@ -293,7 +288,6 @@ namespace AnalysisManagerMasicPlugin
             if (!string.IsNullOrEmpty(m_MASICLogFileName))
             {
                 // Read the most recent MASIC_Log file and look for any lines with the text "Error"
-                // Use clsLogTools.WriteLog to write these to the log
                 ExtractErrorsFromMASICLogFile(Path.Combine(m_WorkDir, m_MASICLogFileName));
             }
 
