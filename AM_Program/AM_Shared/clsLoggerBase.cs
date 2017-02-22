@@ -52,7 +52,15 @@ namespace AnalysisManagerBase
                 loggerType = clsLogTools.LoggerTypes.LogFile;
             }
 
-            clsLogTools.WriteLog(loggerType, clsLogTools.LogLevels.ERROR, errorMessage);
+            try
+            {
+                clsLogTools.WriteLog(loggerType, clsLogTools.LogLevels.ERROR, errorMessage);
+            }
+            catch (Exception ex)
+            {
+                clsGlobal.ErrorWritingToLog(errorMessage, ex);
+            }
+
         }
 
         /// <summary>

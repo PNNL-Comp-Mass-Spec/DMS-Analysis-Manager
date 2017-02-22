@@ -85,6 +85,9 @@ namespace AnalysisManagerBase
         {
             base.LogError(errorMessage, logToDb: true);
         }
+
+        /// <summary>
+        /// Update m_message with an error message and record the error in the manager's log file, plus optionally in the database
         /// </summary>
         /// <param name="errorMessage">Error message</param>
         /// <param name="logToDb">When true, log the message to the database and the local log file</param>
@@ -117,12 +120,20 @@ namespace AnalysisManagerBase
             this.LogError(errorMessage, logToDb);
 
             if (string.IsNullOrEmpty(detailedMessage))
-                return;
+                return;            
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, detailedMessage);
             Console.ForegroundColor = ConsoleColor.Magenta;
             Console.WriteLine(detailedMessage);
             Console.ResetColor();
+
+            try
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, detailedMessage);
+            }
+            catch (Exception ex)
+            {
+                clsGlobal.ErrorWritingToLog(errorMessage, ex);
+            }
         }
 
         protected void ResetTimestampForQueueWaitTimeLogging()

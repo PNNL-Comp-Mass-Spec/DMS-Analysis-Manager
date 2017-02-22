@@ -1350,8 +1350,16 @@ namespace AnalysisManagerBase
         {
             if (message.Contains("permission was denied"))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, message);
+                try
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, message);
+                }
+                catch (Exception ex)
+                {
+                    clsGlobal.ErrorWritingToLog(message, ex);
+                }
             }
+
             OnErrorEvent(message);
         }
 

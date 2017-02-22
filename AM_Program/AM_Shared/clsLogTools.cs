@@ -155,6 +155,9 @@ namespace AnalysisManagerBase
                     throw new Exception("Invalid logger type specified");
             }
 
+            if (myLogger == null)
+                return;
+
             // Send the log message
             switch (logLevel)
             {

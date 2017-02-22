@@ -1147,6 +1147,28 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
+        /// Notify the user at console that an error occurred while writing to a log file or posting a log message to the database
+        /// </summary>
+        /// <param name="logMessage"></param>
+        /// <param name="ex"></param>
+        public static void ErrorWritingToLog(string logMessage, Exception ex)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("Error logging errors");
+
+            Console.ForegroundColor = ConsoleColor.DarkMagenta;
+            Console.WriteLine("  " + logMessage);
+
+            if (ex != null)
+            {
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                Console.WriteLine(GetExceptionStackTrace(ex, true));
+            }
+
+            Console.ResetColor();
+        }
+
+        /// <summary>
         /// Compares two files, byte-by-byte
         /// </summary>
         /// <param name="strFilePath1">Path to the first file</param>
@@ -1250,10 +1272,18 @@ namespace AnalysisManagerBase
             Console.WriteLine("  " + statusMessage);
             Console.ResetColor();
 
-            if (writeToLog)
+            if (!writeToLog)
+                return;
+
+            try
             {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, statusMessage);
             }
+            catch (Exception ex)
+            {
+                ErrorWritingToLog(statusMessage, ex);
+            }
+
         }
 
         /// <summary>
@@ -1283,7 +1313,16 @@ namespace AnalysisManagerBase
             }
 
             Console.ResetColor();
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, formattedError, ex);
+
+            try
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, formattedError, ex);
+            }
+            catch (Exception ex2)
+            {
+                ErrorWritingToLog(formattedError, ex2);
+            }
+            
         }
 
         /// <summary>
@@ -1308,14 +1347,22 @@ namespace AnalysisManagerBase
             if (!writeToLog)
                 return;
 
-            if (isError)
+            try
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, statusMessage);
+                if (isError)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, statusMessage);
+                }
+                else
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, statusMessage);
+                }
             }
-            else
+            catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, statusMessage);
+                ErrorWritingToLog(statusMessage, ex);
             }
+
         }
 
         /// <summary>
@@ -1327,7 +1374,16 @@ namespace AnalysisManagerBase
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.WriteLine(warningMessage);
             Console.ResetColor();
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, warningMessage);
+
+            try
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, warningMessage);
+            }
+            catch (Exception ex)
+            {
+                ErrorWritingToLog(warningMessage, ex);
+            }
+            
         }
 
         /// <summary>
