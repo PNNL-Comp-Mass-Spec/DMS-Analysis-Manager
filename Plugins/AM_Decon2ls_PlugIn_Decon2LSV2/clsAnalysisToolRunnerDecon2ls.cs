@@ -109,7 +109,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             try
             {
                 var ScansFilePath = Path.Combine(m_WorkDir, m_Dataset + DECON2LS_SCANS_FILE_SUFFIX);
-                var IsosFilePath = Path.Combine(m_WorkDir, m_Dataset + DECON2LS_ISOS_FILE_SUFFIX);
+                var isosFilePath = Path.Combine(m_WorkDir, m_Dataset + DECON2LS_ISOS_FILE_SUFFIX);
                 var PeaksFilePath = Path.Combine(m_WorkDir, m_Dataset + DECON2LS_PEAKS_FILE_SUFFIX);
 
                 switch (mRawDataType)
@@ -122,7 +122,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                         blnDotDFolder = true;
                         break;
                     default:
-                        if (!File.Exists(IsosFilePath) & !File.Exists(ScansFilePath))
+                        if (!File.Exists(isosFilePath) & !File.Exists(ScansFilePath))
                         {
                             if (mInputFilePath.ToLower().EndsWith(".d"))
                             {
@@ -132,7 +132,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                         break;
                 }
 
-                if (blnDotDFolder && !File.Exists(IsosFilePath) && !File.Exists(ScansFilePath))
+                if (blnDotDFolder && !File.Exists(isosFilePath) && !File.Exists(ScansFilePath))
                 {
                     // Copy the files from the .D folder to the work directory
                     if (m_DebugLevel >= 1)
@@ -149,7 +149,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     fiSrcFilePath = new FileInfo(Path.Combine(mInputFilePath, m_Dataset + DECON2LS_ISOS_FILE_SUFFIX));
                     if (fiSrcFilePath.Exists)
                     {
-                        fiSrcFilePath.CopyTo(IsosFilePath);
+                        fiSrcFilePath.CopyTo(isosFilePath);
                     }
 
                     fiSrcFilePath = new FileInfo(Path.Combine(mInputFilePath, m_Dataset + DECON2LS_PEAKS_FILE_SUFFIX));
@@ -160,7 +160,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 }
 
                 m_jobParams.AddResultFileToKeep(ScansFilePath);
-                m_jobParams.AddResultFileToKeep(IsosFilePath);
+                m_jobParams.AddResultFileToKeep(isosFilePath);
 
                 var blnWritePeaksToTextFile = oDeconToolsParamFileReader.GetParameter("WritePeaksToTextFile", false);
 
@@ -197,14 +197,14 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 if (blnEmptyIsosFileExpected)
                 {
                     // The _isos.csv file should be empty; delete it
-                    if (!ResultsFileHasData(IsosFilePath))
+                    if (!ResultsFileHasData(isosFilePath))
                     {
                         // The file does not have any data lines
                         try
                         {
-                            if (File.Exists(IsosFilePath))
+                            if (File.Exists(isosFilePath))
                             {
-                                File.Delete(IsosFilePath);
+                                File.Delete(isosFilePath);
                             }
                         }
                         catch (Exception)
@@ -216,15 +216,15 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 else
                 {
                     // Make sure the Isos File exists
-                    if (!File.Exists(IsosFilePath))
+                    if (!File.Exists(isosFilePath))
                     {
                         var msg = "DeconTools Isos file Not Found";
-                        LogError(msg, msg + ": " + IsosFilePath);
+                        LogError(msg, msg + ": " + isosFilePath);
                         return CloseOutType.CLOSEOUT_NO_OUT_FILES;
                     }
 
                     // Make sure the Isos file contains at least one row of data
-                    if (!IsosFileHasData(IsosFilePath))
+                    if (!IsosFileHasData(isosFilePath))
                     {
                         LogError("No results in DeconTools Isos file");
                         return CloseOutType.CLOSEOUT_NO_DATA;
@@ -274,14 +274,16 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
             try
             {
-                var strInputFilePath = Path.Combine(m_WorkDir, m_Dataset + DECON2LS_ISOS_FILE_SUFFIX);
-                if (!File.Exists(strInputFilePath))
+                var isosFilePath = Path.Combine(m_WorkDir, m_Dataset + DECON2LS_ISOS_FILE_SUFFIX);
+                if (!File.Exists(isosFilePath))
                 {
                     // Do not treat this as a fatal error
                     // It's possible that this analysis job used a parameter file that only picks peaks but doesn't deisotope, e.g. PeakPicking_NonThresholded_PeakBR2_SN7.xml
                     return CloseOutType.CLOSEOUT_SUCCESS;
                 }
 
+                var isosDataLineCount = -1;
+                
                 var strMSFileInfoScannerDir = m_mgrParams.GetParam("MSFileInfoScannerDir");
                 if (string.IsNullOrEmpty(strMSFileInfoScannerDir))
                 {
@@ -302,72 +304,94 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 RegisterEvents(objQCPlotGenerator);
 
                 // Create the QC Plot .png files and associated Index.html file
-                blnSuccess = objQCPlotGenerator.CreateQCPlots(strInputFilePath, m_WorkDir);
+                blnSuccess = objQCPlotGenerator.CreateQCPlots(isosFilePath, m_WorkDir);
 
-                if (blnSuccess)
-                {
-                    // Make sure the key png files were created
-                    var expectedFileExtensions = new List<string> {
-                        "_BPI_MS.png|_BPI_MSn.png",
-                        "_HighAbu_LCMS.png|_HighAbu_LCMS_MSn.png",
-                        "_LCMS.png|_LCMS_MSn.png",
-                        "_TIC.png"
-                    };
-
-                    foreach (var fileExtension in expectedFileExtensions)
-                    {
-                        var filesToFind = new List<FileInfo>();
-                        string fileDescription;
-                        if (fileExtension.Contains("|"))
-                        {
-                            fileDescription = "";
-
-                            // fileExtension contains a list of files
-                            // Require that at least once of them exists
-                            foreach (var extension in fileExtension.Split('|'))
-                            {
-                                filesToFind.Add(new FileInfo(Path.Combine(m_WorkDir, m_Dataset + extension)));
-                                if (fileDescription.Length == 0)
-                                    fileDescription = extension;
-                                else
-                                    fileDescription += " or " + extension;
-                            }
-
-                        } else
-                        {
-                            filesToFind.Add(new FileInfo(Path.Combine(m_WorkDir, m_Dataset + fileExtension)));
-                            fileDescription = fileExtension;
-                        }
-
-                        var filesFound = 0;
-                        foreach (var pngFile in filesToFind)
-                        {
-                            if (pngFile.Exists)
-                                filesFound++;
-                        }
-
-                        if (filesFound == 0)
-                        {
-                            LogError("QC png file not found, extension " + fileDescription);
-                            return CloseOutType.CLOSEOUT_FAILED;
-                        }
-                    }                   
-
-                    if (m_DebugLevel >= 1)
-                    {
-                        LogMessage("Generated QC Plots file using " + strInputFilePath);
-                    }
-                }
-                else
+                if (!blnSuccess)
                 {
                     LogError("Error generating QC Plots files with clsDeconToolsQCPlotsGenerator");
                     LogMessage(objQCPlotGenerator.ErrorMessage, 0, true);
-                    
+
                     if (objQCPlotGenerator.MSFileInfoScannerErrorCount > 0)
                     {
                         LogWarning("MSFileInfoScanner encountered " + objQCPlotGenerator.MSFileInfoScannerErrorCount + " errors");
                     }
+                    return (CloseOutType.CLOSEOUT_FAILED);
                 }
+
+                // Make sure the key png files were created
+                var expectedFileExtensions = new List<string>
+                {
+                    "_BPI_MS.png|_BPI_MSn.png",
+                    "_HighAbu_LCMS.png|_HighAbu_LCMS_MSn.png",
+                    "_LCMS.png|_LCMS_MSn.png",
+                    "_TIC.png"
+                };
+
+                foreach (var fileExtension in expectedFileExtensions)
+                {
+                    var filesToFind = new List<FileInfo>();
+                    string fileDescription;
+                    if (fileExtension.Contains("|"))
+                    {
+                        fileDescription = "";
+
+                        // fileExtension contains a list of files
+                        // Require that at least once of them exists
+                        foreach (var extension in fileExtension.Split('|'))
+                        {
+                            filesToFind.Add(new FileInfo(Path.Combine(m_WorkDir, m_Dataset + extension)));
+                            if (fileDescription.Length == 0)
+                                fileDescription = extension;
+                            else
+                                fileDescription += " or " + extension;
+                        }
+                    }
+                    else
+                    {
+                        filesToFind.Add(new FileInfo(Path.Combine(m_WorkDir, m_Dataset + fileExtension)));
+                        fileDescription = fileExtension;
+                    }
+
+                    var filesFound = 0;
+                    foreach (var pngFile in filesToFind)
+                    {
+                        if (pngFile.Exists)
+                            filesFound++;
+                    }
+
+                    if (filesFound != 0)
+                        continue;
+
+                    if (fileExtension.Contains("_HighAbu_LCMS.png") || fileExtension.Contains("_LCMS.png"))
+                    {
+                        // This file may be missing if _isos.csv only contains one data point
+                        if (isosDataLineCount < 0)
+                        {
+                            var success = IsosFileHasData(isosFilePath, out isosDataLineCount, countTotalDataLines: true);
+                            if (!success || isosDataLineCount == 0)
+                            {
+                                LogError("No results in DeconTools Isos file");
+                                return CloseOutType.CLOSEOUT_NO_DATA;
+                            }
+                        }
+
+                        if (isosDataLineCount <= 3)
+                        {
+                            // The Isos file has very little data; allow this plot to be missing
+                            continue;
+                        }
+                    }
+
+                    LogError("QC png file not found, extension " + fileDescription);
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                if (m_DebugLevel >= 1)
+                {
+                    LogMessage("Generated QC Plots file using " + isosFilePath);
+                }
+
+                return CloseOutType.CLOSEOUT_SUCCESS;
             }
             catch (Exception ex)
             {
@@ -375,44 +399,38 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (blnSuccess)
-            {
-                return CloseOutType.CLOSEOUT_SUCCESS;
-            }
-
-            return (CloseOutType.CLOSEOUT_FAILED);
         }
 
         /// <summary>
-        /// Examines IsosFilePath to look for data lines (does not read the entire file, just the first two lines)
+        /// Examines isosFilePath to look for data lines (does not read the entire file, just the first two lines)
         /// </summary>
-        /// <param name="IsosFilePath"></param>
+        /// <param name="isosFilePath"></param>
         /// <returns>True if it has one or more lines of data, otherwise, returns False</returns>
         /// <remarks></remarks>
-        private bool IsosFileHasData(string IsosFilePath)
+        private bool IsosFileHasData(string isosFilePath)
         {
-            int intDataLineCount;
-            return IsosFileHasData(IsosFilePath, out intDataLineCount, false);
+            int dataLineCount;
+            return IsosFileHasData(isosFilePath, out dataLineCount, false);
         }
 
         /// <summary>
-        /// Examines IsosFilePath to look for data lines
+        /// Examines isosFilePath to look for data lines
         /// </summary>
-        /// <param name="IsosFilePath"></param>
-        /// <param name="intDataLineCount">Output parameter: total data line count</param>
-        /// <param name="blnCountTotalDataLines">True to count all of the data lines; false to just look for the first data line</param>
+        /// <param name="isosFilePath"></param>
+        /// <param name="dataLineCount">Output parameter: total data line count</param>
+        /// <param name="countTotalDataLines">True to count all of the data lines; false to just look for the first data line</param>
         /// <returns>True if it has one or more lines of data, otherwise, returns False</returns>
         /// <remarks></remarks>
-        private bool IsosFileHasData(string IsosFilePath, out int intDataLineCount, bool blnCountTotalDataLines)
+        private bool IsosFileHasData(string isosFilePath, out int dataLineCount, bool countTotalDataLines)
         {
-            intDataLineCount = 0;
+            dataLineCount = 0;
             var blnHeaderLineProcessed = false;
 
             try
             {
-                if (File.Exists(IsosFilePath))
+                if (File.Exists(isosFilePath))
                 {
-                    var srInFile = new StreamReader(new FileStream(IsosFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+                    var srInFile = new StreamReader(new FileStream(isosFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
                     while (!srInFile.EndOfStream)
                     {
@@ -424,13 +442,13 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                         if (blnHeaderLineProcessed)
                         {
                             // This is a data line
-                            if (blnCountTotalDataLines)
+                            if (countTotalDataLines)
                             {
-                                intDataLineCount += 1;
+                                dataLineCount += 1;
                             }
                             else
                             {
-                                intDataLineCount = 1;
+                                dataLineCount = 1;
                                 break;
                             }
                         }
@@ -448,7 +466,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 // Ignore errors here
             }
 
-            if (intDataLineCount > 0)
+            if (dataLineCount > 0)
             {
                 return true;
             }
@@ -1146,7 +1164,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 return false;
             }
 
-            var intDataLineCount = 0;
+            var dataLineCount = 0;
 
             // Open the DeconTools results file
             // The first line is the header lines
@@ -1156,17 +1174,17 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
             using (var srReader = new StreamReader(new FileStream(strFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
             {
-                while (!srReader.EndOfStream && intDataLineCount < 2)
+                while (!srReader.EndOfStream && dataLineCount < 2)
                 {
                     var strLineIn = srReader.ReadLine();
                     if (!string.IsNullOrWhiteSpace(strLineIn))
                     {
-                        intDataLineCount += 1;
+                        dataLineCount += 1;
                     }
                 }
             }
 
-            if (intDataLineCount >= 2)
+            if (dataLineCount >= 2)
             {
                 LogDebug("DeconTools results file has at least two non-blank lines");
                 return true;
