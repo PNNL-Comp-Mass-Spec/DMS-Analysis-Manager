@@ -169,18 +169,5 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             mSuccess = mMSFileInfoScanner.ProcessMSFileOrFolder(mInputFilePath, mOutputFolderPath);
         }
 
-        private void mMSFileInfoScanner_ErrorEvent(string Message)
-        {
-            mMSFileInfoScannerErrorCount += 1;
-            OnErrorEvent("MSFileInfoScanner error: " + Message);
-        }
-
-        private void mMSFileInfoScanner_MessageEvent(string Message)
-        {
-            if (mDebugLevel >= 3)
-            {
-                OnDebugEvent(" ... " + Message);
-            }
-        }
     }
 }
