@@ -283,9 +283,11 @@ namespace AnalysisManagerProg
 
             // Make sure that the manager name matches the machine name (with a few exceptions)
 
-            if (!hostName.ToLower().StartsWith("emslmq") && !hostName.ToLower().StartsWith("emslpub") && !hostName.ToLower().StartsWith("monroe"))
+            if (!hostName.StartsWith("emslmq", StringComparison.InvariantCultureIgnoreCase) && 
+                !hostName.StartsWith("emslpub", StringComparison.InvariantCultureIgnoreCase) && 
+                !hostName.StartsWith("monroe", StringComparison.InvariantCultureIgnoreCase))
             {
-                if (!m_MgrName.ToLower().StartsWith(hostName.ToLower()))
+                if (!m_MgrName.StartsWith(hostName, StringComparison.InvariantCultureIgnoreCase))
                 {
                     LogError("Manager name does not match the host name: " + m_MgrName + " vs. " + hostName + "; update AnalysisManagerProg.exe.config");
                     return false;
@@ -2425,7 +2427,8 @@ namespace AnalysisManagerProg
                 //  then try to delete it, since it's likely left over from a previous job that never actually started
                 var firstFile = workDirFiles.First();
 
-                if (firstFile.Name.StartsWith(clsGlobal.XML_FILENAME_PREFIX) && firstFile.Name.EndsWith(clsGlobal.XML_FILENAME_EXTENSION))
+                if (firstFile.Name.StartsWith(clsGlobal.XML_FILENAME_PREFIX, StringComparison.InvariantCultureIgnoreCase) && 
+                    firstFile.Name.EndsWith(clsGlobal.XML_FILENAME_EXTENSION, StringComparison.InvariantCultureIgnoreCase))
                 {
                     try
                     {

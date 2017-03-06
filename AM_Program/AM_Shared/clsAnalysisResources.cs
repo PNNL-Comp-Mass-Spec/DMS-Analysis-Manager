@@ -2807,7 +2807,7 @@ namespace AnalysisManagerBase
 
             var baseName = Path.GetFileNameWithoutExtension(fiFileToPurge.Name);
 
-            if (!string.IsNullOrWhiteSpace(legacyFastaFileBaseName) && baseName.StartsWith(legacyFastaFileBaseName))
+            if (!string.IsNullOrWhiteSpace(legacyFastaFileBaseName) && baseName.StartsWith(legacyFastaFileBaseName, StringComparison.InvariantCultureIgnoreCase))
             {
                 // The current job needs this file; do not delete it
                 return 0;
@@ -2879,7 +2879,7 @@ namespace AnalysisManagerBase
 
                 var driveLetter = diOrgDbFolder.FullName.Substring(0, 2);
 
-                if ((!driveLetter.EndsWith(":")))
+                if (!driveLetter.EndsWith(":"))
                 {
                     // The folder is not local to this computer
                     if (!fiMaxDirSize.Exists)
@@ -3296,7 +3296,7 @@ namespace AnalysisManagerBase
                     foreach (var fileSpec in fileSpecList)
                     {
                         var fileSpecTerms = fileSpec.Trim().Split(':').ToList();
-                        if (dataPkgJob.Value.Tool.ToLower().StartsWith(fileSpecTerms[0].Trim().ToLower()))
+                        if (dataPkgJob.Value.Tool.StartsWith(fileSpecTerms[0].Trim(), StringComparison.InvariantCultureIgnoreCase))
                         {
                             fileSpecListCurrent = fileSpecList;
                             break;
@@ -3309,7 +3309,7 @@ namespace AnalysisManagerBase
                         {
                             case DataPackageFileRetrievalModeConstants.Ascore:
 
-                                if (dataPkgJob.Value.Tool.ToLower().StartsWith("msgf"))
+                                if (dataPkgJob.Value.Tool.StartsWith("msgf", StringComparison.InvariantCultureIgnoreCase))
                                 {
                                     // MSGF+
                                     fileSpecListCurrent = new List<string> {
@@ -3320,7 +3320,7 @@ namespace AnalysisManagerBase
 
                                 }
 
-                                if (dataPkgJob.Value.Tool.ToLower().StartsWith("sequest"))
+                                if (dataPkgJob.Value.Tool.StartsWith("sequest", StringComparison.InvariantCultureIgnoreCase))
                                 {
                                     // Sequest
                                     fileSpecListCurrent = new List<string> {
@@ -3332,7 +3332,7 @@ namespace AnalysisManagerBase
 
                                 }
 
-                                if (dataPkgJob.Value.Tool.ToLower().StartsWith("xtandem"))
+                                if (dataPkgJob.Value.Tool.StartsWith("xtandem", StringComparison.InvariantCultureIgnoreCase))
                                 {
                                     // XTandem
                                     fileSpecListCurrent = new List<string> {
@@ -3368,7 +3368,7 @@ namespace AnalysisManagerBase
 
                         try
                         {
-                            if (!dataPkgJob.Value.Tool.ToLower().StartsWith(fileSpecTerms[0].Trim().ToLower()))
+                            if (!dataPkgJob.Value.Tool.StartsWith(fileSpecTerms[0].Trim(), StringComparison.InvariantCultureIgnoreCase))
                             {
                                 continue;
                             }
@@ -3378,7 +3378,8 @@ namespace AnalysisManagerBase
                             if (!diTargetFolder.Exists)
                                 diTargetFolder.Create();
 
-                            if (sourceFileName.ToLower().EndsWith("_dta.zip") && dataPkgJob.Value.Tool.ToLower().EndsWith("_mzml"))
+                            if (sourceFileName.EndsWith("_dta.zip", StringComparison.InvariantCultureIgnoreCase) && 
+                                dataPkgJob.Value.Tool.EndsWith("_mzml", StringComparison.InvariantCultureIgnoreCase))
                             {
                                 // This is a .mzML job; it is not going to have a _dta.zip file
                                 // Setting sourceFolderPath to an empty string so that GetMzMLFile will get called below
@@ -3419,7 +3420,7 @@ namespace AnalysisManagerBase
 
                             if (string.IsNullOrEmpty(sourceFolderPath))
                             {
-                                if (sourceFileName.ToLower().EndsWith("_dta.zip"))
+                                if (sourceFileName.EndsWith("_dta.zip", StringComparison.InvariantCultureIgnoreCase))
                                 {
                                     // Look for a mzML.gz file instead
 
@@ -3472,7 +3473,7 @@ namespace AnalysisManagerBase
                                 return false;
                             }
 
-                            if (sourceFileName.EndsWith("_dta.zip"))
+                            if (sourceFileName.EndsWith("_dta.zip", StringComparison.InvariantCultureIgnoreCase))
                             {
                                 m_jobParams.AddAdditionalParameter("DataPackageMetadata", spectraFileKey, sourceFileName);
                             }

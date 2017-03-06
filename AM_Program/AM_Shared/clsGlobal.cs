@@ -1295,7 +1295,7 @@ namespace AnalysisManagerBase
         public static void LogError(string errorMessage, Exception ex = null)
         {
             string formattedError;
-            if (ex == null || errorMessage.EndsWith(ex.Message))
+            if (ex == null || errorMessage.EndsWith(ex.Message, StringComparison.InvariantCultureIgnoreCase))
             {
                 formattedError = errorMessage;
             }
@@ -1397,7 +1397,7 @@ namespace AnalysisManagerBase
         public static string ReplaceIgnoreCase(string strTextToSearch, string strTextToFind, string strReplacementText)
         {
 
-            var intCharIndex = strTextToSearch.ToLower().IndexOf(strTextToFind.ToLower(), StringComparison.Ordinal);
+            var intCharIndex = strTextToSearch.IndexOf(strTextToFind, StringComparison.InvariantCultureIgnoreCase);
 
             if (intCharIndex < 0)
             {

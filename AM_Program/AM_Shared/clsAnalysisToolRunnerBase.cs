@@ -1958,7 +1958,7 @@ namespace AnalysisManagerBase
             var coresOnMachine = PRISM.clsProgRunner.GetCoreCount();
             int coreCount;
 
-            if (threadCountText.ToLower().StartsWith("all"))
+            if (threadCountText.StartsWith("all", StringComparison.InvariantCultureIgnoreCase))
             {
                 coreCount = coresOnMachine;
             }
@@ -2263,7 +2263,7 @@ namespace AnalysisManagerBase
                         // Note that entries in m_ResultFileExtensionsToSkip can be extensions, or can even be partial file names, e.g. _peaks.txt
                         foreach (var ext in m_jobParams.ResultFileExtensionsToSkip)
                         {
-                            if (tmpFileNameLcase.EndsWith(ext.ToLower()))
+                            if (tmpFileNameLcase.EndsWith(ext, StringComparison.InvariantCultureIgnoreCase))
                             {
                                 okToMove = false;
                                 break;
@@ -2503,9 +2503,9 @@ namespace AnalysisManagerBase
 
         public void PurgeOldServerCacheFilesTest(string cacheFolderPath, int spaceUsageThresholdGB)
         {
-            if (cacheFolderPath.ToLower().StartsWith(@"\\proto"))
+            if (cacheFolderPath.StartsWith(@"\\proto", StringComparison.InvariantCultureIgnoreCase))
             {
-                if (!string.Equals(cacheFolderPath, @"\\proto-2\past\PurgeTest", StringComparison.CurrentCultureIgnoreCase))
+                if (!string.Equals(cacheFolderPath, @"\\proto-2\past\PurgeTest", StringComparison.InvariantCultureIgnoreCase))
                 {
                     Console.WriteLine(@"This function cannot be used with a \\Proto-x\ server");
                     return;
@@ -2540,7 +2540,7 @@ namespace AnalysisManagerBase
                     throw new ArgumentOutOfRangeException(nameof(strCacheFolderPath), "Cache folder path cannot be empty");
                 }
 
-                if (strCacheFolderPath.ToLower().StartsWith(@"\\proto-"))
+                if (strCacheFolderPath.StartsWith(@"\\proto-", StringComparison.InvariantCultureIgnoreCase))
                 {
                     if (spaceUsageThresholdGB < 1000)
                         spaceUsageThresholdGB = 1000;
@@ -2599,7 +2599,7 @@ namespace AnalysisManagerBase
 
                     foreach (var fiItem in diCacheFolder.GetFiles("*.hashcheck", SearchOption.AllDirectories))
                     {
-                        if (!fiItem.FullName.ToLower().EndsWith(clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX.ToLower()))
+                        if (!fiItem.FullName.EndsWith(clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX, StringComparison.InvariantCultureIgnoreCase))
                             continue;
 
                         var strDataFilePath = fiItem.FullName.Substring(0, fiItem.FullName.Length - clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX.Length);

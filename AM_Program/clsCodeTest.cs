@@ -1334,10 +1334,10 @@ namespace AnalysisManagerProg
         /// Look for the .PEK and .PAR files in the specified folder
         /// Make sure they are named Dataset_m_dd_yyyy.PAR andDataset_m_dd_yyyy.Pek
         /// </summary>
-        /// <param name="strFolderPath">Folder to examine</param>
-        /// <param name="strDatasetName">Dataset name</param>
+        /// <param name="folderPath">Folder to examine</param>
+        /// <param name="datasetName">Dataset name</param>
         /// <remarks></remarks>
-        public void FixICR2LSResultFileNames(string strFolderPath, string strDatasetName)
+        public void FixICR2LSResultFileNames(string folderPath, string datasetName)
         {
             var objExtensionsToCheck = new List<string>();
 
@@ -1346,13 +1346,11 @@ namespace AnalysisManagerProg
                 objExtensionsToCheck.Add("PAR");
                 objExtensionsToCheck.Add("Pek");
 
-                var strDSNameLCase = strDatasetName.ToLower();
-
-                var fiFolder = new DirectoryInfo(strFolderPath);
+                var fiFolder = new DirectoryInfo(folderPath);
 
                 if (!fiFolder.Exists)
                 {
-                    LogError("Folder no tfound: " + strFolderPath);
+                    LogError("Folder no tfound: " + folderPath);
                     return;
                 }
 
@@ -1360,12 +1358,12 @@ namespace AnalysisManagerProg
                 {
                     foreach (var fiFile in fiFolder.GetFiles("*." + strExtension))
                     {
-                        if (!fiFile.Name.ToLower().StartsWith(strDSNameLCase))
+                        if (!fiFile.Name.StartsWith(datasetName, StringComparison.InvariantCultureIgnoreCase))
                             continue;
 
-                        var strDesiredName = strDatasetName + "_" + DateTime.Now.ToString("M_d_yyyy") + "." + strExtension;
+                        var strDesiredName = datasetName + "_" + DateTime.Now.ToString("M_d_yyyy") + "." + strExtension;
 
-                        if (fiFile.Name.ToLower() != strDesiredName.ToLower())
+                        if (!string.Equals(fiFile.Name, strDesiredName, StringComparison.InvariantCultureIgnoreCase))
                         {
                             try
                             {

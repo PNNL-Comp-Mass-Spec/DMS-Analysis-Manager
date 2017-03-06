@@ -2323,7 +2323,8 @@ namespace AnalysisManagerBase
             {
                 case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder:
                     // Agilent ion trap data
-                    if (StoragePath.ToLower().Contains("Agilent_SL1".ToLower()) || StoragePath.ToLower().Contains("Agilent_XCT1".ToLower()))
+                    if (StoragePath.ToLower().Contains("Agilent_SL1".ToLower()) || 
+                        StoragePath.ToLower().Contains("Agilent_XCT1".ToLower()))
                     {
                         // For Agilent Ion Trap datasets acquired on Agilent_SL1 or Agilent_XCT1 in 2005, 
                         //  we would pre-process the data beforehand to create MGF files
@@ -3012,10 +3013,9 @@ namespace AnalysisManagerBase
 
             if ((lstNonCriticalFileSuffixes != null))
             {
-                strFileName = strFileName.ToLower();
                 foreach (var strSuffix in lstNonCriticalFileSuffixes)
                 {
-                    if (strFileName.EndsWith(strSuffix.ToLower()))
+                    if (strFileName.EndsWith(strSuffix, StringComparison.InvariantCultureIgnoreCase))
                     {
                         // It's OK that this file is missing
                         return true;
@@ -3072,7 +3072,7 @@ namespace AnalysisManagerBase
 
                 var blnUseExternalUnzipper = false;
 
-                if (zipFilePath.ToLower().EndsWith(clsAnalysisResources.DOT_GZ_EXTENSION))
+                if (zipFilePath.EndsWith(clsAnalysisResources.DOT_GZ_EXTENSION, StringComparison.InvariantCultureIgnoreCase))
                 {
                     // This is a gzipped file
                     // Use Ionic.Zip

@@ -318,23 +318,29 @@ namespace AnalysisManagerBase
             bool validFolderFound;
             string folderNotFoundMessage;
 
-            var FileNameToFind = string.Empty;
-            var FolderExtensionWildcard = "*" + folderExtension;
+            var fileNameToFind = string.Empty;
+            var folderExtensionWildcard = "*" + folderExtension;
 
-            var ServerPath = FindValidFolder(DatasetName, FileNameToFind, FolderExtensionWildcard, clsFolderSearch.DEFAULT_MAX_RETRY_COUNT,
-                logFolderNotFound: true, retrievingInstrumentDataFolder: true,
-                 assumeUnpurged: assumeUnpurged, 
-                 validFolderFound: out validFolderFound, folderNotFoundMessage: out folderNotFoundMessage);
+            var serverPath = FindValidFolder(
+                DatasetName, 
+                fileNameToFind, 
+                folderExtensionWildcard, 
+                clsFolderSearch.DEFAULT_MAX_RETRY_COUNT,
+                logFolderNotFound: true, 
+                retrievingInstrumentDataFolder: true,
+                assumeUnpurged: assumeUnpurged, 
+                validFolderFound: out validFolderFound, 
+                folderNotFoundMessage: out folderNotFoundMessage);
 
-            if (ServerPath.StartsWith(MYEMSL_PATH_FLAG))
+            if (serverPath.StartsWith(MYEMSL_PATH_FLAG))
             {
-                return ServerPath;
+                return serverPath;
             }
 
-            var diDatasetFolder = new DirectoryInfo(ServerPath);
+            var diDatasetFolder = new DirectoryInfo(serverPath);
 
             // Find the instrument data folder (e.g. Dataset.D or Dataset.Raw) in the dataset folder
-            foreach (var diSubFolder in diDatasetFolder.GetDirectories(FolderExtensionWildcard))
+            foreach (var diSubFolder in diDatasetFolder.GetDirectories(folderExtensionWildcard))
             {
                 return diSubFolder.FullName;
             }
