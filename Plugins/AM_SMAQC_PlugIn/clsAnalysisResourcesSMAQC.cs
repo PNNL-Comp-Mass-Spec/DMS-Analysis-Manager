@@ -18,8 +18,8 @@ namespace AnalysisManagerSMAQCPlugIn
             }
 
             // Retrieve the parameter file
-            string strParamFileName = m_jobParams.GetParam("ParmFileName");
-            string strParamFileStoragePath = m_jobParams.GetParam("ParmFileStoragePath");
+            var strParamFileName = m_jobParams.GetParam("ParmFileName");
+            var strParamFileStoragePath = m_jobParams.GetParam("ParmFileStoragePath");
 
             if (!FileSearch.RetrieveFile(strParamFileName, strParamFileStoragePath))
             {
@@ -45,7 +45,7 @@ namespace AnalysisManagerSMAQCPlugIn
             //    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             //}
 
-            if (!base.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -59,13 +59,13 @@ namespace AnalysisManagerSMAQCPlugIn
             if (!clsAnalysisToolRunnerSMAQC.LLRC_ENABLED)
                 throw new Exception("LLRC is disabled -- do not call this function");
 
-            string strLLRCRunnerProgLoc = m_mgrParams.GetParam("LLRCRunnerProgLoc", @"\\gigasax\DMS_Programs\LLRCRunner");
+            var strLLRCRunnerProgLoc = m_mgrParams.GetParam("LLRCRunnerProgLoc", @"\\gigasax\DMS_Programs\LLRCRunner");
             var lstFilesToCopy = new List<string>();
 
             lstFilesToCopy.Add(LLRC.LLRCWrapper.RDATA_FILE_ALLDATA);
             lstFilesToCopy.Add(LLRC.LLRCWrapper.RDATA_FILE_MODELS);
 
-            foreach (string strFileName in lstFilesToCopy)
+            foreach (var strFileName in lstFilesToCopy)
             {
                 var fiSourceFile = new FileInfo(Path.Combine(strLLRCRunnerProgLoc, strFileName));
 
@@ -87,9 +87,9 @@ namespace AnalysisManagerSMAQCPlugIn
 
         private bool RetrieveMASICFiles()
         {
-            var createStoragePathInfoFile = false;
+            const bool createStoragePathInfoFile = false;
 
-            string strMASICResultsFolderName = m_jobParams.GetParam("MASIC_Results_Folder_Name");
+            var strMASICResultsFolderName = m_jobParams.GetParam("MASIC_Results_Folder_Name");
 
             m_jobParams.AddResultFileExtensionToSkip(SCAN_STATS_FILE_SUFFIX);        // _ScanStats.txt
             m_jobParams.AddResultFileExtensionToSkip(SCAN_STATS_EX_FILE_SUFFIX);     // _ScanStatsEx.txt
@@ -110,63 +110,69 @@ namespace AnalysisManagerSMAQCPlugIn
                         "Retrieving the MASIC files by searching for any valid MASIC folder");
                 }
 
-                return FileSearch.RetrieveScanAndSICStatsFiles(retrieveSICStatsFile: true, createStoragePathInfoOnly: createStoragePathInfoFile,
-                    retrieveScanStatsFile: true, retrieveScanStatsExFile: true, retrieveReporterIonsFile: true,
+                return FileSearch.RetrieveScanAndSICStatsFiles(
+                    retrieveSICStatsFile: true, 
+                    createStoragePathInfoOnly: createStoragePathInfoFile,
+                    retrieveScanStatsFile: true, 
+                    retrieveScanStatsExFile: true, 
+                    retrieveReporterIonsFile: true,
                     lstNonCriticalFileSuffixes: lstNonCriticalFileSuffixes);
+            }
+
+            if (m_DebugLevel >= 2)
+            {
+                LogDebug(
+                    "Retrieving the MASIC files from " + strMASICResultsFolderName);
+            }
+
+            var serverPath = FolderSearch.FindValidFolder(DatasetName, "", strMASICResultsFolderName, 2);
+
+            if (string.IsNullOrEmpty(serverPath))
+            {
+                m_message = "Dataset folder path not defined";
             }
             else
             {
-                if (m_DebugLevel >= 2)
+                if (serverPath.StartsWith(MYEMSL_PATH_FLAG))
                 {
-                    LogDebug(
-                        "Retrieving the MASIC files from " + strMASICResultsFolderName);
+                    var bestSICFolderPath = Path.Combine(MYEMSL_PATH_FLAG, strMASICResultsFolderName);
+
+                    return FileSearch.RetrieveScanAndSICStatsFiles(
+                        bestSICFolderPath, 
+                        retrieveSICStatsFile: true,
+                        createStoragePathInfoOnly: createStoragePathInfoFile, 
+                        retrieveScanStatsFile: true, 
+                        retrieveScanStatsExFile: true,
+                        retrieveReporterIonsFile: true, 
+                        lstNonCriticalFileSuffixes: lstNonCriticalFileSuffixes
+                    );
                 }
 
-                string ServerPath = null;
-                ServerPath = FolderSearch.FindValidFolder(DatasetName, "", strMASICResultsFolderName, 2);
+                var diFolderInfo = new DirectoryInfo(serverPath);
 
-                if (string.IsNullOrEmpty(ServerPath))
+                if (!diFolderInfo.Exists)
                 {
-                    m_message = "Dataset folder path not defined";
+                    m_message = "Dataset folder not found: " + diFolderInfo.FullName;
                 }
                 else
                 {
-                    if (ServerPath.StartsWith(MYEMSL_PATH_FLAG))
-                    {
-                        var bestSICFolderPath = Path.Combine(MYEMSL_PATH_FLAG, strMASICResultsFolderName);
+                    //See if the ServerPath folder actually contains a subfolder named strMASICResultsFolderName
+                    var diMASICFolderInfo = new DirectoryInfo(Path.Combine(diFolderInfo.FullName, strMASICResultsFolderName));
 
+                    if (!diMASICFolderInfo.Exists)
+                    {
+                        m_message = "Unable to find MASIC results folder " + strMASICResultsFolderName;
+                    }
+                    else
+                    {
                         return FileSearch.RetrieveScanAndSICStatsFiles(
-                            bestSICFolderPath, 
+                            diMASICFolderInfo.FullName, 
                             retrieveSICStatsFile: true,
                             createStoragePathInfoOnly: createStoragePathInfoFile, 
                             retrieveScanStatsFile: true, 
                             retrieveScanStatsExFile: true,
                             retrieveReporterIonsFile: true, 
-                            lstNonCriticalFileSuffixes: lstNonCriticalFileSuffixes
-                            );
-                    }
-
-                    var diFolderInfo = new DirectoryInfo(ServerPath);
-
-                    if (!diFolderInfo.Exists)
-                    {
-                        m_message = "Dataset folder not found: " + diFolderInfo.FullName;
-                    }
-                    else
-                    {
-                        //See if the ServerPath folder actually contains a subfolder named strMASICResultsFolderName
-                        var diMASICFolderInfo = new DirectoryInfo(Path.Combine(diFolderInfo.FullName, strMASICResultsFolderName));
-
-                        if (!diMASICFolderInfo.Exists)
-                        {
-                            m_message = "Unable to find MASIC results folder " + strMASICResultsFolderName;
-                        }
-                        else
-                        {
-                            return FileSearch.RetrieveScanAndSICStatsFiles(diMASICFolderInfo.FullName, retrieveSICStatsFile: true,
-                                createStoragePathInfoOnly: createStoragePathInfoFile, retrieveScanStatsFile: true, retrieveScanStatsExFile: true,
-                                retrieveReporterIonsFile: true, lstNonCriticalFileSuffixes: lstNonCriticalFileSuffixes);
-                        }
+                            lstNonCriticalFileSuffixes: lstNonCriticalFileSuffixes);
                     }
                 }
             }
@@ -176,7 +182,7 @@ namespace AnalysisManagerSMAQCPlugIn
 
         private bool RetrievePHRPFiles()
         {
-            List<string> lstFileNamesToGet = new List<string>();
+            var lstFileNamesToGet = new List<string>();
             clsPHRPReader.ePeptideHitResultType ePeptideHitResultType;
 
             // The Input_Folder for this job step should have been auto-defined by the DMS_Pipeline database using the Special_Processing parameters
@@ -194,15 +200,15 @@ namespace AnalysisManagerSMAQCPlugIn
                 return false;
             }
 
-            if (strInputFolder.ToUpper().StartsWith("XTM"))
+            if (strInputFolder.StartsWith("XTM", StringComparison.InvariantCultureIgnoreCase))
             {
                 ePeptideHitResultType = clsPHRPReader.ePeptideHitResultType.XTandem;
             }
-            else if (strInputFolder.ToUpper().StartsWith("SEQ"))
+            else if (strInputFolder.StartsWith("SEQ", StringComparison.InvariantCultureIgnoreCase))
             {
                 ePeptideHitResultType = clsPHRPReader.ePeptideHitResultType.Sequest;
             }
-            else if (strInputFolder.ToUpper().StartsWith("MSG"))
+            else if (strInputFolder.StartsWith("MSG", StringComparison.InvariantCultureIgnoreCase))
             {
                 ePeptideHitResultType = clsPHRPReader.ePeptideHitResultType.MSGFDB;
             }
@@ -229,7 +235,7 @@ namespace AnalysisManagerSMAQCPlugIn
             lstFileNamesToGet.Add(clsPHRPReader.GetPHRPModSummaryFileName(ePeptideHitResultType, DatasetName));
             lstFileNamesToGet.Add(clsPHRPReader.GetMSGFFileName(strSynopsisFileName));
 
-            foreach (string FileToGet in lstFileNamesToGet)
+            foreach (var FileToGet in lstFileNamesToGet)
             {
                 if (!FileSearch.FindAndRetrieveMiscFiles(FileToGet, false))
                 {

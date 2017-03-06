@@ -47,10 +47,10 @@ namespace AnalysisManagerSMAQCPlugIn
         /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
-            CloseOutType result = CloseOutType.CLOSEOUT_SUCCESS;
+            var result = CloseOutType.CLOSEOUT_SUCCESS;
             var blnProcessingError = false;
 
-            bool blnSuccess = false;
+            var blnSuccess = false;
 
             try
             {
@@ -285,7 +285,7 @@ namespace AnalysisManagerSMAQCPlugIn
         [Obsolete("No longer used")]
         private bool ComputeLLRC()
         {
-            bool blnSuccess = false;
+            var blnSuccess = false;
 
             var lstDatasetIDs = new List<int>();
 
@@ -342,7 +342,7 @@ namespace AnalysisManagerSMAQCPlugIn
         {
             short RetryCount = 3;
 
-            string strDatasetID = m_jobParams.GetParam("DatasetID");
+            var strDatasetID = m_jobParams.GetParam("DatasetID");
             mDatasetID = 0;
 
             if (string.IsNullOrWhiteSpace(strDatasetID))
@@ -356,10 +356,10 @@ namespace AnalysisManagerSMAQCPlugIn
                 return false;
             }
 
-            string ConnectionString = m_mgrParams.GetParam("connectionstring");
-            bool blnSuccess = false;
+            var ConnectionString = m_mgrParams.GetParam("connectionstring");
+            var blnSuccess = false;
 
-            string SqlStr = "SELECT Instrument_ID " + "FROM V_Dataset_Instrument_List_Report " + "WHERE ID = " + strDatasetID;
+            var SqlStr = "SELECT Instrument_ID " + "FROM V_Dataset_Instrument_List_Report " + "WHERE ID = " + strDatasetID;
 
             InstrumentID = 0;
 
@@ -415,7 +415,7 @@ namespace AnalysisManagerSMAQCPlugIn
 
         private void CopyFailedResultsToArchiveFolder()
         {
-            string strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
+            var strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
             if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
@@ -470,10 +470,10 @@ namespace AnalysisManagerSMAQCPlugIn
             //   </Measurements>
             // </SMAQC_Results>
 
-            StringBuilder sbXML = new StringBuilder();
+            var sbXML = new StringBuilder();
             strXMLResults = string.Empty;
 
-            string strPSMSourceJob = m_jobParams.GetParam("SourceJob");
+            var strPSMSourceJob = m_jobParams.GetParam("SourceJob");
 
             try
             {
@@ -545,17 +545,14 @@ namespace AnalysisManagerSMAQCPlugIn
                 LogDebug("Parsing SMAQC Results file " + ResultsFilePath);
             }
 
-            string strLineIn = null;
-            string[] strSplitLine = null;
-
-            bool blnMeasurementsFound = false;
-            bool blnHeadersFound = false;
+            var blnMeasurementsFound = false;
+            var blnHeadersFound = false;
 
             using (var srInFile = new StreamReader(new FileStream(ResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
             {
                 while (!srInFile.EndOfStream)
                 {
-                    strLineIn = srInFile.ReadLine();
+                    var strLineIn = srInFile.ReadLine();
 
                     if (string.IsNullOrWhiteSpace(strLineIn))
                         continue;
@@ -577,9 +574,9 @@ namespace AnalysisManagerSMAQCPlugIn
                     else
                     {
                         // This is a measurement result line
-                        strSplitLine = strLineIn.Split(',');
+                        var strSplitLine = strLineIn.Split(',');
 
-                        if ((strSplitLine != null) && strSplitLine.Length >= 3)
+                        if (strSplitLine.Length >= 3)
                         {
                             lstResults.Add(new KeyValuePair<string, string>(strSplitLine[1].Trim(), strSplitLine[2].Trim()));
                         }
@@ -664,39 +661,39 @@ namespace AnalysisManagerSMAQCPlugIn
                         }
 
                         // Update progress if the line starts with one of the expected phrases
-                        if (strLineIn.StartsWith("Searching for Text Files"))
+                        if (strLineIn.StartsWith("Searching for Text Files", StringComparison.InvariantCultureIgnoreCase))
                         {
                             if (sngEffectiveProgress < PROGRESS_PCT_SMAQC_SEARCHING_FOR_FILES)
                             {
                                 sngEffectiveProgress = PROGRESS_PCT_SMAQC_SEARCHING_FOR_FILES;
                             }
                         }
-                        else if (strLineIn.StartsWith("Parsing and Inserting Data"))
+                        else if (strLineIn.StartsWith("Parsing and Inserting Data", StringComparison.InvariantCultureIgnoreCase))
                         {
                             if (sngEffectiveProgress < PROGRESS_PCT_SMAQC_POPULATING_DB_TEMP_TABLES)
                             {
                                 sngEffectiveProgress = PROGRESS_PCT_SMAQC_POPULATING_DB_TEMP_TABLES;
                             }
                         }
-                        else if (strLineIn.StartsWith("Now running Measurements"))
+                        else if (strLineIn.StartsWith("Now running Measurements", StringComparison.InvariantCultureIgnoreCase))
                         {
                             if (sngEffectiveProgress < PROGRESS_PCT_SMAQC_RUNNING_MEASUREMENTS)
                             {
                                 sngEffectiveProgress = PROGRESS_PCT_SMAQC_RUNNING_MEASUREMENTS;
                             }
                         }
-                        else if (strLineIn.StartsWith("Saving Scan Results"))
+                        else if (strLineIn.StartsWith("Saving Scan Results", StringComparison.InvariantCultureIgnoreCase))
                         {
                             if (sngEffectiveProgress < PROGRESS_PCT_SMAQC_SAVING_RESULTS)
                             {
                                 sngEffectiveProgress = PROGRESS_PCT_SMAQC_SAVING_RESULTS;
                             }
                         }
-                        else if (strLineIn.StartsWith("Scan output has been saved"))
+                        else if (strLineIn.StartsWith("Scan output has been saved", StringComparison.InvariantCultureIgnoreCase))
                         {
                             // Ignore this line
                         }
-                        else if (strLineIn.StartsWith("SMAQC analysis complete"))
+                        else if (strLineIn.StartsWith("SMAQC analysis complete", StringComparison.InvariantCultureIgnoreCase))
                         {
                             // Ignore this line
                         }
@@ -744,11 +741,11 @@ namespace AnalysisManagerSMAQCPlugIn
         {
             const int MAX_RETRY_COUNT = 3;
 
-            int intStartIndex = 0;
+            var intStartIndex = 0;
 
             string strXMLResultsClean = null;
 
-            bool blnSuccess = false;
+            var blnSuccess = false;
 
             try
             {
@@ -817,7 +814,7 @@ namespace AnalysisManagerSMAQCPlugIn
         /// <remarks></remarks>
         private bool ReadAndStoreSMAQCResults(string ResultsFilePath)
         {
-            bool blnSuccess = false;
+            var blnSuccess = false;
 
             try
             {
@@ -833,7 +830,7 @@ namespace AnalysisManagerSMAQCPlugIn
                 else
                 {
                     // Convert the results to XML format
-                    string strXMLResults = string.Empty;
+                    var strXMLResults = string.Empty;
 
                     blnSuccess = ConvertResultsToXML(ref lstResults, ref strXMLResults);
 
@@ -897,8 +894,8 @@ namespace AnalysisManagerSMAQCPlugIn
         /// <remarks></remarks>
         private bool StoreToolVersionInfo(string strSMAQCProgLoc)
         {
-            string strToolVersionInfo = string.Empty;
-            bool blnSuccess = false;
+            var strToolVersionInfo = string.Empty;
+            var blnSuccess = false;
 
             if (m_DebugLevel >= 2)
             {
