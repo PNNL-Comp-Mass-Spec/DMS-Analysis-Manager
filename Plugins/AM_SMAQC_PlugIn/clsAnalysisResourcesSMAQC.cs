@@ -224,25 +224,51 @@ namespace AnalysisManagerSMAQCPlugIn
                 LogDebug("Retrieving the PHRP files");
             }
 
-            string strSynopsisFileName = null;
+            var msgfplusSynopsisFile = clsPHRPReader.GetPHRPSynopsisFileName(ePeptideHitResultType, DatasetName);
+            var synFileToFind = string.Copy(msgfplusSynopsisFile);
 
-            strSynopsisFileName = clsPHRPReader.GetPHRPSynopsisFileName(ePeptideHitResultType, DatasetName);
-            lstFileNamesToGet.Add(strSynopsisFileName);
+            var success = FileSearch.FindAndRetrievePHRPDataFile(ref synFileToFind, "", addToResultFileSkipList: true);
+            if (!success)
+            {
+                //Errors were reported in function call, so just return
+                return false;
+            }
+
+            // Check whether we are loading data where the filenames are _msgfdb.txt instead of _msgfplus.txt
+            var autoSwitchFilename = !string.Equals(synFileToFind, msgfplusSynopsisFile);
+            if (autoSwitchFilename)
+            {
+                msgfplusSynopsisFile = synFileToFind;
+            }
 
             lstFileNamesToGet.Add(clsPHRPReader.GetPHRPResultToSeqMapFileName(ePeptideHitResultType, DatasetName));
             lstFileNamesToGet.Add(clsPHRPReader.GetPHRPSeqInfoFileName(ePeptideHitResultType, DatasetName));
             lstFileNamesToGet.Add(clsPHRPReader.GetPHRPSeqToProteinMapFileName(ePeptideHitResultType, DatasetName));
             lstFileNamesToGet.Add(clsPHRPReader.GetPHRPModSummaryFileName(ePeptideHitResultType, DatasetName));
-            lstFileNamesToGet.Add(clsPHRPReader.GetMSGFFileName(strSynopsisFileName));
+            lstFileNamesToGet.Add(clsPHRPReader.GetMSGFFileName(msgfplusSynopsisFile));
 
-            foreach (var FileToGet in lstFileNamesToGet)
+            foreach (var phrpFile in lstFileNamesToGet)
             {
-                if (!FileSearch.FindAndRetrieveMiscFiles(FileToGet, false))
+                string fileToGet;
+                if (autoSwitchFilename)
+                {
+                    fileToGet = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(phrpFile, msgfplusSynopsisFile);
+
+                }
+                else
+                {
+                    fileToGet = phrpFile;
+                }
+            
+                success = FileSearch.FindAndRetrieveMiscFiles(fileToGet, unzip: false);
+
+                if (!success)
                 {
                     //Errors were reported in function call, so just return
                     return false;
                 }
-                m_jobParams.AddResultFileToSkip(FileToGet);
+
+                m_jobParams.AddResultFileToSkip(fileToGet);
             }
 
             return true;
