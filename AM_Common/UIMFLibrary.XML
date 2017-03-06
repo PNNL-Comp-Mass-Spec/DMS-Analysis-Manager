@@ -2441,7 +2441,7 @@
         </member>
         <member name="F:UIMFLibrary.DataReader.m_FramesWarnedInvalidData">
             <summary>
-            Tracks frame numbers for which we called OnErrorMessage() to warn the caller that there is invalid data
+            Tracks frame numbers for which we called ReportError() to warn the caller that there is invalid data
             </summary>
             <remarks>
             Key is a frame number (integer) or frame range (two integers separated by a dash)
@@ -5183,6 +5183,15 @@
             <summary>
             Assures column Decoded exists in the legacy Frame_Parameters table
             </summary>
+        </member>
+        <member name="M:UIMFLibrary.DataWriter.ValidateLegacyHPFColumnsExist">
+            <summary>
+            Assures that several columns exist in the legacy Frame_Parameters table
+            </summary>
+            <remarks>
+            This method is used when writing data to legacy tables 
+            in a UIMF file that was cloned from an old file format
+            </remarks>
         </member>
         <member name="M:UIMFLibrary.DataWriter.ConvertBinToMz(System.Int32,System.Double,UIMFLibrary.FrameParameters)">
             <summary>
