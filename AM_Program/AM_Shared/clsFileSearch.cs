@@ -732,7 +732,7 @@ namespace AnalysisManagerBase
                     // File found in MyEMSL
                     // Determine the MyEMSL FileID by searching for the expected file in m_MyEMSLUtilities.RecentlyFoundMyEMSLFiles
 
-                    Int64 myEmslFileID = 0;
+                    long myEmslFileID = 0;
 
                     foreach (var udtArchivedFile in m_MyEMSLUtilities.RecentlyFoundMyEMSLFiles)
                     {

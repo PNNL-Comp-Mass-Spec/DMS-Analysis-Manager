@@ -39,10 +39,7 @@ namespace AnalysisManagerBase
         /// <value></value>
         /// <returns></returns>
         /// <remarks></remarks>
-        public Dictionary<string, ArchivedFileInfo> DownloadedFiles
-        {
-            get { return m_MyEMSLDatasetListInfo.DownloadedFiles; }
-        }
+        public Dictionary<string, ArchivedFileInfo> DownloadedFiles => m_MyEMSLDatasetListInfo.DownloadedFiles;
 
         /// <summary>
         /// MyEMSL IDs of files queued to be downloaded
@@ -50,10 +47,7 @@ namespace AnalysisManagerBase
         /// <value></value>
         /// <returns></returns>
         /// <remarks></remarks>
-        public Dictionary<Int64, DownloadQueue.udtFileToDownload> FilesToDownload
-        {
-            get { return m_MyEMSLDatasetListInfo.FilesToDownload; }
-        }
+        public Dictionary<long, DownloadQueue.udtFileToDownload> FilesToDownload => m_MyEMSLDatasetListInfo.FilesToDownload;
 
         /// <summary>
         /// All files found in MyEMSL via calls to FindFiles
@@ -61,10 +55,7 @@ namespace AnalysisManagerBase
         /// <value></value>
         /// <returns></returns>
         /// <remarks></remarks>
-        public List<DatasetFolderOrFileInfo> AllFoundMyEMSLFiles
-        {
-            get { return m_AllFoundMyEMSLFiles; }
-        }
+        public List<DatasetFolderOrFileInfo> AllFoundMyEMSLFiles => m_AllFoundMyEMSLFiles;
 
         /// <summary>
         /// Returns the files most recently unzipped
@@ -73,10 +64,7 @@ namespace AnalysisManagerBase
         /// <value></value>
         /// <returns></returns>
         /// <remarks></remarks>
-        public List<KeyValuePair<string, string>> MostRecentUnzippedFiles
-        {
-            get { return m_MostRecentUnzippedFiles; }
-        }
+        public List<KeyValuePair<string, string>> MostRecentUnzippedFiles => m_MostRecentUnzippedFiles;
 
         /// <summary>
         /// Files most recently found via a call to FindFiles
@@ -84,10 +72,8 @@ namespace AnalysisManagerBase
         /// <value></value>
         /// <returns></returns>
         /// <remarks></remarks>
-        public List<DatasetFolderOrFileInfo> RecentlyFoundMyEMSLFiles
-        {
-            get { return m_RecentlyFoundMyEMSLFiles; }
-        }
+        public List<DatasetFolderOrFileInfo> RecentlyFoundMyEMSLFiles => m_RecentlyFoundMyEMSLFiles;
+
         #endregion
 
         /// <summary>
@@ -245,7 +231,7 @@ namespace AnalysisManagerBase
 
         }
 
-        private bool GetCachedArchivedFileInfo(Int64 myEMSLFileID, out ArchivedFileInfo matchingFileInfo)
+        private bool GetCachedArchivedFileInfo(long myEMSLFileID, out ArchivedFileInfo matchingFileInfo)
         {
 
             matchingFileInfo = null;
