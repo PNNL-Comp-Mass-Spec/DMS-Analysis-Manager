@@ -160,7 +160,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 // Note that PHRP assumes /InsFHT=True and /InsSyn=True by default
                 // Thus, we only need to use these switches if either of these should be false
-                if (!createFirstHitsFile | !createSynopsisFile)
+                if (!createFirstHitsFile || !createSynopsisFile)
                 {
                     cmdStr += " /InsFHT:" + createFirstHitsFile.ToString();
                     cmdStr += " /InsSyn:" + createSynopsisFile.ToString();

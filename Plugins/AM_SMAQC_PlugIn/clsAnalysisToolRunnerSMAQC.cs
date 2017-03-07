@@ -230,7 +230,7 @@ namespace AnalysisManagerSMAQCPlugIn
                 // 1 second delay
                 PRISM.clsProgRunner.GarbageCollectNow();
 
-                if (blnProcessingError | result != CloseOutType.CLOSEOUT_SUCCESS)
+                if (blnProcessingError || result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     // Something went wrong
                     // In order to help diagnose things, we will move whatever files were created into the result folder,

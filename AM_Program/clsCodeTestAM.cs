@@ -104,7 +104,7 @@ namespace AnalysisManagerProg
             if (diPlotsFolder.Exists && !Directory.Exists(strTargetFolderPath))
                 diPlotsFolder.MoveTo(strTargetFolderPath);
 
-            if (!success | eReturnCode == CloseOutType.CLOSEOUT_FAILED)
+            if (!success || eReturnCode == CloseOutType.CLOSEOUT_FAILED)
             {
                 // Try to save whatever files were moved into the results folder
                 var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);

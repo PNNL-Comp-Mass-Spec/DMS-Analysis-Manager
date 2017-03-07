@@ -454,7 +454,7 @@ namespace AnalysisManagerBase
 
             try
             {
-                if (sourceFilePath == null | DestFilePath == null)
+                if (sourceFilePath == null || DestFilePath == null)
                 {
                     return false;
                 }

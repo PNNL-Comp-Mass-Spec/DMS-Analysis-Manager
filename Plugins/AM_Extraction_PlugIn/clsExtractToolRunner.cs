@@ -264,7 +264,7 @@ namespace AnalysisManagerExtractionPlugin
                     eReturnCode = CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (blnProcessingError | eReturnCode == CloseOutType.CLOSEOUT_FAILED)
+                if (blnProcessingError || eReturnCode == CloseOutType.CLOSEOUT_FAILED)
                 {
                     // Try to save whatever files were moved into the results folder
                     var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);

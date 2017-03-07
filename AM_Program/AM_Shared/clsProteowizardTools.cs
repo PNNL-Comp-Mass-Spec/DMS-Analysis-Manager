@@ -91,7 +91,7 @@ namespace AnalysisManagerBase
                     blnValueMissing = true;
                 }
 
-                if (blnSubKeyMissing | blnValueMissing)
+                if (blnSubKeyMissing || blnValueMissing)
                 {
                     var regSoftware = Microsoft.Win32.Registry.CurrentUser.OpenSubKey("Software", true);
                     if (regSoftware == null)

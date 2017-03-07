@@ -2294,7 +2294,7 @@ namespace AnalysisManagerBase
                         foreach (var chChar in Path.GetFileName(tmpFileName))
                         {
                             var asciiValue = (int)chChar;
-                            if (asciiValue <= 31 | asciiValue >= 128)
+                            if (asciiValue <= 31 || asciiValue >= 128)
                             {
                                 // Invalid character found
                                 okToMove = false;

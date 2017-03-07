@@ -101,7 +101,7 @@ namespace AnalysisManagerExtractionPlugin
             if (mRetrieveOrganismDB)
             {
                 var blnSkipProteinMods = m_jobParams.GetJobParameter("SkipProteinMods", false);
-                if (!blnSkipProteinMods | createPepToProtMapFile)
+                if (!blnSkipProteinMods || createPepToProtMapFile)
                 {
                     // Retrieve the Fasta file; required to create the _ProteinMods.txt file
                     if (!RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")))

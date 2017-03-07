@@ -319,14 +319,14 @@ namespace AnalysisManagerBase
                 {
                     var testcode = reader.Read();
 
-                    if (!(testcode == 10 | testcode == 13))
+                    if (!(testcode == 10 || testcode == 13))
                         continue;
 
                     if (reader.EndOfStream)
                         break;
 
                     var testcode2 = reader.Read();
-                    if (testcode2 == 10 | testcode2 == 13)
+                    if (testcode2 == 10 || testcode2 == 13)
                     {
                         // Line terminator is 2 bytes
                         return 2;

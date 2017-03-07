@@ -86,7 +86,7 @@ namespace AnalysisManagerBase
                 mMSFileInfoScanner.UpdateDatasetStatsTextFile = false;
                 mMSFileInfoScanner.DatasetIDOverride = intDatasetID;
 
-                if (ScanStart > 0 | ScanEnd > 0)
+                if (ScanStart > 0 || ScanEnd > 0)
                 {
                     mMSFileInfoScanner.ScanStart = ScanStart;
                     mMSFileInfoScanner.ScanEnd = ScanEnd;
