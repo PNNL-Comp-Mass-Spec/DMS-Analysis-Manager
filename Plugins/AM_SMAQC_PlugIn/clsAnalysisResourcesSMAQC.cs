@@ -60,10 +60,10 @@ namespace AnalysisManagerSMAQCPlugIn
                 throw new Exception("LLRC is disabled -- do not call this function");
 
             var strLLRCRunnerProgLoc = m_mgrParams.GetParam("LLRCRunnerProgLoc", @"\\gigasax\DMS_Programs\LLRCRunner");
-            var lstFilesToCopy = new List<string>();
+            var lstFilesToCopy = new List<string> {
+                LLRC.LLRCWrapper.RDATA_FILE_ALLDATA,
+                LLRC.LLRCWrapper.RDATA_FILE_MODELS};
 
-            lstFilesToCopy.Add(LLRC.LLRCWrapper.RDATA_FILE_ALLDATA);
-            lstFilesToCopy.Add(LLRC.LLRCWrapper.RDATA_FILE_MODELS);
 
             foreach (var strFileName in lstFilesToCopy)
             {
@@ -190,8 +190,7 @@ namespace AnalysisManagerSMAQCPlugIn
             //   SourceJob:Auto{Tool = "XTandem" AND Settings_File = "IonTrapDefSettings.xml" AND [Parm File] = "xtandem_Rnd1PartTryp.xml"}
             // leads to the input folder being XTM201009211859_Auto625059
 
-            string strInputFolder = null;
-            strInputFolder = m_jobParams.GetParam("StepParameters", "InputFolderName");
+            var strInputFolder = m_jobParams.GetParam("StepParameters", "InputFolderName");
 
             if (string.IsNullOrEmpty(strInputFolder))
             {

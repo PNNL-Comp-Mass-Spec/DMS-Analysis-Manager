@@ -32,7 +32,7 @@ namespace AnalysisManagerSMAQCPlugIn
         internal const bool LLRC_ENABLED = false;
 
         private string mConsoleOutputErrorMsg;
-        private int mDatasetID = 0;
+        private int mDatasetID;
 
         #endregion
 
@@ -50,8 +50,6 @@ namespace AnalysisManagerSMAQCPlugIn
             var result = CloseOutType.CLOSEOUT_SUCCESS;
             var blnProcessingError = false;
 
-            var blnSuccess = false;
-
             try
             {
                 //Call base class for initial setup
@@ -66,8 +64,7 @@ namespace AnalysisManagerSMAQCPlugIn
                 }
 
                 // Determine the path to the SMAQC program
-                string progLoc = null;
-                progLoc = DetermineProgramLocation("SMAQC", "SMAQCProgLoc", "SMAQC.exe");
+                var progLoc = DetermineProgramLocation("SMAQC", "SMAQCProgLoc", "SMAQC.exe");
 
                 if (string.IsNullOrWhiteSpace(progLoc))
                 {
@@ -130,7 +127,7 @@ namespace AnalysisManagerSMAQCPlugIn
 
                 m_progress = PROGRESS_PCT_SMAQC_STARTING;
 
-                blnSuccess = mCmdRunner.RunProgram(progLoc, CmdStr, "SMAQC", true);
+                var blnSuccess = mCmdRunner.RunProgram(progLoc, CmdStr, "SMAQC", true);
 
                 if (!mCmdRunner.WriteConsoleOutputToFile)
                 {
@@ -153,11 +150,10 @@ namespace AnalysisManagerSMAQCPlugIn
 
                 if (!blnSuccess)
                 {
-                    string Msg = null;
-                    Msg = "Error running SMAQC";
-                    m_message = clsGlobal.AppendToComment(m_message, Msg);
+                    var msg = "Error running SMAQC";
+                    m_message = clsGlobal.AppendToComment(m_message, msg);
 
-                    LogError(Msg + ", job " + m_JobNum);
+                    LogError(msg + ", job " + m_JobNum);
 
                     if (mCmdRunner.ExitCode != 0)
                     {
@@ -285,9 +281,9 @@ namespace AnalysisManagerSMAQCPlugIn
         [Obsolete("No longer used")]
         private bool ComputeLLRC()
         {
-            var blnSuccess = false;
+            bool blnSuccess;
 
-            var lstDatasetIDs = new List<int>();
+            List<int> lstDatasetIDs;
 
             var intDatasetID = m_jobParams.GetJobParameter("DatasetID", -1);
 
@@ -305,9 +301,11 @@ namespace AnalysisManagerSMAQCPlugIn
 
             LogMessage("Running LLRC to compute QCDM");
 
-            var oLLRC = new LLRC.LLRCWrapper();
-            oLLRC.PostToDB = true;
-            oLLRC.WorkingDirectory = m_WorkDir;
+            var oLLRC = new LLRC.LLRCWrapper
+            {
+                PostToDB = true,
+                WorkingDirectory = m_WorkDir
+            };
 
             // Add result files to skip
             m_jobParams.AddResultFileExtensionToSkip(".Rdata");
@@ -350,7 +348,8 @@ namespace AnalysisManagerSMAQCPlugIn
                 m_message = "DatasetID not defined";
                 return false;
             }
-            else if (!int.TryParse(strDatasetID, out mDatasetID))
+
+            if (!int.TryParse(strDatasetID, out mDatasetID))
             {
                 m_message = "DatasetID is not numeric: " + strDatasetID;
                 return false;
@@ -403,14 +402,13 @@ namespace AnalysisManagerSMAQCPlugIn
                 LogError(m_message);
                 return false;
             }
-            else
+
+            if (!blnSuccess)
             {
-                if (!blnSuccess)
-                {
-                    m_message = "Error obtaining InstrumentID for dataset " + mDatasetID;
-                }
-                return blnSuccess;
+                m_message = "Error obtaining InstrumentID for dataset " + mDatasetID;
             }
+
+            return blnSuccess;
         }
 
         private void CopyFailedResultsToArchiveFolder()
@@ -429,8 +427,7 @@ namespace AnalysisManagerSMAQCPlugIn
             m_jobParams.RemoveResultFileToSkip(SMAQC_CONSOLE_OUTPUT);
 
             // Try to save whatever files are in the work directory
-            string strFolderPathToArchive = null;
-            strFolderPathToArchive = string.Copy(m_WorkDir);
+            var strFolderPathToArchive = string.Copy(m_WorkDir);
 
             // Make the results folder
             var result = MakeResultsFolder();
@@ -450,7 +447,7 @@ namespace AnalysisManagerSMAQCPlugIn
             objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive);
         }
 
-        private bool ConvertResultsToXML(ref List<KeyValuePair<string, string>> lstResults, ref string strXMLResults)
+        private bool ConvertResultsToXML(ref List<KeyValuePair<string, string>> lstResults, out string strXMLResults)
         {
             // XML will look like:
 
@@ -610,7 +607,7 @@ namespace AnalysisManagerSMAQCPlugIn
 
         // This RegEx matches lines in the form:
         // 2/13/2012 07:15:42 PM - Searching for Text Files!...
-        private Regex reMatchTimeStamp = new Regex(@"^\d+/\d+/\d+ \d+:\d+:\d+ [AP]M - ", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private readonly Regex reMatchTimeStamp = new Regex(@"^\d+/\d+/\d+ \d+:\d+:\d+ [AP]M - ", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
         /// Parse the SMAQC console output file to track progress
@@ -637,18 +634,15 @@ namespace AnalysisManagerSMAQCPlugIn
                     LogDebug("Parsing file " + strConsoleOutputFilePath);
                 }
 
-                float sngEffectiveProgress = 0;
-                sngEffectiveProgress = PROGRESS_PCT_SMAQC_STARTING;
+                var sngEffectiveProgress = PROGRESS_PCT_SMAQC_STARTING;
 
                 mConsoleOutputErrorMsg = string.Empty;
 
                 using (var srInFile = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    var intLinesRead = 0;
                     while (!srInFile.EndOfStream)
                     {
                         var strLineIn = srInFile.ReadLine();
-                        intLinesRead += 1;
 
                         if (string.IsNullOrWhiteSpace(strLineIn))
                             continue;
@@ -741,11 +735,7 @@ namespace AnalysisManagerSMAQCPlugIn
         {
             const int MAX_RETRY_COUNT = 3;
 
-            var intStartIndex = 0;
-
-            string strXMLResultsClean = null;
-
-            var blnSuccess = false;
+            bool blnSuccess;
 
             try
             {
@@ -759,7 +749,8 @@ namespace AnalysisManagerSMAQCPlugIn
                 // This line will look like this:
                 //   <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 
-                intStartIndex = strXMLResults.IndexOf("?>", StringComparison.Ordinal);
+                var intStartIndex = strXMLResults.IndexOf("?>", StringComparison.Ordinal);
+                string strXMLResultsClean;
                 if (intStartIndex > 0)
                 {
                     strXMLResultsClean = strXMLResults.Substring(intStartIndex + 2).Trim();
@@ -771,10 +762,11 @@ namespace AnalysisManagerSMAQCPlugIn
 
                 // Call stored procedure StoreSMAQCResults in DMS5
 
-                var objCommand = new SqlCommand();
-
-                objCommand.CommandType = CommandType.StoredProcedure;
-                objCommand.CommandText = STORE_SMAQC_RESULTS_SP_NAME;
+                var objCommand = new SqlCommand
+                {
+                    CommandType = CommandType.StoredProcedure,
+                    CommandText = STORE_SMAQC_RESULTS_SP_NAME
+                };
 
                 objCommand.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
                 objCommand.Parameters.Add(new SqlParameter("@DatasetID", SqlDbType.Int)).Value = intDatasetID;
@@ -791,7 +783,7 @@ namespace AnalysisManagerSMAQCPlugIn
                 }
                 else
                 {
-                    m_message = "Error storing SMAQC Results in database, " + STORE_SMAQC_RESULTS_SP_NAME + " returned " + ResCode.ToString();
+                    m_message = "Error storing SMAQC Results in database, " + STORE_SMAQC_RESULTS_SP_NAME + " returned " + ResCode;
                     LogError(m_message);
                     blnSuccess = false;
                 }
@@ -830,9 +822,9 @@ namespace AnalysisManagerSMAQCPlugIn
                 else
                 {
                     // Convert the results to XML format
-                    var strXMLResults = string.Empty;
+                    string strXMLResults;
 
-                    blnSuccess = ConvertResultsToXML(ref lstResults, ref strXMLResults);
+                    blnSuccess = ConvertResultsToXML(ref lstResults, out strXMLResults);
 
                     if (blnSuccess)
                     {
@@ -865,7 +857,7 @@ namespace AnalysisManagerSMAQCPlugIn
 
                 var fiFiles = diWorkDir.GetFiles("SMAQC-log*.txt");
 
-                if ((fiFiles != null) && fiFiles.Length > 0)
+                if (fiFiles.Length > 0)
                 {
                     // There should only be one file; just parse fiFiles[0]
                     var strLogFilePathNew = Path.Combine(m_WorkDir, "SMAQC_log.txt");
@@ -895,7 +887,6 @@ namespace AnalysisManagerSMAQCPlugIn
         private bool StoreToolVersionInfo(string strSMAQCProgLoc)
         {
             var strToolVersionInfo = string.Empty;
-            var blnSuccess = false;
 
             if (m_DebugLevel >= 2)
             {
@@ -908,7 +899,7 @@ namespace AnalysisManagerSMAQCPlugIn
                 try
                 {
                     strToolVersionInfo = "Unknown";
-                    return base.SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>());
+                    return SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>());
                 }
                 catch (Exception ex)
                 {
@@ -916,12 +907,10 @@ namespace AnalysisManagerSMAQCPlugIn
                         "Exception calling SetStepTaskToolVersion: " + ex.Message);
                     return false;
                 }
-
-                return false;
             }
 
             // Lookup the version of the SMAQC application
-            blnSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, ioSMAQC.FullName);
+            var blnSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, ioSMAQC.FullName);
             if (!blnSuccess)
                 return false;
 
@@ -934,12 +923,13 @@ namespace AnalysisManagerSMAQCPlugIn
             }
 
             // Store paths to key DLLs in ioToolFiles
-            var ioToolFiles = new List<FileInfo>();
-            ioToolFiles.Add(ioSMAQC);
+            var ioToolFiles = new List<FileInfo> {
+                ioSMAQC
+            };
 
             try
             {
-                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
+                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
             }
             catch (Exception ex)
             {
