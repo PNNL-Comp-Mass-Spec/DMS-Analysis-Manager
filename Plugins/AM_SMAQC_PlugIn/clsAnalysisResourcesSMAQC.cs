@@ -213,7 +213,8 @@ namespace AnalysisManagerSMAQCPlugIn
             }
             else
             {
-                m_message = "InputFolder is not an X!Tandem, Sequest, or MSGF+ folder; it should start with XTM, Seq, or MSG and is auto-determined by the SourceJob SpecialProcessing text";
+                m_message = "InputFolder '" + strInputFolder + "' is not an X!Tandem, Sequest, or MSGF+ folder; " + 
+                    "it should start with XTM, Seq, or MSG and is auto-determined by the SourceJob SpecialProcessing text";
                 LogError(m_message);
                 return false;
             }
