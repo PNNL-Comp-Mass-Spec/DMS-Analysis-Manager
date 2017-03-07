@@ -412,6 +412,11 @@ namespace AnalysisManagerBase
                     OnErrorEvent("CopyFileUsingLocks returned false copying " + srcFilePath + " to " + destFilePath);
                     return false;
                 }
+                catch (PathTooLongException ex)
+                {
+                    OnErrorEvent("Exception copying file " + srcFilePath + " to " + destFilePath + "; path too long", ex);
+                    return false;
+                }
                 catch (Exception ex)
                 {
                     OnErrorEvent("Exception copying file " + srcFilePath + " to " + destFilePath + "; Retry Count = " + retryCount, ex);
