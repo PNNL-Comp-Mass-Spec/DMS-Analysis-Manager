@@ -426,6 +426,23 @@ namespace AnalysisManagerBase
 
         }
 
+        public static string GetDotNetVersion()
+        {
+            try
+            {
+                var versionChecker = new clsDotNETVersionChecker();
+                return versionChecker.GetLatestDotNETVersion();
+            }
+            catch (Exception ex)
+            {
+                var msg = "Unknown .NET version, " + ex.Message;
+                LogError(msg, ex);
+                return msg;
+            }
+
+
+        }
+
         /// <summary>
         /// Run a query against a SQL Server database
         /// </summary>

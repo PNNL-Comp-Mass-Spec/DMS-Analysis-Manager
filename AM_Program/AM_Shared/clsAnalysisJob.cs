@@ -145,7 +145,6 @@ namespace AnalysisManagerBase
         public bool AddAdditionalParameter(string SectionName, string ParamName, bool ParamValue)
         {
 
-
             try
             {
                 SetParam(SectionName, ParamName, ParamValue.ToString());
@@ -809,7 +808,22 @@ namespace AnalysisManagerBase
 
             RequestTaskResult taskResult;
 
-            var strProductVersion = clsGlobal.GetAssemblyVersion() ?? "??";
+            var productVersion = clsGlobal.GetAssemblyVersion() ?? "??";
+
+            var dotNetVersion = clsGlobal.GetDotNetVersion();
+
+            string managerVersion;
+            if (!string.IsNullOrEmpty(dotNetVersion))
+            {
+                if (!dotNetVersion.StartsWith("v", StringComparison.InvariantCultureIgnoreCase))
+                    dotNetVersion = "v" + dotNetVersion;
+
+                managerVersion = productVersion + "; .NET " + dotNetVersion;
+            }
+            else
+            {
+                managerVersion = productVersion + "; Unkown .NET Version";
+            }
 
             Reset();
 
@@ -824,7 +838,7 @@ namespace AnalysisManagerBase
                 myCmd.Parameters.Add(new SqlParameter("@parameters", SqlDbType.VarChar, 8000)).Direction = ParameterDirection.Output;
                 myCmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
                 myCmd.Parameters.Add(new SqlParameter("@infoOnly", SqlDbType.TinyInt)).Value = 0;
-                myCmd.Parameters.Add(new SqlParameter("@AnalysisManagerVersion", SqlDbType.VarChar, 128)).Value = strProductVersion;
+                myCmd.Parameters.Add(new SqlParameter("@AnalysisManagerVersion", SqlDbType.VarChar, 128)).Value = managerVersion;
 
                 if (m_DebugLevel > 4)
                 {
