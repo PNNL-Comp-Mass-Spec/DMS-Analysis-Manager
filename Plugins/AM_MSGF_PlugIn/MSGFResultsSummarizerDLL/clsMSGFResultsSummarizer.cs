@@ -175,10 +175,7 @@ namespace MSGFResultsSummarizer
         /// <remarks>When this is false, we cannot compute MaximumScanGapAdjacentMSn or PercentMSnScansNoPSM</remarks>
         public bool ContactDatabase { get; set; }
 
-        public bool DatasetScanStatsLookupError
-        {
-            get { return mDatasetScanStatsLookupError; }
-        }
+        public bool DatasetScanStatsLookupError => mDatasetScanStatsLookupError;
 
         public string ErrorMessage
         {
@@ -188,10 +185,7 @@ namespace MSGFResultsSummarizer
                 {
                     return string.Empty;
                 }
-                else
-                {
-                    return mErrorMessage;
-                }
+                return mErrorMessage;
             }
         }
 
@@ -207,10 +201,7 @@ namespace MSGFResultsSummarizer
             set { mFDRThreshold = value; }
         }
 
-        public int MaximumScanGapAdjacentMSn
-        {
-            get { return mMaximumScanGapAdjacentMSn; }
-        }
+        public int MaximumScanGapAdjacentMSn => mMaximumScanGapAdjacentMSn;
 
         public double MSGFThreshold
         {
@@ -226,10 +217,7 @@ namespace MSGFResultsSummarizer
                 {
                     return string.Empty;
                 }
-                else
-                {
-                    return mMSGFSynopsisFileName;
-                }
+                return mMSGFSynopsisFileName;
             }
         }
 
@@ -239,10 +227,7 @@ namespace MSGFResultsSummarizer
             set { mOutputFolderPath = value; }
         }
 
-        public double PercentMSnScansNoPSM
-        {
-            get { return mPercentMSnScansNoPSM; }
-        }
+        public double PercentMSnScansNoPSM => mPercentMSnScansNoPSM;
 
         public bool PostJobPSMResultsToDB
         {
@@ -250,30 +235,15 @@ namespace MSGFResultsSummarizer
             set { mPostJobPSMResultsToDB = value; }
         }
 
-        public clsPHRPReader.ePeptideHitResultType ResultType
-        {
-            get { return mResultType; }
-        }
+        public clsPHRPReader.ePeptideHitResultType ResultType => mResultType;
 
-        public string ResultTypeName
-        {
-            get { return mResultType.ToString(); }
-        }
+        public string ResultTypeName => mResultType.ToString();
 
-        public int SpectraSearched
-        {
-            get { return mSpectraSearched; }
-        }
+        public int SpectraSearched => mSpectraSearched;
 
-        public int TotalPSMsFDR
-        {
-            get { return mFDRBasedCounts.TotalPSMs; }
-        }
+        public int TotalPSMsFDR => mFDRBasedCounts.TotalPSMs;
 
-        public int TotalPSMsMSGF
-        {
-            get { return mMSGFBasedCounts.TotalPSMs; }
-        }
+        public int TotalPSMsMSGF => mMSGFBasedCounts.TotalPSMs;
 
         public bool SaveResultsToTextFile
         {
@@ -281,105 +251,45 @@ namespace MSGFResultsSummarizer
             set { mSaveResultsToTextFile = value; }
         }
 
-        public int UniquePeptideCountFDR
-        {
-            get { return mFDRBasedCounts.UniquePeptideCount; }
-        }
+        public int UniquePeptideCountFDR => mFDRBasedCounts.UniquePeptideCount;
 
-        public int UniquePeptideCountMSGF
-        {
-            get { return mMSGFBasedCounts.UniquePeptideCount; }
-        }
+        public int UniquePeptideCountMSGF => mMSGFBasedCounts.UniquePeptideCount;
 
-        public int UniqueProteinCountFDR
-        {
-            get { return mFDRBasedCounts.UniqueProteinCount; }
-        }
+        public int UniqueProteinCountFDR => mFDRBasedCounts.UniqueProteinCount;
 
-        public int UniqueProteinCountMSGF
-        {
-            get { return mMSGFBasedCounts.UniqueProteinCount; }
-        }
+        public int UniqueProteinCountMSGF => mMSGFBasedCounts.UniqueProteinCount;
 
-        public int UniquePhosphopeptideCountFDR
-        {
-            get { return mFDRBasedCounts.UniquePhosphopeptideCount; }
-        }
+        public int UniquePhosphopeptideCountFDR => mFDRBasedCounts.UniquePhosphopeptideCount;
 
-        public int UniquePhosphopeptideCountMSGF
-        {
-            get { return mMSGFBasedCounts.UniquePhosphopeptideCount; }
-        }
+        public int UniquePhosphopeptideCountMSGF => mMSGFBasedCounts.UniquePhosphopeptideCount;
 
-        public int UniquePhosphopeptidesCTermK_FDR
-        {
-            get { return mFDRBasedCounts.UniquePhosphopeptidesCTermK; }
-        }
+        public int UniquePhosphopeptidesCTermK_FDR => mFDRBasedCounts.UniquePhosphopeptidesCTermK;
 
-        public int UniquePhosphopeptidesCTermK_MSGF
-        {
-            get { return mMSGFBasedCounts.UniquePhosphopeptidesCTermK; }
-        }
+        public int UniquePhosphopeptidesCTermK_MSGF => mMSGFBasedCounts.UniquePhosphopeptidesCTermK;
 
-        public int UniquePhosphopeptidesCTermR_FDR
-        {
-            get { return mFDRBasedCounts.UniquePhosphopeptidesCTermR; }
-        }
+        public int UniquePhosphopeptidesCTermR_FDR => mFDRBasedCounts.UniquePhosphopeptidesCTermR;
 
-        public int UniquePhosphopeptidesCTermR_MSGF
-        {
-            get { return mMSGFBasedCounts.UniquePhosphopeptidesCTermR; }
-        }
+        public int UniquePhosphopeptidesCTermR_MSGF => mMSGFBasedCounts.UniquePhosphopeptidesCTermR;
 
-        public float MissedCleavageRatioFDR
-        {
-            get { return mFDRBasedCounts.MissedCleavageRatio; }
-        }
+        public float MissedCleavageRatioFDR => mFDRBasedCounts.MissedCleavageRatio;
 
-        public float MissedCleavageRatioMSGF
-        {
-            get { return mMSGFBasedCounts.MissedCleavageRatio; }
-        }
+        public float MissedCleavageRatioMSGF => mMSGFBasedCounts.MissedCleavageRatio;
 
-        public float MissedCleavageRatioPhosphoFDR
-        {
-            get { return mFDRBasedCounts.MissedCleavageRatioPhospho; }
-        }
+        public float MissedCleavageRatioPhosphoFDR => mFDRBasedCounts.MissedCleavageRatioPhospho;
 
-        public float MissedCleavageRatioPhosphoMSGF
-        {
-            get { return mMSGFBasedCounts.MissedCleavageRatioPhospho; }
-        }
+        public float MissedCleavageRatioPhosphoMSGF => mMSGFBasedCounts.MissedCleavageRatioPhospho;
 
-        public int KeratinPeptidesFDR
-        {
-            get { return mFDRBasedCounts.KeratinPeptides; }
-        }
+        public int KeratinPeptidesFDR => mFDRBasedCounts.KeratinPeptides;
 
-        public int KeratinPeptidesMSGF
-        {
-            get { return mMSGFBasedCounts.KeratinPeptides; }
-        }
+        public int KeratinPeptidesMSGF => mMSGFBasedCounts.KeratinPeptides;
 
-        public int TrypsinPeptidesFDR
-        {
-            get { return mFDRBasedCounts.TrypsinPeptides; }
-        }
+        public int TrypsinPeptidesFDR => mFDRBasedCounts.TrypsinPeptides;
 
-        public int TrypsinPeptidesMSGF
-        {
-            get { return mMSGFBasedCounts.TrypsinPeptides; }
-        }
+        public int TrypsinPeptidesMSGF => mMSGFBasedCounts.TrypsinPeptides;
 
-        public int TrypticPeptidesMSGF
-        {
-            get { return mMSGFBasedCounts.TrypticPeptides; }
-        }
+        public int TrypticPeptidesMSGF => mMSGFBasedCounts.TrypticPeptides;
 
-        public int TrypticPeptidesFDR
-        {
-            get { return mFDRBasedCounts.TrypticPeptides; }
-        }
+        public int TrypticPeptidesFDR => mFDRBasedCounts.TrypticPeptides;
 
         #endregion
 
