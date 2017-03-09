@@ -12,7 +12,7 @@ using PHRPReader;
 
 namespace AnalysisManagerMSGFPlugin
 {
-    public class clsMSGFInputCreatorMODPlus : clsMSGFInputCreator
+    public sealed class clsMSGFInputCreatorMODPlus : clsMSGFInputCreator
     {
         /// <summary>
         /// Constructor
@@ -23,6 +23,9 @@ namespace AnalysisManagerMSGFPlugin
         public clsMSGFInputCreatorMODPlus(string strDatasetName, string strWorkDir)
             : base(strDatasetName, strWorkDir, clsPHRPReader.ePeptideHitResultType.MODPlus)
         {
+            // Initialize the file paths
+            // This updates mPHRPFirstHitsFilePath and mPHRPSynopsisFilePath
+            InitializeFilePaths();
         }
 
         protected override void InitializeFilePaths()
@@ -30,6 +33,8 @@ namespace AnalysisManagerMSGFPlugin
             // Customize mPHRPResultFilePath for MODPlus _syn.txt files
             mPHRPFirstHitsFilePath = string.Empty;
             mPHRPSynopsisFilePath = CombineIfValidFile(mWorkDir, clsPHRPParserMODPlus.GetPHRPSynopsisFileName(mDatasetName));
+
+            UpdateMSGFInputOutputFilePaths();
         }
 
         protected override bool PassesFilters(clsPSM objPSM)

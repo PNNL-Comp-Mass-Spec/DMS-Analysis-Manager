@@ -14,7 +14,7 @@ using PHRPReader;
 
 namespace AnalysisManagerMSGFPlugin
 {
-    public class clsMSGFInputCreatorMSGFDB : clsMSGFInputCreator
+    public sealed class clsMSGFInputCreatorMSGFDB : clsMSGFInputCreator
     {
         /// <summary>
         /// Constructor
@@ -25,6 +25,9 @@ namespace AnalysisManagerMSGFPlugin
         public clsMSGFInputCreatorMSGFDB(string strDatasetName, string strWorkDir)
             : base(strDatasetName, strWorkDir, clsPHRPReader.ePeptideHitResultType.MSGFDB)
         {
+            // Initialize the file paths
+            // This updates mPHRPFirstHitsFilePath and mPHRPSynopsisFilePath
+            InitializeFilePaths();
         }
 
         protected override void InitializeFilePaths()
@@ -32,6 +35,8 @@ namespace AnalysisManagerMSGFPlugin
             // Customize mPHRPResultFilePath for MSGFDB synopsis files
             mPHRPFirstHitsFilePath = CombineIfValidFile(mWorkDir, clsPHRPParserMSGFDB.GetPHRPFirstHitsFileName(mDatasetName));
             mPHRPSynopsisFilePath = CombineIfValidFile(mWorkDir, clsPHRPParserMSGFDB.GetPHRPSynopsisFileName(mDatasetName));
+
+            UpdateMSGFInputOutputFilePaths();
         }
 
         /// <summary>

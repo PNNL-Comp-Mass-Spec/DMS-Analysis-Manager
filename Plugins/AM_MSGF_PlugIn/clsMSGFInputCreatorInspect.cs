@@ -12,7 +12,7 @@ using PHRPReader;
 
 namespace AnalysisManagerMSGFPlugin
 {
-    public class clsMSGFInputCreatorInspect : clsMSGFInputCreator
+    public sealed class clsMSGFInputCreatorInspect : clsMSGFInputCreator
     {
         /// <summary>
         /// Constructor
@@ -23,6 +23,9 @@ namespace AnalysisManagerMSGFPlugin
         public clsMSGFInputCreatorInspect(string strDatasetName, string strWorkDir)
             : base(strDatasetName, strWorkDir, clsPHRPReader.ePeptideHitResultType.Inspect)
         {
+            // Initialize the file paths
+            // This updates mPHRPFirstHitsFilePath and mPHRPSynopsisFilePath
+            InitializeFilePaths();
         }
 
         protected override void InitializeFilePaths()
@@ -30,6 +33,8 @@ namespace AnalysisManagerMSGFPlugin
             // Customize mPHRPResultFilePath for Inspect synopsis files
             mPHRPFirstHitsFilePath = CombineIfValidFile(mWorkDir, clsPHRPParserInspect.GetPHRPFirstHitsFileName(mDatasetName));
             mPHRPSynopsisFilePath = CombineIfValidFile(mWorkDir, clsPHRPParserInspect.GetPHRPSynopsisFileName(mDatasetName));
+
+            UpdateMSGFInputOutputFilePaths();
         }
 
         protected override bool PassesFilters(clsPSM objPSM)

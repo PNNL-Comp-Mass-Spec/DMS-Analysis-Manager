@@ -118,11 +118,6 @@ namespace AnalysisManagerMSGFPlugin
             mSkippedLineInfo = new SortedDictionary<int, List<string>>();
 
             mMSGFCachedResults = new SortedDictionary<string, string>();
-
-            // Initialize the file paths
-            InitializeFilePaths();
-
-            UpdateMSGFInputOutputFilePaths();
         }
 
         #region "Functions to be defined in derived classes"

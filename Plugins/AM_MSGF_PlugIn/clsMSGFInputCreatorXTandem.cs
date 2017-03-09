@@ -12,7 +12,7 @@ using PHRPReader;
 
 namespace AnalysisManagerMSGFPlugin
 {
-    public class clsMSGFInputCreatorXTandem : clsMSGFInputCreator
+    public sealed class clsMSGFInputCreatorXTandem : clsMSGFInputCreator
     {
         /// <summary>
         /// Constructor
@@ -23,6 +23,9 @@ namespace AnalysisManagerMSGFPlugin
         public clsMSGFInputCreatorXTandem(string strDatasetName, string strWorkDir)
             : base(strDatasetName, strWorkDir, clsPHRPReader.ePeptideHitResultType.XTandem)
         {
+            // Initialize the file paths
+            // This updates mPHRPFirstHitsFilePath and mPHRPSynopsisFilePath
+            InitializeFilePaths();
         }
 
         protected override void InitializeFilePaths()
@@ -30,6 +33,8 @@ namespace AnalysisManagerMSGFPlugin
             // Customize mPHRPResultFilePath for X!Tandem _xt.txt files
             mPHRPFirstHitsFilePath = CombineIfValidFile(mWorkDir, clsPHRPParserXTandem.GetPHRPFirstHitsFileName(mDatasetName));
             mPHRPSynopsisFilePath = CombineIfValidFile(mWorkDir, clsPHRPParserXTandem.GetPHRPSynopsisFileName(mDatasetName));
+
+            UpdateMSGFInputOutputFilePaths();
         }
 
         protected override bool PassesFilters(clsPSM objPSM)
