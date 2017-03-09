@@ -220,8 +220,22 @@ namespace AnalysisManagerBase
                     var cacheInfoFiles = sourceFolder.GetFiles("*_CacheInfo.txt");
                     if (cacheInfoFiles.Length == 0)
                     {
-                        OnErrorEvent("FindValidFolder reported that folder " + cacheInfoFileSourceType + " has a _CacheInfo.txt file, but none was found");
-                        return string.Empty;
+                        var sourceFolderAlt = new DirectoryInfo(Path.Combine(sourceFolder.FullName, inputFolderName));
+                        if (sourceFolderAlt.Exists)
+                        {
+                            cacheInfoFiles = sourceFolderAlt.GetFiles("*_CacheInfo.txt");
+                        }
+
+                        if (cacheInfoFiles.Length > 0)
+                        {
+                            cacheInfoFileSourceType = sourceFolderAlt.FullName;
+                        }
+                        else
+                        {
+                            OnErrorEvent("FindValidFolder reported that folder " + cacheInfoFileSourceType +
+                                         " has a _CacheInfo.txt file, but none was found");
+                            return string.Empty;
+                        }
                     }
 
                     var sourceCacheInfoFile = cacheInfoFiles.First();
