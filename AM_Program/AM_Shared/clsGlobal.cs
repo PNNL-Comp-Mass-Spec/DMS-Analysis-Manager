@@ -13,7 +13,7 @@ using System.Threading;
 using PRISM;
 
 //*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy 
+// Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2007, Battelle Memorial Institute
 // Created 12/20/2007
@@ -49,9 +49,9 @@ namespace AnalysisManagerBase
 
         [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         public static extern int GetDiskFreeSpaceEx(
-            string lpRootPathName, 
-            out ulong lpFreeBytesAvailable, 
-            out ulong lpTotalNumberOfBytes, 
+            string lpRootPathName,
+            out ulong lpFreeBytesAvailable,
+            out ulong lpTotalNumberOfBytes,
             out ulong lpTotalNumberOfFreeBytes);
 
         private static string mAppFolderPath;
@@ -216,7 +216,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Returns the directory in which the entry assembly (typically the Program .exe file) resides 
+        /// Returns the directory in which the entry assembly (typically the Program .exe file) resides
         /// </summary>
         /// <returns>Full directory path</returns>
         public static string GetAppFolderPath()
@@ -262,7 +262,7 @@ namespace AnalysisManagerBase
         {
             // objAssembly.FullName typically returns something like this:
             // AnalysisManagerProg, Version=2.3.4479.23831, Culture=neutral, PublicKeyToken=null
-            // 
+            //
             // the goal is to extract out the text after Version= but before the next comma
 
             var reGetVersion = new Regex("version=([0-9.]+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
@@ -310,7 +310,7 @@ namespace AnalysisManagerBase
         /// <returns>True if success, false if an error</returns>
         /// <remarks></remarks>
         public static bool GetDataTableByQuery(
-            string sqlStr, string connectionString, string callingFunction, 
+            string sqlStr, string connectionString, string callingFunction,
             short retryCount, out DataTable dtResults, int timeoutSeconds)
         {
 
@@ -334,11 +334,11 @@ namespace AnalysisManagerBase
         /// <returns>True if success, false if an error</returns>
         /// <remarks></remarks>
         public static bool GetDataTableByCmd(
-            SqlCommand cmd, 
-            string connectionString, 
-            string callingFunction, 
+            SqlCommand cmd,
+            string connectionString,
+            string callingFunction,
             short retryCount,
-            out DataTable dtResults, 
+            out DataTable dtResults,
             int timeoutSeconds)
         {
 
@@ -459,11 +459,11 @@ namespace AnalysisManagerBase
         /// Use the GetDataTable functions in this class if you need to retain numeric values or null values
         /// </remarks>
         public static bool GetQueryResultsTopRow(
-            string sqlQuery, 
-            string connectionString, 
-            out List<string> lstResults, 
-            string callingFunction, 
-            short retryCount = 3, 
+            string sqlQuery,
+            string connectionString,
+            out List<string> lstResults,
+            string callingFunction,
+            short retryCount = 3,
             int timeoutSeconds = 5)
         {
 
@@ -498,12 +498,12 @@ namespace AnalysisManagerBase
         /// Use the GetDataTable functions in this class if you need to retain numeric values or null values
         /// </remarks>
         public static bool GetQueryResults(
-            string sqlQuery, 
-            string connectionString, 
-            out List<List<string>> lstResults, 
-            string callingFunction, 
-            short retryCount = 3, 
-            int timeoutSeconds = 30, 
+            string sqlQuery,
+            string connectionString,
+            out List<List<string>> lstResults,
+            string callingFunction,
+            short retryCount = 3,
+            int timeoutSeconds = 30,
             int maxRowsToReturn = 0)
         {
 
@@ -971,7 +971,7 @@ namespace AnalysisManagerBase
         /// </summary>
         private static string ByteArrayToString(byte[] arrInput)
         {
- 
+
             var  strOutput = new StringBuilder(arrInput.Length);
 
             for (var i = 0; i <= arrInput.Length - 1; i++)
@@ -1339,7 +1339,7 @@ namespace AnalysisManagerBase
             {
                 ErrorWritingToLog(formattedError, ex2);
             }
-            
+
         }
 
         /// <summary>
@@ -1400,7 +1400,7 @@ namespace AnalysisManagerBase
             {
                 ErrorWritingToLog(warningMessage, ex);
             }
-            
+
         }
 
         /// <summary>
@@ -1442,7 +1442,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Compares two files line-by-line.  If comparisonStartLine is > 0, then ignores differences up until the given line number.  If 
+        /// Compares two files line-by-line.  If comparisonStartLine is > 0, then ignores differences up until the given line number.  If
         /// </summary>
         /// <param name="filePath1">First file</param>
         /// <param name="filePath2">Second file</param>
@@ -1461,7 +1461,7 @@ namespace AnalysisManagerBase
 
 
         /// <summary>
-        /// Compares two files line-by-line.  If comparisonStartLine is > 0, then ignores differences up until the given line number.  If 
+        /// Compares two files line-by-line.  If comparisonStartLine is > 0, then ignores differences up until the given line number.  If
         /// </summary>
         /// <param name="filePath1">First file</param>
         /// <param name="filePath2">Second file</param>
@@ -1478,7 +1478,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Compares two files line-by-line.  If comparisonStartLine is > 0, then ignores differences up until the given line number. 
+        /// Compares two files line-by-line.  If comparisonStartLine is > 0, then ignores differences up until the given line number.
         /// </summary>
         /// <param name="filePath1">First file</param>
         /// <param name="filePath2">Second file</param>
@@ -1741,7 +1741,7 @@ namespace AnalysisManagerBase
         /// <returns>True if the hashcheck file exists and the actual file matches the expected values; false if a mismatch or a problem</returns>
         /// <remarks>The .hashcheck file has the same name as the data file, but with ".hashcheck" appended</remarks>
         public static bool ValidateFileVsHashcheck(
-            string strDataFilePath, string strHashFilePath, out string strErrorMessage, 
+            string strDataFilePath, string strHashFilePath, out string strErrorMessage,
             bool blnCheckDate, bool blnComputeHash)
         {
             return ValidateFileVsHashcheck(strDataFilePath, strHashFilePath, out strErrorMessage, blnCheckDate, blnComputeHash, blnCheckSize: true);
@@ -1761,7 +1761,7 @@ namespace AnalysisManagerBase
         /// <returns>True if the hashcheck file exists and the actual file matches the expected values; false if a mismatch or a problem</returns>
         /// <remarks>The .hashcheck file has the same name as the data file, but with ".hashcheck" appended</remarks>
         public static bool ValidateFileVsHashcheck(
-            string strDataFilePath, string strHashFilePath, out string strErrorMessage, 
+            string strDataFilePath, string strHashFilePath, out string strErrorMessage,
             bool blnCheckDate, bool blnComputeHash, bool blnCheckSize)
         {
 
@@ -1838,8 +1838,8 @@ namespace AnalysisManagerBase
                 {
                     if (Math.Abs(fiDataFile.LastWriteTimeUtc.Subtract(dtExpectedFileDate).TotalSeconds) > 2)
                     {
-                        strErrorMessage = "File modification date mismatch: expecting " + 
-                            dtExpectedFileDate.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT) + " UTC but actually " + 
+                        strErrorMessage = "File modification date mismatch: expecting " +
+                            dtExpectedFileDate.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT) + " UTC but actually " +
                             fiDataFile.LastWriteTimeUtc.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT) + " UTC";
                         return false;
                     }
@@ -1869,10 +1869,10 @@ namespace AnalysisManagerBase
         }
 
         public static bool ValidateFreeDiskSpace(
-            string directoryDescription, 
-            string directoryPath, 
-            int minFreeSpaceMB, 
-            clsLogTools.LoggerTypes eLogLocationIfNotFound, 
+            string directoryDescription,
+            string directoryPath,
+            int minFreeSpaceMB,
+            clsLogTools.LoggerTypes eLogLocationIfNotFound,
             out string errorMessage)
         {
 

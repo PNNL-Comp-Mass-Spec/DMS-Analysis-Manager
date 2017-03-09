@@ -17,7 +17,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="statusMessage">Status message</param>
         /// <param name="logFileDebugLevel">
-        /// Log level for whether to log to disk: 
+        /// Log level for whether to log to disk:
         /// 0 to always log
         /// 1 to log if m_DebugLevel is >= 1
         /// 2 to log if m_DebugLevel is >= 2
@@ -79,7 +79,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="statusMessage">Status message</param>
         /// <param name="logFileDebugLevel">
-        /// Log level for whether to log to disk: 
+        /// Log level for whether to log to disk:
         /// 0 to always log
         /// 1 to log if m_DebugLevel is >= 1
         /// 2 to log if m_DebugLevel is >= 2
