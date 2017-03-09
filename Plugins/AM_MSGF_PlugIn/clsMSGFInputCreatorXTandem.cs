@@ -34,14 +34,12 @@ namespace AnalysisManagerMSGFPlugin
 
         protected override bool PassesFilters(clsPSM objPSM)
         {
-            double dblLogEValue = 0;
-
-            bool blnPassesFilters = false;
+            var blnPassesFilters = false;
 
             // Keep X!Tandem results with Peptide_Expectation_Value_Log(e) <= -0.3
             // This will typically keep all data in the _xt.txt file
 
-            dblLogEValue = objPSM.GetScoreDbl(clsPHRPParserXTandem.DATA_COLUMN_Peptide_Expectation_Value_LogE, 0);
+            var dblLogEValue = objPSM.GetScoreDbl(clsPHRPParserXTandem.DATA_COLUMN_Peptide_Expectation_Value_LogE, 0);
             if (dblLogEValue <= -0.3)
             {
                 blnPassesFilters = true;

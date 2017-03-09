@@ -54,7 +54,7 @@ namespace AnalysisManagerMSGFPlugin
 
         private SortedDictionary<int, int> mMGFIndexToScan;
 
-        protected string mErrorMessage = string.Empty;
+        protected string mErrorMessage;
         protected string mPHRPFirstHitsFilePath = string.Empty;
 
         protected string mPHRPSynopsisFilePath = string.Empty;
@@ -62,7 +62,7 @@ namespace AnalysisManagerMSGFPlugin
 
         private string mMSGFResultsFilePath = string.Empty;
 
-        private int mMSGFInputFileLineCount = 0;
+        private int mMSGFInputFileLineCount;
 
         private StreamWriter mLogFile;
 
@@ -84,37 +84,19 @@ namespace AnalysisManagerMSGFPlugin
 
         public bool DoNotFilterPeptides { get; set; }
 
-        public string ErrorMessage
-        {
-            get { return mErrorMessage; }
-        }
+        public string ErrorMessage => mErrorMessage;
 
         public bool MgfInstrumentData { get; set; }
 
-        public int MSGFInputFileLineCount
-        {
-            get { return mMSGFInputFileLineCount; }
-        }
+        public int MSGFInputFileLineCount => mMSGFInputFileLineCount;
 
-        public string MSGFInputFilePath
-        {
-            get { return mMSGFInputFilePath; }
-        }
+        public string MSGFInputFilePath => mMSGFInputFilePath;
 
-        public string MSGFResultsFilePath
-        {
-            get { return mMSGFResultsFilePath; }
-        }
+        public string MSGFResultsFilePath => mMSGFResultsFilePath;
 
-        public string PHRPFirstHitsFilePath
-        {
-            get { return mPHRPFirstHitsFilePath; }
-        }
+        public string PHRPFirstHitsFilePath => mPHRPFirstHitsFilePath;
 
-        public string PHRPSynopsisFilePath
-        {
-            get { return mPHRPSynopsisFilePath; }
-        }
+        public string PHRPSynopsisFilePath => mPHRPSynopsisFilePath;
 
         #endregion
 
@@ -125,7 +107,7 @@ namespace AnalysisManagerMSGFPlugin
         /// <param name="strWorkDir">Working directory</param>
         /// <param name="eResultType">PeptideHit result type</param>
         /// <remarks></remarks>
-        public clsMSGFInputCreator(string strDatasetName, string strWorkDir, clsPHRPReader.ePeptideHitResultType eResultType)
+        protected clsMSGFInputCreator(string strDatasetName, string strWorkDir, clsPHRPReader.ePeptideHitResultType eResultType)
         {
             mDatasetName = strDatasetName;
             mWorkDir = strWorkDir;
@@ -174,10 +156,7 @@ namespace AnalysisManagerMSGFPlugin
             {
                 return strText;
             }
-            else
-            {
-                return strText + strDelimiter + strAddnl;
-            }
+            return strText + strDelimiter + strAddnl;
         }
 
         public void CloseLogFileNow()
@@ -198,10 +177,7 @@ namespace AnalysisManagerMSGFPlugin
             {
                 return Path.Combine(strFolder, strFile);
             }
-            else
-            {
-                return string.Empty;
-            }
+            return string.Empty;
         }
 
         private string ConstructMGFMappingCode(int intScanNumber, int intCharge)
@@ -225,7 +201,7 @@ namespace AnalysisManagerMSGFPlugin
 
             try
             {
-                clsMGFReader objMGFReader = new clsMGFReader();
+                var objMGFReader = new clsMGFReader();
 
                 if (!objMGFReader.OpenFile(strMGFFilePath))
                 {
@@ -239,7 +215,7 @@ namespace AnalysisManagerMSGFPlugin
                 while (true)
                 {
                     // Read the next available spectrum
-                    List<string> msmsDataList = null;
+                    List<string> msmsDataList;
                     clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType udtSpectrumHeaderInfo;
 
                     var blnSpectrumFound = objMGFReader.ReadNextSpectrum(out msmsDataList, out udtSpectrumHeaderInfo);
@@ -275,11 +251,10 @@ namespace AnalysisManagerMSGFPlugin
             {
                 return true;
             }
-            else
-            {
-                ReportError("No spectra were found in the MGF file");
-                return false;
-            }
+
+            ReportError("No spectra were found in the MGF file");
+            return false;
+
         }
 
         /// <summary>
@@ -290,14 +265,6 @@ namespace AnalysisManagerMSGFPlugin
         public bool CreateMSGFFirstHitsFile()
         {
             const int MAX_WARNINGS_TO_REPORT = 10;
-
-            string strMSGFFirstHitsResults = null;
-            string strPeptideResultCode = null;
-
-            string strMSGFResultData = string.Empty;
-
-            int intMissingValueCount = 0;
-            string strWarningMessage = null;
 
             try
             {
@@ -322,8 +289,7 @@ namespace AnalysisManagerMSGFPlugin
                 }
 
                 // Define the path to write the first-hits MSGF results to
-                strMSGFFirstHitsResults = Path.GetFileNameWithoutExtension(mPHRPFirstHitsFilePath) +
-                                          MSGF_RESULT_FILENAME_SUFFIX;
+                var strMSGFFirstHitsResults = Path.GetFileNameWithoutExtension(mPHRPFirstHitsFilePath) + MSGF_RESULT_FILENAME_SUFFIX;
                 strMSGFFirstHitsResults = Path.Combine(mWorkDir, strMSGFFirstHitsResults);
 
                 // Create the output file
@@ -332,14 +298,15 @@ namespace AnalysisManagerMSGFPlugin
                     // Write out the headers to swMSGFFHTFile
                     WriteMSGFResultsHeaders(swMSGFFHTFile);
 
-                    intMissingValueCount = 0;
+                    var intMissingValueCount = 0;
 
                     while (phrpReader.MoveNext())
                     {
                         var objPSM = phrpReader.CurrentPSM;
 
-                        strPeptideResultCode = ConstructMSGFResultCode(objPSM.ScanNumber, objPSM.Charge, objPSM.Peptide);
+                        var strPeptideResultCode = ConstructMSGFResultCode(objPSM.ScanNumber, objPSM.Charge, objPSM.Peptide);
 
+                        string strMSGFResultData;
                         if (mMSGFCachedResults.TryGetValue(strPeptideResultCode, out strMSGFResultData))
                         {
                             if (string.IsNullOrEmpty(strMSGFResultData))
@@ -347,7 +314,7 @@ namespace AnalysisManagerMSGFPlugin
                                 // Match text is empty
                                 // We should not write thie out to disk since it would result in empty columns
 
-                                strWarningMessage = "MSGF Results are empty for result code '" + strPeptideResultCode +
+                                var strWarningMessage = "MSGF Results are empty for result code '" + strPeptideResultCode +
                                                     "'; this is unexpected";
                                 intMissingValueCount += 1;
                                 if (intMissingValueCount <= MAX_WARNINGS_TO_REPORT)
@@ -373,7 +340,7 @@ namespace AnalysisManagerMSGFPlugin
                         {
                             // Match not found; this is unexpected
 
-                            strWarningMessage = "Match not found for first-hits entry with result code '" +
+                            var strWarningMessage = "Match not found for first-hits entry with result code '" +
                                                 strPeptideResultCode + "'; this is unexpected";
 
                             // Report the first 10 times this happens
@@ -416,7 +383,6 @@ namespace AnalysisManagerMSGFPlugin
         /// <remarks></remarks>
         public bool CreateMSGFInputFileUsingPHRPResultFiles()
         {
-            string strSpectrumFileName = null;
             var blnSuccess = false;
 
             try
@@ -433,6 +399,7 @@ namespace AnalysisManagerMSGFPlugin
                     return false;
                 }
 
+                string strSpectrumFileName;
                 if (MgfInstrumentData)
                 {
                     strSpectrumFileName = mDatasetName + ".mgf";
@@ -476,7 +443,7 @@ namespace AnalysisManagerMSGFPlugin
 
                     if (!string.IsNullOrEmpty(mPHRPSynopsisFilePath) && File.Exists(mPHRPSynopsisFilePath))
                     {
-                        clsPHRPStartupOptions startupOptions = GetMinimalMemoryPHRPStartupOptions();
+                        var startupOptions = GetMinimalMemoryPHRPStartupOptions();
                         startupOptions.LoadModsAndSeqInfo = true;
 
                         // Read the synopsis file data
@@ -485,14 +452,14 @@ namespace AnalysisManagerMSGFPlugin
                         phrpReader.EchoMessagesToConsole = true;
 
                         // Report any errors cached during instantiation of mPHRPReader
-                        foreach (string strMessage in phrpReader.ErrorMessages)
+                        foreach (var strMessage in phrpReader.ErrorMessages)
                         {
                             ReportError(strMessage);
                         }
                         mErrorMessage = string.Empty;
 
                         // Report any warnings cached during instantiation of mPHRPReader
-                        foreach (string strMessage in phrpReader.WarningMessages)
+                        foreach (var strMessage in phrpReader.WarningMessages)
                         {
                             ReportWarning(strMessage);
                         }
@@ -516,7 +483,7 @@ namespace AnalysisManagerMSGFPlugin
                     {
                         // Now read the first-hits file data
 
-                        clsPHRPStartupOptions startupOptions = GetMinimalMemoryPHRPStartupOptions();
+                        var startupOptions = GetMinimalMemoryPHRPStartupOptions();
                         startupOptions.LoadModsAndSeqInfo = true;
 
                         var phrpReader = new clsPHRPReader(mPHRPFirstHitsFilePath, mPeptideHitResultType, startupOptions);
@@ -565,16 +532,15 @@ namespace AnalysisManagerMSGFPlugin
 
         public List<string> GetSkippedInfoByResultId(int intResultID)
         {
-            List<string> objSkipList = null;
+            List<string> objSkipList;
 
             if (mSkippedLineInfo.TryGetValue(intResultID, out objSkipList))
             {
                 return objSkipList;
             }
-            else
-            {
-                return new List<string>();
-            }
+
+            return new List<string>();
+
         }
 
         /// <summary>
@@ -585,16 +551,15 @@ namespace AnalysisManagerMSGFPlugin
         /// <remarks></remarks>
         public int GetScanByMGFSpectrumIndex(int intMGFSpectrumIndex)
         {
-            int intScanNumber = 0;
+            int intScanNumber;
 
             if (mMGFIndexToScan.TryGetValue(intMGFSpectrumIndex, out intScanNumber))
             {
                 return intScanNumber;
             }
-            else
-            {
-                return 0;
-            }
+
+            return 0;
+
         }
 
         private void LogError(string strErrorMessage)
@@ -603,18 +568,19 @@ namespace AnalysisManagerMSGFPlugin
             {
                 if (mLogFile == null)
                 {
-                    string strErrorLogFilePath = null;
                     var blnWriteHeader = true;
 
-                    strErrorLogFilePath = Path.Combine(mWorkDir, "MSGFInputCreator_Log.txt");
+                    var strErrorLogFilePath = Path.Combine(mWorkDir, "MSGFInputCreator_Log.txt");
 
                     if (File.Exists(strErrorLogFilePath))
                     {
                         blnWriteHeader = false;
                     }
 
-                    mLogFile = new StreamWriter(new FileStream(strErrorLogFilePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite));
-                    mLogFile.AutoFlush = true;
+                    mLogFile = new StreamWriter(new FileStream(strErrorLogFilePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite))
+                    {
+                        AutoFlush = true
+                    };
 
                     if (blnWriteHeader)
                     {
@@ -622,14 +588,11 @@ namespace AnalysisManagerMSGFPlugin
                     }
                 }
 
-                mLogFile.WriteLine(System.DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss tt") + "\t" + strErrorMessage);
+                mLogFile.WriteLine(DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss tt") + "\t" + strErrorMessage);
             }
             catch (Exception ex)
             {
-                if (ErrorEvent != null)
-                {
-                    ErrorEvent("Error writing to MSGFInputCreator log file: " + ex.Message);
-                }
+                ErrorEvent?.Invoke("Error writing to MSGFInputCreator log file: " + ex.Message);
             }
         }
 
@@ -649,23 +612,14 @@ namespace AnalysisManagerMSGFPlugin
             string strSpectrumFileName,
             bool blnParsingSynopsisFile)
         {
-            string strPeptideResultCode = null;
-            string strPHRPSource = null;
-
-            bool blnSuccess = false;
+            string strPHRPSource;
 
             var intResultIDPrevious = 0;
             var intScanNumberPrevious = 0;
             var intChargePrevious = 0;
-            string strPeptidePrevious = string.Empty;
+            var strPeptidePrevious = string.Empty;
 
-            string strScanAndCharge = null;
-            int intScanNumberToWrite = 0;
-            int intMGFIndexLookupFailureCount = 0;
-
-            bool blnPassesFilters = false;
-
-            List<string> objSkipList = null;
+            var intMGFIndexLookupFailureCount = 0;
 
             if (blnParsingSynopsisFile)
             {
@@ -680,13 +634,14 @@ namespace AnalysisManagerMSGFPlugin
 
             while (objReader.MoveNext())
             {
-                blnSuccess = true;
+                var blnSuccess = true;
 
                 var objPSM = objReader.CurrentPSM;
 
                 // Compute the result code; we'll use it later to search/populate mMSGFCachedResults
-                strPeptideResultCode = ConstructMSGFResultCode(objPSM.ScanNumber, objPSM.Charge, objPSM.Peptide);
+                var strPeptideResultCode = ConstructMSGFResultCode(objPSM.ScanNumber, objPSM.Charge, objPSM.Peptide);
 
+                bool blnPassesFilters;
                 if (DoNotFilterPeptides)
                 {
                     blnPassesFilters = true;
@@ -712,14 +667,16 @@ namespace AnalysisManagerMSGFPlugin
                         {
                             blnSuccess = false;
 
+                            List<string> objSkipList;
                             if (mSkippedLineInfo.TryGetValue(intResultIDPrevious, out objSkipList))
                             {
                                 objSkipList.Add(objPSM.ResultID + "\t" + objPSM.ProteinFirst);
                             }
                             else
                             {
-                                objSkipList = new List<string>();
-                                objSkipList.Add(objPSM.ResultID + "\t" + objPSM.ProteinFirst);
+                                objSkipList = new List<string> {
+                                    objPSM.ResultID + "\t" + objPSM.ProteinFirst
+                                };
                                 mSkippedLineInfo.Add(intResultIDPrevious, objSkipList);
                             }
                         }
@@ -745,57 +702,60 @@ namespace AnalysisManagerMSGFPlugin
                     }
                 }
 
-                if (blnSuccess & blnPassesFilters)
-                {
-                    if (MgfInstrumentData)
-                    {
-                        strScanAndCharge = ConstructMGFMappingCode(objPSM.ScanNumber, objPSM.Charge);
-                        if (!mScanAndChargeToMGFIndex.TryGetValue(strScanAndCharge, out intScanNumberToWrite))
-                        {
-                            // Match not found; try searching for scan and charge 0
-                            if (!mScanAndChargeToMGFIndex.TryGetValue(ConstructMGFMappingCode(objPSM.ScanNumber, 0), out intScanNumberToWrite))
-                            {
-                                intScanNumberToWrite = 0;
+                if (!(blnSuccess & blnPassesFilters))
+                    continue;
 
-                                intMGFIndexLookupFailureCount += 1;
-                                if (intMGFIndexLookupFailureCount <= 10)
-                                {
-                                    ReportError("Unable to find " + strScanAndCharge + " in mScanAndChargeToMGFIndex for peptide " + objPSM.Peptide);
-                                }
+                int intScanNumberToWrite;
+
+                if (MgfInstrumentData)
+                {
+                    var strScanAndCharge = ConstructMGFMappingCode(objPSM.ScanNumber, objPSM.Charge);
+
+                    if (!mScanAndChargeToMGFIndex.TryGetValue(strScanAndCharge, out intScanNumberToWrite))
+                    {
+                        // Match not found; try searching for scan and charge 0
+                        if (!mScanAndChargeToMGFIndex.TryGetValue(ConstructMGFMappingCode(objPSM.ScanNumber, 0), out intScanNumberToWrite))
+                        {
+                            intScanNumberToWrite = 0;
+
+                            intMGFIndexLookupFailureCount += 1;
+                            if (intMGFIndexLookupFailureCount <= 10)
+                            {
+                                ReportError("Unable to find " + strScanAndCharge + " in mScanAndChargeToMGFIndex for peptide " + objPSM.Peptide);
                             }
                         }
                     }
-                    else
-                    {
-                        intScanNumberToWrite = objPSM.ScanNumber;
-                    }
+                }
+                else
+                {
+                    intScanNumberToWrite = objPSM.ScanNumber;
+                }
 
-                    // The title column holds the original peptide sequence
-                    // If a peptide doesn't have any mods, then the Title column and the Annotation column will be identical
+                // The title column holds the original peptide sequence
+                // If a peptide doesn't have any mods, then the Title column and the Annotation column will be identical
 
-                    // Columns are: #SpectrumFile  Title  Scan#  Annotation  Charge  Protein_First  Result_ID  Data_Source  Collision_Mode
-                    swMSGFInputFile.WriteLine(
-                        strSpectrumFileName + "\t" +
-                        objPSM.Peptide + "\t" +
-                        intScanNumberToWrite + "\t" +
-                        objPSM.PeptideWithNumericMods + "\t" +
-                        objPSM.Charge + "\t" +
-                        objPSM.ProteinFirst + "\t" +
-                        objPSM.ResultID + "\t" +
-                        strPHRPSource + "\t" +
-                        objPSM.CollisionMode);
+                // Columns are: #SpectrumFile  Title  Scan#  Annotation  Charge  Protein_First  Result_ID  Data_Source  Collision_Mode
+                swMSGFInputFile.WriteLine(
+                    strSpectrumFileName + "\t" +
+                    objPSM.Peptide + "\t" +
+                    intScanNumberToWrite + "\t" +
+                    objPSM.PeptideWithNumericMods + "\t" +
+                    objPSM.Charge + "\t" +
+                    objPSM.ProteinFirst + "\t" +
+                    objPSM.ResultID + "\t" +
+                    strPHRPSource + "\t" +
+                    objPSM.CollisionMode);
 
-                    mMSGFInputFileLineCount += 1;
+                mMSGFInputFileLineCount += 1;
 
-                    try
-                    {
-                        mMSGFCachedResults.Add(strPeptideResultCode, "");
-                    }
-                    catch (Exception)
-                    {
-                        // Key is already present; this is unexpected, but we can safely ignore this error
-                        LogError("Warning in ReadAndStorePHRPData: Key already defined in mMSGFCachedResults: " + strPeptideResultCode);
-                    }
+                try
+                {
+                    mMSGFCachedResults.Add(strPeptideResultCode, "");
+                }
+                catch (Exception)
+                {
+                    // Key is already present; this is unexpected, but we can safely ignore this error
+                    LogError("Warning in ReadAndStorePHRPData: Key already defined in mMSGFCachedResults: " + strPeptideResultCode);
                 }
             }
 
@@ -809,26 +769,20 @@ namespace AnalysisManagerMSGFPlugin
         {
             mErrorMessage = strErrorMessage;
             LogError(mErrorMessage);
-            if (ErrorEvent != null)
-            {
-                ErrorEvent(mErrorMessage);
-            }
+            ErrorEvent?.Invoke(mErrorMessage);
         }
 
         private void ReportWarning(string strWarningMessage)
         {
             LogError(strWarningMessage);
-            if (WarningEvent != null)
-            {
-                WarningEvent(strWarningMessage);
-            }
+            WarningEvent?.Invoke(strWarningMessage);
         }
 
         /// <summary>
         /// Define the MSGF input and output file paths
         /// </summary>
-        /// <remarks>This sub should be called after updating mPHRPResultFilePath</remarks>
-        private void UpdateMSGFInputOutputFilePaths()
+        /// <remarks>This method is called after InitializeFilePaths updates mPHRPResultFilePath</remarks>
+        protected void UpdateMSGFInputOutputFilePaths()
         {
             mMSGFInputFilePath = Path.Combine(mWorkDir,
                 Path.GetFileNameWithoutExtension(mPHRPSynopsisFilePath) +

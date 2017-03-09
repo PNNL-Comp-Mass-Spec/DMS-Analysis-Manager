@@ -117,25 +117,25 @@ namespace MSGFResultsSummarizer
         private double mEValueThreshold = DEFAULT_EVALUE_THRESHOLD;
 
         private bool mDatasetScanStatsLookupError;
-        private bool mPostJobPSMResultsToDB = false;
+        private bool mPostJobPSMResultsToDB;
 
         private bool mSaveResultsToTextFile = true;
         private string mOutputFolderPath = string.Empty;
 
-        private int mSpectraSearched = 0;
+        private int mSpectraSearched;
 
         /// <summary>
         /// Value between 0 and 100, indicating the percentage of the MS2 spectra with search results that are
         /// more than 2 scans away from an adjacent spectrum
         /// </summary>
         /// <remarks></remarks>
-        private double mPercentMSnScansNoPSM = 0;
+        private double mPercentMSnScansNoPSM;
 
         /// <summary>
         /// Maximum number of scans separating two MS2 spectra with search results
         /// </summary>
         /// <remarks></remarks>
-        private int mMaximumScanGapAdjacentMSn = 0;
+        private int mMaximumScanGapAdjacentMSn;
 
         private udtPSMStatsType mMSGFBasedCounts;
         private udtPSMStatsType mFDRBasedCounts;
@@ -146,7 +146,7 @@ namespace MSGFResultsSummarizer
         private readonly string mWorkDir;
         private readonly string mConnectionString;
 
-        private readonly PRISM.clsExecuteDatabaseSP mStoredProcedureExecutor;
+        private readonly clsExecuteDatabaseSP mStoredProcedureExecutor;
 
         // The following is auto-determined in ProcessMSGFResults
         private string mMSGFSynopsisFileName = string.Empty;
@@ -412,7 +412,7 @@ namespace MSGFResultsSummarizer
             mWorkDir = strSourceFolderPath;
             mConnectionString = strConnectionString;
 
-            mStoredProcedureExecutor = new PRISM.clsExecuteDatabaseSP(mConnectionString);
+            mStoredProcedureExecutor = new clsExecuteDatabaseSP(mConnectionString);
             mStoredProcedureExecutor.DebugEvent += m_ExecuteSP_DebugEvent;
             mStoredProcedureExecutor.DBErrorEvent += m_ExecuteSP_DBErrorEvent;
             ContactDatabase = true;
@@ -420,7 +420,7 @@ namespace MSGFResultsSummarizer
 
         private void AddUpdateUniqueSequence(IDictionary<int, clsUniqueSeqInfo> lstUniqueSeqs, int intSeqId, clsUniqueSeqInfo seqInfoToStore)
         {
-            clsUniqueSeqInfo existingSeqInfo = null;
+            clsUniqueSeqInfo existingSeqInfo;
 
             if (lstUniqueSeqs.TryGetValue(intSeqId, out existingSeqInfo))
             {
@@ -440,7 +440,7 @@ namespace MSGFResultsSummarizer
                 // Keys are Scan_Charge, values are Scan number
                 var lstUniqueSpectra = new Dictionary<string, int>();
 
-                clsPHRPStartupOptions startupOptions = GetMinimalMemoryPHRPStartupOptions();
+                var startupOptions = GetMinimalMemoryPHRPStartupOptions();
 
                 using (var objReader = new clsPHRPReader(strFirstHitsFilePath, startupOptions))
                 {
@@ -475,13 +475,11 @@ namespace MSGFResultsSummarizer
 
                 CheckForScanGaps(scanList);
 
-                return;
             }
             catch (Exception ex)
             {
                 SetErrorMessage(ex.Message);
                 Console.WriteLine(ex.StackTrace);
-                return;
             }
         }
 
@@ -491,8 +489,8 @@ namespace MSGFResultsSummarizer
             // The occurrence of large gaps indicates that a processing thread in MSGF+ crashed and the results may be incomplete
             scanList.Sort();
 
-            var totalSpectra = 0;
-            var totalMSnSpectra = 0;
+            int totalSpectra;
+            int totalMSnSpectra;
 
             var success = LookupScanStats(out totalSpectra, out totalMSnSpectra);
             if (!success || totalSpectra <= 0)
@@ -572,9 +570,9 @@ namespace MSGFResultsSummarizer
                                      "        SUM(CASE WHEN Scan_Type LIKE '%MSn' THEN Scan_Count ELSE 0 END) AS ScanCountMSn" +
                                      " FROM V_Dataset_Scans_Export DSE" + " WHERE Dataset = '" + DatasetName + "'" + " GROUP BY Scan_Count_Total";
 
-                List<List<string>> lstResults = null;
+                List<List<string>> lstResults;
 
-                var dbTools = new PRISM.clsDBTools(mConnectionString);
+                var dbTools = new clsDBTools(mConnectionString);
 
                 dbTools.ErrorEvent += DbToolsErrorEventHandler;
 
@@ -592,11 +590,9 @@ namespace MSGFResultsSummarizer
                             success = false;
                             break;
                         }
-                        else
-                        {
-                            int.TryParse(scanCountMSn, out totalMSnSpectra);
-                            return true;
-                        }
+
+                        int.TryParse(scanCountMSn, out totalMSnSpectra);
+                        return true;
                     }
                 }
 
@@ -640,11 +636,11 @@ namespace MSGFResultsSummarizer
         {
             var lstFilteredPSMs = new Dictionary<int, clsPSMInfo>();
 
-            bool blnSuccess = false;
+            var blnSuccess = false;
             var blnFilterPSMs = true;
 
             // Make sure .PassesFilter is false for all of the observations
-            foreach (KeyValuePair<int, clsPSMInfo> kvEntry in lstNormalizedPSMs)
+            foreach (var kvEntry in lstNormalizedPSMs)
             {
                 foreach (var observation in kvEntry.Value.Observations)
                 {
@@ -681,7 +677,7 @@ namespace MSGFResultsSummarizer
             if (!blnFilterPSMs)
             {
                 // Keep all PSMs
-                foreach (KeyValuePair<int, clsPSMInfo> kvEntry in lstNormalizedPSMs)
+                foreach (var kvEntry in lstNormalizedPSMs)
                 {
                     foreach (var observation in kvEntry.Value.Observations)
                     {
@@ -728,7 +724,7 @@ namespace MSGFResultsSummarizer
         private bool FilterPSMsByFDR(IDictionary<int, clsPSMInfo> lstPSMs)
         {
             var blnFDRAlreadyComputed = true;
-            foreach (KeyValuePair<int, clsPSMInfo> kvEntry in lstPSMs)
+            foreach (var kvEntry in lstPSMs)
             {
                 if (kvEntry.Value.BestFDR < 0)
                 {
@@ -740,7 +736,7 @@ namespace MSGFResultsSummarizer
             var lstResultIDtoFDRMap = new Dictionary<int, double>();
             if (blnFDRAlreadyComputed)
             {
-                foreach (KeyValuePair<int, clsPSMInfo> kvEntry in lstPSMs)
+                foreach (var kvEntry in lstPSMs)
                 {
                     lstResultIDtoFDRMap.Add(kvEntry.Key, kvEntry.Value.BestFDR);
                 }
@@ -759,7 +755,7 @@ namespace MSGFResultsSummarizer
                 var lstMSGFtoResultIDMap = new List<KeyValuePair<double, int>>();
 
                 var blnValidMSGFOrEValue = false;
-                foreach (KeyValuePair<int, clsPSMInfo> kvEntry in lstPSMs)
+                foreach (var kvEntry in lstPSMs)
                 {
                     if (kvEntry.Value.BestMSGF < clsPSMInfo.UNKNOWN_MSGF_SPECPROB)
                     {
@@ -788,13 +784,11 @@ namespace MSGFResultsSummarizer
 
                 var intForwardResults = 0;
                 var intDecoyResults = 0;
-                string strProtein = null;
-                List<int> lstMissedResultIDsAtStart;
-                lstMissedResultIDsAtStart = new List<int>();
+                var lstMissedResultIDsAtStart = new List<int>();
 
-                foreach (KeyValuePair<double, int> kvEntry in lstMSGFtoResultIDMap)
+                foreach (var kvEntry in lstMSGFtoResultIDMap)
                 {
-                    strProtein = lstPSMs[kvEntry.Value].Protein.ToLower();
+                    var strProtein = lstPSMs[kvEntry.Value].Protein.ToLower();
 
                     // MTS reversed proteins                 'reversed[_]%'
                     // MTS scrambled proteins                'scrambled[_]%'
@@ -820,7 +814,7 @@ namespace MSGFResultsSummarizer
 
                         if (lstMissedResultIDsAtStart.Count > 0)
                         {
-                            foreach (int intResultID in lstMissedResultIDsAtStart)
+                            foreach (var intResultID in lstMissedResultIDsAtStart)
                             {
                                 lstResultIDtoFDRMap.Add(intResultID, dblFDRThreshold);
                             }
@@ -838,7 +832,7 @@ namespace MSGFResultsSummarizer
                 if (intDecoyResults == 0)
                 {
                     // We never encountered any decoy proteins; cannot compute FDR
-                    SetErrorMessage("Data does not contain decoy proteins; cannot compute a decoy-based FDR");
+                    OnWarningEvent("Data does not contain decoy proteins; cannot compute a decoy-based FDR");
                     lstPSMs.Clear();
                     return false;
                 }
@@ -846,7 +840,7 @@ namespace MSGFResultsSummarizer
 
             // Remove entries from lstPSMs where .FDR is larger than mFDRThreshold
 
-            foreach (KeyValuePair<int, double> kvEntry in lstResultIDtoFDRMap)
+            foreach (var kvEntry in lstResultIDtoFDRMap)
             {
                 if (kvEntry.Value > mFDRThreshold)
                 {
@@ -904,7 +898,7 @@ namespace MSGFResultsSummarizer
         public static int FindNormalizedSequence(IReadOnlyDictionary<string, List<clsNormalizedPeptideInfo>> dictNormalizedPeptides, clsNormalizedPeptideInfo newNormalizedPeptide)
         {
             // Find normalized peptides with the new normalized peptide's clean sequence
-            List<clsNormalizedPeptideInfo> normalizedPeptideCandidates = null;
+            List<clsNormalizedPeptideInfo> normalizedPeptideCandidates;
 
             if (!dictNormalizedPeptides.TryGetValue(newNormalizedPeptide.CleanSequence, out normalizedPeptideCandidates))
             {
@@ -1013,7 +1007,7 @@ namespace MSGFResultsSummarizer
         {
             const int MAX_RETRY_COUNT = 3;
 
-            bool blnSuccess = false;
+            bool blnSuccess;
 
             try
             {
@@ -1065,17 +1059,16 @@ namespace MSGFResultsSummarizer
                 objCommand.Parameters.Add(new SqlParameter("@TrypsinPeptides", SqlDbType.Int)).Value = mFDRBasedCounts.TrypsinPeptides;
 
                 // Execute the SP (retry the call up to 3 times)
-                int ResCode = 0;
-                string strErrorMessage = string.Empty;
-                ResCode = mStoredProcedureExecutor.ExecuteSP(objCommand, MAX_RETRY_COUNT, out strErrorMessage);
+                string strErrorMessage;
+                var result = mStoredProcedureExecutor.ExecuteSP(objCommand, MAX_RETRY_COUNT, out strErrorMessage);
 
-                if (ResCode == 0)
+                if (result == 0)
                 {
                     blnSuccess = true;
                 }
                 else
                 {
-                    SetErrorMessage("Error storing PSM Results in database, " + STORE_JOB_PSM_RESULTS_SP_NAME + " returned " + ResCode.ToString());
+                    SetErrorMessage("Error storing PSM Results in database, " + STORE_JOB_PSM_RESULTS_SP_NAME + " returned " + result);
                     if (!string.IsNullOrEmpty(strErrorMessage))
                     {
                         mErrorMessage += "; " + strErrorMessage;
@@ -1099,16 +1092,6 @@ namespace MSGFResultsSummarizer
         /// <remarks></remarks>
         public bool ProcessMSGFResults()
         {
-            string strPHRPFirstHitsFileName = null;
-            string strPHRPFirstHitsFilePath = null;
-
-            string strPHRPSynopsisFileName = null;
-            string strPHRPSynopsisFilePath = null;
-
-            bool blnUsingMSGFOrEValueFilter = false;
-
-            bool blnSuccess = false;
-            bool blnSuccessViaFDR = false;
 
             mDatasetScanStatsLookupError = false;
 
@@ -1123,10 +1106,10 @@ namespace MSGFResultsSummarizer
                 // Define the file paths
                 //
                 // We use the First-hits file to determine the number of MS/MS spectra that were searched (unique combo of charge and scan number)
-                strPHRPFirstHitsFileName = clsPHRPReader.GetPHRPFirstHitsFileName(mResultType, mDatasetName);
+                var strPHRPFirstHitsFileName = clsPHRPReader.GetPHRPFirstHitsFileName(mResultType, mDatasetName);
 
                 // We use the Synopsis file to count the number of peptides and proteins observed
-                strPHRPSynopsisFileName = clsPHRPReader.GetPHRPSynopsisFileName(mResultType, mDatasetName);
+                var strPHRPSynopsisFileName = clsPHRPReader.GetPHRPSynopsisFileName(mResultType, mDatasetName);
 
                 if (mResultType == clsPHRPReader.ePeptideHitResultType.XTandem || mResultType == clsPHRPReader.ePeptideHitResultType.MSAlign ||
                     mResultType == clsPHRPReader.ePeptideHitResultType.MODa || mResultType == clsPHRPReader.ePeptideHitResultType.MODPlus ||
@@ -1138,8 +1121,8 @@ namespace MSGFResultsSummarizer
 
                 mMSGFSynopsisFileName = Path.GetFileNameWithoutExtension(strPHRPSynopsisFileName) + MSGF_RESULT_FILENAME_SUFFIX;
 
-                strPHRPFirstHitsFilePath = Path.Combine(mWorkDir, strPHRPFirstHitsFileName);
-                strPHRPSynopsisFilePath = Path.Combine(mWorkDir, strPHRPSynopsisFileName);
+                var strPHRPFirstHitsFilePath = Path.Combine(mWorkDir, strPHRPFirstHitsFileName);
+                var strPHRPSynopsisFilePath = Path.Combine(mWorkDir, strPHRPSynopsisFileName);
 
                 if (!File.Exists(strPHRPSynopsisFilePath))
                 {
@@ -1169,14 +1152,14 @@ namespace MSGFResultsSummarizer
                 // If those files are not found, then we'll simply use the protein information stored in lstPSMs
                 var lstNormalizedPSMs = new Dictionary<int, clsPSMInfo>();
 
-                var lstResultToSeqMap = new SortedList<int, int>();
+                SortedList<int, int> lstResultToSeqMap;
 
-                var lstSeqToProteinMap = new SortedList<int, List<clsProteinInfo>>();
+                SortedList<int, List<clsProteinInfo>> lstSeqToProteinMap;
 
-                var lstSeqInfo = new SortedList<int, clsSeqInfo>();
+                SortedList<int, clsSeqInfo> lstSeqInfo;
 
-                blnSuccess = LoadPSMs(strPHRPSynopsisFilePath, lstNormalizedPSMs, out lstResultToSeqMap, out lstSeqToProteinMap, out lstSeqInfo);
-                if (!blnSuccess)
+                var psmsLoaded = LoadPSMs(strPHRPSynopsisFilePath, lstNormalizedPSMs, out lstResultToSeqMap, out lstSeqToProteinMap, out lstSeqInfo);
+                if (!psmsLoaded)
                 {
                     return false;
                 }
@@ -1184,8 +1167,7 @@ namespace MSGFResultsSummarizer
                 ////////////////////
                 // Filter on MSGF or EValue and compute the stats
                 //
-                blnUsingMSGFOrEValueFilter = true;
-                blnSuccess = FilterAndComputeStats(blnUsingMSGFOrEValueFilter, lstNormalizedPSMs, lstSeqToProteinMap, lstSeqInfo);
+                var usingMSGFOrEValueFilter = true;
 
                 ////////////////////
                 // Filter on FDR and compute the stats
@@ -1218,7 +1200,8 @@ namespace MSGFResultsSummarizer
                     blnSuccess = true;
                 }
 
-                return blnSuccess;
+                SetErrorMessage("Cannot post results to the database because ContactDatabase is False");
+                return false;
             }
             catch (Exception ex)
             {
@@ -1243,10 +1226,10 @@ namespace MSGFResultsSummarizer
             out SortedList<int, int> lstResultToSeqMap, out SortedList<int, List<clsProteinInfo>> lstSeqToProteinMap,
             out SortedList<int, clsSeqInfo> lstSeqInfo)
         {
-            double dblSpecProb = clsPSMInfo.UNKNOWN_MSGF_SPECPROB;
-            double dblEValue = clsPSMInfo.UNKNOWN_EVALUE;
+            var dblSpecProb = clsPSMInfo.UNKNOWN_MSGF_SPECPROB;
+            var dblEValue = clsPSMInfo.UNKNOWN_EVALUE;
 
-            bool blnSuccess = false;
+            bool blnSuccess;
 
             var blnLoadMSGFResults = true;
 
@@ -1274,7 +1257,7 @@ namespace MSGFResultsSummarizer
                 // Note that this will set .LoadModsAndSeqInfo to false
                 // That is fine because we will have access to the modification info from the _SeqInfo.txt file
                 // Since we're looking for trypsin and keratin proteins, we need to change MaxProteinsPerPSM back to a large number
-                clsPHRPStartupOptions startupOptions = GetMinimalMemoryPHRPStartupOptions();
+                var startupOptions = GetMinimalMemoryPHRPStartupOptions();
                 startupOptions.LoadMSGFResults = blnLoadMSGFResults;
                 startupOptions.MaxProteinsPerPSM = 1000;
 
@@ -1330,11 +1313,11 @@ namespace MSGFResultsSummarizer
                 //
                 var dictNormalizedPeptides = new Dictionary<string, List<clsNormalizedPeptideInfo>>();
 
-                using (clsPHRPReader objReader = new clsPHRPReader(strPHRPSynopsisFilePath, startupOptions))
+                using (var objReader = new clsPHRPReader(strPHRPSynopsisFilePath, startupOptions))
                 {
                     while (objReader.MoveNext())
                     {
-                        clsPSM objPSM = objReader.CurrentPSM;
+                        var objPSM = objReader.CurrentPSM;
 
                         if (objPSM.ScoreRank > 1)
                         {
@@ -1348,7 +1331,7 @@ namespace MSGFResultsSummarizer
                         {
                             // Use the EValue reported by MSAlign
 
-                            var strEValue = string.Empty;
+                            string strEValue;
                             if (objPSM.TryGetScore("EValue", out strEValue))
                             {
                                 blnValid = double.TryParse(strEValue, out dblEValue);
@@ -1364,7 +1347,7 @@ namespace MSGFResultsSummarizer
                             // Use SpecEValue in place of SpecProb
                             blnValid = true;
 
-                            var strSpecEValue = string.Empty;
+                            string strSpecEValue;
                             if (objPSM.TryGetScore(clsPHRPParserMSPathFinder.DATA_COLUMN_SpecEValue, out strSpecEValue))
                             {
                                 if (!string.IsNullOrWhiteSpace(strSpecEValue))
@@ -1372,11 +1355,9 @@ namespace MSGFResultsSummarizer
                                     blnValid = double.TryParse(strSpecEValue, out dblSpecProb);
                                 }
                             }
-                            else
-                            {
-                                // SpecEValue was not present
-                                // That's OK, QValue should be present
-                            }
+
+                            // SpecEValue was not present
+                            // That's OK, QValue should be present
                         }
                         else
                         {
@@ -1390,14 +1371,14 @@ namespace MSGFResultsSummarizer
 
                         // Store in lstNormalizedPSMs
 
-                        clsPSMInfo psmInfo = new clsPSMInfo();
+                        var psmInfo = new clsPSMInfo();
                         psmInfo.Clear();
 
                         psmInfo.Protein = objPSM.ProteinFirst;
 
                         var psmMSGF = dblSpecProb;
                         var psmEValue = dblEValue;
-                        double psmFDR = 0;
+                        double psmFDR;
 
                         if (mResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB | mResultType == clsPHRPReader.ePeptideHitResultType.MSAlign)
                         {
@@ -1437,7 +1418,7 @@ namespace MSGFResultsSummarizer
 
                                 // This result is not listed in the _ResultToSeqMap file, likely because it was already processed for this scan
                                 // Look for a match in dictNormalizedPeptides that matches this peptide's clean sesquence
-                                List<clsNormalizedPeptideInfo> normalizedPeptides = null;
+                                List<clsNormalizedPeptideInfo> normalizedPeptides;
 
                                 if (dictNormalizedPeptides.TryGetValue(objPSM.PeptideCleanSequence, out normalizedPeptides))
                                 {
@@ -1455,7 +1436,7 @@ namespace MSGFResultsSummarizer
 
                             if (intSeqID != clsPSMInfo.UNKNOWN_SEQID)
                             {
-                                clsSeqInfo oSeqInfo = null;
+                                clsSeqInfo oSeqInfo;
                                 if (lstSeqInfo.TryGetValue(intSeqID, out oSeqInfo))
                                 {
                                     normalizedPeptide = NormalizeSequence(objPSM.PeptideCleanSequence, oSeqInfo, intSeqID);
@@ -1510,12 +1491,13 @@ namespace MSGFResultsSummarizer
 
                             if (addObservation)
                             {
-                                var observation = new clsPSMInfo.PSMObservation();
-
-                                observation.Scan = objPSM.ScanNumber;
-                                observation.FDR = psmFDR;
-                                observation.MSGF = psmMSGF;
-                                observation.EValue = psmEValue;
+                                var observation = new clsPSMInfo.PSMObservation
+                                {
+                                    Scan = objPSM.ScanNumber,
+                                    FDR = psmFDR,
+                                    MSGF = psmMSGF,
+                                    EValue = psmEValue
+                                };
 
                                 normalizedPSMInfo.Observations.Add(observation);
                             }
@@ -1531,7 +1513,7 @@ namespace MSGFResultsSummarizer
                                 intSeqID = objPSM.ResultID;
                             }
 
-                            List<clsNormalizedPeptideInfo> normalizedPeptides = null;
+                            List<clsNormalizedPeptideInfo> normalizedPeptides;
 
                             if (!dictNormalizedPeptides.TryGetValue(normalizedPeptide.CleanSequence, out normalizedPeptides))
                             {
@@ -1654,9 +1636,9 @@ namespace MSGFResultsSummarizer
             var sbAminoAcids = new StringBuilder(sequenceWithMods.Length);
             var modList = new List<KeyValuePair<string, int>>();
 
-            var strPrefix = string.Empty;
-            var strSuffix = string.Empty;
-            var strPrimarySequence = string.Empty;
+            string strPrefix;
+            string strSuffix;
+            string strPrimarySequence;
 
             clsPeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(sequenceWithMods, out strPrimarySequence, out strPrefix, out strSuffix);
 
@@ -1687,7 +1669,7 @@ namespace MSGFResultsSummarizer
                 foreach (var modDescriptor in lstMods)
                 {
                     var colonIndex = modDescriptor.IndexOf(':');
-                    string modName = null;
+                    string modName;
                     var modIndex = 0;
 
                     if (colonIndex > 0)
@@ -1745,10 +1727,8 @@ namespace MSGFResultsSummarizer
             catch (Exception ex)
             {
                 SetErrorMessage("Exception saving results to " + strOutputFilePath + ": " + ex.Message);
-                return;
             }
 
-            return;
         }
 
         private void SetErrorMessage(string errMsg)
@@ -1781,7 +1761,7 @@ namespace MSGFResultsSummarizer
                 // The Keys in this dictionary are protein names; the values are observation count
                 var lstUniqueProteins = new Dictionary<string, int>();
 
-                foreach (KeyValuePair<int, clsPSMInfo> result in lstFilteredPSMs)
+                foreach (var result in lstFilteredPSMs)
                 {
                     var observations = result.Value.Observations;
                     var obsCountForResult = (from item in observations where item.PassesFilter select item).Count();
@@ -1793,7 +1773,7 @@ namespace MSGFResultsSummarizer
 
                     // If lstResultToSeqMap has data, the keys in lstFilteredPSMs are SeqID values
                     // Otherwise, the keys are ResultID values
-                    int intSeqID = result.Key;
+                    var intSeqID = result.Key;
 
                     // Make a deep copy of result.Value as class clsUniqueSeqInfo
                     var seqInfoToStore = result.Value.CloneAsSeqInfo(obsCountForResult);
@@ -1807,19 +1787,19 @@ namespace MSGFResultsSummarizer
 
                     var addResultProtein = true;
 
-                    clsSeqInfo oSeqInfo = null;
+                    clsSeqInfo oSeqInfo;
 
                     if (lstSeqInfo.Count > 0 && lstSeqInfo.TryGetValue(intSeqID, out oSeqInfo))
                     {
                         // Lookup the proteins for this peptide
-                        List<clsProteinInfo> lstProteins = null;
+                        List<clsProteinInfo> lstProteins;
                         if (lstSeqToProteinMap.TryGetValue(intSeqID, out lstProteins))
                         {
                             // Update the observation count for each protein
 
-                            foreach (clsProteinInfo objProtein in lstProteins)
+                            foreach (var objProtein in lstProteins)
                             {
-                                int obsCountOverall = 0;
+                                int obsCountOverall;
                                 if (lstUniqueProteins.TryGetValue(objProtein.ProteinName, out obsCountOverall))
                                 {
                                     lstUniqueProteins[objProtein.ProteinName] = obsCountOverall + obsCountForResult;
@@ -1839,7 +1819,7 @@ namespace MSGFResultsSummarizer
                     {
                         var proteinName = result.Value.Protein;
 
-                        int obsCountOverall = 0;
+                        int obsCountOverall;
                         if (lstUniqueProteins.TryGetValue(proteinName, out obsCountOverall))
                         {
                             lstUniqueProteins[proteinName] = obsCountOverall + obsCountForResult;
@@ -1874,32 +1854,29 @@ namespace MSGFResultsSummarizer
 
         private udtPSMStatsType TabulatePSMStats(IDictionary<int, clsUniqueSeqInfo> lstUniqueSequences, IDictionary<string, int> lstUniqueProteins, IDictionary<int, clsUniqueSeqInfo> lstUniquePhosphopeptides)
         {
-            var psmStats = new udtPSMStatsType();
-            psmStats.TotalPSMs = (from item in lstUniqueSequences select item.Value.ObsCount).Sum();
-            psmStats.UniquePeptideCount = lstUniqueSequences.Count;
-            psmStats.UniqueProteinCount = lstUniqueProteins.Count;
-
-            psmStats.MissedCleavageRatio = ComputeMissedCleavageRatio(lstUniqueSequences);
-
-            psmStats.KeratinPeptides = (from item in lstUniqueSequences where item.Value.KeratinPeptide == true select item.Key).Count();
-            psmStats.TrypsinPeptides = (from item in lstUniqueSequences where item.Value.TrypsinPeptide == true select item.Key).Count();
-            psmStats.TrypticPeptides = (from item in lstUniqueSequences where item.Value.Tryptic == true select item.Key).Count();
-
-            psmStats.UniquePhosphopeptideCount = lstUniquePhosphopeptides.Count;
-
-            psmStats.UniquePhosphopeptidesCTermK = (from item in lstUniquePhosphopeptides where item.Value.CTermK select item.Key).Count();
-            psmStats.UniquePhosphopeptidesCTermR = (from item in lstUniquePhosphopeptides where item.Value.CTermR select item.Key).Count();
-
-            psmStats.MissedCleavageRatioPhospho = ComputeMissedCleavageRatio(lstUniquePhosphopeptides);
+            var psmStats = new udtPSMStatsType
+            {
+                TotalPSMs = (from item in lstUniqueSequences select item.Value.ObsCount).Sum(),
+                UniquePeptideCount = lstUniqueSequences.Count,
+                UniqueProteinCount = lstUniqueProteins.Count,
+                MissedCleavageRatio = ComputeMissedCleavageRatio(lstUniqueSequences),
+                KeratinPeptides = (from item in lstUniqueSequences where item.Value.KeratinPeptide select item.Key).Count(),
+                TrypsinPeptides = (from item in lstUniqueSequences where item.Value.TrypsinPeptide select item.Key).Count(),
+                TrypticPeptides = (from item in lstUniqueSequences where item.Value.Tryptic select item.Key).Count(),
+                UniquePhosphopeptideCount = lstUniquePhosphopeptides.Count,
+                UniquePhosphopeptidesCTermK = (from item in lstUniquePhosphopeptides where item.Value.CTermK select item.Key).Count(),
+                UniquePhosphopeptidesCTermR = (from item in lstUniquePhosphopeptides where item.Value.CTermR select item.Key).Count(),
+                MissedCleavageRatioPhospho = ComputeMissedCleavageRatio(lstUniquePhosphopeptides)
+            };
 
             return psmStats;
         }
 
         #region "Event Handlers"
 
-        private void m_ExecuteSP_DebugEvent(string Message)
+        private void m_ExecuteSP_DebugEvent(string message)
         {
-            OnDebugEvent(Message);
+            ReportDebugMessage(message, 1);
         }
 
         private void m_ExecuteSP_DBErrorEvent(string errMsg)
@@ -1922,14 +1899,13 @@ namespace MSGFResultsSummarizer
                 {
                     return -1;
                 }
-                else if (x.Key > y.Key)
+
+                if (x.Key > y.Key)
                 {
                     return 1;
                 }
-                else
-                {
-                    return 0;
-                }
+
+                return 0;
             }
         }
     }

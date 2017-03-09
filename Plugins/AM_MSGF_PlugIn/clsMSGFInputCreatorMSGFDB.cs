@@ -46,8 +46,6 @@ namespace AnalysisManagerMSGFPlugin
         [Obsolete("This function does not appear to be used anywhere")]
         public bool CreateMSGFFileUsingMODaOrModPlusProbabilities(string strSourceFilePath, clsPHRPReader.ePeptideHitResultType eResultType, string strSourceFileDescription)
         {
-            string strMSGFFilePath = null;
-
             try
             {
                 if (string.IsNullOrEmpty(strSourceFilePath))
@@ -58,7 +56,7 @@ namespace AnalysisManagerMSGFPlugin
                     return false;
                 }
 
-                clsPHRPStartupOptions startupOptions = GetMinimalMemoryPHRPStartupOptions();
+                var startupOptions = GetMinimalMemoryPHRPStartupOptions();
 
                 var probabilityColumnName = clsPHRPParserMODPlus.DATA_COLUMN_Probability;
 
@@ -73,7 +71,7 @@ namespace AnalysisManagerMSGFPlugin
                     objReader.SkipDuplicatePSMs = false;
 
                     // Define the path to write the first-hits MSGF results to
-                    strMSGFFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(strSourceFilePath) + MSGF_RESULT_FILENAME_SUFFIX);
+                    var strMSGFFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(strSourceFilePath) + MSGF_RESULT_FILENAME_SUFFIX);
 
                     // Create the output file
                     using (var swMSGFFile = new StreamWriter(new FileStream(strMSGFFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
@@ -125,7 +123,7 @@ namespace AnalysisManagerMSGFPlugin
                     return false;
                 }
 
-                clsPHRPStartupOptions startupOptions = GetMinimalMemoryPHRPStartupOptions();
+                var startupOptions = GetMinimalMemoryPHRPStartupOptions();
 
                 // Open the file (no need to read the Mods and Seq Info since we're not actually running MSGF)
                 using (var objReader = new clsPHRPReader(strSourceFilePath, clsPHRPReader.ePeptideHitResultType.MSGFDB, startupOptions))
@@ -164,10 +162,8 @@ namespace AnalysisManagerMSGFPlugin
 
         protected override bool PassesFilters(clsPSM objPSM)
         {
-            bool blnPassesFilters = false;
-
             // All MSGFDB data is considered to be "filter-passing"
-            blnPassesFilters = true;
+            var blnPassesFilters = true;
 
             return blnPassesFilters;
         }

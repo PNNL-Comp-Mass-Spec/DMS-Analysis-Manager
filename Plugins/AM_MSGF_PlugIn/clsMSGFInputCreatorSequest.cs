@@ -36,14 +36,8 @@ namespace AnalysisManagerMSGFPlugin
 
         protected override bool PassesFilters(clsPSM objPSM)
         {
-            double dblXCorr = 0;
-            double dblDeltaCN = 0;
-
-            int intCleavageState = 0;
-            short intCleavageStateAlt = 0;
-
-            bool blnIsProteinTerminus = false;
-            bool blnPassesFilters = false;
+            bool blnIsProteinTerminus;
+            var blnPassesFilters = false;
 
             // Examine the score values and possibly filter out this line
 
@@ -66,11 +60,11 @@ namespace AnalysisManagerMSGFPlugin
                 blnIsProteinTerminus = false;
             }
 
-            dblDeltaCN = objPSM.GetScoreDbl(clsPHRPParserSequest.DATA_COLUMN_DelCn);
-            dblXCorr = objPSM.GetScoreDbl(clsPHRPParserSequest.DATA_COLUMN_XCorr);
+            var dblDeltaCN = objPSM.GetScoreDbl(clsPHRPParserSequest.DATA_COLUMN_DelCn);
+            var dblXCorr = objPSM.GetScoreDbl(clsPHRPParserSequest.DATA_COLUMN_XCorr);
 
-            intCleavageState = clsPeptideCleavageStateCalculator.CleavageStateToShort(objPSM.CleavageState);
-            intCleavageStateAlt = (short)objPSM.GetScoreInt(clsPHRPParserSequest.DATA_COLUMN_NumTrypticEnds, 0);
+            int intCleavageState = clsPeptideCleavageStateCalculator.CleavageStateToShort(objPSM.CleavageState);
+            var intCleavageStateAlt = (short)objPSM.GetScoreInt(clsPHRPParserSequest.DATA_COLUMN_NumTrypticEnds, 0);
 
             if (intCleavageStateAlt > intCleavageState)
             {

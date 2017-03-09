@@ -79,19 +79,19 @@ namespace AnalysisManagerMSGFPlugin
 
         #region "Module variables"
 
-        private bool mETDMode = false;
+        private bool mETDMode;
 
         private string mMSGFInputFilePath = string.Empty;
         private string mMSGFResultsFilePath = string.Empty;
         private string mCurrentMSGFResultsFilePath = string.Empty;
 
-        private int mMSGFInputFileLineCount = 0;
-        private int mMSGFLineCountPreviousSegments = 0;
+        private int mMSGFInputFileLineCount;
+        private int mMSGFLineCountPreviousSegments;
 
         private bool mProcessingMSGFDBCollisionModeData;
         private int mCollisionModeIteration;
 
-        private bool mKeepMSGFInputFiles = false;
+        private bool mKeepMSGFInputFiles;
 
         private bool mToolVersionWritten;
         private string mMSGFVersion = string.Empty;
@@ -247,7 +247,7 @@ namespace AnalysisManagerMSGFPlugin
                 }
 
                 //Stop the job timer
-                m_StopTime = System.DateTime.UtcNow;
+                m_StopTime = DateTime.UtcNow;
 
                 if (blnProcessingError)
                 {
@@ -306,7 +306,7 @@ namespace AnalysisManagerMSGFPlugin
             catch (Exception ex)
             {
                 var errMsg = "clsMSGFToolRunner.RunTool(); Exception running MSGF: " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex);
-                LogError(errMsg);
+                LogError(errMsg, ex);
                 m_message = clsGlobal.AppendToComment(m_message, "Exception running MSGF");
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -336,15 +336,12 @@ namespace AnalysisManagerMSGFPlugin
         /// <returns>True if success; false if an error</returns>
         private bool CheckETDModeEnabled(clsPHRPReader.ePeptideHitResultType eResultType, string strSearchToolParamFilePath)
         {
-            bool blnSuccess = false;
-
             mETDMode = false;
-            blnSuccess = false;
+            var blnSuccess = false;
 
             if (string.IsNullOrEmpty(strSearchToolParamFilePath))
             {
-                LogError(
-                    "PeptideHit param file path is empty; unable to continue");
+                LogError("PeptideHit param file path is empty; unable to continue");
                 return false;
             }
 
@@ -400,13 +397,6 @@ namespace AnalysisManagerMSGFPlugin
         {
             const string MSGFDB_FRAG_METHOD_TAG = "FragmentationMethodID";
 
-            string strLineIn = null;
-
-            string strFragMode = null;
-            int intFragMode = 0;
-
-            int intCharIndex = 0;
-
             try
             {
                 mETDMode = false;
@@ -422,7 +412,7 @@ namespace AnalysisManagerMSGFPlugin
                 {
                     while (!srParamFile.EndOfStream)
                     {
-                        strLineIn = srParamFile.ReadLine();
+                        var strLineIn = srParamFile.ReadLine();
 
                         if (!string.IsNullOrEmpty(strLineIn) && strLineIn.StartsWith(MSGFDB_FRAG_METHOD_TAG))
                         {
@@ -437,11 +427,12 @@ namespace AnalysisManagerMSGFPlugin
                             }
 
                             // Look for the equals sign
-                            intCharIndex = strLineIn.IndexOf('=');
+                            var intCharIndex = strLineIn.IndexOf('=');
                             if (intCharIndex > 0)
                             {
-                                strFragMode = strLineIn.Substring(intCharIndex + 1).Trim();
+                                var strFragMode = strLineIn.Substring(intCharIndex + 1).Trim();
 
+                                int intFragMode;
                                 if (int.TryParse(strFragMode, out intFragMode))
                                 {
                                     if (intFragMode == 2)
@@ -475,9 +466,8 @@ namespace AnalysisManagerMSGFPlugin
             }
             catch (Exception ex)
             {
-                string Msg = null;
-                Msg = "Error reading the MSGFDB param file: " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex);
-                LogError(Msg);
+                var msg = "Error reading the MSGFDB param file: " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex);
+                LogError(msg, ex);
                 m_message = clsGlobal.AppendToComment(m_message, "Exception reading MSGFDB parameter file");
                 return false;
             }
@@ -495,16 +485,6 @@ namespace AnalysisManagerMSGFPlugin
         {
             const string SEQUEST_ION_SERIES_TAG = "ion_series";
 
-            string strLineIn = null;
-
-            string strIonWeightText = null;
-            string[] strIonWeights = null;
-
-            double dblCWeight = 0;
-            double dblZWeight = 0;
-
-            int intCharIndex = 0;
-
             try
             {
                 mETDMode = false;
@@ -520,7 +500,7 @@ namespace AnalysisManagerMSGFPlugin
                 {
                     while (!srParamFile.EndOfStream)
                     {
-                        strLineIn = srParamFile.ReadLine();
+                        var strLineIn = srParamFile.ReadLine();
 
                         if (!string.IsNullOrEmpty(strLineIn) && strLineIn.StartsWith(SEQUEST_ION_SERIES_TAG))
                         {
@@ -539,18 +519,18 @@ namespace AnalysisManagerMSGFPlugin
                             }
 
                             // Look for the equals sign
-                            intCharIndex = strLineIn.IndexOf('=');
+                            var intCharIndex = strLineIn.IndexOf('=');
                             if (intCharIndex > 0)
                             {
-                                strIonWeightText = strLineIn.Substring(intCharIndex + 1).Trim();
+                                var strIonWeightText = strLineIn.Substring(intCharIndex + 1).Trim();
 
                                 // Split strIonWeightText on spaces
-                                strIonWeights = strIonWeightText.Split(' ');
+                                var strIonWeights = strIonWeightText.Split(' ');
 
                                 if (strIonWeights.Length >= 12)
                                 {
-                                    dblCWeight = 0;
-                                    dblZWeight = 0;
+                                    double dblCWeight;
+                                    double dblZWeight;
 
                                     double.TryParse(strIonWeights[5], out dblCWeight);
                                     double.TryParse(strIonWeights[11], out dblZWeight);
@@ -589,9 +569,8 @@ namespace AnalysisManagerMSGFPlugin
             }
             catch (Exception ex)
             {
-                string Msg = null;
-                Msg = "Error reading the Sequest param file: " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex);
-                LogError(Msg);
+                var msg = "Error reading the Sequest param file: " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex);
+                LogError(msg, ex);
                 m_message = clsGlobal.AppendToComment(m_message, "Exception reading Sequest parameter file");
                 return false;
             }
@@ -609,9 +588,6 @@ namespace AnalysisManagerMSGFPlugin
         {
             XmlNodeList objSelectedNodes = null;
 
-            int intSettingIndex = 0;
-            int intMatchIndex = 0;
-
             try
             {
                 mETDMode = false;
@@ -627,11 +603,12 @@ namespace AnalysisManagerMSGFPlugin
                 //   <note type="input" label="scoring, c ions">yes</note>
                 //   <note type="input" label="scoring, z ions">yes</note>
 
-                var objParamFile = new XmlDocument();
-                objParamFile.PreserveWhitespace = true;
+                var objParamFile = new XmlDocument {
+                    PreserveWhitespace = true
+                };
                 objParamFile.Load(strSearchToolParamFilePath);
 
-                for (intSettingIndex = 0; intSettingIndex <= 1; intSettingIndex++)
+                for (var intSettingIndex = 0; intSettingIndex <= 1; intSettingIndex++)
                 {
                     switch (intSettingIndex)
                     {
@@ -643,9 +620,9 @@ namespace AnalysisManagerMSGFPlugin
                             break;
                     }
 
-                    if ((objSelectedNodes != null))
+                    if (objSelectedNodes != null)
                     {
-                        for (intMatchIndex = 0; intMatchIndex <= objSelectedNodes.Count - 1; intMatchIndex++)
+                        for (var intMatchIndex = 0; intMatchIndex <= objSelectedNodes.Count - 1; intMatchIndex++)
                         {
                             // Make sure this node has an attribute named type with value "input"
                             var objAttributeNode = objSelectedNodes.Item(intMatchIndex).Attributes.GetNamedItem("type");
@@ -674,9 +651,8 @@ namespace AnalysisManagerMSGFPlugin
             }
             catch (Exception ex)
             {
-                string Msg = null;
-                Msg = "Error reading the X!Tandem param file: " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex);
-                LogError(Msg);
+                var msg = "Error reading the X!Tandem param file: " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex);
+                LogError(msg, ex);
                 m_message = clsGlobal.AppendToComment(m_message, "Exception reading X!Tandem parameter file");
 
                 return false;
@@ -687,15 +663,13 @@ namespace AnalysisManagerMSGFPlugin
 
         private bool ConvertMzMLToMzXML()
         {
-            bool blnSuccess = false;
-
             m_StatusTools.CurrentOperation = "Creating the .mzXML file";
 
             mMSXmlCreator = new clsMSXMLCreator(mMSXmlGeneratorAppPath, m_WorkDir, m_Dataset, m_DebugLevel, m_jobParams);
             RegisterEvents(mMSXmlCreator);
             mMSXmlCreator.LoopWaiting += mMSXmlCreator_LoopWaiting;
 
-            blnSuccess = mMSXmlCreator.ConvertMzMLToMzXML();
+            var blnSuccess = mMSXmlCreator.ConvertMzMLToMzXML();
 
             if (!blnSuccess && string.IsNullOrEmpty(m_message))
             {
@@ -724,7 +698,6 @@ namespace AnalysisManagerMSGFPlugin
         /// <remarks></remarks>
         private bool CreateMSGFInputFile(clsPHRPReader.ePeptideHitResultType eResultType, bool blnDoNotFilterPeptides, bool blnMGFInstrumentData, out int intMSGFInputFileLineCount)
         {
-            string Msg = null;
 
             var blnSuccess = true;
 
@@ -774,10 +747,9 @@ namespace AnalysisManagerMSGFPlugin
                     break;
                 default:
                     // Should never get here; invalid result type specified
-                    Msg = "Invalid PeptideHit ResultType specified: " + eResultType;
-                    m_message = clsGlobal.AppendToComment(m_message, Msg);
-                    LogError(
-                        "clsMSGFToolRunner.CreateMSGFInputFile(); " + Msg);
+                    var msg = "Invalid PeptideHit ResultType specified: " + eResultType;
+                    m_message = clsGlobal.AppendToComment(m_message, msg);
+                    LogError("clsMSGFToolRunner.CreateMSGFInputFile(); " + msg);
 
                     blnSuccess = false;
                     break;
@@ -808,15 +780,13 @@ namespace AnalysisManagerMSGFPlugin
 
                 if (!blnSuccess)
                 {
-                    LogError(
-                        "mMSGFInputCreator.MSGFDataFileLineCount returned False");
+                    LogError("mMSGFInputCreator.MSGFDataFileLineCount returned False");
                 }
                 else
                 {
                     if (m_DebugLevel >= 2)
                     {
-                        LogDebug(
-                            "CreateMSGFInputFileUsingPHRPResultFile complete; " + intMSGFInputFileLineCount + " lines of data");
+                        LogDebug("CreateMSGFInputFileUsingPHRPResultFile complete; " + intMSGFInputFileLineCount + " lines of data");
                     }
                 }
             }
@@ -826,12 +796,10 @@ namespace AnalysisManagerMSGFPlugin
 
         private bool SummarizeMODaResults()
         {
-            bool blnSuccess = false;
-
             // Summarize the results to determine the number of peptides and proteins at a given FDR threshold
             // Any results based on a MSGF SpecProb will be meaningless because we didn't run MSGF on the MODa results
             // Post the results to the database
-            blnSuccess = SummarizeMSGFResults(clsPHRPReader.ePeptideHitResultType.MODa);
+            var blnSuccess = SummarizeMSGFResults(clsPHRPReader.ePeptideHitResultType.MODa);
 
             if (blnSuccess)
             {
@@ -845,12 +813,10 @@ namespace AnalysisManagerMSGFPlugin
 
         private bool SummarizeMODPlusResults()
         {
-            bool blnSuccess = false;
-
             // Summarize the results to determine the number of peptides and proteins at a given FDR threshold
             // Any results based on a MSGF SpecProb will be meaningless because we didn't run MSGF on the MODPlus results
             // Post the results to the database
-            blnSuccess = SummarizeMSGFResults(clsPHRPReader.ePeptideHitResultType.MODPlus);
+            var blnSuccess = SummarizeMSGFResults(clsPHRPReader.ePeptideHitResultType.MODPlus);
 
             if (blnSuccess)
             {
@@ -864,12 +830,10 @@ namespace AnalysisManagerMSGFPlugin
 
         private bool SummarizeMSPathFinderResults()
         {
-            bool blnSuccess = false;
-
             // Summarize the results to determine the number of peptides and proteins at a given FDR threshold
             // Will use SpecEValue in place of MSGF SpecProb
             // Post the results to the database
-            blnSuccess = SummarizeMSGFResults(clsPHRPReader.ePeptideHitResultType.MSPathFinder);
+            var blnSuccess = SummarizeMSGFResults(clsPHRPReader.ePeptideHitResultType.MSPathFinder);
 
             if (blnSuccess)
             {
@@ -883,8 +847,7 @@ namespace AnalysisManagerMSGFPlugin
 
         private bool CreateMSGFResultsFromMSGFDBResults()
         {
-            clsMSGFInputCreatorMSGFDB objMSGFInputCreator = new clsMSGFInputCreatorMSGFDB(m_Dataset, m_WorkDir);
-            bool blnSuccess = false;
+            var objMSGFInputCreator = new clsMSGFInputCreatorMSGFDB(m_Dataset, m_WorkDir);
 
             if (!CreateMSGFResultsFromMSGFPlusResults(objMSGFInputCreator, MSGF_PHRP_DATA_SOURCE_SYN.ToLower()))
             {
@@ -898,7 +861,7 @@ namespace AnalysisManagerMSGFPlugin
 
             // Summarize the results in the _syn_MSGF.txt file
             // Post the results to the database
-            blnSuccess = SummarizeMSGFResults(clsPHRPReader.ePeptideHitResultType.MSGFDB);
+            var blnSuccess = SummarizeMSGFResults(clsPHRPReader.ePeptideHitResultType.MSGFDB);
 
             return blnSuccess;
         }
@@ -929,20 +892,16 @@ namespace AnalysisManagerMSGFPlugin
                 }
                 return false;
             }
-            else
-            {
-                return true;
-            }
+
+            return true;
+
         }
 
         private bool CreateMzXMLFile()
         {
-            bool blnSuccess = false;
-
             m_StatusTools.CurrentOperation = "Creating the .mzXML file";
 
-            string strMzXmlFilePath = null;
-            strMzXmlFilePath = Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_MZXML_EXTENSION);
+            var strMzXmlFilePath = Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_MZXML_EXTENSION);
 
             if (File.Exists(strMzXmlFilePath))
             {
@@ -954,7 +913,7 @@ namespace AnalysisManagerMSGFPlugin
             RegisterEvents(mMSXmlCreator);
             mMSXmlCreator.LoopWaiting += mMSXmlCreator_LoopWaiting;
 
-            blnSuccess = mMSXmlCreator.CreateMZXMLFile();
+            var blnSuccess = mMSXmlCreator.CreateMZXMLFile();
 
             if (!blnSuccess && string.IsNullOrEmpty(m_message))
             {
@@ -995,7 +954,7 @@ namespace AnalysisManagerMSGFPlugin
                 return false;
             }
 
-            mMSXmlGeneratorAppPath = base.GetMSXmlGeneratorAppPath();
+            mMSXmlGeneratorAppPath = GetMSXmlGeneratorAppPath();
 
             return true;
         }
@@ -1004,7 +963,7 @@ namespace AnalysisManagerMSGFPlugin
         {
             var strStepToolName = "MSGFDB";
             var strProgLocManagerParamName = "MSGFDbProgLoc";
-            string strExeName = MSGFDB_JAR_NAME;
+            var strExeName = MSGFDB_JAR_NAME;
 
             mUsingMSGFDB = true;
 
@@ -1012,7 +971,7 @@ namespace AnalysisManagerMSGFPlugin
             // In order to allow the old version of MSGF to be run, we must look for parameter MSGF_Version
 
             // Check whether the settings file specifies that a specific version of the step tool be used
-            string strMSGFStepToolVersion = m_jobParams.GetParam("MSGF_Version");
+            var strMSGFStepToolVersion = m_jobParams.GetParam("MSGF_Version");
 
             if (!string.IsNullOrWhiteSpace(strMSGFStepToolVersion))
             {
@@ -1075,9 +1034,7 @@ namespace AnalysisManagerMSGFPlugin
         {
             const int MAX_ALLOWABLE_PRECURSOR_MASS_ERRORS_PERCENT = 10;
 
-            float sngPercentDataPrecursorMassError = 0;
-            string Msg = null;
-            bool blnTooManyPrecursorMassMismatches = false;
+            var blnTooManyPrecursorMassMismatches = false;
 
             try
             {
@@ -1088,22 +1045,22 @@ namespace AnalysisManagerMSGFPlugin
 
                 if (intLinesRead >= 2 && intPrecursorMassErrorCount > 0)
                 {
-                    sngPercentDataPrecursorMassError = intPrecursorMassErrorCount / (float)intLinesRead * 100f;
+                    var sngPercentDataPrecursorMassError = intPrecursorMassErrorCount / (float)intLinesRead * 100f;
 
-                    Msg = sngPercentDataPrecursorMassError.ToString("0.0") +
-                          "% of the data processed by MSGF has a precursor mass 10 or more Da away from the computed peptide mass";
+                    var msg = sngPercentDataPrecursorMassError.ToString("0.0") +
+                                 "% of the data processed by MSGF has a precursor mass 10 or more Da away from the computed peptide mass";
 
                     if (sngPercentDataPrecursorMassError >= MAX_ALLOWABLE_PRECURSOR_MASS_ERRORS_PERCENT)
                     {
-                        Msg += "; this likely indicates a static or dynamic mod definition is missing from the PHRP _ModSummary.txt file";
-                        LogError(Msg);
+                        msg += "; this likely indicates a static or dynamic mod definition is missing from the PHRP _ModSummary.txt file";
+                        LogError(msg);
                         blnTooManyPrecursorMassMismatches = true;
                     }
                     else
                     {
-                        Msg += "; this is below the error threshold of " + MAX_ALLOWABLE_PRECURSOR_MASS_ERRORS_PERCENT +
+                        msg += "; this is below the error threshold of " + MAX_ALLOWABLE_PRECURSOR_MASS_ERRORS_PERCENT +
                                "% and thus is only a warning (note that static and dynamic mod info is loaded from the PHRP _ModSummary.txt file)";
-                        LogWarning(Msg);
+                        LogWarning(msg);
                     }
                 }
             }
@@ -1135,18 +1092,17 @@ namespace AnalysisManagerMSGFPlugin
         {
             FileInfo fiInputFile;
 
-            string strMSGFSynopsisResults = null;
+            string strMSGFSynopsisResults;
 
-            bool blnSuccess = false;
-            var blnFirstHitsDataPresent = false;
-            var blnTooManyErrors = false;
+            bool blnSuccess;
+            bool blnFirstHitsDataPresent;
+            bool blnTooManyErrors;
 
             try
             {
                 if (string.IsNullOrEmpty(strMSGFResultsFilePath))
                 {
-                    LogError(
-                        "MSGF Results File path is empty; unable to continue");
+                    LogError("MSGF Results File path is empty; unable to continue");
                     return false;
                 }
 
@@ -1170,7 +1126,7 @@ namespace AnalysisManagerMSGFPlugin
             catch (Exception ex)
             {
                 var errMsg = "Error post-processing the MSGF Results file: " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex);
-                LogError(errMsg);
+                LogError(errMsg, ex);
                 m_message = clsGlobal.AppendToComment(m_message, "Exception post-processing the MSGF Results file");
 
                 return false;
@@ -1198,7 +1154,7 @@ namespace AnalysisManagerMSGFPlugin
             catch (Exception ex)
             {
                 var errMsg = "Error replacing the original MSGF Results file with the post-processed one: " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex);
-                LogError(errMsg);
+                LogError(errMsg, ex);
                 m_message = clsGlobal.AppendToComment(m_message, "Exception post-processing the MSGF Results file");
 
                 return false;
@@ -1226,10 +1182,9 @@ namespace AnalysisManagerMSGFPlugin
             {
                 return false;
             }
-            else
-            {
-                return blnSuccess;
-            }
+
+            return blnSuccess;
+
         }
 
         /// <summary>
@@ -1247,36 +1202,12 @@ namespace AnalysisManagerMSGFPlugin
         {
             const int MAX_ERRORS_TO_LOG = 5;
 
-            var chSepChars = new char[] { '\t' };
+            var chSepChars = new[] { '\t' };
 
-            string strLineIn = null;
-            string[] strSplitLine = null;
-
-            int intLinesRead = 0;
-            int intSpecProbErrorCount = 0;
-            int intPrecursorMassErrorCount = 0;
-            int intMGFLookupErrorCount = 0;
-
-            string strOriginalPeptide = null;
-            string strScan = null;
-            string strCharge = null;
-            string strProtein = null;
-            string strPeptide = null;
-            string strResultID = null;
-            string strSpecProb = null;
-            string strDataSource = null;
-            string strNotes = null;
-
-            string strMSGFResultData = null;
-            string strOriginalPeptideInfo = null;
-
-            int intResultID = 0;
-            double dblSpecProb = 0;
-
-            string[] strSkipInfo = null;
-
-            bool blnSkipLine = false;
-            bool blnHeaderLineParsed = false;
+            var intLinesRead = 0;
+            var intSpecProbErrorCount = 0;
+            var intPrecursorMassErrorCount = 0;
+            var intMGFLookupErrorCount = 0;
 
             ///////////////////////////////////////////////////////
             // Note: Do not put a Try/Catch block in this function
@@ -1285,19 +1216,22 @@ namespace AnalysisManagerMSGFPlugin
 
             // Initialize the column mapping
             // Using a case-insensitive comparer
-            var objColumnHeaders = new SortedDictionary<string, int>(StringComparer.CurrentCultureIgnoreCase);
+            var objColumnHeaders = new SortedDictionary<string, int>(StringComparer.CurrentCultureIgnoreCase)
+            {
+                // Define the default column mapping
+                {MSGF_RESULT_COLUMN_SpectrumFile, 0},
+                {MSGF_RESULT_COLUMN_Title, 1},
+                {MSGF_RESULT_COLUMN_ScanNumber, 2},
+                {MSGF_RESULT_COLUMN_Annotation, 3},
+                {MSGF_RESULT_COLUMN_Charge, 4},
+                {MSGF_RESULT_COLUMN_Protein_First, 5},
+                {MSGF_RESULT_COLUMN_Result_ID, 6},
+                {MSGF_RESULT_COLUMN_Data_Source, 7},
+                {MSGF_RESULT_COLUMN_Collision_Mode, 8},
+                {MSGF_RESULT_COLUMN_SpecProb, 9}
+            };
 
-            // Define the default column mapping
-            objColumnHeaders.Add(MSGF_RESULT_COLUMN_SpectrumFile, 0);
-            objColumnHeaders.Add(MSGF_RESULT_COLUMN_Title, 1);
-            objColumnHeaders.Add(MSGF_RESULT_COLUMN_ScanNumber, 2);
-            objColumnHeaders.Add(MSGF_RESULT_COLUMN_Annotation, 3);
-            objColumnHeaders.Add(MSGF_RESULT_COLUMN_Charge, 4);
-            objColumnHeaders.Add(MSGF_RESULT_COLUMN_Protein_First, 5);
-            objColumnHeaders.Add(MSGF_RESULT_COLUMN_Result_ID, 6);
-            objColumnHeaders.Add(MSGF_RESULT_COLUMN_Data_Source, 7);
-            objColumnHeaders.Add(MSGF_RESULT_COLUMN_Collision_Mode, 8);
-            objColumnHeaders.Add(MSGF_RESULT_COLUMN_SpecProb, 9);
+
 
             // Read the data from the MSGF Result file and
             // write the Synopsis MSGF Results to a new file
@@ -1307,161 +1241,159 @@ namespace AnalysisManagerMSGFPlugin
                 // Write out the headers to swMSGFSynFile
                 mMSGFInputCreator.WriteMSGFResultsHeaders(swMSGFSynFile);
 
-                blnHeaderLineParsed = false;
+                var blnHeaderLineParsed = false;
                 blnFirstHitsDataPresent = false;
                 blnTooManyErrors = false;
 
-                intLinesRead = 0;
-                intSpecProbErrorCount = 0;
-                intPrecursorMassErrorCount = 0;
-                intMGFLookupErrorCount = 0;
-
                 while (!srMSGFResults.EndOfStream)
                 {
-                    strLineIn = srMSGFResults.ReadLine();
+                    var strLineIn = srMSGFResults.ReadLine();
                     intLinesRead += 1;
-                    blnSkipLine = false;
+                    var blnSkipLine = false;
 
-                    if (!string.IsNullOrEmpty(strLineIn))
+                    if (string.IsNullOrEmpty(strLineIn))
+                        continue;
+
+                    var strSplitLine = strLineIn.Split('\t');
+
+                    if (!blnHeaderLineParsed)
                     {
-                        strSplitLine = strLineIn.Split('\t');
-
-                        if (!blnHeaderLineParsed)
+                        if (strSplitLine[0].ToLower() == MSGF_RESULT_COLUMN_SpectrumFile.ToLower())
                         {
-                            if (strSplitLine[0].ToLower() == MSGF_RESULT_COLUMN_SpectrumFile.ToLower())
-                            {
-                                // Parse the header line to confirm the column ordering
-                                clsPHRPReader.ParseColumnHeaders(strSplitLine, objColumnHeaders);
-                                blnSkipLine = true;
-                            }
-
-                            blnHeaderLineParsed = true;
+                            // Parse the header line to confirm the column ordering
+                            clsPHRPReader.ParseColumnHeaders(strSplitLine, objColumnHeaders);
+                            blnSkipLine = true;
                         }
 
-                        if (!blnSkipLine && strSplitLine.Length >= 4)
+                        blnHeaderLineParsed = true;
+                    }
+
+                    if (blnSkipLine || strSplitLine.Length < 4)
+                        continue;
+
+                    var strOriginalPeptide = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Title, objColumnHeaders);
+                    var strScan = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_ScanNumber, objColumnHeaders);
+                    var strCharge = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Charge, objColumnHeaders);
+                    var strProtein = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Protein_First, objColumnHeaders);
+                    var strPeptide = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Annotation, objColumnHeaders);
+                    var strResultID = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Result_ID, objColumnHeaders);
+                    var strSpecProb = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_SpecProb, objColumnHeaders);
+                    var strDataSource = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Data_Source, objColumnHeaders);
+                    var strNotes = string.Empty;
+
+                    if (blnMGFInstrumentData)
+                    {
+                        // Update the scan number
+                        int intMGFScanIndex;
+                        var intActualScanNumber = 0;
+                        if (int.TryParse(strScan, out intMGFScanIndex))
                         {
-                            strOriginalPeptide = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Title, objColumnHeaders);
-                            strScan = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_ScanNumber, objColumnHeaders);
-                            strCharge = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Charge, objColumnHeaders);
-                            strProtein = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Protein_First, objColumnHeaders);
-                            strPeptide = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Annotation, objColumnHeaders);
-                            strResultID = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Result_ID, objColumnHeaders);
-                            strSpecProb = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_SpecProb, objColumnHeaders);
-                            strDataSource = clsPHRPReader.LookupColumnValue(strSplitLine, MSGF_RESULT_COLUMN_Data_Source, objColumnHeaders);
-                            strNotes = string.Empty;
+                            intActualScanNumber = mMSGFInputCreator.GetScanByMGFSpectrumIndex(intMGFScanIndex);
+                        }
 
-                            if (blnMGFInstrumentData)
+                        if (intActualScanNumber == 0)
+                        {
+                            intMGFLookupErrorCount += 1;
+
+                            // Log the first 5 instances to the log file as warnings
+                            LogWarning(
+                                "Unable to determine the scan number for MGF spectrum index " + strScan + " on line  " + intLinesRead +
+                                " in the result file");
+                        }
+                        strScan = intActualScanNumber.ToString();
+                    }
+
+                    double dblSpecProb;
+                    if (double.TryParse(strSpecProb, out dblSpecProb))
+                    {
+                        if (strOriginalPeptide != strPeptide)
+                        {
+                            strNotes = string.Copy(strPeptide);
+                        }
+
+                        // Update strSpecProb to reduce the number of significant figures
+                        strSpecProb = dblSpecProb.ToString("0.000000E+00");
+                    }
+                    else
+                    {
+                        // The specProb column does not contain a number
+                        intSpecProbErrorCount += 1;
+
+                        if (intSpecProbErrorCount <= MAX_ERRORS_TO_LOG)
+                        {
+                            // Log the first 5 instances to the log file as warnings
+
+                            string strOriginalPeptideInfo;
+                            if (strOriginalPeptide != strPeptide)
                             {
-                                // Update the scan number
-                                int intMGFScanIndex = 0;
-                                var intActualScanNumber = 0;
-                                if (int.TryParse(strScan, out intMGFScanIndex))
-                                {
-                                    intActualScanNumber = mMSGFInputCreator.GetScanByMGFSpectrumIndex(intMGFScanIndex);
-                                }
-
-                                if (intActualScanNumber == 0)
-                                {
-                                    intMGFLookupErrorCount += 1;
-
-                                    // Log the first 5 instances to the log file as warnings
-                                    LogWarning(
-                                        "Unable to determine the scan number for MGF spectrum index " + strScan + " on line  " + intLinesRead +
-                                        " in the result file");
-                                }
-                                strScan = intActualScanNumber.ToString();
-                            }
-
-                            if (double.TryParse(strSpecProb, out dblSpecProb))
-                            {
-                                if (strOriginalPeptide != strPeptide)
-                                {
-                                    strNotes = string.Copy(strPeptide);
-                                }
-
-                                // Update strSpecProb to reduce the number of significant figures
-                                strSpecProb = dblSpecProb.ToString("0.000000E+00");
+                                strOriginalPeptideInfo = ", original peptide sequence " + strOriginalPeptide;
                             }
                             else
                             {
-                                // The specProb column does not contain a number
-                                intSpecProbErrorCount += 1;
-
-                                if (intSpecProbErrorCount <= MAX_ERRORS_TO_LOG)
-                                {
-                                    // Log the first 5 instances to the log file as warnings
-
-                                    if (strOriginalPeptide != strPeptide)
-                                    {
-                                        strOriginalPeptideInfo = ", original peptide sequence " + strOriginalPeptide;
-                                    }
-                                    else
-                                    {
-                                        strOriginalPeptideInfo = string.Empty;
-                                    }
-
-                                    LogWarning(
-                                        "MSGF SpecProb is not numeric on line " + intLinesRead + " in the result file: " + strSpecProb +
-                                        " (parent peptide " + strPeptide + ", Scan " + strScan + ", Result_ID " + strResultID + strOriginalPeptideInfo +
-                                        ")");
-                                }
-
-                                if (strSpecProb.Contains("precursor mass"))
-                                {
-                                    intPrecursorMassErrorCount += 1;
-                                }
-
-                                if (strOriginalPeptide != strPeptide)
-                                {
-                                    strNotes = strPeptide + "; " + strSpecProb;
-                                }
-                                else
-                                {
-                                    strNotes = string.Copy(strSpecProb);
-                                }
-
-                                // Change the spectrum probability to 1
-                                strSpecProb = "1";
+                                strOriginalPeptideInfo = string.Empty;
                             }
 
-                            strMSGFResultData = strScan + "\t" + strCharge + "\t" + strProtein + "\t" + strOriginalPeptide + "\t" + strSpecProb + "\t" + strNotes;
+                            LogWarning(
+                                "MSGF SpecProb is not numeric on line " + intLinesRead + " in the result file: " + strSpecProb +
+                                " (parent peptide " + strPeptide + ", Scan " + strScan + ", Result_ID " + strResultID + strOriginalPeptideInfo +
+                                ")");
+                        }
 
-                            // Add this result to the cached string dictionary
-                            mMSGFInputCreator.AddUpdateMSGFResult(strScan, strCharge, strOriginalPeptide, strMSGFResultData);
+                        if (strSpecProb.Contains("precursor mass"))
+                        {
+                            intPrecursorMassErrorCount += 1;
+                        }
 
-                            if (strDataSource == MSGF_PHRP_DATA_SOURCE_FHT)
-                            {
-                                // First-hits file
-                                blnFirstHitsDataPresent = true;
-                            }
-                            else
-                            {
-                                // Synopsis file
+                        if (strOriginalPeptide != strPeptide)
+                        {
+                            strNotes = strPeptide + "; " + strSpecProb;
+                        }
+                        else
+                        {
+                            strNotes = string.Copy(strSpecProb);
+                        }
 
-                                // Add this entry to the MSGF synopsis results
-                                // Note that strOriginalPeptide has the original peptide sequence
-                                swMSGFSynFile.WriteLine(strResultID + "\t" + strMSGFResultData);
+                        // Change the spectrum probability to 1
+                        strSpecProb = "1";
+                    }
 
-                                // See if any entries were skipped when reading the synopsis file used to create the MSGF input file
-                                // If they were, add them to the validated MSGF file (to aid in linking up files later)
+                    var strMSGFResultData = strScan + "\t" + strCharge + "\t" + strProtein + "\t" + strOriginalPeptide + "\t" + strSpecProb + "\t" + strNotes;
 
-                                if (int.TryParse(strResultID, out intResultID))
-                                {
-                                    var objSkipList = mMSGFInputCreator.GetSkippedInfoByResultId(intResultID);
+                    // Add this result to the cached string dictionary
+                    mMSGFInputCreator.AddUpdateMSGFResult(strScan, strCharge, strOriginalPeptide, strMSGFResultData);
 
-                                    for (var intIndex = 0; intIndex <= objSkipList.Count - 1; intIndex++)
-                                    {
-                                        // Split the entry on the tab character
-                                        // The item left of the tab is the skipped result id
-                                        // the item right of the tab is the protein corresponding to the skipped result id
+                    if (strDataSource == MSGF_PHRP_DATA_SOURCE_FHT)
+                    {
+                        // First-hits file
+                        blnFirstHitsDataPresent = true;
+                    }
+                    else
+                    {
+                        // Synopsis file
 
-                                        strSkipInfo = objSkipList[intIndex].Split(chSepChars, 2);
+                        // Add this entry to the MSGF synopsis results
+                        // Note that strOriginalPeptide has the original peptide sequence
+                        swMSGFSynFile.WriteLine(strResultID + "\t" + strMSGFResultData);
 
-                                        swMSGFSynFile.WriteLine(strSkipInfo[0] + "\t" + strScan + "\t" + strCharge + "\t" + strSkipInfo[1] + "\t" +
-                                                                strOriginalPeptide + "\t" + strSpecProb + "\t" + strNotes);
-                                    }
-                                }
-                            }
+                        // See if any entries were skipped when reading the synopsis file used to create the MSGF input file
+                        // If they were, add them to the validated MSGF file (to aid in linking up files later)
+
+                        int intResultID;
+                        if (!int.TryParse(strResultID, out intResultID))
+                            continue;
+
+                        var objSkipList = mMSGFInputCreator.GetSkippedInfoByResultId(intResultID);
+
+                        for (var intIndex = 0; intIndex <= objSkipList.Count - 1; intIndex++)
+                        {
+                            // Split the entry on the tab character
+                            // The item left of the tab is the skipped result id
+                            // the item right of the tab is the protein corresponding to the skipped result id
+
+                            var strSkipInfo = objSkipList[intIndex].Split(chSepChars, 2);
+
+                            swMSGFSynFile.WriteLine(strSkipInfo[0] + "\t" + strScan + "\t" + strCharge + "\t" + strSkipInfo[1] + "\t" +
+                                                    strOriginalPeptide + "\t" + strSpecProb + "\t" + strNotes);
                         }
                     }
                 }
@@ -1475,8 +1407,7 @@ namespace AnalysisManagerMSGFPlugin
 
             if (intMGFLookupErrorCount > 1)
             {
-                LogError(
-                    "MGF Index-to-scan lookup failed for " + intMGFLookupErrorCount + " entries in the MSGF result file");
+                LogError("MGF Index-to-scan lookup failed for " + intMGFLookupErrorCount + " entries in the MSGF result file");
                 if (intLinesRead > 0 && intMGFLookupErrorCount / (float)intLinesRead > 0.1)
                 {
                     blnTooManyErrors = true;
@@ -1495,7 +1426,7 @@ namespace AnalysisManagerMSGFPlugin
 
         private bool ProcessFileWithMSGF(clsPHRPReader.ePeptideHitResultType eResultType, int intMSGFInputFileLineCount, string strMSGFInputFilePath, string strMSGFResultsFilePath)
         {
-            bool blnSuccess = false;
+            bool blnSuccess;
 
             if (eResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB)
             {
@@ -1515,36 +1446,31 @@ namespace AnalysisManagerMSGFPlugin
         private bool ProcessFilesWrapper(clsAnalysisResources.eRawDataTypeConstants eRawDataType, clsPHRPReader.ePeptideHitResultType eResultType,
             bool blnDoNotFilterPeptides, bool blnMGFInstrumentData)
         {
-            bool blnSuccess = false;
-
-            string Msg = null;
-            int intMSGFInputFileLineCount = 0;
+            string msg;
+            int intMSGFInputFileLineCount;
 
             // Parse the Sequest, X!Tandem, Inspect, or MODa parameter file to determine if ETD mode was used
-            string strSearchToolParamFilePath = null;
-            strSearchToolParamFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("ParmFileName"));
+            var strSearchToolParamFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("ParmFileName"));
 
-            blnSuccess = CheckETDModeEnabled(eResultType, strSearchToolParamFilePath);
+            var blnSuccess = CheckETDModeEnabled(eResultType, strSearchToolParamFilePath);
             if (!blnSuccess)
             {
-                Msg = "Error examining param file to determine if ETD mode was enabled)";
-                m_message = clsGlobal.AppendToComment(m_message, Msg);
-                LogError("clsMSGFToolRunner.RunTool(); " + Msg);
+                msg = "Error examining param file to determine if ETD mode was enabled)";
+                m_message = clsGlobal.AppendToComment(m_message, msg);
+                LogError("clsMSGFToolRunner.RunTool(); " + msg);
                 return false;
             }
-            else
-            {
-                m_progress = PROGRESS_PCT_PARAM_FILE_EXAMINED_FOR_ETD;
-                m_StatusTools.UpdateAndWrite(m_progress);
-            }
+
+            m_progress = PROGRESS_PCT_PARAM_FILE_EXAMINED_FOR_ETD;
+            m_StatusTools.UpdateAndWrite(m_progress);
 
             // Create the _MSGF_input.txt file
             blnSuccess = CreateMSGFInputFile(eResultType, blnDoNotFilterPeptides, blnMGFInstrumentData, out intMSGFInputFileLineCount);
 
             if (!blnSuccess)
             {
-                Msg = "Error creating MSGF input file";
-                m_message = clsGlobal.AppendToComment(m_message, Msg);
+                msg = "Error creating MSGF input file";
+                m_message = clsGlobal.AppendToComment(m_message, msg);
             }
             else
             {
@@ -1575,8 +1501,8 @@ namespace AnalysisManagerMSGFPlugin
 
                 if (!blnSuccess)
                 {
-                    Msg = "Error creating .mzXML file";
-                    m_message = clsGlobal.AppendToComment(m_message, Msg);
+                    msg = "Error creating .mzXML file";
+                    m_message = clsGlobal.AppendToComment(m_message, msg);
                 }
                 else
                 {
@@ -1622,8 +1548,8 @@ namespace AnalysisManagerMSGFPlugin
 
                 if (!blnSuccess)
                 {
-                    Msg = "Error running MSGF";
-                    m_message = clsGlobal.AppendToComment(m_message, Msg);
+                    msg = "Error running MSGF";
+                    m_message = clsGlobal.AppendToComment(m_message, msg);
                 }
                 else
                 {
@@ -1654,16 +1580,12 @@ namespace AnalysisManagerMSGFPlugin
         /// <remarks></remarks>
         private bool RetrievePreGeneratedDataFile(string strFileNameToFind)
         {
-            string strTransferFolderPath = null;
-            string strInputFolderName = null;
             var strFolderToCheck = "??";
-            string strFilePathSource = null;
-            string strFilePathTarget = null;
 
             try
             {
-                strTransferFolderPath = m_jobParams.GetParam("transferFolderPath");
-                strInputFolderName = m_jobParams.GetParam("inputFolderName");
+                var strTransferFolderPath = m_jobParams.GetParam("transferFolderPath");
+                var strInputFolderName = m_jobParams.GetParam("inputFolderName");
 
                 strFolderToCheck = Path.Combine(Path.Combine(strTransferFolderPath, m_Dataset), strInputFolderName);
 
@@ -1675,7 +1597,7 @@ namespace AnalysisManagerMSGFPlugin
                 // Look for strFileNameToFind in strFolderToCheck
                 if (Directory.Exists(strFolderToCheck))
                 {
-                    strFilePathSource = Path.Combine(strFolderToCheck, strFileNameToFind);
+                    var strFilePathSource = Path.Combine(strFolderToCheck, strFileNameToFind);
 
                     if (m_DebugLevel >= 1)
                     {
@@ -1684,7 +1606,7 @@ namespace AnalysisManagerMSGFPlugin
 
                     if (File.Exists(strFilePathSource))
                     {
-                        strFilePathTarget = Path.Combine(m_WorkDir, strFileNameToFind);
+                        var strFilePathTarget = Path.Combine(m_WorkDir, strFileNameToFind);
                         LogDebug(
                             "Copying file " + strFilePathSource + " to " + strFilePathTarget);
 
@@ -1698,7 +1620,7 @@ namespace AnalysisManagerMSGFPlugin
             catch (Exception ex)
             {
                 LogWarning(
-                    "Exception finding file " + strFileNameToFind + " in folder " + strFolderToCheck + ": "+  ex);
+                    "Exception finding file " + strFileNameToFind + " in folder " + strFolderToCheck + ": " + ex);
                 return false;
             }
 
@@ -1708,10 +1630,7 @@ namespace AnalysisManagerMSGFPlugin
 
         private bool RunMSGFonMSGFDB(int intMSGFInputFileLineCount, string strMSGFInputFilePath, string strMSGFResultsFilePath)
         {
-            string strLineIn = null;
-            int intLinesRead = 0;
-
-            int intCollisionModeColIndex = -1;
+            var intCollisionModeColIndex = -1;
 
             try
             {
@@ -1720,59 +1639,58 @@ namespace AnalysisManagerMSGFPlugin
 
                 using (var srSourceFile = new StreamReader(new FileStream(strMSGFInputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    intLinesRead = 0;
+                    var intLinesRead = 0;
                     while (!srSourceFile.EndOfStream)
                     {
-                        strLineIn = srSourceFile.ReadLine();
+                        var strLineIn = srSourceFile.ReadLine();
 
-                        if (!string.IsNullOrEmpty(strLineIn))
+                        if (string.IsNullOrEmpty(strLineIn))
+                            continue;
+
+                        intLinesRead += 1;
+                        var strSplitLine = strLineIn.Split('\t').ToList();
+
+                        if (intLinesRead == 1)
                         {
-                            intLinesRead += 1;
-                            var strSplitLine = strLineIn.Split('\t').ToList();
+                            // Cache the header line
+                            lstCIDData.Add(strLineIn);
+                            lstETDData.Add(strLineIn);
 
-                            if (intLinesRead == 1)
+                            // Confirm the column index of the Collision_Mode column
+                            for (var intIndex = 0; intIndex <= strSplitLine.Count - 1; intIndex++)
                             {
-                                // Cache the header line
-                                lstCIDData.Add(strLineIn);
-                                lstETDData.Add(strLineIn);
-
-                                // Confirm the column index of the Collision_Mode column
-                                for (var intIndex = 0; intIndex <= strSplitLine.Count - 1; intIndex++)
+                                if (string.Equals(strSplitLine[intIndex], MSGF_RESULT_COLUMN_Collision_Mode, StringComparison.CurrentCultureIgnoreCase))
                                 {
-                                    if (string.Equals(strSplitLine[intIndex], MSGF_RESULT_COLUMN_Collision_Mode, StringComparison.CurrentCultureIgnoreCase))
-                                    {
-                                        intCollisionModeColIndex = intIndex;
-                                    }
-                                }
-
-                                if (intCollisionModeColIndex < 0)
-                                {
-                                    // Collision_Mode column not found; this is unexpected
-                                    LogError(
-                                        "Collision_Mode column not found in the MSGF input file for MSGFDB data; unable to continue");
-                                    srSourceFile.Close();
-                                    return false;
+                                    intCollisionModeColIndex = intIndex;
                                 }
                             }
-                            else
-                            {
-                                // Read the collision mode
 
-                                if (strSplitLine.Count > intCollisionModeColIndex)
+                            if (intCollisionModeColIndex < 0)
+                            {
+                                // Collision_Mode column not found; this is unexpected
+                                LogError("Collision_Mode column not found in the MSGF input file for MSGFDB data; unable to continue");
+                                srSourceFile.Close();
+                                return false;
+                            }
+                        }
+                        else
+                        {
+                            // Read the collision mode
+
+                            if (strSplitLine.Count > intCollisionModeColIndex)
+                            {
+                                if (strSplitLine[intCollisionModeColIndex].ToUpper() == "ETD")
                                 {
-                                    if (strSplitLine[intCollisionModeColIndex].ToUpper() == "ETD")
-                                    {
-                                        lstETDData.Add(strLineIn);
-                                    }
-                                    else
-                                    {
-                                        lstCIDData.Add(strLineIn);
-                                    }
+                                    lstETDData.Add(strLineIn);
                                 }
                                 else
                                 {
                                     lstCIDData.Add(strLineIn);
                                 }
+                            }
+                            else
+                            {
+                                lstCIDData.Add(strLineIn);
                             }
                         }
                     }
@@ -1786,11 +1704,10 @@ namespace AnalysisManagerMSGFPlugin
                     mETDMode = true;
                     return RunMSGF(intMSGFInputFileLineCount, strMSGFInputFilePath, strMSGFResultsFilePath);
                 }
-                else if (lstCIDData.Count > 1 & lstETDData.Count > 1)
+
+                if (lstCIDData.Count > 1 & lstETDData.Count > 1)
                 {
                     // Mix of both CID and ETD data found
-
-                    bool blnSuccess = false;
 
                     mProcessingMSGFDBCollisionModeData = true;
 
@@ -1803,7 +1720,7 @@ namespace AnalysisManagerMSGFPlugin
                     // Process the CID data
                     mETDMode = false;
                     mCollisionModeIteration = 1;
-                    blnSuccess = RunMSGFonMSGFDBCachedData(lstCIDData, strMSGFInputFilePath, strMSGFResultsFilePath, "CID");
+                    var blnSuccess = RunMSGFonMSGFDBCachedData(lstCIDData, strMSGFInputFilePath, strMSGFResultsFilePath, "CID");
                     if (!blnSuccess)
                         return false;
 
@@ -1816,12 +1733,10 @@ namespace AnalysisManagerMSGFPlugin
 
                     return true;
                 }
-                else
-                {
-                    // Only CID or HCD data is present (or no data is present)
-                    mETDMode = false;
-                    return RunMSGF(intMSGFInputFileLineCount, strMSGFInputFilePath, strMSGFResultsFilePath);
-                }
+                
+                // Only CID or HCD data is present (or no data is present)
+                mETDMode = false;
+                return RunMSGF(intMSGFInputFileLineCount, strMSGFInputFilePath, strMSGFResultsFilePath);
             }
             catch (Exception ex)
             {
@@ -1832,25 +1747,21 @@ namespace AnalysisManagerMSGFPlugin
 
         private bool RunMSGFonMSGFDBCachedData(List<string> lstData, string strMSGFInputFilePath, string strMSGFResultsFilePathFinal, string strCollisionMode)
         {
-            string strInputFileTempPath = null;
-            string strResultFileTempPath = null;
-
-            bool blnSuccess = false;
 
             try
             {
-                strInputFileTempPath = AddFileNameSuffix(strMSGFInputFilePath, strCollisionMode);
-                strResultFileTempPath = AddFileNameSuffix(strMSGFResultsFilePathFinal, strCollisionMode);
+                var strInputFileTempPath = AddFileNameSuffix(strMSGFInputFilePath, strCollisionMode);
+                var strResultFileTempPath = AddFileNameSuffix(strMSGFResultsFilePathFinal, strCollisionMode);
 
                 using (var swInputFileTemp = new StreamWriter(new FileStream(strInputFileTempPath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    foreach (string strData in lstData)
+                    foreach (var strData in lstData)
                     {
                         swInputFileTemp.WriteLine(strData);
                     }
                 }
 
-                blnSuccess = RunMSGF(lstData.Count - 1, strInputFileTempPath, strResultFileTempPath);
+                var blnSuccess = RunMSGF(lstData.Count - 1, strInputFileTempPath, strResultFileTempPath);
 
                 if (!blnSuccess)
                 {
@@ -1900,12 +1811,11 @@ namespace AnalysisManagerMSGFPlugin
 
         private bool RunMSGF(int intMSGFInputFileLineCount, string strMSGFInputFilePath, string strMSGFResultsFilePath)
         {
-            int intMSGFEntriesPerSegment = 0;
-            bool blnSuccess = false;
-            bool blnUseSegments = false;
-            string strSegmentUsageMessage = null;
+            bool blnSuccess;
+            bool blnUseSegments;
+            string strSegmentUsageMessage;
 
-            intMSGFEntriesPerSegment = m_jobParams.GetJobParameter("MSGFEntriesPerSegment", MSGF_SEGMENT_ENTRY_COUNT);
+            var intMSGFEntriesPerSegment = m_jobParams.GetJobParameter("MSGFEntriesPerSegment", MSGF_SEGMENT_ENTRY_COUNT);
             if (m_DebugLevel >= 2)
             {
                 LogDebug(
@@ -1945,7 +1855,7 @@ namespace AnalysisManagerMSGFPlugin
             }
             else
             {
-                List<udtSegmentFileInfoType> lstSegmentFileInfo = new List<udtSegmentFileInfoType>();
+                var lstSegmentFileInfo = new List<udtSegmentFileInfoType>();
                 var lstResultFiles = new List<string>();
 
                 // Split strMSGFInputFilePath into chunks with intMSGFEntriesPerSegment each
@@ -1960,10 +1870,9 @@ namespace AnalysisManagerMSGFPlugin
                 if (blnSuccess)
                 {
                     // Call MSGF for each segment
-                    foreach (clsMSGFRunner.udtSegmentFileInfoType udtSegmentFile in lstSegmentFileInfo)
+                    foreach (var udtSegmentFile in lstSegmentFileInfo)
                     {
-                        string strResultFile = null;
-                        strResultFile = AddFileNameSuffix(strMSGFResultsFilePath, udtSegmentFile.Segment);
+                        var strResultFile = AddFileNameSuffix(strMSGFResultsFilePath, udtSegmentFile.Segment);
 
                         blnSuccess = RunMSGFWork(udtSegmentFile.FilePath, strResultFile);
 
@@ -1989,13 +1898,13 @@ namespace AnalysisManagerMSGFPlugin
                     }
 
                     // Delete the segment files
-                    foreach (clsMSGFRunner.udtSegmentFileInfoType udtSegmentFile in lstSegmentFileInfo)
+                    foreach (var udtSegmentFile in lstSegmentFileInfo)
                     {
                         DeleteTemporaryfile(udtSegmentFile.FilePath);
                     }
 
                     // Delete the result files
-                    foreach (string strResultFile in lstResultFiles)
+                    foreach (var strResultFile in lstResultFiles)
                     {
                         DeleteTemporaryfile(strResultFile);
                     }
@@ -2022,20 +1931,15 @@ namespace AnalysisManagerMSGFPlugin
 
         private bool RunMSGFWork(string strInputFilePath, string strResultsFilePath)
         {
-            string CmdStr = null;
-            int intJavaMemorySize = 0;
-
             if (string.IsNullOrEmpty(strInputFilePath))
             {
-                LogError(
-                    "strInputFilePath has not been defined; unable to continue");
+                LogError("strInputFilePath has not been defined; unable to continue");
                 return false;
             }
 
             if (string.IsNullOrEmpty(strResultsFilePath))
             {
-                LogError(
-                    "strResultsFilePath has not been defined; unable to continue");
+                LogError("strResultsFilePath has not been defined; unable to continue");
                 return false;
             }
 
@@ -2048,7 +1952,7 @@ namespace AnalysisManagerMSGFPlugin
             // If an MSGF analysis crashes with an "out-of-memory" error, then we need to reserve more memory for Java
             // Customize this on a per-job basis using the MSGFJavaMemorySize setting in the settings file
             // (job 611216 succeeded with a value of 5000)
-            intJavaMemorySize = m_jobParams.GetJobParameter("MSGFJavaMemorySize", 2000);
+            var intJavaMemorySize = m_jobParams.GetJobParameter("MSGFJavaMemorySize", 2000);
             if (intJavaMemorySize < 512)
                 intJavaMemorySize = 512;
 
@@ -2063,7 +1967,7 @@ namespace AnalysisManagerMSGFPlugin
             m_StatusTools.CurrentOperation = "Running MSGF";
             m_StatusTools.UpdateAndWrite(m_progress);
 
-            CmdStr = " -Xmx" + intJavaMemorySize.ToString() + "M ";
+            var CmdStr = " -Xmx" + intJavaMemorySize.ToString() + "M ";
 
             if (mUsingMSGFDB)
             {
@@ -2088,7 +1992,7 @@ namespace AnalysisManagerMSGFPlugin
             //   -m 2 means ETD
             //   -m 3 means HCD
 
-            int intMSGFDBVersion = int.MaxValue;
+            var intMSGFDBVersion = int.MaxValue;
 
             if (mUsingMSGFDB)
             {
@@ -2149,14 +2053,13 @@ namespace AnalysisManagerMSGFPlugin
             RegisterEvents(mMSGFRunner);
             mMSGFRunner.LoopWaiting += MSGFRunner_LoopWaiting;
 
-            bool blnSuccess = false;
-            blnSuccess = mMSGFRunner.RunProgram(mJavaProgLoc, CmdStr, "MSGF", true);
+            var blnSuccess = mMSGFRunner.RunProgram(mJavaProgLoc, CmdStr, "MSGF", true);
 
             if (!mToolVersionWritten)
             {
                 if (string.IsNullOrWhiteSpace(mMSGFVersion))
                 {
-                    FileInfo fiConsoleOutputfile = new FileInfo(Path.Combine(m_WorkDir, MSGF_CONSOLE_OUTPUT));
+                    var fiConsoleOutputfile = new FileInfo(Path.Combine(m_WorkDir, MSGF_CONSOLE_OUTPUT));
                     if (fiConsoleOutputfile.Length == 0)
                     {
                         // File is 0-bytes; delete it
@@ -2187,23 +2090,20 @@ namespace AnalysisManagerMSGFPlugin
         {
             try
             {
-                string strLineIn = null;
-                int intLinesRead = 0;
-                bool blnHeaderWritten = false;
 
                 // Create the output file
                 using (var swOutFile = new StreamWriter(new FileStream(strMSGFOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
                     // Step through the input files and append the results
-                    blnHeaderWritten = false;
-                    foreach (string strResultFile in lstResultFiles)
+                    var blnHeaderWritten = false;
+                    foreach (var strResultFile in lstResultFiles)
                     {
                         using (var srInFile = new StreamReader(new FileStream(strResultFile, FileMode.Open, FileAccess.Read, FileShare.Read)))
                         {
-                            intLinesRead = 0;
+                            var intLinesRead = 0;
                             while (!srInFile.EndOfStream)
                             {
-                                strLineIn = srInFile.ReadLine();
+                                var strLineIn = srInFile.ReadLine();
                                 intLinesRead += 1;
 
                                 if (!blnHeaderWritten)
@@ -2234,69 +2134,64 @@ namespace AnalysisManagerMSGFPlugin
 
         private bool LoadMSGFResults(string strMSGFResultsFilePath, out Dictionary<int, string> lstMSGFResults)
         {
-            string strLineIn = null;
-            string[] strSplitLine = null;
-            int intMSGFSpecProbColIndex = 0;
 
-            int intResultID = 0;
             lstMSGFResults = new Dictionary<int, string>();
 
             try
             {
                 var blnSuccess = true;
 
-                intMSGFSpecProbColIndex = -1;
+                var intMSGFSpecProbColIndex = -1;
                 using (var srInFile = new StreamReader(new FileStream(strMSGFResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
                     while (!srInFile.EndOfStream)
                     {
-                        strLineIn = srInFile.ReadLine();
+                        var strLineIn = srInFile.ReadLine();
 
-                        if (!string.IsNullOrEmpty(strLineIn))
+                        if (string.IsNullOrEmpty(strLineIn))
+                            continue;
+
+                        var strSplitLine = strLineIn.Split();
+
+                        if (strSplitLine.Length <= 0)
+                            continue;
+
+                        if (intMSGFSpecProbColIndex < 0)
                         {
-                            strSplitLine = strLineIn.Split();
-
-                            if (strSplitLine.Length > 0)
+                            // Assume this is the headerline, look for SpecProb
+                            for (var intIndex = 0; intIndex <= strSplitLine.Length - 1; intIndex++)
                             {
-                                if (intMSGFSpecProbColIndex < 0)
+                                if (String.Equals(strSplitLine[intIndex], "SpecProb", StringComparison.InvariantCultureIgnoreCase))
                                 {
-                                    // Assume this is the headerline, look for SpecProb
-                                    for (var intIndex = 0; intIndex <= strSplitLine.Length - 1; intIndex++)
-                                    {
-                                        if (strSplitLine[intIndex].ToLower() == "SpecProb".ToLower())
-                                        {
-                                            intMSGFSpecProbColIndex = intIndex;
-                                            break;
-                                        }
-                                    }
-
-                                    if (intMSGFSpecProbColIndex < 0)
-                                    {
-                                        // Match not found; abort
-                                        LogError(
-                                            "SpecProb column not found in file " + strMSGFResultsFilePath);
-                                        blnSuccess = false;
-                                        break;
-                                    }
+                                    intMSGFSpecProbColIndex = intIndex;
+                                    break;
                                 }
-                                else
-                                {
-                                    // Data line
+                            }
 
-                                    if (int.TryParse(strSplitLine[0], out intResultID))
+                            if (intMSGFSpecProbColIndex < 0)
+                            {
+                                // Match not found; abort
+                                LogError("SpecProb column not found in file " + strMSGFResultsFilePath);
+                                blnSuccess = false;
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            // Data line
+                            int intResultID;
+                            if (int.TryParse(strSplitLine[0], out intResultID))
+                            {
+                                if (intMSGFSpecProbColIndex < strSplitLine.Length)
+                                {
+                                    try
                                     {
-                                        if (intMSGFSpecProbColIndex < strSplitLine.Length)
-                                        {
-                                            try
-                                            {
-                                                lstMSGFResults.Add(intResultID, strSplitLine[intMSGFSpecProbColIndex]);
-                                            }
-                                            catch (Exception)
-                                            {
-                                                // Ignore errors here
-                                                // Possibly a key violation or a column index issue
-                                            }
-                                        }
+                                        lstMSGFResults.Add(intResultID, strSplitLine[intMSGFSpecProbColIndex]);
+                                    }
+                                    catch (Exception)
+                                    {
+                                        // Ignore errors here
+                                        // Possibly a key violation or a column index issue
                                     }
                                 }
                             }
@@ -2308,7 +2203,7 @@ namespace AnalysisManagerMSGFPlugin
             }
             catch (Exception ex)
             {
-                LogError("Exception in LoadMSGFResults: " + ex.Message);
+                LogError("Exception in LoadMSGFResults: " + ex.Message, ex);
                 return false;
             }
         }
@@ -2330,8 +2225,7 @@ namespace AnalysisManagerMSGFPlugin
                 {
                     if (m_DebugLevel >= 4)
                     {
-                        LogDebug(
-                            "Console output file not found: " + strConsoleOutputFilePath);
+                        LogDebug("Console output file not found: " + strConsoleOutputFilePath);
                     }
 
                     return;
@@ -2342,43 +2236,41 @@ namespace AnalysisManagerMSGFPlugin
                     LogDebug("Parsing file " + strConsoleOutputFilePath);
                 }
 
-                string strLineIn = null;
-                int intLinesRead = 0;
                 mConsoleOutputErrorMsg = string.Empty;
 
                 using (var srInFile = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    intLinesRead = 0;
+                    var intLinesRead = 0;
                     while (!srInFile.EndOfStream)
                     {
-                        strLineIn = srInFile.ReadLine();
+                        var strLineIn = srInFile.ReadLine();
                         intLinesRead += 1;
 
-                        if (!string.IsNullOrWhiteSpace(strLineIn))
+                        if (string.IsNullOrWhiteSpace(strLineIn))
+                            continue;
+
+                        if (intLinesRead <= 3 && string.IsNullOrWhiteSpace(mMSGFVersion) && strLineIn.StartsWith("MSGF v"))
                         {
-                            if (intLinesRead <= 3 && string.IsNullOrWhiteSpace(mMSGFVersion) && strLineIn.StartsWith("MSGF v"))
+                            // Originally the first line was the MSGF version
+                            // Starting in November 2016, the first line is the command line and the second line is a separator (series of dashes)
+                            // The third line is the MSGF version
+
+                            if (m_DebugLevel >= 2)
                             {
-                                // Originally the first line was the MSGF version
-                                // Starting in November 2016, the first line is the command line and the second line is a separator (series of dashes)
-                                // The third line is the MSGF version
-
-                                if (m_DebugLevel >= 2)
-                                {
-                                    LogDebug("MSGF version: " + strLineIn);
-                                }
-
-                                mMSGFVersion = string.Copy(strLineIn);
+                                LogDebug("MSGF version: " + strLineIn);
                             }
-                            else
+
+                            mMSGFVersion = string.Copy(strLineIn);
+                        }
+                        else
+                        {
+                            if (strLineIn.ToLower().Contains("error"))
                             {
-                                if (strLineIn.ToLower().Contains("error"))
+                                if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                                 {
-                                    if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
-                                    {
-                                        mConsoleOutputErrorMsg = "Error running MSGF:";
-                                    }
-                                    mConsoleOutputErrorMsg += "; " + strLineIn;
+                                    mConsoleOutputErrorMsg = "Error running MSGF:";
                                 }
+                                mConsoleOutputErrorMsg += "; " + strLineIn;
                             }
                         }
                     }
@@ -2389,8 +2281,7 @@ namespace AnalysisManagerMSGFPlugin
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    LogError(
-                        "Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    LogError("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message, ex);
                 }
             }
         }
@@ -2399,8 +2290,7 @@ namespace AnalysisManagerMSGFPlugin
             List<udtSegmentFileInfoType> lstSegmentFileInfo)
         {
             var intLinesRead = 0;
-            string strLineIn = null;
-            string strHeaderLine = string.Empty;
+            var strHeaderLine = string.Empty;
 
             var intLineCountAllSegments = 0;
 
@@ -2421,7 +2311,7 @@ namespace AnalysisManagerMSGFPlugin
 
                     while (!srInFile.EndOfStream)
                     {
-                        strLineIn = srInFile.ReadLine();
+                        var strLineIn = srInFile.ReadLine();
                         intLinesRead += 1;
 
                         if (intLinesRead == 1)
@@ -2435,8 +2325,7 @@ namespace AnalysisManagerMSGFPlugin
                             // Need to create a new segment
                             // However, if the number of lines remaining to be written is less than 5% of intMSGFEntriesPerSegment then keep writing to this segment
 
-                            int intLineCountRemaining = 0;
-                            intLineCountRemaining = intMSGFinputFileLineCount - intLineCountAllSegments;
+                            var intLineCountRemaining = intMSGFinputFileLineCount - intLineCountAllSegments;
 
                             if (udtThisSegment.Segment == 0 || intLineCountRemaining > intMSGFEntriesPerSegment * MSGF_SEGMENT_OVERFLOW_MARGIN)
                             {
@@ -2487,20 +2376,18 @@ namespace AnalysisManagerMSGFPlugin
         /// <remarks></remarks>
         private bool StoreToolVersionInfo()
         {
-            string strToolVersionInfo = null;
-
             if (m_DebugLevel >= 2)
             {
                 LogDebug("Determining tool version info");
             }
 
-            strToolVersionInfo = string.Copy(mMSGFVersion);
+            var strToolVersionInfo = string.Copy(mMSGFVersion);
 
             // Store paths to key files in ioToolFiles
-            List<FileInfo> ioToolFiles = new List<FileInfo>();
-            ioToolFiles.Add(new FileInfo(mMSGFProgLoc));
-
-            ioToolFiles.Add(new FileInfo(mMSXmlGeneratorAppPath));
+            var ioToolFiles = new List<FileInfo> {
+                new FileInfo(mMSGFProgLoc),
+                new FileInfo(mMSXmlGeneratorAppPath)
+            };
 
             try
             {
@@ -2519,7 +2406,7 @@ namespace AnalysisManagerMSGFPlugin
         /// <remarks></remarks>
         private bool StoreToolVersionInfoPrecomputedProbabilities(clsPHRPReader.ePeptideHitResultType eResultType)
         {
-            string strToolVersionInfo = string.Empty;
+            var strToolVersionInfo = string.Empty;
 
             if (m_DebugLevel >= 2)
             {
@@ -2532,7 +2419,7 @@ namespace AnalysisManagerMSGFPlugin
                 return false;
             }
 
-            List<FileInfo> ioToolFiles = new List<FileInfo>();
+            var ioToolFiles = new List<FileInfo>();
 
             if (eResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB)
             {
@@ -2546,24 +2433,22 @@ namespace AnalysisManagerMSGFPlugin
             }
             catch (Exception ex)
             {
-                LogError(
-                    "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message, ex);
                 return false;
             }
         }
 
         private bool SummarizeMSGFResults(clsPHRPReader.ePeptideHitResultType eResultType)
         {
-            string strConnectionString = null;
-            var intJobNumber = 0;
-            bool blnPostResultsToDB = false;
-
-            bool blnSuccess = false;
+            bool blnSuccess;
 
             try
             {
                 // Gigasax.DMS5
-                strConnectionString = m_mgrParams.GetParam("connectionstring");
+                var strConnectionString = m_mgrParams.GetParam("connectionstring");
+                int intJobNumber;
+                bool blnPostResultsToDB;
+
                 if (int.TryParse(m_JobNum, out intJobNumber))
                 {
                     blnPostResultsToDB = true;
@@ -2575,8 +2460,8 @@ namespace AnalysisManagerMSGFPlugin
                     LogError(m_message);
                 }
 
-                var objSummarizer = new clsMSGFResultsSummarizer(eResultType, m_Dataset, intJobNumber, m_WorkDir, strConnectionString);
-                RegisterEvents(objSummarizer);
+                var objSummarizer = new clsMSGFResultsSummarizer(eResultType, m_Dataset, intJobNumber, m_WorkDir, strConnectionString, m_DebugLevel);
+                RegisterEvents(objSummarizer, writeDebugEventsToLog: true);
 
                 objSummarizer.ErrorEvent += MSGFResultsSummarizer_ErrorHandler;
 
@@ -2614,20 +2499,17 @@ namespace AnalysisManagerMSGFPlugin
             {
                 var errMsg = "Exception summarizing the MSGF results";
                 m_message = clsGlobal.AppendToComment(m_message, errMsg);
-                LogError(errMsg + ": " + ex.Message);
+                LogError(errMsg + ": " + ex.Message, ex);
                 return false;
             }
 
             return blnSuccess;
         }
 
-        private int intErrorCount = 0;
+        private int intErrorCount;
 
         private void UpdateMSGFProgress(string strMSGFResultsFilePath)
         {
-            int intLineCount = 0;
-            double dblFraction = 0;
-
             try
             {
                 if (mMSGFInputFileLineCount <= 0)
@@ -2636,6 +2518,7 @@ namespace AnalysisManagerMSGFPlugin
                     return;
 
                 // Read the data from the results file
+                int intLineCount;
                 using (var srMSGFResultsFile = new StreamReader(new FileStream(strMSGFResultsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     intLineCount = 0;
@@ -2648,7 +2531,7 @@ namespace AnalysisManagerMSGFPlugin
                 }
 
                 // Update the overall progress
-                dblFraction = (intLineCount + mMSGFLineCountPreviousSegments) / (float)mMSGFInputFileLineCount;
+                double dblFraction = (intLineCount + mMSGFLineCountPreviousSegments) / (float)mMSGFInputFileLineCount;
 
                 if (mProcessingMSGFDBCollisionModeData)
                 {
@@ -2671,155 +2554,151 @@ namespace AnalysisManagerMSGFPlugin
                 intErrorCount += 1;
                 if (intErrorCount <= 3)
                 {
-                    LogError(
-                        "Error counting the number of lines in the MSGF results file, " + strMSGFResultsFilePath, ex);
+                    LogError("Error counting the number of lines in the MSGF results file, " + strMSGFResultsFilePath, ex);
                 }
             }
         }
 
         private bool UpdateProteinModsFile(clsPHRPReader.ePeptideHitResultType eResultType, string strMSGFResultsFilePath)
         {
-            string Msg = null;
-            string strLineIn = null;
-
-            int intMSGFSpecProbColIndex = 0;
-            int intResultID = 0;
-            string strMSGFSpecProb = string.Empty;
-            double dblValue = 0;
-
-            bool blnSuccess = false;
+            bool blnSuccess;
 
             try
             {
+                LogDebug("Contact clsPHRPReader.GetPHRPProteinModsFileName for eResultType " + eResultType, 3);
+
                 var fiProteinModsFile = new FileInfo(Path.Combine(m_WorkDir, clsPHRPReader.GetPHRPProteinModsFileName(eResultType, m_Dataset)));
                 var fiProteinModsFileNew = new FileInfo(fiProteinModsFile.FullName + ".tmp");
 
                 if (!fiProteinModsFile.Exists)
                 {
-                    LogWarning(
-                        "PHRP ProteinMods.txt file not found: " + fiProteinModsFile.Name);
-                    blnSuccess = true;
+                    LogWarning("PHRP ProteinMods.txt file not found: " + fiProteinModsFile.Name);
+                    return true;
                 }
-                else
+
+                LogDebug("Load MSGFResults from " + strMSGFResultsFilePath, 3);
+
+                Dictionary <int, string> lstMSGFResults;
+                blnSuccess = LoadMSGFResults(strMSGFResultsFilePath, out lstMSGFResults);
+                if (!blnSuccess)
                 {
-                    var lstMSGFResults = new Dictionary<int, string>();
-                    blnSuccess = LoadMSGFResults(strMSGFResultsFilePath, out lstMSGFResults);
-                    if (!blnSuccess)
-                    {
-                        return false;
-                    }
+                    return false;
+                }
 
-                    intMSGFSpecProbColIndex = -1;
-                    blnSuccess = true;
+                var intMSGFSpecProbColIndex = -1;
+                blnSuccess = true;
 
-                    using (var srSource = new StreamReader(new FileStream(fiProteinModsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
-                    using (var swTarget = new StreamWriter(new FileStream(fiProteinModsFileNew.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                LogDebug("Read " + fiProteinModsFile.FullName + " and create " + fiProteinModsFileNew.FullName, 3);
+
+                using (var srSource = new StreamReader(new FileStream(fiProteinModsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using (var swTarget = new StreamWriter(new FileStream(fiProteinModsFileNew.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                {
+                    while (!srSource.EndOfStream)
                     {
-                        while (!srSource.EndOfStream)
+                        var strLineIn = srSource.ReadLine();
+
+                        if (string.IsNullOrEmpty(strLineIn))
                         {
-                            strLineIn = srSource.ReadLine();
+                            swTarget.WriteLine();
+                            continue;
+                        }
 
-                            if (string.IsNullOrEmpty(strLineIn))
-                            {
-                                swTarget.WriteLine();
-                            }
-                            else
-                            {
-                                var strSplitLine = strLineIn.Split().ToList();
+                        var strSplitLine = strLineIn.Split().ToList();
 
-                                if (strSplitLine.Count <= 0)
+                        if (strSplitLine.Count <= 0)
+                        {
+                            swTarget.WriteLine();
+                            continue;
+                        }
+
+                        if (intMSGFSpecProbColIndex < 0)
+                        {
+                            // Assume this is the header line, look for MSGF_SpecProb
+                            for (var intIndex = 0; intIndex <= strSplitLine.Count - 1; intIndex++)
+                            {
+                                if (string.Equals(strSplitLine[intIndex], "MSGF_SpecProb", StringComparison.CurrentCultureIgnoreCase))
                                 {
-                                    swTarget.WriteLine();
+                                    intMSGFSpecProbColIndex = intIndex;
+                                    break;
                                 }
-                                else
+                            }
+
+                            if (intMSGFSpecProbColIndex < 0)
+                            {
+                                // Match not found; abort
+                                blnSuccess = false;
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            // Data line; determine the ResultID
+                            int intResultID;
+                            if (int.TryParse(strSplitLine[0], out intResultID))
+                            {
+                                // Lookup the MSGFSpecProb value for this ResultID
+                                string strMSGFSpecProb;
+                                if (lstMSGFResults.TryGetValue(intResultID, out strMSGFSpecProb))
                                 {
-                                    if (intMSGFSpecProbColIndex < 0)
+                                    // Only update the value if strMSGFSpecProb is a number
+                                    double dblValue;
+                                    if (double.TryParse(strMSGFSpecProb, out dblValue))
                                     {
-                                        // Assume this is the header line, look for MSGF_SpecProb
-                                        for (var intIndex = 0; intIndex <= strSplitLine.Count - 1; intIndex++)
-                                        {
-                                            if (string.Equals(strSplitLine[intIndex], "MSGF_SpecProb", StringComparison.CurrentCultureIgnoreCase))
-                                            {
-                                                intMSGFSpecProbColIndex = intIndex;
-                                                break;
-                                            }
-                                        }
-
-                                        if (intMSGFSpecProbColIndex < 0)
-                                        {
-                                            // Match not found; abort
-                                            blnSuccess = false;
-                                            break;
-                                        }
+                                        strSplitLine[intMSGFSpecProbColIndex] = strMSGFSpecProb;
                                     }
-                                    else
-                                    {
-                                        // Data line; determine the ResultID
-
-                                        if (int.TryParse(strSplitLine[0], out intResultID))
-                                        {
-                                            // Lookup the MSGFSpecProb value for this ResultID
-                                            if (lstMSGFResults.TryGetValue(intResultID, out strMSGFSpecProb))
-                                            {
-                                                // Only update the value if strMSGFSpecProb is a number
-                                                if (double.TryParse(strMSGFSpecProb, out dblValue))
-                                                {
-                                                    strSplitLine[intMSGFSpecProbColIndex] = strMSGFSpecProb;
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    swTarget.WriteLine(clsGlobal.CollapseList(strSplitLine));
                                 }
                             }
                         }
-                    }
 
-                    if (blnSuccess)
+                        swTarget.WriteLine(clsGlobal.CollapseList(strSplitLine));
+                    }
+                }
+
+                if (blnSuccess)
+                {
+                    // Replace the original file with the new one
+                    Thread.Sleep(200);
+                    clsProgRunner.GarbageCollectNow();
+
+                    try
                     {
-                        // Replace the original file with the new one
-                        Thread.Sleep(200);
-                        clsProgRunner.GarbageCollectNow();
+                        LogDebug("Replace " + fiProteinModsFile.FullName + " with " + fiProteinModsFileNew.Name, 3);
+
+                        fiProteinModsFile.Delete();
 
                         try
                         {
-                            fiProteinModsFile.Delete();
-
-                            try
+                            fiProteinModsFileNew.MoveTo(fiProteinModsFile.FullName);
+                            if (m_DebugLevel >= 2)
                             {
-                                fiProteinModsFileNew.MoveTo(fiProteinModsFile.FullName);
-                                if (m_DebugLevel >= 2)
-                                {
-                                    LogMessage(
-                                        "Updated MSGF_SpecProb values in the ProteinMods.txt file");
-                                }
+                                LogMessage(
+                                    "Updated MSGF_SpecProb values in the ProteinMods.txt file");
+                            }
 
-                                blnSuccess = true;
-                            }
-                            catch (Exception ex)
-                            {
-                                Msg = "Error updating the ProteinMods.txt file; cannot rename new version";
-                                m_message = clsGlobal.AppendToComment(m_message, Msg);
-                                LogError(Msg + ": " + ex.Message);
-                                return false;
-                            }
+                            blnSuccess = true;
                         }
                         catch (Exception ex)
                         {
-                            Msg = "Error updating the ProteinMods.txt file; cannot delete old version";
-                            m_message = clsGlobal.AppendToComment(m_message, Msg);
-                            LogError(Msg + ": " + ex.Message);
+                            var msg = "Error updating the ProteinMods.txt file; cannot rename new version";
+                            m_message = clsGlobal.AppendToComment(m_message, msg);
+                            LogError(msg + ": " + ex.Message, ex);
                             return false;
                         }
+                    }
+                    catch (Exception ex)
+                    {
+                        var msg = "Error updating the ProteinMods.txt file; cannot delete old version";
+                        m_message = clsGlobal.AppendToComment(m_message, msg);
+                        LogError(msg + ": " + ex.Message, ex);
+                        return false;
                     }
                 }
             }
             catch (Exception ex)
             {
-                Msg = "Exception updating the ProteinMods.txt file";
-                m_message = clsGlobal.AppendToComment(m_message, Msg);
-                LogError(Msg + ": " + ex.Message);
+                var msg = "Exception updating the ProteinMods.txt file";
+                m_message = clsGlobal.AppendToComment(m_message, msg);
+                LogError(msg + ": " + ex.Message, ex);
                 return false;
             }
 
@@ -2847,8 +2726,7 @@ namespace AnalysisManagerMSGFPlugin
             mMSGFInputCreatorErrorCount += 1;
             if (mMSGFInputCreatorErrorCount < 10 || mMSGFInputCreatorErrorCount % 1000 == 0)
             {
-                LogError(
-                    "Error reported by MSGFInputCreator; " + strErrorMessage + " (ErrorCount=" + mMSGFInputCreatorErrorCount + ")");
+                LogError("Error reported by MSGFInputCreator; " + strErrorMessage + " (ErrorCount=" + mMSGFInputCreatorErrorCount + ")");
             }
         }
 
@@ -2877,7 +2755,7 @@ namespace AnalysisManagerMSGFPlugin
             if (Message.ToLower().Contains("permission was denied"))
             {
                 LogErrorToDatabase(errorMessage);
-            }           
+            }
         }
 
         private DateTime dtLastUpdateTime = DateTime.MinValue;
@@ -2889,17 +2767,17 @@ namespace AnalysisManagerMSGFPlugin
         /// <remarks></remarks>
         private void MSGFRunner_LoopWaiting()
         {
-            if (System.DateTime.UtcNow.Subtract(dtLastUpdateTime).TotalSeconds >= 20)
+            if (DateTime.UtcNow.Subtract(dtLastUpdateTime).TotalSeconds >= 20)
             {
                 // Update the MSGF progress by counting the number of lines in the _MSGF.txt file
                 UpdateMSGFProgress(mCurrentMSGFResultsFilePath);
 
-                dtLastUpdateTime = System.DateTime.UtcNow;
+                dtLastUpdateTime = DateTime.UtcNow;
             }
 
-            if (System.DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15)
+            if (DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15)
             {
-                dtLastConsoleOutputParse = System.DateTime.UtcNow;
+                dtLastConsoleOutputParse = DateTime.UtcNow;
 
                 ParseConsoleOutputFile(Path.Combine(m_WorkDir, MSGF_CONSOLE_OUTPUT));
                 if (!mToolVersionWritten && !string.IsNullOrWhiteSpace(mMSGFVersion))

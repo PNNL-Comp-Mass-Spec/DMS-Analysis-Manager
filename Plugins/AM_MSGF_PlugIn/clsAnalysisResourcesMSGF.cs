@@ -51,7 +51,7 @@ namespace AnalysisManagerMSGFPlugin
 
             m_PendingFileRenames = new Dictionary<string, string>();
 
-            string strScriptName = m_jobParams.GetParam("ToolName");
+            var strScriptName = m_jobParams.GetParam("ToolName");
 
             if (!strScriptName.ToLower().StartsWith("MSGFPlus".ToLower()))
             {
@@ -81,11 +81,11 @@ namespace AnalysisManagerMSGFPlugin
         /// <remarks></remarks>
         private CloseOutType GetInputFiles(string resultType)
         {
-            string fileToGet = null;
-            string strSynFilePath = string.Empty;
+            string fileToGet;
+            var strSynFilePath = string.Empty;
 
-            bool blnSuccess = false;
-            bool blnOnlyCopyFHTandSYNfiles = false;
+            bool blnSuccess;
+            bool blnOnlyCopyFHTandSYNfiles;
 
             // Make sure the ResultType is valid
             var eResultType = clsPHRPReader.GetPeptideHitResultType(resultType);
@@ -121,7 +121,7 @@ namespace AnalysisManagerMSGFPlugin
                 // We do not need the mzXML file, the parameter file, or various other files if we are running MSGF+ and running MSGF v6432 or later
                 // Determine this by looking for job parameter MSGF_Version
 
-                string strMSGFStepToolVersion = m_jobParams.GetParam("MSGF_Version");
+                var strMSGFStepToolVersion = m_jobParams.GetParam("MSGF_Version");
 
                 if (string.IsNullOrWhiteSpace(strMSGFStepToolVersion))
                 {
@@ -273,7 +273,7 @@ namespace AnalysisManagerMSGFPlugin
                 }
             }
 
-            blnSuccess = base.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders);
+            blnSuccess = ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders);
             if (!blnSuccess)
             {
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -300,10 +300,9 @@ namespace AnalysisManagerMSGFPlugin
                     if (synFileSizeBytes == 0)
                     {
                         // If the synopsis file is 0-bytes, then the _ModSummary.txt file won't exist; that's OK
-                        string strModDefsFile = null;
-                        string strTargetFile = Path.Combine(m_WorkingDir, fileToGet);
+                        var strTargetFile = Path.Combine(m_WorkingDir, fileToGet);
 
-                        strModDefsFile = Path.GetFileNameWithoutExtension(m_jobParams.GetParam("ParmFileName")) + PHRP_MOD_DEFS_SUFFIX;
+                        var strModDefsFile = Path.GetFileNameWithoutExtension(m_jobParams.GetParam("ParmFileName")) + PHRP_MOD_DEFS_SUFFIX;
 
                         if (!FileSearch.FindAndRetrieveMiscFiles(strModDefsFile, false))
                         {
@@ -386,7 +385,7 @@ namespace AnalysisManagerMSGFPlugin
 
             if (blnMGFInstrumentData)
             {
-                string strFileToFind = DatasetName + DOT_MGF_EXTENSION;
+                var strFileToFind = DatasetName + DOT_MGF_EXTENSION;
                 if (!FileSearch.FindAndRetrieveMiscFiles(strFileToFind, false))
                 {
                     m_message = "Instrument data not found: " + strFileToFind;
@@ -394,14 +393,13 @@ namespace AnalysisManagerMSGFPlugin
                         "clsAnalysisResourcesMSGF.GetResources: " + m_message);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
-                else
-                {
-                    m_jobParams.AddResultFileExtensionToSkip(DOT_MGF_EXTENSION);
-                }
+
+                m_jobParams.AddResultFileExtensionToSkip(DOT_MGF_EXTENSION);
+
             }
             else if (!blnOnlyCopyFHTandSYNfiles)
             {
-                string strMzXMLFilePath = string.Empty;
+                string strMzXMLFilePath;
 
                 // See if a .mzXML file already exists for this dataset
                 blnSuccess = FileSearch.RetrieveMZXmlFile(false, out strMzXMLFilePath);
@@ -451,7 +449,7 @@ namespace AnalysisManagerMSGFPlugin
                 }
             }
 
-            blnSuccess = base.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders);
+            blnSuccess = ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders);
             if (!blnSuccess)
             {
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -459,7 +457,7 @@ namespace AnalysisManagerMSGFPlugin
 
             foreach (var entry in m_PendingFileRenames)
             {
-                FileInfo sourceFile = new FileInfo(Path.Combine(m_WorkingDir, entry.Key));
+                var sourceFile = new FileInfo(Path.Combine(m_WorkingDir, entry.Key));
                 if (sourceFile.Exists)
                 {
                     sourceFile.MoveTo(Path.Combine(m_WorkingDir, entry.Value));
@@ -471,11 +469,9 @@ namespace AnalysisManagerMSGFPlugin
 
         private bool CreateEmptyResultToSeqMapFile(string fileName)
         {
-            string strFilePath = null;
-
             try
             {
-                strFilePath = Path.Combine(m_WorkingDir, fileName);
+                var strFilePath = Path.Combine(m_WorkingDir, fileName);
                 using (var swOutfile = new StreamWriter(new FileStream(strFilePath, FileMode.CreateNew, FileAccess.Write, FileShare.Read)))
                 {
                     swOutfile.WriteLine("Result_ID\tUnique_Seq_ID");
@@ -483,7 +479,7 @@ namespace AnalysisManagerMSGFPlugin
             }
             catch (Exception ex)
             {
-                string Msg = "Error creating empty ResultToSeqMap file: " + ex.Message;
+                var Msg = "Error creating empty ResultToSeqMap file: " + ex.Message;
                 LogError(Msg);
                 return false;
             }
@@ -493,11 +489,9 @@ namespace AnalysisManagerMSGFPlugin
 
         private bool CreateEmptySeqToProteinMapFile(string FileName)
         {
-            string strFilePath = null;
-
             try
             {
-                strFilePath = Path.Combine(m_WorkingDir, FileName);
+                var strFilePath = Path.Combine(m_WorkingDir, FileName);
                 using (var swOutfile = new StreamWriter(new FileStream(strFilePath, FileMode.CreateNew, FileAccess.Write, FileShare.Read)))
                 {
                     swOutfile.WriteLine("Unique_Seq_ID\tCleavage_State\tTerminus_State\tProtein_Name\tProtein_Expectation_Value_Log(e)\tProtein_Intensity_Log(I)");
@@ -505,7 +499,7 @@ namespace AnalysisManagerMSGFPlugin
             }
             catch (Exception ex)
             {
-                string Msg = "Error creating empty SeqToProteinMap file: " + ex.Message;
+                var Msg = "Error creating empty SeqToProteinMap file: " + ex.Message;
                 LogError(Msg);
                 return false;
             }
