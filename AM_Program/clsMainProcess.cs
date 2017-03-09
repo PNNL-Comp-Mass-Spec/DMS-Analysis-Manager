@@ -1056,7 +1056,7 @@ namespace AnalysisManagerProg
             if (blnSuccess)
             {
                 Console.WriteLine();
-                Console.WriteLine("Windows Event Log '" + CUSTOM_LOG_NAME + "' has been validated for source '" + CUSTOM_LOG_SOURCE_NAME + "'");
+                clsGlobal.LogDebug("Windows Event Log '" + CUSTOM_LOG_NAME + "' has been validated for source '" + CUSTOM_LOG_SOURCE_NAME + "'", false);
                 Console.WriteLine();
             }
         }
@@ -1067,19 +1067,23 @@ namespace AnalysisManagerProg
             {
                 if (string.IsNullOrEmpty(SourceName))
                 {
+                    Console.ForegroundColor = ConsoleColor.Red;
                     Console.WriteLine("Error creating the Windows Event Log: SourceName cannot be blank");
+                    Console.ResetColor();
                     return false;
                 }
 
                 if (string.IsNullOrEmpty(LogName))
                 {
+                    Console.ForegroundColor = ConsoleColor.Red;
                     Console.WriteLine("Error creating the Windows Event Log: LogName cannot be blank");
+                    Console.ResetColor();
                     return false;
                 }
 
                 if (!EventLog.SourceExists(SourceName))
                 {
-                    Console.WriteLine("Creating Windows Event Log " + LogName + " for source " + SourceName);
+                    clsGlobal.LogDebug("Creating Windows Event Log " + LogName + " for source " + SourceName, false);
                     var SourceData = new EventSourceCreationData(SourceName, LogName);
                     EventLog.CreateEventSource(SourceData);
                 }
@@ -1097,7 +1101,9 @@ namespace AnalysisManagerProg
                 }
                 catch (Exception ex)
                 {
+                    Console.ForegroundColor = ConsoleColor.Yellow;
                     Console.WriteLine("Warning: unable to update the maximum log size to 1024 KB: \n  " + ex.Message);
+                    Console.ResetColor();
                 }
 
                 try
@@ -1106,12 +1112,16 @@ namespace AnalysisManagerProg
                 }
                 catch (Exception ex)
                 {
+                    Console.ForegroundColor = ConsoleColor.Yellow;
                     Console.WriteLine("Warning: unable to update the overflow policy to keep events for 90 days and overwrite as needed: \n  " + ex.Message);
+                    Console.ResetColor();
                 }
             }
             catch (Exception ex)
             {
+                Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("Exception creating the Windows Event Log named '" + LogName + "' for source '" + SourceName + "': " + ex.Message);
+                Console.ResetColor();
                 return false;
             }
 
@@ -1180,7 +1190,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Error in DecrementLogFilePath: " + ex.Message);
+                LogError("Error in DecrementLogFilePath: " + ex.Message, ex);
             }
 
             return string.Empty;
@@ -1924,10 +1934,10 @@ namespace AnalysisManagerProg
                                   "using the /EL switch so that it can create the " + EVENT_LOG_NAME + " application log");
                 Console.WriteLine();
 
-                var Ev = new EventLog("Application", ".", EVENT_LOG_NAME);
+                var ev = new EventLog("Application", ".", EVENT_LOG_NAME);
                 Trace.Listeners.Add(new EventLogTraceListener(EVENT_LOG_NAME));
                 Trace.WriteLine(ErrMsg);
-                Ev.Close();
+                ev.Close();
             }
             catch (Exception ex)
             {
@@ -2396,7 +2406,6 @@ namespace AnalysisManagerProg
             {
                 var msg = "Invalid working directory: " + m_WorkDirPath;
                 LogError(msg);
-                Console.WriteLine(msg);
                 Thread.Sleep(1500);
                 return false;
             }

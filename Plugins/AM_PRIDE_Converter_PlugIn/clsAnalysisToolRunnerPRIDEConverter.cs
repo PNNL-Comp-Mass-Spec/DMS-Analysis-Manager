@@ -401,7 +401,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     m_StatusTools.CurrentOperation = "Processing job " + udtCurrentJobInfo.Job + ", dataset " + udtCurrentJobInfo.Dataset;
 
                     Console.WriteLine();
-                    Console.WriteLine((jobsProcessed + 1).ToString() + ": " + m_StatusTools.CurrentOperation);
+                    LogDebug((jobsProcessed + 1) + ": " + m_StatusTools.CurrentOperation, 10);
 
                     var result = ProcessJob(kvJobInfo, udtFilterThresholds, objAnalysisResults, remoteTransferFolder, dctDatasetRawFilePaths,
                         dctTemplateParameters, assumeInstrumentDataUnpurged);
@@ -442,7 +442,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         m_StatusTools.CurrentOperation = "Adding dataset " + kvDatasetInfo.Value.Dataset + " (no associated PeptideHit job)";
 
                         Console.WriteLine();
-                        Console.WriteLine(m_StatusTools.CurrentOperation);
+                        LogDebug(m_StatusTools.CurrentOperation, 10);
 
                         AddPlaceholderDatasetEntry(kvDatasetInfo);
                     }
@@ -1714,8 +1714,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         return false;
                     }
 
-                    Console.WriteLine();
-                    Console.WriteLine("Reading proteins from " + strFastaFilePath);
+                    LogDebug("Reading proteins from " + strFastaFilePath, 10);
 
                     while (objFastaFileReader.ReadNextProteinEntry())
                     {
@@ -3386,7 +3385,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 if (m_DebugLevel >= 2)
                 {
                     LogError("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
-                    Console.WriteLine("Error parsing console output file (" + Path.GetFileName(strConsoleOutputFilePath) + ")");
                 }
             }
         }
@@ -4023,18 +4021,12 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 else
                 {
                     LogError(mConsoleOutputErrorMsg);
-                    Console.WriteLine(mConsoleOutputErrorMsg);
                 }
             }
 
             if (!blnSuccess)
             {
                 LogError("Error running PrideConverter, dataset " + strDataset + ", job " + intJob);
-                if (string.IsNullOrWhiteSpace(m_message))
-                {
-                    m_message = "Error running PrideConverter";
-                    Console.WriteLine(m_message);
-                }
             }
 
             return blnSuccess;
@@ -4109,7 +4101,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     {
                         var msg = "Exception calling SetStepTaskToolVersion: " + ex.Message;
                         LogError(msg);
-                        Console.WriteLine(msg);
                         return false;
                     }
                 }
