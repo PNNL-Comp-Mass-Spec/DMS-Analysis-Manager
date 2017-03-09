@@ -1164,18 +1164,30 @@ namespace AnalysisManagerMSGFPlugin
             {
                 // Summarize the results in the _syn_MSGF.txt file
                 // Post the results to the database
-                SummarizeMSGFResults(eResultType);
+                LogDebug("Call SummarizeMSGFResults for eResultType " + eResultType, 3);
+
+                var summarizeSuccess = SummarizeMSGFResults(eResultType);
+
+                LogDebug("SummarizeMSGFResults returned " + summarizeSuccess, 3);
             }
 
             if (blnSuccess && blnFirstHitsDataPresent)
             {
                 // Write out the First-Hits file results
+                LogDebug("Call mMSGFInputCreator.CreateMSGFFirstHitsFile", 3);
+
                 blnSuccess = mMSGFInputCreator.CreateMSGFFirstHitsFile();
+
+                LogDebug("CreateMSGFFirstHitsFile returned " + blnSuccess, 3);
             }
 
             if (blnSuccess & eResultType != clsPHRPReader.ePeptideHitResultType.MSGFDB)
             {
+                LogDebug("Call UpdateProteinModsFile for eResultType " + eResultType, 3);
+
                 blnSuccess = UpdateProteinModsFile(eResultType, strMSGFResultsFilePath);
+
+                LogDebug("UpdateProteinModsFile returned " + blnSuccess, 3);
             }
 
             if (blnTooManyErrors)

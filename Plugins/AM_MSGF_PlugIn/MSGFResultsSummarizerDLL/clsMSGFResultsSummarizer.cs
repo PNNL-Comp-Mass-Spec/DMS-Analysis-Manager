@@ -111,6 +111,7 @@ namespace MSGFResultsSummarizer
         #region "Member variables"
 
         private string mErrorMessage = string.Empty;
+        private readonly short mDebugLevel;
 
         private double mFDRThreshold = DEFAULT_FDR_THRESHOLD;
         private double mMSGFThreshold = DEFAULT_MSGF_THRESHOLD;
@@ -391,7 +392,7 @@ namespace MSGFResultsSummarizer
         /// <param name="strSourceFolderPath">Source folder path</param>
         /// <remarks></remarks>
         public clsMSGFResultsSummarizer(clsPHRPReader.ePeptideHitResultType eResultType, string strDatasetName, int intJob, string strSourceFolderPath)
-            : this(eResultType, strDatasetName, intJob, strSourceFolderPath, DEFAULT_CONNECTION_STRING)
+            : this(eResultType, strDatasetName, intJob, strSourceFolderPath, DEFAULT_CONNECTION_STRING, debugLevel: 1)
         {
         }
 
@@ -403,14 +404,22 @@ namespace MSGFResultsSummarizer
         /// <param name="intJob">Job number</param>
         /// <param name="strSourceFolderPath">Source folder path</param>
         /// <param name="strConnectionString">DMS connection string</param>
+        /// <param name="debugLevel">Debug Level</param>
         /// <remarks></remarks>
-        public clsMSGFResultsSummarizer(clsPHRPReader.ePeptideHitResultType eResultType, string strDatasetName, int intJob, string strSourceFolderPath, string strConnectionString)
+        public clsMSGFResultsSummarizer(
+            clsPHRPReader.ePeptideHitResultType eResultType, 
+            string strDatasetName, 
+            int intJob, 
+            string strSourceFolderPath, 
+            string strConnectionString,
+            short debugLevel)
         {
             mResultType = eResultType;
             mDatasetName = strDatasetName;
             mJob = intJob;
             mWorkDir = strSourceFolderPath;
             mConnectionString = strConnectionString;
+            mDebugLevel = debugLevel;
 
             mStoredProcedureExecutor = new clsExecuteDatabaseSP(mConnectionString);
             mStoredProcedureExecutor.DebugEvent += m_ExecuteSP_DebugEvent;
@@ -691,7 +700,11 @@ namespace MSGFResultsSummarizer
             if (!blnUsingMSGFOrEValueFilter && mFDRThreshold < 1)
             {
                 // Filter on FDR (we'll compute the FDR using Reverse Proteins, if necessary)
+                ReportDebugMessage("Call FilterPSMsByFDR", 3);
+
                 blnSuccess = FilterPSMsByFDR(lstFilteredPSMs);
+
+                ReportDebugMessage("FilterPSMsByFDR returned " + blnSuccess, 2);
 
                 foreach (var entry in lstFilteredPSMs)
                 {
@@ -709,7 +722,11 @@ namespace MSGFResultsSummarizer
             {
                 // Summarize the results, counting the number of peptides, unique peptides, and proteins
                 // We also count phosphopeptides using several metrics
+                ReportDebugMessage("Call SummarizeResults for " + lstFilteredPSMs.Count + " Filtered PSMs", 3);
+
                 blnSuccess = SummarizeResults(blnUsingMSGFOrEValueFilter, lstFilteredPSMs, lstSeqToProteinMap, lstSeqInfo);
+
+                ReportDebugMessage("SummarizeResults returned " + blnSuccess, 3);
             }
 
             return blnSuccess;
@@ -1168,36 +1185,43 @@ namespace MSGFResultsSummarizer
                 // Filter on MSGF or EValue and compute the stats
                 //
                 var usingMSGFOrEValueFilter = true;
+                ReportDebugMessage("Call FilterAndComputeStats with blnUsingMSGFOrEValueFilter = true", 3);
+
+                var success = FilterAndComputeStats(usingMSGFOrEValueFilter, lstNormalizedPSMs, lstSeqToProteinMap, lstSeqInfo);
+
+                ReportDebugMessage("FilterAndComputeStats returned " + success, 3);
 
                 ////////////////////
                 // Filter on FDR and compute the stats
                 //
-                blnUsingMSGFOrEValueFilter = false;
-                blnSuccessViaFDR = FilterAndComputeStats(blnUsingMSGFOrEValueFilter, lstNormalizedPSMs, lstSeqToProteinMap, lstSeqInfo);
+                usingMSGFOrEValueFilter = false;
+                ReportDebugMessage("Call FilterAndComputeStats with blnUsingMSGFOrEValueFilter = false", 3);
 
-                if (blnSuccess || blnSuccessViaFDR)
+                var successViaFDR = FilterAndComputeStats(usingMSGFOrEValueFilter, lstNormalizedPSMs, lstSeqToProteinMap, lstSeqInfo);
+
+                ReportDebugMessage("FilterAndComputeStats returned " + success, 3);
+
+                if (!(success || successViaFDR))
+                    return false;
+
+                if (mSaveResultsToTextFile)
                 {
-                    if (mSaveResultsToTextFile)
-                    {
-                        // Note: Continue processing even if this step fails
-                        SaveResultsToFile();
-                    }
+                    // Note: Continue processing even if this step fails
+                    SaveResultsToFile();
+                }
 
-                    if (mPostJobPSMResultsToDB)
-                    {
-                        if (ContactDatabase)
-                        {
-                            blnSuccess = PostJobPSMResults(mJob);
-                            return blnSuccess;
-                        }
-                        else
-                        {
-                            SetErrorMessage("Cannot post results to the database because ContactDatabase is False");
-                            return false;
-                        }
-                    }
+                if (!mPostJobPSMResultsToDB)
+                    return true;
 
-                    blnSuccess = true;
+                if (ContactDatabase)
+                {
+                    ReportDebugMessage("Call PostJobPSMResults for job " + mJob, 2);
+
+                    var psmResultsPosted = PostJobPSMResults(mJob);
+
+                    ReportDebugMessage("PostJobPSMResults returned " + psmResultsPosted);
+
+                    return psmResultsPosted;
                 }
 
                 SetErrorMessage("Cannot post results to the database because ContactDatabase is False");
@@ -1693,6 +1717,18 @@ namespace MSGFResultsSummarizer
             }
 
             return GetNormalizedPeptideInfo(peptideCleanSequence, modList, seqID);
+        }
+
+        private void ReportDebugMessage(string message, int debugLevel = 2)
+        {
+            if (mDebugLevel >= debugLevel)
+                OnDebugEvent(message);
+            else
+            {
+                Console.ForegroundColor = ConsoleColor.DarkGray;
+                Console.WriteLine("  " + message);
+                Console.ResetColor();
+            }
         }
 
         private void SaveResultsToFile()
