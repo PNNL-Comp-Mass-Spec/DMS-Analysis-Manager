@@ -12,7 +12,7 @@ namespace AnalysisManagerBase
 
         private DateTime m_LockQueueWaitTimeStart = DateTime.UtcNow;
 
-        protected PRISM.clsFileTools m_FileTools;
+        protected clsFileTools m_FileTools;
 
         protected string m_message;
 
@@ -68,7 +68,7 @@ namespace AnalysisManagerBase
         protected void InitFileTools(string mgrName, short debugLevel)
         {
             ResetTimestampForQueueWaitTimeLogging();
-            m_FileTools = new PRISM.clsFileTools(mgrName, debugLevel);
+            m_FileTools = new clsFileTools(mgrName, debugLevel);
             RegisterEvents(m_FileTools);
 
             m_FileTools.LockQueueTimedOut += m_FileTools_LockQueueTimedOut;
@@ -117,7 +117,7 @@ namespace AnalysisManagerBase
         /// <param name="logToDb">True to log this error to the database</param>
         protected void LogError(string errorMessage, string detailedMessage, bool logToDb = false)
         {
-            this.LogError(errorMessage, logToDb);
+            LogError(errorMessage, logToDb);
 
             if (string.IsNullOrEmpty(detailedMessage))
                 return;            

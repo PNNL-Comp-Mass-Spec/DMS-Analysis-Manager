@@ -974,7 +974,7 @@ namespace AnalysisManagerProg
                 {
                     // If there was a problem deleting non result files, return success and let the manager try to delete the files one more time on the next start up
                     // However, wait another 5 seconds before continuing
-                    PRISM.clsProgRunner.GarbageCollectNow();
+                    clsProgRunner.GarbageCollectNow();
                     Thread.Sleep(5000);
 
                     return true;
@@ -1132,11 +1132,7 @@ namespace AnalysisManagerProg
             "RepoPkgr"
         };
 
-            var dataPkgRequired = false;
-            if (multiJobStepTools.Any(multiJobTool => string.Equals(stepToolName, multiJobTool, StringComparison.InvariantCultureIgnoreCase)))
-            {
-                dataPkgRequired = true;
-            }
+            var dataPkgRequired = multiJobStepTools.Any(multiJobTool => string.Equals(stepToolName, multiJobTool, StringComparison.InvariantCultureIgnoreCase));
 
             if (dataPkgRequired)
             {
@@ -2453,7 +2449,7 @@ namespace AnalysisManagerProg
                 }
             }
 
-            var errorCount = workDirFiles.Count(item => !PRISM.clsFileTools.IsVimSwapFile(item.FullName));
+            var errorCount = workDirFiles.Count(item => !clsFileTools.IsVimSwapFile(item.FullName));
 
             if (errorCount == 0)
             {
