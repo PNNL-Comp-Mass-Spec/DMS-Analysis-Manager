@@ -61,8 +61,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 // Get input data file
                 if (!FileSearch.RetrieveSpectra(strRawDataType))
                 {
-                    LogError(
-                        "clsAnalysisResourcesDecon2ls.GetResources: Error occurred retrieving spectra.");
+                    LogError("clsAnalysisResourcesDecon2ls.GetResources: Error occurred retrieving spectra.");
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
             }

@@ -261,7 +261,8 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             if (!detailedScanTypesDefinedNewFile)
             {
-                m_message = "ScanTypes defined in the ScanTypeName column do not contain detailed CID, ETD, or HCD information; MSGF+ could use the wrong scoring model; fix this problem before running MSGF+";
+                m_message = "ScanTypes defined in the ScanTypeName column do not contain detailed CID, ETD, or HCD information; " + 
+                    "MSGF+ could use the wrong scoring model; fix this problem before running MSGF+";
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 

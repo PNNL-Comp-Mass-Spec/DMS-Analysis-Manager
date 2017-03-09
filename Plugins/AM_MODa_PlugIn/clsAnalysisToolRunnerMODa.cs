@@ -266,8 +266,7 @@ namespace AnalysisManagerMODaPlugIn
 
                 if (mCmdRunner.ExitCode != 0)
                 {
-                    LogWarning(
-                        "MODa returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
+                    LogWarning("MODa returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
                 }
                 else
                 {
@@ -293,8 +292,7 @@ namespace AnalysisManagerMODaPlugIn
             if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
-            LogWarning(
-                "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
+            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
 
             // Bump up the debug level if less than 2
             if (m_DebugLevel < 2)
@@ -367,8 +365,7 @@ namespace AnalysisManagerMODaPlugIn
                 {
                     if (m_DebugLevel >= 4)
                     {
-                        LogDebug(
-                            "Console output file not found: " + strConsoleOutputFilePath);
+                        LogDebug("Console output file not found: " + strConsoleOutputFilePath);
                     }
 
                     return;
@@ -480,8 +477,7 @@ namespace AnalysisManagerMODaPlugIn
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    LogError(
-                        "Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    LogError("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
             }
         }
@@ -512,8 +508,7 @@ namespace AnalysisManagerMODaPlugIn
             }
             catch (Exception ex)
             {
-                LogError(
-                    "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
         }
@@ -531,8 +526,7 @@ namespace AnalysisManagerMODaPlugIn
                 {
                     if (m_DebugLevel >= 4)
                     {
-                        LogDebug(
-                            "Console output file not found: " + strConsoleOutputFilePath);
+                        LogDebug("Console output file not found: " + strConsoleOutputFilePath);
                     }
 
                     return;
@@ -540,8 +534,7 @@ namespace AnalysisManagerMODaPlugIn
 
                 if (m_DebugLevel >= 4)
                 {
-                    LogDebug(
-                        "Trimming console output file at " + strConsoleOutputFilePath);
+                    LogDebug("Trimming console output file at " + strConsoleOutputFilePath);
                 }
 
                 int intScanNumber = 0;
@@ -591,8 +584,7 @@ namespace AnalysisManagerMODaPlugIn
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    LogError(
-                        "Error trimming console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    LogError("Error trimming console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
             }
         }

@@ -48,8 +48,7 @@ namespace AnalysisManagerMasicPlugin
 
             if (!FileSearch.RetrieveSpectra(RawDataType, CreateStoragePathInfoOnly))
             {
-                LogDebug(
-                    "clsAnalysisResourcesDecon2ls.GetResources: Error occurred retrieving spectra.");
+                LogDebug("clsAnalysisResourcesDecon2ls.GetResources: Error occurred retrieving spectra.");
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 

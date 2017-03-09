@@ -84,7 +84,9 @@ namespace AnalysisManagerExtractionPlugin
         }
 
         /// <summary>
-        /// Parses strInputFilePath to count the number of entries where the difference in mass between the precursor neutral mass value and the computed monoisotopic mass value is more than 6 Da away (more for higher charge states)
+        /// Parses strInputFilePath to count the number of entries where the difference in mass 
+        /// between the precursor neutral mass value and the computed monoisotopic mass value 
+        /// is more than 6 Da away (more for higher charge states)
         /// </summary>
         /// <param name="strInputFilePath"></param>
         /// <param name="eResultType"></param>

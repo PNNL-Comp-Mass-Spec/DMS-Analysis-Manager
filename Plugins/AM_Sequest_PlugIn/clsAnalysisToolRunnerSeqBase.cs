@@ -95,8 +95,7 @@ namespace AnalysisManagerSequestPlugin
             UpdateStatusRunning(m_progress, m_DtaCount);
 
             //Make the .out files
-            LogMessage(
-                "Making OUT files, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
+            LogMessage("Making OUT files, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
             try
             {
                 Result = MakeOUTFiles();
@@ -188,8 +187,7 @@ namespace AnalysisManagerSequestPlugin
             if (!base.RemoveNonResultServerFiles())
             {
                 // Do not treat this as a fatal error
-                LogWarning(
-                    "Error deleting .tmp files in folder " + m_jobParams.GetParam("JobParameters", "transferFolderPath"));
+                LogWarning("Error deleting .tmp files in folder " + m_jobParams.GetParam("JobParameters", "transferFolderPath"));
             }
 
             return eReturnCode;
@@ -379,14 +377,12 @@ namespace AnalysisManagerSequestPlugin
 
                 if (m_DebugLevel >= 1)
                 {
-                    LogDebug(
-                        "Completed splitting concatenated DTA file, created " + GetDTAFileCountRemaining().ToString("#,##0") + " DTAs");
+                    LogDebug("Completed splitting concatenated DTA file, created " + GetDTAFileCountRemaining().ToString("#,##0") + " DTAs");
                 }
             }
             catch (Exception ex)
             {
-                LogError(
-                    "Error in CheckForExistingConcatenatedOutFile: " + ex.Message);
+                LogError("Error in CheckForExistingConcatenatedOutFile: " + ex.Message);
                 return false;
             }
 
@@ -433,8 +429,7 @@ namespace AnalysisManagerSequestPlugin
             if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
-            LogWarning(
-                "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
+            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
 
             // Bump up the debug level if less than 2
             if (m_DebugLevel < 2)
@@ -553,8 +548,7 @@ namespace AnalysisManagerSequestPlugin
             {
                 if (m_DebugLevel >= 1)
                 {
-                    LogDebug(
-                        "clsAnalysisToolRunnerSeqBase.MakeOutFiles: Closing FileList" + ProcIndx);
+                    LogDebug("clsAnalysisToolRunnerSeqBase.MakeOutFiles: Closing FileList" + ProcIndx);
                 }
                 try
                 {
@@ -563,8 +557,7 @@ namespace AnalysisManagerSequestPlugin
                 }
                 catch (Exception Err)
                 {
-                    LogError(
-                        "clsAnalysisToolRunnerSeqBase.MakeOutFiles: " + Err.Message + "; " + clsGlobal.GetExceptionStackTrace(Err));
+                    LogError("clsAnalysisToolRunnerSeqBase.MakeOutFiles: " + Err.Message + "; " + clsGlobal.GetExceptionStackTrace(Err));
                 }
             }
 
@@ -632,16 +625,14 @@ namespace AnalysisManagerSequestPlugin
             //Clean up our object references
             if (m_DebugLevel >= 1)
             {
-                LogDebug(
-                    "clsAnalysisToolRunnerSeqBase.MakeOutFiles(), cleaning up runprog object references");
+                LogDebug("clsAnalysisToolRunnerSeqBase.MakeOutFiles(), cleaning up runprog object references");
             }
             for (ProcIndx = 0; ProcIndx <= RunProgs.GetUpperBound(0); ProcIndx++)
             {
                 RunProgs[ProcIndx] = null;
                 if (m_DebugLevel >= 1)
                 {
-                    LogDebug(
-                        "Set RunProgs(" + ProcIndx.ToString() + ") to Nothing");
+                    LogDebug("Set RunProgs(" + ProcIndx.ToString() + ") to Nothing");
                 }
             }
 
@@ -652,8 +643,7 @@ namespace AnalysisManagerSequestPlugin
             //Verify out file creation
             if (m_DebugLevel >= 1)
             {
-                LogDebug(
-                    "clsAnalysisToolRunnerSeqBase.MakeOutFiles(), verifying out file creation");
+                LogDebug("clsAnalysisToolRunnerSeqBase.MakeOutFiles(), verifying out file creation");
             }
 
             if (GetOUTFileCountRemaining() < 1)
@@ -736,8 +726,7 @@ namespace AnalysisManagerSequestPlugin
                         dtInterlockWaitStartTime = DateTime.UtcNow;
                         if (m_DebugLevel >= 1)
                         {
-                            LogDebug(
-                                "ConcatOutFiles is waiting for mOutFileHandlerInUse to be zero");
+                            LogDebug("ConcatOutFiles is waiting for mOutFileHandlerInUse to be zero");
                         }
                     }
                 }
@@ -766,8 +755,7 @@ namespace AnalysisManagerSequestPlugin
                 }
                 catch (Exception ex)
                 {
-                    LogWarning(
-                        "Error appending .out files to the _out.txt.tmp file" + ": " + ex.Message);
+                    LogWarning("Error appending .out files to the _out.txt.tmp file" + ": " + ex.Message);
                     Thread.Sleep(oRandom.Next(15, 30) * 1000);           // Delay for a random length between 15 and 30 seconds
                     blnSuccess = false;
                 }
@@ -860,8 +848,7 @@ namespace AnalysisManagerSequestPlugin
 
                                     if (m_DebugLevel >= 2)
                                     {
-                                        LogDebug(
-                                            "Sequest Version: " + strToolVersionInfo);
+                                        LogDebug("Sequest Version: " + strToolVersionInfo);
                                     }
 
                                     break;
@@ -873,8 +860,7 @@ namespace AnalysisManagerSequestPlugin
             }
             catch (Exception ex)
             {
-                LogError(
-                    "Exception parsing .Out file in StoreToolVersionInfo: " + ex.Message);
+                LogError("Exception parsing .Out file in StoreToolVersionInfo: " + ex.Message);
             }
 
             // Store the path to the Sequest .Exe in ioToolFiles
@@ -884,8 +870,7 @@ namespace AnalysisManagerSequestPlugin
             }
             catch (Exception ex)
             {
-                LogError(
-                    "Exception adding Sequest .Exe to ioToolFiles in StoreToolVersionInfo: " + ex.Message);
+                LogError("Exception adding Sequest .Exe to ioToolFiles in StoreToolVersionInfo: " + ex.Message);
             }
 
             try
@@ -895,8 +880,7 @@ namespace AnalysisManagerSequestPlugin
             }
             catch (Exception ex)
             {
-                LogError(
-                    "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
         }
@@ -1428,8 +1412,7 @@ namespace AnalysisManagerSequestPlugin
             string OutFileName = m_Dataset + "_out.txt";
             string OutFilePath = Path.Combine(WorkDir, OutFileName);
 
-            LogMessage(
-                "Zipping concatenated output file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
+            LogMessage("Zipping concatenated output file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
 
             //Verify file exists
             if (!File.Exists(OutFilePath))

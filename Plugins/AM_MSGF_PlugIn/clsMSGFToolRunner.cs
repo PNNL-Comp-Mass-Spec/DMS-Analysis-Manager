@@ -358,8 +358,7 @@ namespace AnalysisManagerMSGFPlugin
 
                     break;
                 case clsPHRPReader.ePeptideHitResultType.Inspect:
-                    LogDebug(
-                        "Inspect does not support ETD data processing; will set mETDMode to False");
+                    LogDebug("Inspect does not support ETD data processing; will set mETDMode to False");
                     blnSuccess = true;
 
                     break;
@@ -368,14 +367,12 @@ namespace AnalysisManagerMSGFPlugin
 
                     break;
                 case clsPHRPReader.ePeptideHitResultType.MODa:
-                    LogDebug(
-                        "MODa does not support ETD data processing; will set mETDMode to False");
+                    LogDebug("MODa does not support ETD data processing; will set mETDMode to False");
                     blnSuccess = true;
 
                     break;
                 case clsPHRPReader.ePeptideHitResultType.MODPlus:
-                    LogDebug(
-                        "MODPlus does not support ETD data processing; will set mETDMode to False");
+                    LogDebug("MODPlus does not support ETD data processing; will set mETDMode to False");
                     blnSuccess = true;
 
                     break;
@@ -386,8 +383,7 @@ namespace AnalysisManagerMSGFPlugin
 
             if (mETDMode)
             {
-                LogDebug(
-                    "ETD search mode has been enabled since c and z ions were used for the peptide search");
+                LogDebug("ETD search mode has been enabled since c and z ions were used for the peptide search");
             }
 
             return blnSuccess;
@@ -403,8 +399,7 @@ namespace AnalysisManagerMSGFPlugin
 
                 if (m_DebugLevel >= 2)
                 {
-                    LogDebug(
-                        "Reading the MSGF-DB parameter file: " + strSearchToolParamFilePath);
+                    LogDebug("Reading the MSGF-DB parameter file: " + strSearchToolParamFilePath);
                 }
 
                 // Read the data from the MSGF-DB Param file
@@ -422,8 +417,7 @@ namespace AnalysisManagerMSGFPlugin
 
                             if (m_DebugLevel >= 3)
                             {
-                                LogDebug(
-                                    "MSGFDB " + MSGFDB_FRAG_METHOD_TAG + " line found: " + strLineIn);
+                                LogDebug("MSGFDB " + MSGFDB_FRAG_METHOD_TAG + " line found: " + strLineIn);
                             }
 
                             // Look for the equals sign
@@ -491,8 +485,7 @@ namespace AnalysisManagerMSGFPlugin
 
                 if (m_DebugLevel >= 2)
                 {
-                    LogDebug(
-                        "Reading the Sequest parameter file: " + strSearchToolParamFilePath);
+                    LogDebug("Reading the Sequest parameter file: " + strSearchToolParamFilePath);
                 }
 
                 // Read the data from the Sequest Param file
@@ -514,8 +507,7 @@ namespace AnalysisManagerMSGFPlugin
 
                             if (m_DebugLevel >= 3)
                             {
-                                LogDebug(
-                                    "Sequest " + SEQUEST_ION_SERIES_TAG + " line found: " + strLineIn);
+                                LogDebug("Sequest " + SEQUEST_ION_SERIES_TAG + " line found: " + strLineIn);
                             }
 
                             // Look for the equals sign
@@ -594,8 +586,7 @@ namespace AnalysisManagerMSGFPlugin
 
                 if (m_DebugLevel >= 2)
                 {
-                    LogDebug(
-                        "Reading the X!Tandem parameter file: " + strSearchToolParamFilePath);
+                    LogDebug("Reading the X!Tandem parameter file: " + strSearchToolParamFilePath);
                 }
 
                 // Open the parameter file
@@ -1413,8 +1404,7 @@ namespace AnalysisManagerMSGFPlugin
 
             if (intSpecProbErrorCount > 1)
             {
-                LogWarning(
-                    "MSGF SpecProb was not numeric for " + intSpecProbErrorCount + " entries in the MSGF result file");
+                LogWarning("MSGF SpecProb was not numeric for " + intSpecProbErrorCount + " entries in the MSGF result file");
             }
 
             if (intMGFLookupErrorCount > 1)
@@ -1535,14 +1525,12 @@ namespace AnalysisManagerMSGFPlugin
 
                     if (m_DebugLevel >= 1)
                     {
-                        LogDebug(
-                            "UseExistingMSGFResults = True; will look for pre-generated MSGF results file in the transfer folder");
+                        LogDebug("UseExistingMSGFResults = True; will look for pre-generated MSGF results file in the transfer folder");
                     }
 
                     if (RetrievePreGeneratedDataFile(Path.GetFileName(mMSGFResultsFilePath)))
                     {
-                        LogDebug(
-                            "Pre-generated MSGF results file successfully copied to the work directory");
+                        LogDebug("Pre-generated MSGF results file successfully copied to the work directory");
                         blnSuccess = true;
                     }
                     else
@@ -1619,8 +1607,7 @@ namespace AnalysisManagerMSGFPlugin
                     if (File.Exists(strFilePathSource))
                     {
                         var strFilePathTarget = Path.Combine(m_WorkDir, strFileNameToFind);
-                        LogDebug(
-                            "Copying file " + strFilePathSource + " to " + strFilePathTarget);
+                        LogDebug("Copying file " + strFilePathSource + " to " + strFilePathTarget);
 
                         File.Copy(strFilePathSource, strFilePathTarget, true);
 
@@ -1631,8 +1618,7 @@ namespace AnalysisManagerMSGFPlugin
             }
             catch (Exception ex)
             {
-                LogWarning(
-                    "Exception finding file " + strFileNameToFind + " in folder " + strFolderToCheck + ": " + ex);
+                LogWarning("Exception finding file " + strFileNameToFind + " in folder " + strFolderToCheck + ": " + ex);
                 return false;
             }
 
@@ -1830,8 +1816,7 @@ namespace AnalysisManagerMSGFPlugin
             var intMSGFEntriesPerSegment = m_jobParams.GetJobParameter("MSGFEntriesPerSegment", MSGF_SEGMENT_ENTRY_COUNT);
             if (m_DebugLevel >= 2)
             {
-                LogDebug(
-                    "MSGFInputFileLineCount = " + intMSGFInputFileLineCount + "; MSGFEntriesPerSegment = " + intMSGFEntriesPerSegment);
+                LogDebug("MSGFInputFileLineCount = " + intMSGFInputFileLineCount + "; MSGFEntriesPerSegment = " + intMSGFEntriesPerSegment);
             }
 
             if (intMSGFEntriesPerSegment <= 1)
@@ -1934,8 +1919,7 @@ namespace AnalysisManagerMSGFPlugin
             }
             catch (Exception ex)
             {
-                LogWarning(
-                    "Unable to delete the " + MSGF_CONSOLE_OUTPUT + " file: " + ex);
+                LogWarning("Unable to delete the " + MSGF_CONSOLE_OUTPUT + " file: " + ex);
             }
 
             return blnSuccess;
@@ -1970,8 +1954,7 @@ namespace AnalysisManagerMSGFPlugin
 
             if (m_DebugLevel >= 1)
             {
-                LogMessage(
-                    "Running MSGF on " + Path.GetFileName(strInputFilePath));
+                LogMessage("Running MSGF on " + Path.GetFileName(strInputFilePath));
             }
 
             mCurrentMSGFResultsFilePath = string.Copy(strResultsFilePath);
@@ -2683,8 +2666,7 @@ namespace AnalysisManagerMSGFPlugin
                             fiProteinModsFileNew.MoveTo(fiProteinModsFile.FullName);
                             if (m_DebugLevel >= 2)
                             {
-                                LogMessage(
-                                    "Updated MSGF_SpecProb values in the ProteinMods.txt file");
+                                LogMessage("Updated MSGF_SpecProb values in the ProteinMods.txt file");
                             }
 
                             blnSuccess = true;
@@ -2752,8 +2734,7 @@ namespace AnalysisManagerMSGFPlugin
             mMSGFInputCreatorWarningCount += 1;
             if (mMSGFInputCreatorWarningCount < 10 || mMSGFInputCreatorWarningCount % 1000 == 0)
             {
-                LogWarning(
-                    "Warning reported by MSGFInputCreator; " + strWarningMessage + " (WarnCount=" + mMSGFInputCreatorWarningCount + ")");
+                LogWarning("Warning reported by MSGFInputCreator; " + strWarningMessage + " (WarnCount=" + mMSGFInputCreatorWarningCount + ")");
             }
         }
 

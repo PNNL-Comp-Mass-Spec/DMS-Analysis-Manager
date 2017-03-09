@@ -70,7 +70,7 @@ namespace MSMSSpectrumFilterAM
 
             var blnNeedScanStatsFiles = false;
 
-            if ((strMSLevelFilter != null) && strMSLevelFilter.Length > 0 && strMSLevelFilter != "0")
+            if (!string.IsNullOrEmpty(strMSLevelFilter) && strMSLevelFilter != "0")
             {
                 if (m_DebugLevel >= 1)
                 {
@@ -79,7 +79,7 @@ namespace MSMSSpectrumFilterAM
                 blnNeedScanStatsFiles = true;
             }
 
-            if ((strScanTypeFilter != null) && strScanTypeFilter.Length > 0)
+            if (!string.IsNullOrEmpty(strScanTypeFilter))
             {
                 if (m_DebugLevel >= 1)
                 {
@@ -88,11 +88,12 @@ namespace MSMSSpectrumFilterAM
                 blnNeedScanStatsFiles = true;
             }
 
-            if ((strMSCollisionModeFilter != null) && strMSCollisionModeFilter.Length > 0)
+            if (!string.IsNullOrEmpty(strMSCollisionModeFilter))
             {
                 if (m_DebugLevel >= 1)
                 {
-                    LogDebug("GetResources: MSCollisionModeFilter is defined (" + strMSCollisionModeFilter + " with match type " + strMSCollisionModeMatchType + "); will retrieve or generate the ScanStats files");
+                    LogDebug("GetResources: MSCollisionModeFilter is defined (" + strMSCollisionModeFilter + 
+                        " with match type " + strMSCollisionModeMatchType + "); will retrieve or generate the ScanStats files");
                 }
                 blnNeedScanStatsFiles = true;
             }
@@ -133,7 +134,7 @@ namespace MSMSSpectrumFilterAM
                     // Find the dataset file and either create a StoragePathInfo file or copy it locally
 
                     var CreateStoragePathInfoOnly = false;
-                    string RawDataType = m_jobParams.GetParam("RawDataType");
+                    var RawDataType = m_jobParams.GetParam("RawDataType");
 
                     switch (RawDataType.ToLower())
                     {
@@ -205,9 +206,9 @@ namespace MSMSSpectrumFilterAM
                 }
 
                 // Find the newest file in lstFiles
-                List<FileInfo> lstSortedFiles = (from item in lstFiles orderby item.LastWriteTime descending select item).ToList();
+                var lstSortedFiles = (from item in lstFiles orderby item.LastWriteTime descending select item).ToList();
 
-                FileInfo fiNewestScanStatsFile = lstSortedFiles[0];
+                var fiNewestScanStatsFile = lstSortedFiles[0];
 
                 // Copy the ScanStats file locally
                 fiNewestScanStatsFile.CopyTo(Path.Combine(m_WorkingDir, fiNewestScanStatsFile.Name));
@@ -222,7 +223,8 @@ namespace MSMSSpectrumFilterAM
                     {
                         if (m_DebugLevel >= 1)
                         {
-                            LogMessage("The newest _ScanStats.txt file for this dataset does not contain column " + clsMsMsSpectrumFilter.SCANSTATS_COL_SCAN_TYPE_NAME + "; will need to re-generate the file using the .Raw file");
+                            LogMessage("The newest _ScanStats.txt file for this dataset does not contain column " + clsMsMsSpectrumFilter.SCANSTATS_COL_SCAN_TYPE_NAME + 
+                                "; will need to re-generate the file using the .Raw file");
                         }
                         return false;
                     }

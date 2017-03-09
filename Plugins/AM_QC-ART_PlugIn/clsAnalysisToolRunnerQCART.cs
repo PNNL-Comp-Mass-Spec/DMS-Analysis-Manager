@@ -649,13 +649,11 @@ namespace AnalysisManagerQCARTPlugin
 
             if (cmdRunner.ExitCode != 0)
             {
-                LogWarning(
-                                     "R.exe returned a non-zero exit code: " + cmdRunner.ExitCode);
+                LogWarning("R.exe returned a non-zero exit code: " + cmdRunner.ExitCode);
             }
             else
             {
-                LogWarning(
-                                     "R.exe failed (but exit code is 0)");
+                LogWarning("R.exe failed (but exit code is 0)");
             }
 
             return false;

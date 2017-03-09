@@ -19,10 +19,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
         #region "Properties"
 
-        public List<int> FileMappings
-        {
-            get { return mFileMappings; }
-        }
+        public List<int> FileMappings => mFileMappings;
 
         #endregion
 

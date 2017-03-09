@@ -60,8 +60,7 @@ namespace AnalysisManagerMSDeconvPlugIn
 
                 if (m_DebugLevel > 4)
                 {
-                    LogDebug(
-                        "clsAnalysisToolRunnerMSDeconv.RunTool(): Enter");
+                    LogDebug("clsAnalysisToolRunnerMSDeconv.RunTool(): Enter");
                 }
 
                 // Verify that program files exist
@@ -136,13 +135,11 @@ namespace AnalysisManagerMSDeconvPlugIn
 
                     if (mCmdRunner.ExitCode != 0)
                     {
-                        LogWarning(
-                            "MSDeconv returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
+                        LogWarning("MSDeconv returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
                     }
                     else
                     {
-                        LogWarning(
-                            "Call to MSDeconv failed (but exit code is 0)");
+                        LogWarning("Call to MSDeconv failed (but exit code is 0)");
                     }
 
                     blnProcessingError = true;
@@ -248,8 +245,7 @@ namespace AnalysisManagerMSDeconvPlugIn
             if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
-            LogWarning(
-                "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
+            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
 
             // Bump up the debug level if less than 2
             if (m_DebugLevel < 2)
@@ -321,8 +317,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                 {
                     if (m_DebugLevel >= 4)
                     {
-                        LogDebug(
-                            "Console output file not found: " + strConsoleOutputFilePath);
+                        LogDebug("Console output file not found: " + strConsoleOutputFilePath);
                     }
 
                     return;
@@ -359,8 +354,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                                 {
                                     if (m_DebugLevel >= 2 && string.IsNullOrWhiteSpace(mMSDeconvVersion))
                                     {
-                                        LogDebug(
-                                            "MSDeconv version: " + strLineIn);
+                                        LogDebug("MSDeconv version: " + strLineIn);
                                     }
 
                                     mMSDeconvVersion = string.Copy(strLineIn);
@@ -414,8 +408,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    LogError(
-                        "Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    LogError("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
             }
         }
@@ -592,8 +585,7 @@ namespace AnalysisManagerMSDeconvPlugIn
             }
             catch (Exception ex)
             {
-                LogError(
-                    "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
         }
@@ -613,8 +605,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                 {
                     if (m_DebugLevel >= 4)
                     {
-                        LogDebug(
-                            "Console output file not found: " + strConsoleOutputFilePath);
+                        LogDebug("Console output file not found: " + strConsoleOutputFilePath);
                     }
 
                     return;
@@ -622,8 +613,7 @@ namespace AnalysisManagerMSDeconvPlugIn
 
                 if (m_DebugLevel >= 4)
                 {
-                    LogDebug(
-                        "Trimming console output file at " + strConsoleOutputFilePath);
+                    LogDebug("Trimming console output file at " + strConsoleOutputFilePath);
                 }
 
                 string strLineIn = null;
@@ -693,8 +683,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                 {
                     if (m_DebugLevel >= 1)
                     {
-                        LogError(
-                            "Error replacing original console output file (" + strConsoleOutputFilePath + ") with trimmed version: " + ex.Message);
+                        LogError("Error replacing original console output file (" + strConsoleOutputFilePath + ") with trimmed version: " + ex.Message);
                     }
                 }
             }
@@ -703,8 +692,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    LogError(
-                        "Error trimming console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    LogError("Error trimming console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
             }
         }

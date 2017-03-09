@@ -179,7 +179,7 @@ namespace AnalysisManagerProg
                 // Make sure no invalid parameters are present
                 if (objParseCommandLine.InvalidParametersPresent(lstValidParameters))
                 {
-                    ShowErrorMessage("Invalid commmand line parameters", 
+                    ShowErrorMessage("Invalid commmand line parameters",
                         (from item in objParseCommandLine.InvalidParameters(lstValidParameters) select "/" + item).ToList());
                 }
                 else
@@ -265,7 +265,8 @@ namespace AnalysisManagerProg
                 Console.WriteLine("Program syntax:\n" + Path.GetFileName(GetAppPath()) + " [/EL] [/NQ] [/NoMyEMSL] [/T] [/Trace] [/DLL]");
                 Console.WriteLine();
 
-                Console.WriteLine("Use /EL to create the Windows Event Log named '" + clsMainProcess.CUSTOM_LOG_NAME + "' then exit the program.  You should do this from a Windows Command Prompt that you started using 'Run as Administrator'");
+                Console.WriteLine("Use /EL to create the Windows Event Log named '" + clsMainProcess.CUSTOM_LOG_NAME + "' then exit the program. " +
+                                  "You should do this from a Windows Command Prompt that you started using 'Run as Administrator'");
                 Console.WriteLine();
                 Console.WriteLine("Use /NQ to disable posting status messages to the message queue");
                 Console.WriteLine();
@@ -289,10 +290,18 @@ namespace AnalysisManagerProg
                 Console.WriteLine("Website: http://omics.pnl.gov/ or http://panomics.pnnl.gov/");
                 Console.WriteLine();
 
-                Console.WriteLine("Licensed under the Apache License, Version 2.0; you may not use this file except in compliance with the License.  " + "You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0");
+                Console.WriteLine("Licensed under the Apache License, Version 2.0; you may not use this file except in compliance with the License.  " +
+                                  "You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0");
                 Console.WriteLine();
 
-                Console.WriteLine("Notice: This computer software was prepared by Battelle Memorial Institute, " + "hereinafter the Contractor, under Contract No. DE-AC05-76RL0 1830 with the " + "Department of Energy (DOE).  All rights in the computer software are reserved " + "by DOE on behalf of the United States Government and the Contractor as " + "provided in the Contract.  NEITHER THE GOVERNMENT NOR THE CONTRACTOR MAKES ANY " + "WARRANTY, EXPRESS OR IMPLIED, OR ASSUMES ANY LIABILITY FOR THE USE OF THIS " + "SOFTWARE.  This notice including this sentence must appear on any copies of " + "this computer software.");
+                Console.WriteLine("Notice: This computer software was prepared by Battelle Memorial Institute, " +
+                                  "hereinafter the Contractor, under Contract No. DE-AC05-76RL0 1830 with the " +
+                                  "Department of Energy (DOE).  All rights in the computer software are reserved " +
+                                  "by DOE on behalf of the United States Government and the Contractor as " +
+                                  "provided in the Contract.  NEITHER THE GOVERNMENT NOR THE CONTRACTOR MAKES ANY " +
+                                  "WARRANTY, EXPRESS OR IMPLIED, OR ASSUMES ANY LIABILITY FOR THE USE OF THIS " +
+                                  "SOFTWARE.  This notice including this sentence must appear on any copies of " +
+                                  "this computer software.");
 
                 // Delay for 750 msec in case the user double clicked this file from within Windows Explorer (or started the program via a shortcut)
                 Thread.Sleep(750);

@@ -65,8 +65,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
             blnSuccess = StoreToolVersionInfo(progLoc);
             if (!blnSuccess)
             {
-                LogError(
-                    "Aborting since StoreToolVersionInfo returned false");
+                LogError("Aborting since StoreToolVersionInfo returned false");
                 m_message = "Error determining LCMS FeatureFinder version";
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -146,8 +145,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
             if (string.IsNullOrEmpty(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
-            LogWarning(
-                "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
+            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
 
             // Bump up the debug level if less than 2
             if (m_DebugLevel < 2)
@@ -220,8 +218,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
                 }
                 catch (Exception ex)
                 {
-                    LogError(
-                        "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                    LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                     return false;
                 }
 
@@ -255,8 +252,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
             }
             catch (Exception ex)
             {
-                LogError(
-                    "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
         }

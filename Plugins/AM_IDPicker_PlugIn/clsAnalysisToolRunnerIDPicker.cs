@@ -111,8 +111,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
                 if (m_DebugLevel > 4)
                 {
-                    LogDebug(
-                        "clsAnalysisToolRunnerIDPicker.RunTool(): Enter");
+                    LogDebug("clsAnalysisToolRunnerIDPicker.RunTool(): Enter");
                 }
 
                 m_progress = PROGRESS_PCT_IDPicker_SEARCHING_FOR_FILES;
@@ -186,8 +185,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 // This function updates mPeptideListToXMLExePath and mIDPickerProgramFolder
                 if (!StoreToolVersionInfo(progLocQonvert, blnSkipIDPicker))
                 {
-                    LogError(
-                        "Aborting since StoreToolVersionInfo returned false");
+                    LogError("Aborting since StoreToolVersionInfo returned false");
                     m_message = "Error determining IDPicker version";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -200,8 +198,7 @@ namespace AnalysisManagerIDPickerPlugIn
                     {
                         m_message = "Error creating PepXML file";
                     }
-                    LogError(
-                        "Error creating PepXML file for job " + m_JobNum);
+                    LogError("Error creating PepXML file for job " + m_JobNum);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -838,8 +835,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
                 if (m_DebugLevel >= 3)
                 {
-                    LogDebug(
-                        "Looking for decoy proteins in the MSGFDB synopsis file");
+                    LogDebug("Looking for decoy proteins in the MSGFDB synopsis file");
                 }
 
                 using (var oReader = new clsPHRPReader(strSynFilePath, eResultType, false, false, false))
@@ -855,8 +851,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
                                 if (m_DebugLevel >= 4)
                                 {
-                                    LogDebug(
-                                        "Decoy protein prefix found: " + strDecoyPrefix);
+                                    LogDebug("Decoy protein prefix found: " + strDecoyPrefix);
                                 }
 
                                 found = true;
@@ -937,8 +932,7 @@ namespace AnalysisManagerIDPickerPlugIn
                     if (!blnSuccess)
                     {
                         blnErrorEncountered = true;
-                        LogError(
-                            "Unable to move " + fiFile.Name + " into the IDPicker subfolder; tried " + (intAttempts - 1).ToString() + " times");
+                        LogError("Unable to move " + fiFile.Name + " into the IDPicker subfolder; tried " + (intAttempts - 1).ToString() + " times");
                     }
                 }
             }
@@ -1014,8 +1008,7 @@ namespace AnalysisManagerIDPickerPlugIn
             }
             catch (Exception ex)
             {
-                LogError(
-                    "Exception in ParseConsoleOutputFileForErrors: " + ex.Message);
+                LogError("Exception in ParseConsoleOutputFileForErrors: " + ex.Message);
             }
         }
 
@@ -1120,7 +1113,10 @@ namespace AnalysisManagerIDPickerPlugIn
             }
 
             // Build the command string, for example:
-            //   -MaxFDR 0.1 -ProteinDatabase c:\DMS_Temp_Org\ID_002339_125D2B84.fasta -SearchScoreWeights "msgfspecprob -1" -OptimizeScoreWeights 1 -NormalizedSearchScores msgfspecprob -DecoyPrefix Reversed_ -dump QC_Shew_11_06_pt5_3_13Feb12_Doc_11-12-07.pepXML
+            //   -MaxFDR 0.1 -ProteinDatabase c:\DMS_Temp_Org\ID_002339_125D2B84.fasta 
+            //   -SearchScoreWeights "msgfspecprob -1" -OptimizeScoreWeights 1 
+            //   -NormalizedSearchScores msgfspecprob -DecoyPrefix Reversed_ 
+            //   -dump QC_Shew_11_06_pt5_3_13Feb12_Doc_11-12-07.pepXML
             CmdStr = string.Empty;
 
             CmdStr = AppendArgument(CmdStr, "QonvertMaxFDR", "MaxFDR", "0.1");
@@ -1446,8 +1442,7 @@ namespace AnalysisManagerIDPickerPlugIn
                     }
                     catch (Exception ex)
                     {
-                        LogError(
-                            "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                        LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                         return false;
                     }
                 }
@@ -1479,8 +1474,7 @@ namespace AnalysisManagerIDPickerPlugIn
             }
             catch (Exception ex)
             {
-                LogError(
-                    "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
         }

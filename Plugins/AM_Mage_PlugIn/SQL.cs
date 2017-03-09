@@ -30,7 +30,10 @@ namespace AnalysisManager_Mage_PlugIn
                 new QueryTemplate("SELECT * FROM V_Mage_Data_Package_Analysis_Jobs WHERE Data_Package_ID = {0} AND Tool = '{1}'",
                     "DataPackageID, Tool") },
             {"FactorsFromDataPackageID",
-                new QueryTemplate("SELECT Dataset, Dataset_ID, Factor, Value FROM DMS5.dbo.V_Custom_Factors_List_Report WHERE Dataset IN (SELECT DISTINCT Dataset FROM V_Mage_Data_Package_Analysis_Jobs WHERE Data_Package_ID = {0})",
+                new QueryTemplate(
+                    "SELECT Dataset, Dataset_ID, Factor, Value " + 
+                    "FROM DMS5.dbo.V_Custom_Factors_List_Report " + 
+                    "WHERE Dataset IN (SELECT DISTINCT Dataset FROM V_Mage_Data_Package_Analysis_Jobs WHERE Data_Package_ID = {0})",
                     "DataPackageID") },
             {"JobDatasetsFromDataPackageIDForTool",
                 new QueryTemplate("SELECT * FROM V_Mage_Dataset_List WHERE Dataset IN (SELECT DISTINCT Dataset FROM S_V_Data_Package_Analysis_Jobs_Export WHERE Data_Package_ID = {0})",

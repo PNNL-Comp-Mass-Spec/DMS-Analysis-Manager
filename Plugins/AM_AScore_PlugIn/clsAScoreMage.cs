@@ -154,7 +154,10 @@ namespace AnalysisManager_AScore_PlugIn
             if (string.IsNullOrEmpty(strMAParameterFileStoragePath))
             {
                 strMAParameterFileStoragePath = @"\\gigasax\DMS_Parameter_Files\AScore";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, "Parameter " + strParamFileStoragePathKeyName + " is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " + strMAParameterFileStoragePath);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, 
+                    "Parameter " + strParamFileStoragePathKeyName + " is not defined " + 
+                    "(obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); " + 
+                    "will assume: " + strMAParameterFileStoragePath);
             }
 
             //Find all parameter files that match the base name and copy to working directory

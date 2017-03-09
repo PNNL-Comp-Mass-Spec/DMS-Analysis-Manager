@@ -35,15 +35,9 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
         #region "Properties"
 
-        public string Filename
-        {
-            get { return mFileName; }
-        }
+        public string Filename => mFileName;
 
-        public clsDataPackageJobInfo JobInfo
-        {
-            get { return mJobInfo; }
-        }
+        public clsDataPackageJobInfo JobInfo => mJobInfo;
 
         #endregion
 
@@ -55,11 +49,11 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
         public void Update(clsPXFileInfoBase oSource)
         {
-            this.mFileName = oSource.mFileName;
-            this.mJobInfo = oSource.mJobInfo;
-            this.FileID = oSource.FileID;
-            this.Length = oSource.Length;
-            this.MD5Hash = oSource.MD5Hash;
+            mFileName = oSource.mFileName;
+            mJobInfo = oSource.mJobInfo;
+            FileID = oSource.FileID;
+            Length = oSource.Length;
+            MD5Hash = oSource.MD5Hash;
         }
 
         public override string ToString()

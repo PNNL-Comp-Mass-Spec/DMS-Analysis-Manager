@@ -248,7 +248,9 @@ namespace AnalysisManagerMzRefineryPlugIn
                         }
                     }
 
-                    using (var swMessageFile = new StreamWriter(new FileStream(Path.Combine(m_WorkDir, "NOTE - Orphan folder; safe to delete.txt"), FileMode.Create, FileAccess.Write, FileShare.Read)))
+                    using (var swMessageFile = new StreamWriter(new FileStream(
+                        Path.Combine(m_WorkDir, "NOTE - Orphan folder; safe to delete.txt"), 
+                        FileMode.Create, FileAccess.Write, FileShare.Read)))
                     {
                         swMessageFile.WriteLine("This folder contains MSGF+ results and the MzRefinery log file from a failed attempt at running MzRefinery for job " + m_JobNum + ".");
                         swMessageFile.WriteLine("The files can be used to investigate the MzRefinery failure.");
@@ -424,7 +426,9 @@ namespace AnalysisManagerMzRefineryPlugIn
                 }
             }
 
-            result = mMSGFDBUtils.ParseMSGFPlusParameterFile(fastaFileSizeKB, fastaFileIsDecoy, strAssumedScanType, strScanTypeFilePath, strInstrumentGroup, strParameterFilePath, overrideParams, out strMSGFPlusCmdLineOptions);
+            result = mMSGFDBUtils.ParseMSGFPlusParameterFile(
+                fastaFileSizeKB, fastaFileIsDecoy, strAssumedScanType, strScanTypeFilePath, 
+                strInstrumentGroup, strParameterFilePath, overrideParams, out strMSGFPlusCmdLineOptions);
 
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
@@ -765,7 +769,9 @@ namespace AnalysisManagerMzRefineryPlugIn
                         {
                             // MSGF+ is stuck at 96% complete and has been that way for 5 minutes
                             // Java is likely frozen and thus the process should be aborted
-                            var warningMessage = "MSGF+ has been stuck at " + clsMSGFDBUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE.ToString("0") + "% complete for 5 minutes; aborting since Java appears frozen";
+                            var warningMessage = "MSGF+ has been stuck at " + 
+                                clsMSGFDBUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE.ToString("0") + "% complete for 5 minutes; " + 
+                                "aborting since Java appears frozen";
                             LogWarning(warningMessage);
 
                             // Bump up mMSGFPlusCompletionTime by one hour

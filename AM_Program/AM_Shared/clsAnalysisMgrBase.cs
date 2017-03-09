@@ -170,7 +170,11 @@ namespace AnalysisManagerBase
                 m_LastLockQueueWaitTimeLog = DateTime.UtcNow;
                 if (m_DebugLevel >= 1)
                 {
-                    var msg = "Waiting for lockfile queue to fall below threshold (" + m_derivedClassName + "); " + "SourceBacklog=" + backlogSourceMB + " MB, " + "TargetBacklog=" + backlogTargetMB + " MB, " + "Source=" + sourceFilePath + ", Target=" + targetFilePath;
+                    var msg = "Waiting for lockfile queue to fall below threshold (" + m_derivedClassName + "); " + 
+                        "SourceBacklog=" + backlogSourceMB + " MB, " + 
+                        "TargetBacklog=" + backlogTargetMB + " MB, " + 
+                        "Source=" + sourceFilePath + ", " + 
+                        "Target=" + targetFilePath;
                     LogDebug(msg);
                 }
             }

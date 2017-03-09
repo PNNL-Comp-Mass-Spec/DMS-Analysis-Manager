@@ -77,8 +77,7 @@ namespace AnalysisManagerIDPickerPlugIn
                     var noScanStats = m_jobParams.GetJobParameter("PepXMLNoScanStats", false);
                     if (noScanStats)
                     {
-                        LogMessage(
-                            "Not retrieving MASIC files since PepXMLNoScanStats is True");
+                        LogMessage("Not retrieving MASIC files since PepXMLNoScanStats is True");
                     }
                     else
                     {
@@ -205,8 +204,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
             if (m_DebugLevel >= 2)
             {
-                LogDebug(
-                    "Retrieving the " + eResultType.ToString() + " files");
+                LogDebug("Retrieving the " + eResultType.ToString() + " files");
             }
 
             var synFileNameExpected = clsPHRPReader.GetPHRPSynopsisFileName(eResultType, strDatasetName);
@@ -410,8 +408,7 @@ namespace AnalysisManagerIDPickerPlugIn
             {
                 if (m_DebugLevel >= 1)
                 {
-                    LogMessage(
-                        "Retrieved MASIC ScanStats and ScanStatsEx files");
+                    LogMessage("Retrieved MASIC ScanStats and ScanStatsEx files");
                 }
             }
 

@@ -256,8 +256,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             if (string.IsNullOrEmpty(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
-            LogWarning(
-                "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
+            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
 
             // Bump up the debug level if less than 2
             if (m_DebugLevel < 2)
@@ -307,8 +306,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 var fiSourceFile = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + "_dta_DtaRefineryLog.txt"));
                 if (!fiSourceFile.Exists)
                 {
-                    LogDebug(
-                        "DTA_Refinery log file not found by IsXtandenFinished: " + fiSourceFile.Name);
+                    LogDebug("DTA_Refinery log file not found by IsXtandenFinished: " + fiSourceFile.Name);
                     return false;
                 }
 

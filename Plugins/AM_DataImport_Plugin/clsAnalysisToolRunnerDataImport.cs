@@ -141,8 +141,7 @@ namespace AnalysisManagerDataImportPlugIn
                 if (mSourceFiles == null || mSourceFiles.Count == 0)
                 {
                     // Nothing to do
-                    LogWarning(
-                        "mSourceFiles is empty; nothing for MoveImportedFiles to do");
+                    LogWarning("mSourceFiles is empty; nothing for MoveImportedFiles to do");
                     return true;
                 }
 
@@ -169,8 +168,7 @@ namespace AnalysisManagerDataImportPlugIn
                     }
                     catch (Exception ex)
                     {
-                        LogWarning(
-                            "Error moving file " + fiFile.Name + " to " + strTargetFilePath + ": " + ex.Message);
+                        LogWarning("Error moving file " + fiFile.Name + " to " + strTargetFilePath + ": " + ex.Message);
                         return false;
                     }
                 }

@@ -515,13 +515,11 @@ namespace AnalysisManagerNOMSIPlugin
 
             if (cmdRunner.ExitCode != 0)
             {
-                LogWarning(
-                                     "NOMSI returned a non-zero exit code: " + cmdRunner.ExitCode);
+                LogWarning("NOMSI returned a non-zero exit code: " + cmdRunner.ExitCode);
             }
             else
             {
-                LogWarning(
-                                     "NOMSI failed (but exit code is 0)");
+                LogWarning("NOMSI failed (but exit code is 0)");
             }
 
             return false;

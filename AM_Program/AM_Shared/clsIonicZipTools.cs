@@ -356,7 +356,10 @@ namespace AnalysisManagerBase
         /// <param name="GZipFilePath">Full path to the .gz file to be created</param>
         /// <param name="fiGZip">GZip.exe fileinfo object</param>
         /// <returns></returns>
-        /// <remarks>The .gz file will initially be created in the same folder as the original file.  If GZipFilePath points to a different folder, then the file will be moved to that new location</remarks>
+        /// <remarks>
+        /// The .gz file will initially be created in the same folder as the original file.
+        /// If GZipFilePath points to a different folder, then the file will be moved to that new location.
+        /// </remarks>
         private bool GZipUsingExe(FileInfo fiFile, string GZipFilePath, FileInfo fiGZip)
         {
 
@@ -712,7 +715,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Verifies that the zip file exists.  
+        /// Verifies that the zip file exists.
         /// If the file size is less than crcCheckThresholdGB, then also performs a full CRC check of the data
         /// </summary>
         /// <param name="zipFilePath">Zip file to check</param>
@@ -937,7 +940,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Stores all files in a source directory into a zip file named ZipFilePath
         /// </summary>
-        /// <param name="SourceDirectoryPath">Full path to the directory to be zipped</param>    
+        /// <param name="SourceDirectoryPath">Full path to the directory to be zipped</param>
         /// <param name="ZipFilePath">Full path to the .zip file to be created.  Existing files will be overwritten</param>
         /// <param name="Recurse">If True, then recurse through all subfolders</param>
         /// <param name="FileFilter">Filter to apply when zipping</param>
@@ -1025,7 +1028,7 @@ namespace AnalysisManagerBase
             return true;
 
         }
-        
+
     }
 
 }

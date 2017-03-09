@@ -46,8 +46,7 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
             // Store the MSDataFileTrimmer version info in the database
             if (!StoreToolVersionInfo())
             {
-                LogError(
-                    "Aborting since StoreToolVersionInfo returned false");
+                LogError("Aborting since StoreToolVersionInfo returned false");
                 m_message = "Error determining MSDataFileTrimmer version";
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -70,8 +69,7 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
             {
                 if (progLoc.Length == 0)
                     progLoc = "Parameter 'MSDataFileTrimmerprogloc' not defined for this manager";
-                LogError(
-                    "Cannot find MSDataFileTrimmer program file: " + progLoc);
+                LogError("Cannot find MSDataFileTrimmer program file: " + progLoc);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -150,8 +148,7 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
             if (string.IsNullOrEmpty(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
-            LogWarning(
-                "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
+            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
 
             // Bump up the debug level if less than 2
             if (m_DebugLevel < 2)
@@ -202,8 +199,7 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
             }
             catch (Exception ex)
             {
-                LogError(
-                    "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
         }

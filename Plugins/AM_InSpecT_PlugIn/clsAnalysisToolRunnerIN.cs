@@ -111,8 +111,7 @@ namespace AnalysisManagerInSpecTPlugIn
                 // Store the Inspect version info in the database
                 if (!StoreToolVersionInfo(InspectDir))
                 {
-                    LogError(
-                        "Aborting since StoreToolVersionInfo returned false");
+                    LogError("Aborting since StoreToolVersionInfo returned false");
                     m_message = "Error determining Inspect version";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -162,8 +161,7 @@ namespace AnalysisManagerInSpecTPlugIn
 
                 if (m_DebugLevel >= 3)
                 {
-                    LogDebug(
-                        "Running " + strParallelizedText + " inspect on " + Path.GetFileName(mInspectConcatenatedDtaFilePath));
+                    LogDebug("Running " + strParallelizedText + " inspect on " + Path.GetFileName(mInspectConcatenatedDtaFilePath));
                 }
 
                 result = RunInSpecT(InspectDir);
@@ -324,17 +322,14 @@ namespace AnalysisManagerInSpecTPlugIn
 
                 if (m_DebugLevel >= 2)
                 {
-                    LogDebug(
-                        "Created Inspect input file '" + inputFilename + "' using '" + ParamFilename + "'");
-                    LogDebug(
-                        "Using DB '" + dbFilePath + "' and input spectra '" + strInputSpectra + "'");
+                    LogDebug("Created Inspect input file '" + inputFilename + "' using '" + ParamFilename + "'");
+                    LogDebug("Using DB '" + dbFilePath + "' and input spectra '" + strInputSpectra + "'");
                 }
             }
             catch (Exception ex)
             {
                 // Let the user know what went wrong.
-                LogError(
-                    "clsAnalysisToolRunnerIN.BuildInspectInputFile-> error while writing file: " + ex.Message);
+                LogError("clsAnalysisToolRunnerIN.BuildInspectInputFile-> error while writing file: " + ex.Message);
                 return string.Empty;
             }
 
@@ -422,8 +417,7 @@ namespace AnalysisManagerInSpecTPlugIn
             {
                 if (m_DebugLevel > 4)
                 {
-                    LogDebug(
-                        "clsAnalysisToolRunnerIN.ParseInspectErrorsFile(): Reading " + errorFilename);
+                    LogDebug("clsAnalysisToolRunnerIN.ParseInspectErrorsFile(): Reading " + errorFilename);
                 }
 
                 strInputFilePath = Path.Combine(m_WorkDir, errorFilename);
@@ -479,8 +473,7 @@ namespace AnalysisManagerInSpecTPlugIn
             }
             catch (Exception)
             {
-                LogError(
-                    "clsAnalysisToolRunnerIN.ParseInspectErrorsFile, Error reading the Inspect _errors.txt file (" + errorFilename + ")");
+                LogError("clsAnalysisToolRunnerIN.ParseInspectErrorsFile, Error reading the Inspect _errors.txt file (" + errorFilename + ")");
                 return false;
             }
 
@@ -548,8 +541,7 @@ namespace AnalysisManagerInSpecTPlugIn
             {
                 if (mCmdRunner.ExitCode != 0)
                 {
-                    LogWarning(
-                        "Inspect returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
+                    LogWarning("Inspect returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
                 }
                 else
                 {
@@ -567,8 +559,7 @@ namespace AnalysisManagerInSpecTPlugIn
                         break;
                     case -1073741510:
                         // Corresponds to the user pressing Ctrl+Break to stop Inspect
-                        LogError(
-                            "Exit code indicates user pressed Ctrl+Break; job failed");
+                        LogError("Exit code indicates user pressed Ctrl+Break; job failed");
                         break;
                     default:
                         // Any other code
@@ -581,8 +572,7 @@ namespace AnalysisManagerInSpecTPlugIn
                 {
                     if (mInspectSearchLogMostRecentEntry.Length > 0)
                     {
-                        LogWarning(
-                            "Most recent Inspect search log entry: " + mInspectSearchLogMostRecentEntry);
+                        LogWarning("Most recent Inspect search log entry: " + mInspectSearchLogMostRecentEntry);
                     }
                     else
                     {
@@ -621,8 +611,7 @@ namespace AnalysisManagerInSpecTPlugIn
             }
             else
             {
-                LogError(
-                    "Inspect results file not found; job failed: " + Path.GetFileName(mInspectResultsFilePath));
+                LogError("Inspect results file not found; job failed: " + Path.GetFileName(mInspectResultsFilePath));
                 blnSuccess = false;
             }
 
@@ -690,8 +679,7 @@ namespace AnalysisManagerInSpecTPlugIn
                             // Store the new search log entry in the log
                             if (mInspectSearchLogMostRecentEntry.Length == 0 || mInspectSearchLogMostRecentEntry != strLastEntry)
                             {
-                                LogDebug(
-                                    "Inspect search log entry: " + strLastEntry);
+                                LogDebug("Inspect search log entry: " + strLastEntry);
                             }
                         }
 
@@ -715,8 +703,7 @@ namespace AnalysisManagerInSpecTPlugIn
             }
             catch (Exception ex)
             {
-                LogError(
-                    "clsAnalysisToolRunnerIN.ParseInspectSearchLogFile, error reading Inspect search log" + ex.Message);
+                LogError("clsAnalysisToolRunnerIN.ParseInspectSearchLogFile, error reading Inspect search log" + ex.Message);
             }
         }
 
@@ -743,8 +730,7 @@ namespace AnalysisManagerInSpecTPlugIn
             }
             catch (Exception ex)
             {
-                LogError(
-                    "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
         }

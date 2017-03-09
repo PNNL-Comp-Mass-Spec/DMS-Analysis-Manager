@@ -576,7 +576,8 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
             // For certain long-running steps we can compute a more precise version of % complete by keeping track of the number of datasets processed
 
-            //Static reExtractPercentFinished As New System.Text.RegularExpressions.Regex("(\d+)% finished", Text.RegularExpressions.RegexOptions.Compiled Or Text.RegularExpressions.RegexOptions.IgnoreCase)
+            //Static reExtractPercentFinished As New System.Text.RegularExpressions.Regex("(\d+)% finished",
+            //   Text.RegularExpressions.RegexOptions.Compiled Or Text.RegularExpressions.RegexOptions.IgnoreCase)
 
             //Dim oMatch As System.Text.RegularExpressions.Match
             try

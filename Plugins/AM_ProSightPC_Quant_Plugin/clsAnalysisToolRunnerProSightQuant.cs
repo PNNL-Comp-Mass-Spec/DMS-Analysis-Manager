@@ -65,8 +65,7 @@ namespace AnalysisManagerProSightQuantPlugIn
 
                 if (m_DebugLevel > 4)
                 {
-                    LogDebug(
-                        "clsAnalysisToolRunnerProSightQuant.RunTool(): Enter");
+                    LogDebug("clsAnalysisToolRunnerProSightQuant.RunTool(): Enter");
                 }
 
                 if (clsAnalysisResourcesProSightQuant.TOOL_DISABLED)
@@ -86,8 +85,7 @@ namespace AnalysisManagerProSightQuantPlugIn
                 // Store the TargetedWorkflowsConsole version info in the database
                 if (!StoreToolVersionInfo(mTargetedWorkflowsProgLoc))
                 {
-                    LogError(
-                        "Aborting since StoreToolVersionInfo returned false");
+                    LogError("Aborting since StoreToolVersionInfo returned false");
                     m_message = "Error determining TargetedWorkflowsConsole version";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -98,8 +96,7 @@ namespace AnalysisManagerProSightQuantPlugIn
                 strTargetedQuantParamFilePath = CreateTargetedQuantParamFile();
                 if (string.IsNullOrEmpty(strTargetedQuantParamFilePath))
                 {
-                    LogError(
-                        "Aborting since CreateTargetedQuantParamFile returned false");
+                    LogError("Aborting since CreateTargetedQuantParamFile returned false");
                     if (string.IsNullOrEmpty(m_message))
                     {
                         m_message = "Error creating " + TARGETED_QUANT_XML_FILE_NAME;
@@ -199,13 +196,11 @@ namespace AnalysisManagerProSightQuantPlugIn
 
                     if (mCmdRunner.ExitCode != 0)
                     {
-                        LogWarning(
-                            "TargetedWorkflowsConsole returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
+                        LogWarning("TargetedWorkflowsConsole returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
                     }
                     else
                     {
-                        LogWarning(
-                            "Call to TargetedWorkflowsConsole failed (but exit code is 0)");
+                        LogWarning("Call to TargetedWorkflowsConsole failed (but exit code is 0)");
                     }
 
                     blnProcessingError = true;
@@ -216,8 +211,7 @@ namespace AnalysisManagerProSightQuantPlugIn
                     m_StatusTools.UpdateAndWrite(m_progress);
                     if (m_DebugLevel >= 3)
                     {
-                        LogDebug(
-                            "TargetedWorkflowsConsole Quantitation Complete");
+                        LogDebug("TargetedWorkflowsConsole Quantitation Complete");
                     }
 
                     var fiConsoleOutputfile = new FileInfo(Path.Combine(m_WorkDir, TARGETED_WORKFLOWS_CONSOLE_OUTPUT));
@@ -293,8 +287,7 @@ namespace AnalysisManagerProSightQuantPlugIn
             if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
-            LogWarning(
-                "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
+            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
 
             // Bump up the debug level if less than 2
             if (m_DebugLevel < 2)
@@ -426,8 +419,7 @@ namespace AnalysisManagerProSightQuantPlugIn
                 {
                     if (m_DebugLevel >= 4)
                     {
-                        LogDebug(
-                            "Console output file not found: " + strConsoleOutputFilePath);
+                        LogDebug("Console output file not found: " + strConsoleOutputFilePath);
                     }
 
                     return;
@@ -529,8 +521,7 @@ namespace AnalysisManagerProSightQuantPlugIn
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    LogError(
-                        "Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    LogError("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
             }
         }
@@ -559,8 +550,7 @@ namespace AnalysisManagerProSightQuantPlugIn
                 }
                 catch (Exception ex)
                 {
-                    LogError(
-                        "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                    LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                     return false;
                 }
 
@@ -585,8 +575,7 @@ namespace AnalysisManagerProSightQuantPlugIn
             }
             catch (Exception ex)
             {
-                LogError(
-                    "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
         }

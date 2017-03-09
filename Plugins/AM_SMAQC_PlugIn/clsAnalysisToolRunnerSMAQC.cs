@@ -74,8 +74,7 @@ namespace AnalysisManagerSMAQCPlugIn
                 // Store the SMAQC version info in the database
                 if (!StoreToolVersionInfo(progLoc))
                 {
-                    LogError(
-                        "Aborting since StoreToolVersionInfo returned false");
+                    LogError("Aborting since StoreToolVersionInfo returned false");
                     m_message = "Error determining SMAQC version";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -157,8 +156,7 @@ namespace AnalysisManagerSMAQCPlugIn
 
                     if (mCmdRunner.ExitCode != 0)
                     {
-                        LogWarning(
-                            "SMAQC returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
+                        LogWarning("SMAQC returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
                     }
                     else
                     {
@@ -292,8 +290,7 @@ namespace AnalysisManagerSMAQCPlugIn
 
             if (intDatasetID < 0)
             {
-                LogError(
-                    "Job parameter DatasetID is missing; cannot compute LLRC");
+                LogError("Job parameter DatasetID is missing; cannot compute LLRC");
                 return false;
             }
 
@@ -417,8 +414,7 @@ namespace AnalysisManagerSMAQCPlugIn
             if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
-            LogWarning(
-                "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
+            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
 
             // Bump up the debug level if less than 2
             if (m_DebugLevel < 2)
@@ -495,8 +491,7 @@ namespace AnalysisManagerSMAQCPlugIn
             }
             catch (Exception ex)
             {
-                LogError(
-                    "Error converting SMAQC results to XML: " + ex.Message);
+                LogError("Error converting SMAQC results to XML: " + ex.Message);
                 m_message = "Error converting SMAQC results to XML";
                 return false;
             }
@@ -622,8 +617,7 @@ namespace AnalysisManagerSMAQCPlugIn
                 {
                     if (m_DebugLevel >= 4)
                     {
-                        LogDebug(
-                            "Console output file not found: " + strConsoleOutputFilePath);
+                        LogDebug("Console output file not found: " + strConsoleOutputFilePath);
                     }
 
                     return;
@@ -711,8 +705,7 @@ namespace AnalysisManagerSMAQCPlugIn
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    LogError(
-                        "Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    LogError("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
             }
         }
@@ -741,8 +734,7 @@ namespace AnalysisManagerSMAQCPlugIn
             {
                 if (m_DebugLevel >= 2)
                 {
-                    LogDebug(
-                        "Posting SMAQC Results to the database (using Dataset ID " + intDatasetID.ToString() + ")");
+                    LogDebug("Posting SMAQC Results to the database (using Dataset ID " + intDatasetID.ToString() + ")");
                 }
 
                 // We need to remove the encoding line from strXMLResults before posting to the DB
@@ -836,8 +828,7 @@ namespace AnalysisManagerSMAQCPlugIn
             catch (Exception ex)
             {
                 m_message = "Exception parsing SMAQC results";
-                LogError(
-                    "Exception parsing SMAQC results and posting to the database", ex);
+                LogError("Exception parsing SMAQC results and posting to the database", ex);
                 blnSuccess = false;
             }
 
@@ -903,8 +894,7 @@ namespace AnalysisManagerSMAQCPlugIn
                 }
                 catch (Exception ex)
                 {
-                    LogError(
-                        "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                    LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                     return false;
                 }
             }
@@ -933,8 +923,7 @@ namespace AnalysisManagerSMAQCPlugIn
             }
             catch (Exception ex)
             {
-                LogError(
-                    "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
         }

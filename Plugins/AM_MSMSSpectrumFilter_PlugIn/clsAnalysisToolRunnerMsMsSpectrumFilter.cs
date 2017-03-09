@@ -159,7 +159,8 @@ namespace MSMSSpectrumFilterAM
                 {
                     if (m_DebugLevel >= 2)
                     {
-                        LogMessage("Filtered CDTA file's size differs by more than 10 bytes vs. the original CDTA file (" + fiFilteredCDTA.Length + " vs. " + fiOriginalCDTA.Length + "); assuming the files do not match");
+                        LogMessage("Filtered CDTA file's size differs by more than 10 bytes vs. the original CDTA file " + 
+                            "(" + fiFilteredCDTA.Length + " vs. " + fiOriginalCDTA.Length + "); assuming the files do not match");
                     }
                     return false;
                 }
@@ -211,7 +212,8 @@ namespace MSMSSpectrumFilterAM
                         {
                             if (m_DebugLevel >= 2)
                             {
-                                LogMessage("Spectrum " + intOriginalCDTASpectra + " in the original CDTA file has a different spectrum header vs. spectrum " + intFilteredCDTASpectra + " in the filtered CDTA file; files do not match");
+                                LogMessage("Spectrum " + intOriginalCDTASpectra + " in the original CDTA file has a different spectrum header " + 
+                                    "vs. spectrum " + intFilteredCDTASpectra + " in the filtered CDTA file; files do not match");
                             }
                             return false;
                         }
@@ -220,7 +222,8 @@ namespace MSMSSpectrumFilterAM
                         {
                             if (m_DebugLevel >= 2)
                             {
-                                LogMessage("Spectrum " + intOriginalCDTASpectra + " in the original CDTA file has a different number of ions (" + msmsDataListOrig.Count + " vs. " + msmsDataListFilt.Count + "); files do not match");
+                                LogMessage("Spectrum " + intOriginalCDTASpectra + " in the original CDTA file has a different number of ions " + 
+                                    "(" + msmsDataListOrig.Count + " vs. " + msmsDataListFilt.Count + "); files do not match");
                             }
                             return false;
                         }
@@ -597,7 +600,9 @@ namespace MSMSSpectrumFilterAM
                 if (strFinniganRawFilePath == null || strFinniganRawFilePath.Length == 0)
                 {
                     // Unable to resolve the file path
-                    m_ErrMsg = "Could not find " + strRawFileName + " or " + strRawFileName + clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX + " in the dataset folder; unable to generate the ScanStats files";
+                    m_ErrMsg = "Could not find " + strRawFileName + " or " + 
+                        strRawFileName + clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX + 
+                        " in the dataset folder; unable to generate the ScanStats files";
                     LogErrors("GenerateFinniganScanStatsFiles", m_ErrMsg, null);
                     return false;
                 }

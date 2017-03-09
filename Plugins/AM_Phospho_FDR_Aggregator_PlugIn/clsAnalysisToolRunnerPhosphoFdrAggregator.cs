@@ -87,8 +87,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
                 if (m_DebugLevel > 4)
                 {
-                    LogDebug(
-                        "clsAnalysisToolRunnerPhosphoFdrAggregator.RunTool(): Enter");
+                    LogDebug("clsAnalysisToolRunnerPhosphoFdrAggregator.RunTool(): Enter");
                 }
 
                 // Determine the path to the Ascore program
@@ -106,8 +105,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 // Store the AScore version info in the database
                 if (!StoreToolVersionInfo(progLocAScore))
                 {
-                    LogError(
-                        "Aborting since StoreToolVersionInfo returned false");
+                    LogError("Aborting since StoreToolVersionInfo returned false");
                     m_message = "Error determining AScore version";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -441,8 +439,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             catch (Exception ex)
             {
                 m_message = "File could not be concatenated: " + currentFile;
-                LogError(
-                    "ConcatenateResultFiles, " + m_message + ": " + ex.Message);
+                LogError("ConcatenateResultFiles, " + m_message + ": " + ex.Message);
                 return false;
             }
         }
@@ -453,8 +450,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
-            LogWarning(
-                "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
+            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
 
             // Bump up the debug level if less than 2
             if (m_DebugLevel < 2)
@@ -551,7 +547,8 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
             if (string.IsNullOrWhiteSpace(bestAScoreParamFileName))
             {
-                m_message = "Programming bug, AScore parameter file not found in ProcessSynopsisFiles (clsAnalysisResourcesPhosphoFdrAggregator.GetResources should have already flagged this as an error)";
+                m_message = "Programming bug, AScore parameter file not found in ProcessSynopsisFiles " + 
+                    "(clsAnalysisResourcesPhosphoFdrAggregator.GetResources should have already flagged this as an error)";
                 LogError(m_message);
                 return string.Empty;
             }
@@ -765,8 +762,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 {
                     if (m_DebugLevel >= 4)
                     {
-                        LogDebug(
-                            "Console output file not found: " + strConsoleOutputFilePath);
+                        LogDebug("Console output file not found: " + strConsoleOutputFilePath);
                     }
 
                     return;
@@ -829,8 +825,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    LogError(
-                        "Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    LogError("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
             }
         }
@@ -891,8 +886,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                     {
                         m_message = "Job " + udtJobMetadata.Job + " not found in packed job parameter " +
                                     clsAnalysisResources.JOB_PARAM_DICTIONARY_JOB_DATASET_MAP;
-                        LogError(
-                            "Error in ProcessSynopsisFiles: " + m_message);
+                        LogError("Error in ProcessSynopsisFiles: " + m_message);
                         return false;
                     }
 
@@ -1090,8 +1084,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
                 if (mCmdRunner.ExitCode != 0)
                 {
-                    LogWarning(
-                        "AScore returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
+                    LogWarning("AScore returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
                 }
                 else
                 {
@@ -1104,8 +1097,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             m_StatusTools.UpdateAndWrite(m_progress);
             if (m_DebugLevel >= 3)
             {
-                LogDebug(
-                    "AScore search complete for data package job " + udtJobMetadata.Job);
+                LogDebug("AScore search complete for data package job " + udtJobMetadata.Job);
             }
 
             return true;
@@ -1135,8 +1127,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 }
                 catch (Exception ex)
                 {
-                    LogError(
-                        "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                    LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                     return false;
                 }
             }
@@ -1158,8 +1149,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             }
             catch (Exception ex)
             {
-                LogError(
-                    "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
         }

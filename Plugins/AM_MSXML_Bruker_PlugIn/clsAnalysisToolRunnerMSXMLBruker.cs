@@ -58,8 +58,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             // Store the CompassXport version info in the database
             if (!StoreToolVersionInfo())
             {
-                LogError(
-                    "Aborting since StoreToolVersionInfo returned false");
+                LogError("Aborting since StoreToolVersionInfo returned false");
                 if (string.IsNullOrEmpty(m_message))
                 {
                     m_message = "Error determining CompassXport version";
@@ -113,14 +112,12 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             //Delete the raw data files
             if (m_DebugLevel > 3)
             {
-                LogDebug(
-                    "clsAnalysisToolRunnerMSXMLBruker.RunTool(), Deleting raw data file");
+                LogDebug("clsAnalysisToolRunnerMSXMLBruker.RunTool(), Deleting raw data file");
             }
 
             if (DeleteRawDataFiles() != CloseOutType.CLOSEOUT_SUCCESS)
             {
-                LogError(
-                    "clsAnalysisToolRunnerMSXMLBruker.RunTool(), Problem deleting raw data files: " + m_message);
+                LogError("clsAnalysisToolRunnerMSXMLBruker.RunTool(), Problem deleting raw data files: " + m_message);
 
                 if (!string.IsNullOrEmpty(processingErrorMessage))
                 {
@@ -136,8 +133,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             //Update the job summary file
             if (m_DebugLevel > 3)
             {
-                LogDebug(
-                    "clsAnalysisToolRunnerMSXMLBruker.RunTool(), Updating summary file");
+                LogDebug("clsAnalysisToolRunnerMSXMLBruker.RunTool(), Updating summary file");
             }
 
             UpdateSummaryFile();
@@ -145,8 +141,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             //Make the results folder
             if (m_DebugLevel > 3)
             {
-                LogDebug(
-                    "clsAnalysisToolRunnerMSXMLBruker.RunTool(), Making results folder");
+                LogDebug("clsAnalysisToolRunnerMSXMLBruker.RunTool(), Making results folder");
             }
 
             eResult = MakeResultsFolder();
@@ -193,8 +188,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
         {
             if (m_DebugLevel > 4)
             {
-                LogDebug(
-                    "clsAnalysisToolRunnerMSXMLGen.CreateMSXmlFile(): Enter");
+                LogDebug("clsAnalysisToolRunnerMSXMLGen.CreateMSXmlFile(): Enter");
             }
 
             string msXmlGenerator = m_jobParams.GetParam("MSXMLGenerator");
@@ -239,8 +233,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             var eOutputType = clsCompassXportRunner.GetMsXmlOutputTypeByName(msXmlFormat);
             if (eOutputType == clsCompassXportRunner.MSXMLOutputTypeConstants.Invalid)
             {
-                LogWarning(
-                    "msXmlFormat string is not recognized (" + msXmlFormat + "); it is typically mzXML, mzML, or CSV; will default to mzXML");
+                LogWarning("msXmlFormat string is not recognized (" + msXmlFormat + "); it is typically mzXML, mzML, or CSV; will default to mzXML");
                 eOutputType = clsCompassXportRunner.MSXMLOutputTypeConstants.mzXML;
             }
 
@@ -404,8 +397,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             }
             catch (Exception ex)
             {
-                LogError(
-                    "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
         }

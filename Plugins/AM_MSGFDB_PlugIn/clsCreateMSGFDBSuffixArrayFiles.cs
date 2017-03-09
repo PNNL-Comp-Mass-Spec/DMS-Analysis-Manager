@@ -251,7 +251,10 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="remoteIndexFolderPath"></param>
         /// <param name="debugLevel"></param>
         /// <param name="managerName">Manager name (only required because the constructor for PRISM.clsFileTools requires this)</param>
-        /// <param name="createIndexFileForExistingFiles">When true, assumes that the index files were previously copied to remoteIndexFolderPath, and we should simply create the .MSGFPlusIndexFileInfo file for the matching files</param>
+        /// <param name="createIndexFileForExistingFiles">
+        /// When true, assumes that the index files were previously copied to remoteIndexFolderPath, 
+        /// and we should simply create the .MSGFPlusIndexFileInfo file for the matching files
+        /// </param>
         /// <param name="strErrorMessage"></param>
         /// <returns></returns>
         /// <remarks>This function is used both by this class and by the MSGFPlusIndexFileCopier console application</remarks>
@@ -351,9 +354,15 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="javaProgLoc"></param>
         /// <param name="msgfDbProgLoc"></param>
         /// <param name="strFASTAFilePath">FASTA file path</param>
-        /// <param name="blnFastaFileIsDecoy">When True, only creates the forward-based index files.  When False, creates both the forward and reverse index files</param>
+        /// <param name="blnFastaFileIsDecoy">
+        /// When True, only creates the forward-based index files.  
+        /// When False, creates both the forward and reverse index files
+        /// </param>
         /// <param name="strMSGFPlusIndexFilesFolderPathBase">Folder path from which to copy (or store) the index files</param>
-        /// <param name="strMSGFPlusIndexFilesFolderPathLegacyDB">Folder path from which to copy (or store) the index files for Legacy DBs (.fasta files not created from the protein sequences database)</param>
+        /// <param name="strMSGFPlusIndexFilesFolderPathLegacyDB">
+        /// Folder path from which to copy (or store) the index files for Legacy DBs 
+        /// (.fasta files not created from the protein sequences database)
+        /// </param>
         /// <returns>CloseOutType enum indicating success or failure</returns>
         /// <remarks></remarks>
         public CloseOutType CreateSuffixArrayFiles(string strLogFileDir, int intDebugLevel, string JobNum, string javaProgLoc, string msgfDbProgLoc,

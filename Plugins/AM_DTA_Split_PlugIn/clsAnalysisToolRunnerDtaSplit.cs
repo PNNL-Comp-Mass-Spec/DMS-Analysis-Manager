@@ -80,15 +80,13 @@ namespace AnalysisManagerDtaSplitPlugIn
                     intSegmentCountToCreate = m_jobParams.GetJobParameter("NumberOfClonedSteps", 0);
                     if (intSegmentCountToCreate == 0)
                     {
-                        LogWarning(
-                            "Setting 'NumberOfClonedSteps' not found in the job parameters; will assume NumberOfClonedSteps=4");
+                        LogWarning("Setting 'NumberOfClonedSteps' not found in the job parameters; will assume NumberOfClonedSteps=4");
                         intSegmentCountToCreate = 4;
                     }
                 }
                 catch (Exception)
                 {
-                    LogWarning(
-                        "Setting 'NumberOfClonedSteps' is not numeric in the job parameters; will assume NumberOfClonedSteps=4");
+                    LogWarning("Setting 'NumberOfClonedSteps' is not numeric in the job parameters; will assume NumberOfClonedSteps=4");
                     intSegmentCountToCreate = 4;
                 }
 
@@ -187,8 +185,7 @@ namespace AnalysisManagerDtaSplitPlugIn
 
                     if (intSpectraCountExpected == 0)
                     {
-                        LogWarning(
-                            "CountSpectraInCattedDtaFile returned a spectrum count of 0; this is unexpected");
+                        LogWarning("CountSpectraInCattedDtaFile returned a spectrum count of 0; this is unexpected");
                     }
                 }
 
@@ -327,8 +324,7 @@ namespace AnalysisManagerDtaSplitPlugIn
 
                 if (m_DebugLevel >= 2)
                 {
-                    LogDebug(
-                        "Counting the number of spectra in the source _Dta.txt file: " + Path.GetFileName(strSourceFilePath));
+                    LogDebug("Counting the number of spectra in the source _Dta.txt file: " + Path.GetFileName(strSourceFilePath));
                 }
 
                 // Open the input file
@@ -347,8 +343,7 @@ namespace AnalysisManagerDtaSplitPlugIn
 
                     if (m_DebugLevel >= 1)
                     {
-                        LogDebug(
-                            "Spectrum count in source _Dta.txt file: " + intSpectraCount);
+                        LogDebug("Spectrum count in source _Dta.txt file: " + intSpectraCount);
                     }
                 }
             }
@@ -377,8 +372,7 @@ namespace AnalysisManagerDtaSplitPlugIn
 
                 if (File.Exists(strFilePath))
                 {
-                    LogWarning(
-                        "Warning: Split DTA file already exists " + strFilePath);
+                    LogWarning("Warning: Split DTA file already exists " + strFilePath);
                 }
 
                 if (m_DebugLevel >= 3)

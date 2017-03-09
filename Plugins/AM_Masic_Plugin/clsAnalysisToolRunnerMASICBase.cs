@@ -112,8 +112,7 @@ namespace AnalysisManagerMasicPlugin
             }
             catch (Exception ex)
             {
-                LogError(
-                    "Error reading MASIC Log File at '" + strLogFilePath + "'; " + ex.Message);
+                LogError("Error reading MASIC Log File at '" + strLogFilePath + "'; " + ex.Message);
             }
         }
 
@@ -127,8 +126,7 @@ namespace AnalysisManagerMasicPlugin
             // Store the MASIC version info in the database
             if (!StoreToolVersionInfo())
             {
-                LogError(
-                    "Aborting since StoreToolVersionInfo returned false");
+                LogError("Aborting since StoreToolVersionInfo returned false");
                 m_message = "Error determining MASIC version";
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -151,8 +149,7 @@ namespace AnalysisManagerMasicPlugin
             }
             catch (Exception Err)
             {
-                LogError(
-                    "clsAnalysisToolRunnerMASICBase.RunTool(), Exception calling MASIC to create the SIC files, " + Err.Message);
+                LogError("clsAnalysisToolRunnerMASICBase.RunTool(), Exception calling MASIC to create the SIC files, " + Err.Message);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -168,8 +165,7 @@ namespace AnalysisManagerMasicPlugin
             // Make the results folder
             if (m_DebugLevel > 3)
             {
-                LogDebug(
-                    "clsAnalysisToolRunnerMASICBase.RunTool(), Making results folder");
+                LogDebug("clsAnalysisToolRunnerMASICBase.RunTool(), Making results folder");
             }
 
             eStepResult = MakeResultsFolder();
@@ -228,15 +224,13 @@ namespace AnalysisManagerMasicPlugin
                 strMASICExePath = m_mgrParams.GetParam("masicprogloc");
                 if (!File.Exists(strMASICExePath))
                 {
-                    LogError(
-                        "clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); MASIC not found at: " + strMASICExePath);
+                    LogError("clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); MASIC not found at: " + strMASICExePath);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
             }
             catch (Exception)
             {
-                LogError(
-                    "clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); Error looking for MASIC .Exe at " + strMASICExePath);
+                LogError("clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); Error looking for MASIC .Exe at " + strMASICExePath);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -301,15 +295,13 @@ namespace AnalysisManagerMasicPlugin
 
                 if ((m_ErrorMessage != null) && m_ErrorMessage.Length > 0)
                 {
-                    LogError(
-                        "clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); Masic Error message: " + m_ErrorMessage);
+                    LogError("clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); Masic Error message: " + m_ErrorMessage);
                     if (string.IsNullOrEmpty(m_message))
                         m_message = m_ErrorMessage;
                 }
                 else
                 {
-                    LogError(
-                        "clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); Masic Error message is blank");
+                    LogError("clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); Masic Error message is blank");
                     if (string.IsNullOrEmpty(m_message))
                         m_message = "Unknown error running MASIC";
                 }
@@ -319,8 +311,7 @@ namespace AnalysisManagerMasicPlugin
             {
                 if (m_DebugLevel > 0)
                 {
-                    LogDebug(
-                        "clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); m_ProcessStep=" + m_ProcessStep);
+                    LogDebug("clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); m_ProcessStep=" + m_ProcessStep);
                 }
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
@@ -488,8 +479,7 @@ namespace AnalysisManagerMasicPlugin
             }
             catch (Exception ex)
             {
-                LogError(
-                    "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
         }
@@ -503,8 +493,7 @@ namespace AnalysisManagerMasicPlugin
         {
             if (string.IsNullOrWhiteSpace(strParameterFilePath))
             {
-                LogWarning(
-                    "The MASIC Parameter File path is empty; nothing to validate");
+                LogWarning("The MASIC Parameter File path is empty; nothing to validate");
                 return true;
             }
 
@@ -512,15 +501,13 @@ namespace AnalysisManagerMasicPlugin
 
             if (!objSettingsFile.LoadSettings(strParameterFilePath))
             {
-                LogError(
-                    "Error loading parameter file " + strParameterFilePath);
+                LogError("Error loading parameter file " + strParameterFilePath);
                 return false;
             }
 
             if (!objSettingsFile.SectionPresent("MasicExportOptions"))
             {
-                LogWarning(
-                    "MasicExportOptions section not found in " + strParameterFilePath);
+                LogWarning("MasicExportOptions section not found in " + strParameterFilePath);
                 objSettingsFile.SetParam("MasicExportOptions", "IncludeHeaders", "True");
                 objSettingsFile.SaveSettings();
                 return true;
@@ -590,27 +577,23 @@ namespace AnalysisManagerMasicPlugin
 
             if (m_DebugLevel > 0)
             {
-                LogDebug(
-                    "clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); MASIC process has ended");
+                LogDebug("clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); MASIC process has ended");
             }
 
             if (blnAbortedProgram)
             {
                 m_ErrorMessage = "Aborted MASIC processing since over " + MAX_RUNTIME_HOURS + " hours have elapsed";
-                LogError(
-                    "clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); " + m_ErrorMessage);
+                LogError("clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); " + m_ErrorMessage);
                 return false;
             }
             else if ((int) objMasicProgRunner.State == 10)
             {
-                LogError(
-                    "clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); objMasicProgRunner.State = 10");
+                LogError("clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); objMasicProgRunner.State = 10");
                 return false;
             }
             else if (objMasicProgRunner.ExitCode != 0)
             {
-                LogError(
-                    "clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); objMasicProgRunner.ExitCode is nonzero: " + objMasicProgRunner.ExitCode);
+                LogError("clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); objMasicProgRunner.ExitCode is nonzero: " + objMasicProgRunner.ExitCode);
 
                 // See if a _SICs.XML file was created
                 if (Directory.GetFiles(m_WorkDir, "*" + SICS_XML_FILE_SUFFIX).Length > 0)
@@ -631,8 +614,7 @@ namespace AnalysisManagerMasicPlugin
                     }
                     else
                     {
-                        LogError(
-                            "clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); " + SICS_XML_FILE_SUFFIX + " file not found");
+                        LogError("clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); " + SICS_XML_FILE_SUFFIX + " file not found");
                         return false;
                     }
                 }

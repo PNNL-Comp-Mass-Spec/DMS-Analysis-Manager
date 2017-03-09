@@ -73,8 +73,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                             }
                             else
                             {
-                                LogDebug(
-                                    "clsAnalysisResourcesMSXMLGen.GetResources: Error occurred retrieving spectra.");
+                                LogDebug("clsAnalysisResourcesMSXMLGen.GetResources: Error occurred retrieving spectra.");
                                 return CloseOutType.CLOSEOUT_FAILED;
                             }
                             break;

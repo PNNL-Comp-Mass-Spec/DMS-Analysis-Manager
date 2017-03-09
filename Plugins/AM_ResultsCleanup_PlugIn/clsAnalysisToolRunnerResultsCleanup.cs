@@ -42,8 +42,7 @@ namespace AnalysisManagerResultsCleanupPlugin
                 // Store the AnalysisManager version info in the database
                 if (!StoreToolVersionInfo())
                 {
-                    LogError(
-                        "Aborting since StoreToolVersionInfo returned false");
+                    LogError("Aborting since StoreToolVersionInfo returned false");
                     m_message = "Error determining AnalysisManager version";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -167,8 +166,7 @@ namespace AnalysisManagerResultsCleanupPlugin
                         }
                         catch (Exception ex)
                         {
-                            LogWarning(
-                                "Error deleting extra " + RESULTS_DB3_FILE + " file: " + ex.Message);
+                            LogWarning("Error deleting extra " + RESULTS_DB3_FILE + " file: " + ex.Message);
                         }
                     }
 
@@ -244,8 +242,7 @@ namespace AnalysisManagerResultsCleanupPlugin
             }
             catch (Exception ex)
             {
-                LogError(
-                    "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
         }

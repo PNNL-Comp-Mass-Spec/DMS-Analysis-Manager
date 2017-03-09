@@ -76,8 +76,7 @@ namespace AnalysisManagerProMexPlugIn
                 // Store the ProMex version info in the database
                 if (!StoreToolVersionInfo(progLoc))
                 {
-                    LogError(
-                        "Aborting since StoreToolVersionInfo returned false");
+                    LogError("Aborting since StoreToolVersionInfo returned false");
                     m_message = "Error determining ProMex version";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -176,8 +175,7 @@ namespace AnalysisManagerProMexPlugIn
             if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
-            LogWarning(
-                "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
+            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
 
             // Bump up the debug level if less than 2
             if (m_DebugLevel < 2)
@@ -270,8 +268,7 @@ namespace AnalysisManagerProMexPlugIn
                 {
                     if (m_DebugLevel >= 4)
                     {
-                        LogDebug(
-                            "Console output file not found: " + strConsoleOutputFilePath);
+                        LogDebug("Console output file not found: " + strConsoleOutputFilePath);
                     }
 
                     return;
@@ -337,8 +334,7 @@ namespace AnalysisManagerProMexPlugIn
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    LogError(
-                        "Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    LogError("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
             }
         }
@@ -390,8 +386,7 @@ namespace AnalysisManagerProMexPlugIn
                             }
                             else
                             {
-                                LogWarning(
-                                    "Ignoring parameter '" + kvSetting.Key + "' since not recognized as a valid ProMex parameter");
+                                LogWarning("Ignoring parameter '" + kvSetting.Key + "' since not recognized as a valid ProMex parameter");
                             }
                         }
                     }
@@ -599,8 +594,7 @@ namespace AnalysisManagerProMexPlugIn
 
                 if (mCmdRunner.ExitCode != 0)
                 {
-                    LogWarning(
-                        "ProMex returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
+                    LogWarning("ProMex returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
                 }
                 else
                 {
@@ -711,8 +705,7 @@ namespace AnalysisManagerProMexPlugIn
                 }
                 catch (Exception ex)
                 {
-                    LogError(
-                        "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                    LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                     return false;
                 }
             }
@@ -734,8 +727,7 @@ namespace AnalysisManagerProMexPlugIn
             }
             catch (Exception ex)
             {
-                LogError(
-                    "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
         }

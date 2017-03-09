@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 
 //*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy 
+// Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2006, Battelle Memorial Institute
 // Created 06/07/2006
@@ -67,7 +67,7 @@ namespace AnalysisManagerBase
         string MgrName { get; set; }
 
         EnumMgrStatus MgrStatus { get; set; }
-        
+
         /// <summary>
         /// Overall CPU utilization of all threads
         /// </summary>
@@ -138,7 +138,7 @@ namespace AnalysisManagerBase
         void StoreCoreUsageHistory(Queue<KeyValuePair<DateTime, float>> coreUsageHistory);
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="ManagerIdleMessage"></param>
         /// <param name="recentErrorMessages"></param>
@@ -163,7 +163,7 @@ namespace AnalysisManagerBase
         /// <param name="PercentComplete">Job completion percentage (value between 0 and 100)</param>
         /// <remarks></remarks>
         void UpdateAndWrite(EnumMgrStatus eMgrStatus, EnumTaskStatus eTaskStatus, EnumTaskStatusDetail eTaskStatusDetail, float PercentComplete);
-        
+
         /// <summary>
         /// Update the current status
         /// </summary>
@@ -172,7 +172,7 @@ namespace AnalysisManagerBase
         /// <param name="SpectrumCountTotal">Number of DTA files (i.e., spectra files); relevant for Sequest, X!Tandem, and Inspect</param>
         /// <remarks></remarks>
         void UpdateAndWrite(EnumTaskStatus Status, float PercentComplete, int SpectrumCountTotal);
-        
+
         /// <summary>
         /// Updates status file
         /// </summary>
@@ -186,7 +186,16 @@ namespace AnalysisManagerBase
         /// <param name="RecentJobInfo">Information on the job that started most recently</param>
         /// <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
         /// <remarks></remarks>
-        void UpdateAndWrite(EnumMgrStatus eMgrStatus, EnumTaskStatus eTaskStatus, EnumTaskStatusDetail eTaskStatusDetail, float PercentComplete, int DTACount, string MostRecentLogMessage, string MostRecentErrorMessage, string RecentJobInfo, bool ForceLogToBrokerDB);
+        void UpdateAndWrite(
+            EnumMgrStatus eMgrStatus,
+            EnumTaskStatus eTaskStatus,
+            EnumTaskStatusDetail eTaskStatusDetail,
+            float PercentComplete,
+            int DTACount,
+            string MostRecentLogMessage,
+            string MostRecentErrorMessage,
+            string RecentJobInfo,
+            bool ForceLogToBrokerDB);
 
         /// <summary>
         /// Logs to the status file that the manager is idle
@@ -233,7 +242,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="ManagerStatus"></param>
         /// <param name="ManagerDisableMessage">Description of why the manager is disabled (leave blank if unknown)</param>
-        /// <remarks></remarks>    
+        /// <remarks></remarks>
         void UpdateDisabled(EnumMgrStatus ManagerStatus, string ManagerDisableMessage);
 
         /// <summary>

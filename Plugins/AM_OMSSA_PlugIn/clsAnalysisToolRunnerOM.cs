@@ -61,8 +61,7 @@ namespace AnalysisManagerOMSSAPlugIn
             // Store the OMSSA version info in the database
             if (!StoreToolVersionInfo())
             {
-                LogError(
-                    "Aborting since StoreToolVersionInfo returned false");
+                LogError("Aborting since StoreToolVersionInfo returned false");
                 m_message = "Error determining OMSSA version";
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -81,8 +80,7 @@ namespace AnalysisManagerOMSSAPlugIn
 
             if (m_DebugLevel > 4)
             {
-                LogDebug(
-                    "clsAnalysisToolRunnerOM.OperateAnalysisTool(): Enter");
+                LogDebug("clsAnalysisToolRunnerOM.OperateAnalysisTool(): Enter");
             }
 
             // verify that program file exists
@@ -264,8 +262,7 @@ namespace AnalysisManagerOMSSAPlugIn
 
                 if (m_DebugLevel > 4)
                 {
-                    LogDebug(
-                        "clsAnalysisToolRunnerOM.ConvertOMSSA2PepXmlFile(): Enter");
+                    LogDebug("clsAnalysisToolRunnerOM.ConvertOMSSA2PepXmlFile(): Enter");
                 }
 
                 // verify that program formatdb.exe file exists
@@ -274,8 +271,7 @@ namespace AnalysisManagerOMSSAPlugIn
                 {
                     if (progLoc.Length == 0)
                         progLoc = "Parameter 'omssa2pepprogloc' not defined for this manager";
-                    LogError(
-                        "Cannot find OMSSA2PepXml program file: " + progLoc);
+                    LogError("Cannot find OMSSA2PepXml program file: " + progLoc);
                     return false;
                 }
 
@@ -288,8 +284,7 @@ namespace AnalysisManagerOMSSAPlugIn
 
                 if (m_DebugLevel >= 1)
                 {
-                    LogDebug(
-                        "Starting OMSSA2PepXml: " + progLoc + " " + CmdStr);
+                    LogDebug("Starting OMSSA2PepXml: " + progLoc + " " + CmdStr);
                 }
 
                 cmdRunner.CreateNoWindow = true;
@@ -307,8 +302,7 @@ namespace AnalysisManagerOMSSAPlugIn
             }
             catch (Exception ex)
             {
-                LogError(
-                    "clsAnalysisToolRunnerOM.ConvertOMSSA2PepXmlFile, exception, " + ex.Message);
+                LogError("clsAnalysisToolRunnerOM.ConvertOMSSA2PepXmlFile, exception, " + ex.Message);
             }
 
             return result;
@@ -338,8 +332,7 @@ namespace AnalysisManagerOMSSAPlugIn
             }
             catch (Exception ex)
             {
-                LogError(
-                    "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
         }

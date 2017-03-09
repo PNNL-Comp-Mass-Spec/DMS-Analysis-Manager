@@ -90,8 +90,7 @@ namespace AnalysisManagerInSpecTPlugIn
                 parallelZipNum = Convert.ToInt32(stepNum) - Convert.ToInt32(CloneStepRenum) + 1;
                 DtaResultFileName = DatasetName + "_" + Convert.ToString(parallelZipNum) + "_dta.txt";
                 isParallelized = true;
-                LogMessage(
-                    "Processing parallelized Inspect segment " + parallelZipNum.ToString());
+                LogMessage("Processing parallelized Inspect segment " + parallelZipNum.ToString());
             }
 
             string DtaResultFolderName = FileSearch.FindDataFile(DtaResultFileName);
@@ -101,8 +100,7 @@ namespace AnalysisManagerInSpecTPlugIn
                 // No folder found containing the zipped DTA files (error will have already been logged)
                 if (m_DebugLevel >= 3)
                 {
-                    LogError(
-                        "FindDataFile returned False for " + DtaResultFileName);
+                    LogError("FindDataFile returned False for " + DtaResultFileName);
                 }
                 return false;
             }
@@ -113,8 +111,7 @@ namespace AnalysisManagerInSpecTPlugIn
                 {
                     if (m_DebugLevel >= 1)
                     {
-                        LogMessage(
-                            "Downloaded " + m_MyEMSLUtilities.DownloadedFiles.First().Value.Filename + " from MyEMSL");
+                        LogMessage("Downloaded " + m_MyEMSLUtilities.DownloadedFiles.First().Value.Filename + " from MyEMSL");
                     }
                 }
                 else
@@ -130,8 +127,7 @@ namespace AnalysisManagerInSpecTPlugIn
                     // Error copying file (error will have already been logged)
                     if (m_DebugLevel >= 3)
                     {
-                        LogError(
-                            "CopyFileToWorkDir returned False for " + DtaResultFileName + " using folder " + DtaResultFolderName);
+                        LogError("CopyFileToWorkDir returned False for " + DtaResultFileName + " using folder " + DtaResultFolderName);
                     }
                     return false;
                 }

@@ -15,7 +15,7 @@ namespace AnalysisManagerBase
         #region "Constants"
 
         /// <summary>
-        /// Define the maximum file size to process using IonicZip; 
+        /// Define the maximum file size to process using IonicZip;
         ///  the reason we don't want to process larger files is that IonicZip is 1.5x to 2x slower than PkZip
         ///  For example, given a 1.9 GB _isos.csv file zipped to a 660 MB .Zip file:
         ///   SharpZipLib unzips the file in 130 seconds
@@ -114,8 +114,8 @@ namespace AnalysisManagerBase
         /// Copies the zipped s-folders to the working directory
         /// </summary>
         /// <param name="createStoragePathInfoOnly">
-        /// When true, then does not actually copy the specified files, 
-        /// but instead creates a series of files named s*.zip_StoragePathInfo.txt, 
+        /// When true, then does not actually copy the specified files,
+        /// but instead creates a series of files named s*.zip_StoragePathInfo.txt,
         /// and each file's first line will be the full path to the source file
         /// </param>
         /// <returns>TRUE for success; FALSE for failure</returns>
@@ -283,7 +283,7 @@ namespace AnalysisManagerBase
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks></remarks>
         private bool FindAndRetrieveMiscFiles(
-            string fileName, bool unzip, bool searchArchivedDatasetFolder, 
+            string fileName, bool unzip, bool searchArchivedDatasetFolder,
             out string sourceFolderPath, bool logFileNotFound)
         {
 
@@ -338,7 +338,7 @@ namespace AnalysisManagerBase
         /// <param name="synopsisFileName">Synopsis file name, if known</param>
         /// <param name="addToResultFileSkipList">If true, add the filename to the list of files to skip copying to the result folder</param>
         /// <returns>True if success, false if not found</returns>
-        /// <remarks>Used by the IDPicker and MSGF plugins</remarks>    
+        /// <remarks>Used by the IDPicker and MSGF plugins</remarks>
         public bool FindAndRetrievePHRPDataFile(ref string fileToGet, string synopsisFileName, bool addToResultFileSkipList = true)
         {
 
@@ -395,7 +395,7 @@ namespace AnalysisManagerBase
                     // add the _dta.zip file name to the folder path found by FindDataFile
                     return clsMyEMSLUtilities.AddFileToMyEMSLFolderPath(sourceFolderPath, sourceFileName);
                 }
-                
+
                 // Return the path to the _dta.zip file
                 return Path.Combine(sourceFolderPath, sourceFileName);
             }
@@ -470,7 +470,7 @@ namespace AnalysisManagerBase
                 //  c. Check the "inputFolderName" and then each of the Shared Results Folders in MyEMSL for this dataset
                 //  d. Check the "inputFolderName" and then each of the Shared Results Folders in the Archived dataset folder
                 //
-                // Note that "SharedResultsFolders" will typically only contain one folder path, 
+                // Note that "SharedResultsFolders" will typically only contain one folder path,
                 //  but can contain a comma-separated list of folders
 
                 var strDatasetFolderName = m_jobParams.GetParam("DatasetFolderName");
@@ -762,7 +762,7 @@ namespace AnalysisManagerBase
 
                         if (diSubfolders.Length > 0)
                         {
-                            // MSXmlFolder found; return the path to the file     
+                            // MSXmlFolder found; return the path to the file
                             return Path.Combine(diSubfolders[0].FullName, MzXMLFilename);
 
                         }
@@ -874,7 +874,7 @@ namespace AnalysisManagerBase
                 return string.Empty;
             }
 
-            // One or more matches were found; select the newest one 
+            // One or more matches were found; select the newest one
             var sortQuery = (from item in lstMatchingFiles orderby item.LastWriteTimeUtc descending select item).Take(1);
             var matchedFilePath = sortQuery.First().FullName;
 
@@ -1296,7 +1296,7 @@ namespace AnalysisManagerBase
             return true;
 
         }
-        
+
         /// <summary>
         /// Retrieves file PNNLOmicsElementData.xml from the program directory of the program specified by strProgLocName
         /// </summary>
@@ -1396,7 +1396,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Retrieves the _DTA.txt file (either zipped or unzipped).  
+        /// Retrieves the _DTA.txt file (either zipped or unzipped).
         /// </summary>
         /// <returns>TRUE for success, FALSE for error</returns>
         /// <remarks>If the _dta.zip or _dta.txt file already exists in the working folder then will not re-copy it from the remote folder</remarks>
@@ -1613,7 +1613,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Looks for the newest mzXML file for this dataset
         /// First looks for the newest file in \\Proto-11\MSXML_Cache
-        /// If not found, looks in the dataset folder, looking for subfolders 
+        /// If not found, looks in the dataset folder, looking for subfolders
         /// MSXML_Gen_1_154_DatasetID, MSXML_Gen_1_93_DatasetID, or MSXML_Gen_1_39_DatasetID (plus some others)
         /// </summary>
         /// <param name="createStoragePathInfoOnly"></param>
@@ -1832,8 +1832,8 @@ namespace AnalysisManagerBase
 
             return RetrieveScanAndSICStatsFiles(
                 retrieveSICStatsFile: false,
-                createStoragePathInfoOnly: createStoragePathInfoOnly, 
-                retrieveScanStatsFile: true, 
+                createStoragePathInfoOnly: createStoragePathInfoOnly,
+                retrieveScanStatsFile: true,
                 retrieveScanStatsExFile: true);
 
         }
@@ -1964,7 +1964,12 @@ namespace AnalysisManagerBase
                 }
 
                 var bestSICFolderPath = Path.Combine(MYEMSL_PATH_FLAG, bestSICFolderName);
-                return RetrieveScanAndSICStatsFiles(bestSICFolderPath, retrieveSICStatsFile, createStoragePathInfoOnly, retrieveScanStatsFile: retrieveScanStatsFile, retrieveScanStatsExFile: retrieveScanStatsExFile, retrieveReporterIonsFile: retrieveReporterIonsFile, lstNonCriticalFileSuffixes: lstNonCriticalFileSuffixes);
+                return RetrieveScanAndSICStatsFiles(
+                    bestSICFolderPath, retrieveSICStatsFile, createStoragePathInfoOnly,
+                    retrieveScanStatsFile: retrieveScanStatsFile,
+                    retrieveScanStatsExFile: retrieveScanStatsExFile,
+                    retrieveReporterIonsFile: retrieveReporterIonsFile,
+                    lstNonCriticalFileSuffixes: lstNonCriticalFileSuffixes);
             }
             else
             {
@@ -2018,7 +2023,12 @@ namespace AnalysisManagerBase
 
                 var bestSICFolderPath = fiSourceFile.Directory.FullName;
 
-                return RetrieveScanAndSICStatsFiles(bestSICFolderPath, retrieveSICStatsFile, createStoragePathInfoOnly, retrieveScanStatsFile: retrieveScanStatsFile, retrieveScanStatsExFile: retrieveScanStatsExFile, retrieveReporterIonsFile: retrieveReporterIonsFile, lstNonCriticalFileSuffixes: lstNonCriticalFileSuffixes);
+                return RetrieveScanAndSICStatsFiles(
+                    bestSICFolderPath, retrieveSICStatsFile, createStoragePathInfoOnly,
+                    retrieveScanStatsFile: retrieveScanStatsFile,
+                    retrieveScanStatsExFile: retrieveScanStatsExFile,
+                    retrieveReporterIonsFile: retrieveReporterIonsFile,
+                    lstNonCriticalFileSuffixes: lstNonCriticalFileSuffixes);
             }
 
         }
@@ -2044,7 +2054,12 @@ namespace AnalysisManagerBase
             var lstNonCriticalFileSuffixes = new List<string>();
             const bool RETRIEVE_REPORTERIONS_FILE = false;
 
-            return RetrieveScanAndSICStatsFiles(MASICResultsFolderPath, retrieveSICStatsFile, createStoragePathInfoOnly, retrieveScanStatsFile, retrieveScanStatsExFile, RETRIEVE_REPORTERIONS_FILE, lstNonCriticalFileSuffixes);
+            return RetrieveScanAndSICStatsFiles(
+                MASICResultsFolderPath, retrieveSICStatsFile, createStoragePathInfoOnly,
+                retrieveScanStatsFile,
+                retrieveScanStatsExFile,
+                RETRIEVE_REPORTERIONS_FILE,
+                lstNonCriticalFileSuffixes);
         }
 
         /// <summary>
@@ -2144,8 +2159,8 @@ namespace AnalysisManagerBase
             {
                 // Look for and copy the _ScanStats.txt file
                 if (!RetrieveSICFileUNC(
-                    DatasetName + clsAnalysisResources.SCAN_STATS_FILE_SUFFIX, 
-                    masicResultsFolderPath, 
+                    DatasetName + clsAnalysisResources.SCAN_STATS_FILE_SUFFIX,
+                    masicResultsFolderPath,
                     createStoragePathInfoOnly, maxCopyAttempts, lstNonCriticalFileSuffixes))
                 {
                     return false;
@@ -2156,8 +2171,8 @@ namespace AnalysisManagerBase
             {
                 // Look for and copy the _ScanStatsEx.txt file
                 if (!RetrieveSICFileUNC(
-                    DatasetName + clsAnalysisResources.SCAN_STATS_EX_FILE_SUFFIX, 
-                    masicResultsFolderPath, 
+                    DatasetName + clsAnalysisResources.SCAN_STATS_EX_FILE_SUFFIX,
+                    masicResultsFolderPath,
                     createStoragePathInfoOnly, maxCopyAttempts, lstNonCriticalFileSuffixes))
                 {
                     return false;
@@ -2168,8 +2183,8 @@ namespace AnalysisManagerBase
             {
                 // Look for and copy the _SICStats.txt file
                 if (!RetrieveSICFileUNC(
-                    DatasetName + "_SICStats.txt", 
-                    masicResultsFolderPath, 
+                    DatasetName + "_SICStats.txt",
+                    masicResultsFolderPath,
                     createStoragePathInfoOnly, maxCopyAttempts, lstNonCriticalFileSuffixes))
                 {
                     return false;
@@ -2180,8 +2195,8 @@ namespace AnalysisManagerBase
             {
                 // Look for and copy the _SICStats.txt file
                 if (!RetrieveSICFileUNC(
-                    DatasetName + "_ReporterIons.txt", 
-                    masicResultsFolderPath, 
+                    DatasetName + "_ReporterIons.txt",
+                    masicResultsFolderPath,
                     createStoragePathInfoOnly, maxCopyAttempts, lstNonCriticalFileSuffixes))
                 {
                     return false;
@@ -2291,7 +2306,10 @@ namespace AnalysisManagerBase
         /// Retrieves the spectra file(s) based on raw data type and puts them in the working directory
         /// </summary>
         /// <param name="rawDataType">Type of data to copy</param>
-        /// <param name="createStoragePathInfoOnly">When true, then does not actually copy the dataset file (or folder), and instead creates a file named Dataset.raw_StoragePathInfo.txt, and this file's first line will be the full path to the spectrum file (or spectrum folder)</param>
+        /// <param name="createStoragePathInfoOnly">
+        /// When true, then does not actually copy the dataset file (or folder), and instead creates a file named Dataset.raw_StoragePathInfo.txt,
+        /// and this file's first line will be the full path to the spectrum file (or spectrum folder)
+        /// </param>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks></remarks>
         public bool RetrieveSpectra(string rawDataType, bool createStoragePathInfoOnly)
@@ -2323,10 +2341,10 @@ namespace AnalysisManagerBase
             {
                 case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder:
                     // Agilent ion trap data
-                    if (StoragePath.ToLower().Contains("Agilent_SL1".ToLower()) || 
+                    if (StoragePath.ToLower().Contains("Agilent_SL1".ToLower()) ||
                         StoragePath.ToLower().Contains("Agilent_XCT1".ToLower()))
                     {
-                        // For Agilent Ion Trap datasets acquired on Agilent_SL1 or Agilent_XCT1 in 2005, 
+                        // For Agilent Ion Trap datasets acquired on Agilent_SL1 or Agilent_XCT1 in 2005,
                         //  we would pre-process the data beforehand to create MGF files
                         // The following call can be used to retrieve the files
                         blnSuccess = RetrieveMgfFile(getCdfAlso: true, createStoragePathInfoOnly: createStoragePathInfoOnly, maxAttempts: maxAttempts);
@@ -2452,9 +2470,9 @@ namespace AnalysisManagerBase
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks></remarks>
         private bool RetrieveDotXFolder(
-            string folderExtension, 
-            bool createStoragePathInfoOnly, 
-            int maxAttempts, 
+            string folderExtension,
+            bool createStoragePathInfoOnly,
+            int maxAttempts,
             List<string> fileNamesToSkip)
         {
 
@@ -2502,7 +2520,7 @@ namespace AnalysisManagerBase
                     {
                         OnStatusEvent("Retrieving folder " + disourceFolder.FullName);
                     }
-                    
+
                     m_FileCopyUtilities.CopyDirectory(disourceFolder.FullName, destFolderPath, fileNamesToSkip);
 
                 }
@@ -2622,7 +2640,7 @@ namespace AnalysisManagerBase
 
             try
             {
-                // Look for the .mis file (ImagingSequence file) 
+                // Look for the .mis file (ImagingSequence file)
                 var strImagingSeqFilePathFinal = Path.Combine(diCachedDataFolder.FullName, DatasetName + ".mis");
 
                 if (!File.Exists(strImagingSeqFilePathFinal))
@@ -2643,7 +2661,7 @@ namespace AnalysisManagerBase
                     if (!clsGlobal.IsMatch(Path.GetFileName(MisFiles[0]), strImagingSeqFilePathFinal))
                     {
 
-                        OnDebugEvent("Note: Renaming .mis file (ImagingSequence file) from " + Path.GetFileName(MisFiles[0]) + 
+                        OnDebugEvent("Note: Renaming .mis file (ImagingSequence file) from " + Path.GetFileName(MisFiles[0]) +
                             " to " + Path.GetFileName(strImagingSeqFilePathFinal));
                     }
 
@@ -2731,7 +2749,7 @@ namespace AnalysisManagerBase
                     if (!unzipFile)
                         continue;
 
-                    
+
                     // Unzip the file to the Chameleon cached data folder
                     // If unzipOverNetwork=True, then we want to copy the file locally first
 
@@ -2861,7 +2879,7 @@ namespace AnalysisManagerBase
                 // If 0.ser folder exists, then either store the path to the 0.ser folder in a StoragePathInfo file, or copy the 0.ser folder to the working directory
                 var DSFolderPath = m_FolderSearch.FindValidFolder(DatasetName, fileNameToFind: "", folderNameToFind:
                     clsAnalysisResources.BRUKER_ZERO_SER_FOLDER, maxRetryCount: maxAttempts, logFolderNotFound: true, retrievingInstrumentDataFolder: true);
-                
+
                 if (!string.IsNullOrEmpty(DSFolderPath))
                 {
                     var disourceFolder = new DirectoryInfo(Path.Combine(DSFolderPath, clsAnalysisResources.BRUKER_ZERO_SER_FOLDER));
@@ -2944,7 +2962,7 @@ namespace AnalysisManagerBase
                         {
                             OnErrorEvent("Unable to determine the filename of the zip file: " + zipFilePath);
                             return false;
-                        }                        
+                        }
 
                         var targetFolderPath = Path.Combine(datasetWorkFolder, fileNameBase);
                         Directory.CreateDirectory(targetFolderPath);

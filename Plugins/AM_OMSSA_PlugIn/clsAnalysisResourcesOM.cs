@@ -108,8 +108,7 @@ namespace AnalysisManagerOMSSAPlugIn
 
                 if (m_DebugLevel > 4)
                 {
-                    LogDebug(
-                        "clsAnalysisToolRunnerOM.OperateAnalysisTool(): Enter");
+                    LogDebug("clsAnalysisToolRunnerOM.OperateAnalysisTool(): Enter");
                 }
 
                 // verify that program formatdb.exe file exists
@@ -139,8 +138,7 @@ namespace AnalysisManagerOMSSAPlugIn
             }
             catch (Exception ex)
             {
-                LogError(
-                    "clsAnalysisResourcesOM.ConvertOMSSAFastaFile, FormatDB error. " + ex.Message);
+                LogError("clsAnalysisResourcesOM.ConvertOMSSAFastaFile, FormatDB error. " + ex.Message);
             }
 
             return true;
@@ -166,30 +164,26 @@ namespace AnalysisManagerOMSSAPlugIn
 
                 if (m_DebugLevel >= 2)
                 {
-                    LogDebug(
-                        "Converting _DTA.txt file to DTA XML file using the DtaTextConverter");
+                    LogDebug("Converting _DTA.txt file to DTA XML file using the DtaTextConverter");
                 }
 
                 blnSuccess = objDtaConverter.ProcessFile(SourceFilePath, m_WorkingDir);
 
                 if (!blnSuccess)
                 {
-                    LogError(
-                        "Error calling DtaTextConverter: " + objDtaConverter.GetErrorMessage());
+                    LogError("Error calling DtaTextConverter: " + objDtaConverter.GetErrorMessage());
                 }
                 else
                 {
                     if (m_DebugLevel >= 1)
                     {
-                        LogDebug(
-                            "DTA XML file created for " + Path.GetFileName(SourceFilePath));
+                        LogDebug("DTA XML file created for " + Path.GetFileName(SourceFilePath));
                     }
                 }
             }
             catch (Exception ex)
             {
-                LogError(
-                    "clsAnalysisResourcesOM.ConvertDtaToXml, File conversion error. " + ex.Message);
+                LogError("clsAnalysisResourcesOM.ConvertDtaToXml, File conversion error. " + ex.Message);
             }
 
             return blnSuccess;
@@ -425,9 +419,13 @@ namespace AnalysisManagerOMSSAPlugIn
                 // Now override the values for MSInFile_infile and MSSpectrumFileType
                 try
                 {
-                    var objFileNameNodes = objTemplate.DocumentElement.SelectNodes("/ncbi:MSSearchSettings/ncbi:MSSearchSettings_infiles/ncbi:MSInFile/ncbi:MSInFile_infile", objNamespaceMgr);
+                    var objFileNameNodes = objTemplate.DocumentElement.SelectNodes(
+                        "/ncbi:MSSearchSettings/ncbi:MSSearchSettings_infiles/ncbi:MSInFile/ncbi:MSInFile_infile", 
+                        objNamespaceMgr);
 
-                    var objFileTypeNodes = objTemplate.DocumentElement.SelectNodes("/ncbi:MSSearchSettings/ncbi:MSSearchSettings_infiles/ncbi:MSInFile/ncbi:MSInFile_infiletype/ncbi:MSSpectrumFileType", objNamespaceMgr);
+                    var objFileTypeNodes = objTemplate.DocumentElement.SelectNodes(
+                        "/ncbi:MSSearchSettings/ncbi:MSSearchSettings_infiles/ncbi:MSInFile/ncbi:MSInFile_infiletype/ncbi:MSSpectrumFileType", 
+                        objNamespaceMgr);
 
                     if (objFileNameNodes.Count == 0)
                     {
@@ -493,12 +491,18 @@ namespace AnalysisManagerOMSSAPlugIn
                 {
                     //If we ever have to change the value of the MSOutFile_includerequest value
                     //Dim objFileIncludeRequestNodes As XmlNodeList
-                    //objFileIncludeRequestNodes = objTemplate.DocumentElement.SelectNodes("/ncbi:MSSearchSettings/ncbi:MSSearchSettings_outfiles/ncbi:MSOutFile/ncbi:MSOutFile_includerequest[@value='false']", objNamespaceMgr)
+                    //objFileIncludeRequestNodes = objTemplate.DocumentElement.SelectNodes(
+                    //  "/ncbi:MSSearchSettings/ncbi:MSSearchSettings_outfiles/ncbi:MSOutFile/ncbi:MSOutFile_includerequest[@value='false']",
+                    //  objNamespaceMgr)
                     //objFileIncludeRequestNodes.Item(1).InnerXml = "true"
 
-                    var objFileNameNodes = objTemplate.DocumentElement.SelectNodes("/ncbi:MSSearchSettings/ncbi:MSSearchSettings_outfiles/ncbi:MSOutFile/ncbi:MSOutFile_outfile", objNamespaceMgr);
+                    var objFileNameNodes = objTemplate.DocumentElement.SelectNodes(
+                        "/ncbi:MSSearchSettings/ncbi:MSSearchSettings_outfiles/ncbi:MSOutFile/ncbi:MSOutFile_outfile", 
+                        objNamespaceMgr);
 
-                    var objFileTypeNodes = objTemplate.DocumentElement.SelectNodes("/ncbi:MSSearchSettings/ncbi:MSSearchSettings_outfiles/ncbi:MSOutFile/ncbi:MSOutFile_outfiletype/ncbi:MSSerialDataFormat", objNamespaceMgr);
+                    var objFileTypeNodes = objTemplate.DocumentElement.SelectNodes(
+                        "/ncbi:MSSearchSettings/ncbi:MSSearchSettings_outfiles/ncbi:MSOutFile/ncbi:MSOutFile_outfiletype/ncbi:MSSerialDataFormat", 
+                        objNamespaceMgr);
 
                     if (objFileNameNodes.Count == 0)
                     {

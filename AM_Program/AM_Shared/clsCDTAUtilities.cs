@@ -162,7 +162,11 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="blnNewCDTAFileHasUpdates">True if the new CDTA file has updated info</param>
         /// <param name="blnReplaceSourceFile">If True, then replaces the source file with and updated file</param>
-        /// <param name="blnDeleteSourceFileIfUpdated">Only valid if blnReplaceSourceFile=True: If True, then the source file is deleted if an updated version is created. If false, then the source file is renamed to .old if an updated version is created.</param>
+        /// <param name="blnDeleteSourceFileIfUpdated">
+        /// Only valid if blnReplaceSourceFile=True;
+        /// If True, then the source file is deleted if an updated version is created.
+        /// If false, then the source file is renamed to .old if an updated version is created.
+        /// </param>
         /// <param name="fiOriginalFile">File handle to the original CDTA file</param>
         /// <param name="fiUpdatedFile">File handle to the new CDTA file</param>
         /// <remarks></remarks>
@@ -229,14 +233,19 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="strSourceFilePath">Input _DTA.txt file to parse</param>
         /// <param name="blnReplaceSourceFile">If True, then replaces the source file with and updated file</param>
-        /// <param name="blnDeleteSourceFileIfUpdated">Only valid if blnReplaceSourceFile=True: If True, then the source file is deleted if an updated version is created. If false, then the source file is renamed to .old if an updated version is created.</param>
-        /// <param name="strOutputFilePath">Output file path to use for the updated file; required if blnReplaceSourceFile=False; ignored if blnReplaceSourceFile=True</param>
+        /// <param name="blnDeleteSourceFileIfUpdated">
+        /// Only valid if blnReplaceSourceFile=True;
+        /// If True, then the source file is deleted if an updated version is created.
+        /// If false, then the source file is renamed to .old if an updated version is created.
+        /// </param>
+        /// <param name="strOutputFilePath">
+        /// Output file path to use for the updated file; required if blnReplaceSourceFile=False; ignored if blnReplaceSourceFile=True
+        /// </param>
         /// <returns>True if success; false if an error</returns>
         public bool ValidateCDTAFileScanAndCSTags(string strSourceFilePath, bool blnReplaceSourceFile, bool blnDeleteSourceFileIfUpdated,
                                                   string strOutputFilePath)
         {
 
-          
             var blnParentIonLineIsNext = false;
             var blnParentIonLineUpdated = false;
 
@@ -372,7 +381,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public bool ValidateCDTAFileSize(string strWorkDir, string strInputFileName)
         {
-            const int FILE_SIZE_THRESHOLD = Int32.MaxValue;
+            const int FILE_SIZE_THRESHOLD = int.MaxValue;
 
             try
             {
@@ -404,14 +413,14 @@ namespace AnalysisManagerBase
                     OnErrorEvent("Error condensing _DTA.txt file: " + m_CDTACondenser.GetErrorMessage());
                     return false;
                 }
-                
+
                 // Wait 500 msec, then check the size of the new _dta.txt file
                 Thread.Sleep(500);
 
                 ioFileInfo.Refresh();
 
                 OnStatusEvent(
-                    "Condensing complete; size of the new _dta.txt file is " + 
+                    "Condensing complete; size of the new _dta.txt file is " +
                     clsGlobal.BytesToGB(ioFileInfo.Length).ToString("0.00") + " GB");
 
                 try

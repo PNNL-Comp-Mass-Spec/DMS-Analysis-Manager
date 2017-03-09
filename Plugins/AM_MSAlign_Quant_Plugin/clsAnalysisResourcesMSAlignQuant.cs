@@ -75,8 +75,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                             if (!File.Exists(Path.Combine(m_WorkingDir, DatasetName + DOT_RAW_EXTENSION)))
                             {
                                 m_message = "Thermo .Raw file not successfully copied to WorkDir; likely a timeout error";
-                                LogError(
-                                    "clsDtaGenResources.GetResources: " + m_message);
+                                LogError("clsDtaGenResources.GetResources: " + m_message);
                                 return CloseOutType.CLOSEOUT_FAILED;
                             }
                             m_jobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION);  //Raw file
@@ -86,16 +85,14 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                             if (!Directory.Exists(Path.Combine(m_WorkingDir, DatasetName + DOT_D_EXTENSION)))
                             {
                                 m_message = "Bruker .D folder not successfully copied to WorkDir; likely a timeout error";
-                                LogError(
-                                    "clsDtaGenResources.GetResources: " + m_message);
+                                LogError("clsDtaGenResources.GetResources: " + m_message);
                                 return CloseOutType.CLOSEOUT_FAILED;
                             }
                         }
                     }
                     else
                     {
-                        LogDebug(
-                            "clsDtaGenResources.GetResources: Error occurred retrieving spectra.");
+                        LogDebug("clsDtaGenResources.GetResources: Error occurred retrieving spectra.");
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
                     break;

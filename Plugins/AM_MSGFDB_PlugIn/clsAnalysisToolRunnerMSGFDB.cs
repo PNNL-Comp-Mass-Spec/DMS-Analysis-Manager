@@ -572,7 +572,10 @@ namespace AnalysisManagerMSGFDBPlugIn
                     }
                     else
                     {
-                        LogWarning("MSGF+ processed some of the spectra, but it skipped " + mMSGFDBUtils.ContinuumSpectraSkipped + " spectra that were not centroided " + "(" + strPercentSkipped + " skipped)", true);
+                        LogWarning(
+                            "MSGF+ processed some of the spectra, but it skipped " + 
+                            mMSGFDBUtils.ContinuumSpectraSkipped + " spectra that were not centroided " + 
+                            "(" + strPercentSkipped + " skipped)", true);
                     }
                 }
             }

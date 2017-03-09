@@ -74,8 +74,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 if (m_DebugLevel > 4)
                 {
-                    LogDebug(
-                        "clsAnalysisToolRunnerDeconPeakDetector.RunTool(): Enter");
+                    LogDebug("clsAnalysisToolRunnerDeconPeakDetector.RunTool(): Enter");
                 }
 
                 // Store the AnalysisManager version info in the database
@@ -360,8 +359,7 @@ namespace AnalysisManagerExtractionPlugin
 
                     if (m_DebugLevel >= 1)
                     {
-                        LogMessage(
-                            "Verifying the decoy prefix in " + fiFastaFile.Name);
+                        LogMessage("Verifying the decoy prefix in " + fiFastaFile.Name);
                     }
 
                     // Determine the most common decoy prefix in the Fasta file
@@ -410,8 +408,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 if (m_DebugLevel >= 2)
                 {
-                    LogMessage(
-                        "Filtering MODa/MODPlus Results with FDR threshold " + fdrThreshold.ToString("0.00"));
+                    LogMessage("Filtering MODa/MODPlus Results with FDR threshold " + fdrThreshold.ToString("0.00"));
                 }
 
                 const int javaMemorySize = 1000;
@@ -442,8 +439,13 @@ namespace AnalysisManagerExtractionPlugin
                 cmdStr += " -d " + decoyPrefixJobParam;
 
                 // Example command line:
-                // "C:\Program Files\Java\jre8\bin\java.exe" -Xmx1000M -jar C:\DMS_Programs\MODa\anal_moda.jar -i "E:\DMS_WorkDir3\QC_Shew_13_04_pt1_1_2_45min_14Nov13_Leopard_13-05-21_moda.txt" -p "E:\DMS_WorkDir3\MODa_PartTryp_Par20ppm_Frag0pt6Da" -fdr 0.05 -d XXX_
-                // "C:\Program Files\Java\jre8\bin\java.exe" -Xmx1000M -jar C:\DMS_Programs\MODPlus\tda_plus.jar -i "E:\DMS_WorkDir3\QC_Shew_13_04_pt1_1_2_45min_14Nov13_Leopard_13-05-21_modp.txt" -fdr 0.05 -d Reversed_
+                // "C:\Program Files\Java\jre8\bin\java.exe" -Xmx1000M -jar C:\DMS_Programs\MODa\anal_moda.jar 
+                //   -i "E:\DMS_WorkDir3\QC_Shew_13_04_pt1_1_2_45min_14Nov13_Leopard_13-05-21_moda.txt" 
+                //   -p "E:\DMS_WorkDir3\MODa_PartTryp_Par20ppm_Frag0pt6Da" -fdr 0.05 -d XXX_
+                // "C:\Program Files\Java\jre8\bin\java.exe" -Xmx1000M -jar C:\DMS_Programs\MODPlus\tda_plus.jar 
+                //   -i "E:\DMS_WorkDir3\QC_Shew_13_04_pt1_1_2_45min_14Nov13_Leopard_13-05-21_modp.txt" 
+                //   -fdr 0.05 -d Reversed_
+
                 LogDebug(JavaProgLoc + " " + cmdStr);
 
                 var progRunner = new clsRunDosProgram(m_WorkDir)
@@ -471,8 +473,7 @@ namespace AnalysisManagerExtractionPlugin
                     }
                     else
                     {
-                        LogWarning(
-                            "Call to " + modxFilterJarName + " failed (but exit code is 0)");
+                        LogWarning("Call to " + modxFilterJarName + " failed (but exit code is 0)");
                     }
 
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -728,14 +729,12 @@ namespace AnalysisManagerExtractionPlugin
                                     {
                                         if (warningsLogged < 10)
                                         {
-                                            LogWarning(
-                                                "SpecEValue was not numeric: " + specEValueText + " in " + strLineIn);
+                                            LogWarning("SpecEValue was not numeric: " + specEValueText + " in " + strLineIn);
                                             warningsLogged += 1;
 
                                             if (warningsLogged >= 10)
                                             {
-                                                LogWarning(
-                                                    "Additional warnings will not be logged");
+                                                LogWarning("Additional warnings will not be logged");
                                             }
                                         }
 
@@ -776,8 +775,7 @@ namespace AnalysisManagerExtractionPlugin
 
                     if (m_DebugLevel >= 2)
                     {
-                        LogDebug(
-                            "Sorting results for " + dctScanChargeBestScore.Count + " lines of scan/charge combos");
+                        LogDebug("Sorting results for " + dctScanChargeBestScore.Count + " lines of scan/charge combos");
                     }
 
                     // Sort the data, then write to disk
@@ -947,8 +945,7 @@ namespace AnalysisManagerExtractionPlugin
             //Run the extractor
             if (m_DebugLevel > 3)
             {
-                LogDebug(
-                    "clsExtractToolRunner.PerformPeptideExtraction(); Starting peptide extraction");
+                LogDebug("clsExtractToolRunner.PerformPeptideExtraction(); Starting peptide extraction");
             }
 
             try
@@ -1886,8 +1883,7 @@ namespace AnalysisManagerExtractionPlugin
                 {
                     if (m_DebugLevel >= 3)
                     {
-                        LogDebug(
-                            "Synopsis file was split into " + strFileList.Length + " sections by SplitFileRoundRobin");
+                        LogDebug("Synopsis file was split into " + strFileList.Length + " sections by SplitFileRoundRobin");
                     }
                 }
                 else
@@ -1927,8 +1923,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 if (m_DebugLevel >= 1)
                 {
-                    LogDebug(
-                        "Running peptide prophet on file " + strSynFileNameAndSize);
+                    LogDebug("Running peptide prophet on file " + strSynFileNameAndSize);
                 }
 
                 eResult = m_PeptideProphet.CallPeptideProphet();
@@ -1941,8 +1936,7 @@ namespace AnalysisManagerExtractionPlugin
 
                     if (m_DebugLevel >= 3)
                     {
-                        LogDebug(
-                            "Peptide prophet processing complete; checking for file " + strPepProphetOutputFilePath);
+                        LogDebug("Peptide prophet processing complete; checking for file " + strPepProphetOutputFilePath);
                     }
 
                     if (!File.Exists(strPepProphetOutputFilePath))
@@ -1957,13 +1951,11 @@ namespace AnalysisManagerExtractionPlugin
 
                         if (blnIgnorePeptideProphetErrors)
                         {
-                            LogWarning(
-                                "Ignoring peptide prophet execution error since 'IgnorePeptideProphetErrors' = True");
+                            LogWarning("Ignoring peptide prophet execution error since 'IgnorePeptideProphetErrors' = True");
                         }
                         else
                         {
-                            LogWarning(
-                                "To ignore this error, update this job to use a settings file that has 'IgnorePeptideProphetErrors' set to True");
+                            LogWarning("To ignore this error, update this job to use a settings file that has 'IgnorePeptideProphetErrors' set to True");
                             eResult = CloseOutType.CLOSEOUT_FAILED;
                             break;
                         }
@@ -2483,8 +2475,7 @@ namespace AnalysisManagerExtractionPlugin
                 if (System.DateTime.UtcNow.Subtract(dtLastPepProphetStatusLog).TotalSeconds >= PEPPROPHET_DETAILED_LOG_INTERVAL_SECONDS)
                 {
                     dtLastPepProphetStatusLog = System.DateTime.UtcNow;
-                    LogDebug(
-                        "Running peptide prophet: " + PepProphetStatus + "; " + PercentComplete + "% complete");
+                    LogDebug("Running peptide prophet: " + PepProphetStatus + "; " + PercentComplete + "% complete");
                 }
             }
         }
@@ -2505,8 +2496,7 @@ namespace AnalysisManagerExtractionPlugin
                     System.DateTime.UtcNow.Subtract(dtLastPHRPStatusLog).TotalSeconds >= PHRP_LOG_INTERVAL_SECONDS)
                 {
                     dtLastPHRPStatusLog = System.DateTime.UtcNow;
-                    LogDebug(
-                        "Running PHRP: " + taskDescription + "; " + percentComplete + "% complete");
+                    LogDebug("Running PHRP: " + taskDescription + "; " + percentComplete + "% complete");
                 }
             }
         }

@@ -53,8 +53,7 @@ namespace AnalysisManagerMultiAlignPlugIn
 
             if (m_DebugLevel > 4)
             {
-                LogDebug(
-                    "clsAnalysisToolRunnerMultiAlign.OperateAnalysisTool(): Enter");
+                LogDebug("clsAnalysisToolRunnerMultiAlign.OperateAnalysisTool(): Enter");
             }
 
             // Determine the path to the MultiAlign folder
@@ -69,8 +68,7 @@ namespace AnalysisManagerMultiAlignPlugIn
             // Store the MultiAlign version info in the database
             if (!StoreToolVersionInfo(progLoc))
             {
-                LogError(
-                    "Aborting since StoreToolVersionInfo returned false");
+                LogError("Aborting since StoreToolVersionInfo returned false");
                 m_message = "Error determining MultiAlign version";
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -192,8 +190,7 @@ namespace AnalysisManagerMultiAlignPlugIn
             if (string.IsNullOrEmpty(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
-            LogWarning(
-                "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
+            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
 
             // Bump up the debug level if less than 2
             if (m_DebugLevel < 2)
@@ -255,8 +252,7 @@ namespace AnalysisManagerMultiAlignPlugIn
                 }
                 catch (Exception ex)
                 {
-                    LogError(
-                        "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                    LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                     return false;
                 }
 
@@ -296,8 +292,7 @@ namespace AnalysisManagerMultiAlignPlugIn
             }
             catch (Exception ex)
             {
-                LogError(
-                    "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
         }

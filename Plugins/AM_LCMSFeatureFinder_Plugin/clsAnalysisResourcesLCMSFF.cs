@@ -85,8 +85,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
                 // IMS data; need to get the .UIMF file
                 if (!FileSearch.RetrieveSpectra(strRawDataType))
                 {
-                    LogDebug(
-                        "clsAnalysisResourcesDecon2ls.GetResources: Error occurred retrieving spectra.");
+                    LogDebug("clsAnalysisResourcesDecon2ls.GetResources: Error occurred retrieving spectra.");
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
                 else

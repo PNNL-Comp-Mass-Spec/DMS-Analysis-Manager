@@ -59,7 +59,10 @@ namespace AnalysisManagerLipidMapSearchPlugIn
 
             // The Input_Folder for this job step should have been auto-defined by the DMS_Pipeline database using the Special_Processing parameters
             // For example, for dataset XG_lipid_pt5a using Special_Processing of
-            //   SourceJob:Auto{Tool = "Decon2LS_V2" AND [Parm File] = "LTQ_FT_Lipidomics_2012-04-16.xml"}, Job2:Auto{Tool = "Decon2LS_V2" AND [Parm File] = "LTQ_FT_Lipidomics_2012-04-16.xml" AND Dataset LIKE "$Replace($ThisDataset,_Pos,)%NEG"}'
+            //   SourceJob:Auto{Tool = "Decon2LS_V2" AND [Parm File] = "LTQ_FT_Lipidomics_2012-04-16.xml"}, 
+            //   Job2:Auto{Tool = "Decon2LS_V2" AND [Parm File] = "LTQ_FT_Lipidomics_2012-04-16.xml" AND 
+            //   Dataset LIKE "$Replace($ThisDataset,_Pos,)%NEG"}'
+            //
             // Gives these parameters:
 
             // SourceJob                     = 852150
@@ -112,8 +115,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
 
             if (m_DebugLevel >= 2)
             {
-                LogDebug(
-                    "Retrieving the dataset's .Raw file and DeconTools _peaks.txt file");
+                LogDebug("Retrieving the dataset's .Raw file and DeconTools _peaks.txt file");
             }
 
             return RetrieveDatasetAndPeaksFile(DatasetName, strDatasetFolder, strDatasetFolderArchive);
@@ -123,7 +125,10 @@ namespace AnalysisManagerLipidMapSearchPlugIn
         {
             // The Input_Folder for this job step should have been auto-defined by the DMS_Pipeline database using the Special_Processing parameters
             // For example, for dataset XG_lipid_pt5a using Special_Processing of
-            //   SourceJob:Auto{Tool = "Decon2LS_V2" AND [Parm File] = "LTQ_FT_Lipidomics_2012-04-16.xml"}, Job2:Auto{Tool = "Decon2LS_V2" AND [Parm File] = "LTQ_FT_Lipidomics_2012-04-16.xml" AND Dataset LIKE "$Replace($ThisDataset,_Pos,)%NEG"}'
+            //   SourceJob:Auto{Tool = "Decon2LS_V2" AND [Parm File] = "LTQ_FT_Lipidomics_2012-04-16.xml"}, 
+            //   Job2:Auto{Tool = "Decon2LS_V2" AND [Parm File] = "LTQ_FT_Lipidomics_2012-04-16.xml" AND 
+            //   Dataset LIKE "$Replace($ThisDataset,_Pos,)%NEG"}'
+            //
             // Gives these parameters:
 
             // SourceJob                     = 852150
@@ -204,8 +209,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
 
             if (m_DebugLevel >= 2)
             {
-                LogDebug(
-                    "Retrieving the second dataset's .Raw file and DeconTools _peaks.txt file");
+                LogDebug("Retrieving the second dataset's .Raw file and DeconTools _peaks.txt file");
             }
 
             return RetrieveDatasetAndPeaksFile(strDataset2, diInputFolder.Parent.FullName, diInputFolderArchive.Parent.FullName);

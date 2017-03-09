@@ -38,8 +38,7 @@ namespace AnalysisManagerICR2LSPlugIn
             // Get input data file
             if (!FileSearch.RetrieveSpectra(m_jobParams.GetParam("RawDataType")))
             {
-                LogDebug(
-                    "clsAnalysisResourcesIcr2ls.GetResources: Error occurred retrieving spectra.");
+                LogDebug("clsAnalysisResourcesIcr2ls.GetResources: Error occurred retrieving spectra.");
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -99,8 +98,7 @@ namespace AnalysisManagerICR2LSPlugIn
                         {
                             var diSourceFolder = new DirectoryInfo(serFileOrFolderPath);
 
-                            LogMessage(
-                                "Copying 0.ser folder from archive to working directory: " + serFileOrFolderPath);
+                            LogMessage("Copying 0.ser folder from archive to working directory: " + serFileOrFolderPath);
                             ResetTimestampForQueueWaitTimeLogging();
                             m_FileTools.CopyDirectory(serFileOrFolderPath, Path.Combine(strLocalDatasetFolderPath, diSourceFolder.Name));
 
@@ -115,8 +113,7 @@ namespace AnalysisManagerICR2LSPlugIn
                         {
                             var fiSourceFile = new FileInfo(serFileOrFolderPath);
 
-                            LogMessage(
-                                "Copying " + Path.GetFileName(serFileOrFolderPath) + " file from archive to working directory: " + serFileOrFolderPath);
+                            LogMessage("Copying " + Path.GetFileName(serFileOrFolderPath) + " file from archive to working directory: " + serFileOrFolderPath);
 
                             if (!CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName, strLocalDatasetFolderPath, clsLogTools.LogLevels.ERROR))
                             {
@@ -211,8 +208,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 if (string.IsNullOrWhiteSpace(transferFolderPath))
                 {
                     // Transfer folder path is not defined
-                    LogWarning(
-                        "transferFolderPath is empty; this is unexpected");
+                    LogWarning("transferFolderPath is empty; this is unexpected");
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
                 else
@@ -223,8 +219,7 @@ namespace AnalysisManagerICR2LSPlugIn
 
                 if (m_DebugLevel >= 4)
                 {
-                    LogDebug(
-                        "Checking for " + clsAnalysisToolRunnerICRBase.PEK_TEMP_FILE + " file at " + transferFolderPath);
+                    LogDebug("Checking for " + clsAnalysisToolRunnerICRBase.PEK_TEMP_FILE + " file at " + transferFolderPath);
                 }
 
                 var diSourceFolder = new DirectoryInfo(transferFolderPath);
@@ -234,8 +229,7 @@ namespace AnalysisManagerICR2LSPlugIn
                     // Transfer folder not found; return false
                     if (m_DebugLevel >= 4)
                     {
-                        LogDebug(
-                            "  ... Transfer folder not found: " + diSourceFolder.FullName);
+                        LogDebug("  ... Transfer folder not found: " + diSourceFolder.FullName);
                     }
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
@@ -247,8 +241,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 {
                     if (m_DebugLevel >= 4)
                     {
-                        LogDebug(
-                            "  ... " + clsAnalysisToolRunnerICRBase.PEK_TEMP_FILE + " file not found");
+                        LogDebug("  ... " + clsAnalysisToolRunnerICRBase.PEK_TEMP_FILE + " file not found");
                     }
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
@@ -267,8 +260,7 @@ namespace AnalysisManagerICR2LSPlugIn
 
                     if (m_DebugLevel >= 1)
                     {
-                        LogDebug(
-                            "Copied " + fiTempPekFile.Name + " locally; will resume ICR-2LS analysis");
+                        LogDebug("Copied " + fiTempPekFile.Name + " locally; will resume ICR-2LS analysis");
                     }
 
                     // If the job succeeds, we should delete the .pek.tmp file from the transfer folder
@@ -279,8 +271,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 {
                     // Error copying the file; treat this as a failed job
                     m_message = " Exception copying " + clsAnalysisToolRunnerICRBase.PEK_TEMP_FILE + " file locally";
-                    LogError(
-                        "  ... Exception copying " + fiTempPekFile.FullName + " locally; unable to resume: " + ex.Message);
+                    LogError("  ... Exception copying " + fiTempPekFile.FullName + " locally; unable to resume: " + ex.Message);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 

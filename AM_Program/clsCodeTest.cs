@@ -875,7 +875,7 @@ namespace AnalysisManagerProg
             }
 
             LogError("Test error, no detailed message");
-          
+
             try
             {
                 throw new FileNotFoundException("TestFile.txt");
@@ -1155,7 +1155,7 @@ namespace AnalysisManagerProg
 
             //      ionicZipTools.UnzipFile(@"F:\Temp\UnzipTest\ZippedFolders3.zip", @"F:\Temp\UnzipTest\Unzipped5", "my*.ini", Ionic.Zip.ExtractExistingFileAction.OverwriteSilently);
         }
-    
+
         /// <summary>
         /// Generate a scan stats file
         /// </summary>
@@ -1281,7 +1281,12 @@ namespace AnalysisManagerProg
             var blnWriteConsoleOutputFileRealtime = false;
 
             var strExePath = @"C:\DMS_Programs\IDPicker\idpQonvert.exe";
-            var cmdStr = @"-MaxFDR 0.1 -ProteinDatabase C:\DMS_Temp_Org\ID_003521_89E56851.fasta -SearchScoreWeights ""msgfspecprob -1"" -OptimizeScoreWeights 1 -NormalizedSearchScores msgfspecprob -DecoyPrefix Reversed_ -dump C:\DMS_WorkDir\Malaria844_msms_29Dec11_Draco_11-10-04.pepXML";
+            var cmdStr =
+                @"-MaxFDR 0.1 -ProteinDatabase C:\DMS_Temp_Org\ID_003521_89E56851.fasta " +
+                @"-SearchScoreWeights ""msgfspecprob -1"" " +
+                @"-OptimizeScoreWeights 1 -NormalizedSearchScores msgfspecprob -DecoyPrefix Reversed_ " +
+                @"-dump C:\DMS_WorkDir\Malaria844_msms_29Dec11_Draco_11-10-04.pepXML";
+
             var strProgramDescription = "IDPQonvert";
 
             var progRunner = new clsRunDosProgram(m_WorkDir)
@@ -1309,7 +1314,7 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
-        /// Test PurgeOldServerCacheFilesTest 
+        /// Test PurgeOldServerCacheFilesTest
         /// </summary>
         public void TestMSXmlCachePurge()
         {

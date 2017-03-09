@@ -42,8 +42,7 @@ namespace AnalysisManagerResultsXferPlugin
                 // Store the AnalysisManager version info in the database
                 if (!StoreToolVersionInfo())
                 {
-                    LogError(
-                        "Aborting since StoreToolVersionInfo returned false");
+                    LogError("Aborting since StoreToolVersionInfo returned false");
                     m_message = "Error determining AnalysisManager version";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -121,8 +120,7 @@ namespace AnalysisManagerResultsXferPlugin
                     {
                         if (m_DebugLevel >= 3)
                         {
-                            LogDebug(
-                                "Deleting empty dataset folder in transfer directory: " + diTransferFolder.FullName);
+                            LogDebug("Deleting empty dataset folder in transfer directory: " + diTransferFolder.FullName);
                         }
 
                         diTransferFolder.Delete();
@@ -139,8 +137,7 @@ namespace AnalysisManagerResultsXferPlugin
                 {
                     if (m_DebugLevel >= 3)
                     {
-                        LogDebug(
-                            "Dataset folder in transfer directory still has files/folders; will not delete: " + diTransferFolder.FullName);
+                        LogDebug("Dataset folder in transfer directory still has files/folders; will not delete: " + diTransferFolder.FullName);
                     }
                 }
             }
@@ -269,8 +266,7 @@ namespace AnalysisManagerResultsXferPlugin
 
                 if (m_DebugLevel >= 2)
                 {
-                    LogDebug(
-                        "Moving files locally to " + diTargetFolder.FullName);
+                    LogDebug("Moving files locally to " + diTargetFolder.FullName);
                 }
 
                 foreach (var fiSourceFile in diSourceFolder.GetFiles())
@@ -285,8 +281,7 @@ namespace AnalysisManagerResultsXferPlugin
                             {
                                 if (m_DebugLevel >= 2)
                                 {
-                                    LogDebug(
-                                        "Skipping existing file: " + fiTargetFile.FullName);
+                                    LogDebug("Skipping existing file: " + fiTargetFile.FullName);
                                 }
                                 continue;
                             }
@@ -302,8 +297,7 @@ namespace AnalysisManagerResultsXferPlugin
                         {
                             errorMessage = "Error moving file " + fiSourceFile.Name + ": " + ex.Message;
                         }
-                        LogError(
-                            "Error moving file " + fiSourceFile.Name + ": " + ex.Message);
+                        LogError("Error moving file " + fiSourceFile.Name + ": " + ex.Message);
                         success = false;
                     }
                 }
@@ -335,15 +329,13 @@ namespace AnalysisManagerResultsXferPlugin
                     catch (Exception ex)
                     {
                         // Log a warning, but ignore this error
-                        LogWarning(
-                            "Unable to delete folder " + diSourceFolder.FullName + ": " + ex);
+                        LogWarning("Unable to delete folder " + diSourceFolder.FullName + ": " + ex);
                     }
                 }
             }
             catch (Exception ex)
             {
-                LogError(
-                    "Error moving directory " + sourceFolderpath + ": " + ex.Message);
+                LogError("Error moving directory " + sourceFolderpath + ": " + ex.Message);
                 success = false;
             }
 
@@ -487,8 +479,7 @@ namespace AnalysisManagerResultsXferPlugin
             {
                 if (m_DebugLevel >= 3)
                 {
-                    LogDebug(
-                        "Moving '" + FolderToMove + "' to '" + TargetDir + "'");
+                    LogDebug("Moving '" + FolderToMove + "' to '" + TargetDir + "'");
                 }
 
                 if (movingLocalFiles)
@@ -502,8 +493,7 @@ namespace AnalysisManagerResultsXferPlugin
                     // Call MoveDirectory, which will copy the files using locks
                     if (m_DebugLevel >= 2)
                     {
-                        LogDebug(
-                            "Using m_FileTools.MoveDirectory to copy files to " + TargetDir);
+                        LogDebug("Using m_FileTools.MoveDirectory to copy files to " + TargetDir);
                     }
                     ResetTimestampForQueueWaitTimeLogging();
                     m_FileTools.MoveDirectory(FolderToMove, TargetDir, overwriteFiles: true);
@@ -557,8 +547,7 @@ namespace AnalysisManagerResultsXferPlugin
             }
             catch (Exception ex)
             {
-                LogError(
-                    "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
         }

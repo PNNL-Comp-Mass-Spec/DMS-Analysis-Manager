@@ -52,8 +52,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             // Store the ReAdW or MSConvert version info in the database
             if (!StoreToolVersionInfo())
             {
-                LogError(
-                    "Aborting since StoreToolVersionInfo returned false");
+                LogError("Aborting since StoreToolVersionInfo returned false");
                 LogError("Error determining MSXMLGen version");
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -129,8 +128,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             {
                 if (m_DebugLevel > 4)
                 {
-                    LogDebug(
-                        "clsAnalysisToolRunnerMSXMLGen.CreateMSXMLFile(): Enter");
+                    LogDebug("clsAnalysisToolRunnerMSXMLGen.CreateMSXMLFile(): Enter");
                 }
 
                 var msXmlGenerator = m_jobParams.GetParam("MSXMLGenerator");          // ReAdW.exe or MSConvert.exe
@@ -146,8 +144,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                         mMSXmlOutputFileType = clsAnalysisResources.MSXMLOutputTypeConstants.mzML;
                         break;
                     default:
-                        LogWarning(
-                            "msXmlFormat string is not mzXML or mzML (" + msXmlFormat + "); will default to mzXML");
+                        LogWarning("msXmlFormat string is not mzXML or mzML (" + msXmlFormat + "); will default to mzXML");
                         mMSXmlOutputFileType = clsAnalysisResources.MSXMLOutputTypeConstants.mzXML;
                         break;
                 }
@@ -179,8 +176,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                 if (string.IsNullOrEmpty(mMSXmlGeneratorAppPath))
                 {
-                    LogWarning(
-                        "mMSXmlGeneratorAppPath is empty; this is unexpected");
+                    LogWarning("mMSXmlGeneratorAppPath is empty; this is unexpected");
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 

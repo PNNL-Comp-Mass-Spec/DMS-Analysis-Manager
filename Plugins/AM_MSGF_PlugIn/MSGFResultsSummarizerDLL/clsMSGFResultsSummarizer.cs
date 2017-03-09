@@ -1660,7 +1660,18 @@ namespace MSGFResultsSummarizer
                 using (var swOutFile = new StreamWriter(new FileStream(strOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
                     // Header line
-                    swOutFile.WriteLine("Dataset\tJob\tMSGF_Threshold\tFDR_Threshold\tSpectra_Searched\tTotal_PSMs_MSGF_Filtered\tUnique_Peptides_MSGF_Filtered\tUnique_Proteins_MSGF_Filtered\tTotal_PSMs_FDR_Filtered\tUnique_Peptides_FDR_Filtered\tUnique_Proteins_FDR_Filtered");
+                    swOutFile.WriteLine(
+                        "Dataset\t" +
+                        "Job\t" +
+                        "MSGF_Threshold\t" +
+                        "FDR_Threshold\t" +
+                        "Spectra_Searched\t" +
+                        "Total_PSMs_MSGF_Filtered\t" +
+                        "Unique_Peptides_MSGF_Filtered\t" +
+                        "Unique_Proteins_MSGF_Filtered\t" +
+                        "Total_PSMs_FDR_Filtered\t" +
+                        "Unique_Peptides_FDR_Filtered\t" +
+                        "Unique_Proteins_FDR_Filtered");
 
                     // Stats
                     swOutFile.WriteLine(mDatasetName + "\t" + mJob + "\t" + mMSGFThreshold.ToString("0.00E+00") + "\t" +
@@ -1798,7 +1809,10 @@ namespace MSGFResultsSummarizer
             return true;
         }
 
-        private udtPSMStatsType TabulatePSMStats(IDictionary<int, clsUniqueSeqInfo> lstUniqueSequences, IDictionary<string, int> lstUniqueProteins, IDictionary<int, clsUniqueSeqInfo> lstUniquePhosphopeptides)
+        private udtPSMStatsType TabulatePSMStats(
+            IDictionary<int, clsUniqueSeqInfo> lstUniqueSequences, 
+            IDictionary<string, int> lstUniqueProteins, 
+            IDictionary<int, clsUniqueSeqInfo> lstUniquePhosphopeptides)
         {
             var psmStats = new udtPSMStatsType
             {

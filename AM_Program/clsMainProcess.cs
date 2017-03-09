@@ -46,7 +46,7 @@ namespace AnalysisManagerProg
         #endregion
 
         #region "Member variables"
-        
+
         // clsAnalysisMgrSettings
         private IMgrParams m_MgrSettings;
 
@@ -56,7 +56,7 @@ namespace AnalysisManagerProg
         private string m_WorkDirPath;
 
         private string m_MgrName = "??";
-        
+
         // clsAnalysisJob
         private IJobParams m_AnalysisTask;
         private clsPluginLoader m_PluginLoader;
@@ -208,7 +208,8 @@ namespace AnalysisManagerProg
                     Console.WriteLine("Exception instantiating clsAnalysisMgrSettings: " + ex.Message);
                     Console.WriteLine("===============================================================");
                     Console.WriteLine();
-                    Console.WriteLine("You may need to start this application once from an elevated (administrative level) command prompt using the /EL switch so that it can create the " + CUSTOM_LOG_NAME + " application log");
+                    Console.WriteLine("You may need to start this application once from an elevated (administrative level) command prompt " +
+                        "using the /EL switch so that it can create the " + CUSTOM_LOG_NAME + " application log");
                     Console.WriteLine();
                     Thread.Sleep(500);
 
@@ -283,8 +284,8 @@ namespace AnalysisManagerProg
 
             // Make sure that the manager name matches the machine name (with a few exceptions)
 
-            if (!hostName.StartsWith("emslmq", StringComparison.InvariantCultureIgnoreCase) && 
-                !hostName.StartsWith("emslpub", StringComparison.InvariantCultureIgnoreCase) && 
+            if (!hostName.StartsWith("emslmq", StringComparison.InvariantCultureIgnoreCase) &&
+                !hostName.StartsWith("emslpub", StringComparison.InvariantCultureIgnoreCase) &&
                 !hostName.StartsWith("monroe", StringComparison.InvariantCultureIgnoreCase))
             {
                 if (!m_MgrName.StartsWith(hostName, StringComparison.InvariantCultureIgnoreCase))
@@ -559,7 +560,9 @@ namespace AnalysisManagerProg
                                 else
                                 {
                                     // Something went wrong; errors were logged by DoAnalysisJob
-                                    if (m_MostRecentErrorMessage.Contains("None of the spectra are centroided") || m_MostRecentErrorMessage.Contains("No peaks found") || m_MostRecentErrorMessage.Contains("No spectra were exported"))
+                                    if (m_MostRecentErrorMessage.Contains("None of the spectra are centroided") ||
+                                        m_MostRecentErrorMessage.Contains("No peaks found") ||
+                                        m_MostRecentErrorMessage.Contains("No spectra were exported"))
                                     {
                                         // Job failed, but this was not a manager error
                                         // Do not increment the error count
@@ -1044,7 +1047,7 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
-        /// Initialize the analysis manager application log, 
+        /// Initialize the analysis manager application log,
         /// </summary>
         public static void CreateAnalysisManagerEventLog()
         {
@@ -1362,7 +1365,7 @@ namespace AnalysisManagerProg
                 var sortedAndFilteredRecentErrors = (from item in recentErrorMessages
                                                      orderby item.Value descending
                                                      select item.Key).Take(intErrorMessageCountToReturn);
-               
+
                 if (string.IsNullOrEmpty(strMostRecentJobInfo))
                 {
                     if (!string.IsNullOrWhiteSpace(strMostRecentJobInfoFromLogs))
@@ -1596,7 +1599,7 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
-        /// Read settings from file AnalysisManagerProg.exe.config 
+        /// Read settings from file AnalysisManagerProg.exe.config
         /// </summary>
         /// <returns>String dictionary of settings as key/value pairs; null on error</returns>
         private Dictionary<string, string> ReadMgrSettingsFile()
@@ -1698,12 +1701,12 @@ namespace AnalysisManagerProg
             //   <applicationSettings>
             //     <AnalysisManagerProg.Properties.Settings>
             //       <setting name="MgrActive_Local" serializeAs="String">
-            
+
             // Older VB.NET based versions of the AnalysisManagerProg.exe.config file have:
             //   <applicationSettings>
             //     <My.MySettings>
             //       <setting name="MgrActive_Local" serializeAs="String">
-            
+
             // Method ReadMgrSettingsFile() works with both versions of the .exe.config file
 
             // Load initial settings into string dictionary
@@ -1755,7 +1758,7 @@ namespace AnalysisManagerProg
             {
                 lstMgrSettings.Add(clsAnalysisMgrSettings.MGR_PARAM_DEFAULT_DMS_CONN_STRING, Properties.Settings.Default.DefaultDMSConnString);
             }
-         
+
             return lstMgrSettings;
         }
 
@@ -1917,7 +1920,8 @@ namespace AnalysisManagerProg
                 Console.WriteLine(ErrMsg);
                 Console.WriteLine("===============================================================");
                 Console.WriteLine();
-                Console.WriteLine("You may need to start this application once from an elevated (administrative level) command prompt using the /EL switch so that it can create the " + EVENT_LOG_NAME + " application log");
+                Console.WriteLine("You may need to start this application once from an elevated (administrative level) command prompt " +
+                                  "using the /EL switch so that it can create the " + EVENT_LOG_NAME + " application log");
                 Console.WriteLine();
 
                 var Ev = new EventLog("Application", ".", EVENT_LOG_NAME);
@@ -2046,7 +2050,7 @@ namespace AnalysisManagerProg
                 {
                     LogWarning(item);
                 }
-                
+
             }
 
             try
@@ -2247,7 +2251,7 @@ namespace AnalysisManagerProg
             // Most managers have logStatusToBrokerDb=False and logStatusToMessageQueue=True
             var logStatusToBrokerDb = m_MgrSettings.GetParam("LogStatusToBrokerDB", false);
             var brokerDbConnectionString = m_MgrSettings.GetParam("brokerconnectionstring");
-            
+
             // Gigasax.DMS_Pipeline
             float brokerDbStatusUpdateIntervalMinutes = m_MgrSettings.GetParam("BrokerDBStatusUpdateIntervalMinutes", 60);
 
@@ -2423,7 +2427,7 @@ namespace AnalysisManagerProg
                 //  then try to delete it, since it's likely left over from a previous job that never actually started
                 var firstFile = workDirFiles.First();
 
-                if (firstFile.Name.StartsWith(clsGlobal.XML_FILENAME_PREFIX, StringComparison.InvariantCultureIgnoreCase) && 
+                if (firstFile.Name.StartsWith(clsGlobal.XML_FILENAME_PREFIX, StringComparison.InvariantCultureIgnoreCase) &&
                     firstFile.Name.EndsWith(clsGlobal.XML_FILENAME_EXTENSION, StringComparison.InvariantCultureIgnoreCase))
                 {
                     try
@@ -2514,7 +2518,7 @@ namespace AnalysisManagerProg
         }
 
         #endregion
-        
+
         /// <summary>
         /// Event handler for file watcher
         /// </summary>

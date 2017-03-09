@@ -85,8 +85,7 @@ namespace AnalysisManagerXTandemPlugIn
 
             if (m_DebugLevel > 4)
             {
-                LogDebug(
-                    "clsAnalysisToolRunnerXT.OperateAnalysisTool(): Enter");
+                LogDebug("clsAnalysisToolRunnerXT.OperateAnalysisTool(): Enter");
             }
 
             // Define the path to the X!Tandem .Exe
@@ -140,8 +139,7 @@ namespace AnalysisManagerXTandemPlugIn
 
                 if (mCmdRunner.ExitCode != 0)
                 {
-                    LogWarning(
-                        "Tandem.exe returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
+                    LogWarning("Tandem.exe returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
                 }
                 else
                 {
@@ -231,8 +229,7 @@ namespace AnalysisManagerXTandemPlugIn
             if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
-            LogWarning(
-                "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
+            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
 
             // Bump up the debug level if less than 2
             if (m_DebugLevel < 2)
@@ -293,8 +290,7 @@ namespace AnalysisManagerXTandemPlugIn
             }
             catch (Exception ex)
             {
-                LogError(
-                    "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
         }
@@ -346,8 +342,7 @@ namespace AnalysisManagerXTandemPlugIn
                 {
                     if (m_DebugLevel >= 4)
                     {
-                        LogDebug(
-                            "Console output file not found: " + strConsoleOutputFilePath);
+                        LogDebug("Console output file not found: " + strConsoleOutputFilePath);
                     }
 
                     return;
@@ -438,8 +433,7 @@ namespace AnalysisManagerXTandemPlugIn
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    LogError(
-                        "Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    LogError("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
             }
         }
@@ -489,8 +483,7 @@ namespace AnalysisManagerXTandemPlugIn
             }
             catch (Exception Err)
             {
-                LogError(
-                    "clsAnalysisToolRunnerXT.ZipMainOutputFile, Error deleting _xt.xml file, job " + m_JobNum + Err.Message);
+                LogError("clsAnalysisToolRunnerXT.ZipMainOutputFile, Error deleting _xt.xml file, job " + m_JobNum + Err.Message);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 

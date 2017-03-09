@@ -251,8 +251,7 @@ namespace AnalysisManagerMODPlusPlugin
             {
                 if (m_DebugLevel >= 2)
                 {
-                    LogDebug(
-                        "MSConvert.exe successfully created " + fiMgfFile.Name);
+                    LogDebug("MSConvert.exe successfully created " + fiMgfFile.Name);
                 }
                 return true;
             }
@@ -265,8 +264,7 @@ namespace AnalysisManagerMODPlusPlugin
 
             if (msConvertRunner.ExitCode != 0)
             {
-                LogWarning(
-                    "MSConvert returned a non-zero exit code: " + msConvertRunner.ExitCode.ToString());
+                LogWarning("MSConvert returned a non-zero exit code: " + msConvertRunner.ExitCode.ToString());
             }
             else
             {
@@ -282,8 +280,7 @@ namespace AnalysisManagerMODPlusPlugin
             if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
-            LogWarning(
-                "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
+            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
 
             // Bump up the debug level if less than 2
             if (m_DebugLevel < 2)
@@ -734,8 +731,7 @@ namespace AnalysisManagerMODPlusPlugin
             }
             catch (Exception ex)
             {
-                LogError(
-                    "Exception preparing the MODPlus results for zipping: " + ex.Message);
+                LogError("Exception preparing the MODPlus results for zipping: " + ex.Message);
                 return false;
             }
         }
@@ -768,8 +764,7 @@ namespace AnalysisManagerMODPlusPlugin
         {
             if (m_DebugLevel >= 1)
             {
-                LogDebug(
-                    "Splitting mgf file into " + threadCount + " parts: " + fiMgfFile.Name);
+                LogDebug("Splitting mgf file into " + threadCount + " parts: " + fiMgfFile.Name);
             }
 
             // Cache the current state of m_message
@@ -907,8 +902,7 @@ namespace AnalysisManagerMODPlusPlugin
 
                 currentTask = " Set up and execute a program runner to run each MODPlus instance";
 
-                LogMessage(
-                    "Running MODPlus using " + paramFileList.Count + " threads");
+                LogMessage("Running MODPlus using " + paramFileList.Count + " threads");
 
                 m_progress = PROGRESS_PCT_MODPLUS_STARTING;
                 ResetProgRunnerCpuUsage();
@@ -968,8 +962,7 @@ namespace AnalysisManagerMODPlusPlugin
                             if (!completedThreads.Contains(modPlusRunner.Key))
                             {
                                 completedThreads.Add(modPlusRunner.Key);
-                                LogDebug(
-                                    "MODPlus thread " + modPlusRunner.Key + " is now complete");
+                                LogDebug("MODPlus thread " + modPlusRunner.Key + " is now complete");
                             }
                         }
 
@@ -984,7 +977,8 @@ namespace AnalysisManagerMODPlusPlugin
                             {
                                 modPlusRunner.Value.CommandLineArgsLogged = true;
 
-                                // "C:\Program Files\Java\jre8\bin\java.exe" -Xmx3G -jar C:\DMS_Programs\MODPlus\modp_pnnl.jar -i MODPlus_Params_Part1.xml -o E:\DMS_WorkDir2\Dataset_Part1_modp.txt  > MODPlus_ConsoleOutput_Part1.txt
+                                // "C:\Program Files\Java\jre8\bin\java.exe" -Xmx3G -jar C:\DMS_Programs\MODPlus\modp_pnnl.jar 
+                                //   -i MODPlus_Params_Part1.xml -o E:\DMS_WorkDir2\Dataset_Part1_modp.txt > MODPlus_ConsoleOutput_Part1.txt
                                 LogDebug(
                                     javaProgLoc + " " + modPlusRunner.Value.CommandLineArgs);
                             }
@@ -1087,13 +1081,11 @@ namespace AnalysisManagerMODPlusPlugin
 
                     if (exitCode != 0)
                     {
-                        LogWarning(
-                            "MODPlus returned a non-zero exit code: " + exitCode.ToString());
+                        LogWarning("MODPlus returned a non-zero exit code: " + exitCode.ToString());
                     }
                     else
                     {
-                        LogWarning(
-                            "Call to MODPlus failed (but exit code is 0)");
+                        LogWarning("Call to MODPlus failed (but exit code is 0)");
                     }
 
                     return false;
@@ -1144,8 +1136,7 @@ namespace AnalysisManagerMODPlusPlugin
             }
             catch (Exception ex)
             {
-                LogError(
-                    "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
         }

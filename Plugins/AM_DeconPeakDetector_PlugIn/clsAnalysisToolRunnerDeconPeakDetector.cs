@@ -57,8 +57,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
 
                 if (m_DebugLevel > 4)
                 {
-                    LogDebug(
-                        "clsAnalysisToolRunnerDeconPeakDetector.RunTool(): Enter");
+                    LogDebug("clsAnalysisToolRunnerDeconPeakDetector.RunTool(): Enter");
                 }
 
                 // Verify that program files exist
@@ -185,8 +184,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
                 {
                     if (m_DebugLevel >= 4)
                     {
-                        LogDebug(
-                            "Console output file not found: " + strConsoleOutputFilePath);
+                        LogDebug("Console output file not found: " + strConsoleOutputFilePath);
                     }
 
                     return;
@@ -297,13 +295,11 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
 
                 if (mCmdRunner.ExitCode != 0)
                 {
-                    LogWarning(
-                        "PeakDetector returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
+                    LogWarning("PeakDetector returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
                 }
                 else
                 {
-                    LogWarning(
-                        "Call to PeakDetector failed (but exit code is 0)");
+                    LogWarning("Call to PeakDetector failed (but exit code is 0)");
                 }
 
                 return false;

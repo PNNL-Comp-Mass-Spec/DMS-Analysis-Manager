@@ -101,8 +101,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 // Store the GlyQ-IQ version info in the database
                 if (!StoreToolVersionInfo(progLoc))
                 {
-                    LogError(
-                        "Aborting since StoreToolVersionInfo returned false");
+                    LogError("Aborting since StoreToolVersionInfo returned false");
                     if (string.IsNullOrEmpty(m_message))
                     {
                         m_message = "Error determining GlyQ-IQ version";
@@ -164,8 +163,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 // It is now safe to delete the _peaks.txt file that is in the transfer folder
                 if (m_DebugLevel >= 1)
                 {
-                    LogDebug(
-                        "Deleting the _peaks.txt file from the Results Transfer folder");
+                    LogDebug("Deleting the _peaks.txt file from the Results Transfer folder");
                 }
 
                 RemoveNonResultServerFiles();
@@ -269,8 +267,7 @@ namespace AnalysisManagerGlyQIQPlugin
             {
                 if (m_DebugLevel >= 1)
                 {
-                    LogDebug(
-                        "Counting the number of MS/MS spectra in " + Path.GetFileName(rawFilePath));
+                    LogDebug("Counting the number of MS/MS spectra in " + Path.GetFileName(rawFilePath));
                 }
 
                 mThermoFileReader = new XRawFileIO();
@@ -627,8 +624,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 }
                 else
                 {
-                    LogError(
-                        "Error storing PSM Results in database, " + STORE_JOB_PSM_RESULTS_SP_NAME + " returned " + ResCode);
+                    LogError("Error storing PSM Results in database, " + STORE_JOB_PSM_RESULTS_SP_NAME + " returned " + ResCode);
                     clsGlobal.AppendToComment(m_message, "Error storing PSM Results in database");
 
                     blnSuccess = false;
@@ -636,8 +632,7 @@ namespace AnalysisManagerGlyQIQPlugin
             }
             catch (Exception ex)
             {
-                LogError(
-                    "Exception storing PSM Results in database: " + ex.Message);
+                LogError("Exception storing PSM Results in database: " + ex.Message);
                 blnSuccess = false;
             }
 
@@ -714,8 +709,7 @@ namespace AnalysisManagerGlyQIQPlugin
             }
             catch (Exception ex)
             {
-                LogError(
-                    "Exception in PruneConsoleOutputFiles: " + ex.Message);
+                LogError("Exception in PruneConsoleOutputFiles: " + ex.Message);
             }
         }
 
@@ -800,8 +794,7 @@ namespace AnalysisManagerGlyQIQPlugin
                             if (!completedCores.Contains(glyQRunner.Key))
                             {
                                 completedCores.Add(glyQRunner.Key);
-                                LogDebug(
-                                    "GlyQ-IQ processing core " + glyQRunner.Key + " is now complete");
+                                LogDebug("GlyQ-IQ processing core " + glyQRunner.Key + " is now complete");
                             }
                         }
 
@@ -854,8 +847,7 @@ namespace AnalysisManagerGlyQIQPlugin
 
                     foreach (var cachedError in progRunner.CachedConsoleErrors)
                     {
-                        LogError(
-                            "Core " + glyQRunner.Key + ": " + cachedError);
+                        LogError("Core " + glyQRunner.Key + ": " + cachedError);
                         blnSuccess = false;
                     }
 
@@ -875,13 +867,11 @@ namespace AnalysisManagerGlyQIQPlugin
 
                     if (exitCode != 0)
                     {
-                        LogWarning(
-                            "GlyQ-IQ returned a non-zero exit code: " + exitCode.ToString());
+                        LogWarning("GlyQ-IQ returned a non-zero exit code: " + exitCode.ToString());
                     }
                     else
                     {
-                        LogWarning(
-                            "Call to GlyQ-IQ failed (but exit code is 0)");
+                        LogWarning("Call to GlyQ-IQ failed (but exit code is 0)");
                     }
 
                     return false;
@@ -929,8 +919,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 }
                 catch (Exception ex)
                 {
-                    LogError(
-                        "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                    LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                     return false;
                 }
             }
@@ -959,8 +948,7 @@ namespace AnalysisManagerGlyQIQPlugin
             }
             catch (Exception ex)
             {
-                LogError(
-                    "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
         }

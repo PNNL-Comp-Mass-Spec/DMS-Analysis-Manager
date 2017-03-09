@@ -30,16 +30,15 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 return result;
             }
 
-            var lstDataPackagePeptideHitJobs = new List<clsDataPackageJobInfo>();
+            List<clsDataPackageJobInfo> lstDataPackagePeptideHitJobs;
 
-            bool blnCreatePrideXMLFiles = m_jobParams.GetJobParameter("CreatePrideXMLFiles", false);
+            var blnCreatePrideXMLFiles = m_jobParams.GetJobParameter("CreatePrideXMLFiles", false);
 
             // Check whether we are only creating the .msgf files
-            bool blnCreateMSGFReportFilesOnly = m_jobParams.GetJobParameter("CreateMSGFReportFilesOnly", false);
-            clsDataPackageFileHandler.udtDataPackageRetrievalOptionsType udtOptions =
-                new clsDataPackageFileHandler.udtDataPackageRetrievalOptionsType();
-
-            udtOptions.CreateJobPathFiles = true;
+            var blnCreateMSGFReportFilesOnly = m_jobParams.GetJobParameter("CreateMSGFReportFilesOnly", false);
+            var udtOptions = new clsDataPackageFileHandler.udtDataPackageRetrievalOptionsType {
+                CreateJobPathFiles = true
+            };
 
             if (blnCreatePrideXMLFiles & !blnCreateMSGFReportFilesOnly)
             {
@@ -97,7 +96,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             // The .mzXML file is required if we are creating Pride XML files (which were required for a "complete" submission
             //   prior to May 2013; we now submit .mzid.gz files, .mgf files, and instrument binary files and thus don't need the .mzXML file.
             //   However, if the MSGF+ search used searched a .mzML file and not a _dta.txt file, then we _do_ need the .mzid file)
-            if (!base.RetrieveDataPackagePeptideHitJobPHRPFiles(udtOptions, out lstDataPackagePeptideHitJobs, 0,
+            if (!RetrieveDataPackagePeptideHitJobPHRPFiles(udtOptions, out lstDataPackagePeptideHitJobs, 0,
                     clsAnalysisToolRunnerPRIDEConverter.PROGRESS_PCT_TOOL_RUNNER_STARTING))
             {
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -139,10 +138,9 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             try
             {
-                foreach (clsDataPackageJobInfo dataPkgJob in lstDataPackagePeptideHitJobs)
+                foreach (var dataPkgJob in lstDataPackagePeptideHitJobs)
                 {
-                    string strMzXmlFilePath = null;
-                    strMzXmlFilePath = Path.Combine(m_WorkingDir, dataPkgJob.Dataset + DOT_MZXML_EXTENSION);
+                    var strMzXmlFilePath = Path.Combine(m_WorkingDir, dataPkgJob.Dataset + DOT_MZXML_EXTENSION);
 
                     if (!File.Exists(strMzXmlFilePath))
                     {
@@ -179,7 +177,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
         public static string GetMSGFReportTemplateFilename(IJobParams JobParams, bool WarnIfJobParamMissing)
         {
-            string strTemplateFileName = JobParams.GetJobParameter(JOB_PARAM_MSGF_REPORT_TEMPLATE_FILENAME, string.Empty);
+            var strTemplateFileName = JobParams.GetJobParameter(JOB_PARAM_MSGF_REPORT_TEMPLATE_FILENAME, string.Empty);
 
             if (string.IsNullOrEmpty(strTemplateFileName))
             {
@@ -196,7 +194,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
         public static string GetPXSubmissionTemplateFilename(IJobParams JobParams, bool WarnIfJobParamMissing)
         {
-            string strTemplateFileName = JobParams.GetJobParameter(JOB_PARAM_PX_SUBMISSION_TEMPLATE_FILENAME, string.Empty);
+            var strTemplateFileName = JobParams.GetJobParameter(JOB_PARAM_PX_SUBMISSION_TEMPLATE_FILENAME, string.Empty);
 
             if (string.IsNullOrEmpty(strTemplateFileName))
             {
@@ -213,11 +211,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
         protected bool RetrieveFastaFiles(IEnumerable<clsDataPackageJobInfo> lstDataPackagePeptideHitJobs)
         {
-            string strLocalOrgDBFolder = m_mgrParams.GetParam("orgdbdir");
-
-            string strDictionaryKey = null;
-
-            string strOrgDBNameGenerated = string.Empty;
+            var strLocalOrgDBFolder = m_mgrParams.GetParam("orgdbdir");
 
             try
             {
@@ -229,10 +223,11 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 // Cache the current dataset and job info
                 var currentDatasetAndJobInfo = GetCurrentDatasetAndJobInfo();
 
-                foreach (clsDataPackageJobInfo dataPkgJob in lstDataPackagePeptideHitJobs)
+                foreach (var dataPkgJob in lstDataPackagePeptideHitJobs)
                 {
-                    strDictionaryKey = dataPkgJob.LegacyFastaFileName + "_" + dataPkgJob.ProteinCollectionList + "_" + dataPkgJob.ProteinOptions;
+                    var strDictionaryKey = dataPkgJob.LegacyFastaFileName + "_" + dataPkgJob.ProteinCollectionList + "_" + dataPkgJob.ProteinOptions;
 
+                    string strOrgDBNameGenerated;
                     if (dctOrgDBParamsToGeneratedFileNameMap.TryGetValue(strDictionaryKey, out strOrgDBNameGenerated))
                     {
                         // Organism DB was already generated
@@ -263,8 +258,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                         if (strOrgDBNameGenerated != dataPkgJob.OrganismDBName)
                         {
-                            if (strOrgDBNameGenerated == null)
-                                strOrgDBNameGenerated = "??";
                             if (dataPkgJob.OrganismDBName == null)
                                 dataPkgJob.OrganismDBName = "??";
 
@@ -302,14 +295,12 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             // Retrieve the template .msgf-pride.xml file
             // Although there is a default in the PRIDE_Converter parameter file folder, it should ideally be customized and placed in the data package folder
 
-            string strTemplateFileName = null;
-
             try
             {
-                strTemplateFileName = GetMSGFReportTemplateFilename(m_jobParams, WarnIfJobParamMissing: true);
+                var strTemplateFileName = GetMSGFReportTemplateFilename(m_jobParams, WarnIfJobParamMissing: true);
 
                 // First look for the template file in the data package folder
-                string strDataPackagePath = m_jobParams.GetJobParameter("JobParameters", "transferFolderPath", string.Empty);
+                var strDataPackagePath = m_jobParams.GetJobParameter("JobParameters", "transferFolderPath", string.Empty);
                 if (string.IsNullOrEmpty(strDataPackagePath))
                 {
                     m_message = "Job parameter transferFolderPath is missing; unable to determine the data package folder path";
@@ -339,14 +330,11 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     {
                         return false;
                     }
-                    else
-                    {
-                        strTemplateFileName = fiFiles[0].Name;
-                    }
+                    strTemplateFileName = fiFiles[0].Name;
                 }
                 else
                 {
-                    string strParamFileStoragePath = m_jobParams.GetParam("ParmFileStoragePath");
+                    var strParamFileStoragePath = m_jobParams.GetParam("ParmFileStoragePath");
                     strTemplateFileName = DEFAULT_MSGF_REPORT_TEMPLATE_FILENAME;
 
                     LogWarning(
@@ -389,7 +377,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 // First look for the template file in the data package folder
                 // Note that transferFolderPath is likely \\protoapps\PeptideAtlas_Staging and not the real data package path
 
-                string transferFolderPath = m_jobParams.GetJobParameter("JobParameters", "transferFolderPath", string.Empty);
+                var transferFolderPath = m_jobParams.GetJobParameter("JobParameters", "transferFolderPath", string.Empty);
                 if (string.IsNullOrEmpty(transferFolderPath))
                 {
                     m_message = "Job parameter transferFolderPath is missing; unable to determine the data package folder path";
@@ -397,14 +385,14 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     return false;
                 }
 
-                string ConnectionString = m_mgrParams.GetParam("brokerconnectionstring");
-                int dataPackageID = m_jobParams.GetJobParameter("DataPackageID", -1);
+                var ConnectionString = m_mgrParams.GetParam("brokerconnectionstring");
+                var dataPackageID = m_jobParams.GetJobParameter("DataPackageID", -1);
 
                 var matchFound = false;
-                var lstSourceFolders = new List<string>();
-
-                lstSourceFolders.Add(GetDataPackageStoragePath(ConnectionString, dataPackageID));
-                lstSourceFolders.Add(transferFolderPath);
+                var lstSourceFolders = new List<string> {
+                    GetDataPackageStoragePath(ConnectionString, dataPackageID),
+                    transferFolderPath
+                };
 
                 foreach (var sourceFolderPath in lstSourceFolders)
                 {
@@ -427,18 +415,15 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         {
                             return false;
                         }
-                        else
-                        {
-                            strTemplateFileName = fiFiles[0].Name;
-                            matchFound = true;
-                            break;
-                        }
+                        strTemplateFileName = fiFiles[0].Name;
+                        matchFound = true;
+                        break;
                     }
                 }
 
                 if (!matchFound)
                 {
-                    string strParamFileStoragePath = m_jobParams.GetParam("ParmFileStoragePath");
+                    var strParamFileStoragePath = m_jobParams.GetParam("ParmFileStoragePath");
                     if (string.IsNullOrEmpty(strParamFileStoragePath))
                     {
                         strParamFileStoragePath = @"\\gigasax\dms_parameter_Files\PRIDE_Converter";
@@ -483,7 +468,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         {
             var lstDataPackageJobs = new List<string>();
 
-            foreach (clsDataPackageJobInfo dataPkgJob in lstDataPackagePeptideHitJobs)
+            foreach (var dataPkgJob in lstDataPackagePeptideHitJobs)
             {
                 lstDataPackageJobs.Add(dataPkgJob.Job.ToString());
             }

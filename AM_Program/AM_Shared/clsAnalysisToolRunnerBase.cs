@@ -9,7 +9,7 @@ using System.Threading;
 using System.Text.RegularExpressions;
 
 //*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy 
+// Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2007, Battelle Memorial Institute
 // Created 12/19/2007
@@ -81,7 +81,7 @@ namespace AnalysisManagerBase
         protected int m_EvalCode;
 
         /// <summary>
-        /// Can be used to pass information regarding the results of this analysis back to the DMS_Pipeline DB        
+        /// Can be used to pass information regarding the results of this analysis back to the DMS_Pipeline DB
         /// </summary>
         protected string m_EvalMessage = string.Empty;
 
@@ -317,13 +317,13 @@ namespace AnalysisManagerBase
                 return currentTaskProgressAtEnd;
             }
 
-            return currentTaskProgressAtStart + 
+            return currentTaskProgressAtStart +
                 currentTaskItemsProcessed / (float)currentTaskTotalItems * (currentTaskProgressAtEnd - currentTaskProgressAtStart);
 
         }
 
         /// <summary>
-        /// Computes the maximum threads to allow given the number of cores on the machine and 
+        /// Computes the maximum threads to allow given the number of cores on the machine and
         /// the the amount of memory that each thread is allowed to reserve
         /// </summary>
         /// <param name="memorySizeMBPerThread">Amount of memory allocated to each thread</param>
@@ -407,7 +407,9 @@ namespace AnalysisManagerBase
 
                 string remoteCacheFilePath;
 
-                var success = CopyFileToServerCache(cacheFolderPath, toolNameVersionFolder, sourceFilePath, strDatasetYearQuarter, purgeOldFilesIfNeeded: purgeOldFilesIfNeeded, remoteCacheFilePath: out remoteCacheFilePath);
+                var success = CopyFileToServerCache(
+                    cacheFolderPath, toolNameVersionFolder, sourceFilePath, strDatasetYearQuarter,
+                    purgeOldFilesIfNeeded: purgeOldFilesIfNeeded, remoteCacheFilePath: out remoteCacheFilePath);
 
                 if (!success)
                 {
@@ -436,7 +438,10 @@ namespace AnalysisManagerBase
         /// <param name="strCacheFolderPath">Cache folder base path, e.g. \\proto-6\MSXML_Cache</param>
         /// <param name="strSubfolderInTarget">Subfolder name to create below strCacheFolderPath (optional), e.g. MSXML_Gen_1_93 or MSConvert</param>
         /// <param name="strsourceFilePath">Path to the data file</param>
-        /// <param name="strDatasetYearQuarter">Dataset year quarter text (optional); example value is 2013_2; if this this parameter is blank, then will auto-determine using Job Parameter DatasetStoragePath</param>
+        /// <param name="strDatasetYearQuarter">
+        /// Dataset year quarter text (optional)
+        /// Example value is 2013_2; if this this parameter is blank, then will auto-determine using Job Parameter DatasetStoragePath
+        /// </param>
         /// <param name="blnPurgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 20 TB</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>
@@ -458,7 +463,10 @@ namespace AnalysisManagerBase
         /// <param name="cacheFolderPath">Cache folder base path, e.g. \\proto-11\MSXML_Cache</param>
         /// <param name="subfolderInTarget">Subfolder name to create below strCacheFolderPath (optional), e.g. MSXML_Gen_1_93 or MSConvert</param>
         /// <param name="sourceFilePath">Path to the data file</param>
-        /// <param name="datasetYearQuarter">Dataset year quarter text (optional); example value is 2013_2; if this this parameter is blank, then will auto-determine using Job Parameter DatasetStoragePath</param>
+        /// <param name="datasetYearQuarter">
+        /// Dataset year quarter text (optional)
+        /// Eexample value is 2013_2; if this this parameter is blank, then will auto-determine using Job Parameter DatasetStoragePath
+        /// </param>
         /// <param name="purgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 20 TB</param>
         /// <param name="remoteCacheFilePath">Output parameter: the target file path (determined by this function)</param>
         /// <returns>True if success, false if an error</returns>
@@ -582,7 +590,7 @@ namespace AnalysisManagerBase
         /// <param name="blnPurgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 20 TB</param>
         /// <returns>True if success; false if an error</returns>
         /// <remarks>
-        /// Contrast with CopyMSXmlToCache in clsAnalysisToolRunnerMSXMLGen, where the target folder is 
+        /// Contrast with CopyMSXmlToCache in clsAnalysisToolRunnerMSXMLGen, where the target folder is
         /// of the form \\proto-6\MSXML_Cache\MSConvert\MSXML_Gen_1_93
         /// </remarks>
         protected bool CopyMzXMLFileToServerCache(string strsourceFilePath, string strDatasetYearQuarter, string strMSXmlGeneratorName, bool blnPurgeOldFilesIfNeeded)
@@ -637,7 +645,7 @@ namespace AnalysisManagerBase
         /// Copies the files from the results folder to the transfer folder on the server
         /// </summary>
         /// <param name="transferFolderPath">Base transfer folder path to use
-        /// e.g. \\proto-6\DMS3_Xfer\ or 
+        /// e.g. \\proto-6\DMS3_Xfer\ or
         /// \\protoapps\PeptideAtlas_Staging\1000_DataPackageName</param>
         /// <returns>CloseOutType.CLOSEOUT_SUCCESS on success</returns>
         /// <remarks></remarks>
@@ -712,7 +720,10 @@ namespace AnalysisManagerBase
                 // Copy all of the files and subdirectories in the local result folder to the target folder
 
                 // Copy the files and subfolders
-                var eResult = CopyResultsFolderRecursive(sourceFolderPath, sourceFolderPath, targetDirectoryPath, objAnalysisResults, ref blnErrorEncountered, ref intFailedFileCount, intRetryCount, intRetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry);
+                var eResult = CopyResultsFolderRecursive(
+                    sourceFolderPath, sourceFolderPath, targetDirectoryPath, objAnalysisResults,
+                    ref blnErrorEncountered, ref intFailedFileCount, intRetryCount,
+                    intRetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry);
 
                 if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
                     blnErrorEncountered = true;
@@ -1077,7 +1088,7 @@ namespace AnalysisManagerBase
                     // Delay 2 seconds
                     Thread.Sleep(2000);
 
-                    // Do a garbage collection in case something is hanging onto the file that has been closed, but not GC'd 
+                    // Do a garbage collection in case something is hanging onto the file that has been closed, but not GC'd
                     PRISM.clsProgRunner.GarbageCollectNow();
                     retryCount += 1;
 
@@ -1181,7 +1192,7 @@ namespace AnalysisManagerBase
                 case clsAnalysisResources.eRawDataTypeConstants.BrukerMALDISpot:
                     ////////////////////////////////////
                     // TODO: Finalize this code
-                    //       DMS doesn't yet have a BrukerTOF dataset 
+                    //       DMS doesn't yet have a BrukerTOF dataset
                     //        so we don't know the official folder structure
                     ////////////////////////////////////
 
@@ -1193,7 +1204,7 @@ namespace AnalysisManagerBase
 
                     ////////////////////////////////////
                     // TODO: Finalize this code
-                    //       DMS doesn't yet have a BrukerTOF dataset 
+                    //       DMS doesn't yet have a BrukerTOF dataset
                     //        so we don't know the official folder structure
                     ////////////////////////////////////
 
@@ -1330,7 +1341,13 @@ namespace AnalysisManagerBase
         /// <param name="errorMessage">Output: error message</param>
         /// <returns>The path to the program, or an empty string if there is a problem</returns>
         /// <remarks></remarks>
-        public static string DetermineProgramLocation(string strStepToolName, string strProgLocManagerParamName, string strExeName, string strStepToolVersion, IMgrParams mgrParams, out string errorMessage)
+        public static string DetermineProgramLocation(
+            string strStepToolName,
+            string strProgLocManagerParamName,
+            string strExeName,
+            string strStepToolVersion,
+            IMgrParams mgrParams,
+            out string errorMessage)
         {
 
             errorMessage = string.Empty;
@@ -1445,7 +1462,10 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Looks up the current debug level for the manager.  If the call to the server fails, m_DebugLevel will be left unchanged
         /// </summary>
-        /// <param name="intUpdateIntervalSeconds">The minimum number of seconds between updates; if fewer than intUpdateIntervalSeconds seconds have elapsed since the last call to this function, then no update will occur</param>
+        /// <param name="intUpdateIntervalSeconds">
+        /// The minimum number of seconds between updates
+        /// If fewer than intUpdateIntervalSeconds seconds have elapsed since the last call to this function, then no update will occur
+        /// </param>
         /// <returns></returns>
         /// <remarks></remarks>
         protected bool GetCurrentMgrSettingsFromDB(int intUpdateIntervalSeconds)
@@ -1510,7 +1530,10 @@ namespace AnalysisManagerBase
                 return currentDebugLevel;
             }
 
-            var sqlQuery = "SELECT ParameterName, ParameterValue " + "FROM V_MgrParams " + "WHERE ManagerName = '" + managerName + "' AND " + " ParameterName IN ('debuglevel', 'MgrSettingGroupName')";
+            var sqlQuery =
+                "SELECT ParameterName, ParameterValue " +
+                "FROM V_MgrParams " +
+                "WHERE ManagerName = '" + managerName + "' AND " + " ParameterName IN ('debuglevel', 'MgrSettingGroupName')";
 
             List<List<string>> lstResults;
             var success = clsGlobal.GetQueryResults(sqlQuery, connectionString, out lstResults, "GetCurrentMgrSettingsFromDB");
@@ -2011,7 +2034,7 @@ namespace AnalysisManagerBase
 
             // Gigasax.DMS_Pipeline
             var connectionString = m_mgrParams.GetParam("brokerconnectionstring");
-                        
+
             var dataPackageID = m_jobParams.GetJobParameter("DataPackageID", -1);
 
             if (dataPackageID < 0)
@@ -2287,7 +2310,7 @@ namespace AnalysisManagerBase
                     }
 
                     // Look for invalid characters in the filename
-                    // (Required because extract_msn.exe sometimes leaves files with names like "C3 90 68 C2" (ascii codes) in working directory) 
+                    // (Required because extract_msn.exe sometimes leaves files with names like "C3 90 68 C2" (ascii codes) in working directory)
                     // Note: now evaluating each character in the filename
                     if (okToMove)
                     {
@@ -2369,7 +2392,7 @@ namespace AnalysisManagerBase
                                 // Attempt to copy the file instead of moving the file
                                 File.Copy(tmpFileName, targetFilePath, true);
 
-                                // If we get here, then the copy succeeded; 
+                                // If we get here, then the copy succeeded;
                                 // The original file (in the work folder) will get deleted when the work folder is "cleaned" after the job finishes
                             }
 
@@ -3773,7 +3796,7 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                LogError("Error updating the summary file", 
+                LogError("Error updating the summary file",
                          "Error updating the summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("StepParameters", "Step") + ": " + ex.Message);
                 return false;
             }
@@ -4072,7 +4095,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Verifies that the zip file exists.  
+        /// Verifies that the zip file exists.
         /// If the file size is less than crcCheckThresholdGB, then also performs a full CRC check of the data
         /// </summary>
         /// <param name="zipFilePath">Zip file to check</param>

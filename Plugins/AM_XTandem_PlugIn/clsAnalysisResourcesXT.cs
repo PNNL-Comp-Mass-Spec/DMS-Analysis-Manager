@@ -160,8 +160,7 @@ namespace AnalysisManagerXTandemPlugIn
             catch (Exception E)
             {
                 // Let the user know what went wrong.
-                LogError(
-                    "clsAnalysisResourcesXT.MakeTaxonomyFile, The file could not be read" + E.Message);
+                LogError("clsAnalysisResourcesXT.MakeTaxonomyFile, The file could not be read" + E.Message);
             }
 
             //get rid of base file
@@ -230,8 +229,7 @@ namespace AnalysisManagerXTandemPlugIn
             catch (Exception E)
             {
                 // Let the user know what went wrong.
-                LogError(
-                    "clxAnalysisResourcesXT.MakeInputFile, The file could not be read" + E.Message);
+                LogError("clxAnalysisResourcesXT.MakeInputFile, The file could not be read" + E.Message);
                 result = false;
             }
 
@@ -326,8 +324,7 @@ namespace AnalysisManagerXTandemPlugIn
                         catch (Exception ex)
                         {
                             // Error deleting the file; log it but keep processing
-                            LogError(
-                                "Exception deleting _dta_old.txt file: " + ex.Message);
+                            LogError("Exception deleting _dta_old.txt file: " + ex.Message);
                         }
                     }
                 }
@@ -355,8 +352,7 @@ namespace AnalysisManagerXTandemPlugIn
                 {
                     dtLastUpdateTime = DateTime.UtcNow;
 
-                    LogDebug(
-                        " ... " + percentComplete.ToString("0.00") + "% complete");
+                    LogDebug(" ... " + percentComplete.ToString("0.00") + "% complete");
                 }
             }
         }

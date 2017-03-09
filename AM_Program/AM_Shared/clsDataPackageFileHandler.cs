@@ -30,25 +30,25 @@ namespace AnalysisManagerBase
             /// </summary>
             /// <remarks>No files are actually retrieved when this is set to True</remarks>
             public bool CreateJobPathFiles;
-            
+
             /// <summary>
             /// Set to true to obtain the mzXML file for the dataset associated with this job
             /// </summary>
             /// <remarks>If the .mzXML file does not exist, then retrieves the instrument data file (e.g. Thermo .raw file)</remarks>
             public bool RetrieveMzXMLFile;
-            
+
             /// <summary>
             /// Set to True to retrieve _DTA.txt files (the PRIDE Converter will convert these to .mgf files)
             /// </summary>
             /// <remarks>If the search used a .mzML instead of a _dta.txt file, the .mzML.gz file will be retrieved</remarks>
             public bool RetrieveDTAFiles;
-            
+
             /// <summary>
             /// Set to True to obtain MSGF+ .mzID files
             /// </summary>
             /// <remarks></remarks>
             public bool RetrieveMZidFiles;
-            
+
             /// <summary>
             /// Set to True to obtain .pepXML files (typically stored as _pepXML.zip)
             /// </summary>
@@ -165,7 +165,9 @@ namespace AnalysisManagerBase
                 bool validFolderFound;
                 string folderNotFoundMessage;
 
-                var datasetFolderPath = mAnalysisResources.FindValidFolder(dataset, "*_CacheInfo.txt", folderNameToFind: inputFolderName, maxAttempts: 1, logFolderNotFound: false, retrievingInstrumentDataFolder: false, assumeUnpurged: false,
+                var datasetFolderPath = mAnalysisResources.FindValidFolder(
+                    dataset, "*_CacheInfo.txt", folderNameToFind: inputFolderName, maxAttempts: 1,
+                    logFolderNotFound: false, retrievingInstrumentDataFolder: false, assumeUnpurged: false,
                     validFolderFound: out validFolderFound, folderNotFoundMessage: out folderNotFoundMessage);
 
                 if (!validFolderFound)
@@ -225,7 +227,7 @@ namespace AnalysisManagerBase
                     var sourceCacheInfoFile = cacheInfoFiles.First();
 
                     var success = mAnalysisResources.CopyFileToWorkDir(
-                        sourceCacheInfoFile.Name, sourceCacheInfoFile.DirectoryName, 
+                        sourceCacheInfoFile.Name, sourceCacheInfoFile.DirectoryName,
                         workingDir, clsLogTools.LogLevels.ERROR);
 
                     if (!success)
@@ -415,7 +417,7 @@ namespace AnalysisManagerBase
                                         const string DOT_MZML = clsAnalysisResources.DOT_MZML_EXTENSION;
                                         const string DOT_MZML_GZ = clsAnalysisResources.DOT_MZML_EXTENSION + clsAnalysisResources.DOT_GZ_EXTENSION;
 
-                                        if (spectraDataFileName.EndsWith(DOT_MZML, StringComparison.InvariantCultureIgnoreCase) || 
+                                        if (spectraDataFileName.EndsWith(DOT_MZML, StringComparison.InvariantCultureIgnoreCase) ||
                                             spectraDataFileName.EndsWith(DOT_MZML_GZ, StringComparison.InvariantCultureIgnoreCase))
                                         {
                                             searchedUsedMzML = true;
@@ -544,7 +546,7 @@ namespace AnalysisManagerBase
             // The keys in this dictionary are data package job info entries
             // The values are KeyValuePairs of path to the .mzXML file and path to the .hashcheck file (if any)
             // The KeyValuePair will have empty strings if the .Raw file needs to be retrieved
-            // This information is used by RetrieveDataPackageMzXMLFiles when copying files locally        
+            // This information is used by RetrieveDataPackageMzXMLFiles when copying files locally
             var dctInstrumentDataToRetrieve = new Dictionary<clsDataPackageJobInfo, KeyValuePair<string, string>>();
 
             // This list tracks analysis jobs that are not PeptideHit jobs
@@ -745,7 +747,7 @@ namespace AnalysisManagerBase
                                     if (eLogMsgTypeIfNotFound != clsLogTools.LogLevels.DEBUG)
                                     {
                                         var warningMessage = "Required PHRP file not found: " + sourceFilename;
-                                        if (sourceFilename.EndsWith("_msgfplus.zip", StringComparison.InvariantCultureIgnoreCase) || 
+                                        if (sourceFilename.EndsWith("_msgfplus.zip", StringComparison.InvariantCultureIgnoreCase) ||
                                             sourceFilename.EndsWith("_msgfplus.mzid.gz", StringComparison.InvariantCultureIgnoreCase))
                                         {
                                             warningMessage += "; Confirm job used MSGF+ and not MSGFDB";
@@ -873,7 +875,7 @@ namespace AnalysisManagerBase
                                     }
                                     else
                                     {
-                                        // Note for files in MyEMSL, this call will simply add the file to the download queue 
+                                        // Note for files in MyEMSL, this call will simply add the file to the download queue
                                         // Use ProcessMyEMSLDownloadQueue() to retrieve the file
                                         var sourceMzMLFile = new FileInfo(mzMLFilePathRemote);
                                         var targetMzMLFile = new FileInfo(Path.Combine(localFolderPath, sourceMzMLFile.Name));
@@ -985,7 +987,11 @@ namespace AnalysisManagerBase
 
                                 if (blnPrefixRequired)
                                 {
-                                    if (RenameDuplicatePHRPFile(workingDir, datasetName + "_msgfplus.mzid", workingDir, "Job" + dataPkgJob.Job.ToString() + "_", dataPkgJob.Job, out unzippedFilePath))
+                                    if (RenameDuplicatePHRPFile(
+                                        workingDir, datasetName + "_msgfplus.mzid",
+                                        workingDir, "Job" + dataPkgJob.Job + "_",
+                                        dataPkgJob.Job,
+                                        out unzippedFilePath))
                                     {
                                     }
                                     else
@@ -1024,7 +1030,9 @@ namespace AnalysisManagerBase
                     }
 
                     intJobsProcessed += 1;
-                    var sngProgress = clsAnalysisToolRunnerBase.ComputeIncrementalProgress(progressPercentAtStart, progressPercentAtFinish, intJobsProcessed, lstDataPackagePeptideHitJobs.Count + lstAdditionalJobs.Count);
+                    var sngProgress = clsAnalysisToolRunnerBase.ComputeIncrementalProgress(
+                        progressPercentAtStart, progressPercentAtFinish, intJobsProcessed,
+                        lstDataPackagePeptideHitJobs.Count + lstAdditionalJobs.Count);
 
                     OnProgressUpdate("RetrieveDataPackagePeptideHitJobPHRPFiles (PeptideHit Jobs)", sngProgress);
 
@@ -1047,7 +1055,9 @@ namespace AnalysisManagerBase
                     }
 
                     intJobsProcessed += 1;
-                    var sngProgress = clsAnalysisToolRunnerBase.ComputeIncrementalProgress(progressPercentAtStart, progressPercentAtFinish, intJobsProcessed, lstDataPackagePeptideHitJobs.Count + lstAdditionalJobs.Count);
+                    var sngProgress = clsAnalysisToolRunnerBase.ComputeIncrementalProgress(
+                        progressPercentAtStart, progressPercentAtFinish, intJobsProcessed,
+                        lstDataPackagePeptideHitJobs.Count + lstAdditionalJobs.Count);
 
                     OnProgressUpdate("RetrieveDataPackagePeptideHitJobPHRPFiles (Additional Jobs)", sngProgress);
 
@@ -1137,7 +1147,12 @@ namespace AnalysisManagerBase
         /// <param name="dctDatasetRawFilePaths">Mapping of dataset name to the remote location of the .raw file</param>
         /// <returns></returns>
         /// <remarks></remarks>
-        private bool RetrieveDataPackageInstrumentFile(clsDataPackageJobInfo dataPkgJob, udtDataPackageRetrievalOptionsType udtOptions, IDictionary<int, string> dctRawFileRetrievalCommands, IDictionary<clsDataPackageJobInfo, KeyValuePair<string, string>> dctInstrumentDataToRetrieve, IDictionary<string, string> dctDatasetRawFilePaths)
+        private bool RetrieveDataPackageInstrumentFile(
+            clsDataPackageJobInfo dataPkgJob, udtDataPackageRetrievalOptionsType udtOptions,
+            IDictionary<int, string> dctRawFileRetrievalCommands,
+            IDictionary<clsDataPackageJobInfo,
+            KeyValuePair<string, string>> dctInstrumentDataToRetrieve,
+            IDictionary<string, string> dctDatasetRawFilePaths)
         {
 
             if (udtOptions.RetrieveMzXMLFile)
@@ -1195,7 +1210,11 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Retrieve the .mzXML files for the jobs in dctInstrumentDataToRetrieve
         /// </summary>
-        /// <param name="dctInstrumentDataToRetrieve">The keys in this dictionary are JobInfo entries; the values in this dictionary are KeyValuePairs of path to the .mzXML file and path to the .hashcheck file (if any); the KeyValuePair will have empty strings if the .Raw file needs to be retrieved</param>
+        /// <param name="dctInstrumentDataToRetrieve">
+        /// The keys in this dictionary are JobInfo entries
+        /// The values in this dictionary are KeyValuePairs of path to the .mzXML file and path to the .hashcheck file (if any).
+        /// The KeyValuePair will have empty strings if the .Raw file needs to be retrieved
+        /// </param>
         /// <param name="udtOptions">File retrieval options</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>If udtOptions.CreateJobPathFiles is True, then will create StoragePathInfo files for the .mzXML or .Raw files</remarks>
@@ -1295,7 +1314,8 @@ namespace AnalysisManagerBase
                         else
                         {
                             // .mzXML file not found (or problem adding to the MyEMSL download queue)
-                            // Find or retrieve the .Raw file, which can be used to create the .mzXML file (the plugin will actually perform the work of converting the file; as an example, see the MSGF plugin)
+                            // Find or retrieve the .Raw file, which can be used to create the .mzXML file
+                            // (the plugin will actually perform the work of converting the file; as an example, see the MSGF plugin)
 
                             if (!mAnalysisResources.FileSearch.RetrieveSpectra(kvItem.Key.RawDataType, createStoragePathInfoOnly, maxAttempts: 1))
                             {
@@ -1310,7 +1330,7 @@ namespace AnalysisManagerBase
 
                     datasetsProcessed += 1;
 
-                    // Compute a % complete value between 0 and 2%                
+                    // Compute a % complete value between 0 and 2%
                     var percentComplete = datasetsProcessed / (float)datasetsToProcess * 2;
                     OnProgressUpdate("Retrieving MzXML files", percentComplete);
 
@@ -1365,6 +1385,6 @@ namespace AnalysisManagerBase
             OnErrorEvent(message);
         }
 
-        #endregion        
+        #endregion
     }
 }

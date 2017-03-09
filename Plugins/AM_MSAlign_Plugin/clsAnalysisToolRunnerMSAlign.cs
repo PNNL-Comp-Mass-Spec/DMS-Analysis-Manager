@@ -237,13 +237,11 @@ namespace AnalysisManagerMSAlignPlugIn
 
                     if (mCmdRunner.ExitCode != 0)
                     {
-                        LogWarning(
-                            "MSAlign returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
+                        LogWarning("MSAlign returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
                     }
                     else
                     {
-                        LogWarning(
-                            "Call to MSAlign failed (but exit code is 0)");
+                        LogWarning("Call to MSAlign failed (but exit code is 0)");
                     }
 
                     blnProcessingError = true;
@@ -360,8 +358,7 @@ namespace AnalysisManagerMSAlignPlugIn
 
                 if (m_DebugLevel >= 1)
                 {
-                    LogMessage(
-                        "Adding header line to MSAlign_ResultTable.txt file");
+                    LogMessage("Adding header line to MSAlign_ResultTable.txt file");
                 }
 
                 string strTargetFilePath = null;
@@ -395,8 +392,7 @@ namespace AnalysisManagerMSAlignPlugIn
             }
             catch (Exception ex)
             {
-                LogError(
-                    "Exception in AddResultTableHeaderLine: " + ex.Message);
+                LogError("Exception in AddResultTableHeaderLine: " + ex.Message);
                 return false;
             }
 
@@ -434,8 +430,7 @@ namespace AnalysisManagerMSAlignPlugIn
 
                         if (intWarningCount < 5 && strProteinResidues.GetHashCode() != oReader.ProteinSequence.GetHashCode())
                         {
-                            LogWarning(
-                                "Changed invalid residues to '-' in protein " + oReader.ProteinName);
+                            LogWarning("Changed invalid residues to '-' in protein " + oReader.ProteinName);
                             intWarningCount += 1;
                         }
 
@@ -468,8 +463,7 @@ namespace AnalysisManagerMSAlignPlugIn
             if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
-            LogWarning(
-                "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
+            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
 
             // Bump up the debug level if less than 2
             if (m_DebugLevel < 2)
@@ -514,8 +508,7 @@ namespace AnalysisManagerMSAlignPlugIn
 
                 if (!fiMSAlignJarFile.Exists)
                 {
-                    LogError(
-                        "MSAlign .Jar file not found: " + fiMSAlignJarFile.FullName);
+                    LogError("MSAlign .Jar file not found: " + fiMSAlignJarFile.FullName);
                     return false;
                 }
 
@@ -566,8 +559,7 @@ namespace AnalysisManagerMSAlignPlugIn
 
                     if (diSubfolder.Length == 0)
                     {
-                        LogError(
-                            "Source MSAlign subfolder not found: " + strTargetSubfolder);
+                        LogError("Source MSAlign subfolder not found: " + strTargetSubfolder);
                         return false;
                     }
 
@@ -579,8 +571,7 @@ namespace AnalysisManagerMSAlignPlugIn
             }
             catch (Exception ex)
             {
-                LogError(
-                    "Exception in CopyMSAlignProgramFiles: " + ex.Message);
+                LogError("Exception in CopyMSAlignProgramFiles: " + ex.Message);
                 return false;
             }
 
@@ -706,7 +697,8 @@ namespace AnalysisManagerMSAlignPlugIn
 
                                         if (strProteinOptions.ToLower().Contains("seq_direction=decoy"))
                                         {
-                                            m_message = "MSAlign parameter file contains searchType=TARGET+DECOY; protein options for this analysis job must contain seq_direction=forward, not seq_direction=decoy";
+                                            m_message = "MSAlign parameter file contains searchType=TARGET+DECOY; " + 
+                                                "protein options for this analysis job must contain seq_direction=forward, not seq_direction=decoy";
 
                                             LogError(m_message);
 
@@ -860,8 +852,7 @@ namespace AnalysisManagerMSAlignPlugIn
             catch (Exception ex)
             {
                 m_message = "Exception in CreateInputPropertiesFile";
-                LogError(
-                    "Exception in CreateInputPropertiesFile: " + ex.Message);
+                LogError("Exception in CreateInputPropertiesFile: " + ex.Message);
                 return false;
             }
 
@@ -935,8 +926,7 @@ namespace AnalysisManagerMSAlignPlugIn
             }
             catch (Exception ex)
             {
-                LogError(
-                    "Exception in InitializeMSInputFolder: " + ex.Message);
+                LogError("Exception in InitializeMSInputFolder: " + ex.Message);
                 return false;
             }
 
@@ -964,8 +954,7 @@ namespace AnalysisManagerMSAlignPlugIn
                 {
                     if (m_DebugLevel >= 4)
                     {
-                        LogDebug(
-                            "Console output file not found: " + strConsoleOutputFilePath);
+                        LogDebug("Console output file not found: " + strConsoleOutputFilePath);
                     }
 
                     return;
@@ -1002,8 +991,7 @@ namespace AnalysisManagerMSAlignPlugIn
                                 {
                                     if (m_DebugLevel >= 2 && string.IsNullOrWhiteSpace(mMSAlignVersion))
                                     {
-                                        LogDebug(
-                                            "MSAlign version: " + strLineIn);
+                                        LogDebug("MSAlign version: " + strLineIn);
                                     }
 
                                     mMSAlignVersion = string.Copy(strLineIn);
@@ -1055,8 +1043,7 @@ namespace AnalysisManagerMSAlignPlugIn
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    LogError(
-                        "Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    LogError("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
             }
         }
@@ -1084,8 +1071,7 @@ namespace AnalysisManagerMSAlignPlugIn
             }
             catch (Exception ex)
             {
-                LogError(
-                    "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
         }
@@ -1105,8 +1091,7 @@ namespace AnalysisManagerMSAlignPlugIn
                 {
                     if (m_DebugLevel >= 4)
                     {
-                        LogDebug(
-                            "Console output file not found: " + strConsoleOutputFilePath);
+                        LogDebug("Console output file not found: " + strConsoleOutputFilePath);
                     }
 
                     return;
@@ -1114,8 +1099,7 @@ namespace AnalysisManagerMSAlignPlugIn
 
                 if (m_DebugLevel >= 4)
                 {
-                    LogDebug(
-                        "Trimming console output file at " + strConsoleOutputFilePath);
+                    LogDebug("Trimming console output file at " + strConsoleOutputFilePath);
                 }
 
                 string strLineIn = null;
@@ -1185,8 +1169,7 @@ namespace AnalysisManagerMSAlignPlugIn
                 {
                     if (m_DebugLevel >= 1)
                     {
-                        LogError(
-                            "Error replacing original console output file (" + strConsoleOutputFilePath + ") with trimmed version: " + ex.Message);
+                        LogError("Error replacing original console output file (" + strConsoleOutputFilePath + ") with trimmed version: " + ex.Message);
                     }
                 }
             }
@@ -1195,8 +1178,7 @@ namespace AnalysisManagerMSAlignPlugIn
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    LogError(
-                        "Error trimming console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    LogError("Error trimming console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
             }
         }
@@ -1260,8 +1242,7 @@ namespace AnalysisManagerMSAlignPlugIn
             }
             catch (Exception ex)
             {
-                LogError(
-                    "Exception in ValidateAndCopyResultFiles: " + ex.Message);
+                LogError("Exception in ValidateAndCopyResultFiles: " + ex.Message);
                 return false;
             }
 
@@ -1288,16 +1269,14 @@ namespace AnalysisManagerMSAlignPlugIn
                 {
                     if (m_DebugLevel >= 2)
                     {
-                        LogWarning(
-                            "MSAlign_ResultTable.txt file not found: " + strSourceFilePath);
+                        LogWarning("MSAlign_ResultTable.txt file not found: " + strSourceFilePath);
                     }
                     return false;
                 }
 
                 if (m_DebugLevel >= 2)
                 {
-                    LogMessage(
-                        "Validating that the MSAlign_ResultTable.txt file is not empty");
+                    LogMessage("Validating that the MSAlign_ResultTable.txt file is not empty");
                 }
 
                 // Open the input file
@@ -1341,8 +1320,7 @@ namespace AnalysisManagerMSAlignPlugIn
             }
             catch (Exception ex)
             {
-                LogError(
-                    "Exception in ValidateResultTableFile: " + ex.Message);
+                LogError("Exception in ValidateResultTableFile: " + ex.Message);
                 return false;
             }
 
@@ -1365,8 +1343,7 @@ namespace AnalysisManagerMSAlignPlugIn
                 {
                     if (m_DebugLevel >= 1)
                     {
-                        LogWarning(
-                            "MSAlign results folder is empty; nothing to zip: " + strSourceFolderPath);
+                        LogWarning("MSAlign results folder is empty; nothing to zip: " + strSourceFolderPath);
                     }
                     return false;
                 }
@@ -1389,8 +1366,7 @@ namespace AnalysisManagerMSAlignPlugIn
             }
             catch (Exception ex)
             {
-                LogError(
-                    "Exception in ZipMSAlignResultFolder: " + ex.Message);
+                LogError("Exception in ZipMSAlignResultFolder: " + ex.Message);
                 return false;
             }
 

@@ -336,7 +336,8 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 // Need to create the .mzXML file
                 if (!dctDatasetRawFilePaths.ContainsKey(datasetName))
                 {
-                    m_message = "Dataset " + datasetName + " not found in job parameter " + clsAnalysisResources.JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS + "; unable to create the missing .mzXML file";
+                    m_message = "Dataset " + datasetName + " not found in job parameter " + 
+                        clsAnalysisResources.JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS + "; unable to create the missing .mzXML file";
                     LogError(m_message);
                     return string.Empty;
                 }
@@ -747,8 +748,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 var proteinSeqsDBConnectionString = m_mgrParams.GetParam("fastacnstring");
                 if (string.IsNullOrWhiteSpace(proteinSeqsDBConnectionString))
                 {
-                    LogError(
-                                            "Error in UpdateOrgDBNameIfRequired: manager parameter fastacnstring is not defined");
+                    LogError("Error in UpdateOrgDBNameIfRequired: manager parameter fastacnstring is not defined");
                     return orgDbName;
                 }
 

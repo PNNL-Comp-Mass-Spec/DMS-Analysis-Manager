@@ -112,8 +112,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                 if (m_DebugLevel > 4)
                 {
-                    LogDebug(
-                        "clsAnalysisToolRunnerMSAlignHistone.RunTool(): Enter");
+                    LogDebug("clsAnalysisToolRunnerMSAlignHistone.RunTool(): Enter");
                 }
 
                 // Verify that program files exist
@@ -241,13 +240,11 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                     if (cmdRunner.ExitCode != 0)
                     {
-                        LogWarning(
-                            "MSAlign_Histone returned a non-zero exit code: " + cmdRunner.ExitCode.ToString());
+                        LogWarning("MSAlign_Histone returned a non-zero exit code: " + cmdRunner.ExitCode.ToString());
                     }
                     else
                     {
-                        LogWarning(
-                            "Call to MSAlign_Histone failed (but exit code is 0)");
+                        LogWarning("Call to MSAlign_Histone failed (but exit code is 0)");
                     }
 
                     blnProcessingError = true;
@@ -387,8 +384,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                         if (intWarningCount < 5 && strProteinResidues.GetHashCode() != oReader.ProteinSequence.GetHashCode())
                         {
-                            LogWarning(
-                                "Changed invalid residues to '-' in protein " + oReader.ProteinName);
+                            LogWarning("Changed invalid residues to '-' in protein " + oReader.ProteinName);
                             intWarningCount += 1;
                         }
 
@@ -421,8 +417,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
-            LogWarning(
-                "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
+            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
 
             // Bump up the debug level if less than 2
             if (m_DebugLevel < 2)
@@ -480,8 +475,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                 if (!fiMSAlignJarFile.Exists)
                 {
-                    LogError(
-                        "MSAlign .Jar file not found: " + fiMSAlignJarFile.FullName);
+                    LogError("MSAlign .Jar file not found: " + fiMSAlignJarFile.FullName);
                     return false;
                 }
 
@@ -524,8 +518,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                     if (diSubfolder.Length == 0)
                     {
-                        LogError(
-                            "Source MSAlign subfolder not found: " + strTargetSubfolder);
+                        LogError("Source MSAlign subfolder not found: " + strTargetSubfolder);
                         return false;
                     }
 
@@ -545,8 +538,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             }
             catch (Exception ex)
             {
-                LogError(
-                    "Exception in CopyMSAlignProgramFiles: " + ex.Message);
+                LogError("Exception in CopyMSAlignProgramFiles: " + ex.Message);
                 return false;
             }
 
@@ -672,7 +664,8 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                                         if (strProteinOptions.ToLower().Contains("seq_direction=decoy"))
                                         {
                                             m_message =
-                                                "MSAlign parameter file contains searchType=TARGET+DECOY; protein options for this analysis job must contain seq_direction=forward, not seq_direction=decoy";
+                                                "MSAlign parameter file contains searchType=TARGET+DECOY; " + 
+                                                "protein options for this analysis job must contain seq_direction=forward, not seq_direction=decoy";
 
                                             LogError(m_message);
 
@@ -688,8 +681,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                                 }
                                 else
                                 {
-                                    LogWarning(
-                                        "Ignoring unrecognized MSAlign_Histone parameter: " + strKeyName);
+                                    LogWarning("Ignoring unrecognized MSAlign_Histone parameter: " + strKeyName);
                                 }
                             }
                             else
@@ -703,8 +695,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             catch (Exception ex)
             {
                 m_message = "Exception in CreateMSAlignCommandLine";
-                LogError(
-                    "Exception in CreateMSAlignCommandLine: " + ex.Message);
+                LogError("Exception in CreateMSAlignCommandLine: " + ex.Message);
                 return false;
             }
 
@@ -825,8 +816,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             }
             catch (Exception ex)
             {
-                LogError(
-                    "Exception in InitializeMSInputFolder: " + ex.Message);
+                LogError("Exception in InitializeMSInputFolder: " + ex.Message);
                 return false;
             }
 
@@ -871,13 +861,11 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                     if (cmdRunner.ExitCode != 0)
                     {
-                        LogWarning(
-                            "MSAlign_Histone returned a non-zero exit code during report creation: " + cmdRunner.ExitCode.ToString());
+                        LogWarning("MSAlign_Histone returned a non-zero exit code during report creation: " + cmdRunner.ExitCode.ToString());
                     }
                     else
                     {
-                        LogWarning(
-                            "Call to MSAlign_Histone failed during report creation (but exit code is 0)");
+                        LogWarning("Call to MSAlign_Histone failed during report creation (but exit code is 0)");
                     }
                 }
                 else
@@ -918,8 +906,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 {
                     if (m_DebugLevel >= 4)
                     {
-                        LogDebug(
-                            "Console output file not found: " + strConsoleOutputFilePath);
+                        LogDebug("Console output file not found: " + strConsoleOutputFilePath);
                     }
 
                     return;
@@ -957,8 +944,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                                 {
                                     if (m_DebugLevel >= 2 && string.IsNullOrWhiteSpace(mMSAlignVersion))
                                     {
-                                        LogDebug(
-                                            "MSAlign version: " + strLineIn);
+                                        LogDebug("MSAlign version: " + strLineIn);
                                     }
 
                                     mMSAlignVersion = string.Copy(strLineIn);
@@ -1010,8 +996,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    LogError(
-                        "Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    LogError("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
             }
         }
@@ -1039,8 +1024,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             }
             catch (Exception ex)
             {
-                LogError(
-                    "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
         }
@@ -1062,8 +1046,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 {
                     if (m_DebugLevel >= 4)
                     {
-                        LogDebug(
-                            "Console output file not found: " + strConsoleOutputFilePath);
+                        LogDebug("Console output file not found: " + strConsoleOutputFilePath);
                     }
 
                     return;
@@ -1071,8 +1054,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                 if (m_DebugLevel >= 4)
                 {
-                    LogDebug(
-                        "Trimming console output file at " + strConsoleOutputFilePath);
+                    LogDebug("Trimming console output file at " + strConsoleOutputFilePath);
                 }
 
                 string strLineIn = null;
@@ -1142,8 +1124,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 {
                     if (m_DebugLevel >= 1)
                     {
-                        LogError(
-                            "Error replacing original console output file (" + strConsoleOutputFilePath + ") with trimmed version: " + ex.Message);
+                        LogError("Error replacing original console output file (" + strConsoleOutputFilePath + ") with trimmed version: " + ex.Message);
                     }
                 }
             }
@@ -1152,8 +1133,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    LogError(
-                        "Error trimming console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    LogError("Error trimming console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
             }
         }
@@ -1221,8 +1201,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             }
             catch (Exception ex)
             {
-                LogError(
-                    "Exception in ValidateAndCopyResultFiles: " + ex.Message);
+                LogError("Exception in ValidateAndCopyResultFiles: " + ex.Message);
                 return false;
             }
 
@@ -1300,8 +1279,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 {
                     if (m_DebugLevel >= 2)
                     {
-                        LogWarning(
-                            "MSAlign OUTPUT_TABLE file not found: " + strSourceFilePath);
+                        LogWarning("MSAlign OUTPUT_TABLE file not found: " + strSourceFilePath);
                     }
                     if (string.IsNullOrEmpty(m_message))
                     {
@@ -1312,8 +1290,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                 if (m_DebugLevel >= 2)
                 {
-                    LogMessage(
-                        "Validating that the MSAlign OUTPUT_TABLE file is not empty");
+                    LogMessage("Validating that the MSAlign OUTPUT_TABLE file is not empty");
                 }
 
                 // Open the input file and
@@ -1376,8 +1353,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             }
             catch (Exception ex)
             {
-                LogError(
-                    "Exception in ValidateResultTableFile: " + ex.Message);
+                LogError("Exception in ValidateResultTableFile: " + ex.Message);
                 return false;
             }
 
@@ -1400,8 +1376,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 {
                     if (m_DebugLevel >= 1)
                     {
-                        LogWarning(
-                            "MSAlign results folder is empty; nothing to zip: " + strSourceFolderPath);
+                        LogWarning("MSAlign results folder is empty; nothing to zip: " + strSourceFolderPath);
                     }
                     return false;
                 }
@@ -1424,8 +1399,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             }
             catch (Exception ex)
             {
-                LogError(
-                    "Exception in ZipMSAlignResultFolder: " + ex.Message);
+                LogError("Exception in ZipMSAlignResultFolder: " + ex.Message);
                 return false;
             }
 

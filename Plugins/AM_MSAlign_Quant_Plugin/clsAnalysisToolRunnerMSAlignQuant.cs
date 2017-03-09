@@ -64,8 +64,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
 
                 if (m_DebugLevel > 4)
                 {
-                    LogDebug(
-                        "clsAnalysisToolRunnerMSAlignQuant.RunTool(): Enter");
+                    LogDebug("clsAnalysisToolRunnerMSAlignQuant.RunTool(): Enter");
                 }
 
                 // Determine the path to the TargetedWorkflowConsole.exe program
@@ -80,8 +79,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 // Store the TargetedWorkflowsConsole version info in the database
                 if (!StoreToolVersionInfo(mTargetedWorkflowsProgLoc))
                 {
-                    LogError(
-                        "Aborting since StoreToolVersionInfo returned false");
+                    LogError("Aborting since StoreToolVersionInfo returned false");
                     m_message = "Error determining TargetedWorkflowsConsole version";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -92,8 +90,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 strTargetedQuantParamFilePath = CreateTargetedQuantParamFile();
                 if (string.IsNullOrEmpty(strTargetedQuantParamFilePath))
                 {
-                    LogError(
-                        "Aborting since CreateTargetedQuantParamFile returned false");
+                    LogError("Aborting since CreateTargetedQuantParamFile returned false");
                     if (string.IsNullOrEmpty(m_message))
                     {
                         m_message = "Error creating " + TARGETED_QUANT_XML_FILE_NAME;
@@ -196,13 +193,11 @@ namespace AnalysisManagerMSAlignQuantPlugIn
 
                     if (mCmdRunner.ExitCode != 0)
                     {
-                        LogWarning(
-                            "TargetedWorkflowsConsole returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
+                        LogWarning("TargetedWorkflowsConsole returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
                     }
                     else
                     {
-                        LogWarning(
-                            "Call to TargetedWorkflowsConsole failed (but exit code is 0)");
+                        LogWarning("Call to TargetedWorkflowsConsole failed (but exit code is 0)");
                     }
 
                     blnProcessingError = true;
@@ -213,8 +208,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                     m_StatusTools.UpdateAndWrite(m_progress);
                     if (m_DebugLevel >= 3)
                     {
-                        LogDebug(
-                            "TargetedWorkflowsConsole Quantitation Complete");
+                        LogDebug("TargetedWorkflowsConsole Quantitation Complete");
                     }
 
                     var fiConsoleOutputfile = new FileInfo(Path.Combine(m_WorkDir, TARGETED_WORKFLOWS_CONSOLE_OUTPUT));
@@ -290,8 +284,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
             if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
-            LogWarning(
-                "Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
+            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
 
             // Bump up the debug level if less than 2
             if (m_DebugLevel < 2)
@@ -444,8 +437,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 {
                     if (m_DebugLevel >= 4)
                     {
-                        LogDebug(
-                            "Console output file not found: " + strConsoleOutputFilePath);
+                        LogDebug("Console output file not found: " + strConsoleOutputFilePath);
                     }
 
                     return;
@@ -524,7 +516,9 @@ namespace AnalysisManagerMSAlignQuantPlugIn
 
                                 if (strNewError.Contains("all peptides contain unknown modifications"))
                                 {
-                                    strNewError = "Error: every peptide in the mass tags file had an unknown modification; known mods are Acetylation (C2H2O, 42.01 Da), Phosphorylation (HPO3, 79.97 Da), or Pyroglutomate (H3N1, 17.03 Da)";
+                                    strNewError = "Error: every peptide in the mass tags file had an unknown modification; " +
+                                        "known mods are Acetylation (C2H2O, 42.01 Da), Phosphorylation (HPO3, 79.97 Da), " + 
+                                        "or Pyroglutomate (H3N1, 17.03 Da)";
                                 }
 
                                 mConsoleOutputErrorMsg = clsGlobal.AppendToComment(mConsoleOutputErrorMsg, strNewError);
@@ -551,8 +545,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    LogError(
-                        "Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    LogError("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
             }
         }
@@ -581,8 +574,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 }
                 catch (Exception ex)
                 {
-                    LogError(
-                        "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                    LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                     return false;
                 }
             }
@@ -605,8 +597,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
             }
             catch (Exception ex)
             {
-                LogError(
-                    "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
         }

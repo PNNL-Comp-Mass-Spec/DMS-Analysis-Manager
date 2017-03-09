@@ -8,7 +8,7 @@ using System.Xml;
 using PRISM;
 
 //*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy 
+// Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2006, Battelle Memorial Institute
 // Created 06/07/2006
@@ -24,7 +24,7 @@ namespace AnalysisManagerBase
     /// <remarks>
     /// Additional functionality:
     ///  1) Can log memory usage stats to a file using clsMemoryUsageLogger
-    ///  2) Looks for the presence of file "AbortProcessingNow.txt"; if found, it sets AbortProcessingNow to true 
+    ///  2) Looks for the presence of file "AbortProcessingNow.txt"; if found, it sets AbortProcessingNow to true
     ///  and renames the file to "AbortProcessingNow.txt.Done"
     ///  3) Posts status messages to the DMS broker DB at the specified interval
     /// </remarks>
@@ -53,7 +53,7 @@ namespace AnalysisManagerBase
         private readonly string[] m_RecentErrorMessages = new string[MAX_ERROR_MESSAGE_COUNT_TO_CACHE];
 
         private Queue<KeyValuePair<DateTime, float>> m_ProgRunnerCoreUsageHistory;
-        
+
         private readonly int m_DebugLevel;
 
         /// <summary>
@@ -527,7 +527,7 @@ namespace AnalysisManagerBase
 
         private void LogStatusToMessageQueue(string strStatusXML)
         {
-            const float MINIMUM_LOG_FAILURE_INTERVAL_MINUTES = 10;           
+            const float MINIMUM_LOG_FAILURE_INTERVAL_MINUTES = 10;
 
             try
             {
@@ -709,9 +709,9 @@ namespace AnalysisManagerBase
                         continue;
 
                     m_RecentErrorMessages[m_RecentErrorMessageCount] = errorMsg;
-                    m_RecentErrorMessageCount += 1;                    
+                    m_RecentErrorMessageCount += 1;
                 }
-              
+
 
                 if (m_RecentErrorMessageCount == 0)
                 {
@@ -917,11 +917,11 @@ namespace AnalysisManagerBase
                 }
                 catch (Exception ex)
                 {
-                    // Copy failed; this is normal when running GlyQ-IQ or MODPlus because they have multiple threads running                  
+                    // Copy failed; this is normal when running GlyQ-IQ or MODPlus because they have multiple threads running
                     if (logWarning)
                     {
                         // Log a warning that the file copy failed
-                        OnWarningEvent("Unable to copy temporary status file to the final status file (" + Path.GetFileName(strTempStatusFilePath) + 
+                        OnWarningEvent("Unable to copy temporary status file to the final status file (" + Path.GetFileName(strTempStatusFilePath) +
                                        " to " + Path.GetFileName(FileNamePath) + "):" + ex.Message);
                     }
 
@@ -933,7 +933,7 @@ namespace AnalysisManagerBase
                 }
                 catch (Exception ex)
                 {
-                    // Delete failed; this is normal when running GlyQ-IQ or MODPlus because they have multiple threads running                  
+                    // Delete failed; this is normal when running GlyQ-IQ or MODPlus because they have multiple threads running
                     if (logWarning)
                     {
                         // Log a warning that the file delete failed
@@ -955,7 +955,7 @@ namespace AnalysisManagerBase
         private bool WriteStatusFileToDisk(string strFilePath, string strXMLText, bool logWarning)
         {
             const int WRITE_FAILURE_LOG_THRESHOLD = 5;
-           
+
             bool blnSuccess;
 
             try
@@ -1079,7 +1079,16 @@ namespace AnalysisManagerBase
         /// <param name="RecentJobInfo">Information on the job that started most recently</param>
         /// <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
         /// <remarks></remarks>
-        public void UpdateAndWrite(EnumMgrStatus eMgrStatus, EnumTaskStatus eTaskStatus, EnumTaskStatusDetail eTaskStatusDetail, float PercentComplete, int DTACount, string MostRecentLogMessage, string MostRecentErrorMessage, string RecentJobInfo, bool ForceLogToBrokerDB)
+        public void UpdateAndWrite(
+            EnumMgrStatus eMgrStatus,
+            EnumTaskStatus eTaskStatus,
+            EnumTaskStatusDetail eTaskStatusDetail,
+            float PercentComplete,
+            int DTACount,
+            string MostRecentLogMessage,
+            string MostRecentErrorMessage,
+            string RecentJobInfo,
+            bool ForceLogToBrokerDB)
         {
             MgrStatus = eMgrStatus;
             TaskStatus = eTaskStatus;

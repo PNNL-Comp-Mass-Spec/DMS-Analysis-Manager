@@ -112,8 +112,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             {
                 if (m_DebugLevel > 4)
                 {
-                    LogDebug(
-                        "clsAnalysisToolRunnerInspResultsAssembly.RunTool(): Enter");
+                    LogDebug("clsAnalysisToolRunnerInspResultsAssembly.RunTool(): Enter");
                 }
 
                 //Call base class for initial setup
@@ -122,8 +121,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 // Store the AnalysisManager version info in the database
                 if (!StoreToolVersionInfo())
                 {
-                    LogError(
-                        "Aborting since StoreToolVersionInfo returned false");
+                    LogError("Aborting since StoreToolVersionInfo returned false");
                     m_message = "Error determining Inspect Results Assembly version";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -153,8 +151,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
                     if (m_DebugLevel >= 1)
                     {
-                        LogDebug(
-                            "Assembling parallelized inspect files; file count = " + intNumResultFiles.ToString());
+                        LogDebug("Assembling parallelized inspect files; file count = " + intNumResultFiles.ToString());
                     }
 
                     // AssembleResults will create _inspect.txt, _inspect_fht.txt, and _inspect_filtered.txt
@@ -250,8 +247,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 {
                     if (!base.RemoveNonResultServerFiles())
                     {
-                        LogWarning(
-                            "Error deleting non Result files from directory on server, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
+                        LogWarning("Error deleting non Result files from directory on server, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
                 }
@@ -322,8 +318,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
                 if (m_DebugLevel >= 3)
                 {
-                    LogDebug(
-                        "Assembling parallelized inspect search log files");
+                    LogDebug("Assembling parallelized inspect search log files");
                 }
 
                 strFileName = "InspectSearchLog.txt";
@@ -336,8 +331,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
                 if (m_DebugLevel >= 3)
                 {
-                    LogDebug(
-                        "Assembling parallelized inspect console output files");
+                    LogDebug("Assembling parallelized inspect console output files");
                 }
 
                 strFileName = "InspectConsoleOutput.txt";
@@ -437,8 +431,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                             break;
                         default:
                             // Unknown ResultFileType
-                            LogError(
-                                "clsAnalysisToolRunnerInspResultsAssembly->AssembleFiles: Unknown Inspect Result File Type: " + resFileType.ToString());
+                            LogError("clsAnalysisToolRunnerInspResultsAssembly->AssembleFiles: Unknown Inspect Result File Type: " + resFileType.ToString());
                             error = true;
                             break;
                     }
@@ -499,7 +492,8 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                                         intTabIndex = s.IndexOf('\t');
                                         if (intTabIndex > 0)
                                         {
-                                            // Note: .LastIndexOf will start at index intTabIndex and search backword until the first match is found (this is a bit counter-intuitive, but that's what it does)
+                                            // Note: .LastIndexOf will start at index intTabIndex and search backword until the first match is found 
+                                            // (this is a bit counter-intuitive, but that's what it does)
                                             intSlashIndex = s.LastIndexOf(Path.DirectorySeparatorChar, intTabIndex);
                                             if (intSlashIndex > 0)
                                             {
@@ -600,8 +594,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 {
                     // File is empty or only contains a header line
                     m_message = "No results above threshold";
-                    LogError(
-                        "No results above threshold; filtered inspect results file is empty");
+                    LogError("No results above threshold; filtered inspect results file is empty");
                     return CloseOutType.CLOSEOUT_NO_DATA;
                 }
             }
@@ -663,13 +656,11 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 }
                 else
                 {
-                    LogError(
-                        "Error running clsPeptideToProteinMapEngine: " + mPeptideToProteinMapper.GetErrorMessage());
+                    LogError("Error running clsPeptideToProteinMapEngine: " + mPeptideToProteinMapper.GetErrorMessage());
 
                     if (blnIgnorePeptideToProteinMapperErrors)
                     {
-                        LogWarning(
-                            "Ignoring protein mapping error since 'IgnorePeptideToProteinMapError' = True");
+                        LogWarning("Ignoring protein mapping error since 'IgnorePeptideToProteinMapError' = True");
                         return CloseOutType.CLOSEOUT_SUCCESS;
                     }
                     else
@@ -687,8 +678,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
                 if (blnIgnorePeptideToProteinMapperErrors)
                 {
-                    LogWarning(
-                        "Ignoring protein mapping error since 'IgnorePeptideToProteinMapError' = True");
+                    LogWarning("Ignoring protein mapping error since 'IgnorePeptideToProteinMapError' = True");
                     return CloseOutType.CLOSEOUT_SUCCESS;
                 }
                 else
@@ -722,8 +712,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
                 if (m_DebugLevel > 4)
                 {
-                    LogDebug(
-                        "clsAnalysisToolRunnerInspResultsAssembly.ExtractModInfoFromInspectParamFile(): Reading " + strInspectParameterFilePath);
+                    LogDebug("clsAnalysisToolRunnerInspResultsAssembly.ExtractModInfoFromInspectParamFile(): Reading " + strInspectParameterFilePath);
                 }
 
                 // Read the contents of strProteinToPeptideMappingFilePath
@@ -847,16 +836,14 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
             if (!fiFileInfo.Exists)
             {
-                LogError(
-                    "Inspect results file not found; nothing to zip: " + fiFileInfo.FullName);
+                LogError("Inspect results file not found; nothing to zip: " + fiFileInfo.FullName);
                 return false;
             }
 
             strTargetFilePath = Path.Combine(m_WorkDir, mInspectResultsFileName);
             if (m_DebugLevel >= 3)
             {
-                LogDebug(
-                    "Renaming " + fiFileInfo.FullName + " to " + strTargetFilePath);
+                LogDebug("Renaming " + fiFileInfo.FullName + " to " + strTargetFilePath);
             }
 
             fiFileInfo.MoveTo(strTargetFilePath);
@@ -894,16 +881,14 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
                 if (!fiRescoredFile.Exists)
                 {
-                    LogError(
-                        "Rescored Inspect Results file not found: " + fiRescoredFile.FullName);
+                    LogError("Rescored Inspect Results file not found: " + fiRescoredFile.FullName);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 if (fiOriginalFile.Length == 0)
                 {
                     // Assembled inspect results file is 0-bytes; this is unexpected
-                    LogError(
-                        "Assembled Inspect Results file is 0 bytes: " + fiOriginalFile.FullName);
+                    LogError("Assembled Inspect Results file is 0 bytes: " + fiOriginalFile.FullName);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -953,8 +938,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
             if (m_DebugLevel > 4)
             {
-                LogDebug(
-                    "clsAnalysisToolRunnerInspResultsAssembly.RunpValue(): Enter");
+                LogDebug("clsAnalysisToolRunnerInspResultsAssembly.RunpValue(): Enter");
             }
 
             // verify that python program file exists
@@ -981,7 +965,9 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             // -r is the input file
             // -w is the output file
             // -s saves the p-value distribution to a text file
-            // -H means to not remove entries mapped to shuffled proteins (created by shuffleDB.py); shuffled protein names start with XXX; we use this option when creating the First Hits file so that we retain the top hit, even if it is from a shuffled protein
+            // -H means to not remove entries mapped to shuffled proteins (created by shuffleDB.py); 
+            //    shuffled protein names start with XXX; 
+            //    we use this option when creating the First Hits file so that we retain the top hit, even if it is from a shuffled protein
             // -p 0.1 will filter out results with p-value <= 0.1 (this threshold was suggested by Sam Payne)
             // -i means to create a PValue distribution image file (.PNG)
             // -S 0.5 means that 50% of the proteins in the DB come from shuffled proteins
@@ -1096,8 +1082,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             }
             catch (Exception ex)
             {
-                LogError(
-                    "Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
         }
@@ -1134,8 +1119,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             {
                 if (m_DebugLevel > 4)
                 {
-                    LogDebug(
-                        "clsAnalysisToolRunnerInspResultsAssembly.UpdatePTModsFile(): Enter ");
+                    LogDebug("clsAnalysisToolRunnerInspResultsAssembly.UpdatePTModsFile(): Enter ");
                 }
 
                 // Read the mods defined in strInspectInputFilePath
@@ -1155,15 +1139,13 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
                         if (m_DebugLevel > 4)
                         {
-                            LogDebug(
-                                "clsAnalysisToolRunnerInspResultsAssembly.UpdatePTModsFile(): Open " + strPTModsFilePath);
+                            LogDebug("clsAnalysisToolRunnerInspResultsAssembly.UpdatePTModsFile(): Open " + strPTModsFilePath);
                         }
                         var srInFile = new StreamReader(new FileStream(strPTModsFilePath, FileMode.Open, FileAccess.Read, FileShare.Read));
 
                         if (m_DebugLevel > 4)
                         {
-                            LogDebug(
-                                "clsAnalysisToolRunnerInspResultsAssembly.UpdatePTModsFile(): Create " + strPTModsFilePathNew);
+                            LogDebug("clsAnalysisToolRunnerInspResultsAssembly.UpdatePTModsFile(): Create " + strPTModsFilePathNew);
                         }
                         var swOutFile = new StreamWriter(new FileStream(strPTModsFilePathNew, FileMode.Create, FileAccess.Write, FileShare.Read));
 
@@ -1364,8 +1346,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                             // Verify that strSplitLine[3] is "Protein"
                             if (!strSplitLine[3].ToLower().StartsWith("protein"))
                             {
-                                LogWarning(
-                                    "The fourth column in the Inspect results file does not start with 'Protein'; this is unexpected");
+                                LogWarning("The fourth column in the Inspect results file does not start with 'Protein'; this is unexpected");
                             }
                         }
                         else
@@ -1389,8 +1370,8 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                     if (intDecoyProteinCount == 0)
                     {
                         LogWarning(
-                            "The job has 'InspectUsesShuffledDB' set to True in the Settings file, but none of the proteins in the result file starts with XXX.  Will assume the fasta file did NOT have shuffled proteins, and will thus NOT use '-S 0.5' when calling " +
-                            PVALUE_MINLENGTH5_SCRIPT);
+                            "The job has 'InspectUsesShuffledDB' set to True in the Settings file, but none of the proteins in the result file starts with XXX. " + 
+                            "Will assume the fasta file did NOT have shuffled proteins, and will thus NOT use '-S 0.5' when calling " + PVALUE_MINLENGTH5_SCRIPT);
                         blnShuffledDBUsed = false;
                     }
                 }

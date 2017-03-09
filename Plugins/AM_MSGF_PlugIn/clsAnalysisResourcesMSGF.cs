@@ -257,13 +257,11 @@ namespace AnalysisManagerMSGFPlugin
                 {
                     if (m_jobParams.GetJobParameter("IgnorePeptideToProteinMapError", false))
                     {
-                        LogWarning(
-                            "Ignoring missing _PepToProtMapMTS.txt file since 'IgnorePeptideToProteinMapError' = True");
+                        LogWarning("Ignoring missing _PepToProtMapMTS.txt file since 'IgnorePeptideToProteinMapError' = True");
                     }
                     else if (m_jobParams.GetJobParameter("SkipProteinMods", false))
                     {
-                        LogWarning(
-                            "Ignoring missing _PepToProtMapMTS.txt file since 'SkipProteinMods' = True");
+                        LogWarning("Ignoring missing _PepToProtMapMTS.txt file since 'SkipProteinMods' = True");
                     }
                     else
                     {
@@ -378,8 +376,7 @@ namespace AnalysisManagerMSGFPlugin
                 }
                 else
                 {
-                    LogWarning(
-                        "SeqInfo file not found (" + fileToGet + "); modifications will be inferred using the ModSummary.txt file");
+                    LogWarning("SeqInfo file not found (" + fileToGet + "); modifications will be inferred using the ModSummary.txt file");
                 }
             }
 
@@ -389,8 +386,7 @@ namespace AnalysisManagerMSGFPlugin
                 if (!FileSearch.FindAndRetrieveMiscFiles(strFileToFind, false))
                 {
                     m_message = "Instrument data not found: " + strFileToFind;
-                    LogError(
-                        "clsAnalysisResourcesMSGF.GetResources: " + m_message);
+                    LogError("clsAnalysisResourcesMSGF.GetResources: " + m_message);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -412,8 +408,7 @@ namespace AnalysisManagerMSGFPlugin
                     // .mzXML file found and copied locally; no need to retrieve the .Raw file
                     if (m_DebugLevel >= 1)
                     {
-                        LogMessage(
-                            "Existing .mzXML file found: " + strMzXMLFilePath);
+                        LogMessage("Existing .mzXML file found: " + strMzXMLFilePath);
                     }
 
                     // Possibly unzip the .mzXML file
@@ -442,8 +437,7 @@ namespace AnalysisManagerMSGFPlugin
                     }
                     else
                     {
-                        LogError(
-                            "clsAnalysisResourcesMSGF.GetResources: Error occurred retrieving spectra.");
+                        LogError("clsAnalysisResourcesMSGF.GetResources: Error occurred retrieving spectra.");
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
                 }

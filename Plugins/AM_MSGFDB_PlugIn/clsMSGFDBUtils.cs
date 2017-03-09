@@ -2427,7 +2427,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                     // Prior to July 2014 we would use "coreCount - 1" when the computer had more than 4 cores because MS-GF+ would actually use intParamFileThreadCount+1 cores
                     // Starting with version v10072, MS-GF+ actually uses all the cores, so we started using intParamFileThreadCount = coreCount
 
-                    // Then, in April 2015, we started running two copies of MS-GF+ simultaneously on machines with > 4 cores because even if we tell MS-GF+ to use all the cores, we saw a lot of idle time
+                    // Then, in April 2015, we started running two copies of MS-GF+ simultaneously on machines with > 4 cores 
+                    //  because even if we tell MS-GF+ to use all the cores, we saw a lot of idle time
                     // When two simultaneous copies of MS-GF+ are running the CPUs get a bit overtaxed, so we're now using this logic:
 
                     if (coreCount > 4)

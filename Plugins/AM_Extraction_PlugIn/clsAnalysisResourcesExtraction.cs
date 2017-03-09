@@ -708,8 +708,10 @@ namespace AnalysisManagerExtractionPlugin
 
             try
             {
-                // Call RetrieveGeneratedParamFile() now to re-create the parameter file, retrieve the _ModDefs.txt file, and retrieve the MassCorrectionTags.txt file
-                // Although the ModDefs file should have been created when Sequest, X!Tandem, Inspect, MSGFDB, or MSAlign ran, we re-generate it here just in case T_Param_File_Mass_Mods had missing information
+                // Call RetrieveGeneratedParamFile() now to re-create the parameter file, retrieve the _ModDefs.txt file, 
+                //   and retrieve the MassCorrectionTags.txt file
+                // Although the ModDefs file should have been created when Sequest, X!Tandem, Inspect, MSGFDB, or MSAlign ran, 
+                //   we re-generate it here just in case T_Param_File_Mass_Mods had missing information
                 // Furthermore, we need the search engine parameter file for the PHRPReader
 
                 // Note that the _ModDefs.txt file is obtained using this query:

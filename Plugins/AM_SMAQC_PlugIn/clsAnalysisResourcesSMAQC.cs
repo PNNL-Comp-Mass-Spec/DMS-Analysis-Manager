@@ -106,8 +106,7 @@ namespace AnalysisManagerSMAQCPlugIn
             {
                 if (m_DebugLevel >= 2)
                 {
-                    LogDebug(
-                        "Retrieving the MASIC files by searching for any valid MASIC folder");
+                    LogDebug("Retrieving the MASIC files by searching for any valid MASIC folder");
                 }
 
                 return FileSearch.RetrieveScanAndSICStatsFiles(
@@ -121,8 +120,7 @@ namespace AnalysisManagerSMAQCPlugIn
 
             if (m_DebugLevel >= 2)
             {
-                LogDebug(
-                    "Retrieving the MASIC files from " + strMASICResultsFolderName);
+                LogDebug("Retrieving the MASIC files from " + strMASICResultsFolderName);
             }
 
             var serverPath = FolderSearch.FindValidFolder(DatasetName, "", strMASICResultsFolderName, 2);

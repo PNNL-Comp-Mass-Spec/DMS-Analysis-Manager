@@ -338,13 +338,11 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
 
             if (cmdRunner.ExitCode != 0)
             {
-                LogWarning(
-                                     "MetaboliteDetector returned a non-zero exit code: " + cmdRunner.ExitCode);
+                LogWarning("MetaboliteDetector returned a non-zero exit code: " + cmdRunner.ExitCode);
             }
             else
             {
-                LogWarning(
-                                     "MetaboliteDetector failed (but exit code is 0)");
+                LogWarning("MetaboliteDetector failed (but exit code is 0)");
             }
 
             return false;

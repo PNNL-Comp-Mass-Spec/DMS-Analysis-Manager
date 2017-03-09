@@ -13,7 +13,7 @@ using MyEMSLReader;
 using ParamFileGenerator.MakeParams;
 
 //*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy 
+// Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2007, Battelle Memorial Institute
 // Created 12/19/2007
@@ -39,7 +39,7 @@ namespace AnalysisManagerBase
         public const string RAW_DATA_TYPE_DOT_D_FOLDERS = "dot_d_folders";
 
         /// <summary>
-        /// FTICR data, including instrument 3T_FTICR, 7T_FTICR, 9T_FTICR, 11T_FTICR, 11T_FTICR_B, and 12T_FTICR 
+        /// FTICR data, including instrument 3T_FTICR, 7T_FTICR, 9T_FTICR, 11T_FTICR, 11T_FTICR_B, and 12T_FTICR
         /// </summary>
         public const string RAW_DATA_TYPE_ZIPPED_S_FOLDERS = "zipped_s_folders";
 
@@ -167,7 +167,7 @@ namespace AnalysisManagerBase
             MicromassRawFolder = 7,
             // Micromass QTOF data
             ZippedSFolders = 8,
-            // FTICR data, including instrument 3T_FTICR, 7T_FTICR, 9T_FTICR, 11T_FTICR, 11T_FTICR_B, and 12T_FTICR 
+            // FTICR data, including instrument 3T_FTICR, 7T_FTICR, 9T_FTICR, 11T_FTICR, 11T_FTICR_B, and 12T_FTICR
             BrukerFTFolder = 9,
             // .D folder is the analysis.baf file; there is also .m subfolder that has a apexAcquisition.method file
             BrukerMALDISpot = 10,
@@ -202,8 +202,8 @@ namespace AnalysisManagerBase
         /// Dataset name
         /// </summary>
         /// <remarks>
-        /// Update the dataset name using property DatasetName 
-        /// because we also need to propogate that change 
+        /// Update the dataset name using property DatasetName
+        /// because we also need to propogate that change
         /// into m_FolderSearch and m_FileSearch
         /// </remarks>
         private string m_DatasetName;
@@ -871,7 +871,10 @@ namespace AnalysisManagerBase
 
             if (m_DebugLevel >= 2)
             {
-                LogMessage("ProteinCollectionList=" + proteinCollectionInfo.ProteinCollectionList + "; " + "CreationOpts=" + proteinCollectionInfo.ProteinCollectionOptions + "; " + "LegacyFasta=" + legacyFastaToUse);
+                LogMessage(
+                    "ProteinCollectionList=" + proteinCollectionInfo.ProteinCollectionList + "; " +
+                    "CreationOpts=" + proteinCollectionInfo.ProteinCollectionOptions + "; " +
+                    "LegacyFasta=" + legacyFastaToUse);
             }
 
             try
@@ -937,7 +940,9 @@ namespace AnalysisManagerBase
                     try
                     {
                         var strFastaFileMsg = "Fasta file last modified: " +
-                                                 GetHumanReadableTimeInterval(DateTime.UtcNow.Subtract(fiFastaFile.LastWriteTimeUtc)) + " ago at " + fiFastaFile.LastWriteTime.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT);
+                            GetHumanReadableTimeInterval(
+                                DateTime.UtcNow.Subtract(fiFastaFile.LastWriteTimeUtc)) + " ago at " +
+                                fiFastaFile.LastWriteTime.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT);
 
                         strFastaFileMsg += "; file created: " +
                             GetHumanReadableTimeInterval(DateTime.UtcNow.Subtract(fiFastaFile.CreationTimeUtc)) + " ago at " +
@@ -1278,7 +1283,7 @@ namespace AnalysisManagerBase
                 return string.Empty;
             }
 
-            // RegEx to find the year_quarter folder name 
+            // RegEx to find the year_quarter folder name
             // Valid matches include: 2014_1, 2014_01, 2014_4
             var reYearQuarter = new Regex("^[0-9]{4}_0*[1-4]$", RegexOptions.Compiled);
 
@@ -1708,7 +1713,7 @@ namespace AnalysisManagerBase
 
             // Retrieve the .mzXML file for this dataset
             // Do not use RetrieveMZXmlFile since that function looks for any valid MSXML_Gen folder for this dataset
-            // Instead, use FindAndRetrieveMiscFiles 
+            // Instead, use FindAndRetrieveMiscFiles
 
             LogMessage("Getting mzXML file");
 
@@ -2181,9 +2186,9 @@ namespace AnalysisManagerBase
             // View V_DMS_Data_Package_Datasets is in the DMS_Pipeline database
             // That view references view V_DMS_Data_Package_Aggregation_Datasets in the DMS_Data_Package database
             // That view pulls information from several tables in the DMS_Data_Package database, plus 3 views in DMS5:
-            //   V_Dataset_Folder_Path, V_Organism_Export, and V_Dataset_Archive_Path 
+            //   V_Dataset_Folder_Path, V_Organism_Export, and V_Dataset_Archive_Path
             // Experiment_NEWT_ID comes from the organism for the experiment, and actually comes from field NCBI_Taxonomy_ID in T_Organisms
-            // 
+            //
             sqlStr.Append(" SELECT Dataset, DatasetID, Instrument, InstrumentGroup, ");
             sqlStr.Append("        Experiment, Experiment_Reason, Experiment_Comment, Organism, Experiment_NEWT_ID, Experiment_NEWT_Name, ");
             sqlStr.Append("        Dataset_Folder_Path, Archive_Folder_Path, RawDataType");
@@ -2511,7 +2516,7 @@ namespace AnalysisManagerBase
 
                 var masterDoc = XDocument.Load(masterJobParamXMLFilePath);
 
-                // Keys in the stepParamsSections dictionaries are step numbers 
+                // Keys in the stepParamsSections dictionaries are step numbers
                 // Values are the XElement node with the step parameters for the given step
 
                 var stepParamSectionsSource = GetStepParametersSections(sourceDoc);
@@ -2937,7 +2942,8 @@ namespace AnalysisManagerBase
 
             if (logInfoMessages)
             {
-                LogMessage(string.Format("Free space on {0} ({1:F1} GB) is {2:F1}% of the total space; purge required since less than threshold of {3}%", localDriveInfo.Name, freeSpaceGB, percentFreeSpaceAtStart, freeSpaceThresholdPercent));
+                LogMessage(string.Format("Free space on {0} ({1:F1} GB) is {2:F1}% of the total space; purge required since less than threshold of {3}%",
+                    localDriveInfo.Name, freeSpaceGB, percentFreeSpaceAtStart, freeSpaceThresholdPercent));
             }
 
             // Obtain a dictionary of FASTA files where Keys are FileInfo and values are last usage date
@@ -2990,7 +2996,8 @@ namespace AnalysisManagerBase
                         // Target threshold reached
                         if (m_DebugLevel >= 1)
                         {
-                            LogMessage(string.Format("Free space on {0} ({1:F1} GB) is now over {2}% of the total space; " + "deleted {3:F1} GB of cached files", localDriveInfo.Name, updatedFreeSpaceGB, freeSpaceThresholdPercent, clsGlobal.BytesToGB(totalBytesPurged)));
+                            LogMessage(string.Format("Free space on {0} ({1:F1} GB) is now over {2}% of the total space; " + "deleted {3:F1} GB of cached files",
+                                localDriveInfo.Name, updatedFreeSpaceGB, freeSpaceThresholdPercent, clsGlobal.BytesToGB(totalBytesPurged)));
                         }
                         break;
                     }
@@ -3008,7 +3015,9 @@ namespace AnalysisManagerBase
 
             if (requiredFreeSpaceMB > 0 && finalFreeSpaceGB * 1024.0 < requiredFreeSpaceMB)
             {
-                LogMessage(string.Format("Warning: unable to delete enough files to free up the required space on {0} ({1:F1} GB vs. {2:F1} GB); " + "deleted {3:F1} GB of cached files", localDriveInfo.Name, finalFreeSpaceGB, requiredFreeSpaceMB / 1024.0, clsGlobal.BytesToGB(totalBytesPurged)));
+                LogMessage(string.Format("Warning: unable to delete enough files to free up the required space on {0} " +
+                                         "({1:F1} GB vs. {2:F1} GB); " + "deleted {3:F1} GB of cached files",
+                    localDriveInfo.Name, finalFreeSpaceGB, requiredFreeSpaceMB / 1024.0, clsGlobal.BytesToGB(totalBytesPurged)));
             }
 
         }
@@ -3110,21 +3119,23 @@ namespace AnalysisManagerBase
                         // Keep deleting files
                         if (m_DebugLevel >= 2)
                         {
-                            LogDebugMessage(string.Format("Purging FASTA files: {0:F1} / {1:F1} MB deleted", 
+                            LogDebugMessage(string.Format("Purging FASTA files: {0:F1} / {1:F1} MB deleted",
                                 clsGlobal.BytesToMB(totalBytesPurged), clsGlobal.BytesToMB(bytesToPurge)));
                         }
                     }
                     else
                     {
                         // Enough files have been deleted
-                        LogMessage(string.Format("Space usage in {0} is now below {1} GB; deleted {2:F1} GB of cached files", diOrgDbFolder.FullName, maxSizeGB, clsGlobal.BytesToGB(totalBytesPurged)));
+                        LogMessage(string.Format("Space usage in {0} is now below {1} GB; deleted {2:F1} GB of cached files",
+                            diOrgDbFolder.FullName, maxSizeGB, clsGlobal.BytesToGB(totalBytesPurged)));
                         return;
                     }
                 }
 
                 if (totalBytesPurged < bytesToPurge)
                 {
-                    LogMessage(string.Format("Warning: unable to delete enough files to lower the space usage in {0} to below {1} GB; " + "deleted {2:F1} GB of cached files", diOrgDbFolder.FullName, maxSizeGB, clsGlobal.BytesToGB(totalBytesPurged)));
+                    LogMessage(string.Format("Warning: unable to delete enough files to lower the space usage in {0} to below {1} GB; " +
+                        "deleted {2:F1} GB of cached files", diOrgDbFolder.FullName, maxSizeGB, clsGlobal.BytesToGB(totalBytesPurged)));
                 }
 
             }
@@ -3378,7 +3389,7 @@ namespace AnalysisManagerBase
                             if (!diTargetFolder.Exists)
                                 diTargetFolder.Create();
 
-                            if (sourceFileName.EndsWith("_dta.zip", StringComparison.InvariantCultureIgnoreCase) && 
+                            if (sourceFileName.EndsWith("_dta.zip", StringComparison.InvariantCultureIgnoreCase) &&
                                 dataPkgJob.Value.Tool.EndsWith("_mzml", StringComparison.InvariantCultureIgnoreCase))
                             {
                                 // This is a .mzML job; it is not going to have a _dta.zip file
@@ -3645,7 +3656,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Overrides base class version of the function to creates a Sequest params file compatible 
+        /// Overrides base class version of the function to creates a Sequest params file compatible
         /// with the Bioworks version on this System. Uses ParamFileGenerator dll provided by Ken Auberry
         /// </summary>
         /// <param name="paramFileName">Name of param file to be created</param>
@@ -3891,8 +3902,14 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="strSourceFilePath">Input _DTA.txt file to parse</param>
         /// <param name="blnReplaceSourceFile">If True, then replaces the source file with and updated file</param>
-        /// <param name="blnDeleteSourceFileIfUpdated">Only valid if blnReplaceSourceFile=True: If True, then the source file is deleted if an updated version is created. If false, then the source file is renamed to .old if an updated version is created.</param>
-        /// <param name="strOutputFilePath">Output file path to use for the updated file; required if blnReplaceSourceFile=False; ignored if blnReplaceSourceFile=True</param>
+        /// <param name="blnDeleteSourceFileIfUpdated">
+        /// Only valid if blnReplaceSourceFile=True;
+        /// If True, then the source file is deleted if an updated version is created.
+        /// If false, then the source file is renamed to .old if an updated version is created.
+        /// </param>
+        /// <param name="strOutputFilePath">
+        /// Output file path to use for the updated file; required if blnReplaceSourceFile=False; ignored if blnReplaceSourceFile=True
+        /// </param>
         /// <returns>True if success; false if an error</returns>
         protected bool ValidateCDTAFileScanAndCSTags(string strSourceFilePath, bool blnReplaceSourceFile, bool blnDeleteSourceFileIfUpdated, string strOutputFilePath)
         {
@@ -4091,7 +4108,7 @@ namespace AnalysisManagerBase
         /// <param name="strJavaMemorySizeJobParamName">Name of the job parameter that defines the amount of memory (in MB) to reserve for Java</param>
         /// <param name="strStepToolName">Step tool name to use when posting log entries</param>
         /// <returns>True if sufficient free memory; false if not enough free memory</returns>
-        /// <remarks>Typical names for strJavaMemorySizeJobParamName are MSGFJavaMemorySize, MSGFDBJavaMemorySize, and MSDeconvJavaMemorySize.  
+        /// <remarks>Typical names for strJavaMemorySizeJobParamName are MSGFJavaMemorySize, MSGFDBJavaMemorySize, and MSDeconvJavaMemorySize.
         /// These parameters are loaded from DMS Settings Files (table T_Settings_Files in DMS5, copied to table T_Job_Parameters in DMS_Pipeline) </remarks>
         protected bool ValidateFreeMemorySize(string strJavaMemorySizeJobParamName, string strStepToolName)
         {
@@ -4108,7 +4125,7 @@ namespace AnalysisManagerBase
         /// <param name="strStepToolName">Step tool name to use when posting log entries</param>
         /// <param name="blnLogFreeMemoryOnSuccess">If True, then post a log entry if sufficient memory is, in fact, available</param>
         /// <returns>True if sufficient free memory; false if not enough free memory</returns>
-        /// <remarks>Typical names for strJavaMemorySizeJobParamName are MSGFJavaMemorySize, MSGFDBJavaMemorySize, and MSDeconvJavaMemorySize.  
+        /// <remarks>Typical names for strJavaMemorySizeJobParamName are MSGFJavaMemorySize, MSGFDBJavaMemorySize, and MSDeconvJavaMemorySize.
         /// These parameters are loaded from DMS Settings Files (table T_Settings_Files in DMS5, copied to table T_Job_Parameters in DMS_Pipeline)
         /// </remarks>
         protected bool ValidateFreeMemorySize(string strMemorySizeJobParamName, string strStepToolName, bool blnLogFreeMemoryOnSuccess)
@@ -4210,7 +4227,9 @@ namespace AnalysisManagerBase
             if (m_DebugLevel >= 1)
             {
 
-                if (m_DebugLevel == 1 && DateTime.UtcNow.Subtract(m_SplitFastaLastUpdateTime).TotalSeconds >= 60 || m_DebugLevel > 1 && DateTime.UtcNow.Subtract(m_SplitFastaLastUpdateTime).TotalSeconds >= 20 || percentComplete >= 100 & m_SplitFastaLastPercentComplete < 100)
+                if (m_DebugLevel == 1 && DateTime.UtcNow.Subtract(m_SplitFastaLastUpdateTime).TotalSeconds >= 60 ||
+                    m_DebugLevel > 1 && DateTime.UtcNow.Subtract(m_SplitFastaLastUpdateTime).TotalSeconds >= 20 ||
+                    percentComplete >= 100 & m_SplitFastaLastPercentComplete < 100)
                 {
                     m_SplitFastaLastUpdateTime = DateTime.UtcNow;
                     m_SplitFastaLastPercentComplete = percentComplete;

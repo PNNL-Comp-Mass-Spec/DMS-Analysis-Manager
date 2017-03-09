@@ -147,7 +147,8 @@ namespace AnalysisManagerDtaRefineryPlugIn
                                 }
                                 else
                                 {
-                                    mErrorMessage = "Unable to extract mass error value from 'Robust estimate' line in the DTA Refinery log file; RegEx capture is not a number: " + reMatch.Groups[1].Value;
+                                    mErrorMessage = "Unable to extract mass error value from 'Robust estimate' line in the DTA Refinery log file; " + 
+                                        "RegEx capture is not a number: " + reMatch.Groups[1].Value;
                                     return false;
                                 }
                             }

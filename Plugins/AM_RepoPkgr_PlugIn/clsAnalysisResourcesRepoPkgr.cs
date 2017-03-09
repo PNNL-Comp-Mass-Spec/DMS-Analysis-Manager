@@ -228,7 +228,8 @@ namespace AnalysisManager_RepoPkgr_Plugin
             {
                 var jobId = m_jobParams.GetJobParameter("Job", "??");
                 var dataPackageID = m_jobParams.GetJobParameter("DataPackageID", "??");
-                var msg = "Instrument data file not found for " + missingInstrumentDataCount + clsGlobal.CheckPlural(missingInstrumentDataCount, " dataset", " datasets") + " in data package " + dataPackageID;
+                var msg = "Instrument data file not found for " + missingInstrumentDataCount + 
+                    clsGlobal.CheckPlural(missingInstrumentDataCount, " dataset", " datasets") + " in data package " + dataPackageID;
                 m_jobParams.AddAdditionalParameter("JobParameters", clsAnalysisToolRunnerRepoPkgr.WARNING_INSTRUMENT_DATA_MISSING, msg);
 
                 msg += " (pipeline job " + jobId + ")";

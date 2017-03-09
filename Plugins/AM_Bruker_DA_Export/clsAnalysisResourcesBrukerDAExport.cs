@@ -49,7 +49,9 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 if (string.IsNullOrWhiteSpace(exportScriptStoragePath))
                 {
                     exportScriptStoragePath = @"F:\My Documents\Gigasax_Data\DMS_Parameter_Files\Bruker_Data_Analysis";
-                    LogWarning("Parameter '" + paramFileStoragePathKeyName + "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " + exportScriptStoragePath);
+                    LogWarning("Parameter '" + paramFileStoragePathKeyName + "' is not defined " +
+                        "(obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); " + 
+                        "will assume: " + exportScriptStoragePath);
                 }
 
                 if (!FileSearch.RetrieveFile(exportScriptName, exportScriptStoragePath))
