@@ -1985,7 +1985,7 @@ namespace AnalysisManagerBase
             var iteration = GetSplitFastaIteration(jobParams, out errorMessage);
             if (iteration < 1)
             {
-                var toolName = jobParams.GetJobParameter("ToolName", string.Empty);
+                var toolName = jobParams.GetJobParameter("StepTool", string.Empty);
                 if (clsGlobal.IsMatch(toolName, "Mz_Refinery"))
                 {
                     // Running MzRefinery
