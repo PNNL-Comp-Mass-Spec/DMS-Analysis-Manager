@@ -152,9 +152,13 @@ namespace AnalysisManagerDtaRefineryPlugIn
                     {
                         OnErrorEvent("Error replacing source file with new file: " + ex.Message, ex);
 
-                        // Copy the temp file to strFilePath
-                        File.Copy(strTempFilePath, Path.Combine(ioFileInfo.DirectoryName, Path.GetFileNameWithoutExtension(ioFileInfo.Name) + "_New.txt"), true);
-                        File.Delete(strTempFilePath);
+                        if (ioFileInfo.DirectoryName != null)
+                        {
+                            // Copy the temp file to strFilePath
+                            File.Copy(tempFilePath, Path.Combine(ioFileInfo.DirectoryName,
+                                Path.GetFileNameWithoutExtension(ioFileInfo.Name) + "_New.txt"), true);
+                            File.Delete(tempFilePath);
+                        }
 
                         return false;
                     }
