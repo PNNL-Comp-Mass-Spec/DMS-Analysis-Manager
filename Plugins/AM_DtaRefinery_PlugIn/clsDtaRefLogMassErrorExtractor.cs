@@ -26,7 +26,6 @@ namespace AnalysisManagerDtaRefineryPlugIn
         private struct udtMassErrorInfoType
         {
             public string DatasetName;
-            public int DatasetID;
             public int PSMJob;
             public double MassErrorPPM;                 // Parent Ion Mass Error, before refinement
             public double MassErrorPPMRefined;          // Parent Ion Mass Error, after refinement
@@ -85,7 +84,6 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 var udtMassErrorInfo = new udtMassErrorInfoType
                 {
                     DatasetName = strDatasetName,
-                    DatasetID = intDatasetID,
                     PSMJob = intPSMJob,
                     MassErrorPPM = double.MinValue,
                     MassErrorPPMRefined = double.MinValue
