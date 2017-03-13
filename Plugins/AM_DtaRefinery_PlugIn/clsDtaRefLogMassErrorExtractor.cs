@@ -86,20 +86,18 @@ namespace AnalysisManagerDtaRefineryPlugIn
             var blnOriginalDistributionSection = false;
             var blnRefinedDistributionSection = false;
 
-            udtMassErrorInfoType udtMassErrorInfo = new udtMassErrorInfoType();
-
             var reMassError = new Regex(@"Robust estimate[ \t]+([^\t ]+)", RegexOptions.Compiled);
-
-            string strLineIn = null;
 
             try
             {
-                udtMassErrorInfo = new udtMassErrorInfoType();
-                udtMassErrorInfo.DatasetName = strDatasetName;
-                udtMassErrorInfo.DatasetID = intDatasetID;
-                udtMassErrorInfo.PSMJob = intPSMJob;
-                udtMassErrorInfo.MassErrorPPM = double.MinValue;
-                udtMassErrorInfo.MassErrorPPMRefined = double.MinValue;
+                var udtMassErrorInfo = new udtMassErrorInfoType
+                {
+                    DatasetName = strDatasetName,
+                    DatasetID = intDatasetID,
+                    PSMJob = intPSMJob,
+                    MassErrorPPM = double.MinValue,
+                    MassErrorPPMRefined = double.MinValue
+                };
 
                 var fiSourceFile = new FileInfo(Path.Combine(strWorkDirPath, strDatasetName + "_dta_DtaRefineryLog.txt"));
                 if (!fiSourceFile.Exists)
@@ -112,7 +110,9 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 {
                     while (!srSourceFile.EndOfStream)
                     {
-                        strLineIn = srSourceFile.ReadLine();
+                        var strLineIn = srSourceFile.ReadLine();
+                        if (string.IsNullOrWhiteSpace(strLineIn))
+                            continue;
 
                         if (strLineIn.Contains("ORIGINAL parent ion mass error distribution"))
                         {
@@ -130,9 +130,9 @@ namespace AnalysisManagerDtaRefineryPlugIn
                         {
                             var reMatch = reMassError.Match(strLineIn);
 
-                            double dblMassError = 0;
                             if (reMatch.Success)
                             {
+                                double dblMassError;
                                 if (double.TryParse(reMatch.Groups[1].Value, out dblMassError))
                                 {
                                     if (blnOriginalDistributionSection)
@@ -163,15 +163,11 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
                 if (udtMassErrorInfo.MassErrorPPM > double.MinValue)
                 {
-                    string strXMLResults = null;
-
-                    strXMLResults = ConstructXML(udtMassErrorInfo);
+                    var strXMLResults = ConstructXML(udtMassErrorInfo);
 
                     if (mPostResultsToDB)
                     {
-                        bool blnSuccess = false;
-
-                        blnSuccess = PostMassErrorInfoToDB(intDatasetID, strXMLResults);
+                        var blnSuccess = PostMassErrorInfoToDB(intDatasetID, strXMLResults);
 
                         if (!blnSuccess)
                         {
@@ -197,16 +193,17 @@ namespace AnalysisManagerDtaRefineryPlugIn
         {
             const int MAX_RETRY_COUNT = 3;
 
-            bool blnSuccess = false;
+            bool blnSuccess;
 
             try
             {
                 // Call stored procedure STORE_MASS_ERROR_STATS_SP_NAME in DMS5
 
-                var objCommand = new SqlCommand();
-
-                objCommand.CommandType = CommandType.StoredProcedure;
-                objCommand.CommandText = STORE_MASS_ERROR_STATS_SP_NAME;
+                var objCommand = new SqlCommand
+                {
+                    CommandType = CommandType.StoredProcedure,
+                    CommandText = STORE_MASS_ERROR_STATS_SP_NAME
+                };
 
                 objCommand.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
                 objCommand.Parameters.Add(new SqlParameter("@DatasetID", SqlDbType.Int)).Value = intDatasetID;
@@ -215,8 +212,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 var objAnalysisTask = new clsAnalysisJob(m_mgrParams, m_DebugLevel);
 
                 //Execute the SP (retry the call up to 4 times)
-                int ResCode = 0;
-                ResCode = objAnalysisTask.DMSProcedureExecutor.ExecuteSP(objCommand, MAX_RETRY_COUNT);
+                var ResCode = objAnalysisTask.DMSProcedureExecutor.ExecuteSP(objCommand, MAX_RETRY_COUNT);
 
                 if (ResCode == 0)
                 {

@@ -30,21 +30,18 @@ namespace AnalysisManagerDtaRefineryPlugIn
         /// Indicates whether the intensity values in the original file were updated
         /// </summary>
         /// <returns>True if the file was updated</returns>
-        public bool FileUpdated
-        {
-            get { return mFileUpdated; }
-        }
+        public bool FileUpdated => mFileUpdated;
 
-        private string CollapseLine(string[] strSplitLine)
+        private string CollapseLine(string[] dataColumns)
         {
-            StringBuilder sbCollapsed = new StringBuilder(1024);
+            var sbCollapsed = new StringBuilder(1024);
 
-            if (strSplitLine.Length > 0)
+            if (dataColumns.Length > 0)
             {
-                sbCollapsed.Append(strSplitLine[0]);
-                for (var intIndex = 1; intIndex <= strSplitLine.Length - 1; intIndex++)
+                sbCollapsed.Append(dataColumns[0]);
+                for (var intIndex = 1; intIndex <= dataColumns.Length - 1; intIndex++)
                 {
-                    sbCollapsed.Append("\t" + strSplitLine[intIndex]);
+                    sbCollapsed.Append("\t" + dataColumns[intIndex]);
                 }
             }
 
@@ -58,76 +55,71 @@ namespace AnalysisManagerDtaRefineryPlugIn
         /// <returns>True if success; false if an unrecoverable error</returns>
         public bool ValidateDeconMSnLogFile(string strSourceFilePath)
         {
-            string strTempFilePath = null;
+            var headerValidated = false;
 
-            string strLineIn = null;
-            string[] strSplitLine = null;
-
-            var blnHeaderPassed = false;
-            bool blnColumnUpdated = false;
-
-            var intParentIntensityColIndex = 9;
-            var intMonoIntensityColIndex = 10;
-            int intColumnCountUpdated = 0;
+            var parentIntensityColIndex = 9;
+            var monoIntensityColIndex = 10;
 
             try
             {
-                mErrorMessage = string.Empty;
                 mFileUpdated = false;
 
-                strTempFilePath = Path.GetTempFileName();
+                var tempFilePath = Path.GetTempFileName();
                 Thread.Sleep(250);
 
                 using (var srSourceFile = new StreamReader(new FileStream(strSourceFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
-                using (var swOutFile = new StreamWriter(new FileStream(strTempFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
+                using (var swOutFile = new StreamWriter(new FileStream(tempFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
                 {
                     while (!srSourceFile.EndOfStream)
                     {
-                        strLineIn = srSourceFile.ReadLine();
-                        intColumnCountUpdated = 0;
+                        var dataLine = srSourceFile.ReadLine();
+                        var columnCountUpdated = 0;
+                        if (string.IsNullOrWhiteSpace(dataLine))
+                            continue;
 
-                        if (blnHeaderPassed)
+                        if (headerValidated)
                         {
-                            strSplitLine = strLineIn.Split('\t');
+                            var dataColumns = dataLine.Split('\t');
 
-                            if (strSplitLine.Length > 1 && strSplitLine[0] == "MSn_Scan")
+                            if (dataColumns.Length > 1 && dataColumns[0] == "MSn_Scan")
                             {
                                 // This is the header line
-                                ValidateHeader(strLineIn, ref intParentIntensityColIndex, ref intMonoIntensityColIndex);
+                                ValidateHeader(dataLine, ref parentIntensityColIndex, ref monoIntensityColIndex);
                             }
-                            else if (strSplitLine.Length > 1)
+                            else if (dataColumns.Length > 1)
                             {
-                                ValidateColumnIsPositive(strSplitLine, intParentIntensityColIndex, out blnColumnUpdated);
-                                if (blnColumnUpdated)
-                                    intColumnCountUpdated += 1;
+                                bool columnUpdated;
+                                ValidateColumnIsPositive(dataColumns, parentIntensityColIndex, out columnUpdated);
+                                if (columnUpdated)
+                                    columnCountUpdated += 1;
 
-                                ValidateColumnIsPositive(strSplitLine, intMonoIntensityColIndex, out blnColumnUpdated);
-                                if (blnColumnUpdated)
-                                    intColumnCountUpdated += 1;
+                                ValidateColumnIsPositive(dataColumns, monoIntensityColIndex, out columnUpdated);
+                                if (columnUpdated)
+                                    columnCountUpdated += 1;
                             }
 
-                            if (intColumnCountUpdated > 0)
+                            if (columnCountUpdated > 0)
                             {
                                 mFileUpdated = true;
-                                swOutFile.WriteLine(CollapseLine(strSplitLine));
+                                swOutFile.WriteLine(CollapseLine(dataColumns));
                             }
                             else
                             {
-                                swOutFile.WriteLine(strLineIn);
+                                swOutFile.WriteLine(dataLine);
                             }
                         }
                         else
                         {
-                            if (strLineIn.StartsWith("--------------"))
+                            if (dataLine.StartsWith("--------------"))
                             {
-                                blnHeaderPassed = true;
+                                headerValidated = true;
                             }
-                            else if (strLineIn.StartsWith("MSn_Scan"))
+                            else if (dataLine.StartsWith("MSn_Scan"))
                             {
-                                ValidateHeader(strLineIn, ref intParentIntensityColIndex, ref intMonoIntensityColIndex);
-                                blnHeaderPassed = true;
+                                ValidateHeader(dataLine, ref parentIntensityColIndex, ref monoIntensityColIndex);
+                                headerValidated = true;
                             }
-                            swOutFile.WriteLine(strLineIn);
+                            swOutFile.WriteLine(dataLine);
                         }
                     }
                 }
@@ -157,7 +149,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                         ioFileInfo.MoveTo(strTargetFilePath);
 
                         // Now copy the temp file to strFilePath
-                        File.Copy(strTempFilePath, strSourceFilePath, false);
+                        File.Copy(tempFilePath, strSourceFilePath, false);
                     }
                     catch (Exception ex)
                     {
@@ -172,7 +164,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                     }
                 }
 
-                File.Delete(strTempFilePath);
+                File.Delete(tempFilePath);
             }
             catch (Exception ex)
             {
@@ -187,47 +179,47 @@ namespace AnalysisManagerDtaRefineryPlugIn
         /// <summary>
         /// Validate the header, updating the column indices if necessary
         /// </summary>
-        /// <param name="strLineIn"></param>
-        /// <param name="intParentIntensityColIndex">Input/output parameter</param>
-        /// <param name="intMonoIntensityColIndex">Input/output parameter</param>
+        /// <param name="dataLine"></param>
+        /// <param name="parentIntensityColIndex">Input/output parameter</param>
+        /// <param name="monoIntensityColIndex">Input/output parameter</param>
         /// <remarks></remarks>
-        private void ValidateHeader(string strLineIn, ref int intParentIntensityColIndex, ref int intMonoIntensityColIndex)
+        private void ValidateHeader(string dataLine, ref int parentIntensityColIndex, ref int monoIntensityColIndex)
         {
-            string[] strSplitLine = null;
-            int intColIndex = 0;
+            var dataColumns = dataLine.Split('\t');
 
-            strSplitLine = strLineIn.Split('\t');
-
-            if (strSplitLine.Length > 1)
+            if (dataColumns.Length > 1)
             {
-                var lstSplitLine = new List<string>(strSplitLine);
+                var lstSplitLine = new List<string>(dataColumns);
 
-                intColIndex = lstSplitLine.IndexOf("Parent_Intensity");
-                if (intColIndex > 0)
-                    intParentIntensityColIndex = intColIndex;
+                var colIndex = lstSplitLine.IndexOf("Parent_Intensity");
+                if (colIndex > 0)
+                    parentIntensityColIndex = colIndex;
 
-                intColIndex = lstSplitLine.IndexOf("Mono_Intensity");
-                if (intColIndex > 0)
-                    intMonoIntensityColIndex = intColIndex;
+                colIndex = lstSplitLine.IndexOf("Mono_Intensity");
+                if (colIndex > 0)
+                    monoIntensityColIndex = colIndex;
             }
         }
 
-        private void ValidateColumnIsPositive(string[] strSplitLine, int intColIndex, out bool blnColumnUpdated)
+        /// <summary>
+        /// Examines the data in dataColumns[colIndex] to see if it is numeric and 1 or grater
+        /// If not numeric, or if less than 1, it is changed to be 1
+        /// </summary>
+        /// <param name="dataColumns"></param>
+        /// <param name="colIndex"></param>
+        /// <param name="columnUpdated"></param>
+        private void ValidateColumnIsPositive(IList<string> dataColumns, int colIndex, out bool columnUpdated)
         {
-            double dblResult = 0;
-            bool blnIsNumeric = false;
+            columnUpdated = false;
 
-            blnColumnUpdated = false;
+            if (dataColumns.Count <= colIndex)
+                return;
 
-            if (strSplitLine.Length > intColIndex)
+            var isNumeric = double.TryParse(dataColumns[colIndex], out var result);
+            if (!isNumeric || result < 1)
             {
-                dblResult = 0;
-                blnIsNumeric = double.TryParse(strSplitLine[intColIndex], out dblResult);
-                if (!blnIsNumeric || dblResult < 1)
-                {
-                    strSplitLine[intColIndex] = "1";
-                    blnColumnUpdated = true;
-                }
+                dataColumns[colIndex] = "1";
+                columnUpdated = true;
             }
         }
     }

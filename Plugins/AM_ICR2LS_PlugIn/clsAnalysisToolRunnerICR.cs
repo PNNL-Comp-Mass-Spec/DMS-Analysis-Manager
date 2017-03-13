@@ -39,22 +39,6 @@ namespace AnalysisManagerICR2LSPlugIn
 
         public override CloseOutType RunTool()
         {
-            string DSNamePath = null;
-
-            bool UseAllScans = false;
-
-            string SerFileOrFolderPath = null;
-            var blnIsFolder = false;
-
-            string strSerTypeName = null;
-
-            string OutFileNamePath = null;
-            string ParamFilePath = null;
-            string RawDataType = null;
-            bool blnBrukerFT = false;
-            string DatasetFolderPathBase = null;
-
-            bool blnSuccess = false;
 
             var currentTask = "Initializing";
 
@@ -77,14 +61,14 @@ namespace AnalysisManagerICR2LSPlugIn
 
                 //Verify a param file has been specified
                 currentTask = "Verify param file path";
-                ParamFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"));
+                var paramFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"));
 
-                currentTask = "Verify param file path: " + ParamFilePath;
-                if (!File.Exists(ParamFilePath))
+                currentTask = "Verify param file path: " + paramFilePath;
+                if (!File.Exists(paramFilePath))
                 {
                     //Param file wasn't specified, but is required for ICR-2LS analysis
                     m_message = "ICR-2LS Param file not found";
-                    LogError(m_message + ": " + ParamFilePath);
+                    LogError(m_message + ": " + paramFilePath);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -97,42 +81,47 @@ namespace AnalysisManagerICR2LSPlugIn
                 // Determine whether or not we should be processing MS2 spectra
                 var SkipMS2 = !m_jobParams.GetJobParameter("ProcessMS2", false);
 
+                bool useAllScans;
                 if ((MinScan == 0 && MaxScan == 0) || MinScan > MaxScan || MaxScan > 500000)
                 {
-                    UseAllScans = true;
+                    useAllScans = true;
                 }
                 else
                 {
-                    UseAllScans = false;
+                    useAllScans = false;
                 }
 
                 //Assemble the dataset name
-                DSNamePath = Path.Combine(m_WorkDir, m_Dataset);
-                RawDataType = m_jobParams.GetParam("RawDataType");
+                var DSNamePath = Path.Combine(m_WorkDir, m_Dataset);
+                var RawDataType = m_jobParams.GetParam("RawDataType");
 
                 //Assemble the output file name and path
-                OutFileNamePath = Path.Combine(m_WorkDir, m_Dataset + ".pek");
+                var OutFileNamePath = Path.Combine(m_WorkDir, m_Dataset + ".pek");
 
                 // Determine the location of the ser file (or fid file)
                 // It could be in a "0.ser" folder, a ser file inside a .D folder, or a fid file inside a .D folder
 
-                if (RawDataType.ToLower() == clsAnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER)
+                string datasetFolderPathBase;
+                bool blnBrukerFT;
+
+                if (string.Equals(RawDataType.ToLower(), clsAnalysisResources.RAW_DATA_TYPE_BRUKER_FT_FOLDER, StringComparison.InvariantCultureIgnoreCase))
                 {
-                    DatasetFolderPathBase = Path.Combine(m_WorkDir, m_Dataset + ".d");
+                    datasetFolderPathBase = Path.Combine(m_WorkDir, m_Dataset + ".d");
                     blnBrukerFT = true;
                 }
                 else
                 {
-                    DatasetFolderPathBase = string.Copy(m_WorkDir);
+                    datasetFolderPathBase = string.Copy(m_WorkDir);
                     blnBrukerFT = false;
                 }
 
                 // Look for a ser file or fid file in the working directory
                 currentTask = "FindSerFileOrFolder";
 
-                SerFileOrFolderPath = clsAnalysisResourcesIcr2ls.FindSerFileOrFolder(DatasetFolderPathBase, ref blnIsFolder);
+                bool blnIsFolder;
+                var serFileOrFolderPath = clsAnalysisResourcesIcr2ls.FindSerFileOrFolder(datasetFolderPathBase, out blnIsFolder);
 
-                if (string.IsNullOrEmpty(SerFileOrFolderPath))
+                if (string.IsNullOrEmpty(serFileOrFolderPath))
                 {
                     // Did not find a ser file, fid file, or 0.ser folder
 
@@ -158,19 +147,22 @@ namespace AnalysisManagerICR2LSPlugIn
                     {
                         if (blnIsFolder)
                         {
-                            LogDebug("0.ser folder found: " + SerFileOrFolderPath);
+                            LogDebug("0.ser folder found: " + serFileOrFolderPath);
                         }
                         else
                         {
                             LogDebug(
-                                Path.GetFileName(SerFileOrFolderPath) + " file found: " + SerFileOrFolderPath);
+                                Path.GetFileName(serFileOrFolderPath) + " file found: " + serFileOrFolderPath);
                         }
                     }
                 }
 
                 ICR2LSProcessingModeConstants eICR2LSMode;
-                if (!string.IsNullOrEmpty(SerFileOrFolderPath))
+                bool success;
+
+                if (!string.IsNullOrEmpty(serFileOrFolderPath))
                 {
+                    string strSerTypeName;
                     if (!blnIsFolder)
                     {
                         eICR2LSMode = ICR2LSProcessingModeConstants.SerFilePEK;
@@ -182,12 +174,14 @@ namespace AnalysisManagerICR2LSPlugIn
                         strSerTypeName = "folder";
                     }
 
-                    currentTask = "StartICR2LS for " + SerFileOrFolderPath;
-                    blnSuccess = base.StartICR2LS(SerFileOrFolderPath, ParamFilePath, OutFileNamePath, eICR2LSMode, UseAllScans, SkipMS2, MinScan,
-                        MaxScan);
-                    if (!blnSuccess)
+                    currentTask = "StartICR2LS for " + serFileOrFolderPath;
+                    success = base.StartICR2LS(
+                        serFileOrFolderPath, paramFilePath, OutFileNamePath, eICR2LSMode, useAllScans,
+                        SkipMS2, MinScan,MaxScan);
+
+                    if (!success)
                     {
-                        LogError("Error running ICR-2LS on " + strSerTypeName + " " + SerFileOrFolderPath);
+                        LogError("Error running ICR-2LS on " + strSerTypeName + " " + serFileOrFolderPath);
                     }
                 }
                 else
@@ -203,15 +197,15 @@ namespace AnalysisManagerICR2LSPlugIn
                     currentTask = "StartICR2LS for zippsed s-folders in " + DSNamePath;
 
                     eICR2LSMode = ICR2LSProcessingModeConstants.SFoldersPEK;
-                    blnSuccess = base.StartICR2LS(DSNamePath, ParamFilePath, OutFileNamePath, eICR2LSMode, UseAllScans, SkipMS2, MinScan, MaxScan);
+                    success = base.StartICR2LS(DSNamePath, paramFilePath, OutFileNamePath, eICR2LSMode, useAllScans, SkipMS2, MinScan, MaxScan);
 
-                    if (!blnSuccess)
+                    if (!success)
                     {
                         LogError("Error running ICR-2LS on zipped s-files in " + DSNamePath);
                     }
                 }
 
-                if (!blnSuccess)
+                if (!success)
                 {
                     // If a .PEK file exists, then call PerfPostAnalysisTasks() to move the .Pek file into the results folder, which we'll then archive in the Failed Results folder
                     currentTask = "VerifyPEKFileExists";
@@ -259,7 +253,7 @@ namespace AnalysisManagerICR2LSPlugIn
         {
             //Deletes the dataset folder containing s-folders from the working directory
             var RetryCount = 0;
-            string ErrMsg = string.Empty;
+            var ErrMsg = string.Empty;
 
             while (RetryCount < 3)
             {
@@ -303,53 +297,47 @@ namespace AnalysisManagerICR2LSPlugIn
         /// <remarks></remarks>
         private void FixICR2LSResultFileNames(string strFolderPath, string strDatasetName)
         {
-            List<string> objExtensionsToCheck = new List<string>();
-
-            string strDSNameLCase = null;
-
-            string strDesiredName = null;
+            var objExtensionsToCheck = new List<string>();
 
             try
             {
                 objExtensionsToCheck.Add("PAR");
                 objExtensionsToCheck.Add("Pek");
 
-                strDSNameLCase = strDatasetName.ToLower();
-
                 var fiFolder = new DirectoryInfo(strFolderPath);
 
                 if (fiFolder.Exists)
                 {
-                    foreach (string strExtension in objExtensionsToCheck)
+                    foreach (var strExtension in objExtensionsToCheck)
                     {
                         foreach (var fiFile in fiFolder.GetFiles("*." + strExtension))
                         {
-                            if (fiFile.Name.ToLower().StartsWith(strDSNameLCase))
+                            if (!fiFile.Name.StartsWith(strDatasetName, StringComparison.InvariantCultureIgnoreCase))
+                                continue;
+
+                            // Name should be of the form: Dataset_1_24_2010.PAR
+                            // The datestamp in the name is month_day_year
+                            var strDesiredName = strDatasetName + "_" + System.DateTime.Now.ToString("M_d_yyyy") + "." + strExtension;
+
+                            if (!string.Equals(fiFile.Name, strDesiredName, StringComparison.InvariantCultureIgnoreCase))
                             {
-                                // Name should be of the form: Dataset_1_24_2010.PAR
-                                // The datestamp in the name is month_day_year
-                                strDesiredName = strDatasetName + "_" + System.DateTime.Now.ToString("M_d_yyyy") + "." + strExtension;
-
-                                if (fiFile.Name.ToLower() != strDesiredName.ToLower())
+                                try
                                 {
-                                    try
+                                    if (m_DebugLevel >= 1)
                                     {
-                                        if (m_DebugLevel >= 1)
-                                        {
-                                            LogDebug("Renaming " + strExtension + " file from " + fiFile.Name + " to " + strDesiredName);
-                                        }
+                                        LogDebug("Renaming " + strExtension + " file from " + fiFile.Name + " to " + strDesiredName);
+                                    }
 
-                                        fiFile.MoveTo(Path.Combine(fiFolder.FullName, strDesiredName));
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        // Rename failed; that means the correct file already exists; this is OK
-                                        LogError("Rename failed: " + ex.Message);
-                                    }
+                                    fiFile.MoveTo(Path.Combine(fiFolder.FullName, strDesiredName));
                                 }
-
-                                break;
+                                catch (Exception ex)
+                                {
+                                    // Rename failed; that means the correct file already exists; this is OK
+                                    LogError("Rename failed: " + ex.Message);
+                                }
                             }
+
+                            break;
                         }
                     }
                 }

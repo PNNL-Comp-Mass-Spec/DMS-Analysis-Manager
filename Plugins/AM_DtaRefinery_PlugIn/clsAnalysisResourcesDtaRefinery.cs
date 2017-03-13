@@ -43,11 +43,9 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            string strParamFileStoragePathKeyName = null;
-            string strDtaRefineryParmFileStoragePath = null;
-            strParamFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "DTA_Refinery";
+            var strParamFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "DTA_Refinery";
 
-            strDtaRefineryParmFileStoragePath = m_mgrParams.GetParam(strParamFileStoragePathKeyName);
+            var strDtaRefineryParmFileStoragePath = m_mgrParams.GetParam(strParamFileStoragePathKeyName);
             if (string.IsNullOrEmpty(strDtaRefineryParmFileStoragePath))
             {
                 strDtaRefineryParmFileStoragePath = @"\\gigasax\dms_parameter_Files\DTARefinery";
@@ -82,7 +80,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             }
 
             // Make sure the _DTA.txt file has parent ion lines with text: scan=x and cs=y
-            string strCDTAPath = Path.Combine(m_WorkingDir, DatasetName + "_dta.txt");
+            var strCDTAPath = Path.Combine(m_WorkingDir, DatasetName + "_dta.txt");
             const bool blnReplaceSourceFile = true;
             const bool blnDeleteSourceFileIfUpdated = true;
 
@@ -106,7 +104,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (!base.ProcessMyEMSLDownloadQueue(m_WorkingDir, Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, Downloader.DownloadFolderLayout.FlatNoSubfolders))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -137,11 +135,11 @@ namespace AnalysisManagerDtaRefineryPlugIn
             m_jobParams.AddResultFileToKeep(DatasetName + "_dta.zip");
 
             // Set up run parameter file to reference spectra file, taxonomy file, and analysis parameter file
-            string strErrorMessage = null;
+            string strErrorMessage;
             var success = UpdateParameterFile(out strErrorMessage);
             if (!success)
             {
-                string msg = "clsAnalysisResourcesDtaRefinery.GetResources(), failed making input file: " + strErrorMessage;
+                var msg = "clsAnalysisResourcesDtaRefinery.GetResources(), failed making input file: " + strErrorMessage;
                 LogError(msg);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -151,12 +149,10 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
         private bool RetrieveDeconMSnLogFiles()
         {
-            string sourceFolderPath = null;
-
             try
             {
                 var deconMSnLogFileName = DatasetName + "_DeconMSn_log.txt";
-                sourceFolderPath = FileSearch.FindDataFile(deconMSnLogFileName);
+                var sourceFolderPath = FileSearch.FindDataFile(deconMSnLogFileName);
 
                 if (string.IsNullOrWhiteSpace(sourceFolderPath))
                 {
@@ -211,7 +207,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                     }
                 }
 
-                if (!base.ProcessMyEMSLDownloadQueue(m_WorkingDir, Downloader.DownloadFolderLayout.FlatNoSubfolders))
+                if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, Downloader.DownloadFolderLayout.FlatNoSubfolders))
                 {
                     return false;
                 }
@@ -243,33 +239,30 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
         private void DeleteFileIfNoData(string fileName, string fileDescription)
         {
-            string strErrorMessage = string.Empty;
-            string strFilePathToCheck = null;
+            if (string.IsNullOrWhiteSpace(fileName))
+                return;
 
-            if (!string.IsNullOrWhiteSpace(fileName))
+            var strFilePathToCheck = Path.Combine(m_WorkingDir, fileName);
+            string strErrorMessage;
+            if (!ValidateFileHasData(strFilePathToCheck, fileDescription, out strErrorMessage))
             {
-                strFilePathToCheck = Path.Combine(m_WorkingDir, fileName);
-                if (!ValidateFileHasData(strFilePathToCheck, fileDescription, out strErrorMessage))
+                if (m_DebugLevel >= 1)
                 {
-                    if (m_DebugLevel >= 1)
-                    {
-                        LogWarning(
-                            fileDescription +
-                            " does not have any tab-delimited lines that start with a number; file will be deleted so that DTARefinery can proceed without considering TIC or ion intensity");
-                    }
-
-                    File.Delete(strFilePathToCheck);
+                    LogWarning(
+                        fileDescription +
+                        " does not have any tab-delimited lines that start with a number; file will be deleted so that DTARefinery can proceed without considering TIC or ion intensity");
                 }
+
+                File.Delete(strFilePathToCheck);
             }
         }
 
         private bool UpdateParameterFile(out string strErrorMessage)
         {
-            string XTandemExePath = null;
-            string XtandemDefaultInput = Path.Combine(m_WorkingDir, XTANDEM_DEFAULT_INPUT_FILE);
-            string XtandemTaxonomyList = Path.Combine(m_WorkingDir, XTANDEM_TAXONOMY_LIST_FILE);
-            string ParamFilePath = Path.Combine(m_WorkingDir, m_jobParams.GetParam("DTARefineryXMLFile"));
-            string DtaRefineryDirectory = Path.GetDirectoryName(m_mgrParams.GetParam("dtarefineryloc"));
+            var XtandemDefaultInput = Path.Combine(m_WorkingDir, XTANDEM_DEFAULT_INPUT_FILE);
+            var XtandemTaxonomyList = Path.Combine(m_WorkingDir, XTANDEM_TAXONOMY_LIST_FILE);
+            var ParamFilePath = Path.Combine(m_WorkingDir, m_jobParams.GetParam("DTARefineryXMLFile"));
+            var DtaRefineryDirectory = Path.GetDirectoryName(m_mgrParams.GetParam("dtarefineryloc"));
 
             strErrorMessage = string.Empty;
 
@@ -283,9 +276,17 @@ namespace AnalysisManagerDtaRefineryPlugIn
                     return false;
                 }
 
+                if (string.IsNullOrWhiteSpace(DtaRefineryDirectory))
+                {
+                    strErrorMessage = "Manager parameter dtarefineryloc is empty";
+                    return false;
+                }
+
                 // Open the template XML file
-                var objTemplate = new XmlDocument();
-                objTemplate.PreserveWhitespace = true;
+                var objTemplate = new XmlDocument {
+                    PreserveWhitespace = true
+                };
+
                 try
                 {
                     objTemplate.Load(fiTemplateFile.FullName);
@@ -299,17 +300,24 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 // Now override the values for xtandem parameters file
                 try
                 {
-                    XmlElement root = objTemplate.DocumentElement;
+                    var root = objTemplate.DocumentElement;
 
-                    XTandemExePath = Path.Combine(DtaRefineryDirectory, "aux_xtandem_module\\tandem_5digit_precision.exe");
-                    var par = root.SelectSingleNode("/allPars/xtandemPars/par[@label='xtandem exe file']");
-                    par.InnerXml = XTandemExePath;
+                    var XTandemExePath = Path.Combine(DtaRefineryDirectory, "aux_xtandem_module\\tandem_5digit_precision.exe");
 
-                    par = root.SelectSingleNode("/allPars/xtandemPars/par[@label='default input']");
-                    par.InnerXml = XtandemDefaultInput;
+                    if (root != null)
+                    {
+                        var exeParam = root.SelectSingleNode("/allPars/xtandemPars/par[@label='xtandem exe file']");
+                        if (exeParam != null)
+                            exeParam.InnerXml = XTandemExePath;
 
-                    par = root.SelectSingleNode("/allPars/xtandemPars/par[@label='taxonomy list']");
-                    par.InnerXml = XtandemTaxonomyList;
+                        var inputParam = root.SelectSingleNode("/allPars/xtandemPars/par[@label='default input']");
+                        if (inputParam != null)
+                            inputParam.InnerXml = XtandemDefaultInput;
+
+                        var taxonomyListParam = root.SelectSingleNode("/allPars/xtandemPars/par[@label='taxonomy list']");
+                        if (taxonomyListParam != null)
+                            taxonomyListParam.InnerXml = XtandemTaxonomyList;
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -334,27 +342,17 @@ namespace AnalysisManagerDtaRefineryPlugIn
             clsDeconMSnLogFileValidator oValidator = new clsDeconMSnLogFileValidator();
             bool blnSuccess = false;
 
-            blnSuccess = oValidator.ValidateDeconMSnLogFile(strFilePath);
+            var blnSuccess = oValidator.ValidateDeconMSnLogFile(strFilePath);
             if (!blnSuccess)
             {
-                if (string.IsNullOrEmpty(oValidator.ErrorMessage))
-                {
-                    LogError(
-                        "clsDeconMSnLogFileValidator.ValidateFile returned false");
-                }
-                else
-                {
-                    LogError(oValidator.ErrorMessage);
-                }
+                // The error will have already been logged
                 return false;
             }
-            else
+
+            if (oValidator.FileUpdated)
             {
-                if (oValidator.FileUpdated)
-                {
-                    LogWarning(
-                        "clsDeconMSnLogFileValidator.ValidateFile updated one or more rows in the DeconMSn_Log.txt file to replace values with intensities of 0 with 1");
-                }
+                LogWarning("clsDeconMSnLogFileValidator.ValidateFile updated one or more rows " +
+                           "in the DeconMSn_Log.txt file to replace values with intensities of 0 with 1");
             }
 
             return true;

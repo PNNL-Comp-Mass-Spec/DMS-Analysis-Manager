@@ -13,13 +13,6 @@ namespace AnalysisManagerICR2LSPlugIn
     {
         public override CloseOutType RunTool()
         {
-            string DSNamePath = null;
-
-            bool UseAllScans = false;
-
-            string OutFileNamePath = null;
-            string ParamFilePath = null;
-            bool blnSuccess = false;
 
             //Start with base class function to get settings information
             var ResCode = base.RunTool();
@@ -36,12 +29,12 @@ namespace AnalysisManagerICR2LSPlugIn
             }
 
             //Verify a param file has been specified
-            ParamFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"));
-            if (!File.Exists(ParamFilePath))
+            var paramFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"));
+            if (!File.Exists(paramFilePath))
             {
                 //Param file wasn't specified, but is required for ICR-2LS analysis
                 m_message = "ICR-2LS Param file not found";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + ParamFilePath);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + paramFilePath);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -53,18 +46,19 @@ namespace AnalysisManagerICR2LSPlugIn
 
             // Determine whether or not we should be processing MS2 spectra
             var SkipMS2 = !m_jobParams.GetJobParameter("ProcessMS2", false);
+            bool useAllScans;
 
             if ((MinScan == 0 && MaxScan == 0) || MinScan > MaxScan || MaxScan > 500000)
             {
-                UseAllScans = true;
+                useAllScans = true;
             }
             else
             {
-                UseAllScans = false;
+                useAllScans = false;
             }
 
             //Assemble the data file name and path
-            DSNamePath = Path.Combine(m_WorkDir, m_Dataset + ".raw");
+            var DSNamePath = Path.Combine(m_WorkDir, m_Dataset + ".raw");
             if (!File.Exists(DSNamePath))
             {
                 m_message = "Raw file not found: " + DSNamePath;
@@ -73,12 +67,12 @@ namespace AnalysisManagerICR2LSPlugIn
             }
 
             //Assemble the output file name and path
-            OutFileNamePath = Path.Combine(m_WorkDir, m_Dataset + ".pek");
+            var OutFileNamePath = Path.Combine(m_WorkDir, m_Dataset + ".pek");
 
-            blnSuccess = base.StartICR2LS(DSNamePath, ParamFilePath, OutFileNamePath, ICR2LSProcessingModeConstants.LTQFTPEK, UseAllScans, SkipMS2,
+            var success = base.StartICR2LS(DSNamePath, paramFilePath, OutFileNamePath, ICR2LSProcessingModeConstants.LTQFTPEK, useAllScans, SkipMS2,
                 MinScan, MaxScan);
 
-            if (blnSuccess)
+            if (success)
             {
                 if (!VerifyPEKFileExists(m_WorkDir, m_Dataset))
                 {
@@ -127,14 +121,13 @@ namespace AnalysisManagerICR2LSPlugIn
         protected override CloseOutType DeleteDataFile()
         {
             //Deletes the .raw file from the working directory
-            string[] FoundFiles = null;
 
             //Delete the .raw file
             try
             {
                 Thread.Sleep(5000);             //Allow extra time for ICR2LS to release file locks
-                FoundFiles = Directory.GetFiles(m_WorkDir, "*.raw");
-                foreach (string MyFile in FoundFiles)
+                var FoundFiles = Directory.GetFiles(m_WorkDir, "*.raw");
+                foreach (var MyFile in FoundFiles)
                 {
                     // Add the file to .FilesToDelete just in case the deletion fails
                     m_jobParams.AddResultFileToSkip(MyFile);

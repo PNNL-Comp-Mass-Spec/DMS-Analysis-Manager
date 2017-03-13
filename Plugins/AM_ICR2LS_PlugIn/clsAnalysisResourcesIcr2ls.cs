@@ -53,13 +53,9 @@ namespace AnalysisManagerICR2LSPlugIn
 
         private bool GetBrukerSerFile()
         {
-            string strLocalDatasetFolderPath = null;
-
-            bool blnIsFolder = false;
-
             try
             {
-                string RawDataType = m_jobParams.GetParam("RawDataType");
+                var RawDataType = m_jobParams.GetParam("RawDataType");
 
                 if (RawDataType == RAW_DATA_TYPE_DOT_RAW_FILES)
                 {
@@ -69,6 +65,7 @@ namespace AnalysisManagerICR2LSPlugIn
 
                 var strRemoteDatasetFolderPath = Path.Combine(m_jobParams.GetParam("DatasetArchivePath"), m_jobParams.GetParam("DatasetFolderName"));
 
+                string strLocalDatasetFolderPath;
                 if (RawDataType.ToLower() == RAW_DATA_TYPE_BRUKER_FT_FOLDER)
                 {
                     strLocalDatasetFolderPath = Path.Combine(m_WorkingDir, DatasetName + ".d");
@@ -79,20 +76,21 @@ namespace AnalysisManagerICR2LSPlugIn
                     strLocalDatasetFolderPath = string.Copy(m_WorkingDir);
                 }
 
-                var serFileOrFolderPath = FindSerFileOrFolder(strLocalDatasetFolderPath, ref blnIsFolder);
+                bool blnIsFolder;
+                var serFileOrFolderPath = FindSerFileOrFolder(strLocalDatasetFolderPath, out blnIsFolder);
 
                 if (string.IsNullOrEmpty(serFileOrFolderPath))
                 {
                     // Ser file, fid file, or 0.ser folder not found in the working directory
                     // See if the file exists in the archive
 
-                    serFileOrFolderPath = FindSerFileOrFolder(strRemoteDatasetFolderPath, ref blnIsFolder);
+                    serFileOrFolderPath = FindSerFileOrFolder(strRemoteDatasetFolderPath, out blnIsFolder);
 
                     if (!string.IsNullOrEmpty(serFileOrFolderPath))
                     {
                         // File found in the archive; need to copy it locally
 
-                        DateTime dtStartTime = System.DateTime.UtcNow;
+                        var dtStartTime = DateTime.UtcNow;
 
                         if (blnIsFolder)
                         {
@@ -105,7 +103,7 @@ namespace AnalysisManagerICR2LSPlugIn
                             if (m_DebugLevel >= 1)
                             {
                                 LogMessage(
-                                    "Successfully copied 0.ser folder in " + System.DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds.ToString("0") +
+                                    "Successfully copied 0.ser folder in " + DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds.ToString("0") +
                                     " seconds");
                             }
                         }
@@ -119,14 +117,12 @@ namespace AnalysisManagerICR2LSPlugIn
                             {
                                 return false;
                             }
-                            else
+
+                            if (m_DebugLevel >= 1)
                             {
-                                if (m_DebugLevel >= 1)
-                                {
-                                    LogMessage(
-                                        "Successfully copied " + Path.GetFileName(serFileOrFolderPath) + " file in " +
-                                        System.DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds.ToString("0") + " seconds");
-                                }
+                                LogMessage(
+                                    "Successfully copied " + Path.GetFileName(serFileOrFolderPath) + " file in " +
+                                    DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds.ToString("0") + " seconds");
                             }
                         }
                     }
@@ -149,7 +145,7 @@ namespace AnalysisManagerICR2LSPlugIn
         /// <param name="blnIsFolder"></param>
         /// <returns>The path to the ser file, fid file, or 0.ser folder, if found.  An empty string if not found</returns>
         /// <remarks></remarks>
-        public static string FindSerFileOrFolder(string strFolderToCheck, ref bool blnIsFolder)
+        public static string FindSerFileOrFolder(string strFolderToCheck, out bool blnIsFolder)
         {
             blnIsFolder = false;
 
@@ -211,11 +207,9 @@ namespace AnalysisManagerICR2LSPlugIn
                     LogWarning("transferFolderPath is empty; this is unexpected");
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
-                else
-                {
-                    transferFolderPath = Path.Combine(transferFolderPath, m_jobParams.GetParam("JobParameters", "DatasetFolderName"));
-                    transferFolderPath = Path.Combine(transferFolderPath, m_jobParams.GetParam("StepParameters", "OutputFolderName"));
-                }
+
+                transferFolderPath = Path.Combine(transferFolderPath, m_jobParams.GetParam("JobParameters", "DatasetFolderName"));
+                transferFolderPath = Path.Combine(transferFolderPath, m_jobParams.GetParam("StepParameters", "OutputFolderName"));
 
                 if (m_DebugLevel >= 4)
                 {

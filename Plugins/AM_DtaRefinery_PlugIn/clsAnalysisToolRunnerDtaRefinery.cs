@@ -47,8 +47,8 @@ namespace AnalysisManagerDtaRefineryPlugIn
         public override CloseOutType RunTool()
         {
             CloseOutType result;
-            string OrgDBName = m_jobParams.GetParam("PeptideSearch", "generatedFastaName");
-            string LocalOrgDBFolder = m_mgrParams.GetParam("orgdbdir");
+            var OrgDBName = m_jobParams.GetParam("PeptideSearch", "generatedFastaName");
+            var LocalOrgDBFolder = m_mgrParams.GetParam("orgdbdir");
 
             //Do the base class stuff
             if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
@@ -80,17 +80,20 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 LogMessage("Running DTA_Refinery");
             }
 
-            mCmdRunner = new clsRunDosProgram(m_WorkDir);
-            mCmdRunner.CreateNoWindow = false;
-            mCmdRunner.EchoOutputToConsole = false;
-            mCmdRunner.CacheStandardOutput = false;
-            mCmdRunner.WriteConsoleOutputToFile = false;
+            mCmdRunner = new clsRunDosProgram(m_WorkDir)
+            {
+                CreateNoWindow = false,
+                EchoOutputToConsole = false,
+                CacheStandardOutput = false,
+                WriteConsoleOutputToFile = false
+            };
+
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
             // verify that program file exists
             // DTARefineryLoc will be something like this: "c:\dms_programs\DTARefinery\dta_refinery.exe"
-            string progLoc = m_mgrParams.GetParam("DTARefineryLoc");
+            var progLoc = m_mgrParams.GetParam("DTARefineryLoc");
             if (!File.Exists(progLoc))
             {
                 if (progLoc.Length == 0)
@@ -99,20 +102,20 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            string CmdStr = null;
-            CmdStr = Path.Combine(m_WorkDir, m_jobParams.GetParam("DTARefineryXMLFile"));
-            CmdStr += " " + Path.Combine(m_WorkDir, m_Dataset + "_dta.txt");
-            CmdStr += " " + Path.Combine(LocalOrgDBFolder, OrgDBName);
+            var cmdStr =
+                Path.Combine(m_WorkDir, m_jobParams.GetParam("DTARefineryXMLFile")) + " " +
+                Path.Combine(m_WorkDir, m_Dataset + "_dta.txt") + " " +
+                Path.Combine(LocalOrgDBFolder, OrgDBName);
 
             // Create a batch file to run the command
             // Capture the console output (including output to the error stream) via redirection symbols:
-            //    strExePath CmdStr > ConsoleOutputFile.txt 2>&1
+            //    strExePath cmdStr > ConsoleOutputFile.txt 2>&1
 
-            string strBatchFilePath = Path.Combine(m_WorkDir, "Run_DTARefinery.bat");
+            var strBatchFilePath = Path.Combine(m_WorkDir, "Run_DTARefinery.bat");
             var strConsoleOutputFileName = "DTARefinery_Console_Output.txt";
             m_jobParams.AddResultFileToSkip(Path.GetFileName(strBatchFilePath));
 
-            string strBatchFileCmdLine = progLoc + " " + CmdStr + " > " + strConsoleOutputFileName + " 2>&1";
+            var strBatchFileCmdLine = progLoc + " " + cmdStr + " > " + strConsoleOutputFileName + " 2>&1";
 
             // Create the batch file
             using (var swBatchFile = new StreamWriter(new FileStream(strBatchFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
@@ -196,15 +199,12 @@ namespace AnalysisManagerDtaRefineryPlugIn
             }
             else
             {
-                var blnPostResultsToDB = true;
-                var oMassErrorExtractor = new clsDtaRefLogMassErrorExtractor(m_mgrParams, m_WorkDir, m_DebugLevel, blnPostResultsToDB);
-                bool blnSuccess = false;
+                var oMassErrorExtractor = new clsDtaRefLogMassErrorExtractor(m_mgrParams, m_WorkDir, m_DebugLevel, blnPostResultsToDB:true);
 
-                int intDatasetID = m_jobParams.GetJobParameter("DatasetID", 0);
-                int intJob = 0;
-                int.TryParse(m_JobNum, out intJob);
+                var intDatasetID = m_jobParams.GetJobParameter("DatasetID", 0);
+                int.TryParse(m_JobNum, out var intJob);
 
-                blnSuccess = oMassErrorExtractor.ParseDTARefineryLogFile(m_Dataset, intDatasetID, intJob);
+                var blnSuccess = oMassErrorExtractor.ParseDTARefineryLogFile(m_Dataset, intDatasetID, intJob);
 
                 if (!blnSuccess)
                 {
@@ -252,7 +252,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
         private void CopyFailedResultsToArchiveFolder()
         {
-            string strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
+            var strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
             if (string.IsNullOrEmpty(strFailedResultsFolderPath))
                 strFailedResultsFolderPath = "??Not Defined??";
 
@@ -263,8 +263,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 m_DebugLevel = 2;
 
             // Try to save whatever files are in the work directory (however, delete the _DTA.txt and _DTA.zip files first)
-            string strFolderPathToArchive = null;
-            strFolderPathToArchive = string.Copy(m_WorkDir);
+            var strFolderPathToArchive = string.Copy(m_WorkDir);
 
             try
             {
@@ -321,7 +320,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                     {
                         var strLineIn = srSourceFile.ReadLine();
 
-                        if (strLineIn.Contains("finished x!tandem"))
+                        if (strLineIn != null && strLineIn.Contains("finished x!tandem"))
                         {
                             return true;
                         }
@@ -343,7 +342,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
         /// <remarks></remarks>
         private bool StoreToolVersionInfo()
         {
-            string strToolVersionInfo = string.Empty;
+            var strToolVersionInfo = string.Empty;
 
             if (m_DebugLevel >= 2)
             {
@@ -351,15 +350,22 @@ namespace AnalysisManagerDtaRefineryPlugIn
             }
 
             // Store paths to key files in ioToolFiles
-            List<FileInfo> ioToolFiles = new List<FileInfo>();
-            FileInfo ioDtaRefineryFileInfo = new FileInfo(m_mgrParams.GetParam("DTARefineryLoc"));
+            var ioToolFiles = new List<FileInfo>();
+            var ioDtaRefineryFileInfo = new FileInfo(m_mgrParams.GetParam("DTARefineryLoc"));
 
             if (ioDtaRefineryFileInfo.Exists)
             {
                 ioToolFiles.Add(ioDtaRefineryFileInfo);
 
-                string strXTandemModuleLoc = Path.Combine(ioDtaRefineryFileInfo.DirectoryName, "aux_xtandem_module\\tandem_5digit_precision.exe");
-                ioToolFiles.Add(new FileInfo(strXTandemModuleLoc));
+                if (ioDtaRefineryFileInfo.DirectoryName == null)
+                {
+                    LogError("Unable to determine the parent directory of " + ioDtaRefineryFileInfo.FullName);
+                }
+                else
+                {
+                    var strXTandemModuleLoc = Path.Combine(ioDtaRefineryFileInfo.DirectoryName, @"aux_xtandem_module\tandem_5digit_precision.exe");
+                    ioToolFiles.Add(new FileInfo(strXTandemModuleLoc));
+                }
             }
             else
             {
@@ -369,7 +375,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
             try
             {
-                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile: false);
+                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile: false);
             }
             catch (Exception ex)
             {
@@ -400,21 +406,21 @@ namespace AnalysisManagerDtaRefineryPlugIn
                     {
                         var strLineIn = srSourceFile.ReadLine();
 
-                        if (strLineIn.StartsWith("number of spectra identified less than 2"))
-                        {
-                            if (!srSourceFile.EndOfStream)
-                            {
-                                strLineIn = srSourceFile.ReadLine();
-                                if (strLineIn.StartsWith("stop processing"))
-                                {
-                                    LogError("X!Tandem identified fewer than 2 peptides; unable to use DTARefinery with this dataset");
-                                    return false;
-                                }
-                            }
+                        if (strLineIn == null || !strLineIn.StartsWith("number of spectra identified less than 2"))
+                            continue;
 
-                            LogWarning(
-                                "Encountered message 'number of spectra identified less than 2' but did not find 'stop processing' on the next line; DTARefinery likely did not complete properly");
+                        if (!srSourceFile.EndOfStream)
+                        {
+                            strLineIn = srSourceFile.ReadLine();
+                            if (strLineIn != null && strLineIn.StartsWith("stop processing"))
+                            {
+                                LogError("X!Tandem identified fewer than 2 peptides; unable to use DTARefinery with this dataset");
+                                return false;
+                            }
                         }
+
+                        LogWarning(
+                            "Encountered message 'number of spectra identified less than 2' but did not find 'stop processing' on the next line; DTARefinery likely did not complete properly");
                     }
                 }
             }
@@ -434,9 +440,6 @@ namespace AnalysisManagerDtaRefineryPlugIn
         /// <remarks></remarks>
         private CloseOutType ZipMainOutputFile()
         {
-            FileInfo[] ioFiles = null;
-            string strFixedDTAFilePath = null;
-
             //Do we want to zip these output files?  Yes, we keep them all
             //* _dta_DtaRefineryLog.txt
             //* _dta_SETTINGS.xml
@@ -452,7 +455,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             try
             {
                 var ioWorkDirectory = new DirectoryInfo(m_WorkDir);
-                ioFiles = ioWorkDirectory.GetFiles("*_dta.*");
+                var ioFiles = ioWorkDirectory.GetFiles("*_dta.*");
 
                 foreach (var ioFile in ioFiles)
                 {
@@ -471,7 +474,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
             try
             {
-                strFixedDTAFilePath = Path.Combine(m_WorkDir, m_Dataset + "_FIXED_dta.txt");
+                var strFixedDTAFilePath = Path.Combine(m_WorkDir, m_Dataset + "_FIXED_dta.txt");
                 var ioFile = new FileInfo(strFixedDTAFilePath);
 
                 if (!ioFile.Exists)
@@ -484,7 +487,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
                 try
                 {
-                    if (!base.ZipFile(ioFile.FullName, true))
+                    if (!ZipFile(ioFile.FullName, true))
                     {
                         LogError("Error zipping DTARefinery output file: " + ioFile.FullName);
                         return CloseOutType.CLOSEOUT_FAILED;
