@@ -339,8 +339,8 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
         private bool ValidateDeconMSnLogFile(string strFilePath)
         {
-            clsDeconMSnLogFileValidator oValidator = new clsDeconMSnLogFileValidator();
-            bool blnSuccess = false;
+            var oValidator = new clsDeconMSnLogFileValidator();
+            RegisterEvents(oValidator);
 
             var blnSuccess = oValidator.ValidateDeconMSnLogFile(strFilePath);
             if (!blnSuccess)

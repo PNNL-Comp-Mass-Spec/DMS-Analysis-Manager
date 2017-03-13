@@ -200,6 +200,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             else
             {
                 var oMassErrorExtractor = new clsDtaRefLogMassErrorExtractor(m_mgrParams, m_WorkDir, m_DebugLevel, blnPostResultsToDB:true);
+                RegisterEvents(oMassErrorExtractor);
 
                 var intDatasetID = m_jobParams.GetJobParameter("DatasetID", 0);
                 int.TryParse(m_JobNum, out var intJob);

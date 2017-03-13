@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading;
+using PRISM;
 
 namespace AnalysisManagerDtaRefineryPlugIn
 {
@@ -12,19 +13,9 @@ namespace AnalysisManagerDtaRefineryPlugIn
     /// Values that are 0 are auto-changed to 1
     /// </summary>
     /// <remarks></remarks>
-    public class clsDeconMSnLogFileValidator
+    public class clsDeconMSnLogFileValidator : clsEventNotifier
     {
-        private string mErrorMessage = string.Empty;
-
         private bool mFileUpdated;
-
-        /// <summary>
-        /// Error message (if any)
-        /// </summary>
-        public string ErrorMessage
-        {
-            get { return mErrorMessage; }
-        }
 
         /// <summary>
         /// Indicates whether the intensity values in the original file were updated
@@ -128,7 +119,14 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 {
                     // First rename strFilePath
                     var ioFileInfo = new FileInfo(strSourceFilePath);
-                    string strTargetFilePath = Path.Combine(ioFileInfo.DirectoryName,
+
+                    if (ioFileInfo.DirectoryName == null)
+                    {
+                        OnErrorEvent("Unable to determine the parent directory of " + strSourceFilePath);
+                        return false;
+                    }
+
+                    var strTargetFilePath = Path.Combine(ioFileInfo.DirectoryName,
                         Path.GetFileNameWithoutExtension(ioFileInfo.Name) + "_Original.txt");
 
                     if (File.Exists(strTargetFilePath))
@@ -139,8 +137,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                         }
                         catch (Exception ex)
                         {
-                            mErrorMessage = "Error deleting old _Original.txt file: " + ex.Message;
-                            Console.WriteLine(mErrorMessage);
+                            OnErrorEvent("Error deleting old _Original.txt file: " + ex.Message, ex);
                         }
                     }
 
@@ -153,8 +150,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                     }
                     catch (Exception ex)
                     {
-                        mErrorMessage = "Error replacing source file with new file: " + ex.Message;
-                        Console.WriteLine(mErrorMessage);
+                        OnErrorEvent("Error replacing source file with new file: " + ex.Message, ex);
 
                         // Copy the temp file to strFilePath
                         File.Copy(strTempFilePath, Path.Combine(ioFileInfo.DirectoryName, Path.GetFileNameWithoutExtension(ioFileInfo.Name) + "_New.txt"), true);
@@ -168,8 +164,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             }
             catch (Exception ex)
             {
-                mErrorMessage = "Exception in clsDeconMSnLogFileValidator.ValidateFile: " + ex.Message;
-                Console.WriteLine(mErrorMessage);
+                OnErrorEvent("Exception in clsDeconMSnLogFileValidator.ValidateFile: " + ex.Message, ex);
                 return false;
             }
 

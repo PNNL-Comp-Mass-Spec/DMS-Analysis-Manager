@@ -5,6 +5,7 @@ using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 using AnalysisManagerBase;
+using PRISM;
 
 namespace AnalysisManagerDtaRefineryPlugIn
 {
@@ -13,7 +14,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
     /// It passes on the information to DMS for storage in table T_Dataset_QC
     /// </summary>
     /// <remarks></remarks>
-    public class clsDtaRefLogMassErrorExtractor
+    public class clsDtaRefLogMassErrorExtractor : clsEventNotifier
     {
         private const string STORE_MASS_ERROR_STATS_SP_NAME = "StoreDTARefMassErrorStats";
 
@@ -21,8 +22,6 @@ namespace AnalysisManagerDtaRefineryPlugIn
         private readonly string m_WorkDir;
         private readonly short m_DebugLevel;
         private readonly bool mPostResultsToDB;
-
-        private string mErrorMessage;
 
         private struct udtMassErrorInfoType
         {
@@ -33,19 +32,12 @@ namespace AnalysisManagerDtaRefineryPlugIn
             public double MassErrorPPMRefined;          // Parent Ion Mass Error, after refinement
         }
 
-        public string ErrorMessage
-        {
-            get { return mErrorMessage; }
-        }
-
         public clsDtaRefLogMassErrorExtractor(IMgrParams mgrParams, string strWorkDir, short intDebugLevel, bool blnPostResultsToDB)
         {
             m_mgrParams = mgrParams;
             m_WorkDir = strWorkDir;
             m_DebugLevel = intDebugLevel;
             mPostResultsToDB = blnPostResultsToDB;
-
-            mErrorMessage = string.Empty;
         }
 
         private string ConstructXML(udtMassErrorInfoType udtMassErrorInfo)
@@ -102,7 +94,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 var fiSourceFile = new FileInfo(Path.Combine(strWorkDirPath, strDatasetName + "_dta_DtaRefineryLog.txt"));
                 if (!fiSourceFile.Exists)
                 {
-                    mErrorMessage = "DtaRefinery Log file not found";
+                    OnErrorEvent("DtaRefinery Log file not found; " + fiSourceFile.FullName);
                     return false;
                 }
 
@@ -126,37 +118,37 @@ namespace AnalysisManagerDtaRefineryPlugIn
                             blnRefinedDistributionSection = true;
                         }
 
-                        if (strLineIn.StartsWith("Robust estimate"))
+                        if (!strLineIn.StartsWith("Robust estimate", StringComparison.InvariantCultureIgnoreCase))
+                            continue;
+
+                        var reMatch = reMassError.Match(strLineIn);
+
+                        if (reMatch.Success)
                         {
-                            var reMatch = reMassError.Match(strLineIn);
-
-                            if (reMatch.Success)
+                            double dblMassError;
+                            if (double.TryParse(reMatch.Groups[1].Value, out dblMassError))
                             {
-                                double dblMassError;
-                                if (double.TryParse(reMatch.Groups[1].Value, out dblMassError))
+                                if (blnOriginalDistributionSection)
                                 {
-                                    if (blnOriginalDistributionSection)
-                                    {
-                                        udtMassErrorInfo.MassErrorPPM = dblMassError;
-                                    }
-
-                                    if (blnRefinedDistributionSection)
-                                    {
-                                        udtMassErrorInfo.MassErrorPPMRefined = dblMassError;
-                                    }
+                                    udtMassErrorInfo.MassErrorPPM = dblMassError;
                                 }
-                                else
+
+                                if (blnRefinedDistributionSection)
                                 {
-                                    mErrorMessage = "Unable to extract mass error value from 'Robust estimate' line in the DTA Refinery log file; " + 
-                                        "RegEx capture is not a number: " + reMatch.Groups[1].Value;
-                                    return false;
+                                    udtMassErrorInfo.MassErrorPPMRefined = dblMassError;
                                 }
                             }
                             else
                             {
-                                mErrorMessage = "Unable to extract mass error value from 'Robust estimate' line in the DTA Refinery log file; RegEx match failed";
+                                OnErrorEvent("Unable to extract mass error value from 'Robust estimate' line in the DTA Refinery log file; " +
+                                             "RegEx capture is not a number: " + reMatch.Groups[1].Value);
                                 return false;
                             }
+                        }
+                        else
+                        {
+                            OnErrorEvent("Unable to extract mass error value from 'Robust estimate' line in the DTA Refinery log file; RegEx match failed");
+                            return false;
                         }
                     }
                 }
@@ -171,10 +163,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
                         if (!blnSuccess)
                         {
-                            if (string.IsNullOrEmpty(mErrorMessage))
-                            {
-                                mErrorMessage = "Unknown error posting Mass Error results from DTA Refinery to the database";
-                            }
+                            // The error should have already been reported
                             return false;
                         }
                     }
@@ -182,7 +171,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             }
             catch (Exception ex)
             {
-                mErrorMessage = "Exception in ParseDTARefineryLogFile: " + ex.Message;
+                OnErrorEvent("Exception in ParseDTARefineryLogFile: " + ex.Message, ex);
                 return false;
             }
 
@@ -192,8 +181,6 @@ namespace AnalysisManagerDtaRefineryPlugIn
         private bool PostMassErrorInfoToDB(int intDatasetID, string strXMLResults)
         {
             const int MAX_RETRY_COUNT = 3;
-
-            bool blnSuccess;
 
             try
             {
@@ -216,21 +203,18 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
                 if (ResCode == 0)
                 {
-                    blnSuccess = true;
+                    return true;
                 }
-                else
-                {
-                    mErrorMessage = "Error storing DTA Refinery Mass Error Results in the database, " + STORE_MASS_ERROR_STATS_SP_NAME + " returned " + ResCode.ToString();
-                    blnSuccess = false;
-                }
+
+                OnErrorEvent("Error storing DTA Refinery Mass Error Results in the database, " + STORE_MASS_ERROR_STATS_SP_NAME + " returned " + ResCode);
+                return false;
             }
             catch (Exception ex)
             {
-                mErrorMessage = "Exception storing DTA Refinery Mass Error Results in the database: " + ex.Message;
-                blnSuccess = false;
+                OnErrorEvent("Exception storing DTA Refinery Mass Error Results in the database: " + ex.Message, ex);
+                return false;
             }
 
-            return blnSuccess;
         }
     }
 }
