@@ -105,7 +105,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                             {
                                 headerValidated = true;
                             }
-                            else if (dataLine.StartsWith("MSn_Scan"))
+                            else if (dataLine.StartsWith("MSn_Scan", StringComparison.InvariantCultureIgnoreCase))
                             {
                                 ValidateHeader(dataLine, ref parentIntensityColIndex, ref monoIntensityColIndex);
                                 headerValidated = true;

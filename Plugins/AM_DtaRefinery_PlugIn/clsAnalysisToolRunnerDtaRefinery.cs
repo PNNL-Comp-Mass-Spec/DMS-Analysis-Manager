@@ -407,13 +407,13 @@ namespace AnalysisManagerDtaRefineryPlugIn
                     {
                         var strLineIn = srSourceFile.ReadLine();
 
-                        if (strLineIn == null || !strLineIn.StartsWith("number of spectra identified less than 2"))
+                        if (strLineIn == null || !strLineIn.StartsWith("number of spectra identified less than 2", StringComparison.InvariantCultureIgnoreCase))
                             continue;
 
                         if (!srSourceFile.EndOfStream)
                         {
                             strLineIn = srSourceFile.ReadLine();
-                            if (strLineIn != null && strLineIn.StartsWith("stop processing"))
+                            if (strLineIn != null && strLineIn.StartsWith("stop processing", StringComparison.InvariantCultureIgnoreCase))
                             {
                                 LogError("X!Tandem identified fewer than 2 peptides; unable to use DTARefinery with this dataset");
                                 return false;
@@ -460,7 +460,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
                 foreach (var ioFile in ioFiles)
                 {
-                    if (!ioFile.Name.ToUpper().EndsWith("_FIXED_dta.txt".ToUpper()))
+                    if (!ioFile.Name.EndsWith("_FIXED_dta.txt", StringComparison.InvariantCultureIgnoreCase))
                     {
                         ioFile.Attributes = ioFile.Attributes & (~FileAttributes.ReadOnly);
                         ioFile.Delete();

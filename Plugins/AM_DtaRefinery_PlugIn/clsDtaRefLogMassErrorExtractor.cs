@@ -47,12 +47,12 @@ namespace AnalysisManagerDtaRefineryPlugIn
             {
                 sbXml.Append("<DTARef_MassErrorStats>");
 
-                sbXml.Append((Convert.ToString("<Dataset>") + udtMassErrorInfo.DatasetName) + "</Dataset>");
-                sbXml.Append((Convert.ToString("<PSM_Source_Job>") + udtMassErrorInfo.PSMJob) + "</PSM_Source_Job>");
+                sbXml.Append(Convert.ToString("<Dataset>") + udtMassErrorInfo.DatasetName + "</Dataset>");
+                sbXml.Append(Convert.ToString("<PSM_Source_Job>") + udtMassErrorInfo.PSMJob + "</PSM_Source_Job>");
 
                 sbXml.Append("<Measurements>");
-                sbXml.Append((Convert.ToString("<Measurement Name=\"" + "MassErrorPPM" + "\">") + udtMassErrorInfo.MassErrorPPM) + "</Measurement>");
-                sbXml.Append((Convert.ToString("<Measurement Name=\"" + "MassErrorPPM_Refined" + "\">") + udtMassErrorInfo.MassErrorPPMRefined) + "</Measurement>");
+                sbXml.Append(Convert.ToString("<Measurement Name=\"" + "MassErrorPPM" + "\">") + udtMassErrorInfo.MassErrorPPM + "</Measurement>");
+                sbXml.Append(Convert.ToString("<Measurement Name=\"" + "MassErrorPPM_Refined" + "\">") + udtMassErrorInfo.MassErrorPPMRefined + "</Measurement>");
                 sbXml.Append("</Measurements>");
 
                 sbXml.Append("</DTARef_MassErrorStats>");
@@ -104,13 +104,13 @@ namespace AnalysisManagerDtaRefineryPlugIn
                         if (string.IsNullOrWhiteSpace(strLineIn))
                             continue;
 
-                        if (strLineIn.Contains("ORIGINAL parent ion mass error distribution"))
+                        if (strLineIn.IndexOf("ORIGINAL parent ion mass error distribution", StringComparison.InvariantCultureIgnoreCase) >= 0)
                         {
                             blnOriginalDistributionSection = true;
                             blnRefinedDistributionSection = false;
                         }
 
-                        if (strLineIn.Contains("REFINED parent ion mass error distribution"))
+                        if (strLineIn.IndexOf("REFINED parent ion mass error distribution", StringComparison.InvariantCultureIgnoreCase) >= 0)
                         {
                             blnOriginalDistributionSection = false;
                             blnRefinedDistributionSection = true;

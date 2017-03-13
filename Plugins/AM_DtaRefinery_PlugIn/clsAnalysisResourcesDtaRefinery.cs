@@ -111,7 +111,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
             // If this is a MSGFPlus script, make sure that the spectra are centroided
             var toolName = m_jobParams.GetParam("ToolName");
-            if (toolName.StartsWith("MSGFPlus", StringComparison.CurrentCultureIgnoreCase))
+            if (toolName.StartsWith("MSGFPlus", StringComparison.InvariantCultureIgnoreCase))
             {
                 LogMessage(
                     "Validating that the _dta.txt file has centroided spectra (required by MSGF+)");
