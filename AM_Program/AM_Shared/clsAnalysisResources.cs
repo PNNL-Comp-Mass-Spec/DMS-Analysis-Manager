@@ -4276,6 +4276,6 @@ namespace AnalysisManagerBase
 
         #endregion
 
-    } // End Class
+    }
 
 }
