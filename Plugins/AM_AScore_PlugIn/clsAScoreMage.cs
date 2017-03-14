@@ -57,7 +57,7 @@ namespace AnalysisManager_AScore_PlugIn
             {
                 mMyEMSLDatasetInfo = new DatasetListInfo();
                 mMyEMSLDatasetInfo.ErrorEvent += mReader_ErrorEvent;
-                mMyEMSLDatasetInfo.MessageEvent += mReader_MessageEvent;
+                mMyEMSLDatasetInfo.StatusEvent += mReader_MessageEvent;
             }
         }
 
@@ -404,15 +404,15 @@ namespace AnalysisManager_AScore_PlugIn
             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
         }
 
-        void mReader_MessageEvent(object sender, MessageEventArgs e)
+        void mReader_MessageEvent(string message)
         {
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, e.Message);
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, message);
         }
 
-        void mReader_ErrorEvent(object sender, MessageEventArgs e)
+        void mReader_ErrorEvent(string message, Exception ex)
         {
-            mErrorMessage = "MyEMSL Reader error: " + e.Message;
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mErrorMessage);
+            mErrorMessage = "MyEMSL Reader error: " + message;
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mErrorMessage, ex);
         }
 
         #endregion

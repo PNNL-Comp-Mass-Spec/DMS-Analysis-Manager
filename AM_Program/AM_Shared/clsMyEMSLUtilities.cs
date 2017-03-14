@@ -14,7 +14,7 @@ namespace AnalysisManagerBase
         public const string MYEMSL_PATH_FLAG = @"\\MyEMSL";
 
         private readonly clsIonicZipTools m_IonicZipTools;
-        private readonly DatasetListInfo m_MyEMSLDatasetListInfo;     
+        private readonly DatasetListInfo m_MyEMSLDatasetListInfo;
 
         private readonly List<DatasetFolderOrFileInfo> m_AllFoundMyEMSLFiles;
 
@@ -85,9 +85,12 @@ namespace AnalysisManagerBase
         public clsMyEMSLUtilities(int debugLevel, string workingDir)
         {
             m_MyEMSLDatasetListInfo = new DatasetListInfo();
-            m_MyEMSLDatasetListInfo.ErrorEvent += m_MyEMSLDatasetListInfo_ErrorEvent;
-            m_MyEMSLDatasetListInfo.MessageEvent += m_MyEMSLDatasetListInfo_MessageEvent;
-            m_MyEMSLDatasetListInfo.ProgressEvent += m_MyEMSLDatasetListInfo_ProgressEvent;
+            m_MyEMSLDatasetListInfo.DebugEvent += OnDebugEvent;
+            m_MyEMSLDatasetListInfo.StatusEvent += OnStatusEvent;
+            m_MyEMSLDatasetListInfo.ErrorEvent += OnErrorEvent;
+            m_MyEMSLDatasetListInfo.WarningEvent += OnWarningEvent;
+            m_MyEMSLDatasetListInfo.ProgressUpdate += m_MyEMSLDatasetListInfo_ProgressEvent;
+
             m_MyEMSLDatasetListInfo.FileDownloadedEvent += m_MyEMSLDatasetListInfo_FileDownloadedEvent;
 
             m_AllFoundMyEMSLFiles = new List<DatasetFolderOrFileInfo>();
@@ -280,26 +283,16 @@ namespace AnalysisManagerBase
 
             return false;
 
-        }        
+        }
 
         #region "MyEMSL Event Handlers"
 
-        private void m_MyEMSLDatasetListInfo_ErrorEvent(object sender, MessageEventArgs e)
-        {
-            OnErrorEvent(e.Message);
-        }
-
-        private void m_MyEMSLDatasetListInfo_MessageEvent(object sender, MessageEventArgs e)
-        {
-            OnStatusEvent(e.Message);
-        }
-
-        private void m_MyEMSLDatasetListInfo_ProgressEvent(object sender, ProgressEventArgs e)
+        private void m_MyEMSLDatasetListInfo_ProgressEvent(string progressMessage, float percentComplete)
         {
             if (DateTime.UtcNow.Subtract(m_LastMyEMSLProgressWriteTime).TotalMinutes > 0.2)
             {
                 m_LastMyEMSLProgressWriteTime = DateTime.UtcNow;
-                OnProgressUpdate("MyEMSL downloader: " + e.PercentComplete + "% complete", (float)e.PercentComplete);
+                OnProgressUpdate("MyEMSL downloader: " + percentComplete + "% complete", percentComplete);
             }
         }
 
