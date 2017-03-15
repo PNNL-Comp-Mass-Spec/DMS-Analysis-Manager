@@ -172,6 +172,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                     msg += ": " + consoleOutputErrorMessage;
                 }
 
+                m_message = string.Empty;
                 LogError(msg);
 
                 ValidateDTARefineryLogFile();
@@ -306,7 +307,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 var fiSourceFile = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + "_dta_DtaRefineryLog.txt"));
                 if (!fiSourceFile.Exists)
                 {
-                    LogDebug("DTA_Refinery log file not found by IsXtandenFinished: " + fiSourceFile.Name);
+                    LogDebug("DTA_Refinery log file not found by IsXTandemFinished: " + fiSourceFile.Name);
                     return false;
                 }
 
@@ -397,6 +398,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 var fiSourceFile = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + "_dta_DtaRefineryLog.txt"));
                 if (!fiSourceFile.Exists)
                 {
+                    m_message = string.Empty;
                     LogError("DtaRefinery Log file not found (" + fiSourceFile.Name + ")");
                     return false;
                 }
@@ -415,13 +417,14 @@ namespace AnalysisManagerDtaRefineryPlugIn
                             strLineIn = srSourceFile.ReadLine();
                             if (strLineIn != null && strLineIn.StartsWith("stop processing", StringComparison.InvariantCultureIgnoreCase))
                             {
+                                m_message = string.Empty;
                                 LogError("X!Tandem identified fewer than 2 peptides; unable to use DTARefinery with this dataset");
                                 return false;
                             }
                         }
 
-                        LogWarning(
-                            "Encountered message 'number of spectra identified less than 2' but did not find 'stop processing' on the next line; DTARefinery likely did not complete properly");
+                        LogWarning("Encountered message 'number of spectra identified less than 2' but did not find 'stop processing' on the next line; " +
+                                   "DTARefinery likely did not complete properly");
                     }
                 }
             }
