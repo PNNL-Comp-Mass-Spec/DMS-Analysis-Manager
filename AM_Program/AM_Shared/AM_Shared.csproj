@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>AnalysisManagerBase</RootNamespace>
     <AssemblyName>AM_Shared</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -72,6 +72,9 @@
     </Reference>
     <Reference Include="PRISM">
       <HintPath>..\..\AM_Common\PRISM.dll</HintPath>
+    </Reference>
+    <Reference Include="PRISMWin">
+      <HintPath>..\..\AM_Common\PRISMWin.dll</HintPath>
     </Reference>
     <Reference Include="Protein_Exporter">
       <HintPath>..\..\AM_Common\Protein_Exporter.dll</HintPath>

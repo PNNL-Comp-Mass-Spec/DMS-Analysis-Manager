@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>AnalysisManagerMasicPlugin</RootNamespace>
     <AssemblyName>AnalysisManagerMasicPlugin</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -42,6 +42,9 @@
     </Reference>
     <Reference Include="PRISM">
       <HintPath>..\..\AM_Common\PRISM.dll</HintPath>
+    </Reference>
+    <Reference Include="PRISMWin">
+      <HintPath>..\..\AM_Common\PRISMWin.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
