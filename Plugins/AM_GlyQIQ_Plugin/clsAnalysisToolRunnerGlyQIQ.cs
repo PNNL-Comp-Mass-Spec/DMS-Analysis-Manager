@@ -610,7 +610,7 @@ namespace AnalysisManagerGlyQIQPlugin
 
                     mStoredProcedureExecutor = new PRISM.clsExecuteDatabaseSP(strConnectionString);
                     mStoredProcedureExecutor.DebugEvent += m_ExecuteSP_DebugEvent;
-                    mStoredProcedureExecutor.DBErrorEvent += m_ExecuteSP_DBErrorEvent;
+                    mStoredProcedureExecutor.ErrorEvent += m_ExecuteSP_DBErrorEvent;
                 }
 
                 //Execute the SP (retry the call up to 3 times)
@@ -962,11 +962,11 @@ namespace AnalysisManagerGlyQIQPlugin
             LogDebug("StoredProcedureExecutor: " + errorMessage);
         }
 
-        private void m_ExecuteSP_DBErrorEvent(string errorMessage)
+        private void m_ExecuteSP_DBErrorEvent(string errorMessage, Exception ex)
         {
             LogError("StoredProcedureExecutor: " + errorMessage);
 
-            if (Message.Contains("permission was denied"))
+            if (Message.ToLower().Contains("permission was denied"))
             {
                 LogErrorToDatabase(Message);
             }

@@ -113,7 +113,7 @@ namespace AnalysisManagerBase
 
             // Gigasax.DMS_Pipeline
             m_BrokerConnStr = m_MgrParams.GetParam("brokerconnectionstring");
-            
+
             m_DebugLevel = debugLvl;
 
             DMSProcedureExecutor = new PRISM.clsExecuteDatabaseSP(m_ConnStr);
@@ -122,8 +122,8 @@ namespace AnalysisManagerBase
             DMSProcedureExecutor.DebugEvent += ProcedureExecutor_DebugEvent;
             PipelineDBProcedureExecutor.DebugEvent += ProcedureExecutor_DebugEvent;
 
-            DMSProcedureExecutor.DBErrorEvent += ProcedureExecutor_DBErrorEvent;
-            PipelineDBProcedureExecutor.DBErrorEvent += ProcedureExecutor_DBErrorEvent;
+            DMSProcedureExecutor.ErrorEvent += ProcedureExecutor_DBErrorEvent;
+            PipelineDBProcedureExecutor.ErrorEvent += ProcedureExecutor_DBErrorEvent;
 
             if (m_DebugLevel > 1)
             {
@@ -243,7 +243,7 @@ namespace AnalysisManagerBase
             LogDebug(message, (int)clsLogTools.LogLevels.DEBUG);
         }
 
-        private void ProcedureExecutor_DBErrorEvent(string message)
+        private void ProcedureExecutor_DBErrorEvent(string message, Exception ex)
         {
             if (message.Contains("permission was denied"))
             {
@@ -251,9 +251,9 @@ namespace AnalysisManagerBase
                 {
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, message);
                 }
-                catch (Exception ex)
+                catch (Exception ex2)
                 {
-                    clsGlobal.ErrorWritingToLog(message, ex);
+                    clsGlobal.ErrorWritingToLog(message, ex2);
                 }
             }
 

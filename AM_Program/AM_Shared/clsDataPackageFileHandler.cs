@@ -73,10 +73,14 @@ namespace AnalysisManagerBase
 
         private readonly clsAnalysisResources mAnalysisResources;
 
-        private readonly clsDataPackageInfoLoader mDataPackageInfoLoader;
-        #endregion
+        /// <summary>
+        /// Typically Gigasax.DMS_Pipeline
+        /// </summary>
+        private readonly string mBrokerDBConnectionString;
 
-        public readonly PRISM.clsExecuteDatabaseSP mPipelineDBProcedureExecutor;
+        private readonly clsDataPackageInfoLoader mDataPackageInfoLoader;
+
+        #endregion
 
         /// <summary>
         /// Constructor
@@ -90,11 +94,7 @@ namespace AnalysisManagerBase
 
             mDataPackageInfoLoader = new clsDataPackageInfoLoader(brokerDbConnectionString, dataPackageID);
 
-            mPipelineDBProcedureExecutor = new clsExecuteDatabaseSP(brokerDbConnectionString);
-
-            mPipelineDBProcedureExecutor.DebugEvent += ProcedureExecutor_DebugEvent;
-            mPipelineDBProcedureExecutor.DBErrorEvent += ProcedureExecutor_DBErrorEvent;
-
+            mBrokerDBConnectionString = brokerDbConnectionString;
         }
 
         /// <summary>
@@ -129,11 +129,15 @@ namespace AnalysisManagerBase
                 var inputFolderName = string.Empty;
                 var stepToolMatch = string.Empty;
 
+                var pipelineDBProcedureExecutor = new clsExecuteDatabaseSP(mBrokerDBConnectionString);
+                pipelineDBProcedureExecutor.DebugEvent += OnDebugEvent;
+                pipelineDBProcedureExecutor.ErrorEvent += ProcedureExecutor_DBErrorEvent;
+                pipelineDBProcedureExecutor.WarningEvent += OnWarningEvent;
 
                 while (!matchFound)
                 {
                     // Execute the SP
-                    mPipelineDBProcedureExecutor.ExecuteSP(myCmd, 1);
+                    pipelineDBProcedureExecutor.ExecuteSP(myCmd, 1);
 
                     inputFolderName = Convert.ToString(myCmd.Parameters["@inputFolderName"].Value);
                     stepToolMatch = Convert.ToString(myCmd.Parameters["@stepToolMatch"].Value);
@@ -1376,13 +1380,7 @@ namespace AnalysisManagerBase
 
         #region "Event Handlers"
 
-        private void ProcedureExecutor_DebugEvent(string message)
-        {
-            OnStatusEvent(message);
-
-        }
-
-        private void ProcedureExecutor_DBErrorEvent(string message)
+        private void ProcedureExecutor_DBErrorEvent(string message, Exception ex)
         {
             if (message.Contains("permission was denied"))
             {
@@ -1390,9 +1388,9 @@ namespace AnalysisManagerBase
                 {
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, message);
                 }
-                catch (Exception ex)
+                catch (Exception ex2)
                 {
-                    clsGlobal.ErrorWritingToLog(message, ex);
+                    clsGlobal.ErrorWritingToLog(message, ex2);
                 }
             }
 

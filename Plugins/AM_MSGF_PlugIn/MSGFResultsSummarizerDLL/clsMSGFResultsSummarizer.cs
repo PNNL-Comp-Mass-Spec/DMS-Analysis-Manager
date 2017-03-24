@@ -332,8 +332,8 @@ namespace MSGFResultsSummarizer
             mDebugLevel = debugLevel;
 
             mStoredProcedureExecutor = new clsExecuteDatabaseSP(mConnectionString);
-            mStoredProcedureExecutor.DebugEvent += m_ExecuteSP_DebugEvent;
-            mStoredProcedureExecutor.DBErrorEvent += m_ExecuteSP_DBErrorEvent;
+            RegisterEvents(mStoredProcedureExecutor);
+
             ContactDatabase = true;
         }
 
@@ -492,8 +492,7 @@ namespace MSGFResultsSummarizer
                 List<List<string>> lstResults;
 
                 var dbTools = new clsDBTools(mConnectionString);
-
-                dbTools.ErrorEvent += DbToolsErrorEventHandler;
+                RegisterEvents(dbTools);
 
                 var success = dbTools.GetQueryResults(queryScanStats, out lstResults, "LookupScanStats_V_Dataset_Scans_Export");
 
@@ -1831,25 +1830,6 @@ namespace MSGFResultsSummarizer
 
             return psmStats;
         }
-
-        #region "Event Handlers"
-
-        private void m_ExecuteSP_DebugEvent(string message)
-        {
-            ReportDebugMessage(message, 1);
-        }
-
-        private void m_ExecuteSP_DBErrorEvent(string errMsg)
-        {
-            SetErrorMessage(errMsg);
-        }
-
-        private void DbToolsErrorEventHandler(string errMsg)
-        {
-            SetErrorMessage(errMsg);
-        }
-
-        #endregion
 
         private class clsMSGFtoResultIDMapComparer : IComparer<KeyValuePair<double, int>>
         {
