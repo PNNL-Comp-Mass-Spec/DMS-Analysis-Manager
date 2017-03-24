@@ -393,16 +393,12 @@ namespace AnalysisManagerMasicPlugin
             }
             finally
             {
-                if ((objXmlReader != null))
-                {
-                    objXmlReader.Close();
-                    objXmlReader = null;
-                }
+                objXmlReader?.Dispose();
 
-                if ((fsInFile != null))
+                if (fsInFile != null)
                 {
-                    fsInFile.Close();
-                    fsInFile = null;
+                    fsInFile.Flush();
+                    fsInFile.Dispose();
                 }
             }
         }

@@ -2282,7 +2282,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                                         {
                                             mErrorMessage = "Invalid value for uniformAAProb in MS-GF+ parameter file";
                                             OnErrorEvent(mErrorMessage + ": " + strLineIn);
-                                            srParamFile.Close();
+                                            srParamFile.Dispose();
                                             return CloseOutType.CLOSEOUT_FAILED;
                                         }
                                     }
@@ -2316,7 +2316,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                                 {
                                     mErrorMessage = "Invalid value for NumMods in MS-GF+ parameter file";
                                     OnErrorEvent(mErrorMessage + ": " + strLineIn);
-                                    srParamFile.Close();
+                                    srParamFile.Dispose();
                                     return CloseOutType.CLOSEOUT_FAILED;
                                 }
                             }

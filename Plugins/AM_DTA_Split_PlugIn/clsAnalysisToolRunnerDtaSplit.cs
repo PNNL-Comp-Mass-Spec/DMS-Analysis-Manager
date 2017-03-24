@@ -291,7 +291,8 @@ namespace AnalysisManagerDtaSplitPlugIn
 
                 for (intSplitFileNum = 1; intSplitFileNum <= intSegmentCountToCreate; intSplitFileNum++)
                 {
-                    swOutFile[intSplitFileNum].Close();
+                    swOutFile[intSplitFileNum].Flush();
+                    swOutFile[intSplitFileNum].Dispose();
                 }
             }
             catch (Exception ex)

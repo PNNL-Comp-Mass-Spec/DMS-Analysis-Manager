@@ -1667,7 +1667,7 @@ namespace AnalysisManagerMSGFPlugin
                             {
                                 // Collision_Mode column not found; this is unexpected
                                 LogError("Collision_Mode column not found in the MSGF input file for MSGFDB data; unable to continue");
-                                srSourceFile.Close();
+                                srSourceFile.Dispose();
                                 return false;
                             }
                         }
@@ -2327,7 +2327,8 @@ namespace AnalysisManagerMSGFPlugin
                                 if (udtThisSegment.Segment > 0)
                                 {
                                     // Close the current segment
-                                    swOutFile.Close();
+                                    swOutFile.Flush();
+                                    swOutFile.Dispose();
                                     lstSegmentFileInfo.Add(udtThisSegment);
                                 }
 
@@ -2352,7 +2353,9 @@ namespace AnalysisManagerMSGFPlugin
                     }
 
                     // Close the the output files
-                    swOutFile.Close();
+                    swOutFile.Flush();
+                    swOutFile.Dispose();
+
                     lstSegmentFileInfo.Add(udtThisSegment);
                 }
             }

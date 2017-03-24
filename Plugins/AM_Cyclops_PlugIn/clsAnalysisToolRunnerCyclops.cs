@@ -112,7 +112,8 @@ namespace AnalysisManager_Cyclops_PlugIn
                     blnSuccess = false;
                 }
 
-                mCyclopsLogWriter.Close();
+                mCyclopsLogWriter.Flush();
+                mCyclopsLogWriter.Dispose();
 
                 // Stop the job timer
                 m_StopTime = DateTime.UtcNow;
