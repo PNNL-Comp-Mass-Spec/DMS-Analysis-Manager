@@ -46,12 +46,12 @@ namespace AnalysisManagerMasicPlugin
             // Read the most recent MASIC_Log file and look for any lines with the text "Error"
 
             string strLineIn = null;
-            int intErrorCount = 0;
+            var intErrorCount = 0;
 
             try
             {
                 // Fix the case of the MASIC LogFile
-                FileInfo ioFileInfo = new FileInfo(strLogFilePath);
+                var ioFileInfo = new FileInfo(strLogFilePath);
                 string strLogFileNameCorrectCase = null;
 
                 strLogFileNameCorrectCase = Path.GetFileName(strLogFilePath);
@@ -85,30 +85,31 @@ namespace AnalysisManagerMasicPlugin
                     return;
                 }
 
-                var srInFile = new StreamReader(new FileStream(strLogFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
-
-                intErrorCount = 0;
-                while (!srInFile.EndOfStream)
+                using (var srInFile = new StreamReader(new FileStream(strLogFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    strLineIn = srInFile.ReadLine();
-
-                    if (string.IsNullOrEmpty(strLineIn))
-                        continue;
-
-                    if (strLineIn.ToLower().Contains("error"))
+                    intErrorCount = 0;
+                    while (!srInFile.EndOfStream)
                     {
-                        if (intErrorCount == 0)
+                        strLineIn = srInFile.ReadLine();
+
+                        if (string.IsNullOrEmpty(strLineIn))
+                            continue;
+
+                        if (strLineIn.ToLower().Contains("error"))
                         {
-                            LogError("Errors found in the MASIC Log File");
+                            if (intErrorCount == 0)
+                            {
+                                LogError("Errors found in the MASIC Log File");
+                            }
+
+                            LogWarning(" ... " + strLineIn);
+
+                            intErrorCount += 1;
                         }
-
-                        LogWarning(" ... " + strLineIn);
-
-                        intErrorCount += 1;
                     }
+
                 }
 
-                srInFile.Close();
             }
             catch (Exception ex)
             {
@@ -198,9 +199,9 @@ namespace AnalysisManagerMasicPlugin
         {
             // Note that this function is normally called by RunMasic() in the subclass
 
-            string strMASICExePath = string.Empty;
+            var strMASICExePath = string.Empty;
             string CmdStr = null;
-            bool blnSuccess = false;
+            var blnSuccess = false;
 
             m_ErrorMessage = string.Empty;
             m_ProcessStep = "NewTask";
@@ -331,7 +332,7 @@ namespace AnalysisManagerMasicPlugin
             FileStream fsInFile = null;
             XmlTextReader objXmlReader = null;
 
-            string strProgress = string.Empty;
+            var strProgress = string.Empty;
 
             try
             {
@@ -405,8 +406,6 @@ namespace AnalysisManagerMasicPlugin
 
         protected virtual CloseOutType PerfPostAnalysisTasks(string ResType)
         {
-            string[] FoundFiles = null;
-
             // Stop the job timer
             m_StopTime = DateTime.UtcNow;
 
@@ -418,17 +417,15 @@ namespace AnalysisManagerMasicPlugin
             }
 
             // Zip the _SICs.XML file (if it exists; it won't if SkipSICProcessing = True in the parameter file)
-            FoundFiles = Directory.GetFiles(m_WorkDir, "*" + SICS_XML_FILE_SUFFIX);
+            var FoundFiles = Directory.GetFiles(m_WorkDir, "*" + SICS_XML_FILE_SUFFIX);
 
             if (FoundFiles.Length > 0)
             {
                 // Setup zipper
 
-                string ZipFileName = null;
+                var zipFileName = m_Dataset + "_SICs.zip";
 
-                ZipFileName = m_Dataset + "_SICs.zip";
-
-                if (!base.ZipFile(FoundFiles[0], true, Path.Combine(m_WorkDir, ZipFileName)))
+                if (!ZipFile(FoundFiles[0], true, Path.Combine(m_WorkDir, zipFileName)))
                 {
                     LogErrorToDatabase("Error zipping " + Path.GetFileName(FoundFiles[0]) + ", job " + m_JobNum);
                     m_message = clsGlobal.AppendToComment(m_message, "Error zipping " + SICS_XML_FILE_SUFFIX + " file");
@@ -451,9 +448,8 @@ namespace AnalysisManagerMasicPlugin
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo()
         {
-            string strToolVersionInfo = string.Empty;
-            string strMASICExePath = m_mgrParams.GetParam("masicprogloc");
-            bool blnSuccess = false;
+            var strToolVersionInfo = string.Empty;
+            var strMASICExePath = m_mgrParams.GetParam("masicprogloc");
 
             if (m_DebugLevel >= 2)
             {
@@ -461,13 +457,14 @@ namespace AnalysisManagerMasicPlugin
             }
 
             // Lookup the version of MASIC
-            blnSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strMASICExePath);
+            var blnSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, strMASICExePath);
             if (!blnSuccess)
                 return false;
 
             // Store path to MASIC.exe in ioToolFiles
-            List<FileInfo> ioToolFiles = new List<FileInfo>();
-            ioToolFiles.Add(new FileInfo(strMASICExePath));
+            var ioToolFiles = new List<FileInfo> {
+                new FileInfo(strMASICExePath)
+            };
 
             try
             {
@@ -509,7 +506,7 @@ namespace AnalysisManagerMasicPlugin
                 return true;
             }
 
-            var bad = false;
+            bool bad;
             var includeHeaders = objSettingsFile.GetParam("MasicExportOptions", "IncludeHeaders", false, out bad);
 
             if (!includeHeaders)
@@ -527,8 +524,8 @@ namespace AnalysisManagerMasicPlugin
             const int MAX_RUNTIME_HOURS = 12;
             const int SECONDS_BETWEEN_UPDATE = 15;
 
-            bool blnSICsXMLFileExists = false;
-            DateTime dtStartTime = DateTime.UtcNow;
+            var blnSICsXMLFileExists = false;
+            var dtStartTime = DateTime.UtcNow;
             var blnAbortedProgram = false;
 
             // Wait for completion
@@ -583,48 +580,41 @@ namespace AnalysisManagerMasicPlugin
                 LogError("clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); " + m_ErrorMessage);
                 return false;
             }
-            else if ((int) objMasicProgRunner.State == 10)
+
+            if ((int) objMasicProgRunner.State == 10)
             {
                 LogError("clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); objMasicProgRunner.State = 10");
                 return false;
             }
-            else if (objMasicProgRunner.ExitCode != 0)
+
+            if (objMasicProgRunner.ExitCode == 0)
+                return true;
+
+            LogError("clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); objMasicProgRunner.ExitCode is nonzero: " + objMasicProgRunner.ExitCode);
+
+            // See if a _SICs.XML file was created
+            if (Directory.GetFiles(m_WorkDir, "*" + SICS_XML_FILE_SUFFIX).Length > 0)
             {
-                LogError("clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); objMasicProgRunner.ExitCode is nonzero: " + objMasicProgRunner.ExitCode);
-
-                // See if a _SICs.XML file was created
-                if (Directory.GetFiles(m_WorkDir, "*" + SICS_XML_FILE_SUFFIX).Length > 0)
-                {
-                    blnSICsXMLFileExists = true;
-                }
-
-                if (objMasicProgRunner.ExitCode == 32)
-                {
-                    // FindSICPeaksError
-                    // As long as the _SICs.xml file was created, we can safely ignore this error
-                    if (blnSICsXMLFileExists)
-                    {
-                        LogWarning(
-                            "clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); " + SICS_XML_FILE_SUFFIX +
-                            " file found, so ignoring non-zero exit code");
-                        return true;
-                    }
-                    else
-                    {
-                        LogError("clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); " + SICS_XML_FILE_SUFFIX + " file not found");
-                        return false;
-                    }
-                }
-                else
-                {
-                    // Return False for any other exit codes
-                    return false;
-                }
+                blnSICsXMLFileExists = true;
             }
-            else
+
+            if (objMasicProgRunner.ExitCode != 32)
+                return false;
+
+            // FindSICPeaksError
+            // As long as the _SICs.xml file was created, we can safely ignore this error
+            if (blnSICsXMLFileExists)
             {
+                LogWarning(
+                    "clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); " + SICS_XML_FILE_SUFFIX +
+                    " file found, so ignoring non-zero exit code");
                 return true;
             }
+
+            LogError("clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); " + SICS_XML_FILE_SUFFIX + " file not found");
+            return false;
+
+            // Return False for any other exit codes
         }
 
         #endregion

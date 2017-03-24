@@ -69,7 +69,7 @@ namespace AnalysisManagerMasicPlugin
             }
 
             // Examine the size of the .Raw file
-            FileInfo fiInputFile = new FileInfo(strInputFilePath);
+            var fiInputFile = new FileInfo(strInputFilePath);
             if (!fiInputFile.Exists)
             {
                 // Unable to resolve the file path
@@ -165,7 +165,7 @@ namespace AnalysisManagerMasicPlugin
         protected string ConvertRawToMzXML(FileInfo fiThermoRawFile)
         {
             string strMSXmlGeneratorAppPath = null;
-            bool blnSuccess = false;
+            var blnSuccess = false;
 
             strMSXmlGeneratorAppPath = base.GetMSXmlGeneratorAppPath();
 
@@ -191,7 +191,7 @@ namespace AnalysisManagerMasicPlugin
             if (!blnSuccess)
                 return string.Empty;
 
-            string strMzXMLFilePath = Path.ChangeExtension(fiThermoRawFile.FullName, "mzXML");
+            var strMzXMLFilePath = Path.ChangeExtension(fiThermoRawFile.FullName, "mzXML");
             if (!File.Exists(strMzXMLFilePath))
             {
                 m_message = "MSXmlCreator did not create the .mzXML file";
@@ -210,7 +210,7 @@ namespace AnalysisManagerMasicPlugin
             try
             {
                 FoundFiles = Directory.GetFiles(m_WorkDir, "*.raw");
-                foreach (string MyFile in FoundFiles)
+                foreach (var MyFile in FoundFiles)
                 {
                     DeleteFileWithRetries(MyFile);
                 }
@@ -251,13 +251,13 @@ namespace AnalysisManagerMasicPlugin
                 }
                 else
                 {
-                    string strScanStatsOverrideFilePath = strScanStatsFilePath + ".override";
+                    var strScanStatsOverrideFilePath = strScanStatsFilePath + ".override";
                     fiScanStatsOverrideFile.MoveTo(strScanStatsOverrideFilePath);
                 }
 
                 if (fiScanStatsExOverrideFile.Exists)
                 {
-                    string strScanStatsExOverrideFilePath = strScanStatsExFilePath + ".override";
+                    var strScanStatsExOverrideFilePath = strScanStatsExFilePath + ".override";
                     fiScanStatsExOverrideFile.MoveTo(strScanStatsExOverrideFilePath);
                 }
 

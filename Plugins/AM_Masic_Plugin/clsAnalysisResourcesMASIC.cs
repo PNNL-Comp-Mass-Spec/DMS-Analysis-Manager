@@ -22,8 +22,8 @@ namespace AnalysisManagerMasicPlugin
 
             // Get input data file
             var CreateStoragePathInfoOnly = false;
-            string RawDataType = m_jobParams.GetParam("RawDataType");
-            string toolName = m_jobParams.GetParam("ToolName");
+            var RawDataType = m_jobParams.GetParam("RawDataType");
+            var toolName = m_jobParams.GetParam("ToolName");
 
             switch (RawDataType.ToLower())
             {
