@@ -430,35 +430,36 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             {
                 if (File.Exists(isosFilePath))
                 {
-                    var srInFile = new StreamReader(new FileStream(isosFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
-
-                    while (!srInFile.EndOfStream)
+                    using (var srInFile = new StreamReader(new FileStream(isosFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                     {
-                        var strLineIn = srInFile.ReadLine();
 
-                        if (string.IsNullOrEmpty(strLineIn))
-                            continue;
-
-                        if (blnHeaderLineProcessed)
+                        while (!srInFile.EndOfStream)
                         {
-                            // This is a data line
-                            if (countTotalDataLines)
+                            var strLineIn = srInFile.ReadLine();
+
+                            if (string.IsNullOrEmpty(strLineIn))
+                                continue;
+
+                            if (blnHeaderLineProcessed)
                             {
-                                dataLineCount += 1;
+                                // This is a data line
+                                if (countTotalDataLines)
+                                {
+                                    dataLineCount += 1;
+                                }
+                                else
+                                {
+                                    dataLineCount = 1;
+                                    break;
+                                }
                             }
                             else
                             {
-                                dataLineCount = 1;
-                                break;
+                                blnHeaderLineProcessed = true;
                             }
                         }
-                        else
-                        {
-                            blnHeaderLineProcessed = true;
-                        }
-                    }
 
-                    srInFile.Close();
+                    }
                 }
             }
             catch (Exception)

@@ -274,75 +274,75 @@ namespace AnalysisManagerICR2LSPlugIn
                 if (File.Exists(strStatusFilePath))
                 {
                     // Read the file
-                    var srInFile = new StreamReader(new FileStream(strStatusFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
-
-                    while (!srInFile.EndOfStream)
+                    using (var srInFile = new StreamReader(new FileStream(strStatusFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                     {
-                        var strLineIn = srInFile.ReadLine();
-
-                        if (string.IsNullOrWhiteSpace(strLineIn))
-                            continue;
-
-                        var charIndex = strLineIn.IndexOf('=');
-                        if (charIndex <= 0)
-                            continue;
-
-                        var strKey = strLineIn.Substring(0, charIndex).Trim();
-                        var strValue = strLineIn.Substring(charIndex + 1).Trim();
-
-                        switch (strKey.ToLower())
+                        while (!srInFile.EndOfStream)
                         {
-                            case "date":
-                                strStatusDate = string.Copy(strValue);
-                                break;
-                            case "time":
-                                strStatusTime = string.Copy(strValue);
-                                break;
-                            case "scansprocessed":
-                                if (int.TryParse(strValue, out var intResult))
-                                {
-                                    // Old: The ScansProcessed value reported by ICR-2LS is actually the scan number of the most recently processed scan
-                                    // If we use /F to start with a scan other than 1, then this ScansProcessed value does not reflect reality
-                                    // To correct for this, subtract out mMinScanOffset
-                                    // intScansProcessed = intResult - mMinScanOffset
+                            var strLineIn = srInFile.ReadLine();
 
-                                    // New: ScansProcessed is truly the number of scans processed
-                                    intScansProcessed = intResult;
-                                    if (intScansProcessed < 0)
+                            if (string.IsNullOrWhiteSpace(strLineIn))
+                                continue;
+
+                            var charIndex = strLineIn.IndexOf('=');
+                            if (charIndex <= 0)
+                                continue;
+
+                            var strKey = strLineIn.Substring(0, charIndex).Trim();
+                            var strValue = strLineIn.Substring(charIndex + 1).Trim();
+
+                            switch (strKey.ToLower())
+                            {
+                                case "date":
+                                    strStatusDate = string.Copy(strValue);
+                                    break;
+                                case "time":
+                                    strStatusTime = string.Copy(strValue);
+                                    break;
+                                case "scansprocessed":
+                                    if (int.TryParse(strValue, out var intResult))
                                     {
+                                        // Old: The ScansProcessed value reported by ICR-2LS is actually the scan number of the most recently processed scan
+                                        // If we use /F to start with a scan other than 1, then this ScansProcessed value does not reflect reality
+                                        // To correct for this, subtract out mMinScanOffset
+                                        // intScansProcessed = intResult - mMinScanOffset
+
+                                        // New: ScansProcessed is truly the number of scans processed
                                         intScansProcessed = intResult;
+                                        if (intScansProcessed < 0)
+                                        {
+                                            intScansProcessed = intResult;
+                                        }
                                     }
-                                }
 
-                                break;
-                            case "percentcomplete":
-                                if (float.TryParse(strValue, out var sngResult))
-                                {
-                                    mICR2LSStatus.PercentComplete = sngResult;
-                                }
+                                    break;
+                                case "percentcomplete":
+                                    if (float.TryParse(strValue, out var sngResult))
+                                    {
+                                        mICR2LSStatus.PercentComplete = sngResult;
+                                    }
 
-                                break;
-                            case "state":
-                                // Example values: Processing, Finished
-                                strProcessingState = string.Copy(strValue);
+                                    break;
+                                case "state":
+                                    // Example values: Processing, Finished
+                                    strProcessingState = string.Copy(strValue);
 
-                                break;
-                            case "status":
-                                // Example value: LTQFTPEKGENERATION
-                                strProcessingStatus = string.Copy(strValue);
+                                    break;
+                                case "status":
+                                    // Example value: LTQFTPEKGENERATION
+                                    strProcessingStatus = string.Copy(strValue);
 
-                                break;
-                            case "errormessage":
-                                mICR2LSStatus.ErrorMessage = string.Copy(strValue);
+                                    break;
+                                case "errormessage":
+                                    mICR2LSStatus.ErrorMessage = string.Copy(strValue);
 
-                                break;
-                            default:
-                                break;
-                            // Ignore the line
+                                    break;
+                                default:
+                                    break;
+                                // Ignore the line
+                            }
                         }
-                    }
 
-                    srInFile.Close();
+                    }
 
                     if (strStatusDate.Length > 0 && strStatusTime.Length > 0)
                     {

@@ -439,11 +439,11 @@ namespace AnalysisManagerExtractionPlugin
                 cmdStr += " -d " + decoyPrefixJobParam;
 
                 // Example command line:
-                // "C:\Program Files\Java\jre8\bin\java.exe" -Xmx1000M -jar C:\DMS_Programs\MODa\anal_moda.jar 
-                //   -i "E:\DMS_WorkDir3\QC_Shew_13_04_pt1_1_2_45min_14Nov13_Leopard_13-05-21_moda.txt" 
+                // "C:\Program Files\Java\jre8\bin\java.exe" -Xmx1000M -jar C:\DMS_Programs\MODa\anal_moda.jar
+                //   -i "E:\DMS_WorkDir3\QC_Shew_13_04_pt1_1_2_45min_14Nov13_Leopard_13-05-21_moda.txt"
                 //   -p "E:\DMS_WorkDir3\MODa_PartTryp_Par20ppm_Frag0pt6Da" -fdr 0.05 -d XXX_
-                // "C:\Program Files\Java\jre8\bin\java.exe" -Xmx1000M -jar C:\DMS_Programs\MODPlus\tda_plus.jar 
-                //   -i "E:\DMS_WorkDir3\QC_Shew_13_04_pt1_1_2_45min_14Nov13_Leopard_13-05-21_modp.txt" 
+                // "C:\Program Files\Java\jre8\bin\java.exe" -Xmx1000M -jar C:\DMS_Programs\MODPlus\tda_plus.jar
+                //   -i "E:\DMS_WorkDir3\QC_Shew_13_04_pt1_1_2_45min_14Nov13_Leopard_13-05-21_modp.txt"
                 //   -fdr 0.05 -d Reversed_
 
                 LogDebug(JavaProgLoc + " " + cmdStr);
@@ -2125,68 +2125,67 @@ namespace AnalysisManagerExtractionPlugin
 
                 // Create the output file
 
-                var swOutFile = new StreamWriter(new FileStream(strCombinedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
-
-                intTotalLinesRead = 0;
-                blnContinueReading = true;
-
-                while (blnContinueReading)
+                using (var swOutFile = new StreamWriter(new FileStream(strCombinedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    intTotalLinesReadSaved = intTotalLinesRead;
+                    intTotalLinesRead = 0;
+                    blnContinueReading = true;
 
-                    for (intFileIndex = 0; intFileIndex <= intFileCount - 1; intFileIndex++)
+                    while (blnContinueReading)
                     {
-                        if (srInFiles[intFileIndex].EndOfStream)
-                            continue;
+                        intTotalLinesReadSaved = intTotalLinesRead;
 
-                        strLineIn = srInFiles[intFileIndex].ReadLine();
-
-                        intLinesRead[intFileIndex] += 1;
-                        intTotalLinesRead += 1;
-
-                        if (strLineIn == null)
-                            continue;
-
-                        blnProcessLine = true;
-
-                        if (intLinesRead[intFileIndex] == 1 && blnLookForHeaderLine && strLineIn.Length > 0)
+                        for (intFileIndex = 0; intFileIndex <= intFileCount - 1; intFileIndex++)
                         {
-                            // check for a header line
-                            strSplitLine = strLineIn.Split(new char[] { '\t' }, 2);
+                            if (srInFiles[intFileIndex].EndOfStream)
+                                continue;
 
-                            double temp;
-                            if (strSplitLine.Length > 0 && !double.TryParse(strSplitLine[0], out temp))
+                            strLineIn = srInFiles[intFileIndex].ReadLine();
+
+                            intLinesRead[intFileIndex] += 1;
+                            intTotalLinesRead += 1;
+
+                            if (strLineIn == null)
+                                continue;
+
+                            blnProcessLine = true;
+
+                            if (intLinesRead[intFileIndex] == 1 && blnLookForHeaderLine && strLineIn.Length > 0)
                             {
-                                // first column does not contain a number; this must be a header line
-                                // write the header to the output file (provided intfileindex=0)
-                                if (intFileIndex == 0)
+                                // check for a header line
+                                strSplitLine = strLineIn.Split(new char[] {'\t'}, 2);
+
+                                double temp;
+                                if (strSplitLine.Length > 0 && !double.TryParse(strSplitLine[0], out temp))
                                 {
-                                    swOutFile.WriteLine(strLineIn);
+                                    // first column does not contain a number; this must be a header line
+                                    // write the header to the output file (provided intfileindex=0)
+                                    if (intFileIndex == 0)
+                                    {
+                                        swOutFile.WriteLine(strLineIn);
+                                    }
+                                    blnProcessLine = false;
                                 }
-                                blnProcessLine = false;
+                            }
+
+                            if (blnProcessLine)
+                            {
+                                swOutFile.WriteLine(strLineIn);
                             }
                         }
 
-                        if (blnProcessLine)
+                        if (intTotalLinesRead == intTotalLinesReadSaved)
                         {
-                            swOutFile.WriteLine(strLineIn);
+                            blnContinueReading = false;
                         }
                     }
 
-                    if (intTotalLinesRead == intTotalLinesReadSaved)
+                    // Close the input files
+                    for (var intIndex = 0; intIndex <= intFileCount - 1; intIndex++)
                     {
-                        blnContinueReading = false;
+                        srInFiles[intIndex].Dispose();
                     }
-                }
 
-                // Close the input files
-                for (var intIndex = 0; intIndex <= intFileCount - 1; intIndex++)
-                {
-                    srInFiles[intIndex].Close();
                 }
-
-                // Close the output file
-                swOutFile.Close();
 
                 blnSuccess = true;
             }
@@ -2254,67 +2253,68 @@ namespace AnalysisManagerExtractionPlugin
                     }
 
                     // Open the input file
-                    var srInFile = new StreamReader(new FileStream(fiFileInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.Read));
-
-                    // Create each of the output files
-                    strSplitFileList = new string[intSplitCount];
-                    swOutFiles = new StreamWriter[intSplitCount];
-
-                    strBaseName = Path.Combine(fiFileInfo.DirectoryName, Path.GetFileNameWithoutExtension(fiFileInfo.Name));
-
-                    for (var intIndex = 0; intIndex <= intSplitCount - 1; intIndex++)
+                    using (var srInFile = new StreamReader(new FileStream(fiFileInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
                     {
-                        strSplitFileList[intIndex] = strBaseName + "_part" + (intIndex + 1).ToString() + Path.GetExtension(fiFileInfo.Name);
-                        swOutFiles[intIndex] = new StreamWriter(new FileStream(strSplitFileList[intIndex], FileMode.Create, FileAccess.Write, FileShare.Read));
-                    }
+                        // Create each of the output files
+                        strSplitFileList = new string[intSplitCount];
+                        swOutFiles = new StreamWriter[intSplitCount];
 
-                    intLinesRead = 0;
-                    intTargetFileIndex = 0;
+                        strBaseName = Path.Combine(fiFileInfo.DirectoryName, Path.GetFileNameWithoutExtension(fiFileInfo.Name));
 
-                    while (!srInFile.EndOfStream)
-                    {
-                        strLineIn = srInFile.ReadLine();
-                        intLinesRead += 1;
-
-                        if (strLineIn == null)
-                            continue;
-
-                        blnProcessLine = true;
-
-                        if (intLinesRead == 1 && blnLookForHeaderLine && strLineIn.Length > 0)
+                        for (var intIndex = 0; intIndex <= intSplitCount - 1; intIndex++)
                         {
-                            // Check for a header line
-                            strSplitLine = strLineIn.Split(new char[] { '\t' }, 2);
+                            strSplitFileList[intIndex] = strBaseName + "_part" + (intIndex + 1).ToString() + Path.GetExtension(fiFileInfo.Name);
+                            swOutFiles[intIndex] =
+                                new StreamWriter(new FileStream(strSplitFileList[intIndex], FileMode.Create, FileAccess.Write, FileShare.Read));
+                        }
 
-                            double temp;
-                            if (strSplitLine.Length > 0 && !double.TryParse(strSplitLine[0], out temp))
+                        intLinesRead = 0;
+                        intTargetFileIndex = 0;
+
+                        while (!srInFile.EndOfStream)
+                        {
+                            strLineIn = srInFile.ReadLine();
+                            intLinesRead += 1;
+
+                            if (strLineIn == null)
+                                continue;
+
+                            blnProcessLine = true;
+
+                            if (intLinesRead == 1 && blnLookForHeaderLine && strLineIn.Length > 0)
                             {
-                                // First column does not contain a number; this must be a header line
-                                // Write the header to each output file
-                                for (var intIndex = 0; intIndex <= intSplitCount - 1; intIndex++)
+                                // Check for a header line
+                                strSplitLine = strLineIn.Split(new char[] {'\t'}, 2);
+
+                                double temp;
+                                if (strSplitLine.Length > 0 && !double.TryParse(strSplitLine[0], out temp))
                                 {
-                                    swOutFiles[intIndex].WriteLine(strLineIn);
+                                    // First column does not contain a number; this must be a header line
+                                    // Write the header to each output file
+                                    for (var intIndex = 0; intIndex <= intSplitCount - 1; intIndex++)
+                                    {
+                                        swOutFiles[intIndex].WriteLine(strLineIn);
+                                    }
+                                    blnProcessLine = false;
                                 }
-                                blnProcessLine = false;
+                            }
+
+                            if (blnProcessLine)
+                            {
+                                swOutFiles[intTargetFileIndex].WriteLine(strLineIn);
+                                intTargetFileIndex += 1;
+                                if (intTargetFileIndex == intSplitCount)
+                                    intTargetFileIndex = 0;
                             }
                         }
 
-                        if (blnProcessLine)
-                        {
-                            swOutFiles[intTargetFileIndex].WriteLine(strLineIn);
-                            intTargetFileIndex += 1;
-                            if (intTargetFileIndex == intSplitCount)
-                                intTargetFileIndex = 0;
-                        }
                     }
-
-                    // Close the input file
-                    srInFile.Close();
 
                     // Close the output files
                     for (var intIndex = 0; intIndex <= intSplitCount - 1; intIndex++)
                     {
-                        swOutFiles[intIndex].Close();
+                        swOutFiles[intIndex].Flush();
+                        swOutFiles[intIndex].Dispose();
                     }
 
                     blnSuccess = true;
@@ -2517,7 +2517,7 @@ namespace AnalysisManagerExtractionPlugin
             {
                 LogErrorToDatabase(errorMessage);
             }
-            
+
         }
 
         #endregion
