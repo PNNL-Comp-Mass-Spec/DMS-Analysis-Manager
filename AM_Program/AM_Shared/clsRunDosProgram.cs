@@ -280,7 +280,13 @@ namespace AnalysisManagerBase
 
             try
             {
-                var currentCoreUsage = m_ProgRunner.GetCoreUsage();
+                if (m_ProgRunner.PID <= 0)
+                {
+                    // Unknown process ID
+                    return 0;
+                }
+
+                var currentCoreUsage = PRISMWin.clsProcessStats.GetCoreUsageByProcessID(m_ProgRunner.PID);
                 if (currentCoreUsage < 0)
                 {
                     return -1;
@@ -448,10 +454,10 @@ namespace AnalysisManagerBase
                         }
                         m_ProgRunner.StopMonitoringProgram(kill: true);
                     }
+                } // end while
 
-                    clsProgRunner.ClearCachedPerformanceCounterForProcessID(cachedProcessID);
+                PRISMWin.clsProcessStats.ClearCachedPerformanceCounterForProcessID(cachedProcessID);
 
-                }
             }
             catch (Exception ex)
             {

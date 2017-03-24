@@ -497,9 +497,7 @@ namespace AnalysisManagerBase
         /// <remarks>Should not be affected by hyperthreading, so a computer with two 4-core chips will report 8 cores</remarks>
         public int GetCoreCount()
         {
-
-            return PRISM.clsProgRunner.GetCoreCount();
-
+            return PRISMWin.clsProcessStats.GetCoreCount();
         }
 
         /// <summary>

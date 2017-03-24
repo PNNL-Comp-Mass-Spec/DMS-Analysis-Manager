@@ -430,7 +430,7 @@ namespace AnalysisManagerBase
         {
             try
             {
-                var versionChecker = new clsDotNETVersionChecker();
+                var versionChecker = new PRISMWin.clsDotNETVersionChecker();
                 return versionChecker.GetLatestDotNETVersion();
             }
             catch (Exception ex)
@@ -1631,7 +1631,7 @@ namespace AnalysisManagerBase
 
         }
 
-        protected static bool TextFilesMatchIgnoreLine(string strText, List<Regex> lstLineIgnoreRegExSpecs)
+        private static bool TextFilesMatchIgnoreLine(string strText, List<Regex> lstLineIgnoreRegExSpecs)
         {
 
             if ((lstLineIgnoreRegExSpecs != null))
@@ -1893,13 +1893,13 @@ namespace AnalysisManagerBase
             if (diDirectory.Root.FullName.StartsWith(@"\\") || !diDirectory.Root.FullName.Contains(":"))
             {
                 // Directory path is a remote share; use GetDiskFreeSpaceEx in Kernel32.dll
-                ulong freeBytesAvailableToUser;
-                ulong lngTotalNumberOfBytes;
-                ulong totalNumberOfFreeBytes;
+                long freeBytesAvailableToUser;
+                long lngTotalNumberOfBytes;
+                long totalNumberOfFreeBytes;
 
-                if (GetDiskFreeSpace(diDirectory.FullName, out freeBytesAvailableToUser, out lngTotalNumberOfBytes, out totalNumberOfFreeBytes))
+                if (PRISMWin.clsDiskInfo.GetDiskFreeSpace(diDirectory.FullName, out freeBytesAvailableToUser, out lngTotalNumberOfBytes, out totalNumberOfFreeBytes))
                 {
-                    freeSpaceMB = BytesToMB((long)totalNumberOfFreeBytes);
+                    freeSpaceMB = BytesToMB(totalNumberOfFreeBytes);
                 }
                 else
                 {

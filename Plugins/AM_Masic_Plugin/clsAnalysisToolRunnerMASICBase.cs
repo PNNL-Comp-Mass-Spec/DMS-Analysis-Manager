@@ -560,7 +560,8 @@ namespace AnalysisManagerMasicPlugin
                     UpdateStatusFile();
 
                     // Note that the call to GetCoreUsage() will take at least 1 second
-                    var coreUsage = objMasicProgRunner.GetCoreUsage();
+                    var processId = objMasicProgRunner.PID;
+                    var coreUsage = processId > 0 ? PRISMWin.clsProcessStats.GetCoreUsageByProcessID(processId) : 0;
 
                     UpdateProgRunnerCpuUsage(objMasicProgRunner.PID, coreUsage, SECONDS_BETWEEN_UPDATE);
 

@@ -335,7 +335,7 @@ namespace AnalysisManagerBase
             if (memorySizeMBPerThread < 512)
                 memorySizeMBPerThread = 512;
 
-            var maxThreadsToAllow = PRISM.clsProgRunner.GetCoreCount();
+            var maxThreadsToAllow = PRISMWin.clsProcessStats.GetCoreCount();
 
             var freeMemoryMB = m_StatusTools.GetFreeMemoryMB();
 
@@ -1978,7 +1978,7 @@ namespace AnalysisManagerBase
                 threadCountText = threadCountText.Trim();
             }
 
-            var coresOnMachine = PRISM.clsProgRunner.GetCoreCount();
+            var coresOnMachine = PRISMWin.clsProcessStats.GetCoreCount();
             int coreCount;
 
             if (threadCountText.StartsWith("all", StringComparison.InvariantCultureIgnoreCase))
@@ -3873,7 +3873,7 @@ namespace AnalysisManagerBase
                 List<int> processIDs;
                 var processID = defaultProcessID;
 
-                var coreUsage = PRISM.clsProgRunner.GetCoreUsageByProcessName(processName, out processIDs);
+                var coreUsage = PRISMWin.clsProcessStats.GetCoreUsageByProcessName(processName, out processIDs);
                 if (processIDs.Count > 0)
                 {
                     processID = processIDs.First();
