@@ -95,8 +95,9 @@ namespace AnalysisManagerProg
                             // objTest.TestDeleteFiles();
                             // objTest.TestLogging();
                             // objTest.GenerateScanStatsFile();
+                            // objTest.TestArchiveFailedResults();
 
-                            objTest.TestArchiveFailedResults();
+                            objTest.TestGetToolVersionInfo();
                         }
                         catch (Exception ex)
                         {

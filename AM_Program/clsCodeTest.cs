@@ -841,6 +841,28 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
+        /// Test determining the DLL version of DLLs
+        /// </summary>
+        public void TestGetToolVersionInfo()
+        {
+            var dllFile = "AM_Shared.dll";
+            var dllFile64Bit = @"C:\Windows\System32\wer.dll";
+
+            clsAnalysisJob objJobParams;
+            clsMyEMSLUtilities myEMSLUtilities;
+
+            var objToolRunner = GetCodeTestToolRunner(out objJobParams, out myEMSLUtilities);
+
+            var toolVersionInfo = "";
+
+            objToolRunner.StoreToolVersionInfoOneFile(ref toolVersionInfo, dllFile);
+
+            objToolRunner.StoreToolVersionInfoOneFile(ref toolVersionInfo, dllFile64Bit);
+
+            Console.WriteLine(toolVersionInfo);
+        }
+
+        /// <summary>
         /// Create a log file
         /// </summary>
         public void TestLogging()
