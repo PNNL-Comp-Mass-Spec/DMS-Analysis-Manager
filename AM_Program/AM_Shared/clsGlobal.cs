@@ -22,7 +22,7 @@ using PRISM;
 
 namespace AnalysisManagerBase
 {
-    public class clsGlobal
+    public static class clsGlobal
     {
 
         #region "Constants"
@@ -46,13 +46,6 @@ namespace AnalysisManagerBase
         #endregion
 
         #region "Module variables"
-
-        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        public static extern int GetDiskFreeSpaceEx(
-            string lpRootPathName,
-            out ulong lpFreeBytesAvailable,
-            out ulong lpTotalNumberOfBytes,
-            out ulong lpTotalNumberOfFreeBytes);
 
         private static string mAppFolderPath;
 
@@ -513,8 +506,7 @@ namespace AnalysisManagerBase
                 timeoutSeconds = 5;
 
             var dbTools = new clsDBTools(connectionString);
-
-            dbTools.ErrorEvent += DbToolsErrorEventHandler;
+            RegisterEvents(dbTools);
 
             var success = dbTools.GetQueryResults(sqlQuery, out lstResults, callingFunction, retryCount, timeoutSeconds, maxRowsToReturn);
 
@@ -1238,30 +1230,6 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Determines free disk space for the disk where the given directory resides.  Supports both fixed drive letters and UNC paths (e.g. \\Server\Share\)
-        /// </summary>
-        /// <param name="directoryPath"></param>
-        /// <param name="freeBytesAvailableToUser"></param>
-        /// <param name="totalDriveCapacityBytes"></param>
-        /// <param name="totalNumberOfFreeBytes"></param>
-        /// <returns>True if success, false if a problem</returns>
-        /// <remarks></remarks>
-        private static bool GetDiskFreeSpace(
-            string directoryPath, out ulong freeBytesAvailableToUser,
-            out ulong totalDriveCapacityBytes, out ulong totalNumberOfFreeBytes)
-        {
-
-            var result = GetDiskFreeSpaceEx(directoryPath, out freeBytesAvailableToUser, out totalDriveCapacityBytes, out totalNumberOfFreeBytes);
-
-            if (result == 0)
-            {
-                return false;
-            }
-
-            return true;
-        }
-
-        /// <summary>
         /// Reports the amount of free memory on this computer (in MB)
         /// </summary>
         /// <returns>Free memory, in MB</returns>
@@ -1924,15 +1892,6 @@ namespace AnalysisManagerBase
             }
 
             return true;
-        }
-
-        #endregion
-
-        #region "EventHandlers"
-
-        private static void DbToolsErrorEventHandler(string errorMessage)
-        {
-            LogError(errorMessage);
         }
 
         #endregion
