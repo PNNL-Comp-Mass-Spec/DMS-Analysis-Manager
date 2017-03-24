@@ -3,7 +3,7 @@ using System.Threading;
 using PRISM;
 
 //*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy 
+// Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2006, Battelle Memorial Institute
 // Created 06/07/2006
@@ -146,7 +146,7 @@ namespace AnalysisManagerBase
         public int DebugLevel { get; set; } = 0;
 
         /// <summary>
-        /// When true, then echoes, in real time, text written to the Console by the external program 
+        /// When true, then echoes, in real time, text written to the Console by the external program
         /// Ignored if CreateNoWindow = False
         /// </summary>
         public bool EchoOutputToConsole { get; set; } = true;
@@ -424,15 +424,6 @@ namespace AnalysisManagerBase
                             blnRuntimeExceeded = true;
                             OnTimeout();
                         }
-                    }
-
-                    if (m_ProgRunner.State == clsProgRunner.States.StartingProcess &&
-                        DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds > 30 &&
-                        DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds < 90)
-                    {
-                        // It has taken over 30 seconds for the thread to start
-                        // Try re-joining
-                        m_ProgRunner.JoinThreadNow();
                     }
 
                     if (ProgramAborted)
