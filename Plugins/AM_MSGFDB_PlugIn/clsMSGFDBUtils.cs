@@ -483,7 +483,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     OnErrorEvent("MzidToTsvConverter.exe returned an error code converting the .mzid file To a .tsv file: " + objCreateTSV.ExitCode);
                     return string.Empty;
                 }
-                
+
                 // The conversion succeeded
 
                 // Append the first line from the console output file to the end of the MSGFPlus console output file
@@ -610,7 +610,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     OnErrorEvent("MSGFPlus returned an error code converting the .mzid file to a .tsv file: " + objCreateTSV.ExitCode);
                     return string.Empty;
                 }
-                
+
                 // The conversion succeeded
 
                 // Append the first line from the console output file to the end of the MSGFPlus console output file
@@ -914,7 +914,16 @@ namespace AnalysisManagerMSGFDBPlugIn
             {
                 var fiFastaFile = new FileInfo(fastaFilePath);
 
-                var fiTrimmedFasta = new FileInfo(Path.Combine(fiFastaFile.DirectoryName, Path.GetFileNameWithoutExtension(fiFastaFile.Name) + "_Trim" + maxFastaFileSizeMB + "MB.fasta"));
+                if (fiFastaFile.DirectoryName == null)
+                {
+                    mErrorMessage = "Unable to determine the parent directory of " + fastaFilePath;
+                    OnErrorEvent(mErrorMessage);
+                    return string.Empty;
+                }
+
+                var fiTrimmedFasta = new FileInfo(Path.Combine(
+                    fiFastaFile.DirectoryName,
+                    Path.GetFileNameWithoutExtension(fiFastaFile.Name) + "_Trim" + maxFastaFileSizeMB + "MB.fasta"));
 
                 if (fiTrimmedFasta.Exists)
                 {
@@ -1023,7 +1032,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         }
 
         /// Read the original fasta file to create a decoy fasta file
-        
+
         /// <summary>
         /// Creates a decoy version of the fasta file specified by strInputFilePath
         /// This new file will include the original proteins plus reversed versions of the original proteins
@@ -2022,7 +2031,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             return blnSuccess;
         }
-       
+
         /// <summary>
         /// Read the MS-GF+ options file and convert the options to command line switches
         /// </summary>
@@ -2393,14 +2402,9 @@ namespace AnalysisManagerMSGFDBPlugIn
                 intParamFileThreadCount = intDMSDefinedThreadCount;
             }
 
-            var limitCoreUsage = false;
-
-            if (Dns.GetHostName().ToLower().StartsWith("proto-"))
-            {
-                // Running on a Proto storage server (e.g. Proto-4, Proto-5, or Proto-11)
-                // Limit the number of cores used to 75% of the total core count
-                limitCoreUsage = true;
-            }
+            // If running on a Proto storage server (e.g. Proto-4, Proto-5, or Proto-11),
+            // we will limit the number of cores used to 75% of the total core count
+            var limitCoreUsage = Dns.GetHostName().ToLower().StartsWith("proto-");
 
             if (intParamFileThreadCount <= 0 || limitCoreUsage)
             {
@@ -2427,7 +2431,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     // Prior to July 2014 we would use "coreCount - 1" when the computer had more than 4 cores because MS-GF+ would actually use intParamFileThreadCount+1 cores
                     // Starting with version v10072, MS-GF+ actually uses all the cores, so we started using intParamFileThreadCount = coreCount
 
-                    // Then, in April 2015, we started running two copies of MS-GF+ simultaneously on machines with > 4 cores 
+                    // Then, in April 2015, we started running two copies of MS-GF+ simultaneously on machines with > 4 cores
                     //  because even if we tell MS-GF+ to use all the cores, we saw a lot of idle time
                     // When two simultaneous copies of MS-GF+ are running the CPUs get a bit overtaxed, so we're now using this logic:
 
@@ -3057,6 +3061,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         }
 
         #endregion
-        
+
     }
 }
