@@ -32,7 +32,7 @@ namespace AnalysisManagerProg
 {
     static class modMain
     {
-        public const string PROGRAM_DATE = "February 21, 2017";
+        public const string PROGRAM_DATE = "March 31, 2017";
 
         private static bool mCodeTestMode;
         private static bool mCreateWindowsEventLog;
@@ -46,7 +46,7 @@ namespace AnalysisManagerProg
         {
             // Returns 0 if no error, error code if an error
 
-            var objParseCommandLine = new clsParseCommandLine();
+            var objParseCommandLine = new PRISM.clsParseCommandLine();
 
             var intReturnCode = 0;
             mCodeTestMode = false;
@@ -104,7 +104,7 @@ namespace AnalysisManagerProg
                             clsGlobal.LogError("clsCodeTest exception: " + ex.Message, ex);
                         }
 
-                        clsParseCommandLine.PauseAtConsole(3000, 1000);
+                        PRISM.clsParseCommandLine.PauseAtConsole(3000, 1000);
                         return 0;
                     }
 
@@ -118,7 +118,7 @@ namespace AnalysisManagerProg
                             TraceMode = mTraceMode
                         };
                         objTest.DisplayDllVersions(mDisplayDllPath);
-                        clsParseCommandLine.PauseAtConsole();
+                        PRISM.clsParseCommandLine.PauseAtConsole();
                     }
                     else
                     {
@@ -161,7 +161,7 @@ namespace AnalysisManagerProg
             return Assembly.GetExecutingAssembly().GetName().Version + " (" + strProgramDate + ")";
         }
 
-        private static void SetOptionsUsingCommandLineParameters(clsParseCommandLine objParseCommandLine)
+        private static void SetOptionsUsingCommandLineParameters(PRISM.clsParseCommandLine objParseCommandLine)
         {
             // Returns True if no problems; otherwise, returns false
 

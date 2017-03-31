@@ -16,12 +16,13 @@ using System.Linq;
 using PHRPReader;
 using System.IO;
 using MSGFResultsSummarizer;
+using PRISM;
 
 namespace MSGFResultsSummarizerExe
 {
     static class modMain
     {
-        private const string PROGRAM_DATE = "November 23, 2016";
+        private const string PROGRAM_DATE = "March 31, 2017";
         private static string mMSGFSynFilePath = string.Empty;
         private static string mInputFolderPath = string.Empty;
 
@@ -38,10 +39,7 @@ namespace MSGFResultsSummarizerExe
         {
             // Returns 0 if no error, error code if an error
 
-            clsParseCommandLine objParseCommandLine = new clsParseCommandLine();
-            bool blnProceed = false;
-
-            bool blnSuccess = false;
+            var objParseCommandLine = new clsParseCommandLine();
 
             try
             {

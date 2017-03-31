@@ -2,13 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using AnalysisManagerMSGFDBPlugIn;
-using FileProcessor;
+using PRISM;
 
 namespace MSGFPlusIndexFileCopier
 {
     class Program
     {
-        protected const string PROGRAM_DATE = "April 25, 2016";
+        protected const string PROGRAM_DATE = "March 31, 2017";
         protected const string DEFAULT_REMOTE_SHARE = @"\\proto-7\MSGFPlus_Index_Files\Other";
 
         protected static string mFastaFilePath;
@@ -25,7 +25,7 @@ namespace MSGFPlusIndexFileCopier
 
             try
             {
-                bool success = false;
+                var success = false;
 
                 if (objParseCommandLine.ParseCommandLine())
                 {
@@ -77,7 +77,7 @@ namespace MSGFPlusIndexFileCopier
                 {
                     // Update fiFastaFile to point to the remote share
                     // Note that the fasta file does not have to exist (and likely won't)
-                    string remoteFastaPath = Path.Combine(remoteIndexFolderPath, fiFastaFile.Name);
+                    var remoteFastaPath = Path.Combine(remoteIndexFolderPath, fiFastaFile.Name);
                     fiFastaFile = new FileInfo(remoteFastaPath);
                 }
                 else
@@ -93,7 +93,7 @@ namespace MSGFPlusIndexFileCopier
                 const string managerName = "MSGFPlusIndexFileCopier";
                 string errorMessage;
 
-                bool success = clsCreateMSGFDBSuffixArrayFiles.CopyIndexFilesToRemote(
+                var success = clsCreateMSGFDBSuffixArrayFiles.CopyIndexFilesToRemote(
                     fiFastaFile,
                     remoteIndexFolderPath,
                     debugLevel,
@@ -148,7 +148,7 @@ namespace MSGFPlusIndexFileCopier
                 if (objParseCommandLine.InvalidParametersPresent(lstValidParameters))
                 {
                     var badArguments = new List<string>();
-                    foreach (string item in objParseCommandLine.InvalidParameters(lstValidParameters))
+                    foreach (var item in objParseCommandLine.InvalidParameters(lstValidParameters))
                     {
                         badArguments.Add("/" + item);
                     }
@@ -158,7 +158,7 @@ namespace MSGFPlusIndexFileCopier
                     return false;
                 }
 
-                // Query objParseCommandLine to see if various parameters are present						
+                // Query objParseCommandLine to see if various parameters are present
 
                 if (objParseCommandLine.NonSwitchParameterCount > 0)
                     mFastaFilePath = objParseCommandLine.RetrieveNonSwitchParameter(0);
@@ -220,9 +220,9 @@ namespace MSGFPlusIndexFileCopier
             Console.WriteLine();
             Console.WriteLine(strSeparator);
             Console.WriteLine(strTitle);
-            string strMessage = strTitle + ":";
+            var strMessage = strTitle + ":";
 
-            foreach (string item in items)
+            foreach (var item in items)
             {
                 Console.WriteLine("   " + item);
                 strMessage += " " + item;
@@ -236,7 +236,7 @@ namespace MSGFPlusIndexFileCopier
 
         private static void ShowProgramHelp()
         {
-            string exeName = System.IO.Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            var exeName = System.IO.Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().Location);
 
             try
             {
