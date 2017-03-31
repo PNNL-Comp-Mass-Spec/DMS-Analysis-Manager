@@ -30,10 +30,10 @@ namespace MSGFResultsSummarizerExe
         private static string mDatasetName = string.Empty;
 
         private static bool mContactDatabase = true;
-        private static int mJob = 0;
+        private static int mJob;
         private static bool mSaveResultsAsText = true;
 
-        private static bool mPostResultsToDb = false;
+        private static bool mPostResultsToDb;
 
         public static int Main()
         {
@@ -43,7 +43,7 @@ namespace MSGFResultsSummarizerExe
 
             try
             {
-                blnProceed = false;
+                var blnProceed = false;
                 if (objParseCommandLine.ParseCommandLine())
                 {
                     if (SetOptionsUsingCommandLineParameters(objParseCommandLine))
@@ -55,25 +55,25 @@ namespace MSGFResultsSummarizerExe
                     ShowProgramHelp();
                     return -1;
                 }
-                else if ((objParseCommandLine.ParameterCount + objParseCommandLine.NonSwitchParameterCount == 0))
+
+                if ((objParseCommandLine.ParameterCount + objParseCommandLine.NonSwitchParameterCount == 0))
                 {
                     ShowProgramHelp();
                     return -1;
                 }
-                else if (string.IsNullOrEmpty(mMSGFSynFilePath) && string.IsNullOrEmpty(mInputFolderPath))
+
+                if (string.IsNullOrEmpty(mMSGFSynFilePath) && string.IsNullOrEmpty(mInputFolderPath))
                 {
                     ShowErrorMessage("Must define either the MSGFSynFilePath or InputFolderPath");
                     ShowProgramHelp();
                     return -1;
                 }
-                else
-                {
-                    blnSuccess = SummarizeMSGFResults();
 
-                    if (!blnSuccess)
-                    {
-                        return -1;
-                    }
+                var blnSuccess = SummarizeMSGFResults();
+
+                if (!blnSuccess)
+                {
+                    return -1;
                 }
             }
             catch (Exception ex)
@@ -87,7 +87,7 @@ namespace MSGFResultsSummarizerExe
 
         private static string GetAppVersion()
         {
-            return System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString() + " (" + PROGRAM_DATE + ")";
+            return System.Reflection.Assembly.GetExecutingAssembly().GetName().Version + " (" + PROGRAM_DATE + ")";
         }
 
         private static bool SummarizeMSGFResults()
@@ -97,14 +97,16 @@ namespace MSGFResultsSummarizerExe
             try
             {
                 // Initialize a dictionary object that will be used to either find the appropriate input file, or determine the file type of the specified input file
-                var dctFileSuffixes = new Dictionary<string, clsPHRPReader.ePeptideHitResultType>();
+                var dctFileSuffixes = new Dictionary<string, clsPHRPReader.ePeptideHitResultType>
+                {
+                    {"_xt_MSGF.txt", clsPHRPReader.ePeptideHitResultType.XTandem},
+                    {"_msgfdb_syn_MSGF.txt", clsPHRPReader.ePeptideHitResultType.MSGFDB},
+                    {"_inspect_syn_MSGF.txt", clsPHRPReader.ePeptideHitResultType.Inspect},
+                    {"_syn_MSGF.txt", clsPHRPReader.ePeptideHitResultType.Sequest},
+                    {"_msalign_syn.txt", clsPHRPReader.ePeptideHitResultType.MSAlign},
+                    {"_mspath_syn.txt", clsPHRPReader.ePeptideHitResultType.MSPathFinder}
+                };
 
-                dctFileSuffixes.Add("_xt_MSGF.txt", clsPHRPReader.ePeptideHitResultType.XTandem);
-                dctFileSuffixes.Add("_msgfdb_syn_MSGF.txt", clsPHRPReader.ePeptideHitResultType.MSGFDB);
-                dctFileSuffixes.Add("_inspect_syn_MSGF.txt", clsPHRPReader.ePeptideHitResultType.Inspect);
-                dctFileSuffixes.Add("_syn_MSGF.txt", clsPHRPReader.ePeptideHitResultType.Sequest);
-                dctFileSuffixes.Add("_msalign_syn.txt", clsPHRPReader.ePeptideHitResultType.MSAlign);
-                dctFileSuffixes.Add("_mspath_syn.txt", clsPHRPReader.ePeptideHitResultType.MSPathFinder);
 
                 var eResultType = clsPHRPReader.ePeptideHitResultType.Unknown;
 
@@ -126,8 +128,7 @@ namespace MSGFResultsSummarizerExe
                     // Determine the input file path by looking for the expected files in mInputFolderPath
                     foreach (var suffixEntry in dctFileSuffixes)
                     {
-                        FileInfo[] fiFiles = null;
-                        fiFiles = diFolder.GetFiles("*" + suffixEntry.Key);
+                        var fiFiles = diFolder.GetFiles("*" + suffixEntry.Key);
 
                         if (fiFiles.Length > 0)
                         {
@@ -142,7 +143,7 @@ namespace MSGFResultsSummarizerExe
 
                     if (eResultType == clsPHRPReader.ePeptideHitResultType.Unknown)
                     {
-                        string strMsg = "Did not find any files in the source folder with the expected file name suffixes\n" +
+                        var strMsg = "Did not find any files in the source folder with the expected file name suffixes\n" +
                             "Looked for " + strSuffixesSearched + " in \n" + diFolder.FullName;
 
                         ShowErrorMessage(strMsg);
@@ -197,14 +198,12 @@ namespace MSGFResultsSummarizerExe
                 if (mJob == 0)
                 {
                     // Auto-determine the job number by looking for _Auto000000 in the parent folder name
-                    int intUnderscoreIndex = 0;
-                    string strNamePart = null;
 
-                    intUnderscoreIndex = fiSourceFile.DirectoryName.LastIndexOf("_", StringComparison.Ordinal);
+                    var intUnderscoreIndex = fiSourceFile.DirectoryName.LastIndexOf("_", StringComparison.Ordinal);
 
                     if (intUnderscoreIndex > 0)
                     {
-                        strNamePart = fiSourceFile.DirectoryName.Substring(intUnderscoreIndex + 1);
+                        var strNamePart = fiSourceFile.DirectoryName.Substring(intUnderscoreIndex + 1);
                         if (strNamePart.ToLower().StartsWith("auto"))
                         {
                             strNamePart = strNamePart.Substring(4);
@@ -249,7 +248,7 @@ namespace MSGFResultsSummarizerExe
 
                 Console.WriteLine("Result Type: ".PadRight(25) + objSummarizer.ResultTypeName);
 
-                string strFilterText = null;
+                string strFilterText;
 
                 if (objSummarizer.ResultType == clsPHRPReader.ePeptideHitResultType.MSAlign)
                 {
@@ -306,7 +305,6 @@ namespace MSGFResultsSummarizerExe
         {
             // Returns True if no problems; otherwise, returns false
 
-            string strValue = string.Empty;
             var strValidParameters = new List<string>
             {
                 "I",
@@ -329,6 +327,7 @@ namespace MSGFResultsSummarizerExe
                 else
                 {
                     // Query objParseCommandLine to see if various parameters are present
+                    string strValue;
                     if (objParseCommandLine.RetrieveValueForParameter("I", out strValue))
                     {
                         mMSGFSynFilePath = strValue;
@@ -385,13 +384,18 @@ namespace MSGFResultsSummarizerExe
             return true;
         }
 
-        private static void ShowErrorMessage(string strMessage)
+        private static void ShowErrorMessage(string message, Exception ex = null)
         {
             const string strSeparator = "------------------------------------------------------------------------------";
 
             Console.WriteLine();
             Console.WriteLine(strSeparator);
-            Console.WriteLine(strMessage);
+            Console.WriteLine(message);
+            if (ex != null)
+            {
+                Console.WriteLine(PRISM.clsStackTraceFormatter.GetExceptionStackTraceMultiLine(ex));
+            }
+
             Console.WriteLine(strSeparator);
             Console.WriteLine();
         }
@@ -447,10 +451,11 @@ namespace MSGFResultsSummarizerExe
         /// <summary>
         /// Event handler for the MSGResultsSummarizer
         /// </summary>
-        /// <param name="errorMessage"></param>
-        private static void MSGFResultsSummarizer_ErrorHandler(string errorMessage)
+        /// <param name="errorMessage">Error Message</param>
+        /// <param name="ex">Exception</param>
+        private static void MSGFResultsSummarizer_ErrorHandler(string errorMessage, Exception ex)
         {
-            ShowErrorMessage(errorMessage);
+            ShowErrorMessage(errorMessage, ex);
         }
 
         #endregion
