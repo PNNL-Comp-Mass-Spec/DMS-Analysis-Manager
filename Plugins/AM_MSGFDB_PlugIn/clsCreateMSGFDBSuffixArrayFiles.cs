@@ -252,7 +252,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="debugLevel"></param>
         /// <param name="managerName">Manager name (only required because the constructor for PRISM.clsFileTools requires this)</param>
         /// <param name="createIndexFileForExistingFiles">
-        /// When true, assumes that the index files were previously copied to remoteIndexFolderPath, 
+        /// When true, assumes that the index files were previously copied to remoteIndexFolderPath,
         /// and we should simply create the .MSGFPlusIndexFileInfo file for the matching files
         /// </param>
         /// <param name="strErrorMessage"></param>
@@ -355,12 +355,12 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="msgfDbProgLoc"></param>
         /// <param name="strFASTAFilePath">FASTA file path</param>
         /// <param name="blnFastaFileIsDecoy">
-        /// When True, only creates the forward-based index files.  
+        /// When True, only creates the forward-based index files.
         /// When False, creates both the forward and reverse index files
         /// </param>
         /// <param name="strMSGFPlusIndexFilesFolderPathBase">Folder path from which to copy (or store) the index files</param>
         /// <param name="strMSGFPlusIndexFilesFolderPathLegacyDB">
-        /// Folder path from which to copy (or store) the index files for Legacy DBs 
+        /// Folder path from which to copy (or store) the index files for Legacy DBs
         /// (.fasta files not created from the protein sequences database)
         /// </param>
         /// <returns>CloseOutType enum indicating success or failure</returns>
@@ -1057,7 +1057,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // Not MSGF+
                 return false;
             }
-            
+
             // Using MSGF+
             return true;
         }
@@ -1173,8 +1173,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // Lock file is over 60 minutes old; delete it
                 if (intDebugLevel >= 1)
                 {
-                    OnStatusEvent("Lock file is over 60 minutes old (created " + 
-                        fiLockFile.LastWriteTime.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT) + "); " + 
+                    OnStatusEvent("Lock file is over 60 minutes old (created " +
+                        fiLockFile.LastWriteTime.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT) + "); " +
                         "deleting " + fiLockFile.FullName);
                 }
                 DeleteLockFile(fiLockFile);
