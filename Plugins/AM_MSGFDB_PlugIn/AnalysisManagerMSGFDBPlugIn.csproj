@@ -43,12 +43,6 @@
     <Reference Include="PeptideToProteinMapEngine">
       <HintPath>..\..\AM_Common\PeptideToProteinMapEngine.dll</HintPath>
     </Reference>
-    <Reference Include="PRISM">
-      <HintPath>..\..\AM_Common\PRISM.dll</HintPath>
-    </Reference>
-    <Reference Include="PRISMWin">
-      <HintPath>..\..\AM_Common\PRISMWin.dll</HintPath>
-    </Reference>
     <Reference Include="ProteinFileReader">
       <HintPath>..\..\AM_Common\ProteinFileReader.dll</HintPath>
     </Reference>
@@ -72,6 +66,14 @@
     <Compile Include="clsMSGFDBUtils.cs" />
     <Compile Include="clsScanTypeFileCreator.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="PRISM-Library">
+      <Version>1.0.2</Version>
+    </PackageReference>
+    <PackageReference Include="PRISMWin-Library">
+      <Version>1.0.1</Version>
+    </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

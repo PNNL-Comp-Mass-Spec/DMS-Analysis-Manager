@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.26228.10
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMSGFDBPlugIn", "AnalysisManagerMSGFDBPlugIn.csproj", "{44E81B35-BA39-47AD-9B67-FBAFC925CACA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MSGFPlusIndexFileCopier", "MSGFPlusIndexFileCopier\MSGFPlusIndexFileCopier.csproj", "{CEC53517-CF8A-4E8E-9DCD-57CD2B8A3F92}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{44E81B35-BA39-47AD-9B67-FBAFC925CACA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{44E81B35-BA39-47AD-9B67-FBAFC925CACA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{44E81B35-BA39-47AD-9B67-FBAFC925CACA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CEC53517-CF8A-4E8E-9DCD-57CD2B8A3F92}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CEC53517-CF8A-4E8E-9DCD-57CD2B8A3F92}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CEC53517-CF8A-4E8E-9DCD-57CD2B8A3F92}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CEC53517-CF8A-4E8E-9DCD-57CD2B8A3F92}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
