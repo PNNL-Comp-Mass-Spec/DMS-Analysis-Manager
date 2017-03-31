@@ -19,13 +19,14 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
+    <OutputPath>bin\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
-    <DocumentationFile>bin\Debug\AnalysisManagerProg.XML</DocumentationFile>
-    <NoWarn>1591</NoWarn>
+    <DocumentationFile>bin\AnalysisManagerProg.XML</DocumentationFile>
+    <NoWarn>
+    </NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -68,9 +69,6 @@
     <Reference Include="PHRPReader">
       <HintPath>..\AM_Common\PHRPReader.dll</HintPath>
     </Reference>
-    <Reference Include="PRISM">
-      <HintPath>..\AM_Common\PRISM.dll</HintPath>
-    </Reference>
     <Reference Include="Protein_Exporter">
       <HintPath>..\AM_Common\Protein_Exporter.dll</HintPath>
     </Reference>
@@ -93,7 +91,6 @@
     <Compile Include="clsCodeTest.cs" />
     <Compile Include="clsCodeTestAM.cs" />
     <Compile Include="clsMainProcess.cs" />
-    <Compile Include="clsParseCommandLine.cs" />
     <Compile Include="clsPluginLoader.cs" />
     <Compile Include="modMain.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -115,6 +112,17 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="LITENING.ICO" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="PRISM-Library">
+      <Version>1.0.2</Version>
+    </PackageReference>
+    <PackageReference Include="System.Data.SQLite.Core">
+      <Version>1.0.97</Version>
+    </PackageReference>
+    <PackageReference Include="UIMFLibrary">
+      <Version>1.0.3</Version>
+    </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
