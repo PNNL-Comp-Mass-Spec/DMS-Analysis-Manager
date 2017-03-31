@@ -22,3 +22,10 @@
 
 cloc*.pl
 /AM_Common/Old
+AM_Common/PRISM.dll
+AM_Common/PRISMWin.dll
+AM_Common/System.Data.SQLite.dll
+AM_Common/UIMFLibrary.dll
+AM_Common/x64/SQLite.Interop.dll
+AM_Common/x86/SQLite.Interop.dll
+AM_Common/SQLite_1.0.97/*
