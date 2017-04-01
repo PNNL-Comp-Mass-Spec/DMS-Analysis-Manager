@@ -327,27 +327,30 @@ namespace AnalysisManagerMasicPlugin
             // Calculates status information for progress file
             // Does this by reading the MasicStatus.xml file
 
-            string strPath = null;
-
-            FileStream fsInFile = null;
-            XmlTextReader objXmlReader = null;
-
             var strProgress = string.Empty;
 
             try
             {
-                strPath = Path.Combine(Path.GetDirectoryName(strMasicProgLoc), m_MASICStatusFileName);
+                var masicExe = new FileInfo(strMasicProgLoc);
+                if (masicExe.DirectoryName == null)
+                    return;
 
-                if (File.Exists(strPath))
+                var strPath = Path.Combine(masicExe.DirectoryName, m_MASICStatusFileName);
+
+                if (!File.Exists(strPath))
+                    return;
+
+                using (var fsInFile = new FileStream(strPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                 {
-                    fsInFile = new FileStream(strPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-                    objXmlReader = new XmlTextReader(fsInFile);
-                    objXmlReader.WhitespaceHandling = WhitespaceHandling.None;
-
-                    while (objXmlReader.Read())
+                    using (var objXmlReader = new XmlTextReader(fsInFile))
                     {
-                        if (objXmlReader.NodeType == XmlNodeType.Element)
+                        objXmlReader.WhitespaceHandling = WhitespaceHandling.None;
+
+                        while (objXmlReader.Read())
                         {
+                            if (objXmlReader.NodeType != XmlNodeType.Element)
+                                continue;
+
                             switch (objXmlReader.Name)
                             {
                                 case "ProcessingStep":
@@ -374,33 +377,24 @@ namespace AnalysisManagerMasicPlugin
                             }
                         }
                     }
+                }
 
-                    if (strProgress.Length > 0)
-                    {
-                        try
-                        {
-                            m_progress = float.Parse(strProgress);
-                        }
-                        catch (Exception)
-                        {
-                            // Ignore errors
-                        }
-                    }
+
+                if (string.IsNullOrEmpty(strProgress))
+                    return;
+
+                try
+                {
+                    m_progress = float.Parse(strProgress);
+                }
+                catch (Exception)
+                {
+                    // Ignore errors
                 }
             }
             catch (Exception)
             {
                 // Ignore errors
-            }
-            finally
-            {
-                objXmlReader?.Dispose();
-
-                if (fsInFile != null)
-                {
-                    fsInFile.Flush();
-                    fsInFile.Dispose();
-                }
             }
         }
 
