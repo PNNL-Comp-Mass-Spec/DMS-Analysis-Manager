@@ -86,9 +86,9 @@ namespace AnalysisManagerMasicPlugin
                     DeleteFileWithRetries(MyFile);
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                LogError("Error deleting .mgf file");
+                LogError("Error deleting .mgf file", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 

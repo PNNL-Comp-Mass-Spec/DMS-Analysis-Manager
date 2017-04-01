@@ -75,7 +75,7 @@ namespace AnalysisManagerMasicPlugin
             catch (Exception ex)
             {
                 // Ignore errors here
-                LogError("Error fixing capitalization of the MASIC Log File at " + strLogFilePath + ": " + ex.Message);
+                LogError("Error fixing capitalization of the MASIC Log File at " + strLogFilePath + ": " + ex.Message, ex);
             }
 
             try
@@ -113,7 +113,7 @@ namespace AnalysisManagerMasicPlugin
             }
             catch (Exception ex)
             {
-                LogError("Error reading MASIC Log File at '" + strLogFilePath + "'; " + ex.Message);
+                LogError("Error reading MASIC Log File at '" + strLogFilePath + "'; " + ex.Message, ex);
             }
         }
 
@@ -148,9 +148,9 @@ namespace AnalysisManagerMasicPlugin
                     return eStepResult;
                 }
             }
-            catch (Exception Err)
+            catch (Exception ex)
             {
-                LogError("clsAnalysisToolRunnerMASICBase.RunTool(), Exception calling MASIC to create the SIC files, " + Err.Message);
+                LogError("clsAnalysisToolRunnerMASICBase.RunTool(), Exception calling MASIC to create the SIC files, " + ex.Message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -229,9 +229,9 @@ namespace AnalysisManagerMasicPlugin
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                LogError("clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); Error looking for MASIC .Exe at " + strMASICExePath);
+                LogError("clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); Error looking for MASIC .Exe at " + strMASICExePath, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -466,7 +466,7 @@ namespace AnalysisManagerMasicPlugin
             }
             catch (Exception ex)
             {
-                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message, ex);
                 return false;
             }
         }

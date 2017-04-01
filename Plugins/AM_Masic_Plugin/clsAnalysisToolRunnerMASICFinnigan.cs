@@ -148,8 +148,7 @@ namespace AnalysisManagerMasicPlugin
             catch (Exception ex)
             {
                 m_message = "Error replacing the ScanStats files created from the mzXML file with the ScanStats files created from the .Raw file";
-                LogError(
-                    m_message + " (ReplaceScanStatsFiles): " + ex.Message);
+                LogError(m_message + " (ReplaceScanStatsFiles): " + ex.Message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -216,9 +215,9 @@ namespace AnalysisManagerMasicPlugin
                 }
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                LogError("Error finding .raw files to delete");
+                LogError("Error finding .raw files to delete", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }
@@ -279,8 +278,7 @@ namespace AnalysisManagerMasicPlugin
             catch (Exception ex)
             {
                 m_message = "Error preparing to convert the Raw file to a MzXML file";
-                LogError(
-                    m_message + " (StartConvertRawToMzXML): " + ex.Message);
+                LogError(m_message + " (StartConvertRawToMzXML): " + ex.Message, ex);
                 fiScanStatsOverrideFile = null;
                 fiScanStatsExOverrideFile = null;
                 return CloseOutType.CLOSEOUT_FAILED;
