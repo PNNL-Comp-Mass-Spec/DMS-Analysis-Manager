@@ -25,10 +25,6 @@ namespace AnalysisManagerMasicPlugin
 
         #endregion
 
-        public clsAnalysisToolRunnerMASICFinnigan()
-        {
-        }
-
         [Obsolete("No longer necessary")]
         public static bool NeedToConvertRawToMzXML(FileInfo fiInputFile)
         {
@@ -42,11 +38,11 @@ namespace AnalysisManagerMasicPlugin
 
         protected override CloseOutType RunMASIC()
         {
-            string strParameterFilePath = null;
+            string strParameterFilePath;
 
             var strParameterFileName = m_jobParams.GetParam("parmFileName");
 
-            if ((strParameterFileName != null) && strParameterFileName.Trim().ToLower() != "na")
+            if (strParameterFileName != null && strParameterFileName.Trim().ToLower() != "na")
             {
                 strParameterFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"));
             }
@@ -163,16 +159,13 @@ namespace AnalysisManagerMasicPlugin
         /// <remarks></remarks>
         protected string ConvertRawToMzXML(FileInfo fiThermoRawFile)
         {
-            string strMSXmlGeneratorAppPath = null;
-            var blnSuccess = false;
-
-            strMSXmlGeneratorAppPath = base.GetMSXmlGeneratorAppPath();
+            var strMSXmlGeneratorAppPath = base.GetMSXmlGeneratorAppPath();
 
             mMSXmlCreator = new AnalysisManagerMsXmlGenPlugIn.clsMSXMLCreator(strMSXmlGeneratorAppPath, m_WorkDir, m_Dataset, m_DebugLevel, m_jobParams);
             RegisterEvents(mMSXmlCreator);
             mMSXmlCreator.LoopWaiting += mMSXmlCreator_LoopWaiting;
 
-            blnSuccess = mMSXmlCreator.CreateMZXMLFile();
+            var blnSuccess = mMSXmlCreator.CreateMZXMLFile();
 
             if (!blnSuccess && string.IsNullOrEmpty(m_message))
             {
@@ -200,15 +193,15 @@ namespace AnalysisManagerMasicPlugin
             return strMzXMLFilePath;
         }
 
+        /// <summary>
+        /// Deletes the .raw file from the working directory
+        /// </summary>
+        /// <returns></returns>
         protected override CloseOutType DeleteDataFile()
         {
-            //Deletes the .raw file from the working directory
-            string[] FoundFiles = null;
-
-            //Delete the .raw file
             try
             {
-                FoundFiles = Directory.GetFiles(m_WorkDir, "*.raw");
+                var FoundFiles = Directory.GetFiles(m_WorkDir, "*.raw");
                 foreach (var MyFile in FoundFiles)
                 {
                     DeleteFileWithRetries(MyFile);
@@ -248,11 +241,9 @@ namespace AnalysisManagerMasicPlugin
                         m_message + ": " + fiScanStatsOverrideFile.FullName);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
-                else
-                {
-                    var strScanStatsOverrideFilePath = strScanStatsFilePath + ".override";
-                    fiScanStatsOverrideFile.MoveTo(strScanStatsOverrideFilePath);
-                }
+
+                var strScanStatsOverrideFilePath = strScanStatsFilePath + ".override";
+                fiScanStatsOverrideFile.MoveTo(strScanStatsOverrideFilePath);
 
                 if (fiScanStatsExOverrideFile.Exists)
                 {
@@ -260,8 +251,7 @@ namespace AnalysisManagerMasicPlugin
                     fiScanStatsExOverrideFile.MoveTo(strScanStatsExOverrideFilePath);
                 }
 
-                string strMzXMLFilePath = null;
-                strMzXMLFilePath = ConvertRawToMzXML(fiInputFile);
+                var strMzXMLFilePath = ConvertRawToMzXML(fiInputFile);
 
                 if (string.IsNullOrEmpty(strMzXMLFilePath))
                 {

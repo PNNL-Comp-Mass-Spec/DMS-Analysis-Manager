@@ -37,39 +37,31 @@ namespace AnalysisManagerMasicPlugin
 
         #region "Methods"
 
-        public clsAnalysisToolRunnerMASICBase()
-        {
-        }
-
         protected void ExtractErrorsFromMASICLogFile(string strLogFilePath)
         {
             // Read the most recent MASIC_Log file and look for any lines with the text "Error"
-
-            string strLineIn = null;
-            var intErrorCount = 0;
 
             try
             {
                 // Fix the case of the MASIC LogFile
                 var ioFileInfo = new FileInfo(strLogFilePath);
-                string strLogFileNameCorrectCase = null;
 
-                strLogFileNameCorrectCase = Path.GetFileName(strLogFilePath);
+                var strLogFileNameCorrectCase = Path.GetFileName(strLogFilePath);
 
                 if (m_DebugLevel >= 1)
                 {
-                    LogDebug("Checking capitalization of the the MASIC Log File: should be " + strLogFileNameCorrectCase + 
+                    LogDebug("Checking capitalization of the the MASIC Log File: should be " + strLogFileNameCorrectCase +
                              "; is currently " + ioFileInfo.Name);
                 }
 
-                if (ioFileInfo.Name != strLogFileNameCorrectCase)
+                if (ioFileInfo.Name != strLogFileNameCorrectCase && ioFileInfo.DirectoryName != null)
                 {
                     // Need to fix the case
                     if (m_DebugLevel >= 1)
                     {
                         LogDebug("Fixing capitalization of the MASIC Log File: " + strLogFileNameCorrectCase + " instead of " + ioFileInfo.Name);
                     }
-                    ioFileInfo.MoveTo(Path.Combine(ioFileInfo.Directory.Name, strLogFileNameCorrectCase));
+                    ioFileInfo.MoveTo(Path.Combine(ioFileInfo.DirectoryName, strLogFileNameCorrectCase));
                 }
             }
             catch (Exception ex)
@@ -80,17 +72,17 @@ namespace AnalysisManagerMasicPlugin
 
             try
             {
-                if (strLogFilePath == null || strLogFilePath.Length == 0)
+                if (string.IsNullOrEmpty(strLogFilePath))
                 {
                     return;
                 }
 
                 using (var srInFile = new StreamReader(new FileStream(strLogFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    intErrorCount = 0;
+                    var intErrorCount = 0;
                     while (!srInFile.EndOfStream)
                     {
-                        strLineIn = srInFile.ReadLine();
+                        var strLineIn = srInFile.ReadLine();
 
                         if (string.IsNullOrEmpty(strLineIn))
                             continue;
@@ -107,7 +99,6 @@ namespace AnalysisManagerMasicPlugin
                             intErrorCount += 1;
                         }
                     }
-
                 }
 
             }
@@ -200,8 +191,6 @@ namespace AnalysisManagerMasicPlugin
             // Note that this function is normally called by RunMasic() in the subclass
 
             var strMASICExePath = string.Empty;
-            string CmdStr = null;
-            var blnSuccess = false;
 
             m_ErrorMessage = string.Empty;
             m_ProcessStep = "NewTask";
@@ -209,10 +198,6 @@ namespace AnalysisManagerMasicPlugin
             try
             {
                 m_MASICStatusFileName = "MasicStatus_" + m_MachName + ".xml";
-                if (m_MASICStatusFileName == null)
-                {
-                    m_MASICStatusFileName = "MasicStatus.xml";
-                }
             }
             catch (Exception)
             {
@@ -238,15 +223,15 @@ namespace AnalysisManagerMasicPlugin
             // Call MASIC using the Program Runner class
 
             // Define the parameters to send to Masic.exe
-            CmdStr = "/I:" + strInputFilePath + " /O:" + strOutputFolderPath + " /P:" + strParameterFilePath + " /Q /SF:" + m_MASICStatusFileName;
+            var cmdStr = "/I:" + strInputFilePath + " /O:" + strOutputFolderPath + " /P:" + strParameterFilePath + " /Q /SF:" + m_MASICStatusFileName;
 
             if (m_DebugLevel >= 2)
             {
                 // Create a MASIC Log File
-                CmdStr += " /L";
+                cmdStr += " /L";
                 m_MASICLogFileName = "MASIC_Log_Job" + m_JobNum + ".txt";
 
-                CmdStr += ":" + Path.Combine(m_WorkDir, m_MASICLogFileName);
+                cmdStr += ":" + Path.Combine(m_WorkDir, m_MASICLogFileName);
             }
             else
             {
@@ -255,29 +240,28 @@ namespace AnalysisManagerMasicPlugin
 
             if (m_DebugLevel >= 1)
             {
-                LogDebug(strMASICExePath + " " + CmdStr);
+                LogDebug(strMASICExePath + " " + cmdStr);
             }
 
-            var objMasicProgRunner = new PRISM.clsProgRunner();
-
-            objMasicProgRunner.CreateNoWindow = true;
-            objMasicProgRunner.CacheStandardOutput = false;
-            objMasicProgRunner.EchoOutputToConsole = true;             // Echo the output to the console
-            objMasicProgRunner.WriteConsoleOutputToFile = false;       // Do not write the console output to a file
-
-            objMasicProgRunner.Name = "MASIC";
-            objMasicProgRunner.Program = strMASICExePath;
-            objMasicProgRunner.Arguments = CmdStr;
-            objMasicProgRunner.WorkDir = m_WorkDir;
+            var objMasicProgRunner = new PRISM.clsProgRunner
+            {
+                CreateNoWindow = true,
+                CacheStandardOutput = false,
+                EchoOutputToConsole = true,
+                WriteConsoleOutputToFile = false,
+                Name = "MASIC",
+                Program = strMASICExePath,
+                Arguments = cmdStr,
+                WorkDir = m_WorkDir
+            };
 
             ResetProgRunnerCpuUsage();
 
             objMasicProgRunner.StartAndMonitorProgram();
 
             // Wait for the job to complete
-            blnSuccess = WaitForJobToFinish(objMasicProgRunner);
+            var blnSuccess = WaitForJobToFinish(objMasicProgRunner);
 
-            objMasicProgRunner = null;
             Thread.Sleep(3000);                // Delay for 3 seconds to make sure program exits
 
             if (!string.IsNullOrEmpty(m_MASICLogFileName))
@@ -294,7 +278,7 @@ namespace AnalysisManagerMasicPlugin
                     LogError("WaitForJobToFinish returned False");
                 }
 
-                if ((m_ErrorMessage != null) && m_ErrorMessage.Length > 0)
+                if (!string.IsNullOrEmpty(m_ErrorMessage))
                 {
                     LogError("clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); Masic Error message: " + m_ErrorMessage);
                     if (string.IsNullOrEmpty(m_message))
@@ -308,14 +292,13 @@ namespace AnalysisManagerMasicPlugin
                 }
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-            else
+
+            if (m_DebugLevel > 0)
             {
-                if (m_DebugLevel > 0)
-                {
-                    LogDebug("clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); m_ProcessStep=" + m_ProcessStep);
-                }
-                return CloseOutType.CLOSEOUT_SUCCESS;
+                LogDebug("clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); m_ProcessStep=" + m_ProcessStep);
             }
+
+            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         protected abstract CloseOutType RunMASIC();
@@ -462,7 +445,7 @@ namespace AnalysisManagerMasicPlugin
 
             try
             {
-                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
+                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
             }
             catch (Exception ex)
             {
@@ -575,7 +558,7 @@ namespace AnalysisManagerMasicPlugin
                 return false;
             }
 
-            if ((int) objMasicProgRunner.State == 10)
+            if ((int)objMasicProgRunner.State == 10)
             {
                 LogError("clsAnalysisToolRunnerMASICBase.WaitForJobToFinish(); objMasicProgRunner.State = 10");
                 return false;

@@ -18,21 +18,14 @@ namespace AnalysisManagerMasicPlugin
     /// <remarks></remarks>
     public class clsAnalysisToolRunnerMASICAgilent : clsAnalysisToolRunnerMASICBase
     {
-        public clsAnalysisToolRunnerMASICAgilent()
-        {
-        }
 
         protected override CloseOutType RunMASIC()
         {
-            string strParameterFileName = null;
-            string strParameterFilePath = null;
+            string strParameterFilePath;
 
-            string strMgfFileName = null;
-            string strInputFilePath = null;
+            var strParameterFileName = m_jobParams.GetParam("parmFileName");
 
-            strParameterFileName = m_jobParams.GetParam("parmFileName");
-
-            if ((strParameterFileName != null) && strParameterFileName.Trim().ToLower() != "na")
+            if (strParameterFileName != null && strParameterFileName.Trim().ToLower() != "na")
             {
                 strParameterFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"));
             }
@@ -42,10 +35,10 @@ namespace AnalysisManagerMasicPlugin
             }
 
             // Determine the path to the .Raw file
-            strMgfFileName = m_Dataset + ".mgf";
-            strInputFilePath = clsAnalysisResources.ResolveStoragePath(m_WorkDir, strMgfFileName);
+            var strMgfFileName = m_Dataset + ".mgf";
+            var strInputFilePath = clsAnalysisResources.ResolveStoragePath(m_WorkDir, strMgfFileName);
 
-            if (strInputFilePath == null || strInputFilePath.Length == 0)
+            if (string.IsNullOrEmpty(strInputFilePath))
             {
                 // Unable to resolve the file path
                 m_ErrorMessage = "Could not find " + strMgfFileName + " or " + strMgfFileName + clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX +
@@ -60,13 +53,13 @@ namespace AnalysisManagerMasicPlugin
         protected override CloseOutType DeleteDataFile()
         {
             //Deletes the .cdf and .mgf files from the working directory
-            string[] FoundFiles = null;
+            string[] foundFiles;
 
             //Delete the .cdf file
             try
             {
-                FoundFiles = Directory.GetFiles(m_WorkDir, "*.cdf");
-                foreach (var MyFile in FoundFiles)
+                foundFiles = Directory.GetFiles(m_WorkDir, "*.cdf");
+                foreach (var MyFile in foundFiles)
                 {
                     DeleteFileWithRetries(MyFile);
                 }
@@ -80,8 +73,8 @@ namespace AnalysisManagerMasicPlugin
             //Delete the .mgf file
             try
             {
-                FoundFiles = Directory.GetFiles(m_WorkDir, "*.mgf");
-                foreach (var MyFile in FoundFiles)
+                foundFiles = Directory.GetFiles(m_WorkDir, "*.mgf");
+                foreach (var MyFile in foundFiles)
                 {
                     DeleteFileWithRetries(MyFile);
                 }

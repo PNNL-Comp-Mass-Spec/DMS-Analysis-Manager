@@ -1,4 +1,5 @@
-﻿using AnalysisManagerBase;
+﻿using System;
+using AnalysisManagerBase;
 
 namespace AnalysisManagerMasicPlugin
 {
@@ -21,11 +22,11 @@ namespace AnalysisManagerMasicPlugin
             }
 
             // Get input data file
-            var CreateStoragePathInfoOnly = false;
-            var RawDataType = m_jobParams.GetParam("RawDataType");
+            bool createStoragePathInfoOnly;
+            var rawDataType = m_jobParams.GetParam("rawDataType");
             var toolName = m_jobParams.GetParam("ToolName");
 
-            switch (RawDataType.ToLower())
+            switch (rawDataType.ToLower())
             {
                 case RAW_DATA_TYPE_DOT_RAW_FILES:
                 case RAW_DATA_TYPE_DOT_WIFF_FILES:
@@ -39,14 +40,14 @@ namespace AnalysisManagerMasicPlugin
 
                     // However, we have found that this can create undo strain on the storage servers (or NWFS Archive)
                     // Thus, we are now setting this to False
-                    CreateStoragePathInfoOnly = false;
+                    createStoragePathInfoOnly = false;
                     break;
                 default:
-                    CreateStoragePathInfoOnly = false;
+                    createStoragePathInfoOnly = false;
                     break;
             }
 
-            if (!FileSearch.RetrieveSpectra(RawDataType, CreateStoragePathInfoOnly))
+            if (!FileSearch.RetrieveSpectra(rawDataType, createStoragePathInfoOnly))
             {
                 LogDebug("clsAnalysisResourcesDecon2ls.GetResources: Error occurred retrieving spectra.");
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -57,7 +58,8 @@ namespace AnalysisManagerMasicPlugin
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (string.Compare(RawDataType, RAW_DATA_TYPE_DOT_RAW_FILES, true) == 0 && toolName.ToLower().StartsWith("MASIC_Finnigan".ToLower()))
+            if (string.Compare(rawDataType, RAW_DATA_TYPE_DOT_RAW_FILES, StringComparison.OrdinalIgnoreCase) == 0 &&
+                toolName.ToLower().StartsWith("MASIC_Finnigan".ToLower()))
             {
                 var strRawFileName = DatasetName + ".raw";
                 var strInputFilePath = ResolveStoragePath(m_WorkingDir, strRawFileName);
@@ -92,13 +94,13 @@ namespace AnalysisManagerMasicPlugin
 
             // We'll add the following extensions to m_FilesToDeleteExt
             // Note, though, that the DeleteDataFile function will delete the .Raw or .mgf/.cdf files
-            m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_WIFF_EXTENSION);
-            m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_RAW_EXTENSION);
-            m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_UIMF_EXTENSION);
-            m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZXML_EXTENSION);
+            m_jobParams.AddResultFileExtensionToSkip(DOT_WIFF_EXTENSION);
+            m_jobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION);
+            m_jobParams.AddResultFileExtensionToSkip(DOT_UIMF_EXTENSION);
+            m_jobParams.AddResultFileExtensionToSkip(DOT_MZXML_EXTENSION);
 
-            m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MGF_EXTENSION);
-            m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_CDF_EXTENSION);
+            m_jobParams.AddResultFileExtensionToSkip(DOT_MGF_EXTENSION);
+            m_jobParams.AddResultFileExtensionToSkip(DOT_CDF_EXTENSION);
 
             //Retrieve param file
             if (!FileSearch.RetrieveFile(m_jobParams.GetParam("ParmFileName"), m_jobParams.GetParam("ParmFileStoragePath")))
