@@ -151,8 +151,11 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy "$(TargetPath)" "$(ProjectDir)..\..\AM_Common"
-copy "AM_Shared.pdb" "$(ProjectDir)..\..\AM_Common"</PostBuildEvent>
+    <PostBuildEvent>xcopy "$(TargetPath)" "$(ProjectDir)..\..\AM_Common" /y /d
+xcopy "$(TargetDir)AM_Shared.pdb" "$(ProjectDir)..\..\AM_Common" /y /d
+
+xcopy "$(TargetDir)PRISM.dll" "$(ProjectDir)..\..\AM_Common" /y /d
+xcopy "$(TargetDir)PrismWin.dll" "$(ProjectDir)..\..\AM_Common" /y /d</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
