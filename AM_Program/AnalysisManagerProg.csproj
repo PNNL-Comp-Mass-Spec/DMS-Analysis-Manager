@@ -47,6 +47,10 @@
     <StartupObject>AnalysisManagerProg.modMain</StartupObject>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="AM_Shared, Version=2.5.6300.27154, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\AM_Common\AM_Shared.dll</HintPath>
+    </Reference>
     <Reference Include="FilterMsMsSpectra">
       <HintPath>..\AM_Common\FilterMsMsSpectra.dll</HintPath>
     </Reference>
@@ -108,12 +112,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="LITENING.ICO" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="AM_Shared\AM_Shared.csproj">
-      <Project>{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}</Project>
-      <Name>AM_Shared</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="PRISM-Library">
