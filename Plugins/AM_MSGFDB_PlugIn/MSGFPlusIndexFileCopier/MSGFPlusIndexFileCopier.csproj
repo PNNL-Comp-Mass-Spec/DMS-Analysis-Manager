@@ -38,6 +38,12 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\AM_Common\AM_Shared.dll</HintPath>
     </Reference>
+    <Reference Include="PRISM">
+      <HintPath>..\..\..\AM_Common\PRISM.dll</HintPath>
+    </Reference>
+    <Reference Include="PRISMWin">
+      <HintPath>..\..\..\AM_Common\PRISMWin.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -49,11 +55,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="PRISM-Library">
-      <Version>1.0.2</Version>
-    </PackageReference>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\AnalysisManagerMSGFDBPlugIn.csproj">
