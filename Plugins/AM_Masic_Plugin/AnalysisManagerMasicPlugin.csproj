@@ -41,10 +41,12 @@
       <HintPath>..\..\AM_Common\ParamFileGenerator.dll</HintPath>
     </Reference>
     <Reference Include="PRISM, Version=2.4.2.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\PRISM-Library.1.0.2\lib\net462\PRISM.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\AM_Common\PRISM.dll</HintPath>
     </Reference>
     <Reference Include="PRISMWin, Version=1.0.1.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\PRISMWin-Library.1.0.1\lib\net462\PRISMWin.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\AM_Common\PRISMWin.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -67,9 +69,6 @@
       <Project>{02D682E5-F70F-4C46-BAC8-1C18920FFF22}</Project>
       <Name>AnalysisManagerMSXMLGenPlugIn</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
