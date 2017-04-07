@@ -47,10 +47,6 @@
     <StartupObject>AnalysisManagerProg.modMain</StartupObject>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="AM_Shared, Version=2.5.6300.27154, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\AM_Common\AM_Shared.dll</HintPath>
-    </Reference>
     <Reference Include="FilterMsMsSpectra">
       <HintPath>..\AM_Common\FilterMsMsSpectra.dll</HintPath>
     </Reference>
@@ -123,6 +119,12 @@
     <PackageReference Include="UIMFLibrary">
       <Version>1.0.3</Version>
     </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="AM_Shared\AM_Shared.csproj">
+      <Project>{35b6b79e-c3b0-4e3a-b3ed-64167a470d7e}</Project>
+      <Name>AM_Shared</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
