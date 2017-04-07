@@ -23,6 +23,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         private const string DECON2LS_ISOS_FILE_SUFFIX = "_isos.csv";
         private const string DECON2LS_PEAKS_FILE_SUFFIX = "_peaks.txt";
 
+        private const string MS_FILE_INFO_SCANNER_NO_ISOS_DATA = "No data found in the _isos.csv file";
         #endregion
 
         #region "Module variables"
@@ -36,6 +37,8 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
         private bool mDeconToolsExceptionThrown;
         private bool mDeconToolsFinishedDespiteProgRunnerError;
+
+        private bool mMSFileInfoScannerReportsEmptyIsosFile;
 
         private udtDeconToolsStatusType mDeconToolsStatus;
 
@@ -165,7 +168,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 var blnWritePeaksToTextFile = oDeconToolsParamFileReader.GetParameter("WritePeaksToTextFile", false);
 
                 // Examine the Peaks File to check whether it only has a header line, or it has multiple data lines
-                if (!ResultsFileHasData(PeaksFilePath))
+                if (!ResultsFileHasData(PeaksFilePath, DECON2LS_PEAKS_FILE_SUFFIX))
                 {
                     // The file does not have any data lines
                     // Raise an error if it should have had data
@@ -197,7 +200,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 if (blnEmptyIsosFileExpected)
                 {
                     // The _isos.csv file should be empty; delete it
-                    if (!ResultsFileHasData(isosFilePath))
+                    if (!ResultsFileHasData(isosFilePath, DECON2LS_ISOS_FILE_SUFFIX))
                     {
                         // The file does not have any data lines
                         try
@@ -270,8 +273,6 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         /// <remarks></remarks>
         private CloseOutType CreateQCPlots()
         {
-            bool blnSuccess;
-
             try
             {
                 var isosFilePath = Path.Combine(m_WorkDir, m_Dataset + DECON2LS_ISOS_FILE_SUFFIX);
@@ -283,7 +284,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 }
 
                 var isosDataLineCount = -1;
-                
+
                 var strMSFileInfoScannerDir = m_mgrParams.GetParam("MSFileInfoScannerDir");
                 if (string.IsNullOrEmpty(strMSFileInfoScannerDir))
                 {
@@ -300,13 +301,16 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
+                mMSFileInfoScannerReportsEmptyIsosFile = false;
+
                 var objQCPlotGenerator = new clsDeconToolsQCPlotsGenerator(strMSFileInfoScannerDLLPath, m_DebugLevel);
                 RegisterEvents(objQCPlotGenerator);
-
+                objQCPlotGenerator.ErrorEvent += QCPlotGenerator_ErrorEvent
+                    ;
                 // Create the QC Plot .png files and associated Index.html file
-                blnSuccess = objQCPlotGenerator.CreateQCPlots(isosFilePath, m_WorkDir);
+                var success = objQCPlotGenerator.CreateQCPlots(isosFilePath, m_WorkDir);
 
-                if (!blnSuccess)
+                if (!success)
                 {
                     LogError("Error generating QC Plots files with clsDeconToolsQCPlotsGenerator");
                     LogMessage(objQCPlotGenerator.ErrorMessage, 0, true);
@@ -315,7 +319,20 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     {
                         LogWarning("MSFileInfoScanner encountered " + objQCPlotGenerator.MSFileInfoScannerErrorCount + " errors");
                     }
-                    return (CloseOutType.CLOSEOUT_FAILED);
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                if (mMSFileInfoScannerReportsEmptyIsosFile)
+                {
+                    // None of the data in the _isos.csv file passed the isotopic fit filter
+                    if (m_message.StartsWith(MS_FILE_INFO_SCANNER_NO_ISOS_DATA, StringComparison.OrdinalIgnoreCase))
+                    {
+                        m_message = "";
+                    }
+
+                    LogError("Unable to create QC plots since no data in _isos.csv passed thresholds");
+
+                    return CloseOutType.CLOSEOUT_NO_DATA;
                 }
 
                 // Make sure the key png files were created
@@ -367,8 +384,8 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                         // This file may be missing if _isos.csv only contains one data point
                         if (isosDataLineCount < 0)
                         {
-                            var success = IsosFileHasData(isosFilePath, out isosDataLineCount, countTotalDataLines: true);
-                            if (!success || isosDataLineCount == 0)
+                            var isosFileHasData = IsosFileHasData(isosFilePath, out isosDataLineCount, countTotalDataLines: true);
+                            if (!isosFileHasData || isosDataLineCount == 0)
                             {
                                 LogError("No results in DeconTools Isos file");
                                 return CloseOutType.CLOSEOUT_NO_DATA;
@@ -953,7 +970,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                         // Data from old Finnigan FTICR
                         return DeconToolsFileTypeConstants.SUNEXTREL;
                     }
-                    
+
                     // Should never get here
                     return DeconToolsFileTypeConstants.Undefined;
 
@@ -1043,8 +1060,8 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                                     else
                                     {
                                         // Unable to parse out the date
-                                        LogMessage("Unable to parse date from string '" + 
-                                            strLineIn.Substring(0, intCharIndex).Trim() + "'; " + 
+                                        LogMessage("Unable to parse date from string '" +
+                                            strLineIn.Substring(0, intCharIndex).Trim() + "'; " +
                                             "will use file modification date as the processing finish time", 0, true);
                                     }
                                 }
@@ -1057,7 +1074,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
                                 if (m_DebugLevel >= 3)
                                 {
-                                    LogDebug("DeconTools log file reports 'finished file processing' at " + 
+                                    LogDebug("DeconTools log file reports 'finished file processing' at " +
                                         dtFinishTime.ToString(DATE_TIME_FORMAT));
                                 }
 
@@ -1155,9 +1172,10 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         /// Opens the specified results file from DeconTools and looks for at least two non-blank lines
         /// </summary>
         /// <param name="strFilePath"></param>
+        /// <param name="fileDescription"></param>
         /// <returns>True if two or more non-blank lines; otherwise false</returns>
         /// <remarks></remarks>
-        private bool ResultsFileHasData(string strFilePath)
+        private bool ResultsFileHasData(string strFilePath, string fileDescription)
         {
             if (!File.Exists(strFilePath))
             {
@@ -1191,7 +1209,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 return true;
             }
 
-            LogDebug("DeconTools results file is empty");
+            LogDebug("DeconTools " + fileDescription + " file is empty");
             return false;
         }
 
@@ -1295,8 +1313,8 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             }
 
             // Lookup the version of the DeconConsole application
-            var blnSuccess = StoreToolVersionInfoViaSystemDiagnostics(ref strToolVersionInfo, ioDeconToolsInfo.FullName);
-            if (!blnSuccess)
+            var success = StoreToolVersionInfoViaSystemDiagnostics(ref strToolVersionInfo, ioDeconToolsInfo.FullName);
+            if (!success)
                 return false;
 
             // Parse out the DeconConsole Build number using a RegEx
@@ -1324,29 +1342,29 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
             // Lookup the version of the DeconTools Backend (in the DeconTools folder)
             var strDeconToolsBackendPath = Path.Combine(ioDeconToolsInfo.DirectoryName, "DeconTools.Backend.dll");
-            blnSuccess = StoreToolVersionInfoViaSystemDiagnostics(ref strToolVersionInfo, strDeconToolsBackendPath);
-            if (!blnSuccess)
+            success = StoreToolVersionInfoViaSystemDiagnostics(ref strToolVersionInfo, strDeconToolsBackendPath);
+            if (!success)
                 return false;
 
             // Lookup the version of the UIMFLibrary (in the DeconTools folder)
             var strDLLPath = Path.Combine(ioDeconToolsInfo.DirectoryName, "UIMFLibrary.dll");
-            blnSuccess = StoreToolVersionInfoViaSystemDiagnostics(ref strToolVersionInfo, strDLLPath);
-            if (!blnSuccess)
+            success = StoreToolVersionInfoViaSystemDiagnostics(ref strToolVersionInfo, strDLLPath);
+            if (!success)
                 return false;
 
             // Old: Lookup the version of DeconEngine (in the DeconTools folder)
             // Disabled July 31, 2014 because support for Rapid was removed from DeconTools.Backend.dll and thus DeconEngine.dll is no longer required
             // strDLLPath = Path.Combine(ioDeconToolsInfo.DirectoryName, "DeconEngine.dll")
-            // blnSuccess = MyBase.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strDLLPath)
-            // If Not blnSuccess Then Return False
+            // success = MyBase.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strDLLPath)
+            // If Not success Then Return False
 
             // Old: Lookup the version of DeconEngineV2 (in the DeconTools folder)
             // Disabled May 20, 2016 because the C++ code that was in DeconEngineV2.dll has been ported to C# and is now part of DeconTools.Backend
             // See DeconTools.Backend\ProcessingTasks\Deconvoluters\HornDeconvolutor\ThrashV1\ThrashV1_Readme.txt
             //
             // strDLLPath = Path.Combine(ioDeconToolsInfo.DirectoryName, "DeconEngineV2.dll")
-            // blnSuccess = MyBase.StoreToolVersionInfoViaSystemDiagnostics(ref strToolVersionInfo, strDLLPath)
-            // If Not blnSuccess Then Return False
+            // success = MyBase.StoreToolVersionInfoViaSystemDiagnostics(ref strToolVersionInfo, strDLLPath)
+            // If Not success Then Return False
 
             // Store paths to key DLLs in ioToolFiles
             var ioToolFiles = new List<FileInfo> {
@@ -1392,6 +1410,8 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         }
 
         #endregion
+
+        #region "Event Handlers"
 
         private DateTime dtLastLogCheckTime = DateTime.MinValue;
 
@@ -1458,24 +1478,33 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             LogProgress(strProgressMessage, logIntervalMinutes);
 
             const int MAX_LOGFINISHED_WAITTIME_SECONDS = 120;
-            if (blnFinishedProcessing)
+            if (!blnFinishedProcessing)
+                return;
+
+            // The Decon2LS Log File reports that the task is complete
+            // If it finished over MAX_LOGFINISHED_WAITTIME_SECONDS seconds ago, then send an abort to the CmdRunner
+
+            if (DateTime.Now.Subtract(dtFinishTime).TotalSeconds >= MAX_LOGFINISHED_WAITTIME_SECONDS)
             {
-                // The Decon2LS Log File reports that the task is complete
-                // If it finished over MAX_LOGFINISHED_WAITTIME_SECONDS seconds ago, then send an abort to the CmdRunner
+                LogDebug("Note: Log file reports finished over " + MAX_LOGFINISHED_WAITTIME_SECONDS +
+                         " seconds ago, but the DeconTools CmdRunner is still active");
 
-                if (DateTime.Now.Subtract(dtFinishTime).TotalSeconds >= MAX_LOGFINISHED_WAITTIME_SECONDS)
-                {
-                    LogDebug("Note: Log file reports finished over " + MAX_LOGFINISHED_WAITTIME_SECONDS +
-                             " seconds ago, but the DeconTools CmdRunner is still active");
+                mDeconToolsFinishedDespiteProgRunnerError = true;
 
-                    mDeconToolsFinishedDespiteProgRunnerError = true;
+                // Abort processing
+                mCmdRunner.AbortProgramNow();
 
-                    // Abort processing
-                    mCmdRunner.AbortProgramNow();
-
-                    Thread.Sleep(3000);
-                }
+                Thread.Sleep(3000);
             }
         }
+
+        private void QCPlotGenerator_ErrorEvent(string message, Exception ex)
+        {
+            if (message.ToLower().Contains(MS_FILE_INFO_SCANNER_NO_ISOS_DATA.ToLower()))
+                mMSFileInfoScannerReportsEmptyIsosFile = true;
+        }
+
+
+        #endregion
     }
 }
