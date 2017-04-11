@@ -41,7 +41,9 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
         private const string PNNL_NAME_COUNTRY = "Pacific Northwest National Laboratory, USA";
 
-        private const string DEFAULT_TISSUE_CV = "[BTO, BTO:0000089, blood, ]";
+        private const string DEFAULT_TISSUE_CV = "[PRIDE, PRIDE:0000442, Tissue not applicable to dataset, ]";
+        private const string DEFAULT_TISSUE_CV_MOUSE_HUMAN = "[BTO, BTO:0000089, blood, ]";
+
         private const string DEFAULT_CELL_TYPE_CV = "[CL, CL:0000081, blood cell, ]";
         private const string DEFAULT_DISEASE_TYPE_CV = "[DOID, DOID:1612, breast cancer, ]";
         private const string DEFAULT_QUANTIFICATION_TYPE_CV = "[PRIDE, PRIDE:0000436, Spectral counting,]";
@@ -2682,6 +2684,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         WritePXHeader(swPXFile, "reason_for_partial", strComment);
                     }
 
+                    var mouseOrHuman = false;
                     if (mExperimentNEWTInfo.Count == 0)
                     {
                         // None of the data package jobs had valid NEWT info
@@ -2693,10 +2696,20 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         foreach (var item in mExperimentNEWTInfo)
                         {
                             WritePXHeader(swPXFile, "species", GetNEWTCv(item.Key, item.Value));
+
+                            if (item.Value.IndexOf("Homo sapiens", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                item.Value.IndexOf("Mus musculus", StringComparison.OrdinalIgnoreCase) >= 0)
+                            {
+                                mouseOrHuman = true;
+                            }
                         }
                     }
 
-                    WritePXHeader(swPXFile, "tissue", TBD + DEFAULT_TISSUE_CV, dctTemplateParameters);
+                    if (mouseOrHuman)
+                        WritePXHeader(swPXFile, "tissue", TBD + DEFAULT_TISSUE_CV_MOUSE_HUMAN, dctTemplateParameters);
+                    else
+                        WritePXHeader(swPXFile, "tissue", TBD + DEFAULT_TISSUE_CV, dctTemplateParameters);
+
                     WritePXHeader(swPXFile, "cell_type", TBD + "Optional, e.g. " + DEFAULT_CELL_TYPE_CV + DELETION_WARNING, dctTemplateParameters);
                     WritePXHeader(swPXFile, "disease", TBD + "Optional, e.g. " + DEFAULT_DISEASE_TYPE_CV + DELETION_WARNING, dctTemplateParameters);
 
