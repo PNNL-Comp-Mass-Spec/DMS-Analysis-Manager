@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Data;
-using System.Diagnostics;
 
 using AnalysisManagerBase;
 using System.IO;
@@ -70,8 +66,8 @@ namespace AnalysisManagerMzRefineryPlugIn
                 if (string.IsNullOrWhiteSpace(mzRefineryParmFileStoragePath))
                 {
                     mzRefineryParmFileStoragePath = @"\\gigasax\dms_parameter_Files\MzRefinery";
-                    LogWarning("Parameter '" + paramFileStoragePathKeyName + "' is not defined " + 
-                        "(obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); " + 
+                    LogWarning("Parameter '" + paramFileStoragePathKeyName + "' is not defined " +
+                        "(obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); " +
                         "will assume: " + mzRefineryParmFileStoragePath);
                 }
 

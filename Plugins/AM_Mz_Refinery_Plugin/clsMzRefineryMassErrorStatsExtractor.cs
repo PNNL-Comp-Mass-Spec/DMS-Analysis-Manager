@@ -22,23 +22,33 @@ namespace AnalysisManagerMzRefineryPlugIn
         private readonly bool mPostResultsToDB;
 
         private string mErrorMessage;
+
         private struct udtMassErrorInfoType
         {
+            /// <summary>
+            /// Dataset name
+            /// </summary>
             public string DatasetName;
-            public int DatasetID;
+
+            /// <summary>
+            /// Analysis Job number
+            /// </summary>
             public int PSMJob;
-            // Parent Ion Mass Error, before refinement
+
+            /// <summary>
+            /// Parent Ion Mass Error, before refinement
+            /// </summary>
             public double MassErrorPPM;
-            // Parent Ion Mass Error, after refinement
+
+            /// <summary>
+            /// Parent Ion Mass Error, after refinement
+            /// </summary>
             public double MassErrorPPMRefined;
         }
 
-        public string ErrorMessage
-        {
-            get { return mErrorMessage; }
-        }
+        public string ErrorMessage => mErrorMessage;
 
-        public clsMzRefineryMassErrorStatsExtractor(ref IMgrParams mgrParams, string strWorkDir, short intDebugLevel, bool blnPostResultsToDB)
+        public clsMzRefineryMassErrorStatsExtractor(IMgrParams mgrParams, short intDebugLevel, bool blnPostResultsToDB)
         {
             m_mgrParams = mgrParams;
             m_DebugLevel = intDebugLevel;
@@ -55,12 +65,12 @@ namespace AnalysisManagerMzRefineryPlugIn
             {
                 sbXml.Append("<DTARef_MassErrorStats>");
 
-                sbXml.Append((Convert.ToString("<Dataset>") + udtMassErrorInfo.DatasetName) + "</Dataset>");
-                sbXml.Append((Convert.ToString("<PSM_Source_Job>") + udtMassErrorInfo.PSMJob) + "</PSM_Source_Job>");
+                sbXml.Append(Convert.ToString("<Dataset>") + udtMassErrorInfo.DatasetName + "</Dataset>");
+                sbXml.Append(Convert.ToString("<PSM_Source_Job>") + udtMassErrorInfo.PSMJob + "</PSM_Source_Job>");
 
                 sbXml.Append("<Measurements>");
-                sbXml.Append((Convert.ToString("<Measurement Name=\"" + "MassErrorPPM" + "\">") + udtMassErrorInfo.MassErrorPPM) + "</Measurement>");
-                sbXml.Append((Convert.ToString("<Measurement Name=\"" + "MassErrorPPM_Refined" + "\">") + udtMassErrorInfo.MassErrorPPMRefined) + "</Measurement>");
+                sbXml.Append(Convert.ToString("<Measurement Name=\"" + "MassErrorPPM" + "\">") + udtMassErrorInfo.MassErrorPPM + "</Measurement>");
+                sbXml.Append(Convert.ToString("<Measurement Name=\"" + "MassErrorPPM_Refined" + "\">") + udtMassErrorInfo.MassErrorPPMRefined + "</Measurement>");
                 sbXml.Append("</Measurements>");
 
                 sbXml.Append("</DTARef_MassErrorStats>");
@@ -93,12 +103,13 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             try
             {
-                var udtMassErrorInfo = new udtMassErrorInfoType();
-                udtMassErrorInfo.DatasetName = strDatasetName;
-                udtMassErrorInfo.DatasetID = intDatasetID;
-                udtMassErrorInfo.PSMJob = intPSMJob;
-                udtMassErrorInfo.MassErrorPPM = double.MinValue;
-                udtMassErrorInfo.MassErrorPPMRefined = double.MinValue;
+                var udtMassErrorInfo = new udtMassErrorInfoType
+                {
+                    DatasetName = strDatasetName,
+                    PSMJob = intPSMJob,
+                    MassErrorPPM = double.MinValue,
+                    MassErrorPPMRefined = double.MinValue
+                };
 
                 var fiSourceFile = new FileInfo(ppmErrorCharterConsoleOutputFilePath);
                 if (!fiSourceFile.Exists)
@@ -118,24 +129,22 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                         strLineIn = strLineIn.Trim();
 
-                        double massError = 0;
+                        if (!strLineIn.StartsWith(MASS_ERROR_PPM))
+                            continue;
 
-                        if (strLineIn.StartsWith(MASS_ERROR_PPM))
+                        var dataString = strLineIn.Substring(MASS_ERROR_PPM.Length).Trim();
+                        double massError;
+
+                        var dataValues = dataString.Split(' ').ToList();
+
+                        if (double.TryParse(dataValues.First(), out massError))
                         {
-                            var dataString = strLineIn.Substring(MASS_ERROR_PPM.Length).Trim();
-                            massError = 0;
+                            udtMassErrorInfo.MassErrorPPM = massError;
+                        }
 
-                            var dataValues = dataString.Split(' ').ToList();
-
-                            if (double.TryParse(dataValues.First(), out massError))
-                            {
-                                udtMassErrorInfo.MassErrorPPM = massError;
-                            }
-
-                            if (dataValues.Count > 1 && double.TryParse(dataValues.Last(), out massError))
-                            {
-                                udtMassErrorInfo.MassErrorPPMRefined = massError;
-                            }
+                        if (dataValues.Count > 1 && double.TryParse(dataValues.Last(), out massError))
+                        {
+                            udtMassErrorInfo.MassErrorPPMRefined = massError;
                         }
                     }
                 }
@@ -156,9 +165,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                 if (mPostResultsToDB)
                 {
-                    bool blnSuccess = false;
-
-                    blnSuccess = PostMassErrorInfoToDB(intDatasetID, strXMLResults);
+                    var blnSuccess = PostMassErrorInfoToDB(intDatasetID, strXMLResults);
 
                     if (!blnSuccess)
                     {
@@ -183,15 +190,17 @@ namespace AnalysisManagerMzRefineryPlugIn
         {
             const int MAX_RETRY_COUNT = 3;
 
-            bool blnSuccess = false;
+            bool blnSuccess;
 
             try
             {
                 // Call stored procedure StoreDTARefMassErrorStats in DMS5
 
-                var objCommand = new SqlCommand();
-                objCommand.CommandType = CommandType.StoredProcedure;
-                objCommand.CommandText = STORE_MASS_ERROR_STATS_SP_NAME;
+                var objCommand = new SqlCommand
+                {
+                    CommandType = CommandType.StoredProcedure,
+                    CommandText = STORE_MASS_ERROR_STATS_SP_NAME
+                };
 
                 objCommand.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
                 objCommand.Parameters.Add(new SqlParameter("@DatasetID", SqlDbType.Int)).Value = intDatasetID;
@@ -200,17 +209,15 @@ namespace AnalysisManagerMzRefineryPlugIn
                 var objAnalysisTask = new clsAnalysisJob(m_mgrParams, m_DebugLevel);
 
                 //Execute the SP (retry the call up to 4 times)
-                var ResCode = objAnalysisTask.DMSProcedureExecutor.ExecuteSP(objCommand, MAX_RETRY_COUNT);
+                var resCode = objAnalysisTask.DMSProcedureExecutor.ExecuteSP(objCommand, MAX_RETRY_COUNT);
 
-                objAnalysisTask = null;
-
-                if (ResCode == 0)
+                if (resCode == 0)
                 {
                     blnSuccess = true;
                 }
                 else
                 {
-                    mErrorMessage = "Error storing MzRefinery Mass Error Results in the database, " + STORE_MASS_ERROR_STATS_SP_NAME + " returned " + ResCode.ToString();
+                    mErrorMessage = "Error storing MzRefinery Mass Error Results in the database, " + STORE_MASS_ERROR_STATS_SP_NAME + " returned " + resCode;
                     blnSuccess = false;
                 }
             }
