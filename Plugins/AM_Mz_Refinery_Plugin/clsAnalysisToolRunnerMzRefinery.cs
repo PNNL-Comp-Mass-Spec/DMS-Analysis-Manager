@@ -751,6 +751,8 @@ namespace AnalysisManagerMzRefineryPlugIn
                     mToolVersionWritten = StoreToolVersionInfo();
                 }
 
+                UpdateProgRunnerCpuUsage(mCmdRunner, SECONDS_BETWEEN_UPDATE);
+
                 LogProgress("MSGF+ for MzRefinery");
 
                 if (m_progress < clsMSGFDBUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE)
@@ -783,6 +785,8 @@ namespace AnalysisManagerMzRefineryPlugIn
             else if (mProgRunnerMode == eMzRefinerProgRunnerMode.MzRefiner)
             {
                 ParseMSConvertConsoleOutputfile(Path.Combine(m_WorkDir, MZ_REFINERY_CONSOLE_OUTPUT));
+
+                UpdateProgRunnerCpuUsage(mCmdRunner, SECONDS_BETWEEN_UPDATE);
 
                 LogProgress("MzRefinery");
             }
