@@ -756,31 +756,31 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                 LogProgress("MSGF+ for MzRefinery");
 
-                if (m_progress >= clsMSGFDBUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE)
+                if (m_progress < clsMSGFDBUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE)
+                    return;
+
+                if (!mMSGFPlusComplete)
                 {
-                    if (!mMSGFPlusComplete)
-                    {
-                        mMSGFPlusComplete = true;
-                        mMSGFPlusCompletionTime = System.DateTime.UtcNow;
-                    }
-                    else
-                    {
-                        if (System.DateTime.UtcNow.Subtract(mMSGFPlusCompletionTime).TotalMinutes >= 5)
-                        {
-                            // MSGF+ is stuck at 96% complete and has been that way for 5 minutes
-                            // Java is likely frozen and thus the process should be aborted
-                            var warningMessage = "MSGF+ has been stuck at " + 
-                                clsMSGFDBUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE.ToString("0") + "% complete for 5 minutes; " + 
-                                "aborting since Java appears frozen";
-                            LogWarning(warningMessage);
+                    mMSGFPlusComplete = true;
+                    mMSGFPlusCompletionTime = DateTime.UtcNow;
+                }
+                else
+                {
+                    if (DateTime.UtcNow.Subtract(mMSGFPlusCompletionTime).TotalMinutes < 5)
+                        return;
 
-                            // Bump up mMSGFPlusCompletionTime by one hour
-                            // This will prevent this function from logging the above message every 30 seconds if the .abort command fails
-                            mMSGFPlusCompletionTime = mMSGFPlusCompletionTime.AddHours(1);
+                    // MSGF+ is stuck at 96% complete and has been that way for 5 minutes
+                    // Java is likely frozen and thus the process should be aborted
+                    var warningMessage = "MSGF+ has been stuck at " +
+                                         clsMSGFDBUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE.ToString("0") + "% complete for 5 minutes; " +
+                                         "aborting since Java appears frozen";
+                    LogWarning(warningMessage);
 
-                            mCmdRunner.AbortProgramNow();
-                        }
-                    }
+                    // Bump up mMSGFPlusCompletionTime by one hour
+                    // This will prevent this function from logging the above message every 30 seconds if the .abort command fails
+                    mMSGFPlusCompletionTime = mMSGFPlusCompletionTime.AddHours(1);
+
+                    mCmdRunner.AbortProgramNow();
                 }
             }
             else if (mProgRunnerMode == eMzRefinerProgRunnerMode.MzRefiner)

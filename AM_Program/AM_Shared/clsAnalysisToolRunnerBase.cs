@@ -3859,7 +3859,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Update the CPU usage by monitoring a process by nme
+        /// Update the CPU usage by monitoring a process by name
         /// </summary>
         /// <param name="processName">Process name, for example chrome (do not include .exe)</param>
         /// <param name="secondsBetweenUpdates">Seconds between which this function is nominally called</param>
@@ -3927,25 +3927,23 @@ namespace AnalysisManagerBase
 
             }
 
-            if (mCoreUsageHistory.Count > 0)
-            {
-                m_StatusTools.ProgRunnerProcessID = processID;
+            if (mCoreUsageHistory.Count <= 0)
+                return;
 
-                m_StatusTools.StoreCoreUsageHistory(mCoreUsageHistory);
+            m_StatusTools.ProgRunnerProcessID = processID;
 
-                // If the Program has been running for at least 3 minutes, store the actual CoreUsage in the database
+            m_StatusTools.StoreCoreUsageHistory(mCoreUsageHistory);
 
-                if (DateTime.UtcNow.Subtract(mProgRunnerStartTime).TotalMinutes >= 3)
-                {
-                    // Average the data in the history queue
+            // If the Program has been running for at least 3 minutes, store the actual CoreUsage in the database
 
-                    var coreUsageAvg = (from item in mCoreUsageHistory.ToArray() select item.Value).Average();
+            if (DateTime.UtcNow.Subtract(mProgRunnerStartTime).TotalMinutes < 3)
+                return;
 
-                    m_StatusTools.ProgRunnerCoreUsage = coreUsageAvg;
-                }
+            // Average the data in the history queue
 
-            }
+            var coreUsageAvg = (from item in mCoreUsageHistory.ToArray() select item.Value).Average();
 
+            m_StatusTools.ProgRunnerCoreUsage = coreUsageAvg;
         }
 
         /// <summary>

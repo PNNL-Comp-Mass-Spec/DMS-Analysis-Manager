@@ -573,8 +573,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                     else
                     {
                         LogWarning(
-                            "MSGF+ processed some of the spectra, but it skipped " + 
-                            mMSGFDBUtils.ContinuumSpectraSkipped + " spectra that were not centroided " + 
+                            "MSGF+ processed some of the spectra, but it skipped " +
+                            mMSGFDBUtils.ContinuumSpectraSkipped + " spectra that were not centroided " +
                             "(" + strPercentSkipped + " skipped)", true);
                     }
                 }
@@ -770,43 +770,49 @@ namespace AnalysisManagerMSGFDBPlugIn
             UpdateStatusFile();
 
             // Parse the console output file every 30 seconds
-            if (DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= SECONDS_BETWEEN_UPDATE)
+            if (DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds < SECONDS_BETWEEN_UPDATE)
             {
-                dtLastConsoleOutputParse = DateTime.UtcNow;
+                return;
+            }
 
-                ParseConsoleOutputFile(mWorkingDirectoryInUse);
-                if (!mToolVersionWritten && !string.IsNullOrWhiteSpace(mMSGFDBUtils.MSGFPlusVersion))
-                {
-                    mToolVersionWritten = StoreToolVersionInfo();
-                }
+            dtLastConsoleOutputParse = DateTime.UtcNow;
 
-                UpdateProgRunnerCpuUsage(mCmdRunner, SECONDS_BETWEEN_UPDATE);
+            ParseConsoleOutputFile(mWorkingDirectoryInUse);
+            if (!mToolVersionWritten && !string.IsNullOrWhiteSpace(mMSGFDBUtils.MSGFPlusVersion))
+            {
+                mToolVersionWritten = StoreToolVersionInfo();
+            }
 
-                LogProgress("MSGF+");
+            UpdateProgRunnerCpuUsage(mCmdRunner, SECONDS_BETWEEN_UPDATE);
 
-                if (m_progress >= clsMSGFDBUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE - float.Epsilon)
-                {
-                    if (!mMSGFPlusComplete)
-                    {
-                        mMSGFPlusComplete = true;
-                        mMSGFPlusCompletionTime = DateTime.UtcNow;
-                    }
-                    else
-                    {
-                        if (DateTime.UtcNow.Subtract(mMSGFPlusCompletionTime).TotalMinutes >= 5)
-                        {
-                            // MSGF+ is stuck at 96% complete and has been that way for 5 minutes
-                            // Java is likely frozen and thus the process should be aborted
-                            LogWarning("MSGF+ has been stuck at " + clsMSGFDBUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE.ToString("0") +
-                                       "% complete for 5 minutes; " + "aborting since Java appears frozen");
+            LogProgress("MSGF+");
 
-                            // Bump up mMSGFPlusCompletionTime by one hour
-                            // This will prevent this function from logging the above message every 30 seconds if the .abort command fails
-                            mMSGFPlusCompletionTime = mMSGFPlusCompletionTime.AddHours(1);
-                            mCmdRunner.AbortProgramNow();
-                        }
-                    }
-                }
+            if (m_progress < clsMSGFDBUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE)
+                return;
+
+            if (!mMSGFPlusComplete)
+            {
+                mMSGFPlusComplete = true;
+                mMSGFPlusCompletionTime = DateTime.UtcNow;
+            }
+            else
+            {
+                if (DateTime.UtcNow.Subtract(mMSGFPlusCompletionTime).TotalMinutes < 5)
+                    return;
+
+                // MSGF+ is stuck at 96% complete and has been that way for 5 minutes
+                // Java is likely frozen and thus the process should be aborted
+
+                var warningMessage = "MSGF+ has been stuck at " +
+                                     clsMSGFDBUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE.ToString("0") + "% complete for 5 minutes; " +
+                                     "aborting since Java appears frozen";
+
+                LogWarning(warningMessage);
+
+                // Bump up mMSGFPlusCompletionTime by one hour
+                // This will prevent this function from logging the above message every 30 seconds if the .abort command fails
+                mMSGFPlusCompletionTime = mMSGFPlusCompletionTime.AddHours(1);
+                mCmdRunner.AbortProgramNow();
             }
         }
 
