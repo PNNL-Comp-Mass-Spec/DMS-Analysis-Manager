@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.IO;
 
 //*********************************************************************************************************
-// Written by Matthew Monroe for the US Department of Energy 
+// Written by Matthew Monroe for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Created 02/09/2009
 // Last updated 02/03/2016
@@ -60,7 +60,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public float MinimumLogIntervalMinutes
         {
-            get { return m_MinimumMemoryUsageLogIntervalMinutes; }
+            get => m_MinimumMemoryUsageLogIntervalMinutes;
             set
             {
                 if (value < 0)
@@ -136,11 +136,11 @@ namespace AnalysisManagerBase
 
             var currentTime = DateTime.Now;
 
-            return currentTime.ToString("yyyy-MM-dd") + COL_SEP + 
-                currentTime.ToString("hh:mm:ss tt") + COL_SEP + 
-                GetProcessMemoryUsageMB().ToString("0.0") + COL_SEP + 
-                GetFreeMemoryMB().ToString("0.0") + COL_SEP + 
-                GetPoolPagedMemory().ToString("0.0") + COL_SEP + 
+            return currentTime.ToString("yyyy-MM-dd") + COL_SEP +
+                currentTime.ToString("hh:mm:ss tt") + COL_SEP +
+                GetProcessMemoryUsageMB().ToString("0.0") + COL_SEP +
+                GetFreeMemoryMB().ToString("0.0") + COL_SEP +
+                GetPoolPagedMemory().ToString("0.0") + COL_SEP +
                 GetPoolNonpagedMemory().ToString("0.0");
 
         }
@@ -201,7 +201,7 @@ namespace AnalysisManagerBase
                 // Obtain a handle to the current process
                 var objProcess = Process.GetCurrentProcess();
 
-                // The WorkingSet is the total physical memory usage 
+                // The WorkingSet is the total physical memory usage
                 return (float)(clsGlobal.BytesToMB(objProcess.WorkingSet64));
             }
             catch (Exception)
@@ -262,10 +262,10 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Writes a status file tracking memory usage
         /// </summary>
-        /// <remarks></remarks>        
+        /// <remarks></remarks>
         public void WriteMemoryUsageLogEntry()
         {
-           
+
             try
             {
                 if (DateTime.UtcNow.Subtract(m_LastWriteTime).TotalMinutes < m_MinimumMemoryUsageLogIntervalMinutes)
@@ -309,7 +309,7 @@ namespace AnalysisManagerBase
                 // Ignore errors here
             }
 
-        }       
+        }
 
         #endregion
 

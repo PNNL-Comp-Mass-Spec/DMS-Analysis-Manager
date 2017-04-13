@@ -30,8 +30,8 @@ namespace AnalysisManagerBase
 
         public int DebugLevel
         {
-            get { return m_DebugLevel; }
-            set { m_DebugLevel = value; }
+            get => m_DebugLevel;
+            set => m_DebugLevel = value;
         }
 
         public string Message => m_Message;

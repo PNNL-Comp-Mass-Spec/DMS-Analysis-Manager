@@ -256,10 +256,7 @@ namespace AnalysisManagerBase
         /// <remarks>Also updates m_FolderSearch and m_FileSearch</remarks>
         public string DatasetName
         {
-            get
-            {
-                return m_DatasetName;
-            }
+            get => m_DatasetName;
             set
             {
                 m_DatasetName = value;
@@ -279,7 +276,7 @@ namespace AnalysisManagerBase
 
         public bool MyEMSLSearchDisabled
         {
-            get { return m_MyEMSLSearchDisabled; }
+            get => m_MyEMSLSearchDisabled;
             set
             {
                 m_MyEMSLSearchDisabled = value;
@@ -353,14 +350,7 @@ namespace AnalysisManagerBase
 
             InitFileTools(m_MgrName, m_DebugLevel);
 
-            if (myEMSLUtilities == null)
-            {
-                m_MyEMSLUtilities = new clsMyEMSLUtilities(m_DebugLevel, m_WorkingDir);
-            }
-            else
-            {
-                m_MyEMSLUtilities = myEMSLUtilities;
-            }
+            m_MyEMSLUtilities = myEMSLUtilities ?? new clsMyEMSLUtilities(m_DebugLevel, m_WorkingDir);
 
             RegisterEvents(m_MyEMSLUtilities);
 

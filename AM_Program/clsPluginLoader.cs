@@ -36,8 +36,8 @@ namespace AnalysisManagerProg
         /// <remarks>Defaults to plugin_info.xml</remarks>
         public string FileName
         {
-            get { return m_pluginConfigFile; }
-            set { m_pluginConfigFile = value; }
+            get => m_pluginConfigFile;
+            set => m_pluginConfigFile = value;
         }
 
         /// <summary>

@@ -2,7 +2,7 @@
 using System;
 
 //*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy 
+// Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2006, Battelle Memorial Institute
 // Created 06/07/2006
@@ -18,18 +18,9 @@ namespace AnalysisManagerBase
     public class AMFileNotFoundException : ApplicationException
     {
 
-        #region "Module variables"
-
-        private string m_FileName;
-
-        #endregion
-
         #region "Properties"
 
-        public string FileName
-        {
-            get { return m_FileName; }
-        }
+        public string FileName { get; }
 
         #endregion
 
@@ -43,7 +34,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public AMFileNotFoundException(string FileName, string Message) : base(Message)
         {
-            m_FileName = FileName;
+            this.FileName = FileName;
 
         }
 
@@ -57,15 +48,10 @@ namespace AnalysisManagerBase
     public class AMFolderNotFoundException : ApplicationException
     {
 
-        #region "Module variables"
-        #endregion
-        private string m_FolderName;
-
         #region "Properties"
-        public string FolderName
-        {
-            get { return m_FolderName; }
-        }
+
+        public string FolderName { get; }
+
         #endregion
 
         #region "Methods"
@@ -78,7 +64,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public AMFolderNotFoundException(string FolderName, string Message) : base(Message)
         {
-            m_FolderName = FolderName;
+            this.FolderName = FolderName;
 
         }
         #endregion
@@ -99,22 +85,12 @@ namespace AnalysisManagerBase
         }
         #endregion
 
-        #region "Module variables"
-        private string m_FileName;
-        #endregion
-
-        private RetryExceptionType m_ExceptionType;
-
         #region "Properties"
-        public string FileName
-        {
-            get { return m_FileName; }
-        }
 
-        public RetryExceptionType ExcType
-        {
-            get { return m_ExceptionType; }
-        }
+        public string FileName { get; }
+
+        public RetryExceptionType ExcType { get; }
+
         #endregion
 
         #region "Methods"
@@ -128,8 +104,8 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public AMFileNotDeletedAfterRetryException(string FileName, RetryExceptionType ExceptionType, string Message) : base(Message)
         {
-            m_FileName = FileName;
-            m_ExceptionType = ExceptionType;
+            this.FileName = FileName;
+            ExcType = ExceptionType;
 
         }
         #endregion
@@ -142,15 +118,10 @@ namespace AnalysisManagerBase
     public class AMFileNotDeletedException : ApplicationException
     {
 
-        #region "Module variables"
-        #endregion
-        private string m_FileName;
-
         #region "Properties"
-        public string FileName
-        {
-            get { return m_FileName; }
-        }
+
+        public string FileName { get; }
+
         #endregion
 
         #region "Methods"
@@ -163,11 +134,11 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public AMFileNotDeletedException(string FileName, string Message) : base(Message)
         {
-            m_FileName = FileName;
+            this.FileName = FileName;
 
         }
         #endregion
 
     }
-    
+
 }

@@ -3,7 +3,7 @@ using System.Data;
 using System.Data.SqlClient;
 
 //*********************************************************************************************************
-// Written by Matthew Monroe for the US Department of Energy 
+// Written by Matthew Monroe for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 02/09/2009
@@ -110,7 +110,7 @@ namespace AnalysisManagerBase
 
         public float DBStatusUpdateIntervalMinutes
         {
-            get { return m_DBStatusUpdateIntervalMinutes; }
+            get => m_DBStatusUpdateIntervalMinutes;
             set
             {
                 if (value < 0)
@@ -145,7 +145,7 @@ namespace AnalysisManagerBase
         /// <remarks>This function is valid, but the primary way that we track status is when WriteStatusFile calls LogStatusToMessageQueue</remarks>
         public void LogStatus(udtStatusInfoType udtStatusInfo, bool blnForceLogToDB)
         {
-           
+
             try
             {
                 if (string.IsNullOrEmpty(m_DBConnectionString))
@@ -277,7 +277,7 @@ namespace AnalysisManagerBase
             objParameters[strParamName].Direction = ParameterDirection.Output;
             objParameters[strParamName].Value = strValue;
         }
-        
+
 
         #endregion
 

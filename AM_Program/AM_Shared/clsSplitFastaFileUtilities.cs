@@ -35,8 +35,8 @@ namespace AnalysisManagerBase
 
         public string MSGFPlusIndexFilesFolderPathLegacyDB
         {
-            get { return mMSGFPlusIndexFilesFolderPathLegacyDB; }
-            set { mMSGFPlusIndexFilesFolderPathLegacyDB = value; }
+            get => mMSGFPlusIndexFilesFolderPathLegacyDB;
+            set => mMSGFPlusIndexFilesFolderPathLegacyDB = value;
         }
 
         public bool WaitingForLockFile => mWaitingForLockFile;

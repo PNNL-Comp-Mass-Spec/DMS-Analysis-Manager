@@ -7,7 +7,7 @@ using System.Xml;
 using System.IO;
 
 //*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy 
+// Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2007, Battelle Memorial Institute
 // Created 10/26/2007
@@ -91,13 +91,13 @@ namespace AnalysisManagerBase
         /// <remarks>Values from 0 (minimum output) to 5 (max detail)</remarks>
         public short DebugLevel
         {
-            get { return m_DebugLevel; }
-            set { m_DebugLevel = value; }
+            get => m_DebugLevel;
+            set => m_DebugLevel = value;
         }
         #endregion
 
         #region "Methods"
-        
+
         /// <summary>
         /// Constructor
         /// </summary>
@@ -164,7 +164,7 @@ namespace AnalysisManagerBase
 
             try
             {
-                // Read XML string into XPathDocument object 
+                // Read XML string into XPathDocument object
                 // and set up navigation objects to traverse it
 
                 using (XmlReader xReader = new XmlTextReader(new StringReader(jobParamsXML)))
