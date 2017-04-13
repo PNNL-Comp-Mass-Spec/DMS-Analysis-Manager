@@ -3,21 +3,9 @@ namespace AnalysisManagerBase
 {
     public class clsDataPackageDatasetInfo
     {
+        public string Dataset { get; }
 
-        private readonly string mDataset;
-
-        private readonly int mDatasetID;
-        // ReSharper disable once ConvertToVbAutoProperty
-        public string Dataset
-        {
-            get { return mDataset; }
-        }
-
-        // ReSharper disable once ConvertToVbAutoProperty
-        public int DatasetID
-        {
-            get { return mDatasetID; }
-        }
+        public int DatasetID { get; }
 
         public string Instrument { get; set; }
 
@@ -59,8 +47,8 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public clsDataPackageDatasetInfo(string datasetName, int datasetId)
         {
-            mDataset = datasetName;
-            mDatasetID = datasetId;
+            Dataset = datasetName;
+            DatasetID = datasetId;
 
             Instrument = "";
             InstrumentGroup = "";

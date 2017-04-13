@@ -5,22 +5,9 @@ namespace AnalysisManagerBase
 {
     public class clsDataPackageJobInfo
     {
+        public int Job { get; }
 
-
-        private readonly int mJob;
-
-        private readonly string mDataset;
-        // ReSharper disable once ConvertToVbAutoProperty
-        public int Job
-        {
-            get { return mJob; }
-        }
-
-        // ReSharper disable once ConvertToVbAutoProperty
-        public string Dataset
-        {
-            get { return mDataset; }
-        }
+        public string Dataset { get; }
 
         public int DatasetID { get; set; }
 
@@ -113,8 +100,8 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public clsDataPackageJobInfo(int job, string datasetName)
         {
-            mJob = job;
-            mDataset = datasetName;
+            Job = job;
+            Dataset = datasetName;
 
             DatasetID = 0;
             Instrument = "";
