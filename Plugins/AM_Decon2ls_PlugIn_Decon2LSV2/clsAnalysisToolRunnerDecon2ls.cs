@@ -9,6 +9,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading;
 using AnalysisManagerBase;
@@ -227,7 +228,8 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     }
 
                     // Make sure the Isos file contains at least one row of data
-                    if (!IsosFileHasData(isosFilePath))
+                    // Using a loose isotopic fit value filter of 0.3
+                    if (!IsosFileHasData(isosFilePath, 0.3))
                     {
                         LogError("No results in DeconTools Isos file");
                         return CloseOutType.CLOSEOUT_NO_DATA;
@@ -394,7 +396,8 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
                         if (isosDataLineCount <= 3)
                         {
-                            // The Isos file has very little data; allow this plot to be missing
+                            // The Isos file has very little data (with isotopic fit <= 0.15)
+                            // Allow this plot to be missing
                             continue;
                         }
                     }
@@ -422,12 +425,13 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         /// Examines isosFilePath to look for data lines (does not read the entire file, just the first two lines)
         /// </summary>
         /// <param name="isosFilePath"></param>
+        /// <param name="maxFitValue">Fit value threshold to apply; use 1 to use all data</param>
         /// <returns>True if it has one or more lines of data, otherwise, returns False</returns>
         /// <remarks></remarks>
-        private bool IsosFileHasData(string isosFilePath)
+        private bool IsosFileHasData(string isosFilePath, double maxFitValue = 0.15)
         {
             int dataLineCount;
-            return IsosFileHasData(isosFilePath, out dataLineCount, false);
+            return IsosFileHasData(isosFilePath, out dataLineCount, false, maxFitValue);
         }
 
         /// <summary>
@@ -436,46 +440,77 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         /// <param name="isosFilePath"></param>
         /// <param name="dataLineCount">Output parameter: total data line count</param>
         /// <param name="countTotalDataLines">True to count all of the data lines; false to just look for the first data line</param>
+        /// <param name="maxFitValue">Fit value threshold to apply; use 1 to use all data</param>
         /// <returns>True if it has one or more lines of data, otherwise, returns False</returns>
         /// <remarks></remarks>
-        private bool IsosFileHasData(string isosFilePath, out int dataLineCount, bool countTotalDataLines)
+        private bool IsosFileHasData(string isosFilePath, out int dataLineCount, bool countTotalDataLines, double maxFitValue = 0.15)
         {
             dataLineCount = 0;
             var blnHeaderLineProcessed = false;
 
+            var fitColumnIndex = -1;
+
             try
             {
-                if (File.Exists(isosFilePath))
+                if (!File.Exists(isosFilePath))
                 {
-                    using (var srInFile = new StreamReader(new FileStream(isosFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                    // File not found
+                    return false;
+                }
+
+                using (var srInFile = new StreamReader(new FileStream(isosFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                {
+                    while (!srInFile.EndOfStream)
                     {
+                        var dataLine = srInFile.ReadLine();
 
-                        while (!srInFile.EndOfStream)
+                        if (string.IsNullOrEmpty(dataLine))
+                            continue;
+
+                        if (blnHeaderLineProcessed)
                         {
-                            var strLineIn = srInFile.ReadLine();
-
-                            if (string.IsNullOrEmpty(strLineIn))
-                                continue;
-
-                            if (blnHeaderLineProcessed)
+                            // This is a data line
+                            if (maxFitValue < 1 && fitColumnIndex >= 0)
                             {
-                                // This is a data line
-                                if (countTotalDataLines)
+                                // Filter on isotopic Fit value
+                                var dataColumns = dataLine.Split(',');
+                                if (dataColumns.Length < fitColumnIndex)
+                                    continue;
+
+                                if (double.TryParse(dataColumns[fitColumnIndex], out var fitValue))
                                 {
-                                    dataLineCount += 1;
+                                    if (fitValue <= maxFitValue)
+                                        dataLineCount = 1;
                                 }
-                                else
-                                {
-                                    dataLineCount = 1;
-                                    break;
-                                }
+
                             }
                             else
                             {
-                                blnHeaderLineProcessed = true;
+                                dataLineCount = 1;
                             }
-                        }
 
+                            if (!countTotalDataLines && dataLineCount > 0)
+                            {
+                                // At least one valid data line has been found
+                                return true;
+                            }
+
+                        }
+                        else
+                        {
+                            var dataColumns = dataLine.Split(',');
+
+                            for (var i = 0; i < dataColumns.Length; i++)
+                            {
+                                if (string.Equals(dataColumns[i], "fit", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    fitColumnIndex = i;
+                                    break;
+                                }
+                            }
+
+                            blnHeaderLineProcessed = true;
+                        }
                     }
                 }
             }
@@ -484,12 +519,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 // Ignore errors here
             }
 
-            if (dataLineCount > 0)
-            {
-                return true;
-            }
-
-            return false;
+            return dataLineCount > 0;
         }
 
         /// <summary>

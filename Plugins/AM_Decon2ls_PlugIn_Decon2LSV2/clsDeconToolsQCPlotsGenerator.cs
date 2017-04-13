@@ -48,7 +48,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 mMSFileInfoScanner.CreateScanStatsFile = false;
                 mMSFileInfoScanner.SaveLCMS2DPlots = true;
                 mMSFileInfoScanner.SaveTICAndBPIPlots = true;
-                mMSFileInfoScanner.UpdateDatasetStatsTextFile = false;                
+                mMSFileInfoScanner.UpdateDatasetStatsTextFile = false;
 
                 mInputFilePath = strInputFilePath;
                 mOutputFolderPath = strOutputFolderPath;
@@ -84,10 +84,10 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     {
                         // Ignore errors here;
                     }
-                        
+
                     break;
-                }                
-                
+                }
+
 
                 if (!mSuccess)
                 {
