@@ -2447,9 +2447,24 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (intParamFileThreadCount > 8)
                 {
-                    OnStatusEvent("The system has " + coreCount + " cores; " + strSearchEngineName + " will use 8 cores (bumped down from " +
-                                  intParamFileThreadCount + " to avoid overloading a single NUMA node)");
-                    intParamFileThreadCount = 8;
+                    if (coreCount >= 16)
+                    {
+                        // There are enough spare cores that we can use 75% of all of the cores
+                        var maxAllowedCores = (int)Math.Floor(coreCount * 0.75);
+                        if (intParamFileThreadCount > maxAllowedCores)
+                        {
+                            OnStatusEvent("The system has " + coreCount + " cores; " + strSearchEngineName + " will use " + maxAllowedCores + " cores " +
+                                          "(bumped down from " + intParamFileThreadCount + " to avoid overloading a single NUMA node)");
+                            intParamFileThreadCount = maxAllowedCores;
+                        }
+                    }
+                    else
+                    {
+                        // Example message: The system has 12 cores; MS-GF+ will use 8 cores (bumped down from 9 to avoid overloading a single NUMA node)
+                        OnStatusEvent("The system has " + coreCount + " cores; " + strSearchEngineName + " will use 8 cores " +
+                                      "(bumped down from " + intParamFileThreadCount + " to avoid overloading a single NUMA node)");
+                        intParamFileThreadCount = 8;
+                    }
                 }
                 else
                 {
