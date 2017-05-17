@@ -655,31 +655,12 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Examines strPath to look for spaces
         /// </summary>
-        /// <param name="strPath"></param>
-        /// <returns>strPath as-is if no spaces, otherwise strPath surrounded by double quotes </returns>
+        /// <param name="filePath"></param>
+        /// <returns>filePath as-is if no spaces, otherwise filePath surrounded by double quotes </returns>
         /// <remarks></remarks>
-        public static string PossiblyQuotePath(string strPath)
+        public static string PossiblyQuotePath(string filePath)
         {
-            if (string.IsNullOrWhiteSpace(strPath))
-            {
-                return string.Empty;
-
-            }
-
-            if (strPath.Contains(" "))
-            {
-                if (!strPath.StartsWith("\""))
-                {
-                    strPath = "\"" + strPath;
-                }
-
-                if (!strPath.EndsWith("\""))
-                {
-                    strPath += "\"";
-                }
-            }
-
-            return strPath;
+            return clsPathUtils.PossiblyQuotePath(filePath);
         }
 
         /// <summary>
