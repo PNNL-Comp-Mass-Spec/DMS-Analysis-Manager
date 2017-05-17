@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 
 //*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy 
+// Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2007, Battelle Memorial Institute
 // Created 12/18/2007
@@ -33,7 +33,8 @@ namespace AnalysisManagerBase
         CLOSEOUT_ERROR_ZIPPING_FILE = 15,
         CLOSEOUT_FILE_NOT_IN_CACHE = 16,
         CLOSEOUT_UNABLE_TO_USE_MZ_REFINERY = 17,
-        CLOSEOUT_NO_DATA = 20
+        CLOSEOUT_NO_DATA = 20,
+        CLOSEOUT_RUNNING_REMOTE = 25
     }
 
     #endregion
@@ -85,52 +86,52 @@ namespace AnalysisManagerBase
         /// <param name="DatasetID"></param>
         /// <remarks></remarks>
         void AddDatasetInfo(string DatasetName, int DatasetID);
-        
+
         /// <summary>
         /// Add a filename to definitely move to the results folder
         /// </summary>
         /// <param name="FileName"></param>
         /// <remarks>FileName can be a file path; only the filename will be stored in m_ResultFilesToKeep</remarks>
         void AddResultFileToKeep(string FileName);
-        
+
         /// <summary>
         /// Add a file to be deleted from the storage server (requires full file path)
         /// </summary>
         /// <param name="FilePath">Full path to the file</param>
         /// <remarks>To delete the files, call clsAnalysisToolRunnerBase.RemoveNonResultServerFiles</remarks>
         void AddServerFileToDelete(string FilePath);
-        
+
         /// <summary>
         /// Add a filename to not move to the results folder
         /// </summary>
         /// <param name="FileName"></param>
         /// <remarks>FileName can be a file path; only the filename will be stored in m_ResultFilesToSkip</remarks>
         void AddResultFileToSkip(string FileName);
-        
+
         /// <summary>
         /// Add a filename extension to not move to the results folder
         /// </summary>
         /// <param name="Extension"></param>
         /// <remarks>Can be a file extension (like .raw) or even a partial file name like _peaks.txt</remarks>
         void AddResultFileExtensionToSkip(string Extension);
-        
-        /// <summary>
-        /// Contact the Pipeline database to close the analysis job
-        /// </summary>
-        /// <param name="CloseOut"></param>
-        /// <param name="CompMsg"></param>
-        /// <remarks>Implemented in clsAnalysisJob</remarks>
-        void CloseTask(CloseOutType CloseOut, string CompMsg);
 
         /// <summary>
         /// Contact the Pipeline database to close the analysis job
         /// </summary>
-        /// <param name="CloseOut"></param>
-        /// <param name="CompMsg"></param>
+        /// <param name="closeOut"></param>
+        /// <param name="compMsg"></param>
+        /// <remarks>Implemented in clsAnalysisJob</remarks>
+        void CloseTask(CloseOutType closeOut, string compMsg);
+
+        /// <summary>
+        /// Contact the Pipeline database to close the analysis job
+        /// </summary>
+        /// <param name="closeOut"></param>
+        /// <param name="compMsg"></param>
         /// <param name="EvalCode"></param>
         /// <param name="EvalMessage"></param>
         /// <remarks>Implemented in clsAnalysisJob</remarks>
-        void CloseTask(CloseOutType CloseOut, string CompMsg, int EvalCode, string EvalMessage);
+        void CloseTask(CloseOutType closeOut, string compMsg, int EvalCode, string EvalMessage);
 
         /// <summary>
         /// Uses the "ToolName" and "StepTool" entries in m_JobParamsTable to generate the tool name for the current analysis job
@@ -164,7 +165,7 @@ namespace AnalysisManagerBase
         /// <param name="valueIfMissing"></param>
         /// <returns>Value for specified parameter; valueIfMissing if not found</returns>
         /// <remarks>
-        /// If the value associated with the parameter is found, yet is not True or False, an exception will be occur; 
+        /// If the value associated with the parameter is found, yet is not True or False, an exception will be occur;
         /// the calling procedure must handle this exception
         /// </remarks>
         bool GetJobParameter(string name, bool valueIfMissing);
@@ -199,7 +200,7 @@ namespace AnalysisManagerBase
         /// <param name="FileName"></param>
         /// <remarks></remarks>
         void RemoveResultFileToSkip(string FileName);
-        
+
         /// <summary>
         /// Requests a task from the database
         /// </summary>
