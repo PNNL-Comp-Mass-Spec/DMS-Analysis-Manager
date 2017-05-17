@@ -112,8 +112,11 @@
     <Compile Include="clsMessageQueueLogger.cs" />
     <Compile Include="clsMessageSender.cs" />
     <Compile Include="clsMyEMSLUtilities.cs" />
+    <Compile Include="clsPathUtils.cs" />
     <Compile Include="clsProteinCollectionInfo.cs" />
     <Compile Include="clsProteowizardTools.cs" />
+    <Compile Include="clsRemoteMonitor.cs" />
+    <Compile Include="clsRemoteTransferUtility.cs" />
     <Compile Include="clsRunDosProgram.cs" />
     <Compile Include="clsScanStatsGenerator.cs" />
     <Compile Include="clsSplitCattedFiles.cs" />
@@ -123,6 +126,7 @@
     <Compile Include="clsStatusFile.cs" />
     <Compile Include="clsSummaryFile.cs" />
     <Compile Include="clsXMLParamFileReader.cs" />
+    <Compile Include="clsXMLUtils.cs" />
     <Compile Include="ExceptionClasses.cs" />
     <Compile Include="IAnalysisResources.cs" />
     <Compile Include="IJobParams.cs" />
@@ -137,16 +141,19 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="PRISM-Library">
-      <Version>1.0.2</Version>
+      <Version>1.0.4</Version>
     </PackageReference>
     <PackageReference Include="PRISMWin-Library">
       <Version>1.0.1</Version>
+    </PackageReference>
+    <PackageReference Include="SSH.NET">
+      <Version>2016.0.0</Version>
     </PackageReference>
     <PackageReference Include="System.Data.SQLite.Core">
       <Version>1.0.97</Version>
     </PackageReference>
     <PackageReference Include="UIMFLibrary">
-      <Version>1.0.3</Version>
+      <Version>1.0.5</Version>
     </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
