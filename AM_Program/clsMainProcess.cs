@@ -65,8 +65,7 @@ namespace AnalysisManagerProg
         private FileSystemWatcher m_FileWatcher;
 
         private bool m_ConfigChanged;
-        private IAnalysisResources m_Resource;
-        private IToolRunner m_ToolRunner;
+
         private clsStatusFile m_StatusTools;
 
         private clsMyEMSLUtilities m_MyEMSLUtilities;
@@ -182,7 +181,7 @@ namespace AnalysisManagerProg
                 var lstMgrSettings = LoadMgrSettingsFromFile();
 
                 // Get the manager settings
-                // If you get an exception here while debugging in Visual Studio, then be sure
+                // If you get an exception here while debugging in Visual Studio, be sure
                 //   that "UsingDefaults" is set to False in CaptureTaskManager.exe.config
                 try
                 {
@@ -386,13 +385,13 @@ namespace AnalysisManagerProg
                     }
 
                     // Check to see if manager is still active
-                    var MgrActive = m_MgrSettings.GetParam("mgractive", false);
-                    var MgrActiveLocal = m_MgrSettings.GetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_ACTIVE_LOCAL, false);
+                    var mgrActive = m_MgrSettings.GetParam("mgractive", false);
+                    var mgrActiveLocal = m_MgrSettings.GetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_ACTIVE_LOCAL, false);
 
-                    if (!(MgrActive & MgrActiveLocal))
+                    if (!(mgrActive & mgrActiveLocal))
                     {
                         string strManagerDisableReason;
-                        if (!MgrActiveLocal)
+                        if (!mgrActiveLocal)
                         {
                             strManagerDisableReason = "Disabled locally via AnalysisManagerProg.exe.config";
                             UpdateStatusDisabled(EnumMgrStatus.DISABLED_LOCAL, strManagerDisableReason);
@@ -408,8 +407,8 @@ namespace AnalysisManagerProg
                         return;
                     }
 
-                    var MgrUpdateRequired = m_MgrSettings.GetParam("ManagerUpdateRequired", false);
-                    if (MgrUpdateRequired)
+                    var mgrUpdateRequired = m_MgrSettings.GetParam("ManagerUpdateRequired", false);
+                    if (mgrUpdateRequired)
                     {
                         var msg = "Manager update is required";
                         LogMessage(msg);
@@ -688,7 +687,6 @@ namespace AnalysisManagerProg
 
         private bool DoAnalysisJob()
         {
-            CloseOutType eToolRunnerResult;
             var jobNum = m_AnalysisTask.GetJobParameter("StepParameters", "Job", 0);
             var stepNum = m_AnalysisTask.GetJobParameter("StepParameters", "Step", 0);
             var cpuLoadExpected = m_AnalysisTask.GetJobParameter("StepParameters", "CPU_Load", 1);
@@ -696,7 +694,8 @@ namespace AnalysisManagerProg
             var datasetName = m_AnalysisTask.GetParam("JobParameters", "DatasetNum");
             var jobToolDescription = m_AnalysisTask.GetCurrentJobToolDescription();
 
-            var blnRunToolError = false;
+            var runJobsRemotely = m_MgrSettings.GetParam("RunJobsRemotely", false);
+            var runningRemote = m_AnalysisTask.GetJobParameter("StepParameters", "RunningRemote", false);
 
             if (TraceMode)
                 ShowTraceMessage("Processing job " + jobNum + ", " + jobToolDescription);
@@ -716,12 +715,14 @@ namespace AnalysisManagerProg
 
             m_StatusTools.TaskStartTime = DateTime.UtcNow;
             m_StatusTools.Dataset = datasetName;
+            m_StatusTools.WorkDirPath = m_WorkDirPath;
             m_StatusTools.JobNumber = jobNum;
             m_StatusTools.JobStep = stepNum;
             m_StatusTools.Tool = jobToolDescription;
             m_StatusTools.MgrName = m_MgrName;
             m_StatusTools.ProgRunnerProcessID = 0;
             m_StatusTools.ProgRunnerCoreUsage = cpuLoadExpected;
+
             m_StatusTools.UpdateAndWrite(EnumMgrStatus.RUNNING, EnumTaskStatus.RUNNING, EnumTaskStatusDetail.RETRIEVING_RESOURCES, 0, 0, "", "", m_MostRecentJobInfo, true);
 
             var processID = Process.GetCurrentProcess().Id;
@@ -739,11 +740,11 @@ namespace AnalysisManagerProg
             if (m_DebugLevel >= 2)
             {
                 // Log the debug level value whenever the debug level is 2 or higher
-                LogMessage("Debug level is " + m_DebugLevel.ToString());
+                LogMessage("Debug level is " + m_DebugLevel);
             }
 
             // Create an object to manage the job resources
-            if (!SetResourceObject())
+            if (!SetResourceObject(out var toolResourcer))
             {
                 LogError(m_MgrName + ": Unable to set the Resource object, job " + jobNum + ", Dataset " + datasetName, true);
                 m_AnalysisTask.CloseTask(CloseOutType.CLOSEOUT_FAILED, "Unable to set resource object");
@@ -753,7 +754,7 @@ namespace AnalysisManagerProg
             }
 
             // Create an object to run the analysis tool
-            if (!SetToolRunnerObject())
+            if (!SetToolRunnerObject(out var toolRunner))
             {
                 LogError(m_MgrName + ": Unable to set the toolRunner object, job " + jobNum + ", Dataset " + datasetName, true);
                 m_AnalysisTask.CloseTask(CloseOutType.CLOSEOUT_FAILED, "Unable to set tool runner object");
@@ -773,7 +774,7 @@ namespace AnalysisManagerProg
             }
 
             // Make sure we have enough free space on the drive with the working directory and on the drive with the transfer folder
-            if (!ValidateFreeDiskSpace(out m_MostRecentErrorMessage))
+            if (!ValidateFreeDiskSpace(toolResourcer, out m_MostRecentErrorMessage))
             {
                 if (TraceMode)
                     ShowTraceMessage("Insufficient free space; closing job step task");
@@ -790,164 +791,48 @@ namespace AnalysisManagerProg
             // Possibly disable MyEMSL
             if (DisableMyEMSL)
             {
-                m_Resource.SetOption(clsGlobal.eAnalysisResourceOptions.MyEMSLSearchDisabled, true);
+                toolResourcer.SetOption(clsGlobal.eAnalysisResourceOptions.MyEMSLSearchDisabled, true);
             }
+
+            bool success;
+            CloseOutType eToolRunnerResult;
 
             // Retrieve files required for the job
             m_MgrErrorCleanup.CreateStatusFlagFile();
-            try
+
+            if (runningRemote)
             {
-                if (TraceMode)
-                    ShowTraceMessage("Getting job resources");
-
-                eToolRunnerResult = m_Resource.GetResources();
-                if (eToolRunnerResult != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    m_MostRecentErrorMessage = "GetResources returned result: " + eToolRunnerResult.ToString();
-                    if (TraceMode)
-                        ShowTraceMessage(m_MostRecentErrorMessage + "; closing job step task");
-                    if ((m_Resource.Message != null))
-                    {
-                        m_MostRecentErrorMessage += "; " + m_Resource.Message;
-                    }
-
-                    LogError(m_MgrName + ": " + m_MostRecentErrorMessage + ", Job " + jobNum + ", Dataset " + datasetName);
-                    m_AnalysisTask.CloseTask(eToolRunnerResult, m_Resource.Message);
-
-                    m_MgrErrorCleanup.CleanWorkDir();
-                    UpdateStatusIdle("Error encountered: " + m_MostRecentErrorMessage);
-                    m_MgrErrorCleanup.DeleteStatusFlagFile(m_DebugLevel);
-                    return false;
-                }
+                // Job is running remotely; check its status
+                success = CheckRemoteJobStatus(toolRunner, out eToolRunnerResult);
             }
-            catch (Exception ex)
+            else
             {
-                LogError("clsMainProcess.DoAnalysisJob(), Getting resources, " + ex.Message, ex);
+                // Retrieve the resources for the job then either run locally or run remotely
+                success = RetrieveResources(toolResourcer, jobNum, datasetName, out eToolRunnerResult);
 
-                m_AnalysisTask.CloseTask(CloseOutType.CLOSEOUT_FAILED, "Exception getting resources");
+                // Run the job
+                m_StatusTools.UpdateAndWrite(EnumMgrStatus.RUNNING, EnumTaskStatus.RUNNING, EnumTaskStatusDetail.RUNNING_TOOL, 0);
 
-                if (m_MgrErrorCleanup.CleanWorkDir())
+
+                if (runJobsRemotely)
                 {
-                    m_MgrErrorCleanup.DeleteStatusFlagFile(m_DebugLevel);
+                    success = RunJobRemotely(toolRunner, jobNum, stepNum, datasetName, out eToolRunnerResult);
                 }
                 else
                 {
-                    m_MgrErrorCleanup.CreateErrorDeletingFilesFlagFile();
-                }
-
-                m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.DoAnalysisJob(): " + ex.Message, m_MostRecentJobInfo, true);
-                return false;
-            }
-
-            // Run the job
-            m_StatusTools.UpdateAndWrite(EnumMgrStatus.RUNNING, EnumTaskStatus.RUNNING, EnumTaskStatusDetail.RUNNING_TOOL, 0);
-            try
-            {
-                if (TraceMode)
-                    ShowTraceMessage("Running the step tool");
-
-                eToolRunnerResult = m_ToolRunner.RunTool();
-                if (eToolRunnerResult != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    m_MostRecentErrorMessage = m_ToolRunner.Message;
-
-                    if (string.IsNullOrEmpty(m_MostRecentErrorMessage))
-                    {
-                        m_MostRecentErrorMessage = "Unknown ToolRunner Error";
-                    }
-
-                    if (TraceMode)
-                        ShowTraceMessage("Error running the tool; closing job step task");
-
-                    LogError(m_MgrName + ": " + m_MostRecentErrorMessage + ", Job " + jobNum + ", Dataset " + datasetName);
-                    m_AnalysisTask.CloseTask(eToolRunnerResult, m_MostRecentErrorMessage, m_ToolRunner.EvalCode, m_ToolRunner.EvalMessage);
-
-                    try
-                    {
-                        if (m_MostRecentErrorMessage.Contains(DECON2LS_FATAL_REMOTING_ERROR) || m_MostRecentErrorMessage.Contains(DECON2LS_CORRUPTED_MEMORY_ERROR))
-                        {
-                            m_NeedToAbortProcessing = true;
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        LogError("clsMainProcess.DoAnalysisJob(), Exception examining MostRecentErrorMessage", ex);
-                    }
-
-                    if (eToolRunnerResult == CloseOutType.CLOSEOUT_ERROR_ZIPPING_FILE)
-                    {
-                        m_NeedToAbortProcessing = true;
-                    }
-
-                    if (m_NeedToAbortProcessing && m_MostRecentErrorMessage.StartsWith(clsAnalysisToolRunnerBase.PVM_RESET_ERROR_MESSAGE))
-                    {
-                        DisableManagerLocally();
-                    }
-
-                    blnRunToolError = true;
-                }
-
-                if (m_ToolRunner.NeedToAbortProcessing)
-                {
-                    m_NeedToAbortProcessing = true;
-                    if (TraceMode)
-                        ShowTraceMessage("ToolRunner.NeedToAbortProcessing = True; closing job step task");
-                    m_AnalysisTask.CloseTask(CloseOutType.CLOSEOUT_FAILED, m_MostRecentErrorMessage, m_ToolRunner.EvalCode, m_ToolRunner.EvalMessage);
+                    success = RunJobLocally(toolRunner, jobNum, datasetName, out eToolRunnerResult);
                 }
             }
-            catch (Exception ex)
+
+
+            if (!success)
             {
-                LogError("clsMainProcess.DoAnalysisJob(), running tool, " + ex.Message, ex);
+                // Error occurred
+                // Note that m_AnalysisTask.CloseTask() should have already been called
+                var reportSuccess = HandleJobFailure(eToolRunnerResult);
 
-                if (ex.Message.Contains(DECON2LS_TCP_ALREADY_REGISTERED_ERROR))
-                {
-                    m_NeedToAbortProcessing = true;
-                }
+                return reportSuccess;
 
-                m_AnalysisTask.CloseTask(CloseOutType.CLOSEOUT_FAILED, "Exception running tool", m_ToolRunner.EvalCode, m_ToolRunner.EvalMessage);
-
-                blnRunToolError = true;
-            }
-
-            if (blnRunToolError)
-            {
-                // Note: the above code should have already called m_AnalysisTask.CloseTask()
-
-                if (TraceMode)
-                    ShowTraceMessage("Tool run error; cleaning up");
-
-                try
-                {
-                    if (m_MgrErrorCleanup.CleanWorkDir())
-                    {
-                        m_MgrErrorCleanup.DeleteStatusFlagFile(m_DebugLevel);
-                    }
-                    else
-                    {
-                        m_MgrErrorCleanup.CreateErrorDeletingFilesFlagFile();
-                    }
-
-                    if (eToolRunnerResult == CloseOutType.CLOSEOUT_NO_DTA_FILES && m_AnalysisTask.GetParam("StepTool").ToLower() == "sequest")
-                    {
-                        // This was a Sequest job, but no .DTA files were found
-                        // Return True; do not count this as a manager failure
-                        return true;
-                    }
-
-                    if (eToolRunnerResult == CloseOutType.CLOSEOUT_NO_DATA)
-                    {
-                        // Return True; do not count this as a manager failure
-                        return true;
-                    }
-
-                    return false;
-                }
-                catch (Exception ex)
-                {
-                    LogError("clsMainProcess.DoAnalysisJob(), cleaning up after RunTool error," + ex.Message, ex);
-                    m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.DoAnalysisJob(): " + ex.Message, m_MostRecentJobInfo, true);
-                    return false;
-                }
             }
 
             // Close out the job
@@ -957,19 +842,127 @@ namespace AnalysisManagerProg
                 if (TraceMode)
                     ShowTraceMessage("Task completed successfully; closing the job step task");
 
+                CloseOutType closeOut;
+                if (runJobsRemotely)
+                {
+                    // eToolRunnerResult will be CLOSEOUT_RUNNING_REMOTE if RunJobRemotely was called
+                    // or if CheckRemoteJobStatus was called and its still in progress
+
+                    // eToolRunnerResult will be CLOSEOUT_SUCCESS if CheckRemoteJobStatus found that the job was done
+                    // and successfully retrieved the results
+
+                    if (eToolRunnerResult == CloseOutType.CLOSEOUT_RUNNING_REMOTE)
+                        closeOut = CloseOutType.CLOSEOUT_RUNNING_REMOTE;
+                    else
+                        closeOut = CloseOutType.CLOSEOUT_SUCCESS;
+                }
+                else
+                {
+                    closeOut = CloseOutType.CLOSEOUT_SUCCESS;
+
+                }
+
                 // Close out the job as a success
-                m_AnalysisTask.CloseTask(CloseOutType.CLOSEOUT_SUCCESS, string.Empty, m_ToolRunner.EvalCode, m_ToolRunner.EvalMessage);
+                m_AnalysisTask.CloseTask(closeOut, string.Empty, toolRunner.EvalCode, toolRunner.EvalMessage);
                 LogMessage(m_MgrName + ": Completed job " + jobNum);
 
                 UpdateStatusIdle("Completed job " + jobNum + ", step " + stepNum);
+
+                success = CleanupAfterJob();
+
+                return success;
             }
             catch (Exception ex)
             {
-                LogError("clsMainProcess.DoAnalysisJob(), Close task after normal run," + ex.Message, ex);
+                LogError("clsMainProcess.DoAnalysisJob(), Close task after normal run, " + ex.Message, ex);
                 m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.DoAnalysisJob(): " + ex.Message, m_MostRecentJobInfo, true);
                 return false;
             }
 
+        }
+
+        private bool CheckRemoteJobStatus(IToolRunner toolRunner, out CloseOutType eToolRunnerResult)
+        {
+            clsRemoteMonitor remoteMonitor;
+
+            try
+            {
+                remoteMonitor = new clsRemoteMonitor(m_MgrSettings, m_AnalysisTask, toolRunner, m_StatusTools);
+                RegisterEvents(remoteMonitor);
+            }
+            catch (Exception ex)
+            {
+                m_MostRecentErrorMessage = "Exception instantiating the RemoteMonitor class";
+                LogError(m_MostRecentErrorMessage + ": " + ex.Message, ex);
+                eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+                return false;
+            }
+
+            try
+            {
+                var eJobStatus = remoteMonitor.GetRemoteJobStatus();
+
+                switch (eJobStatus)
+                {
+                    case clsRemoteMonitor.EnumRemoteJobStatus.Undefined:
+                        m_MostRecentErrorMessage = "Undefined remote job status; check the logs";
+                        LogError(clsGlobal.AppendToComment(m_MostRecentErrorMessage, remoteMonitor.Message));
+
+                        eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+                        break;
+                    case clsRemoteMonitor.EnumRemoteJobStatus.Unstarted:
+                        LogDebug("Remote job has not yet started", 2);
+                        eToolRunnerResult = CloseOutType.CLOSEOUT_RUNNING_REMOTE;
+                        break;
+                    case clsRemoteMonitor.EnumRemoteJobStatus.Running:
+                        LogDebug(string.Format("Remote job is running, {0:F1}% complete", m_StatusTools.Progress), 2);
+                        eToolRunnerResult = CloseOutType.CLOSEOUT_RUNNING_REMOTE;
+                        break;
+                    case clsRemoteMonitor.EnumRemoteJobStatus.Success:
+                        // Retrieve result files then call PostProcess
+
+                        // ToDo: var success = toolRunner.RetrieveRemoteResults(remoteMonitor.TransferUtility);
+
+                        // ToDo: eToolRunnerResult = toolRunner.PostProcess();
+
+                        eToolRunnerResult = CloseOutType.CLOSEOUT_SUCCESS;
+                        break;
+                    case clsRemoteMonitor.EnumRemoteJobStatus.Failed:
+
+                        m_MostRecentErrorMessage = "Remote job failed";
+                        LogError(clsGlobal.AppendToComment(m_MostRecentErrorMessage, remoteMonitor.Message));
+
+                        // Retrieve result files then store in the DMS_FailedResults folder
+
+                        // ToDo: var success = toolRunner.RetrieveRemoteResults(remoteMonitor.TransferUtility);
+
+                        // ToDo: toolRunner.TransferFailedResults();
+
+                        eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+                        break;
+                    default:
+                        m_MostRecentErrorMessage = "Unrecognized remote job status: " + eJobStatus;
+                        LogError(clsGlobal.AppendToComment(m_MostRecentErrorMessage, remoteMonitor.Message));
+
+                        eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+                        break;
+
+                }
+
+
+                return true;
+
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception checking job status on the remote host: " + ex.Message, ex);
+                eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+                return false;
+            }
+        }
+
+        private bool CleanupAfterJob()
+        {
             try
             {
                 // If success was reported check to see if there was an error deleting non result files
@@ -996,8 +989,8 @@ namespace AnalysisManagerProg
                 }
                 catch (Exception ex)
                 {
-                    LogError("clsMainProcess.DoAnalysisJob(), Clean work directory after normal run," + ex.Message, ex);
-                    m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.DoAnalysisJob(): " + ex.Message, m_MostRecentJobInfo, true);
+                    LogError("clsMainProcess.CleanupAfterJob(), Clean work directory after normal run, " + ex.Message, ex);
+                    m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.CleanupAfterJob(): " + ex.Message, m_MostRecentJobInfo, true);
                     return false;
                 }
 
@@ -1011,8 +1004,8 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                LogError("clsMainProcess.DoAnalysisJob(), " + ex.Message, ex);
-                m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.DoAnalysisJob(): " + ex.Message, m_MostRecentJobInfo, true);
+                LogError("clsMainProcess.CleanupAfterJob(), " + ex.Message, ex);
+                m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.CleanupAfterJob(): " + ex.Message, m_MostRecentJobInfo, true);
                 return false;
             }
         }
@@ -1577,6 +1570,46 @@ namespace AnalysisManagerProg
             return eManagerErrorCleanupMode;
         }
 
+        private bool HandleJobFailure(CloseOutType eToolRunnerResult)
+        {
+
+            if (TraceMode)
+                ShowTraceMessage("Tool run error; cleaning up");
+
+            try
+            {
+                if (m_MgrErrorCleanup.CleanWorkDir())
+                {
+                    m_MgrErrorCleanup.DeleteStatusFlagFile(m_DebugLevel);
+                }
+                else
+                {
+                    m_MgrErrorCleanup.CreateErrorDeletingFilesFlagFile();
+                }
+
+                if (eToolRunnerResult == CloseOutType.CLOSEOUT_NO_DTA_FILES && m_AnalysisTask.GetParam("StepTool").ToLower() == "sequest")
+                {
+                    // This was a Sequest job, but no .DTA files were found
+                    // Return True; do not count this as a manager failure
+                    return true;
+                }
+
+                if (eToolRunnerResult == CloseOutType.CLOSEOUT_NO_DATA)
+                {
+                    // Return True; do not count this as a manager failure
+                    return true;
+                }
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                LogError("clsMainProcess.HandleJobFailure(), cleaning up after RunTool error, " + ex.Message, ex);
+                m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.HandleJobFailure(): " + ex.Message, m_MostRecentJobInfo, true);
+                return false;
+            }
+        }
+
         /// <summary>
         /// Initializes the status file writing tool
         /// </summary>
@@ -1593,10 +1626,11 @@ namespace AnalysisManagerProg
                 m_StatusTools = new clsStatusFile(statusFileLoc, m_DebugLevel)
                 {
                     TaskStartTime = DateTime.UtcNow,
-                    Dataset = "",
+                    Dataset = string.Empty,
+                    WorkDirPath = m_WorkDirPath,
                     JobNumber = 0,
                     JobStep = 0,
-                    Tool = "",
+                    Tool = string.Empty,
                     MgrName = m_MgrName,
                     MgrStatus = EnumMgrStatus.RUNNING,
                     TaskStatus = EnumTaskStatus.NO_TASK,
@@ -2041,13 +2075,181 @@ namespace AnalysisManagerProg
             }
         }
 
-        private bool SetResourceObject()
+        private bool RetrieveResources(
+            IAnalysisResources toolResourcer,
+            int jobNum,
+            string datasetName,
+            out CloseOutType eToolRunnerResult)
+        {
+            eToolRunnerResult = CloseOutType.CLOSEOUT_SUCCESS;
+
+            try
+            {
+                if (TraceMode)
+                    ShowTraceMessage("Getting job resources");
+
+                eToolRunnerResult = toolResourcer.GetResources();
+                if (eToolRunnerResult == CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    return true;
+                }
+
+                m_MostRecentErrorMessage = "GetResources returned result: " + eToolRunnerResult;
+                if (TraceMode)
+                    ShowTraceMessage(m_MostRecentErrorMessage + "; closing job step task");
+
+                LogError(m_MgrName + ": " + clsGlobal.AppendToComment(m_MostRecentErrorMessage, toolResourcer.Message) + ", Job " + jobNum + ", Dataset " + datasetName);
+                m_AnalysisTask.CloseTask(eToolRunnerResult, toolResourcer.Message);
+
+                m_MgrErrorCleanup.CleanWorkDir();
+                UpdateStatusIdle("Error encountered: " + m_MostRecentErrorMessage);
+                m_MgrErrorCleanup.DeleteStatusFlagFile(m_DebugLevel);
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                LogError("clsMainProcess.RetrieveResources(), Getting resources, " + ex.Message, ex);
+
+                m_AnalysisTask.CloseTask(CloseOutType.CLOSEOUT_FAILED, "Exception getting resources");
+
+                if (m_MgrErrorCleanup.CleanWorkDir())
+                {
+                    m_MgrErrorCleanup.DeleteStatusFlagFile(m_DebugLevel);
+                }
+                else
+                {
+                    m_MgrErrorCleanup.CreateErrorDeletingFilesFlagFile();
+                }
+
+                m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.RetrieveResources(): " + ex.Message, m_MostRecentJobInfo, true);
+                return false;
+            }
+
+        }
+
+        private bool RunJobLocally(
+            IToolRunner toolRunner,
+            int jobNum,
+            string datasetName,
+            out CloseOutType eToolRunnerResult)
+        {
+            var success = true;
+
+            try
+            {
+
+                if (TraceMode)
+                    ShowTraceMessage("Running the step tool locally");
+
+                eToolRunnerResult = toolRunner.RunTool();
+                if (eToolRunnerResult != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    m_MostRecentErrorMessage = toolRunner.Message;
+
+                    if (string.IsNullOrEmpty(m_MostRecentErrorMessage))
+                    {
+                        m_MostRecentErrorMessage = "Unknown ToolRunner Error";
+                    }
+
+                    if (TraceMode)
+                        ShowTraceMessage("Error running the tool; closing job step task");
+
+                    LogError(m_MgrName + ": " + m_MostRecentErrorMessage + ", Job " + jobNum + ", Dataset " + datasetName);
+                    m_AnalysisTask.CloseTask(eToolRunnerResult, m_MostRecentErrorMessage, toolRunner.EvalCode, toolRunner.EvalMessage);
+
+                    try
+                    {
+                        if (m_MostRecentErrorMessage.Contains(DECON2LS_FATAL_REMOTING_ERROR) ||
+                            m_MostRecentErrorMessage.Contains(DECON2LS_CORRUPTED_MEMORY_ERROR))
+                        {
+                            m_NeedToAbortProcessing = true;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        LogError("clsMainProcess.RunJobLocally(), Exception examining MostRecentErrorMessage", ex);
+                    }
+
+                    if (eToolRunnerResult == CloseOutType.CLOSEOUT_ERROR_ZIPPING_FILE)
+                    {
+                        m_NeedToAbortProcessing = true;
+                    }
+
+                    if (m_NeedToAbortProcessing && m_MostRecentErrorMessage.StartsWith(clsAnalysisToolRunnerBase.PVM_RESET_ERROR_MESSAGE))
+                    {
+                        DisableManagerLocally();
+                    }
+
+                    success = false;
+                }
+
+                if (toolRunner.NeedToAbortProcessing)
+                {
+                    m_NeedToAbortProcessing = true;
+                    if (TraceMode)
+                        ShowTraceMessage("toolRunner.NeedToAbortProcessing = True; closing job step task");
+                    m_AnalysisTask.CloseTask(CloseOutType.CLOSEOUT_FAILED, m_MostRecentErrorMessage, toolRunner.EvalCode, toolRunner.EvalMessage);
+                }
+
+                return success;
+            }
+            catch (Exception ex)
+            {
+                LogError("clsMainProcess.RunJobLocally(), Error encountered, " + ex.Message, ex);
+
+                if (ex.Message.Contains(DECON2LS_TCP_ALREADY_REGISTERED_ERROR))
+                {
+                    m_NeedToAbortProcessing = true;
+                }
+
+                eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+                m_AnalysisTask.CloseTask(eToolRunnerResult, "Exception running tool", toolRunner.EvalCode, toolRunner.EvalMessage);
+
+                return false;
+            }
+
+        }
+
+        private bool RunJobRemotely(
+            IToolRunner toolRunner,
+            int jobNum,
+            int stepNum,
+            string datasetName,
+            out CloseOutType eToolRunnerResult)
+        {
+            try
+            {
+
+                if (TraceMode)
+                    ShowTraceMessage("Transferring files to remote host to run remotely");
+
+                var transferUtility = new clsRemoteTransferUtility(m_MgrSettings, m_AnalysisTask);
+                RegisterEvents(transferUtility);
+
+
+                eToolRunnerResult = CloseOutType.CLOSEOUT_SUCCESS;
+                return true;
+
+            }
+            catch (Exception ex)
+            {
+                LogError("clsMainProcess.RunJobRemotely(), Error encountered, " + ex.Message, ex);
+
+                eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+                m_AnalysisTask.CloseTask(eToolRunnerResult, "Exception running tool remotely", toolRunner.EvalCode, toolRunner.EvalMessage);
+
+                return false;
+            }
+        }
+
+        private bool SetResourceObject(out IAnalysisResources toolResourcer)
         {
             var stepToolName = m_AnalysisTask.GetParam("StepTool");
 
             m_PluginLoader.ClearMessageList();
-            m_Resource = m_PluginLoader.GetAnalysisResources(stepToolName.ToLower());
-            if (m_Resource == null)
+            toolResourcer = m_PluginLoader.GetAnalysisResources(stepToolName.ToLower());
+            if (toolResourcer == null)
             {
                 LogPluginLoaderErrors("resource object for StepTool " + stepToolName, m_PluginLoader.ErrorMessages);
                 return false;
@@ -2065,7 +2267,7 @@ namespace AnalysisManagerProg
 
             try
             {
-                m_Resource.Setup(m_MgrSettings, m_AnalysisTask, m_StatusTools, m_MyEMSLUtilities);
+                toolResourcer.Setup(m_MgrSettings, m_AnalysisTask, m_StatusTools, m_MyEMSLUtilities);
             }
             catch (Exception ex)
             {
@@ -2074,6 +2276,53 @@ namespace AnalysisManagerProg
             }
 
             return true;
+        }
+
+        private bool SetToolRunnerObject(out IToolRunner toolRunner)
+        {
+            var stepToolName = m_AnalysisTask.GetParam("StepTool");
+
+            m_PluginLoader.ClearMessageList();
+            toolRunner = m_PluginLoader.GetToolRunner(stepToolName.ToLower());
+            if (toolRunner == null)
+            {
+                LogPluginLoaderErrors("tool runner for StepTool " + stepToolName, m_PluginLoader.ErrorMessages);
+                return false;
+            }
+
+            if (m_DebugLevel > 0)
+            {
+                LogMessage("Loaded tool runner for StepTool " + m_AnalysisTask.GetCurrentJobToolDescription());
+                foreach (var item in m_PluginLoader.ErrorMessages)
+                {
+                    LogWarning(item);
+                }
+
+            }
+
+            try
+            {
+                // Setup the new tool runner
+                toolRunner.Setup(m_MgrSettings, m_AnalysisTask, m_StatusTools, m_SummaryFile, m_MyEMSLUtilities);
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception calling toolRunner.Setup(): " + ex.Message);
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Display a trace message at the console, preceded by a time stamp
+        /// </summary>
+        /// <param name="strMessage"></param>
+        public static void ShowTraceMessage(string strMessage)
+        {
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            Console.WriteLine(DateTime.Now.ToString("hh:mm:ss.fff tt") + ": " + strMessage);
+            Console.ResetColor();
         }
 
         /// <summary>
@@ -2098,7 +2347,7 @@ namespace AnalysisManagerProg
             catch (Exception ex)
             {
                 LogError("Error calling AutoCleanupManagerErrors, " + ex.Message, ex);
-                m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.DoAnalysis(): " + ex.Message, m_MostRecentJobInfo, true);
+                m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.StatusFlagFileError(): " + ex.Message, m_MostRecentJobInfo, true);
 
                 blnMgrCleanupSuccess = false;
             }
@@ -2130,53 +2379,6 @@ namespace AnalysisManagerProg
 
             // Return true (indicating a flag file exists)
             return true;
-        }
-
-        private bool SetToolRunnerObject()
-        {
-            var stepToolName = m_AnalysisTask.GetParam("StepTool");
-
-            m_PluginLoader.ClearMessageList();
-            m_ToolRunner = m_PluginLoader.GetToolRunner(stepToolName.ToLower());
-            if (m_ToolRunner == null)
-            {
-                LogPluginLoaderErrors("tool runner for StepTool " + stepToolName, m_PluginLoader.ErrorMessages);
-                return false;
-            }
-
-            if (m_DebugLevel > 0)
-            {
-                LogMessage("Loaded tool runner for StepTool " + m_AnalysisTask.GetCurrentJobToolDescription());
-                foreach (var item in m_PluginLoader.ErrorMessages)
-                {
-                    LogWarning(item);
-                }
-
-            }
-
-            try
-            {
-                // Setup the new tool runner
-                m_ToolRunner.Setup(m_MgrSettings, m_AnalysisTask, m_StatusTools, m_SummaryFile, m_MyEMSLUtilities);
-            }
-            catch (Exception ex)
-            {
-                LogError("Exception calling ToolRunner.Setup(): " + ex.Message);
-                return false;
-            }
-
-            return true;
-        }
-
-        /// <summary>
-        /// Display a trace message at the console, preceded by a time stamp
-        /// </summary>
-        /// <param name="strMessage"></param>
-        public static void ShowTraceMessage(string strMessage)
-        {
-            Console.ForegroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine(DateTime.Now.ToString("hh:mm:ss.fff tt") + ": " + strMessage);
-            Console.ResetColor();
         }
 
         private void UpdateClose(string ManagerCloseMessage)
@@ -2285,10 +2487,11 @@ namespace AnalysisManagerProg
         /// Confirms that the drive with the working directory has sufficient free space
         /// Confirms that the remote share for storing results is accessible and has sufficient free space
         /// </summary>
+        /// <param name="toolResourcer"></param>
         /// <param name="errorMessage"></param>
         /// <returns></returns>
         /// <remarks>Disables the manager if the working directory drive does not have enough space</remarks>
-        private bool ValidateFreeDiskSpace(out string errorMessage)
+        private bool ValidateFreeDiskSpace(IAnalysisResources toolResourcer, out string errorMessage)
         {
             const int DEFAULT_DATASET_STORAGE_MIN_FREE_SPACE_GB = 10;
             const int DEFAULT_TRANSFER_DIR_MIN_FREE_SPACE_GB = 10;
@@ -2372,7 +2575,7 @@ namespace AnalysisManagerProg
                     return false;
                 }
 
-                var orgDbRequired = m_Resource.GetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired);
+                var orgDbRequired = toolResourcer.GetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired);
 
                 if (orgDbRequired)
                 {
