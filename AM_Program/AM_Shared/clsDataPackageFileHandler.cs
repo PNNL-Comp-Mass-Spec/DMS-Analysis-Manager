@@ -1209,13 +1209,15 @@ namespace AnalysisManagerBase
                 string strCopyCommand;
                 if (blnIsFolder)
                 {
-                    strCopyCommand = "copy " + rawFilePath + " .\\" + Path.GetFileName(rawFilePath) + " /S /I";
+                    var fileName = Path.GetFileName(rawFilePath);
+                    strCopyCommand = "if not exist " + fileName + " copy " + rawFilePath + @" .\" + fileName + " /S /I";
                 }
                 else
                 {
                     // Make sure the case of the filename matches the case of the dataset name
                     // Also, make sure the extension is lowercase
-                    strCopyCommand = "copy " + rawFilePath + " " + dataPkgJob.Dataset + Path.GetExtension(rawFilePath).ToLower();
+                    var fileName = dataPkgJob.Dataset + Path.GetExtension(rawFilePath).ToLower();
+                    strCopyCommand = "if not exist " + fileName + " copy " + rawFilePath + " " + fileName;
                 }
                 dctRawFileRetrievalCommands.Add(dataPkgJob.DatasetID, strCopyCommand);
                 dctDatasetRawFilePaths.Add(dataPkgJob.Dataset, rawFilePath);
