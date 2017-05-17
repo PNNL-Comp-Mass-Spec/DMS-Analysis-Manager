@@ -151,6 +151,8 @@ namespace AnalysisManagerBase
 
         public const string JOB_PARAM_DICTIONARY_JOB_TOOL_MAP = "PackedParam_JobToolNameMap";
 
+        public const string JOB_PARAM_GENERATED_FASTA_NAME = "generatedFastaName";
+
         // This constant is used by clsAnalysisToolRunnerMSGFDB, clsAnalysisResourcesMSGFDB, and clsAnalysisResourcesDtaRefinery
         public const string SPECTRA_ARE_NOT_CENTROIDED = "None of the spectra are centroided; unable to process";
 
@@ -2654,11 +2656,11 @@ namespace AnalysisManagerBase
 
             if (string.IsNullOrWhiteSpace(dataPkgJob.OrganismDBName))
             {
-                m_jobParams.AddAdditionalParameter("PeptideSearch", "generatedFastaName", "na");
+                m_jobParams.AddAdditionalParameter("PeptideSearch", JOB_PARAM_GENERATED_FASTA_NAME, "na");
             }
             else
             {
-                m_jobParams.AddAdditionalParameter("PeptideSearch", "generatedFastaName", dataPkgJob.OrganismDBName);
+                m_jobParams.AddAdditionalParameter("PeptideSearch", JOB_PARAM_GENERATED_FASTA_NAME, dataPkgJob.OrganismDBName);
             }
 
             if (string.IsNullOrWhiteSpace(dataPkgJob.ProteinCollectionList) || dataPkgJob.ProteinCollectionList == "na")
@@ -3623,7 +3625,7 @@ namespace AnalysisManagerBase
 
                 // Fasta file was successfully generated. Put the name of the generated fastafile in the
                 // job data class for other methods to use
-                if (!m_jobParams.AddAdditionalParameter("PeptideSearch", "generatedFastaName", m_FastaFileName))
+                if (!m_jobParams.AddAdditionalParameter("PeptideSearch", JOB_PARAM_GENERATED_FASTA_NAME, m_FastaFileName))
                 {
                     LogError("Error adding parameter 'generatedFastaName' to m_jobParams");
                     return false;
@@ -3681,7 +3683,7 @@ namespace AnalysisManagerBase
                     return false;
                 }
 
-                var fastaFilePath = Path.Combine(m_mgrParams.GetParam("orgdbdir"), m_jobParams.GetParam("PeptideSearch", "generatedFastaName"));
+                var fastaFilePath = Path.Combine(m_mgrParams.GetParam("orgdbdir"), m_jobParams.GetParam("PeptideSearch", JOB_PARAM_GENERATED_FASTA_NAME));
 
                 // Gigasax.DMS5
                 var connectionString = m_mgrParams.GetParam("connectionstring");

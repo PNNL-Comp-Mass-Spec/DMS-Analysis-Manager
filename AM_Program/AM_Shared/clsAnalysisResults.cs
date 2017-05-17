@@ -4,7 +4,7 @@ using System.IO;
 using System.Threading;
 
 //*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy 
+// Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2007, Battelle Memorial Institute
 // Created 12/19/2007
@@ -236,10 +236,10 @@ namespace AnalysisManagerBase
                     {
                         throw new IOException("Tried to overwrite an existing file when Overwrite = False: " + DestFilePath);
                     }
-                    
+
                     // Wait several seconds before retrying
-                    Thread.Sleep((int)(Math.Floor(sngRetryHoldoffSeconds * 1000)));                    
-                    
+                    Thread.Sleep((int)(Math.Floor(sngRetryHoldoffSeconds * 1000)));
+
                     PRISM.clsProgRunner.GarbageCollectNow();
                 }
 
@@ -258,7 +258,7 @@ namespace AnalysisManagerBase
 
 
         public void CopyFailedResultsToArchiveFolder(string ResultsFolderPath)
-        {            
+        {
             var strFailedResultsFolderPath = string.Empty;
 
             try
@@ -346,7 +346,7 @@ namespace AnalysisManagerBase
                     swInfoFile.WriteLine("LegacyOrganismDBName" + '\t' + m_jobParams.GetParam("LegacyFastaFileName"));
                     swInfoFile.WriteLine("ProteinCollectionList" + '\t' + m_jobParams.GetParam("ProteinCollectionList"));
                     swInfoFile.WriteLine("ProteinOptionsList" + '\t' + m_jobParams.GetParam("ProteinOptions"));
-                    swInfoFile.WriteLine("FastaFileName" + '\t' + m_jobParams.GetParam("PeptideSearch", "generatedFastaName"));
+                    swInfoFile.WriteLine("FastaFileName" + '\t' + m_jobParams.GetParam("PeptideSearch", clsAnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME));
                 }
             }
 

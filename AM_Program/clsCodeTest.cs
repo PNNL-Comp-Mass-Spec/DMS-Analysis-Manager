@@ -693,7 +693,7 @@ namespace AnalysisManagerProg
             if (blnSuccess)
             {
                 IJobParams oJobParams = InitializeManagerParams();
-                oJobParams.AddAdditionalParameter("PeptideSearch", "generatedFastaName", m_FastaFileName);
+                oJobParams.AddAdditionalParameter("PeptideSearch", clsAnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME, m_FastaFileName);
 
                 //const bool blnMsgfPlus = true;
                 //var strJobNum = "12345";

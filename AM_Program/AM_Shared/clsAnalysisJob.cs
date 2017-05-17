@@ -1044,10 +1044,10 @@ namespace AnalysisManagerBase
             myCmd.Parameters.Add(new SqlParameter("@evaluationMessage", SqlDbType.VarChar, 256)).Value = evalMsg;
 
             var orgDbNameParam = myCmd.Parameters.Add(new SqlParameter("@organismDBName", SqlDbType.VarChar, 128));
-            string strValue;
-            if (TryGetParam("PeptideSearch", "generatedFastaName", out strValue))
+
+            if (TryGetParam("PeptideSearch", clsAnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME, out var orgDbName))
             {
-                orgDbNameParam.Value = strValue;
+                orgDbNameParam.Value = orgDbName;
             }
             else
             {

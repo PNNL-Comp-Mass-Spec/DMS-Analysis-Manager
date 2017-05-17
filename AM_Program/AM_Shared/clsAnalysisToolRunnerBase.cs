@@ -3786,7 +3786,7 @@ namespace AnalysisManagerBase
                 m_SummaryFile.Add("Legacy Organism Db Name" + '\t' + m_jobParams.GetParam("LegacyFastaFileName"));
                 m_SummaryFile.Add("Protein Collection List" + '\t' + m_jobParams.GetParam("ProteinCollectionList"));
                 m_SummaryFile.Add("Protein Options List" + '\t' + m_jobParams.GetParam("ProteinOptions"));
-                m_SummaryFile.Add("Fasta File Name" + '\t' + m_jobParams.GetParam("PeptideSearch", "generatedFastaName"));
+                m_SummaryFile.Add("Fasta File Name" + '\t' + m_jobParams.GetParam("PeptideSearch", clsAnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME));
                 m_SummaryFile.Add("Analysis Time (hh:mm:ss)" + '\t' + CalcElapsedTime(m_StartTime, m_StopTime));
 
                 // Add another separator
