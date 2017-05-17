@@ -732,29 +732,48 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Updates the status in various locations, including on disk and with the message broker and/or broker DB
         /// </summary>
-        /// <param name="ForceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
+        /// <param name="forceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
         /// <remarks></remarks>
-        public void WriteStatusFile(bool ForceLogToBrokerDB)
+        public void WriteStatusFile(bool forceLogToBrokerDB)
         {
             // Writes a status file for external monitor to read
 
-            var strXMLText = string.Empty;
-
-            var dtLastUpdate = DateTime.MinValue;
-            float sngRunTimeHours = 0;
+            var lastUpdate = DateTime.MinValue;
+            var processId = 0;
+            var cpuUtilization = 0;
+            float freeMemoryMB = 0;
 
             try
             {
-                dtLastUpdate = DateTime.UtcNow;
-                sngRunTimeHours = GetRunTime();
+                lastUpdate = DateTime.UtcNow;
+                processId = GetProcessID();
 
-                CpuUtilization = (int)GetCPUUtilization();
-                m_FreeMemoryMB = GetFreeMemoryMB();
+                cpuUtilization = (int)GetCPUUtilization();
+                freeMemoryMB = GetFreeMemoryMB();
             }
             catch (Exception)
             {
                 // Ignore errors here
             }
+
+            WriteStatusFile(lastUpdate, processId, cpuUtilization, freeMemoryMB, forceLogToBrokerDB);
+        }
+
+        /// <summary>
+        /// Updates the status in various locations, including on disk and with the message broker and/or broker DB
+        /// </summary>
+        /// <param name="lastUpdate"></param>
+        /// <param name="processId"></param>
+        /// <param name="cpuUtilization"></param>
+        /// <param name="freeMemoryMB"></param>
+        /// <param name="forceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
+        /// <remarks></remarks>
+        public void WriteStatusFile(DateTime lastUpdate, int processId, int cpuUtilization, float freeMemoryMB, bool forceLogToBrokerDB)
+        {
+
+            var strXMLText = string.Empty;
+
+            var runTimeHours = GetRunTime();
 
             // Set up the XML writer
             try
@@ -777,11 +796,11 @@ namespace AnalysisManagerBase
                     xWriter.WriteStartElement("Manager");
                     xWriter.WriteElementString("MgrName", MgrName);
                     xWriter.WriteElementString("MgrStatus", ConvertMgrStatusToString(MgrStatus));
-                    xWriter.WriteElementString("LastUpdate", dtLastUpdate.ToLocalTime().ToString(CultureInfo.InvariantCulture));
+                    xWriter.WriteElementString("LastUpdate", lastUpdate.ToLocalTime().ToString(CultureInfo.InvariantCulture));
                     xWriter.WriteElementString("LastStartTime", TaskStartTime.ToLocalTime().ToString(CultureInfo.InvariantCulture));
-                    xWriter.WriteElementString("CPUUtilization", CpuUtilization.ToString("##0.0"));
-                    xWriter.WriteElementString("FreeMemoryMB", m_FreeMemoryMB.ToString("##0.0"));
-                    xWriter.WriteElementString("ProcessID", GetProcessID().ToString());
+                    xWriter.WriteElementString("CPUUtilization", cpuUtilization.ToString("##0.0"));
+                    xWriter.WriteElementString("FreeMemoryMB", freeMemoryMB.ToString("##0.0"));
+                    xWriter.WriteElementString("ProcessID", processId.ToString());
                     xWriter.WriteElementString("ProgRunnerProcessID", ProgRunnerProcessID.ToString());
                     xWriter.WriteElementString("ProgRunnerCoreUsage", ProgRunnerCoreUsage.ToString("0.00"));
                     xWriter.WriteStartElement("RecentErrorMessages");
@@ -802,8 +821,8 @@ namespace AnalysisManagerBase
                     xWriter.WriteStartElement("Task");
                     xWriter.WriteElementString("Tool", Tool);
                     xWriter.WriteElementString("Status", ConvertTaskStatusToString(TaskStatus));
-                    xWriter.WriteElementString("Duration", sngRunTimeHours.ToString("0.00"));
-                    xWriter.WriteElementString("DurationMinutes", (sngRunTimeHours * 60).ToString("0.0"));
+                    xWriter.WriteElementString("Duration", runTimeHours.ToString("0.00"));
+                    xWriter.WriteElementString("DurationMinutes", (runTimeHours * 60).ToString("0.0"));
                     xWriter.WriteElementString("Progress", Progress.ToString("##0.00"));
                     xWriter.WriteElementString("CurrentOperation", CurrentOperation);
 
@@ -812,7 +831,8 @@ namespace AnalysisManagerBase
                     xWriter.WriteElementString("Job", Convert.ToString(JobNumber));
                     xWriter.WriteElementString("Step", Convert.ToString(JobStep));
                     xWriter.WriteElementString("Dataset", Dataset);
-                    xWriter.WriteElementString("MostRecentLogMessage", m_MostRecentLogMessage);
+                    xWriter.WriteElementString("WorkDirPath", WorkDirPath);
+                    xWriter.WriteElementString("MostRecentLogMessage", MostRecentLogMessage);
                     xWriter.WriteElementString("MostRecentJobInfo", MostRecentJobInfo);
                     xWriter.WriteElementString("SpectrumCount", SpectrumCount.ToString());
                     xWriter.WriteEndElement();      // TaskDetails
@@ -877,9 +897,9 @@ namespace AnalysisManagerBase
             if (m_BrokerDBLogger != null)
             {
                 // Send the status info to the Broker DB
-                // Note that m_BrokerDBLogger() only logs the status every x minutes (unless ForceLogToBrokerDB = True)
+                // Note that m_BrokerDBLogger() only logs the status every x minutes (unless forceLogToBrokerDB = True)
 
-                LogStatusToBrokerDatabase(ForceLogToBrokerDB);
+                LogStatusToBrokerDatabase(forceLogToBrokerDB);
             }
         }
 
