@@ -10,7 +10,7 @@ using System.Xml;
 using System.Xml.Linq;
 
 //*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy 
+// Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2007, Battelle Memorial Institute
 // Created 12/18/2007
@@ -45,7 +45,7 @@ namespace AnalysisManagerBase
         protected int m_JobId;
 
         protected bool m_TaskWasClosed;
-        
+
         /// <summary>
         /// List of file names to NOT move to the result folder; this list is used by MoveResultFiles()
         /// </summary>
@@ -55,7 +55,7 @@ namespace AnalysisManagerBase
         /// List of file extensions (or even partial file names like _peaks.txt) to NOT move to the result folder
         /// </summary>
         /// <remarks>
-        /// Comparison checks if the end of the fileName matches any entry ResultFileExtensionsToSkip: 
+        /// Comparison checks if the end of the fileName matches any entry ResultFileExtensionsToSkip:
         /// If TmpFileNameLcase.EndsWith(ext.ToLower()) Then OkToMove = False
         /// </remarks>
         protected SortedSet<string> m_ResultFileExtensionsToSkip = new SortedSet<string>(StringComparer.CurrentCultureIgnoreCase);
@@ -137,23 +137,23 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Adds (or updates) a job parameter
         /// </summary>
-        /// <param name="SectionName">Section name for parameter</param>
-        /// <param name="ParamName">Name of parameter</param>
-        /// <param name="ParamValue">Boolean value for parameter</param>
+        /// <param name="sectionName">Section name for parameter</param>
+        /// <param name="paramName">Name of parameter</param>
+        /// <param name="paramValue">Boolean value for parameter</param>
         /// <returns>True if success, False if an error</returns>
         /// <remarks></remarks>
-        public bool AddAdditionalParameter(string SectionName, string ParamName, bool ParamValue)
+        public bool AddAdditionalParameter(string sectionName, string paramName, bool paramValue)
         {
 
             try
             {
-                SetParam(SectionName, ParamName, ParamValue.ToString());
+                SetParam(sectionName, paramName, paramValue.ToString());
 
                 return true;
             }
             catch (Exception ex)
             {
-                LogError("Exception adding parameter: " + ParamName + " Value: " + ParamValue, ex);
+                LogError("Exception adding parameter: " + paramName + " Value: " + paramValue, ex);
                 return false;
             }
 
@@ -162,26 +162,26 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Adds (or updates) a job parameter
         /// </summary>
-        /// <param name="SectionName">Section name for parameter</param>
-        /// <param name="ParamName">Name of parameter</param>
-        /// <param name="ParamValue">Value for parameter</param>
+        /// <param name="sectionName">Section name for parameter</param>
+        /// <param name="paramName">Name of parameter</param>
+        /// <param name="paramValue">Value for parameter</param>
         /// <returns>True if success, False if an error</returns>
         /// <remarks></remarks>
-        public bool AddAdditionalParameter(string SectionName, string ParamName, string ParamValue)
+        public bool AddAdditionalParameter(string sectionName, string paramName, string paramValue)
         {
 
             try
             {
-                if (ParamValue == null)
-                    ParamValue = string.Empty;
+                if (paramValue == null)
+                    paramValue = string.Empty;
 
-                SetParam(SectionName, ParamName, ParamValue);
+                SetParam(sectionName, paramName, paramValue);
 
                 return true;
             }
             catch (Exception ex)
             {
-                LogError("Exception adding parameter: " + ParamName + " Value: " + ParamValue, ex);
+                LogError("Exception adding parameter: " + paramName + " Value: " + paramValue, ex);
                 return false;
             }
 
@@ -272,183 +272,181 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Gets a job parameter with the given name (in any parameter section)
         /// </summary>
-        /// <param name="Name">Key name for parameter</param>
-        /// <param name="ValueIfMissing">Value if missing</param>
-        /// <returns>Value for specified parameter; ValueIfMissing if not found</returns>
+        /// <param name="name">Key name for parameter</param>
+        /// <param name="valueIfMissing">Value if missing</param>
+        /// <returns>Value for specified parameter; valueIfMissing if not found</returns>
         /// <remarks>If the value associated with the parameter is found, yet is not True or False, then an exception will be occur; the calling procedure must handle this exception</remarks>
-        public bool GetJobParameter(string Name, bool ValueIfMissing)
+        public bool GetJobParameter(string name, bool valueIfMissing)
         {
 
-            string strValue;
+            string value;
 
             try
             {
-                strValue = GetParam(Name);
+                value = GetParam(name);
 
-                if (string.IsNullOrEmpty(strValue))
+                if (string.IsNullOrEmpty(value))
                 {
-                    return ValueIfMissing;
+                    return valueIfMissing;
                 }
 
             }
             catch
             {
-                return ValueIfMissing;
+                return valueIfMissing;
             }
 
-            // Note: if strValue is not True or False, this will throw an exception; the calling procedure will need to handle that exception
-            return Convert.ToBoolean(strValue);
+            // Note: if value is not True or False, this will throw an exception; the calling procedure will need to handle that exception
+            return Convert.ToBoolean(value);
 
         }
 
         /// <summary>
         /// Gets a job parameter with the given name (in any parameter section)
         /// </summary>
-        /// <param name="Name">Key name for parameter</param>
-        /// <param name="ValueIfMissing">Value if missing</param>
-        /// <returns>Value for specified parameter; ValueIfMissing if not found</returns>
-        public string GetJobParameter(string Name, string ValueIfMissing)
+        /// <param name="name">Key name for parameter</param>
+        /// <param name="valueIfMissing">Value if missing</param>
+        /// <returns>Value for specified parameter; valueIfMissing if not found</returns>
+        public string GetJobParameter(string name, string valueIfMissing)
         {
 
-            string strValue;
+            string value;
 
             try
             {
-                strValue = GetParam(Name);
+                value = GetParam(name);
 
-                if (string.IsNullOrEmpty(strValue))
+                if (string.IsNullOrEmpty(value))
                 {
-                    return ValueIfMissing;
+                    return valueIfMissing;
                 }
 
             }
             catch
             {
-                return ValueIfMissing;
+                return valueIfMissing;
             }
 
-            return strValue;
+            return value;
         }
 
         /// <summary>
         /// Gets a job parameter with the given name (in any parameter section)
         /// </summary>
-        /// <param name="Name">Key name for parameter</param>
-        /// <param name="ValueIfMissing">Value if missing</param>
-        /// <returns>Value for specified parameter; ValueIfMissing if not found</returns>
-        public int GetJobParameter(string Name, int ValueIfMissing)
+        /// <param name="name">Key name for parameter</param>
+        /// <param name="valueIfMissing">Value if missing</param>
+        /// <returns>Value for specified parameter; valueIfMissing if not found</returns>
+        public int GetJobParameter(string name, int valueIfMissing)
         {
-            string strValue;
+            string value;
 
             try
             {
-                strValue = GetParam(Name);
+                value = GetParam(name);
 
-                if (string.IsNullOrEmpty(strValue))
+                if (string.IsNullOrEmpty(value))
                 {
-                    return ValueIfMissing;
+                    return valueIfMissing;
                 }
 
             }
             catch
             {
-                return ValueIfMissing;
+                return valueIfMissing;
             }
 
-            // Note: if strValue is not a number, this will throw an exception; the calling procedure will need to handle that exception
-            return Convert.ToInt32(strValue);
+            // Note: if value is not a number, this will throw an exception; the calling procedure will need to handle that exception
+            return Convert.ToInt32(value);
 
         }
 
         /// <summary>
         /// Gets a job parameter with the given name (in any parameter section)
         /// </summary>
-        /// <param name="Name">Key name for parameter</param>
-        /// <param name="ValueIfMissing">Value if missing</param>
-        /// <returns>Value for specified parameter; ValueIfMissing if not found</returns>
-        public short GetJobParameter(string Name, short ValueIfMissing)
+        /// <param name="name">Key name for parameter</param>
+        /// <param name="valueIfMissing">Value if missing</param>
+        /// <returns>Value for specified parameter; valueIfMissing if not found</returns>
+        public short GetJobParameter(string name, short valueIfMissing)
         {
-            return (short)(GetJobParameter(Name, (int)ValueIfMissing));
+            return (short)(GetJobParameter(name, (int)valueIfMissing));
         }
 
         /// <summary>
         /// Gets a job parameter with the given name (in any parameter section)
         /// </summary>
-        /// <param name="Name">Key name for parameter</param>
-        /// <param name="ValueIfMissing">Value if missing</param>
-        /// <returns>Value for specified parameter; ValueIfMissing if not found</returns>
-        public float GetJobParameter(string Name, float ValueIfMissing)
+        /// <param name="name">Key name for parameter</param>
+        /// <param name="valueIfMissing">Value if missing</param>
+        /// <returns>Value for specified parameter; valueIfMissing if not found</returns>
+        public float GetJobParameter(string name, float valueIfMissing)
         {
-            return clsGlobal.CSngSafe(GetParam(Name), ValueIfMissing);
+            return clsGlobal.CSngSafe(GetParam(name), valueIfMissing);
         }
 
         /// <summary>
         /// Gets a job parameter with the given name, preferentially using the specified parameter section
         /// </summary>
-        /// <param name="Section">Section name for parameter</param>
-        /// <param name="Name">Key name for parameter</param>
-        /// <param name="ValueIfMissing">Value to return if the parameter is not found</param>
-        /// <returns>Value for specified parameter; ValueIfMissing if not found</returns>
-        public bool GetJobParameter(string Section, string Name, bool ValueIfMissing)
+        /// <param name="section">Section name for parameter</param>
+        /// <param name="name">Key name for parameter</param>
+        /// <param name="valueIfMissing">Value to return if the parameter is not found</param>
+        /// <returns>Value for specified parameter; valueIfMissing if not found</returns>
+        public bool GetJobParameter(string section, string name, bool valueIfMissing)
         {
-            return clsGlobal.CBoolSafe(GetParam(Section, Name), ValueIfMissing);
+            return clsGlobal.CBoolSafe(GetParam(section, name), valueIfMissing);
         }
 
         /// <summary>
         /// Gets a job parameter with the given name, preferentially using the specified parameter section
         /// </summary>
-        /// <param name="Section">Section name for parameter</param>
-        /// <param name="Name">Key name for parameter</param>
-        /// <param name="ValueIfMissing">Value to return if the parameter is not found</param>
-        /// <returns>Value for specified parameter; ValueIfMissing if not found</returns>
-        public int GetJobParameter(string Section, string Name, int ValueIfMissing)
+        /// <param name="section">Section name for parameter</param>
+        /// <param name="name">Key name for parameter</param>
+        /// <param name="valueIfMissing">Value to return if the parameter is not found</param>
+        /// <returns>Value for specified parameter; valueIfMissing if not found</returns>
+        public int GetJobParameter(string section, string name, int valueIfMissing)
         {
-            return clsGlobal.CIntSafe(GetParam(Section, Name), ValueIfMissing);
+            return clsGlobal.CIntSafe(GetParam(section, name), valueIfMissing);
         }
 
         /// <summary>
         /// Gets a job parameter with the given name, preferentially using the specified parameter section
         /// </summary>
-        /// <param name="Section">Section name for parameter</param>
-        /// <param name="Name">Key name for parameter</param>
-        /// <param name="ValueIfMissing">Value to return if the parameter is not found</param>
-        /// <returns>Value for specified parameter; ValueIfMissing if not found</returns>
-        public string GetJobParameter(string Section, string Name, string ValueIfMissing)
+        /// <param name="section">Section name for parameter</param>
+        /// <param name="name">Key name for parameter</param>
+        /// <param name="valueIfMissing">Value to return if the parameter is not found</param>
+        /// <returns>Value for specified parameter; valueIfMissing if not found</returns>
+        public string GetJobParameter(string section, string name, string valueIfMissing)
         {
-            var strValue = GetParam(Section, Name);
-            if (string.IsNullOrEmpty(strValue))
+            var value = GetParam(section, name);
+            if (string.IsNullOrEmpty(value))
             {
-                return ValueIfMissing;
+                return valueIfMissing;
             }
-            return strValue;
+            return value;
         }
 
         /// <summary>
         /// Gets a job parameter with the given name, preferentially using the specified parameter section
         /// </summary>
-        /// <param name="Section">Section name for parameter</param>
-        /// <param name="Name">Key name for parameter</param>
-        /// <param name="ValueIfMissing">Value to return if the parameter is not found</param>
-        /// <returns>Value for specified parameter; ValueIfMissing if not found</returns>
-        public float GetJobParameter(string Section, string Name, float ValueIfMissing)
+        /// <param name="section">Section name for parameter</param>
+        /// <param name="name">Key name for parameter</param>
+        /// <param name="valueIfMissing">Value to return if the parameter is not found</param>
+        /// <returns>Value for specified parameter; valueIfMissing if not found</returns>
+        public float GetJobParameter(string section, string name, float valueIfMissing)
         {
-            return clsGlobal.CSngSafe(GetParam(Section, Name), ValueIfMissing);
+            return clsGlobal.CSngSafe(GetParam(section, name), valueIfMissing);
         }
 
         /// <summary>
         /// Gets a job parameter with the given name (in any parameter section)
         /// </summary>
-        /// <param name="Name">Key name for parameter</param>
+        /// <param name="name">Key name for parameter</param>
         /// <returns>Value for specified parameter; empty string if not found</returns>
         /// <remarks></remarks>
-        public string GetParam(string Name)
+        public string GetParam(string name)
         {
 
-            string strValue;
-
-            if (TryGetParam(Name, out strValue))
+            if (TryGetParam(name, out var value))
             {
-                return strValue;
+                return value;
             }
             return string.Empty;
         }
@@ -456,24 +454,22 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Gets a job parameter with the given name, preferentially using the specified parameter section
         /// </summary>
-        /// <param name="Section">Section name for parameter</param>
-        /// <param name="Name">Key name for parameter</param>
+        /// <param name="section">Section name for parameter</param>
+        /// <param name="name">Key name for parameter</param>
         /// <returns>Value for specified parameter; empty string if not found</returns>
         /// <remarks></remarks>
-        public string GetParam(string Section, string Name)
+        public string GetParam(string section, string name)
         {
 
-            string strValue;
-
-            if (string.IsNullOrEmpty(Name))
+            if (string.IsNullOrEmpty(name))
             {
                 // User actually wanted to look for the parameter that is currently in the Section Variable, using an empty string as the default value
-                return GetParam(Section);
+                return GetParam(section);
             }
 
-            if (TryGetParam(Section, Name, out strValue))
+            if (TryGetParam(section, name, out var value))
             {
-                return strValue;
+                return value;
             }
             return string.Empty;
         }
@@ -491,21 +487,21 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Add/updates the value for the given parameter (searches all sections)
         /// </summary>
-        /// <param name="ParamName">Parameter name</param>
-        /// <param name="ParamValue">Parameter value</param>
+        /// <param name="paramName">Parameter name</param>
+        /// <param name="paramValue">Parameter value</param>
         /// <remarks></remarks>
-        public void SetParam(string ParamName, string ParamValue)
+        public void SetParam(string paramName, string paramValue)
         {
             var blnMatchFound = false;
 
-            if (ParamValue == null)
-                ParamValue = string.Empty;
+            if (paramValue == null)
+                paramValue = string.Empty;
 
             foreach (var section in m_JobParams)
             {
-                if (section.Value.ContainsKey(ParamName))
+                if (section.Value.ContainsKey(paramName))
                 {
-                    section.Value[ParamName] = ParamValue;
+                    section.Value[paramName] = paramValue;
                     blnMatchFound = true;
                 }
             }
@@ -513,7 +509,7 @@ namespace AnalysisManagerBase
             if (!blnMatchFound && m_JobParams.Count > 0)
             {
                 // Add the parameter to the first section
-                m_JobParams.First().Value.Add(ParamName, ParamValue);
+                m_JobParams.First().Value.Add(paramName, paramValue);
             }
 
         }
@@ -521,31 +517,31 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Add/updates the value for the given parameter
         /// </summary>
-        /// <param name="Section">Section name</param>
-        /// <param name="ParamName">Parameter name</param>
-        /// <param name="ParamValue">Parameter value</param>
+        /// <param name="section">Section name</param>
+        /// <param name="paramName">Parameter name</param>
+        /// <param name="paramValue">Parameter value</param>
         /// <remarks></remarks>
-        public void SetParam(string Section, string ParamName, string ParamValue)
+        public void SetParam(string section, string paramName, string paramValue)
         {
             Dictionary<string, string> oParams;
 
-            if (!m_JobParams.TryGetValue(Section, out oParams))
+            if (!m_JobParams.TryGetValue(section, out oParams))
             {
                 // Need to add a section with a blank name
                 oParams = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
-                m_JobParams.Add(Section, oParams);
+                m_JobParams.Add(section, oParams);
             }
 
-            if (ParamValue == null)
-                ParamValue = string.Empty;
+            if (paramValue == null)
+                paramValue = string.Empty;
 
-            if (oParams.ContainsKey(ParamName))
+            if (oParams.ContainsKey(paramName))
             {
-                oParams[ParamName] = ParamValue;
+                oParams[paramName] = paramValue;
             }
             else
             {
-                oParams.Add(ParamName, ParamValue);
+                oParams.Add(paramName, paramValue);
             }
 
         }
@@ -553,24 +549,24 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Attempts to retrieve the specified parameter (looks in all parameter sections)
         /// </summary>
-        /// <param name="ParamName">Parameter Name</param>
-        /// <param name="ParamValue">Output: parameter value</param>
+        /// <param name="paramName">Parameter Name</param>
+        /// <param name="paramValue">Output: parameter value</param>
         /// <returns>True if success, False if not found</returns>
         /// <remarks></remarks>
-        public bool TryGetParam(string ParamName, out string ParamValue)
+        public bool TryGetParam(string paramName, out string paramValue)
         {
 
-            ParamValue = string.Empty;
+            paramValue = string.Empty;
 
-            if ((m_JobParams != null))
+            if (m_JobParams != null)
             {
                 foreach (var oEntry in m_JobParams)
                 {
-                    if (oEntry.Value.TryGetValue(ParamName, out ParamValue))
+                    if (oEntry.Value.TryGetValue(paramName, out paramValue))
                     {
-                        if (string.IsNullOrWhiteSpace(ParamValue))
+                        if (string.IsNullOrWhiteSpace(paramValue))
                         {
-                            ParamValue = string.Empty;
+                            paramValue = string.Empty;
                         }
                         return true;
                     }
@@ -584,50 +580,49 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Attempts to retrieve the specified parameter in the specified parameter section
         /// </summary>
-        /// <param name="Section">Section Name</param>
-        /// <param name="ParamName">Parameter Name</param>
-        /// <param name="ParamValue">Output: parameter value</param>
+        /// <param name="section">Section Name</param>
+        /// <param name="paramName">Parameter Name</param>
+        /// <param name="paramValue">Output: parameter value</param>
         /// <returns>True if success, False if not found</returns>
         /// <remarks></remarks>
-        public bool TryGetParam(string Section, string ParamName, out string ParamValue)
+        public bool TryGetParam(string section, string paramName, out string paramValue)
         {
-            return TryGetParam(Section, ParamName, out ParamValue, true);
+            return TryGetParam(section, paramName, out paramValue, true);
         }
 
         /// <summary>
         /// Attempts to retrieve the specified parameter in the specified parameter section
         /// </summary>
-        /// <param name="Section">Section Name</param>
-        /// <param name="ParamName">Parameter Name</param>
-        /// <param name="ParamValue">Output: parameter value</param>
-        /// <param name="SearchAllSectionsIfNotFound">If True, then searches other sections for the parameter if not found in the specified section</param>
+        /// <param name="section">Section Name</param>
+        /// <param name="paramName">Parameter Name</param>
+        /// <param name="paramValue">Output: parameter value</param>
+        /// <param name="searchAllSectionsIfNotFound">If True, then searches other sections for the parameter if not found in the specified section</param>
         /// <returns>True if success, False if not found</returns>
         /// <remarks></remarks>
-        public bool TryGetParam(string Section, string ParamName, out string ParamValue, bool SearchAllSectionsIfNotFound)
+        public bool TryGetParam(string section, string paramName, out string paramValue, bool searchAllSectionsIfNotFound)
         {
-            ParamValue = string.Empty;
+            paramValue = string.Empty;
 
-            if ((m_JobParams != null))
+            if (m_JobParams != null)
             {
-                Dictionary<string, string> oParams;
-                if (m_JobParams.TryGetValue(Section, out oParams))
+                if (m_JobParams.TryGetValue(section, out var oParams))
                 {
-                    if (oParams.TryGetValue(ParamName, out ParamValue))
+                    if (oParams.TryGetValue(paramName, out paramValue))
                     {
-                        if (string.IsNullOrWhiteSpace(ParamValue))
+                        if (string.IsNullOrWhiteSpace(paramValue))
                         {
-                            ParamValue = string.Empty;
+                            paramValue = string.Empty;
                         }
                         return true;
                     }
                 }
             }
 
-            if (SearchAllSectionsIfNotFound)
+            if (searchAllSectionsIfNotFound)
             {
                 // Parameter not found in the specified section
                 // Search for the entry in other sections
-                return TryGetParam(ParamName, out ParamValue);
+                return TryGetParam(paramName, out paramValue);
             }
             return false;
         }
@@ -650,7 +645,7 @@ namespace AnalysisManagerBase
         /// Filter the job parameters in paramXml to remove extra items from section sectionName
         /// </summary>
         /// <param name="paramXml">Job Parameters XML to filter</param>
-        /// <param name="sectionName">SectionName to match</param>
+        /// <param name="sectionName">sectionName to match</param>
         /// <param name="paramNamesToIgnore">
         /// Keys are parameter names to ignore
         /// Values are another parameter name that must be present if we're going to ignore the given parameter
@@ -660,7 +655,11 @@ namespace AnalysisManagerBase
         /// Keys are the parameter name to match, Values are the new attribute name to add
         /// </param>
         /// <returns>Updated XML, as a string</returns>
-        private string FilterXmlSection(string paramXml, string sectionName, Dictionary<string, string> paramNamesToIgnore, Dictionary<string, string> paramsToAddAsAttribute)
+        private string FilterXmlSection(
+            string paramXml,
+            string sectionName,
+            IReadOnlyDictionary<string, string> paramNamesToIgnore,
+            IReadOnlyDictionary<string, string> paramsToAddAsAttribute)
         {
 
             try
@@ -882,7 +881,7 @@ namespace AnalysisManagerBase
                         break;
                     default:
                         // There was an SP error
-                        LogError("clsAnalysisJob.RequestAnalysisJob(), SP execution error " + retVal + "; " + 
+                        LogError("clsAnalysisJob.RequestAnalysisJob(), SP execution error " + retVal + "; " +
                             "Msg text = " + Convert.ToString(myCmd.Parameters["@message"].Value));
                         taskResult = RequestTaskResult.ResultError;
                         break;
@@ -984,26 +983,26 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Contact the Pipeline database to close the analysis job
         /// </summary>
-        /// <param name="CloseOut">IJobParams enum specifying close out type</param>
-        /// <param name="CompMsg">Completion message to be added to database upon closeout</param>
-        public override void CloseTask(CloseOutType CloseOut, string CompMsg)
+        /// <param name="closeOut">IJobParams enum specifying close out type</param>
+        /// <param name="compMsg">Completion message to be added to database upon closeOut</param>
+        public override void CloseTask(CloseOutType closeOut, string compMsg)
         {
-            CloseTask(CloseOut, CompMsg, 0, string.Empty);
+            CloseTask(closeOut, compMsg, 0, string.Empty);
         }
 
         /// <summary>
         /// Contact the Pipeline database to close the analysis job
         /// </summary>
-        /// <param name="CloseOut">IJobParams enum specifying close out type</param>
-        /// <param name="CompMsg">Completion message to be added to database upon closeout</param>
-        /// <param name="EvalCode">Evaluation code (0 if no special evaulation message)</param>
-        /// <param name="EvalMessage">Evaluation message ("" if no special message)</param>
-        public override void CloseTask(CloseOutType CloseOut, string CompMsg, int EvalCode, string EvalMessage)
+        /// <param name="closeOut">IJobParams enum specifying close out type</param>
+        /// <param name="compMsg">Completion message to be added to database upon closeOut</param>
+        /// <param name="evalCode">Evaluation code (0 if no special evaulation message)</param>
+        /// <param name="evalMessage">Evaluation message ("" if no special message)</param>
+        public override void CloseTask(CloseOutType closeOut, string compMsg, int evalCode, string evalMessage)
         {
-            var CompCode = (int)CloseOut;
+            var compCode = (int)closeOut;
 
-            if (EvalMessage == null)
-                EvalMessage = string.Empty;
+            if (evalMessage == null)
+                evalMessage = string.Empty;
 
             if (m_TaskWasClosed)
             {
@@ -1012,7 +1011,7 @@ namespace AnalysisManagerBase
             else
             {
                 m_TaskWasClosed = true;
-                if (!SetAnalysisJobComplete(SP_NAME_SET_COMPLETE, CompCode, CompMsg, EvalCode, EvalMessage))
+                if (!SetAnalysisJobComplete(SP_NAME_SET_COMPLETE, compCode, compMsg, evalCode, evalMessage))
                 {
                     LogError("Error setting job complete in database, job " + m_JobId);
                 }
@@ -1021,15 +1020,15 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Communicates with database to perform job closeout
+        /// Communicates with database to perform job closeOut
         /// </summary>
-        /// <param name="spName">Name of SP in database to call for closeout, typically SetStepTaskComplete</param>
-        /// <param name="compCode">Integer version of ITaskParams specifying closeout type</param>
+        /// <param name="spName">Name of SP in database to call for closeOut, typically SetStepTaskComplete</param>
+        /// <param name="compCode">Integer version of ITaskParams specifying closeOut type (enum CloseOutType)</param>
         /// <param name="compMsg">Comment to insert in database</param>
         /// <param name="evalCode">Integer results evaluation code</param>
         /// <param name="evalMsg">Message describing evaluation results</param>
         /// <returns>True for success, False for failure</returns>
-        /// <remarks>EvalCode and EvalMsg not presently used</remarks>
+        /// <remarks>evalCode and EvalMsg not presently used</remarks>
         protected bool SetAnalysisJobComplete(string spName, int compCode, string compMsg, int evalCode, string evalMsg)
         {
 

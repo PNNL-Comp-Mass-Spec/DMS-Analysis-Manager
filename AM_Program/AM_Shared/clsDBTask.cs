@@ -144,20 +144,20 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Closes out a task
         /// </summary>
-        /// <param name="CloseOut"></param>
-        /// <param name="CompMsg"></param>
+        /// <param name="closeOut"></param>
+        /// <param name="compMsg"></param>
         /// <remarks></remarks>
-        public abstract void CloseTask(CloseOutType CloseOut, string CompMsg);
+        public abstract void CloseTask(CloseOutType closeOut, string compMsg);
 
         /// <summary>
         /// Closes out a task (includes EvalCode and EvalMessgae)
         /// </summary>
-        /// <param name="CloseOut"></param>
-        /// <param name="CompMsg"></param>
+        /// <param name="closeOut"></param>
+        /// <param name="compMsg"></param>
         /// <param name="EvalCode">Evaluation code (0 if no special evaulation message)</param>
         /// <param name="EvalMessage">Evaluation message ("" if no special message)</param>
         /// <remarks></remarks>
-        public abstract void CloseTask(CloseOutType CloseOut, string CompMsg, int EvalCode, string EvalMessage);
+        public abstract void CloseTask(CloseOutType closeOut, string compMsg, int EvalCode, string EvalMessage);
 
         protected IEnumerable<udtParameterInfoType> FillParamDictXml(string jobParamsXML)
         {
