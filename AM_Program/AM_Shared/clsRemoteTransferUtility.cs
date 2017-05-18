@@ -11,7 +11,9 @@ using Renci.SshNet.Sftp;
 namespace AnalysisManagerBase
 {
     /// <summary>
-    /// Used to transfer files to/from a remote host, typically via SFTP
+    /// Used to transfer files to/from a remote host
+    /// Use sftp for file listings
+    /// Use scp for file transfers
     /// </summary>
     public class clsRemoteTransferUtility : clsEventNotifier
     {
@@ -109,30 +111,7 @@ namespace AnalysisManagerBase
         /// </remarks>
         public string RemoteWorkDirPath { get; private set; }
 
-        /// <summary>
-        /// Filename of the .info file
-        /// </summary>
-        public string StatusFileInfo => GetBaseStatusFilename() + ".info";
-
-        /// <summary>
-        /// Filename of the .info file
-        /// </summary>
-        public string StatusFileLock => GetBaseStatusFilename() + ".lock";
-
-        /// <summary>
-        /// Filename of the .jobstatus status file
-        /// </summary>
-        public string StatusFileJobStatus => GetBaseStatusFilename() + ".jobstatus";
-
-        /// <summary>
-        /// Filename of the .success file
-        /// </summary>
-        public string StatusFileSuccess => GetBaseStatusFilename() + ".success";
-
-        /// <summary>
-        /// Filename of the .fail file
-        /// </summary>
-        public string StatusFileFail => GetBaseStatusFilename() + ".fail";
+        public string RemoteJobStepWorkDirPath => clsPathUtils.CombineLinuxPaths(RemoteWorkDirPath, GetJobStepFileOrFolderName());
 
         /// <summary>
         /// Step number for the current job
@@ -145,9 +124,38 @@ namespace AnalysisManagerBase
         public string WorkDir { get; private set; }
 
         /// <summary>
-        /// Job number and text, in the form job x, step y
+        /// Job number and text, in the form "job x, step y"
         /// </summary>
         public string JobStepDescription => string.Format("job {0}, step {1}", JobNum, StepNum);
+
+        #region "Status File Names"
+
+        /// <summary>
+        /// Filename of the .jobstatus status file
+        /// </summary>
+        public string JobStatusFile => GetBaseStatusFilename() + ".jobstatus";
+
+        /// <summary>
+        /// Filename of the .fail file
+        /// </summary>
+        public string ProcessingFailureFile => GetBaseStatusFilename() + ".fail";
+
+        /// <summary>
+        /// Filename of the .success file
+        /// </summary>
+        public string ProcessingSuccessFile => GetBaseStatusFilename() + ".success";
+
+        /// <summary>
+        /// Filename of the .info file
+        /// </summary>
+        public string StatusInfoFile => GetBaseStatusFilename() + ".info";
+
+        /// <summary>
+        /// Filename of the .info file
+        /// </summary>
+        public string StatusLockFile => GetBaseStatusFilename() + ".lock";
+
+        #endregion
 
         #endregion
 
@@ -163,6 +171,17 @@ namespace AnalysisManagerBase
 
             mParametersValidated = false;
             mUsingManagerRemoteInfo = true;
+
+            // Initialize the properties to have empty strings
+            DatasetName = string.Empty;
+            RemoteHostName = string.Empty;
+            RemoteHostUser = string.Empty;
+            RemoteHostPrivateKeyFile = string.Empty;
+            RemoteHostPassphraseFile = string.Empty;
+            RemoteOrgDBPath = string.Empty;
+            RemoteTaskQueuePath = string.Empty;
+            RemoteWorkDirPath = string.Empty;
+            WorkDir = string.Empty;
         }
 
         /// <summary>
@@ -174,7 +193,7 @@ namespace AnalysisManagerBase
         /// <param name="useDefaultManagerRemoteInfo">True to use RemoteInfo defined for the manager; False to use RemoteInfo associated with the job (useful if checking on a running job)</param>
         /// <returns>True on success, false if an error</returns>
         /// <remarks>Calls UpdateParameters if necessary; that method will throw an exception if there are missing parameters or configuration issues</remarks>
-        public bool CopyFilesFromRemote(string sourceDirectoryPath, IEnumerable<string> sourceFileNames, string localDirectoryPath, bool useDefaultManagerRemoteInfo)
+        public bool CopyFilesFromRemote(string sourceDirectoryPath, IReadOnlyCollection<string> sourceFileNames, string localDirectoryPath, bool useDefaultManagerRemoteInfo)
         {
             if (IsParameterUpdateRequired(useDefaultManagerRemoteInfo))
             {
@@ -193,15 +212,23 @@ namespace AnalysisManagerBase
         /// <param name="sourceFileNames">Source file names; wildcards are not allowed</param>
         /// <param name="localDirectoryPath">Local target directory</param>
         /// <returns>True on success, false if an error</returns>
-        private bool CopyFilesFromRemote(string sourceDirectoryPath, IEnumerable<string> sourceFileNames, string localDirectoryPath)
+        private bool CopyFilesFromRemote(string sourceDirectoryPath, IReadOnlyCollection<string> sourceFileNames, string localDirectoryPath)
         {
             // Use scp to retrieve the files
             // scp is faster than sftp, but it has the downside that we can't check for the existence of a file before retrieving it
 
             var success = false;
 
+            if (!mParametersValidated)
+                throw new Exception("Call UpdateParameters before calling CopyFilesToRemote");
+
             try
             {
+                if (sourceFileNames.Count == 1)
+                    OnDebugEvent(string.Format("Retrieving file {0} from {1} on host {2}", sourceFileNames.First(), sourceDirectoryPath, RemoteHostName));
+                else
+                    OnDebugEvent(string.Format("Retrieving {0} files from {1} on host {2}", sourceFileNames.Count, sourceDirectoryPath, RemoteHostName));
+
                 using (var scp = new ScpClient(RemoteHostName, RemoteHostUser, mPrivateKeyFile))
                 {
                     scp.Connect();
@@ -242,6 +269,28 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
+        /// Copy a single file from a local directory to the remote host
+        /// </summary>
+        /// <param name="sourceFilePath">Source file path</param>
+        /// <param name="remoteDirectoryPath">Remote target directory</param>
+        /// <returns>True on success, false if an error</returns>
+        /// <remarks>Calls UpdateParameters if necessary; that method will throw an exception if there are missing parameters or configuration issues</remarks>
+        public bool CopyFileToRemote(string sourceFilePath, string remoteDirectoryPath)
+        {
+            var sourceFile = new FileInfo(sourceFilePath);
+            if (!sourceFile.Exists)
+            {
+                OnErrorEvent("Cannot copy file to remote; source file not found: " + sourceFilePath);
+                return false;
+            }
+
+            var sourceFileNames = new List<string> {sourceFile.Name};
+
+            var success = CopyFilesToRemote(sourceFile.DirectoryName, sourceFileNames, remoteDirectoryPath, USE_MANAGER_REMOTE_INFO);
+            return success;
+        }
+
+        /// <summary>
         /// Copy files from a local directory to the remote host
         /// </summary>
         /// <param name="sourceDirectoryPath">Source directory</param>
@@ -271,10 +320,16 @@ namespace AnalysisManagerBase
         /// <returns>True on success, false if an error</returns>
         public bool CopyFilesToRemote(string sourceDirectoryPath, IEnumerable<string> sourceFileNames, string remoteDirectoryPath)
         {
+            if (string.IsNullOrWhiteSpace(sourceDirectoryPath))
+            {
+                OnErrorEvent("Cannot copy files to remote; source directory is empty");
+                return false;
+            }
+
             var sourceDirectory = new DirectoryInfo(sourceDirectoryPath);
             if (!sourceDirectory.Exists)
             {
-                OnErrorEvent("Source directory not found: " + sourceDirectoryPath);
+                OnErrorEvent("Cannot copy files to remote; source directory not found: " + sourceDirectoryPath);
                 return false;
             }
 
@@ -320,25 +375,44 @@ namespace AnalysisManagerBase
         /// <returns>True on success, false if an error</returns>
         public bool CopyFilesToRemote(IEnumerable<FileInfo> sourceFiles, string remoteDirectoryPath)
         {
+            if (!mParametersValidated)
+                throw new Exception("Call UpdateParameters before calling CopyFilesToRemote");
+
             try
             {
+
+                var uniqueFiles = GetUniqueFileList(sourceFiles).ToList();
+                if (uniqueFiles.Count == 0)
+                {
+                    OnErrorEvent(string.Format("Cannot copy files to {0}; sourceFiles list is empty", RemoteHostName));
+                    return false;
+                }
+
                 var success = false;
+
+                if (uniqueFiles.Count == 1)
+                    OnDebugEvent(string.Format("Copying {0} to {1} on {2}", uniqueFiles.First().Name, remoteDirectoryPath, RemoteHostName));
+                else
+                    OnDebugEvent(string.Format("Copying {0} files to {1} on {2}", uniqueFiles.Count, remoteDirectoryPath, RemoteHostName));
 
                 using (var scp = new ScpClient(RemoteHostName, RemoteHostUser, mPrivateKeyFile))
                 {
                     scp.Connect();
 
-                    foreach (var sourceFile in GetUniqueFileList(sourceFiles))
+                    foreach (var sourceFile in uniqueFiles)
                     {
                         if (!sourceFile.Exists)
                         {
-                            OnWarningEvent(string.Format("Source file not found; cannot copy {0} to {1}",
-                                                         sourceFile.FullName, remoteDirectoryPath));
+                            OnWarningEvent(string.Format("Source file not found; cannot copy {0} to {1} on {2}",
+                                                         sourceFile.FullName, remoteDirectoryPath, RemoteHostName));
                             continue;
                         }
 
+                        OnDebugEvent("  Copying " + sourceFile.FullName);
+
                         var targetFilePath = clsPathUtils.CombineLinuxPaths(remoteDirectoryPath, sourceFile.Name);
                         scp.Upload(sourceFile, targetFilePath);
+
                         success = true;
                     }
 
@@ -346,12 +420,18 @@ namespace AnalysisManagerBase
 
                 }
 
-                return success;
+                if (success)
+                {
+                    return true;
+                }
+
+                OnErrorEvent(string.Format("Cannot copy files to {0}; all of the files in sourceFiles are missing", RemoteHostName));
+                return false;
 
             }
             catch (Exception ex)
             {
-                OnErrorEvent(string.Format("Error copying files to {0}: {1}", remoteDirectoryPath, ex.Message), ex);
+                OnErrorEvent(string.Format("Error copying files to {0} on {1}: {2}", remoteDirectoryPath, RemoteHostName, ex.Message), ex);
                 return false;
             }
 
@@ -386,9 +466,10 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Create a new task info file for the current job on the remote host
         /// </summary>
+        /// <param name="infoFilePathRemote">Output: Remote info file path</param>
         /// <remarks>Created in RemoteTaskQueuePath</remarks>
         /// <returns>True on success, false on an error</returns>
-        public bool CreateJobTaskInfoFile()
+        public bool CreateJobTaskInfoFile(out string infoFilePathRemote)
         {
             if (IsParameterUpdateRequired(USE_MANAGER_REMOTE_INFO))
             {
@@ -399,13 +480,152 @@ namespace AnalysisManagerBase
 
             try
             {
-                return false;
+
+                var remoteTimeStamp = DefineRemoteTimestamp();
+
+                DefineRemoteInfo();
+
+                var infoFileName = GetBaseStatusFilename(remoteTimeStamp) + ".info";
+
+                OnDebugEvent("Creating JobTaskInfo file " + infoFileName);
+
+                var infoFilePathLocal = Path.Combine(WorkDir, infoFileName);
+                infoFilePathRemote = clsPathUtils.CombineLinuxPaths(RemoteTaskQueuePath, infoFileName);
+
+                using (var writer = new StreamWriter(new FileStream(infoFilePathLocal, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                {
+                    writer.WriteLine("Job=" + JobNum);
+                    writer.WriteLine("Step=" + StepNum);
+                    writer.WriteLine("WorkDir=" + RemoteJobStepWorkDirPath);
+                    writer.WriteLine("Staged=" + DateTime.Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
+                }
+
+                CopyFileToRemote(infoFilePathLocal, RemoteTaskQueuePath);
+
+                return true;
             }
             catch (Exception ex)
             {
                 OnErrorEvent("Error creating the remote job task info file", ex);
+                infoFilePathRemote = string.Empty;
                 return false;
             }
+        }
+
+        /// <summary>
+        /// Validates that the remote directory exists, creating it if missing
+        /// </summary>
+        /// <param name="remoteDirectoryPath"></param>
+        /// <returns>True on success, otherwise false</returns>
+        /// <remarks>The parent directory of remoteDirectoryPath must already exist</remarks>
+        public bool CreateRemoteDirectory(string remoteDirectoryPath)
+        {
+            if (!mParametersValidated)
+                throw new Exception("Call UpdateParameters before calling CreateRemoteDirectory");
+
+            return CreateRemoteDirectories(new List<string> { remoteDirectoryPath });
+        }
+
+        /// <summary>
+        /// Validates that the remote directories exists, creating any that are missing
+        /// </summary>
+        /// <param name="remoteDirectories"></param>
+        /// <returns>True on success, otherwise false</returns>
+        /// <remarks>The parent directory of all items in remoteDirectories must already exist</remarks>
+        public bool CreateRemoteDirectories(IReadOnlyCollection<string> remoteDirectories)
+        {
+
+            if (!mParametersValidated)
+                throw new Exception("Call UpdateParameters before calling CreateRemoteDirectories");
+
+            try
+            {
+                if (remoteDirectories.Count == 0)
+                    return true;
+
+                // Keys in this dictionary are parent directory paths; values are subdirectories to find in each
+                var parentDirectories = new Dictionary<string, SortedSet<string>>();
+                foreach (var remoteDirectory in remoteDirectories)
+                {
+                    var parentPath = clsPathUtils.GetParentDirectoryPath(remoteDirectory, out var directoryName);
+                    if (string.IsNullOrWhiteSpace(parentPath))
+                        continue;
+
+                    if (!parentDirectories.TryGetValue(parentPath, out var subDirectories))
+                    {
+                        subDirectories = new SortedSet<string>();
+                        parentDirectories.Add(parentPath, subDirectories);
+                    }
+
+                    if (!subDirectories.Contains(directoryName))
+                        subDirectories.Add(directoryName);
+
+                }
+
+                OnDebugEvent("Verifying directories on host " + RemoteHostName);
+
+                using (var sftp = new SftpClient(RemoteHostName, RemoteHostUser, mPrivateKeyFile))
+                {
+                    sftp.Connect();
+                    foreach (var parentDirectory in parentDirectories)
+                    {
+                        var remoteDirectoryPath = parentDirectory.Key;
+                        OnDebugEvent("  checking " + remoteDirectoryPath);
+
+                        var filesAndFolders = sftp.ListDirectory(remoteDirectoryPath);
+                        var remoteSubdirectories = new SortedSet<string>();
+
+                        foreach (var item in filesAndFolders)
+                        {
+                            if (!item.IsDirectory || item.Name == "." || item.Name == "..")
+                            {
+                                continue;
+                            }
+
+                            if (!remoteSubdirectories.Contains(item.Name))
+                                remoteSubdirectories.Add(item.Name);
+                        }
+
+                        foreach (var directoryToVerify in parentDirectory.Value)
+                        {
+                            if (remoteSubdirectories.Contains(directoryToVerify))
+                            {
+                                OnDebugEvent("    found " + directoryToVerify);
+                                continue;
+                            }
+                            var directoryPathToCreate = clsPathUtils.CombineLinuxPaths(remoteDirectoryPath, directoryToVerify);
+
+                            OnDebugEvent("  creating " + directoryPathToCreate);
+                            sftp.CreateDirectory(directoryPathToCreate);
+                        }
+
+                    }
+                    sftp.Disconnect();
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                OnErrorEvent("Error creating remote directories: " + ex.Message, ex);
+                return false;
+            }
+        }
+
+        private void DefineRemoteInfo()
+        {
+            var remoteInfo = GetRemoteInfoXml(USE_MANAGER_REMOTE_INFO);
+
+            JobParams.AddAdditionalParameter("StepParameters", STEP_PARAM_REMOTE_INFO, remoteInfo);
+        }
+
+        private string DefineRemoteTimestamp()
+        {
+            var remoteTimestamp = DateTime.Now.ToString("yyyyMMdd_hhmm");
+
+            JobParams.AddAdditionalParameter("StepParameters", STEP_PARAM_REMOTE_TIMESTAMP, remoteTimestamp);
+
+            return remoteTimestamp;
         }
 
         /// <summary>
@@ -433,7 +653,17 @@ namespace AnalysisManagerBase
         /// <returns>Status filename</returns>
         private string GetBaseStatusFilename(string remoteTimestamp)
         {
-            return string.Format("Job{0}_Step{1}_{2}", JobNum, StepNum, remoteTimestamp);
+            return GetJobStepFileOrFolderName() + "_" + remoteTimestamp;
+        }
+
+        /// <summary>
+        /// Return text in the form "Job1234_Step3"
+        /// </summary>
+        /// <returns></returns>
+        /// <remarks>Intended for use in file and directory names</remarks>
+        private string GetJobStepFileOrFolderName()
+        {
+            return string.Format("Job{0}_Step{1}", JobNum, StepNum);
         }
 
         /// <summary>
@@ -445,7 +675,7 @@ namespace AnalysisManagerBase
         /// <param name="useDefaultManagerRemoteInfo">True to use RemoteInfo defined for the manager; False to use RemoteInfo associated with the job (typically should be true)</param>
         /// <returns>List of matching files (full paths)</returns>
         /// <remarks>Calls UpdateParameters if necessary; that method will throw an exception if there are missing parameters or configuration issues</remarks>
-        private Dictionary<string, SftpFile> GetRemoteFileListing(string remoteDirectoryPath, string fileMatchSpec, bool recurse, bool useDefaultManagerRemoteInfo)
+        public Dictionary<string, SftpFile> GetRemoteFileListing(string remoteDirectoryPath, string fileMatchSpec, bool recurse, bool useDefaultManagerRemoteInfo)
         {
             if (IsParameterUpdateRequired(useDefaultManagerRemoteInfo))
             {
@@ -468,10 +698,15 @@ namespace AnalysisManagerBase
         {
             var matchingFiles = new Dictionary<string, SftpFile>();
 
+            if (!mParametersValidated)
+                throw new Exception("Call UpdateParameters before calling CopyFilesToRemote");
+
             try
             {
                 if (string.IsNullOrWhiteSpace(fileMatchSpec))
                     fileMatchSpec = "*";
+
+                OnDebugEvent(string.Format("Getting file listing for {0} on host {1}", remoteDirectoryPath, RemoteHostName));
 
                 using (var sftp = new SftpClient(RemoteHostName, RemoteHostUser, mPrivateKeyFile))
                 {
@@ -506,26 +741,26 @@ namespace AnalysisManagerBase
         {
             foreach (var remoteDirectory in remoteDirectoryPaths)
             {
-                var files = sftp.ListDirectory(remoteDirectory);
+                var filesAndFolders = sftp.ListDirectory(remoteDirectory);
                 var subdirectoryPaths = new List<string>();
 
-                foreach (var file in files)
+                foreach (var item in filesAndFolders)
                 {
-                    if (file.IsDirectory)
+                    if (item.IsDirectory)
                     {
-                        subdirectoryPaths.Add(file.FullName);
+                        subdirectoryPaths.Add(item.FullName);
                         continue;
                     }
 
-                    if (fileMatchSpec == "*" || clsPathUtils.FitsMask(file.Name, fileMatchSpec))
+                    if (fileMatchSpec == "*" || clsPathUtils.FitsMask(item.Name, fileMatchSpec))
                     {
                         try
                         {
-                            matchingFiles.Add(file.FullName, file);
+                            matchingFiles.Add(item.FullName, item);
                         }
                         catch (ArgumentException)
                         {
-                            OnWarningEvent("Skipping duplicate filename: " + file.FullName);
+                            OnWarningEvent("Skipping duplicate filename: " + item.FullName);
                         }
 
                     }
