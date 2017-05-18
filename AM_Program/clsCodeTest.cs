@@ -7,9 +7,11 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Versioning;
+using System.Text;
 using System.Text.RegularExpressions;
 using AnalysisManagerBase;
 using PRISM;
+using Renci.SshNet;
 
 namespace AnalysisManagerProg
 {
@@ -614,6 +616,67 @@ namespace AnalysisManagerProg
             {
                 Console.WriteLine("Error caught: " + ex.Message);
             }
+        }
+
+        /// <summary>
+        /// Test using sftp to list files on a remote host
+        /// Connect using an RSA private key file
+        /// </summary>
+        public void TestConnectRSA()
+        {
+            var host = "prismweb2";
+            var username = "svc-dms";
+
+            var keyFile = new FileInfo(@"C:\DMS_RemoteInfo\Svc-Dms.key");
+            if (!keyFile.Exists)
+            {
+                LogError("File not found: " + keyFile.FullName);
+                return;
+            }
+
+            var passPhraseFile = new FileInfo(@"C:\DMS_RemoteInfo\Svc-Dms.pass");
+            if (!passPhraseFile.Exists)
+            {
+                LogError("File not found: " + passPhraseFile.FullName);
+                return;
+            }
+
+            MemoryStream keyFileStream;
+            string passphraseEncoded;
+
+            using (var reader = new StreamReader(new FileStream(keyFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+            {
+                keyFileStream = new MemoryStream(Encoding.ASCII.GetBytes(reader.ReadToEnd()));
+            }
+
+            using (var reader = new StreamReader(new FileStream(passPhraseFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+            {
+                passphraseEncoded = reader.ReadLine();
+            }
+
+            try
+            {
+                var privateKeyFile = new PrivateKeyFile(keyFileStream, clsGlobal.DecodePassword(passphraseEncoded));
+
+                using (var sftp = new SftpClient(host, username, privateKeyFile))
+                {
+                    sftp.Connect();
+                    var files = sftp.ListDirectory(".");
+                    foreach (var file in files)
+                    {
+                        Console.WriteLine(file.FullName);
+                    }
+                }
+            }
+            catch (InvalidOperationException ex)
+            {
+                if (ex.Message.Contains("Invalid data type"))
+                    throw new Exception("Passphrase error connecting to " + host + " as user " + username, ex);
+
+                throw;
+            }
+
+
         }
 
         /// <summary>
