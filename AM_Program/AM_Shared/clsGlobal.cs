@@ -27,9 +27,8 @@ namespace AnalysisManagerBase
         #region "Constants"
         public const bool LOG_LOCAL_ONLY = true;
         public const bool LOG_DATABASE = false;
-        public const string XML_FILENAME_PREFIX = "JobParameters_";
 
-        public const string XML_FILENAME_EXTENSION = "xml";
+        public const string JOB_PARAMETERS_FILE_PREFIX = "JobParameters_";
 
         public const string STEPTOOL_PARAMFILESTORAGEPATH_PREFIX = "StepTool_ParamFileStoragePath_";
 
@@ -393,7 +392,7 @@ namespace AnalysisManagerBase
                     }
 
                     msg += ": " + ex.Message + "; ConnectionString: " + connectionString;
-                    msg += ", RetryCount = " + retryCount.ToString();
+                    msg += ", RetryCount = " + retryCount;
 
                     if (cmd.CommandType == CommandType.Text)
                     {

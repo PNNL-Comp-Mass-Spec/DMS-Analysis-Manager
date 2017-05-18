@@ -510,7 +510,7 @@ namespace AnalysisManagerBase
 
         public static string JobParametersFilename(string jobNum)
         {
-            return clsGlobal.XML_FILENAME_PREFIX + jobNum + "." + clsGlobal.XML_FILENAME_EXTENSION;
+            return clsGlobal.JOB_PARAMETERS_FILE_PREFIX + jobNum + ".xml";
         }
 
         /// <summary>

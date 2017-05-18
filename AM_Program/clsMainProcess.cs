@@ -2725,12 +2725,12 @@ namespace AnalysisManagerProg
 
             if ((workDirFolders.Length == 0) & (workDirFiles.Length == 1))
             {
-                // If the only file in the working directory is a JobParameters xml file,
-                //  then try to delete it, since it's likely left over from a previous job that never actually started
+                // If the only file in the working directory is a JobParameters xml file, try to delete it.
+                // It is likely left over from a previous job that never actually started
                 var firstFile = workDirFiles.First();
 
-                if (firstFile.Name.StartsWith(clsGlobal.XML_FILENAME_PREFIX, StringComparison.InvariantCultureIgnoreCase) &&
-                    firstFile.Name.EndsWith(clsGlobal.XML_FILENAME_EXTENSION, StringComparison.InvariantCultureIgnoreCase))
+                if (firstFile.Name.StartsWith(clsGlobal.JOB_PARAMETERS_FILE_PREFIX, StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(Path.GetExtension(firstFile.Name), ".xml", StringComparison.OrdinalIgnoreCase))
                 {
                     try
                     {
