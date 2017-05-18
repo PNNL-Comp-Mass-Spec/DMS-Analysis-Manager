@@ -1115,7 +1115,7 @@ namespace AnalysisManagerBase
         /// <param name="FileText">String containing XML file contents</param>
         /// <param name="FileNamePath">Name of file to create</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
-        /// <remarks>XML handling based on code provided by Matt Monroe</remarks>
+        [Obsolete("Unused")]
         private bool CreateSettingsFile(string FileText, string FileNamePath)
         {
 
@@ -3910,6 +3910,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <returns>TRUE if file created successfully; FALSE otherwise</returns>
         /// <remarks>Use this overload with jobs where settings file is retrieved from database</remarks>
+        [Obsolete("Unused")]
         protected internal bool RetrieveSettingsFileFromDb()
         {
 
