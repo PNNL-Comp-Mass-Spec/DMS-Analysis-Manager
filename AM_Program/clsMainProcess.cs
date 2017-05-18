@@ -815,6 +815,14 @@ namespace AnalysisManagerProg
             {
                 // Retrieve the resources for the job then either run locally or run remotely
                 success = RetrieveResources(toolResourcer, jobNum, datasetName, out eToolRunnerResult);
+                if (!success)
+                {
+                    // Error occurred
+                    // Note that m_AnalysisTask.CloseTask() should have already been called
+                    var reportSuccess = HandleJobFailure(eToolRunnerResult);
+
+                    return reportSuccess;
+                }
 
                 // Run the job
                 m_StatusTools.UpdateAndWrite(EnumMgrStatus.RUNNING, EnumTaskStatus.RUNNING, EnumTaskStatusDetail.RUNNING_TOOL, 0);
