@@ -1072,7 +1072,7 @@ namespace AnalysisManagerBase
             }
 
             var remoteInfoParam = myCmd.Parameters.Add(new SqlParameter("@remoteInfo", SqlDbType.VarChar, 900));
-            if (TryGetParam("StepParameters", clsAnalysisResources.JOB_PARAM_REMOTE_INFO, out var remoteInfo, false))
+            if (TryGetParam("StepParameters", clsRemoteTransferUtility.STEP_PARAM_REMOTE_INFO, out var remoteInfo, false))
             {
                 remoteInfoParam.Value = remoteInfo;
             }
@@ -1083,7 +1083,7 @@ namespace AnalysisManagerBase
 
             // Note: leave remoteTimestampParam.Value as null if remoteTimestamp is empty
             var remoteTimestampParam = myCmd.Parameters.Add(new SqlParameter("@remoteTimestamp", SqlDbType.VarChar, 24));
-            if (TryGetParam("StepParameters", clsAnalysisResources.JOB_PARAM_REMOTE_TIMESTAMP, out var remoteTimestamp, false))
+            if (TryGetParam("StepParameters", clsRemoteTransferUtility.STEP_PARAM_REMOTE_TIMESTAMP, out var remoteTimestamp, false))
             {
                 if (!string.IsNullOrWhiteSpace(remoteTimestamp))
                     remoteTimestampParam.Value = remoteTimestamp;

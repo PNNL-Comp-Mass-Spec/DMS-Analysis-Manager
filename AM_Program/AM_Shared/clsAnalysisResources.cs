@@ -153,9 +153,6 @@ namespace AnalysisManagerBase
 
         public const string JOB_PARAM_GENERATED_FASTA_NAME = "generatedFastaName";
 
-        public const string JOB_PARAM_REMOTE_INFO = "RemoteInfo";
-        public const string JOB_PARAM_REMOTE_TIMESTAMP = "RemoteTimestamp";
-
         // This constant is used by clsAnalysisToolRunnerMSGFDB, clsAnalysisResourcesMSGFDB, and clsAnalysisResourcesDtaRefinery
         public const string SPECTRA_ARE_NOT_CENTROIDED = "None of the spectra are centroided; unable to process";
 

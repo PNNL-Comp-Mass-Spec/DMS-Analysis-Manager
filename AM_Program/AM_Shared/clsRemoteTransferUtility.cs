@@ -17,6 +17,10 @@ namespace AnalysisManagerBase
     {
         #region "Constants"
 
+        public const string STEP_PARAM_REMOTE_INFO = "RemoteInfo";
+
+        public const string STEP_PARAM_REMOTE_TIMESTAMP = "RemoteTimestamp";
+
         private const bool USE_MANAGER_REMOTE_INFO = true;
 
         #endregion
@@ -412,11 +416,11 @@ namespace AnalysisManagerBase
         private string GetBaseStatusFilename()
         {
 
-            var remoteTimestamp = JobParams.GetParam("JobParameters", "RemoteTimestamp");
+            var remoteTimestamp = JobParams.GetParam("StepParameters", STEP_PARAM_REMOTE_TIMESTAMP);
             if (string.IsNullOrWhiteSpace(remoteTimestamp))
             {
-                OnErrorEvent("Job parameter remoteTimestamp is empty; cannot properly construct the base tracking file name");
-                return "";
+                OnErrorEvent("Job parameter RemoteTimestamp is empty; cannot properly construct the base tracking file name");
+                return string.Empty;
             }
 
             return GetBaseStatusFilename(remoteTimestamp);
@@ -602,10 +606,10 @@ namespace AnalysisManagerBase
                 UpdateParameters(useDefaultManagerRemoteInfo);
             }
 
-            var remoteTimestamp = JobParams.GetParam("JobParameters", "RemoteTimestamp");
+            var remoteTimestamp = JobParams.GetParam("StepParameters", STEP_PARAM_REMOTE_TIMESTAMP);
             if (string.IsNullOrWhiteSpace(remoteTimestamp))
             {
-                OnErrorEvent("Job parameter remoteTimestamp is empty; cannot check remote status");
+                OnErrorEvent("Job parameter RemoteTimestamp is empty; cannot list remote status files");
                 statusFiles = new Dictionary<string, SftpFile>();
                 return statusFiles;
             }
@@ -721,10 +725,10 @@ namespace AnalysisManagerBase
                 UpdateParameters(false);
             }
 
-            var remoteTimestamp = JobParams.GetParam("JobParameters", "RemoteTimestamp");
+            var remoteTimestamp = JobParams.GetParam("StepParameters", STEP_PARAM_REMOTE_TIMESTAMP);
             if (string.IsNullOrWhiteSpace(remoteTimestamp))
             {
-                OnErrorEvent("Job parameter remoteTimestamp is empty; cannot check remote status");
+                OnErrorEvent("Job parameter RemoteTimestamp is empty; cannot retrieve the remote .jobstatus file");
                 return false;
             }
 
