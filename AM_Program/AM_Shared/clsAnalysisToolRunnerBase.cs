@@ -4014,6 +4014,25 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
+        /// Update m_message, which is logged in the pipeline job steps table when the job step finishes
+        /// </summary>
+        /// <param name="statusMessage">New status message</param>
+        /// <param name="appendToExisting">True to append to m_message; false to overwrite it</param>
+        protected void UpdateStatusMessage(string statusMessage, bool appendToExisting = false)
+        {
+            if (appendToExisting)
+            {
+                m_message = clsGlobal.AppendToComment(m_message, statusMessage);
+            }
+            else
+            {
+                m_message = statusMessage;
+            }
+
+            LogDebug(m_message);
+        }
+
+        /// <summary>
         /// Update Status.xml now using m_progress
         /// </summary>
         /// <remarks></remarks>

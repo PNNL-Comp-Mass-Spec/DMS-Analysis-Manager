@@ -98,14 +98,51 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Update m_message with an error message and record the error in the manager's log file
+        /// Log an error message, but do not update m_message
         /// </summary>
         /// <param name="errorMessage">Error message</param>
+        protected void LogErrorNoMessageUpdate(string errorMessage)
+        {
+            base.LogError(errorMessage);
+        }
+
+        /// <summary>
+        /// Update m_message with an error message and record the error in the manager's log file
+        /// </summary>
+        /// <param name="errorMessage">Error message (do not include ex.message, unless you want that message to appear in the job comment)</param>
         /// <param name="ex">Exception to log</param>
         protected override void LogError(string errorMessage, Exception ex)
         {
             m_message = clsGlobal.AppendToComment(m_message, errorMessage);
             base.LogError(errorMessage, ex);
+        }
+
+        /// <summary>
+        /// Update m_message with an error message and record the error in the manager's log file
+        /// Also write the detailed error message to the local log file
+        /// </summary>
+        /// <param name="errorMessage">Error message</param>
+        /// <param name="detailedMessage">Detailed error message</param>
+        /// <param name="ex">Exception</param>
+        protected void LogError(string errorMessage, string detailedMessage, Exception ex)
+        {
+            LogError(errorMessage, ex);
+
+            if (string.IsNullOrEmpty(detailedMessage))
+                return;
+
+            Console.ForegroundColor = ConsoleColor.Magenta;
+            Console.WriteLine(detailedMessage);
+            Console.ResetColor();
+
+            try
+            {
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, detailedMessage);
+            }
+            catch (Exception logException)
+            {
+                clsGlobal.ErrorWritingToLog(errorMessage, logException);
+            }
         }
 
         /// <summary>
@@ -120,7 +157,7 @@ namespace AnalysisManagerBase
             LogError(errorMessage, logToDb);
 
             if (string.IsNullOrEmpty(detailedMessage))
-                return;            
+                return;
 
             Console.ForegroundColor = ConsoleColor.Magenta;
             Console.WriteLine(detailedMessage);
