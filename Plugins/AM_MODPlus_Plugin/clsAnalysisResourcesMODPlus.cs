@@ -16,9 +16,9 @@ namespace AnalysisManagerMODPlusPlugin
         internal const string MOD_PLUS_RUNTIME_PARAM_FASTA_FILE_IS_DECOY = "###_MODPlus_Runtime_Param_FastaFileIsDecoy_###";
         internal const int MINIMUM_PERCENT_DECOY = 25;
 
-        public override void Setup(IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsMyEMSLUtilities myEMSLUtilities)
+        public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsMyEMSLUtilities myEMSLUtilities)
         {
-            base.Setup(mgrParams, jobParams, statusTools, myEMSLUtilities);
+            base.Setup(stepToolName, mgrParams, jobParams, statusTools, myEMSLUtilities);
             SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, true);
         }
 

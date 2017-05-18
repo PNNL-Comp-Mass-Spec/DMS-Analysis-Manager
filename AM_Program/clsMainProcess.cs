@@ -2267,7 +2267,7 @@ namespace AnalysisManagerProg
 
             try
             {
-                toolResourcer.Setup(m_MgrSettings, m_AnalysisTask, m_StatusTools, m_MyEMSLUtilities);
+                toolResourcer.Setup(stepToolName, m_MgrSettings, m_AnalysisTask, m_StatusTools, m_MyEMSLUtilities);
             }
             catch (Exception ex)
             {
@@ -2303,7 +2303,7 @@ namespace AnalysisManagerProg
             try
             {
                 // Setup the new tool runner
-                toolRunner.Setup(m_MgrSettings, m_AnalysisTask, m_StatusTools, m_SummaryFile, m_MyEMSLUtilities);
+                toolRunner.Setup(stepToolName, m_MgrSettings, m_AnalysisTask, m_StatusTools, m_SummaryFile, m_MyEMSLUtilities);
             }
             catch (Exception ex)
             {

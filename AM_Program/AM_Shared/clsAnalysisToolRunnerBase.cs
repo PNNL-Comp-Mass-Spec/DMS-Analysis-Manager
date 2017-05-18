@@ -177,6 +177,8 @@ namespace AnalysisManagerBase
         /// <remarks>This is a value between 0 and 100</remarks>
         public float Progress => m_progress;
 
+        public string StepToolName { get; private set; }
+
         #endregion
 
         #region "Methods"
@@ -194,14 +196,23 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Initializes class
         /// </summary>
+        /// <param name="stepToolName">Name of the current step tool</param>
         /// <param name="mgrParams">Object holding manager parameters</param>
         /// <param name="jobParams">Object holding job parameters</param>
         /// <param name="statusTools">Object for status reporting</param>
         /// <param name="summaryFile">Object for creating an analysis job summary file</param>
         /// <param name="myEMSLUtilities">MyEMSL download Utilities</param>
         /// <remarks></remarks>
-        public virtual void Setup(IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsSummaryFile summaryFile, clsMyEMSLUtilities myEMSLUtilities)
+        public virtual void Setup(
+            string stepToolName,
+            IMgrParams mgrParams,
+            IJobParams jobParams,
+            IStatusFile statusTools,
+            clsSummaryFile summaryFile,
+            clsMyEMSLUtilities myEMSLUtilities)
         {
+            StepToolName = stepToolName;
+
             m_mgrParams = mgrParams;
             m_jobParams = jobParams;
             m_StatusTools = statusTools;

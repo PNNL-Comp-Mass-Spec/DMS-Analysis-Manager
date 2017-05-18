@@ -275,7 +275,7 @@ namespace AnalysisManagerProg
             RegisterEvents(myEMSLUtilities);
 
             var objToolRunner = new clsCodeTestAM();
-            objToolRunner.Setup(m_mgrParams, objJobParams, statusTools, objSummaryFile, myEMSLUtilities);
+            objToolRunner.Setup("CodeTest", m_mgrParams, objJobParams, statusTools, objSummaryFile, myEMSLUtilities);
 
             return objToolRunner;
         }
@@ -308,7 +308,7 @@ namespace AnalysisManagerProg
             objJobParams.SetParam("StepParameters", "Job", "12345");
             objJobParams.SetParam("StepParameters", "OutputFolderName", "Test_Results");
 
-            objResources.Setup(m_mgrParams, objJobParams, statusTools, myEMSLUtilities);
+            objResources.Setup("CodeTest", m_mgrParams, objJobParams, statusTools, myEMSLUtilities);
 
             return objResources;
         }
@@ -660,7 +660,7 @@ namespace AnalysisManagerProg
             var pluginLoader = new clsPluginLoader(summaryFile, mgrFolderPath);
 
             var objToolRunner = pluginLoader.GetToolRunner("dta_split".ToLower());
-            objToolRunner.Setup(m_mgrParams, objJobParams, statusTools, summaryFile, myEMSLUtilities);
+            objToolRunner.Setup("CodeTest", m_mgrParams, objJobParams, statusTools, summaryFile, myEMSLUtilities);
             objToolRunner.RunTool();
 
         }
@@ -1136,7 +1136,7 @@ namespace AnalysisManagerProg
             objJobParams.SetParam("JobParameters", "DatasetArchivePath", @"\\adms.emsl.pnl.gov\dmsarch\9T_FTICR_Imaging_1");
             objJobParams.SetParam("JobParameters", "transferFolderPath", @"\\proto-10\DMS3_Xfer");
 
-            objResources.Setup(m_mgrParams, objJobParams, statusTools, myEMSLUtilities);
+            objResources.Setup("CodeTest", m_mgrParams, objJobParams, statusTools, myEMSLUtilities);
 
             var blnSuccess = objResources.FileSearch.RetrieveBrukerMALDIImagingFolders(true);
 

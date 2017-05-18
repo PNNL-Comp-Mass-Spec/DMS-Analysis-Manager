@@ -16,9 +16,9 @@ namespace AnalysisManagerInSpecTPlugIn
     {
         #region "Methods"
 
-        public override void Setup(IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsMyEMSLUtilities myEMSLUtilities)
+        public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsMyEMSLUtilities myEMSLUtilities)
         {
-            base.Setup(mgrParams, jobParams, statusTools, myEMSLUtilities);
+            base.Setup(stepToolName, mgrParams, jobParams, statusTools, myEMSLUtilities);
             SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, true);
         }
 

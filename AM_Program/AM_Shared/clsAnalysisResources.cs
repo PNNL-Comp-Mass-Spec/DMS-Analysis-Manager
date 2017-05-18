@@ -307,6 +307,8 @@ namespace AnalysisManagerBase
         /// </summary>
         public string Message => m_message;
 
+        public string StepToolName { get; private set; }
+
         public string WorkDir => m_WorkingDir;
 
         #endregion
@@ -329,13 +331,21 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Initialize class
         /// </summary>
+        /// <param name="stepToolName">Name of the current step tool</param>
         /// <param name="mgrParams">Manager parameter object</param>
         /// <param name="jobParams">Job parameter object</param>
         /// <param name="statusTools">Object for status reporting</param>
         /// <param name="myEMSLUtilities">MyEMSL download Utilities (can be nothing)</param>
         /// <remarks></remarks>
-        public virtual void Setup(IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsMyEMSLUtilities myEMSLUtilities)
+        public virtual void Setup(
+            string stepToolName,
+            IMgrParams mgrParams,
+            IJobParams jobParams,
+            IStatusFile statusTools,
+            clsMyEMSLUtilities myEMSLUtilities)
         {
+            StepToolName = stepToolName;
+
             m_mgrParams = mgrParams;
             m_jobParams = jobParams;
 

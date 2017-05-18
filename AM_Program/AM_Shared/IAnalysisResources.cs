@@ -1,5 +1,5 @@
 //*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy 
+// Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2006, Battelle Memorial Institute
 // Created 06/07/2006
@@ -24,13 +24,19 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Initialize class
         /// </summary>
+        /// <param name="stepToolName">Name of the current step tool</param>
         /// <param name="mgrParams">Manager parameter object</param>
         /// <param name="jobParams">Job parameter object</param>
         /// <param name="statusTools">Status tools object</param>
         /// <param name="myEMSLUtilities">MyEMSL download utilities</param>
         /// <remarks></remarks>
-        void Setup(IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsMyEMSLUtilities myEMSLUtilities);
-        
+        void Setup(
+            string stepToolName,
+            IMgrParams mgrParams,
+            IJobParams jobParams,
+            IStatusFile statusTools,
+            clsMyEMSLUtilities myEMSLUtilities);
+
         /// <summary>
         /// Main processing function for obtaining the required resources
         /// </summary>

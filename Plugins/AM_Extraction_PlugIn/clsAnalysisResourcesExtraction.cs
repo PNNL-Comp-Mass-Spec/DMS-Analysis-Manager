@@ -39,9 +39,9 @@ namespace AnalysisManagerExtractionPlugin
 
         #region "Methods"
 
-        public override void Setup(IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsMyEMSLUtilities myEMSLUtilities)
+        public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsMyEMSLUtilities myEMSLUtilities)
         {
-            base.Setup(mgrParams, jobParams, statusTools, myEMSLUtilities);
+            base.Setup(stepToolName, mgrParams, jobParams, statusTools, myEMSLUtilities);
 
             // Always retrieve the FASTA file because PHRP uses it
             // This includes for MSGF+ because it uses the order of the proteins in the

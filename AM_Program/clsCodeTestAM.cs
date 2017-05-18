@@ -21,15 +21,16 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Initializes class
         /// </summary>
+        /// <param name="stepToolName">Name of the current step tool</param>
         /// <param name="mgrParams">Object containing manager parameters</param>
         /// <param name="jobParams">Object containing job parameters</param>
         /// <param name="statusTools">Object for updating status file as job progresses</param>
         /// <param name="summaryFile"></param>
         /// <param name="myEMSLUtilities"></param>
         /// <remarks></remarks>
-        public override void Setup(IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsSummaryFile summaryFile, clsMyEMSLUtilities myEMSLUtilities)
+        public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsSummaryFile summaryFile, clsMyEMSLUtilities myEMSLUtilities)
         {
-            base.Setup(mgrParams, jobParams, statusTools, summaryFile, myEMSLUtilities);
+            base.Setup(stepToolName, mgrParams, jobParams, statusTools, summaryFile, myEMSLUtilities);
 
             if (m_DebugLevel > 3)
             {

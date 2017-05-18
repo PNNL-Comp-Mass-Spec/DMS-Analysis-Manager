@@ -11,9 +11,9 @@ namespace AnalysisManagerOMSSAPlugIn
         internal const string OMSSA_INPUT_FILE = "OMSSA_input.xml";
         protected clsRunDosProgram mCmdRunner;
 
-        public override void Setup(IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsMyEMSLUtilities myEMSLUtilities)
+        public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsMyEMSLUtilities myEMSLUtilities)
         {
-            base.Setup(mgrParams, jobParams, statusTools, myEMSLUtilities);
+            base.Setup(stepToolName, mgrParams, jobParams, statusTools, myEMSLUtilities);
             SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, true);
         }
 
