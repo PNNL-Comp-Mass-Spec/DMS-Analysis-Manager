@@ -498,8 +498,8 @@ namespace AnalysisManagerMasicPlugin
 
         protected bool WaitForJobToFinish(PRISM.clsProgRunner objMasicProgRunner)
         {
-            const int MAX_RUNTIME_HOURS = 12;
-            const int SECONDS_BETWEEN_UPDATE = 15;
+            const int MAX_RUNTIME_HOURS = 24;
+            const int SECONDS_BETWEEN_UPDATE = 30;
 
             var blnSICsXMLFileExists = false;
             var dtStartTime = DateTime.UtcNow;
