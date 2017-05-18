@@ -817,11 +817,25 @@ namespace AnalysisManagerProg
 
                 if (runJobsRemotely)
                 {
-                    success = RunJobRemotely(toolRunner, jobNum, stepNum, datasetName, out eToolRunnerResult);
+                    success = RunJobRemotely(toolResourcer, jobNum, stepNum, out eToolRunnerResult);
+                    if (!success)
+                    {
+                        if (TraceMode)
+                            ShowTraceMessage("Error staging the job to run remotely; closing job step task");
+
+                        if (string.IsNullOrEmpty(m_MostRecentErrorMessage))
+                        {
+                            m_MostRecentErrorMessage = "Unknown error staging the job to run remotely";
+                        }
+
+                        m_AnalysisTask.CloseTask(eToolRunnerResult, m_MostRecentErrorMessage);
+                    }
                 }
                 else
                 {
                     success = RunJobLocally(toolRunner, jobNum, datasetName, out eToolRunnerResult);
+
+                    // Note: if success is false, RunJobLocally will have already called .CloseTask
                 }
             }
 
@@ -852,10 +866,7 @@ namespace AnalysisManagerProg
                     // eToolRunnerResult will be CLOSEOUT_SUCCESS if CheckRemoteJobStatus found that the job was done
                     // and successfully retrieved the results
 
-                    if (eToolRunnerResult == CloseOutType.CLOSEOUT_RUNNING_REMOTE)
-                        closeOut = CloseOutType.CLOSEOUT_RUNNING_REMOTE;
-                    else
-                        closeOut = CloseOutType.CLOSEOUT_SUCCESS;
+                    closeOut = eToolRunnerResult;
                 }
                 else
                 {
@@ -952,9 +963,7 @@ namespace AnalysisManagerProg
 
                 }
 
-
-                return true;
-
+                return eToolRunnerResult != CloseOutType.CLOSEOUT_FAILED;
             }
             catch (Exception ex)
             {
@@ -2217,24 +2226,80 @@ namespace AnalysisManagerProg
         }
 
         private bool RunJobRemotely(
-            IToolRunner toolRunner,
+            IAnalysisResources toolResourcer,
             int jobNum,
             int stepNum,
-            string datasetName,
             out CloseOutType eToolRunnerResult)
         {
             try
             {
 
                 if (TraceMode)
-                    ShowTraceMessage("Transferring files to remote host to run remotely");
+                    ShowTraceMessage("Instantiating clsRemoteTransferUtility");
 
                 var transferUtility = new clsRemoteTransferUtility(m_MgrSettings, m_AnalysisTask);
                 RegisterEvents(transferUtility);
 
+                try
+                {
+                    transferUtility.UpdateParameters(true);
+                }
+                catch (Exception ex)
+                {
+                    m_MostRecentErrorMessage = "Exception initializing the remote transfer utility: " + ex.Message;
+                    LogError(m_MostRecentErrorMessage, ex);
 
-                eToolRunnerResult = CloseOutType.CLOSEOUT_SUCCESS;
+                    eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+                    return false;
+                }
+
+                if (TraceMode)
+                    ShowTraceMessage("Transferring files to remote host to run remotely");
+
+                try
+                {
+                    var successCopying = toolResourcer.CopyResourcesToRemote(transferUtility);
+
+                    if (!successCopying)
+                    {
+                        m_MostRecentErrorMessage = "Error copying files to the remote host";
+                        LogError(m_MostRecentErrorMessage);
+
+                        eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+                        return false;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    m_MostRecentErrorMessage = "Exception copying files to the remote host: " + ex.Message;
+                    LogError(m_MostRecentErrorMessage, ex);
+
+                    eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+                    return false;
+                }
+
+                if (TraceMode)
+                    ShowTraceMessage("Creating the .info file in the remote task queue folder ");
+
+                // All files have been copied remotely
+                // Create the .info file so remote managers can start processing
+                var success = transferUtility.CreateJobTaskInfoFile(out var infoFilePathRemote);
+
+                if (!success)
+                {
+                    m_MostRecentErrorMessage = "Error creating the remote job task info file";
+                    LogError(m_MostRecentErrorMessage);
+
+                    eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+                    return false;
+                }
+
+                LogMessage(string.Format("Job {0}, step {1} staged to run remotely on {2}; remote info file at {3}",
+                                         jobNum, stepNum, transferUtility.RemoteHostName, infoFilePathRemote));
+
+                eToolRunnerResult = CloseOutType.CLOSEOUT_RUNNING_REMOTE;
                 return true;
+
 
             }
             catch (Exception ex)
