@@ -40,7 +40,7 @@ namespace AnalysisManagerProSightQuantPlugIn
                     "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " + strParamFileStoragePath);
             }
 
-            string strParamFileName = m_jobParams.GetParam("ProSightQuantParamFile");
+            var strParamFileName = m_jobParams.GetParam("ProSightQuantParamFile");
             if (string.IsNullOrEmpty(strParamFileName))
             {
                 m_message = clsAnalysisToolRunnerBase.NotifyMissingParameter(m_jobParams, "ProSightQuantParamFile");
@@ -66,7 +66,7 @@ namespace AnalysisManagerProSightQuantPlugIn
             m_jobParams.AddResultFileToSkip(strProSightPCResultsFile);
 
             // Get the instrument data file
-            string strRawDataType = m_jobParams.GetParam("RawDataType");
+            var strRawDataType = m_jobParams.GetParam("RawDataType");
 
             switch (strRawDataType.ToLower())
             {
