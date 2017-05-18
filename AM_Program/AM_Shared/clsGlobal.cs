@@ -1266,7 +1266,10 @@ namespace AnalysisManagerBase
             }
             else
             {
-                formattedError = errorMessage + ": " + ex.Message;
+                if (errorMessage.Contains(ex.Message))
+                    formattedError = errorMessage;
+                else
+                    formattedError = errorMessage + ": " + ex.Message;
             }
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine(formattedError);
