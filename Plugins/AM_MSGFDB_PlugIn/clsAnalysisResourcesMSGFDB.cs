@@ -155,7 +155,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             {
 
                 // Construct a list of any files that we don't want to copy
-                var filesToIgnore = new SortedSet<string>();
+                var filesToIgnore = GetDefaultWorkDirFilesToIgnore();
 
                 var copyWorkDirSuccess = CopyWorkDirFilesToRemote(transferUtility, filesToIgnore);
 

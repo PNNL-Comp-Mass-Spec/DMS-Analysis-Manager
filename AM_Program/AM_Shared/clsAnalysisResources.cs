@@ -1522,6 +1522,21 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
+        /// Return a SortedSet with the default files from the WorkDir to ignore
+        /// Used by CopyResourcesToRemote when calling CopyWorkDirFilesToRemote
+        /// </summary>
+        /// <returns></returns>
+        protected SortedSet<string> GetDefaultWorkDirFilesToIgnore()
+        {
+            // Construct the filename, for example JobParameters_1394245.xml
+            var jobParametersFilename = clsAnalysisJob.JobParametersFilename(m_JobNum);
+
+            var filesToIgnore = new SortedSet<string> { jobParametersFilename };
+
+            return filesToIgnore;
+        }
+
+        /// <summary>
         /// Look for a JobParameters file from the previous job step
         /// If found, copy to the working directory, naming in JobParameters_JobNum_PreviousStep.xml
         /// </summary>
