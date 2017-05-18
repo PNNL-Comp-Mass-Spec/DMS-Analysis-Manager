@@ -295,16 +295,14 @@ namespace AnalysisManagerResultsXferPlugin
                         errorCount += 1;
                         if (errorCount == 1)
                         {
-                            errorMessage = "Error moving file " + fiSourceFile.Name + ": " + ex.Message;
+                            LogError("Error moving file " + fiSourceFile.Name + ": " + ex.Message, ex);
                         }
-                        LogError("Error moving file " + fiSourceFile.Name + ": " + ex.Message);
+                        else
+                        {
+                            LogErrorNoMessageUpdate("Error moving file " + fiSourceFile.Name + ": " + ex.Message);
+                        }
                         success = false;
                     }
-                }
-
-                if (errorCount > 0)
-                {
-                    m_message = clsGlobal.AppendToComment(m_message, errorMessage);
                 }
 
                 // Recursively call this function for each subdirectory
@@ -349,11 +347,6 @@ namespace AnalysisManagerResultsXferPlugin
         /// <remarks></remarks>
         protected virtual CloseOutType PerformResultsXfer()
         {
-            string msg = null;
-            string FolderToMove = null;
-            string DatasetDir = null;
-            string TargetDir = null;
-
             var transferFolderPath = m_jobParams.GetParam("transferFolderPath");
             var datasetStoragePath = m_jobParams.GetParam("DatasetStoragePath");
 
@@ -361,8 +354,8 @@ namespace AnalysisManagerResultsXferPlugin
             var serverName = Environment.MachineName;
             var movingLocalFiles = false;
 
-            if (string.Compare(GetMachineNameFromPath(transferFolderPath), serverName, true) == 0 &&
-                string.Compare(GetMachineNameFromPath(datasetStoragePath), serverName, true) == 0)
+            if (string.Equals(GetMachineNameFromPath(transferFolderPath), serverName, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(GetMachineNameFromPath(datasetStoragePath), serverName, StringComparison.OrdinalIgnoreCase))
             {
                 // Update the paths to use local file paths instead of network share paths
 
@@ -378,33 +371,36 @@ namespace AnalysisManagerResultsXferPlugin
             }
 
             // Verify input folder exists in storage server xfer folder
-            FolderToMove = Path.Combine(transferFolderPath, m_jobParams.GetParam("DatasetFolderName"));
-            FolderToMove = Path.Combine(FolderToMove, m_jobParams.GetParam("InputFolderName"));
+            var folderToMove = Path.Combine(transferFolderPath, m_jobParams.GetParam("DatasetFolderName"), m_jobParams.GetParam("InputFolderName"));
 
-            if (!Directory.Exists(FolderToMove))
+            if (!Directory.Exists(folderToMove))
             {
-                msg = "clsResultXferToolRunner.PerformResultsXfer(); results folder " + FolderToMove + " not found";
-                m_message = clsGlobal.AppendToComment(m_message, "results folder not found");
-                LogError(msg);
+                LogError("Results transfer failed, directory" + folderToMove + " not found");
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-            else if (m_DebugLevel >= 4)
+
+            if (m_DebugLevel >= 4)
             {
-                LogDebug("Results folder to move: " + FolderToMove);
+                LogDebug("Results folder to move: " + folderToMove);
             }
 
             // Verify dataset folder exists on storage server
             // If it doesn't exist, we will auto-create it (this behavior was added 4/24/2009)
-            DatasetDir = Path.Combine(datasetStoragePath, m_jobParams.GetParam("DatasetFolderName"));
-            var diDatasetFolder = new DirectoryInfo(DatasetDir);
+            var datasetDir = Path.Combine(datasetStoragePath, m_jobParams.GetParam("DatasetFolderName"));
+            var diDatasetFolder = new DirectoryInfo(datasetDir);
             if (!diDatasetFolder.Exists)
             {
-                msg = "clsResultXferToolRunner.PerformResultsXfer(); dataset folder " + DatasetDir + " not found; will attempt to make it";
-                LogWarning(msg);
+                LogWarning("Dataset folder " + datasetDir + " not found for results transfer; will attempt to make it");
 
                 try
                 {
                     var diParentFolder = diDatasetFolder.Parent;
+
+                    if (diParentFolder == null)
+                    {
+                        LogError("Unable to determine the parent folder of " + diDatasetFolder.FullName);
+                        return CloseOutType.CLOSEOUT_FAILED;
+                    }
 
                     if (!diParentFolder.Exists)
                     {
@@ -434,44 +430,36 @@ namespace AnalysisManagerResultsXferPlugin
                         if (!diDatasetFolder.Exists)
                         {
                             // Creation of the dataset folder failed; unable to continue
-                            msg = "clsResultXferToolRunner.PerformResultsXfer(); error trying to create missing dataset folder " + DatasetDir +
-                                  ": folder creation failed for unknown reason";
-                            m_message = clsGlobal.AppendToComment(m_message, "error trying to create missing dataset folder");
-                            LogError(msg);
+                            var msg = "Error trying to create missing dataset folder";
+                            LogError(msg, msg + datasetDir + ": folder creation failed for unknown reason");
                             return CloseOutType.CLOSEOUT_FAILED;
                         }
                     }
                     else
                     {
-                        msg = "clsResultXferToolRunner.PerformResultsXfer(); parent folder not found: " + diDatasetFolder.Parent.FullName +
-                              "; unable to continue";
-                        m_message = clsGlobal.AppendToComment(m_message, "parent folder not found: " + diDatasetFolder.Parent.FullName);
-                        LogError(msg);
+                        LogError("Parent directory not found: " + diParentFolder.FullName);
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
                 }
                 catch (Exception ex)
                 {
-                    msg = "clsResultXferToolRunner.PerformResultsXfer(); error trying to create missing dataset folder " + DatasetDir + ": " +
-                          ex.Message;
-                    m_message = clsGlobal.AppendToComment(m_message, "exception trying to create missing dataset folder");
-                    LogError(msg);
+                    var msg = "Error trying to create missing dataset folder";
+                    LogError(msg, msg + ": " + datasetDir, ex);
 
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
             }
             else if (m_DebugLevel >= 4)
             {
-                LogDebug("Dataset folder path: " + DatasetDir);
+                LogDebug("Dataset folder path: " + datasetDir);
             }
 
-            TargetDir = Path.Combine(DatasetDir, m_jobParams.GetParam("inputfoldername"));
+            var targetDir = Path.Combine(datasetDir, m_jobParams.GetParam("inputfoldername"));
 
             // Determine if output folder already exists on storage server
-            if (Directory.Exists(TargetDir))
+            if (Directory.Exists(targetDir))
             {
-                msg = "Warning: overwriting existing results folder: " + TargetDir;
-                LogWarning(msg);
+                LogWarning("Warning: overwriting existing results folder: " + targetDir);
             }
 
             // Move the directory
@@ -479,12 +467,12 @@ namespace AnalysisManagerResultsXferPlugin
             {
                 if (m_DebugLevel >= 3)
                 {
-                    LogDebug("Moving '" + FolderToMove + "' to '" + TargetDir + "'");
+                    LogDebug("Moving '" + folderToMove + "' to '" + targetDir + "'");
                 }
 
                 if (movingLocalFiles)
                 {
-                    var success = MoveFilesLocally(FolderToMove, TargetDir, overwriteExisting: true);
+                    var success = MoveFilesLocally(folderToMove, targetDir, overwriteExisting: true);
                     if (!success)
                         return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -493,17 +481,16 @@ namespace AnalysisManagerResultsXferPlugin
                     // Call MoveDirectory, which will copy the files using locks
                     if (m_DebugLevel >= 2)
                     {
-                        LogDebug("Using m_FileTools.MoveDirectory to copy files to " + TargetDir);
+                        LogDebug("Using m_FileTools.MoveDirectory to copy files to " + targetDir);
                     }
                     ResetTimestampForQueueWaitTimeLogging();
-                    m_FileTools.MoveDirectory(FolderToMove, TargetDir, overwriteFiles: true);
+                    m_FileTools.MoveDirectory(folderToMove, targetDir, overwriteFiles: true);
                 }
             }
             catch (Exception ex)
             {
-                msg = "clsResultXferToolRunner.PerformResultsXfer(); Exception moving results folder " + FolderToMove + ": " + ex.Message;
-                m_message = clsGlobal.AppendToComment(m_message, "exception moving results folder");
-                LogError(msg);
+                var msg = "Exception moving results folder";
+                LogError(msg, msg + ": " + folderToMove, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 

@@ -1567,7 +1567,7 @@ namespace AnalysisManagerBase
                 else
                 {
                     LogError("Error in GetExistingJobParametersFile copying file " + sourceFile.FullName);
-                    // Return false
+                    return false;
                 }
 
                 var sourceJobParamXMLFile = new FileInfo(destFilePath);
@@ -2530,7 +2530,7 @@ namespace AnalysisManagerBase
         {
             clsGlobal.LogDebug(debugMessage);
 
-            if ((statusTools != null))
+            if (statusTools != null)
             {
                 statusTools.CurrentOperation = debugMessage;
                 statusTools.UpdateAndWrite(0);
@@ -4103,12 +4103,14 @@ namespace AnalysisManagerBase
         {
             if (appendToExisting)
             {
-                clsGlobal.AppendToComment(m_message, statusMessage);
+                m_message = clsGlobal.AppendToComment(m_message, statusMessage);
             }
             else
             {
                 m_message = statusMessage;
             }
+
+            LogDebugMessage(m_message);
         }
 
         /// <summary>

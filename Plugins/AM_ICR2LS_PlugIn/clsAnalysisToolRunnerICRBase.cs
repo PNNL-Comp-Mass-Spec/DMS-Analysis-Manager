@@ -956,7 +956,6 @@ namespace AnalysisManagerICR2LSPlugIn
         private void mPEKtoCSVConverter_ErrorEvent(object sender, PEKtoCSVConverter.PEKtoCSVConverter.MessageEventArgs e)
         {
             LogError("PEKtoCSVConverter error: " + e.Message);
-            clsGlobal.AppendToComment(m_message, e.Message);
         }
 
         private void mPEKtoCSVConverter_MessageEvent(object sender, PEKtoCSVConverter.PEKtoCSVConverter.MessageEventArgs e)

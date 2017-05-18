@@ -180,19 +180,16 @@ namespace AnalysisManagerProSightQuantPlugIn
 
                 if (!blnSuccess)
                 {
-                    string Msg = null;
-                    Msg = "Error running TargetedWorkflowsConsole";
+                    var msg = "Error running TargetedWorkflowsConsole";
 
                     if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                     {
-                        m_message = clsGlobal.AppendToComment(m_message, Msg + "; " + mConsoleOutputErrorMsg);
+                        LogError(msg + "; " + mConsoleOutputErrorMsg);
                     }
                     else
                     {
-                        m_message = clsGlobal.AppendToComment(m_message, Msg);
+                        LogError(msg);
                     }
-
-                    LogError(Msg + ", job " + m_JobNum);
 
                     if (mCmdRunner.ExitCode != 0)
                     {

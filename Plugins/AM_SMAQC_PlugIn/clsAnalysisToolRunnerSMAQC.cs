@@ -149,10 +149,7 @@ namespace AnalysisManagerSMAQCPlugIn
 
                 if (!blnSuccess)
                 {
-                    var msg = "Error running SMAQC";
-                    m_message = clsGlobal.AppendToComment(m_message, msg);
-
-                    LogError(msg + ", job " + m_JobNum);
+                    LogError("Error running SMAQC");
 
                     if (mCmdRunner.ExitCode != 0)
                     {
@@ -491,7 +488,7 @@ namespace AnalysisManagerSMAQCPlugIn
             }
             catch (Exception ex)
             {
-                LogError("Error converting SMAQC results to XML: " + ex.Message);
+                LogError("Error converting SMAQC results to XML", ex);
                 m_message = "Error converting SMAQC results to XML";
                 return false;
             }
@@ -705,7 +702,7 @@ namespace AnalysisManagerSMAQCPlugIn
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    LogError("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    LogError("Error parsing console output file (" + strConsoleOutputFilePath + ")", ex);
                 }
             }
         }
@@ -894,7 +891,7 @@ namespace AnalysisManagerSMAQCPlugIn
                 }
                 catch (Exception ex)
                 {
-                    LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
+                    LogError("Exception calling SetStepTaskToolVersion", ex);
                     return false;
                 }
             }
@@ -923,7 +920,7 @@ namespace AnalysisManagerSMAQCPlugIn
             }
             catch (Exception ex)
             {
-                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion", ex);
                 return false;
             }
         }

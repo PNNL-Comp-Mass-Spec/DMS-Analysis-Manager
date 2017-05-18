@@ -211,17 +211,13 @@ namespace AnalysisManagerExtractionPlugin
                         break;
                     default:
                         // Should never get here - invalid result type specified
-                        var msg = "Invalid ResultType specified: " + m_jobParams.GetParam("ResultType");
-                        LogError("clsExtractToolRunner.RunTool(); " + msg);
-                        m_message = clsGlobal.AppendToComment(m_message, msg);
+                        LogError("Invalid ResultType specified: " + m_jobParams.GetParam("ResultType"));
                         return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 if (eResult != CloseOutType.CLOSEOUT_SUCCESS & eResult != CloseOutType.CLOSEOUT_NO_DATA)
                 {
-                    var msg = "Error " + strCurrentAction;
-                    LogError("clsExtractToolRunner.RunTool(); " + msg);
-                    m_message = clsGlobal.AppendToComment(m_message, msg);
+                    LogError("Error " + strCurrentAction);
                     blnProcessingError = true;
                 }
                 else
@@ -285,8 +281,7 @@ namespace AnalysisManagerExtractionPlugin
             }
             catch (Exception ex)
             {
-                LogError("Exception running extraction tool: " + ex.Message, ex);
-                m_message = clsGlobal.AppendToComment(m_message, "Exception running extraction tool");
+                LogError("Exception running extraction tool", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -462,9 +457,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 if (!blnSuccess)
                 {
-                    var msg = "Error parsing and filtering " + toolName + " results";
-                    LogError(msg + ", job " + m_JobNum);
-                    m_message = clsGlobal.AppendToComment(m_message, msg);
+                    LogError("Error parsing and filtering " + toolName + " results");
 
                     if (progRunner.ExitCode != 0)
                     {
@@ -969,8 +962,7 @@ namespace AnalysisManagerExtractionPlugin
             }
             catch (Exception ex)
             {
-                LogError("clsExtractToolRunner.PerformPeptideExtraction(); Exception running extraction tool: " + ex.Message, ex);
-                m_message = clsGlobal.AppendToComment(m_message, "Exception running extraction tool");
+                LogError("Exception running extraction tool", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
             return CloseOutType.CLOSEOUT_SUCCESS;
@@ -1008,13 +1000,11 @@ namespace AnalysisManagerExtractionPlugin
             }
             catch (Exception ex)
             {
-                msg = "clsExtractToolRunner.RunPhrpForSequest(); Exception running PHRP: " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex);
-                LogError(msg);
-                m_message = clsGlobal.AppendToComment(m_message, "Exception running PHRP");
+                LogError("Exception running PHRP", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            if ((eResult != CloseOutType.CLOSEOUT_SUCCESS))
+            if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 msg = "Error running PHRP";
                 if (!string.IsNullOrWhiteSpace(phrp.ErrMsg))
@@ -1071,7 +1061,7 @@ namespace AnalysisManagerExtractionPlugin
             }
             catch (Exception ex)
             {
-                LogError("Exception running PHRP: " + ex.Message, ex);
+                LogError("Exception running PHRP", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -1123,7 +1113,7 @@ namespace AnalysisManagerExtractionPlugin
             }
             catch (Exception ex)
             {
-                LogError("clsExtractToolRunner.RunPhrpForMSAlign(); Exception running PHRP: " + ex.Message, ex);
+                LogError("Exception running PHRP", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -1248,8 +1238,7 @@ namespace AnalysisManagerExtractionPlugin
                 }
                 catch (Exception ex)
                 {
-                    LogError("clsExtractToolRunner.RunPhrpForMODa(); Exception running PHRP: " + ex.Message, ex);
-                    m_message = clsGlobal.AppendToComment(m_message, "Exception running PHRP");
+                    LogError("Exception running PHRP", ex);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -1332,8 +1321,7 @@ namespace AnalysisManagerExtractionPlugin
                 }
                 catch (Exception ex)
                 {
-                    LogError("clsExtractToolRunner.RunPhrpForMODPlus(); Exception running PHRP: " + ex.Message, ex);
-                    m_message = clsGlobal.AppendToComment(m_message, "Exception running PHRP");
+                    LogError("Exception running PHRP", ex);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -1530,8 +1518,7 @@ namespace AnalysisManagerExtractionPlugin
                 }
                 catch (Exception ex)
                 {
-                    LogError("clsExtractToolRunner.RunPhrpForMSGFPlus(); Exception running PHRP: " + ex.Message, ex);
-                    m_message = clsGlobal.AppendToComment(m_message, "Exception running PHRP");
+                    LogError("Exception running PHRP", ex);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -1616,8 +1603,7 @@ namespace AnalysisManagerExtractionPlugin
                 }
                 catch (Exception ex)
                 {
-                    LogError("clsExtractToolRunner.RunPhrpForMODa(); Exception running PHRP: " + ex.Message, ex);
-                    m_message = clsGlobal.AppendToComment(m_message, "Exception running PHRP");
+                    LogError("Exception running PHRP", ex);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -1785,8 +1771,7 @@ namespace AnalysisManagerExtractionPlugin
             }
             catch (Exception ex)
             {
-                LogError("clsExtractToolRunner.RunPhrpForInSpecT(); Exception running PHRP: " + ex.Message, ex);
-                m_message = clsGlobal.AppendToComment(m_message, "Exception running PHRP");
+                LogError("Exception running PHRP", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -2191,8 +2176,7 @@ namespace AnalysisManagerExtractionPlugin
             }
             catch (Exception ex)
             {
-                LogError("Exception in clsExtractToolRunner.InterleaveFiles: " + ex.Message, ex);
-                m_message = clsGlobal.AppendToComment(m_message, "Exception in InterleaveFiles");
+                LogError("Exception in clsExtractToolRunner.InterleaveFiles", ex);
                 blnSuccess = false;
             }
 
@@ -2322,8 +2306,7 @@ namespace AnalysisManagerExtractionPlugin
             }
             catch (Exception ex)
             {
-                LogError("Exception in clsExtractToolRunner.SplitFileRoundRobin: " + ex.Message, ex);
-                m_message = clsGlobal.AppendToComment(m_message, "Exception in SplitFileRoundRobin");
+                LogError("Exception in clsExtractToolRunner.SplitFileRoundRobin", ex);
                 blnSuccess = false;
             }
 

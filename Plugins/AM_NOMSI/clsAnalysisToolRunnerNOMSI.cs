@@ -507,11 +507,7 @@ namespace AnalysisManagerNOMSIPlugin
                 return true;
             }
 
-            var msg = "Error processing scan " + scanNumber + " using NOMSI";
-            m_message = clsGlobal.AppendToComment(m_message, msg);
-
-            LogError(
-                                 msg + ", job " + m_JobNum);
+            LogError("Error processing scan " + scanNumber + " using NOMSI");
 
             if (cmdRunner.ExitCode != 0)
             {

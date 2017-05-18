@@ -456,18 +456,14 @@ namespace AnalysisManagerXTandemPlugIn
                     TmpFilePath = Path.Combine(m_WorkDir, Path.GetFileName(TmpFile));
                     if (!base.ZipFile(TmpFilePath, true))
                     {
-                        string Msg = "Error zipping output files, job " + m_JobNum;
-                        LogError(Msg);
-                        m_message = clsGlobal.AppendToComment(m_message, "Error zipping output files");
+                        LogError("Error zipping output files");
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
                 }
             }
             catch (Exception ex)
             {
-                string Msg = "clsAnalysisToolRunnerXT.ZipMainOutputFile, Exception zipping output files, job " + m_JobNum + ": " + ex.Message;
-                LogError(Msg);
-                m_message = clsGlobal.AppendToComment(m_message, "Error zipping output files");
+                LogError("Exception zipping output files", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 

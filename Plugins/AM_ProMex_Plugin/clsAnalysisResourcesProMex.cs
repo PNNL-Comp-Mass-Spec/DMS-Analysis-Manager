@@ -71,8 +71,7 @@ namespace AnalysisManagerProMexPlugIn
                 if (string.IsNullOrEmpty(paramFileName))
                 {
                     // Settings file does not contain parameter ProMexParamFile
-                    m_message = "Parameter 'ProMexParamFile' is not defined in the settings file for this job";
-                    LogError(m_message);
+                    LogError("Parameter 'ProMexParamFile' is not defined in the settings file for this job");
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
             }
@@ -81,11 +80,11 @@ namespace AnalysisManagerProMexPlugIn
             {
                 if (proMexScript)
                 {
-                    m_message = clsGlobal.AppendToComment(m_message, "see the parameter file name defined for this Analysis Job");
+                    UpdateStatusMessage("see the parameter file name defined for this Analysis Job");
                 }
                 else
                 {
-                    m_message = clsGlobal.AppendToComment(m_message, "see the Analysis Job's settings file, entry ProMexParamFile");
+                    UpdateStatusMessage("see the Analysis Job's settings file, entry ProMexParamFile");
                 }
                 return CloseOutType.CLOSEOUT_FAILED;
             }

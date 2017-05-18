@@ -188,10 +188,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
 
                 if (!success)
                 {
-                    var msg = "Error running LipidTools";
-                    m_message = clsGlobal.AppendToComment(m_message, msg);
-
-                    LogError(msg + ", job " + m_JobNum);
+                    LogError("Error running LipidTools");
 
                     if (mCmdRunner.ExitCode != 0)
                     {

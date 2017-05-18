@@ -587,10 +587,8 @@ namespace AnalysisManagerProMexPlugIn
 
             if (!blnSuccess)
             {
-                var Msg = "Error running ProMex";
-                m_message = clsGlobal.AppendToComment(m_message, Msg);
 
-                LogError(Msg + ", job " + m_JobNum);
+                LogError("Error running ProMex");
 
                 if (mCmdRunner.ExitCode != 0)
                 {

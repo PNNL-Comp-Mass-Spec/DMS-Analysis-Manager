@@ -330,9 +330,8 @@ namespace AnalysisManagerSequestPlugin
 
             if ((mTotalOutFileCount + OutFiles.Length) < 1)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR,
-                    "No OUT files created, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
-                m_message = clsGlobal.AppendToComment(m_message, "No OUT files created");
+                LogErrorToDatabase("No OUT files created, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
+                UpdateStatusMessage("No OUT files created");
                 blnProcessingError = true;
             }
 

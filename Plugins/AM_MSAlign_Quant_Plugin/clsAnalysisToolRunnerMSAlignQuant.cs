@@ -182,14 +182,12 @@ namespace AnalysisManagerMSAlignQuantPlugIn
 
                     if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                     {
-                        m_message = clsGlobal.AppendToComment(m_message, msg + "; " + mConsoleOutputErrorMsg);
+                        LogError(msg + "; " + mConsoleOutputErrorMsg);
                     }
                     else
                     {
-                        m_message = clsGlobal.AppendToComment(m_message, msg);
+                        LogError(msg);
                     }
-
-                    LogError(msg + ", job " + m_JobNum);
 
                     if (mCmdRunner.ExitCode != 0)
                     {
@@ -517,7 +515,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                                 if (strNewError.Contains("all peptides contain unknown modifications"))
                                 {
                                     strNewError = "Error: every peptide in the mass tags file had an unknown modification; " +
-                                        "known mods are Acetylation (C2H2O, 42.01 Da), Phosphorylation (HPO3, 79.97 Da), " + 
+                                        "known mods are Acetylation (C2H2O, 42.01 Da), Phosphorylation (HPO3, 79.97 Da), " +
                                         "or Pyroglutomate (H3N1, 17.03 Da)";
                                 }
 

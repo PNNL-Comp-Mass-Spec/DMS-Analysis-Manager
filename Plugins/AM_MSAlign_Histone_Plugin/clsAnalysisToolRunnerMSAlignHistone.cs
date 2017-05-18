@@ -97,7 +97,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             int intJavaMemorySize = 0;
 
             CloseOutType result = CloseOutType.CLOSEOUT_FAILED;
-            var blnProcessingError = false;
+            var processingError = false;
 
             CloseOutType eResult = CloseOutType.CLOSEOUT_SUCCESS;
             bool blnSuccess = false;
@@ -232,11 +232,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                 if (!blnSuccess)
                 {
-                    string Msg = null;
-                    Msg = "Error running MSAlign_Histone";
-                    m_message = clsGlobal.AppendToComment(m_message, Msg);
-
-                    LogError(Msg + ", job " + m_JobNum);
+                    LogError("Error running MSAlign_Histone");
 
                     if (cmdRunner.ExitCode != 0)
                     {
@@ -247,7 +243,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                         LogWarning("Call to MSAlign_Histone failed (but exit code is 0)");
                     }
 
-                    blnProcessingError = true;
+                    processingError = true;
                     eResult = CloseOutType.CLOSEOUT_FAILED;
                 }
                 else
@@ -255,7 +251,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                     // Make sure the output files were created
                     if (!ValidateResultFiles())
                     {
-                        blnProcessingError = true;
+                        processingError = true;
                     }
                     else
                     {
@@ -264,18 +260,18 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                         blnSuccess = MakeReportFiles(JavaProgLoc, strMSAlignCmdLineOptions, intJavaMemorySize);
                         if (!blnSuccess)
-                            blnProcessingError = true;
+                            processingError = true;
 
                         // Move the result files
                         if (!MoveMSAlignResultFiles())
                         {
-                            blnProcessingError = true;
+                            processingError = true;
                         }
 
                         string strResultTableSourcePath = null;
                         strResultTableSourcePath = Path.Combine(m_WorkDir, m_Dataset + "_" + RESULT_TABLE_FILE_EXTENSION);
 
-                        if (!blnProcessingError && File.Exists(strResultTableSourcePath))
+                        if (!processingError && File.Exists(strResultTableSourcePath))
                         {
                             // Make sure the _OUTPUT_TABLE.txt file is not empty
                             // Make a copy of the OUTPUT_TABLE.txt file so that we can fix the header row (creating the RESULT_TABLE_NAME_SUFFIX file)
@@ -312,7 +308,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 
                 PRISM.clsProgRunner.GarbageCollectNow();
 
-                if (blnProcessingError)
+                if (processingError)
                 {
                     // Move the source files and any results to the Failed Job folder
                     // Useful for debugging MSAlign problems
@@ -404,7 +400,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             catch (Exception ex)
             {
                 m_message = "Exception in CopyFastaCheckResidues";
-                LogError(m_message + ": " + ex.Message);
+                LogError(m_message, ex);
                 return false;
             }
 
@@ -538,7 +534,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             }
             catch (Exception ex)
             {
-                LogError("Exception in CopyMSAlignProgramFiles: " + ex.Message);
+                LogError("Exception in CopyMSAlignProgramFiles", ex);
                 return false;
             }
 
@@ -695,7 +691,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             catch (Exception ex)
             {
                 m_message = "Exception in CreateMSAlignCommandLine";
-                LogError("Exception in CreateMSAlignCommandLine: " + ex.Message);
+                LogError("Exception in CreateMSAlignCommandLine", ex);
                 return false;
             }
 
@@ -743,7 +739,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             }
             catch (Exception ex)
             {
-                LogError("Exception in FilesMatch: " + ex.Message);
+                LogError("Exception in FilesMatch", ex);
                 blnFilesMatch = false;
             }
 
@@ -816,7 +812,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             }
             catch (Exception ex)
             {
-                LogError("Exception in InitializeMSInputFolder: " + ex.Message);
+                LogError("Exception in InitializeMSInputFolder", ex);
                 return false;
             }
 
@@ -853,11 +849,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                 if (!blnSuccess)
                 {
-                    string Msg = null;
-                    Msg = "Error running MSAlign_Histone to create HTML and XML files";
-                    m_message = clsGlobal.AppendToComment(m_message, Msg);
-
-                    LogError(Msg + ", job " + m_JobNum);
+                    LogError("Error running MSAlign_Histone to create HTML and XML files");
 
                     if (cmdRunner.ExitCode != 0)
                     {
@@ -876,7 +868,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             catch (Exception ex)
             {
                 m_message = "Exception creating MSAlign_Histone HTML and XML files";
-                LogError("Exception in MakeReportFiles: " + ex.Message);
+                LogError("Exception in MakeReportFiles", ex);
                 return false;
             }
 
@@ -996,7 +988,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    LogError("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    LogError("Error parsing console output file (" + strConsoleOutputFilePath + ")", ex);
                 }
             }
         }
@@ -1024,7 +1016,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             }
             catch (Exception ex)
             {
-                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion", ex);
                 return false;
             }
         }
@@ -1124,7 +1116,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 {
                     if (m_DebugLevel >= 1)
                     {
-                        LogError("Error replacing original console output file (" + strConsoleOutputFilePath + ") with trimmed version: " + ex.Message);
+                        LogError("Error replacing original console output file (" + strConsoleOutputFilePath + ") with trimmed version", ex);
                     }
                 }
             }
@@ -1133,14 +1125,14 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    LogError("Error trimming console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    LogError("Error trimming console output file (" + strConsoleOutputFilePath + ")", ex);
                 }
             }
         }
 
         protected bool MoveMSAlignResultFiles()
         {
-            var blnProcessingError = false;
+            var processingError = false;
 
             string strEValueResultFilePath = string.Empty;
             string strFinalResultFilePath = string.Empty;
@@ -1201,11 +1193,11 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             }
             catch (Exception ex)
             {
-                LogError("Exception in ValidateAndCopyResultFiles: " + ex.Message);
+                LogError("Exception in ValidateAndCopyResultFiles", ex);
                 return false;
             }
 
-            if (blnProcessingError)
+            if (processingError)
             {
                 return false;
             }
@@ -1217,7 +1209,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
         protected bool ValidateResultFiles()
         {
-            var blnProcessingError = false;
+            var processingError = false;
 
             try
             {
@@ -1229,28 +1221,27 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                     if (!fiSearchResultFile.Exists)
                     {
-                        string Msg = null;
-                        Msg = "MSAlign results file not found (" + kvItem.Key + ")";
+                        var msg = "MSAlign results file not found";
 
-                        if (!blnProcessingError)
+                        if (!processingError)
                         {
                             // This is the first missing file; update the base-class comment
-                            m_message = clsGlobal.AppendToComment(m_message, Msg);
+                            LogError(msg + ": " + kvItem.Key);
+                            processingError = true;
                         }
 
-                        LogError(
-                            Msg + " (" + fiSearchResultFile.FullName + ")" + ", job " + m_JobNum);
-                        blnProcessingError = true;
+                        LogErrorNoMessageUpdate(msg + ": " + fiSearchResultFile.FullName);
+
                     }
                 }
             }
             catch (Exception ex)
             {
-                LogError("Exception in ValidateResultFiles: " + ex.Message);
+                LogError("Exception in ValidateResultFiles", ex);
                 return false;
             }
 
-            if (blnProcessingError)
+            if (processingError)
             {
                 return false;
             }
@@ -1338,11 +1329,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                 if (!blnValidDataFound)
                 {
-                    string Msg = null;
-                    Msg = "MSAlign OUTPUT_TABLE file is empty";
-                    m_message = clsGlobal.AppendToComment(m_message, Msg);
-
-                    LogError(Msg + ", job " + m_JobNum);
+                    LogError("MSAlign OUTPUT_TABLE file is empty");
                     return false;
                 }
                 else
@@ -1353,7 +1340,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             }
             catch (Exception ex)
             {
-                LogError("Exception in ValidateResultTableFile: " + ex.Message);
+                LogError("Exception in ValidateResultTableFile", ex);
                 return false;
             }
 
@@ -1399,7 +1386,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             }
             catch (Exception ex)
             {
-                LogError("Exception in ZipMSAlignResultFolder: " + ex.Message);
+                LogError("Exception in ZipMSAlignResultFolder", ex);
                 return false;
             }
 

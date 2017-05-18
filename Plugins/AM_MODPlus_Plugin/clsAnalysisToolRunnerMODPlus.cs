@@ -256,11 +256,7 @@ namespace AnalysisManagerMODPlusPlugin
                 return true;
             }
 
-            string msg = null;
-            msg = "Error running MSConvert";
-            m_message = clsGlobal.AppendToComment(m_message, msg);
-
-            LogError(msg + ", job " + m_JobNum);
+            LogError("Error running MSConvert");
 
             if (msConvertRunner.ExitCode != 0)
             {
@@ -628,17 +624,16 @@ namespace AnalysisManagerMODPlusPlugin
                     {
                         // Result file not found for the current thread
                         // Log an error, but continue to combine the files
-                        m_message = clsGlobal.AppendToComment(m_message, "Result file not found for thread " + modPlusRunner.Key);
-                        LogError(m_message);
+                        LogError("Result file not found for thread " + modPlusRunner.Key);
                         successOverall = false;
                         continue;
                     }
-                    else if (fiResultFile.Length == 0)
+
+                    if (fiResultFile.Length == 0)
                     {
                         // 0-byte result file
                         // Log an error, but continue to combine the files
-                        m_message = clsGlobal.AppendToComment(m_message, "Result file is empty for thread " + modPlusRunner.Key);
-                        LogError(m_message);
+                        LogError("Result file is empty for thread " + modPlusRunner.Key);
                         successOverall = false;
                         continue;
                     }
@@ -977,7 +972,7 @@ namespace AnalysisManagerMODPlusPlugin
                             {
                                 modPlusRunner.Value.CommandLineArgsLogged = true;
 
-                                // "C:\Program Files\Java\jre8\bin\java.exe" -Xmx3G -jar C:\DMS_Programs\MODPlus\modp_pnnl.jar 
+                                // "C:\Program Files\Java\jre8\bin\java.exe" -Xmx3G -jar C:\DMS_Programs\MODPlus\modp_pnnl.jar
                                 //   -i MODPlus_Params_Part1.xml -o E:\DMS_WorkDir2\Dataset_Part1_modp.txt > MODPlus_ConsoleOutput_Part1.txt
                                 LogDebug(
                                     javaProgLoc + " " + modPlusRunner.Value.CommandLineArgs);
@@ -1073,11 +1068,8 @@ namespace AnalysisManagerMODPlusPlugin
 
                 if (!blnSuccess)
                 {
-                    string msg = null;
-                    msg = "Error running MODPlus";
-                    m_message = clsGlobal.AppendToComment(m_message, msg);
 
-                    LogError(msg + ", job " + m_JobNum);
+                    LogError("Error running MODPlus");
 
                     if (exitCode != 0)
                     {

@@ -507,7 +507,7 @@ namespace AnalysisManagerSequestPlugin
             NumFiles = DtaFiles.GetLength(0);
             if (NumFiles == 0)
             {
-                m_message = clsGlobal.AppendToComment(m_message, "No dta files found for Sequest processing");
+                LogError("No dta files found for Sequest processing");
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -650,14 +650,12 @@ namespace AnalysisManagerSequestPlugin
             {
                 var msg = "No OUT files created";
                 LogErrorToDatabase(msg + ", job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
-                m_message = clsGlobal.AppendToComment(m_message, msg);
+                UpdateStatusMessage(msg);
                 return CloseOutType.CLOSEOUT_NO_OUT_FILES;
             }
-            else
-            {
-                //Add .out extension to list of file extensions to delete
-                m_jobParams.AddResultFileExtensionToSkip(".out");
-            }
+
+            //Add .out extension to list of file extensions to delete
+            m_jobParams.AddResultFileExtensionToSkip(".out");
 
             //Package out files into concatenated text files
             if (!ConcatOutFiles(m_WorkDir, m_Dataset, m_JobNum))

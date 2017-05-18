@@ -1489,9 +1489,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
                 if (!base.ZipFile(mPepXMLFilePath, false, strZippedPepXMLFilePath))
                 {
-                    string Msg = "Error zipping PepXML file, job " + m_JobNum;
-                    LogError(Msg);
-                    m_message = clsGlobal.AppendToComment(m_message, "Error zipping PepXML file");
+                    LogError("Error zipping PepXML file");
                     return false;
                 }
 
@@ -1500,9 +1498,7 @@ namespace AnalysisManagerIDPickerPlugIn
             }
             catch (Exception ex)
             {
-                string Msg = "clsAnalysisToolRunnerIDPicker.ZipPepXMLFile, Exception zipping output files, job " + m_JobNum + ": " + ex.Message;
-                LogError(Msg);
-                m_message = clsGlobal.AppendToComment(m_message, "Error zipping PepXML file");
+                LogError("Exception zipping PepXML output file", ex);
                 return false;
             }
 

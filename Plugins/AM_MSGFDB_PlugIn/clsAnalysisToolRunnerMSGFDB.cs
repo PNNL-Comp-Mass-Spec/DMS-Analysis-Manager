@@ -417,16 +417,14 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
             else
             {
-                string msg;
                 if (mMSGFPlusComplete)
                 {
-                    msg = "MSGF+ log file reported it was complete, but aborted the ProgRunner since Java was frozen";
+                    LogError("MSGF+ log file reported it was complete, but aborted the ProgRunner since Java was frozen");
                 }
                 else
                 {
-                    msg = "Error running MSGF+";
+                    LogError("Error running MSGF+");
                 }
-                LogError(msg, msg + ", job " + m_JobNum);
 
                 if (mMSGFPlusComplete)
                 {

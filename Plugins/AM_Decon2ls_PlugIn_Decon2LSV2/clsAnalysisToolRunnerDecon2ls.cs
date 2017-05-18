@@ -1423,9 +1423,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 {
                     if (!ZipFile(strPeaksFilePath, false, strZippedPeaksFilePath))
                     {
-                        var msg = "Error zipping " + DECON2LS_PEAKS_FILE_SUFFIX + " file, job " + m_JobNum;
-                        LogMessage(msg, 0, true);
-                        m_message = clsGlobal.AppendToComment(m_message, "Error zipping Peaks.txt file");
+                        LogError("Error zipping " + DECON2LS_PEAKS_FILE_SUFFIX + " file");
                         return;
                     }
 
@@ -1435,7 +1433,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             }
             catch (Exception ex)
             {
-                LogError("Exception zipping Peaks.txt file", ex);
+                LogError("Exception zipping " + DECON2LS_PEAKS_FILE_SUFFIX + " file", ex);
             }
         }
 

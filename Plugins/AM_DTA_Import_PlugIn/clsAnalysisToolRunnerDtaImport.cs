@@ -86,7 +86,9 @@ namespace AnalysisManagerDtaImportPlugIn
                     }
                     catch (Exception ex)
                     {
-                        m_message = clsGlobal.AppendToComment(m_message, "Error creating results folder on " + Path.GetPathRoot(TargetFolderNamePath)) + ": " + ex.Message;
+                        LogError(
+                            "Error creating results folder in transfer directory",
+                            "Error creating results folder " + TargetFolderNamePath, ex);
                         return CloseOutType.CLOSEOUT_FAILED;
                         //TODO: Handle errors
                     }
@@ -97,7 +99,7 @@ namespace AnalysisManagerDtaImportPlugIn
             }
             catch (Exception ex)
             {
-                m_message = clsGlobal.AppendToComment(m_message, "Error creating results folder: " + ex.Message);
+                LogError("Error creating results folder", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
                 //TODO: Handle errors
             }
@@ -115,7 +117,10 @@ namespace AnalysisManagerDtaImportPlugIn
             }
             catch (Exception ex)
             {
-                m_message = clsGlobal.AppendToComment(m_message, "Error copying results folder to " + Path.GetPathRoot(TargetFolderNamePath) + " : " + ex.Message);
+
+                LogError(
+                    "Error copying results folder to transfer directory",
+                    "Error copying results folder to " + TargetFolderNamePath, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }

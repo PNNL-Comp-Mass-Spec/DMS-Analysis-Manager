@@ -148,7 +148,6 @@ namespace AnalysisManager_Mage_PlugIn
             if (toolName == "DeconTools")
                 msg += "; required for IDM";
 
-            m_message = clsGlobal.AppendToComment(m_message, msg);
             LogError(msg);
 
             return false;

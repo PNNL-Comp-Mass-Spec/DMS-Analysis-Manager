@@ -405,7 +405,7 @@ namespace AnalysisManagerMasicPlugin
                 if (!ZipFile(FoundFiles[0], true, Path.Combine(m_WorkDir, zipFileName)))
                 {
                     LogErrorToDatabase("Error zipping " + Path.GetFileName(FoundFiles[0]) + ", job " + m_JobNum);
-                    m_message = clsGlobal.AppendToComment(m_message, "Error zipping " + SICS_XML_FILE_SUFFIX + " file");
+                    UpdateStatusMessage("Error zipping " + SICS_XML_FILE_SUFFIX + " file");
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
             }

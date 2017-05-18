@@ -962,8 +962,9 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
                 if (jobCountSkipped > 0)
                 {
-                    m_message = clsGlobal.AppendToComment(m_message,
-                        "Skipped " + jobCountSkipped + " job(s) because a synopsis or first hits file was not found");
+                    var msg = "Skipped " + jobCountSkipped + " job(s) because a synopsis or first hits file was not found";
+                    LogWarning(msg);
+                    UpdateStatusMessage(msg);
                 }
 
                 // Create the job to dataset map file
@@ -1076,11 +1077,8 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
             if (!blnSuccess)
             {
-                string msg = "Error running AScore for job " + udtJobMetadata.Job;
-                m_message = clsGlobal.AppendToComment(m_message, msg);
-
-                LogError(
-                    msg + ", file " + fiSourceFile.Name + ", data package job " + udtJobMetadata.Job);
+                var msg = "Error running AScore for job " + udtJobMetadata.Job;
+                LogError(msg, msg + ", file " + fiSourceFile.Name + ", data package job " + udtJobMetadata.Job);
 
                 if (mCmdRunner.ExitCode != 0)
                 {

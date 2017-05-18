@@ -203,7 +203,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         protected void CopyFailedResultsToArchiveFolder()
         {
@@ -221,7 +221,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             var strFolderPathToArchive = string.Copy(m_WorkDir);
 
             // If necessary, delete extra files with the following
-            /* 
+            /*
                 try
                 {
                     File.Delete(Path.Combine(m_WorkDir, m_Dataset + ".UIMF"));
@@ -376,12 +376,12 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
                     if (!success)
                     {
-                        var Msg = "Error zipping the plot files";
+                        var msg = "Error zipping the plot files";
                         if (!string.IsNullOrEmpty(m_IonicZipTools.Message))
-                            Msg += ": " + m_IonicZipTools.Message;
+                            LogError(msg + ": " + m_IonicZipTools.Message);
+                        else
+                            LogError(msg);
 
-                        LogError(Msg);
-                        m_message = clsGlobal.AppendToComment(m_message, Msg);
                         return false;
                     }
 
@@ -408,9 +408,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             }
             catch (Exception ex)
             {
-                var Msg = "Exception zipping plot files, job " + m_JobNum + ": " + ex.Message;
-                LogError(Msg);
-                m_message = clsGlobal.AppendToComment(m_message, "Error zipping the plot files");
+                LogError("Exception zipping plot files", ex);
                 return false;
             }
 

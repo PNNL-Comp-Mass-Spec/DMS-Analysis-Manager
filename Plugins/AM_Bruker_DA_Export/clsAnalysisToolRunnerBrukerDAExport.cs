@@ -365,9 +365,8 @@ namespace AnalysisManagerBrukerDAExportPlugin
                     {
                         msg += "; ActiveX component error -- is Bruker DataAnalysis installed or has a license expired?";
                     }
-                    m_message = clsGlobal.AppendToComment(m_message, msg);
 
-                    LogError(msg + ", job " + m_JobNum);
+                    LogError(msg);
 
                     if (cmdRunner.ExitCode != 0)
                     {

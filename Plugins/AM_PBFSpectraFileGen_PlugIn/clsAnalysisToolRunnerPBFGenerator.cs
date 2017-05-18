@@ -371,7 +371,7 @@ namespace AnalysisManagerPBFGenerator
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    LogError("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    LogError("Error parsing console output file (" + strConsoleOutputFilePath + ")", ex);
                 }
             }
         }
@@ -461,11 +461,7 @@ namespace AnalysisManagerPBFGenerator
 
             if (!blnSuccess)
             {
-                string Msg = null;
-                Msg = "Error running PBFGen to create a PBF file";
-                m_message = clsGlobal.AppendToComment(m_message, Msg);
-
-                LogError(Msg + ", job " + m_JobNum);
+                LogError("Error running PBFGen to create a PBF file");
 
                 if (cmdRunner.ExitCode != 0)
                 {
@@ -513,7 +509,7 @@ namespace AnalysisManagerPBFGenerator
                 }
                 catch (Exception ex)
                 {
-                    LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
+                    LogError("Exception calling SetStepTaskToolVersion", ex);
                     return false;
                 }
 
@@ -536,7 +532,7 @@ namespace AnalysisManagerPBFGenerator
             }
             catch (Exception ex)
             {
-                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
+                LogError("Exception calling SetStepTaskToolVersion", ex);
                 return false;
             }
         }

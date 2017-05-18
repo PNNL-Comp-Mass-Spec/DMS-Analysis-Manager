@@ -259,8 +259,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             }
             catch (Exception ex)
             {
-                LogError("clsMSGFToolRunner.RunTool(); Exception during Inspect Results Assembly: " + ex.Message, ex);
-                m_message = clsGlobal.AppendToComment(m_message, "Exception during Inspect Results Assembly");
+                LogError("Exception during Inspect Results Assembly", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 

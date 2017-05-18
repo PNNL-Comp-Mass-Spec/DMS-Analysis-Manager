@@ -287,11 +287,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
 
             if (!blnSuccess)
             {
-                string Msg = null;
-                Msg = "Error running DeconPeakDetector";
-                m_message = clsGlobal.AppendToComment(m_message, Msg);
-
-                LogError(Msg + ", job " + m_JobNum);
+                LogError("Error running DeconPeakDetector");
 
                 if (mCmdRunner.ExitCode != 0)
                 {

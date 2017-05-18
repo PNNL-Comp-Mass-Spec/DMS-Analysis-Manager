@@ -715,7 +715,6 @@ namespace AnalysisManagerBase
             catch (Exception ex)
             {
                 LogError("Error creating results folder in transfer directory", ex);
-                m_message = clsGlobal.AppendToComment(m_message, "Error creating dataset folder in transfer directory");
                 if (!string.IsNullOrEmpty(sourceFolderPath))
                 {
                     objAnalysisResults.CopyFailedResultsToArchiveFolder(sourceFolderPath);
@@ -744,19 +743,15 @@ namespace AnalysisManagerBase
             catch (Exception ex)
             {
                 LogError("Error copying results folder to " + Path.GetPathRoot(targetDirectoryPath), ex);
-                m_message = clsGlobal.AppendToComment(m_message, "Error copying results folder to " + Path.GetPathRoot(targetDirectoryPath));
                 blnErrorEncountered = true;
             }
 
             if (blnErrorEncountered)
             {
-                var strMessage = "Error copying " + intFailedFileCount + " file";
-                if (intFailedFileCount != 1)
-                {
-                    strMessage += "s";
-                }
-                strMessage += " to transfer folder";
-                m_message = clsGlobal.AppendToComment(m_message, strMessage);
+                var msg = "Error copying " + intFailedFileCount +
+                    clsGlobal.CheckPlural(intFailedFileCount, " file", " files") +
+                    " to transfer folder";
+                LogError(msg);
                 objAnalysisResults.CopyFailedResultsToArchiveFolder(sourceFolderPath);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -837,7 +832,6 @@ namespace AnalysisManagerBase
                     catch (Exception ex)
                     {
                         LogError("Error creating results folder in transfer directory, " + Path.GetPathRoot(targetDirectoryPath), ex);
-                        m_message = clsGlobal.AppendToComment(m_message, "Error creating results folder in transfer directory, " + Path.GetPathRoot(targetDirectoryPath));
                         objAnalysisResults.CopyFailedResultsToArchiveFolder(rootSourceFolderPath);
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
@@ -847,7 +841,6 @@ namespace AnalysisManagerBase
             catch (Exception ex)
             {
                 LogError("Error comparing files in source folder to " + targetDirectoryPath, ex);
-                m_message = clsGlobal.AppendToComment(m_message, "Error comparing files in source folder to transfer directory");
                 objAnalysisResults.CopyFailedResultsToArchiveFolder(rootSourceFolderPath);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -925,8 +918,8 @@ namespace AnalysisManagerBase
             // First make sure TransferFolderPath is defined
             if (string.IsNullOrEmpty(transferFolderPath))
             {
-                LogMessage("Transfer folder path not defined; job param 'transferFolderPath' is empty", 0, true);
-                m_message = clsGlobal.AppendToComment(m_message, "Transfer folder path not defined");
+                var msg = "Transfer folder path not defined";
+                LogError(msg, msg + "; job param 'transferFolderPath' is empty");
                 return string.Empty;
             }
 
@@ -1827,7 +1820,6 @@ namespace AnalysisManagerBase
             if (string.IsNullOrEmpty(transferFolderPath))
             {
                 LogError("Transfer folder path not defined; job param 'transferFolderPath' is empty");
-                m_message = clsGlobal.AppendToComment(m_message, "Transfer folder path not defined");
                 return string.Empty;
             }
 
@@ -2221,7 +2213,6 @@ namespace AnalysisManagerBase
             {
                 // Log this error to the database
                 LogError("Error making results folder, job " + m_JobNum, ex);
-                m_message = clsGlobal.AppendToComment(m_message, "Error making results folder");
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -2451,7 +2442,7 @@ namespace AnalysisManagerBase
                 }
 
                 LogErrorToDatabase("Error moving results files, job " + m_JobNum + ex.Message);
-                m_message = clsGlobal.AppendToComment(m_message, "Error moving results files");
+                UpdateStatusMessage("Error moving results files");
 
                 blnErrorEncountered = true;
             }
@@ -3491,9 +3482,8 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                m_message = "Exception determining Version info for " + Path.GetFileName(strDLLFilePath) + " using " + versionInspectorExeName;
-                LogError(m_message, ex);
-                strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, Path.GetFileNameWithoutExtension(strDLLFilePath));
+                var msg = "Exception determining Version info for " + Path.GetFileName(strDLLFilePath);
+                LogError(msg, msg + " using " + versionInspectorExeName, ex);
             }
 
             return false;
@@ -3806,7 +3796,7 @@ namespace AnalysisManagerBase
             catch (Exception ex)
             {
                 LogError("Error updating the summary file",
-                         "Error updating the summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("StepParameters", "Step") + ": " + ex.Message);
+                         "Error updating the summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("StepParameters", "Step"), ex);
                 return false;
             }
 

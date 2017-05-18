@@ -146,9 +146,7 @@ namespace AnalysisManagerMSGFPlugin
             if (eResultType == clsPHRPReader.ePeptideHitResultType.Unknown)
             {
                 // Result type is not supported
-                var msg = "ResultType is not supported by MSGF: " + m_jobParams.GetParam("ResultType");
-                m_message = clsGlobal.AppendToComment(m_message, msg);
-                LogError("clsMSGFToolRunner.RunTool(); " + msg);
+                LogError("ResultType is not supported by MSGF in MSGFToolRunner: " + m_jobParams.GetParam("ResultType"));
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -240,7 +238,8 @@ namespace AnalysisManagerMSGFPlugin
 
                         if (!blnSuccess)
                         {
-                            m_message = clsGlobal.AppendToComment(m_message, "MSGF results file post-processing error");
+                            if (string.IsNullOrWhiteSpace(m_message))
+                                m_message = "MSGF results file post-processing error";
                             blnPostProcessingError = true;
                         }
                     }
@@ -305,9 +304,7 @@ namespace AnalysisManagerMSGFPlugin
             }
             catch (Exception ex)
             {
-                var errMsg = "clsMSGFToolRunner.RunTool(); Exception running MSGF: " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex);
-                LogError(errMsg, ex);
-                m_message = clsGlobal.AppendToComment(m_message, "Exception running MSGF");
+                LogError("Exception running MSGF", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -460,9 +457,7 @@ namespace AnalysisManagerMSGFPlugin
             }
             catch (Exception ex)
             {
-                var msg = "Error reading the MSGFDB param file: " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex);
-                LogError(msg, ex);
-                m_message = clsGlobal.AppendToComment(m_message, "Exception reading MSGFDB parameter file");
+                LogError("Error reading the MSGFDB param file", ex);
                 return false;
             }
 
@@ -561,9 +556,7 @@ namespace AnalysisManagerMSGFPlugin
             }
             catch (Exception ex)
             {
-                var msg = "Error reading the Sequest param file: " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex);
-                LogError(msg, ex);
-                m_message = clsGlobal.AppendToComment(m_message, "Exception reading Sequest parameter file");
+                LogError("Error reading the Sequest param file", ex);
                 return false;
             }
 
@@ -642,9 +635,7 @@ namespace AnalysisManagerMSGFPlugin
             }
             catch (Exception ex)
             {
-                var msg = "Error reading the X!Tandem param file: " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex);
-                LogError(msg, ex);
-                m_message = clsGlobal.AppendToComment(m_message, "Exception reading X!Tandem parameter file");
+                LogError("Error reading the X!Tandem param file", ex);
 
                 return false;
             }
@@ -738,9 +729,7 @@ namespace AnalysisManagerMSGFPlugin
                     break;
                 default:
                     // Should never get here; invalid result type specified
-                    var msg = "Invalid PeptideHit ResultType specified: " + eResultType;
-                    m_message = clsGlobal.AppendToComment(m_message, msg);
-                    LogError("clsMSGFToolRunner.CreateMSGFInputFile(); " + msg);
+                    LogError("Invalid PeptideHit ResultType specified: " + eResultType);
 
                     blnSuccess = false;
                     break;
@@ -939,9 +928,8 @@ namespace AnalysisManagerMSGFPlugin
             {
                 if (string.IsNullOrEmpty(m_message))
                 {
-                    m_message = "Error determining MSGF program location";
+                    LogError("Error determining MSGF program location");
                 }
-                LogError(m_message);
                 return false;
             }
 
@@ -993,7 +981,7 @@ namespace AnalysisManagerMSGFPlugin
                 mMSGFDBVersion = "Production_Release";
             }
 
-            return DetermineProgramLocation(strStepToolName, strProgLocManagerParamName, strExeName, 
+            return DetermineProgramLocation(strStepToolName, strProgLocManagerParamName, strExeName,
                 strMSGFStepToolVersion, m_mgrParams, out m_message);
         }
 
@@ -1117,10 +1105,7 @@ namespace AnalysisManagerMSGFPlugin
             }
             catch (Exception ex)
             {
-                var errMsg = "Error post-processing the MSGF Results file: " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex);
-                LogError(errMsg, ex);
-                m_message = clsGlobal.AppendToComment(m_message, "Exception post-processing the MSGF Results file");
-
+                LogError("Error post-processing the MSGF Results file", ex);
                 return false;
             }
 
@@ -1145,10 +1130,7 @@ namespace AnalysisManagerMSGFPlugin
             }
             catch (Exception ex)
             {
-                var errMsg = "Error replacing the original MSGF Results file with the post-processed one: " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex);
-                LogError(errMsg, ex);
-                m_message = clsGlobal.AppendToComment(m_message, "Exception post-processing the MSGF Results file");
-
+                LogError("Error post-processing the MSGF Results file", "Exception replacing the original MSGF Results file with the post-processed one", ex);
                 return false;
             }
 
@@ -1449,7 +1431,6 @@ namespace AnalysisManagerMSGFPlugin
         private bool ProcessFilesWrapper(clsAnalysisResources.eRawDataTypeConstants eRawDataType, clsPHRPReader.ePeptideHitResultType eResultType,
             bool blnDoNotFilterPeptides, bool blnMGFInstrumentData)
         {
-            string msg;
             int intMSGFInputFileLineCount;
 
             // Parse the Sequest, X!Tandem, Inspect, or MODa parameter file to determine if ETD mode was used
@@ -1458,9 +1439,7 @@ namespace AnalysisManagerMSGFPlugin
             var blnSuccess = CheckETDModeEnabled(eResultType, strSearchToolParamFilePath);
             if (!blnSuccess)
             {
-                msg = "Error examining param file to determine if ETD mode was enabled)";
-                m_message = clsGlobal.AppendToComment(m_message, msg);
-                LogError("clsMSGFToolRunner.RunTool(); " + msg);
+                LogError("Error examining param file to determine if ETD mode was enabled");
                 return false;
             }
 
@@ -1472,8 +1451,8 @@ namespace AnalysisManagerMSGFPlugin
 
             if (!blnSuccess)
             {
-                msg = "Error creating MSGF input file";
-                m_message = clsGlobal.AppendToComment(m_message, msg);
+                if (string.IsNullOrWhiteSpace(m_message))
+                    m_message = "Error creating MSGF input file";
             }
             else
             {
@@ -1504,8 +1483,8 @@ namespace AnalysisManagerMSGFPlugin
 
                 if (!blnSuccess)
                 {
-                    msg = "Error creating .mzXML file";
-                    m_message = clsGlobal.AppendToComment(m_message, msg);
+                    if (string.IsNullOrWhiteSpace(m_message))
+                        m_message = "Error creating .mzXML file";
                 }
                 else
                 {
@@ -1549,8 +1528,8 @@ namespace AnalysisManagerMSGFPlugin
 
                 if (!blnSuccess)
                 {
-                    msg = "Error running MSGF";
-                    m_message = clsGlobal.AppendToComment(m_message, msg);
+                    if (string.IsNullOrWhiteSpace(m_message))
+                        m_message = "Error running MSGF";
                 }
                 else
                 {
@@ -1732,7 +1711,7 @@ namespace AnalysisManagerMSGFPlugin
 
                     return true;
                 }
-                
+
                 // Only CID or HCD data is present (or no data is present)
                 mETDMode = false;
                 return RunMSGF(intMSGFInputFileLineCount, strMSGFInputFilePath, strMSGFResultsFilePath);
@@ -2199,7 +2178,7 @@ namespace AnalysisManagerMSGFPlugin
             }
             catch (Exception ex)
             {
-                LogError("Exception in LoadMSGFResults: " + ex.Message, ex);
+                LogError("Exception in LoadMSGFResults", ex);
                 return false;
             }
         }
@@ -2277,7 +2256,7 @@ namespace AnalysisManagerMSGFPlugin
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    LogError("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message, ex);
+                    LogError("Error parsing console output file (" + strConsoleOutputFilePath + ")", ex);
                 }
             }
         }
@@ -2432,7 +2411,7 @@ namespace AnalysisManagerMSGFPlugin
             }
             catch (Exception ex)
             {
-                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message, ex);
+                LogError("Exception calling SetStepTaskToolVersion", ex);
                 return false;
             }
         }
@@ -2475,30 +2454,31 @@ namespace AnalysisManagerMSGFPlugin
 
                 if (!blnSuccess)
                 {
-                    var errMsg = "Error calling ProcessMSGFResults";
-                    m_message = clsGlobal.AppendToComment(m_message, errMsg);
+                    var msg = "Error calling ProcessMSGFResults";
+
+                    var detailedMsg = string.Copy(msg);
+
                     if (objSummarizer.ErrorMessage.Length > 0)
                     {
-                        errMsg += ": " + objSummarizer.ErrorMessage;
+                        detailedMsg += ": " + objSummarizer.ErrorMessage;
                     }
 
-                    errMsg += "; input file name: " + objSummarizer.MSGFSynopsisFileName;
+                    detailedMsg += "; input file name: " + objSummarizer.MSGFSynopsisFileName;
 
-                    LogError(errMsg);
+                    LogError(msg, detailedMsg);
                 }
                 else
                 {
                     if (objSummarizer.DatasetScanStatsLookupError)
                     {
-                        m_message = clsGlobal.AppendToComment(m_message, objSummarizer.ErrorMessage);
+                        if (string.IsNullOrWhiteSpace(m_message) && !string.IsNullOrWhiteSpace(objSummarizer.ErrorMessage))
+                            LogError(objSummarizer.ErrorMessage);
                     }
                 }
             }
             catch (Exception ex)
             {
-                var errMsg = "Exception summarizing the MSGF results";
-                m_message = clsGlobal.AppendToComment(m_message, errMsg);
-                LogError(errMsg + ": " + ex.Message, ex);
+                LogError("Exception summarizing the MSGF results", ex);
                 return false;
             }
 
@@ -2677,26 +2657,20 @@ namespace AnalysisManagerMSGFPlugin
                         }
                         catch (Exception ex)
                         {
-                            var msg = "Error updating the ProteinMods.txt file; cannot rename new version";
-                            m_message = clsGlobal.AppendToComment(m_message, msg);
-                            LogError(msg + ": " + ex.Message, ex);
+                            LogError("Error updating the ProteinMods.txt file; cannot rename new version", ex);
                             return false;
                         }
                     }
                     catch (Exception ex)
                     {
-                        var msg = "Error updating the ProteinMods.txt file; cannot delete old version";
-                        m_message = clsGlobal.AppendToComment(m_message, msg);
-                        LogError(msg + ": " + ex.Message, ex);
+                        LogError("Error updating the ProteinMods.txt file; cannot delete old version", ex);
                         return false;
                     }
                 }
             }
             catch (Exception ex)
             {
-                var msg = "Exception updating the ProteinMods.txt file";
-                m_message = clsGlobal.AppendToComment(m_message, msg);
-                LogError(msg + ": " + ex.Message, ex);
+                LogError("Exception updating the ProteinMods.txt file", ex);
                 return false;
             }
 

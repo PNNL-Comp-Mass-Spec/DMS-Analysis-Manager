@@ -1119,9 +1119,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                     }
                 }
 
-                m_message = clsGlobal.AppendToComment(m_message, msg);
-
-                LogError(msg + ", job " + m_JobNum);
+                LogError(msg);
 
                 if (mCmdRunner.ExitCode != 0)
                 {

@@ -525,9 +525,8 @@ namespace AnalysisManagerMzRefineryPlugIn
                 {
                     msg = "Error running MSGF+";
                 }
-                m_message = clsGlobal.AppendToComment(m_message, msg);
 
-                LogError(msg + ", job " + m_JobNum);
+                LogError(msg);
 
                 if (mMSGFPlusComplete)
                 {
@@ -1241,23 +1240,20 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             if (!success)
             {
-                var msg = "Error running MSConvert/MzRefinery";
-
                 if (m_UnableToUseMzRefinery)
                 {
                     if (string.IsNullOrEmpty(m_message))
                     {
-                        m_message = "MSGF+ identified too few peptides; unable to use MzRefinery with this dataset";
-                        LogError(m_message);
+                        LogError("MSGF+ identified too few peptides; unable to use MzRefinery with this dataset");
                         m_ForceGeneratePPMErrorPlots = true;
                     }
-                }
-                else
-                {
-                    m_message = msg;
+                    else
+                    {
+                        LogErrorNoMessageUpdate("Unable to use MzRefinery with this dataset");
+                    }
                 }
 
-                LogError(msg + ", job " + m_JobNum);
+                LogErrorNoMessageUpdate("Error running MSConvert/MzRefinery");
 
                 if (!m_UnableToUseMzRefinery)
                 {
@@ -1316,10 +1312,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             if (!success)
             {
-                var msg = "Error running PPMErrorCharter";
-                m_message = clsGlobal.AppendToComment(m_message, msg);
-
-                LogError(msg + ", job " + m_JobNum);
+                LogError("Error running PPMErrorCharter");
 
                 if (mCmdRunner.ExitCode != 0)
                 {

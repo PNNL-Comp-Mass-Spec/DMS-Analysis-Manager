@@ -258,11 +258,7 @@ namespace AnalysisManagerMODaPlugIn
 
             if (!blnSuccess)
             {
-                string Msg = null;
-                Msg = "Error running MODa";
-                m_message = clsGlobal.AppendToComment(m_message, Msg);
-
-                LogError(Msg + ", job " + m_JobNum);
+                LogError("Error running MODa");
 
                 if (mCmdRunner.ExitCode != 0)
                 {

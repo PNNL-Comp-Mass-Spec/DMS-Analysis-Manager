@@ -624,8 +624,8 @@ namespace AnalysisManagerGlyQIQPlugin
                 }
                 else
                 {
-                    LogError("Error storing PSM Results in database, " + STORE_JOB_PSM_RESULTS_SP_NAME + " returned " + ResCode);
-                    clsGlobal.AppendToComment(m_message, "Error storing PSM Results in database");
+                    var msg = "Error storing PSM Results in database";
+                    LogError(msg, msg + ", " + STORE_JOB_PSM_RESULTS_SP_NAME + " returned " + ResCode);
 
                     blnSuccess = false;
                 }
@@ -859,11 +859,7 @@ namespace AnalysisManagerGlyQIQPlugin
 
                 if (!blnSuccess)
                 {
-                    string Msg = null;
-                    Msg = "Error running GlyQ-IQ";
-                    m_message = clsGlobal.AppendToComment(m_message, Msg);
-
-                    LogError(Msg + ", job " + m_JobNum);
+                    LogError("Error running GlyQ-IQ");
 
                     if (exitCode != 0)
                     {

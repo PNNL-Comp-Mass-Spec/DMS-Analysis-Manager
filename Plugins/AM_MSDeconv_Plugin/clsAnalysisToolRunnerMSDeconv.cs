@@ -127,11 +127,7 @@ namespace AnalysisManagerMSDeconvPlugIn
 
                 if (!blnSuccess)
                 {
-                    string Msg = null;
-                    Msg = "Error running MSDeconv";
-                    m_message = clsGlobal.AppendToComment(m_message, Msg);
-
-                    LogError(Msg + ", job " + m_JobNum);
+                    LogError("Error running MSDeconv");
 
                     if (mCmdRunner.ExitCode != 0)
                     {
@@ -151,23 +147,15 @@ namespace AnalysisManagerMSDeconvPlugIn
                     var ioResultsFile = new FileInfo(Path.Combine(m_WorkDir, resultsFileName));
                     if (!ioResultsFile.Exists)
                     {
-                        string Msg = null;
-                        Msg = "MSDeconv results file not found";
-                        m_message = clsGlobal.AppendToComment(m_message, Msg);
-
-                        LogError(
-                            Msg + " (" + resultsFileName + ")" + ", job " + m_JobNum);
+                        var msg = "MSDeconv results file not found";
+                        LogError(msg, msg + " (" + resultsFileName + ")");
 
                         blnProcessingError = true;
                     }
                     else if (ioResultsFile.Length == 0)
                     {
-                        string Msg = null;
-                        Msg = "MSDeconv results file is empty; assure that the input .mzXML file has MS/MS spectra";
-                        m_message = clsGlobal.AppendToComment(m_message, Msg);
-
-                        LogError(
-                            Msg + " (" + resultsFileName + ")" + ", job " + m_JobNum);
+                        var msg = "MSDeconv results file is empty; assure that the input .mzXML file has MS/MS spectra";
+                        LogError(msg, msg + " (" + resultsFileName + ")");
 
                         blnProcessingError = true;
                     }
