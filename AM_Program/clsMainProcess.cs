@@ -1339,10 +1339,7 @@ namespace AnalysisManagerProg
                                 blnCheckForMostRecentJob = false;
                             }
                         }
-                        else
-                        {
-                            // Log file not found; that's OK, we'll decrement the name by one day and keep checking
-                        }
+                        // else: Log file not found; that's OK, we'll decrement the name by one day and keep checking
 
                         // Increment the log file counter, regardless of whether or not the log file was found
                         intLogFileCountProcessed += 1;
@@ -1851,6 +1848,7 @@ namespace AnalysisManagerProg
             return false;
         }
 
+        // ReSharper disable once SuggestBaseTypeForParameter
         private Dictionary<string, DateTime> LoadCachedLogMessages(FileInfo messageCacheFile)
         {
             var cachedMessages = new Dictionary<string, DateTime>();
@@ -1943,6 +1941,7 @@ namespace AnalysisManagerProg
                     writer.WriteLine("{0}\t{1}", "TimeStamp", "Message");
                     foreach (var message in cachedMessages)
                     {
+                        // ReSharper disable once UseFormatSpecifierInFormatString
                         writer.WriteLine("{0}\t{1}", message.Value.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT), message.Key);
                     }
                 }

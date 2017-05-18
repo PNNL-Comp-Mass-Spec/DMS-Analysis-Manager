@@ -2,13 +2,11 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Globalization;
 using PHRPReader;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
 using MyEMSLReader;
@@ -1257,6 +1255,7 @@ namespace AnalysisManagerBase
                     return false;
                 }
 
+                // ReSharper disable once RedundantNameQualifier
                 if (!m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
                 {
                     return false;
@@ -1882,6 +1881,7 @@ namespace AnalysisManagerBase
             }
             m_jobParams.AddResultFileToSkip(fileToGet);
 
+            // ReSharper disable once RedundantNameQualifier
             if (!m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -2205,7 +2205,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="doc">XDocument to scan</param>
         /// <returns>Dictionary where keys are the step number and values are the XElement node with the step parameters for the given step</returns>
-        private Dictionary<int, XElement> GetStepParametersSections(XDocument doc)
+        private Dictionary<int, XElement> GetStepParametersSections(XContainer doc)
         {
 
             var stepNumToParamsMap = new Dictionary<int, XElement>();
@@ -2966,6 +2966,7 @@ namespace AnalysisManagerBase
         {
             if (m_MyEMSLUtilities.FilesToDownload.Count > 0)
             {
+                // ReSharper disable once RedundantNameQualifier
                 if (!m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
                 {
                     return false;
@@ -2995,6 +2996,7 @@ namespace AnalysisManagerBase
         /// <param name="fiFileToPurge"></param>
         /// <param name="legacyFastaFileBaseName"></param>
         /// <returns>Number of bytes deleted</returns>
+        // ReSharper disable once SuggestBaseTypeForParameter
         private long PurgeFastaFiles(DirectoryInfo diOrgDbFolder, FileInfo fiFileToPurge, string legacyFastaFileBaseName)
         {
 
@@ -3708,6 +3710,7 @@ namespace AnalysisManagerBase
                     }
                 }
 
+                // ReSharper disable once RedundantNameQualifier
                 if (!m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
                 {
                     return false;
@@ -3866,7 +3869,7 @@ namespace AnalysisManagerBase
             {
                 LogMessage("Retrieving parameter file " + paramFileName);
 
-                ParFileGen = new ParamFileGenerator.MakeParams.clsMakeParameterFile
+                ParFileGen = new clsMakeParameterFile
                 {
                     TemplateFilePath = m_mgrParams.GetParam("paramtemplateloc")
                 };

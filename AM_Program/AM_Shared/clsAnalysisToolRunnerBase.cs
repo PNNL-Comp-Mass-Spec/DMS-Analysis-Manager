@@ -1178,7 +1178,7 @@ namespace AnalysisManagerBase
                     if (string.IsNullOrEmpty(newSourceFolder))
                     {
                         fileOrFolderName = Path.Combine(m_WorkDir, m_Dataset);
-                        isNetworkDir = false;
+                        // isNetworkDir = false;
                     }
                     else
                     {
@@ -2873,9 +2873,8 @@ namespace AnalysisManagerBase
                                 LogMessage("Error reported by DLLVersionInspector for " + Path.GetFileName(strDLLFilePath) + ": " + strValue, 0, true);
                                 blnSuccess = false;
                                 break;
-                            default:
+                            // default:
                                 // Ignore the line
-                                break;
 
                         }
                     }
