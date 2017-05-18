@@ -1974,23 +1974,29 @@ namespace AnalysisManagerBase
             {
                 // Archive storage path and server storage path track the folder just above the dataset folder
                 var archiveFolder = new DirectoryInfo(udtDatasetInfo.ArchiveStoragePath);
-                jobInfo.ArchiveStoragePath = archiveFolder.Parent.FullName;
+                if (archiveFolder.Parent != null)
+                    jobInfo.ArchiveStoragePath = archiveFolder.Parent.FullName;
+                else
+                    throw new DirectoryNotFoundException("Parent of " + archiveFolder.FullName);
             }
             catch (Exception)
             {
-                Console.WriteLine("Exception in GetPseudoDataPackageJobInfo determining the parent folder of " + udtDatasetInfo.ArchiveStoragePath);
-                jobInfo.ArchiveStoragePath = udtDatasetInfo.ArchiveStoragePath.Replace(@" \ " + udtDatasetInfo.Dataset, "");
+                clsGlobal.LogWarning("Exception in GetPseudoDataPackageJobInfo determining the parent folder of " + udtDatasetInfo.ArchiveStoragePath);
+                jobInfo.ArchiveStoragePath = udtDatasetInfo.ArchiveStoragePath.Replace(@"\" + udtDatasetInfo.Dataset, "");
             }
 
             try
             {
                 var storageFolder = new DirectoryInfo(udtDatasetInfo.ServerStoragePath);
-                jobInfo.ServerStoragePath = storageFolder.Parent.FullName;
+                if (storageFolder.Parent != null)
+                    jobInfo.ServerStoragePath = storageFolder.Parent.FullName;
+                else
+                    throw new DirectoryNotFoundException("Parent of " + storageFolder.FullName);
             }
             catch (Exception)
             {
-                Console.WriteLine("Exception in GetPseudoDataPackageJobInfo determining the parent folder of " + udtDatasetInfo.ServerStoragePath);
-                jobInfo.ServerStoragePath = udtDatasetInfo.ServerStoragePath.Replace(@" \ " + udtDatasetInfo.Dataset, "");
+                clsGlobal.LogWarning("Exception in GetPseudoDataPackageJobInfo determining the parent folder of " + udtDatasetInfo.ServerStoragePath);
+                jobInfo.ServerStoragePath = udtDatasetInfo.ServerStoragePath.Replace(@"\" + udtDatasetInfo.Dataset, "");
             }
 
             return jobInfo;
@@ -3214,6 +3220,14 @@ namespace AnalysisManagerBase
             try
             {
                 var diOrgDbFolder = fiMaxDirSize.Directory;
+                if (diOrgDbFolder == null)
+                {
+                    LogErrorToDatabase("Cannot purge fasta files to manage drive space usage; " +
+                                       "unable to determine the parent directory of " +
+                                       fiMaxDirSize.FullName + " on " + System.Net.Dns.GetHostName());
+                    return;
+                }
+
                 var errorSuffix = "; cannot manage drive space usage: " + diOrgDbFolder.FullName;
                 var maxSizeGB = 0;
 
