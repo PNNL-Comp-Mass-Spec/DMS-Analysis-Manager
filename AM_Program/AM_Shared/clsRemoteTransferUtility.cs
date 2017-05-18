@@ -797,7 +797,8 @@ namespace AnalysisManagerBase
                 settings.Add(new Tuple<string, string>("user", MgrParams.GetParam("RemoteHostUser")));
                 settings.Add(new Tuple<string, string>("taskQueue", MgrParams.GetParam("RemoteTaskQueuePath")));
                 settings.Add(new Tuple<string, string>("workDir", MgrParams.GetParam("RemoteWorkDirPath")));
-                settings.Add(new Tuple<string, string>("orbDB", MgrParams.GetParam("RemoteOrgDBPath")));
+                settings.Add(new Tuple<string, string>("orgDB", MgrParams.GetParam("RemoteOrgDBPath")));
+
             }
             else
             {
@@ -808,7 +809,8 @@ namespace AnalysisManagerBase
                 settings.Add(new Tuple<string, string>("user", RemoteHostUser));
                 settings.Add(new Tuple<string, string>("taskQueue", RemoteTaskQueuePath));
                 settings.Add(new Tuple<string, string>("workDir", RemoteWorkDirPath));
-                settings.Add(new Tuple<string, string>("orbDB", RemoteOrgDBPath));
+                settings.Add(new Tuple<string, string>("orgDB", RemoteOrgDBPath));
+
             }
 
             settings.Add(new Tuple<string, string>("privateKey", privateKeyFile));
@@ -817,7 +819,7 @@ namespace AnalysisManagerBase
             var xmlText = new StringBuilder();
             foreach (var setting in settings)
             {
-                xmlText.Append(string.Format("<{0}>{1}</{0}", setting.Item1, setting.Item2));
+                xmlText.Append(string.Format("<{0}>{1}</{0}>", setting.Item1, setting.Item2));
             }
 
             // Convert to text, will look like
@@ -1033,8 +1035,8 @@ namespace AnalysisManagerBase
 
                 try
                 {
-                    var doc = XDocument.Parse(remoteInfo);
-                    var elements = doc.Elements().ToList();
+                    var doc = XDocument.Parse("<root>" + remoteInfo + "</root>");
+                    var elements = doc.Elements("root").ToList();
 
                     RemoteHostName = clsXMLUtils.GetXmlValue(elements, "host");
                     RemoteHostUser = clsXMLUtils.GetXmlValue(elements, "user");
