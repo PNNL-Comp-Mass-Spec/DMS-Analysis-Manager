@@ -72,6 +72,85 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
+        /// Return the parent directory of directoryPath
+        /// Supports both Windows paths and Linux paths
+        /// </summary>
+        /// <param name="directoryPath">Directory path to examine</param>
+        /// <param name="directoryName">Name of the directory in directoryPath but without the parent path</param>
+        /// <returns>Parent directory path, or an empty string if no parent</returns>
+        /// <remarks>Returns \ or / if the path is rooted and the parent is a path</remarks>
+        public static string GetParentDirectoryPath(string directoryPath, out string directoryName)
+        {
+            if (directoryPath.Contains(Path.DirectorySeparatorChar) && Path.IsPathRooted(directoryPath))
+            {
+                var directory = new DirectoryInfo(directoryPath);
+                directoryName = directory.Name;
+
+                var parent = directory.Parent;
+                return parent?.FullName ?? string.Empty;
+            }
+
+            char sepChar;
+            if (directoryPath.Contains(Path.DirectorySeparatorChar))
+                sepChar = Path.DirectorySeparatorChar;
+            else
+            {
+                sepChar = Path.DirectorySeparatorChar == '\\' ? '/' : '\\';
+            }
+
+            if (sepChar == '\\')
+            {
+                // Check for a windows server without a share name
+                if (Regex.IsMatch(directoryPath, @"^\\\\[^\\]+\\?$") ||
+                    Regex.IsMatch(directoryPath, @"^[a-z]:\\?$"))
+                {
+                    directoryName = "";
+                    return "";
+                }
+            }
+            else
+            {
+                // sepChar is /
+                if (directoryPath == "/")
+                {
+                    directoryName = "";
+                    return "";
+                }
+            }
+
+            if (directoryPath.EndsWith(sepChar.ToString()))
+                directoryPath = directoryPath.TrimEnd(sepChar);
+
+            bool rootedLinuxPath;
+            string[] pathParts;
+            if (directoryPath.StartsWith(@"/"))
+            {
+                rootedLinuxPath = true;
+                pathParts = directoryPath.Substring(1).Split(sepChar);
+            }
+            else
+            {
+                rootedLinuxPath = false;
+                pathParts = directoryPath.Split(sepChar);
+            }
+
+            if (pathParts.Length == 1)
+            {
+                directoryName = pathParts[0];
+                return rootedLinuxPath ? "/" : "";
+            }
+
+            directoryName = pathParts[pathParts.Length - 1];
+
+            var parentPath = directoryPath.Substring(0, directoryPath.Length - directoryName.Length - 1);
+            if (rootedLinuxPath && !parentPath.StartsWith("/"))
+                return "/" + parentPath;
+
+            return parentPath;
+
+        }
+
+        /// <summary>
         /// Examines strPath to look for spaces
         /// </summary>
         /// <param name="filePath"></param>
@@ -112,5 +191,6 @@ namespace AnalysisManagerBase
 
             return Path.Combine(existingFile.DirectoryName, newFileName);
         }
+
     }
 }
