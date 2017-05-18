@@ -724,7 +724,12 @@ namespace AnalysisManagerProg
             m_StatusTools.ProgRunnerProcessID = 0;
             m_StatusTools.ProgRunnerCoreUsage = cpuLoadExpected;
 
-            m_StatusTools.UpdateAndWrite(EnumMgrStatus.RUNNING, EnumTaskStatus.RUNNING, EnumTaskStatusDetail.RETRIEVING_RESOURCES, 0, 0, "", "", m_MostRecentJobInfo, true);
+            m_StatusTools.UpdateAndWrite(
+                EnumMgrStatus.RUNNING,
+                EnumTaskStatus.RUNNING,
+                EnumTaskStatusDetail.RETRIEVING_RESOURCES,
+                0, 0, string.Empty, string.Empty,
+                m_MostRecentJobInfo, true);
 
             var processID = Process.GetCurrentProcess().Id;
 

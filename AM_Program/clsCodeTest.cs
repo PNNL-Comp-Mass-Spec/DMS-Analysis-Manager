@@ -24,7 +24,7 @@ namespace AnalysisManagerProg
         private Protein_Exporter.clsGetFASTAFromDMS m_FastaTools;
         private bool m_GenerationComplete;
         private readonly string m_FastaToolsCnStr = "Data Source=proteinseqs;Initial Catalog=Protein_Sequences;Integrated Security=SSPI;";
-        private string m_FastaFileName = "";
+        private string m_FastaFileName = string.Empty;
         private System.Timers.Timer m_FastaTimer;
 
         private bool m_FastaGenTimeOut;
@@ -481,7 +481,7 @@ namespace AnalysisManagerProg
                 CacheStandardOutput = true,
                 EchoOutputToConsole = true,
                 WriteConsoleOutputToFile = true,
-                ConsoleOutputFilePath = ""
+                ConsoleOutputFilePath = string.Empty
                 // Allow the console output filename to be auto-generated
             };
             RegisterEvents(m_RunProgTool);
@@ -916,7 +916,7 @@ namespace AnalysisManagerProg
 
             var objToolRunner = GetCodeTestToolRunner(out objJobParams, out myEMSLUtilities);
 
-            var toolVersionInfo = "";
+            var toolVersionInfo = string.Empty;
 
             objToolRunner.StoreToolVersionInfoOneFile(ref toolVersionInfo, dllFile);
 
@@ -1362,7 +1362,7 @@ namespace AnalysisManagerProg
         public void TestProgRunnerIDPicker()
         {
             var m_WorkDir = @"C:\DMS_WorkDir";
-            var strConsoleOutputFileName = "";
+            var strConsoleOutputFileName = string.Empty;
             var blnWriteConsoleOutputFileRealtime = false;
 
             var strExePath = @"C:\DMS_Programs\IDPicker\idpQonvert.exe";

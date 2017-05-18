@@ -23,7 +23,7 @@ namespace AnalysisManagerProg
     /// Class for loading, storing and accessing manager parameters.
     /// </summary>
     /// <remarks>
-    /// Loads initial settings from local config file, then checks to see if remainder of settings should be loaded or manager set to inactive. 
+    /// Loads initial settings from local config file, then checks to see if remainder of settings should be loaded or manager set to inactive.
     /// If manager active, retrieves remainder of settings manager parameters database.
     /// </remarks>
     public class clsAnalysisMgrSettings : clsLoggerBase, IMgrParams
@@ -69,7 +69,7 @@ namespace AnalysisManagerProg
         private const string SP_NAME_ACKMANAGERUPDATE = "AckManagerUpdateRequired";
         private Dictionary<string, string> mParamDictionary;
 
-        private string mErrMsg = "";
+        private string mErrMsg = string.Empty;
         private readonly string mEmergencyLogSource;
         private readonly string mEmergencyLogName;
 
@@ -143,10 +143,10 @@ namespace AnalysisManagerProg
         /// <param name="traceMode"></param>
         /// <remarks></remarks>
         public clsAnalysisMgrSettings(
-            string emergencyLogSource, 
-            string emergencyLogName, 
+            string emergencyLogSource,
+            string emergencyLogName,
             Dictionary<string, string> lstMgrSettings,
-            string mgrFolderPath, 
+            string mgrFolderPath,
             bool traceMode)
         {
             mEmergencyLogName = emergencyLogName;
@@ -176,7 +176,7 @@ namespace AnalysisManagerProg
         /// <remarks></remarks>
         public bool LoadSettings(Dictionary<string, string> configFileSettings)
         {
-            mErrMsg = "";
+            mErrMsg = string.Empty;
 
             mParamDictionary = configFileSettings;
 
@@ -307,7 +307,7 @@ namespace AnalysisManagerProg
         {
             // Requests manager specific settings from database. Performs retries if necessary.
 
-            var managerName = GetParam(MGR_PARAM_MGR_NAME, "");
+            var managerName = GetParam(MGR_PARAM_MGR_NAME);
             if (string.IsNullOrEmpty(managerName))
             {
                 mErrMsg = "MgrName parameter not found in m_ParamDictionary; it should be defined in the AnalysisManagerProg.exe.config file";
@@ -462,7 +462,7 @@ namespace AnalysisManagerProg
             short retryCount = 6;
 
             // Gigasax.DMS_Pipeline
-            var connectionString = GetParam("brokerconnectionstring");            
+            var connectionString = GetParam("brokerconnectionstring");
 
             if (mTraceMode)
                 ShowTraceMessage("LoadBrokerDBSettings has brokerconnectionstring = " + connectionString);
@@ -670,7 +670,7 @@ namespace AnalysisManagerProg
         /// <remarks>This bit of lunacy is needed because MS doesn't supply a means to write to an app config file</remarks>
         public bool WriteConfigSetting(string key, string value)
         {
-            mErrMsg = "";
+            mErrMsg = string.Empty;
 
             // Load the config document
             var myDoc = LoadConfigDocument();

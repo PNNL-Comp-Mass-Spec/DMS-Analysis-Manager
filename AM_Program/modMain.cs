@@ -42,6 +42,7 @@ namespace AnalysisManagerProg
         private static bool mDisplayDllVersions;
 
         private static string mDisplayDllPath;
+
         public static int Main()
         {
             // Returns 0 if no error, error code if an error
@@ -54,7 +55,7 @@ namespace AnalysisManagerProg
             mDisableMessageQueue = false;
             mDisableMyEMSL = false;
             mDisplayDllVersions = false;
-            mDisplayDllPath = "";
+            mDisplayDllPath = string.Empty;
 
             try
             {
