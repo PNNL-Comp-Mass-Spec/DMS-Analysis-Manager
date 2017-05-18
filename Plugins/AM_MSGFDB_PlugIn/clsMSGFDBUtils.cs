@@ -672,32 +672,32 @@ namespace AnalysisManagerMSGFDBPlugIn
         public CloseOutType CreatePeptideToProteinMapping(string ResultsFileName,
             PeptideToProteinMapEngine.clsPeptideToProteinMapEngine.ePeptideInputFileFormatConstants ePeptideInputFileFormat)
         {
-            const bool blnResultsIncludeAutoAddedDecoyPeptides = false;
+            const bool resultsIncludeAutoAddedDecoyPeptides = false;
             var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
-            return CreatePeptideToProteinMapping(ResultsFileName, blnResultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder, ePeptideInputFileFormat);
+            return CreatePeptideToProteinMapping(ResultsFileName, resultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder, ePeptideInputFileFormat);
         }
 
-        public CloseOutType CreatePeptideToProteinMapping(string ResultsFileName, bool blnResultsIncludeAutoAddedDecoyPeptides)
+        public CloseOutType CreatePeptideToProteinMapping(string ResultsFileName, bool resultsIncludeAutoAddedDecoyPeptides)
         {
             var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
-            return CreatePeptideToProteinMapping(ResultsFileName, blnResultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder);
+            return CreatePeptideToProteinMapping(ResultsFileName, resultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder);
         }
 
-        public CloseOutType CreatePeptideToProteinMapping(string ResultsFileName, bool blnResultsIncludeAutoAddedDecoyPeptides, string localOrgDbFolder)
+        public CloseOutType CreatePeptideToProteinMapping(string ResultsFileName, bool resultsIncludeAutoAddedDecoyPeptides, string localOrgDbFolder)
         {
-            return CreatePeptideToProteinMapping(ResultsFileName, blnResultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder,
+            return CreatePeptideToProteinMapping(ResultsFileName, resultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder,
                 PeptideToProteinMapEngine.clsPeptideToProteinMapEngine.ePeptideInputFileFormatConstants.MSGFDBResultsFile);
         }
 
         /// <summary>
         /// Create file Dataset_msgfplus_PepToProtMap.txt
         /// </summary>
-        /// <param name="ResultsFileName"></param>
-        /// <param name="blnResultsIncludeAutoAddedDecoyPeptides"></param>
+        /// <param name="resultsFileName"></param>
+        /// <param name="resultsIncludeAutoAddedDecoyPeptides"></param>
         /// <param name="localOrgDbFolder"></param>
         /// <param name="ePeptideInputFileFormat"></param>
         /// <returns></returns>
-        public CloseOutType CreatePeptideToProteinMapping(string ResultsFileName, bool blnResultsIncludeAutoAddedDecoyPeptides,
+        public CloseOutType CreatePeptideToProteinMapping(string resultsFileName, bool resultsIncludeAutoAddedDecoyPeptides,
             string localOrgDbFolder, PeptideToProteinMapEngine.clsPeptideToProteinMapEngine.ePeptideInputFileFormatConstants ePeptideInputFileFormat)
         {
             // Note that job parameter "generatedFastaName" gets defined by clsAnalysisResources.RetrieveOrgDB
@@ -705,46 +705,45 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             string msg;
 
-            var blnIgnorePeptideToProteinMapperErrors = false;
-            bool blnSuccess;
+            var ignorePeptideToProteinMapperErrors = false;
 
-            var strInputFilePath = Path.Combine(m_WorkDir, ResultsFileName);
-            var strFastaFilePath = Path.Combine(localOrgDbFolder, dbFilename);
+            var inputFilePath = Path.Combine(m_WorkDir, resultsFileName);
+            var fastaFilePath = Path.Combine(localOrgDbFolder, dbFilename);
 
             try
             {
                 // Validate that the input file has at least one entry; if not, then no point in continuing
-                int intLinesRead;
+                int linesRead;
 
-                var fiInputFile = new FileInfo(strInputFilePath);
-                if (!fiInputFile.Exists)
+                var inputFile = new FileInfo(inputFilePath);
+                if (!inputFile.Exists)
                 {
-                    msg = "MS-GF+ TSV results file not found: " + strInputFilePath;
+                    msg = "MS-GF+ TSV results file not found: " + inputFilePath;
                     OnErrorEvent(msg);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (fiInputFile.Length == 0)
+                if (inputFile.Length == 0)
                 {
                     msg = "MS-GF+ TSV results file is empty";
                     OnErrorEvent(msg);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                using (var srInFile = new StreamReader(new FileStream(strInputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using (var reader = new StreamReader(new FileStream(inputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
-                    intLinesRead = 0;
-                    while (!srInFile.EndOfStream && intLinesRead < 10)
+                    linesRead = 0;
+                    while (!reader.EndOfStream && linesRead < 10)
                     {
-                        var strLineIn = srInFile.ReadLine();
+                        var strLineIn = reader.ReadLine();
                         if (!string.IsNullOrEmpty(strLineIn))
                         {
-                            intLinesRead += 1;
+                            linesRead += 1;
                         }
                     }
                 }
 
-                if (intLinesRead <= 1)
+                if (linesRead <= 1)
                 {
                     // File is empty or only contains a header line
                     msg = "No results above threshold";
@@ -760,12 +759,12 @@ namespace AnalysisManagerMSGFDBPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (blnResultsIncludeAutoAddedDecoyPeptides)
+            if (resultsIncludeAutoAddedDecoyPeptides)
             {
                 // Read the original fasta file to create a decoy fasta file
-                strFastaFilePath = GenerateDecoyFastaFile(strFastaFilePath, m_WorkDir);
+                var decoyFastaFilePath = GenerateDecoyFastaFile(fastaFilePath, m_WorkDir);
 
-                if (string.IsNullOrEmpty(strFastaFilePath))
+                if (string.IsNullOrEmpty(decoyFastaFilePath))
                 {
                     // Problem creating the decoy fasta file
                     if (string.IsNullOrEmpty(mErrorMessage))
@@ -776,7 +775,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                m_jobParams.AddResultFileToSkip(Path.GetFileName(strFastaFilePath));
+                m_jobParams.AddResultFileToSkip(Path.GetFileName(decoyFastaFilePath));
             }
 
             try
@@ -786,7 +785,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     OnStatusEvent("Creating peptide to protein map file");
                 }
 
-                blnIgnorePeptideToProteinMapperErrors = m_jobParams.GetJobParameter("IgnorePeptideToProteinMapError", false);
+                ignorePeptideToProteinMapperErrors = m_jobParams.GetJobParameter("IgnorePeptideToProteinMapError", false);
 
                 mPeptideToProteinMapper = new PeptideToProteinMapEngine.clsPeptideToProteinMapEngine
                 {
@@ -798,7 +797,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     PeptideInputFileFormat = ePeptideInputFileFormat,
                     PeptideFileSkipFirstLine = false,
                     ProteinDataRemoveSymbolCharacters = true,
-                    ProteinInputFilePath = strFastaFilePath,
+                    ProteinInputFilePath = fastaFilePath,
                     SaveProteinToPeptideMappingFile = true,
                     SearchAllProteinsForPeptideSequence = true,
                     SearchAllProteinsSkipCoverageComputationSteps = true,
@@ -817,21 +816,21 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
 
                 // Note that clsPeptideToProteinMapEngine utilizes System.Data.SQLite.dll
-                blnSuccess = mPeptideToProteinMapper.ProcessFile(strInputFilePath, m_WorkDir, string.Empty, true);
+                var success = mPeptideToProteinMapper.ProcessFile(inputFilePath, m_WorkDir, string.Empty, true);
 
                 mPeptideToProteinMapper.CloseLogFileNow();
 
-                var strResultsFilePath = Path.GetFileNameWithoutExtension(strInputFilePath) +
+                var strResultsFilePath = Path.GetFileNameWithoutExtension(inputFilePath) +
                     PeptideToProteinMapEngine.clsPeptideToProteinMapEngine.FILENAME_SUFFIX_PEP_TO_PROTEIN_MAPPING;
 
                 strResultsFilePath = Path.Combine(m_WorkDir, strResultsFilePath);
 
-                if (blnSuccess)
+                if (success)
                 {
                     if (!File.Exists(strResultsFilePath))
                     {
                         OnErrorEvent("Peptide to protein mapping file was not created");
-                        blnSuccess = false;
+                        success = false;
                     }
                     else
                     {
@@ -840,7 +839,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                             OnStatusEvent("Peptide to protein mapping complete");
                         }
 
-                        blnSuccess = ValidatePeptideToProteinMapResults(strResultsFilePath, blnIgnorePeptideToProteinMapperErrors);
+                        success = ValidatePeptideToProteinMapResults(strResultsFilePath, ignorePeptideToProteinMapperErrors);
                     }
                 }
                 else
@@ -858,31 +857,38 @@ namespace AnalysisManagerMSGFDBPlugIn
                         }
                     }
 
-                    if (blnIgnorePeptideToProteinMapperErrors)
+                    if (ignorePeptideToProteinMapperErrors)
                     {
                         OnWarningEvent("Ignoring protein mapping error since 'IgnorePeptideToProteinMapError' = True");
 
                         if (File.Exists(strResultsFilePath))
                         {
-                            blnSuccess = ValidatePeptideToProteinMapResults(strResultsFilePath, blnIgnorePeptideToProteinMapperErrors);
+                            success = ValidatePeptideToProteinMapResults(strResultsFilePath, ignorePeptideToProteinMapperErrors);
                         }
                         else
                         {
-                            blnSuccess = true;
+                            success = true;
                         }
                     }
                     else
                     {
                         OnErrorEvent("Error in CreatePeptideToProteinMapping");
-                        blnSuccess = false;
+                        success = false;
                     }
                 }
+
+                if (success)
+                {
+                    return CloseOutType.CLOSEOUT_SUCCESS;
+                }
+
+                return CloseOutType.CLOSEOUT_FAILED;
             }
             catch (Exception ex)
             {
                 OnErrorEvent("Exception in CreatePeptideToProteinMapping", ex);
 
-                if (blnIgnorePeptideToProteinMapperErrors)
+                if (ignorePeptideToProteinMapperErrors)
                 {
                     OnWarningEvent("Ignoring protein mapping error since 'IgnorePeptideToProteinMapError' = True");
                     return CloseOutType.CLOSEOUT_SUCCESS;
@@ -891,13 +897,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
 
             }
-
-            if (blnSuccess)
-            {
-                return CloseOutType.CLOSEOUT_SUCCESS;
-            }
-
-            return CloseOutType.CLOSEOUT_FAILED;
 
         }
 
@@ -954,12 +953,12 @@ namespace AnalysisManagerMSGFDBPlugIn
                 long bytesWritten = 0;
                 var proteinCount = 0;
 
-                using (var srSourceFasta = new StreamReader(new FileStream(fiFastaFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
-                using (var swTrimmedFasta = new StreamWriter(new FileStream(fiTrimmedFasta.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var sourceFastaReader = new StreamReader(new FileStream(fiFastaFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using (var trimmedFastaWriter = new StreamWriter(new FileStream(fiTrimmedFasta.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    while (!srSourceFasta.EndOfStream)
+                    while (!sourceFastaReader.EndOfStream)
                     {
-                        var dataLine = srSourceFasta.ReadLine();
+                        var dataLine = sourceFastaReader.ReadLine();
 
                         if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
@@ -986,7 +985,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                             proteinCount += 1;
                         }
 
-                        swTrimmedFasta.WriteLine(dataLine);
+                        trimmedFastaWriter.WriteLine(dataLine);
                         bytesWritten += dataLine.Length + 2;
                     }
 
@@ -995,7 +994,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     {
                         if (!protein.Value)
                         {
-                            contaminantUtility.WriteProteinToFasta(swTrimmedFasta, protein.Key);
+                            contaminantUtility.WriteProteinToFasta(trimmedFastaWriter, protein.Key);
                         }
                     }
                 }
@@ -1018,11 +1017,11 @@ namespace AnalysisManagerMSGFDBPlugIn
         {
             try
             {
-                var fiFile = new FileInfo(Path.Combine(m_WorkDir, strFilename));
+                var targetFile = new FileInfo(Path.Combine(m_WorkDir, strFilename));
 
-                if (fiFile.Exists)
+                if (targetFile.Exists)
                 {
-                    fiFile.Delete();
+                    targetFile.Delete();
                 }
             }
             catch (Exception)
@@ -1034,82 +1033,82 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Read the original fasta file to create a decoy fasta file
 
         /// <summary>
-        /// Creates a decoy version of the fasta file specified by strInputFilePath
+        /// Creates a decoy version of the fasta file specified by inputFilePath
         /// This new file will include the original proteins plus reversed versions of the original proteins
         /// Protein names will be prepended with REV_ or XXX_
         /// </summary>
-        /// <param name="strInputFilePath">Fasta file to process</param>
-        /// <param name="strOutputDirectoryPath">Output folder to create decoy file in</param>
+        /// <param name="inputFilePath">Fasta file to process</param>
+        /// <param name="outputDirectoryPath">Output folder to create decoy file in</param>
         /// <returns>Full path to the decoy fasta file</returns>
         /// <remarks></remarks>
-        private string GenerateDecoyFastaFile(string strInputFilePath, string strOutputDirectoryPath)
+        private string GenerateDecoyFastaFile(string inputFilePath, string outputDirectoryPath)
         {
             const char PROTEIN_LINE_START_CHAR = '>';
             const char PROTEIN_LINE_ACCESSION_END_CHAR = ' ';
 
-            string strDecoyFastaFilePath;
-
             try
             {
-                var ioSourceFile = new FileInfo(strInputFilePath);
-                if (!ioSourceFile.Exists)
+                var sourceFile = new FileInfo(inputFilePath);
+                if (!sourceFile.Exists)
                 {
-                    mErrorMessage = "Fasta file not found: " + ioSourceFile.FullName;
+                    mErrorMessage = "Fasta file not found: " + sourceFile.FullName;
                     return string.Empty;
                 }
 
-                strDecoyFastaFilePath = Path.Combine(strOutputDirectoryPath, Path.GetFileNameWithoutExtension(ioSourceFile.Name) + "_decoy.fasta");
+                var decoyFastaFilePath = Path.Combine(outputDirectoryPath, Path.GetFileNameWithoutExtension(sourceFile.Name) + "_decoy.fasta");
 
                 if (m_DebugLevel >= 2)
                 {
-                    OnStatusEvent("Creating decoy fasta file at " + strDecoyFastaFilePath);
+                    OnStatusEvent("Creating decoy fasta file at " + decoyFastaFilePath);
                 }
 
-                var objFastaFileReader = new ProteinFileReader.FastaFileReader
+                var fastaFileReader = new ProteinFileReader.FastaFileReader
                 {
                     ProteinLineStartChar = PROTEIN_LINE_START_CHAR,
                     ProteinLineAccessionEndChar = PROTEIN_LINE_ACCESSION_END_CHAR
                 };
 
-                if (!objFastaFileReader.OpenFile(strInputFilePath))
+                if (!fastaFileReader.OpenFile(inputFilePath))
                 {
                     OnErrorEvent("Error reading fasta file with ProteinFileReader to create decoy file");
                     return string.Empty;
                 }
 
-                string strPrefix;
+                string namePrefix;
                 if (mMSGFPlus)
                 {
-                    strPrefix = "XXX_";
+                    namePrefix = "XXX_";
                 }
                 else
                 {
-                    strPrefix = "REV_";
+                    namePrefix = "REV_";
                 }
 
-                using (var swProteinOutputFile = new StreamWriter(new FileStream(strDecoyFastaFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var writer = new StreamWriter(new FileStream(decoyFastaFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    bool blnInputProteinFound;
+                    bool inputProteinFound;
                     do
                     {
-                        blnInputProteinFound = objFastaFileReader.ReadNextProteinEntry();
+                        inputProteinFound = fastaFileReader.ReadNextProteinEntry();
 
-                        if (blnInputProteinFound)
+                        if (inputProteinFound)
                         {
                             // Write the forward protein
-                            swProteinOutputFile.WriteLine(PROTEIN_LINE_START_CHAR + objFastaFileReader.ProteinName + " " +
-                                                          objFastaFileReader.ProteinDescription);
-                            WriteProteinSequence(swProteinOutputFile, objFastaFileReader.ProteinSequence);
+                            writer.WriteLine(PROTEIN_LINE_START_CHAR + fastaFileReader.ProteinName + " " +
+                                                          fastaFileReader.ProteinDescription);
+                            WriteProteinSequence(writer, fastaFileReader.ProteinSequence);
 
                             // Write the decoy protein
-                            swProteinOutputFile.WriteLine(PROTEIN_LINE_START_CHAR + strPrefix + objFastaFileReader.ProteinName + " " +
-                                                          objFastaFileReader.ProteinDescription);
-                            WriteProteinSequence(swProteinOutputFile, ReverseString(objFastaFileReader.ProteinSequence));
+                            writer.WriteLine(PROTEIN_LINE_START_CHAR + namePrefix + fastaFileReader.ProteinName + " " +
+                                                          fastaFileReader.ProteinDescription);
+                            WriteProteinSequence(writer, ReverseString(fastaFileReader.ProteinSequence));
                         }
-                    } while (blnInputProteinFound);
+                    } while (inputProteinFound);
                 }
 
-                objFastaFileReader.CloseFile();
+                fastaFileReader.CloseFile();
+
+                return decoyFastaFilePath;
             }
             catch (Exception ex)
             {
@@ -1117,7 +1116,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                 return string.Empty;
             }
 
-            return strDecoyFastaFilePath;
         }
 
         /// <summary>
@@ -2927,7 +2925,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             //Return blnUseLegacyMSGFDB
         }
 
-        private bool ValidatePeptideToProteinMapResults(string strPeptideToProteinMapFilePath, bool blnIgnorePeptideToProteinMapperErrors)
+        private bool ValidatePeptideToProteinMapResults(string strPeptideToProteinMapFilePath, bool ignorePeptideToProteinMapperErrors)
         {
             const string PROTEIN_NAME_NO_MATCH = "__NoMatch__";
 
@@ -2987,7 +2985,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     mErrorMessage = dblErrorPercent.ToString("0.0") + "% of the entries in the peptide to protein map file did not match to a protein in the FASTA file";
                     OnErrorEvent(mErrorMessage);
 
-                    if (blnIgnorePeptideToProteinMapperErrors)
+                    if (ignorePeptideToProteinMapperErrors)
                     {
                         OnWarningEvent("Ignoring protein mapping error since 'IgnorePeptideToProteinMapError' = True");
                         blnSuccess = true;

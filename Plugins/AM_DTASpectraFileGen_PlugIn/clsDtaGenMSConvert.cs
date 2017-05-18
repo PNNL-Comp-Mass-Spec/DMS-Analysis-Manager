@@ -17,13 +17,7 @@ namespace DTASpectraFileGen
     {
         public const int DEFAULT_CENTROID_PEAK_COUNT_TO_RETAIN = 250;
 
-        private bool mForceCentroidOn = false;
-
-        public bool ForceCentroidOn
-        {
-            get { return mForceCentroidOn; }
-            set { mForceCentroidOn = value; }
-        }
+        public bool ForceCentroidOn { get; set; }
 
         public override void Setup(SpectraFileProcessorParams initParams, clsAnalysisToolRunnerBase toolRunner)
         {
@@ -50,7 +44,7 @@ namespace DTASpectraFileGen
         {
             string strDTAToolPath = null;
 
-            string ProteoWizardDir = m_MgrParams.GetParam("ProteoWizardDir");         // MSConvert.exe is stored in the ProteoWizard folder
+            var ProteoWizardDir = m_MgrParams.GetParam("ProteoWizardDir");         // MSConvert.exe is stored in the ProteoWizard folder
             strDTAToolPath = Path.Combine(ProteoWizardDir, MSCONVERT_FILENAME);
 
             return strDTAToolPath;
@@ -99,7 +93,7 @@ namespace DTASpectraFileGen
         {
             try
             {
-                string strRawDataType = m_JobParams.GetJobParameter("RawDataType", string.Empty);
+                var strRawDataType = m_JobParams.GetJobParameter("RawDataType", string.Empty);
 
                 var oMGFConverter = new clsMGFConverter(m_DebugLevel, m_WorkDir)
                 {
@@ -242,7 +236,7 @@ namespace DTASpectraFileGen
                     centroidPeakCountToRetain = m_JobParams.GetJobParameter("CentroidPeakCountToRetain", DEFAULT_CENTROID_PEAK_COUNT_TO_RETAIN);
                 }
 
-                if (mForceCentroidOn)
+                if (ForceCentroidOn)
                 {
                     centroidMGF = true;
                 }

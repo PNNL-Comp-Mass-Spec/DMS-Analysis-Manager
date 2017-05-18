@@ -777,7 +777,7 @@ namespace AnalysisManagerBase
         public void WriteStatusFile(DateTime lastUpdate, int processId, int cpuUtilization, float freeMemoryMB, bool forceLogToBrokerDB)
         {
 
-            var strXMLText = string.Empty;
+            var xmlText = string.Empty;
 
             var runTimeHours = GetRunTime();
 
@@ -872,15 +872,15 @@ namespace AnalysisManagerBase
                     // Now use a StreamReader to copy the XML text to a string variable
                     objMemoryStream.Seek(0, SeekOrigin.Begin);
                     var srMemoryStreamReader = new StreamReader(objMemoryStream);
-                    strXMLText = srMemoryStreamReader.ReadToEnd();
+                    xmlText = srMemoryStreamReader.ReadToEnd();
 
                     srMemoryStreamReader.Close();
                     objMemoryStream.Close();
 
-                    // Since strXMLText now contains the XML, we can now safely close XWriter
+                    // Since xmlText now contains the XML, we can now safely close XWriter
                 }
 
-                WriteStatusFileToDisk(strXMLText);
+                WriteStatusFileToDisk(xmlText);
 
             }
             catch (Exception ex)
@@ -894,7 +894,7 @@ namespace AnalysisManagerBase
             if (LogToMsgQueue)
             {
                 // Send the XML text to a message queue
-                LogStatusToMessageQueue(strXMLText);
+                LogStatusToMessageQueue(xmlText);
             }
 
             // Log the memory usage to a local file
@@ -909,7 +909,7 @@ namespace AnalysisManagerBase
             }
         }
 
-        private void WriteStatusFileToDisk(string strXMLText)
+        private void WriteStatusFileToDisk(string xmlText)
         {
             const int MIN_FILE_WRITE_INTERVAL_SECONDS = 2;
 
@@ -921,7 +921,7 @@ namespace AnalysisManagerBase
             if (FileNamePath == null)
                 return;
 
-            var strTempStatusFilePath = Path.Combine(GetStatusFileDirectory(), Path.GetFileNameWithoutExtension(FileNamePath) + "_Temp.xml");
+            var tempStatusFilePath = Path.Combine(GetStatusFileDirectory(), Path.GetFileNameWithoutExtension(FileNamePath) + "_Temp.xml");
 
             m_LastFileWriteTime = DateTime.UtcNow;
 
@@ -932,12 +932,12 @@ namespace AnalysisManagerBase
                     logWarning = false;
             }
 
-            var blnSuccess = WriteStatusFileToDisk(strTempStatusFilePath, strXMLText, logWarning);
+            var blnSuccess = WriteStatusFileToDisk(tempStatusFilePath, xmlText, logWarning);
             if (blnSuccess)
             {
                 try
                 {
-                    File.Copy(strTempStatusFilePath, FileNamePath, true);
+                    File.Copy(tempStatusFilePath, FileNamePath, true);
                 }
                 catch (Exception ex)
                 {
@@ -945,7 +945,7 @@ namespace AnalysisManagerBase
                     if (logWarning)
                     {
                         // Log a warning that the file copy failed
-                        OnWarningEvent("Unable to copy temporary status file to the final status file (" + Path.GetFileName(strTempStatusFilePath) +
+                        OnWarningEvent("Unable to copy temporary status file to the final status file (" + Path.GetFileName(tempStatusFilePath) +
                                        " to " + Path.GetFileName(FileNamePath) + "):" + ex.Message);
                     }
 
@@ -953,7 +953,7 @@ namespace AnalysisManagerBase
 
                 try
                 {
-                    File.Delete(strTempStatusFilePath);
+                    File.Delete(tempStatusFilePath);
                 }
                 catch (Exception ex)
                 {
@@ -961,7 +961,7 @@ namespace AnalysisManagerBase
                     if (logWarning)
                     {
                         // Log a warning that the file delete failed
-                        OnWarningEvent("Unable to delete temporary status file (" + Path.GetFileName(strTempStatusFilePath) + "): " + ex.Message);
+                        OnWarningEvent("Unable to delete temporary status file (" + Path.GetFileName(tempStatusFilePath) + "): " + ex.Message);
                     }
                 }
 
@@ -969,11 +969,11 @@ namespace AnalysisManagerBase
             else
             {
                 // Error writing to the temporary status file; try the primary file
-                WriteStatusFileToDisk(FileNamePath, strXMLText, logWarning);
+                WriteStatusFileToDisk(FileNamePath, xmlText, logWarning);
             }
         }
 
-        private bool WriteStatusFileToDisk(string strFilePath, string strXMLText, bool logWarning)
+        private bool WriteStatusFileToDisk(string statusFilePath, string xmlText, bool logWarning)
         {
             const int WRITE_FAILURE_LOG_THRESHOLD = 5;
 
@@ -983,9 +983,9 @@ namespace AnalysisManagerBase
             {
                 // Write out the XML text to a file
                 // If the file is in use by another process, then the writing will fail
-                using (var srOutFile = new StreamWriter(new FileStream(strFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var writer = new StreamWriter(new FileStream(statusFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    srOutFile.WriteLine(strXMLText);
+                    writer.WriteLine(xmlText);
                 }
 
                 // Reset the error counter
@@ -1005,7 +1005,7 @@ namespace AnalysisManagerBase
                     // Post an entry to the log, only when intWritingErrorCountSaved is 5, 10, 20, 30, etc.
                     if (m_WritingErrorCountSaved == WRITE_FAILURE_LOG_THRESHOLD || m_WritingErrorCountSaved % 10 == 0)
                     {
-                        var msg = "Error writing status file " + Path.GetFileName(strFilePath) + ": " + ex.Message;
+                        var msg = "Error writing status file " + Path.GetFileName(statusFilePath) + ": " + ex.Message;
                         OnWarningEvent(msg);
                     }
                 }
@@ -1021,10 +1021,10 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="managerIdleMessage"></param>
         /// <param name="recentErrorMessages"></param>
-        /// <param name="JobInfo">Information on the job that started most recently</param>
+        /// <param name="jobInfo">Information on the job that started most recently</param>
         /// <param name="forceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
         /// <remarks></remarks>
-        public void UpdateClose(string managerIdleMessage, IEnumerable<string> recentErrorMessages, string JobInfo, bool forceLogToBrokerDB)
+        public void UpdateClose(string managerIdleMessage, IEnumerable<string> recentErrorMessages, string jobInfo, bool forceLogToBrokerDB)
         {
             ClearCachedInfo();
 
@@ -1034,7 +1034,7 @@ namespace AnalysisManagerBase
             MostRecentLogMessage = managerIdleMessage;
 
             StoreRecentErrorMessages(recentErrorMessages);
-            StoreRecentJobInfo(JobInfo);
+            StoreRecentJobInfo(jobInfo);
 
             WriteStatusFile(forceLogToBrokerDB);
 
