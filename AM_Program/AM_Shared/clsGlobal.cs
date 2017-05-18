@@ -65,23 +65,23 @@ namespace AnalysisManagerBase
 
             if (string.IsNullOrWhiteSpace(baseComment))
             {
-                return addnlComment;
+                return addnlComment.Trim();
             }
 
             if (string.IsNullOrWhiteSpace(addnlComment) || baseComment.Contains(addnlComment))
             {
                 // Either addnlComment is empty (unlikely) or addnlComment is a duplicate comment
                 // Return the base comment
-                return baseComment;
+                return baseComment.Trim();
             }
 
             // Append a semicolon to baseComment, but only if it doesn't already end in a semicolon
-            if (baseComment.TrimEnd(' ').EndsWith(";"))
+            if (baseComment.TrimEnd().EndsWith(";"))
             {
-                return baseComment + addnlComment;
+                return baseComment.TrimEnd() + addnlComment.Trim();
             }
 
-            return baseComment + "; " + addnlComment;
+            return baseComment.Trim() + "; " + addnlComment.Trim();
         }
 
         /// <summary>
@@ -673,7 +673,7 @@ namespace AnalysisManagerBase
         {
             bool blnValue;
 
-            if (Boolean.TryParse(value, out blnValue))
+            if (bool.TryParse(value, out blnValue))
                 return blnValue;
 
             return false;
@@ -691,7 +691,7 @@ namespace AnalysisManagerBase
         {
             bool blnValue;
 
-            if (Boolean.TryParse(value, out blnValue))
+            if (bool.TryParse(value, out blnValue))
                 return blnValue;
 
             return blnDefaultValue;
