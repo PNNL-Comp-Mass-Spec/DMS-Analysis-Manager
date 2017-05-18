@@ -576,7 +576,7 @@ namespace AnalysisManagerProg
                             {
                                 // Something went wrong; errors likely were not logged by DoAnalysisJob
 
-                                LogError("clsMainProcess.DoAnalysis(), Exception thrown by DoAnalysisJob, " + ex.Message, ex);
+                                LogError("Exception thrown by DoAnalysisJob", ex);
                                 m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.DoAnalysis(): " + ex.Message, m_MostRecentJobInfo, true);
 
                                 // Set the job state to failed
@@ -615,7 +615,7 @@ namespace AnalysisManagerProg
                             break;
                         default:
                             // Shouldn't ever get here
-                            LogError("clsMainProcess.DoAnalysis; Invalid request result: " + (int)taskReturn);
+                            LogError("Invalid request result: " + (int)taskReturn);
                             return;
                     }
 
@@ -671,7 +671,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                LogError("clsMainProcess.DoAnalysis(), Error encountered, " + ex.Message, ex);
+                LogError("Exception in DoAnalysis", ex);
                 m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.DoAnalysis(): " + ex.Message, m_MostRecentJobInfo, true);
             }
             finally
@@ -695,7 +695,8 @@ namespace AnalysisManagerProg
             var jobToolDescription = m_AnalysisTask.GetCurrentJobToolDescription();
 
             var runJobsRemotely = m_MgrSettings.GetParam("RunJobsRemotely", false);
-            var runningRemote = m_AnalysisTask.GetJobParameter("StepParameters", "RunningRemote", false);
+            var runningRemoteFlag = m_AnalysisTask.GetJobParameter("StepParameters", "RunningRemote", 0);
+            var runningRemote = (runningRemoteFlag > 0);
 
             if (TraceMode)
                 ShowTraceMessage("Processing job " + jobNum + ", " + jobToolDescription);
@@ -874,7 +875,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                LogError("clsMainProcess.DoAnalysisJob(), Close task after normal run, " + ex.Message, ex);
+                LogError("Exception closing task after a normal run", ex);
                 m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.DoAnalysisJob(): " + ex.Message, m_MostRecentJobInfo, true);
                 return false;
             }
@@ -887,13 +888,15 @@ namespace AnalysisManagerProg
 
             try
             {
+                LogDebug("Instantiating clsRemoteMonitor to check remote job status");
+
                 remoteMonitor = new clsRemoteMonitor(m_MgrSettings, m_AnalysisTask, toolRunner, m_StatusTools);
                 RegisterEvents(remoteMonitor);
             }
             catch (Exception ex)
             {
                 m_MostRecentErrorMessage = "Exception instantiating the RemoteMonitor class";
-                LogError(m_MostRecentErrorMessage + ": " + ex.Message, ex);
+                LogError(m_MostRecentErrorMessage, ex);
                 eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
                 return false;
             }
@@ -955,7 +958,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                LogError("Exception checking job status on the remote host: " + ex.Message, ex);
+                LogError("Exception checking job status on the remote host", ex);
                 eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
                 return false;
             }
@@ -989,7 +992,7 @@ namespace AnalysisManagerProg
                 }
                 catch (Exception ex)
                 {
-                    LogError("clsMainProcess.CleanupAfterJob(), Clean work directory after normal run, " + ex.Message, ex);
+                    LogError("Exception cleaning work directory after normal run", ex);
                     m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.CleanupAfterJob(): " + ex.Message, m_MostRecentJobInfo, true);
                     return false;
                 }
@@ -1004,7 +1007,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                LogError("clsMainProcess.CleanupAfterJob(), " + ex.Message, ex);
+                LogError("Exception in CleanupAfterJob", ex);
                 m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.CleanupAfterJob(): " + ex.Message, m_MostRecentJobInfo, true);
                 return false;
             }
@@ -1013,24 +1016,24 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Constructs a description of the given job using the job number, step tool name, and dataset name
         /// </summary>
-        /// <param name="JobStartTimeStamp">Time job started</param>
-        /// <param name="Job">Job name</param>
-        /// <param name="Dataset">Dataset name</param>
-        /// <param name="ToolName">Tool name (or step tool name)</param>
+        /// <param name="jobStartTimeStamp">Time job started</param>
+        /// <param name="job">Job name</param>
+        /// <param name="dataset">Dataset name</param>
+        /// <param name="toolName">Tool name (or step tool name)</param>
         /// <returns>Info string, similar to: Job 375797; DataExtractor (XTandem), Step 4; QC_Shew_09_01_b_pt5_25Mar09_Griffin_09-02-03; 3/26/2009 3:17:57 AM</returns>
         /// <remarks></remarks>
-        private string ConstructMostRecentJobInfoText(string JobStartTimeStamp, int Job, string Dataset, string ToolName)
+        private string ConstructMostRecentJobInfoText(string jobStartTimeStamp, int job, string dataset, string toolName)
         {
             try
             {
-                if (JobStartTimeStamp == null)
-                    JobStartTimeStamp = string.Empty;
-                if (ToolName == null)
-                    ToolName = "??";
-                if (Dataset == null)
-                    Dataset = "??";
+                if (jobStartTimeStamp == null)
+                    jobStartTimeStamp = string.Empty;
+                if (toolName == null)
+                    toolName = "??";
+                if (dataset == null)
+                    dataset = "??";
 
-                return "Job " + Job.ToString() + "; " + ToolName + "; " + Dataset + "; " + JobStartTimeStamp;
+                return "Job " + job + "; " + toolName + "; " + dataset + "; " + jobStartTimeStamp;
             }
             catch (Exception)
             {
@@ -1183,7 +1186,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                LogError("Error in DecrementLogFilePath: " + ex.Message, ex);
+                LogError("Error in DecrementLogFilePath", ex);
             }
 
             return string.Empty;
@@ -1604,7 +1607,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                LogError("clsMainProcess.HandleJobFailure(), cleaning up after RunTool error, " + ex.Message, ex);
+                LogError("Exception in cleaning up after RunTool error", ex);
                 m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.HandleJobFailure(): " + ex.Message, m_MostRecentJobInfo, true);
                 return false;
             }
@@ -1668,7 +1671,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                LogError("ReadMgrSettingsFile; exception loading settings file: " + ex.Message);
+                LogError("ReadMgrSettingsFile; exception loading settings file", ex);
                 return null;
             }
 
@@ -1722,7 +1725,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                LogError("ReadMgrSettingsFile; Exception reading settings file: " + ex.Message);
+                LogError("ReadMgrSettingsFile; Exception reading settings file", ex);
                 return null;
             }
         }
@@ -1936,6 +1939,7 @@ namespace AnalysisManagerProg
                 return;
             }
 
+            // Unable to load resource object for StepTool ...
             LogError(string.Format("Unable to load {0}: {1}", pluginType, errorMessages.First()));
             if (errorMessages.Count <= 1)
                 return;
@@ -2022,7 +2026,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                LogError("Error re-loading manager settings: " + ex.Message);
+                LogError("Error re-loading manager settings", ex);
                 return false;
             }
 
@@ -2109,7 +2113,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                LogError("clsMainProcess.RetrieveResources(), Getting resources, " + ex.Message, ex);
+                LogError("Error getting resources", ex);
 
                 m_AnalysisTask.CloseTask(CloseOutType.CLOSEOUT_FAILED, "Exception getting resources");
 
@@ -2143,6 +2147,7 @@ namespace AnalysisManagerProg
                     ShowTraceMessage("Running the step tool locally");
 
                 eToolRunnerResult = toolRunner.RunTool();
+
                 if (eToolRunnerResult != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     m_MostRecentErrorMessage = toolRunner.Message;
@@ -2168,7 +2173,7 @@ namespace AnalysisManagerProg
                     }
                     catch (Exception ex)
                     {
-                        LogError("clsMainProcess.RunJobLocally(), Exception examining MostRecentErrorMessage", ex);
+                        LogError("Exception examining MostRecentErrorMessage", ex);
                     }
 
                     if (eToolRunnerResult == CloseOutType.CLOSEOUT_ERROR_ZIPPING_FILE)
@@ -2196,7 +2201,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                LogError("clsMainProcess.RunJobLocally(), Error encountered, " + ex.Message, ex);
+                LogError("Exception running job " + jobNum, ex);
 
                 if (ex.Message.Contains(DECON2LS_TCP_ALREADY_REGISTERED_ERROR))
                 {
@@ -2234,11 +2239,10 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                LogError("clsMainProcess.RunJobRemotely(), Error encountered, " + ex.Message, ex);
+                m_MostRecentErrorMessage = "Exception staging job to run remotely";
+                LogError(m_MostRecentErrorMessage + ", job " + jobNum, ex);
 
                 eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
-                m_AnalysisTask.CloseTask(eToolRunnerResult, "Exception running tool remotely", toolRunner.EvalCode, toolRunner.EvalMessage);
-
                 return false;
             }
         }
@@ -2249,6 +2253,7 @@ namespace AnalysisManagerProg
 
             m_PluginLoader.ClearMessageList();
             toolResourcer = m_PluginLoader.GetAnalysisResources(stepToolName.ToLower());
+
             if (toolResourcer == null)
             {
                 LogPluginLoaderErrors("resource object for StepTool " + stepToolName, m_PluginLoader.ErrorMessages);
@@ -2271,7 +2276,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                LogError("Unable to load resource object, " + ex.Message);
+                LogError("Unable to load resource object", ex);
                 return false;
             }
 
@@ -2307,7 +2312,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                LogError("Exception calling toolRunner.Setup(): " + ex.Message);
+                LogError("Exception calling toolRunner.Setup()", ex);
                 return false;
             }
 
@@ -2346,7 +2351,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                LogError("Error calling AutoCleanupManagerErrors, " + ex.Message, ex);
+                LogError("Error calling AutoCleanupManagerErrors", ex);
                 m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.StatusFlagFileError(): " + ex.Message, m_MostRecentJobInfo, true);
 
                 blnMgrCleanupSuccess = false;
@@ -2590,7 +2595,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                LogError("Exception validating free space: " + ex.Message);
+                LogError("Exception validating free space", ex);
                 return false;
             }
 

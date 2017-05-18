@@ -103,7 +103,7 @@ namespace AnalysisManagerProg
                         }
                         catch (Exception ex)
                         {
-                            clsGlobal.LogError("clsCodeTest exception: " + ex.Message, ex);
+                            clsGlobal.LogError("clsCodeTest exception", ex);
                         }
 
                         PRISM.clsParseCommandLine.PauseAtConsole(3000, 1000);
