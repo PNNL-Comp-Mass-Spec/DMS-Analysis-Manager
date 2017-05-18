@@ -45,6 +45,14 @@ namespace AnalysisManagerBase
         CloseOutType GetResources();
 
         /// <summary>
+        /// Call this function to copy files from the working directory to a remote host for remote processing
+        /// Plugins that implement this will skip files that are not be needed by the ToolRunner class of the plugin
+        /// Plugins should also copy fasta files if appropriate
+        /// </summary>
+        /// <returns>True if success, false if an error</returns>
+        bool CopyResourcesToRemote(clsRemoteTransferUtility transferUtility);
+
+        /// <summary>
         /// Check the status of an analysis resource option
         /// </summary>
         /// <param name="resourceOption">Option to get</param>
@@ -59,7 +67,7 @@ namespace AnalysisManagerBase
         /// <param name="enabled">True or false</param>
         /// <remarks></remarks>
         void SetOption(clsGlobal.eAnalysisResourceOptions resourceOption, bool enabled);
-        
+
         #endregion
 
     }

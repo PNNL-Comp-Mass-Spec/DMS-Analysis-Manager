@@ -132,17 +132,47 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
         }
 
-        private void CheckParentFolder(DirectoryInfo diPicFsWorkDir)
+        /// <summary>
+        /// Call this function to copy files from the working directory to a remote host for remote processing
+        /// Plugins that implement this will skip files that are not be needed by the ToolRunner class of the plugin
+        /// Plugins should also copy fasta files if appropriate
+        /// </summary>
+        /// <returns>True if success, false if an error</returns>
+        public override bool CopyResourcesToRemote(clsRemoteTransferUtility transferUtility)
         {
             try
             {
-                var lstParentDirectories = diPicFsWorkDir.Parent.GetDirectories().ToList();
-
-                LogMessage("Found " + lstParentDirectories.Count + " subdirectories in " + diPicFsWorkDir.FullName);
+                // Save job parameters to an XML file
+                // Required because the tool runner needs to load the name of the generated parameter file and generated OrgDB (generatedFastaName)
+                SaveCurrentJobParameters();
             }
             catch (Exception ex)
             {
-                LogError("Exception checking " + diPicFsWorkDir.Parent.FullName, ex);
+                LogError("Exception saving current job parameters", ex);
+                return false;
+            }
+
+            try
+            {
+
+                // Construct a list of any files that we don't want to copy
+                var filesToIgnore = new SortedSet<string>();
+
+                var copyWorkDirSuccess = CopyWorkDirFilesToRemote(transferUtility, filesToIgnore);
+
+                if (!copyWorkDirSuccess)
+                    return false;
+
+                // Copy the FASTA file to the remote computer
+                var copyOrgDbSuccess = CopyGeneratedOrgDBToRemote(transferUtility);
+
+                return copyOrgDbSuccess;
+
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception copying resources to remote host " + transferUtility.RemoteHostName, ex);
+                return false;
             }
         }
 
@@ -262,7 +292,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             if (!detailedScanTypesDefinedNewFile)
             {
-                m_message = "ScanTypes defined in the ScanTypeName column do not contain detailed CID, ETD, or HCD information; " + 
+                m_message = "ScanTypes defined in the ScanTypeName column do not contain detailed CID, ETD, or HCD information; " +
                     "MSGF+ could use the wrong scoring model; fix this problem before running MSGF+";
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -327,7 +357,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     if (!string.IsNullOrWhiteSpace(headerLine))
                         break;
                 }
-                
+
                 if (string.IsNullOrWhiteSpace(headerLine))
                 {
                     return false;

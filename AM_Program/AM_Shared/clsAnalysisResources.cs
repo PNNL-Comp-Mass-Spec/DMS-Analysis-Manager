@@ -2,11 +2,13 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Globalization;
 using PHRPReader;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
 using MyEMSLReader;
@@ -316,7 +318,7 @@ namespace AnalysisManagerBase
         /// Constructor
         /// </summary>
         /// <remarks></remarks>
-        public clsAnalysisResources() : base("clsAnalysisResources")
+        protected clsAnalysisResources() : base("clsAnalysisResources")
         {
             m_CDTAUtilities = new clsCDTAUtilities();
             RegisterEvents(m_CDTAUtilities);
@@ -395,6 +397,134 @@ namespace AnalysisManagerBase
             RegisterEvents(m_FileSearch);
 
             m_FileSearch.MyEMSLSearchDisabled = m_MyEMSLSearchDisabled || !myEmslAvailable;
+        }
+
+        protected bool CopyGeneratedOrgDBToRemote(clsRemoteTransferUtility transferUtility)
+        {
+            var dbFilename = m_jobParams.GetParam("PeptideSearch", JOB_PARAM_GENERATED_FASTA_NAME);
+            if (string.IsNullOrWhiteSpace(dbFilename))
+            {
+                LogError("Cannot copy the generated FASTA remotely; parameter " + JOB_PARAM_GENERATED_FASTA_NAME + " is empty");
+                return false;
+            }
+
+            var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
+            if (string.IsNullOrWhiteSpace(localOrgDbFolder))
+            {
+                LogError("Cannot copy the generated FASTA remotely; manager parameter orgdbdir is empty");
+                return false;
+            }
+
+            var sourceFile = new FileInfo(Path.Combine(localOrgDbFolder, dbFilename));
+
+            if (!sourceFile.Exists)
+            {
+                LogError("Cannot copy the generated FASTA remotely; file not found: " + sourceFile.FullName);
+                return false;
+            }
+
+            LogDebug("Verifying that the generated fasta file exists on the remote host");
+
+            // Check whether the file needs to be copied
+            // Skip the copy if it exists and has the same size
+            var matchingFiles = transferUtility.GetRemoteFileListing(transferUtility.RemoteOrgDBPath, sourceFile.Name);
+
+            if (matchingFiles.Count > 0)
+            {
+                var remoteOrgDB = matchingFiles.First();
+                if (remoteOrgDB.Value.Length == sourceFile.Length)
+                {
+                    LogDebug(string.Format("Using existing FASTA file {0} on {1}",
+                                           remoteOrgDB.Key, transferUtility.RemoteHostName));
+                    return true;
+                }
+
+                LogDebug(string.Format("Fasta file size on remote host is different than local file ({0} bytes vs. {1} bytes locally); " +
+                                       "copying {2} to {3}", remoteOrgDB.Value.Length, sourceFile.Length, sourceFile.Name, transferUtility.RemoteHostName));
+            }
+            else
+            {
+                LogDebug(string.Format("Fasta file not found on remote host; copying {0} to {1}", sourceFile.Name, transferUtility.RemoteHostName));
+            }
+
+            var success = transferUtility.CopyFileToRemote(sourceFile.FullName, transferUtility.RemoteOrgDBPath);
+            if (success)
+                return true;
+
+            LogError(string.Format("Error copying {0} to {1} on {2}", sourceFile.Name, transferUtility.RemoteOrgDBPath,
+                                   transferUtility.RemoteHostName));
+            return false;
+
+        }
+
+        /// <summary>
+        /// Copy files in the working directory to a remote host, skipping files in filesToIgnore
+        /// </summary>
+        /// <param name="transferUtility">file transfer utility</param>
+        /// <param name="filesToIgnore">Names of files to ignore</param>
+        /// <remarks>This method is called by step tools that override CopyResourcesToRemote</remarks>
+        /// <returns>True if success, otherwise false</returns>
+        protected bool CopyWorkDirFilesToRemote(clsRemoteTransferUtility transferUtility, SortedSet<string> filesToIgnore)
+        {
+
+            try
+            {
+                LogDebug("Copying work dir files to remote host " + transferUtility.RemoteHostName);
+
+                // Find files in the working directory to copy
+                var filesToCopy = GetWorkDirFiles(filesToIgnore).ToList();
+
+                if (filesToCopy.Count == 0)
+                {
+                    LogError("Nothing to copy to the remote host; did not find any eligible files in the working directory");
+                    return false;
+                }
+
+                // Create the destination folder
+                var remoteDirectoryPath = transferUtility.RemoteJobStepWorkDirPath;
+                var remoteHost = transferUtility.RemoteHostName;
+
+                var targetFolderVerified = transferUtility.CreateRemoteDirectory(remoteDirectoryPath);
+                if (!targetFolderVerified)
+                {
+                    LogError(string.Format("Unable to create working directory {0} on host {1}", remoteDirectoryPath, remoteHost));
+                    m_message = "Unable to create working directory on remote host " + remoteHost;
+                    return false;
+                }
+
+                // Copy the files
+                var success = transferUtility.CopyFilesToRemote(filesToCopy, remoteDirectoryPath);
+
+                if (success)
+                {
+                    LogMessage(string.Format("Copied {0} files to {1} on host {2}",
+                                             filesToCopy.Count, remoteDirectoryPath, remoteHost));
+                    return true;
+                }
+
+                LogError(string.Format("Failure copying {0} files to {1} on host {2}",
+                                         filesToCopy.Count, remoteDirectoryPath, remoteHost));
+
+                m_message = "Failure copying required files to remote host " + remoteHost;
+                return false;
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception copying resources to remote host " + transferUtility.RemoteHostName, ex);
+                return false;
+            }
+
+        }
+
+        /// <summary>
+        /// Call this function to copy files from the working directory to a remote host for remote processing
+        /// Plugins that implement this will skip files that are not be needed by the ToolRunner class of the plugin
+        /// Plugins should also copy fasta files if appropriate
+        /// </summary>
+        /// <returns>True if success, false if an error</returns>
+        public virtual bool CopyResourcesToRemote(clsRemoteTransferUtility transferUtility)
+        {
+            throw new NotImplementedException("Plugin " + StepToolName + " must implement CopyResourcesToRemote to allow for remote processing");
         }
 
         public abstract CloseOutType GetResources();
@@ -2130,6 +2260,43 @@ namespace AnalysisManagerBase
             var transferFolderPath = Path.Combine(transferFolderPathBase, datasetFolderName, folderName);
 
             return transferFolderPath;
+
+        }
+
+        /// <summary>
+        /// Find files in the working directory
+        /// </summary>
+        /// <param name="recurse">True to recurse</param>
+        /// <returns>Iterator of FileInfo items</returns>
+        protected IEnumerable<FileInfo> GetWorkDirFiles(bool recurse = true)
+        {
+            var filesToIgnore = new SortedSet<string>();
+
+            return GetWorkDirFiles(filesToIgnore, recurse);
+        }
+
+        /// <summary>
+        /// Find files in the working directory, excluding any in filesToIgnore
+        /// </summary>
+        /// <param name="filesToIgnore">Names of files to not include in the list of returned files</param>
+        /// <param name="recurse">True to recurse</param>
+        /// <returns>Iterator of FileInfo items</returns>
+        protected IEnumerable<FileInfo> GetWorkDirFiles(SortedSet<string> filesToIgnore, bool recurse = true)
+        {
+            if (string.IsNullOrWhiteSpace(m_WorkingDir))
+                yield break;
+
+            var workDir = new DirectoryInfo(m_WorkingDir);
+
+            var searchOption = recurse ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+
+            foreach (var file in workDir.GetFiles("*", searchOption))
+            {
+                if (filesToIgnore.Contains(file.Name))
+                    continue;
+
+                yield return file;
+            }
 
         }
 
