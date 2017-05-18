@@ -2319,6 +2319,13 @@ namespace AnalysisManagerProg
             m_PluginLoader.ClearMessageList();
             toolResourcer = m_PluginLoader.GetAnalysisResources(stepToolName.ToLower());
 
+            if (toolResourcer == null && stepToolName.StartsWith("Test_", StringComparison.OrdinalIgnoreCase))
+            {
+                m_PluginLoader.ClearMessageList();
+                stepToolName = stepToolName.Substring("Test_".Length);
+                toolResourcer = m_PluginLoader.GetAnalysisResources(stepToolName.ToLower());
+            }
+
             if (toolResourcer == null)
             {
                 LogPluginLoaderErrors("resource object for StepTool " + stepToolName, m_PluginLoader.ErrorMessages);
@@ -2354,6 +2361,14 @@ namespace AnalysisManagerProg
 
             m_PluginLoader.ClearMessageList();
             toolRunner = m_PluginLoader.GetToolRunner(stepToolName.ToLower());
+
+            if (toolRunner == null && stepToolName.StartsWith("Test_", StringComparison.OrdinalIgnoreCase))
+            {
+                m_PluginLoader.ClearMessageList();
+                stepToolName = stepToolName.Substring("Test_".Length);
+                toolRunner = m_PluginLoader.GetToolRunner(stepToolName.ToLower());
+            }
+
             if (toolRunner == null)
             {
                 LogPluginLoaderErrors("tool runner for StepTool " + stepToolName, m_PluginLoader.ErrorMessages);
