@@ -39,9 +39,14 @@ namespace AnalysisManagerBase
         #region "Module variables"
 
         /// <summary>
+        /// Job parameters
         /// The outer dictionary tracks section names, then the inner dictionary tracks key/value pairs within each section
         /// </summary>
-        protected Dictionary<string, Dictionary<string, string>> m_JobParams;
+        protected readonly Dictionary<string, Dictionary<string, string>> m_JobParams;
+
+        /// <summary>
+        /// Current job number
+        /// </summary>
         protected int m_JobId;
 
         protected bool m_TaskWasClosed;
@@ -131,6 +136,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public clsAnalysisJob(IMgrParams mgrParams, short debugLvl) : base(mgrParams, debugLvl)
         {
+            m_JobParams = new Dictionary<string, Dictionary<string, string>>(StringComparer.CurrentCultureIgnoreCase);
             Reset();
         }
 
@@ -267,6 +273,29 @@ namespace AnalysisManagerBase
             {
                 m_ServerFilesToDelete.Add(filePath);
             }
+        }
+
+        /// <summary>
+        /// Get all job parameters for the given section
+        /// </summary>
+        /// <returns>Dictionary where keys are parameter names and values are parameter values</returns>
+        public Dictionary<string, string> GetAllParametersForSection(string sectionName)
+        {
+            if (m_JobParams.TryGetValue(sectionName, out var oParams))
+            {
+                return oParams;
+            }
+
+            return new Dictionary<string, string>();
+        }
+
+        /// <summary>
+        /// Get job parameter section names
+        /// </summary>
+        /// <returns></returns>
+        public List<string> GetAllSectionNames()
+        {
+            return m_JobParams.Keys.ToList();
         }
 
         /// <summary>
@@ -523,9 +552,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public void SetParam(string section, string paramName, string paramValue)
         {
-            Dictionary<string, string> oParams;
-
-            if (!m_JobParams.TryGetValue(section, out oParams))
+            if (!m_JobParams.TryGetValue(section, out var oParams))
             {
                 // Need to add a section with a blank name
                 oParams = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
@@ -558,18 +585,15 @@ namespace AnalysisManagerBase
 
             paramValue = string.Empty;
 
-            if (m_JobParams != null)
+            foreach (var oEntry in m_JobParams)
             {
-                foreach (var oEntry in m_JobParams)
+                if (oEntry.Value.TryGetValue(paramName, out paramValue))
                 {
-                    if (oEntry.Value.TryGetValue(paramName, out paramValue))
+                    if (string.IsNullOrWhiteSpace(paramValue))
                     {
-                        if (string.IsNullOrWhiteSpace(paramValue))
-                        {
-                            paramValue = string.Empty;
-                        }
-                        return true;
+                        paramValue = string.Empty;
                     }
+                    return true;
                 }
             }
 
@@ -603,18 +627,15 @@ namespace AnalysisManagerBase
         {
             paramValue = string.Empty;
 
-            if (m_JobParams != null)
+            if (m_JobParams.TryGetValue(section, out var oParams))
             {
-                if (m_JobParams.TryGetValue(section, out var oParams))
+                if (oParams.TryGetValue(paramName, out paramValue))
                 {
-                    if (oParams.TryGetValue(paramName, out paramValue))
+                    if (string.IsNullOrWhiteSpace(paramValue))
                     {
-                        if (string.IsNullOrWhiteSpace(paramValue))
-                        {
-                            paramValue = string.Empty;
-                        }
-                        return true;
+                        paramValue = string.Empty;
                     }
+                    return true;
                 }
             }
 
@@ -684,7 +705,8 @@ namespace AnalysisManagerBase
 
                     // Construct a list of the parameter names in this section
                     var paramNames = new List<string>();
-                    foreach (var item in parameterItems) {
+                    foreach (var item in parameterItems)
+                    {
                         if (!item.HasAttributes) continue;
 
                         var itemKey = item.Attribute("key");
@@ -913,11 +935,6 @@ namespace AnalysisManagerBase
 
             m_DatasetInfoList.Clear();
 
-            if (m_JobParams == null)
-            {
-                m_JobParams = new Dictionary<string, Dictionary<string, string>>(StringComparer.CurrentCultureIgnoreCase);
-            }
-
             m_JobParams.Clear();
 
         }
@@ -1093,37 +1110,32 @@ namespace AnalysisManagerBase
         public string GetCurrentJobToolDescription()
         {
 
-            if (m_JobParams == null)
+            var toolName = GetParam("ToolName");
+
+            var toolAndStepTool = GetParam("StepTool");
+            if (string.IsNullOrWhiteSpace(toolAndStepTool))
+                toolAndStepTool = string.Empty;
+
+            var stepNumber = GetParam("StepParameters", "Step") ?? string.Empty;
+
+            if (!string.IsNullOrWhiteSpace(toolName) && !string.Equals(toolAndStepTool, toolName))
             {
-               return "??";
-            }
-
-            var strTool = GetParam("ToolName");
-
-            var strToolAndStepTool = GetParam("StepTool");
-            if (string.IsNullOrWhiteSpace(strToolAndStepTool))
-                strToolAndStepTool = string.Empty;
-
-            var strStep = GetParam("StepParameters", "Step") ?? string.Empty;
-
-            if (!string.IsNullOrWhiteSpace(strTool) && !string.Equals(strToolAndStepTool, strTool))
-            {
-                if (strToolAndStepTool.Length > 0)
+                if (toolAndStepTool.Length > 0)
                 {
-                    strToolAndStepTool += " (" + strTool + ")";
+                    toolAndStepTool += " (" + toolName + ")";
                 }
                 else
                 {
-                    strToolAndStepTool += strTool;
+                    toolAndStepTool += toolName;
                 }
             }
 
-            if (strStep.Length > 0)
+            if (stepNumber.Length > 0)
             {
-                strToolAndStepTool += ", Step " + strStep;
+                toolAndStepTool += ", Step " + stepNumber;
             }
 
-            return strToolAndStepTool;
+            return toolAndStepTool;
 
         }
 

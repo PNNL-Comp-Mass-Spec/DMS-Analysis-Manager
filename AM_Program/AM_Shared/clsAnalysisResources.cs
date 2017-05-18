@@ -3748,6 +3748,70 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
+        /// Create file JobParams.xml in the working directory using in-memory job parameters
+        /// </summary>
+        /// <remarks>Adds JobParams.xml to the list of files to skip by calling m_jobParams.AddResultFileToSkip</remarks>
+        protected void SaveCurrentJobParameters()
+        {
+            string xmlText;
+
+            var objMemoryStream = new MemoryStream();
+            using (var xWriter = new XmlTextWriter(objMemoryStream, System.Text.Encoding.UTF8))
+            {
+
+                xWriter.Formatting = Formatting.Indented;
+                xWriter.Indentation = 2;
+                xWriter.IndentChar = ' ';
+
+                // Create the XML document in memory
+                xWriter.WriteStartDocument(true);
+
+                // General job information
+                // Root level element
+                xWriter.WriteStartElement("sections");
+
+                foreach (var section in m_jobParams.GetAllSectionNames())
+                {
+                    xWriter.WriteStartElement("section");
+                    xWriter.WriteAttributeString("name", section);
+
+                    foreach (var parameter in m_jobParams.GetAllParametersForSection(section))
+                    {
+                        xWriter.WriteStartElement("item");
+                        xWriter.WriteAttributeString("key", parameter.Key);
+                        xWriter.WriteAttributeString("value", parameter.Value);
+                        xWriter.WriteEndElement();
+                    }
+
+                    xWriter.WriteEndElement();      // section
+                }
+
+                // Close out the XML document (but do not close XWriter yet)
+                xWriter.WriteEndDocument();
+                xWriter.Flush();
+
+                // Now use a StreamReader to copy the XML text to a string variable
+                objMemoryStream.Seek(0, SeekOrigin.Begin);
+                var srMemoryStreamReader = new StreamReader(objMemoryStream);
+                xmlText = srMemoryStreamReader.ReadToEnd();
+
+                srMemoryStreamReader.Close();
+                objMemoryStream.Close();
+
+                // Since xmlText now contains the XML, we can now safely close XWriter
+            }
+
+            var jobParamsFile = new FileInfo(Path.Combine(WorkDir, "JobParams.xml"));
+            using (var writer = new StreamWriter(new FileStream(jobParamsFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
+            {
+                writer.WriteLine(xmlText);
+            }
+
+            m_jobParams.AddResultFileToSkip(jobParamsFile.Name);
+
+        }
+
+        /// <summary>
         /// Specifies the Bioworks version for use by the Param File Generator DLL
         /// </summary>
         /// <param name="toolName">Version specified in mgr config file</param>

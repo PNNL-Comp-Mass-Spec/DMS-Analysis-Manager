@@ -62,58 +62,58 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Adds (or updates) a job parameter
         /// </summary>
-        /// <param name="ParamSection">Section name for parameter</param>
-        /// <param name="ParamName">Name of parameter</param>
-        /// <param name="ParamValue">Value for parameter</param>
+        /// <param name="sectionName">Section name for parameter</param>
+        /// <param name="paramName">Name of parameter</param>
+        /// <param name="paramValue">Value for parameter</param>
         /// <returns>True if success, False if an error</returns>
         /// <remarks></remarks>
-        bool AddAdditionalParameter(string ParamSection, string ParamName, string ParamValue);
+        bool AddAdditionalParameter(string sectionName, string paramName, string paramValue);
 
         /// <summary>
         /// Adds (or updates) a job parameter
         /// </summary>
-        /// <param name="ParamSection">Section name for parameter</param>
-        /// <param name="ParamName">Name of parameter</param>
-        /// <param name="ParamValue">Boolean alue for parameter</param>
+        /// <param name="sectionName">Section name for parameter</param>
+        /// <param name="paramName">Name of parameter</param>
+        /// <param name="paramValue">Boolean alue for parameter</param>
         /// <returns>True if success, False if an error</returns>
         /// <remarks></remarks>
-        bool AddAdditionalParameter(string ParamSection, string ParamName, bool ParamValue);
+        bool AddAdditionalParameter(string sectionName, string paramName, bool paramValue);
 
         /// <summary>
         /// Add new dataset name and ID to DatasetInfoList
         /// </summary>
-        /// <param name="DatasetName"></param>
-        /// <param name="DatasetID"></param>
+        /// <param name="datasetName"></param>
+        /// <param name="datasetID"></param>
         /// <remarks></remarks>
-        void AddDatasetInfo(string DatasetName, int DatasetID);
+        void AddDatasetInfo(string datasetName, int datasetID);
 
         /// <summary>
         /// Add a filename to definitely move to the results folder
         /// </summary>
-        /// <param name="FileName"></param>
+        /// <param name="fileName"></param>
         /// <remarks>FileName can be a file path; only the filename will be stored in m_ResultFilesToKeep</remarks>
-        void AddResultFileToKeep(string FileName);
+        void AddResultFileToKeep(string fileName);
 
         /// <summary>
         /// Add a file to be deleted from the storage server (requires full file path)
         /// </summary>
-        /// <param name="FilePath">Full path to the file</param>
+        /// <param name="filePath">Full path to the file</param>
         /// <remarks>To delete the files, call clsAnalysisToolRunnerBase.RemoveNonResultServerFiles</remarks>
-        void AddServerFileToDelete(string FilePath);
+        void AddServerFileToDelete(string filePath);
 
         /// <summary>
         /// Add a filename to not move to the results folder
         /// </summary>
-        /// <param name="FileName"></param>
+        /// <param name="fileName"></param>
         /// <remarks>FileName can be a file path; only the filename will be stored in m_ResultFilesToSkip</remarks>
-        void AddResultFileToSkip(string FileName);
+        void AddResultFileToSkip(string fileName);
 
         /// <summary>
         /// Add a filename extension to not move to the results folder
         /// </summary>
-        /// <param name="Extension"></param>
+        /// <param name="fileExtension"></param>
         /// <remarks>Can be a file extension (like .raw) or even a partial file name like _peaks.txt</remarks>
-        void AddResultFileExtensionToSkip(string Extension);
+        void AddResultFileExtensionToSkip(string fileExtension);
 
         /// <summary>
         /// Contact the Pipeline database to close the analysis job
@@ -128,10 +128,22 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="closeOut"></param>
         /// <param name="compMsg"></param>
-        /// <param name="EvalCode"></param>
-        /// <param name="EvalMessage"></param>
+        /// <param name="evalCode"></param>
+        /// <param name="evalMessage"></param>
         /// <remarks>Implemented in clsAnalysisJob</remarks>
-        void CloseTask(CloseOutType closeOut, string compMsg, int EvalCode, string EvalMessage);
+        void CloseTask(CloseOutType closeOut, string compMsg, int evalCode, string evalMessage);
+
+        /// <summary>
+        /// Get all job parameters for the given section
+        /// </summary>
+        /// <returns>Dictionary where keys are parameter names and values are parameter values</returns>
+        Dictionary<string, string> GetAllParametersForSection(string sectionName);
+
+        /// <summary>
+        /// Get job parameter section names
+        /// </summary>
+        /// <returns></returns>
+        List<string> GetAllSectionNames();
 
         /// <summary>
         /// Uses the "ToolName" and "StepTool" entries in m_JobParamsTable to generate the tool name for the current analysis job
@@ -197,9 +209,9 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Remove a filename that was previously added to ResultFilesToSkip
         /// </summary>
-        /// <param name="FileName"></param>
+        /// <param name="fileName"></param>
         /// <remarks></remarks>
-        void RemoveResultFileToSkip(string FileName);
+        void RemoveResultFileToSkip(string fileName);
 
         /// <summary>
         /// Requests a task from the database
