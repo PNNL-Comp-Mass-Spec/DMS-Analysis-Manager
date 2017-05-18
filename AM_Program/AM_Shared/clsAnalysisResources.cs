@@ -913,12 +913,10 @@ namespace AnalysisManagerBase
                 return false;
             }
 
-            var stepToolName = m_jobParams.GetJobParameter("StepTool", "Unknown");
-
             string legacyFastaToUse;
             var orgDBDescription = string.Copy(proteinCollectionInfo.OrgDBDescription);
 
-            if (proteinCollectionInfo.UsingSplitFasta && !string.Equals(stepToolName, "DataExtractor", StringComparison.CurrentCultureIgnoreCase))
+            if (proteinCollectionInfo.UsingSplitFasta && !string.Equals(StepToolName, "DataExtractor", StringComparison.CurrentCultureIgnoreCase))
             {
                 if (!proteinCollectionInfo.UsingLegacyFasta)
                 {
