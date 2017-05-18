@@ -517,7 +517,6 @@ namespace AnalysisManagerPBFGenerator
                     return false;
                 }
 
-                return false;
             }
 
             // Lookup the version of the .NET application

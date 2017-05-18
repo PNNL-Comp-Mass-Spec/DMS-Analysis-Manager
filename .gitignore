@@ -30,3 +30,4 @@ AM_Common/x64/SQLite.Interop.dll
 AM_Common/x86/SQLite.Interop.dll
 AM_Common/SQLite_1.0.97/*
 AM_Program/packages/
+/Plugins/AM_MaxQuant_PlugIn
