@@ -115,6 +115,15 @@ namespace AnalysisManagerBase
         {
             try
             {
+                TransferUtility.UpdateParameters(false);
+            }
+            catch (Exception ex)
+            {
+                LogError("Error initializing parameters for the remote transfer utility", ex);
+                return EnumRemoteJobStatus.Undefined;
+            }
+            try
+            {
 
                 OnDebugEvent("Retrieving status files for "  + TransferUtility.JobStepDescription);
 
