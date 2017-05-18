@@ -115,6 +115,9 @@ namespace AnalysisManagerBase
         {
             try
             {
+
+                OnDebugEvent("Retrieving status files for "  + TransferUtility.JobStepDescription);
+
                 var statusFiles = TransferUtility.GetStatusFiles();
 
                 if (statusFiles.Count == 0)
@@ -123,21 +126,23 @@ namespace AnalysisManagerBase
                     return EnumRemoteJobStatus.Undefined;
                 }
 
-                if (StatusFileExists(statusFiles, TransferUtility.StatusFileFail))
+                if (StatusFileExists(statusFiles, TransferUtility.ProcessingFailureFile))
                 {
                     LogWarning(".fail file found for " + TransferUtility.JobStepDescription + " on " + TransferUtility.RemoteHostName);
                     return EnumRemoteJobStatus.Failed;
                 }
 
-                if (StatusFileExists(statusFiles, TransferUtility.StatusFileSuccess))
+                if (StatusFileExists(statusFiles, TransferUtility.ProcessingSuccessFile))
                 {
                     OnStatusEvent(".success file found for " + TransferUtility.JobStepDescription + " on " + TransferUtility.RemoteHostName);
                     return EnumRemoteJobStatus.Success;
                 }
 
-                if (StatusFileExists(statusFiles, TransferUtility.StatusFileJobStatus))
+                if (StatusFileExists(statusFiles, TransferUtility.JobStatusFile))
                 {
                     // .jobstatus file found; retrieve it
+
+                    OnDebugEvent(string.Format("Retrieve status file {0} from {1} ", TransferUtility.JobStatusFile, TransferUtility.RemoteHostName));
 
                     var success = TransferUtility.RetrieveJobStatusFile(out var jobStatusFilePathLocal);
 
@@ -152,7 +157,7 @@ namespace AnalysisManagerBase
                     return jobStatus;
                 }
 
-                if (StatusFileExists(statusFiles, TransferUtility.StatusFileLock))
+                if (StatusFileExists(statusFiles, TransferUtility.StatusLockFile))
                 {
                     // A lock file exists, but no progress file exists yet
                     return EnumRemoteJobStatus.Running;
@@ -167,7 +172,6 @@ namespace AnalysisManagerBase
             }
 
         }
-
 
         private void LogError(string message, Exception ex)
         {
@@ -193,6 +197,7 @@ namespace AnalysisManagerBase
 
             try
             {
+                OnDebugEvent("Parse status file " + Path.GetFileName(jobStatusFilePath));
 
                 using (var reader = new StreamReader(new FileStream(jobStatusFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {

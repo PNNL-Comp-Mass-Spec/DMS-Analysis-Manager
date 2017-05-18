@@ -781,7 +781,7 @@ namespace AnalysisManagerBase
         /// <param name="useDefaultManagerRemoteInfo"></param>
         /// <returns>String with XML</returns>
         /// <remarks>RemoteInfo is sent to the database via stored procedure SetStepTaskComplete</remarks>
-        public string GetRemoteInfoXml(bool useDefaultManagerRemoteInfo = true)
+        private string GetRemoteInfoXml(bool useDefaultManagerRemoteInfo)
         {
             var settings = new List<Tuple<string, string>>();
 
@@ -790,20 +790,17 @@ namespace AnalysisManagerBase
 
             if (useDefaultManagerRemoteInfo)
             {
-                privateKeyFile = Path.GetFileName(MgrParams.GetParam("RemoteHostPrivateKeyFile"));
-                passphraseFile = Path.GetFileName(MgrParams.GetParam("RemoteHostPassphraseFile"));
-
                 settings.Add(new Tuple<string, string>("host", MgrParams.GetParam("RemoteHostName")));
                 settings.Add(new Tuple<string, string>("user", MgrParams.GetParam("RemoteHostUser")));
                 settings.Add(new Tuple<string, string>("taskQueue", MgrParams.GetParam("RemoteTaskQueuePath")));
                 settings.Add(new Tuple<string, string>("workDir", MgrParams.GetParam("RemoteWorkDirPath")));
                 settings.Add(new Tuple<string, string>("orgDB", MgrParams.GetParam("RemoteOrgDBPath")));
 
+                privateKeyFile = Path.GetFileName(MgrParams.GetParam("RemoteHostPrivateKeyFile"));
+                passphraseFile = Path.GetFileName(MgrParams.GetParam("RemoteHostPassphraseFile"));
             }
             else
             {
-                privateKeyFile = Path.GetFileName(RemoteHostPrivateKeyFile);
-                passphraseFile = Path.GetFileName(RemoteHostPassphraseFile);
 
                 settings.Add(new Tuple<string, string>("host", RemoteHostName));
                 settings.Add(new Tuple<string, string>("user", RemoteHostUser));
@@ -811,6 +808,8 @@ namespace AnalysisManagerBase
                 settings.Add(new Tuple<string, string>("workDir", RemoteWorkDirPath));
                 settings.Add(new Tuple<string, string>("orgDB", RemoteOrgDBPath));
 
+                privateKeyFile = Path.GetFileName(RemoteHostPrivateKeyFile);
+                passphraseFile = Path.GetFileName(RemoteHostPassphraseFile);
             }
 
             settings.Add(new Tuple<string, string>("privateKey", privateKeyFile));
@@ -892,6 +891,7 @@ namespace AnalysisManagerBase
 
         private void LoadRSAPrivateKey()
         {
+            OnDebugEvent("Loading RSA private key files");
 
             var keyFile = new FileInfo(RemoteHostPrivateKeyFile);
             if (!keyFile.Exists)
@@ -910,6 +910,7 @@ namespace AnalysisManagerBase
 
             try
             {
+                OnDebugEvent("  reading " + keyFile.FullName);
                 using (var reader = new StreamReader(new FileStream(keyFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     keyFileStream = new MemoryStream(Encoding.ASCII.GetBytes(reader.ReadToEnd()));
@@ -922,6 +923,7 @@ namespace AnalysisManagerBase
 
             try
             {
+                OnDebugEvent("  reading " + passPhraseFile.FullName);
                 using (var reader = new StreamReader(new FileStream(passPhraseFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     passphraseEncoded = reader.ReadLine();
@@ -969,7 +971,7 @@ namespace AnalysisManagerBase
                 return false;
             }
 
-            var sourceFileNames = new List<string> { StatusFileJobStatus };
+            var sourceFileNames = new List<string> { JobStatusFile };
 
             var success = CopyFilesFromRemote(RemoteTaskQueuePath, sourceFileNames, WorkDir);
 
@@ -978,7 +980,7 @@ namespace AnalysisManagerBase
                 return false;
             }
 
-            var jobStatusFile = new FileInfo(Path.Combine(WorkDir, StatusFileJobStatus));
+            var jobStatusFile = new FileInfo(Path.Combine(WorkDir, JobStatusFile));
             if (jobStatusFile.Exists)
             {
                 jobStatusFilePathLocal = jobStatusFile.FullName;
@@ -988,7 +990,7 @@ namespace AnalysisManagerBase
             OnWarningEvent(".jobstatus file not found despite CopyFilesFromRemote reporting success: " + jobStatusFile.FullName);
             return false;
         }
-        
+
         /// <summary>
         /// Update cached parameters using MgrParams and JobParams
         /// In addition, loads the private key information from RemoteHostPrivateKeyFile and RemoteHostPassphraseFile
@@ -1010,6 +1012,7 @@ namespace AnalysisManagerBase
             if (useDefaultManagerRemoteInfo)
             {
                 // Use settings defined for this manager
+                OnDebugEvent("Updating remote transfer settings using manager defaults");
 
                 RemoteHostName = MgrParams.GetParam("RemoteHostName");
                 RemoteHostUser = MgrParams.GetParam("RemoteHostUser");
@@ -1027,7 +1030,9 @@ namespace AnalysisManagerBase
             {
                 // Use settings defined for the running analysis job
 
-                var remoteInfo = JobParams.GetJobParameter("StepParameters", "RemoteInfo");
+                OnDebugEvent("Updating remote transfer settings using job parameter RemoteInfo");
+
+                var remoteInfo = JobParams.GetParam("StepParameters", "RemoteInfo");
                 if (string.IsNullOrWhiteSpace(remoteInfo))
                 {
                     throw new Exception("RemoteInfo job step parameter is empty; the RemoteTransferUtility cannot validate remote info");
