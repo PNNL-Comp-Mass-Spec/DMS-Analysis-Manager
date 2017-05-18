@@ -32,7 +32,7 @@ namespace AnalysisManagerMODaPlugIn
             }
 
             // Make sure the machine has enough free memory to run MODa
-            if (!ValidateFreeMemorySize("MODaJavaMemorySize", "MODa"))
+            if (!ValidateFreeMemorySize("MODaJavaMemorySize"))
             {
                 m_message = "Not enough free memory to run MODa";
                 return CloseOutType.CLOSEOUT_FAILED;

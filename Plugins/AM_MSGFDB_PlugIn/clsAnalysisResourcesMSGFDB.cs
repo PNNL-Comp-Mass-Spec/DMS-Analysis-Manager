@@ -41,12 +41,13 @@ namespace AnalysisManagerMSGFDBPlugIn
                 {
                     return result;
                 }
-                
+
                 // Make sure the machine has enough free memory to run MSGF+
+                // Setting MSGFDBJavaMemorySize is stored in the settings file for the job
                 currentTask = "ValidateFreeMemorySize";
-                if (!ValidateFreeMemorySize("MSGFDBJavaMemorySize", "MSGF+", false))
+                if (!ValidateFreeMemorySize("MSGFDBJavaMemorySize", false))
                 {
-                    m_message = "Not enough free memory to run MSGFDB";
+                    m_message = "Not enough free memory to run MSGF+";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 

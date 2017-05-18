@@ -21,7 +21,7 @@ namespace AnalysisManagerMSDeconvPlugIn
             }
 
             // Make sure the machine has enough free memory to run MSDeconv
-            if (!ValidateFreeMemorySize("MSDeconvJavaMemorySize", "MSDeconv"))
+            if (!ValidateFreeMemorySize("MSDeconvJavaMemorySize"))
             {
                 m_message = "Not enough free memory to run MSDeconv";
                 return CloseOutType.CLOSEOUT_FAILED;

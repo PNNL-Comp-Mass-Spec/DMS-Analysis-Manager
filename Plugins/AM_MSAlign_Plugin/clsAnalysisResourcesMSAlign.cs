@@ -29,7 +29,7 @@ namespace AnalysisManagerMSAlignPlugIn
             }
 
             // Make sure the machine has enough free memory to run MSAlign
-            if (!ValidateFreeMemorySize("MSAlignJavaMemorySize", "MSAlign"))
+            if (!ValidateFreeMemorySize("MSAlignJavaMemorySize"))
             {
                 m_message = "Not enough free memory to run MSAlign";
                 return CloseOutType.CLOSEOUT_FAILED;

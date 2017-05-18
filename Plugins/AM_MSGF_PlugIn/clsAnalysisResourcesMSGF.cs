@@ -56,7 +56,7 @@ namespace AnalysisManagerMSGFPlugin
             if (!strScriptName.ToLower().StartsWith("MSGFPlus".ToLower()))
             {
                 // Make sure the machine has enough free memory to run MSGF
-                if (!ValidateFreeMemorySize("MSGFJavaMemorySize", "MSGF"))
+                if (!ValidateFreeMemorySize("MSGFJavaMemorySize"))
                 {
                     m_message = "Not enough free memory to run MSGF";
                     return CloseOutType.CLOSEOUT_FAILED;

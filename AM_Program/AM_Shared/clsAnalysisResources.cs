@@ -4174,30 +4174,13 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Validates that sufficient free memory is available to run Java
         /// </summary>
-        /// <param name="strJavaMemorySizeJobParamName">Name of the job parameter that defines the amount of memory (in MB) to reserve for Java</param>
-        /// <param name="strStepToolName">Step tool name to use when posting log entries</param>
-        /// <returns>True if sufficient free memory; false if not enough free memory</returns>
-        /// <remarks>Typical names for strJavaMemorySizeJobParamName are MSGFJavaMemorySize, MSGFDBJavaMemorySize, and MSDeconvJavaMemorySize.
-        /// These parameters are loaded from DMS Settings Files (table T_Settings_Files in DMS5, copied to table T_Job_Parameters in DMS_Pipeline) </remarks>
-        protected bool ValidateFreeMemorySize(string strJavaMemorySizeJobParamName, string strStepToolName)
-        {
-
-            const bool blnLogFreeMemoryOnSuccess = true;
-            return ValidateFreeMemorySize(strJavaMemorySizeJobParamName, strStepToolName, blnLogFreeMemoryOnSuccess);
-
-        }
-
-        /// <summary>
-        /// Validates that sufficient free memory is available to run Java
-        /// </summary>
         /// <param name="strMemorySizeJobParamName">Name of the job parameter that defines the amount of memory (in MB) that must be available on the system</param>
-        /// <param name="strStepToolName">Step tool name to use when posting log entries</param>
         /// <param name="blnLogFreeMemoryOnSuccess">If True, then post a log entry if sufficient memory is, in fact, available</param>
         /// <returns>True if sufficient free memory; false if not enough free memory</returns>
         /// <remarks>Typical names for strJavaMemorySizeJobParamName are MSGFJavaMemorySize, MSGFDBJavaMemorySize, and MSDeconvJavaMemorySize.
         /// These parameters are loaded from DMS Settings Files (table T_Settings_Files in DMS5, copied to table T_Job_Parameters in DMS_Pipeline)
         /// </remarks>
-        protected bool ValidateFreeMemorySize(string strMemorySizeJobParamName, string strStepToolName, bool blnLogFreeMemoryOnSuccess)
+        protected bool ValidateFreeMemorySize(string strMemorySizeJobParamName, bool blnLogFreeMemoryOnSuccess = true)
         {
             // Lookup parameter strMemorySizeJobParamName; assume 2000 MB if not defined
             var freeMemoryRequiredMB = m_jobParams.GetJobParameter(strMemorySizeJobParamName, 2000);
@@ -4209,30 +4192,30 @@ namespace AnalysisManagerBase
             if (m_DebugLevel < 1)
                 blnLogFreeMemoryOnSuccess = false;
 
-            return ValidateFreeMemorySize(freeMemoryRequiredMB, strStepToolName, blnLogFreeMemoryOnSuccess);
+            return ValidateFreeMemorySize(freeMemoryRequiredMB, StepToolName, blnLogFreeMemoryOnSuccess);
 
         }
 
-        public static bool ValidateFreeMemorySize(int freeMemoryRequiredMB, string strStepToolName, bool blnLogFreeMemoryOnSuccess)
+        public static bool ValidateFreeMemorySize(int freeMemoryRequiredMB, string stepToolName, bool blnLogFreeMemoryOnSuccess)
         {
-            string strMessage;
 
-            var sngFreeMemoryMB = clsGlobal.GetFreeMemoryMB();
+            var freeMemoryMB = clsGlobal.GetFreeMemoryMB();
 
-            if (freeMemoryRequiredMB >= sngFreeMemoryMB)
+            if (freeMemoryRequiredMB >= freeMemoryMB)
             {
-                strMessage = "Not enough free memory to run " + strStepToolName;
+                var errMsg = "Not enough free memory to run " + stepToolName + "; " +
+                             "need " + freeMemoryRequiredMB + " MB but " +
+                             "system has " + freeMemoryMB.ToString("0") + " MB available";
 
-                strMessage += "; need " + freeMemoryRequiredMB.ToString() + " MB but system has " + sngFreeMemoryMB.ToString("0") + " MB available";
-                clsGlobal.LogError(strMessage);
+                clsGlobal.LogError(errMsg);
                 return false;
             }
 
             if (blnLogFreeMemoryOnSuccess)
             {
-                strMessage = strStepToolName + " will use " + freeMemoryRequiredMB.ToString() + " MB; " +
-                             "system has " + sngFreeMemoryMB.ToString("0") + " MB available";
-                clsGlobal.LogDebug(strMessage);
+                var message = stepToolName + " will use " + freeMemoryRequiredMB + " MB; " +
+                             "system has " + freeMemoryMB.ToString("0") + " MB available";
+                clsGlobal.LogDebug(message);
             }
 
             return true;
