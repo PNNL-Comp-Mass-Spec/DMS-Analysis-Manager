@@ -993,7 +993,8 @@ namespace AnalysisManagerMSGFPlugin
                 mMSGFDBVersion = "Production_Release";
             }
 
-            return DetermineProgramLocation(strStepToolName, strProgLocManagerParamName, strExeName, strMSGFStepToolVersion);
+            return DetermineProgramLocation(strStepToolName, strProgLocManagerParamName, strExeName, 
+                strMSGFStepToolVersion, m_mgrParams, out m_message);
         }
 
         public static bool IsLegacyMSGFVersion(string strStepToolVersion)

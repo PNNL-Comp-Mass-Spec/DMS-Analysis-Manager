@@ -1312,34 +1312,32 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Determine the path to the correct version of the step tool
         /// </summary>
-        /// <param name="strStepToolName">The name of the step tool, e.g. LCMSFeatureFinder</param>
         /// <param name="strProgLocManagerParamName">The name of the manager parameter that defines the path to the folder with the exe, e.g. LCMSFeatureFinderProgLoc</param>
         /// <param name="strExeName">The name of the exe file, e.g. LCMSFeatureFinder.exe</param>
         /// <returns>The path to the program, or an empty string if there is a problem</returns>
         /// <remarks></remarks>
-        protected string DetermineProgramLocation(string strStepToolName, string strProgLocManagerParamName, string strExeName)
+        protected string DetermineProgramLocation(string strProgLocManagerParamName, string strExeName)
         {
 
             // Check whether the settings file specifies that a specific version of the step tool be used
-            var strStepToolVersion = m_jobParams.GetParam(strStepToolName + "_Version");
+            var strStepToolVersion = m_jobParams.GetParam(StepToolName + "_Version");
 
-            return DetermineProgramLocation(strStepToolName, strProgLocManagerParamName, strExeName, strStepToolVersion);
+            return DetermineProgramLocation(strProgLocManagerParamName, strExeName, strStepToolVersion);
 
         }
 
         /// <summary>
         /// Determine the path to the correct version of the step tool
         /// </summary>
-        /// <param name="strStepToolName">The name of the step tool, e.g. LCMSFeatureFinder</param>
         /// <param name="strProgLocManagerParamName">The name of the manager parameter that defines the path to the folder with the exe, e.g. LCMSFeatureFinderProgLoc</param>
         /// <param name="strExeName">The name of the exe file, e.g. LCMSFeatureFinder.exe</param>
         /// <param name="strStepToolVersion">Specific step tool version to use (will be the name of a subfolder located below the primary ProgLoc location)</param>
         /// <returns>The path to the program, or an empty string if there is a problem</returns>
         /// <remarks></remarks>
-        protected string DetermineProgramLocation(string strStepToolName, string strProgLocManagerParamName, string strExeName, string strStepToolVersion)
+        protected string DetermineProgramLocation(string strProgLocManagerParamName, string strExeName, string strStepToolVersion)
         {
 
-            return DetermineProgramLocation(strStepToolName, strProgLocManagerParamName, strExeName, strStepToolVersion, m_mgrParams, out m_message);
+            return DetermineProgramLocation(StepToolName, strProgLocManagerParamName, strExeName, strStepToolVersion, m_mgrParams, out m_message);
         }
 
         /// <summary>
@@ -3009,8 +3007,7 @@ namespace AnalysisManagerBase
 
             try
             {
-                var strStepToolName = m_jobParams.GetParam("StepTool");
-                var strToolVersionFilePath = Path.Combine(strFolderPath, "Tool_Version_Info_" + strStepToolName + ".txt");
+                var strToolVersionFilePath = Path.Combine(strFolderPath, "Tool_Version_Info_" + StepToolName + ".txt");
 
                 using (var swToolVersionFile = new StreamWriter(new FileStream(strToolVersionFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
                 {
