@@ -62,6 +62,21 @@ namespace AnalysisManagerBase
 
         #region "Properties"
 
+        /// <summary>
+        /// When true, status messages are being sent directly to the broker database
+        /// </summary>
+        bool LogToBrokerQueue { get; }
+
+        /// <summary>
+        /// Broker database connection string
+        /// </summary>
+        string BrokerDBConnectionString { get; }
+
+        /// <summary>
+        /// Broker database update interval, in minutes
+        /// </summary>
+        float BrokerDBUpdateIntervalMinutes { get; }
+
         string FileNamePath { get; set; }
 
         string MgrName { get; set; }
@@ -112,11 +127,12 @@ namespace AnalysisManagerBase
 
         int SpectrumCount { get; set; }
 
-        string MessageQueueURI { get; set; }
+        string MessageQueueURI { get; }
 
-        string MessageQueueTopic { get; set; }
+        string MessageQueueTopic { get; }
 
-        bool LogToMsgQueue { get; set; }
+        bool LogToMsgQueue { get; }
+
         #endregion
 
         #region "Methods"
