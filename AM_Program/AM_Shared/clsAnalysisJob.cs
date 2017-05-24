@@ -1052,7 +1052,7 @@ namespace AnalysisManagerBase
             else
             {
                 m_TaskWasClosed = true;
-                if (!SetAnalysisJobComplete(SP_NAME_SET_COMPLETE, compCode, compMsg, evalCode, evalMessage))
+                if (!SetAnalysisJobComplete(compCode, compMsg, evalCode, evalMessage))
                 {
                     LogError("Error setting job complete in database, job " + m_JobId);
                 }
@@ -1063,18 +1063,17 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Communicates with database to perform job closeOut
         /// </summary>
-        /// <param name="spName">Name of SP in database to call for closeOut, typically SetStepTaskComplete</param>
         /// <param name="compCode">Integer version of ITaskParams specifying closeOut type (enum CloseOutType)</param>
         /// <param name="compMsg">Comment to insert in database</param>
         /// <param name="evalCode">Integer results evaluation code</param>
         /// <param name="evalMsg">Message describing evaluation results</param>
         /// <returns>True for success, False for failure</returns>
         /// <remarks>evalCode and EvalMsg not presently used</remarks>
-        protected bool SetAnalysisJobComplete(string spName, int compCode, string compMsg, int evalCode, string evalMsg)
+        protected bool SetAnalysisJobComplete(int compCode, string compMsg, int evalCode, string evalMsg)
         {
 
             // Setup for execution of the stored procedure
-            var myCmd = new SqlCommand(spName) { CommandType = CommandType.StoredProcedure };
+            var cmd = new SqlCommand(SP_NAME_SET_COMPLETE) {
                 CommandType = CommandType.StoredProcedure
             };
 
@@ -1115,6 +1114,13 @@ namespace AnalysisManagerBase
                     remoteTimestampParam.Value = remoteTimestamp;
             }
 
+            // Note: leave remoteTimestampParam.Value as null if remoteTimestamp is empty
+            var remoteProgressParam = cmd.Parameters.Add(new SqlParameter("@remoteProgress", SqlDbType.Real));
+            if (TryGetParam(STEP_PARAMETERS_SECTION, clsRemoteTransferUtility.STEP_PARAM_REMOTE_PROGRESS, out var remoteProgressText, false))
+            {
+                remoteProgressParam.Value = clsGlobal.CSngSafe(remoteProgressText, 0);
+            }
+
             // Execute the Stored Procedure (retry the call up to 20 times)
             var returnCode = PipelineDBProcedureExecutor.ExecuteSP(cmd, 20);
 
@@ -1129,9 +1135,9 @@ namespace AnalysisManagerBase
 
         /// <summary>
         /// Uses the "ToolName" and "StepTool" entries in m_JobParamsTable to generate the tool name for the current analysis job
-        /// Example tool names are "Sequest" or "DTA_Gen (Sequest)" or "DataExtractor (XTandem)"
+        /// Example tool names are "Sequest, Step 3" or "DTA_Gen (Sequest), Step 1" or "DataExtractor (XTandem), Step 4"
         /// </summary>
-        /// <returns>Tool name</returns>
+        /// <returns>Tool name and step number</returns>
         /// <remarks></remarks>
         public string GetCurrentJobToolDescription()
         {

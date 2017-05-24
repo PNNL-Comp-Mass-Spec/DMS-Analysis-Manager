@@ -289,6 +289,10 @@ namespace AnalysisManagerBase
                     status.SpectrumCount = clsXMLUtils.GetXmlValue(taskDetails, "SpectrumCount", 0);
 
                     status.WriteStatusFile(lastUpdate, processId, cpuUtilization, freeMemoryMB, forceLogToBrokerDB: logToBrokerDB);
+
+                    JobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsRemoteTransferUtility.STEP_PARAM_REMOTE_PROGRESS,
+                                                     status.Progress.ToString("0.0###"));
+
                 }
 
             }
