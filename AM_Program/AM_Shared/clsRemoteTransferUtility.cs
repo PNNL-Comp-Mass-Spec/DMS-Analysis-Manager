@@ -106,6 +106,20 @@ namespace AnalysisManagerBase
         public string RemoteTaskQueuePath { get; private set; }
 
         /// <summary>
+        /// Folder for task queue files for the step tool associated with this job
+        /// </summary>
+        public string RemoteTaskQueuePathForTool
+        {
+            get
+            {
+                if (string.IsNullOrWhiteSpace(RemoteTaskQueuePath) || string.IsNullOrWhiteSpace(StepTool))
+                    return string.Empty;
+
+                return clsPathUtils.CombineLinuxPaths(RemoteTaskQueuePath, StepTool);
+            }
+        }
+
+        /// <summary>
         /// Folder for job task data files
         /// </summary>
         /// <remarks>
@@ -119,6 +133,11 @@ namespace AnalysisManagerBase
         /// Step number for the current job
         /// </summary>
         public int StepNum { get; private set; }
+
+        /// <summary>
+        /// Step tool, e.g. MSGFPlus
+        /// </summary>
+        public string StepTool { get; private set; }
 
         /// <summary>
         /// Local working directory
@@ -510,7 +529,16 @@ namespace AnalysisManagerBase
                 OnDebugEvent("Creating JobTaskInfo file " + infoFileName);
 
                 var infoFilePathLocal = Path.Combine(WorkDir, infoFileName);
-                infoFilePathRemote = clsPathUtils.CombineLinuxPaths(RemoteTaskQueuePath, infoFileName);
+
+                var remoteDirectoryPath = RemoteTaskQueuePathForTool;
+                if (string.IsNullOrWhiteSpace(remoteDirectoryPath))
+                {
+                    OnErrorEvent("Remote task queue path for this job's step tool is empty; cannot create the task info file");
+                    infoFilePathRemote = string.Empty;
+                    return false;
+                }
+
+                infoFilePathRemote = clsPathUtils.CombineLinuxPaths(remoteDirectoryPath, infoFileName);
 
                 using (var writer = new StreamWriter(new FileStream(infoFilePathLocal, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
@@ -854,8 +882,6 @@ namespace AnalysisManagerBase
         /// <returns>Dictionary of matching files, where keys are full file paths and values are instances of SFtpFile</returns>
         public Dictionary<string, SftpFile> GetStatusFiles(bool useDefaultManagerRemoteInfo = false)
         {
-            Dictionary<string, SftpFile> statusFiles;
-
             if (IsParameterUpdateRequired(useDefaultManagerRemoteInfo))
             {
                 // Validate that the required parameters are present and load the private key and passphrase from disk
@@ -863,24 +889,31 @@ namespace AnalysisManagerBase
                 UpdateParameters(useDefaultManagerRemoteInfo);
             }
 
-            var remoteTimestamp = JobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, STEP_PARAM_REMOTE_TIMESTAMP);
-            if (string.IsNullOrWhiteSpace(remoteTimestamp))
+            try
             {
-                OnErrorEvent("Job parameter RemoteTimestamp is empty; cannot list remote status files");
-                statusFiles = new Dictionary<string, SftpFile>();
-                return statusFiles;
-            }
+                var remoteTimestamp = JobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, STEP_PARAM_REMOTE_TIMESTAMP);
+                if (string.IsNullOrWhiteSpace(remoteTimestamp))
+                {
+                    OnErrorEvent("Job parameter RemoteTimestamp is empty; cannot list remote status files");
+                    return new Dictionary<string, SftpFile>();
+                }
 
-            var baseTrackingFilename = GetBaseStatusFilename();
-            if (string.IsNullOrWhiteSpace(baseTrackingFilename))
+                var baseTrackingFilename = GetBaseStatusFilename();
+                if (string.IsNullOrWhiteSpace(baseTrackingFilename))
+                {
+                    return new Dictionary<string, SftpFile>();
+                }
+
+                var statusFiles = GetRemoteFileListing(RemoteTaskQueuePathForTool, baseTrackingFilename + "*");
+
+                return statusFiles;
+
+            }
+            catch (Exception ex)
             {
-                statusFiles = new Dictionary<string, SftpFile>();
-                return statusFiles;
+                OnErrorEvent(string.Format("Error retrieving remote status files: " + ex.Message), ex);
+                return new Dictionary<string, SftpFile>();
             }
-
-            statusFiles = GetRemoteFileListing(RemoteTaskQueuePath, baseTrackingFilename + "*");
-
-            return statusFiles;
         }
 
         /// <summary>
@@ -1005,9 +1038,11 @@ namespace AnalysisManagerBase
         {
             statusFilePathLocal = string.Empty;
 
-            var sourceFileNames = new List<string> { statusFileName };
+            try
+            {
+                var sourceFileNames = new List<string> { statusFileName };
 
-            var success = CopyFilesFromRemote(RemoteTaskQueuePath, sourceFileNames, WorkDir);
+                var success = CopyFilesFromRemote(RemoteTaskQueuePathForTool, sourceFileNames, WorkDir);
 
             if (!success)
             {
@@ -1104,6 +1139,7 @@ namespace AnalysisManagerBase
 
             JobNum = JobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job", 0);
             StepNum = JobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step", 0);
+            StepTool = JobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "StepTool");
             DatasetName = JobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetNum");
 
             if (string.IsNullOrWhiteSpace(WorkDir))
@@ -1132,6 +1168,9 @@ namespace AnalysisManagerBase
 
             if (JobNum == 0)
                 throw new Exception("JobNum is zero; check the job parameters");
+
+            if (string.IsNullOrWhiteSpace(StepTool))
+                throw new Exception("StepTool name is empty; check the job parameters");
 
             if (string.IsNullOrWhiteSpace(DatasetName))
                 throw new Exception("Dataset name is empty; check the job parameters");
