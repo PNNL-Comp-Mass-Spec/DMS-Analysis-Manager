@@ -201,7 +201,7 @@ namespace AnalysisManagerBase
                     }
                 }
 
-                // No .lock file; look for a .success file
+                // Look for a .success file
                 if (StatusFileExists(TransferUtility.ProcessingSuccessFile, statusFiles, out var remoteSuccessFile))
                 {
                     OnStatusEvent(".success file found for " + TransferUtility.JobStepDescription + " on " + TransferUtility.RemoteHostName);
@@ -214,7 +214,7 @@ namespace AnalysisManagerBase
                     return EnumRemoteJobStatus.Success;
                 }
 
-                // No .lock file or .success file; look for a .fail file
+                // Look for a .fail file
                 if (StatusFileExists(TransferUtility.ProcessingFailureFile, statusFiles, out var remoteFailureFile))
                 {
                     LogWarning(".fail file found for " + TransferUtility.JobStepDescription + " on " + TransferUtility.RemoteHostName);
@@ -429,7 +429,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Look for file statusFileName in statusFiles
+        /// Look for file statusFileName in dictionary statusFiles
         /// </summary>
         /// <param name="statusFileName">Status file to find</param>
         /// <param name="statusFiles">List of status files</param>

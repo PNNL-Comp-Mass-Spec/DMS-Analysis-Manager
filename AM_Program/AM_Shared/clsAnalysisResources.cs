@@ -2118,7 +2118,7 @@ namespace AnalysisManagerBase
         {
             numberOfClonedSteps = 0;
 
-            var legacyFastaFileName = jobParams.GetJobParameter("LegacyFastaFileName", "");
+            var legacyFastaFileName = jobParams.GetJobParameter("LegacyFastaFileName", string.Empty);
             if (string.IsNullOrEmpty(legacyFastaFileName))
             {
                 errorMessage = "Parameter LegacyFastaFileName is empty for the job; cannot determine the SplitFasta file name for this job step";
