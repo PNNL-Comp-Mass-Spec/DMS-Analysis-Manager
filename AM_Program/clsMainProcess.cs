@@ -1841,20 +1841,18 @@ namespace AnalysisManagerProg
         {
             if (m_NeedToAbortProcessing)
             {
-                LogError("Analysis manager has encountered a fatal error - aborting processing (m_NeedToAbortProcessing = True)");
+                LogError("Analysis manager has encountered a fatal error - aborting processing (m_NeedToAbortProcessing is True)");
                 return true;
             }
 
-            if ((m_StatusTools != null))
-            {
-                if (m_StatusTools.AbortProcessingNow)
-                {
-                    LogError("Found file " + clsStatusFile.ABORT_PROCESSING_NOW_FILENAME + " - aborting processing");
-                    return true;
-                }
-            }
+            if (m_StatusTools == null)
+                return false;
 
-            return false;
+            if (!m_StatusTools.AbortProcessingNow)
+                return false;
+
+            LogError("Found file " + clsStatusFile.ABORT_PROCESSING_NOW_FILENAME + " - aborting processing");
+            return true;
         }
 
         // ReSharper disable once SuggestBaseTypeForParameter
@@ -2586,7 +2584,7 @@ namespace AnalysisManagerProg
 
             objStatusFile.ConfigureMemoryLogging(logMemoryUsage, minimumMemoryUsageLogInterval, m_MgrFolderPath);
             objStatusFile.ConfigureBrokerDBLogging(logStatusToBrokerDb, brokerDbConnectionString, brokerDbStatusUpdateIntervalMinutes);
-            objStatusFile.ConfigureMessageQueueLogging(logStatusToMessageQueue, messageQueueUri, messageQueueTopicMgrStatus, m_MgrName);
+            objStatusFile.ConfigureMessageQueueLogging(logStatusToMessageQueue, messageQueueUri, messageQueueTopicMgrStatus);
         }
 
         /// <summary>
@@ -2754,19 +2752,23 @@ namespace AnalysisManagerProg
 
                         firstFile.Delete();
 
-                        // Wait 0.5 second and then refresh tmpFilArray
-                        Thread.Sleep(500);
+                        // Wait 100 msec then refresh the listing
+                        Thread.Sleep(100);
 
                         // Now obtain a new listing of files
-                        if (workDir.GetFiles(m_WorkDirPath).Length == 0)
+                        workDir.Refresh();
+
+                        if (workDir.GetFiles().Length == 0)
                         {
                             // The directory is now empty
                             return true;
                         }
+
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
                         // Deletion failed
+                        LogError("Error deleting files in the working directory: " + ex.Message);
                     }
                 }
             }
