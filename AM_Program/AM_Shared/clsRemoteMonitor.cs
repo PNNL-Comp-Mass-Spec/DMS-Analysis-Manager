@@ -58,6 +58,8 @@ namespace AnalysisManagerBase
 
         private IMgrParams MgrParams { get; }
 
+        public float RemoteProgress { get; private set; }
+
         public clsRemoteTransferUtility TransferUtility { get; }
 
         private IToolRunner ToolRunner { get; }

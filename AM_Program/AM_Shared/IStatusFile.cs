@@ -69,6 +69,12 @@ namespace AnalysisManagerBase
         EnumMgrStatus MgrStatus { get; set; }
 
         /// <summary>
+        /// Name of the manager remotely running the job
+        /// </summary>
+        /// <remarks>When this is defined, it is implied that stats like CpuUtilization  and CoreUsage apply to the remote manager</remarks>
+        string RemoteMgrName { get; set; }
+
+        /// <summary>
         /// Overall CPU utilization of all threads
         /// </summary>
         /// <remarks></remarks>

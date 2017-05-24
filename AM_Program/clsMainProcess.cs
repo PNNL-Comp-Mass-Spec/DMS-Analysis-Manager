@@ -945,7 +945,7 @@ namespace AnalysisManagerProg
                         eToolRunnerResult = CloseOutType.CLOSEOUT_RUNNING_REMOTE;
                         break;
                     case clsRemoteMonitor.EnumRemoteJobStatus.Running:
-                        LogDebug(string.Format("Remote job is running, {0:F1}% complete", m_StatusTools.Progress), 2);
+                        LogDebug(string.Format("Remote job is running, {0:F1}% complete", remoteMonitor.RemoteProgress), 2);
                         eToolRunnerResult = CloseOutType.CLOSEOUT_RUNNING_REMOTE;
                         break;
                     case clsRemoteMonitor.EnumRemoteJobStatus.Success:
@@ -1662,6 +1662,12 @@ namespace AnalysisManagerProg
                     TaskStatusDetail = EnumTaskStatusDetail.NO_TASK
                 };
                 RegisterEvents(m_StatusTools);
+
+                var runJobsRemotely = m_MgrSettings.GetParam("RunJobsRemotely", false);
+                if (runJobsRemotely)
+                {
+                    m_StatusTools.RemoteMgrName = m_MgrSettings.GetParam("RemoteHostName");
+                }
 
                 UpdateStatusToolLoggingSettings(m_StatusTools);
             }

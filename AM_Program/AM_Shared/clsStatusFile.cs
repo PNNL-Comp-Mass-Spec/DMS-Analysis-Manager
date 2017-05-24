@@ -77,6 +77,11 @@ namespace AnalysisManagerBase
         public EnumMgrStatus MgrStatus { get; set; }
 
         /// <summary>
+        /// Name of the manager remotely running the job, or of the remote host that this manager pushes jobs to
+        /// </summary>
+        public string RemoteMgrName { get; set; }
+
+        /// <summary>
         /// Overall CPU utilization of all threads
         /// </summary>
         /// <remarks></remarks>
@@ -181,6 +186,8 @@ namespace AnalysisManagerBase
         {
             FileNamePath = statusFilePath;
             MgrName = string.Empty;
+            RemoteMgrName = string.Empty;
+
             MgrStatus = EnumMgrStatus.STOPPED;
 
             TaskStatus = EnumTaskStatus.NO_TASK;
