@@ -316,17 +316,26 @@ namespace AnalysisManagerBase
         /// <remarks>Calls UpdateParameters if necessary; that method will throw an exception if there are missing parameters or configuration issues</remarks>
         public bool CopyFileToRemote(string sourceFilePath, string remoteDirectoryPath)
         {
-            var sourceFile = new FileInfo(sourceFilePath);
-            if (!sourceFile.Exists)
+            try
             {
-                OnErrorEvent("Cannot copy file to remote; source file not found: " + sourceFilePath);
+                var sourceFile = new FileInfo(sourceFilePath);
+                if (!sourceFile.Exists)
+                {
+                    OnErrorEvent("Cannot copy file to remote; source file not found: " + sourceFilePath);
+                    return false;
+                }
+
+                var sourceFileNames = new List<string> { sourceFile.Name };
+
+                var success = CopyFilesToRemote(sourceFile.DirectoryName, sourceFileNames, remoteDirectoryPath, USE_MANAGER_REMOTE_INFO);
+                return success;
+            }
+            catch (Exception ex)
+            {
+                var errMsg = string.Format("Error copying file {0} to {1}: {2}", Path.GetFileName(sourceFilePath), remoteDirectoryPath, ex.Message);
+                OnErrorEvent(errMsg, ex);
                 return false;
             }
-
-            var sourceFileNames = new List<string> { sourceFile.Name };
-
-            var success = CopyFilesToRemote(sourceFile.DirectoryName, sourceFileNames, remoteDirectoryPath, USE_MANAGER_REMOTE_INFO);
-            return success;
         }
 
         /// <summary>
@@ -365,45 +374,55 @@ namespace AnalysisManagerBase
                 return false;
             }
 
-            var sourceDirectory = new DirectoryInfo(sourceDirectoryPath);
-            if (!sourceDirectory.Exists)
+            try
             {
-                OnErrorEvent("Cannot copy files to remote; source directory not found: " + sourceDirectoryPath);
+                var sourceDirectory = new DirectoryInfo(sourceDirectoryPath);
+                if (!sourceDirectory.Exists)
+                {
+                    OnErrorEvent("Cannot copy files to remote; source directory not found: " + sourceDirectoryPath);
+                    return false;
+                }
+
+                var sourceDirectoryFiles = sourceDirectory.GetFiles();
+                var filesToCopy = new List<FileInfo>();
+
+                foreach (var sourceFileName in sourceFileNames)
+                {
+                    if (sourceFileName.Contains("*") || sourceFileName.Contains("?"))
+                    {
+                        // Filename has a wildcard
+                        var matchingFiles = sourceDirectory.GetFiles(sourceFileName);
+                        filesToCopy.AddRange(matchingFiles);
+                        continue;
+                    }
+
+                    var matchFound = false;
+                    foreach (var candidateFile in sourceDirectoryFiles)
+                    {
+                        if (!string.Equals(sourceFileName, candidateFile.Name, StringComparison.OrdinalIgnoreCase))
+                            continue;
+
+                        filesToCopy.Add(candidateFile);
+                        matchFound = true;
+                        break;
+                    }
+
+                    if (!matchFound)
+                    {
+                        OnWarningEvent(string.Format("Source file not found; cannot copy {0} to {1}",
+                            Path.Combine(sourceDirectory.FullName, sourceFileName), remoteDirectoryPath));
+                    }
+                }
+
+                return CopyFilesToRemote(filesToCopy, remoteDirectoryPath);
+
+            }
+            catch (Exception ex)
+            {
+                var errMsg = string.Format("Error copying files to {0}: {1}", remoteDirectoryPath, ex.Message);
+                OnErrorEvent(errMsg, ex);
                 return false;
             }
-
-            var sourceDirectoryFiles = sourceDirectory.GetFiles();
-            var filesToCopy = new List<FileInfo>();
-
-            foreach (var sourceFileName in sourceFileNames)
-            {
-                if (sourceFileName.Contains("*") || sourceFileName.Contains("?"))
-                {
-                    // Filename has a wildcard
-                    var matchingFiles = sourceDirectory.GetFiles(sourceFileName);
-                    filesToCopy.AddRange(matchingFiles);
-                    continue;
-                }
-
-                var matchFound = false;
-                foreach (var candidateFile in sourceDirectoryFiles)
-                {
-                    if (!string.Equals(sourceFileName, candidateFile.Name, StringComparison.OrdinalIgnoreCase))
-                        continue;
-
-                    filesToCopy.Add(candidateFile);
-                    matchFound = true;
-                    break;
-                }
-
-                if (!matchFound)
-                {
-                    OnWarningEvent(string.Format("Source file not found; cannot copy {0} to {1}",
-                        Path.Combine(sourceDirectory.FullName, sourceFileName), remoteDirectoryPath));
-                }
-            }
-
-            return CopyFilesToRemote(filesToCopy, remoteDirectoryPath);
         }
 
         /// <summary>
@@ -1044,20 +1063,26 @@ namespace AnalysisManagerBase
 
                 var success = CopyFilesFromRemote(RemoteTaskQueuePathForTool, sourceFileNames, WorkDir);
 
-            if (!success)
-            {
+                if (!success)
+                {
+                    return false;
+                }
+
+                var statusFile = new FileInfo(Path.Combine(WorkDir, JobStatusFile));
+                if (statusFile.Exists)
+                {
+                    statusFilePathLocal = statusFile.FullName;
+                    return true;
+                }
+
+                OnWarningEvent(Path.GetExtension(statusFileName) + " file not found despite CopyFilesFromRemote reporting success: " + statusFile.FullName);
                 return false;
             }
-
-            var statusFile = new FileInfo(Path.Combine(WorkDir, JobStatusFile));
-            if (statusFile.Exists)
+            catch (Exception ex)
             {
-                statusFilePathLocal = statusFile.FullName;
-                return true;
+                OnErrorEvent(string.Format("Error retrieving status file {0}: {1}", statusFileName, ex.Message), ex);
+                return false;
             }
-
-            OnWarningEvent(Path.GetExtension(statusFileName) + " file not found despite CopyFilesFromRemote reporting success: " + statusFile.FullName);
-            return false;
         }
 
         /// <summary>
