@@ -267,19 +267,19 @@ namespace AnalysisManagerBase
                     splitFastaName = fiSplitFastaFile.Name;
 
                     // Setup for execution of the stored procedure
-                    var myCmd = new SqlCommand
+                    var cmd = new SqlCommand
                     {
                         CommandType = CommandType.StoredProcedure,
                         CommandText = SP_NAME_UPDATE_ORGANISM_DB_FILE
                     };
 
-                    myCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
-                    myCmd.Parameters.Add(new SqlParameter("@FastaFileName", SqlDbType.VarChar, 128)).Value = splitFastaName;
-                    myCmd.Parameters.Add(new SqlParameter("@OrganismName", SqlDbType.VarChar, 128)).Value = organismName;
-                    myCmd.Parameters.Add(new SqlParameter("@NumProteins", SqlDbType.Int)).Value = udtFileInfo.NumProteins;
-                    myCmd.Parameters.Add(new SqlParameter("@NumResidues", SqlDbType.BigInt)).Value = udtFileInfo.NumResidues;
-                    myCmd.Parameters.Add(new SqlParameter("@FileSizeKB", SqlDbType.Int)).Value = (fiSplitFastaFile.Length / 1024.0).ToString("0");
-                    myCmd.Parameters.Add(new SqlParameter("@Message", SqlDbType.VarChar, 512)).Value = string.Empty;
+                    cmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
+                    cmd.Parameters.Add(new SqlParameter("@FastaFileName", SqlDbType.VarChar, 128)).Value = splitFastaName;
+                    cmd.Parameters.Add(new SqlParameter("@OrganismName", SqlDbType.VarChar, 128)).Value = organismName;
+                    cmd.Parameters.Add(new SqlParameter("@NumProteins", SqlDbType.Int)).Value = udtFileInfo.NumProteins;
+                    cmd.Parameters.Add(new SqlParameter("@NumResidues", SqlDbType.BigInt)).Value = udtFileInfo.NumResidues;
+                    cmd.Parameters.Add(new SqlParameter("@FileSizeKB", SqlDbType.Int)).Value = (fiSplitFastaFile.Length / 1024.0).ToString("0");
+                    cmd.Parameters.Add(new SqlParameter("@Message", SqlDbType.VarChar, 512)).Value = string.Empty;
 
                     var retryCount = 3;
                     while (retryCount > 0)
@@ -289,17 +289,17 @@ namespace AnalysisManagerBase
                             using (var connection = new SqlConnection(mDMSConnectionString))
                             {
                                 connection.Open();
-                                myCmd.Connection = connection;
-                                myCmd.ExecuteNonQuery();
+                                cmd.Connection = connection;
+                                cmd.ExecuteNonQuery();
 
-                                var resultCode = Convert.ToInt32(myCmd.Parameters["@Return"].Value);
+                                var resultCode = Convert.ToInt32(cmd.Parameters["@Return"].Value);
 
                                 if (resultCode != 0)
                                 {
                                     // Error occurred
                                     mErrorMessage = SP_NAME_UPDATE_ORGANISM_DB_FILE + " returned a non-zero error code of " + resultCode;
 
-                                    var statusMessage = myCmd.Parameters["@Message"].Value;
+                                    var statusMessage = cmd.Parameters["@Message"].Value;
                                     if ((statusMessage != null))
                                     {
                                         mErrorMessage = mErrorMessage + "; " + Convert.ToString(statusMessage);
@@ -347,13 +347,13 @@ namespace AnalysisManagerBase
             try
             {
                 // Setup for execution of the stored procedure
-                var myCmd = new SqlCommand
+                var cmd = new SqlCommand
                 {
                     CommandType = CommandType.StoredProcedure,
                     CommandText = SP_NAME_REFRESH_CACHED_ORG_DB_INFO
                 };
 
-                myCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
+                cmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
 
                 var retryCount = 3;
                 while (retryCount > 0)
@@ -363,10 +363,10 @@ namespace AnalysisManagerBase
                         using (var connection = new SqlConnection(mProteinSeqsDBConnectionString))
                         {
                             connection.Open();
-                            myCmd.Connection = connection;
-                            myCmd.ExecuteNonQuery();
+                            cmd.Connection = connection;
+                            cmd.ExecuteNonQuery();
 
-                            var resultCode = Convert.ToInt32(myCmd.Parameters["@Return"].Value);
+                            var resultCode = Convert.ToInt32(cmd.Parameters["@Return"].Value);
 
                             if (resultCode != 0)
                             {

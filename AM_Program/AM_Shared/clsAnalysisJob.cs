@@ -185,7 +185,7 @@ namespace AnalysisManagerBase
             try
             {
                 if (paramValue == null)
-                    paramValue = string.Empty;
+                    paramValue = String.Empty;
 
                 SetParam(sectionName, paramName, paramValue);
 
@@ -207,7 +207,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public void AddDatasetInfo(string datasetName, int datasetID)
         {
-            if (string.IsNullOrWhiteSpace(datasetName))
+            if (String.IsNullOrWhiteSpace(datasetName))
                 return;
             if (!m_DatasetInfoList.ContainsKey(datasetName))
             {
@@ -222,7 +222,7 @@ namespace AnalysisManagerBase
         /// <remarks>Can be a file extension (like .raw) or even a partial file name like _peaks.txt</remarks>
         public void AddResultFileExtensionToSkip(string fileExtension)
         {
-            if (string.IsNullOrWhiteSpace(fileExtension))
+            if (String.IsNullOrWhiteSpace(fileExtension))
                 return;
 
             if (!m_ResultFileExtensionsToSkip.Contains(fileExtension))
@@ -238,7 +238,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public void AddResultFileToKeep(string fileName)
         {
-            if (string.IsNullOrWhiteSpace(fileName))
+            if (String.IsNullOrWhiteSpace(fileName))
                 return;
 
             fileName = Path.GetFileName(fileName);
@@ -255,7 +255,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public void AddResultFileToSkip(string fileName)
         {
-            if (string.IsNullOrWhiteSpace(fileName))
+            if (String.IsNullOrWhiteSpace(fileName))
                 return;
 
             fileName = Path.GetFileName(fileName);
@@ -272,7 +272,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public void AddServerFileToDelete(string filePath)
         {
-            if (string.IsNullOrWhiteSpace(filePath))
+            if (String.IsNullOrWhiteSpace(filePath))
                 return;
 
             if (!m_ServerFilesToDelete.Contains(filePath))
@@ -320,7 +320,7 @@ namespace AnalysisManagerBase
             {
                 value = GetParam(name);
 
-                if (string.IsNullOrEmpty(value))
+                if (String.IsNullOrEmpty(value))
                 {
                     return valueIfMissing;
                 }
@@ -351,7 +351,7 @@ namespace AnalysisManagerBase
             {
                 value = GetParam(name);
 
-                if (string.IsNullOrEmpty(value))
+                if (String.IsNullOrEmpty(value))
                 {
                     return valueIfMissing;
                 }
@@ -379,7 +379,7 @@ namespace AnalysisManagerBase
             {
                 value = GetParam(name);
 
-                if (string.IsNullOrEmpty(value))
+                if (String.IsNullOrEmpty(value))
                 {
                     return valueIfMissing;
                 }
@@ -451,7 +451,7 @@ namespace AnalysisManagerBase
         public string GetJobParameter(string section, string name, string valueIfMissing)
         {
             var value = GetParam(section, name);
-            if (string.IsNullOrEmpty(value))
+            if (String.IsNullOrEmpty(value))
             {
                 return valueIfMissing;
             }
@@ -497,7 +497,7 @@ namespace AnalysisManagerBase
             {
                 return value;
             }
-            return string.Empty;
+            return String.Empty;
         }
 
         /// <summary>
@@ -510,7 +510,7 @@ namespace AnalysisManagerBase
         public string GetParam(string section, string name)
         {
 
-            if (string.IsNullOrEmpty(name))
+            if (String.IsNullOrEmpty(name))
             {
                 // User actually wanted to look for the parameter that is currently in the Section Variable, using an empty string as the default value
                 return GetParam(section);
@@ -520,7 +520,7 @@ namespace AnalysisManagerBase
             {
                 return value;
             }
-            return string.Empty;
+            return String.Empty;
         }
 
         public static string JobParametersFilename(int jobNum)
@@ -544,7 +544,7 @@ namespace AnalysisManagerBase
             var blnMatchFound = false;
 
             if (paramValue == null)
-                paramValue = string.Empty;
+                paramValue = String.Empty;
 
             foreach (var section in m_JobParams)
             {
@@ -580,7 +580,7 @@ namespace AnalysisManagerBase
             }
 
             if (paramValue == null)
-                paramValue = string.Empty;
+                paramValue = String.Empty;
 
             if (oParams.ContainsKey(paramName))
             {
@@ -603,15 +603,15 @@ namespace AnalysisManagerBase
         public bool TryGetParam(string paramName, out string paramValue)
         {
 
-            paramValue = string.Empty;
+            paramValue = String.Empty;
 
             foreach (var oEntry in m_JobParams)
             {
                 if (oEntry.Value.TryGetValue(paramName, out paramValue))
                 {
-                    if (string.IsNullOrWhiteSpace(paramValue))
+                    if (String.IsNullOrWhiteSpace(paramValue))
                     {
-                        paramValue = string.Empty;
+                        paramValue = String.Empty;
                     }
                     return true;
                 }
@@ -645,15 +645,15 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public bool TryGetParam(string section, string paramName, out string paramValue, bool searchAllSectionsIfNotFound)
         {
-            paramValue = string.Empty;
+            paramValue = String.Empty;
 
             if (m_JobParams.TryGetValue(section, out var oParams))
             {
                 if (oParams.TryGetValue(paramName, out paramValue))
                 {
-                    if (string.IsNullOrWhiteSpace(paramValue))
+                    if (String.IsNullOrWhiteSpace(paramValue))
                     {
-                        paramValue = string.Empty;
+                        paramValue = String.Empty;
                     }
                     return true;
                 }
@@ -750,7 +750,7 @@ namespace AnalysisManagerBase
                         if (paramNamesToIgnore.ContainsKey(paramName.Value))
                         {
                             var requiredParameter = paramNamesToIgnore[paramName.Value];
-                            if (string.IsNullOrEmpty(requiredParameter) || paramNames.Contains(requiredParameter))
+                            if (String.IsNullOrEmpty(requiredParameter) || paramNames.Contains(requiredParameter))
                             {
                                 // Remove this parameter from this section
                                 paramsToRemove.Add(paramItem);
@@ -760,13 +760,13 @@ namespace AnalysisManagerBase
                         if (paramsToAddAsAttribute.ContainsKey(paramName.Value))
                         {
                             var attribName = paramsToAddAsAttribute[paramName.Value];
-                            if (string.IsNullOrEmpty(attribName))
+                            if (String.IsNullOrEmpty(attribName))
                                 attribName = paramName.Value;
 
                             var paramValue = paramItem.Attribute("value");
                             if (paramValue == null)
                             {
-                                attributesToAdd.Add(attribName, string.Empty);
+                                attributesToAdd.Add(attribName, String.Empty);
                             }
                             else
                             {
@@ -854,7 +854,7 @@ namespace AnalysisManagerBase
             var dotNetVersion = clsGlobal.GetDotNetVersion();
 
             string managerVersion;
-            if (!string.IsNullOrEmpty(dotNetVersion))
+            if (!String.IsNullOrEmpty(dotNetVersion))
             {
                 if (!dotNetVersion.StartsWith("v", StringComparison.InvariantCultureIgnoreCase))
                     dotNetVersion = "v" + dotNetVersion;
@@ -871,32 +871,35 @@ namespace AnalysisManagerBase
             try
             {
                 // Set up the command object prior to SP execution
-                var myCmd = new SqlCommand(SP_NAME_REQUEST_TASK) { CommandType = CommandType.StoredProcedure };
+                var cmd = new SqlCommand(SP_NAME_REQUEST_TASK) { CommandType = CommandType.StoredProcedure };
 
-                myCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
-                myCmd.Parameters.Add(new SqlParameter("@processorName", SqlDbType.VarChar, 128)).Value = m_MgrParams.GetParam("MgrName");
-                myCmd.Parameters.Add(new SqlParameter("@jobNumber", SqlDbType.Int)).Direction = ParameterDirection.Output;
-                myCmd.Parameters.Add(new SqlParameter("@parameters", SqlDbType.VarChar, 8000)).Direction = ParameterDirection.Output;
-                myCmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
-                myCmd.Parameters.Add(new SqlParameter("@infoOnly", SqlDbType.TinyInt)).Value = 0;
-                myCmd.Parameters.Add(new SqlParameter("@AnalysisManagerVersion", SqlDbType.VarChar, 128)).Value = managerVersion;
+                cmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
+                cmd.Parameters.Add(new SqlParameter("@processorName", SqlDbType.VarChar, 128)).Value = m_MgrParams.GetParam("MgrName");
+                cmd.Parameters.Add(new SqlParameter("@jobNumber", SqlDbType.Int)).Direction = ParameterDirection.Output;
+                cmd.Parameters.Add(new SqlParameter("@parameters", SqlDbType.VarChar, 8000)).Direction = ParameterDirection.Output;
+                cmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
+                cmd.Parameters.Add(new SqlParameter("@infoOnly", SqlDbType.TinyInt)).Value = 0;
+                cmd.Parameters.Add(new SqlParameter("@analysisManagerVersion", SqlDbType.VarChar, 128)).Value = managerVersion;
+
+                var remoteInfo = clsRemoteTransferUtility.GetRemoteInfoXml(m_MgrParams);
+                cmd.Parameters.Add(new SqlParameter("@remoteInfo", SqlDbType.VarChar, 900)).Value = remoteInfo;
 
                 if (m_DebugLevel > 4)
                 {
                     LogDebug("clsAnalysisJob.RequestAnalysisJob(), connection string: " + m_BrokerConnStr, (int)clsLogTools.LogLevels.DEBUG);
                     LogDebug("clsAnalysisJob.RequestAnalysisJob(), printing param list", (int)clsLogTools.LogLevels.DEBUG);
-                    PrintCommandParams(myCmd);
+                    PrintCommandParams(cmd);
                 }
 
                 // Execute the SP
-                var retVal = PipelineDBProcedureExecutor.ExecuteSP(myCmd, 1);
+                var retVal = PipelineDBProcedureExecutor.ExecuteSP(cmd, 1);
 
                 switch (retVal)
                 {
                     case RET_VAL_OK:
                         // No errors found in SP call, so see if any step tasks were found
-                        m_JobId = Convert.ToInt32(myCmd.Parameters["@jobNumber"].Value);
-                        var jobParamsXML = Convert.ToString(myCmd.Parameters["@parameters"].Value);
+                        m_JobId = Convert.ToInt32(cmd.Parameters["@jobNumber"].Value);
+                        var jobParamsXML = Convert.ToString(cmd.Parameters["@parameters"].Value);
 
                         // Step task was found; get the data for it
                         var dctParameters = FillParamDictXml(jobParamsXML).ToList();
@@ -924,7 +927,7 @@ namespace AnalysisManagerBase
                     default:
                         // There was an SP error
                         LogError("clsAnalysisJob.RequestAnalysisJob(), SP execution error " + retVal + "; " +
-                            "Msg text = " + Convert.ToString(myCmd.Parameters["@message"].Value));
+                            "Msg text = " + Convert.ToString(cmd.Parameters["@message"].Value));
                         taskResult = RequestTaskResult.ResultError;
                         break;
                 }
@@ -968,7 +971,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         private void SaveJobParameters(string workDir, string jobParamsXML, int jobNum)
         {
-            var xmlParameterFilePath = string.Empty;
+            var xmlParameterFilePath = String.Empty;
 
             try
             {
@@ -989,7 +992,8 @@ namespace AnalysisManagerBase
                     {"StepOutputFolderName", "OutputFolderName"}
                 };
 
-                var paramsToAddAsAttribute = new Dictionary<string, string> {
+                var paramsToAddAsAttribute = new Dictionary<string, string>
+                {
                     { "Step", "step"}
                 };
 
@@ -1024,7 +1028,7 @@ namespace AnalysisManagerBase
         /// <param name="compMsg">Completion message to be added to database upon closeOut</param>
         public override void CloseTask(CloseOutType closeOut, string compMsg)
         {
-            CloseTask(closeOut, compMsg, 0, string.Empty);
+            CloseTask(closeOut, compMsg, 0, String.Empty);
         }
 
         /// <summary>
@@ -1039,7 +1043,7 @@ namespace AnalysisManagerBase
             var compCode = (int)closeOut;
 
             if (evalMessage == null)
-                evalMessage = string.Empty;
+                evalMessage = String.Empty;
 
             if (m_TaskWasClosed)
             {
@@ -1071,16 +1075,18 @@ namespace AnalysisManagerBase
 
             // Setup for execution of the stored procedure
             var myCmd = new SqlCommand(spName) { CommandType = CommandType.StoredProcedure };
+                CommandType = CommandType.StoredProcedure
+            };
 
-            myCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
-            myCmd.Parameters.Add(new SqlParameter("@job", SqlDbType.Int)).Value = GetJobParameter("StepParameters", "Job", 0);
-            myCmd.Parameters.Add(new SqlParameter("@step", SqlDbType.Int)).Value = GetJobParameter("StepParameters", "Step", 0);
-            myCmd.Parameters.Add(new SqlParameter("@completionCode", SqlDbType.Int)).Value = compCode;
-            myCmd.Parameters.Add(new SqlParameter("@completionMessage", SqlDbType.VarChar, 256)).Value = compMsg;
-            myCmd.Parameters.Add(new SqlParameter("@evaluationCode", SqlDbType.Int)).Value = evalCode;
-            myCmd.Parameters.Add(new SqlParameter("@evaluationMessage", SqlDbType.VarChar, 256)).Value = evalMsg;
+            cmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
+            cmd.Parameters.Add(new SqlParameter("@job", SqlDbType.Int)).Value = GetJobParameter(STEP_PARAMETERS_SECTION, "Job", 0);
+            cmd.Parameters.Add(new SqlParameter("@step", SqlDbType.Int)).Value = GetJobParameter(STEP_PARAMETERS_SECTION, "Step", 0);
+            cmd.Parameters.Add(new SqlParameter("@completionCode", SqlDbType.Int)).Value = compCode;
+            cmd.Parameters.Add(new SqlParameter("@completionMessage", SqlDbType.VarChar, 256)).Value = compMsg;
+            cmd.Parameters.Add(new SqlParameter("@evaluationCode", SqlDbType.Int)).Value = evalCode;
+            cmd.Parameters.Add(new SqlParameter("@evaluationMessage", SqlDbType.VarChar, 256)).Value = evalMsg;
 
-            var orgDbNameParam = myCmd.Parameters.Add(new SqlParameter("@organismDBName", SqlDbType.VarChar, 128));
+            var orgDbNameParam = cmd.Parameters.Add(new SqlParameter("@organismDBName", SqlDbType.VarChar, 128));
 
             if (TryGetParam("PeptideSearch", clsAnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME, out var orgDbName))
             {
@@ -1088,29 +1094,29 @@ namespace AnalysisManagerBase
             }
             else
             {
-                orgDbNameParam.Value = string.Empty;
+                orgDbNameParam.Value = String.Empty;
             }
 
-            var remoteInfoParam = myCmd.Parameters.Add(new SqlParameter("@remoteInfo", SqlDbType.VarChar, 900));
-            if (TryGetParam("StepParameters", clsRemoteTransferUtility.STEP_PARAM_REMOTE_INFO, out var remoteInfo, false))
+            var remoteInfoParam = cmd.Parameters.Add(new SqlParameter("@remoteInfo", SqlDbType.VarChar, 900));
+            if (TryGetParam(STEP_PARAMETERS_SECTION, clsRemoteTransferUtility.STEP_PARAM_REMOTE_INFO, out var remoteInfo, false))
             {
                 remoteInfoParam.Value = remoteInfo;
             }
             else
             {
-                remoteInfoParam.Value = string.Empty;
+                remoteInfoParam.Value = String.Empty;
             }
 
             // Note: leave remoteTimestampParam.Value as null if remoteTimestamp is empty
-            var remoteTimestampParam = myCmd.Parameters.Add(new SqlParameter("@remoteTimestamp", SqlDbType.VarChar, 24));
-            if (TryGetParam("StepParameters", clsRemoteTransferUtility.STEP_PARAM_REMOTE_TIMESTAMP, out var remoteTimestamp, false))
+            var remoteTimestampParam = cmd.Parameters.Add(new SqlParameter("@remoteTimestamp", SqlDbType.VarChar, 24));
+            if (TryGetParam(STEP_PARAMETERS_SECTION, clsRemoteTransferUtility.STEP_PARAM_REMOTE_TIMESTAMP, out var remoteTimestamp, false))
             {
-                if (!string.IsNullOrWhiteSpace(remoteTimestamp))
+                if (!String.IsNullOrWhiteSpace(remoteTimestamp))
                     remoteTimestampParam.Value = remoteTimestamp;
             }
 
             // Execute the Stored Procedure (retry the call up to 20 times)
-            var returnCode = PipelineDBProcedureExecutor.ExecuteSP(myCmd, 20);
+            var returnCode = PipelineDBProcedureExecutor.ExecuteSP(cmd, 20);
 
             if (returnCode == 0)
             {
@@ -1133,12 +1139,12 @@ namespace AnalysisManagerBase
             var toolName = GetParam("ToolName");
 
             var toolAndStepTool = GetParam("StepTool");
-            if (string.IsNullOrWhiteSpace(toolAndStepTool))
-                toolAndStepTool = string.Empty;
+            if (String.IsNullOrWhiteSpace(toolAndStepTool))
+                toolAndStepTool = String.Empty;
 
-            var stepNumber = GetParam("StepParameters", "Step") ?? string.Empty;
+            var stepNumber = GetParam(STEP_PARAMETERS_SECTION, "Step") ?? String.Empty;
 
-            if (!string.IsNullOrWhiteSpace(toolName) && !string.Equals(toolAndStepTool, toolName))
+            if (!String.IsNullOrWhiteSpace(toolName) && !String.Equals(toolAndStepTool, toolName))
             {
                 if (toolAndStepTool.Length > 0)
                 {
@@ -1160,6 +1166,5 @@ namespace AnalysisManagerBase
         }
 
         #endregion
-
     }
 }

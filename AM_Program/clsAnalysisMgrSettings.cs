@@ -107,14 +107,14 @@ namespace AnalysisManagerProg
                 myConnection.Open();
 
                 // Set up the command object prior to SP execution
-                var myCmd = new SqlCommand(SP_NAME_ACKMANAGERUPDATE, myConnection) {CommandType = CommandType.StoredProcedure};
+                var cmd = new SqlCommand(SP_NAME_ACKMANAGERUPDATE, myConnection) {CommandType = CommandType.StoredProcedure};
 
-                myCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
-                myCmd.Parameters.Add(new SqlParameter("@managerName", SqlDbType.VarChar, 128)).Value = GetParam(MGR_PARAM_MGR_NAME);
-                myCmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
+                cmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
+                cmd.Parameters.Add(new SqlParameter("@managerName", SqlDbType.VarChar, 128)).Value = GetParam(MGR_PARAM_MGR_NAME);
+                cmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
 
                 // Execute the SP
-                myCmd.ExecuteNonQuery();
+                cmd.ExecuteNonQuery();
             }
             catch (Exception ex)
             {

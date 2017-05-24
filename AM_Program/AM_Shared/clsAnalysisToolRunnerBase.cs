@@ -87,12 +87,23 @@ namespace AnalysisManagerBase
         protected string m_EvalMessage = string.Empty;
 
         /// <summary>
-        /// Working directory, machine name (aka manager name), & job number (used frequently by subclasses)
+        /// Working directory
         /// </summary>
         protected string m_WorkDir;
+
+        /// <summary>
+        /// Machine name (aka manager name)
+        /// </summary>
         protected string m_MachName;
+
+        /// <summary>
+        /// Job number
+        /// </summary>
         protected string m_JobNum;
 
+        /// <summary>
+        /// Dataset name
+        /// </summary>
         protected string m_Dataset;
 
         /// <summary>
@@ -3115,21 +3126,21 @@ namespace AnalysisManagerBase
             }
 
             // Setup for execution of the stored procedure
-            var myCmd = new SqlCommand
+            var cmd = new SqlCommand
             {
                 CommandType = CommandType.StoredProcedure,
                 CommandText = SP_NAME_SET_TASK_TOOL_VERSION
             };
 
-            myCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
-            myCmd.Parameters.Add(new SqlParameter("@job", SqlDbType.Int)).Value = m_jobParams.GetJobParameter("StepParameters", "Job", 0);
-            myCmd.Parameters.Add(new SqlParameter("@step", SqlDbType.Int)).Value = m_jobParams.GetJobParameter("StepParameters", "Step", 0);
-            myCmd.Parameters.Add(new SqlParameter("@ToolVersionInfo", SqlDbType.VarChar, 900)).Value = strToolVersionInfoCombined;
+            cmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
+            cmd.Parameters.Add(new SqlParameter("@job", SqlDbType.Int)).Value = m_jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job", 0);
+            cmd.Parameters.Add(new SqlParameter("@step", SqlDbType.Int)).Value = m_jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step", 0);
+            cmd.Parameters.Add(new SqlParameter("@ToolVersionInfo", SqlDbType.VarChar, 900)).Value = strToolVersionInfoCombined;
 
             var objAnalysisTask = new clsAnalysisJob(m_mgrParams, m_DebugLevel);
 
             // Execute the stored procedure (retry the call up to 4 times)
-            var resCode = objAnalysisTask.PipelineDBProcedureExecutor.ExecuteSP(myCmd, 4);
+            var resCode = objAnalysisTask.PipelineDBProcedureExecutor.ExecuteSP(cmd, 4);
 
             if (resCode == 0)
             {

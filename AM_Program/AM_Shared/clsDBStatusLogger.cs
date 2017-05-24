@@ -21,7 +21,12 @@ namespace AnalysisManagerBase
         public struct udtStatusInfoType
         {
             public string MgrName;
+
             public EnumMgrStatus MgrStatus;
+
+            /// <summary>
+            /// Last update time (UTC-based)
+            /// </summary>
             public DateTime LastUpdate;
 
             public DateTime LastStartTime;
@@ -166,51 +171,51 @@ namespace AnalysisManagerBase
                 myConnection.Open();
 
                 // Set up the command object prior to SP execution
-                var myCmd = new SqlCommand
+                var cmd = new SqlCommand
                 {
                     CommandType = CommandType.StoredProcedure,
                     CommandText = SP_NAME_UPDATE_MANAGER_STATUS,
                     Connection = myConnection
                 };
 
-                myCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int));
-                myCmd.Parameters["@Return"].Direction = ParameterDirection.ReturnValue;
+                cmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int));
+                cmd.Parameters["@Return"].Direction = ParameterDirection.ReturnValue;
 
 
                 // Manager items
-                AddSPParameter(myCmd.Parameters, "@MgrName", udtStatusInfo.MgrName, 128);
-                AddSPParameter(myCmd.Parameters, "@MgrStatusCode", (int)udtStatusInfo.MgrStatus);
+                AddSPParameter(cmd.Parameters, "@MgrName", udtStatusInfo.MgrName, 128);
+                AddSPParameter(cmd.Parameters, "@MgrStatusCode", (int)udtStatusInfo.MgrStatus);
 
-                AddSPParameter(myCmd.Parameters, "@LastUpdate", udtStatusInfo.LastUpdate.ToLocalTime());
-                AddSPParameter(myCmd.Parameters, "@LastStartTime", udtStatusInfo.LastStartTime.ToLocalTime());
-                AddSPParameter(myCmd.Parameters, "@CPUUtilization", udtStatusInfo.CPUUtilization);
-                AddSPParameter(myCmd.Parameters, "@FreeMemoryMB", udtStatusInfo.FreeMemoryMB);
-                AddSPParameter(myCmd.Parameters, "@ProcessID", udtStatusInfo.ProcessID);
-                AddSPParameter(myCmd.Parameters, "@ProgRunnerProcessID", udtStatusInfo.ProgRunnerProcessID);
-                AddSPParameter(myCmd.Parameters, "@ProgRunnerCoreUsage", udtStatusInfo.ProgRunnerCoreUsage);
+                AddSPParameter(cmd.Parameters, "@LastUpdate", udtStatusInfo.LastUpdate.ToLocalTime());
+                AddSPParameter(cmd.Parameters, "@LastStartTime", udtStatusInfo.LastStartTime.ToLocalTime());
+                AddSPParameter(cmd.Parameters, "@CPUUtilization", udtStatusInfo.CPUUtilization);
+                AddSPParameter(cmd.Parameters, "@FreeMemoryMB", udtStatusInfo.FreeMemoryMB);
+                AddSPParameter(cmd.Parameters, "@ProcessID", udtStatusInfo.ProcessID);
+                AddSPParameter(cmd.Parameters, "@ProgRunnerProcessID", udtStatusInfo.ProgRunnerProcessID);
+                AddSPParameter(cmd.Parameters, "@ProgRunnerCoreUsage", udtStatusInfo.ProgRunnerCoreUsage);
 
-                AddSPParameter(myCmd.Parameters, "@MostRecentErrorMessage", udtStatusInfo.MostRecentErrorMessage, 1024);
+                AddSPParameter(cmd.Parameters, "@MostRecentErrorMessage", udtStatusInfo.MostRecentErrorMessage, 1024);
 
                 // Task items
-                AddSPParameter(myCmd.Parameters, "@StepTool", udtStatusInfo.Task.Tool, 128);
-                AddSPParameter(myCmd.Parameters, "@TaskStatusCode", (int)udtStatusInfo.Task.Status);
-                AddSPParameter(myCmd.Parameters, "@DurationHours", udtStatusInfo.Task.DurationHours);
-                AddSPParameter(myCmd.Parameters, "@Progress", udtStatusInfo.Task.Progress);
-                AddSPParameter(myCmd.Parameters, "@CurrentOperation", udtStatusInfo.Task.CurrentOperation, 256);
+                AddSPParameter(cmd.Parameters, "@StepTool", udtStatusInfo.Task.Tool, 128);
+                AddSPParameter(cmd.Parameters, "@TaskStatusCode", (int)udtStatusInfo.Task.Status);
+                AddSPParameter(cmd.Parameters, "@DurationHours", udtStatusInfo.Task.DurationHours);
+                AddSPParameter(cmd.Parameters, "@Progress", udtStatusInfo.Task.Progress);
+                AddSPParameter(cmd.Parameters, "@CurrentOperation", udtStatusInfo.Task.CurrentOperation, 256);
 
                 // Task detail items
-                AddSPParameter(myCmd.Parameters, "@TaskDetailStatusCode", (int)udtStatusInfo.Task.TaskDetails.Status);
-                AddSPParameter(myCmd.Parameters, "@Job", udtStatusInfo.Task.TaskDetails.Job);
-                AddSPParameter(myCmd.Parameters, "@JobStep", udtStatusInfo.Task.TaskDetails.JobStep);
-                AddSPParameter(myCmd.Parameters, "@Dataset", udtStatusInfo.Task.TaskDetails.Dataset, 256);
-                AddSPParameter(myCmd.Parameters, "@MostRecentLogMessage", udtStatusInfo.Task.TaskDetails.MostRecentLogMessage, 1024);
-                AddSPParameter(myCmd.Parameters, "@MostRecentJobInfo", udtStatusInfo.Task.TaskDetails.MostRecentJobInfo, 256);
-                AddSPParameter(myCmd.Parameters, "@SpectrumCount", udtStatusInfo.Task.TaskDetails.SpectrumCount);
+                AddSPParameter(cmd.Parameters, "@TaskDetailStatusCode", (int)udtStatusInfo.Task.TaskDetails.Status);
+                AddSPParameter(cmd.Parameters, "@Job", udtStatusInfo.Task.TaskDetails.Job);
+                AddSPParameter(cmd.Parameters, "@JobStep", udtStatusInfo.Task.TaskDetails.JobStep);
+                AddSPParameter(cmd.Parameters, "@Dataset", udtStatusInfo.Task.TaskDetails.Dataset, 256);
+                AddSPParameter(cmd.Parameters, "@MostRecentLogMessage", udtStatusInfo.Task.TaskDetails.MostRecentLogMessage, 1024);
+                AddSPParameter(cmd.Parameters, "@MostRecentJobInfo", udtStatusInfo.Task.TaskDetails.MostRecentJobInfo, 256);
+                AddSPParameter(cmd.Parameters, "@SpectrumCount", udtStatusInfo.Task.TaskDetails.SpectrumCount);
 
-                AddSPParameterOutput(myCmd.Parameters, "@message", string.Empty, 512);
+                AddSPParameterOutput(cmd.Parameters, "@message", string.Empty, 512);
 
                 // Execute the SP
-                myCmd.ExecuteNonQuery();
+                cmd.ExecuteNonQuery();
 
             }
             catch (Exception ex)

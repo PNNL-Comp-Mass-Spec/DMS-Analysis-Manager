@@ -683,17 +683,17 @@ namespace AnalysisManagerBase
         /// Converts a string value to a boolean equivalent
         /// </summary>
         /// <param name="value"></param>
-        /// <param name="blnDefaultValue">Boolean value to return if value is empty or an exception occurs</param>
+        /// <param name="defaultValue">Boolean value to return if value is empty or an exception occurs</param>
         /// <returns></returns>
         /// <remarks>Returns false if an exception</remarks>
-        public static bool CBoolSafe(string value, bool blnDefaultValue)
+        public static bool CBoolSafe(string value, bool defaultValue)
         {
             bool blnValue;
 
             if (bool.TryParse(value, out blnValue))
                 return blnValue;
 
-            return blnDefaultValue;
+            return defaultValue;
 
         }
 
@@ -701,17 +701,17 @@ namespace AnalysisManagerBase
         /// Converts value to an integer
         /// </summary>
         /// <param name="value"></param>
-        /// <param name="intDefaultValue">Integer to return if value is not numeric</param>
+        /// <param name="defaultValue">Integer to return if value is not numeric</param>
         /// <returns></returns>
         /// <remarks></remarks>
-        public static int CIntSafe(string value, int intDefaultValue)
+        public static int CIntSafe(string value, int defaultValue)
         {
             int intValue;
 
-            if (Int32.TryParse(value, out intValue))
+            if (int.TryParse(value, out intValue))
                 return intValue;
 
-            return intDefaultValue;
+            return defaultValue;
 
         }
 
@@ -719,17 +719,17 @@ namespace AnalysisManagerBase
         /// Converts value to a single (aka float)
         /// </summary>
         /// <param name="value"></param>
-        /// <param name="sngDefaultValue">Single to return if value is not numeric</param>
+        /// <param name="defaultValue">Float to return if value is not numeric</param>
         /// <returns></returns>
         /// <remarks></remarks>
-        public static float CSngSafe(string value, float sngDefaultValue)
+        public static float CSngSafe(string value, float defaultValue)
         {
             float sngValue;
 
-            if (Single.TryParse(value, out sngValue))
+            if (float.TryParse(value, out sngValue))
                 return sngValue;
 
-            return sngDefaultValue;
+            return defaultValue;
 
         }
 

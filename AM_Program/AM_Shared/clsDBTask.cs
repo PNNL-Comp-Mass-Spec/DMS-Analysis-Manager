@@ -35,14 +35,20 @@ namespace AnalysisManagerBase
         #endregion
 
         #region "Constants"
+
         public const int RET_VAL_OK = 0;
+
         // Timeout expired
         public const int RET_VAL_EXCESSIVE_RETRIES = -5;
+
         // Transaction (Process ID 143) was deadlocked on lock resources with another process and has been chosen as the deadlock victim
         public const int RET_VAL_DEADLOCK = -4;
+
         public const int RET_VAL_TASK_NOT_AVAILABLE = 53000;
-        #endregion
+
         public const int DEFAULT_SP_RETRY_COUNT = 3;
+
+        #endregion
 
         #region "Module variables"
 
@@ -225,9 +231,9 @@ namespace AnalysisManagerBase
 
             var paramDetails = "";
 
-            foreach (SqlParameter MyParam in sqlCmd.Parameters)
+            foreach (SqlParameter param in sqlCmd.Parameters)
             {
-                paramDetails += Environment.NewLine + "Name= " + MyParam.ParameterName + "\t, Value= " + clsGlobal.DbCStr(MyParam.Value);
+                paramDetails += Environment.NewLine + "Name= " + param.ParameterName + "\t, Value= " + clsGlobal.DbCStr(param.Value);
             }
 
             LogDebug("Parameter list:" + paramDetails);

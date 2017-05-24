@@ -114,16 +114,16 @@ namespace AnalysisManagerBase
             try
             {
                 // Set up the command object prior to SP execution
-                var myCmd = new SqlCommand(SP_NAME_GET_JOB_STEP_INPUT_FOLDER) { CommandType = CommandType.StoredProcedure };
+                var cmd = new SqlCommand(SP_NAME_GET_JOB_STEP_INPUT_FOLDER) { CommandType = CommandType.StoredProcedure };
 
-                myCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
-                myCmd.Parameters.Add(new SqlParameter("@job", SqlDbType.Int)).Value = job;
+                cmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
+                cmd.Parameters.Add(new SqlParameter("@job", SqlDbType.Int)).Value = job;
 
-                var stepToolFilterParam = myCmd.Parameters.Add(new SqlParameter("@stepToolFilter", SqlDbType.VarChar, 8000));
+                var stepToolFilterParam = cmd.Parameters.Add(new SqlParameter("@stepToolFilter", SqlDbType.VarChar, 8000));
                 stepToolFilterParam.Value = stepToolFilter;
 
-                myCmd.Parameters.Add(new SqlParameter("@inputFolderName", SqlDbType.VarChar, 128)).Direction = ParameterDirection.Output;
-                myCmd.Parameters.Add(new SqlParameter("@stepToolMatch", SqlDbType.VarChar, 64)).Direction = ParameterDirection.Output;
+                cmd.Parameters.Add(new SqlParameter("@inputFolderName", SqlDbType.VarChar, 128)).Direction = ParameterDirection.Output;
+                cmd.Parameters.Add(new SqlParameter("@stepToolMatch", SqlDbType.VarChar, 64)).Direction = ParameterDirection.Output;
 
                 var matchFound = false;
                 var inputFolderName = string.Empty;
@@ -137,10 +137,10 @@ namespace AnalysisManagerBase
                 while (!matchFound)
                 {
                     // Execute the SP
-                    pipelineDBProcedureExecutor.ExecuteSP(myCmd, 1);
+                    pipelineDBProcedureExecutor.ExecuteSP(cmd, 1);
 
-                    inputFolderName = Convert.ToString(myCmd.Parameters["@inputFolderName"].Value);
-                    stepToolMatch = Convert.ToString(myCmd.Parameters["@stepToolMatch"].Value);
+                    inputFolderName = Convert.ToString(cmd.Parameters["@inputFolderName"].Value);
+                    stepToolMatch = Convert.ToString(cmd.Parameters["@stepToolMatch"].Value);
 
                     if (string.IsNullOrWhiteSpace(inputFolderName))
                     {
@@ -835,7 +835,7 @@ namespace AnalysisManagerBase
                         {
                             string newFilePath;
                             if (RenameDuplicatePHRPFile(localFolderPath, fileToRename, workingDir,
-                                "Job" + dataPkgJob.Job.ToString() + "_", dataPkgJob.Job,
+                                "Job" + dataPkgJob.Job + "_", dataPkgJob.Job,
                                 out newFilePath))
                             {
                                 // Rename succeeded

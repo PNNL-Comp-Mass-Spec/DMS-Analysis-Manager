@@ -56,8 +56,8 @@ namespace AnalysisManagerBase
         /// <returns>True if a data package is defined and it has datasets associated with it</returns>
         /// <remarks></remarks>
         public static bool LoadDataPackageDatasetInfo(
-            string connectionString, 
-            int dataPackageID, 
+            string connectionString,
+            int dataPackageID,
             out Dictionary<int, clsDataPackageDatasetInfo> dctDataPackageDatasets)
         {
 
@@ -236,7 +236,7 @@ namespace AnalysisManagerBase
 
         /// <summary>
         /// Retrieve the job parameters from the pipeline database for the given analysis job
-        /// The analysis job must have completed successfully, since the parameters 
+        /// The analysis job must have completed successfully, since the parameters
         /// are retrieved from tables T_Jobs_History, T_Job_Steps_History, and T_Job_Parameters_History
         /// </summary>
         /// <param name="brokerConnection">DMS_Pipline database connection (must already be open)</param>
@@ -246,9 +246,9 @@ namespace AnalysisManagerBase
         /// <returns>True if success; false if an error</returns>
         /// <remarks>This procedure is used by clsAnalysisToolRunnerPRIDEConverter</remarks>
         private static bool LookupJobParametersFromHistory(
-            SqlConnection brokerConnection, 
-            int jobNumber, 
-            out Dictionary<string, string> jobParameters, 
+            SqlConnection brokerConnection,
+            int jobNumber,
+            out Dictionary<string, string> jobParameters,
             out string errorMsg)
         {
 
@@ -269,16 +269,16 @@ namespace AnalysisManagerBase
 
             try
             {
-                var myCmd = new SqlCommand("GetJobStepParamsAsTableUseHistory")
+                var cmd = new SqlCommand("GetJobStepParamsAsTableUseHistory")
                 {
                     CommandType = CommandType.StoredProcedure,
                     Connection = brokerConnection,
                     CommandTimeout = TIMEOUT_SECONDS
                 };
 
-                myCmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
-                myCmd.Parameters.Add(new SqlParameter("@jobNumber", SqlDbType.Int)).Value = jobNumber;
-                myCmd.Parameters.Add(new SqlParameter("@stepNumber", SqlDbType.Int)).Value = 1;
+                cmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
+                cmd.Parameters.Add(new SqlParameter("@jobNumber", SqlDbType.Int)).Value = jobNumber;
+                cmd.Parameters.Add(new SqlParameter("@stepNumber", SqlDbType.Int)).Value = 1;
 
                 // Execute the SP
 
@@ -290,7 +290,7 @@ namespace AnalysisManagerBase
                 {
                     try
                     {
-                        using (var Da = new SqlDataAdapter(myCmd))
+                        using (var Da = new SqlDataAdapter(cmd))
                         {
                             using (var Ds = new DataSet())
                             {
@@ -304,7 +304,7 @@ namespace AnalysisManagerBase
                     catch (Exception ex)
                     {
                         retryCount -= 1;
-                        var msg = "Exception running stored procedure " + myCmd.CommandText + ": " + ex.Message + "; RetryCount = " + retryCount;
+                        var msg = "Exception running stored procedure " + cmd.CommandText + ": " + ex.Message + "; RetryCount = " + retryCount;
 
                         clsGlobal.LogError(msg);
 
@@ -489,8 +489,8 @@ namespace AnalysisManagerBase
         /// <returns>Peptide Hit Jobs (e.g. MSGF+ or Sequest)</returns>
         /// <remarks></remarks>
         public static List<clsDataPackageJobInfo> RetrieveDataPackagePeptideHitJobInfo(
-            string connectionString, 
-            int dataPackageID, 
+            string connectionString,
+            int dataPackageID,
             out string errorMsg)
         {
 
@@ -509,9 +509,9 @@ namespace AnalysisManagerBase
         /// <returns>Peptide Hit Jobs (e.g. MSGF+ or Sequest)</returns>
         /// <remarks></remarks>
         public static List<clsDataPackageJobInfo> RetrieveDataPackagePeptideHitJobInfo(
-            string connectionString, 
-            int dataPackageID, 
-            out List<clsDataPackageJobInfo> lstAdditionalJobs, 
+            string connectionString,
+            int dataPackageID,
+            out List<clsDataPackageJobInfo> lstAdditionalJobs,
             out string errorMsg)
         {
 
