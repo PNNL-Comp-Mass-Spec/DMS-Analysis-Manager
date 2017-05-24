@@ -28,12 +28,18 @@ namespace AnalysisManagerBase
     {
 
         #region "Constants"
+
+        public const string JOB_PARAMETERS_SECTION = "JobParameters";
+
+        public const string STEP_PARAMETERS_SECTION = "StepParameters";
+
         protected const string SP_NAME_SET_COMPLETE = "SetStepTaskComplete";
 
         /// <summary>
         /// "RequestStepTask"
         /// </summary>
         protected const string SP_NAME_REQUEST_TASK = "RequestStepTaskXML";
+
         #endregion
 
         #region "Module variables"
@@ -462,6 +468,20 @@ namespace AnalysisManagerBase
         public float GetJobParameter(string section, string name, float valueIfMissing)
         {
             return clsGlobal.CSngSafe(GetParam(section, name), valueIfMissing);
+        }
+
+        /// <summary>
+        /// Get a description of the current job number and step number
+        /// </summary>
+        /// <returns>String in the form "job x, step y"</returns>
+        public string GetJobStepDescription()
+        {
+
+            var job = GetJobParameter(STEP_PARAMETERS_SECTION, "Job", 0);
+            var step = GetJobParameter(STEP_PARAMETERS_SECTION, "Step", 0);
+
+            return string.Format("job {0}, step {1}", job, step);
+
         }
 
         /// <summary>
@@ -975,12 +995,12 @@ namespace AnalysisManagerBase
 
                 // Remove extra parameters from the StepParameters section that we don't want to include in the XML
                 // Also update the section to have an attribute that is the step number
-                var filteredXML = FilterXmlSection(jobParamsXML, "StepParameters", paramNamesToIgnore, paramsToAddAsAttribute);
+                var filteredXML = FilterXmlSection(jobParamsXML, STEP_PARAMETERS_SECTION, paramNamesToIgnore, paramsToAddAsAttribute);
 
                 var xmlWriter = new clsFormattedXMLWriter();
                 xmlWriter.WriteXMLToFile(filteredXML, xmlParameterFile.FullName);
 
-                AddAdditionalParameter("JobParameters", "genJobParamsFilename", xmlParameterFilename);
+                AddAdditionalParameter(JOB_PARAMETERS_SECTION, "genJobParamsFilename", xmlParameterFilename);
 
                 var msg = "Job Parameters successfully saved to file: " + xmlParameterFile.FullName;
 

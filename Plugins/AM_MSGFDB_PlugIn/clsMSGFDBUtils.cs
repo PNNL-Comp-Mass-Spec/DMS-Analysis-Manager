@@ -2093,7 +2093,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             //Dim strDatasetType As String
             //Dim blnHCD As Boolean = False
-            //strDatasetType = m_jobParams.GetParam("JobParameters", "DatasetType")
+            //strDatasetType = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetType")
             //If strDatasetType.ToUpper().Contains("HCD") Then
             //	blnHCD = True
             //End If

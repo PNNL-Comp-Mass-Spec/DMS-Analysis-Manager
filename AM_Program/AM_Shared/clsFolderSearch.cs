@@ -725,7 +725,7 @@ namespace AnalysisManagerBase
                         }
                         else
                         {
-                            var msg = folderNotFoundMessage + ", Job " + m_jobParams.GetParam("StepParameters", "Job") + ", Dataset " + dsName;
+                            var msg = folderNotFoundMessage + ", Job " + m_jobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job") + ", Dataset " + dsName;
                             OnWarningEvent(msg);
                         }
                     }

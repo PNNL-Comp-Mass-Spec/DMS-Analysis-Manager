@@ -253,11 +253,11 @@ namespace AnalysisManagerProg
             m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, "Monroe_Test");
             m_mgrParams.SetParam("debuglevel", intDebugLevel.ToString());
 
-            objJobParams.SetParam("StepParameters", "StepTool", "TestStepTool");
-            objJobParams.SetParam("JobParameters", "ToolName", "TestTool");
+            objJobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "StepTool", "TestStepTool");
+            objJobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "ToolName", "TestTool");
 
-            objJobParams.SetParam("StepParameters", "Job", "12345");
-            objJobParams.SetParam("StepParameters", "OutputFolderName", "Test_Results");
+            objJobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job", "12345");
+            objJobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "OutputFolderName", "Test_Results");
 
             return objJobParams;
         }
@@ -304,11 +304,11 @@ namespace AnalysisManagerProg
             m_mgrParams.SetParam("debuglevel", intDebugLevel.ToString());
             m_mgrParams.SetParam("zipprogram", @"C:\PKWARE\PKZIPC\pkzipc.exe");
 
-            objJobParams.SetParam("StepParameters", "StepTool", "TestStepTool");
-            objJobParams.SetParam("JobParameters", "ToolName", "TestTool");
+            objJobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "StepTool", "TestStepTool");
+            objJobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "ToolName", "TestTool");
 
-            objJobParams.SetParam("StepParameters", "Job", "12345");
-            objJobParams.SetParam("StepParameters", "OutputFolderName", "Test_Results");
+            objJobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job", "12345");
+            objJobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "OutputFolderName", "Test_Results");
 
             objResources.Setup("CodeTest", m_mgrParams, objJobParams, statusTools, myEMSLUtilities);
 
@@ -330,11 +330,11 @@ namespace AnalysisManagerProg
             m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, "Monroe_Test");
             m_mgrParams.SetParam("debuglevel", intDebugLevel.ToString());
 
-            objJobParams.SetParam("StepParameters", "StepTool", "TestStepTool");
-            objJobParams.SetParam("JobParameters", "ToolName", "TestTool");
+            objJobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "StepTool", "TestStepTool");
+            objJobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "ToolName", "TestTool");
 
-            objJobParams.SetParam("StepParameters", "Job", "12345");
-            objJobParams.SetParam("StepParameters", "OutputFolderName", "Test_Results");
+            objJobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job", "12345");
+            objJobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "OutputFolderName", "Test_Results");
 
             return objJobParams;
         }
@@ -710,9 +710,9 @@ namespace AnalysisManagerProg
             var myEMSLUtilities = new clsMyEMSLUtilities(intDebugLevel, WORKING_DIRECTORY);
             RegisterEvents(myEMSLUtilities);
 
-            objJobParams.SetParam("JobParameters", "DatasetNum", "QC_05_2_05Dec05_Doc_0508-08");
-            objJobParams.SetParam("JobParameters", "NumberOfClonedSteps", "25");
-            objJobParams.SetParam("JobParameters", "ClonedStepsHaveEqualNumSpectra", "True");
+            objJobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetNum", "QC_05_2_05Dec05_Doc_0508-08");
+            objJobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "NumberOfClonedSteps", "25");
+            objJobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "ClonedStepsHaveEqualNumSpectra", "True");
 
             var fiMgr = new FileInfo(System.Windows.Forms.Application.ExecutablePath);
             var mgrFolderPath = fiMgr.DirectoryName;
@@ -877,9 +877,9 @@ namespace AnalysisManagerProg
 
             var objToolRunner = GetCodeTestToolRunner(out objJobParams, out myEMSLUtilities);
 
-            objJobParams.SetParam("StepParameters", "OutputFolderName", "Test_Results_" + DateTime.Now.ToString("hh_mm_ss"));
-            objJobParams.SetParam("JobParameters", "transferFolderPath", @"\\proto-3\DMS3_XFER");
-            objJobParams.SetParam("JobParameters", "DatasetNum", "Test_Dataset");
+            objJobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "OutputFolderName", "Test_Results_" + DateTime.Now.ToString("hh_mm_ss"));
+            objJobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "transferFolderPath", @"\\proto-3\DMS3_XFER");
+            objJobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetNum", "Test_Dataset");
 
             objToolRunner.RunTool();
         }
@@ -980,9 +980,9 @@ namespace AnalysisManagerProg
         {
             var objJobParams = new clsAnalysisJob(m_mgrParams, 0);
 
-            objJobParams.SetParam("JobParameters", "ToolName", "MSGFPlus_SplitFasta");
+            objJobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "ToolName", "MSGFPlus_SplitFasta");
 
-            objJobParams.SetParam("StepParameters", "Step", "50");
+            objJobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step", "50");
 
             objJobParams.SetParam("ParallelMSGFPlus", "NumberOfClonedSteps", "25");
             objJobParams.SetParam("ParallelMSGFPlus", "CloneStepRenumberStart", "50");
@@ -1193,11 +1193,11 @@ namespace AnalysisManagerProg
 
             m_mgrParams.SetParam("ChameleonCachedDataFolder", @"H:\9T_Imaging");
 
-            objJobParams.SetParam("JobParameters", "DatasetNum", "ratjoint071110_INCAS_MS");
+            objJobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetNum", "ratjoint071110_INCAS_MS");
 
-            objJobParams.SetParam("JobParameters", "DatasetStoragePath", @"\\Proto-10\9T_FTICR_Imaging\2010_4\");
-            objJobParams.SetParam("JobParameters", "DatasetArchivePath", @"\\adms.emsl.pnl.gov\dmsarch\9T_FTICR_Imaging_1");
-            objJobParams.SetParam("JobParameters", "transferFolderPath", @"\\proto-10\DMS3_Xfer");
+            objJobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetStoragePath", @"\\Proto-10\9T_FTICR_Imaging\2010_4\");
+            objJobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetArchivePath", @"\\adms.emsl.pnl.gov\dmsarch\9T_FTICR_Imaging_1");
+            objJobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "transferFolderPath", @"\\proto-10\DMS3_Xfer");
 
             objResources.Setup("CodeTest", m_mgrParams, objJobParams, statusTools, myEMSLUtilities);
 

@@ -689,7 +689,7 @@ namespace AnalysisManagerBase
 
             // Not found in the cache; look in the dataset folder
 
-            var DatasetID = m_jobParams.GetParam("JobParameters", "DatasetID");
+            var DatasetID = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetID");
 
             const string MSXmlFoldernameBase = "MSXML_Gen_1_";
             var MzXMLFilename = DatasetName + ".mzXML";
@@ -818,10 +818,10 @@ namespace AnalysisManagerBase
             }
 
             // Determine the YearQuarter code for this dataset
-            var strDatasetStoragePath = m_jobParams.GetParam("JobParameters", "DatasetStoragePath");
+            var strDatasetStoragePath = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetStoragePath");
             if (string.IsNullOrEmpty(strDatasetStoragePath) && (m_AuroraAvailable || !MyEMSLSearchDisabled))
             {
-                strDatasetStoragePath = m_jobParams.GetParam("JobParameters", "DatasetArchivePath");
+                strDatasetStoragePath = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetArchivePath");
             }
 
             var strYearQuarter = clsAnalysisResources.GetDatasetYearQuarter(strDatasetStoragePath);

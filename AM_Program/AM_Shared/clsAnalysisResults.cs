@@ -330,8 +330,8 @@ namespace AnalysisManagerBase
                 if ((m_jobParams != null))
                 {
                     swInfoFile.WriteLine("JobToolDescription" + '\t' + m_jobParams.GetCurrentJobToolDescription());
-                    swInfoFile.WriteLine("Job" + '\t' + m_jobParams.GetParam("StepParameters", "Job"));
-                    swInfoFile.WriteLine("Step" + '\t' + m_jobParams.GetParam("StepParameters", "Step"));
+                    swInfoFile.WriteLine("Job" + '\t' + m_jobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job"));
+                    swInfoFile.WriteLine("Step" + '\t' + m_jobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step"));
                 }
 
                 swInfoFile.WriteLine("Date" + '\t' + DateTime.Now);
@@ -339,7 +339,7 @@ namespace AnalysisManagerBase
                 {
                     swInfoFile.WriteLine("Tool" + '\t' + m_jobParams.GetParam("toolname"));
                     swInfoFile.WriteLine("StepTool" + '\t' + m_jobParams.GetParam("StepTool"));
-                    swInfoFile.WriteLine("Dataset" + '\t' + m_jobParams.GetParam("JobParameters", "DatasetNum"));
+                    swInfoFile.WriteLine("Dataset" + '\t' + m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetNum"));
                     swInfoFile.WriteLine("XferFolder" + '\t' + m_jobParams.GetParam("transferFolderPath"));
                     swInfoFile.WriteLine("ParamFileName" + '\t' + m_jobParams.GetParam("parmFileName"));
                     swInfoFile.WriteLine("SettingsFileName" + '\t' + m_jobParams.GetParam("settingsFileName"));

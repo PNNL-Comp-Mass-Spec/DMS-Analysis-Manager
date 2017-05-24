@@ -218,8 +218,8 @@ namespace AnalysisManagerBase
             m_StatusTools = statusTools;
             m_WorkDir = m_mgrParams.GetParam("workdir");
             m_MachName = m_mgrParams.GetParam("MgrName");
-            m_JobNum = m_jobParams.GetParam("StepParameters", "Job");
-            m_Dataset = m_jobParams.GetParam("JobParameters", "DatasetNum");
+            m_JobNum = m_jobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job");
+            m_Dataset = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetNum");
 
             m_MyEMSLUtilities = myEMSLUtilities ?? new clsMyEMSLUtilities(m_DebugLevel, m_WorkDir);
 
@@ -406,9 +406,9 @@ namespace AnalysisManagerBase
                 }
 
                 // Determine the year_quarter text for this dataset
-                var strDatasetStoragePath = m_jobParams.GetParam("JobParameters", "DatasetStoragePath");
+                var strDatasetStoragePath = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetStoragePath");
                 if (string.IsNullOrEmpty(strDatasetStoragePath))
-                    strDatasetStoragePath = m_jobParams.GetParam("JobParameters", "DatasetArchivePath");
+                    strDatasetStoragePath = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetArchivePath");
 
                 var strDatasetYearQuarter = clsAnalysisResources.GetDatasetYearQuarter(strDatasetStoragePath);
                 if (string.IsNullOrEmpty(strDatasetYearQuarter))
@@ -524,9 +524,9 @@ namespace AnalysisManagerBase
                 if (string.IsNullOrEmpty(datasetYearQuarter))
                 {
                     // Determine the year_quarter text for this dataset
-                    var strDatasetStoragePath = m_jobParams.GetParam("JobParameters", "DatasetStoragePath");
+                    var strDatasetStoragePath = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetStoragePath");
                     if (string.IsNullOrEmpty(strDatasetStoragePath))
-                        strDatasetStoragePath = m_jobParams.GetParam("JobParameters", "DatasetArchivePath");
+                        strDatasetStoragePath = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetArchivePath");
 
                     datasetYearQuarter = clsAnalysisResources.GetDatasetYearQuarter(strDatasetStoragePath);
                 }
@@ -683,7 +683,7 @@ namespace AnalysisManagerBase
                 if (string.IsNullOrEmpty(m_ResFolderName))
                 {
                     // Log this error to the database (the logger will also update the local log file)
-                    LogErrorToDatabase("Results folder name is not defined, job " + m_jobParams.GetParam("StepParameters", "Job"));
+                    LogErrorToDatabase("Results folder name is not defined, job " + m_JobNum);
                     m_message = "Results folder name is not defined";
 
                     // Without a source folder; there isn't much we can do
@@ -696,7 +696,7 @@ namespace AnalysisManagerBase
                 if (!Directory.Exists(sourceFolderPath))
                 {
                     // Log this error to the database
-                    LogErrorToDatabase("Results folder not found, job " + m_jobParams.GetParam("StepParameters", "Job") + ", folder " + sourceFolderPath);
+                    LogErrorToDatabase("Results folder not found, " + m_jobParams.GetJobStepDescription() + ", folder " + sourceFolderPath);
                     m_message = "Results folder not found: " + sourceFolderPath;
 
                     // Without a source folder; there isn't much we can do
@@ -939,7 +939,7 @@ namespace AnalysisManagerBase
 
             if (string.IsNullOrEmpty(m_ResFolderName))
             {
-                LogError("Results folder name is not defined, job " + m_jobParams.GetParam("StepParameters", "Job"));
+                LogError("Results folder name is not defined, " + m_jobParams.GetJobStepDescription());
                 m_message = "Results folder job parameter not defined (OutputFolderName)";
                 return string.Empty;
             }
@@ -959,7 +959,7 @@ namespace AnalysisManagerBase
             // First make sure "DatasetFolderName" or "DatasetNum" is defined
             if (string.IsNullOrEmpty(m_Dataset))
             {
-                LogError("Dataset name is undefined, job " + m_jobParams.GetParam("StepParameters", "Job"));
+                LogError("Dataset name is undefined, " + m_jobParams.GetJobStepDescription());
                 m_message = "Dataset name is undefined";
                 return string.Empty;
             }
@@ -974,7 +974,7 @@ namespace AnalysisManagerBase
             else
             {
                 // Append the dataset folder name to the transfer folder path
-                var datasetFolderName = m_jobParams.GetParam("StepParameters", "DatasetFolderName");
+                var datasetFolderName = m_jobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "DatasetFolderName");
                 if (string.IsNullOrWhiteSpace(datasetFolderName))
                     datasetFolderName = m_Dataset;
                 strRemoteTransferFolderPath = Path.Combine(transferFolderPath, datasetFolderName);
@@ -2795,7 +2795,7 @@ namespace AnalysisManagerBase
             }
 
             strTransferFolderPath = diTransferFolder.Parent.FullName;
-            m_jobParams.SetParam("JobParameters", "transferFolderPath", strTransferFolderPath);
+            m_jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "transferFolderPath", strTransferFolderPath);
 
         }
 
@@ -3005,7 +3005,7 @@ namespace AnalysisManagerBase
                     swToolVersionFile.WriteLine("Date: " + DateTime.Now.ToString(DATE_TIME_FORMAT));
                     swToolVersionFile.WriteLine("Dataset: " + m_Dataset);
                     swToolVersionFile.WriteLine("Job: " + m_JobNum);
-                    swToolVersionFile.WriteLine("Step: " + m_jobParams.GetParam("StepParameters", "Step"));
+                    swToolVersionFile.WriteLine("Step: " + m_jobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step"));
                     swToolVersionFile.WriteLine("Tool: " + m_jobParams.GetParam("StepTool"));
                     swToolVersionFile.WriteLine("ToolVersionInfo:");
 
@@ -3772,7 +3772,7 @@ namespace AnalysisManagerBase
 
                 // Add the data
                 m_SummaryFile.Add("Job Number" + '\t' + m_JobNum);
-                m_SummaryFile.Add("Job Step" + '\t' + m_jobParams.GetParam("StepParameters", "Step"));
+                m_SummaryFile.Add("Job Step" + '\t' + m_jobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step"));
                 m_SummaryFile.Add("Date" + '\t' + DateTime.Now);
                 m_SummaryFile.Add("Processor" + '\t' + m_MachName);
                 m_SummaryFile.Add("Tool" + '\t' + strToolAndStepTool);
@@ -3795,7 +3795,7 @@ namespace AnalysisManagerBase
             catch (Exception ex)
             {
                 LogError("Error updating the summary file",
-                         "Error updating the summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam("StepParameters", "Step"), ex);
+                         "Error updating the summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step"), ex);
                 return false;
             }
 

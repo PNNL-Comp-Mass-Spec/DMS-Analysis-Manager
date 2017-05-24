@@ -23,6 +23,8 @@ namespace AnalysisManagerBase
 
         public const string STEP_PARAM_REMOTE_TIMESTAMP = "RemoteTimestamp";
 
+        public const string STEP_PARAM_REMOTE_PROGRESS = "RemoteProgress";
+
         private const bool USE_MANAGER_REMOTE_INFO = true;
 
         #endregion
@@ -616,14 +618,14 @@ namespace AnalysisManagerBase
         {
             var remoteInfo = GetRemoteInfoXml(USE_MANAGER_REMOTE_INFO);
 
-            JobParams.AddAdditionalParameter("StepParameters", STEP_PARAM_REMOTE_INFO, remoteInfo);
+            JobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, STEP_PARAM_REMOTE_INFO, remoteInfo);
         }
 
         private string DefineRemoteTimestamp()
         {
             var remoteTimestamp = DateTime.Now.ToString("yyyyMMdd_hhmm");
 
-            JobParams.AddAdditionalParameter("StepParameters", STEP_PARAM_REMOTE_TIMESTAMP, remoteTimestamp);
+            JobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, STEP_PARAM_REMOTE_TIMESTAMP, remoteTimestamp);
 
             return remoteTimestamp;
         }
@@ -636,7 +638,7 @@ namespace AnalysisManagerBase
         private string GetBaseStatusFilename()
         {
 
-            var remoteTimestamp = JobParams.GetParam("StepParameters", STEP_PARAM_REMOTE_TIMESTAMP);
+            var remoteTimestamp = JobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, STEP_PARAM_REMOTE_TIMESTAMP);
             if (string.IsNullOrWhiteSpace(remoteTimestamp))
             {
                 OnErrorEvent("Job parameter RemoteTimestamp is empty; cannot properly construct the base tracking file name");
@@ -842,7 +844,7 @@ namespace AnalysisManagerBase
                 UpdateParameters(useDefaultManagerRemoteInfo);
             }
 
-            var remoteTimestamp = JobParams.GetParam("StepParameters", STEP_PARAM_REMOTE_TIMESTAMP);
+            var remoteTimestamp = JobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, STEP_PARAM_REMOTE_TIMESTAMP);
             if (string.IsNullOrWhiteSpace(remoteTimestamp))
             {
                 OnErrorEvent("Job parameter RemoteTimestamp is empty; cannot list remote status files");
@@ -964,7 +966,7 @@ namespace AnalysisManagerBase
                 UpdateParameters(false);
             }
 
-            var remoteTimestamp = JobParams.GetParam("StepParameters", STEP_PARAM_REMOTE_TIMESTAMP);
+            var remoteTimestamp = JobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, STEP_PARAM_REMOTE_TIMESTAMP);
             if (string.IsNullOrWhiteSpace(remoteTimestamp))
             {
                 OnErrorEvent("Job parameter RemoteTimestamp is empty; cannot retrieve the remote .jobstatus file");
@@ -1032,7 +1034,7 @@ namespace AnalysisManagerBase
 
                 OnDebugEvent("Updating remote transfer settings using job parameter RemoteInfo");
 
-                var remoteInfo = JobParams.GetParam("StepParameters", "RemoteInfo");
+                var remoteInfo = JobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, STEP_PARAM_REMOTE_INFO);
                 if (string.IsNullOrWhiteSpace(remoteInfo))
                 {
                     throw new Exception("RemoteInfo job step parameter is empty; the RemoteTransferUtility cannot validate remote info");
@@ -1068,9 +1070,9 @@ namespace AnalysisManagerBase
                 mUsingManagerRemoteInfo = false;
             }
 
-            JobNum = JobParams.GetJobParameter("StepParameters", "Job", 0);
-            StepNum = JobParams.GetJobParameter("StepParameters", "Step", 0);
-            DatasetName = JobParams.GetParam("JobParameters", "DatasetNum");
+            JobNum = JobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job", 0);
+            StepNum = JobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step", 0);
+            DatasetName = JobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetNum");
 
             if (string.IsNullOrWhiteSpace(WorkDir))
                 throw new Exception("WorkDir parameter is empty; check the manager parameters");

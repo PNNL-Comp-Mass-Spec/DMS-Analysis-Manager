@@ -352,13 +352,13 @@ namespace AnalysisManagerBase
 
             m_WorkingDir = m_mgrParams.GetParam("workdir");
 
-            var jobNum = m_jobParams.GetParam("StepParameters", "Job");
+            var jobNum = m_jobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job");
             if (!string.IsNullOrEmpty(jobNum))
             {
                 int.TryParse(jobNum, out m_JobNum);
             }
 
-            DatasetName = m_jobParams.GetParam("JobParameters", "DatasetNum");
+            DatasetName = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetNum");
 
             InitFileTools(m_MgrName, m_DebugLevel);
 
@@ -1308,25 +1308,26 @@ namespace AnalysisManagerBase
 
         protected clsDataPackageJobInfo GetCurrentDatasetAndJobInfo()
         {
+            const string jobParamsSection = clsAnalysisJob.JOB_PARAMETERS_SECTION;
 
-            var jobNumber = m_jobParams.GetJobParameter("StepParameters", "Job", 0);
-            var dataset = m_jobParams.GetJobParameter("JobParameters", "DatasetNum", m_DatasetName);
+            var jobNumber = m_jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job", 0);
+            var dataset = m_jobParams.GetJobParameter(jobParamsSection, "DatasetNum", m_DatasetName);
 
             var jobInfo = new clsDataPackageJobInfo(jobNumber, dataset)
             {
-                DatasetID = m_jobParams.GetJobParameter("JobParameters", "DatasetID", 0),
-                Instrument = m_jobParams.GetJobParameter("JobParameters", "Instrument", string.Empty),
-                InstrumentGroup = m_jobParams.GetJobParameter("JobParameters", "InstrumentGroup", string.Empty),
-                Experiment = m_jobParams.GetJobParameter("JobParameters", "Experiment", string.Empty),
+                DatasetID = m_jobParams.GetJobParameter(jobParamsSection, "DatasetID", 0),
+                Instrument = m_jobParams.GetJobParameter(jobParamsSection, "Instrument", string.Empty),
+                InstrumentGroup = m_jobParams.GetJobParameter(jobParamsSection, "InstrumentGroup", string.Empty),
+                Experiment = m_jobParams.GetJobParameter(jobParamsSection, "Experiment", string.Empty),
                 Experiment_Reason = string.Empty,
                 Experiment_Comment = string.Empty,
                 Experiment_Organism = string.Empty,
                 Experiment_NEWT_ID = 0,
                 Experiment_NEWT_Name = string.Empty,
-                Tool = m_jobParams.GetJobParameter("JobParameters", "ToolName", string.Empty),
+                Tool = m_jobParams.GetJobParameter(jobParamsSection, "ToolName", string.Empty),
                 NumberOfClonedSteps = m_jobParams.GetJobParameter("NumberOfClonedSteps", 0),
-                ResultType = m_jobParams.GetJobParameter("JobParameters", "ResultType", string.Empty),
-                SettingsFileName = m_jobParams.GetJobParameter("JobParameters", "SettingsFileName", string.Empty),
+                ResultType = m_jobParams.GetJobParameter(jobParamsSection, "ResultType", string.Empty),
+                SettingsFileName = m_jobParams.GetJobParameter(jobParamsSection, "SettingsFileName", string.Empty),
                 ParameterFileName = m_jobParams.GetJobParameter("PeptideSearch", "ParmFileName", string.Empty),
                 LegacyFastaFileName = m_jobParams.GetJobParameter("PeptideSearch", "legacyFastaFileName", string.Empty)
             };
@@ -1336,12 +1337,12 @@ namespace AnalysisManagerBase
             jobInfo.ProteinCollectionList = m_jobParams.GetJobParameter("PeptideSearch", "ProteinCollectionList", string.Empty);
             jobInfo.ProteinOptions = m_jobParams.GetJobParameter("PeptideSearch", "ProteinOptions", string.Empty);
 
-            jobInfo.ServerStoragePath = m_jobParams.GetJobParameter("JobParameters", "DatasetStoragePath", string.Empty);
-            jobInfo.ArchiveStoragePath = m_jobParams.GetJobParameter("JobParameters", "DatasetArchivePath", string.Empty);
-            jobInfo.ResultsFolderName = m_jobParams.GetJobParameter("JobParameters", "inputFolderName", string.Empty);
-            jobInfo.DatasetFolderName = m_jobParams.GetJobParameter("JobParameters", "DatasetFolderName", string.Empty);
-            jobInfo.SharedResultsFolder = m_jobParams.GetJobParameter("JobParameters", "SharedResultsFolders", string.Empty);
-            jobInfo.RawDataType = m_jobParams.GetJobParameter("JobParameters", "RawDataType", string.Empty);
+            jobInfo.ServerStoragePath = m_jobParams.GetJobParameter(jobParamsSection, "DatasetStoragePath", string.Empty);
+            jobInfo.ArchiveStoragePath = m_jobParams.GetJobParameter(jobParamsSection, "DatasetArchivePath", string.Empty);
+            jobInfo.ResultsFolderName = m_jobParams.GetJobParameter(jobParamsSection, "inputFolderName", string.Empty);
+            jobInfo.DatasetFolderName = m_jobParams.GetJobParameter(jobParamsSection, "DatasetFolderName", string.Empty);
+            jobInfo.SharedResultsFolder = m_jobParams.GetJobParameter(jobParamsSection, "SharedResultsFolders", string.Empty);
+            jobInfo.RawDataType = m_jobParams.GetJobParameter(jobParamsSection, "RawDataType", string.Empty);
 
             return jobInfo;
 
@@ -1545,7 +1546,7 @@ namespace AnalysisManagerBase
 
             try
             {
-                var stepNum = m_jobParams.GetJobParameter("StepParameters", "Step", 1);
+                var stepNum = m_jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step", 1);
                 if (stepNum == 1)
                 {
                     // This is the first step; nothing to retrieve
@@ -1759,10 +1760,10 @@ namespace AnalysisManagerBase
 
             errorMessage = string.Empty;
 
-            var strDatasetStoragePath = jobParams.GetParam("JobParameters", "DatasetStoragePath");
+            var strDatasetStoragePath = jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetStoragePath");
             if (string.IsNullOrEmpty(strDatasetStoragePath))
             {
-                strDatasetStoragePath = jobParams.GetParam("JobParameters", "DatasetArchivePath");
+                strDatasetStoragePath = jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetArchivePath");
             }
 
             if (string.IsNullOrEmpty(strDatasetStoragePath))
@@ -2188,7 +2189,7 @@ namespace AnalysisManagerBase
                 return 0;
             }
 
-            var stepNumber = jobParams.GetJobParameter("StepParameters", "Step", 0);
+            var stepNumber = jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step", 0);
             if (stepNumber == 0)
             {
                 errorMessage = "Job parameter Step is missing; cannot determine the SplitFasta iteration value for this job step";
@@ -2220,7 +2221,7 @@ namespace AnalysisManagerBase
                 if (nameAttrib == null)
                     continue;
 
-                if (!string.Equals(nameAttrib.Value, "StepParameters"))
+                if (!string.Equals(nameAttrib.Value, clsAnalysisJob.STEP_PARAMETERS_SECTION))
                     continue;
 
                 var stepAttrib = section.Attribute("step");
@@ -2255,7 +2256,7 @@ namespace AnalysisManagerBase
             }
 
             // Append the dataset folder name to the transfer folder path
-            var datasetFolderName = m_jobParams.GetParam("StepParameters", "DatasetFolderName");
+            var datasetFolderName = m_jobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "DatasetFolderName");
             if (string.IsNullOrWhiteSpace(datasetFolderName))
                 datasetFolderName = m_DatasetName;
 
@@ -2838,15 +2839,17 @@ namespace AnalysisManagerBase
             m_jobParams.AddDatasetInfo(dataPkgJob.Dataset, dataPkgJob.DatasetID);
             DatasetName = string.Copy(dataPkgJob.Dataset);
 
-            m_jobParams.AddAdditionalParameter("JobParameters", "DatasetNum", dataPkgJob.Dataset);
-            m_jobParams.AddAdditionalParameter("JobParameters", "DatasetID", dataPkgJob.DatasetID.ToString());
+            const string jobParamsSection = clsAnalysisJob.JOB_PARAMETERS_SECTION;
 
-            m_jobParams.AddAdditionalParameter("JobParameters", "Instrument", dataPkgJob.Instrument);
-            m_jobParams.AddAdditionalParameter("JobParameters", "InstrumentGroup", dataPkgJob.InstrumentGroup);
+            m_jobParams.AddAdditionalParameter(jobParamsSection, "DatasetNum", dataPkgJob.Dataset);
+            m_jobParams.AddAdditionalParameter(jobParamsSection, "DatasetID", dataPkgJob.DatasetID.ToString());
 
-            m_jobParams.AddAdditionalParameter("JobParameters", "ToolName", dataPkgJob.Tool);
-            m_jobParams.AddAdditionalParameter("JobParameters", "ResultType", dataPkgJob.ResultType);
-            m_jobParams.AddAdditionalParameter("JobParameters", "SettingsFileName", dataPkgJob.SettingsFileName);
+            m_jobParams.AddAdditionalParameter(jobParamsSection, "Instrument", dataPkgJob.Instrument);
+            m_jobParams.AddAdditionalParameter(jobParamsSection, "InstrumentGroup", dataPkgJob.InstrumentGroup);
+
+            m_jobParams.AddAdditionalParameter(jobParamsSection, "ToolName", dataPkgJob.Tool);
+            m_jobParams.AddAdditionalParameter(jobParamsSection, "ResultType", dataPkgJob.ResultType);
+            m_jobParams.AddAdditionalParameter(jobParamsSection, "SettingsFileName", dataPkgJob.SettingsFileName);
 
             m_jobParams.AddAdditionalParameter("PeptideSearch", "ParmFileName", dataPkgJob.ParameterFileName);
 
@@ -2871,12 +2874,12 @@ namespace AnalysisManagerBase
             m_jobParams.AddAdditionalParameter("PeptideSearch", "ProteinCollectionList", dataPkgJob.ProteinCollectionList);
             m_jobParams.AddAdditionalParameter("PeptideSearch", "ProteinOptions", dataPkgJob.ProteinOptions);
 
-            m_jobParams.AddAdditionalParameter("JobParameters", "DatasetStoragePath", dataPkgJob.ServerStoragePath);
-            m_jobParams.AddAdditionalParameter("JobParameters", "DatasetArchivePath", dataPkgJob.ArchiveStoragePath);
-            m_jobParams.AddAdditionalParameter("JobParameters", "inputFolderName", dataPkgJob.ResultsFolderName);
-            m_jobParams.AddAdditionalParameter("JobParameters", "DatasetFolderName", dataPkgJob.DatasetFolderName);
-            m_jobParams.AddAdditionalParameter("JobParameters", "SharedResultsFolders", dataPkgJob.SharedResultsFolder);
-            m_jobParams.AddAdditionalParameter("JobParameters", "RawDataType", dataPkgJob.RawDataType);
+            m_jobParams.AddAdditionalParameter(jobParamsSection, "DatasetStoragePath", dataPkgJob.ServerStoragePath);
+            m_jobParams.AddAdditionalParameter(jobParamsSection, "DatasetArchivePath", dataPkgJob.ArchiveStoragePath);
+            m_jobParams.AddAdditionalParameter(jobParamsSection, "inputFolderName", dataPkgJob.ResultsFolderName);
+            m_jobParams.AddAdditionalParameter(jobParamsSection, "DatasetFolderName", dataPkgJob.DatasetFolderName);
+            m_jobParams.AddAdditionalParameter(jobParamsSection, "SharedResultsFolders", dataPkgJob.SharedResultsFolder);
+            m_jobParams.AddAdditionalParameter(jobParamsSection, "RawDataType", dataPkgJob.RawDataType);
 
             return true;
 
@@ -3894,7 +3897,7 @@ namespace AnalysisManagerBase
 
                 // Gigasax.DMS5
                 var connectionString = m_mgrParams.GetParam("connectionstring");
-                var datasetID = m_jobParams.GetJobParameter("JobParameters", "DatasetID", 0);
+                var datasetID = m_jobParams.GetJobParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetID", 0);
 
                 var blnSuccess = ParFileGen.MakeFile(paramFileName, paramFileType, fastaFilePath, m_WorkingDir, connectionString, datasetID);
 
@@ -4105,7 +4108,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         protected void StorePackedJobParameterList(List<string> lstItems, string strParameterName)
         {
-            m_jobParams.AddAdditionalParameter("JobParameters", strParameterName, clsGlobal.FlattenList(lstItems, "\t"));
+            m_jobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, strParameterName, clsGlobal.FlattenList(lstItems, "\t"));
 
         }
 

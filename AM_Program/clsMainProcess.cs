@@ -117,6 +117,7 @@ namespace AnalysisManagerProg
 
                 if (TraceMode)
                     ShowTraceMessage("Call DoAnalysis");
+
                 DoAnalysis();
 
                 if (TraceMode)
@@ -427,7 +428,7 @@ namespace AnalysisManagerProg
                         {
                             if (oneTaskStarted)
                             {
-                                LogError("Error cleaning working directory, job " + m_AnalysisTask.GetParam("StepParameters", "Job") + "; see folder " + m_WorkDirPath);
+                                LogError("Error cleaning working directory, job " + m_AnalysisTask.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job") + "; see folder " + m_WorkDirPath);
                                 m_AnalysisTask.CloseTask(CloseOutType.CLOSEOUT_FAILED, "Error cleaning working directory");
                             }
                             else
@@ -676,7 +677,7 @@ namespace AnalysisManagerProg
             }
             finally
             {
-                if ((m_StatusTools != null))
+                if (m_StatusTools != null)
                 {
                     if (TraceMode)
                         ShowTraceMessage("Disposing message queue via m_StatusTools.DisposeMessageQueue");
@@ -687,15 +688,15 @@ namespace AnalysisManagerProg
 
         private bool DoAnalysisJob()
         {
-            var jobNum = m_AnalysisTask.GetJobParameter("StepParameters", "Job", 0);
-            var stepNum = m_AnalysisTask.GetJobParameter("StepParameters", "Step", 0);
-            var cpuLoadExpected = m_AnalysisTask.GetJobParameter("StepParameters", "CPU_Load", 1);
+            var jobNum = m_AnalysisTask.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job", 0);
+            var stepNum = m_AnalysisTask.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step", 0);
+            var cpuLoadExpected = m_AnalysisTask.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "CPU_Load", 1);
 
-            var datasetName = m_AnalysisTask.GetParam("JobParameters", "DatasetNum");
+            var datasetName = m_AnalysisTask.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetNum");
             var jobToolDescription = m_AnalysisTask.GetCurrentJobToolDescription();
 
             var runJobsRemotely = m_MgrSettings.GetParam("RunJobsRemotely", false);
-            var runningRemoteFlag = m_AnalysisTask.GetJobParameter("StepParameters", "RunningRemote", 0);
+            var runningRemoteFlag = m_AnalysisTask.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "RunningRemote", 0);
             var runningRemote = (runningRemoteFlag > 0);
 
             if (TraceMode)
@@ -827,7 +828,6 @@ namespace AnalysisManagerProg
                 // Run the job
                 m_StatusTools.UpdateAndWrite(EnumMgrStatus.RUNNING, EnumTaskStatus.RUNNING, EnumTaskStatusDetail.RUNNING_TOOL, 0);
 
-
                 if (runJobsRemotely)
                 {
                     success = RunJobRemotely(toolResourcer, jobNum, stepNum, out eToolRunnerResult);
@@ -884,7 +884,6 @@ namespace AnalysisManagerProg
                 else
                 {
                     closeOut = CloseOutType.CLOSEOUT_SUCCESS;
-
                 }
 
                 // Close out the job as a success
@@ -1006,7 +1005,7 @@ namespace AnalysisManagerProg
                 {
                     if (!m_MgrErrorCleanup.CleanWorkDir(1))
                     {
-                        LogError("Error cleaning working directory, job " + m_AnalysisTask.GetParam("StepParameters", "Job"));
+                        LogError("Error cleaning working directory, job " + m_AnalysisTask.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job"));
                         m_AnalysisTask.CloseTask(CloseOutType.CLOSEOUT_FAILED, "Error cleaning working directory");
                         m_MgrErrorCleanup.CreateErrorDeletingFilesFlagFile();
                         return false;
@@ -1148,7 +1147,7 @@ namespace AnalysisManagerProg
 
         private bool DataPackageIdMissing()
         {
-            var stepToolName = m_AnalysisTask.GetParam("JobParameters", "StepTool");
+            var stepToolName = m_AnalysisTask.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "StepTool");
 
             var multiJobStepTools = new SortedSet<string> {
             "APE",
@@ -1167,7 +1166,7 @@ namespace AnalysisManagerProg
 
             if (dataPkgRequired)
             {
-                var dataPkgID = m_AnalysisTask.GetJobParameter("JobParameters", "DataPackageID", 0);
+                var dataPkgID = m_AnalysisTask.GetJobParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DataPackageID", 0);
                 if (dataPkgID <= 0)
                 {
                     // The data package ID is 0 or missing
@@ -2600,7 +2599,7 @@ namespace AnalysisManagerProg
 
             try
             {
-                var stepToolNameLCase = m_AnalysisTask.GetParam("JobParameters", "StepTool").ToLower();
+                var stepToolNameLCase = m_AnalysisTask.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "StepTool").ToLower();
 
                 if (stepToolNameLCase == "results_transfer")
                 {
@@ -2639,7 +2638,7 @@ namespace AnalysisManagerProg
 
                 var workingDirMinFreeSpaceMB = m_MgrSettings.GetParam("WorkDirMinFreeSpaceMB", DEFAULT_WORKING_DIR_MIN_FREE_SPACE_MB);
 
-                var transferDir = m_AnalysisTask.GetParam("JobParameters", "transferFolderPath");
+                var transferDir = m_AnalysisTask.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "transferFolderPath");
                 var transferDirMinFreeSpaceGB = m_MgrSettings.GetParam("TransferDirMinFreeSpaceGB", DEFAULT_TRANSFER_DIR_MIN_FREE_SPACE_GB);
 
                 var orgDbDir = m_MgrSettings.GetParam("orgdbdir");

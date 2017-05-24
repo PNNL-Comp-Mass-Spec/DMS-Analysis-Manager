@@ -100,9 +100,9 @@ namespace AnalysisManagerBase
             ToolRunner = toolRunner;
             StatusTools = statusTools;
 
-            JobNum = jobParams.GetJobParameter("StepParameters", "Job", 0);
-            StepNum = jobParams.GetJobParameter("StepParameters", "Step", 0);
-            DatasetName = jobParams.GetParam("JobParameters", "DatasetNum");
+            JobNum = jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job", 0);
+            StepNum = jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step", 0);
+            DatasetName = jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetNum");
 
             TransferUtility = new clsRemoteTransferUtility(mgrParams, jobParams);
         }
