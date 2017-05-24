@@ -537,6 +537,7 @@ namespace AnalysisManagerBase
                 {
                     writer.WriteLine("Job=" + JobNum);
                     writer.WriteLine("Step=" + StepNum);
+                    writer.WriteLine("StepTool=" + StepTool);
                     writer.WriteLine("WorkDir=" + RemoteJobStepWorkDirPath);
                     writer.WriteLine("Staged=" + DateTime.Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
                 }
