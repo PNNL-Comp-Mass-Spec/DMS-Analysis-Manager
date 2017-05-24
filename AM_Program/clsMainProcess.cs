@@ -915,6 +915,10 @@ namespace AnalysisManagerProg
 
                 remoteMonitor = new clsRemoteMonitor(m_MgrSettings, m_AnalysisTask, toolRunner, m_StatusTools);
                 RegisterEvents(remoteMonitor);
+
+                remoteMonitor.StaleJobStatusFileEvent += RemoteMonitor_StaleJobStatusFileEvent;
+                remoteMonitor.StaleLockFileEvent += RemoteMonitor_StaleLockFileEvent;
+
             }
             catch (Exception ex)
             {
@@ -2823,6 +2827,26 @@ namespace AnalysisManagerProg
         {
             m_StatusTools.CurrentOperation = progressMessage;
             m_StatusTools.UpdateAndWrite(percentComplete);
+        }
+
+        #endregion
+
+        #region "RemoteMonitor events"
+
+        private void RemoteMonitor_StaleLockFileEvent(string fileName, int ageHours)
+        {
+            var msg = string.Format("Stale remote lock file for {0}; {1} last modified {2} hours ago",
+                                    m_AnalysisTask.GetJobStepDescription(), fileName, ageHours);
+
+            LogErrorToDatabasePeriodically(msg, 12);
+        }
+
+        private void RemoteMonitor_StaleJobStatusFileEvent(string fileName, int ageHours)
+        {
+            var msg = string.Format("Stale remote status file for {0}; {1} last modified {2} hours ago",
+                                    m_AnalysisTask.GetJobStepDescription(), fileName, ageHours);
+
+            LogErrorToDatabasePeriodically(msg, 12);
         }
 
         #endregion

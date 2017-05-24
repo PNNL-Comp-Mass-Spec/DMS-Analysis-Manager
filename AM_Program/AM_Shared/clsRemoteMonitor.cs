@@ -24,6 +24,11 @@ namespace AnalysisManagerBase
     {
 
         #region "Constants"
+
+        private int STALE_LOCK_FILE_AGE_HOURS = 24;
+
+        private int STALE_JOBSTATUS_FILE_AGE_HOURS = 24;
+
         #endregion
 
         #region "Enums"
@@ -141,25 +146,58 @@ namespace AnalysisManagerBase
                     return EnumRemoteJobStatus.Failed;
                 }
 
-                if (StatusFileExists(statusFiles, TransferUtility.ProcessingSuccessFile))
+                if (StatusFileExists(TransferUtility.StatusLockFile, statusFiles, out var remoteLockFile))
                 {
-                    OnStatusEvent(".success file found for " + TransferUtility.JobStepDescription + " on " + TransferUtility.RemoteHostName);
-                    return EnumRemoteJobStatus.Success;
-                }
+                    // Check whether the job has finished (success or failure)
+                    var jobFinished = StatusFileExists(TransferUtility.ProcessingSuccessFile, statusFiles, out _) ||
+                                      StatusFileExists(TransferUtility.ProcessingFailureFile, statusFiles, out _);
 
-                if (StatusFileExists(statusFiles, TransferUtility.JobStatusFile))
-                {
-                    // .jobstatus file found; retrieve it
-
-                    OnDebugEvent(string.Format("Retrieve status file {0} from {1} ", TransferUtility.JobStatusFile, TransferUtility.RemoteHostName));
-
-                    var success = TransferUtility.RetrieveJobStatusFile(out var jobStatusFilePathLocal);
-
-                    if (!success)
+                    if (StatusFileExists(TransferUtility.JobStatusFile, statusFiles, out var remoteJobStatusFile))
                     {
-                        LogWarning("Error retrieving the .jobstatus file for " + TransferUtility.JobStepDescription + " on " + TransferUtility.RemoteHostName);
+                        // .jobstatus file found; check the age
+                        // If over 24 hours old, we probably have an issue
+                        var statusFileAgeHours = DateTime.UtcNow.Subtract(remoteJobStatusFile.LastWriteTimeUtc).TotalHours;
+                        if (statusFileAgeHours > STALE_JOBSTATUS_FILE_AGE_HOURS)
+                        {
+                            NotifyStaleJobStatusFile(remoteJobStatusFile.Name, (int)Math.Round(statusFileAgeHours, 0));
+                        }
+
+                        // Retrieve the .jobstatus file
+                        OnDebugEvent(string.Format("Retrieve status file {0} from {1} ", remoteJobStatusFile.Name, TransferUtility.RemoteHostName));
+
+                        var success = TransferUtility.RetrieveJobStatusFile(out var jobStatusFilePathLocal);
+
+                        if (!success)
+                        {
+                            // Log a warning, but return .running
+                            LogWarning("Error retrieving the .jobstatus file for " + TransferUtility.JobStepDescription + " on " +
+                                       TransferUtility.RemoteHostName);
+                            return EnumRemoteJobStatus.Running;
+                        }
+
+                        var jobStatus = ParseJobStatusFile(jobStatusFilePathLocal);
+
+                        if (!jobFinished)
+                        {
+                            return jobStatus;
+                        }
+
+                    }
+                    else if (!jobFinished)
+                    {
+
+                        // A lock file exists, but no .jobstatus file exists yet, and a .success or .fail file was not found
+                        // If the .lock file is over 24 hours old, we probably have an issue
+                        var lockFileAgeHours = DateTime.UtcNow.Subtract(remoteLockFile.LastWriteTimeUtc).TotalHours;
+                        if (lockFileAgeHours > STALE_LOCK_FILE_AGE_HOURS)
+                        {
+                            // Stale lock file; notify the calling class, but still return state "Running"
+                            NotifyStaleLockFile(remoteLockFile.Name, (int)Math.Round(lockFileAgeHours, 0));
+                        }
+
                         return EnumRemoteJobStatus.Running;
                     }
+                }
 
                     var jobStatus = ParseJobStatusFile(jobStatusFilePathLocal);
 
@@ -192,6 +230,18 @@ namespace AnalysisManagerBase
         {
             Message = message;
             OnWarningEvent(message);
+        }
+
+        private void NotifyStaleJobStatusFile(string lockFileName, int ageHours)
+        {
+            Message = string.Format("JobStatus file has not been modified for over {0} hours", STALE_JOBSTATUS_FILE_AGE_HOURS);
+            OnStaleJobStatusFileEvent(lockFileName, ageHours);
+        }
+
+        private void NotifyStaleLockFile(string lockFileName, int ageHours)
+        {
+            Message = string.Format("Lock file created over {0} hours ago, but a .jobstatus file has not yet been created", STALE_LOCK_FILE_AGE_HOURS);
+            OnStaleLockFileEvent(lockFileName, ageHours);
         }
 
         /// <summary>
@@ -319,6 +369,26 @@ namespace AnalysisManagerBase
 
         #endregion
 
+
+        #region "Events"
+
+        public delegate void StaleFileEventHandler(string fileName, int ageHours);
+
+        public event StaleFileEventHandler StaleJobStatusFileEvent;
+
+        public event StaleFileEventHandler StaleLockFileEvent;
+
+        private void OnStaleJobStatusFileEvent(string fileName, int ageHours)
+        {
+            StaleJobStatusFileEvent?.Invoke(fileName, ageHours);
+        }
+
+        private void OnStaleLockFileEvent(string fileName, int ageHours)
+        {
+            StaleLockFileEvent?.Invoke(fileName, ageHours);
+        }
+
+        #endregion
     }
 
 }
