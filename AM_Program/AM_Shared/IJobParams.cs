@@ -9,6 +9,7 @@ using System.Collections.Generic;
 
 namespace AnalysisManagerBase
 {
+
     #region "Enums"
 
     /// <summary>
@@ -146,12 +147,17 @@ namespace AnalysisManagerBase
         List<string> GetAllSectionNames();
 
         /// <summary>
-        /// Uses the "ToolName" and "StepTool" entries in m_JobParamsTable to generate the tool name for the current analysis job
-        /// Example tool names are "Sequest" or "DTA_Gen (Sequest)" or "DataExtractor (XTandem)"
+        /// Get a description of the step tool and script name
         /// </summary>
-        /// <returns>Tool name</returns>
+        /// <returns>Tool name, e.g. "Sequest" or "DTA_Gen (Sequest)" or "DataExtractor (XTandem)"</returns>
         /// <remarks></remarks>
         string GetCurrentJobToolDescription();
+
+        /// <summary>
+        /// Get a description of the current job number and step number
+        /// </summary>
+        /// <returns>String in the form "job x, step y"</returns>
+        string GetJobStepDescription();
 
         /// <summary>
         /// Gets a job parameter with the given name (in any parameter section)
