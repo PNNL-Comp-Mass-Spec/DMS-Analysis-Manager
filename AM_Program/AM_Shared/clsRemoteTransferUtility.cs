@@ -187,6 +187,24 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
+        /// Convert a list of settings to XML
+        /// </summary>
+        /// <param name="settings"></param>
+        /// <returns></returns>
+        private static string ConstructRemoteInfoXml(IEnumerable<KeyValuePair<string, string>> settings)
+        {
+            var xmlText = new StringBuilder();
+            foreach (var setting in settings)
+            {
+                xmlText.Append(string.Format("<{0}>{1}</{0}>", setting.Key, setting.Value));
+            }
+
+            // Convert to text, will look like
+            // <host>PrismWeb2</host><user>svc-dms</user><taskQueue>/file1/temp/DMSTasks</taskQueue> ...
+            return xmlText.ToString();
+        }
+
+        /// <summary>
         /// Copy files from the remote host to a local directory
         /// </summary>
         /// <param name="sourceDirectoryPath">Source directory</param>
@@ -286,7 +304,7 @@ namespace AnalysisManagerBase
                 return false;
             }
 
-            var sourceFileNames = new List<string> {sourceFile.Name};
+            var sourceFileNames = new List<string> { sourceFile.Name };
 
             var success = CopyFilesToRemote(sourceFile.DirectoryName, sourceFileNames, remoteDirectoryPath, USE_MANAGER_REMOTE_INFO);
             return success;
@@ -623,7 +641,9 @@ namespace AnalysisManagerBase
 
         private string DefineRemoteTimestamp()
         {
-            var remoteTimestamp = DateTime.Now.ToString("yyyyMMdd_hhmm");
+            // Note: use DateTime.Now and convert to a 24-hour clock
+            // Do not use UTCNow since DMS converts the RemoteTimestamp to a DateTime then compares the result to GetDate() to compute job runtime
+            var remoteTimestamp = DateTime.Now.ToString("yyyyMMdd_HHmm");
 
             JobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, STEP_PARAM_REMOTE_TIMESTAMP, remoteTimestamp);
 
@@ -785,47 +805,46 @@ namespace AnalysisManagerBase
         /// <remarks>RemoteInfo is sent to the database via stored procedure SetStepTaskComplete</remarks>
         private string GetRemoteInfoXml(bool useDefaultManagerRemoteInfo)
         {
-            var settings = new List<Tuple<string, string>>();
-
-            string privateKeyFile;
-            string passphraseFile;
 
             if (useDefaultManagerRemoteInfo)
             {
-                settings.Add(new Tuple<string, string>("host", MgrParams.GetParam("RemoteHostName")));
-                settings.Add(new Tuple<string, string>("user", MgrParams.GetParam("RemoteHostUser")));
-                settings.Add(new Tuple<string, string>("taskQueue", MgrParams.GetParam("RemoteTaskQueuePath")));
-                settings.Add(new Tuple<string, string>("workDir", MgrParams.GetParam("RemoteWorkDirPath")));
-                settings.Add(new Tuple<string, string>("orgDB", MgrParams.GetParam("RemoteOrgDBPath")));
-
-                privateKeyFile = Path.GetFileName(MgrParams.GetParam("RemoteHostPrivateKeyFile"));
-                passphraseFile = Path.GetFileName(MgrParams.GetParam("RemoteHostPassphraseFile"));
+                return GetRemoteInfoXml(MgrParams);
             }
-            else
+
+            var settings = new List<KeyValuePair<string, string>>
             {
+                new KeyValuePair<string, string>("host", RemoteHostName),
+                new KeyValuePair<string, string>("user", RemoteHostUser),
+                new KeyValuePair<string, string>("taskQueue", RemoteTaskQueuePath),
+                new KeyValuePair<string, string>("workDir", RemoteWorkDirPath),
+                new KeyValuePair<string, string>("orgDB", RemoteOrgDBPath),
+                new KeyValuePair<string, string>("privateKey", Path.GetFileName(RemoteHostPrivateKeyFile)),
+                new KeyValuePair<string, string>("passphrase", Path.GetFileName(RemoteHostPassphraseFile))
+            };
 
-                settings.Add(new Tuple<string, string>("host", RemoteHostName));
-                settings.Add(new Tuple<string, string>("user", RemoteHostUser));
-                settings.Add(new Tuple<string, string>("taskQueue", RemoteTaskQueuePath));
-                settings.Add(new Tuple<string, string>("workDir", RemoteWorkDirPath));
-                settings.Add(new Tuple<string, string>("orgDB", RemoteOrgDBPath));
+            return ConstructRemoteInfoXml(settings);
+        }
 
-                privateKeyFile = Path.GetFileName(RemoteHostPrivateKeyFile);
-                passphraseFile = Path.GetFileName(RemoteHostPassphraseFile);
-            }
-
-            settings.Add(new Tuple<string, string>("privateKey", privateKeyFile));
-            settings.Add(new Tuple<string, string>("passphrase", passphraseFile));
-
-            var xmlText = new StringBuilder();
-            foreach (var setting in settings)
+        /// <summary>
+        /// Construct the default XML string that will be used for jobs staged by this manager
+        /// </summary>
+        /// <param name="mgrParams">Manager parameters</param>
+        /// <returns>String with XML</returns>
+        /// <remarks>The RemoteInfo generated here is passed to RequestStepTaskXML when checking for an available job</remarks>
+        public static string GetRemoteInfoXml(IMgrParams mgrParams)
+        {
+            var settings = new List<KeyValuePair<string, string>>
             {
-                xmlText.Append(string.Format("<{0}>{1}</{0}>", setting.Item1, setting.Item2));
-            }
+                new KeyValuePair<string, string>("host", mgrParams.GetParam("RemoteHostName")),
+                new KeyValuePair<string, string>("user", mgrParams.GetParam("RemoteHostUser")),
+                new KeyValuePair<string, string>("taskQueue", mgrParams.GetParam("RemoteTaskQueuePath")),
+                new KeyValuePair<string, string>("workDir", mgrParams.GetParam("RemoteWorkDirPath")),
+                new KeyValuePair<string, string>("orgDB", mgrParams.GetParam("RemoteOrgDBPath")),
+                new KeyValuePair<string, string>("privateKey",  Path.GetFileName(mgrParams.GetParam("RemoteHostPrivateKeyFile"))),
+                new KeyValuePair<string, string>("passphrase", Path.GetFileName(mgrParams.GetParam("RemoteHostPassphraseFile")))
+            };
 
-            // Convert to text, will look like
-            // <host>PrismWeb2</host><user>svc-dms</user><taskQueue>/file1/temp/DMSTasks</taskQueue> ...
-            return xmlText.ToString();
+            return ConstructRemoteInfoXml(settings);
         }
 
         /// <summary>
@@ -950,15 +969,13 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Retrieve the JobX_StepY_RemoteTimestamp.jobstatus file (if it exists)
+        /// Retrieve the JobX_StepY_RemoteTimestamp.jobstatus file from the remote TaskQueue folder
         /// </summary>
         /// <param name="jobStatusFilePathLocal"></param>
         /// <returns>True if success, otherwise false</returns>
         /// <remarks>Check for the existence of the file by calling GetStatusFiles and looking for a .jobstatus file </remarks>
         public bool RetrieveJobStatusFile(out string jobStatusFilePathLocal)
         {
-            jobStatusFilePathLocal = string.Empty;
-
             if (IsParameterUpdateRequired(false))
             {
                 // Validate that the required parameters are present and load the private key and passphrase from disk
@@ -970,10 +987,25 @@ namespace AnalysisManagerBase
             if (string.IsNullOrWhiteSpace(remoteTimestamp))
             {
                 OnErrorEvent("Job parameter RemoteTimestamp is empty; cannot retrieve the remote .jobstatus file");
+                jobStatusFilePathLocal = string.Empty;
                 return false;
             }
 
-            var sourceFileNames = new List<string> { JobStatusFile };
+            return RetrieveStatusFile(JobStatusFile, out jobStatusFilePathLocal);
+        }
+
+        /// <summary>
+        /// Retrieve the given status file from the remote TaskQueue folder
+        /// </summary>
+        /// <param name="statusFileName"></param>
+        /// <param name="statusFilePathLocal">Output: full path to the status file on the local drive</param>
+        /// <returns>True if success, otherwise false</returns>
+        /// <remarks>Check for the existence of the file by calling GetStatusFiles and looking for desired file </remarks>
+        public bool RetrieveStatusFile(string statusFileName, out string statusFilePathLocal)
+        {
+            statusFilePathLocal = string.Empty;
+
+            var sourceFileNames = new List<string> { statusFileName };
 
             var success = CopyFilesFromRemote(RemoteTaskQueuePath, sourceFileNames, WorkDir);
 
@@ -982,14 +1014,14 @@ namespace AnalysisManagerBase
                 return false;
             }
 
-            var jobStatusFile = new FileInfo(Path.Combine(WorkDir, JobStatusFile));
-            if (jobStatusFile.Exists)
+            var statusFile = new FileInfo(Path.Combine(WorkDir, JobStatusFile));
+            if (statusFile.Exists)
             {
-                jobStatusFilePathLocal = jobStatusFile.FullName;
+                statusFilePathLocal = statusFile.FullName;
                 return true;
             }
 
-            OnWarningEvent(".jobstatus file not found despite CopyFilesFromRemote reporting success: " + jobStatusFile.FullName);
+            OnWarningEvent(Path.GetExtension(statusFileName) + " file not found despite CopyFilesFromRemote reporting success: " + statusFile.FullName);
             return false;
         }
 

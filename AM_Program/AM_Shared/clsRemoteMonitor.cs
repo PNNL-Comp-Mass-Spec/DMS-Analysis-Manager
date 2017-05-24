@@ -127,8 +127,11 @@ namespace AnalysisManagerBase
             catch (Exception ex)
             {
                 LogError("Error initializing parameters for the remote transfer utility", ex);
+
+                // Return .Undefined, which will fail out the job step
                 return EnumRemoteJobStatus.Undefined;
             }
+
             try
             {
 
@@ -138,14 +141,11 @@ namespace AnalysisManagerBase
 
                 if (statusFiles.Count == 0)
                 {
-                    LogWarning("No status files were found for " + TransferUtility.JobStepDescription);
-                    return EnumRemoteJobStatus.Undefined;
-                }
+                    // No status files, not even a .info file
+                    // This could be due to a network outage issue so we'll return .Running
+                    LogWarning("No status files were found for " + TransferUtility.JobStepDescription + ", not even a .info file");
 
-                if (StatusFileExists(statusFiles, TransferUtility.ProcessingFailureFile))
-                {
-                    LogWarning(".fail file found for " + TransferUtility.JobStepDescription + " on " + TransferUtility.RemoteHostName);
-                    return EnumRemoteJobStatus.Failed;
+                    return EnumRemoteJobStatus.Running;
                 }
 
                 if (StatusFileExists(TransferUtility.StatusLockFile, statusFiles, out var remoteLockFile))
@@ -201,22 +201,38 @@ namespace AnalysisManagerBase
                     }
                 }
 
-                    var jobStatus = ParseJobStatusFile(jobStatusFilePathLocal);
-
-                    return jobStatus;
-                }
-
-                if (StatusFileExists(statusFiles, TransferUtility.StatusLockFile))
+                // No .lock file; look for a .success file
+                if (StatusFileExists(TransferUtility.ProcessingSuccessFile, statusFiles, out var remoteSuccessFile))
                 {
-                    // A lock file exists, but no progress file exists yet
-                    return EnumRemoteJobStatus.Running;
+                    OnStatusEvent(".success file found for " + TransferUtility.JobStepDescription + " on " + TransferUtility.RemoteHostName);
+
+                    // Retrieve the .success file
+                    OnDebugEvent(string.Format("Retrieve status file {0} from {1} ", remoteSuccessFile.Name, TransferUtility.RemoteHostName));
+
+                    TransferUtility.RetrieveStatusFile(remoteSuccessFile.Name, out _);
+
+                    return EnumRemoteJobStatus.Success;
                 }
 
+                // No .lock file or .success file; look for a .fail file
+                if (StatusFileExists(TransferUtility.ProcessingFailureFile, statusFiles, out var remoteFailureFile))
+                {
+                    LogWarning(".fail file found for " + TransferUtility.JobStepDescription + " on " + TransferUtility.RemoteHostName);
+
+                    TransferUtility.RetrieveStatusFile(remoteFailureFile.Name, out _);
+
+                    return EnumRemoteJobStatus.Failed;
+                }
+
+                // No .lock file, .success file, or .fail file
+                // There might be a .jobstatus file, but that would indicate things are in an unstable / unsupported state
                 return EnumRemoteJobStatus.Unstarted;
             }
             catch (Exception ex)
             {
                 LogError("Error reading the status file for the remotely running job", ex);
+
+                // Return .Undefined, which will fail out the job step
                 return EnumRemoteJobStatus.Undefined;
             }
 
@@ -246,13 +262,47 @@ namespace AnalysisManagerBase
             OnStaleLockFileEvent(lockFileName, ageHours);
         }
 
+        private static Queue<KeyValuePair<DateTime, float>> ParseCoreUsageHistory(XContainer doc)
+        {
+            var coreUsageHistory = new Queue<KeyValuePair<DateTime, float>>();
+
+            var coreUsageInfo = doc.Elements("Root").Elements("ProgRunnerCoreUsage").ToList();
+
+            var coreUsage = coreUsageInfo.Elements("CoreUsageSample").ToList();
+            foreach (var coreUsageSample in coreUsage)
+            {
+                string samplingDateText;
+                if (coreUsageSample.HasAttributes)
+                {
+                    var dateAttribute = coreUsageSample.Attribute("Date");
+                    if (dateAttribute == null)
+                        continue;
+
+                    samplingDateText = dateAttribute.Value;
+                }
+                else
+                {
+                    continue;
+                }
+
+                if (!DateTime.TryParse(samplingDateText, out var samplingDate))
+                    continue;
+
+                if (float.TryParse(coreUsageSample.Value, out var coresInUse))
+                {
+                    coreUsageHistory.Enqueue(new KeyValuePair<DateTime, float>(samplingDate, coresInUse));
+                }
+            }
+
+            return coreUsageHistory;
+        }
+
         /// <summary>
         /// Read the .jobstatus file retrieved from the remote host
         /// </summary>
         /// <param name="jobStatusFilePath"></param>
-        /// <param name="logToBrokerDB">When true, log the status to the broker DB (via the messaging queue)</param>
         /// <remarks></remarks>
-        private EnumRemoteJobStatus ParseJobStatusFile(string jobStatusFilePath, bool logToBrokerDB = true)
+        private EnumRemoteJobStatus ParseJobStatusFile(string jobStatusFilePath)
         {
             EnumRemoteJobStatus jobStatus;
 
@@ -267,22 +317,35 @@ namespace AnalysisManagerBase
 
                     var managerInfo = doc.Elements("Root").Elements("Manager").ToList();
 
-                    var status = new clsStatusFile(Path.Combine(WorkDir, "RemoteStatus.xml"), DebugLevel)
+                    // Note: although we pass statusFilePath to the clsStatusFile constructor, the path doesn't matter because
+                    // we call UpdateRemoteStatus to push the remote status to the message queue only; a status file is not written
+                    var statusFilePath = Path.Combine(WorkDir, "RemoteStatus.xml");
+
+                    var status = new clsStatusFile(statusFilePath, DebugLevel)
                     {
                         MgrName = clsXMLUtils.GetXmlValue(managerInfo, "MgrName")
                     };
 
+                    // Note: do not configure status to push to the BrokerDB or the MessageQueue
+
                     var mgrStatus = clsXMLUtils.GetXmlValue(managerInfo, "MgrStatus");
-                    if (Enum.TryParse(mgrStatus, out EnumMgrStatus eMgrStatus))
+                    status.MgrStatus = StatusTools.ConvertToMgrStatusFromText(mgrStatus);
+
+                    status.TaskStartTime = clsXMLUtils.GetXmlValue(managerInfo, "LastStartTime", DateTime.MinValue).ToUniversalTime();
+                    if (status.TaskStartTime > DateTime.MinValue)
                     {
-                        status.MgrStatus = eMgrStatus;
+                        status.TaskStartTime = status.TaskStartTime.ToUniversalTime();
                     }
 
-                    status.TaskStartTime = clsXMLUtils.GetXmlValue(managerInfo, "LastStartTime", DateTime.MinValue);
-
                     var lastUpdate = clsXMLUtils.GetXmlValue(managerInfo, "LastUpdate", DateTime.MinValue);
-                    if (lastUpdate == DateTime.MinValue)
-                        lastUpdate = status.TaskStartTime;
+                    if (lastUpdate > DateTime.MinValue)
+                    {
+                        lastUpdate = lastUpdate.ToUniversalTime();
+                    }
+                    else
+                    {
+                        lastUpdate = status.TaskStartTime.ToUniversalTime();
+                    }
 
                     var cpuUtilization = (int)clsXMLUtils.GetXmlValue(managerInfo, "CPUUtilization", 0f);
                     var freeMemoryMB = clsXMLUtils.GetXmlValue(managerInfo, "FreeMemoryMB", 0f);
@@ -292,32 +355,35 @@ namespace AnalysisManagerBase
 
                     status.ProgRunnerCoreUsage = clsXMLUtils.GetXmlValue(managerInfo, "ProgRunnerCoreUsage", 0f);
 
-
                     var taskInfo = doc.Elements("Root").Elements("Task").ToList();
 
                     status.Tool = clsXMLUtils.GetXmlValue(taskInfo, "Tool");
 
                     var taskStatus = clsXMLUtils.GetXmlValue(taskInfo, "Status");
-                    if (Enum.TryParse(taskStatus, out EnumTaskStatus eTaskStatus))
-                    {
-                        status.TaskStatus = eTaskStatus;
-                    }
+                    status.TaskStatus = StatusTools.ConvertToTaskStatusFromText(taskStatus);
 
-                    switch (eTaskStatus)
+                    switch (status.TaskStatus)
                     {
                         case EnumTaskStatus.STOPPED:
                         case EnumTaskStatus.REQUESTING:
                         case EnumTaskStatus.NO_TASK:
+                            // The .jobstatus file in the Task Queue folder should not have these task status values
+                            // Return .Undefined, which will fail out the job step
                             jobStatus = EnumRemoteJobStatus.Undefined;
                             break;
+
                         case EnumTaskStatus.RUNNING:
                         case EnumTaskStatus.CLOSING:
                             jobStatus = EnumRemoteJobStatus.Running;
                             break;
+
                         case EnumTaskStatus.FAILED:
                             jobStatus = EnumRemoteJobStatus.Failed;
                             break;
+
                         default:
+                            // Unrecognized task status
+                            // Return .Undefined, which will fail out the job step
                             jobStatus = EnumRemoteJobStatus.Undefined;
                             break;
                     }
@@ -328,10 +394,7 @@ namespace AnalysisManagerBase
                     var taskDetails = taskInfo.Elements("TaskDetails").ToList();
 
                     var taskStatusDetail = clsXMLUtils.GetXmlValue(taskDetails, "Status");
-                    if (Enum.TryParse(taskStatusDetail, out EnumTaskStatusDetail eTaskStatusDetail))
-                    {
-                        status.TaskStatusDetail = eTaskStatusDetail;
-                    }
+                    status.TaskStatusDetail = StatusTools.ConvertToTaskDetailStatusFromText(taskStatusDetail);
 
                     status.JobNumber = clsXMLUtils.GetXmlValue(taskDetails, "Job", 0);
                     status.JobStep = clsXMLUtils.GetXmlValue(taskDetails, "Step", 0);
@@ -340,10 +403,17 @@ namespace AnalysisManagerBase
                     status.MostRecentJobInfo = clsXMLUtils.GetXmlValue(taskDetails, "MostRecentJobInfo");
                     status.SpectrumCount = clsXMLUtils.GetXmlValue(taskDetails, "SpectrumCount", 0);
 
-                    status.WriteStatusFile(lastUpdate, processId, cpuUtilization, freeMemoryMB, forceLogToBrokerDB: logToBrokerDB);
+                    var coreUsageHistory = ParseCoreUsageHistory(doc);
+
+                    status.StoreCoreUsageHistory(coreUsageHistory);
 
                     JobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsRemoteTransferUtility.STEP_PARAM_REMOTE_PROGRESS,
                                                      status.Progress.ToString("0.0###"));
+
+                    // Update the cached progress; used by clsMainProcess
+                    RemoteProgress = status.Progress;
+
+                    StatusTools.UpdateRemoteStatus(status, lastUpdate, processId, cpuUtilization, freeMemoryMB);
 
                 }
 
@@ -361,12 +431,23 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Look for file statusFileName in statusFiles
         /// </summary>
-        /// <param name="statusFiles"></param>
-        /// <param name="statusFileName"></param>
+        /// <param name="statusFileName">Status file to find</param>
+        /// <param name="statusFiles">List of status files</param>
+        /// <param name="matchedFile">Output: matched status file, or null if no match</param>
         /// <returns>True if found, otherwise false</returns>
-        private bool StatusFileExists(Dictionary<string, SftpFile> statusFiles, string statusFileName)
+        private bool StatusFileExists(string statusFileName, Dictionary<string, SftpFile> statusFiles, out SftpFile matchedFile)
         {
-            return statusFiles.Any(item => string.Equals(item.Value.Name, statusFileName, StringComparison.OrdinalIgnoreCase));
+            foreach (var item in statusFiles)
+            {
+                if (!string.Equals(item.Value.Name, statusFileName, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                matchedFile = item.Value;
+                return true;
+            }
+
+            matchedFile = null;
+            return false;
         }
 
         #endregion
