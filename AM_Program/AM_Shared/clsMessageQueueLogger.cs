@@ -45,7 +45,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Push status message onto the local status message queue 
+        /// Push status message onto the local status message queue
         /// to be sent off by the PostalWorker thread
         /// </summary>
         /// <param name="statusMessage"></param>
@@ -88,8 +88,8 @@ namespace AnalysisManagerBase
                 }
                 else
                 {
-                    waitHandle.WaitOne();
                     // No more m_statusMessages - wait for a signal
+                    waitHandle.WaitOne(60000);
                 }
             }
         }
