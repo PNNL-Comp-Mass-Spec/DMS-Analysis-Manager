@@ -496,32 +496,6 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Copy files for the current job to the remote host
-        /// </summary>
-        /// <remarks>Creates a new subdirectory below RemoteWorkDirPath</remarks>
-        /// <returns>True on success, false on an error</returns>
-        public bool CopyJobTaskFilesToRemote()
-        {
-            if (IsParameterUpdateRequired(USE_MANAGER_REMOTE_INFO))
-            {
-                // Validate that the required parameters are present and load the private key and passphrase from disk
-                // This throws an exception if any parameters are missing
-                UpdateParameters(USE_MANAGER_REMOTE_INFO);
-            }
-
-            try
-            {
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                OnErrorEvent("Error copying files to the remote host", ex);
-                return false;
-            }
-        }
-
-        /// <summary>
         /// Create a new task info file for the current job on the remote host
         /// </summary>
         /// <param name="infoFilePathRemote">Output: Remote info file path</param>
