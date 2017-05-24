@@ -541,7 +541,16 @@ namespace AnalysisManagerBase
                     writer.WriteLine("Staged=" + DateTime.Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
                 }
 
-                CopyFileToRemote(infoFilePathLocal, RemoteTaskQueuePath);
+                // Assure that the target directory exists
+                var targetFolderVerified = CreateRemoteDirectory(remoteDirectoryPath);
+                if (!targetFolderVerified)
+                {
+                    OnErrorEvent(string.Format("Unable to verify/create directory {0} on host {1}", remoteDirectoryPath, RemoteHostName));
+                    infoFilePathRemote = string.Empty;
+                    return false;
+                }
+
+                CopyFileToRemote(infoFilePathLocal, remoteDirectoryPath);
 
                 return true;
             }
@@ -746,6 +755,9 @@ namespace AnalysisManagerBase
 
             try
             {
+                if (string.IsNullOrWhiteSpace(remoteDirectoryPath))
+                    throw new ArgumentException("Remote directory path cannot be empty", nameof(remoteDirectoryPath));
+
                 if (string.IsNullOrWhiteSpace(fileMatchSpec))
                     fileMatchSpec = "*";
 
@@ -784,6 +796,12 @@ namespace AnalysisManagerBase
         {
             foreach (var remoteDirectory in remoteDirectoryPaths)
             {
+                if (string.IsNullOrWhiteSpace(remoteDirectory))
+                {
+                    OnWarningEvent("Ignoring empty remote directory name from remoteDirectoryPaths in GetRemoteFileListing");
+                    continue;
+                }
+
                 var filesAndFolders = sftp.ListDirectory(remoteDirectory);
                 var subdirectoryPaths = new List<string>();
 
@@ -1010,6 +1028,7 @@ namespace AnalysisManagerBase
             }
 
             var remoteTimestamp = JobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, STEP_PARAM_REMOTE_TIMESTAMP);
+
             if (string.IsNullOrWhiteSpace(remoteTimestamp))
             {
                 OnErrorEvent("Job parameter RemoteTimestamp is empty; cannot retrieve the remote .jobstatus file");
