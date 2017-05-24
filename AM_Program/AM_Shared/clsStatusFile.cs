@@ -41,6 +41,7 @@ namespace AnalysisManagerBase
         private bool m_AbortProcessingNow;
 
         const int MAX_ERROR_MESSAGE_COUNT_TO_CACHE = 10;
+
         private int m_RecentErrorMessageCount;
         private readonly string[] m_RecentErrorMessages = new string[MAX_ERROR_MESSAGE_COUNT_TO_CACHE];
 
@@ -57,19 +58,63 @@ namespace AnalysisManagerBase
         /// Used to log messages to the broker DB
         /// </summary>
         private clsDBStatusLogger m_BrokerDBLogger;
-        private clsMessageQueueLogger m_MessageQueueLogger;
+
         private clsMessageSender m_MessageSender;
 
         private clsMessageQueueLogger m_QueueLogger;
         private PerformanceCounter mCPUUsagePerformanceCounter;
 
         private DateTime m_LastFileWriteTime;
+
         private int m_WritingErrorCountSaved;
+
         private DateTime m_LastMessageQueueErrorTime;
+
+        private readonly Dictionary<EnumMgrStatus, string> MgrStatusMap;
+
+        private readonly Dictionary<EnumTaskStatus, string> TaskStatusMap;
+
+        private readonly Dictionary<EnumTaskStatusDetail, string> TaskStatusDetailMap;
 
         #endregion
 
         #region "Properties"
+
+        /// <summary>
+        /// When true, status messages are being sent directly to the broker database
+        /// </summary>
+        public bool LogToBrokerQueue { get; private set; }
+
+        /// <summary>
+        /// Broker database connection string
+        /// </summary>
+        public string BrokerDBConnectionString
+        {
+            get
+            {
+                if (m_BrokerDBLogger == null)
+                    return string.Empty;
+
+                return m_BrokerDBLogger.DBConnectionString;
+            }
+
+        }
+
+        /// <summary>
+        /// Broker database update interval, in minutes
+        /// </summary>
+        public float BrokerDBUpdateIntervalMinutes
+        {
+            get
+            {
+                if (m_BrokerDBLogger == null)
+                    return 0;
+
+                return m_BrokerDBLogger.DBStatusUpdateIntervalMinutes;
+            }
+
+        }
+
         public string FileNamePath { get; set; }
 
         public string MgrName { get; set; }
@@ -91,6 +136,9 @@ namespace AnalysisManagerBase
 
         public EnumTaskStatus TaskStatus { get; set; }
 
+        /// <summary>
+        /// Task start time (UTC-based)
+        /// </summary>
         public DateTime TaskStartTime { get; set; }
 
         /// <summary>
@@ -100,6 +148,8 @@ namespace AnalysisManagerBase
         /// <returns></returns>
         /// <remarks></remarks>
         public float Progress { get; set; }
+
+        public Queue<KeyValuePair<DateTime, float>> ProgRunnerCoreUsageHistory => m_ProgRunnerCoreUsageHistory;
 
         /// <summary>
         /// ProcessID of an externally spawned process
@@ -144,6 +194,23 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public string MostRecentJobInfo { get; set; }
 
+        public List<string> RecentErrorMessages
+        {
+            get
+            {
+                if (m_RecentErrorMessageCount == 0)
+                    return new List<string>();
+
+                var messages = new List<string>();
+                for (var i = 0; i < m_RecentErrorMessageCount; i++)
+                {
+                    messages.Add(m_RecentErrorMessages[i]);
+                }
+                return messages;
+            }
+        }
+
+
         /// <summary>
         /// Number of spectrum files created
         /// </summary>
@@ -155,17 +222,17 @@ namespace AnalysisManagerBase
         /// <summary>
         /// URI for the manager status message queue, e.g. tcp://Proto-7.pnl.gov:61616
         /// </summary>
-        public string MessageQueueURI { get; set; }
+        public string MessageQueueURI { get; private set; }
 
         /// <summary>
         /// Topic name for the manager status message queue
         /// </summary>
-        public string MessageQueueTopic { get; set; }
+        public string MessageQueueTopic { get; private set; }
 
         /// <summary>
-        /// When true, log messages to the manager status message queue
+        /// When true, the status XML is being sent to the manager status message queue
         /// </summary>
-        public bool LogToMsgQueue { get; set; }
+        public bool LogToMsgQueue { get; private set; }
 
         /// <summary>
         /// Set to true to abort processing due to a critical error
@@ -184,6 +251,13 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public clsStatusFile(string statusFilePath, int debugLevel)
         {
+            MgrStatusMap = new Dictionary<EnumMgrStatus, string>();
+            TaskStatusMap = new Dictionary<EnumTaskStatus, string>();
+            TaskStatusDetailMap = new Dictionary<EnumTaskStatusDetail, string>();
+
+            DefineEnumToStringMapping(MgrStatusMap, TaskStatusMap, TaskStatusDetailMap);
+
+
             FileNamePath = statusFilePath;
             MgrName = string.Empty;
             RemoteMgrName = string.Empty;
@@ -242,26 +316,29 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Configure the Broker DB logging settings
         /// </summary>
-        /// <param name="LogStatusToBrokerDB"></param>
-        /// <param name="BrokerDBConnectionString"></param>
-        /// <param name="BrokerDBStatusUpdateIntervalMinutes"></param>
+        /// <param name="logStatusToBrokerDB"></param>
+        /// <param name="brokerDBConnectionString"></param>
+        /// <param name="brokerDBStatusUpdateIntervalMinutes"></param>
         /// <remarks></remarks>
-        public void ConfigureBrokerDBLogging(bool LogStatusToBrokerDB, string BrokerDBConnectionString, float BrokerDBStatusUpdateIntervalMinutes)
+        public void ConfigureBrokerDBLogging(bool logStatusToBrokerDB, string brokerDBConnectionString, float brokerDBStatusUpdateIntervalMinutes)
         {
-            if (LogStatusToBrokerDB)
+            LogToBrokerQueue = logStatusToBrokerDB;
+
+            if (logStatusToBrokerDB)
             {
                 if (m_BrokerDBLogger == null)
                 {
-                    m_BrokerDBLogger = new clsDBStatusLogger(BrokerDBConnectionString, BrokerDBStatusUpdateIntervalMinutes);
+                    m_BrokerDBLogger = new clsDBStatusLogger(brokerDBConnectionString, brokerDBStatusUpdateIntervalMinutes);
                 }
                 else
                 {
-                    m_BrokerDBLogger.DBStatusUpdateIntervalMinutes = BrokerDBStatusUpdateIntervalMinutes;
+                    m_BrokerDBLogger.DBStatusUpdateIntervalMinutes = brokerDBStatusUpdateIntervalMinutes;
                 }
             }
             else
             {
-                if ((m_BrokerDBLogger != null))
+                // ReSharper disable once RedundantCheckBeforeAssignment
+                if (m_BrokerDBLogger != null)
                 {
                     // Stop logging to the broker
                     m_BrokerDBLogger = null;
@@ -272,22 +349,15 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Configure the Message Queue logging settings
         /// </summary>
-        /// <param name="LogStatusToMessageQueue"></param>
-        /// <param name="MsgQueueURI"></param>
-        /// <param name="MessageQueueTopicMgrStatus"></param>
-        /// <param name="ClientName"></param>
+        /// <param name="logStatusToMessageQueue"></param>
+        /// <param name="msgQueueURI"></param>
+        /// <param name="messageQueueTopicMgrStatus"></param>
         /// <remarks></remarks>
-        public void ConfigureMessageQueueLogging(bool LogStatusToMessageQueue, string MsgQueueURI, string MessageQueueTopicMgrStatus, string ClientName)
+        public void ConfigureMessageQueueLogging(bool logStatusToMessageQueue, string msgQueueURI, string messageQueueTopicMgrStatus)
         {
-            LogToMsgQueue = LogStatusToMessageQueue;
-            MessageQueueURI = MsgQueueURI;
-            MessageQueueTopic = MessageQueueTopicMgrStatus;
-
-            if (!LogToMsgQueue & (m_MessageQueueLogger != null))
-            {
-                // Stop logging to the message queue
-                m_MessageQueueLogger = null;
-            }
+            LogToMsgQueue = logStatusToMessageQueue;
+            MessageQueueURI = msgQueueURI;
+            MessageQueueTopic = messageQueueTopicMgrStatus;
         }
 
         /// <summary>
@@ -348,93 +418,143 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Converts the job status enum to a string value
+        /// Converts the string representation of manager status to the enum
         /// </summary>
-        /// <param name="StatusEnum">An JobStatus object</param>
-        /// <returns>String representation of input object</returns>
+        /// <param name="statusText">Text from ConvertMgrStatusToString or the string representation of the enum</param>
+        /// <returns>Task status enum</returns>
         /// <remarks></remarks>
-        private string ConvertTaskStatusToString(EnumTaskStatus StatusEnum)
+        public EnumMgrStatus ConvertToMgrStatusFromText(string statusText)
         {
-
-            // Converts a status enum to a string
-            switch (StatusEnum)
+            foreach (var item in MgrStatusMap)
             {
-                case EnumTaskStatus.CLOSING:
-                    return "Closing";
-                case EnumTaskStatus.NO_TASK:
-                    return "No Task";
-                case EnumTaskStatus.RUNNING:
-                    return "Running";
-                case EnumTaskStatus.REQUESTING:
-                    return "Requesting";
-                case EnumTaskStatus.STOPPED:
-                    return "Stopped";
-                case EnumTaskStatus.FAILED:
-                    return "Failed";
-                default:
-                    // Should never get here
-                    return "Unknown Task Status";
+                if (string.Equals(item.Value, statusText, StringComparison.OrdinalIgnoreCase))
+                    return item.Key;
             }
+
+            if (Enum.TryParse(statusText, true, out EnumMgrStatus taskStatus))
+                return taskStatus;
+
+            return EnumMgrStatus.STOPPED;
+        }
+
+        /// <summary>
+        /// Converts the string representation of task status to the enum
+        /// </summary>
+        /// <param name="statusText">Text from ConvertTaskStatusToString or the string representation of the enum</param>
+        /// <returns>Task status enum</returns>
+        /// <remarks></remarks>
+        public EnumTaskStatus ConvertToTaskStatusFromText(string statusText)
+        {
+            foreach (var item in TaskStatusMap)
+            {
+                if (string.Equals(item.Value, statusText, StringComparison.OrdinalIgnoreCase))
+                    return item.Key;
+            }
+
+            if (Enum.TryParse(statusText, true, out EnumTaskStatus taskStatus))
+                return taskStatus;
+
+            return EnumTaskStatus.NO_TASK;
+        }
+
+        /// <summary>
+        /// Converts the string representation of task status detail to the enum
+        /// </summary>
+        /// <param name="statusText">Text from ConvertTaskStatusDetailToString or the string representation of the enum</param>
+        /// <returns>Task status enum</returns>
+        /// <remarks></remarks>
+        public EnumTaskStatusDetail ConvertToTaskDetailStatusFromText(string statusText)
+        {
+            foreach (var item in TaskStatusDetailMap)
+            {
+                if (string.Equals(item.Value, statusText, StringComparison.OrdinalIgnoreCase))
+                    return item.Key;
+            }
+
+            if (Enum.TryParse(statusText, true, out EnumTaskStatusDetail taskStatus))
+                return taskStatus;
+
+            return EnumTaskStatusDetail.NO_TASK;
+        }
+
+        /// <summary>
+        /// Converts the manager status enum to a string value
+        /// </summary>
+        /// <param name="statusEnum">A MgrStatus enum</param>
+        /// <returns>String representation of input object (sentence case and underscores to spaces)</returns>
+        /// <remarks></remarks>
+        private string ConvertMgrStatusToString(EnumMgrStatus statusEnum)
+        {
+            if (MgrStatusMap.TryGetValue(statusEnum, out var statusText))
+                return statusText;
+
+            // Unknown enum
+            return "Unknown Mgr Status";
 
         }
 
         /// <summary>
-        /// Converts the job status enum to a string value
+        /// Converts the task status enum to a string value
         /// </summary>
-        /// <param name="StatusEnum">An JobStatus object</param>
-        /// <returns>String representation of input object</returns>
+        /// <param name="statusEnum">A Task Status enum</param>
+        /// <returns>String representation of input object (sentence case and underscores to spaces)</returns>
         /// <remarks></remarks>
-        private string ConvertMgrStatusToString(EnumMgrStatus StatusEnum)
+        private string ConvertTaskStatusToString(EnumTaskStatus statusEnum)
         {
 
-            // Converts a status enum to a string
-            switch (StatusEnum)
-            {
-                case EnumMgrStatus.DISABLED_LOCAL:
-                    return "Disabled Local";
-                case EnumMgrStatus.DISABLED_MC:
-                    return "Disabled MC";
-                case EnumMgrStatus.RUNNING:
-                    return "Running";
-                case EnumMgrStatus.STOPPED:
-                    return "Stopped";
-                case EnumMgrStatus.STOPPED_ERROR:
-                    return "Stopped Error";
-                default:
-                    // Should never get here
-                    return "Unknown Mgr Status";
-            }
+            if (TaskStatusMap.TryGetValue(statusEnum, out var statusText))
+                return statusText;
+
+            // Unknown enum
+            return "Unknown Task Status";
 
         }
 
         /// <summary>
-        /// Converts the job status enum to a string value
+        /// Converts the task status detail enum to a string value
         /// </summary>
-        /// <param name="StatusEnum">An JobStatus object</param>
-        /// <returns>String representation of input object</returns>
+        /// <param name="statusEnum">A TaskStatusDetail enum</param>
+        /// <returns>String representation of input object (sentence case and underscores to spaces)</returns>
         /// <remarks></remarks>
-        private string ConvertTaskStatusDetailToString(EnumTaskStatusDetail StatusEnum)
+        private string ConvertTaskStatusDetailToString(EnumTaskStatusDetail statusEnum)
         {
 
-            // Converts a status enum to a string
-            switch (StatusEnum)
-            {
-                case EnumTaskStatusDetail.DELIVERING_RESULTS:
-                    return "Delivering Results";
-                case EnumTaskStatusDetail.NO_TASK:
-                    return "No Task";
-                case EnumTaskStatusDetail.PACKAGING_RESULTS:
-                    return "Packaging Results";
-                case EnumTaskStatusDetail.RETRIEVING_RESOURCES:
-                    return "Retrieving Resources";
-                case EnumTaskStatusDetail.RUNNING_TOOL:
-                    return "Running Tool";
-                case EnumTaskStatusDetail.CLOSING:
-                    return "Closing";
-                default:
-                    // Should never get here
-                    return "Unknown Task Status Detail";
-            }
+            if (TaskStatusDetailMap.TryGetValue(statusEnum, out var statusText))
+                return statusText;
+
+            // Unknown enum
+            return "Unknown Task Status Detail";
+
+        }
+
+        private void DefineEnumToStringMapping(
+            IDictionary<EnumMgrStatus, string> mgrStatusMap,
+            IDictionary<EnumTaskStatus, string> taskStatusMap,
+            IDictionary<EnumTaskStatusDetail, string> taskStatusDetailMap)
+        {
+
+            mgrStatusMap.Clear();
+            mgrStatusMap.Add(EnumMgrStatus.DISABLED_LOCAL, "Disabled Local");
+            mgrStatusMap.Add(EnumMgrStatus.DISABLED_MC, "Disabled MC");
+            mgrStatusMap.Add(EnumMgrStatus.RUNNING, "Running");
+            mgrStatusMap.Add(EnumMgrStatus.STOPPED, "Stopped");
+            mgrStatusMap.Add(EnumMgrStatus.STOPPED_ERROR, "Stopped Error");
+
+            taskStatusMap.Clear();
+            taskStatusMap.Add(EnumTaskStatus.CLOSING, "Closing");
+            taskStatusMap.Add(EnumTaskStatus.NO_TASK, "No Task");
+            taskStatusMap.Add(EnumTaskStatus.RUNNING, "Running");
+            taskStatusMap.Add(EnumTaskStatus.REQUESTING, "Requesting");
+            taskStatusMap.Add(EnumTaskStatus.STOPPED, "Stopped");
+            taskStatusMap.Add(EnumTaskStatus.FAILED, "Failed");
+
+            taskStatusDetailMap.Clear();
+            taskStatusDetailMap.Add(EnumTaskStatusDetail.DELIVERING_RESULTS, "Delivering Results");
+            taskStatusDetailMap.Add(EnumTaskStatusDetail.NO_TASK, "No Task");
+            taskStatusDetailMap.Add(EnumTaskStatusDetail.PACKAGING_RESULTS, "Packaging Results");
+            taskStatusDetailMap.Add(EnumTaskStatusDetail.RETRIEVING_RESOURCES, "Retrieving Resources");
+            taskStatusDetailMap.Add(EnumTaskStatusDetail.RUNNING_TOOL, "Running Tool");
+            taskStatusDetailMap.Add(EnumTaskStatusDetail.CLOSING, "Closing");
 
         }
 
@@ -536,7 +656,7 @@ namespace AnalysisManagerBase
             return statusFileDirectory;
         }
 
-        private void LogStatusToMessageQueue(string strStatusXML)
+        private void LogStatusToMessageQueue(string xmlText)
         {
             const float MINIMUM_LOG_FAILURE_INTERVAL_MINUTES = 10;
 
@@ -565,14 +685,14 @@ namespace AnalysisManagerBase
 
                 }
 
-                m_QueueLogger?.LogStatusMessage(strStatusXML);
+                m_QueueLogger?.LogStatusMessage(xmlText);
             }
             catch (Exception ex)
             {
                 if (DateTime.UtcNow.Subtract(m_LastMessageQueueErrorTime).TotalMinutes >= MINIMUM_LOG_FAILURE_INTERVAL_MINUTES)
                 {
                     m_LastMessageQueueErrorTime = DateTime.UtcNow;
-                    var msg = "Error in clsStatusFile.LogStatusToMessageQueue (B): " + ex.Message;
+                    var msg = "Error in LogStatusToMessageQueue: " + ex.Message;
                     OnErrorEvent(msg, ex);
                 }
 
@@ -584,9 +704,13 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Send status information to the database
         /// </summary>
+        /// <param name="forceLogToBrokerDB">If true, will force m_BrokerDBLogger to report the manager status directly to the database (if initialized)</param>
         /// <remarks>This function is valid, but the primary way that we track status is when WriteStatusFile calls LogStatusToMessageQueue</remarks>
         private void LogStatusToBrokerDatabase(bool forceLogToBrokerDB)
         {
+            if (m_BrokerDBLogger == null)
+                return;
+
             var udtStatusInfo = new clsDBStatusLogger.udtStatusInfoType
             {
                 MgrName = MgrName,
@@ -641,7 +765,6 @@ namespace AnalysisManagerBase
 
             udtTask.TaskDetails = udtTaskDetails;
             udtStatusInfo.Task = udtTask;
-
 
             m_BrokerDBLogger.LogStatus(udtStatusInfo, forceLogToBrokerDB);
         }
@@ -745,8 +868,8 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Updates the status in various locations, including on disk and with the message broker and/or broker DB
         /// </summary>
-        /// <param name="forceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
-        /// <remarks></remarks>
+        /// <param name="forceLogToBrokerDB">If true, will force m_BrokerDBLogger to report the manager status directly to the database (if initialized)</param>
+        /// <remarks>The Message queue is always updated if LogToMsgQueue is true</remarks>
         public void WriteStatusFile(bool forceLogToBrokerDB)
         {
             // Writes a status file for external monitor to read
@@ -1081,7 +1204,7 @@ namespace AnalysisManagerBase
         /// <param name="managerIdleMessage"></param>
         /// <param name="recentErrorMessages"></param>
         /// <param name="jobInfo">Information on the job that started most recently</param>
-        /// <param name="forceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
+        /// <param name="forceLogToBrokerDB">If true, will force m_BrokerDBLogger to report the manager status directly to the database (if initialized)</param>
         /// <remarks></remarks>
         public void UpdateClose(string managerIdleMessage, IEnumerable<string> recentErrorMessages, string jobInfo, bool forceLogToBrokerDB)
         {
@@ -1119,7 +1242,8 @@ namespace AnalysisManagerBase
         /// <param name="eTaskStatusDetail">Task status detail enum</param>
         /// <param name="percentComplete">Job completion percentage (value between 0 and 100)</param>
         /// <remarks></remarks>
-        public void UpdateAndWrite(EnumMgrStatus eMgrStatus, EnumTaskStatus eTaskStatus, EnumTaskStatusDetail eTaskStatusDetail, float percentComplete)
+        public void UpdateAndWrite(EnumMgrStatus eMgrStatus, EnumTaskStatus eTaskStatus, EnumTaskStatusDetail eTaskStatusDetail,
+                                   float percentComplete)
         {
             MgrStatus = eMgrStatus;
             TaskStatus = eTaskStatus;
@@ -1134,13 +1258,13 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="status">Job status enum</param>
         /// <param name="percentComplete">Job completion percentage (value between 0 and 100)</param>
-        /// <param name="SpectrumCountTotal">Number of DTA files (i.e., spectra files); relevant for Sequest, X!Tandem, and Inspect</param>
+        /// <param name="spectrumCountTotal">Number of DTA files (i.e., spectra files); relevant for Sequest, X!Tandem, and Inspect</param>
         /// <remarks></remarks>
-        public void UpdateAndWrite(EnumTaskStatus status, float percentComplete, int SpectrumCountTotal)
+        public void UpdateAndWrite(EnumTaskStatus status, float percentComplete, int spectrumCountTotal)
         {
             TaskStatus = status;
             Progress = percentComplete;
-            SpectrumCount = SpectrumCountTotal;
+            SpectrumCount = spectrumCountTotal;
 
             WriteStatusFile();
 
@@ -1157,7 +1281,7 @@ namespace AnalysisManagerBase
         /// <param name="mostRecentLogMessage">Most recent message posted to the logger (leave blank if unknown)</param>
         /// <param name="mostRecentErrorMessage">Most recent error posted to the logger (leave blank if unknown)</param>
         /// <param name="recentJobInfo">Information on the job that started most recently</param>
-        /// <param name="forceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
+        /// <param name="forceLogToBrokerDB">If true, will force m_BrokerDBLogger to report the manager status directly to the database (if initialized)</param>
         /// <remarks></remarks>
         public void UpdateAndWrite(
             EnumMgrStatus eMgrStatus,
@@ -1197,7 +1321,7 @@ namespace AnalysisManagerBase
         /// Logs to the status file that the manager is idle
         /// </summary>
         /// <param name="managerIdleMessage">Reason why the manager is idle (leave blank if unknown)</param>
-        /// <param name="forceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
+        /// <param name="forceLogToBrokerDB">If true, will force m_BrokerDBLogger to report the manager status directly to the database (if initialized)</param>
         /// <remarks></remarks>
         public void UpdateIdle(string managerIdleMessage, bool forceLogToBrokerDB)
         {
@@ -1214,7 +1338,7 @@ namespace AnalysisManagerBase
         /// <param name="managerIdleMessage">Reason why the manager is idle (leave blank if unknown)</param>
         /// <param name="idleErrorMessage">Error message explaining why the manager is idle</param>
         /// <param name="recentJobInfo">Information on the job that started most recently</param>
-        /// <param name="forceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
+        /// <param name="forceLogToBrokerDB">If true, will force m_BrokerDBLogger to report the manager status directly to the database (if initialized)</param>
         /// <remarks></remarks>
         public void UpdateIdle(string managerIdleMessage, string idleErrorMessage, string recentJobInfo, bool forceLogToBrokerDB)
         {
@@ -1235,7 +1359,7 @@ namespace AnalysisManagerBase
         /// <param name="managerIdleMessage">Reason why the manager is idle (leave blank if unknown)</param>
         /// <param name="recentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
         /// <param name="recentJobInfo">Information on the job that started most recently</param>
-        /// <param name="forceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
+        /// <param name="forceLogToBrokerDB">If true, will force m_BrokerDBLogger to report the manager status directly to the database (if initialized)</param>
         /// <remarks></remarks>
         public void UpdateIdle(string managerIdleMessage, IEnumerable<string> recentErrorMessages, string recentJobInfo, bool forceLogToBrokerDB)
         {
@@ -1279,7 +1403,8 @@ namespace AnalysisManagerBase
         /// <param name="recentErrorMessages">Recent error messages written to the log file (leave blank if unknown)</param>
         /// <param name="recentJobInfo">Information on the job that started most recently</param>
         /// <remarks></remarks>
-        public void UpdateDisabled(EnumMgrStatus managerStatus, string managerDisableMessage, IEnumerable<string> recentErrorMessages, string recentJobInfo)
+        public void UpdateDisabled(EnumMgrStatus managerStatus, string managerDisableMessage, IEnumerable<string> recentErrorMessages,
+                                   string recentJobInfo)
         {
             ClearCachedInfo();
 
@@ -1326,6 +1451,22 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
+        /// Update the status of a remotely running job
+        /// </summary>
+        /// <param name="status"></param>
+        /// <param name="lastUpdate"></param>
+        /// <param name="processId"></param>
+        /// <param name="cpuUtilization"></param>
+        /// <param name="freeMemoryMB"></param>
+        /// <remarks>Pushes the status to the message queue; does not write the XML to disk</remarks>
+        public void UpdateRemoteStatus(clsStatusFile status, DateTime lastUpdate, int processId, int cpuUtilization, float freeMemoryMB)
+        {
+            var runTimeHours = (float)DateTime.UtcNow.Subtract(status.TaskStartTime).TotalHours;
+
+            WriteStatusFile(status, lastUpdate, processId, cpuUtilization, runTimeHours, freeMemoryMB, false);
+        }
+
+        /// <summary>
         /// Total time the job has been running
         /// </summary>
         /// <returns>Number of hours manager has been processing job</returns>
@@ -1339,22 +1480,21 @@ namespace AnalysisManagerBase
 
         public void DisposeMessageQueue()
         {
-            if (m_MessageSender != null)
-            {
-                m_QueueLogger.Dispose();
-                m_MessageSender.Dispose();
-            }
+            m_QueueLogger?.Dispose();
+            m_MessageSender?.Dispose();
 
         }
 
         #endregion
 
         #region "Event handlers"
+
         private void MessageSender_ErrorEvent(string strMessage, Exception ex)
         {
             OnErrorEvent(strMessage, ex);
         }
 
         #endregion
+
     }
 }
