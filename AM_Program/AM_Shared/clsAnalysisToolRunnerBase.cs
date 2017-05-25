@@ -194,6 +194,8 @@ namespace AnalysisManagerBase
 
         public string StepToolName { get; private set; }
 
+        public string ToolVersionInfoFile => "Tool_Version_Info_" + StepToolName + ".txt";
+
         #endregion
 
         #region "Methods"
@@ -2299,7 +2301,9 @@ namespace AnalysisManagerBase
             // Make the results folder
             try
             {
-                Directory.CreateDirectory(resFolderNamePath);
+                var resultsFolder = new DirectoryInfo(resFolderNamePath);
+                if (!resultsFolder.Exists)
+                    resultsFolder.Create();
             }
             catch (Exception ex)
             {
@@ -3106,16 +3110,16 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Creates a Tool Version Info file
         /// </summary>
-        /// <param name="strFolderPath"></param>
+        /// <param name="folderPath"></param>
         /// <param name="strToolVersionInfo"></param>
         /// <returns></returns>
         /// <remarks></remarks>
-        protected bool SaveToolVersionInfoFile(string strFolderPath, string strToolVersionInfo)
+        protected bool SaveToolVersionInfoFile(string folderPath, string strToolVersionInfo)
         {
 
             try
             {
-                var strToolVersionFilePath = Path.Combine(strFolderPath, "Tool_Version_Info_" + StepToolName + ".txt");
+                var strToolVersionFilePath = Path.Combine(folderPath, ToolVersionInfoFile);
 
                 using (var swToolVersionFile = new StreamWriter(new FileStream(strToolVersionFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
                 {
