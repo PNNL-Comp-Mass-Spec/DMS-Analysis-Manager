@@ -120,13 +120,16 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Folder for job task data files
+        /// Root folder for job task data files
         /// </summary>
         /// <remarks>
         /// For example, /file1/temp/DMSWorkDir
         /// </remarks>
         public string RemoteWorkDirPath { get; private set; }
 
+        /// <summary>
+        /// Remote working directory folder for this specific job
+        /// </summary>
         public string RemoteJobStepWorkDirPath => clsPathUtils.CombineLinuxPaths(RemoteWorkDirPath, GetJobStepFileOrFolderName());
 
         /// <summary>
@@ -232,7 +235,11 @@ namespace AnalysisManagerBase
         /// <param name="useDefaultManagerRemoteInfo">True to use RemoteInfo defined for the manager; False to use RemoteInfo associated with the job (useful if checking on a running job)</param>
         /// <returns>True on success, false if an error</returns>
         /// <remarks>Calls UpdateParameters if necessary; that method will throw an exception if there are missing parameters or configuration issues</remarks>
-        public bool CopyFilesFromRemote(string sourceDirectoryPath, IReadOnlyCollection<string> sourceFileNames, string localDirectoryPath, bool useDefaultManagerRemoteInfo)
+        public bool CopyFilesFromRemote(
+            string sourceDirectoryPath,
+            IReadOnlyCollection<string> sourceFileNames,
+            string localDirectoryPath,
+            bool useDefaultManagerRemoteInfo)
         {
             if (IsParameterUpdateRequired(useDefaultManagerRemoteInfo))
             {
@@ -251,7 +258,10 @@ namespace AnalysisManagerBase
         /// <param name="sourceFileNames">Source file names; wildcards are not allowed</param>
         /// <param name="localDirectoryPath">Local target directory</param>
         /// <returns>True on success, false if an error</returns>
-        private bool CopyFilesFromRemote(string sourceDirectoryPath, IReadOnlyCollection<string> sourceFileNames, string localDirectoryPath)
+        private bool CopyFilesFromRemote(
+            string sourceDirectoryPath,
+            IReadOnlyCollection<string> sourceFileNames,
+            string localDirectoryPath)
         {
             // Use scp to retrieve the files
             // scp is faster than sftp, but it has the downside that we can't check for the existence of a file before retrieving it
@@ -347,7 +357,11 @@ namespace AnalysisManagerBase
         /// <param name="useDefaultManagerRemoteInfo">True to use RemoteInfo defined for the manager; False to use RemoteInfo associated with the job (typically should be true)</param>
         /// <returns>True on success, false if an error</returns>
         /// <remarks>Calls UpdateParameters if necessary; that method will throw an exception if there are missing parameters or configuration issues</remarks>
-        public bool CopyFilesToRemote(string sourceDirectoryPath, IEnumerable<string> sourceFileNames, string remoteDirectoryPath, bool useDefaultManagerRemoteInfo)
+        public bool CopyFilesToRemote(
+            string sourceDirectoryPath,
+            IEnumerable<string> sourceFileNames,
+            string remoteDirectoryPath,
+            bool useDefaultManagerRemoteInfo)
         {
             if (IsParameterUpdateRequired(useDefaultManagerRemoteInfo))
             {
@@ -366,7 +380,10 @@ namespace AnalysisManagerBase
         /// <param name="sourceFileNames">Source file names; wildcards are allowed</param>
         /// <param name="remoteDirectoryPath">Remote target directory</param>
         /// <returns>True on success, false if an error</returns>
-        public bool CopyFilesToRemote(string sourceDirectoryPath, IEnumerable<string> sourceFileNames, string remoteDirectoryPath)
+        public bool CopyFilesToRemote(
+            string sourceDirectoryPath,
+            IEnumerable<string> sourceFileNames,
+            string remoteDirectoryPath)
         {
             if (string.IsNullOrWhiteSpace(sourceDirectoryPath))
             {
@@ -728,7 +745,11 @@ namespace AnalysisManagerBase
         /// <param name="useDefaultManagerRemoteInfo">True to use RemoteInfo defined for the manager; False to use RemoteInfo associated with the job (typically should be true)</param>
         /// <returns>List of matching files (full paths)</returns>
         /// <remarks>Calls UpdateParameters if necessary; that method will throw an exception if there are missing parameters or configuration issues</remarks>
-        public Dictionary<string, SftpFile> GetRemoteFileListing(string remoteDirectoryPath, string fileMatchSpec, bool recurse, bool useDefaultManagerRemoteInfo)
+        public Dictionary<string, SftpFile> GetRemoteFileListing(
+            string remoteDirectoryPath,
+            string fileMatchSpec,
+            bool recurse,
+            bool useDefaultManagerRemoteInfo)
         {
             if (IsParameterUpdateRequired(useDefaultManagerRemoteInfo))
             {
