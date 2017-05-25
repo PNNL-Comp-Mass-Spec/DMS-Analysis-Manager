@@ -99,7 +99,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Job number
         /// </summary>
-        protected string m_JobNum;
+        protected int m_JobNum;
 
         /// <summary>
         /// Dataset name
@@ -167,6 +167,8 @@ namespace AnalysisManagerBase
         /// </summary>
         public string EvalMessage => m_EvalMessage;
 
+        public int Job => m_JobNum;
+
         /// <summary>
         /// Publicly accessible results folder name and path
         /// </summary>
@@ -229,7 +231,9 @@ namespace AnalysisManagerBase
             m_StatusTools = statusTools;
             m_WorkDir = m_mgrParams.GetParam("workdir");
             m_MachName = m_mgrParams.GetParam("MgrName");
-            m_JobNum = m_jobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job");
+
+            m_JobNum = m_jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job", 0);
+
             m_Dataset = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetNum");
 
             m_MyEMSLUtilities = myEMSLUtilities ?? new clsMyEMSLUtilities(m_DebugLevel, m_WorkDir);
@@ -694,7 +698,7 @@ namespace AnalysisManagerBase
                 if (string.IsNullOrEmpty(m_ResFolderName))
                 {
                     // Log this error to the database (the logger will also update the local log file)
-                    LogErrorToDatabase("Results folder name is not defined, job " + m_JobNum);
+                    LogErrorToDatabase("Results folder name is not defined, job " + Job);
                     m_message = "Results folder name is not defined";
 
                     // Without a source folder; there isn't much we can do
@@ -822,7 +826,7 @@ namespace AnalysisManagerBase
                                     "; old file date (UTC): " + objTargetFile.LastWriteTimeUtc;
 
                                 // Log a warning, though not if the file is JobParameters_1394245.xml since we update that file after each job step
-                                if (objSourceFile.Name != clsAnalysisJob.JobParametersFilename(m_JobNum))
+                                if (objSourceFile.Name != clsAnalysisJob.JobParametersFilename(Job))
                                 {
                                     LogWarning(message);
                                 }
@@ -2157,7 +2161,7 @@ namespace AnalysisManagerBase
                 if (logIntervalMinutes < 1)
                     logIntervalMinutes = 1;
 
-                var progressMessage = " ... " + m_progress.ToString("0.0") + "% complete for " + toolName + ", job " + m_JobNum;
+                var progressMessage = " ... " + m_progress.ToString("0.0") + "% complete for " + toolName + ", job " + Job;
 
                 if (DateTime.UtcNow.Subtract(m_LastProgressConsoleTime).TotalMinutes >= CONSOLE_PROGRESS_INTERVAL_MINUTES)
                 {
@@ -2212,7 +2216,7 @@ namespace AnalysisManagerBase
             // Makes results folder and moves files into it
 
             // Log status
-            LogMessage(m_MachName + ": Creating results folder, Job " + m_JobNum);
+            LogMessage(m_MachName + ": Creating results folder, Job " + Job);
             var resFolderNamePath = Path.Combine(m_WorkDir, m_ResFolderName);
 
             // Make the results folder
@@ -2223,8 +2227,8 @@ namespace AnalysisManagerBase
             catch (Exception ex)
             {
                 // Log this error to the database
-                LogError("Error making results folder, job " + m_JobNum, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
+                LogError("Error making results folder, job " + Job, ex);
             }
 
             return CloseOutType.CLOSEOUT_SUCCESS;
@@ -2452,7 +2456,7 @@ namespace AnalysisManagerBase
                     LogMessage("Results folder name = " + resFolderNamePath);
                 }
 
-                LogErrorToDatabase("Error moving results files, job " + m_JobNum + ex.Message);
+                LogErrorToDatabase("Error moving results files, job " + Job + ex.Message);
                 UpdateStatusMessage("Error moving results files");
 
                 blnErrorEncountered = true;
@@ -2985,7 +2989,7 @@ namespace AnalysisManagerBase
             GetCurrentMgrSettingsFromDB();
 
             // Make log entry
-            LogMessage(m_MachName + ": Starting analysis, job " + m_JobNum);
+            LogMessage(m_MachName + ": Starting analysis, job " + Job);
 
             // Start the job timer
             m_StartTime = DateTime.UtcNow;
@@ -3015,7 +3019,7 @@ namespace AnalysisManagerBase
 
                     swToolVersionFile.WriteLine("Date: " + DateTime.Now.ToString(DATE_TIME_FORMAT));
                     swToolVersionFile.WriteLine("Dataset: " + m_Dataset);
-                    swToolVersionFile.WriteLine("Job: " + m_JobNum);
+                    swToolVersionFile.WriteLine("Job: " + Job);
                     swToolVersionFile.WriteLine("Step: " + m_jobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step"));
                     swToolVersionFile.WriteLine("Tool: " + m_jobParams.GetParam("StepTool"));
                     swToolVersionFile.WriteLine("ToolVersionInfo:");
@@ -3782,7 +3786,7 @@ namespace AnalysisManagerBase
                 }
 
                 // Add the data
-                m_SummaryFile.Add("Job Number" + '\t' + m_JobNum);
+                m_SummaryFile.Add("Job Number" + '\t' + Job);
                 m_SummaryFile.Add("Job Step" + '\t' + m_jobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step"));
                 m_SummaryFile.Add("Date" + '\t' + DateTime.Now);
                 m_SummaryFile.Add("Processor" + '\t' + m_MachName);
@@ -3806,7 +3810,7 @@ namespace AnalysisManagerBase
             catch (Exception ex)
             {
                 LogError("Error updating the summary file",
-                         "Error updating the summary file, job " + m_JobNum + ", step " + m_jobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step"), ex);
+                         "Error updating the summary file, " + m_jobParams.GetJobStepDescription(), ex);
                 return false;
             }
 

@@ -528,9 +528,10 @@ namespace AnalysisManagerBase
 
         public static string JobParametersFilename(int jobNum)
         {
-            return JobParametersFilename(jobNum.ToString());
+            return clsGlobal.JOB_PARAMETERS_FILE_PREFIX + jobNum + ".xml";
         }
 
+        [Obsolete("Use the version that takex an integer")]
         public static string JobParametersFilename(string jobNum)
         {
             return clsGlobal.JOB_PARAMETERS_FILE_PREFIX + jobNum + ".xml";
@@ -978,7 +979,7 @@ namespace AnalysisManagerBase
 
             try
             {
-                var xmlParameterFilename = JobParametersFilename(jobNum.ToString());
+                var xmlParameterFilename = JobParametersFilename(jobNum);
                 xmlParameterFilePath = Path.Combine(workDir, xmlParameterFilename);
 
                 var xmlParameterFile = new FileInfo(xmlParameterFilePath);

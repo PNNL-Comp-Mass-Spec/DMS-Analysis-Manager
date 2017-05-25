@@ -270,7 +270,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
 
             // Initialize mMSGFDBUtils
-            mMSGFDBUtils = new clsMSGFDBUtils(m_mgrParams, m_jobParams, m_JobNum, m_WorkDir, m_DebugLevel, msgfPlus: true);
+            mMSGFDBUtils = new clsMSGFDBUtils(m_mgrParams, m_jobParams, Job, m_WorkDir, m_DebugLevel, msgfPlus: true);
             RegisterEvents(mMSGFDBUtils);
 
             mMSGFDBUtils.IgnorePreviousErrorEvent += mMSGFDBUtils_IgnorePreviousErrorEvent;
