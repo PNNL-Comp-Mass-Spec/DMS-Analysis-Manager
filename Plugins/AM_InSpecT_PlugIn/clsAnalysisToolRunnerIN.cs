@@ -189,32 +189,12 @@ namespace AnalysisManagerInSpecTPlugIn
                 UpdateSummaryFile();
 
                 //Make sure objects are released
-                Thread.Sleep(500);        // 500 msec delay
+                Thread.Sleep(500);
                 clsProgRunner.GarbageCollectNow();
 
-                result = MakeResultsFolder();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    //MakeResultsFolder handles posting to local log, so set database error message and exit
-                    m_message = "Error making results folder";
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
+                var success = CopyResultsToTransferDirectory();
 
-                result = MoveResultFiles();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    //MoveResultFiles moves the result files to the result folder
-                    m_message = "Error moving files into results folder";
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
-
-                result = CopyResultsFolderToServer();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    //TODO: What do we do here?
-                    // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    return result;
-                }
+                return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
             }
             catch (Exception ex)
             {
@@ -222,7 +202,6 @@ namespace AnalysisManagerInSpecTPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            return CloseOutType.CLOSEOUT_SUCCESS; //No failures so everything must have succeeded
         }
 
         /// <summary>

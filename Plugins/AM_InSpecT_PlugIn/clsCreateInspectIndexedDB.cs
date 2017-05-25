@@ -20,7 +20,7 @@ namespace AnalysisManagerInSpecTPlugIn
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
         /// <remarks></remarks>
-        public CloseOutType CreateIndexedDbFiles(ref IMgrParams mgrParams, ref IJobParams jobParams, int DebugLevel, string JobNum, string InspectDir, string OrgDbDir)
+        public CloseOutType CreateIndexedDbFiles(ref IMgrParams mgrParams, ref IJobParams jobParams, int DebugLevel, int JobNum, string InspectDir, string OrgDbDir)
         {
             const float MAX_WAITTIME_HOURS = 1.0f;
             const float MAX_WAITTIME_PREVENT_REPEATS = 2.0f;

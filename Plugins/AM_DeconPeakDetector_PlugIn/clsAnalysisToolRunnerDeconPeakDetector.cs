@@ -117,7 +117,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
                 UpdateSummaryFile();
 
                 //Make sure objects are released
-                Thread.Sleep(500);     // 500 msec delay
+                Thread.Sleep(500);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
                 if (!blnSuccess)
@@ -125,28 +125,10 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var result = MakeResultsFolder();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    //MakeResultsFolder handles posting to local log, so set database error message and exit
-                    m_message = "Error making results folder";
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
+                var success = CopyResultsToTransferDirectory();
 
-                result = MoveResultFiles();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    m_message = "Error moving files into results folder";
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
+                return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
 
-                result = CopyResultsFolderToServer();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
             }
             catch (Exception ex)
             {
@@ -154,7 +136,6 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         // Example Console output

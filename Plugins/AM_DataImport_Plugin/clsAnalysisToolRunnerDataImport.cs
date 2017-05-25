@@ -32,9 +32,6 @@ namespace AnalysisManagerDataImportPlugIn
         /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
-            bool blnMoveFilesAfterImport = false;
-            bool blnSuccess = false;
-
             try
             {
                 //Call base class for initial setup
@@ -52,8 +49,8 @@ namespace AnalysisManagerDataImportPlugIn
                 }
 
                 // Import the files
-                blnSuccess = PerformDataImport();
-                if (!blnSuccess)
+                var importSuccess = PerformDataImport();
+                if (!importSuccess)
                 {
                     if (string.IsNullOrEmpty(m_message))
                     {
@@ -69,61 +66,29 @@ namespace AnalysisManagerDataImportPlugIn
                 System.Threading.Thread.Sleep(500);         // 1 second delay
                 PRISM.clsProgRunner.GarbageCollectNow();
 
-                var result = MakeResultsFolder();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // MakeResultsFolder handles posting to local log, so set database error message and exit
-                    m_message = "Error making results folder";
+                // Skip two auto-generated files from the Results Folder since they're not necessary to keep
+                m_jobParams.AddResultFileToSkip("DataImport_AnalysisSummary.txt");
+                m_jobParams.AddResultFileToSkip("JobParameters_" + m_JobNum + ".xml");
+
+                var success = CopyResultsToTransferDirectory();
+
+                if (!success)
                     return CloseOutType.CLOSEOUT_FAILED;
-                }
 
-                result = MoveResultFiles();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    m_message = "Error moving files into results folder";
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
-
-                // Delete two auto-generated files from the Results Folder since they're not necessary to keep
-                System.Threading.Thread.Sleep(500);
-                DeleteFileFromResultFolder("DataImport_AnalysisSummary.txt");
-                DeleteFileFromResultFolder("JobParameters_" + m_JobNum + ".xml");
-
-                result = CopyResultsFolderToServer();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    return result;
-                }
-
-                blnMoveFilesAfterImport = m_jobParams.GetJobParameter("MoveFilesAfterImport", true);
-                if (blnMoveFilesAfterImport)
+                var moveFilesAfterImport = m_jobParams.GetJobParameter("MoveFilesAfterImport", true);
+                if (moveFilesAfterImport)
                 {
                     MoveImportedFiles();
                 }
+
+                return CloseOutType.CLOSEOUT_SUCCESS;
             }
             catch (Exception ex)
             {
                 LogError("Error in DataImportPlugin->RunTool: " + ex.Message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
-            return CloseOutType.CLOSEOUT_SUCCESS;
-        }
-
-        protected void DeleteFileFromResultFolder(string strFileName)
-        {
-            try
-            {
-                var fiFileToDelete = new FileInfo(Path.Combine(m_WorkDir, Path.Combine(m_ResFolderName, strFileName)));
-                if (fiFileToDelete.Exists)
-                    fiFileToDelete.Delete();
-            }
-            catch (Exception)
-            {
-                // Ignore errors here
-            }
+            
         }
 
         /// <summary>

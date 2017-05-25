@@ -612,7 +612,9 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
             var messageSaved = string.Copy(m_message);
 
-            if (DeleteRawDataFiles(mRawDataType) != CloseOutType.CLOSEOUT_SUCCESS)
+            var deleteSuccess = DeleteRawDataFiles(mRawDataType);
+
+            if (!deleteSuccess)
             {
                 LogMessage("clsAnalysisToolRunnerDecon2lsBase.RunTool(), Problem deleting raw data files: " + m_message, 0, true);
 
@@ -631,46 +633,19 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
             UpdateSummaryFile();
 
-            // Make the results folder
-            if (m_DebugLevel > 3)
+            if (eResult == CloseOutType.CLOSEOUT_FAILED)
             {
-                LogDebug("clsAnalysisToolRunnerDecon2lsBase.RunTool(), Making results folder");
-            }
-
-            eResult = MakeResultsFolder();
-            if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                // MakeResultsFolder handles posting to local log, so set database error message and exit
-                m_message = "Error making results folder";
+                // Something went wrong
+                // In order to help diagnose things, we will move whatever files were created into the result folder,
+                //  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
+                CopyFailedResultsToArchiveFolder();
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            eResult = MoveResultFiles();
-            if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                // MoveResultFiles moves the eResult files to the eResult folder
-                m_message = "Error moving files into results folder";
-                eReturnCode = CloseOutType.CLOSEOUT_FAILED;
-            }
+            var success = CopyResultsToTransferDirectory();
 
-            if (eReturnCode == CloseOutType.CLOSEOUT_FAILED)
-            {
-                // Try to save whatever files were moved into the results folder
-                var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
-                objAnalysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(m_WorkDir, m_ResFolderName));
+            return success ? eReturnCode : CloseOutType.CLOSEOUT_FAILED;
 
-                return CloseOutType.CLOSEOUT_FAILED;
-            }
-
-            eResult = CopyResultsFolderToServer();
-            if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                return eResult;
-            }
-
-            // If we get to here, return the return code
-            return eReturnCode;
         }
 
         private CloseOutType RunDecon2Ls()

@@ -75,8 +75,8 @@ namespace AnalysisManagerMSDeconvPlugIn
 
                 // Examine the mzXML file to look for large scan gaps (common for data from Agilent IMS TOFs, e.g. AgQTOF05)
                 // Possibly generate a new mzXML file with renumbered scans
-                var blnSuccess = RenumberMzXMLIfRequired();
-                if (!blnSuccess)
+                var mzXmlValidated = RenumberMzXMLIfRequired();
+                if (!mzXmlValidated)
                 {
                     if (string.IsNullOrEmpty(m_message))
                     {
@@ -121,11 +121,9 @@ namespace AnalysisManagerMSDeconvPlugIn
                         return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                blnSuccess = StartMSDeconv(JavaProgLoc, strOutputFormat);
+                var processingSuccess = StartMSDeconv(JavaProgLoc, strOutputFormat);
 
-                var blnProcessingError = false;
-
-                if (!blnSuccess)
+                if (!processingSuccess)
                 {
                     LogError("Error running MSDeconv");
 
@@ -138,7 +136,6 @@ namespace AnalysisManagerMSDeconvPlugIn
                         LogWarning("Call to MSDeconv failed (but exit code is 0)");
                     }
 
-                    blnProcessingError = true;
                 }
                 else
                 {
@@ -150,14 +147,14 @@ namespace AnalysisManagerMSDeconvPlugIn
                         var msg = "MSDeconv results file not found";
                         LogError(msg, msg + " (" + resultsFileName + ")");
 
-                        blnProcessingError = true;
+                        processingSuccess = false;
                     }
                     else if (ioResultsFile.Length == 0)
                     {
                         var msg = "MSDeconv results file is empty; assure that the input .mzXML file has MS/MS spectra";
                         LogError(msg, msg + " (" + resultsFileName + ")");
 
-                        blnProcessingError = true;
+                        processingSuccess = false;
                     }
                     else
                     {
@@ -180,13 +177,13 @@ namespace AnalysisManagerMSDeconvPlugIn
                 mCmdRunner = null;
 
                 //Make sure objects are released
-                Thread.Sleep(500);        // 500 msec delay
+                Thread.Sleep(500);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
                 // Trim the console output file to remove the majority of the % finished messages
                 TrimConsoleOutputFile(Path.Combine(m_WorkDir, MSDECONV_CONSOLE_OUTPUT));
 
-                if (blnProcessingError)
+                if (!processingSuccess)
                 {
                     // Something went wrong
                     // In order to help diagnose things, we will move whatever files were created into the result folder,
@@ -195,28 +192,10 @@ namespace AnalysisManagerMSDeconvPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var result = MakeResultsFolder();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    //MakeResultsFolder handles posting to local log, so set database error message and exit
-                    m_message = "Error making results folder";
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
+                var success = CopyResultsToTransferDirectory();
 
-                result = MoveResultFiles();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    m_message = "Error moving files into results folder";
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
+                return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
 
-                result = CopyResultsFolderToServer();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
             }
             catch (Exception ex)
             {
@@ -224,52 +203,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            return CloseOutType.CLOSEOUT_SUCCESS;    //No failures so everything must have succeeded
         }
-
-        protected void CopyFailedResultsToArchiveFolder()
-        {
-            string strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
-            if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
-                strFailedResultsFolderPath = "??Not Defined??";
-
-            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
-
-            // Bump up the debug level if less than 2
-            if (m_DebugLevel < 2)
-                m_DebugLevel = 2;
-
-            // Try to save whatever files are in the work directory (however, delete the .mzXML file first)
-            string strFolderPathToArchive = null;
-            strFolderPathToArchive = string.Copy(m_WorkDir);
-
-            try
-            {
-                File.Delete(Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_MZXML_EXTENSION));
-            }
-            catch (Exception)
-            {
-                // Ignore errors here
-            }
-
-            // Make the results folder
-            var result = MakeResultsFolder();
-            if (result == CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                // Move the result files into the result folder
-                result = MoveResultFiles();
-                if (result == CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Move was a success; update strFolderPathToArchive
-                    strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName);
-                }
-            }
-
-            // Copy the results folder to the Archive folder
-            var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
-            objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive);
-        }
-
 
         // Example Console output:
         //

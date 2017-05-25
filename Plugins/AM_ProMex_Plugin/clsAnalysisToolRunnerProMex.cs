@@ -65,8 +65,7 @@ namespace AnalysisManagerProMexPlugIn
                 }
 
                 // Determine the path to the ProMex program
-                string progLoc = null;
-                progLoc = DetermineProgramLocation("ProMex", "ProMexProgLoc", "ProMex.exe");
+                string progLoc = DetermineProgramLocation("ProMex", "ProMexProgLoc", "ProMex.exe");
 
                 if (string.IsNullOrWhiteSpace(progLoc))
                 {
@@ -82,9 +81,9 @@ namespace AnalysisManagerProMexPlugIn
                 }
 
                 // Run ProMex
-                var blnSuccess = StartProMex(progLoc);
+                var processingSuccess = StartProMex(progLoc);
 
-                if (blnSuccess)
+                if (processingSuccess)
                 {
                     // Look for the results file
 
@@ -92,13 +91,14 @@ namespace AnalysisManagerProMexPlugIn
 
                     if (fiResultsFile.Exists)
                     {
-                        blnSuccess = PostProcessProMexResults(fiResultsFile);
-                        if (!blnSuccess)
+                        var postProcessSuccess = PostProcessProMexResults(fiResultsFile);
+                        if (!postProcessSuccess)
                         {
                             if (string.IsNullOrEmpty(m_message))
                             {
                                 m_message = "Unknown error post-processing the ProMex results";
                             }
+                            processingSuccess = false;
                         }
                     }
                     else
@@ -107,7 +107,7 @@ namespace AnalysisManagerProMexPlugIn
                         {
                             m_message = "ProMex results file not found: " + fiResultsFile.Name;
                         }
-                        blnSuccess = false;
+                        processingSuccess = false;
                     }
                 }
 
@@ -122,13 +122,14 @@ namespace AnalysisManagerProMexPlugIn
                 mCmdRunner = null;
 
                 //Make sure objects are released
-                Thread.Sleep(500);        // 500 msec delay
+                Thread.Sleep(500);
                 clsProgRunner.GarbageCollectNow();
 
-                if (!blnSuccess)
+                if (!processingSuccess)
                 {
-                    // Move the source files and any results to the Failed Job folder
-                    // Useful for debugging problems
+                    // Something went wrong
+                    // In order to help diagnose things, we will move whatever files were created into the result folder,
+                    //  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
                     CopyFailedResultsToArchiveFolder();
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -136,28 +137,10 @@ namespace AnalysisManagerProMexPlugIn
                 // There is no need to keep the parameter file since it is fairly simple, and the ProMex_ConsoleOutput.txt file displays all of the parameters used
                 m_jobParams.AddResultFileToSkip(mProMexParamFilePath);
 
-                var result = MakeResultsFolder();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    //MakeResultsFolder handles posting to local log, so set database error message and exit
-                    m_message = "Error making results folder";
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
+                var success = CopyResultsToTransferDirectory();
 
-                result = MoveResultFiles();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    m_message = "Error moving files into results folder";
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
+                return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
 
-                result = CopyResultsFolderToServer();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
             }
             catch (Exception ex)
             {
@@ -166,50 +149,13 @@ namespace AnalysisManagerProMexPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        protected void CopyFailedResultsToArchiveFolder()
+        public override void CopyFailedResultsToArchiveFolder()
         {
-            string strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
-            if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
-                strFailedResultsFolderPath = "??Not Defined??";
+            m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZXML_EXTENSION);
 
-            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
-
-            // Bump up the debug level if less than 2
-            if (m_DebugLevel < 2)
-                m_DebugLevel = 2;
-
-            // Try to save whatever files are in the work directory (however, delete the .mzXML file first)
-            string strFolderPathToArchive = null;
-            strFolderPathToArchive = string.Copy(m_WorkDir);
-
-            try
-            {
-                File.Delete(Path.Combine(m_WorkDir, m_Dataset + ".mzXML"));
-            }
-            catch (Exception)
-            {
-                // Ignore errors here
-            }
-
-            // Make the results folder
-            var result = MakeResultsFolder();
-            if (result == CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                // Move the result files into the result folder
-                result = MoveResultFiles();
-                if (result == CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Move was a success; update strFolderPathToArchive
-                    strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName);
-                }
-            }
-
-            // Copy the results folder to the Archive folder
-            var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
-            objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive);
+            base.CopyFailedResultsToArchiveFolder();
         }
 
         protected Dictionary<string, string> GetProMexParameterNames()

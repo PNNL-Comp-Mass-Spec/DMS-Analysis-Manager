@@ -33,12 +33,7 @@ namespace AnalysisManagerDtaImportPlugIn
                 m_StartTime = System.DateTime.UtcNow;
 
                 var result = CopyManualDTAs();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    //TODO: What do we do here?
-                    return result;
-                }
-
+               
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return result;

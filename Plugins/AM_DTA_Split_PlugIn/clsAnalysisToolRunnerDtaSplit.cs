@@ -109,34 +109,17 @@ namespace AnalysisManagerDtaSplitPlugIn
 
                 UpdateStatusRunning(100, intSegmentCountToCreate);
 
-                result = MakeResultsFolder();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    //TODO: What do we do here?
-                    return result;
-                }
+                var success = CopyResultsToTransferDirectory();
 
-                result = MoveResultFiles();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    //TODO: What do we do here?
-                    return result;
-                }
+                return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
 
-                result = CopyResultsFolderToServer();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    //TODO: What do we do here?
-                    return result;
-                }
             }
             catch (Exception ex)
             {
                 m_message = "Error in DtaSplitPlugin->RunTool: " + ex.Message;
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
-            return CloseOutType.CLOSEOUT_SUCCESS; //No failures so everything must have succeeded
+            
         }
 
         /// <summary>

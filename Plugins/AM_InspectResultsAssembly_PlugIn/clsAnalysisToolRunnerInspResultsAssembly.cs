@@ -97,16 +97,9 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
-            string numClonedSteps = null;
-            int intNumResultFiles = 0;
-
-            var isParallelized = false;
-
-            var blnProcessingError = false;
-            var blnNoDataInFilteredResults = false;
+            var filteredResultsAreEmpty = false;
 
             // We no longer need to index the .Fasta file (since we're no longer using PValue.py with the -a switch or Summary.py
-            //'Dim objIndexedDBCreator As New clsCreateInspectIndexedDB
 
             try
             {
@@ -127,64 +120,67 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 }
 
                 //Determine if this is a parallelized job
-                numClonedSteps = m_jobParams.GetParam("NumberOfClonedSteps");
-                CloseOutType Result;
-                if (String.IsNullOrEmpty(numClonedSteps))
+                var numClonedSteps = m_jobParams.GetParam("NumberOfClonedSteps");
+
+                var processingSuccess = true;
+                bool isParallelized;
+
+                if (string.IsNullOrEmpty(numClonedSteps))
                 {
                     // This is not a parallelized job; no need to assemble the results
 
                     // FilterInspectResultsByFirstHits will create file _inspect_fht.txt
-                    Result = FilterInspectResultsByFirstHits();
+                    var firstHitsFilterResult = FilterInspectResultsByFirstHits();
 
                     // FilterInspectResultsByPValue will create file _inspect_filtered.txt
-                    Result = FilterInspectResultsByPValue();
-                    if (Result != CloseOutType.CLOSEOUT_SUCCESS)
+                    var pValueFilterResult = FilterInspectResultsByPValue();
+                    if (pValueFilterResult != CloseOutType.CLOSEOUT_SUCCESS)
                     {
-                        blnProcessingError = true;
+                        processingSuccess = false;
                     }
                     isParallelized = false;
                 }
                 else
                 {
                     // This is a parallelized job; need to re-assemble the results
-                    intNumResultFiles = Convert.ToInt32(numClonedSteps);
+                    var numResultFiles = Convert.ToInt32(numClonedSteps);
 
                     if (m_DebugLevel >= 1)
                     {
-                        LogDebug("Assembling parallelized inspect files; file count = " + intNumResultFiles.ToString());
+                        LogDebug("Assembling parallelized inspect files; file count = " + numResultFiles.ToString());
                     }
 
                     // AssembleResults will create _inspect.txt, _inspect_fht.txt, and _inspect_filtered.txt
-                    Result = AssembleResults(intNumResultFiles);
+                    var assemblyResult = AssembleResults(numResultFiles);
 
-                    if (Result != CloseOutType.CLOSEOUT_SUCCESS)
+                    if (assemblyResult != CloseOutType.CLOSEOUT_SUCCESS)
                     {
-                        blnProcessingError = true;
+                        processingSuccess = false;
                     }
                     isParallelized = true;
                 }
 
-                if (!blnProcessingError)
+                if (processingSuccess)
                 {
                     // Rename and zip up files _inspect_filtered.txt and _inspect.txt
-                    Result = ZipInspectResults();
-                    if (Result != CloseOutType.CLOSEOUT_SUCCESS)
+                    var zipResult = ZipInspectResults();
+                    if (zipResult != CloseOutType.CLOSEOUT_SUCCESS)
                     {
-                        blnProcessingError = true;
+                        processingSuccess = false;
                     }
                 }
 
-                if (!blnProcessingError)
+                if (processingSuccess)
                 {
                     // Create the Peptide to Protein map file
-                    Result = CreatePeptideToProteinMapping();
-                    if (Result == CloseOutType.CLOSEOUT_NO_DATA)
+                    var pepToProteinMappingResult = CreatePeptideToProteinMapping();
+                    if (pepToProteinMappingResult == CloseOutType.CLOSEOUT_NO_DATA)
                     {
-                        blnNoDataInFilteredResults = true;
+                        filteredResultsAreEmpty = true;
                     }
-                    else if (Result != CloseOutType.CLOSEOUT_SUCCESS & Result != CloseOutType.CLOSEOUT_NO_DATA)
+                    else if (pepToProteinMappingResult != CloseOutType.CLOSEOUT_SUCCESS & pepToProteinMappingResult != CloseOutType.CLOSEOUT_NO_DATA)
                     {
-                        blnProcessingError = true;
+                        processingSuccess = false;
                     }
                 }
 
@@ -194,55 +190,28 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 //Stop the job timer
                 m_StopTime = DateTime.UtcNow;
 
-                CloseOutType eReturnCode = CloseOutType.CLOSEOUT_SUCCESS;
-                if (blnProcessingError)
-                {
-                    // Something went wrong
-                    // In order to help diagnose things, we will move whatever files were created into the Result folder,
-                    //  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
-                    eReturnCode = CloseOutType.CLOSEOUT_FAILED;
-                }
-
                 //Add the current job data to the summary file
                 UpdateSummaryFile();
 
                 //Make sure objects are released
-                Thread.Sleep(500);        // 500 msec delay
+                Thread.Sleep(500);
                 clsProgRunner.GarbageCollectNow();
 
-                Result = MakeResultsFolder();
-                if (Result != CloseOutType.CLOSEOUT_SUCCESS)
+                if (!processingSuccess)
                 {
-                    //MakeResultsFolder handles posting to local log, so set database error message and exit
-                    m_message = "Error making results folder";
+                    // Something went wrong
+                    // In order to help diagnose things, we will move whatever files were created into the result folder,
+                    //  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
+                    CopyFailedResultsToArchiveFolder();
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                Result = MoveResultFiles();
-                if (Result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    //MoveResultFiles moves the Result files to the Result folder
-                    m_message = "Error moving files into results folder";
-                    eReturnCode = CloseOutType.CLOSEOUT_FAILED;
-                }
+                var copySuccess = CopyResultsToTransferDirectory();
 
-                if (blnProcessingError | eReturnCode == CloseOutType.CLOSEOUT_FAILED)
-                {
-                    // Try to save whatever files were moved into the results folder
-                    var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
-                    objAnalysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(m_WorkDir, m_ResFolderName));
-
+                if (!copySuccess)
                     return CloseOutType.CLOSEOUT_FAILED;
-                }
 
-                Result = CopyResultsFolderToServer();
-                if (Result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    //TODO: What do we do here?
-                    return Result;
-                }
-
-                //If parallelized, then remove multiple Result files from server
+                // If parallelized, remove multiple Result files from server
                 if (isParallelized)
                 {
                     if (!base.RemoveNonResultServerFiles())
@@ -252,10 +221,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                     }
                 }
 
-                if (blnNoDataInFilteredResults)
-                {
-                    return CloseOutType.CLOSEOUT_NO_DATA;
-                }
+                return filteredResultsAreEmpty ? CloseOutType.CLOSEOUT_NO_DATA : CloseOutType.CLOSEOUT_SUCCESS;
             }
             catch (Exception ex)
             {
@@ -263,7 +229,6 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            return CloseOutType.CLOSEOUT_SUCCESS; //No failures so everything must have succeeded
         }
 
         /// <summary>
@@ -348,10 +313,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 // Rescore the assembled inspect results using PValue_MinLength5.py (which is similar to PValue.py but retains peptides of length 5 or greater)
                 // This will create files _inspect_fht.txt and _inspect_filtered.txt
                 result = RescoreAssembledInspectResults();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    return result;
-                }
+                return result;
             }
             catch (Exception ex)
             {
@@ -360,7 +322,6 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         /// <summary>
@@ -492,7 +453,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                                         intTabIndex = s.IndexOf('\t');
                                         if (intTabIndex > 0)
                                         {
-                                            // Note: .LastIndexOf will start at index intTabIndex and search backword until the first match is found 
+                                            // Note: .LastIndexOf will start at index intTabIndex and search backword until the first match is found
                                             // (this is a bit counter-intuitive, but that's what it does)
                                             intSlashIndex = s.LastIndexOf(Path.DirectorySeparatorChar, intTabIndex);
                                             if (intSlashIndex > 0)
@@ -531,6 +492,8 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
                 //close the main result file
                 tw.Close();
+
+                return CloseOutType.CLOSEOUT_SUCCESS;
             }
             catch (Exception ex)
             {
@@ -539,7 +502,6 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         private StreamWriter CreateNewExportFile(string exportFilePath)
@@ -965,8 +927,8 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             // -r is the input file
             // -w is the output file
             // -s saves the p-value distribution to a text file
-            // -H means to not remove entries mapped to shuffled proteins (created by shuffleDB.py); 
-            //    shuffled protein names start with XXX; 
+            // -H means to not remove entries mapped to shuffled proteins (created by shuffleDB.py);
+            //    shuffled protein names start with XXX;
             //    we use this option when creating the First Hits file so that we retain the top hit, even if it is from a shuffled protein
             // -p 0.1 will filter out results with p-value <= 0.1 (this threshold was suggested by Sam Payne)
             // -i means to create a PValue distribution image file (.PNG)
@@ -1370,7 +1332,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                     if (intDecoyProteinCount == 0)
                     {
                         LogWarning(
-                            "The job has 'InspectUsesShuffledDB' set to True in the Settings file, but none of the proteins in the result file starts with XXX. " + 
+                            "The job has 'InspectUsesShuffledDB' set to True in the Settings file, but none of the proteins in the result file starts with XXX. " +
                             "Will assume the fasta file did NOT have shuffled proteins, and will thus NOT use '-S 0.5' when calling " + PVALUE_MINLENGTH5_SCRIPT);
                         blnShuffledDBUsed = false;
                     }

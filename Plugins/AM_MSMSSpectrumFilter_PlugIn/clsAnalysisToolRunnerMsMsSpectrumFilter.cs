@@ -118,30 +118,9 @@ namespace MSMSSpectrumFilterAM
                 LogDebug("clsAnalysisToolRunnerMsMsSpectrumFilter.RunTool(), Making results folder");
             }
 
-            result = MakeResultsFolder();
-            if (result != CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                // MakeResultsFolder handles posting to local log, so set database error message and exit
-                m_message = "Error making results folder";
-                return CloseOutType.CLOSEOUT_FAILED;
-            }
+            var success = CopyResultsToTransferDirectory();
 
-            result = MoveResultFiles();
-            if (result != CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                // MoveResultFiles moves the result files to the result folder
-                m_message = "Error making results folder";
-                return CloseOutType.CLOSEOUT_FAILED;
-            }
-
-            result = CopyResultsFolderToServer();
-            if (result != CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                // TODO: What do we do here?
-                return result;
-            }
-
-            return CloseOutType.CLOSEOUT_SUCCESS;
+            return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
         }
 
         private bool CDTAFilesMatch(string strOriginalCDTA, string strFilteredCDTA)
@@ -159,7 +138,7 @@ namespace MSMSSpectrumFilterAM
                 {
                     if (m_DebugLevel >= 2)
                     {
-                        LogMessage("Filtered CDTA file's size differs by more than 10 bytes vs. the original CDTA file " + 
+                        LogMessage("Filtered CDTA file's size differs by more than 10 bytes vs. the original CDTA file " +
                             "(" + fiFilteredCDTA.Length + " vs. " + fiOriginalCDTA.Length + "); assuming the files do not match");
                     }
                     return false;
@@ -212,7 +191,7 @@ namespace MSMSSpectrumFilterAM
                         {
                             if (m_DebugLevel >= 2)
                             {
-                                LogMessage("Spectrum " + intOriginalCDTASpectra + " in the original CDTA file has a different spectrum header " + 
+                                LogMessage("Spectrum " + intOriginalCDTASpectra + " in the original CDTA file has a different spectrum header " +
                                     "vs. spectrum " + intFilteredCDTASpectra + " in the filtered CDTA file; files do not match");
                             }
                             return false;
@@ -222,7 +201,7 @@ namespace MSMSSpectrumFilterAM
                         {
                             if (m_DebugLevel >= 2)
                             {
-                                LogMessage("Spectrum " + intOriginalCDTASpectra + " in the original CDTA file has a different number of ions " + 
+                                LogMessage("Spectrum " + intOriginalCDTASpectra + " in the original CDTA file has a different number of ions " +
                                     "(" + msmsDataListOrig.Count + " vs. " + msmsDataListFilt.Count + "); files do not match");
                             }
                             return false;
@@ -432,7 +411,7 @@ namespace MSMSSpectrumFilterAM
 
                     break;
                 }
-                
+
                 // If we reach here, everything must be good
                 m_FilterStatus = ProcessStatus.SF_COMPLETE;
             }
@@ -600,8 +579,8 @@ namespace MSMSSpectrumFilterAM
                 if (strFinniganRawFilePath == null || strFinniganRawFilePath.Length == 0)
                 {
                     // Unable to resolve the file path
-                    m_ErrMsg = "Could not find " + strRawFileName + " or " + 
-                        strRawFileName + clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX + 
+                    m_ErrMsg = "Could not find " + strRawFileName + " or " +
+                        strRawFileName + clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX +
                         " in the dataset folder; unable to generate the ScanStats files";
                     LogErrors("GenerateFinniganScanStatsFiles", m_ErrMsg, null);
                     return false;

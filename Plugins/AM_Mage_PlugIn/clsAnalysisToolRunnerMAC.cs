@@ -39,14 +39,14 @@ namespace AnalysisManager_Mage_PlugIn
                 LogMessage("Running MAC Plugin");
 
 
-                bool blnSuccess;
+                bool processingSuccess;
                 try
                 {
 
                     // run the appropriate MAC pipeline(s) according to mode parameter
-                    blnSuccess = RunMACTool();
+                    processingSuccess = RunMACTool();
 
-                    if (!blnSuccess && !string.IsNullOrWhiteSpace(m_message))
+                    if (!processingSuccess && !string.IsNullOrWhiteSpace(m_message))
                     {
                         LogError("Error running MAC: " + m_message);
                     }
@@ -59,7 +59,7 @@ namespace AnalysisManager_Mage_PlugIn
                     clsLogTools.ChangeLogFileName(logFileName);
 
                     LogError("Error running MAC: " + ex.Message, ex);
-                    blnSuccess = false;
+                    processingSuccess = false;
 
                     m_message = "Error running MAC: " + ex.Message;
                     var sDataPackageSourceFolderName = m_jobParams.GetJobParameter("DataPackageSourceFolderName", "ImportFiles");
@@ -78,45 +78,27 @@ namespace AnalysisManager_Mage_PlugIn
                 UpdateSummaryFile();
 
                 //Make sure objects are released
-                //2 second delay
-                System.Threading.Thread.Sleep(2000);
+                System.Threading.Thread.Sleep(500);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
-                if (!blnSuccess)
+                if (!processingSuccess)
                 {
-                    // Move the source files and any results to the Failed Job folder
-                    // Useful for debugging problems
+                    // Something went wrong
+                    // In order to help diagnose things, we will move whatever files were created into the result folder,
+                    //  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
                     CopyFailedResultsToArchiveFolder();
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
+                // Override the output folder name and the dataset name (since this is a dataset aggregation job)
                 m_ResFolderName = m_jobParams.GetParam("StepOutputFolderName");
                 m_Dataset = m_jobParams.GetParam("OutputFolderName");
                 if (!string.IsNullOrEmpty(m_ResFolderName))
                     m_jobParams.SetParam("StepParameters", "OutputFolderName", m_ResFolderName);
 
-                var result = MakeResultsFolder();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // MakeResultsFolder handles posting to local log, so set database error message and exit
-                    m_message = "Error making results folder";
-                    return result;
-                }
+                var success = CopyResultsToTransferDirectory();
 
-                result = MoveResultFiles();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    m_message = "Error moving files into results folder";
-                    return result;
-                }
-
-                result = CopyResultsFolderToServer();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    return result;
-                }
+                return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
 
             }
             catch (Exception ex)
@@ -126,50 +108,12 @@ namespace AnalysisManager_Mage_PlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         /// <summary>
         /// Run the specific MAC tool (override in a subclass)
         /// </summary>
         protected abstract bool RunMACTool();
-
-        /// <summary>
-        /// 
-        /// </summary>
-        protected void CopyFailedResultsToArchiveFolder()
-        {
-            var strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
-            if (string.IsNullOrEmpty(strFailedResultsFolderPath))
-                strFailedResultsFolderPath = "??Not Defined??";
-
-            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
-
-            // Bump up the debug level if less than 2
-            if (m_DebugLevel < 2)
-                m_DebugLevel = 2;
-
-            // Try to save whatever files are in the work directory
-            var strFolderPathToArchive = string.Copy(m_WorkDir);
-
-            // Make the results folder
-            var result = MakeResultsFolder();
-            if (result == CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                // Move the result files into the result folder
-                result = MoveResultFiles();
-                if (result == CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Move was a success; update strFolderPathToArchive
-                    strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName);
-                }
-            }
-
-            // Copy the results folder to the Archive folder
-            var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
-            objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive);
-        }
-
 
         /// <summary>
         /// Stores the tool version info in the database

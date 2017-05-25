@@ -110,8 +110,6 @@ namespace AnalysisManagerMasicPlugin
 
         public override CloseOutType RunTool()
         {
-            CloseOutType eStepResult;
-
             // Call base class for initial setup
             base.RunTool();
 
@@ -133,10 +131,10 @@ namespace AnalysisManagerMasicPlugin
             {
                 // Note that RunMASIC will populate the File Path variables, then will call
                 //  StartMASICAndWait() and WaitForJobToFinish(), which are in this class
-                eStepResult = RunMASIC();
-                if (eStepResult != CloseOutType.CLOSEOUT_SUCCESS)
+                var eProcessingResult = RunMASIC();
+                if (eProcessingResult != CloseOutType.CLOSEOUT_SUCCESS)
                 {
-                    return eStepResult;
+                    return eProcessingResult;
                 }
             }
             catch (Exception ex)
@@ -149,7 +147,8 @@ namespace AnalysisManagerMasicPlugin
             UpdateStatusFile();
 
             // Run the cleanup routine from the base class
-            if (PerfPostAnalysisTasks("SIC") != CloseOutType.CLOSEOUT_SUCCESS)
+            var ePostProcessingResult = PerfPostAnalysisTasks("SIC");
+            if (ePostProcessingResult != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -160,30 +159,10 @@ namespace AnalysisManagerMasicPlugin
                 LogDebug("clsAnalysisToolRunnerMASICBase.RunTool(), Making results folder");
             }
 
-            eStepResult = MakeResultsFolder();
-            if (eStepResult != CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                // MakeResultsFolder handles posting to local log, so set database error message and exit
-                m_message = "Error making results folder";
-                return CloseOutType.CLOSEOUT_FAILED;
-            }
+            var success = CopyResultsToTransferDirectory();
 
-            eStepResult = MoveResultFiles();
-            if (eStepResult != CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                m_message = "Error moving files into results folder";
-                return CloseOutType.CLOSEOUT_FAILED;
-            }
+            return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
 
-            eStepResult = CopyResultsFolderToServer();
-            if (eStepResult != CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                return eStepResult;
-            }
-
-            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         protected CloseOutType StartMASICAndWait(string strInputFilePath, string strOutputFolderPath, string strParameterFilePath)

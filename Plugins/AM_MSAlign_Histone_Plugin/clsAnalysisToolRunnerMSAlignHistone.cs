@@ -93,14 +93,6 @@ namespace AnalysisManagerMSAlignHistonePlugIn
         /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
-            string CmdStr = null;
-            int intJavaMemorySize = 0;
-
-            CloseOutType result = CloseOutType.CLOSEOUT_FAILED;
-            var processingError = false;
-
-            CloseOutType eResult = CloseOutType.CLOSEOUT_SUCCESS;
-            bool blnSuccess = false;
 
             try
             {
@@ -162,18 +154,18 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                 // Read the MSAlign Parameter File
                 string strParamFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"));
-                string strMSAlignCmdLineOptions = string.Empty;
 
-                blnSuccess = CreateMSAlignCommandLine(strParamFilePath, ref strMSAlignCmdLineOptions);
-                if (!blnSuccess)
+                var cmdLineGenerated = CreateMSAlignCommandLine(strParamFilePath, out var strMSAlignCmdLineOptions);
+                if (!cmdLineGenerated)
                 {
                     if (string.IsNullOrEmpty(m_message))
                     {
                         m_message = "Unknown error parsing the MSAlign parameter file";
                     }
-                    return result;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
-                else if (string.IsNullOrEmpty(strMSAlignCmdLineOptions))
+
+                if (string.IsNullOrEmpty(strMSAlignCmdLineOptions))
                 {
                     if (string.IsNullOrEmpty(m_message))
                     {
@@ -185,15 +177,15 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 LogMessage("Running MSAlign_Histone");
 
                 // Lookup the amount of memory to reserve for Java; default to 2 GB
-                intJavaMemorySize = m_jobParams.GetJobParameter("MSAlignJavaMemorySize", 2000);
+                var intJavaMemorySize = m_jobParams.GetJobParameter("MSAlignJavaMemorySize", 2000);
                 if (intJavaMemorySize < 512)
                     intJavaMemorySize = 512;
 
                 //Set up and execute a program runner to run MSAlign_Histone
-                CmdStr = " -Xmx" + intJavaMemorySize.ToString() +
+                var cmdStr = " -Xmx" + intJavaMemorySize +
                          "M -classpath jar\\*; edu.iupui.msalign.align.histone.pipeline.MsAlignHistonePipelineConsole " + strMSAlignCmdLineOptions;
 
-                LogDebug(JavaProgLoc + " " + CmdStr);
+                LogDebug(JavaProgLoc + " " + cmdStr);
 
                 var cmdRunner = new clsRunDosProgram(mMSAlignWorkFolderPath);
                 RegisterEvents(cmdRunner);
@@ -208,7 +200,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                 m_progress = PROGRESS_PCT_STARTING;
 
-                blnSuccess = cmdRunner.RunProgram(JavaProgLoc, CmdStr, "MSAlign_Histone", true);
+                var processingSuccess = cmdRunner.RunProgram(JavaProgLoc, cmdStr, "MSAlign_Histone", true);
 
                 if (!mToolVersionWritten)
                 {
@@ -219,7 +211,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                     mToolVersionWritten = StoreToolVersionInfo();
                 }
 
-                if (!blnSuccess && string.IsNullOrEmpty(mConsoleOutputErrorMsg))
+                if (!processingSuccess && string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                 {
                     // Parse the console output file one more time to see if an exception was logged
                     ParseConsoleOutputFile(Path.Combine(m_WorkDir, MSAlign_CONSOLE_OUTPUT));
@@ -230,7 +222,9 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                     LogError(mConsoleOutputErrorMsg);
                 }
 
-                if (!blnSuccess)
+                CloseOutType eResult;
+
+                if (!processingSuccess)
                 {
                     LogError("Error running MSAlign_Histone");
 
@@ -243,7 +237,6 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                         LogWarning("Call to MSAlign_Histone failed (but exit code is 0)");
                     }
 
-                    processingError = true;
                     eResult = CloseOutType.CLOSEOUT_FAILED;
                 }
                 else
@@ -251,27 +244,28 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                     // Make sure the output files were created
                     if (!ValidateResultFiles())
                     {
-                        processingError = true;
+                        processingSuccess = false;
+                        eResult = CloseOutType.CLOSEOUT_FAILED;
                     }
                     else
                     {
                         // Create the HTML and XML files
                         // Need to call MsAlignPipeline.jar again, but this time with a different classpath
 
-                        blnSuccess = MakeReportFiles(JavaProgLoc, strMSAlignCmdLineOptions, intJavaMemorySize);
-                        if (!blnSuccess)
-                            processingError = true;
+                        var reportGenerated = MakeReportFiles(JavaProgLoc, strMSAlignCmdLineOptions, intJavaMemorySize);
+                        if (!reportGenerated)
+                            processingSuccess = false;
 
                         // Move the result files
-                        if (!MoveMSAlignResultFiles())
+                        var filesMoved = MoveMSAlignResultFiles();
+                        if (!filesMoved)
                         {
-                            processingError = true;
+                            processingSuccess = false;
                         }
 
-                        string strResultTableSourcePath = null;
-                        strResultTableSourcePath = Path.Combine(m_WorkDir, m_Dataset + "_" + RESULT_TABLE_FILE_EXTENSION);
+                        var strResultTableSourcePath = Path.Combine(m_WorkDir, m_Dataset + "_" + RESULT_TABLE_FILE_EXTENSION);
 
-                        if (!processingError && File.Exists(strResultTableSourcePath))
+                        if (processingSuccess && File.Exists(strResultTableSourcePath))
                         {
                             // Make sure the _OUTPUT_TABLE.txt file is not empty
                             // Make a copy of the OUTPUT_TABLE.txt file so that we can fix the header row (creating the RESULT_TABLE_NAME_SUFFIX file)
@@ -284,6 +278,10 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                             {
                                 eResult = CloseOutType.CLOSEOUT_NO_DATA;
                             }
+                        }
+                        else
+                        {
+                            eResult = CloseOutType.CLOSEOUT_FAILED;
                         }
 
                         m_StatusTools.UpdateAndWrite(m_progress);
@@ -303,41 +301,23 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 UpdateSummaryFile();
 
                 // Make sure objects are released
-                // 500 msec delay
                 Thread.Sleep(500);
-                
+
                 PRISM.clsProgRunner.GarbageCollectNow();
 
-                if (processingError)
+                if (!processingSuccess)
                 {
-                    // Move the source files and any results to the Failed Job folder
-                    // Useful for debugging MSAlign problems
+                    // Something went wrong
+                    // In order to help diagnose things, we will move whatever files were created into the result folder,
+                    //  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
                     CopyFailedResultsToArchiveFolder();
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                result = MakeResultsFolder();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    //MakeResultsFolder handles posting to local log, so set database error message and exit
-                    m_message = "Error making results folder";
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
+                var success = CopyResultsToTransferDirectory();
 
-                result = MoveResultFiles();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    m_message = "Error moving files into results folder";
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
+                return success ? eResult : CloseOutType.CLOSEOUT_FAILED;
 
-                result = CopyResultsFolderToServer();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
             }
             catch (Exception ex)
             {
@@ -346,7 +326,6 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            return eResult;
         }
 
         protected bool CopyFastaCheckResidues(string strSourceFilePath, string strTargetFilePath)
@@ -407,30 +386,17 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             return true;
         }
 
-        protected void CopyFailedResultsToArchiveFolder()
+        public override void CopyFailedResultsToArchiveFolder()
         {
-            string strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
-            if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
-                strFailedResultsFolderPath = "??Not Defined??";
-
-            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
-
-            // Bump up the debug level if less than 2
-            if (m_DebugLevel < 2)
-                m_DebugLevel = 2;
-
-            // Try to save whatever files are in the work directory (however, delete the .mzXML file first)
-            string strFolderPathToArchive = null;
-            strFolderPathToArchive = string.Copy(m_WorkDir);
 
             try
             {
-                File.Delete(Path.Combine(m_WorkDir, m_Dataset + ".mzXML"));
+                m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZXML_EXTENSION);
 
                 // Copy any search result files that are not empty from the MSAlign folder to the work directory
                 var dctResultFiles = GetExpectedMSAlignResultFiles(m_Dataset);
 
-                foreach (KeyValuePair<string, string> kvItem in dctResultFiles)
+                foreach (var kvItem in dctResultFiles)
                 {
                     var fiSearchResultFile = new FileInfo(Path.Combine(mMSAlignWorkFolderPath, kvItem.Key));
 
@@ -439,28 +405,16 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                         fiSearchResultFile.CopyTo(Path.Combine(m_WorkDir, Path.GetFileName(fiSearchResultFile.Name)));
                     }
                 }
+
+                File.Delete(Path.Combine(m_WorkDir, m_Dataset + ".mzXML"));
+
             }
             catch (Exception)
             {
                 // Ignore errors here
             }
 
-            // Make the results folder
-            var result = MakeResultsFolder();
-            if (result == CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                // Move the result files into the result folder
-                result = MoveResultFiles();
-                if (result == CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Move was a success; update strFolderPathToArchive
-                    strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName);
-                }
-            }
-
-            // Copy the results folder to the Archive folder
-            var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
-            objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive);
+            base.CopyFailedResultsToArchiveFolder();
         }
 
         private bool CopyMSAlignProgramFiles(string strMSAlignJarFilePath)
@@ -541,7 +495,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             return true;
         }
 
-        protected bool CreateMSAlignCommandLine(string strParamFilePath, ref string strCommandLine)
+        protected bool CreateMSAlignCommandLine(string strParamFilePath, out string strCommandLine)
         {
             // MSAlign_Histone syntax
             //
@@ -660,7 +614,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                                         if (strProteinOptions.ToLower().Contains("seq_direction=decoy"))
                                         {
                                             m_message =
-                                                "MSAlign parameter file contains searchType=TARGET+DECOY; " + 
+                                                "MSAlign parameter file contains searchType=TARGET+DECOY; " +
                                                 "protein options for this analysis job must contain seq_direction=forward, not seq_direction=decoy";
 
                                             LogError(m_message);

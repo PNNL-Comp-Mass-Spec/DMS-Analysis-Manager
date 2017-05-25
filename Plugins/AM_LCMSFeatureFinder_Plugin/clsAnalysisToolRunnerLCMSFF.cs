@@ -113,74 +113,18 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            var result = MakeResultsFolder();
-            if (result != CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                //TODO: What do we do here?
-                return result;
-            }
+            var success = CopyResultsToTransferDirectory();
 
-            result = MoveResultFiles();
-            if (result != CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                //TODO: What do we do here?
-                // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                return result;
-            }
+            return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
 
-            result = CopyResultsFolderToServer();
-            if (result != CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                //TODO: What do we do here?
-                // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                return result;
-            }
-
-            return CloseOutType.CLOSEOUT_SUCCESS;    //ZipResult
         }
 
-        protected void CopyFailedResultsToArchiveFolder()
+        public override void CopyFailedResultsToArchiveFolder()
         {
-            string strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
-            if (string.IsNullOrEmpty(strFailedResultsFolderPath))
-                strFailedResultsFolderPath = "??Not Defined??";
+            m_jobParams.AddResultFileToSkip(Dataset + ".UIMF");
+            m_jobParams.AddResultFileExtensionToSkip(Dataset + ".csv");
 
-            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
-
-            // Bump up the debug level if less than 2
-            if (m_DebugLevel < 2)
-                m_DebugLevel = 2;
-
-            // Try to save whatever files are in the work directory (however, delete the .UIMF file first, plus also the Decon2LS .csv files)
-            string strFolderPathToArchive = null;
-            strFolderPathToArchive = string.Copy(m_WorkDir);
-
-            try
-            {
-                File.Delete(Path.Combine(m_WorkDir, m_Dataset + ".UIMF"));
-                File.Delete(Path.Combine(m_WorkDir, m_Dataset + "*.csv"));
-            }
-            catch (Exception)
-            {
-                // Ignore errors here
-            }
-
-            // Make the results folder
-            var result = MakeResultsFolder();
-            if (result == CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                // Move the result files into the result folder
-                result = MoveResultFiles();
-                if (result == CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Move was a success; update strFolderPathToArchive
-                    strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName);
-                }
-            }
-
-            // Copy the results folder to the Archive folder
-            var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
-            objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive);
+            base.CopyFailedResultsToArchiveFolder();
         }
 
         /// <summary>

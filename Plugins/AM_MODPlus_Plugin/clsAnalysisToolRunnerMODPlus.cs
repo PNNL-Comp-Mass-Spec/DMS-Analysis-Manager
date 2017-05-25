@@ -100,18 +100,19 @@ namespace AnalysisManagerMODPlusPlugin
                 Dictionary<int, string> paramFileList = null;
 
                 // Run MODPlus (using multiple threads)
-                var blnSuccess = StartMODPlus(javaProgLoc, out paramFileList);
+                var processingSuccess = StartMODPlus(javaProgLoc, out paramFileList);
 
-                if (blnSuccess)
+                if (processingSuccess)
                 {
                     // Look for the results file(s)
-                    blnSuccess = PostProcessMODPlusResults(paramFileList);
-                    if (!blnSuccess)
+                    var postProcessSuccess = PostProcessMODPlusResults(paramFileList);
+                    if (!postProcessSuccess)
                     {
                         if (string.IsNullOrEmpty(m_message))
                         {
                             LogError("Unknown error post-processing the MODPlus results");
                         }
+                        processingSuccess = false;
                     }
                 }
 
@@ -124,39 +125,22 @@ namespace AnalysisManagerMODPlusPlugin
                 UpdateSummaryFile();
 
                 // Make sure objects are released
-                Thread.Sleep(500);        // 500 msec delay
+                Thread.Sleep(500);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
-                if (!blnSuccess)
+                if (!processingSuccess)
                 {
-                    // Move the source files and any results to the Failed Job folder
-                    // Useful for debugging problems
+                    // Something went wrong
+                    // In order to help diagnose things, we will move whatever files were created into the result folder,
+                    //  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
                     CopyFailedResultsToArchiveFolder();
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var result = MakeResultsFolder();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // MakeResultsFolder handles posting to local log, so set database error message and exit
-                    LogError("Error making results folder");
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
+                var success = CopyResultsToTransferDirectory();
 
-                result = MoveResultFiles();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    LogError("Error moving files into results folder");
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
+                return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
 
-                result = CopyResultsFolderToServer();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
             }
             catch (Exception ex)
             {
@@ -270,47 +254,11 @@ namespace AnalysisManagerMODPlusPlugin
             return false;
         }
 
-        protected void CopyFailedResultsToArchiveFolder()
+        public override void CopyFailedResultsToArchiveFolder()
         {
-            var strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
-            if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
-                strFailedResultsFolderPath = "??Not Defined??";
+            m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_MZXML_EXTENSION);
 
-            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
-
-            // Bump up the debug level if less than 2
-            if (m_DebugLevel < 2)
-                m_DebugLevel = 2;
-
-            // Try to save whatever files are in the work directory (however, delete the .mzXML file first)
-            string strFolderPathToArchive = null;
-            strFolderPathToArchive = string.Copy(m_WorkDir);
-
-            try
-            {
-                File.Delete(Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_MZXML_EXTENSION));
-            }
-            catch (Exception)
-            {
-                // Ignore errors here
-            }
-
-            // Make the results folder
-            var result = MakeResultsFolder();
-            if (result == CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                // Move the result files into the result folder
-                result = MoveResultFiles();
-                if (result == CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Move was a success; update strFolderPathToArchive
-                    strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName);
-                }
-            }
-
-            // Copy the results folder to the Archive folder
-            var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
-            objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive);
+            base.CopyFailedResultsToArchiveFolder();
         }
 
         /// <summary>

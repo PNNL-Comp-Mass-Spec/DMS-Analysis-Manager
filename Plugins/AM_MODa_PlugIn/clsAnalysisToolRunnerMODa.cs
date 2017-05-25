@@ -89,9 +89,9 @@ namespace AnalysisManagerMODaPlugIn
                 }
 
                 // Run MODa, then post process the results
-                var blnSuccess = StartMODa(JavaProgLoc);
+                var processingSuccess = StartMODa(JavaProgLoc);
 
-                if (blnSuccess)
+                if (processingSuccess)
                 {
                     // Look for the MODa results file
                     // If it exists, then zip it
@@ -100,15 +100,19 @@ namespace AnalysisManagerMODaPlugIn
                     if (fiResultsFile.Exists)
                     {
                         // Zip the output file
-                        blnSuccess = ZipOutputFile(fiResultsFile, "MODa");
+                        var zipSuccess = ZipOutputFile(fiResultsFile, "MODa");
 
-                        if (blnSuccess)
+                        if (zipSuccess)
                         {
                             m_jobParams.AddResultFileToSkip(fiResultsFile.Name);
                         }
-                        else if (string.IsNullOrEmpty(m_message))
+                        else
                         {
-                            m_message = "Unknown error zipping the MODa results";
+                            if (string.IsNullOrEmpty(m_message))
+                            {
+                                m_message = "Unknown error zipping the MODa results";
+                            }
+                            processingSuccess = false;
                         }
                     }
                     else
@@ -116,8 +120,8 @@ namespace AnalysisManagerMODaPlugIn
                         if (string.IsNullOrEmpty(m_message))
                         {
                             m_message = "MODa results file not found: " + Path.GetFileName(mMODaResultsFilePath);
-                            blnSuccess = false;
                         }
+                        processingSuccess = false;
                     }
                 }
 
@@ -132,42 +136,25 @@ namespace AnalysisManagerMODaPlugIn
                 mCmdRunner = null;
 
                 // Make sure objects are released
-                Thread.Sleep(500);        // 500 msec delay
+                Thread.Sleep(500);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
                 // Trim the console output file to remove the majority of the status messages (since there is currently one per scan)
                 TrimConsoleOutputFile(Path.Combine(m_WorkDir, MODa_CONSOLE_OUTPUT));
 
-                if (!blnSuccess)
+                if (!processingSuccess)
                 {
-                    // Move the source files and any results to the Failed Job folder
-                    // Useful for debugging MODa problems
+                    // Something went wrong
+                    // In order to help diagnose things, we will move whatever files were created into the result folder,
+                    //  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
                     CopyFailedResultsToArchiveFolder();
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var result = MakeResultsFolder();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // MakeResultsFolder handles posting to local log, so set database error message and exit
-                    m_message = "Error making results folder";
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
+                var success = CopyResultsToTransferDirectory();
 
-                result = MoveResultFiles();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    m_message = "Error moving files into results folder";
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
+                return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
 
-                result = CopyResultsFolderToServer();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
             }
             catch (Exception ex)
             {
@@ -282,47 +269,11 @@ namespace AnalysisManagerMODaPlugIn
             return true;
         }
 
-        protected void CopyFailedResultsToArchiveFolder()
+        public override void CopyFailedResultsToArchiveFolder()
         {
-            string strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
-            if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
-                strFailedResultsFolderPath = "??Not Defined??";
+            m_jobParams.AddResultFileToSkip(Dataset + ".mzXML");
 
-            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
-
-            // Bump up the debug level if less than 2
-            if (m_DebugLevel < 2)
-                m_DebugLevel = 2;
-
-            // Try to save whatever files are in the work directory (however, delete the .mzXML file first)
-            string strFolderPathToArchive = null;
-            strFolderPathToArchive = string.Copy(m_WorkDir);
-
-            try
-            {
-                File.Delete(Path.Combine(m_WorkDir, m_Dataset + ".mzXML"));
-            }
-            catch (Exception)
-            {
-                // Ignore errors here
-            }
-
-            // Make the results folder
-            var result = MakeResultsFolder();
-            if (result == CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                // Move the result files into the result folder
-                result = MoveResultFiles();
-                if (result == CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Move was a success; update strFolderPathToArchive
-                    strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName);
-                }
-            }
-
-            // Copy the results folder to the Archive folder
-            var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
-            objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive);
+            base.CopyFailedResultsToArchiveFolder();
         }
 
         // Example Console output

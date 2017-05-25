@@ -22,7 +22,6 @@ namespace AnalysisManager_Cyclops_PlugIn
 
             try
             {
-                bool blnSuccess;
 
                 // Do the base class stuff
                 if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
@@ -81,6 +80,8 @@ namespace AnalysisManager_Cyclops_PlugIn
                     AutoFlush = true
                 };
 
+                bool processingSuccess;
+
                 try
                 {
                     AppendToCyclopsLog(INITIALIZING_LOG_FILE);
@@ -102,14 +103,14 @@ namespace AnalysisManager_Cyclops_PlugIn
                         AppendToCyclopsLog("  " + entry.Key + ": " + entry.Value);
                     }
 
-                    blnSuccess = cyclops.Run();
+                    processingSuccess = cyclops.Run();
 
                 }
                 catch (Exception ex)
                 {
                     AppendToCyclopsLog("Error running Cyclops: " + ex.Message);
                     LogError("Error running Cyclops: " + ex.Message, ex);
-                    blnSuccess = false;
+                    processingSuccess = false;
                 }
 
                 mCyclopsLogWriter.Flush();
@@ -129,30 +130,26 @@ namespace AnalysisManager_Cyclops_PlugIn
                 // Delete the log file if it only has the "initializing log file" line
                 PossiblyDeleteCyclopsLogFile(cyclopsLogFile);
 
-                if (!blnSuccess)
+                if (!processingSuccess)
                 {
-                    // Move the source files and any results to the Failed Job folder
-                    // Useful for debugging MultiAlign problems
+                    // Something went wrong
+                    // In order to help diagnose things, we will move whatever files were created into the result folder,
+                    //  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
                     CopyFailedResultsToArchiveFolder();
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
+                // Override the output folder name and the dataset name (since this is a dataset aggregation job)
                 m_ResFolderName = m_jobParams.GetParam("StepOutputFolderName");
                 m_Dataset = m_jobParams.GetParam("OutputFolderName");
                 m_jobParams.SetParam("StepParameters", "OutputFolderName", m_ResFolderName);
 
-                var result = MakeResultsFolder();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                var resultsFolderCreated = MakeResultsFolder();
+                if (!resultsFolderCreated)
                 {
                     // MakeResultsFolder handles posting to local log, so set database error message and exit
-                    return result;
-                }
-
-                result = MoveResultFiles();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    return result;
+                    m_message = "Error making results folder";
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // Move the Plots folder to the result files folder
@@ -164,12 +161,9 @@ namespace AnalysisManager_Cyclops_PlugIn
                     diPlotsFolder.MoveTo(strTargetFolderPath);
                 }
 
-                result = CopyResultsFolderToServer();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    return result;
-                }
+                var success = CopyResultsToTransferDirectory();
+
+                return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
 
             }
             catch (Exception ex)
@@ -179,7 +173,6 @@ namespace AnalysisManager_Cyclops_PlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            return CloseOutType.CLOSEOUT_SUCCESS;
 
         }
 
@@ -258,54 +251,6 @@ namespace AnalysisManager_Cyclops_PlugIn
                 LogError("Exception in AppendToCyclopsLog: " + ex.Message, ex);
             }
         }
-
-        private void CopyFailedResultsToArchiveFolder()
-        {
-            var strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
-            if (string.IsNullOrEmpty(strFailedResultsFolderPath))
-                strFailedResultsFolderPath = "??Not Defined??";
-
-            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
-
-            // Bump up the debug level if less than 2
-            if (m_DebugLevel < 2)
-                m_DebugLevel = 2;
-
-            // Try to save whatever files are in the work directory
-            var strFolderPathToArchive = string.Copy(m_WorkDir);
-
-            // If necessary, delete extra files with the following
-            /* 
-                try
-                {
-                    File.Delete(Path.Combine(m_WorkDir, m_Dataset + ".UIMF"));
-                    File.Delete(Path.Combine(m_WorkDir, m_Dataset + "*.csv"));
-                }
-                catch
-                {
-                    // Ignore errors here
-                }
-            */
-
-            // Make the results folder
-            var result = MakeResultsFolder();
-            if (result == CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                // Move the result files into the result folder
-                result = MoveResultFiles();
-                if (result == CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Move was a success; update strFolderPathToArchive
-                    strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName);
-                }
-            }
-
-            // Copy the results folder to the Archive folder
-            var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
-            objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive);
-
-        }
-
 
         /// <summary>
         /// Stores the tool version info in the database

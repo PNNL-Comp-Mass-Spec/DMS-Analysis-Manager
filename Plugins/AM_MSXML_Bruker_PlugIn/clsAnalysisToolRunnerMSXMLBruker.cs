@@ -115,7 +115,8 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
                 LogDebug("clsAnalysisToolRunnerMSXMLBruker.RunTool(), Deleting raw data file");
             }
 
-            if (DeleteRawDataFiles() != CloseOutType.CLOSEOUT_SUCCESS)
+            var deleteSuccess = DeleteRawDataFiles();
+            if (!deleteSuccess)
             {
                 LogError("clsAnalysisToolRunnerMSXMLBruker.RunTool(), Problem deleting raw data files: " + m_message);
 
@@ -138,45 +139,10 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
 
             UpdateSummaryFile();
 
-            //Make the results folder
-            if (m_DebugLevel > 3)
-            {
-                LogDebug("clsAnalysisToolRunnerMSXMLBruker.RunTool(), Making results folder");
-            }
+            var success = CopyResultsToTransferDirectory();
 
-            eResult = MakeResultsFolder();
-            if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                // MakeResultsFolder handles posting to local log, so set database error message and exit
-                m_message = "Error making results folder";
-                return CloseOutType.CLOSEOUT_FAILED;
-            }
+            return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
 
-            eResult = MoveResultFiles();
-            if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                // MoveResultFiles moves the eResult files to the eResult folder
-                m_message = "Error moving files into results folder";
-                eReturnCode = CloseOutType.CLOSEOUT_FAILED;
-            }
-
-            if (eReturnCode == CloseOutType.CLOSEOUT_FAILED)
-            {
-                // Try to save whatever files were moved into the results folder
-                var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
-                objAnalysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(m_WorkDir, m_ResFolderName));
-
-                return CloseOutType.CLOSEOUT_FAILED;
-            }
-
-            eResult = CopyResultsFolderToServer();
-            if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                return eResult;
-            }
-
-            //If we get to here, everything worked so exit happily
-            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         /// <summary>

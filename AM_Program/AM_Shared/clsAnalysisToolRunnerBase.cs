@@ -389,6 +389,50 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
+        /// Copy failed results from the working directory to the DMS_FailedResults directory on the local computer
+        /// </summary>
+        /// <remarks>
+        /// Prior to calling this method, add files to ignore using
+        /// m_jobParams.AddResultFileToSkip and m_jobParams.AddResultFileExtensionToSkip
+        /// Step tools may override this method if additional steps are required
+        /// </remarks>
+        public virtual void CopyFailedResultsToArchiveFolder()
+        {
+            var failedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
+            if (string.IsNullOrWhiteSpace(failedResultsFolderPath))
+            {
+                LogErrorToDatabase("Manager parameter FailedResultsFolderPath not defined for manager " + m_mgrParams.ManagerName);
+                failedResultsFolderPath = @"C:\DMS_FailedResults";
+            }
+
+            LogWarning("Processing interrupted; copying results to archive folder: " + failedResultsFolderPath);
+
+            // Bump up the debug level if less than 2
+            if (m_DebugLevel < 2)
+                m_DebugLevel = 2;
+
+            // Try to save whatever files are in the work directory (however, delete the _DTA.txt and _DTA.zip files first)
+            var folderPathToArchive = string.Copy(m_WorkDir);
+
+            // Make the results folder
+            var success = MakeResultsFolder();
+            if (success)
+            {
+                // Move the result files into the result folder
+                var moveSucceed = MoveResultFiles();
+                if (moveSucceed)
+                {
+                    // Move was a success; update folderPathToArchive
+                    folderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName);
+                }
+            }
+
+            // Copy the results folder to the Archive folder
+            var analysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
+            analysisResults.CopyFailedResultsToArchiveFolder(folderPathToArchive);
+        }
+
+        /// <summary>
         /// Copies a file (typically a mzXML or mzML file) to a server cache folder
         /// Will store the file in a subfolder based on job parameter OutputFolderName, and below that, in a folder with a name like 2013_2
         /// </summary>

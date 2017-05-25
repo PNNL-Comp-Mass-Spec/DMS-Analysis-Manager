@@ -115,6 +115,8 @@ namespace AnalysisManagerMSGFPlugin
         private int mMSGFInputCreatorErrorCount;
         private int mMSGFInputCreatorWarningCount;
 
+        private bool mPostProcessingError;
+
         #endregion
 
         #region "Methods"
@@ -126,8 +128,6 @@ namespace AnalysisManagerMSGFPlugin
         /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
-            // Set this to success for now
-            var eReturnCode = CloseOutType.CLOSEOUT_SUCCESS;
 
             //Call base class for initial setup
             if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
@@ -163,7 +163,8 @@ namespace AnalysisManagerMSGFPlugin
 
             mKeepMSGFInputFiles = m_jobParams.GetJobParameter("KeepMSGFInputFile", false);
             var blnDoNotFilterPeptides = m_jobParams.GetJobParameter("MSGFIgnoreFilters", false);
-            var blnPostProcessingError = false;
+
+            mPostProcessingError = false;
 
             try
             {
@@ -240,7 +241,7 @@ namespace AnalysisManagerMSGFPlugin
                         {
                             if (string.IsNullOrWhiteSpace(m_message))
                                 m_message = "MSGF results file post-processing error";
-                            blnPostProcessingError = true;
+                            mPostProcessingError = true;
                         }
                     }
                 }
@@ -248,55 +249,27 @@ namespace AnalysisManagerMSGFPlugin
                 //Stop the job timer
                 m_StopTime = DateTime.UtcNow;
 
+                //Add the current job data to the summary file
+                UpdateSummaryFile();
+
+                //Make sure objects are released
+                Thread.Sleep(500);                
+                clsProgRunner.GarbageCollectNow();
+
                 if (blnProcessingError)
                 {
                     // Something went wrong
                     // In order to help diagnose things, we will move whatever files were created into the result folder,
                     //  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
-                    eReturnCode = CloseOutType.CLOSEOUT_FAILED;
-                }
-
-                //Add the current job data to the summary file
-                UpdateSummaryFile();
-
-                //Make sure objects are released
-                Thread.Sleep(500);
-                // 500 msec delay
-                clsProgRunner.GarbageCollectNow();
-
-                var eResult = MakeResultsFolder();
-                if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    //MakeResultsFolder handles posting to local log, so set database error message and exit
-                    m_message = "Error making results folder";
+                    CopyFailedResultsToArchiveFolder();
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                eResult = MoveResultFiles();
-                if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    //MoveResultFiles moves the result files to the result folder
-                    m_message = "Error moving files into results folder";
-                    eReturnCode = CloseOutType.CLOSEOUT_FAILED;
-                }
-
-                if (blnProcessingError | eReturnCode == CloseOutType.CLOSEOUT_FAILED)
-                {
-                    // Try to save whatever files were moved into the results folder
-                    var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
-                    objAnalysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(m_WorkDir, m_ResFolderName));
-
+                var success = CopyResultsToTransferDirectory();
+                if (!success)
                     return CloseOutType.CLOSEOUT_FAILED;
-                }
 
-                eResult = CopyResultsFolderToServer();
-                if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    return eResult;
-                }
-
-                if (blnPostProcessingError)
+                if (mPostProcessingError)
                 {
                     // When a post-processing error occurs, we copy the files to the server, but return CLOSEOUT_FAILED
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -2424,21 +2397,8 @@ namespace AnalysisManagerMSGFPlugin
             {
                 // Gigasax.DMS5
                 var strConnectionString = m_mgrParams.GetParam("connectionstring");
-                int intJobNumber;
-                bool blnPostResultsToDB;
 
-                if (int.TryParse(m_JobNum, out intJobNumber))
-                {
-                    blnPostResultsToDB = true;
-                }
-                else
-                {
-                    blnPostResultsToDB = false;
-                    m_message = "Job number is not numeric: " + m_JobNum + "; will not be able to post PSM results to the database";
-                    LogError(m_message);
-                }
-
-                var objSummarizer = new clsMSGFResultsSummarizer(eResultType, m_Dataset, intJobNumber, m_WorkDir, strConnectionString, m_DebugLevel);
+                var objSummarizer = new clsMSGFResultsSummarizer(eResultType, m_Dataset, m_JobNum, m_WorkDir, strConnectionString, m_DebugLevel);
                 RegisterEvents(objSummarizer, writeDebugEventsToLog: true);
 
                 objSummarizer.ErrorEvent += MSGFResultsSummarizer_ErrorHandler;
@@ -2446,7 +2406,7 @@ namespace AnalysisManagerMSGFPlugin
                 objSummarizer.MSGFThreshold = clsMSGFResultsSummarizer.DEFAULT_MSGF_THRESHOLD;
 
                 objSummarizer.ContactDatabase = true;
-                objSummarizer.PostJobPSMResultsToDB = blnPostResultsToDB;
+                objSummarizer.PostJobPSMResultsToDB = true;
                 objSummarizer.SaveResultsToTextFile = false;
                 objSummarizer.DatasetName = m_Dataset;
 

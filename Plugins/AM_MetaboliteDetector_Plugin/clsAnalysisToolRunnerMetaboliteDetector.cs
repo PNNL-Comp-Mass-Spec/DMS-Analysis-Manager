@@ -65,7 +65,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
 
                 if (string.IsNullOrWhiteSpace(mMetaboliteDetectorProgLoc))
                     return CloseOutType.CLOSEOUT_FAILED;
-                
+
 
                 // Store the MetaboliteDetector version info in the database
                 if (!StoreToolVersionInfo(mMetaboliteDetectorProgLoc))
@@ -76,26 +76,26 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                 }
 
 
-                // Initialize classwide variables 
+                // Initialize classwide variables
                 mLastConsoleOutputParse = DateTime.UtcNow;
                 mLastProgressWriteTime = DateTime.UtcNow;
 
-                var success = ProcessDatasetWithMetaboliteDetector();
+                var processingError = false;
 
-                var eReturnCode = CloseOutType.CLOSEOUT_SUCCESS;
+                var processingSuccess = ProcessDatasetWithMetaboliteDetector();
 
-                if (!success)
+                if (!processingSuccess)
                 {
-                    eReturnCode = CloseOutType.CLOSEOUT_FAILED;
+                    processingError = true;
                 }
                 else
                 {
                     // Look for the result files
-                    success = PostProcessResults();
-                    if (!success)
-                        eReturnCode = CloseOutType.CLOSEOUT_FAILED;
+                    var postProcessSuccess = PostProcessResults();
+                    if (!postProcessSuccess)
+                        processingError = true;
                 }
-             
+
                 m_progress = PROGRESS_PCT_COMPLETE;
 
                 // Stop the job timer
@@ -109,41 +109,22 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                 Thread.Sleep(500);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
-                if (!success)
+                if (processingError)
                 {
-                    // Move the source files and any results to the Failed Job folder
-                    // Useful for debugging problems
+                    // Something went wrong
+                    // In order to help diagnose things, we will move whatever files were created into the result folder,
+                    //  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
                     CopyFailedResultsToArchiveFolder();
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // No need to keep several files; exclude them now
                 m_jobParams.AddResultFileToSkip(m_jobParams.GetParam("ParmFileName"));
-                
-                var result = MakeResultsFolder();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // MakeResultsFolder handles posting to local log, so set database error message and exit
-                    m_message = "Error making results folder";
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
 
-                result = MoveResultFiles();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    m_message = "Error moving files into results folder";
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
+                var success = CopyResultsToTransferDirectory();
 
-                result = CopyResultsFolderToServer();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
+                return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
 
-                return eReturnCode;
             }
             catch (Exception ex)
             {
@@ -152,48 +133,14 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-        }       
-
-        private void CopyFailedResultsToArchiveFolder()
-        {
-            var strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
-            if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
-                strFailedResultsFolderPath = "??Not Defined??";
-
-            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
-
-            // Bump up the debug level if less than 2
-            if (m_DebugLevel < 2)
-                m_DebugLevel = 2;
-
-            // Try to save whatever files are in the work directory (however, delete the XML files first)
-            var strFolderPathToArchive = string.Copy(m_WorkDir);
-
-            // Make the results folder
-            var result = MakeResultsFolder();
-            if (result == CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                // Move the result files into the result folder
-                result = MoveResultFiles();
-                if (result == CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Move was a success; update strFolderPathToArchive
-                    strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName);
-                }
-            }
-
-            // Copy the results folder to the Archive folder
-            var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
-            objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive);
-
-        }        
+        }
 
         private void ParseConsoleOutputFile(string strConsoleOutputFilePath)
         {
             // Example Console output
             //
             // ...
-            // 
+            //
 
             try
             {
@@ -227,7 +174,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                         if (strLineIn.ToLower().StartsWith("error "))
                         {
                             StoreConsoleErrorMessage(srInFile, strLineIn);
-                        }                        
+                        }
                     }
                 }
 
@@ -261,7 +208,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                     }
                     return false;
                 }
-               
+
                 return true;
 
             }
@@ -269,7 +216,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
             {
                 m_message = "Exception post processing results";
                 LogError(m_message + ": " + ex.Message);
-                return false;              
+                return false;
             }
         }
 
@@ -310,13 +257,13 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                 swConsoleOutputfile.WriteLine(cmdRunner.CachedConsoleOutput);
                 swConsoleOutputfile.Close();
             }
-           
+
             if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
             {
                 LogError(
                                      mConsoleOutputErrorMsg);
             }
-            
+
             Thread.Sleep(250);
 
             // Parse the ConsoleOutput file to look for errors
@@ -431,7 +378,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
 
             {
                 UpdateStatusFile();
-             
+
                 // Parse the console output file every 15 seconds
                 if (DateTime.UtcNow.Subtract(mLastConsoleOutputParse).TotalSeconds >= 15)
                 {

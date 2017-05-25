@@ -103,77 +103,23 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
             UpdateSummaryFile();
 
             //Make sure objects are released
-            Thread.Sleep(500);        // 500 msec delay
+            Thread.Sleep(500);
             PRISM.clsProgRunner.GarbageCollectNow();
 
             // Override the dataset name and transfer folder path so that the results get copied to the correct location
             base.RedefineAggregationJobDatasetAndTransferFolder();
 
-            var result = MakeResultsFolder();
-            if (result != CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                //TODO: What do we do here?
-                return result;
-            }
-
-            string[] DumFiles = null;
-
             // Update list of files to be deleted after run
-            DumFiles = Directory.GetFiles(m_WorkDir, "*_grouped*");
-            foreach (string FileToSave in DumFiles)
+            var groupedFiles = Directory.GetFiles(m_WorkDir, "*_grouped*");
+            foreach (var fileToSave in groupedFiles)
             {
-                m_jobParams.AddResultFileToKeep(Path.GetFileName(FileToSave));
+                m_jobParams.AddResultFileToKeep(Path.GetFileName(fileToSave));
             }
 
-            result = MoveResultFiles();
-            if (result != CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                //TODO: What do we do here?
-                return result;
-            }
+            var success = CopyResultsToTransferDirectory();
 
-            result = CopyResultsFolderToServer();
-            if (result != CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                //TODO: What do we do here?
-                return result;
-            }
+            return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
 
-            return CloseOutType.CLOSEOUT_SUCCESS; //ZipResult
-        }
-
-        protected void CopyFailedResultsToArchiveFolder()
-        {
-            string strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
-            if (string.IsNullOrEmpty(strFailedResultsFolderPath))
-                strFailedResultsFolderPath = "??Not Defined??";
-
-            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
-
-            // Bump up the debug level if less than 2
-            if (m_DebugLevel < 2)
-                m_DebugLevel = 2;
-
-            // Try to save whatever files are in the work directory
-            string strFolderPathToArchive = null;
-            strFolderPathToArchive = string.Copy(m_WorkDir);
-
-            // Make the results folder
-            var result = MakeResultsFolder();
-            if (result == CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                // Move the result files into the result folder
-                result = MoveResultFiles();
-                if (result == CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Move was a success; update strFolderPathToArchive
-                    strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName);
-                }
-            }
-
-            // Copy the results folder to the Archive folder
-            var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
-            objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive);
         }
 
         /// <summary>

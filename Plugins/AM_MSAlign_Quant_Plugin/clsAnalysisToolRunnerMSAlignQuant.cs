@@ -47,13 +47,6 @@ namespace AnalysisManagerMSAlignQuantPlugIn
         /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
-            CloseOutType result = CloseOutType.CLOSEOUT_SUCCESS;
-            var blnProcessingError = false;
-
-            bool blnSuccess = false;
-
-            string strTargetedQuantParamFilePath = null;
-
             try
             {
                 //Call base class for initial setup
@@ -87,7 +80,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 // Create the TargetedWorkflowParams.xml file
                 m_progress = PROGRESS_PCT_CREATING_PARAMETERS;
 
-                strTargetedQuantParamFilePath = CreateTargetedQuantParamFile();
+                var strTargetedQuantParamFilePath = CreateTargetedQuantParamFile();
                 if (string.IsNullOrEmpty(strTargetedQuantParamFilePath))
                 {
                     LogError("Aborting since CreateTargetedQuantParamFile returned false");
@@ -141,7 +134,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
 
                 m_progress = PROGRESS_TARGETED_WORKFLOWS_STARTING;
 
-                blnSuccess = mCmdRunner.RunProgram(mTargetedWorkflowsProgLoc, cmdStr, "TargetedWorkflowsConsole", true);
+                var processingSuccess = mCmdRunner.RunProgram(mTargetedWorkflowsProgLoc, cmdStr, "TargetedWorkflowsConsole", true);
 
                 if (!mCmdRunner.WriteConsoleOutputToFile)
                 {
@@ -163,7 +156,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                     LogError(mConsoleOutputErrorMsg);
                 }
 
-                if (blnSuccess)
+                if (processingSuccess)
                 {
                     // Make sure that the quantitation output file was created
                     string strOutputFileName = m_Dataset + "_quant.txt";
@@ -172,11 +165,11 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                     {
                         m_message = "MSAlign_Quant result file not found (" + strOutputFileName + ")";
                         LogError(m_message);
-                        blnSuccess = false;
+                        processingSuccess = false;
                     }
                 }
 
-                if (!blnSuccess)
+                if (!processingSuccess)
                 {
                     var msg = "Error running TargetedWorkflowsConsole";
 
@@ -198,7 +191,6 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                         LogWarning("Call to TargetedWorkflowsConsole failed (but exit code is 0)");
                     }
 
-                    blnProcessingError = true;
                 }
                 else
                 {
@@ -231,10 +223,10 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 UpdateSummaryFile();
 
                 //Make sure objects are released
-                Thread.Sleep(500);         // 500 msec delay
+                Thread.Sleep(500);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
-                if (blnProcessingError | result != CloseOutType.CLOSEOUT_SUCCESS)
+                if (!processingSuccess)
                 {
                     // Something went wrong
                     // In order to help diagnose things, we will move whatever files were created into the result folder,
@@ -243,28 +235,10 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                result = MakeResultsFolder();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    //MakeResultsFolder handles posting to local log, so set database error message and exit
-                    m_message = "Error making results folder";
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
+                var success = CopyResultsToTransferDirectory();
 
-                result = MoveResultFiles();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    m_message = "Error moving files into results folder";
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
+                return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
 
-                result = CopyResultsFolderToServer();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    return result;
-                }
             }
             catch (Exception ex)
             {
@@ -273,41 +247,6 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            return CloseOutType.CLOSEOUT_SUCCESS;
-        }
-
-        protected void CopyFailedResultsToArchiveFolder()
-        {
-            string strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
-            if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
-                strFailedResultsFolderPath = "??Not Defined??";
-
-            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
-
-            // Bump up the debug level if less than 2
-            if (m_DebugLevel < 2)
-                m_DebugLevel = 2;
-
-            // Try to save whatever files are in the work directory
-            string strFolderPathToArchive = null;
-            strFolderPathToArchive = string.Copy(m_WorkDir);
-
-            // Make the results folder
-            var result = MakeResultsFolder();
-            if (result == CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                // Move the result files into the result folder
-                result = MoveResultFiles();
-                if (result == CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Move was a success; update strFolderPathToArchive
-                    strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName);
-                }
-            }
-
-            // Copy the results folder to the Archive folder
-            var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
-            objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive);
         }
 
         /// <summary>

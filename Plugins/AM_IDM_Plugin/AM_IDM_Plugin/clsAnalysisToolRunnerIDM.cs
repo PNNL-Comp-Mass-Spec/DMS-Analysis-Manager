@@ -24,7 +24,6 @@ namespace AnalysisManager_IDM_Plugin
         {
             try
             {
-                bool success = false;
                 bool skipIDM = false;
 
                 //Do the base class stuff
@@ -48,9 +47,9 @@ namespace AnalysisManager_IDM_Plugin
                             LogMessage("Copying table t_precursor_interference from " + fiIDMResultsDB.Name + " to Results.db3");
                         }
 
-                        success = sqLiteUtils.CloneDB(fiIDMResultsDB.FullName, Path.Combine(m_WorkDir, "Results.db3"), appendToExistingDB: true);
+                        var cloneSuccess = sqLiteUtils.CloneDB(fiIDMResultsDB.FullName, Path.Combine(m_WorkDir, "Results.db3"), appendToExistingDB: true);
 
-                        if (success)
+                        if (cloneSuccess)
                             skipIDM = true;
 
                         //success = sqLiteUtils.CopySqliteTable(fiIDMResultsDB.FullName, "t_precursor_interference", Path.Combine(m_WorkDir, "Results.db3"));
@@ -61,6 +60,8 @@ namespace AnalysisManager_IDM_Plugin
                         LogError(ex.Message + "; will run IDM instead of using existing results");
                     }
                 }
+
+                var processingSuccess = false;
 
                 if (!skipIDM)
                 {
@@ -92,7 +93,7 @@ namespace AnalysisManager_IDM_Plugin
 
                         idm.WorkDir = m_WorkDir;
 
-                        success = idm.Run(m_WorkDir, "Results.db3");
+                        processingSuccess = idm.Run(m_WorkDir, "Results.db3");
 
                         //Change the name of the log file for the local log file to the plug in log filename
                         LogFileName = m_mgrParams.GetParam("logfilename");
@@ -107,7 +108,7 @@ namespace AnalysisManager_IDM_Plugin
                         clsLogTools.ChangeLogFileName(LogFileName);
 
                         LogError("Error running IDM: " + ex.Message);
-                        success = false;
+                        processingSuccess = false;
                     }
                 }
 
@@ -119,42 +120,27 @@ namespace AnalysisManager_IDM_Plugin
                 UpdateSummaryFile();
 
                 //Make sure objects are released
-                //2 second delay
-                Thread.Sleep(2000);
+                Thread.Sleep(500);
                 clsProgRunner.GarbageCollectNow();
 
-                if (!success)
+                if (!processingSuccess)
                 {
-                    // Move the source files and any results to the Failed Job folder
-                    // Useful for debugging MultiAlign problems
+                    // Something went wrong
+                    // In order to help diagnose things, we will move whatever files were created into the result folder,
+                    //  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
                     CopyFailedResultsToArchiveFolder();
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
+                // Override the output folder name and the dataset name (since this is a dataset aggregation job)
                 m_ResFolderName = m_jobParams.GetParam("StepOutputFolderName");
                 m_Dataset = m_jobParams.GetParam("OutputFolderName");
                 m_jobParams.SetParam("StepParameters", "OutputFolderName", m_ResFolderName);
 
-                CloseOutType result = MakeResultsFolder();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // MakeResultsFolder handles posting to local log, so set database error message and exit
-                    return result;
-                }
+                var success = CopyResultsToTransferDirectory();
 
-                result = MoveResultFiles();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    return result;
-                }
+                return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
 
-                result = CopyResultsFolderToServer();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    return result;
-                }
             }
             catch (Exception ex)
             {
@@ -166,53 +152,6 @@ namespace AnalysisManager_IDM_Plugin
             return CloseOutType.CLOSEOUT_SUCCESS;
 
         }
-
-        protected void CopyFailedResultsToArchiveFolder()
-        {
-            string strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
-            if (string.IsNullOrEmpty(strFailedResultsFolderPath))
-                strFailedResultsFolderPath = "??Not Defined??";
-
-            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
-
-            // Bump up the debug level if less than 2
-            if (m_DebugLevel < 2)
-                m_DebugLevel = 2;
-
-            // Try to save whatever files are in the work directory
-            string strFolderPathToArchive = string.Copy(m_WorkDir);
-
-            // If necessary, delete extra files with the following
-            /* 
-                try
-                {
-                    System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_Dataset + ".UIMF"));
-                    System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_Dataset + "*.csv"));
-                }
-                catch
-                {
-                    // Ignore errors here
-                }
-            */
-
-            // Make the results folder
-            CloseOutType result = MakeResultsFolder();
-            if (result == CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                // Move the result files into the result folder
-                result = MoveResultFiles();
-                if (result == CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Move was a success; update strFolderPathToArchive
-                    strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName);
-                }
-            }
-
-            // Copy the results folder to the Archive folder
-            var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
-            objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive);
-
-        }		
 
         protected void InterfenceDetectorProgressHandler(InterferenceDetector id, ProgressInfo e)
         {

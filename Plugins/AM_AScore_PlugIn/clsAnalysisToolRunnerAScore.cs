@@ -23,7 +23,6 @@ namespace AnalysisManager_AScore_PlugIn
             {
 
                 m_jobParams.SetParam("JobParameters", "DatasetNum", m_jobParams.GetParam("OutputFolderPath"));
-                bool success;
 
                 //Do the base class stuff
                 if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
@@ -45,15 +44,16 @@ namespace AnalysisManager_AScore_PlugIn
                 }
 
                 var ascoreParamFile = m_jobParams.GetJobParameter("AScoreParamFilename", string.Empty);
+                bool processingSuccess;
 
                 if (string.IsNullOrEmpty(ascoreParamFile))
                 {
                     m_message = "Skipping AScore since AScoreParamFilename is not defined for this job";
-                    success = true;
+                    processingSuccess = true;
                 }
                 else
                 {
-                    
+
                     m_CurrentAScoreTask = "Running AScore";
                     m_LastStatusUpdateTime = DateTime.UtcNow;
                     m_StatusTools.UpdateAndWrite(EnumMgrStatus.RUNNING, EnumTaskStatus.RUNNING,
@@ -62,7 +62,7 @@ namespace AnalysisManager_AScore_PlugIn
                     LogMessage(m_CurrentAScoreTask);
 
                     //Change the name of the log file for the local log file to the plugin log filename
-                    String LogFileName = Path.Combine(m_WorkDir, "Ascore_Log");
+                    var LogFileName = Path.Combine(m_WorkDir, "Ascore_Log");
                     GlobalContext.Properties["LogName"] = LogFileName;
                     clsLogTools.ChangeLogFileName(LogFileName);
 
@@ -70,25 +70,26 @@ namespace AnalysisManager_AScore_PlugIn
                     {
                         m_progress = PROGRESS_PCT_ASCORE_START;
 
-                        success = RunAScore();
+                        processingSuccess = RunAScore();
 
                         // Change the name of the log file back to the analysis manager log file
                         LogFileName = m_mgrParams.GetParam("logfilename");
                         GlobalContext.Properties["LogName"] = LogFileName;
                         clsLogTools.ChangeLogFileName(LogFileName);
 
-                        if (!success && !string.IsNullOrWhiteSpace(m_message))
+                        if (!processingSuccess && !string.IsNullOrWhiteSpace(m_message))
                         {
                             LogError("Error running AScore: " + m_message);
                         }
 
-                        if (success)
+                        if (processingSuccess)
                         {
                             // Export the AScore result table as a tab-delimited text file
-                            success = ExportAScoreResults();
-                            if (!success)
+                            var exportSuccess = ExportAScoreResults();
+                            if (!exportSuccess)
                             {
                                 m_message = "Export of table t_results_ascore failed";
+                                processingSuccess = false;
                             }
                         }
                     }
@@ -100,7 +101,7 @@ namespace AnalysisManager_AScore_PlugIn
                         clsLogTools.ChangeLogFileName(LogFileName);
 
                         LogError("Error running AScore: " + ex.Message, ex);
-                        success = false;
+                        processingSuccess = false;
                         m_message = "Error running AScore";
                     }
                 }
@@ -113,44 +114,26 @@ namespace AnalysisManager_AScore_PlugIn
                 UpdateSummaryFile();
 
                 //Make sure objects are released
-                //2 second delay
-                Thread.Sleep(2000);
+                Thread.Sleep(500);
                 clsProgRunner.GarbageCollectNow();
 
-                if (!success)
+                if (!processingSuccess)
                 {
-                    // Move the source files and any results to the Failed Job folder
-                    // Useful for debugging MultiAlign problems
+                    // Something went wrong
+                    // In order to help diagnose things, we will move whatever files were created into the result folder,
+                    //  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
                     CopyFailedResultsToArchiveFolder();
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
+                // Override the output folder name and the dataset name (since this is a dataset aggregation job)
                 m_ResFolderName = m_jobParams.GetParam("StepOutputFolderName");
                 m_Dataset = m_jobParams.GetParam("OutputFolderName");
                 m_jobParams.SetParam("StepParameters", "OutputFolderName", m_ResFolderName);
 
-                CloseOutType result = MakeResultsFolder();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // MakeResultsFolder handles posting to local log, so set database error message and exit
-                    m_message = "Error making results folder";
-                    return result;
-                }
+                var success = CopyResultsToTransferDirectory();
 
-                result = MoveResultFiles();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    m_message = "Error moving files into results folder";
-                    return result;
-                }
-
-                result = CopyResultsFolderToServer();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    return result;
-                }
+                return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
 
             }
             catch (Exception ex)
@@ -161,7 +144,6 @@ namespace AnalysisManager_AScore_PlugIn
 
             }
 
-            return CloseOutType.CLOSEOUT_SUCCESS;
 
         }
 
@@ -258,54 +240,6 @@ namespace AnalysisManager_AScore_PlugIn
             }
 
             return success;
-
-        }
-
-
-        protected void CopyFailedResultsToArchiveFolder()
-        {
-            string strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
-            if (string.IsNullOrEmpty(strFailedResultsFolderPath))
-                strFailedResultsFolderPath = "??Not Defined??";
-
-            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
-
-            // Bump up the debug level if less than 2
-            if (m_DebugLevel < 2)
-                m_DebugLevel = 2;
-
-            // Try to save whatever files are in the work directory
-            string strFolderPathToArchive = string.Copy(m_WorkDir);
-
-            // If necessary, delete extra files with the following
-            /* 
-                try
-                {
-                    System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_Dataset + ".UIMF"));
-                    System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_Dataset + "*.csv"));
-                }
-                catch
-                {
-                    // Ignore errors here
-                }
-            */
-
-            // Make the results folder
-            CloseOutType result = MakeResultsFolder();
-            if (result == CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                // Move the result files into the result folder
-                result = MoveResultFiles();
-                if (result == CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Move was a success; update strFolderPathToArchive
-                    strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName);
-                }
-            }
-
-            // Copy the results folder to the Archive folder
-            var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
-            objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive);
 
         }
 

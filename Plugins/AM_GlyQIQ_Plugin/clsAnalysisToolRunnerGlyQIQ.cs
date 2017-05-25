@@ -129,7 +129,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 UpdateSummaryFile();
 
                 //Make sure objects are released
-                Thread.Sleep(500);        // 500 msec delay
+                Thread.Sleep(500);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
                 if (!blnSuccess)
@@ -137,28 +137,10 @@ namespace AnalysisManagerGlyQIQPlugin
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var result = MakeResultsFolder();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    //MakeResultsFolder handles posting to local log, so set database error message and exit
-                    m_message = "Error making results folder";
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
+                var success = CopyResultsToTransferDirectory();
 
-                result = MoveResultFiles();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    m_message = "Error moving files into results folder";
+                if (!success)
                     return CloseOutType.CLOSEOUT_FAILED;
-                }
-
-                result = CopyResultsFolderToServer();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
 
                 // It is now safe to delete the _peaks.txt file that is in the transfer folder
                 if (m_DebugLevel >= 1)
@@ -167,6 +149,9 @@ namespace AnalysisManagerGlyQIQPlugin
                 }
 
                 RemoveNonResultServerFiles();
+
+                return CloseOutType.CLOSEOUT_SUCCESS;
+
             }
             catch (Exception ex)
             {
@@ -175,7 +160,6 @@ namespace AnalysisManagerGlyQIQPlugin
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         private bool CombineResultFiles()
@@ -329,14 +313,7 @@ namespace AnalysisManagerGlyQIQPlugin
 
         protected bool ExamineFilteredResults(FileInfo fiResultsFile)
         {
-            int job = 0;
-            if (!int.TryParse(m_JobNum, out job))
-            {
-                m_message = "Unable to determine job number since '" + m_JobNum + "' is not numeric";
-                return false;
-            }
-
-            return ExamineFilteredResults(fiResultsFile, job, string.Empty);
+            return ExamineFilteredResults(fiResultsFile, m_JobNum, string.Empty);
         }
 
         /// <summary>

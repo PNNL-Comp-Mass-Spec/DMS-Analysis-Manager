@@ -91,30 +91,9 @@ namespace AnalysisManagerMsXmlGenPlugIn
             //Add the current job data to the summary file
             UpdateSummaryFile();
 
-            result = MakeResultsFolder();
-            if (result != CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                //MakeResultsFolder handles posting to local log, so set database error message and exit
-                m_message = "Error making results folder";
-                return result;
-            }
+            var success = CopyResultsToTransferDirectory();
 
-            result = MoveResultFiles();
-            if (result != CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                m_message = "Error moving files into results folder";
-                return result;
-            }
-
-            result = CopyResultsFolderToServer();
-            if (result != CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                return result;
-            }
-
-            return CloseOutType.CLOSEOUT_SUCCESS; //No failures so everything must have succeeded
+            return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
         }
 
         /// <summary>

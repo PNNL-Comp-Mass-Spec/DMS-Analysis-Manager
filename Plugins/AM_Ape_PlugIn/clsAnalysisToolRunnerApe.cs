@@ -18,7 +18,6 @@ namespace AnalysisManager_Ape_PlugIn
             {
 
                 m_jobParams.SetParam("JobParameters", "DatasetNum", m_jobParams.GetParam("OutputFolderPath"));
-                bool blnSuccess;
 
                 //Do the base class stuff
                 if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
@@ -45,18 +44,20 @@ namespace AnalysisManager_Ape_PlugIn
                 log4net.GlobalContext.Properties["LogName"] = LogFileName;
                 clsLogTools.ChangeLogFileName(LogFileName);
 
+                bool processingSuccess;
+
                 try
                 {
                     m_progress = PROGRESS_PCT_APE_START;
 
-                    blnSuccess = RunApe();
+                    processingSuccess = RunApe();
 
                     // Change the name of the log file back to the analysis manager log file
                     LogFileName = m_mgrParams.GetParam("logfilename");
                     log4net.GlobalContext.Properties["LogName"] = LogFileName;
                     clsLogTools.ChangeLogFileName(LogFileName);
 
-                    if (!blnSuccess) {
+                    if (!processingSuccess) {
                         if (string.IsNullOrWhiteSpace(m_message))
                             LogError("Error running Ape");
                         else
@@ -71,7 +72,7 @@ namespace AnalysisManager_Ape_PlugIn
                     clsLogTools.ChangeLogFileName(LogFileName);
 
                     LogError("Error running Ape: " + ex.Message);
-                    blnSuccess = false;
+                    processingSuccess = false;
                     m_message = "Error running Ape";
                 }
 
@@ -83,53 +84,35 @@ namespace AnalysisManager_Ape_PlugIn
                 UpdateSummaryFile();
 
                 //Make sure objects are released
-                //2 second delay
-                System.Threading.Thread.Sleep(2000);
+                System.Threading.Thread.Sleep(500);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
-                if (!blnSuccess)
+                if(!processingSuccess)
                 {
-                    // Move the source files and any results to the Failed Job folder
-                    // Useful for debugging MultiAlign problems
+                    // Something went wrong
+                    // In order to help diagnose things, we will move whatever files were created into the result folder,
+                    //  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
                     CopyFailedResultsToArchiveFolder();
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
+                // Override the output folder name and the dataset name (since this is a dataset aggregation job)
                 m_ResFolderName = m_jobParams.GetParam("StepOutputFolderName");
                 m_Dataset = m_jobParams.GetParam("OutputFolderName");
                 m_jobParams.SetParam("StepParameters", "OutputFolderName", m_ResFolderName);
 
-                CloseOutType result = MakeResultsFolder();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // MakeResultsFolder handles posting to local log, so set database error message and exit
-                    m_message = "Error making results folder";
-                    return result;
-                }
+                var success = CopyResultsToTransferDirectory();
 
-               result = MoveResultFiles();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    m_message = "Error moving files into results folder";
-                    return result;
-                }
+                return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
 
-                result = CopyResultsFolderToServer();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    return result;
-                }
-
-            } catch (Exception ex) {
+            }
+            catch (Exception ex) {
                 m_message = "Error in ApePlugin->RunTool";
                 LogError(m_message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
 
             }
-
-            return CloseOutType.CLOSEOUT_SUCCESS;
+            
 
         }
 
@@ -149,55 +132,6 @@ namespace AnalysisManager_Ape_PlugIn
            return bSuccess;
 
        }
-       
-
-       protected void CopyFailedResultsToArchiveFolder()
-        {
-           string strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
-            if (string.IsNullOrEmpty(strFailedResultsFolderPath))
-                strFailedResultsFolderPath = "??Not Defined??";
-
-            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
-
-            // Bump up the debug level if less than 2
-            if (m_DebugLevel < 2)
-                m_DebugLevel = 2;
-
-            // Try to save whatever files are in the work directory
-           string strFolderPathToArchive = string.Copy(m_WorkDir);
-
-            // If necessary, delete extra files with the following
-            /* 
-                try
-                {
-                    System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_Dataset + ".UIMF"));
-                    System.IO.File.Delete(System.IO.Path.Combine(m_WorkDir, m_Dataset + "*.csv"));
-                }
-                catch
-                {
-                    // Ignore errors here
-                }
-            */
-            
-           // Make the results folder
-            CloseOutType result = MakeResultsFolder();
-            if (result == CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                // Move the result files into the result folder
-                result = MoveResultFiles();
-                if (result == CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Move was a success; update strFolderPathToArchive
-                    strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName);
-                }
-            }
-
-            // Copy the results folder to the Archive folder
-            var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
-            objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive);
-
-        }
-
 
         /// <summary>
         /// Stores the tool version info in the database

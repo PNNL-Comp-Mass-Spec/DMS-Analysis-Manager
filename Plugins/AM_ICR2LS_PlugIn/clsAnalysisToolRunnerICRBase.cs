@@ -448,29 +448,10 @@ namespace AnalysisManagerICR2LSPlugIn
 
             m_jobParams.AddResultFileToSkip("Status.log");
 
-            // Make results folder
-            result = MakeResultsFolder();
-            if (result != CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                return result;
-            }
+            var copySuccess = CopyResultsToTransferDirectory();
 
-            result = MoveResultFiles();
-            if (result != CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                return result;
-            }
-
-            if (!blnCopyResultsToServer)
-            {
-                return CloseOutType.CLOSEOUT_SUCCESS;
-            }
-
-            result = CopyResultsFolderToServer();
-            if (result != CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                return result;
-            }
+            if (!copySuccess)
+                return CloseOutType.CLOSEOUT_FAILED;
 
             if (pekConversionSuccess)
             {

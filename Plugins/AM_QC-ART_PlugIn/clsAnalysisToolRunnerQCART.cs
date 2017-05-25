@@ -25,7 +25,7 @@ namespace AnalysisManagerQCARTPlugin
         private const float PROGRESS_PCT_COMPLETE = 99;
 
         // private const string QCART_CONSOLE_OUTPUT = "QCART_ConsoleOutput.txt";
-        
+
         private const string STORE_QCART_RESULTS = "StoreQCARTResults";
 
         #endregion
@@ -63,7 +63,7 @@ namespace AnalysisManagerQCARTPlugin
                     LogDebug("clsAnalysisToolRunnerQCART.RunTool(): Enter");
                 }
 
-                // Initialize classwide variables 
+                // Initialize classwide variables
                 // (these are not used by this plugin)
                 // mLastConsoleOutputParse = DateTime.UtcNow;
                 // mLastProgressWriteTime = DateTime.UtcNow;
@@ -105,20 +105,14 @@ namespace AnalysisManagerQCARTPlugin
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var success = ProcessDatasetWithQCART(rProgLoc);
+                var processingSuccess = ProcessDatasetWithQCART(rProgLoc);
 
-                var eReturnCode = CloseOutType.CLOSEOUT_SUCCESS;
-
-                if (!success)
-                {
-                    eReturnCode = CloseOutType.CLOSEOUT_FAILED;
-                }
-                else
+                if (processingSuccess)
                 {
                     // Look for the result files
-                    success = PostProcessResults(datasetNamesAndJobs);
-                    if (!success)
-                        eReturnCode = CloseOutType.CLOSEOUT_FAILED;
+                    var postProcessSuccess = PostProcessResults(datasetNamesAndJobs);
+                    if (!postProcessSuccess)
+                        processingSuccess = false;
                 }
 
                 DeleteLockFileIfRequired();
@@ -134,12 +128,13 @@ namespace AnalysisManagerQCARTPlugin
 
                 // Make sure objects are released
                 Thread.Sleep(500);
-                PRISM.clsProgRunner.GarbageCollectNow();
+                clsProgRunner.GarbageCollectNow();
 
-                if (!success)
+                if (!processingSuccess)
                 {
-                    // Move the source files and any results to the Failed Job folder
-                    // Useful for debugging problems
+                    // Something went wrong
+                    // In order to help diagnose things, we will move whatever files were created into the result folder,
+                    //  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
                     CopyFailedResultsToArchiveFolder();
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -152,31 +147,11 @@ namespace AnalysisManagerQCARTPlugin
 
                 // Skip the .Rout file
                 m_jobParams.AddResultFileToSkip(clsAnalysisResourcesQCART.QCART_PROCESSING_SCRIPT_NAME + "out");
-                
-                var result = MakeResultsFolder();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // MakeResultsFolder handles posting to local log, so set database error message and exit
-                    m_message = "Error making results folder";
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
 
-                result = MoveResultFiles();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    m_message = "Error moving files into results folder";
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
+                var success = CopyResultsToTransferDirectory();
 
-                result = CopyResultsFolderToServer();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
+                return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
 
-                return eReturnCode;
             }
             catch (Exception ex)
             {
@@ -249,40 +224,6 @@ namespace AnalysisManagerQCARTPlugin
 
         }
 
-        private void CopyFailedResultsToArchiveFolder()
-        {
-            var strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
-            if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
-                strFailedResultsFolderPath = "??Not Defined??";
-
-            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
-
-            // Bump up the debug level if less than 2
-            if (m_DebugLevel < 2)
-                m_DebugLevel = 2;
-
-            // Try to save whatever files are in the work directory (however, delete the XML files first)
-            var strFolderPathToArchive = string.Copy(m_WorkDir);
-
-            // Make the results folder
-            var result = MakeResultsFolder();
-            if (result == CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                // Move the result files into the result folder
-                result = MoveResultFiles();
-                if (result == CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Move was a success; update strFolderPathToArchive
-                    strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName);
-                }
-            }
-
-            // Copy the results folder to the Archive folder
-            var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
-            objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive);
-
-        }
-
         private bool CreateBaselineMetricsMetadataFile(
             Dictionary<string, int> datasetNamesAndJobs,
             FileInfo fiNewBaselineData)
@@ -315,13 +256,13 @@ namespace AnalysisManagerQCARTPlugin
                     writer.IndentChar = '\t';
 
                     writer.WriteStartElement("Parameters");
-                    
+
                     writer.WriteStartElement("Metadata");
                     AppendXmlElementWithValue(writer, "Project", projectName);
                     writer.WriteEndElement();
 
                     writer.WriteStartElement("BaselineList");
-                    
+
                     var query = (from item in datasetNamesAndJobs orderby item.Key select item);
                     foreach (var item in query)
                     {
@@ -340,7 +281,7 @@ namespace AnalysisManagerQCARTPlugin
                     writer.WriteEndElement(); // </Parameters>
                 }
 
-                try 
+                try
                 {
                     // Copy the metadata file to the remote path
                     m_FileTools.CopyFile(baselineMetadataPathLocal, baselineMetadataPathRemote);
@@ -446,7 +387,7 @@ namespace AnalysisManagerQCARTPlugin
                             LogError("QC-ART results file has fewer than 2 columns");
                             continue;
                         }
-                            
+
                         var datasetName = dataCols[0];
                         if (!clsGlobal.IsMatch(m_Dataset, datasetName))
                         {
@@ -467,7 +408,7 @@ namespace AnalysisManagerQCARTPlugin
                     m_message = string.Empty;
                     return true;
                 }
-                
+
                 LogError("QC-ART results file is not in the expected format");
                 return false;
             }
@@ -475,7 +416,7 @@ namespace AnalysisManagerQCARTPlugin
             {
                 m_message = "Exception loading QC-ART results";
                 LogError(m_message + ": " + ex.Message);
-                return false;              
+                return false;
             }
         }
 
@@ -486,7 +427,7 @@ namespace AnalysisManagerQCARTPlugin
             // Example Console output
             //
             // ...
-            // 
+            //
 
             try
             {
@@ -509,7 +450,7 @@ namespace AnalysisManagerQCARTPlugin
         /// <summary>
         /// Read the QC-ART results file and store the score in the database
         /// If we did not use an existing baseline file, creates a new baseline metadata file
-        /// and copies the metadata file plus the 
+        /// and copies the metadata file plus the
         /// </summary>
         /// <param name="datasetNamesAndJobs"></param>
         /// <returns></returns>
@@ -570,7 +511,7 @@ namespace AnalysisManagerQCARTPlugin
             {
                 m_message = "Exception post processing results";
                 LogError(m_message + ": " + ex.Message);
-                return false;              
+                return false;
             }
         }
 
@@ -608,7 +549,7 @@ namespace AnalysisManagerQCARTPlugin
 
             /*
              * This plugin does not use ConsoleOutput files
-             * 
+             *
             if (!cmdRunner.WriteConsoleOutputToFile && cmdRunner.CachedConsoleOutput.Length > 0)
             {
                 // Write the console output to a text file
@@ -618,7 +559,7 @@ namespace AnalysisManagerQCARTPlugin
                 swConsoleOutputfile.WriteLine(cmdRunner.CachedConsoleOutput);
                 swConsoleOutputfile.Close();
             }
-           
+
             if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
             {
                 LogError(
@@ -660,9 +601,9 @@ namespace AnalysisManagerQCARTPlugin
         }
 
 
-        /*            
+        /*
          * Not used by this plugin
-         * 
+         *
         private void StoreConsoleErrorMessage(StreamReader srInFile, string strLineIn)
         {
             if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
@@ -692,7 +633,7 @@ namespace AnalysisManagerQCARTPlugin
         /// <returns></returns>
         private bool StoreResultsInDB(double qcartValue)
         {
-              
+
             try
             {
 
@@ -813,7 +754,7 @@ namespace AnalysisManagerQCARTPlugin
 
                 /*
                  * This plugin does not use ConsoleOutput files
-                 * 
+                 *
                 // Parse the console output file every 15 seconds
                 if (DateTime.UtcNow.Subtract(mLastConsoleOutputParse).TotalSeconds >= 15)
                 {

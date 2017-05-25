@@ -69,7 +69,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         private readonly IJobParams m_jobParams;
 
         private readonly string m_WorkDir;
-        private readonly string m_JobNum;
+        private readonly int m_JobNum;
         private readonly short m_DebugLevel;
 
         private readonly bool mMSGFPlus;
@@ -127,7 +127,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="workDir"></param>
         /// <param name="debugLevel"></param>
         /// <param name="msgfPlus"></param>
-        public clsMSGFDBUtils(IMgrParams oMgrParams, IJobParams oJobParams, string jobNum, string workDir, short debugLevel, bool msgfPlus)
+        public clsMSGFDBUtils(IMgrParams oMgrParams, IJobParams oJobParams, int jobNum, string workDir, short debugLevel, bool msgfPlus)
         {
             m_mgrParams = oMgrParams;
             m_jobParams = oJobParams;
@@ -1389,7 +1389,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 indexIteration += 1;
 
                 // Note that fastaFilePath will get updated by the IndexedDBCreator if we're running Legacy MSGFDB
-                var result = objIndexedDBCreator.CreateSuffixArrayFiles(m_WorkDir, m_DebugLevel, m_JobNum, javaProgLoc, msgfDbProgLoc, fastaFilePath,
+                var result = objIndexedDBCreator.CreateSuffixArrayFiles(m_WorkDir, m_DebugLevel, javaProgLoc, msgfDbProgLoc, fastaFilePath,
                     fastaFileIsDecoy, strMSGFPlusIndexFilesFolderPath, strMSGFPlusIndexFilesFolderPathLegacyDB);
 
                 if (result == CloseOutType.CLOSEOUT_SUCCESS)

@@ -87,14 +87,10 @@ namespace AnalysisManagerIDPickerPlugIn
             string strSynFilePath = null;
             string strErrorMessage = string.Empty;
 
-            CloseOutType result = CloseOutType.CLOSEOUT_SUCCESS;
-
             // As of January 21, 2015 we are now always skipping IDPicker (and thus simply creating the .pepXML file)
-            bool blnSkipIDPicker = ALWAYS_SKIP_IDPICKER;
+            var skipIDPicker = ALWAYS_SKIP_IDPICKER;
 
-            var blnProcessingError = false;
-
-            bool blnSuccess = false;
+            var processingSuccess = true;
 
             mIDPickerOptions = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
             mCmdRunnerErrors = new ConcurrentBag<string>();
@@ -118,7 +114,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
                 // Determine the path to the IDPicker program (idpQonvert); folder will also contain idpAssemble.exe and idpReport.exe
                 string progLocQonvert = string.Empty;
-                if (!blnSkipIDPicker)
+                if (!skipIDPicker)
                 {
                     progLocQonvert = DetermineProgramLocation("IDPicker", "IDPickerProgLoc", IDPicker_Qonvert);
 
@@ -162,7 +158,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
                 var fiFastaFile = new FileInfo(strFASTAFilePath);
 
-                if (!blnSkipIDPicker && !fiFastaFile.Exists)
+                if (!skipIDPicker && !fiFastaFile.Exists)
                 {
                     // Fasta file not found
                     m_message = "Fasta file not found: " + fiFastaFile.Name;
@@ -172,18 +168,18 @@ namespace AnalysisManagerIDPickerPlugIn
 
                 var blnSplitFasta = m_jobParams.GetJobParameter("SplitFasta", false);
 
-                if (!blnSkipIDPicker && blnSplitFasta)
+                if (!skipIDPicker && blnSplitFasta)
                 {
-                    blnSkipIDPicker = true;
+                    skipIDPicker = true;
                     m_EvalMessage = "SplitFasta jobs typically have fasta files too large for IDPQonvert; skipping IDPicker";
                     LogWarning(m_EvalMessage);
                 }
 
                 // Store the version of IDPicker and PeptideListToXML in the database
-                // Alternatively, if blnSkipIDPicker is true, then just store the version of PeptideListToXML
+                // Alternatively, if skipIDPicker is true, then just store the version of PeptideListToXML
 
                 // This function updates mPeptideListToXMLExePath and mIDPickerProgramFolder
-                if (!StoreToolVersionInfo(progLocQonvert, blnSkipIDPicker))
+                if (!StoreToolVersionInfo(progLocQonvert, skipIDPicker))
                 {
                     LogError("Aborting since StoreToolVersionInfo returned false");
                     m_message = "Error determining IDPicker version";
@@ -191,8 +187,8 @@ namespace AnalysisManagerIDPickerPlugIn
                 }
 
                 // Create the PepXML file
-                blnSuccess = CreatePepXMLFile(fiFastaFile.FullName, strSynFilePath, ePHRPResultType);
-                if (!blnSuccess)
+                var pepXmlSuccess = CreatePepXMLFile(fiFastaFile.FullName, strSynFilePath, ePHRPResultType);
+                if (!pepXmlSuccess)
                 {
                     if (string.IsNullOrEmpty(m_message))
                     {
@@ -202,7 +198,7 @@ namespace AnalysisManagerIDPickerPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (blnSkipIDPicker)
+                if (skipIDPicker)
                 {
                     // Don't keep this file since we're skipping IDPicker
                     m_jobParams.AddResultFileToSkip("Tool_Version_Info_IDPicker.txt");
@@ -221,21 +217,23 @@ namespace AnalysisManagerIDPickerPlugIn
                 {
                     var blnCriticalError = false;
 
-                    blnSuccess = RunIDPickerWrapper(ePHRPResultType, strSynFilePath, fiFastaFile.FullName, out blnProcessingError, out blnCriticalError);
+                    var idPickerSuccess = RunIDPickerWrapper(ePHRPResultType, strSynFilePath, fiFastaFile.FullName, out var processingError, out blnCriticalError);
 
                     if (blnCriticalError)
                     {
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
 
-                    if (!blnSuccess)
-                        blnProcessingError = true;
+                    if (!idPickerSuccess || processingError)
+                        processingSuccess = false;
                 }
 
-                if (!blnProcessingError)
+                if (processingSuccess)
                 {
                     // Zip the PepXML file
-                    ZipPepXMLFile();
+                    var zipSuccess = ZipPepXMLFile();
+                    if (!zipSuccess)
+                        processingSuccess = false;
                 }
 
                 m_jobParams.AddResultFileExtensionToSkip(".bat");
@@ -249,10 +247,10 @@ namespace AnalysisManagerIDPickerPlugIn
                 UpdateSummaryFile();
 
                 //Make sure objects are released
-                Thread.Sleep(500);           // 500 msec delay
+                Thread.Sleep(500);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
-                if (blnProcessingError | result != CloseOutType.CLOSEOUT_SUCCESS)
+                if (!processingSuccess)
                 {
                     // Something went wrong
                     // In order to help diagnose things, we will move whatever files were created into the result folder,
@@ -265,26 +263,18 @@ namespace AnalysisManagerIDPickerPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                result = MakeResultsFolder();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                var folderCreated = MakeResultsFolder();
+                if (!folderCreated)
                 {
-                    //MakeResultsFolder handles posting to local log, so set database error message and exit
+                    // MakeResultsFolder handles posting to local log, so set database error message and exit
                     m_message = "Error making results folder";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                result = MoveResultFiles();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                if (!skipIDPicker)
                 {
-                    // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    m_message = "Error moving files into results folder";
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
-
-                if (!blnSkipIDPicker)
-                {
-                    result = MoveFilesIntoIDPickerSubfolder();
-                    if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                    var moveResult = MoveFilesIntoIDPickerSubfolder();
+                    if (moveResult != CloseOutType.CLOSEOUT_SUCCESS)
                     {
                         // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
                         m_message = "Error moving files into IDPicker subfolder";
@@ -292,12 +282,10 @@ namespace AnalysisManagerIDPickerPlugIn
                     }
                 }
 
-                result = CopyResultsFolderToServer();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    return result;
-                }
+                var success = CopyResultsToTransferDirectory();
+
+                return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
+
             }
             catch (Exception ex)
             {
@@ -306,7 +294,6 @@ namespace AnalysisManagerIDPickerPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            return CloseOutType.CLOSEOUT_SUCCESS; //No failures so everything must have succeeded
         }
 
         private bool RunIDPickerWrapper(clsPHRPReader.ePeptideHitResultType ePHRPResultType, string strSynFilePath, string fastaFilePath,
@@ -392,40 +379,6 @@ namespace AnalysisManagerIDPickerPlugIn
             {
                 return true;
             }
-        }
-
-        private void CopyFailedResultsToArchiveFolder()
-        {
-            string strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
-            if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
-                strFailedResultsFolderPath = "??Not Defined??";
-
-            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
-
-            // Bump up the debug level if less than 2
-            if (m_DebugLevel < 2)
-                m_DebugLevel = 2;
-
-            // Try to save whatever files are in the work directory
-            string strFolderPathToArchive = null;
-            strFolderPathToArchive = string.Copy(m_WorkDir);
-
-            // Make the results folder
-            var result = MakeResultsFolder();
-            if (result == CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                // Move the result files into the result folder
-                result = MoveResultFiles();
-                if (result == CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Move was a success; update strFolderPathToArchive
-                    strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName);
-                }
-            }
-
-            // Copy the results folder to the Archive folder
-            var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
-            objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive);
         }
 
         /// <summary>
@@ -1113,9 +1066,9 @@ namespace AnalysisManagerIDPickerPlugIn
             }
 
             // Build the command string, for example:
-            //   -MaxFDR 0.1 -ProteinDatabase c:\DMS_Temp_Org\ID_002339_125D2B84.fasta 
-            //   -SearchScoreWeights "msgfspecprob -1" -OptimizeScoreWeights 1 
-            //   -NormalizedSearchScores msgfspecprob -DecoyPrefix Reversed_ 
+            //   -MaxFDR 0.1 -ProteinDatabase c:\DMS_Temp_Org\ID_002339_125D2B84.fasta
+            //   -SearchScoreWeights "msgfspecprob -1" -OptimizeScoreWeights 1
+            //   -NormalizedSearchScores msgfspecprob -DecoyPrefix Reversed_
             //   -dump QC_Shew_11_06_pt5_3_13Feb12_Doc_11-12-07.pepXML
             CmdStr = string.Empty;
 

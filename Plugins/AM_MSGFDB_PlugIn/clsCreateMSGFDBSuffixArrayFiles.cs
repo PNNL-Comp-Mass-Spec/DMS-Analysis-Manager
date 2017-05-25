@@ -350,7 +350,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// </summary>
         /// <param name="strLogFileDir"></param>
         /// <param name="intDebugLevel"></param>
-        /// <param name="JobNum"></param>
+        /// <param name="jobNum"></param>
         /// <param name="javaProgLoc"></param>
         /// <param name="msgfDbProgLoc"></param>
         /// <param name="strFASTAFilePath">FASTA file path</param>
@@ -365,7 +365,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// </param>
         /// <returns>CloseOutType enum indicating success or failure</returns>
         /// <remarks></remarks>
-        public CloseOutType CreateSuffixArrayFiles(string strLogFileDir, int intDebugLevel, string JobNum, string javaProgLoc, string msgfDbProgLoc,
+        public CloseOutType CreateSuffixArrayFiles(string strLogFileDir, int intDebugLevel, string javaProgLoc, string msgfDbProgLoc,
                                                    string strFASTAFilePath, bool blnFastaFileIsDecoy, string strMSGFPlusIndexFilesFolderPathBase,
                                                    string strMSGFPlusIndexFilesFolderPathLegacyDB)
         {

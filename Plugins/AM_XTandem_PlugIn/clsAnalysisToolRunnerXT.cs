@@ -55,11 +55,7 @@ namespace AnalysisManagerXTandemPlugIn
         /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
-            string CmdStr = null;
-            bool blnSuccess = false;
-            bool blnNoResults = false;
-
-            //Do the base class stuff
+            // Do the base class stuff
             if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -69,7 +65,7 @@ namespace AnalysisManagerXTandemPlugIn
             mToolVersionWritten = false;
             mXTandemVersion = string.Empty;
             mXTandemResultsCount = -1;
-            blnNoResults = false;
+            var noResults = false;
 
             // Make sure the _DTA.txt file is valid
             if (!ValidateCDTAFile())
@@ -111,8 +107,8 @@ namespace AnalysisManagerXTandemPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            //Set up and execute a program runner to run X!Tandem
-            CmdStr = "input.xml";
+            // Set up and execute a program runner to run X!Tandem
+            var cmdStr = "input.xml";
 
             mCmdRunner.CreateNoWindow = true;
             mCmdRunner.CacheStandardOutput = true;
@@ -123,7 +119,7 @@ namespace AnalysisManagerXTandemPlugIn
 
             m_progress = PROGRESS_PCT_XTANDEM_STARTING;
 
-            blnSuccess = mCmdRunner.RunProgram(progLoc, CmdStr, "XTandem", true);
+            var processingSuccess = mCmdRunner.RunProgram(progLoc, cmdStr, "XTandem", true);
 
             // Parse the console output file one more time to determine the number of peptides found
             ParseConsoleOutputFile(Path.Combine(m_WorkDir, XTANDEM_CONSOLE_OUTPUT));
@@ -133,7 +129,7 @@ namespace AnalysisManagerXTandemPlugIn
                 mToolVersionWritten = StoreToolVersionInfo();
             }
 
-            if (!blnSuccess)
+            if (!processingSuccess)
             {
                 LogError("Error running XTandem, job " + m_JobNum);
 
@@ -157,114 +153,52 @@ namespace AnalysisManagerXTandemPlugIn
 
             if (mXTandemResultsCount < 0)
             {
-                m_message = "X!Tandem did not report a \"Valid models\" count";
+                m_message = @"X!Tandem did not report a ""Valid models"" count";
                 LogError(m_message);
-                blnNoResults = true;
+                noResults = true;
             }
             else if (mXTandemResultsCount == 0)
             {
                 m_message = "No results above threshold";
                 LogError(m_message);
-                blnNoResults = true;
+                noResults = true;
             }
 
-            //Stop the job timer
+            // Stop the job timer
             m_StopTime = DateTime.UtcNow;
 
-            //Add the current job data to the summary file
+            // Add the current job data to the summary file
             UpdateSummaryFile();
 
-            //Make sure objects are released
+            // Make sure objects are released
             Thread.Sleep(500);
-            // 500 msec delay
             clsProgRunner.GarbageCollectNow();
 
-            //Zip the output file
+            // Zip the output file
             var result = ZipMainOutputFile();
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
-                // Move the source files and any results to the Failed Job folder
-                // Useful for debugging XTandem problems
+                // Something went wrong
+                // In order to help diagnose things, we will move whatever files were created into the result folder,
+                //  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
                 CopyFailedResultsToArchiveFolder();
                 return result;
             }
 
-            result = MakeResultsFolder();
-            if (result != CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                //TODO: What do we do here?
-                return result;
-            }
+            var success = CopyResultsToTransferDirectory();
 
-            result = MoveResultFiles();
-            if (result != CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                //TODO: What do we do here?
-                // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                return result;
-            }
+            if (!success)
+                return CloseOutType.CLOSEOUT_FAILED;
 
-            result = CopyResultsFolderToServer();
-            if (result != CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                //TODO: What do we do here?
-                // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                return result;
-            }
-
-            if (blnNoResults)
-            {
-                return CloseOutType.CLOSEOUT_NO_DATA;
-            }
-            else
-            {
-                return CloseOutType.CLOSEOUT_SUCCESS;
-                //ZipResult
-            }
+            return noResults ? CloseOutType.CLOSEOUT_NO_DATA : CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        protected void CopyFailedResultsToArchiveFolder()
+        public override void CopyFailedResultsToArchiveFolder()
         {
-            string strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
-            if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
-                strFailedResultsFolderPath = "??Not Defined??";
+            m_jobParams.AddResultFileToSkip(Dataset + "_dta.zip");
+            m_jobParams.AddResultFileToSkip(Dataset + "_dta.txt");
 
-            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
-
-            // Bump up the debug level if less than 2
-            if (m_DebugLevel < 2)
-                m_DebugLevel = 2;
-
-            // Try to save whatever files are in the work directory (however, delete the _DTA.txt and _DTA.zip files first)
-            string strFolderPathToArchive = null;
-            strFolderPathToArchive = string.Copy(m_WorkDir);
-
-            try
-            {
-                File.Delete(Path.Combine(m_WorkDir, m_Dataset + "_dta.zip"));
-                File.Delete(Path.Combine(m_WorkDir, m_Dataset + "_dta.txt"));
-            }
-            catch (Exception)
-            {
-                // Ignore errors here
-            }
-
-            // Make the results folder
-            var result = MakeResultsFolder();
-            if (result == CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                // Move the result files into the result folder
-                result = MoveResultFiles();
-                if (result == CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Move was a success; update strFolderPathToArchive
-                    strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName);
-                }
-            }
-
-            // Copy the results folder to the Archive folder
-            var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
-            objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive);
+            base.CopyFailedResultsToArchiveFolder();
         }
 
         /// <summary>

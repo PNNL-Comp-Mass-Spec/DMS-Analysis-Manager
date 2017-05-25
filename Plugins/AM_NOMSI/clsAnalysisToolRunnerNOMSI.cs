@@ -89,8 +89,8 @@ namespace AnalysisManagerNOMSIPlugin
 
                 // Unzip the XML files
                 var compressedXMLFiles = Path.Combine(m_WorkDir, m_Dataset + "_scans.zip");
-                var success = UnzipFile(compressedXMLFiles, m_WorkDir);
-                if (!success)
+                var unzipSuccess = UnzipFile(compressedXMLFiles, m_WorkDir);
+                if (!unzipSuccess)
                 {
                     if (string.IsNullOrEmpty(m_message))
                     {
@@ -101,16 +101,16 @@ namespace AnalysisManagerNOMSIPlugin
 
                 bool noPeaksFound;
 
-                // Process the XML files using NOMSI                
-                success = ProcessScansWithNOMSI(progLoc, out noPeaksFound);
+                // Process the XML files using NOMSI
+                var processingSuccess = ProcessScansWithNOMSI(progLoc, out noPeaksFound);
 
                 var eReturnCode = CloseOutType.CLOSEOUT_SUCCESS;
 
                 if (noPeaksFound)
                 {
-                    eReturnCode = CloseOutType.CLOSEOUT_NO_DATA;                   
+                    eReturnCode = CloseOutType.CLOSEOUT_NO_DATA;
                 }
-                else if (!success)
+                else if (!processingSuccess)
                 {
                     eReturnCode = CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -130,7 +130,7 @@ namespace AnalysisManagerNOMSIPlugin
                         if (string.IsNullOrEmpty(m_message))
                         {
                             m_message = "NOMSI results not found";
-                            success = false;
+                            processingSuccess = false;
                             eReturnCode = CloseOutType.CLOSEOUT_FAILED;
                         }
                     }
@@ -149,10 +149,11 @@ namespace AnalysisManagerNOMSIPlugin
                 Thread.Sleep(500);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
-                if (!success)
+                if (!processingSuccess)
                 {
-                    // Move the source files and any results to the Failed Job folder
-                    // Useful for debugging problems
+                    // Something went wrong
+                    // In order to help diagnose things, we will move whatever files were created into the result folder,
+                    //  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
                     CopyFailedResultsToArchiveFolder();
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -160,30 +161,10 @@ namespace AnalysisManagerNOMSIPlugin
                 // No need to keep the JobParameters file
                 m_jobParams.AddResultFileToSkip("JobParameters_" + m_JobNum + ".xml");
 
-                var result = MakeResultsFolder();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // MakeResultsFolder handles posting to local log, so set database error message and exit
-                    m_message = "Error making results folder";
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
+                var success = CopyResultsToTransferDirectory();
 
-                result = MoveResultFiles();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    m_message = "Error moving files into results folder";
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
+                return success ? eReturnCode : CloseOutType.CLOSEOUT_FAILED;
 
-                result = CopyResultsFolderToServer();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
-
-                return eReturnCode;
             }
             catch (Exception ex)
             {
@@ -194,20 +175,8 @@ namespace AnalysisManagerNOMSIPlugin
 
         }
 
-        protected void CopyFailedResultsToArchiveFolder()
+        public override void CopyFailedResultsToArchiveFolder()
         {
-            var strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
-            if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
-                strFailedResultsFolderPath = "??Not Defined??";
-
-            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
-
-            // Bump up the debug level if less than 2
-            if (m_DebugLevel < 2)
-                m_DebugLevel = 2;
-
-            // Try to save whatever files are in the work directory (however, delete the XML files first)
-            var strFolderPathToArchive = string.Copy(m_WorkDir);
 
             try
             {
@@ -223,23 +192,7 @@ namespace AnalysisManagerNOMSIPlugin
                 // Ignore errors here
             }
 
-            // Make the results folder
-            var result = MakeResultsFolder();
-            if (result == CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                // Move the result files into the result folder
-                result = MoveResultFiles();
-                if (result == CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Move was a success; update strFolderPathToArchive
-                    strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName);
-                }
-            }
-
-            // Copy the results folder to the Archive folder
-            var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
-            objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive);
-
+            base.CopyFailedResultsToArchiveFolder();
         }
 
         private string GetUsername()
@@ -295,7 +248,7 @@ namespace AnalysisManagerNOMSIPlugin
             // diagnostics=failure
             // summary=success
             // end=5/4/2015 2:16:45 PM
-            // 
+            //
 
             try
             {
@@ -346,7 +299,7 @@ namespace AnalysisManagerNOMSIPlugin
                             }
                             else
                             {
-                                mConsoleOutputErrorMsg = clsGlobal.AppendToComment(mConsoleOutputErrorMsg, errorMessage);                                    
+                                mConsoleOutputErrorMsg = clsGlobal.AppendToComment(mConsoleOutputErrorMsg, errorMessage);
                             }
                         }
                         else if (strLineIn.Contains("No peaks found") ||
@@ -784,7 +737,7 @@ namespace AnalysisManagerNOMSIPlugin
 
                     LogProgress("NOMSI");
                 }
-                
+
             }
 
         }

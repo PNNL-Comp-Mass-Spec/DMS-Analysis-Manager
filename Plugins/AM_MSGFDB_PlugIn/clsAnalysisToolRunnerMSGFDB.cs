@@ -172,7 +172,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 UpdateSummaryFile();
 
                 //Make sure objects are released
-                Thread.Sleep(500);         // 500 msec delay
+                Thread.Sleep(500);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
                 if (blnProcessingError | result != CloseOutType.CLOSEOUT_SUCCESS)
@@ -184,28 +184,10 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                result = MakeResultsFolder();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    //MakeResultsFolder handles posting to local log, so set database error message and exit
-                    m_message = "Error making results folder";
+                var success = CopyResultsToTransferDirectory();
+                if (!success)
                     return CloseOutType.CLOSEOUT_FAILED;
-                }
 
-                result = MoveResultFiles();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    m_message = "Error moving files into results folder";
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
-
-                result = CopyResultsFolderToServer();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    return result;
-                }
             }
             catch (Exception ex)
             {
@@ -238,7 +220,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         {
             var strMSGFJarfile = clsMSGFDBUtils.MSGFPLUS_JAR_NAME;
 
-            fiMSGFPlusResults = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + "_msgfplus.mzid"));
+            fiMSGFPlusResults = new FileInfo(Path.Combine(m_WorkDir, Dataset + "_msgfplus.mzid"));
 
             blnProcessingError = false;
             blnTooManySkippedSpectra = false;
@@ -286,7 +268,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             bool fastaFileIsDecoy;
 
             result = mMSGFDBUtils.InitializeFastaFile(javaExePath, msgfdbJarFilePath, out fastaFileSizeKB, out fastaFileIsDecoy, out fastaFilePath,
-                strParameterFilePath);
+                                                      strParameterFilePath);
 
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
@@ -300,7 +282,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             string strMSGFDbCmdLineOptions;
 
             result = mMSGFDBUtils.ParseMSGFPlusParameterFile(fastaFileSizeKB, fastaFileIsDecoy, strAssumedScanType, strScanTypeFilePath,
-                strInstrumentGroup, strParameterFilePath, out strMSGFDbCmdLineOptions);
+                                                             strInstrumentGroup, strParameterFilePath, out strMSGFDbCmdLineOptions);
 
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
@@ -348,13 +330,13 @@ namespace AnalysisManagerMSGFDBPlugIn
             switch (eInputFileFormat)
             {
                 case eInputFileFormatTypes.CDTA:
-                    cmdStr += " -s " + m_Dataset + "_dta.txt";
+                    cmdStr += " -s " + Dataset + "_dta.txt";
                     break;
                 case eInputFileFormatTypes.MzML:
-                    cmdStr += " -s " + m_Dataset + clsAnalysisResources.DOT_MZML_EXTENSION;
+                    cmdStr += " -s " + Dataset + clsAnalysisResources.DOT_MZML_EXTENSION;
                     break;
                 case eInputFileFormatTypes.MzXML:
-                    cmdStr += " -s " + m_Dataset + clsAnalysisResources.DOT_MZXML_EXTENSION;
+                    cmdStr += " -s " + Dataset + clsAnalysisResources.DOT_MZXML_EXTENSION;
                     break;
                 default:
                     LogError("Unsupported InputFileFormat: " + eInputFileFormat);
@@ -460,7 +442,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                     // Wait 5 more seconds, then parse the log file again
                     // Keep checking and waiting for up to 45 seconds
 
-                    LogWarning("MSGF+ finished, but the log file reports " + mMSGFDBUtils.TaskCountCompleted + " / " + mMSGFDBUtils.TaskCountTotal + " completed tasks");
+                    LogWarning("MSGF+ finished, but the log file reports " + mMSGFDBUtils.TaskCountCompleted + " / " + mMSGFDBUtils.TaskCountTotal +
+                               " completed tasks");
 
                     var waitStartTime = DateTime.UtcNow;
                     while (DateTime.UtcNow.Subtract(waitStartTime).TotalSeconds < 45)
@@ -495,7 +478,9 @@ namespace AnalysisManagerMSGFDBPlugIn
                     if (mMSGFDBUtils.TaskCountCompleted == mMSGFDBUtils.TaskCountTotal - 1)
                     {
                         // All but one of the tasks finished
-                        LogWarning("MSGF+ finished, but the logs indicate that one of the " + mMSGFDBUtils.TaskCountTotal + " tasks did not complete; " + "this could indicate an error", true);
+                        LogWarning(
+                            "MSGF+ finished, but the logs indicate that one of the " + mMSGFDBUtils.TaskCountTotal + " tasks did not complete; " +
+                            "this could indicate an error", true);
                     }
                     else
                     {
@@ -560,7 +545,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                         m_jobParams.GetJobParameter("CentroidDTAs", false) ||
                         m_jobParams.GetJobParameter("CentroidMGF", false);
 
-                    var dblFractionSkipped = mMSGFDBUtils.ContinuumSpectraSkipped / (double)(mMSGFDBUtils.ContinuumSpectraSkipped + mMSGFDBUtils.SpectraSearched);
+                    var dblFractionSkipped = mMSGFDBUtils.ContinuumSpectraSkipped /
+                                             (double)(mMSGFDBUtils.ContinuumSpectraSkipped + mMSGFDBUtils.SpectraSearched);
                     var strPercentSkipped = (dblFractionSkipped * 100).ToString("0.0") + "%";
 
                     if (dblFractionSkipped > 0.2 & !spectraAreCentroided)
@@ -617,7 +603,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <remarks></remarks>
         private string ConvertMZIDToTSV(string strMZIDFileName)
         {
-            var strTSVFilePath = Path.Combine(m_WorkDir, m_Dataset + clsMSGFDBUtils.MSGFPLUS_TSV_SUFFIX);
+            var strTSVFilePath = Path.Combine(m_WorkDir, Dataset + clsMSGFDBUtils.MSGFPLUS_TSV_SUFFIX);
 
             // Determine the path to the MzidToTsvConverter
             var mzidToTsvConverterProgLoc = DetermineProgramLocation("MzidToTsvConverter", "MzidToTsvConverterProgLoc", "MzidToTsvConverter.exe");
@@ -631,7 +617,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 return string.Empty;
             }
 
-            strTSVFilePath = mMSGFDBUtils.ConvertMZIDToTSV(mzidToTsvConverterProgLoc, m_Dataset, strMZIDFileName);
+            strTSVFilePath = mMSGFDBUtils.ConvertMZIDToTSV(mzidToTsvConverterProgLoc, Dataset, strMZIDFileName);
 
             if (string.IsNullOrEmpty(strTSVFilePath))
             {
@@ -654,45 +640,23 @@ namespace AnalysisManagerMSGFDBPlugIn
 
         }
 
-        private void CopyFailedResultsToArchiveFolder()
+        public override void CopyFailedResultsToArchiveFolder()
         {
-            var strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
-            if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
-                strFailedResultsFolderPath = "??Not Defined??";
+            // Try to save whatever files are in the work directory (however, delete any spectral data files)
 
-            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
+            m_jobParams.AddResultFileToSkip(Dataset + "_dta.zip");
+            m_jobParams.AddResultFileToSkip(Dataset + "_dta.txt");
 
-            // Bump up the debug level if less than 2
-            if (m_DebugLevel < 2)
-                m_DebugLevel = 2;
+            m_jobParams.AddResultFileToSkip(Dataset + clsAnalysisResources.DOT_RAW_EXTENSION);
+            m_jobParams.AddResultFileToSkip(Dataset + clsAnalysisResources.DOT_MZML_EXTENSION);
+            m_jobParams.AddResultFileToSkip(Dataset + clsAnalysisResources.DOT_MGF_EXTENSION);
 
-            // Try to save whatever files are in the work directory (however, delete the _DTA.txt and _DTA.zip files first)
-            var strFolderPathToArchive = string.Copy(m_WorkDir);
-
-            mMSGFDBUtils.DeleteFileInWorkDir(m_Dataset + "_dta.txt");
-            mMSGFDBUtils.DeleteFileInWorkDir(m_Dataset + "_dta.zip");
-
-            // Make the results folder
-            var result = MakeResultsFolder();
-            if (result == CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                // Move the result files into the result folder
-                result = MoveResultFiles();
-                if (result == CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Move was a success; update strFolderPathToArchive
-                    strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName);
-                }
-            }
-
-            // Copy the results folder to the Archive folder
-            var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
-            objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive);
+            base.CopyFailedResultsToArchiveFolder();
         }
 
         private bool CreateScanTypeFile(out string strScanTypeFilePath)
         {
-            var objScanTypeFileCreator = new clsScanTypeFileCreator(m_WorkDir, m_Dataset);
+            var objScanTypeFileCreator = new clsScanTypeFileCreator(m_WorkDir, Dataset);
 
             strScanTypeFilePath = string.Empty;
 
@@ -719,7 +683,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         }
 
         private CloseOutType DetermineAssumedScanType(out string strAssumedScanType, out eInputFileFormatTypes eInputFileFormat,
-            out string strScanTypeFilePath)
+                                                      out string strScanTypeFilePath)
         {
             strAssumedScanType = string.Empty;
 
@@ -936,7 +900,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
 
                 // Examine the MSGF+ TSV file to see if it's empty
-                using (var reader = new StreamReader(new FileStream(Path.Combine(m_WorkDir, msgfPlusResultsFileName), FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(Path.Combine(m_WorkDir, msgfPlusResultsFileName), FileMode.Open, FileAccess.Read,
+                                                                    FileShare.ReadWrite)))
                 {
                     var dataLines = 0;
                     while (!reader.EndOfStream)
@@ -976,6 +941,34 @@ namespace AnalysisManagerMSGFDBPlugIn
             {
                 LogError("Error in PostProcessMSGFDBResults (CurrentTask = " + currentTask + ")", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
+            }
+        }
+
+        /// <summary>
+        /// Retrieve MSGF+ results that were run remotely
+        /// </summary>
+        /// <param name="transferUtility"></param>
+        /// <returns>True on success, otherwise false</returns>
+        public override bool RetrieveRemoteResults(clsRemoteTransferUtility transferUtility)
+        {
+            try
+            {
+                var filesToRetrieve = new List<string> {
+                    ToolVersionInfoFile,
+                    Dataset + "_msgfplus.mzid.gz",
+                    clsMSGFDBUtils.MSGFPLUS_CONSOLE_OUTPUT_FILE
+                };
+
+                var remoteSourceDirectory = transferUtility.RemoteJobStepWorkDirPath;
+
+                var success = transferUtility.CopyFilesFromRemote(remoteSourceDirectory, filesToRetrieve, m_WorkDir, false);
+
+                return success;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in RetrieveRemoteResults", ex);
+                return false;
             }
         }
 

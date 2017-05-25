@@ -136,9 +136,9 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
             // Start the program and wait for it to finish
             // However, while it's running, LoopWaiting will get called via events
-            var success = mCmdRunner.RunProgram(strBatchFilePath, string.Empty, "DTARefinery", true);
+            var processingSuccess = mCmdRunner.RunProgram(strBatchFilePath, string.Empty, "DTARefinery", true);
 
-            if (!success)
+            if (!processingSuccess)
             {
                 Thread.Sleep(500);
 
@@ -204,9 +204,8 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 RegisterEvents(oMassErrorExtractor);
 
                 var intDatasetID = m_jobParams.GetJobParameter("DatasetID", 0);
-                int.TryParse(m_JobNum, out var intJob);
 
-                var blnSuccess = oMassErrorExtractor.ParseDTARefineryLogFile(m_Dataset, intDatasetID, intJob);
+                var blnSuccess = oMassErrorExtractor.ParseDTARefineryLogFile(m_Dataset, intDatasetID, m_JobNum);
 
                 if (!blnSuccess)
                 {
@@ -214,7 +213,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                     LogErrorToDatabase(m_message + ", job " + m_JobNum);
                 }
 
-                //Zip the output file
+                // Zip the output file
                 result = ZipMainOutputFile();
             }
 
@@ -226,73 +225,19 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 return result;
             }
 
-            result = MakeResultsFolder();
-            if (result != CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                //TODO: What do we do here?
-                return result;
-            }
+            var success = CopyResultsToTransferDirectory();
 
-            result = MoveResultFiles();
-            if (result != CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                //TODO: What do we do here?
-                // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                return result;
-            }
+            return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
 
-            result = CopyResultsFolderToServer();
-            if (result != CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                //TODO: What do we do here?
-                // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                return result;
-            }
 
-            return CloseOutType.CLOSEOUT_SUCCESS; //ZipResult
         }
 
-        private void CopyFailedResultsToArchiveFolder()
+        public override void CopyFailedResultsToArchiveFolder()
         {
-            var strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
-            if (string.IsNullOrEmpty(strFailedResultsFolderPath))
-                strFailedResultsFolderPath = "??Not Defined??";
+            m_jobParams.AddResultFileToSkip(Dataset + "_dta.zip");
+            m_jobParams.AddResultFileToSkip(Dataset + "_dta.txt");
 
-            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
-
-            // Bump up the debug level if less than 2
-            if (m_DebugLevel < 2)
-                m_DebugLevel = 2;
-
-            // Try to save whatever files are in the work directory (however, delete the _DTA.txt and _DTA.zip files first)
-            var strFolderPathToArchive = string.Copy(m_WorkDir);
-
-            try
-            {
-                File.Delete(Path.Combine(m_WorkDir, m_Dataset + "_dta.zip"));
-                File.Delete(Path.Combine(m_WorkDir, m_Dataset + "_dta.txt"));
-            }
-            catch (Exception)
-            {
-                // Ignore errors here
-            }
-
-            // Make the results folder
-            var result = MakeResultsFolder();
-            if (result == CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                // Move the result files into the result folder
-                result = MoveResultFiles();
-                if (result == CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Move was a success; update strFolderPathToArchive
-                    strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName);
-                }
-            }
-
-            // Copy the results folder to the Archive folder
-            var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
-            objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive);
+            base.CopyFailedResultsToArchiveFolder();
         }
 
         /// <summary>

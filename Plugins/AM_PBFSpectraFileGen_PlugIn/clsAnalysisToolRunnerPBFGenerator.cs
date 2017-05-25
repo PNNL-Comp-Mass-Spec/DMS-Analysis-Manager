@@ -62,8 +62,7 @@ namespace AnalysisManagerPBFGenerator
                 }
 
                 // Determine the path to the PbfGen program
-                string progLoc = null;
-                progLoc = DetermineProgramLocation("PBF_Gen", "PbfGenProgLoc", "PbfGen.exe");
+                var progLoc = DetermineProgramLocation("PBF_Gen", "PbfGenProgLoc", "PbfGen.exe");
 
                 if (string.IsNullOrWhiteSpace(progLoc))
                 {
@@ -88,9 +87,9 @@ namespace AnalysisManagerPBFGenerator
                 }
 
                 // Create the PBF file
-                var blnSuccess = StartPBFFileCreation(progLoc);
+                var processingSuccess = StartPBFFileCreation(progLoc);
 
-                if (blnSuccess)
+                if (processingSuccess)
                 {
                     // Look for the results file
 
@@ -110,7 +109,7 @@ namespace AnalysisManagerPBFGenerator
                                 // (which will be the case if the settings file has <item key="PbfFormatVersion" value="110569"/>)
                                 if (!m_ResFolderName.StartsWith("PBF_Gen_1_191"))
                                 {
-                                    blnSuccess = false;
+                                    processingSuccess = false;
                                 }
                                 break;
                             case "150604":
@@ -119,7 +118,7 @@ namespace AnalysisManagerPBFGenerator
                                 // (which will be the case if the settings file has <item key="PbfFormatVersion" value="150604"/>)
                                 if (!m_ResFolderName.StartsWith("PBF_Gen_1_193"))
                                 {
-                                    blnSuccess = false;
+                                    processingSuccess = false;
                                 }
                                 break;
                             case "150605":
@@ -128,15 +127,15 @@ namespace AnalysisManagerPBFGenerator
                                 // (which will be the case if the settings file has <item key="PbfFormatVersion" value="150605"/>)
                                 if (!m_ResFolderName.StartsWith("PBF_Gen_1_214"))
                                 {
-                                    blnSuccess = false;
+                                    processingSuccess = false;
                                 }
                                 break;
                             default:
-                                blnSuccess = false;
+                                processingSuccess = false;
                                 break;
                         }
 
-                        if (!blnSuccess)
+                        if (!processingSuccess)
                         {
                             LogError("Unrecognized PbfFormatVersion.  Either create a new Settings file with PbfFormatVersion " + mPbfFormatVersion +
                                      " or update the version listed in the current, default settings file;" +
@@ -153,7 +152,7 @@ namespace AnalysisManagerPBFGenerator
                                 {
                                     LogError("CopyFileToServerCache returned false for " + fiResultsFile.Name);
                                 }
-                                blnSuccess = false;
+                                processingSuccess = false;
                             }
 
                             // Create the _CacheInfo.txt file
@@ -171,7 +170,7 @@ namespace AnalysisManagerPBFGenerator
                         if (string.IsNullOrEmpty(m_message))
                         {
                             LogError("PBF_Gen results file not found: " + fiResultsFile.Name);
-                            blnSuccess = false;
+                            processingSuccess = false;
                         }
                     }
                 }
@@ -186,41 +185,23 @@ namespace AnalysisManagerPBFGenerator
 
                 // Make sure objects are released
                 System.Threading.Thread.Sleep(500);
-                // 500 msec delay
                 PRISM.clsProgRunner.GarbageCollectNow();
 
-                if (!blnSuccess)
+                if (!processingSuccess)
                 {
-                    // Move the source files and any results to the Failed Job folder
-                    // Useful for debugging problems
+                    // Something went wrong
+                    // In order to help diagnose things, we will move whatever files were created into the result folder,
+                    //  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
                     CopyFailedResultsToArchiveFolder();
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 m_jobParams.AddResultFileExtensionToSkip("_ConsoleOutput.txt");
 
-                var result = MakeResultsFolder();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    //MakeResultsFolder handles posting to local log, so set database error message and exit
-                    m_message = "Error making results folder";
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
+                var success = CopyResultsToTransferDirectory();
 
-                result = MoveResultFiles();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    m_message = "Error moving files into results folder";
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
+                return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
 
-                result = CopyResultsFolderToServer();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
             }
             catch (Exception ex)
             {
@@ -229,44 +210,14 @@ namespace AnalysisManagerPBFGenerator
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        protected void CopyFailedResultsToArchiveFolder()
+        public override void CopyFailedResultsToArchiveFolder()
         {
-            string strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
-            if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
-                strFailedResultsFolderPath = "??Not Defined??";
-
-            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
-
-            // Bump up the debug level if less than 2
-            if (m_DebugLevel < 2)
-                m_DebugLevel = 2;
-
-            // Try to save whatever files are in the work directory
-            string strFolderPathToArchive = null;
-            strFolderPathToArchive = string.Copy(m_WorkDir);
-
             m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_PBF_EXTENSION);
             m_jobParams.AddResultFileExtensionToSkip(clsAnalysisResources.DOT_RAW_EXTENSION);
 
-            // Make the results folder
-            var result = MakeResultsFolder();
-            if (result == CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                // Move the result files into the result folder
-                result = MoveResultFiles();
-                if (result == CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Move was a success; update strFolderPathToArchive
-                    strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName);
-                }
-            }
-
-            // Copy the results folder to the Archive folder
-            var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
-            objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive);
+            base.CopyFailedResultsToArchiveFolder();
         }
 
         /// <summary>

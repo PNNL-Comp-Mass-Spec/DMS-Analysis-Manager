@@ -62,7 +62,6 @@ namespace AnalysisManagerExtractionPlugin
         {
 
             var strCurrentAction = "preparing for extraction";
-            bool blnProcessingError = false;
 
             try
             {
@@ -99,6 +98,8 @@ namespace AnalysisManagerExtractionPlugin
                 }
 
                 CloseOutType eResult;
+                var processingSuccess = true;
+
                 switch (m_jobParams.GetParam("ResultType"))
                 {
                     case clsAnalysisResources.RESULT_TYPE_SEQUEST:   //Sequest result type
@@ -152,11 +153,10 @@ namespace AnalysisManagerExtractionPlugin
                         break;
                     case clsAnalysisResources.RESULT_TYPE_MODA:
                         // Convert the MODa results to a tab-delimited file; do not filter out the reversed-hit proteins
-                        string strFilteredMODaResultsFilePath = string.Empty;
-                        eResult = ConvertMODaResultsToTxt(out strFilteredMODaResultsFilePath, true);
+                        eResult = ConvertMODaResultsToTxt(out var strFilteredMODaResultsFilePath, true);
                         if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
                         {
-                            blnProcessingError = true;
+                            processingSuccess = false;
                             break;
                         }
 
@@ -165,25 +165,24 @@ namespace AnalysisManagerExtractionPlugin
                         eResult = RunPhrpForMODa(strFilteredMODaResultsFilePath);
                         if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
                         {
-                            blnProcessingError = true;
+                            processingSuccess = false;
                         }
 
                         // Convert the MODa results to a tab-delimited file, filter by FDR (and filter out the reverse-hit proteins)
                         eResult = ConvertMODaResultsToTxt(out strFilteredMODaResultsFilePath, false);
                         if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
                         {
-                            blnProcessingError = true;
+                            processingSuccess = false;
                             break;
                         }
 
                         break;
                     case clsAnalysisResources.RESULT_TYPE_MODPLUS:
                         // Convert the MODPlus results to a tab-delimited file; do not filter out the reversed-hit proteins
-                        string strFilteredMODPlusResultsFilePath = string.Empty;
-                        eResult = ConvertMODPlusResultsToTxt(out strFilteredMODPlusResultsFilePath, true);
+                        eResult = ConvertMODPlusResultsToTxt(out var strFilteredMODPlusResultsFilePath, true);
                         if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
                         {
-                            blnProcessingError = true;
+                            processingSuccess = false;
                             break;
                         }
 
@@ -192,15 +191,14 @@ namespace AnalysisManagerExtractionPlugin
                         eResult = RunPhrpForMODPlus(strFilteredMODPlusResultsFilePath);
                         if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
                         {
-                            blnProcessingError = true;
+                            processingSuccess = false;
                         }
 
                         // Convert the MODa results to a tab-delimited file, filter by FDR (and filter out the reverse-hit proteins)
                         eResult = ConvertMODPlusResultsToTxt(out strFilteredMODPlusResultsFilePath, false);
                         if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
                         {
-                            blnProcessingError = true;
-                            break;
+                            processingSuccess = false;
                         }
 
                         break;
@@ -218,7 +216,7 @@ namespace AnalysisManagerExtractionPlugin
                 if (eResult != CloseOutType.CLOSEOUT_SUCCESS & eResult != CloseOutType.CLOSEOUT_NO_DATA)
                 {
                     LogError("Error " + strCurrentAction);
-                    blnProcessingError = true;
+                    processingSuccess = false;
                 }
                 else
                 {
@@ -230,54 +228,29 @@ namespace AnalysisManagerExtractionPlugin
                 // Stop the job timer
                 m_StopTime = System.DateTime.UtcNow;
 
-                CloseOutType eReturnCode = CloseOutType.CLOSEOUT_SUCCESS;
-
-                if (blnProcessingError)
-                {
-                    // Something went wrong
-                    // In order to help diagnose things, we will move whatever files were created into the Result folder,
-                    //  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
-                    eReturnCode = CloseOutType.CLOSEOUT_FAILED;
-                }
 
                 // Add the current job data to the summary file
                 UpdateSummaryFile();
 
-                eResult = MakeResultsFolder();
-                if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+                if (!processingSuccess)
                 {
-                    // MakeResultsFolder handles posting to local log, so set database error message and exit
-                    LogError("Error making results folder");
+                    // Something went wrong
+                    // In order to help diagnose things, we will move whatever files were created into the result folder,
+                    //  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
+                    CopyFailedResultsToArchiveFolder();
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                eResult = MoveResultFiles();
-                if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // MoveResultFiles moves the Result files to the Result folder
-                    LogError("Error moving files into results folder");
-                    eReturnCode = CloseOutType.CLOSEOUT_FAILED;
-                }
+                var copySuccess = CopyResultsToTransferDirectory();
 
-                if (blnProcessingError || eReturnCode == CloseOutType.CLOSEOUT_FAILED)
-                {
-                    // Try to save whatever files were moved into the results folder
-                    var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
-                    objAnalysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(m_WorkDir, m_ResFolderName));
-
+                if (!copySuccess)
                     return CloseOutType.CLOSEOUT_FAILED;
-                }
-
-                eResult = CopyResultsFolderToServer();
-                if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    return eResult;
-                }
 
                 // Everything succeeded; now delete the _msgfplus.tsv file from the server
                 // For SplitFasta files there will be multiple tsv files to delete, plus the individual ConsoleOutput.txt files (all tracked with m_jobParams.ServerFilesToDelete)
                 RemoveNonResultServerFiles();
+
+                return CloseOutType.CLOSEOUT_SUCCESS;
             }
             catch (Exception ex)
             {
@@ -285,8 +258,6 @@ namespace AnalysisManagerExtractionPlugin
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            // If we got to here, everything worked so exit happily
-            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         /// <summary>
@@ -591,7 +562,7 @@ namespace AnalysisManagerExtractionPlugin
             var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
             if (mMSGFDBUtils == null)
             {
-                mMSGFDBUtils = new clsMSGFDBUtils(m_mgrParams, m_jobParams, m_JobNum.ToString(), m_WorkDir, m_DebugLevel, msgfPlus: true);
+                mMSGFDBUtils = new clsMSGFDBUtils(m_mgrParams, m_jobParams, m_JobNum, m_WorkDir, m_DebugLevel, msgfPlus: true);
                 RegisterEvents(mMSGFDBUtils);
 
                 // Attach an additional handler for the ErrorEvent
@@ -1120,27 +1091,15 @@ namespace AnalysisManagerExtractionPlugin
             // Summarize the number of PSMs in _msalign_syn.txt
             // ReSharper disable once UseImplicitlyTypedVariableEvident
             const clsPHRPReader.ePeptideHitResultType eResultType = clsPHRPReader.ePeptideHitResultType.MSAlign;
-            var job = 0;
-            bool blnPostResultsToDB = false;
 
-            if (int.TryParse(m_JobNum, out job))
-            {
-                blnPostResultsToDB = true;
-            }
-            else
-            {
-                blnPostResultsToDB = false;
-                LogError("Job number is not numeric: " + m_JobNum + "; will not be able to post PSM results to the database");
-            }
-
-            var objSummarizer = new clsMSGFResultsSummarizer(eResultType, m_Dataset, job, m_WorkDir);
+            var objSummarizer = new clsMSGFResultsSummarizer(eResultType, m_Dataset, m_JobNum, m_WorkDir);
             RegisterEvents(objSummarizer);
             objSummarizer.ErrorEvent += MSGFResultsSummarizer_ErrorHandler;
 
             objSummarizer.MSGFThreshold = clsMSGFResultsSummarizer.DEFAULT_MSGF_THRESHOLD;
 
             objSummarizer.ContactDatabase = true;
-            objSummarizer.PostJobPSMResultsToDB = blnPostResultsToDB;
+            objSummarizer.PostJobPSMResultsToDB = false;
             objSummarizer.SaveResultsToTextFile = false;
             objSummarizer.DatasetName = m_Dataset;
 

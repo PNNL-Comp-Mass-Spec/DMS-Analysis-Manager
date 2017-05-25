@@ -96,27 +96,11 @@ namespace DTASpectraFileGen
             // Add any files that are an exception to the captured files to delete list
             m_jobParams.AddResultFileToKeep("lcq_dta.txt");
 
-            result = MakeResultsFolder();
-            if (result != CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                return result;
-            }
+            var success = CopyResultsToTransferDirectory();
 
-            result = MoveResultFiles();
-            if (result != CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                return result;
-            }
+            return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
 
-            result = CopyResultsFolderToServer();
-            if (result != CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                return result;
-            }
 
-            return CloseOutType.CLOSEOUT_SUCCESS; //No failures so everything must have succeeded
         }
 
         /// <summary>
@@ -299,6 +283,7 @@ namespace DTASpectraFileGen
         /// </summary>
         /// <returns>CloseoutType enum indicating success or failure</returns>
         /// <remarks></remarks>
+        [Obsolete("This method is unused")]
         public CloseOutType DispositionResults()
         {
             //Make sure all files have released locks
@@ -324,11 +309,10 @@ namespace DTASpectraFileGen
             UpdateSummaryFile();
 
             //Delete .dta files
-            string[] FileList = null;
             try
             {
-                FileList = Directory.GetFiles(m_WorkDir, "*.dta");
-                foreach (string TmpFile in FileList)
+                var dtaFiles = Directory.GetFiles(m_WorkDir, "*.dta");
+                foreach (string TmpFile in dtaFiles)
                 {
                     DeleteFileWithRetries(TmpFile);
                 }
@@ -340,8 +324,8 @@ namespace DTASpectraFileGen
             }
 
             //Delete unzipped concatenated dta files
-            FileList = Directory.GetFiles(m_WorkDir, "*" + CDTA_FILE_SUFFIX);
-            foreach (string TmpFile in FileList)
+            var cdtaFiles = Directory.GetFiles(m_WorkDir, "*" + CDTA_FILE_SUFFIX);
+            foreach (string TmpFile in cdtaFiles)
             {
                 try
                 {
@@ -357,37 +341,10 @@ namespace DTASpectraFileGen
                 }
             }
 
-            //make results folder
-            try
-            {
-                var stepResult = MakeResultsFolder();
-                if (stepResult != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    return stepResult;
-                }
-            }
-            catch (Exception ex)
-            {
-                LogError("clsDtaGenToolRunner.DispositionResults(), Exception making results folder", ex);
-                return CloseOutType.CLOSEOUT_FAILED;
-            }
+            var success = CopyResultsToTransferDirectory();
 
-            //Copy results folder to storage server
-            try
-            {
-                var stepResult = CopyResultsFolderToServer();
-                if (stepResult != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    return stepResult;
-                }
-            }
-            catch (Exception ex)
-            {
-                LogError("clsDtaGenToolRunner.DispositionResults(), Exception moving results folder", ex);
-                return CloseOutType.CLOSEOUT_FAILED;
-            }
+            return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
 
-            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         private SpectraFileProcessorParams GetDtaGenInitParams()
@@ -663,43 +620,15 @@ namespace DTASpectraFileGen
             }
         }
 
-        private void CopyFailedResultsToArchiveFolder()
+        public override void CopyFailedResultsToArchiveFolder()
         {
-            string strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
-            if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
-                strFailedResultsFolderPath = "??Not Defined??";
-
-            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
-
-            // Bump up the debug level if less than 2
-            if (m_DebugLevel < 2)
-                m_DebugLevel = 2;
-
-            // Make sure the _dta.txt file is retained
-            m_jobParams.RemoveResultFileToSkip(m_Dataset + "_dta.txt");
+            m_jobParams.AddResultFileToSkip(Dataset + "_dta.zip");
+            m_jobParams.AddResultFileToSkip(Dataset + "_dta.txt");
 
             // Skip any .dta files
             m_jobParams.AddResultFileExtensionToSkip(".dta");
 
-            // Try to save whatever files are in the work directory
-            var strFolderPathToArchive = string.Copy(m_WorkDir);
-
-            // Make the results folder
-            var result = MakeResultsFolder();
-            if (result == CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                // Move the result files into the result folder
-                result = MoveResultFiles();
-                if (result == CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Move was a success; update strFolderPathToArchive
-                    strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName);
-                }
-            }
-
-            // Copy the results folder to the Archive folder
-            var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
-            objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive);
+            base.CopyFailedResultsToArchiveFolder();
         }
 
         private string GetMSConvertAppPath()

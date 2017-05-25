@@ -64,9 +64,6 @@ namespace AnalysisManagerSequestPlugin
         /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
-            CloseOutType Result = CloseOutType.CLOSEOUT_SUCCESS;
-            CloseOutType eReturnCode = CloseOutType.CLOSEOUT_SUCCESS;
-            var blnProcessingError = false;
 
             // Do the base class stuff
             if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
@@ -96,26 +93,27 @@ namespace AnalysisManagerSequestPlugin
 
             //Make the .out files
             LogMessage("Making OUT files, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
+
+            CloseOutType eResult;
+            bool processingError;
+
             try
             {
-                Result = MakeOUTFiles();
-                if (Result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    blnProcessingError = true;
-                }
+                eResult = MakeOUTFiles();
+                processingError = eResult != CloseOutType.CLOSEOUT_SUCCESS;
             }
-            catch (Exception Err)
+            catch (Exception ex)
             {
-                LogError(
-                    "clsAnalysisToolRunnerSeqBase.RunTool(), Exception making OUT files, " + Err.Message + "; " +
-                    clsGlobal.GetExceptionStackTrace(Err));
-                blnProcessingError = true;
+                LogError("clsAnalysisToolRunnerSeqBase.RunTool(), Exception making OUT files", ex);
+                processingError = true;
+                eResult = CloseOutType.CLOSEOUT_FAILED;
             }
 
             //Stop the job timer
             m_StopTime = DateTime.UtcNow;
 
-            if (blnProcessingError)
+            CloseOutType eReturnCode;
+            if (processingError)
             {
                 // Something went wrong
                 // In order to help diagnose things, we will move whatever files were created into the result folder,
@@ -124,67 +122,44 @@ namespace AnalysisManagerSequestPlugin
             }
             else
             {
-                eReturnCode = Result;
+                eReturnCode = eResult;
             }
 
             //Add the current job data to the summary file
             UpdateSummaryFile();
 
             //Make sure objects are released
-            Thread.Sleep(500);          // 500 msec delay
+            Thread.Sleep(500);
             clsProgRunner.GarbageCollectNow();
 
             // Parse the Sequest .Log file to make sure the expected number of nodes was used in the analysis
-            string strSequestLogFilePath = null;
-            bool blnSuccess = false;
 
             if (m_mgrParams.GetParam("cluster", true))
             {
                 // Running on a Sequest cluster
-                strSequestLogFilePath = Path.Combine(m_WorkDir, "sequest.log");
-                blnSuccess = ValidateSequestNodeCount(strSequestLogFilePath);
-            }
-            else
-            {
-                blnSuccess = true;
+                var strSequestLogFilePath = Path.Combine(m_WorkDir, "sequest.log");
+                ValidateSequestNodeCount(strSequestLogFilePath);
             }
 
-            if (blnProcessingError)
+            if (processingError)
             {
-                // Move the source files and any results to the Failed Job folder
-                // Useful for debugging Sequest problems
+                // Something went wrong
+                // In order to help diagnose things, we will move whatever files were created into the result folder,
+                //  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
                 CopyFailedResultsToArchiveFolder();
                 if (eReturnCode == CloseOutType.CLOSEOUT_SUCCESS)
                 {
-                    eReturnCode = CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
                 return eReturnCode;
             }
 
-            Result = MakeResultsFolder();
-            if (Result != CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                //MakeResultsFolder handles posting to local log, so set database error message and exit
-                m_message = "Error making results folder";
-                return Result;
-            }
+            var success = CopyResultsToTransferDirectory();
 
-            Result = MoveResultFiles();
-            if (Result != CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                m_message = "Error moving files into results folder";
-                return Result;
-            }
+            if (!success)
+                return CloseOutType.CLOSEOUT_FAILED;
 
-            Result = CopyResultsFolderToServer();
-            if (Result != CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                return Result;
-            }
-
-            if (!base.RemoveNonResultServerFiles())
+            if (!RemoveNonResultServerFiles())
             {
                 // Do not treat this as a fatal error
                 LogWarning("Error deleting .tmp files in folder " + m_jobParams.GetParam("JobParameters", "transferFolderPath"));
@@ -423,49 +398,12 @@ namespace AnalysisManagerSequestPlugin
             return lstDTAsToSkip;
         }
 
-        protected void CopyFailedResultsToArchiveFolder()
+        public override void CopyFailedResultsToArchiveFolder()
         {
-            string strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
-            if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
-                strFailedResultsFolderPath = "??Not Defined??";
+            m_jobParams.AddResultFileToSkip(m_Dataset + "_dta.zip");
+            m_jobParams.AddResultFileToSkip(m_Dataset + "_dta.txt");
 
-            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
-
-            // Bump up the debug level if less than 2
-            if (m_DebugLevel < 2)
-                m_DebugLevel = 2;
-
-            // Try to save whatever files are in the work directory (however, delete the _DTA.txt and _DTA.zip files first)
-            // We don't need to delete .Dta files since MoveResultFiles() will skip them
-            string strFolderPathToArchive = null;
-            strFolderPathToArchive = string.Copy(m_WorkDir);
-
-            try
-            {
-                File.Delete(Path.Combine(m_WorkDir, m_Dataset + "_dta.zip"));
-                File.Delete(Path.Combine(m_WorkDir, m_Dataset + "_dta.txt"));
-            }
-            catch (Exception)
-            {
-                // Ignore errors here
-            }
-
-            // Make the results folder
-            var result = MakeResultsFolder();
-            if (result == CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                // Move the result files into the result folder
-                result = MoveResultFiles();
-                if (result == CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Move was a success; update strFolderPathToArchive
-                    strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName);
-                }
-            }
-
-            // Copy the results folder to the Archive folder
-            var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
-            objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive);
+            base.CopyFailedResultsToArchiveFolder();
         }
 
         protected int GetDTAFileCountRemaining()
@@ -637,7 +575,7 @@ namespace AnalysisManagerSequestPlugin
             }
 
             //Make sure objects are released
-            Thread.Sleep(500);        // 500 msec delay
+            Thread.Sleep(500);
             clsProgRunner.GarbageCollectNow();
 
             //Verify out file creation
@@ -686,7 +624,7 @@ namespace AnalysisManagerSequestPlugin
         /// <param name="JobNum">Job number</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks></remarks>
-        protected virtual bool ConcatOutFiles(string WorkDir, string DSName, string JobNum)
+        protected virtual bool ConcatOutFiles(string WorkDir, string DSName, int JobNum)
         {
             var MAX_RETRY_ATTEMPTS = 5;
             var MAX_INTERLOCK_WAIT_TIME_MINUTES = 30;
@@ -1405,7 +1343,7 @@ namespace AnalysisManagerSequestPlugin
         /// <param name="JobNum">Job number</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks></remarks>
-        protected virtual bool ZipConcatOutFile(string WorkDir, string JobNum)
+        protected virtual bool ZipConcatOutFile(string WorkDir, int JobNum)
         {
             string OutFileName = m_Dataset + "_out.txt";
             string OutFilePath = Path.Combine(WorkDir, OutFileName);

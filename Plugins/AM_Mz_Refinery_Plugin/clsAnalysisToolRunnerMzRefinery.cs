@@ -172,7 +172,6 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                 mCmdRunner = null;
 
-                bool success;
                 var processingError = false;
 
                 var fiOriginalMSXmlFile = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + msXmlFileExtension));
@@ -190,9 +189,9 @@ namespace AnalysisManagerMzRefineryPlugIn
                 else
                 {
                     // Run MSConvert with the MzRefiner filter
-                    success = StartMzRefinery(fiOriginalMSXmlFile, fiMSGFPlusResults);
+                    var mzRefinerySuccess = StartMzRefinery(fiOriginalMSXmlFile, fiMSGFPlusResults);
 
-                    if (!success)
+                    if (!mzRefinerySuccess)
                     {
                         processingError = true;
                     }
@@ -218,8 +217,8 @@ namespace AnalysisManagerMzRefineryPlugIn
                     fiFixedMSXmlFile.Refresh();
                     if (fiFixedMSXmlFile.Exists)
                     {
-                        success = PostProcessMzRefineryResults(fiMSGFPlusResults, fiFixedMSXmlFile);
-                        if (!success)
+                        var postProcessSuccess = PostProcessMzRefineryResults(fiMSGFPlusResults, fiFixedMSXmlFile);
+                        if (!postProcessSuccess)
                             processingError = true;
                     }
                     else
@@ -270,7 +269,6 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                 // Make sure objects are released
                 System.Threading.Thread.Sleep(500);
-                // 500 msec delay
                 PRISM.clsProgRunner.GarbageCollectNow();
 
                 if (processingError)
@@ -301,40 +299,23 @@ namespace AnalysisManagerMzRefineryPlugIn
                     }
                 }
 
-                result = MakeResultsFolder();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // MakeResultsFolder handles posting to local log, so set database error message and exit
-                    m_message = "Error making results folder";
+
+                var success = CopyResultsToTransferDirectory();
+
+                if (!success)
                     return CloseOutType.CLOSEOUT_FAILED;
+
+                if (!processingError)
+                    return CloseOutType.CLOSEOUT_SUCCESS;
+
+                // If we get here, MSGF+ succeeded, but MzRefinery or PostProcessing failed
+                LogWarning("Processing failed; see results at " + m_jobParams.GetParam("transferFolderPath"));
+                if (m_UnableToUseMzRefinery)
+                {
+                    return CloseOutType.CLOSEOUT_UNABLE_TO_USE_MZ_REFINERY;
                 }
 
-                result = MoveResultFiles();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    m_message = "Error moving files into results folder";
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
-
-                result = CopyResultsFolderToServer();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
-
-                if (processingError)
-                {
-                    // If we get here, MSGF+ succeeded, but MzRefinery or PostProcessing failed
-                    LogWarning("Processing failed; see results at " + m_jobParams.GetParam("transferFolderPath"));
-                    if (m_UnableToUseMzRefinery)
-                    {
-                        return CloseOutType.CLOSEOUT_UNABLE_TO_USE_MZ_REFINERY;
-                    }
-
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
+                return CloseOutType.CLOSEOUT_FAILED;
             }
             catch (Exception ex)
             {
@@ -343,7 +324,6 @@ namespace AnalysisManagerMzRefineryPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         /// <summary>
@@ -643,18 +623,6 @@ namespace AnalysisManagerMzRefineryPlugIn
 
         private void CopyFailedResultsToArchiveFolder(string msXmlFileExtension)
         {
-            var strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
-            if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
-                strFailedResultsFolderPath = "??Not Defined??";
-
-            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
-
-            // Bump up the debug level if less than 2
-            if (m_DebugLevel < 2)
-                m_DebugLevel = 2;
-
-            // Try to save whatever files are in the work directory (however, delete any .mzML files first)
-            var strFolderPathToArchive = string.Copy(m_WorkDir);
 
             try
             {
@@ -669,22 +637,8 @@ namespace AnalysisManagerMzRefineryPlugIn
                 // Ignore errors here
             }
 
-            // Make the results folder
-            var result = MakeResultsFolder();
-            if (result == CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                // Move the result files into the result folder
-                result = MoveResultFiles();
-                if (result == CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Move was a success; update strFolderPathToArchive
-                    strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName);
-                }
-            }
+            base.CopyFailedResultsToArchiveFolder();
 
-            // Copy the results folder to the Archive folder
-            var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
-            objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive);
         }
 
         private bool ExtractMzRefinerOptionsFromParameterFile(string strParameterFilePath)
@@ -1358,11 +1312,9 @@ namespace AnalysisManagerMzRefineryPlugIn
             var oMassErrorExtractor = new clsMzRefineryMassErrorStatsExtractor(m_mgrParams, m_DebugLevel, blnPostResultsToDB: true);
 
             var intDatasetID = m_jobParams.GetJobParameter("DatasetID", 0);
-            int intJob;
-            int.TryParse(m_JobNum, out intJob);
 
             var consoleOutputFilePath = Path.Combine(m_WorkDir, ERROR_CHARTER_CONSOLE_OUTPUT_FILE);
-            var success = oMassErrorExtractor.ParsePPMErrorCharterOutput(m_Dataset, intDatasetID, intJob, consoleOutputFilePath);
+            var success = oMassErrorExtractor.ParsePPMErrorCharterOutput(m_Dataset, intDatasetID, m_JobNum, consoleOutputFilePath);
 
             if (!success)
             {

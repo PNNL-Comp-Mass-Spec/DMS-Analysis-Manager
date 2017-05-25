@@ -321,7 +321,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 UpdateSummaryFile();
 
                 // Make sure objects are released
-                Thread.Sleep(500);         // 500 msec delay
+                Thread.Sleep(500);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
                 if (!blnSuccess | jobFailureCount > 0)
@@ -335,28 +335,11 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 DefineFilesToSkipTransfer();
 
-                var result = MakeResultsFolder();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // MakeResultsFolder handles posting to local log, so set database error message and exit
-                    m_message = "Error making results folder";
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
+                var success = CopyResultsToTransferDirectory();
 
-                result = MoveResultFiles();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    m_message = "Error moving files into results folder";
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
+                return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
 
-                result = CopyResultsFolderToServer(mCacheFolderPath);
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    return result;
-                }
+
             }
             catch (Exception ex)
             {
@@ -364,8 +347,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            // No failures so everything must have succeeded
-            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         private int ProcessJobs(clsAnalysisResults objAnalysisResults, string remoteTransferFolder,
@@ -919,17 +900,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             return true;
         }
 
-        private void CopyFailedResultsToArchiveFolder()
+        public override void CopyFailedResultsToArchiveFolder()
         {
-            var strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
-            if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
-                strFailedResultsFolderPath = "??Not Defined??";
-
-            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
-
-            // Bump up the debug level if less than 2
-            if (m_DebugLevel < 2)
-                m_DebugLevel = 2;
 
             // Make sure the PRIDEConverter console output file is retained
             m_jobParams.RemoveResultFileToSkip(PRIDEConverter_CONSOLE_OUTPUT);
@@ -937,25 +909,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             // Skip the .mgf files; no need to put them in the FailedResults folder
             m_jobParams.AddResultFileExtensionToSkip(".mgf");
 
-            // Try to save whatever files are in the work directory
-            var strFolderPathToArchive = string.Copy(m_WorkDir);
-
-            // Make the results folder
-            var result = MakeResultsFolder();
-            if (result == CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                // Move the result files into the result folder
-                result = MoveResultFiles();
-                if (result == CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Move was a success; update strFolderPathToArchive
-                    strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName);
-                }
-            }
-
-            // Copy the results folder to the Archive folder
-            var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
-            objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive);
+            base.CopyFailedResultsToArchiveFolder();
         }
 
         /// <summary>

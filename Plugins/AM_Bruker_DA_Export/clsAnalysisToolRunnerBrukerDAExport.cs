@@ -60,7 +60,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                     LogDebug("clsAnalysisToolRunnerBrukerDAExport.RunTool(): Enter");
                 }
 
-                // Initialize classwide variables               
+                // Initialize classwide variables
                 mLastConsoleOutputParse = DateTime.UtcNow;
                 mLastProgressWriteTime = DateTime.UtcNow;
 
@@ -89,9 +89,9 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 var scriptPath = Path.Combine(m_WorkDir, exportScriptName);
 
                 // Run the export script to create XML files of the mass spectra in the data file
-                var success = ExportSpectraUsingScript(scriptPath);
+                var exportSuccess = ExportSpectraUsingScript(scriptPath);
 
-                if (success)
+                if (exportSuccess)
                 {
                     // Look for the at least one exported mass spectrum
 
@@ -99,13 +99,14 @@ namespace AnalysisManagerBrukerDAExportPlugin
 
                     if (fiResultsFile.Exists)
                     {
-                        success = PostProcessExportedSpectra();
-                        if (!success)
+                        var postProcessSuccess = PostProcessExportedSpectra();
+                        if (!postProcessSuccess)
                         {
                             if (string.IsNullOrEmpty(m_message))
                             {
                                 m_message = "Unknown error post-processing the exported spectra";
                             }
+                            exportSuccess = false;
                         }
 
                     }
@@ -114,7 +115,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                         if (string.IsNullOrEmpty(m_message))
                         {
                             m_message = "No spectra were exported";
-                            success = false;
+                            exportSuccess = false;
                         }
                     }
                 }
@@ -132,36 +133,18 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 Thread.Sleep(500);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
-                if (!success)
+                if (!exportSuccess)
                 {
-                    // Move the source files and any results to the Failed Job folder
-                    // Useful for debugging problems
+                    // Something went wrong
+                    // In order to help diagnose things, we will move whatever files were created into the result folder,
+                    //  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
                     CopyFailedResultsToArchiveFolder();
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var result = MakeResultsFolder();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // MakeResultsFolder handles posting to local log, so set database error message and exit
-                    m_message = "Error making results folder";
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
+                var success = CopyResultsToTransferDirectory();
 
-                result = MoveResultFiles();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    m_message = "Error moving files into results folder";
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
-
-                result = CopyResultsFolderToServer();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
+                return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
 
             }
             catch (Exception ex)
@@ -170,57 +153,6 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 LogError(m_message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
-            return CloseOutType.CLOSEOUT_SUCCESS;
-
-        }
-
-        protected void CopyFailedResultsToArchiveFolder()
-        {
-            var strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
-            if (string.IsNullOrWhiteSpace(strFailedResultsFolderPath))
-                strFailedResultsFolderPath = "??Not Defined??";
-
-            LogWarning("Processing interrupted; copying results to archive folder: " + strFailedResultsFolderPath);
-
-            // Bump up the debug level if less than 2
-            if (m_DebugLevel < 2)
-                m_DebugLevel = 2;
-
-            // Try to save whatever files are in the work directory (however, delete the XML files if more than one was created)
-            var strFolderPathToArchive = string.Copy(m_WorkDir);
-
-            try
-            {
-                var diWorkDir = new DirectoryInfo(m_WorkDir);
-                var fiSpectraFiles = GetXMLSpectraFiles(diWorkDir);
-                if (fiSpectraFiles.Count > 1)
-                {
-                    for (var i = 1; i < fiSpectraFiles.Count; i++)
-                        fiSpectraFiles[i].Delete();
-                }
-            }
-            catch (Exception)
-            {
-                // Ignore errors here
-            }
-
-            // Make the results folder
-            var result = MakeResultsFolder();
-            if (result == CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                // Move the result files into the result folder
-                result = MoveResultFiles();
-                if (result == CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Move was a success; update strFolderPathToArchive
-                    strFolderPathToArchive = Path.Combine(m_WorkDir, m_ResFolderName);
-                }
-            }
-
-            // Copy the results folder to the Archive folder
-            var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
-            objAnalysisResults.CopyFailedResultsToArchiveFolder(strFolderPathToArchive);
 
         }
 
@@ -384,7 +316,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 m_jobParams.AddResultFileToSkip(cmdRunner.ConsoleOutputFilePath);
                 m_jobParams.AddResultFileToSkip(scriptPath);
                 m_jobParams.AddResultFileToSkip("JobParameters_" + m_JobNum + ".xml");
-                
+
                 m_progress = PROGRESS_PCT_COMPLETE;
                 m_StatusTools.UpdateAndWrite(m_progress);
                 if (m_DebugLevel >= 3)
@@ -457,13 +389,13 @@ namespace AnalysisManagerBrukerDAExportPlugin
             //
             // Microsoft (R) Windows Script Host Version 5.8
             // Copyright (C) Microsoft Corporation. All rights reserved.
-            // 
+            //
             // Output file base: C:\Data\2014_05_09_Kaplan_Far_Neg_000001_scan
-            // 
+            //
             // Scans to export = 1
             // Scan 1, mass range 98.278 to 1199.996
             // ... create C:\Data\2014_05_09_Kaplan_Far_Neg_000001_scan1.xml
-            // 
+            //
             // Scan count exported = 1
 
             try

@@ -44,11 +44,6 @@ namespace AnalysisManagerOMSSAPlugIn
         /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
-            string CmdStr = null;
-            CloseOutType result;
-
-            bool blnProcessingError = false;
-
             // Set this to success for now
             var eReturnCode = CloseOutType.CLOSEOUT_SUCCESS;
 
@@ -110,12 +105,13 @@ namespace AnalysisManagerOMSSAPlugIn
             //--------------------------------------------------------------------------------------------
 
             string inputFilename = Path.Combine(m_WorkDir, "OMSSA_Input.xml");
+            
             //Set up and execute a program runner to run OMSSA
-            CmdStr = " -pm " + inputFilename;
+            var cmdStr = " -pm " + inputFilename;
 
             if (m_DebugLevel >= 1)
             {
-                LogDebug("Starting OMSSA: " + progLoc + " " + CmdStr);
+                LogDebug("Starting OMSSA: " + progLoc + " " + cmdStr);
             }
 
             cmdRunner.CreateNoWindow = true;
@@ -125,10 +121,11 @@ namespace AnalysisManagerOMSSAPlugIn
             cmdRunner.WriteConsoleOutputToFile = true;
             cmdRunner.ConsoleOutputFilePath = Path.Combine(m_WorkDir, Path.GetFileNameWithoutExtension(progLoc) + "_ConsoleOutput.txt");
 
-            if (!cmdRunner.RunProgram(progLoc, CmdStr, "OMSSA", true))
+            var processingSuccess = cmdRunner.RunProgram(progLoc, cmdStr, "OMSSA", true);
+
+            if (!processingSuccess)
             {
                 LogError("Error running OMSSA");
-                blnProcessingError = true;
             }
 
             //--------------------------------------------------------------------------------------------
@@ -143,19 +140,12 @@ namespace AnalysisManagerOMSSAPlugIn
             //Stop the job timer
             m_StopTime = DateTime.UtcNow;
 
-            if (blnProcessingError)
+            if (processingSuccess)
             {
-                // Something went wrong
-                // In order to help diagnose things, we will move whatever files were created into the result folder,
-                //  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
-                eReturnCode = CloseOutType.CLOSEOUT_FAILED;
-            }
-
-            if (!blnProcessingError)
-            {
-                if (!ConvertOMSSA2PepXmlFile())
+                var pepXmlSuccess = ConvertOMSSA2PepXmlFile();
+                if (!pepXmlSuccess)
                 {
-                    blnProcessingError = true;
+                    processingSuccess = false;
                 }
             }
 
@@ -163,53 +153,32 @@ namespace AnalysisManagerOMSSAPlugIn
             UpdateSummaryFile();
 
             //Make sure objects are released
-            Thread.Sleep(500);        // 500 msec delay
+            Thread.Sleep(500);
             PRISM.clsProgRunner.GarbageCollectNow();
 
-            if (!blnProcessingError)
+            if (processingSuccess)
             {
                 //Zip the output file
-                result = ZipMainOutputFile();
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                var zipSuccess = ZipMainOutputFile();
+                if (!zipSuccess)
                 {
-                    blnProcessingError = true;
+                    processingSuccess = false;
                 }
             }
 
-            result = MakeResultsFolder();
-            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+            if (!processingSuccess)
             {
-                //MakeResultsFolder handles posting to local log, so set database error message and exit
-                m_message = "Error making results folder";
+                // Something went wrong
+                // In order to help diagnose things, we will move whatever files were created into the result folder,
+                //  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
+                CopyFailedResultsToArchiveFolder();
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            result = MoveResultFiles();
-            if (result != CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                //MoveResultFiles moves the result files to the result folder
-                m_message = "Error moving files into results folder";
-                eReturnCode = CloseOutType.CLOSEOUT_FAILED;
-            }
+            var success = CopyResultsToTransferDirectory();
 
-            if (blnProcessingError | eReturnCode == CloseOutType.CLOSEOUT_FAILED)
-            {
-                // Try to save whatever files were moved into the results folder
-                var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
-                objAnalysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(m_WorkDir, m_ResFolderName));
+            return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
 
-                return CloseOutType.CLOSEOUT_FAILED;
-            }
-
-            result = CopyResultsFolderToServer();
-            if (result != CloseOutType.CLOSEOUT_SUCCESS)
-            {
-                //TODO: What do we do here?
-                return result;
-            }
-
-            //If we get to here, everything worked so exit happily
-            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         /// <summary>
@@ -217,7 +186,7 @@ namespace AnalysisManagerOMSSAPlugIn
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
         /// <remarks></remarks>
-        private CloseOutType ZipMainOutputFile()
+        private bool ZipMainOutputFile()
         {
             //Zip the output file
             string strOMSSAResultsFilePath = null;
@@ -226,12 +195,7 @@ namespace AnalysisManagerOMSSAPlugIn
             strOMSSAResultsFilePath = Path.Combine(m_WorkDir, m_Dataset + "_om.omx");
 
             blnSuccess = base.ZipFile(strOMSSAResultsFilePath, true);
-            if (!blnSuccess)
-            {
-                return CloseOutType.CLOSEOUT_FAILED;
-            }
-
-            return CloseOutType.CLOSEOUT_SUCCESS;
+            return blnSuccess;
         }
 
         /// <summary>
