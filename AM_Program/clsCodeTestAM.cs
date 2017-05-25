@@ -81,16 +81,16 @@ namespace AnalysisManagerProg
             System.Threading.Thread.Sleep(500);
             PRISM.clsProgRunner.GarbageCollectNow();
 
-            var result = MakeResultsFolder();
-            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+            var folderCreateSuccess = MakeResultsFolder();
+            if (!folderCreateSuccess)
             {
                 // MakeResultsFolder handles posting to local log, so set database error message and exit
                 m_message = "Error making results folder";
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            result = MoveResultFiles();
-            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+            var moveSucceed = MoveResultFiles();
+            if (!moveSucceed)
             {
                 // MoveResultFiles moves the result files to the result folder
                 m_message = "Error moving files into results folder";
@@ -113,12 +113,12 @@ namespace AnalysisManagerProg
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            result = CopyResultsFolderToServer();
-            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+            var copySuccess = CopyResultsFolderToServer();
+            if (!copySuccess)
             {
                 // TODO: What do we do here?
                 // Note that CopyResultsFolderToServer should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
-                return result;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
             return CloseOutType.CLOSEOUT_SUCCESS;

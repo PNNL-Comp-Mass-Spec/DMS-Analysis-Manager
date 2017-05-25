@@ -698,9 +698,9 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Copies the files from the results folder to the transfer folder on the server
         /// </summary>
-        /// <returns>CloseOutType.CLOSEOUT_SUCCESS on success</returns>
+        /// <returns>True if success, otherwise false</returns>
         /// <remarks></remarks>
-        protected CloseOutType CopyResultsFolderToServer()
+        protected bool CopyResultsFolderToServer()
         {
 
             var transferFolderPath = GetTransferFolderPath();
@@ -708,7 +708,7 @@ namespace AnalysisManagerBase
             if (string.IsNullOrEmpty(transferFolderPath))
             {
                 // Error has already geen logged and m_message has been updated
-                return CloseOutType.CLOSEOUT_FAILED;
+                return false;
             }
 
             return CopyResultsFolderToServer(transferFolderPath);
@@ -720,9 +720,9 @@ namespace AnalysisManagerBase
         /// <param name="transferFolderPath">Base transfer folder path to use
         /// e.g. \\proto-6\DMS3_Xfer\ or
         /// \\protoapps\PeptideAtlas_Staging\1000_DataPackageName</param>
-        /// <returns>CloseOutType.CLOSEOUT_SUCCESS on success</returns>
+        /// <returns>True if success, otherwise false</returns>
         /// <remarks></remarks>
-        protected CloseOutType CopyResultsFolderToServer(string transferFolderPath)
+        protected bool CopyResultsFolderToServer(string transferFolderPath)
         {
 
             var sourceFolderPath = string.Empty;
@@ -748,7 +748,7 @@ namespace AnalysisManagerBase
                     m_message = "Results folder name is not defined";
 
                     // Without a source folder; there isn't much we can do
-                    return CloseOutType.CLOSEOUT_FAILED;
+                    return false;
                 }
 
                 sourceFolderPath = Path.Combine(m_WorkDir, m_ResFolderName);
@@ -761,7 +761,7 @@ namespace AnalysisManagerBase
                     m_message = "Results folder not found: " + sourceFolderPath;
 
                     // Without a source folder; there isn't much we can do
-                    return CloseOutType.CLOSEOUT_FAILED;
+                    return false;
                 }
 
                 // Determine the remote transfer folder path (create it if missing)
@@ -769,7 +769,7 @@ namespace AnalysisManagerBase
                 if (string.IsNullOrEmpty(targetDirectoryPath))
                 {
                     objAnalysisResults.CopyFailedResultsToArchiveFolder(sourceFolderPath);
-                    return CloseOutType.CLOSEOUT_FAILED;
+                    return false;
                 }
 
             }
@@ -781,7 +781,7 @@ namespace AnalysisManagerBase
                     objAnalysisResults.CopyFailedResultsToArchiveFolder(sourceFolderPath);
                 }
 
-                return CloseOutType.CLOSEOUT_FAILED;
+                return false;
             }
 
             // Copy results folder to xfer folder
@@ -792,12 +792,12 @@ namespace AnalysisManagerBase
                 // Copy all of the files and subdirectories in the local result folder to the target folder
 
                 // Copy the files and subfolders
-                var eResult = CopyResultsFolderRecursive(
+                var success = CopyResultsFolderRecursive(
                     sourceFolderPath, sourceFolderPath, targetDirectoryPath, objAnalysisResults,
                     ref blnErrorEncountered, ref intFailedFileCount, intRetryCount,
                     intRetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry);
 
-                if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+                if (!success)
                     blnErrorEncountered = true;
 
             }
@@ -814,10 +814,10 @@ namespace AnalysisManagerBase
                     " to transfer folder";
                 LogError(msg);
                 objAnalysisResults.CopyFailedResultsToArchiveFolder(sourceFolderPath);
-                return CloseOutType.CLOSEOUT_FAILED;
+                return false;
             }
 
-            return CloseOutType.CLOSEOUT_SUCCESS;
+            return true;
         }
 
         /// <summary>
@@ -834,7 +834,7 @@ namespace AnalysisManagerBase
         /// <param name="retryHoldoffSeconds"></param>
         /// <param name="increaseHoldoffOnEachRetry"></param>
         /// <returns></returns>
-        private CloseOutType CopyResultsFolderRecursive(
+        private bool CopyResultsFolderRecursive(
             string rootSourceFolderPath,
             string sourceFolderPath,
             string targetDirectoryPath,
@@ -894,7 +894,7 @@ namespace AnalysisManagerBase
                     {
                         LogError("Error creating results folder in transfer directory, " + Path.GetPathRoot(targetDirectoryPath), ex);
                         objAnalysisResults.CopyFailedResultsToArchiveFolder(rootSourceFolderPath);
-                        return CloseOutType.CLOSEOUT_FAILED;
+                        return false;
                     }
                 }
 
@@ -903,7 +903,7 @@ namespace AnalysisManagerBase
             {
                 LogError("Error comparing files in source folder to " + targetDirectoryPath, ex);
                 objAnalysisResults.CopyFailedResultsToArchiveFolder(rootSourceFolderPath);
-                return CloseOutType.CLOSEOUT_FAILED;
+                return false;
             }
 
             // Note: Entries in ResultFiles will have full file paths, not just file names
@@ -944,7 +944,7 @@ namespace AnalysisManagerBase
 
             // Recursively call this function for each subfolder
             // If any of the subfolders have an error, we'll continue copying, but will set blnErrorEncountered to True
-            var eResult = CloseOutType.CLOSEOUT_SUCCESS;
+            var success = true;
 
             var diSourceFolder = new DirectoryInfo(sourceFolderPath);
 
@@ -952,15 +952,16 @@ namespace AnalysisManagerBase
             {
                 var targetDirectoryPathCurrent = Path.Combine(targetDirectoryPath, objSubFolder.Name);
 
-                eResult = CopyResultsFolderRecursive(rootSourceFolderPath, objSubFolder.FullName, targetDirectoryPathCurrent, objAnalysisResults,
+                success = CopyResultsFolderRecursive(rootSourceFolderPath, objSubFolder.FullName, targetDirectoryPathCurrent, objAnalysisResults,
                     ref errorEncountered, ref failedFileCount, retryCount, retryHoldoffSeconds, increaseHoldoffOnEachRetry);
 
-                if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+                if (!success)
                     errorEncountered = true;
 
             }
 
-            return eResult;
+            return success;
+
         }
 
         /// <summary>
@@ -1202,21 +1203,21 @@ namespace AnalysisManagerBase
 
         }
 
-        protected CloseOutType DeleteRawDataFiles()
+        protected bool DeleteRawDataFiles()
         {
             var rawDataType = m_jobParams.GetParam("RawDataType");
 
             return DeleteRawDataFiles(rawDataType);
         }
 
-        protected CloseOutType DeleteRawDataFiles(string rawDataType)
+        protected bool DeleteRawDataFiles(string rawDataType)
         {
             var eRawDataType = clsAnalysisResources.GetRawDataType(rawDataType);
 
             return DeleteRawDataFiles(eRawDataType);
         }
 
-        protected CloseOutType DeleteRawDataFiles(clsAnalysisResources.eRawDataTypeConstants eRawDataType)
+        protected bool DeleteRawDataFiles(clsAnalysisResources.eRawDataTypeConstants eRawDataType)
         {
 
             // Deletes the raw data files/folders from the working directory
@@ -1318,7 +1319,7 @@ namespace AnalysisManagerBase
                 default:
                     // Should never get this value
                     m_message = "DeleteRawDataFiles, Invalid RawDataType specified: " + eRawDataType.ToString();
-                    return CloseOutType.CLOSEOUT_FAILED;
+                    return false;
             }
 
             if (isFile)
@@ -1329,7 +1330,7 @@ namespace AnalysisManagerBase
                     if (!File.Exists(fileOrFolderName))
                     {
                         // File not found; treat this as a success
-                        return CloseOutType.CLOSEOUT_SUCCESS;
+                        return true;
                     }
 
                     // DeleteFileWithRetries will throw an exception if it cannot delete any raw data files (e.g. the .UIMF file)
@@ -1337,16 +1338,16 @@ namespace AnalysisManagerBase
 
                     if (DeleteFileWithRetries(fileOrFolderName))
                     {
-                        return CloseOutType.CLOSEOUT_SUCCESS;
+                        return true;
                     }
 
                     LogError("Error deleting raw data file " + fileOrFolderName);
-                    return CloseOutType.CLOSEOUT_FAILED;
+                    return false;
                 }
                 catch (Exception ex)
                 {
                     LogError("Exception deleting raw data file " + fileOrFolderName, ex);
-                    return CloseOutType.CLOSEOUT_FAILED;
+                    return false;
                 }
             }
 
@@ -1364,16 +1365,16 @@ namespace AnalysisManagerBase
                     {
                         Directory.Delete(fileOrFolderName, true);
                     }
-                    return CloseOutType.CLOSEOUT_SUCCESS;
+                    return true;
                 }
                 catch (Exception ex)
                 {
                     LogError("Exception deleting raw data folder " + fileOrFolderName, ex);
-                    return CloseOutType.CLOSEOUT_FAILED;
+                    return false;
                 }
             }
 
-            return CloseOutType.CLOSEOUT_SUCCESS;
+            return true;
 
         }
 
@@ -2282,9 +2283,9 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Creates a results folder after analysis complete
         /// </summary>
-        /// <returns>CloseOutType enum indicating success or failure</returns>
+        /// <returns>True if success, otherwise false</returns>
         /// <remarks></remarks>
-        protected CloseOutType MakeResultsFolder()
+        protected bool MakeResultsFolder()
         {
 
             m_StatusTools.UpdateAndWrite(EnumMgrStatus.RUNNING, EnumTaskStatus.RUNNING, EnumTaskStatusDetail.PACKAGING_RESULTS, 0);
@@ -2303,11 +2304,11 @@ namespace AnalysisManagerBase
             catch (Exception ex)
             {
                 // Log this error to the database
-                return CloseOutType.CLOSEOUT_FAILED;
                 LogError("Error making results folder, job " + Job, ex);
+                return false;
             }
 
-            return CloseOutType.CLOSEOUT_SUCCESS;
+            return true;
 
         }
 
@@ -2315,7 +2316,7 @@ namespace AnalysisManagerBase
         /// Makes results folder and moves files into it
         /// </summary>
         /// <returns></returns>
-        protected CloseOutType MoveResultFiles()
+        protected bool MoveResultFiles()
         {
 
             const int REJECT_LOGGING_THRESHOLD = 10;
@@ -2554,10 +2555,10 @@ namespace AnalysisManagerBase
                 var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
                 objAnalysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(m_WorkDir, m_ResFolderName));
 
-                return CloseOutType.CLOSEOUT_FAILED;
+                return false;
             }
 
-            return CloseOutType.CLOSEOUT_SUCCESS;
+            return true;
         }
 
         public static string NotifyMissingParameter(IJobParams oJobParams, string strParameterName)
