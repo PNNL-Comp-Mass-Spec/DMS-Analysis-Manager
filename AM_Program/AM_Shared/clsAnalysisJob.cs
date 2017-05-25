@@ -55,8 +55,6 @@ namespace AnalysisManagerBase
         /// </summary>
         protected int m_JobId;
 
-        protected bool m_TaskWasClosed;
-
         /// <summary>
         /// List of file names to NOT move to the result folder; this list is used by MoveResultFiles()
         /// </summary>
@@ -129,6 +127,11 @@ namespace AnalysisManagerBase
         /// <returns></returns>
         /// <remarks>Used by clsAnalysisToolRunnerBase.RemoveNonResultServerFiles</remarks>
         public SortedSet<string> ServerFilesToDelete => m_ServerFilesToDelete;
+
+        /// <summary>
+        /// Flag set to True when .CloseTask is called
+        /// </summary>
+        public bool TaskClosed { get; set; }
 
         #endregion
 
@@ -949,7 +952,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public void Reset()
         {
-            m_TaskWasClosed = false;
+            TaskClosed = false;
 
             m_ResultFilesToSkip.Clear();
             m_ResultFileExtensionsToSkip.Clear();
@@ -1043,15 +1046,15 @@ namespace AnalysisManagerBase
             var compCode = (int)closeOut;
 
             if (evalMessage == null)
-                evalMessage = String.Empty;
+                evalMessage = string.Empty;
 
-            if (m_TaskWasClosed)
+            if (TaskClosed)
             {
-                LogMessage("Job " + m_JobId + " has already been closed; will not call " + SP_NAME_SET_COMPLETE + " again");
+                LogWarning("Job " + m_JobId + " has already been closed; will not call " + SP_NAME_SET_COMPLETE + " again");
             }
             else
             {
-                m_TaskWasClosed = true;
+                TaskClosed = true;
                 if (!SetAnalysisJobComplete(compCode, compMsg, evalCode, evalMessage))
                 {
                     LogError("Error setting job complete in database, job " + m_JobId);

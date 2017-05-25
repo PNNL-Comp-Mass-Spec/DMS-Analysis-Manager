@@ -56,6 +56,12 @@ namespace AnalysisManagerBase
         SortedSet<string> ResultFileExtensionsToSkip { get; }
 
         SortedSet<string> ServerFilesToDelete { get; }
+
+        /// <summary>
+        /// Flag set to True when .CloseTask is called
+        /// </summary>
+        bool TaskClosed { get; set; }
+
         #endregion
 
         #region "Methods"

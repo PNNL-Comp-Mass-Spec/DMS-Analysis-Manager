@@ -1603,6 +1603,13 @@ namespace AnalysisManagerProg
 
             try
             {
+                if (!m_AnalysisTask.TaskClosed)
+                {
+                    LogWarning("Upstream code typically calls .CloseTask before HandleJobFailure is reached; closing the task now");
+
+                    m_AnalysisTask.CloseTask(eToolRunnerResult, m_MostRecentErrorMessage, toolRunner.EvalCode, toolRunner.EvalMessage);
+                }
+
                 if (m_MgrErrorCleanup.CleanWorkDir())
                 {
                     m_MgrErrorCleanup.DeleteStatusFlagFile(m_DebugLevel);
