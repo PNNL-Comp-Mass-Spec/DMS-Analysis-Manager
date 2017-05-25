@@ -959,7 +959,37 @@ namespace AnalysisManagerBase
             }
 
             return eResult;
+        }
 
+        /// <summary>
+        /// Make the local results directory, move files into that directory, then copy the files to the transfer directory on the Proto-x server
+        /// </summary>
+        /// <returns>True if success, otherwise false</returns>
+        /// <remarks>
+        /// Uses MakeResultsFolder, MoveResultFiles, and CopyResultsFolderToServer
+        /// Step tools can override this method if custom steps are required prior to packaging and transferring the results
+        /// </remarks>
+        public virtual bool CopyResultsToTransferDirectory()
+        {
+            var success = MakeResultsFolder();
+            if (!success)
+            {
+                // MakeResultsFolder handles posting to local log, so set database error message and exit
+                m_message = "Error making results folder";
+                return false;
+            }
+
+            var moveSucceed = MoveResultFiles();
+            if (!moveSucceed)
+            {
+                // Note that MoveResultFiles should have already called clsAnalysisResults.CopyFailedResultsToArchiveFolder
+                m_message = "Error moving files into results folder";
+                return false;
+            }
+
+            var copySuccess = CopyResultsFolderToServer();
+
+            return copySuccess;
         }
 
         /// <summary>
@@ -2576,6 +2606,21 @@ namespace AnalysisManagerBase
             return clsGlobal.PossiblyQuotePath(strPath);
         }
 
+        /// <summary>
+        /// Perform any required post processing after retrieving remote results
+        /// </summary>
+        /// <returns>CloseoutType enum representing completion status</returns>
+        /// <remarks>
+        /// Actual post-processing of remote results should only be required if the remote host running the job
+        /// could not perform a step that requires database access or Windows share access.
+        /// Override this method as required for specific step tools.
+        /// </remarks>
+        public virtual CloseOutType PostProcessRemoteResults()
+        {
+            LogDebug("Custom post-processing not required for remote job " + Job);
+            return CloseOutType.CLOSEOUT_SUCCESS;
+        }
+
         public void PurgeOldServerCacheFiles(string cacheFolderPath)
         {
             // Value prior to December 2014: 3 TB
@@ -3018,6 +3063,17 @@ namespace AnalysisManagerBase
 
             return true;
 
+        }
+
+        /// <summary>
+        /// Retrieve results from a remote processing job; storing in the local working directory
+        /// </summary>
+        /// <param name="transferUtility"></param>
+        /// <returns>True on success, otherwise false</returns>
+        /// <remarks>If this method is successful, you will typically call PostProcessRemoteResults</remarks>
+        public virtual bool RetrieveRemoteResults(clsRemoteTransferUtility transferUtility)
+        {
+            throw new NotImplementedException("Plugin " + StepToolName + " must implement RetrieveRemoteResults to allow for remote processing");
         }
 
         /// <summary>

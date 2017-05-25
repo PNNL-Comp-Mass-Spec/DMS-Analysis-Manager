@@ -951,12 +951,26 @@ namespace AnalysisManagerProg
                     case clsRemoteMonitor.EnumRemoteJobStatus.Success:
                         // Retrieve result files then call PostProcess
 
-                        // ToDo: var success = toolRunner.RetrieveRemoteResults(remoteMonitor.TransferUtility);
+                        var resultsRetrieved = toolRunner.RetrieveRemoteResults(remoteMonitor.TransferUtility);
 
-                        // ToDo: eToolRunnerResult = toolRunner.PostProcess();
+                        if (resultsRetrieved)
+                        {
+                            eToolRunnerResult = toolRunner.PostProcessRemoteResults();
 
-                        eToolRunnerResult = CloseOutType.CLOSEOUT_SUCCESS;
+                            if (eToolRunnerResult == CloseOutType.CLOSEOUT_SUCCESS ||
+                                eToolRunnerResult == CloseOutType.CLOSEOUT_NO_DATA)
+                            {
+                                var success = toolRunner.CopyResultsToTransferDirectory();
+                                eToolRunnerResult = success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
+                            }
+                        }
+                        else
+                        {
+                            eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+                        }
+
                         break;
+
                     case clsRemoteMonitor.EnumRemoteJobStatus.Failed:
 
                         m_MostRecentErrorMessage = "Remote job failed";
@@ -964,12 +978,16 @@ namespace AnalysisManagerProg
 
                         // Retrieve result files then store in the DMS_FailedResults folder
 
-                        // ToDo: var success = toolRunner.RetrieveRemoteResults(remoteMonitor.TransferUtility);
+                        var failedResultsRetrieved = toolRunner.RetrieveRemoteResults(remoteMonitor.TransferUtility);
 
-                        // ToDo: toolRunner.TransferFailedResults();
+                        if (failedResultsRetrieved)
+                        {
+                            toolRunner.CopyFailedResultsToArchiveFolder();
+                        }
 
                         eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
                         break;
+
                     default:
                         m_MostRecentErrorMessage = "Unrecognized remote job status: " + eJobStatus;
                         LogError(clsGlobal.AppendToComment(m_MostRecentErrorMessage, remoteMonitor.Message));

@@ -75,6 +75,39 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         CloseOutType RunTool();
 
+        /// <summary>
+        /// Copy failed results from the working directory to the DMS_FailedResults directory on the local computer
+        /// </summary>
+        void CopyFailedResultsToArchiveFolder();
+
+        /// <summary>
+        /// Perform any required post processing after retrieving remote results
+        /// </summary>
+        /// <returns>CloseoutType enum representing completion status</returns>
+        /// <remarks>
+        /// Actual post-processing of remote results should only be required if the remote host running the job
+        /// could not perform a step that requires database access or Windows share access
+        /// </remarks>
+        CloseOutType PostProcessRemoteResults();
+
+        /// <summary>
+        /// Make the local results directory, move files into that directory, then copy the files to the transfer directory on the Proto-x server
+        /// </summary>
+        /// <returns>True if success, otherwise false</returns>
+        /// <remarks>Uses MakeResultsFolder, MoveResultFiles, and CopyResultsFolderToServer</remarks>
+        bool CopyResultsToTransferDirectory();
+
+        /// <summary>
+        /// Retrieve results from a remote processing job; storing in the local working directory
+        /// </summary>
+        /// <param name="transferUtility"></param>
+        /// <returns>True on success, otherwise false</returns>
+        /// <remarks>
+        /// If successful, the calling procedure will typically call
+        /// PostProcessRemoteResults then CopyResultsToTransferDirectory
+        /// </remarks>
+        bool RetrieveRemoteResults(clsRemoteTransferUtility transferUtility);
+
         #endregion
 
     }
