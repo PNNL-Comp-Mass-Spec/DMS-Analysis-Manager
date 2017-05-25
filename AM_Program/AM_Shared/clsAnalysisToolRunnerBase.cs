@@ -157,6 +157,8 @@ namespace AnalysisManagerBase
 
         #region "Properties"
 
+        public string Dataset => m_Dataset;
+
         /// <summary>
         /// Evaluation code to be reported to the DMS_Pipeline DB
         /// </summary>
@@ -1046,7 +1048,7 @@ namespace AnalysisManagerBase
 
             // Determine if dataset folder in transfer directory already exists; make directory if it doesn't exist
             // First make sure "DatasetFolderName" or "DatasetNum" is defined
-            if (string.IsNullOrEmpty(m_Dataset))
+            if (string.IsNullOrEmpty(Dataset))
             {
                 LogError("Dataset name is undefined, " + m_jobParams.GetJobStepDescription());
                 m_message = "Dataset name is undefined";
@@ -1055,7 +1057,7 @@ namespace AnalysisManagerBase
 
             string strRemoteTransferFolderPath;
 
-            if (clsGlobal.IsMatch(m_Dataset, "Aggregation"))
+            if (clsGlobal.IsMatch(Dataset, "Aggregation"))
             {
                 // Do not append "Aggregation" to the path since this is a generic dataset name applied to jobs that use Data Packages
                 strRemoteTransferFolderPath = string.Copy(transferFolderPath);
@@ -1065,7 +1067,7 @@ namespace AnalysisManagerBase
                 // Append the dataset folder name to the transfer folder path
                 var datasetFolderName = m_jobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "DatasetFolderName");
                 if (string.IsNullOrWhiteSpace(datasetFolderName))
-                    datasetFolderName = m_Dataset;
+                    datasetFolderName = Dataset;
                 strRemoteTransferFolderPath = Path.Combine(transferFolderPath, datasetFolderName);
             }
 
@@ -1225,37 +1227,37 @@ namespace AnalysisManagerBase
             switch (eRawDataType)
             {
                 case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile:
-                    fileOrFolderName = Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_RAW_EXTENSION);
+                    fileOrFolderName = Path.Combine(m_WorkDir, Dataset + clsAnalysisResources.DOT_RAW_EXTENSION);
                     isFile = true;
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.AgilentQStarWiffFile:
-                    fileOrFolderName = Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_WIFF_EXTENSION);
+                    fileOrFolderName = Path.Combine(m_WorkDir, Dataset + clsAnalysisResources.DOT_WIFF_EXTENSION);
                     isFile = true;
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.UIMF:
-                    fileOrFolderName = Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_UIMF_EXTENSION);
+                    fileOrFolderName = Path.Combine(m_WorkDir, Dataset + clsAnalysisResources.DOT_UIMF_EXTENSION);
                     isFile = true;
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.mzXML:
-                    fileOrFolderName = Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_MZXML_EXTENSION);
+                    fileOrFolderName = Path.Combine(m_WorkDir, Dataset + clsAnalysisResources.DOT_MZXML_EXTENSION);
                     isFile = true;
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.mzML:
-                    fileOrFolderName = Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_MZML_EXTENSION);
+                    fileOrFolderName = Path.Combine(m_WorkDir, Dataset + clsAnalysisResources.DOT_MZML_EXTENSION);
                     isFile = true;
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.AgilentDFolder:
-                    fileOrFolderName = Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_D_EXTENSION);
+                    fileOrFolderName = Path.Combine(m_WorkDir, Dataset + clsAnalysisResources.DOT_D_EXTENSION);
                     isFile = false;
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.MicromassRawFolder:
-                    fileOrFolderName = Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_RAW_EXTENSION);
+                    fileOrFolderName = Path.Combine(m_WorkDir, Dataset + clsAnalysisResources.DOT_RAW_EXTENSION);
                     isFile = false;
 
                     break;
@@ -1266,7 +1268,7 @@ namespace AnalysisManagerBase
                     // Check for "0.ser" folder
                     if (string.IsNullOrEmpty(newSourceFolder))
                     {
-                        fileOrFolderName = Path.Combine(m_WorkDir, m_Dataset);
+                        fileOrFolderName = Path.Combine(m_WorkDir, Dataset);
                         // isNetworkDir = false;
                     }
                     else
@@ -1279,7 +1281,7 @@ namespace AnalysisManagerBase
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder:
                     // Bruker_FT folders are actually .D folders
-                    fileOrFolderName = Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_D_EXTENSION);
+                    fileOrFolderName = Path.Combine(m_WorkDir, Dataset + clsAnalysisResources.DOT_D_EXTENSION);
                     isFile = false;
 
                     break;
@@ -1290,7 +1292,7 @@ namespace AnalysisManagerBase
                     //        so we don't know the official folder structure
                     ////////////////////////////////////
 
-                    fileOrFolderName = Path.Combine(m_WorkDir, m_Dataset);
+                    fileOrFolderName = Path.Combine(m_WorkDir, Dataset);
                     isFile = false;
 
                     break;
@@ -1302,14 +1304,14 @@ namespace AnalysisManagerBase
                     //        so we don't know the official folder structure
                     ////////////////////////////////////
 
-                    fileOrFolderName = Path.Combine(m_WorkDir, m_Dataset);
+                    fileOrFolderName = Path.Combine(m_WorkDir, Dataset);
                     isFile = false;
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.BrukerTOFBaf:
 
                     // BrukerTOFBaf folders are actually .D folders
-                    fileOrFolderName = Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_D_EXTENSION);
+                    fileOrFolderName = Path.Combine(m_WorkDir, Dataset + clsAnalysisResources.DOT_D_EXTENSION);
                     isFile = false;
 
                     break;
@@ -3118,7 +3120,7 @@ namespace AnalysisManagerBase
                 {
 
                     swToolVersionFile.WriteLine("Date: " + DateTime.Now.ToString(DATE_TIME_FORMAT));
-                    swToolVersionFile.WriteLine("Dataset: " + m_Dataset);
+                    swToolVersionFile.WriteLine("Dataset: " + Dataset);
                     swToolVersionFile.WriteLine("Job: " + Job);
                     swToolVersionFile.WriteLine("Step: " + m_jobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step"));
                     swToolVersionFile.WriteLine("Tool: " + m_jobParams.GetParam("StepTool"));
@@ -3891,7 +3893,7 @@ namespace AnalysisManagerBase
                 m_SummaryFile.Add("Date" + '\t' + DateTime.Now);
                 m_SummaryFile.Add("Processor" + '\t' + m_MachName);
                 m_SummaryFile.Add("Tool" + '\t' + strToolAndStepTool);
-                m_SummaryFile.Add("Dataset Name" + '\t' + m_Dataset);
+                m_SummaryFile.Add("Dataset Name" + '\t' + Dataset);
                 m_SummaryFile.Add("Xfer Folder" + '\t' + m_jobParams.GetParam("transferFolderPath"));
                 m_SummaryFile.Add("Param File Name" + '\t' + m_jobParams.GetParam("parmFileName"));
                 m_SummaryFile.Add("Settings File Name" + '\t' + m_jobParams.GetParam("settingsFileName"));
@@ -4175,7 +4177,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         protected bool ValidateCDTAFile()
         {
-            var strDTAFilePath = Path.Combine(m_WorkDir, m_Dataset + "_dta.txt");
+            var strDTAFilePath = Path.Combine(m_WorkDir, Dataset + "_dta.txt");
 
             return ValidateCDTAFile(strDTAFilePath);
         }
