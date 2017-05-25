@@ -227,7 +227,7 @@ namespace AnalysisManagerProg
                 return false;
             }
 
-            m_MgrName = m_MgrSettings.GetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME);
+            m_MgrName = m_MgrSettings.ManagerName;
             if (TraceMode)
                 ShowTraceMessage("Manager name is " + m_MgrName);
 

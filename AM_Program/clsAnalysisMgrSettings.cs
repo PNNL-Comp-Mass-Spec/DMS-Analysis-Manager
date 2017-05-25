@@ -85,6 +85,11 @@ namespace AnalysisManagerProg
         /// </summary>
         public string ErrMsg => mErrMsg;
 
+        /// <summary>
+        /// Manager name
+        /// </summary>
+        public string ManagerName => GetParam(MGR_PARAM_MGR_NAME, "Unknown_Manager");
+
         #endregion
 
         #region "Methods"
@@ -110,7 +115,7 @@ namespace AnalysisManagerProg
                 var cmd = new SqlCommand(SP_NAME_ACKMANAGERUPDATE, myConnection) {CommandType = CommandType.StoredProcedure};
 
                 cmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
-                cmd.Parameters.Add(new SqlParameter("@managerName", SqlDbType.VarChar, 128)).Value = GetParam(MGR_PARAM_MGR_NAME);
+                cmd.Parameters.Add(new SqlParameter("@managerName", SqlDbType.VarChar, 128)).Value = ManagerName;
                 cmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
 
                 // Execute the SP
@@ -307,7 +312,8 @@ namespace AnalysisManagerProg
         {
             // Requests manager specific settings from database. Performs retries if necessary.
 
-            var managerName = GetParam(MGR_PARAM_MGR_NAME);
+            var managerName = ManagerName;
+
             if (string.IsNullOrEmpty(managerName))
             {
                 mErrMsg = "MgrName parameter not found in m_ParamDictionary; it should be defined in the AnalysisManagerProg.exe.config file";
