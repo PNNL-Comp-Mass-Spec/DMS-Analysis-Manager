@@ -810,6 +810,7 @@ namespace AnalysisManagerProg
             if (runningRemote)
             {
                 // Job is running remotely; check its status
+                // If completed (success or fail), retrieve the resutls
                 success = CheckRemoteJobStatus(toolRunner, out eToolRunnerResult);
             }
             else
@@ -820,7 +821,7 @@ namespace AnalysisManagerProg
                 {
                     // Error occurred
                     // Note that m_AnalysisTask.CloseTask() should have already been called
-                    var reportSuccess = HandleJobFailure(eToolRunnerResult);
+                    var reportSuccess = HandleJobFailure(toolRunner, eToolRunnerResult);
 
                     return reportSuccess;
                 }
@@ -840,8 +841,7 @@ namespace AnalysisManagerProg
                         {
                             m_MostRecentErrorMessage = "Unknown error staging the job to run remotely";
                         }
-
-                        m_AnalysisTask.CloseTask(eToolRunnerResult, m_MostRecentErrorMessage);
+                        m_AnalysisTask.CloseTask(eToolRunnerResult, m_MostRecentErrorMessage, toolRunner.EvalCode, toolRunner.EvalMessage);
                     }
                 }
                 else
@@ -857,7 +857,7 @@ namespace AnalysisManagerProg
             {
                 // Error occurred
                 // Note that m_AnalysisTask.CloseTask() should have already been called
-                var reportSuccess = HandleJobFailure(eToolRunnerResult);
+                var reportSuccess = HandleJobFailure(toolRunner, eToolRunnerResult);
 
                 return reportSuccess;
 
@@ -940,14 +940,17 @@ namespace AnalysisManagerProg
 
                         eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
                         break;
+
                     case clsRemoteMonitor.EnumRemoteJobStatus.Unstarted:
                         LogDebug("Remote job has not yet started", 2);
                         eToolRunnerResult = CloseOutType.CLOSEOUT_RUNNING_REMOTE;
                         break;
+
                     case clsRemoteMonitor.EnumRemoteJobStatus.Running:
                         LogDebug(string.Format("Remote job is running, {0:F1}% complete", remoteMonitor.RemoteProgress), 2);
                         eToolRunnerResult = CloseOutType.CLOSEOUT_RUNNING_REMOTE;
                         break;
+
                     case clsRemoteMonitor.EnumRemoteJobStatus.Success:
                         // Retrieve result files then call PostProcess
 
@@ -1613,7 +1616,7 @@ namespace AnalysisManagerProg
             return eManagerErrorCleanupMode;
         }
 
-        private bool HandleJobFailure(CloseOutType eToolRunnerResult)
+        private bool HandleJobFailure(IToolRunner toolRunner, CloseOutType eToolRunnerResult)
         {
 
             if (TraceMode)
