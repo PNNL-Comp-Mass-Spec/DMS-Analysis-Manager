@@ -152,6 +152,8 @@ namespace AnalysisManagerBase
         /// </summary>
         public string JobStepDescription => string.Format("job {0}, step {1}", JobNum, StepNum);
 
+        #endregion
+
         #region "Status File Names"
 
         /// <summary>
@@ -179,7 +181,27 @@ namespace AnalysisManagerBase
         /// </summary>
         public string StatusLockFile => GetBaseStatusFilename() + ".lock";
 
-        #endregion
+        /// <summary>
+        /// Return a list of all status file names
+        /// </summary>
+        /// <remarks>Useful for skipping status files when copying job results</remarks>
+        public List<string> StatusFileNames
+        {
+            get
+            {
+
+                var statusFileNames = new List<string>
+                {
+                    JobStatusFile,
+                    ProcessingFailureFile,
+                    ProcessingSuccessFile,
+                    StatusInfoFile,
+                    StatusLockFile
+                };
+
+                return statusFileNames;
+            }
+        }
 
         #endregion
 
