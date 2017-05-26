@@ -803,6 +803,7 @@ namespace AnalysisManagerProg
 
             bool success;
             CloseOutType eToolRunnerResult;
+            clsRemoteMonitor remoteMonitor;
 
             // Retrieve files required for the job
             m_MgrErrorCleanup.CreateStatusFlagFile();
@@ -811,13 +812,15 @@ namespace AnalysisManagerProg
             {
                 // Job is running remotely; check its status
                 // If completed (success or fail), retrieve the resutls
-                success = CheckRemoteJobStatus(toolRunner, out eToolRunnerResult);
+                success = CheckRemoteJobStatus(toolRunner, out eToolRunnerResult, out remoteMonitor);
             }
             else
             {
+                remoteMonitor = null;
+
                 // Retrieve the resources for the job then either run locally or run remotely
-                success = RetrieveResources(toolResourcer, jobNum, datasetName, out eToolRunnerResult);
-                if (!success)
+                var resourcesRetrieved = RetrieveResources(toolResourcer, jobNum, datasetName, out eToolRunnerResult);
+                if (!resourcesRetrieved)
                 {
                     // Error occurred
                     // Note that m_AnalysisTask.CloseTask() should have already been called
@@ -851,7 +854,6 @@ namespace AnalysisManagerProg
                     // Note: if success is false, RunJobLocally will have already called .CloseTask
                 }
             }
-
 
             if (!success)
             {
@@ -892,9 +894,9 @@ namespace AnalysisManagerProg
 
                 UpdateStatusIdle("Completed job " + jobNum + ", step " + stepNum);
 
-                success = CleanupAfterJob();
+                var cleanupSuccess = CleanupAfterJob(true, runningRemote, remoteMonitor);
 
-                return success;
+                return cleanupSuccess;
             }
             catch (Exception ex)
             {
@@ -905,9 +907,11 @@ namespace AnalysisManagerProg
 
         }
 
-        private bool CheckRemoteJobStatus(IToolRunner toolRunner, out CloseOutType eToolRunnerResult)
+        private bool CheckRemoteJobStatus(
+            IToolRunner toolRunner,
+            out CloseOutType eToolRunnerResult,
+            out clsRemoteMonitor remoteMonitor)
         {
-            clsRemoteMonitor remoteMonitor;
 
             try
             {
@@ -925,6 +929,7 @@ namespace AnalysisManagerProg
                 m_MostRecentErrorMessage = "Exception instantiating the RemoteMonitor class";
                 LogError(m_MostRecentErrorMessage, ex);
                 eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+                remoteMonitor = null;
                 return false;
             }
 
@@ -939,68 +944,36 @@ namespace AnalysisManagerProg
                         LogError(clsGlobal.AppendToComment(m_MostRecentErrorMessage, remoteMonitor.Message));
 
                         eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
-                        break;
+                        return false;
 
                     case clsRemoteMonitor.EnumRemoteJobStatus.Unstarted:
                         LogDebug("Remote job has not yet started", 2);
                         eToolRunnerResult = CloseOutType.CLOSEOUT_RUNNING_REMOTE;
-                        break;
+                        return true;
 
                     case clsRemoteMonitor.EnumRemoteJobStatus.Running:
                         LogDebug(string.Format("Remote job is running, {0:F1}% complete", remoteMonitor.RemoteProgress), 2);
                         eToolRunnerResult = CloseOutType.CLOSEOUT_RUNNING_REMOTE;
-                        break;
+                        return true;
 
                     case clsRemoteMonitor.EnumRemoteJobStatus.Success:
-                        // Retrieve result files then call PostProcess
 
-                        var resultsRetrieved = toolRunner.RetrieveRemoteResults(remoteMonitor.TransferUtility);
-
-                        if (resultsRetrieved)
-                        {
-                            eToolRunnerResult = toolRunner.PostProcessRemoteResults();
-
-                            if (eToolRunnerResult == CloseOutType.CLOSEOUT_SUCCESS ||
-                                eToolRunnerResult == CloseOutType.CLOSEOUT_NO_DATA)
-                            {
-                                var success = toolRunner.CopyResultsToTransferDirectory();
-                                eToolRunnerResult = success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
-                            }
-                        }
-                        else
-                        {
-                            eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
-                        }
-
-                        break;
+                        var success = HandleRemoteJobSuccess(toolRunner, remoteMonitor, out eToolRunnerResult);
+                        return success;
 
                     case clsRemoteMonitor.EnumRemoteJobStatus.Failed:
 
-                        m_MostRecentErrorMessage = "Remote job failed";
-                        LogError(clsGlobal.AppendToComment(m_MostRecentErrorMessage, remoteMonitor.Message));
-
-                        // Retrieve result files then store in the DMS_FailedResults folder
-
-                        var failedResultsRetrieved = toolRunner.RetrieveRemoteResults(remoteMonitor.TransferUtility);
-
-                        if (failedResultsRetrieved)
-                        {
-                            toolRunner.CopyFailedResultsToArchiveFolder();
-                        }
-
-                        eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
-                        break;
+                        HandleRemoteJobFailure(toolRunner, remoteMonitor, out eToolRunnerResult);
+                        return false;
 
                     default:
                         m_MostRecentErrorMessage = "Unrecognized remote job status: " + eJobStatus;
                         LogError(clsGlobal.AppendToComment(m_MostRecentErrorMessage, remoteMonitor.Message));
 
                         eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
-                        break;
-
+                        return false;
                 }
 
-                return eToolRunnerResult != CloseOutType.CLOSEOUT_FAILED;
             }
             catch (Exception ex)
             {
@@ -1010,7 +983,7 @@ namespace AnalysisManagerProg
             }
         }
 
-        private bool CleanupAfterJob()
+        private bool CleanupAfterJob(bool jobSucceeded, bool runningRemote, clsRemoteMonitor remoteMonitor)
         {
             try
             {
@@ -1661,6 +1634,93 @@ namespace AnalysisManagerProg
                 m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.HandleJobFailure(): " + ex.Message, m_MostRecentJobInfo, true);
                 return false;
             }
+        }
+
+        private void HandleRemoteJobFailure(IToolRunner toolRunner, clsRemoteMonitor remoteMonitor, out CloseOutType eToolRunnerResult)
+        {
+            // Job failed
+            // Parse the .fail file to read the result codes and messages (the file was already retrieved by GetRemoteJobStatus()
+
+            var jobResultFilePath = Path.Combine(m_WorkDirPath, remoteMonitor.TransferUtility.ProcessingFailureFile);
+
+            var statusParsed = remoteMonitor.ParseStatusResultFile(jobResultFilePath, out eToolRunnerResult, out var completionMessage);
+
+            m_MostRecentErrorMessage = completionMessage;
+
+            if (!statusParsed)
+            {
+                eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(m_MostRecentErrorMessage))
+                m_MostRecentErrorMessage = "Remote job failed";
+
+            LogError(clsGlobal.AppendToComment(m_MostRecentErrorMessage, remoteMonitor.Message));
+
+            // Retrieve result files then store in the DMS_FailedResults folder
+
+            var failedResultsRetrieved = toolRunner.RetrieveRemoteResults(remoteMonitor.TransferUtility);
+
+            if (failedResultsRetrieved)
+            {
+                toolRunner.CopyFailedResultsToArchiveFolder();
+            }
+
+            eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+
+        }
+
+        private bool HandleRemoteJobSuccess(IToolRunner toolRunner, clsRemoteMonitor remoteMonitor, out CloseOutType eToolRunnerResult)
+        {
+            // Job succeeded
+            // Parse the .success file to read the result codes and messages (the file was already retrieved by GetRemoteJobStatus()
+
+            var jobResultFilePath = Path.Combine(m_WorkDirPath, remoteMonitor.TransferUtility.ProcessingSuccessFile);
+
+            var statusParsed = remoteMonitor.ParseStatusResultFile(jobResultFilePath, out eToolRunnerResult, out var completionMessage);
+
+            m_MostRecentErrorMessage = completionMessage;
+
+            if (!statusParsed)
+            {
+                eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+                return false;
+            }
+
+            // Retrieve result files then call PostProcess
+            var resultsRetrieved = toolRunner.RetrieveRemoteResults(remoteMonitor.TransferUtility);
+
+            if (!resultsRetrieved)
+            {
+                eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+                return false;
+            }
+
+            var postProcessResult = toolRunner.PostProcessRemoteResults();
+            if (postProcessResult != CloseOutType.CLOSEOUT_SUCCESS &&
+                postProcessResult != CloseOutType.CLOSEOUT_NO_DATA)
+            {
+                eToolRunnerResult = postProcessResult;
+            }
+
+            if (eToolRunnerResult != CloseOutType.CLOSEOUT_SUCCESS &&
+                eToolRunnerResult != CloseOutType.CLOSEOUT_NO_DATA)
+            {
+                toolRunner.CopyFailedResultsToArchiveFolder();
+                return false;
+            }
+
+            // Skip the status files when transferring results
+            foreach (var statusFile in remoteMonitor.TransferUtility.StatusFileNames)
+                m_AnalysisTask.AddResultFileToSkip(statusFile);
+
+            var success = toolRunner.CopyResultsToTransferDirectory();
+            if (success)
+                return true;
+
+            eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+            return false;
         }
 
         /// <summary>
