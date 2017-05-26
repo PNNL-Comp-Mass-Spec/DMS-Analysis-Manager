@@ -177,17 +177,18 @@ namespace AnalysisManagerBase
                 if (statusFiles.Count == 0)
                     return true;
 
-                var archiveFolderPathBase = clsPathUtils.CombineLinuxPaths(TransferUtility.RemoteTaskQueuePath, "Old");
+                var archiveFolderPathBase = clsPathUtils.CombineLinuxPaths(TransferUtility.RemoteTaskQueuePath, "Completed");
                 var archiveFolderPath = clsPathUtils.CombineLinuxPaths(archiveFolderPathBase, DateTime.Now.Year.ToString());
 
                 TransferUtility.CreateRemoteDirectories(new List<string> { archiveFolderPathBase, archiveFolderPath });
 
-                // If statusFiles contains a .info file or .lock file, delete it from the remote directory
+                // Do not transfer .info, .lock, or .jobstatus files to the archive folder
 
                 var filesToDelete = new List<string>
                 {
                     TransferUtility.StatusInfoFile,
-                    TransferUtility.StatusLockFile
+                    TransferUtility.StatusLockFile,
+                    TransferUtility.JobStatusFile
                 };
 
                 TransferUtility.MoveFiles(statusFiles, archiveFolderPath, filesToDelete);
