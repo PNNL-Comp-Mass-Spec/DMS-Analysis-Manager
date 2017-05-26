@@ -22,12 +22,11 @@ namespace AnalysisManagerBase
     /// </remarks>
     public class clsRemoteMonitor : clsEventNotifier
     {
-
         #region "Constants"
 
-        private int STALE_LOCK_FILE_AGE_HOURS = 24;
+        private const int STALE_LOCK_FILE_AGE_HOURS = 24;
 
-        private int STALE_JOBSTATUS_FILE_AGE_HOURS = 24;
+        private const int STALE_JOBSTATUS_FILE_AGE_HOURS = 24;
 
         #endregion
 
@@ -85,6 +84,18 @@ namespace AnalysisManagerBase
 
         #endregion
 
+        #region "Fields"
+
+        /// <summary>
+        /// Cache of remote status files for this job
+        /// Tracks full file paths
+        /// </summary>
+        private readonly SortedSet<string> mCachedStatusFiles;
+
+        private bool mParametersUpdated;
+
+        #endregion
+
         #region "Methods"
 
         /// <summary>
@@ -112,8 +123,91 @@ namespace AnalysisManagerBase
             DatasetName = jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetNum");
 
             TransferUtility = new clsRemoteTransferUtility(mgrParams, jobParams);
+
+            mCachedStatusFiles = new SortedSet<string>();
+            mParametersUpdated = false;
         }
 
+        /// <summary>
+        /// Delete workdir files on the remote host and archive status files
+        /// </summary>
+        /// <returns>True on success, otherwise failure</returns>
+        /// <remarks>Will use the cached status file names if GetRemoteJobStatus was previously called</remarks>
+        public bool DeleteRemoteJobFiles()
+        {
+            try
+            {
+                if (!mParametersUpdated)
+                {
+                    TransferUtility.UpdateParameters(false);
+                    mParametersUpdated = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError("Error initializing parameters for the remote transfer utility", ex);
+                return false;
+            }
+
+            try
+            {
+                OnDebugEvent("Deleting workdir files for " + TransferUtility.JobStepDescription);
+
+                TransferUtility.DeleteRemoteWorkDir();
+            }
+            catch (Exception ex)
+            {
+                LogError("Error deleting workdir files for the remotely running job", ex);
+                return false;
+            }
+
+            try
+            {
+
+                OnDebugEvent("Archiving status files for " + TransferUtility.JobStepDescription);
+
+                SortedSet<string> statusFiles;
+
+                if (mCachedStatusFiles.Count > 0)
+                {
+                    statusFiles = mCachedStatusFiles;
+                }
+                else
+                {
+                    statusFiles = new SortedSet<string>();
+
+                    foreach (var statusFile in TransferUtility.GetStatusFiles())
+                    {
+                        statusFiles.Add(statusFile.Key);
+                    }
+                }
+
+                if (statusFiles.Count == 0)
+                    return true;
+
+                var archiveFolderPathBase = clsPathUtils.CombineLinuxPaths(TransferUtility.RemoteTaskQueuePath, "Old");
+                var archiveFolderPath = clsPathUtils.CombineLinuxPaths(archiveFolderPathBase, DateTime.Now.Year.ToString());
+
+                TransferUtility.CreateRemoteDirectories(new List<string> { archiveFolderPathBase, archiveFolderPath });
+
+                // If statusFiles contains a .info file or .lock file, delete it from the remote directory
+
+                var filesToDelete = new List<string>
+                {
+                    TransferUtility.StatusInfoFile,
+                    TransferUtility.StatusLockFile
+                };
+
+                TransferUtility.MoveFiles(statusFiles, archiveFolderPath, filesToDelete);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error deleting workdir files for the remotely running job", ex);
+                return false;
+            }
+        }
         /// <summary>
         /// Determine the status of a remotely running job
         /// </summary>
@@ -122,7 +216,11 @@ namespace AnalysisManagerBase
         {
             try
             {
-                TransferUtility.UpdateParameters(false);
+                if (!mParametersUpdated)
+                {
+                    TransferUtility.UpdateParameters(false);
+                    mParametersUpdated = true;
+                }
             }
             catch (Exception ex)
             {
@@ -135,9 +233,12 @@ namespace AnalysisManagerBase
             try
             {
 
-                OnDebugEvent("Retrieving status files for "  + TransferUtility.JobStepDescription);
+                OnDebugEvent("Retrieving status files for " + TransferUtility.JobStepDescription);
 
                 var statusFiles = TransferUtility.GetStatusFiles();
+                mCachedStatusFiles.Clear();
+                foreach (var statusFile in statusFiles)
+                    mCachedStatusFiles.Add(statusFile.Key);
 
                 if (statusFiles.Count == 0)
                 {

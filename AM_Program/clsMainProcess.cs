@@ -876,7 +876,7 @@ namespace AnalysisManagerProg
                 if (runJobsRemotely)
                 {
                     // eToolRunnerResult will be CLOSEOUT_RUNNING_REMOTE if RunJobRemotely was called
-                    // or if CheckRemoteJobStatus was called and its still in progress
+                    // or if CheckRemoteJobStatus was called and the job is still in progress
 
                     // eToolRunnerResult will be CLOSEOUT_SUCCESS if CheckRemoteJobStatus found that the job was done
                     // and successfully retrieved the results
@@ -987,6 +987,13 @@ namespace AnalysisManagerProg
         {
             try
             {
+                if (jobSucceeded && runningRemote)
+                {
+                    // Job succeeded, and the status in DMS was successfully updated
+                    // Delete files on the remote host
+                    remoteMonitor.DeleteRemoteJobFiles();
+                }
+
                 // If success was reported check to see if there was an error deleting non result files
                 if (m_MgrErrorCleanup.DetectErrorDeletingFilesFlagFile())
                 {
