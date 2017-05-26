@@ -848,15 +848,23 @@ namespace AnalysisManagerBase
                     sftp.Connect();
 
                     // Keys are filenames, values are SftpFile objects
-                    var matchingFiles = new Dictionary<string, SftpFile>();
+                    var filesAndDirectories = new Dictionary<string, SftpFile>();
                     var directoriesToDelete = new SortedSet<string>();
 
-                    GetRemoteFileListing(sftp, new List<string> { workDirPath }, "*", true, matchingFiles);
+                    GetRemoteFilesAndDirectories(sftp, workDirPath, true, filesAndDirectories);
 
-                    foreach (var workDirFile in matchingFiles)
+                    foreach (var workDirFile in filesAndDirectories)
                     {
                         if (workDirFile.Value.IsDirectory)
+                        {
+                            if (workDirFile.Value.Name == "." || workDirFile.Value.Name == "..")
+                                continue;
+
+                            if (!directoriesToDelete.Contains(workDirFile.Key))
+                                directoriesToDelete.Add(workDirFile.Key);
+
                             continue;
+                        }
 
                         try
                         {
@@ -871,9 +879,8 @@ namespace AnalysisManagerBase
                         }
                         catch (Exception ex)
                         {
-                            OnErrorEvent(string.Format("Error deleting file {0}: {1}", workDirFile.Value.Name, ex.Message), ex);
+                            OnErrorEvent(string.Format("Error deleting file {0}: {1}", workDirFile.Value.Name, ex.Message));
                         }
-
 
                     }
 
@@ -886,7 +893,7 @@ namespace AnalysisManagerBase
                         }
                         catch (Exception ex)
                         {
-                            OnErrorEvent(string.Format("Error deleting directory {0}: {1}", directoryToDelete, ex.Message), ex);
+                            OnErrorEvent(string.Format("Error deleting directory {0}: {1}", directoryToDelete, ex.Message));
                         }
                     }
 
@@ -1060,6 +1067,95 @@ namespace AnalysisManagerBase
                     // Recursively call this function
                     GetRemoteFileListing(sftp, subdirectoryPaths, fileMatchSpec, true, matchingFiles);
                 }
+            }
+
+        }
+
+        /// <summary>
+        /// Retrieve a listing of all files and directories below a given directory on the remote host
+        /// </summary>
+        /// <param name="remoteDirectoryPath">Directory to check</param>
+        /// <param name="recurse">True to find files and directories in subdirectories</param>
+        /// <returns>Dictionary of matching files and directories, where keys are full paths and values are instances of SFtpFile</returns>
+        public IDictionary<string, SftpFile> GetRemoteFilesAndDirectories(string remoteDirectoryPath, bool recurse = false)
+        {
+
+            var filesAndDirectories = new Dictionary<string, SftpFile>();
+
+            if (!mParametersValidated)
+                throw new Exception("Call UpdateParameters before calling CopyFilesToRemote");
+
+            try
+            {
+                if (string.IsNullOrWhiteSpace(remoteDirectoryPath))
+                    throw new ArgumentException("Remote directory path cannot be empty", nameof(remoteDirectoryPath));
+
+                OnDebugEvent(string.Format("Getting file/directory listing for {0} on host {1}", remoteDirectoryPath, RemoteHostName));
+
+                using (var sftp = new SftpClient(RemoteHostName, RemoteHostUser, mPrivateKeyFile))
+                {
+                    sftp.Connect();
+                    GetRemoteFilesAndDirectories(sftp, remoteDirectoryPath, recurse, filesAndDirectories);
+                    sftp.Disconnect();
+                }
+
+                return filesAndDirectories;
+            }
+            catch (Exception ex)
+            {
+                OnErrorEvent("Error retrieving remote file/directory listing: " + ex.Message, ex);
+                return filesAndDirectories;
+            }
+
+        }
+
+        /// <summary>
+        /// Retrieve a listing of all files and directories below a given directory on the remote host
+        /// </summary>
+        /// <param name="sftp">sftp client</param>
+        /// <param name="remoteDirectoryPath">Directory to check</param>
+        /// <param name="recurse">True to find files and directories in subdirectories</param>
+        /// <param name="filesAndDirectories">Dictionary of matching files and directories, where keys are full paths and values are instances of SFtpFile</param>
+        private void GetRemoteFilesAndDirectories(
+            SftpClient sftp,
+            string remoteDirectoryPath,
+            bool recurse,
+            IDictionary<string, SftpFile> filesAndDirectories)
+        {
+
+            if (string.IsNullOrWhiteSpace(remoteDirectoryPath))
+            {
+                throw new ArgumentException("Remote directory path cannot be empty", nameof(remoteDirectoryPath));
+            }
+
+            var filesAndFolders = sftp.ListDirectory(remoteDirectoryPath);
+            var subdirectoryPaths = new List<string>();
+
+            foreach (var item in filesAndFolders)
+            {
+                if (item.IsDirectory)
+                {
+                    if (item.Name == "." || item.Name == "..")
+                        continue;
+
+                    subdirectoryPaths.Add(item.FullName);
+                }
+
+                try
+                {
+                    filesAndDirectories.Add(item.FullName, item);
+                }
+                catch (ArgumentException)
+                {
+                    OnWarningEvent("Skipping duplicate file or directory: " + item.FullName);
+                }
+            }
+
+            if (recurse && subdirectoryPaths.Count > 0)
+            {
+                // Recursively call this function
+                foreach (var subDirectoryPath in subdirectoryPaths)
+                    GetRemoteFilesAndDirectories(sftp, subDirectoryPath, true, filesAndDirectories);
             }
 
         }
