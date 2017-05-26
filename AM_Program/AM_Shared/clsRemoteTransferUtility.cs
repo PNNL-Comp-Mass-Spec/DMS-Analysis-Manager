@@ -1004,6 +1004,9 @@ namespace AnalysisManagerBase
                 {
                     if (item.IsDirectory)
                     {
+                        if (item.Name == "." || item.Name == "..")
+                            continue;
+
                         subdirectoryPaths.Add(item.FullName);
                         continue;
                     }
