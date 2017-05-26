@@ -2731,11 +2731,11 @@ namespace AnalysisManagerMSGFDBPlugIn
                 strMod = strMod.Substring(0, intPoundIndex - 1).Trim();
             }
 
-            // Split on commas and remove whitespace
-            var strSplitMod = strMod.Split(',');
-            for (var i = 0; i <= strSplitMod.Length - 1; i++)
+            // Split on commas, change tabs to spaces, and remove whitespace
+            var modParts = strMod.Split(',');
+            for (var i = 0; i <= modParts.Length - 1; i++)
             {
-                strSplitMod[i] = strSplitMod[i].Trim();
+                modParts[i] = modParts[i].Replace("\t", " ").Trim();
             }
 
             // Check whether this is a custom AA definition
