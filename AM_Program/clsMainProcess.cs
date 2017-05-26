@@ -1705,14 +1705,12 @@ namespace AnalysisManagerProg
             }
 
             var postProcessResult = toolRunner.PostProcessRemoteResults();
-            if (postProcessResult != CloseOutType.CLOSEOUT_SUCCESS &&
-                postProcessResult != CloseOutType.CLOSEOUT_NO_DATA)
+            if (!clsAnalysisJob.SuccessOrNoData(postProcessResult))
             {
                 eToolRunnerResult = postProcessResult;
             }
 
-            if (eToolRunnerResult != CloseOutType.CLOSEOUT_SUCCESS &&
-                eToolRunnerResult != CloseOutType.CLOSEOUT_NO_DATA)
+            if (!clsAnalysisJob.SuccessOrNoData(eToolRunnerResult))
             {
                 toolRunner.CopyFailedResultsToArchiveFolder();
                 return false;

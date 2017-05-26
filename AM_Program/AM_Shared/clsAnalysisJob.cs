@@ -598,6 +598,19 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
+        /// Return true if toolRunnerResult is CLOSEOUT_SUCCESS or CLOSEOUT_NO_DATA
+        /// </summary>
+        /// <param name="toolRunnerResult"></param>
+        /// <returns></returns>
+        public static bool SuccessOrNoData(CloseOutType toolRunnerResult)
+        {
+            if (toolRunnerResult == CloseOutType.CLOSEOUT_SUCCESS || toolRunnerResult == CloseOutType.CLOSEOUT_NO_DATA)
+                return true;
+
+            return false;
+        }
+
+        /// <summary>
         /// Attempts to retrieve the specified parameter (looks in all parameter sections)
         /// </summary>
         /// <param name="paramName">Parameter Name</param>

@@ -177,7 +177,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 Thread.Sleep(500);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
-                if (processingError || processingResult != CloseOutType.CLOSEOUT_SUCCESS && processingResult != CloseOutType.CLOSEOUT_NO_DATA)
+                if (processingError || !clsAnalysisJob.SuccessOrNoData(processingResult))
                 {
                     // Something went wrong
                     // In order to help diagnose things, we will move whatever files were created into the result folder,
@@ -932,7 +932,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
                 currentTask = "Calling CreatePeptideToProteinMapping";
                 result = mMSGFDBUtils.CreatePeptideToProteinMapping(msgfPlusResultsFileName, mResultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder);
-                if (result != CloseOutType.CLOSEOUT_SUCCESS & result != CloseOutType.CLOSEOUT_NO_DATA)
+                if (!clsAnalysisJob.SuccessOrNoData(result))
                 {
                     return result;
                 }
