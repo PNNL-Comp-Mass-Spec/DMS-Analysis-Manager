@@ -433,44 +433,43 @@ namespace AnalysisManagerBase
             // Determine the folder archive time by reading the modification times on the ResultsFolderInfo_ files
             foreach (var fiFileInfo in diTargetFolder.GetFiles(FAILED_RESULTS_FOLDER_INFO_TEXT + "*"))
             {
-                if (DateTime.UtcNow.Subtract(fiFileInfo.LastWriteTimeUtc).TotalDays > FAILED_RESULTS_FOLDER_RETAIN_DAYS)
+                if (DateTime.UtcNow.Subtract(fiFileInfo.LastWriteTimeUtc).TotalDays < FAILED_RESULTS_FOLDER_RETAIN_DAYS)
+                    continue;
+
+                // File was modified before the threshold; delete the results folder, then rename this file
+
+                try
                 {
-                    // File was modified before the threshold; delete the results folder, then rename this file
+                    var strOldResultsFolderName = Path.GetFileNameWithoutExtension(fiFileInfo.Name).Substring(FAILED_RESULTS_FOLDER_INFO_TEXT.Length);
+                    if (fiFileInfo.DirectoryName == null)
+                    {
+                        LogWarning("Unable to determine the parent directory of " + fiFileInfo.FullName);
+                        continue;
+                    }
+
+                    var diOldResultsFolder = new DirectoryInfo(Path.Combine(fiFileInfo.DirectoryName, strOldResultsFolderName));
+
+                    if (diOldResultsFolder.Exists)
+                    {
+                        LogMessage("Deleting old failed results folder: " + diOldResultsFolder.FullName);
+                        diOldResultsFolder.Delete(true);
+                    }
 
                     try
                     {
-                        var strOldResultsFolderName = Path.GetFileNameWithoutExtension(fiFileInfo.Name).Substring(FAILED_RESULTS_FOLDER_INFO_TEXT.Length);
-                        if (fiFileInfo.DirectoryName == null)
-                        {
-                            LogWarning("Unable to determine the parent directory of " + fiFileInfo.FullName);
-                            continue;
-                        }
-
-                        var diOldResultsFolder = new DirectoryInfo(Path.Combine(fiFileInfo.DirectoryName, strOldResultsFolderName));
-
-                        if (diOldResultsFolder.Exists)
-                        {
-                            LogMessage("Deleting old failed results folder: " + diOldResultsFolder.FullName);
-                            diOldResultsFolder.Delete(true);
-                        }
-
-                        try
-                        {
-                            strTargetFilePath = Path.Combine(fiFileInfo.DirectoryName, "x_" + fiFileInfo.Name);
-                            fiFileInfo.CopyTo(strTargetFilePath, true);
-                            fiFileInfo.Delete();
-                        }
-                        catch (Exception ex)
-                        {
-                            LogError("Error renaming failed results info file to " + strTargetFilePath, ex);
-                        }
-
+                        strTargetFilePath = Path.Combine(fiFileInfo.DirectoryName, "x_" + fiFileInfo.Name);
+                        fiFileInfo.CopyTo(strTargetFilePath, true);
+                        fiFileInfo.Delete();
                     }
                     catch (Exception ex)
                     {
-                        LogError("Error deleting old failed results folder", ex);
+                        LogError("Error renaming failed results info file to " + strTargetFilePath, ex);
                     }
 
+                }
+                catch (Exception ex)
+                {
+                    LogError("Error deleting old failed results folder", ex);
                 }
             }
 
