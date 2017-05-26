@@ -547,7 +547,7 @@ namespace AnalysisManagerBase
                 if (!statusResultFile.Exists)
                 {
                     LogError("Status result file not found: " + statusResultFile.FullName);
-                    eToolRunnerResult = CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                    eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED_REMOTE;
                     return false;
                 }
 
@@ -619,42 +619,42 @@ namespace AnalysisManagerBase
                 if (remoteJob == 0)
                 {
                     LogError("Status file retrieved from remote host does not have Job listed");
-                    eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+                    eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED_REMOTE;
                     return false;
                 }
 
                 if (remoteStep == 0)
                 {
                     LogError("Status file retrieved from remote host does not have Step listed");
-                    eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+                    eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED_REMOTE;
                     return false;
                 }
 
                 if (remoteJob != JobNum)
                 {
                     LogError(string.Format("Status file retrieved from remote host has the wrong job number: {0} vs. {1}", remoteJob, JobNum));
-                    eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+                    eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED_REMOTE;
                     return false;
                 }
 
                 if (remoteStep != StepNum)
                 {
                     LogError(string.Format("Status file retrieved from remote host has the wrong step number: {0} vs. {1}", remoteStep, StepNum));
-                    eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+                    eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED_REMOTE;
                     return false;
                 }
 
                 if (!(compCodeFound && evalCodeFound))
                 {
                     LogError("Status file retrieved from remote host is missing CompCode or EvalCode");
-                    eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+                    eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED_REMOTE;
                     return false;
                 }
 
                 if (!Enum.TryParse(compCode.ToString(), out eToolRunnerResult))
                 {
                     LogError("Status file retrieved from remote host has an invalid completion code: " + compCode);
-                    eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+                    eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED_REMOTE;
                     return false;
                 }
 
@@ -676,7 +676,7 @@ namespace AnalysisManagerBase
             catch (Exception ex)
             {
                 LogError("Exception parsing the remote job status file " + statusResultFilePath, ex);
-                eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+                eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED_REMOTE;
                 return false;
             }
         }

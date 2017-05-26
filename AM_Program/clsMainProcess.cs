@@ -928,7 +928,7 @@ namespace AnalysisManagerProg
             {
                 m_MostRecentErrorMessage = "Exception instantiating the RemoteMonitor class";
                 LogError(m_MostRecentErrorMessage, ex);
-                eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+                eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED_REMOTE;
                 remoteMonitor = null;
                 return false;
             }
@@ -943,7 +943,7 @@ namespace AnalysisManagerProg
                         m_MostRecentErrorMessage = "Undefined remote job status; check the logs";
                         LogError(clsGlobal.AppendToComment(m_MostRecentErrorMessage, remoteMonitor.Message));
 
-                        eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+                        eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED_REMOTE;
                         return false;
 
                     case clsRemoteMonitor.EnumRemoteJobStatus.Unstarted:
@@ -959,18 +959,23 @@ namespace AnalysisManagerProg
                     case clsRemoteMonitor.EnumRemoteJobStatus.Success:
 
                         var success = HandleRemoteJobSuccess(toolRunner, remoteMonitor, out eToolRunnerResult);
+                        if (!success)
+                        {
+                            m_AnalysisTask.CloseTask(eToolRunnerResult, m_MostRecentErrorMessage, toolRunner.EvalCode, toolRunner.EvalMessage);
+                        }
                         return success;
 
                     case clsRemoteMonitor.EnumRemoteJobStatus.Failed:
 
                         HandleRemoteJobFailure(toolRunner, remoteMonitor, out eToolRunnerResult);
+                        m_AnalysisTask.CloseTask(eToolRunnerResult, m_MostRecentErrorMessage, toolRunner.EvalCode, toolRunner.EvalMessage);
                         return false;
 
                     default:
                         m_MostRecentErrorMessage = "Unrecognized remote job status: " + eJobStatus;
                         LogError(clsGlobal.AppendToComment(m_MostRecentErrorMessage, remoteMonitor.Message));
 
-                        eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+                        eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED_REMOTE;
                         return false;
                 }
 
@@ -978,7 +983,7 @@ namespace AnalysisManagerProg
             catch (Exception ex)
             {
                 LogError("Exception checking job status on the remote host", ex);
-                eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+                eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED_REMOTE;
                 return false;
             }
         }
@@ -1646,22 +1651,32 @@ namespace AnalysisManagerProg
         private void HandleRemoteJobFailure(IToolRunner toolRunner, clsRemoteMonitor remoteMonitor, out CloseOutType eToolRunnerResult)
         {
             // Job failed
-            // Parse the .fail file to read the result codes and messages (the file was already retrieved by GetRemoteJobStatus()
+            // Parse the .fail file to read the result codes and messages (the file was already retrieved by GetRemoteJobStatus, if it existed)
 
-            var jobResultFilePath = Path.Combine(m_WorkDirPath, remoteMonitor.TransferUtility.ProcessingFailureFile);
+            var jobResultFile = new FileInfo(Path.Combine(m_WorkDirPath, remoteMonitor.TransferUtility.ProcessingFailureFile));
 
-            var statusParsed = remoteMonitor.ParseStatusResultFile(jobResultFilePath, out eToolRunnerResult, out var completionMessage);
-
-            m_MostRecentErrorMessage = completionMessage;
-
-            if (!statusParsed)
+            if (!jobResultFile.Exists)
             {
-                eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+                m_MostRecentErrorMessage = "No status files were found, not even a .info file";
+                eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED_REMOTE;
                 return;
             }
 
+            var statusParsed = remoteMonitor.ParseStatusResultFile(jobResultFile.FullName, out eToolRunnerResult, out var completionMessage);
+
+            if (!statusParsed)
+            {
+                if (string.IsNullOrWhiteSpace(m_MostRecentErrorMessage))
+                    m_MostRecentErrorMessage = "Status file parse error";
+
+                eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED_REMOTE;
+                return;
+            }
+
+            m_MostRecentErrorMessage = completionMessage;
+
             if (string.IsNullOrWhiteSpace(m_MostRecentErrorMessage))
-                m_MostRecentErrorMessage = "Remote job failed";
+                m_MostRecentErrorMessage = "Remote job failed: " + eToolRunnerResult;
 
             LogError(clsGlobal.AppendToComment(m_MostRecentErrorMessage, remoteMonitor.Message));
 
@@ -1674,8 +1689,7 @@ namespace AnalysisManagerProg
                 toolRunner.CopyFailedResultsToArchiveFolder();
             }
 
-            eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
-
+            eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED_REMOTE;
         }
 
         private bool HandleRemoteJobSuccess(IToolRunner toolRunner, clsRemoteMonitor remoteMonitor, out CloseOutType eToolRunnerResult)
@@ -1691,7 +1705,7 @@ namespace AnalysisManagerProg
 
             if (!statusParsed)
             {
-                eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+                eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED_REMOTE;
                 return false;
             }
 
@@ -1700,7 +1714,7 @@ namespace AnalysisManagerProg
 
             if (!resultsRetrieved)
             {
-                eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+                eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED_REMOTE;
                 return false;
             }
 
@@ -1724,7 +1738,7 @@ namespace AnalysisManagerProg
             if (success)
                 return true;
 
-            eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+            eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED_REMOTE;
             return false;
         }
 
