@@ -2867,6 +2867,16 @@ namespace AnalysisManagerMSGFDBPlugIn
             return ParseMSFDBParamLine(sbOptions, strKeyName, strValue, strParameterName, strCommandLineSwitchName);
         }
 
+        /// <summary>
+        /// Validate the command line argument and append to sbOptions
+        /// </summary>
+        /// <param name="sbOptions"></param>
+        /// <param name="strKeyName"></param>
+        /// <param name="strValue"></param>
+        /// <param name="strParameterName"></param>
+        /// <param name="strCommandLineSwitchName"></param>
+        /// <returns></returns>
+        /// <remarks></remarks>
         private bool ParseMSFDBParamLine(StringBuilder sbOptions, string strKeyName, string strValue, string strParameterName, string strCommandLineSwitchName)
         {
             if (clsGlobal.IsMatch(strKeyName, strParameterName))
@@ -3032,7 +3042,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 if (!File.Exists(tmpFilePath))
                 {
                     OnErrorEvent("MS-GF+ results file not found: " + fileName);
-                    return CloseOutType.CLOSEOUT_NO_OUT_FILES;
+                    return CloseOutType.CLOSEOUT_NO_DATA;
                 }
 
                 if (!oToolRunner.GZipFile(tmpFilePath, false))
