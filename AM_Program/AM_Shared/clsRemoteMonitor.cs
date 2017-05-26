@@ -115,6 +115,7 @@ namespace AnalysisManagerBase
             DatasetName = jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetNum");
 
             TransferUtility = new clsRemoteTransferUtility(mgrParams, jobParams);
+            RegisterEvents(TransferUtility);
 
             mCachedStatusFiles = new SortedSet<string>();
             mParametersUpdated = false;
