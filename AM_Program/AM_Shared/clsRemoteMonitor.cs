@@ -144,7 +144,7 @@ namespace AnalysisManagerBase
 
             try
             {
-                OnDebugEvent("Deleting workdir files for " + TransferUtility.JobStepDescription);
+                OnDebugEvent("Deleting remote workdir files for " + TransferUtility.JobStepDescription);
 
                 TransferUtility.DeleteRemoteWorkDir();
             }
@@ -610,14 +610,14 @@ namespace AnalysisManagerBase
                             case "CompCode":
                                 int.TryParse(lineParts[1], out compCode);
                                 break;
-                            case "compMessage":
+                            case "CompMsg":
                                 completionMessage = lineParts[1];
                                 LogWarning(string.Format("Completion message for job {0} run remotely: {1}", JobNum, completionMessage));
                                 break;
                             case "EvalCode":
                                 int.TryParse(lineParts[1], out evalCode);
                                 break;
-                            case "evalMessage":
+                            case "EvalMsg":
                                 evalMessage = lineParts[1];
                                 break;
                         }
