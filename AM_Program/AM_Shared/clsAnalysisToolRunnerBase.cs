@@ -2624,7 +2624,7 @@ namespace AnalysisManagerBase
         /// </remarks>
         public virtual CloseOutType PostProcessRemoteResults()
         {
-            LogDebug("Custom post-processing not required for remote job " + Job);
+            LogDebug("Custom post-processing not required for remote tool " + StepToolName + ", job " + Job);
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
@@ -3075,9 +3075,12 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Retrieve results from a remote processing job; storing in the local working directory
         /// </summary>
-        /// <param name="transferUtility"></param>
+        /// <param name="transferUtility">Remote transfer utility</param>
         /// <returns>True on success, otherwise false</returns>
-        /// <remarks>If this method is successful, you will typically call PostProcessRemoteResults</remarks>
+        /// <remarks>
+        /// If successful, the calling procedure will typically next call
+        /// PostProcessRemoteResults then CopyResultsToTransferDirectory
+        /// </remarks>
         public virtual bool RetrieveRemoteResults(clsRemoteTransferUtility transferUtility)
         {
             throw new NotImplementedException("Plugin " + StepToolName + " must implement RetrieveRemoteResults to allow for remote processing");
