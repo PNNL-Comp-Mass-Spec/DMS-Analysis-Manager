@@ -136,9 +136,9 @@ namespace AnalysisManagerBase
         /// <param name="closeOut"></param>
         /// <param name="compMsg"></param>
         /// <param name="evalCode"></param>
-        /// <param name="evalMessage"></param>
+        /// <param name="evalMsg"></param>
         /// <remarks>Implemented in clsAnalysisJob</remarks>
-        void CloseTask(CloseOutType closeOut, string compMsg, int evalCode, string evalMessage);
+        void CloseTask(CloseOutType closeOut, string compMsg, int evalCode, string evalMsg);
 
         /// <summary>
         /// Get all job parameters for the given section

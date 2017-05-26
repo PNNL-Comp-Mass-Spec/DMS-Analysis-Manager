@@ -1054,13 +1054,13 @@ namespace AnalysisManagerBase
         /// <param name="closeOut">IJobParams enum specifying close out type</param>
         /// <param name="compMsg">Completion message to be added to database upon closeOut</param>
         /// <param name="evalCode">Evaluation code (0 if no special evaulation message)</param>
-        /// <param name="evalMessage">Evaluation message ("" if no special message)</param>
-        public override void CloseTask(CloseOutType closeOut, string compMsg, int evalCode, string evalMessage)
+        /// <param name="evalMsg">Evaluation message ("" if no special message)</param>
+        public override void CloseTask(CloseOutType closeOut, string compMsg, int evalCode, string evalMsg)
         {
             var compCode = (int)closeOut;
 
-            if (evalMessage == null)
-                evalMessage = string.Empty;
+            if (evalMsg == null)
+                evalMsg = string.Empty;
 
             if (TaskClosed)
             {
@@ -1069,7 +1069,7 @@ namespace AnalysisManagerBase
             else
             {
                 TaskClosed = true;
-                if (!SetAnalysisJobComplete(compCode, compMsg, evalCode, evalMessage))
+                if (!SetAnalysisJobComplete(compCode, compMsg, evalCode, evalMsg))
                 {
                     LogError("Error setting job complete in database, job " + m_JobId);
                 }

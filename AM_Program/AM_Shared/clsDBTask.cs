@@ -160,10 +160,10 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="closeOut"></param>
         /// <param name="compMsg"></param>
-        /// <param name="EvalCode">Evaluation code (0 if no special evaulation message)</param>
-        /// <param name="EvalMessage">Evaluation message ("" if no special message)</param>
+        /// <param name="evalCode">Evaluation code (0 if no special evaulation message)</param>
+        /// <param name="evalMsg">Evaluation message ("" if no special message)</param>
         /// <remarks></remarks>
-        public abstract void CloseTask(CloseOutType closeOut, string compMsg, int EvalCode, string EvalMessage);
+        public abstract void CloseTask(CloseOutType closeOut, string compMsg, int evalCode, string evalMsg);
 
         protected IEnumerable<udtParameterInfoType> FillParamDictXml(string jobParamsXML)
         {

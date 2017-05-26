@@ -4081,11 +4081,11 @@ namespace AnalysisManagerBase
         /// Update the evaluation code and evaluation message
         /// </summary>
         /// <param name="evalCode"></param>
-        /// <param name="evalMessage"></param>
-        public void UpdateEvalCode(int evalCode, string evalMessage)
+        /// <param name="evalMsg"></param>
+        public void UpdateEvalCode(int evalCode, string evalMsg)
         {
             m_EvalCode = evalCode;
-            m_EvalMessage = evalMessage;
+            m_EvalMessage = evalMsg;
         }
 
         /// <summary>

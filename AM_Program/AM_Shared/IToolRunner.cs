@@ -7,6 +7,8 @@
 //
 //*********************************************************************************************************
 
+using System.Collections.Generic;
+
 namespace AnalysisManagerBase
 {
 
@@ -114,8 +116,8 @@ namespace AnalysisManagerBase
         /// Update the evaluation code and evaluation message
         /// </summary>
         /// <param name="evalCode"></param>
-        /// <param name="evalMessage"></param>
-        void UpdateEvalCode(int evalCode, string evalMessage);
+        /// <param name="evalMsg"></param>
+        void UpdateEvalCode(int evalCode, string evalMsg);
 
         #endregion
 
