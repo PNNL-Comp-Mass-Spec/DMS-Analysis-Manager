@@ -1385,7 +1385,7 @@ namespace AnalysisManagerBase
                     return false;
                 }
 
-                var statusFile = new FileInfo(Path.Combine(WorkDir, JobStatusFile));
+                var statusFile = new FileInfo(Path.Combine(WorkDir, statusFileName));
                 if (statusFile.Exists)
                 {
                     statusFilePathLocal = statusFile.FullName;
