@@ -530,6 +530,161 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
+        /// Parse a .success or .fail file retrieved from the remote host
+        /// </summary>
+        /// <param name="statusResultFilePath">Job .success or .fail status file path</param>
+        /// <param name="eToolRunnerResult">Toolrunner result</param>
+        /// <param name="completionMessage">Completion message</param>
+        /// <returns></returns>
+        public bool ParseStatusResultFile(
+            string statusResultFilePath,
+            out CloseOutType eToolRunnerResult,
+            out string completionMessage)
+        {
+
+            completionMessage = string.Empty;
+
+            try
+            {
+                var statusResultFile = new FileInfo(statusResultFilePath);
+                if (!statusResultFile.Exists)
+                {
+                    LogError("Status result file not found: " + statusResultFile.FullName);
+                    eToolRunnerResult = CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                    return false;
+                }
+
+                var remoteJob = 0;
+                var remoteStep = 0;
+
+                var compCodeFound = false;
+                var evalCodeFound = false;
+
+                var compCode = 0;
+
+                var evalCode = 0;
+                var evalMessage = string.Empty;
+
+                using (var reader = new StreamReader(new FileStream(statusResultFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                {
+                    char[] sepChars = { '=' };
+
+                    while (!reader.EndOfStream)
+                    {
+                        var dataLine = reader.ReadLine();
+                        if (string.IsNullOrWhiteSpace(dataLine))
+                            continue;
+
+                        var lineParts = dataLine.Split(sepChars, 2);
+
+                        if (lineParts.Length < 2)
+                        {
+                            LogWarning(string.Format("Ignoring invalid line in status file {0}: {1}", statusResultFile.Name, dataLine));
+                            continue;
+                        }
+
+                        if (lineParts[0] == "CompCode")
+                            compCodeFound = true;
+
+                        if (lineParts[0] == "EvalCode")
+                            evalCodeFound = true;
+
+                        if (string.IsNullOrWhiteSpace(lineParts[1]))
+                        {
+                            continue;
+                        }
+
+                        switch (lineParts[0])
+                        {
+                            case "Job":
+                                int.TryParse(lineParts[1], out remoteJob);
+                                break;
+                            case "Step":
+                                int.TryParse(lineParts[1], out remoteStep);
+                                break;
+                            case "CompCode":
+                                int.TryParse(lineParts[1], out compCode);
+                                break;
+                            case "compMessage":
+                                completionMessage = lineParts[1];
+                                LogWarning(string.Format("Completion message for job {0} run remotely: {1}", JobNum, completionMessage));
+                                break;
+                            case "EvalCode":
+                                int.TryParse(lineParts[1], out evalCode);
+                                break;
+                            case "evalMessage":
+                                evalMessage = lineParts[1];
+                                break;
+                        }
+                    }
+                }
+
+                if (remoteJob == 0)
+                {
+                    LogError("Status file retrieved from remote host does not have Job listed");
+                    eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+                    return false;
+                }
+
+                if (remoteStep == 0)
+                {
+                    LogError("Status file retrieved from remote host does not have Step listed");
+                    eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+                    return false;
+                }
+
+                if (remoteJob != JobNum)
+                {
+                    LogError(string.Format("Status file retrieved from remote host has the wrong job number: {0} vs. {1}", remoteJob, JobNum));
+                    eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+                    return false;
+                }
+
+                if (remoteStep != StepNum)
+                {
+                    LogError(string.Format("Status file retrieved from remote host has the wrong step number: {0} vs. {1}", remoteStep, StepNum));
+                    eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+                    return false;
+                }
+
+                if (!(compCodeFound && evalCodeFound))
+                {
+                    LogError("Status file retrieved from remote host is missing CompCode or EvalCode");
+                    eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+                    return false;
+                }
+
+                if (!Enum.TryParse(compCode.ToString(), out eToolRunnerResult))
+                {
+                    LogError("Status file retrieved from remote host has an invalid completion code: " + compCode);
+                    eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+                    return false;
+                }
+
+                if (eToolRunnerResult != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    LogWarning(string.Format("Completion code for job {0} run remotely: {1}", JobNum, eToolRunnerResult));
+                }
+
+                ToolRunner.UpdateEvalCode(evalCode, evalMessage);
+
+                if (evalCode != 0)
+                {
+                    LogMessage(string.Format("Evaluation code for job {0} run remotely: {1}, {2}", JobNum, evalCode, evalMessage));
+                }
+
+                return true;
+
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception parsing the remote job status file " + statusResultFilePath, ex);
+                eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+                return false;
+            }
+        }
+
+        /// <summary>
         /// Look for file statusFileName in dictionary statusFiles
         /// </summary>
         /// <param name="statusFileName">Status file to find</param>
