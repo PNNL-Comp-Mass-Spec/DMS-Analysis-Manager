@@ -802,6 +802,8 @@ namespace AnalysisManagerProg
             }
 
             bool success;
+            bool jobSucceeded;
+
             CloseOutType eToolRunnerResult;
             clsRemoteMonitor remoteMonitor;
 
@@ -811,8 +813,13 @@ namespace AnalysisManagerProg
             if (runningRemote)
             {
                 // Job is running remotely; check its status
-                // If completed (success or fail), retrieve the resutls
+                // If completed (success or fail), retrieve the results
                 success = CheckRemoteJobStatus(toolRunner, out eToolRunnerResult, out remoteMonitor);
+
+                if (success && clsAnalysisJob.SuccessOrNoData(eToolRunnerResult))
+                    jobSucceeded = true;
+                else
+                    jobSucceeded = false;
             }
             else
             {
@@ -834,6 +841,7 @@ namespace AnalysisManagerProg
 
                 if (runJobsRemotely)
                 {
+                    // Transfer files to the remote host so that the job can run remotely
                     success = RunJobRemotely(toolResourcer, jobNum, stepNum, out eToolRunnerResult);
                     if (!success)
                     {
@@ -846,12 +854,17 @@ namespace AnalysisManagerProg
                         }
                         m_AnalysisTask.CloseTask(eToolRunnerResult, m_MostRecentErrorMessage, toolRunner.EvalCode, toolRunner.EvalMessage);
                     }
+
+                    // jobSucceeded is always false when we stage files to run remotely
+                    // Only set it to true if CheckRemoteJobStatus reports success and the eToolRunnerResult is Success or No_Data
+                    jobSucceeded = false;
                 }
                 else
                 {
                     success = RunJobLocally(toolRunner, jobNum, datasetName, out eToolRunnerResult);
-
                     // Note: if success is false, RunJobLocally will have already called .CloseTask
+
+                    jobSucceeded = success;
                 }
             }
 
@@ -894,7 +907,7 @@ namespace AnalysisManagerProg
 
                 UpdateStatusIdle("Completed job " + jobNum + ", step " + stepNum);
 
-                var cleanupSuccess = CleanupAfterJob(true, runningRemote, remoteMonitor);
+                var cleanupSuccess = CleanupAfterJob(jobSucceeded, runningRemote, remoteMonitor);
 
                 return cleanupSuccess;
             }
