@@ -2739,10 +2739,10 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
 
             // Check whether this is a custom AA definition
-            var query = (from item in strSplitMod where item.ToLower() == "custom" select item).ToList();
+            var query = (from item in modParts where item.ToLower() == "custom" select item).ToList();
             var customAminoAcidDef = query.Count > 0;
 
-            if (strSplitMod.Length < 5)
+            if (modParts.Length < 5)
             {
                 // Invalid definition
 
@@ -2764,7 +2764,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
 
             // Reconstruct the mod (or custom AA) definition, making sure there is no whitespace
-            strModClean = string.Copy(strSplitMod[0]);
+            strModClean = string.Copy(modParts[0]);
 
             if (customAminoAcidDef)
             {
@@ -2819,9 +2819,9 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
             }
 
-            for (var intIndex = 1; intIndex <= strSplitMod.Length - 1; intIndex++)
+            for (var intIndex = 1; intIndex <= modParts.Length - 1; intIndex++)
             {
-                strModClean += "," + strSplitMod[intIndex];
+                strModClean += "," + modParts[intIndex];
             }
 
             // Possibly append the comment (which will start with a # sign)
@@ -2833,10 +2833,10 @@ namespace AnalysisManagerMSGFDBPlugIn
             // Check whether this is a phosphorylation mod
             if (!customAminoAcidDef)
             {
-                if (strSplitMod[(int) eModDefinitionParts.Name].ToUpper().StartsWith("PHOSPH") ||
-                    strSplitMod[(int) eModDefinitionParts.EmpiricalFormulaOrMass].ToUpper() == "HO3P")
+                if (modParts[(int) eModDefinitionParts.Name].ToUpper().StartsWith("PHOSPH") ||
+                    modParts[(int) eModDefinitionParts.EmpiricalFormulaOrMass].ToUpper() == "HO3P")
                 {
-                    if (strSplitMod[(int) eModDefinitionParts.Residues].ToUpper().IndexOfAny(new[]
+                    if (modParts[(int) eModDefinitionParts.Residues].ToUpper().IndexOfAny(new[]
                     {
                         'S',
                         'T',

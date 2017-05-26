@@ -59,8 +59,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
-            bool blnTooManySkippedSpectra;
-
             try
             {
                 //Call base class for initial setup
@@ -85,10 +83,11 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 // Run MSGF+ (includes indexing the fasta file)
                 FileInfo fiMSGFPlusResults;
-                bool blnProcessingError;
+                bool processingError;
 
-                var result = RunMSGFPlus(javaProgLoc, out fiMSGFPlusResults, out blnProcessingError, out blnTooManySkippedSpectra);
-                if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                bool tooManySkippedSpectra;
+                var processingResult = RunMSGFPlus(javaProgLoc, out fiMSGFPlusResults, out processingError, out tooManySkippedSpectra);
+                if (processingResult != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     if (string.IsNullOrEmpty(m_message))
                     {
@@ -113,12 +112,12 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                     if (!fiMSGFPlusResults.Exists & fiConsoleOutputFile.Length == 0)
                     {
-                        return result;
+                        return processingResult;
                     }
                 }
 
                 // Look for the .mzid file
-                // If it exists, then call PostProcessMSGFDBResults even if blnProcessingError is true
+                // If it exists, then call PostProcessMSGFDBResults even if processingError is true
 
                 fiMSGFPlusResults.Refresh();
                 if (fiMSGFPlusResults.Exists)
@@ -130,18 +129,21 @@ namespace AnalysisManagerMSGFDBPlugIn
                     if (fiMSGFPlusDirtyResults.Exists)
                     {
                         m_message = "MSGF+ _dirty.gz file found; this indicates a processing error";
-                        blnProcessingError = true;
+                        processingError = true;
                     }
                     else
                     {
-                        result = PostProcessMSGFDBResults(fiMSGFPlusResults.Name);
-                        if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                        var postProcessingResult = PostProcessMSGFDBResults(fiMSGFPlusResults.Name);
+                        if (postProcessingResult != CloseOutType.CLOSEOUT_SUCCESS)
                         {
                             if (string.IsNullOrEmpty(m_message))
                             {
                                 m_message = "Unknown error post-processing the MSGF+ results";
                             }
-                            blnProcessingError = true;
+
+                            processingError = true;
+                            if (processingResult == CloseOutType.CLOSEOUT_SUCCESS)
+                                processingResult = postProcessingResult;
                         }
                     }
                 }
@@ -150,13 +152,13 @@ namespace AnalysisManagerMSGFDBPlugIn
                     if (string.IsNullOrEmpty(m_message))
                     {
                         m_message = "MSGF+ results file not found: " + fiMSGFPlusResults.Name;
-                        blnProcessingError = true;
+                        processingError = true;
                     }
                 }
 
                 if (!mMSGFPlusComplete)
                 {
-                    blnProcessingError = true;
+                    processingError = true;
                     if (string.IsNullOrEmpty(m_message))
                     {
                         LogError("MSGF+ did not reach completion");
@@ -175,7 +177,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 Thread.Sleep(500);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
-                if (blnProcessingError | result != CloseOutType.CLOSEOUT_SUCCESS)
+                if (processingError || processingResult != CloseOutType.CLOSEOUT_SUCCESS && processingResult != CloseOutType.CLOSEOUT_NO_DATA)
                 {
                     // Something went wrong
                     // In order to help diagnose things, we will move whatever files were created into the result folder,
@@ -188,19 +190,19 @@ namespace AnalysisManagerMSGFDBPlugIn
                 if (!success)
                     return CloseOutType.CLOSEOUT_FAILED;
 
+
+                if (tooManySkippedSpectra)
+                {
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                return processingResult;
             }
             catch (Exception ex)
             {
                 LogError("Error in MSGFDbPlugin->RunTool: " + ex.Message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-
-            if (blnTooManySkippedSpectra)
-            {
-                return CloseOutType.CLOSEOUT_FAILED;
-            }
-
-            return CloseOutType.CLOSEOUT_SUCCESS;
 
         }
 
@@ -209,21 +211,21 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// </summary>
         /// <param name="javaProgLoc"></param>
         /// <param name="fiMSGFPlusResults"></param>
-        /// <param name="blnProcessingError"></param>
-        /// <param name="blnTooManySkippedSpectra"></param>
+        /// <param name="processingError"></param>
+        /// <param name="tooManySkippedSpectra"></param>
         /// <returns></returns>
         private CloseOutType RunMSGFPlus(
             string javaProgLoc,
             out FileInfo fiMSGFPlusResults,
-            out bool blnProcessingError,
-            out bool blnTooManySkippedSpectra)
+            out bool processingError,
+            out bool tooManySkippedSpectra)
         {
             var strMSGFJarfile = clsMSGFDBUtils.MSGFPLUS_JAR_NAME;
 
             fiMSGFPlusResults = new FileInfo(Path.Combine(m_WorkDir, Dataset + "_msgfplus.mzid"));
 
-            blnProcessingError = false;
-            blnTooManySkippedSpectra = false;
+            processingError = false;
+            tooManySkippedSpectra = false;
 
             // Determine the path to MSGF+
             // The manager parameter is MSGFDbProgLoc because originally the software was named MSGFDB (aka MS-GFDB)
@@ -416,7 +418,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
                 else
                 {
-                    blnProcessingError = true;
+                    processingError = true;
                 }
 
                 if (!mMSGFPlusComplete)
@@ -491,7 +493,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                         // Do not return CLOSEOUT_FAILED, as that causes the plugin to immediately exit; results and console output files would not be saved in that case
                         // Instead, set processingError to true
-                        blnProcessingError = true;
+                        processingError = true;
                         return CloseOutType.CLOSEOUT_SUCCESS;
                     }
                 }
@@ -511,7 +513,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 // Do not return CLOSEOUT_FAILED, as that causes the plugin to immediately exit; results and console output files would not be saved in that case
                 // Instead, set processingError to true
-                blnProcessingError = true;
+                processingError = true;
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -532,13 +534,13 @@ namespace AnalysisManagerMSGFDBPlugIn
                     // Failed jobs that are found to have this comment will have their settings files auto-updated and the job will auto-reset
 
                     LogError(clsAnalysisResources.SPECTRA_ARE_NOT_CENTROIDED + " with MSGF+");
-                    blnProcessingError = true;
+                    processingError = true;
                 }
                 else
                 {
                     // Compute the fraction of all potential spectra that were skipped
                     // If over 20% of the spectra were skipped, and if the source spectra were not centroided,
-                    //   then blnTooManySkippedSpectra will be set to True and the job step will be marked as failed
+                    //   then tooManySkippedSpectra will be set to True and the job step will be marked as failed
 
                     var spectraAreCentroided =
                         m_jobParams.GetJobParameter("CentroidMSXML", false) ||
@@ -552,7 +554,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     if (dblFractionSkipped > 0.2 & !spectraAreCentroided)
                     {
                         LogError("MSGF+ skipped " + strPercentSkipped + " of the spectra because they did not appear centroided");
-                        blnTooManySkippedSpectra = true;
+                        tooManySkippedSpectra = true;
                     }
                     else
                     {
