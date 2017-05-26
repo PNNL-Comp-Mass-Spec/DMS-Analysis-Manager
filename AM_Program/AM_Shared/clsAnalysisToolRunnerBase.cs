@@ -4058,6 +4058,17 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
+        /// Update the evaluation code and evaluation message
+        /// </summary>
+        /// <param name="evalCode"></param>
+        /// <param name="evalMessage"></param>
+        public void UpdateEvalCode(int evalCode, string evalMessage)
+        {
+            m_EvalCode = evalCode;
+            m_EvalMessage = evalMessage;
+        }
+
+        /// <summary>
         /// Cache the new core usage value
         /// Note: call ResetProgRunnerCpuUsage just before calling CmdRunner.RunProgram()
         /// </summary>

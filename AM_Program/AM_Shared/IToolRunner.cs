@@ -103,10 +103,17 @@ namespace AnalysisManagerBase
         /// <param name="transferUtility"></param>
         /// <returns>True on success, otherwise false</returns>
         /// <remarks>
-        /// If successful, the calling procedure will typically call
+        /// If successful, the calling procedure will typically next call
         /// PostProcessRemoteResults then CopyResultsToTransferDirectory
         /// </remarks>
         bool RetrieveRemoteResults(clsRemoteTransferUtility transferUtility);
+
+        /// <summary>
+        /// Update the evaluation code and evaluation message
+        /// </summary>
+        /// <param name="evalCode"></param>
+        /// <param name="evalMessage"></param>
+        void UpdateEvalCode(int evalCode, string evalMessage);
 
         #endregion
 
