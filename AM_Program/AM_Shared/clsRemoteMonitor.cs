@@ -237,9 +237,15 @@ namespace AnalysisManagerBase
                 if (statusFiles.Count == 0)
                 {
                     // No status files, not even a .info file
-                    // This could be due to a network outage issue so we'll return .Running
-                    LogWarning("No status files were found for " + TransferUtility.JobStepDescription + ", not even a .info file");
+                    // Check whether the remote server is reachable
+                    var taskFolderItems = TransferUtility.GetRemoteFilesAndDirectories(TransferUtility.RemoteTaskQueuePath);
+                    if (taskFolderItems.Count > 0)
+                    {
+                        LogError("No status files were found for " + TransferUtility.JobStepDescription + ", not even a .info file");
+                        return EnumRemoteJobStatus.Failed;
+                    }
 
+                    LogWarning("Remote task queue path is not accessible; possible network outage");
                     return EnumRemoteJobStatus.Running;
                 }
 
