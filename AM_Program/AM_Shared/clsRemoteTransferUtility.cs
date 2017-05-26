@@ -255,13 +255,18 @@ namespace AnalysisManagerBase
         /// <param name="sourceFileNames">Source file names; wildcards are not allowed</param>
         /// <param name="localDirectoryPath">Local target directory</param>
         /// <param name="useDefaultManagerRemoteInfo">True to use RemoteInfo defined for the manager; False to use RemoteInfo associated with the job (useful if checking on a running job)</param>
-        /// <returns>True on success, false if an error</returns>
+        /// <param name="warnIfMissing">Log warnings if any files are missing.  When false, logs debug messages instead</param>
+        /// <returns>
+        /// True on success, false if an error
+        /// Returns False if if any files were missing, even if warnIfMissing is false
+        /// </returns>
         /// <remarks>Calls UpdateParameters if necessary; that method will throw an exception if there are missing parameters or configuration issues</remarks>
         public bool CopyFilesFromRemote(
             string sourceDirectoryPath,
             IReadOnlyCollection<string> sourceFileNames,
             string localDirectoryPath,
-            bool useDefaultManagerRemoteInfo)
+            bool useDefaultManagerRemoteInfo,
+            bool warnIfMissing)
         {
             if (IsParameterUpdateRequired(useDefaultManagerRemoteInfo))
             {
@@ -270,7 +275,7 @@ namespace AnalysisManagerBase
                 UpdateParameters(useDefaultManagerRemoteInfo);
             }
 
-            return CopyFilesFromRemote(sourceDirectoryPath, sourceFileNames, localDirectoryPath);
+            return CopyFilesFromRemote(sourceDirectoryPath, sourceFileNames, localDirectoryPath, warnIfMissing);
         }
 
         /// <summary>
@@ -279,16 +284,22 @@ namespace AnalysisManagerBase
         /// <param name="sourceDirectoryPath">Source directory</param>
         /// <param name="sourceFileNames">Source file names; wildcards are not allowed</param>
         /// <param name="localDirectoryPath">Local target directory</param>
-        /// <returns>True on success, false if an error</returns>
+        /// <param name="warnIfMissing">Log warnings if any files are missing.  When false, logs debug messages instead</param>
+        /// <returns>
+        /// True on success, false if an error
+        /// Returns False if if any files were missing, even if warnIfMissing is false
+        /// </returns>
         private bool CopyFilesFromRemote(
             string sourceDirectoryPath,
             IReadOnlyCollection<string> sourceFileNames,
-            string localDirectoryPath)
+            string localDirectoryPath,
+            bool warnIfMissing = true)
         {
             // Use scp to retrieve the files
             // scp is faster than sftp, but it has the downside that we can't check for the existence of a file before retrieving it
 
-            var success = false;
+            var successCount = 0;
+            var failCount = 0;
 
             if (!mParametersValidated)
                 throw new Exception("Call UpdateParameters before calling CopyFilesToRemote");
@@ -315,12 +326,25 @@ namespace AnalysisManagerBase
 
                             targetFile.Refresh();
                             if (targetFile.Exists)
-                                success = true;
+                                successCount++;
+                            else
+                                failCount++;
                         }
                         catch (Exception ex)
                         {
-                            // ToDo: Explicitly check for FileNotFound exceptions
-                            OnWarningEvent(string.Format("Error copying {0}: {1}", remoteFilePath, ex.Message));
+                            failCount++;
+
+                            if (ex.Message.ToLower().Contains("no such file"))
+                            {
+                                if (warnIfMissing)
+                                    OnWarningEvent(string.Format("Remote file not found: {0}", remoteFilePath));
+                                else
+                                    OnDebugEvent(string.Format("Remote file not found: {0}", remoteFilePath));
+                            }
+                            else
+                            {
+                                OnWarningEvent(string.Format("Error copying {0}: {1}", remoteFilePath, ex.Message));
+                            }
                         }
 
                     }
@@ -329,7 +353,13 @@ namespace AnalysisManagerBase
 
                 }
 
-                return success;
+                if (successCount > 0 && failCount == 0)
+                    return true;
+
+                if (warnIfMissing)
+                    OnWarningEvent(string.Format("Error retrieving {0} of {1} files from {2}", failCount, sourceFileNames.Count, sourceDirectoryPath));
+
+                return false;
             }
             catch (Exception ex)
             {
