@@ -1,0 +1,176 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>AnalysisManagerBase</RootNamespace>
+    <AssemblyName>AM_Shared</AssemblyName>
+    <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Mono\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Mono\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Apache.NMS">
+      <HintPath>..\..\AM_Common\Apache.NMS.dll</HintPath>
+    </Reference>
+    <Reference Include="Apache.NMS.ActiveMQ">
+      <HintPath>..\..\AM_Common\Apache.NMS.ActiveMQ.dll</HintPath>
+    </Reference>
+    <Reference Include="CondenseCDTAFile">
+      <HintPath>..\..\AM_Common\CondenseCDTAFile.dll</HintPath>
+    </Reference>
+    <Reference Include="FastaFileSplitterDLL">
+      <HintPath>..\..\AM_Common\FastaFileSplitterDLL.dll</HintPath>
+    </Reference>
+    <Reference Include="FlexibleFileSortUtility">
+      <HintPath>..\..\AM_Common\FlexibleFileSortUtility.dll</HintPath>
+    </Reference>
+    <Reference Include="ICSharpCode.SharpZipLib">
+      <HintPath>..\..\AM_Common\ICSharpCode.SharpZipLib.dll</HintPath>
+    </Reference>
+    <Reference Include="Ionic.Zip">
+      <HintPath>..\..\AM_Common\Ionic.Zip.dll</HintPath>
+    </Reference>
+    <Reference Include="log4net">
+      <HintPath>..\..\AM_Common\log4net.dll</HintPath>
+    </Reference>
+    <Reference Include="MSDataFileReader">
+      <HintPath>..\..\AM_Common\MSDataFileReader.dll</HintPath>
+    </Reference>
+    <Reference Include="MSFileInfoScannerInterfaces">
+      <HintPath>..\..\AM_Common\MSFileInfoScannerInterfaces.dll</HintPath>
+    </Reference>
+    <Reference Include="MyEMSLReader">
+      <HintPath>..\..\AM_Common\MyEMSLReader.dll</HintPath>
+    </Reference>
+    <Reference Include="ParamFileGenerator">
+      <HintPath>..\..\AM_Common\ParamFileGenerator.dll</HintPath>
+    </Reference>
+    <Reference Include="PHRPReader">
+      <HintPath>..\..\AM_Common\PHRPReader.dll</HintPath>
+    </Reference>
+    <Reference Include="PRISM, Version=2.4.4.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\CachedLibs\PRISM.dll</HintPath>
+    </Reference>
+    <Reference Include="PRISMWin, Version=1.0.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\CachedLibs\PRISMWin.dll</HintPath>
+    </Reference>
+    <Reference Include="Protein_Exporter">
+      <HintPath>..\..\AM_Common\Protein_Exporter.dll</HintPath>
+    </Reference>
+    <Reference Include="Renci.SshNet, Version=2016.0.0.0, Culture=neutral, PublicKeyToken=1cee9f8bde3db106, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\CachedLibs\Renci.SshNet.dll</HintPath>
+    </Reference>
+    <Reference Include="SpectraTypeClassifier">
+      <HintPath>..\..\AM_Common\SpectraTypeClassifier.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data.SQLite, Version=1.0.97.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\CachedLibs\System.Data.SQLite.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+    <Reference Include="UIMFLibrary, Version=3.3.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\CachedLibs\UIMFLibrary.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="clsAnalysisJob.cs" />
+    <Compile Include="clsAnalysisMgrBase.cs" />
+    <Compile Include="clsAnalysisResources.cs" />
+    <Compile Include="clsAnalysisResults.cs" />
+    <Compile Include="clsAnalysisToolRunnerBase.cs" />
+    <Compile Include="clsAssemblyTools.cs" />
+    <Compile Include="clsCDTAUtilities.cs" />
+    <Compile Include="clsDataPackageDatasetInfo.cs" />
+    <Compile Include="clsDataPackageFileHandler.cs" />
+    <Compile Include="clsDataPackageInfoLoader.cs" />
+    <Compile Include="clsDataPackageJobInfo.cs" />
+    <Compile Include="clsDBStatusLogger.cs" />
+    <Compile Include="clsDBTask.cs" />
+    <Compile Include="clsEmergencyLog.cs" />
+    <Compile Include="clsFileCopyUtilities.cs" />
+    <Compile Include="clsFolderSearch.cs" />
+    <Compile Include="clsFormattedXMLWriter.cs" />
+    <Compile Include="clsGlobal.cs" />
+    <Compile Include="clsIonicZipTools.cs" />
+    <Compile Include="clsLoggerBase.cs" />
+    <Compile Include="clsLogTools.cs" />
+    <Compile Include="clsLogToolsPatternLayout.cs" />
+    <Compile Include="clsMemoryUsageLogger.cs" />
+    <Compile Include="clsMessageQueueLogger.cs" />
+    <Compile Include="clsMessageSender.cs" />
+    <Compile Include="clsMyEMSLUtilities.cs" />
+    <Compile Include="clsPathUtils.cs" />
+    <Compile Include="clsProteinCollectionInfo.cs" />
+    <Compile Include="clsProteowizardTools.cs" />
+    <Compile Include="clsRemoteMonitor.cs" />
+    <Compile Include="clsRemoteTransferUtility.cs" />
+    <Compile Include="clsRunDosProgram.cs" />
+    <Compile Include="clsScanStatsGenerator.cs" />
+    <Compile Include="clsSplitCattedFiles.cs" />
+    <Compile Include="clsSplitFastaFileUtilities.cs" />
+    <Compile Include="clsSplitMGFFile.cs" />
+    <Compile Include="clsSqLiteUtilities.cs" />
+    <Compile Include="clsStatusFile.cs" />
+    <Compile Include="clsSummaryFile.cs" />
+    <Compile Include="clsXMLParamFileReader.cs" />
+    <Compile Include="clsXMLUtils.cs" />
+    <Compile Include="ExceptionClasses.cs" />
+    <Compile Include="IAnalysisResources.cs" />
+    <Compile Include="IJobParams.cs" />
+    <Compile Include="IMgrParams.cs" />
+    <Compile Include="ISpectraFileProcessor.cs" />
+    <Compile Include="ISpectraFilter.cs" />
+    <Compile Include="IStatusFile.cs" />
+    <Compile Include="IToolRunner.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="clsSystemMemoryInfo.cs" />
+    <Compile Include="clsFileSearch.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>xcopy "$(TargetDir)AM_Shared.dll" "$(ProjectDir)..\..\AM_Common" /Y /D /F
+xcopy "$(TargetDir)AM_Shared.pdb" "$(ProjectDir)..\..\AM_Common" /Y /D /F
+xcopy "$(TargetDir)PRISM.dll" "$(ProjectDir)..\..\AM_Common" /Y /D /F
+xcopy "$(TargetDir)PrismWin.dll" "$(ProjectDir)..\..\AM_Common" /Y /D /F</PostBuildEvent>
+  </PropertyGroup>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
