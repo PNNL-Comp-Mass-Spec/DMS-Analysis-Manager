@@ -3076,50 +3076,67 @@ namespace AnalysisManagerBase
         /// Retrieve results from a remote processing job; storing in the local working directory
         /// </summary>
         /// <param name="transferUtility">Remote transfer utility</param>
+        /// <param name="verifyCopied">Log warnings if any files are missing.  When false, logs debug messages instead</param>
+        /// <param name="retrievedFilePaths">Local paths of retrieved files</param>
         /// <returns>True on success, otherwise false</returns>
         /// <remarks>
         /// If successful, the calling procedure will typically next call
         /// PostProcessRemoteResults then CopyResultsToTransferDirectory
         /// </remarks>
-        public virtual bool RetrieveRemoteResults(clsRemoteTransferUtility transferUtility)
+        public virtual bool RetrieveRemoteResults(
+            clsRemoteTransferUtility transferUtility,
+            bool verifyCopied,
+            out List<string> retrievedFilePaths)
         {
             throw new NotImplementedException("Plugin " + StepToolName + " must implement RetrieveRemoteResults to allow for remote processing");
         }
 
         /// <summary>
-        /// Retrieve the specified files, verifying that each one was actually retrieved
+        /// Retrieve the specified files, verifying that each one was actually retrieved if verifyCopied is true
         /// </summary>
         /// <param name="transferUtility">Remote transfer utility</param>
         /// <param name="filesToRetrieve">Files to retrieve</param>
+        /// <param name="verifyCopied">Log warnings if any files are missing.  When false, logs debug messages instead</param>
+        /// <param name="retrievedFilePaths">Local paths of retrieved files</param>
         /// <returns>True on success, otherwise false</returns>
-        protected bool RetrieveRemoteResults(clsRemoteTransferUtility transferUtility, List<string> filesToRetrieve)
+        protected bool RetrieveRemoteResults(
+            clsRemoteTransferUtility transferUtility,
+            List<string> filesToRetrieve,
+            bool verifyCopied,
+            out List<string> retrievedFilePaths)
         {
+            retrievedFilePaths = new List<string>();
+
             try
             {
 
                 var remoteSourceDirectory = transferUtility.RemoteJobStepWorkDirPath;
+                var warnIfMissing = verifyCopied;
 
-                var success = transferUtility.CopyFilesFromRemote(remoteSourceDirectory, filesToRetrieve, m_WorkDir, false);
-
-                if (!success)
-                {
-                    if (string.IsNullOrWhiteSpace(m_message))
-                        m_message = "Error retrieving processing results from " + transferUtility.RemoteHostName;
-                    return false;
-                }
+                transferUtility.CopyFilesFromRemote(remoteSourceDirectory, filesToRetrieve, m_WorkDir, false, warnIfMissing);
 
                 // Verify that all files were retrieved
                 foreach (var fileName in filesToRetrieve)
                 {
                     var localFile = new FileInfo(Path.Combine(m_WorkDir, fileName));
                     if (localFile.Exists)
+                    {
+                        retrievedFilePaths.Add(localFile.FullName);
                         continue;
+                    }
 
-                    LogError("Required result file not found: " + fileName);
-                    return false;
+                    if (verifyCopied)
+                        LogError("Required result file not found: " + fileName);
                 }
 
-                return true;
+                if (filesToRetrieve.Count == retrievedFilePaths.Count || !verifyCopied)
+                    return true;
+
+                if (string.IsNullOrWhiteSpace(m_message))
+                    LogError("Expected result files not found on " + transferUtility.RemoteHostName);
+
+                return false;
+
             }
             catch (Exception ex)
             {

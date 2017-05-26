@@ -949,9 +949,11 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Retrieve MSGF+ results that were run remotely
         /// </summary>
-        /// <param name="transferUtility"></param>
+        /// <param name="transferUtility">Transfer utility</param>
+        /// <param name="verifyCopied">Log warnings if any files are missing.  When false, logs debug messages instead</param>
+        /// <param name="retrievedFilePaths">Local paths of retrieved files</param>
         /// <returns>True on success, otherwise false</returns>
-        public override bool RetrieveRemoteResults(clsRemoteTransferUtility transferUtility)
+        public override bool RetrieveRemoteResults(clsRemoteTransferUtility transferUtility, bool verifyCopied, out List<string> retrievedFilePaths)
         {
             try
             {
@@ -961,12 +963,13 @@ namespace AnalysisManagerMSGFDBPlugIn
                     clsMSGFDBUtils.MSGFPLUS_CONSOLE_OUTPUT_FILE
                 };
 
-                var success = base.RetrieveRemoteResults(transferUtility, filesToRetrieve);
+                var success = base.RetrieveRemoteResults(transferUtility, filesToRetrieve, verifyCopied, out retrievedFilePaths);
                 return success;
 
             }
             catch (Exception ex)
             {
+                retrievedFilePaths = new List<string>();
                 LogError("Error in RetrieveRemoteResults", ex);
                 return false;
             }

@@ -1667,9 +1667,9 @@ namespace AnalysisManagerProg
 
             // Retrieve result files then store in the DMS_FailedResults folder
 
-            var failedResultsRetrieved = toolRunner.RetrieveRemoteResults(remoteMonitor.TransferUtility);
+            toolRunner.RetrieveRemoteResults(remoteMonitor.TransferUtility, false, out var retrievedFilePaths);
 
-            if (failedResultsRetrieved)
+            if (retrievedFilePaths.Count > 0)
             {
                 toolRunner.CopyFailedResultsToArchiveFolder();
             }
@@ -1696,7 +1696,7 @@ namespace AnalysisManagerProg
             }
 
             // Retrieve result files then call PostProcess
-            var resultsRetrieved = toolRunner.RetrieveRemoteResults(remoteMonitor.TransferUtility);
+            var resultsRetrieved = toolRunner.RetrieveRemoteResults(remoteMonitor.TransferUtility, true, out _);
 
             if (!resultsRetrieved)
             {

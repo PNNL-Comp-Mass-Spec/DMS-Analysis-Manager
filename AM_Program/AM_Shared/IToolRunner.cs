@@ -100,13 +100,15 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Retrieve results from a remote processing job; storing in the local working directory
         /// </summary>
-        /// <param name="transferUtility"></param>
+        /// <param name="transferUtility">Transfer utility</param>
+        /// <param name="verifyCopied">Log warnings and an error if any files are missing.  When false, logs debug messages instead</param>
+        /// <param name="retrievedFilePaths">Local paths of retrieved files</param>
         /// <returns>True on success, otherwise false</returns>
         /// <remarks>
         /// If successful, the calling procedure will typically next call
         /// PostProcessRemoteResults then CopyResultsToTransferDirectory
         /// </remarks>
-        bool RetrieveRemoteResults(clsRemoteTransferUtility transferUtility);
+        bool RetrieveRemoteResults(clsRemoteTransferUtility transferUtility, bool verifyCopied, out List<string> retrievedFilePaths);
 
         /// <summary>
         /// Update the evaluation code and evaluation message
