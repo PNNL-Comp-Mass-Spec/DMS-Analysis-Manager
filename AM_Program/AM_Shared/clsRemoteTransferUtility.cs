@@ -680,6 +680,83 @@ namespace AnalysisManagerBase
             }
         }
 
+        /// <summary>
+        /// Move the specified files to targetRemoteDirectory, optionally deleting files in filesToDelete
+        /// </summary>
+        /// <param name="sourceFilePaths"></param>
+        /// <param name="targetRemoteDirectory"></param>
+        /// <param name="filesToDelete">File names or paths in sourceFilePaths to delete instead of moving</param>
+        /// <returns></returns>
+        public bool MoveFiles(
+            IReadOnlyCollection<string> sourceFilePaths,
+            string targetRemoteDirectory,
+            List<string> filesToDelete)
+        {
+            if (!mParametersValidated)
+                throw new Exception("Call UpdateParameters before calling MoveFiles");
+
+            try
+            {
+                if (sourceFilePaths.Count == 0)
+                    return true;
+
+                var fileNamesToDelete = new SortedSet<string>();
+                var filePathsToDelete = new SortedSet<string>();
+
+                foreach (var fileToDelete in filesToDelete)
+                {
+                    if (fileToDelete.StartsWith("/") || fileToDelete.StartsWith("\\"))
+                    {
+                        // Path is rooted
+                        if (!filePathsToDelete.Contains(fileToDelete))
+                            filePathsToDelete.Add(fileToDelete);
+                        continue;
+                    }
+
+                    // Note that Path.GetFileName handles both Windows and Linux file paths
+                    var fileName = Path.GetFileName(fileToDelete);
+
+                    if (!fileNamesToDelete.Contains(fileName))
+                        fileNamesToDelete.Add(fileName);
+                }
+
+                OnDebugEvent("Moving files on host " + RemoteHostName + " to " + targetRemoteDirectory);
+
+                using (var sftp = new SftpClient(RemoteHostName, RemoteHostUser, mPrivateKeyFile))
+                {
+                    sftp.Connect();
+                    foreach (var remoteFilePath in sourceFilePaths)
+                    {
+
+                        var fileName = Path.GetFileName(remoteFilePath);
+
+                        if (fileName != null && fileNamesToDelete.Contains(fileName) ||
+                            filePathsToDelete.Contains(remoteFilePath))
+                        {
+                            // Delete this file instead of moving it
+                            OnDebugEvent("  deleting " + remoteFilePath);
+                            sftp.Delete(remoteFilePath);
+                            continue;
+                        }
+
+                        var newFilePath = clsPathUtils.CombineLinuxPaths(targetRemoteDirectory, fileName);
+
+                        OnDebugEvent("  moving " + remoteFilePath);
+                        sftp.RenameFile(remoteFilePath, newFilePath);
+                    }
+
+                    sftp.Disconnect();
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                OnErrorEvent("Error moving files: " + ex.Message, ex);
+                return false;
+            }
+        }
+
         private void DefineRemoteInfo()
         {
             var remoteInfo = GetRemoteInfoXml(USE_MANAGER_REMOTE_INFO);
@@ -696,6 +773,80 @@ namespace AnalysisManagerBase
             JobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, STEP_PARAM_REMOTE_TIMESTAMP, remoteTimestamp);
 
             return remoteTimestamp;
+        }
+
+        public void DeleteRemoteWorkDir()
+        {
+
+            if (!mParametersValidated)
+                throw new Exception("Call UpdateParameters before calling MoveFiles");
+
+
+            try
+            {
+                if (string.IsNullOrEmpty(RemoteWorkDirPath))
+                    throw new Exception("RemoteWorkDirPath is empty; cannot delete files");
+
+                var workDirPath = RemoteJobStepWorkDirPath;
+
+                OnDebugEvent("Delete WorkDir files on host " + RemoteHostName + ": " + workDirPath);
+
+                using (var sftp = new SftpClient(RemoteHostName, RemoteHostUser, mPrivateKeyFile))
+                {
+                    sftp.Connect();
+
+                    // Keys are filenames, values are SftpFile objects
+                    var matchingFiles = new Dictionary<string, SftpFile>();
+                    var directoriesToDelete = new SortedSet<string>();
+
+                    GetRemoteFileListing(sftp, new List<string> { workDirPath }, "*", true, matchingFiles);
+
+                    foreach (var workDirFile in matchingFiles)
+                    {
+                        if (workDirFile.Value.IsDirectory)
+                            continue;
+
+                        try
+                        {
+                            OnDebugEvent("  deleting " + workDirFile.Key);
+                            workDirFile.Value.Delete();
+
+                            var parentPath = clsPathUtils.GetParentDirectoryPath(workDirFile.Value.FullName, out _);
+
+                            if (!directoriesToDelete.Contains(parentPath))
+                                directoriesToDelete.Add(parentPath);
+
+                        }
+                        catch (Exception ex)
+                        {
+                            OnErrorEvent(string.Format("Error deleting file {0}: {1}", workDirFile.Value.Name, ex.Message), ex);
+                        }
+
+
+                    }
+
+                    foreach (var directoryToDelete in (from item in directoriesToDelete orderby item descending select item))
+                    {
+                        try
+                        {
+                            OnDebugEvent("  deleting directory " + directoryToDelete);
+                            sftp.DeleteDirectory(directoryToDelete);
+                        }
+                        catch (Exception ex)
+                        {
+                            OnErrorEvent(string.Format("Error deleting directory {0}: {1}", directoryToDelete, ex.Message), ex);
+                        }
+                    }
+
+                    sftp.Disconnect();
+                }
+
+            }
+            catch (Exception ex)
+            {
+                OnErrorEvent("Error deleting remote work directory: " + ex.Message, ex);
+            }
+
         }
 
         /// <summary>
