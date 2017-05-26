@@ -1,14 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml;
 using System.Xml.Linq;
 using PRISM;
-using Renci.SshNet;
 using Renci.SshNet.Sftp;
 
 namespace AnalysisManagerBase
@@ -54,8 +49,6 @@ namespace AnalysisManagerBase
         public string Message { get; private set; }
 
         private IJobParams JobParams { get; }
-
-        private IMgrParams MgrParams { get; }
 
         public float RemoteProgress { get; private set; }
 
@@ -109,7 +102,6 @@ namespace AnalysisManagerBase
             clsStatusFile statusTools)
         {
 
-            MgrParams = mgrParams;
             JobParams = jobParams;
 
             WorkDir = mgrParams.GetParam("workdir");
@@ -339,10 +331,15 @@ namespace AnalysisManagerBase
 
         }
 
-        private void LogError(string message, Exception ex)
+        private void LogError(string message, Exception ex = null)
         {
             Message = message;
             OnErrorEvent(message, ex);
+        }
+
+        private void LogMessage(string message)
+        {
+            OnStatusEvent(message);
         }
 
         private void LogWarning(string message)
@@ -418,11 +415,11 @@ namespace AnalysisManagerBase
 
                     var managerInfo = doc.Elements("Root").Elements("Manager").ToList();
 
-                    // Note: although we pass statusFilePath to the clsStatusFile constructor, the path doesn't matter because
+                    // Note: although we pass localStatusFilePath to the clsStatusFile constructor, the path doesn't matter because
                     // we call UpdateRemoteStatus to push the remote status to the message queue only; a status file is not written
-                    var statusFilePath = Path.Combine(WorkDir, "RemoteStatus.xml");
+                    var localStatusFilePath = Path.Combine(WorkDir, "RemoteStatus.xml");
 
-                    var status = new clsStatusFile(statusFilePath, DebugLevel)
+                    var status = new clsStatusFile(localStatusFilePath, DebugLevel)
                     {
                         MgrName = clsXMLUtils.GetXmlValue(managerInfo, "MgrName")
                     };
