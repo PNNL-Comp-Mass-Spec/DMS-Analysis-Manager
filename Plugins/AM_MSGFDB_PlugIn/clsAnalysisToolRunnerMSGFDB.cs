@@ -959,11 +959,9 @@ namespace AnalysisManagerMSGFDBPlugIn
                     clsMSGFDBUtils.MSGFPLUS_CONSOLE_OUTPUT_FILE
                 };
 
-                var remoteSourceDirectory = transferUtility.RemoteJobStepWorkDirPath;
-
-                var success = transferUtility.CopyFilesFromRemote(remoteSourceDirectory, filesToRetrieve, m_WorkDir, false);
-
+                var success = base.RetrieveRemoteResults(transferUtility, filesToRetrieve);
                 return success;
+
             }
             catch (Exception ex)
             {

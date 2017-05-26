@@ -3084,6 +3084,48 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
+        /// Retrieve the specified files, verifying that each one was actually retrieved
+        /// </summary>
+        /// <param name="transferUtility">Remote transfer utility</param>
+        /// <param name="filesToRetrieve">Files to retrieve</param>
+        /// <returns>True on success, otherwise false</returns>
+        protected bool RetrieveRemoteResults(clsRemoteTransferUtility transferUtility, List<string> filesToRetrieve)
+        {
+            try
+            {
+
+                var remoteSourceDirectory = transferUtility.RemoteJobStepWorkDirPath;
+
+                var success = transferUtility.CopyFilesFromRemote(remoteSourceDirectory, filesToRetrieve, m_WorkDir, false);
+
+                if (!success)
+                {
+                    if (string.IsNullOrWhiteSpace(m_message))
+                        m_message = "Error retrieving processing results from " + transferUtility.RemoteHostName;
+                    return false;
+                }
+
+                // Verify that all files were retrieved
+                foreach (var fileName in filesToRetrieve)
+                {
+                    var localFile = new FileInfo(Path.Combine(m_WorkDir, fileName));
+                    if (localFile.Exists)
+                        continue;
+
+                    LogError("Required result file not found: " + fileName);
+                    return false;
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error in RetrieveRemoteResults", ex);
+                return false;
+            }
+        }
+
+        /// <summary>
         /// Runs the analysis tool
         /// Major work is performed by overrides
         /// </summary>
