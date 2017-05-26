@@ -651,7 +651,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="remoteDirectories"></param>
         /// <returns>True on success, otherwise false</returns>
-        /// <remarks>The parent directory of all items in remoteDirectories must already exist</remarks>
+        /// <remarks>The parent directory of each item in remoteDirectories must already exist</remarks>
         public bool CreateRemoteDirectories(IReadOnlyCollection<string> remoteDirectories)
         {
 
@@ -785,16 +785,32 @@ namespace AnalysisManagerBase
                         if (fileName != null && fileNamesToDelete.Contains(fileName) ||
                             filePathsToDelete.Contains(remoteFilePath))
                         {
-                            // Delete this file instead of moving it
-                            OnDebugEvent("  deleting " + remoteFilePath);
-                            sftp.Delete(remoteFilePath);
+                            try
+                            {
+                                // Delete this file instead of moving it
+                                OnDebugEvent("  deleting " + remoteFilePath);
+                                sftp.Delete(remoteFilePath);
+                            }
+                            catch (Exception ex)
+                            {
+                                OnErrorEvent(string.Format("Error deleting {0}: {1}", remoteFilePath, ex.Message));
+                            }
+
                             continue;
                         }
 
                         var newFilePath = clsPathUtils.CombineLinuxPaths(targetRemoteDirectory, fileName);
 
-                        OnDebugEvent("  moving " + remoteFilePath);
-                        sftp.RenameFile(remoteFilePath, newFilePath);
+                        try
+                        {
+                            // Move the file; if it already exists in the destination, an exception will occur (with message "Failure")
+                            OnDebugEvent("  moving " + remoteFilePath);
+                            sftp.RenameFile(remoteFilePath, newFilePath);
+                        }
+                        catch (Exception ex)
+                        {
+                            OnErrorEvent(string.Format("Error moving {0}: {1}", remoteFilePath, ex.Message));
+                        }
                     }
 
                     sftp.Disconnect();
@@ -832,7 +848,6 @@ namespace AnalysisManagerBase
 
             if (!mParametersValidated)
                 throw new Exception("Call UpdateParameters before calling MoveFiles");
-
 
             try
             {
