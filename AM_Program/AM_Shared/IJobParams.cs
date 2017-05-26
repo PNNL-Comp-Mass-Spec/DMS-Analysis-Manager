@@ -35,7 +35,8 @@ namespace AnalysisManagerBase
         CLOSEOUT_FILE_NOT_IN_CACHE = 16,
         CLOSEOUT_UNABLE_TO_USE_MZ_REFINERY = 17,
         CLOSEOUT_NO_DATA = 20,
-        CLOSEOUT_RUNNING_REMOTE = 25
+        CLOSEOUT_RUNNING_REMOTE = 25,
+        CLOSEOUT_FAILED_REMOTE = 26
     }
 
     #endregion
