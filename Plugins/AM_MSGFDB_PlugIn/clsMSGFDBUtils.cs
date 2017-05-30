@@ -2899,40 +2899,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         public static bool UseLegacyMSGFDB(IJobParams jobParams)
         {
             return false;
-
-            //Dim strValue As String
-
-            //' Default to using MS-GF+
-            //Dim blnUseLegacyMSGFDB As Boolean = False
-
-            //strValue = jobParams.GetJobParameter("UseLegacyMSGFDB", String.Empty)
-            //If Not String.IsNullOrEmpty(strValue) Then
-            //	If Not Boolean.TryParse(strValue, out blnUseLegacyMSGFDB) Then
-            //		' Error parsing strValue; not boolean
-            //		strValue = String.Empty
-            //	End If
-            //End If
-
-            //If String.IsNullOrEmpty(strValue) Then
-            //	strValue = jobParams.GetJobParameter("UseMSGFPlus", String.Empty)
-
-            //	If Not String.IsNullOrEmpty(strValue) Then
-            //		Dim blnUseMSGFPlus As Boolean
-            //		If Boolean.TryParse(strValue, out blnUseMSGFPlus) Then
-            //			strValue = "False"
-            //			blnUseLegacyMSGFDB = False
-            //		Else
-            //			strValue = String.Empty
-            //		End If
-            //	End If
-
-            //	If String.IsNullOrEmpty(strValue) Then
-            //		' Default to using MS-GF+
-            //		blnUseLegacyMSGFDB = False
-            //	End If
-            //End If
-
-            //Return blnUseLegacyMSGFDB
         }
 
         private bool ValidatePeptideToProteinMapResults(string strPeptideToProteinMapFilePath, bool ignorePeptideToProteinMapperErrors)
