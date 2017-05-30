@@ -32,7 +32,7 @@ namespace AnalysisManagerProg
 {
     static class modMain
     {
-        public const string PROGRAM_DATE = "May 18, 2017";
+        public const string PROGRAM_DATE = "May 26, 2017";
 
         private static bool mCodeTestMode;
         private static bool mCreateWindowsEventLog;
@@ -40,6 +40,7 @@ namespace AnalysisManagerProg
         private static bool mDisableMessageQueue;
         private static bool mDisableMyEMSL;
         private static bool mDisplayDllVersions;
+        private static bool mShowVersionOnly;
 
         private static string mDisplayDllPath;
 
@@ -57,95 +58,183 @@ namespace AnalysisManagerProg
             mDisplayDllVersions = false;
             mDisplayDllPath = string.Empty;
 
+            if (Path.DirectorySeparatorChar == '/')
+            {
+                // Running on Linux
+                // Enable offline mode
+                EnableOfflineMode(true);
+            }
+
             try
             {
                 // Look for /T or /Test on the command line
                 // If present, this means "code test mode" is enabled
                 //
-                // Other valid switches are /I, /NoStatus, /T, /Test, /Trace, /EL, /Q, and /?
+                // Other valid switches are /I, /NoStatus, /T, /Test, /Trace, /EL, /Offline, /Version, /Q, and /?
                 //
-                if (objParseCommandLine.ParseCommandLine())
+                if (!objParseCommandLine.ParseCommandLine())
                 {
-                    SetOptionsUsingCommandLineParameters(objParseCommandLine);
+                    Console.WriteLine("Error parsing the command line arguments");
+                    return -1;
                 }
 
-                if (objParseCommandLine.NeedToShowHelp)
+                var validArgs = SetOptionsUsingCommandLineParameters(objParseCommandLine);
+
+                if (objParseCommandLine.NeedToShowHelp || !validArgs)
                 {
                     ShowProgramHelp();
-                    intReturnCode = -1;
+                    return -1;
                 }
-                else
+
+                if (mTraceMode)
+                    ShowTraceMessage("Command line arguments parsed");
+
+                if (mShowVersionOnly)
+                {
+                    DisplayVersion();
+                    return 0;
+                }
+
+                // Note: CodeTestMode is enabled using command line switch /T
+
+                if (mCodeTestMode)
                 {
                     if (mTraceMode)
-                        ShowTraceMessage("Command line arguments parsed");
+                        ShowTraceMessage("Code test mode enabled");
 
-                    // Note: CodeTestMode is enabled using command line switch /T
+                    var objTest = new clsCodeTest { TraceMode = mTraceMode };
 
-                    if (mCodeTestMode)
+                    try
                     {
-                        if (mTraceMode)
-                            ShowTraceMessage("Code test mode enabled");
+                        // objTest.SystemMemoryUsage();
+                        // objTest.TestDTASplit();
+                        // objTest.TestProteinDBExport(@"C:\DMS_Temp_Org");
+                        // objTest.TestDeleteFiles();
+                        // objTest.TestLogging();
+                        // objTest.GenerateScanStatsFile();
+                        // objTest.TestArchiveFailedResults();
 
-                        var objTest = new clsCodeTest { TraceMode = mTraceMode };
+                        // objTest.TestGetToolVersionInfo();
 
-                        try
-                        {
-                            // objTest.SystemMemoryUsage();
-                            // objTest.TestDTASplit();
-                            // objTest.TestProteinDBExport(@"C:\DMS_Temp_Org");
-                            // objTest.TestDeleteFiles();
-                            // objTest.TestLogging();
-                            // objTest.GenerateScanStatsFile();
-                            // objTest.TestArchiveFailedResults();
-
-                            // objTest.TestGetToolVersionInfo();
-
-                            objTest.TestConnectRSA();
-                        }
-                        catch (Exception ex)
-                        {
-                            clsGlobal.LogError("clsCodeTest exception", ex);
-                        }
-
-                        PRISM.clsParseCommandLine.PauseAtConsole(3000, 1000);
-                        return 0;
+                        objTest.TestConnectRSA();
+                    }
+                    catch (Exception ex)
+                    {
+                        clsGlobal.LogError("clsCodeTest exception", ex);
                     }
 
-                    if (mCreateWindowsEventLog)
-                    {
-                        clsMainProcess.CreateAnalysisManagerEventLog();
-                    }
-                    else if (mDisplayDllVersions)
-                    {
-                        var objTest = new clsCodeTest {
-                            TraceMode = mTraceMode
-                        };
-                        objTest.DisplayDllVersions(mDisplayDllPath);
-                        PRISM.clsParseCommandLine.PauseAtConsole();
-                    }
-                    else
-                    {
-                        // Initiate automated analysis
-                        if (mTraceMode)
-                            ShowTraceMessage("Instantiating clsMainProcess");
-
-                        var objDMSMain = new clsMainProcess(mTraceMode)
-                        {
-                            DisableMessageQueue = mDisableMessageQueue,
-                            DisableMyEMSL = mDisableMyEMSL
-                        };
-
-                        intReturnCode = objDMSMain.Main();
-                    }
+                    PRISM.clsParseCommandLine.PauseAtConsole(3000);
+                    return 0;
                 }
+
+                if (mCreateWindowsEventLog)
+                {
+                    clsMainProcess.CreateAnalysisManagerEventLog();
+                    return 0;
+                }
+
+                if (mDisplayDllVersions)
+                {
+                    var objTest = new clsCodeTest {
+                        TraceMode = mTraceMode
+                    };
+                    objTest.DisplayDllVersions(mDisplayDllPath);
+                    PRISM.clsParseCommandLine.PauseAtConsole();
+                    return 0;
+                }
+
+                // Initiate automated analysis
+                if (mTraceMode)
+                    ShowTraceMessage("Instantiating clsMainProcess");
+
+                var objDMSMain = new clsMainProcess(mTraceMode)
+                {
+                    DisableMessageQueue = mDisableMessageQueue,
+                    DisableMyEMSL = mDisableMyEMSL
+                };
+
+                intReturnCode = objDMSMain.Main();
+                return intReturnCode;
             }
             catch (Exception ex)
             {
                 clsGlobal.LogError("Error occurred in modMain->Main: " + Environment.NewLine + ex.Message, ex);
-                intReturnCode = -1;
+                return -1;
             }
 
-            return intReturnCode;
+        }
+
+        private static void DisplayVersion()
+        {
+            Console.WriteLine();
+            Console.WriteLine("DMS Analysis Manager");
+            Console.WriteLine("Version " + GetAppVersion(PROGRAM_DATE));
+            Console.WriteLine();
+
+            if (!clsGlobal.LinuxOS) return;
+
+            try
+            {
+
+                var etcFolder = new DirectoryInfo("/etc");
+
+                if (!etcFolder.Exists)
+                {
+                    Console.WriteLine("Etc folder not found; cannot determine OS version");
+                    return;
+                }
+
+                var dataDisplayed = new SortedSet<string>();
+
+                foreach (var releaseFile in etcFolder.GetFiles("*release"))
+                {
+
+                    using (var reader = new StreamReader(new FileStream(releaseFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                    {
+                        while (!reader.EndOfStream)
+                        {
+                            var dataLine = reader.ReadLine();
+
+                            if (string.IsNullOrWhiteSpace(dataLine))
+                            {
+                                Console.WriteLine();
+                                continue;
+                            }
+
+                            if (dataDisplayed.Contains(dataLine))
+                                continue;
+
+                            Console.WriteLine(dataLine);
+                            dataDisplayed.Add(dataLine);
+                        }
+                    }
+                    Console.WriteLine();
+                }
+            }
+            catch (Exception ex)
+            {
+                clsGlobal.LogError("Error displaying the program version: " + Environment.NewLine + ex.Message, ex);
+            }
+
+        }
+
+        /// <summary>
+        /// Enable offline mode
+        /// </summary>
+        /// <remarks>When offline, does not contact any databases or remote shares</remarks>
+        private static void EnableOfflineMode()
+        {
+            clsMainProcess.EnableOfflineMode(clsGlobal.LinuxOS);
+        }
+
+        /// <summary>
+        /// Enable offline mode
+        /// </summary>
+        /// <param name="runningLinux">Set to True if running Linux</param>
+        /// <remarks>When offline, does not contact any databases or remote shares</remarks>
+        private static void EnableOfflineMode(bool runningLinux)
+        {
+            clsMainProcess.EnableOfflineMode(runningLinux);
         }
 
         private static string GetAppPath()
@@ -164,7 +253,7 @@ namespace AnalysisManagerProg
             return Assembly.GetExecutingAssembly().GetName().Version + " (" + strProgramDate + ")";
         }
 
-        private static void SetOptionsUsingCommandLineParameters(PRISM.clsParseCommandLine objParseCommandLine)
+        private static bool SetOptionsUsingCommandLineParameters(PRISM.clsParseCommandLine objParseCommandLine)
         {
             // Returns True if no problems; otherwise, returns false
 
@@ -175,7 +264,9 @@ namespace AnalysisManagerProg
                 "EL",
                 "NQ",
                 "NoMyEMSL",
-                "DLL"
+                "DLL",
+                "Offline",
+                "Version"
             };
 
             try
@@ -185,45 +276,54 @@ namespace AnalysisManagerProg
                 {
                     ShowErrorMessage("Invalid commmand line parameters",
                         (from item in objParseCommandLine.InvalidParameters(lstValidParameters) select "/" + item).ToList());
+
+                    return false;
                 }
-                else
+
+                // Query objParseCommandLine to see if various parameters are present
+
+                if (objParseCommandLine.IsParameterPresent("T"))
+                    mCodeTestMode = true;
+                if (objParseCommandLine.IsParameterPresent("Test"))
+                    mCodeTestMode = true;
+
+                if (objParseCommandLine.IsParameterPresent("Trace"))
+                    mTraceMode = true;
+
+                if (objParseCommandLine.IsParameterPresent("EL"))
+                    mCreateWindowsEventLog = true;
+
+                if (objParseCommandLine.IsParameterPresent("NQ"))
+                    mDisableMessageQueue = true;
+
+                if (objParseCommandLine.IsParameterPresent("NoMyEMSL"))
+                    mDisableMyEMSL = true;
+
+                if (objParseCommandLine.IsParameterPresent("DLL"))
                 {
-                    // Query objParseCommandLine to see if various parameters are present
-
-                    if (objParseCommandLine.IsParameterPresent("T"))
-                        mCodeTestMode = true;
-                    if (objParseCommandLine.IsParameterPresent("Test"))
-                        mCodeTestMode = true;
-
-                    if (objParseCommandLine.IsParameterPresent("Trace"))
-                        mTraceMode = true;
-
-                    if (objParseCommandLine.IsParameterPresent("EL"))
-                        mCreateWindowsEventLog = true;
-
-                    if (objParseCommandLine.IsParameterPresent("NQ"))
-                        mDisableMessageQueue = true;
-
-                    if (objParseCommandLine.IsParameterPresent("NoMyEMSL"))
-                        mDisableMyEMSL = true;
-
-                    if (objParseCommandLine.IsParameterPresent("DLL"))
+                    mDisplayDllVersions = true;
+                    string strValue;
+                    if (objParseCommandLine.RetrieveValueForParameter("DLL", out strValue))
                     {
-                        mDisplayDllVersions = true;
-                        string strValue;
-                        if (objParseCommandLine.RetrieveValueForParameter("DLL", out strValue))
+                        if (!string.IsNullOrWhiteSpace(strValue))
                         {
-                            if (!string.IsNullOrWhiteSpace(strValue))
-                            {
-                                mDisplayDllPath = strValue;
-                            }
+                            mDisplayDllPath = strValue;
                         }
                     }
                 }
+
+                if (objParseCommandLine.IsParameterPresent("Offline"))
+                    EnableOfflineMode();
+
+                if (objParseCommandLine.IsParameterPresent("Version"))
+                    mShowVersionOnly = true;
+
+                return true;
             }
             catch (Exception ex)
             {
                 clsGlobal.LogError("Error parsing the command line parameters: " + Environment.NewLine + ex.Message, ex);
+                return false;
             }
         }
 
@@ -298,17 +398,7 @@ namespace AnalysisManagerProg
                                   "You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0");
                 Console.WriteLine();
 
-                Console.WriteLine("Notice: This computer software was prepared by Battelle Memorial Institute, " +
-                                  "hereinafter the Contractor, under Contract No. DE-AC05-76RL0 1830 with the " +
-                                  "Department of Energy (DOE).  All rights in the computer software are reserved " +
-                                  "by DOE on behalf of the United States Government and the Contractor as " +
-                                  "provided in the Contract.  NEITHER THE GOVERNMENT NOR THE CONTRACTOR MAKES ANY " +
-                                  "WARRANTY, EXPRESS OR IMPLIED, OR ASSUMES ANY LIABILITY FOR THE USE OF THIS " +
-                                  "SOFTWARE.  This notice including this sentence must appear on any copies of " +
-                                  "this computer software.");
-
-                // Delay for 750 msec in case the user double clicked this file from within Windows Explorer (or started the program via a shortcut)
-                Thread.Sleep(750);
+                PRISM.clsParseCommandLine.PauseAtConsole(1500);
             }
             catch (Exception ex)
             {
