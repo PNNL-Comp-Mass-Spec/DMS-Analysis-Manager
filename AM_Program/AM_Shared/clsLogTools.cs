@@ -6,7 +6,7 @@ using log4net.Appender;
 using log4net.Util.TypeConverters;
 
 //*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy 
+// Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2009, Battelle Memorial Institute
 // Created 01/01/2009
@@ -130,6 +130,11 @@ namespace AnalysisManagerBase
         private static void WriteLogWork(LoggerTypes loggerType, LogLevels logLevel, string message, Exception ex)
         {
             ILog myLogger;
+
+            if (clsGlobal.LinuxOS && (loggerType == LoggerTypes.LogDb || loggerType == LoggerTypes.LogSystem))
+                loggerType = LoggerTypes.LogFile;
+            else if (clsGlobal.OfflineMode && loggerType == LoggerTypes.LogDb)
+                loggerType = LoggerTypes.LogFile;
 
             // Establish which logger will be used
             switch (loggerType)

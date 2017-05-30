@@ -74,6 +74,7 @@ namespace AnalysisManagerProg
         private string m_MostRecentJobInfo;
 
         private string m_MostRecentErrorMessage = string.Empty;
+
         #endregion
 
         #region "Properties"
@@ -1560,6 +1561,16 @@ namespace AnalysisManagerProg
             UpdateStatusFlagFileExists();
         }
 
+        /// <summary>
+        /// Enable offline mode
+        /// </summary>
+        /// <param name="runningLinux">Set to True if running Linux</param>
+        /// <remarks>When offline, does not contact any databases or remote shares</remarks>
+        public static void EnableOfflineMode(bool runningLinux = true)
+        {
+            clsGlobal.EnableOfflineMode(runningLinux);
+        }
+
         private string GetRecentLogFilename()
         {
             string lastFilename;
@@ -2995,5 +3006,6 @@ namespace AnalysisManagerProg
                 LogDebug("Config file changed");
             }
         }
+
     }
 }

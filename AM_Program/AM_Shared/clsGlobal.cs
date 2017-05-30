@@ -43,6 +43,20 @@ namespace AnalysisManagerBase
         }
         #endregion
 
+        #region Properties
+
+        /// <summary>
+        /// When true, we are running on Linux and thus should not access any Windows features
+        /// </summary>
+        public static bool LinuxOS { get; private set; }
+
+        /// <summary>
+        /// When true, does not contact any databases or remote shares
+        /// </summary>
+        public static bool OfflineMode { get; private set; }
+
+        #endregion
+
         #region "Module variables"
 
         private static string mAppFolderPath;
@@ -187,6 +201,18 @@ namespace AnalysisManagerBase
 
             return string.Join("", pwdCharsAdj);
 
+        }
+
+        /// <summary>
+        /// Enable offline mode
+        /// </summary>
+        /// <param name="runningLinux">Set to True if running Linux</param>
+        /// <remarks>When offline, does not contact any databases or remote shares</remarks>
+        public static void EnableOfflineMode(bool runningLinux = true)
+        {
+            Console.WriteLine("Offline mode enabled globally");
+            OfflineMode = true;
+            LinuxOS = runningLinux;
         }
 
         /// <summary>
