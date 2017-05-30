@@ -185,7 +185,7 @@ namespace AnalysisManagerBase
                 pwdCharsAdj.Add((char)pwdBytes[byteCntr]);
             }
 
-            return String.Join("", pwdCharsAdj);
+            return string.Join("", pwdCharsAdj);
 
         }
 
@@ -203,7 +203,7 @@ namespace AnalysisManagerBase
                 return string.Empty;
             }
 
-            return String.Join(delimiter, lstItems);
+            return string.Join(delimiter, lstItems);
         }
 
         /// <summary>
@@ -602,7 +602,7 @@ namespace AnalysisManagerBase
                 return true;
             }
 
-            if (String.Compare(strText1, strText2, StringComparison.OrdinalIgnoreCase) == 0)
+            if (string.Compare(strText1, strText2, StringComparison.OrdinalIgnoreCase) == 0)
             {
                 return true;
             }

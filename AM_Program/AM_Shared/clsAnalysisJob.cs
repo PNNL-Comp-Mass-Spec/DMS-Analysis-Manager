@@ -188,7 +188,7 @@ namespace AnalysisManagerBase
             try
             {
                 if (paramValue == null)
-                    paramValue = String.Empty;
+                    paramValue = string.Empty;
 
                 SetParam(sectionName, paramName, paramValue);
 
@@ -210,7 +210,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public void AddDatasetInfo(string datasetName, int datasetID)
         {
-            if (String.IsNullOrWhiteSpace(datasetName))
+            if (string.IsNullOrWhiteSpace(datasetName))
                 return;
             if (!m_DatasetInfoList.ContainsKey(datasetName))
             {
@@ -225,7 +225,7 @@ namespace AnalysisManagerBase
         /// <remarks>Can be a file extension (like .raw) or even a partial file name like _peaks.txt</remarks>
         public void AddResultFileExtensionToSkip(string fileExtension)
         {
-            if (String.IsNullOrWhiteSpace(fileExtension))
+            if (string.IsNullOrWhiteSpace(fileExtension))
                 return;
 
             if (!m_ResultFileExtensionsToSkip.Contains(fileExtension))
@@ -241,7 +241,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public void AddResultFileToKeep(string fileName)
         {
-            if (String.IsNullOrWhiteSpace(fileName))
+            if (string.IsNullOrWhiteSpace(fileName))
                 return;
 
             fileName = Path.GetFileName(fileName);
@@ -258,7 +258,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public void AddResultFileToSkip(string fileName)
         {
-            if (String.IsNullOrWhiteSpace(fileName))
+            if (string.IsNullOrWhiteSpace(fileName))
                 return;
 
             fileName = Path.GetFileName(fileName);
@@ -275,7 +275,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public void AddServerFileToDelete(string filePath)
         {
-            if (String.IsNullOrWhiteSpace(filePath))
+            if (string.IsNullOrWhiteSpace(filePath))
                 return;
 
             if (!m_ServerFilesToDelete.Contains(filePath))
@@ -323,7 +323,7 @@ namespace AnalysisManagerBase
             {
                 value = GetParam(name);
 
-                if (String.IsNullOrEmpty(value))
+                if (string.IsNullOrEmpty(value))
                 {
                     return valueIfMissing;
                 }
@@ -354,7 +354,7 @@ namespace AnalysisManagerBase
             {
                 value = GetParam(name);
 
-                if (String.IsNullOrEmpty(value))
+                if (string.IsNullOrEmpty(value))
                 {
                     return valueIfMissing;
                 }
@@ -382,7 +382,7 @@ namespace AnalysisManagerBase
             {
                 value = GetParam(name);
 
-                if (String.IsNullOrEmpty(value))
+                if (string.IsNullOrEmpty(value))
                 {
                     return valueIfMissing;
                 }
@@ -454,7 +454,7 @@ namespace AnalysisManagerBase
         public string GetJobParameter(string section, string name, string valueIfMissing)
         {
             var value = GetParam(section, name);
-            if (String.IsNullOrEmpty(value))
+            if (string.IsNullOrEmpty(value))
             {
                 return valueIfMissing;
             }
@@ -500,7 +500,7 @@ namespace AnalysisManagerBase
             {
                 return value;
             }
-            return String.Empty;
+            return string.Empty;
         }
 
         /// <summary>
@@ -513,7 +513,7 @@ namespace AnalysisManagerBase
         public string GetParam(string section, string name)
         {
 
-            if (String.IsNullOrEmpty(name))
+            if (string.IsNullOrEmpty(name))
             {
                 // User actually wanted to look for the parameter that is currently in the Section Variable, using an empty string as the default value
                 return GetParam(section);
@@ -523,7 +523,7 @@ namespace AnalysisManagerBase
             {
                 return value;
             }
-            return String.Empty;
+            return string.Empty;
         }
 
         public static string JobParametersFilename(int jobNum)
@@ -548,7 +548,7 @@ namespace AnalysisManagerBase
             var blnMatchFound = false;
 
             if (paramValue == null)
-                paramValue = String.Empty;
+                paramValue = string.Empty;
 
             foreach (var section in m_JobParams)
             {
@@ -584,7 +584,7 @@ namespace AnalysisManagerBase
             }
 
             if (paramValue == null)
-                paramValue = String.Empty;
+                paramValue = string.Empty;
 
             if (oParams.ContainsKey(paramName))
             {
@@ -620,15 +620,15 @@ namespace AnalysisManagerBase
         public bool TryGetParam(string paramName, out string paramValue)
         {
 
-            paramValue = String.Empty;
+            paramValue = string.Empty;
 
             foreach (var oEntry in m_JobParams)
             {
                 if (oEntry.Value.TryGetValue(paramName, out paramValue))
                 {
-                    if (String.IsNullOrWhiteSpace(paramValue))
+                    if (string.IsNullOrWhiteSpace(paramValue))
                     {
-                        paramValue = String.Empty;
+                        paramValue = string.Empty;
                     }
                     return true;
                 }
@@ -662,15 +662,15 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public bool TryGetParam(string section, string paramName, out string paramValue, bool searchAllSectionsIfNotFound)
         {
-            paramValue = String.Empty;
+            paramValue = string.Empty;
 
             if (m_JobParams.TryGetValue(section, out var oParams))
             {
                 if (oParams.TryGetValue(paramName, out paramValue))
                 {
-                    if (String.IsNullOrWhiteSpace(paramValue))
+                    if (string.IsNullOrWhiteSpace(paramValue))
                     {
-                        paramValue = String.Empty;
+                        paramValue = string.Empty;
                     }
                     return true;
                 }
@@ -767,7 +767,7 @@ namespace AnalysisManagerBase
                         if (paramNamesToIgnore.ContainsKey(paramName.Value))
                         {
                             var requiredParameter = paramNamesToIgnore[paramName.Value];
-                            if (String.IsNullOrEmpty(requiredParameter) || paramNames.Contains(requiredParameter))
+                            if (string.IsNullOrEmpty(requiredParameter) || paramNames.Contains(requiredParameter))
                             {
                                 // Remove this parameter from this section
                                 paramsToRemove.Add(paramItem);
@@ -777,13 +777,13 @@ namespace AnalysisManagerBase
                         if (paramsToAddAsAttribute.ContainsKey(paramName.Value))
                         {
                             var attribName = paramsToAddAsAttribute[paramName.Value];
-                            if (String.IsNullOrEmpty(attribName))
+                            if (string.IsNullOrEmpty(attribName))
                                 attribName = paramName.Value;
 
                             var paramValue = paramItem.Attribute("value");
                             if (paramValue == null)
                             {
-                                attributesToAdd.Add(attribName, String.Empty);
+                                attributesToAdd.Add(attribName, string.Empty);
                             }
                             else
                             {
@@ -871,7 +871,7 @@ namespace AnalysisManagerBase
             var dotNetVersion = clsGlobal.GetDotNetVersion();
 
             string managerVersion;
-            if (!String.IsNullOrEmpty(dotNetVersion))
+            if (!string.IsNullOrEmpty(dotNetVersion))
             {
                 if (!dotNetVersion.StartsWith("v", StringComparison.InvariantCultureIgnoreCase))
                     dotNetVersion = "v" + dotNetVersion;
@@ -988,7 +988,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         private void SaveJobParameters(string workDir, string jobParamsXML, int jobNum)
         {
-            var xmlParameterFilePath = String.Empty;
+            var xmlParameterFilePath = string.Empty;
 
             try
             {
@@ -1045,7 +1045,7 @@ namespace AnalysisManagerBase
         /// <param name="compMsg">Completion message to be added to database upon closeOut</param>
         public override void CloseTask(CloseOutType closeOut, string compMsg)
         {
-            CloseTask(closeOut, compMsg, 0, String.Empty);
+            CloseTask(closeOut, compMsg, 0, string.Empty);
         }
 
         /// <summary>
@@ -1110,7 +1110,7 @@ namespace AnalysisManagerBase
             }
             else
             {
-                orgDbNameParam.Value = String.Empty;
+                orgDbNameParam.Value = string.Empty;
             }
 
             var remoteInfoParam = cmd.Parameters.Add(new SqlParameter("@remoteInfo", SqlDbType.VarChar, 900));
@@ -1120,14 +1120,14 @@ namespace AnalysisManagerBase
             }
             else
             {
-                remoteInfoParam.Value = String.Empty;
+                remoteInfoParam.Value = string.Empty;
             }
 
             // Note: leave remoteTimestampParam.Value as null if remoteTimestamp is empty
             var remoteTimestampParam = cmd.Parameters.Add(new SqlParameter("@remoteTimestamp", SqlDbType.VarChar, 24));
             if (TryGetParam(STEP_PARAMETERS_SECTION, clsRemoteTransferUtility.STEP_PARAM_REMOTE_TIMESTAMP, out var remoteTimestamp, false))
             {
-                if (!String.IsNullOrWhiteSpace(remoteTimestamp))
+                if (!string.IsNullOrWhiteSpace(remoteTimestamp))
                     remoteTimestampParam.Value = remoteTimestamp;
             }
 
@@ -1162,12 +1162,12 @@ namespace AnalysisManagerBase
             var toolName = GetParam("ToolName");
 
             var toolAndStepTool = GetParam("StepTool");
-            if (String.IsNullOrWhiteSpace(toolAndStepTool))
-                toolAndStepTool = String.Empty;
+            if (string.IsNullOrWhiteSpace(toolAndStepTool))
+                toolAndStepTool = string.Empty;
 
-            var stepNumber = GetParam(STEP_PARAMETERS_SECTION, "Step") ?? String.Empty;
+            var stepNumber = GetParam(STEP_PARAMETERS_SECTION, "Step") ?? string.Empty;
 
-            if (!String.IsNullOrWhiteSpace(toolName) && !String.Equals(toolAndStepTool, toolName))
+            if (!string.IsNullOrWhiteSpace(toolName) && !string.Equals(toolAndStepTool, toolName))
             {
                 if (toolAndStepTool.Length > 0)
                 {
