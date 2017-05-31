@@ -50,13 +50,13 @@ namespace AnalysisManagerProg
 
             var objParseCommandLine = new PRISM.clsParseCommandLine();
 
-            var intReturnCode = 0;
             mCodeTestMode = false;
             mTraceMode = false;
             mDisableMessageQueue = false;
             mDisableMyEMSL = false;
             mDisplayDllVersions = false;
             mDisplayDllPath = string.Empty;
+            mShowVersionOnly = false;
 
             if (Path.DirectorySeparatorChar == '/')
             {
@@ -92,6 +92,7 @@ namespace AnalysisManagerProg
                 if (mShowVersionOnly)
                 {
                     DisplayVersion();
+                    Thread.Sleep(500);
                     return 0;
                 }
 
@@ -171,51 +172,25 @@ namespace AnalysisManagerProg
             Console.WriteLine("Version " + GetAppVersion(PROGRAM_DATE));
             Console.WriteLine();
 
-            if (!clsGlobal.LinuxOS) return;
+            DisplayOSVersion();
+
+        }
+
+        private static void DisplayOSVersion()
+        {
 
             try
             {
+                var osVersionInfo = new clsOSVersionInfo();
+                var osDescription = osVersionInfo.GetOSVersion();
 
-                var etcFolder = new DirectoryInfo("/etc");
+                Console.WriteLine("OS Version: " + osDescription);
 
-                if (!etcFolder.Exists)
-                {
-                    Console.WriteLine("Etc folder not found; cannot determine OS version");
-                    return;
-                }
-
-                var dataDisplayed = new SortedSet<string>();
-
-                foreach (var releaseFile in etcFolder.GetFiles("*release"))
-                {
-
-                    using (var reader = new StreamReader(new FileStream(releaseFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
-                    {
-                        while (!reader.EndOfStream)
-                        {
-                            var dataLine = reader.ReadLine();
-
-                            if (string.IsNullOrWhiteSpace(dataLine))
-                            {
-                                Console.WriteLine();
-                                continue;
-                            }
-
-                            if (dataDisplayed.Contains(dataLine))
-                                continue;
-
-                            Console.WriteLine(dataLine);
-                            dataDisplayed.Add(dataLine);
-                        }
-                    }
-                    Console.WriteLine();
-                }
             }
             catch (Exception ex)
             {
-                clsGlobal.LogError("Error displaying the program version: " + Environment.NewLine + ex.Message, ex);
+                clsGlobal.LogError("Error displaying the OS version: " + Environment.NewLine + ex.Message, ex);
             }
-
         }
 
         /// <summary>

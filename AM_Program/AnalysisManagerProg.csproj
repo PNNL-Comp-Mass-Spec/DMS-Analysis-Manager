@@ -87,6 +87,7 @@
     <Compile Include="clsCodeTest.cs" />
     <Compile Include="clsCodeTestAM.cs" />
     <Compile Include="clsMainProcess.cs" />
+    <Compile Include="clsOSVersionInfo.cs" />
     <Compile Include="clsPluginLoader.cs" />
     <Compile Include="modMain.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
