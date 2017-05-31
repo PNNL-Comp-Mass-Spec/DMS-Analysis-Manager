@@ -61,7 +61,7 @@ namespace AnalysisManagerProg
             if (Path.DirectorySeparatorChar == '/')
             {
                 // Running on Linux
-                // Enable offline mode
+                // Auto-enable offline mode
                 EnableOfflineMode(true);
             }
 
@@ -266,6 +266,7 @@ namespace AnalysisManagerProg
                 "NoMyEMSL",
                 "DLL",
                 "Offline",
+                "Linux",
                 "Version"
             };
 
@@ -312,8 +313,14 @@ namespace AnalysisManagerProg
                     }
                 }
 
-                if (objParseCommandLine.IsParameterPresent("Offline"))
-                    EnableOfflineMode();
+                if (!clsGlobal.OfflineMode)
+                {
+                    if (!clsGlobal.LinuxOS && objParseCommandLine.IsParameterPresent("Linux"))
+                        EnableOfflineMode(true);
+
+                    if (!clsGlobal.OfflineMode && objParseCommandLine.IsParameterPresent("Offline"))
+                        EnableOfflineMode();
+                }
 
                 if (objParseCommandLine.IsParameterPresent("Version"))
                     mShowVersionOnly = true;
@@ -364,9 +371,12 @@ namespace AnalysisManagerProg
         {
             try
             {
+                var exeName = Path.GetFileName(GetAppPath());
+
                 Console.WriteLine("This program processes DMS analysis jobs for PRISM. Normal operation is to run the program without any command line switches.");
                 Console.WriteLine();
-                Console.WriteLine("Program syntax:\n" + Path.GetFileName(GetAppPath()) + " [/EL] [/NQ] [/NoMyEMSL] [/T] [/Trace] [/DLL]");
+                Console.WriteLine("Program syntax:\n" + exeName + " [/EL] [/NQ] [/NoMyEMSL] [/T] [/Trace]");
+                Console.WriteLine("[/DLL] [/Offline] [/Linux] [/Version]");
                 Console.WriteLine();
 
                 Console.WriteLine("Use /EL to create the Windows Event Log named '" + clsMainProcess.CUSTOM_LOG_NAME + "' then exit the program. " +
@@ -384,6 +394,15 @@ namespace AnalysisManagerProg
                 Console.WriteLine("Use /DLL:Path to display the version of all DLLs in the specified folder (surround path with double quotes if spaces)");
                 Console.WriteLine();
 
+                // exeName + ".config" is AnalysisManagerProg.exe.config
+                Console.WriteLine("Use /Offline to enable offline mode (database access and use of external servers is disabled). " +
+                                  "Requires that the "+ exeName + ".config file have settings LocalTaskQueuePath and LocalWorkDirPath");
+                Console.WriteLine();
+                Console.WriteLine("Use /Linux to disable access to Windows-specific methods. " +
+                                  "Both /Offline and /Linux are auto-enabled if the path separation character is /");
+                Console.WriteLine();
+                Console.WriteLine("Use /Version to see the program version and OS version");
+                Console.WriteLine();
                 Console.WriteLine("Program written by Dave Clark, Matthew Monroe, and John Sandoval for the Department of Energy (PNNL, Richland, WA)");
                 Console.WriteLine();
 
