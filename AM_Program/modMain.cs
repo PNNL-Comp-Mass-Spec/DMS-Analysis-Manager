@@ -114,17 +114,17 @@ namespace AnalysisManagerProg
                         // objTest.TestLogging();
                         // objTest.GenerateScanStatsFile();
                         // objTest.TestArchiveFailedResults();
-
                         // objTest.TestGetToolVersionInfo();
+                        // objTest.TestConnectRSA();
+                        objTest.TestStatusLogging();
 
-                        objTest.TestConnectRSA();
                     }
                     catch (Exception ex)
                     {
                         clsGlobal.LogError("clsCodeTest exception", ex);
                     }
 
-                    PRISM.clsParseCommandLine.PauseAtConsole(3000);
+                    PRISM.clsParseCommandLine.PauseAtConsole(1500);
                     return 0;
                 }
 
@@ -154,7 +154,7 @@ namespace AnalysisManagerProg
                     DisableMyEMSL = mDisableMyEMSL
                 };
 
-                intReturnCode = objDMSMain.Main();
+                var intReturnCode = objDMSMain.Main();
                 return intReturnCode;
             }
             catch (Exception ex)

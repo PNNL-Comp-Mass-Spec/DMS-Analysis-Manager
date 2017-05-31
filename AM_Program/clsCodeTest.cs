@@ -1204,7 +1204,7 @@ namespace AnalysisManagerProg
 
             objToolRunner.UnzipFile(zippedFile, @"F:\Temp\ZipTest\UnzipTarget");
 
-            var ionicZipTools = new clsIonicZipTools(1, WORKING_DIRECTORY);
+            var ionicZipTools = new clsIonicZipTools(1, GetWorkDirPath());
             RegisterEvents(ionicZipTools);
 
             ionicZipTools.ZipDirectory(@"F:\Temp\ZipTest\QExact01\", @"F:\Temp\ZipTest\QExact01_Folder.zip");
@@ -1264,6 +1264,27 @@ namespace AnalysisManagerProg
             // blnSuccess = objResources.UnzipFileStart(strZipFilePath, strOutFolderPath, "TestUnzip", True)
 
             return blnSuccess;
+        }
+
+        /// <summary>
+        /// Writes the status file
+        /// </summary>
+        /// <remarks></remarks>
+        public void TestStatusLogging()
+        {
+            var statusTools = new clsStatusFile("Status.xml", 2);
+            RegisterEvents(statusTools);
+
+            var exePath = Assembly.GetExecutingAssembly().Location;
+            if (exePath == null)
+                throw new Exception("Unable to determine the Exe path of the currently executing assembly");
+
+            var exeInfo = new FileInfo(exePath);
+
+            statusTools.ConfigureMemoryLogging(true, 5, exeInfo.DirectoryName);
+
+            statusTools.WriteStatusFile();
+
         }
 
         /// <summary>
