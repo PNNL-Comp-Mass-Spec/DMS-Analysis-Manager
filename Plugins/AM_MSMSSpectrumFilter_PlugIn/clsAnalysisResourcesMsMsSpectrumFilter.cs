@@ -109,7 +109,7 @@ namespace MSMSSpectrumFilterAM
 
                 strDatasetFileOrFolderPath = FolderSearch.FindDatasetFileOrFolder(out blnIsFolder, assumeUnpurged: false);
 
-                if (!string.IsNullOrEmpty(strDatasetFileOrFolderPath) & !strDatasetFileOrFolderPath.StartsWith(MYEMSL_PATH_FLAG))
+                if (!string.IsNullOrEmpty(strDatasetFileOrFolderPath) && !strDatasetFileOrFolderPath.StartsWith(MYEMSL_PATH_FLAG))
                 {
                     DirectoryInfo diDatasetFolder;
                     if (blnIsFolder)

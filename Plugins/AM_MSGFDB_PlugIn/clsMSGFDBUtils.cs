@@ -1372,7 +1372,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 fastaFileSizeKB = (float)(fiFastaFile.Length / 1024.0);
             }
 
-            if (m_DebugLevel >= 3 || (m_DebugLevel >= 1 & fastaFileSizeKB > 500))
+            if (m_DebugLevel >= 3 || (m_DebugLevel >= 1 && fastaFileSizeKB > 500))
             {
                 OnStatusEvent("Indexing Fasta file to create Suffix Array files");
             }
@@ -1397,7 +1397,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     break;
                 }
 
-                if (result == CloseOutType.CLOSEOUT_FAILED || (result != CloseOutType.CLOSEOUT_FAILED & indexIteration > 2))
+                if (result == CloseOutType.CLOSEOUT_FAILED || (result != CloseOutType.CLOSEOUT_FAILED && indexIteration > 2))
                 {
                     if (!string.IsNullOrEmpty(objIndexedDBCreator.ErrorMessage))
                     {
@@ -1837,7 +1837,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                         }
                         else if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                         {
-                            if (strLineInLcase.Contains("error") & !strLineInLcase.Contains("isotopeerror:"))
+                            if (strLineInLcase.Contains("error") && !strLineInLcase.Contains("isotopeerror:"))
                             {
                                 mConsoleOutputErrorMsg += "; " + strLineIn;
                             }
@@ -1881,7 +1881,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 mTaskCountTotal = totalTasks;
                 mTaskCountCompleted = completedTasks.Count;
-                if (mTaskCountCompleted == 0 & tasksCompleteViaSearchProgress > 0)
+                if (mTaskCountCompleted == 0 && tasksCompleteViaSearchProgress > 0)
                 {
                     mTaskCountCompleted = tasksCompleteViaSearchProgress;
                 }
@@ -2221,7 +2221,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                                 if (string.IsNullOrEmpty(strArgumentSwitch))
                                 {
-                                    if (m_DebugLevel >= 1 & !clsGlobal.IsMatch(strArgumentSwitchOriginal, MSGFPLUS_OPTION_SHOWDECOY))
+                                    if (m_DebugLevel >= 1 && !clsGlobal.IsMatch(strArgumentSwitchOriginal, MSGFPLUS_OPTION_SHOWDECOY))
                                     {
                                         OnWarningEvent("Skipping switch " + strArgumentSwitchOriginal + " since it is not valid for this version of " + strSearchEngineName);
                                     }
@@ -2374,7 +2374,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     }
                 }
 
-                if (!blnShowDecoyParamPresent & !mMSGFPlus)
+                if (!blnShowDecoyParamPresent && !mMSGFPlus)
                 {
                     // Add showDecoy to sbOptions
                     sbOptions.Append(" -showDecoy 0");
@@ -2613,7 +2613,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
                 else
                 {
-                    if (countLowResMSn == 0 & countHCDMSn > 0)
+                    if (countLowResMSn == 0 && countHCDMSn > 0)
                     {
                         // All of the spectra are HCD
                         instrumentIDNew = "1";
@@ -2622,7 +2622,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     else
                     {
                         instrumentIDNew = "0";
-                        if (countHCDMSn == 0 & countHighResMSn == 0)
+                        if (countHCDMSn == 0 && countHighResMSn == 0)
                         {
                             autoSwitchReason = "since all of the spectra are low res MSn";
                         }

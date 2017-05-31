@@ -747,7 +747,7 @@ namespace AnalysisManagerBase
                                 eLogMsgTypeIfNotFound = clsLogTools.LogLevels.ERROR;
                             }
 
-                            if (udtOptions.CreateJobPathFiles & !sourceFolderPath.StartsWith(clsAnalysisResources.MYEMSL_PATH_FLAG))
+                            if (udtOptions.CreateJobPathFiles && !sourceFolderPath.StartsWith(clsAnalysisResources.MYEMSL_PATH_FLAG))
                             {
                                 var sourceFilePath = Path.Combine(sourceFolderPath, sourceFilename);
                                 var alternateFileNamelternateFileName = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(sourceFilePath, "Dataset_msgfdb.txt");
@@ -884,7 +884,7 @@ namespace AnalysisManagerBase
 
                                 if (!string.IsNullOrEmpty(mzMLFilePathRemote))
                                 {
-                                    if (udtOptions.CreateJobPathFiles & !mzMLFilePathRemote.StartsWith(clsAnalysisResources.MYEMSL_PATH_FLAG))
+                                    if (udtOptions.CreateJobPathFiles && !mzMLFilePathRemote.StartsWith(clsAnalysisResources.MYEMSL_PATH_FLAG))
                                     {
                                         if (!lstFoundFiles.Contains(mzMLFilePathRemote))
                                         {

@@ -110,7 +110,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                     var fiConsoleOutputFile = diWorkingDirectory.GetFiles(clsMSGFDBUtils.MSGFPLUS_CONSOLE_OUTPUT_FILE);
 
-                    if (!fiMSGFPlusResults.Exists & fiConsoleOutputFile.Length == 0)
+                    if (!fiMSGFPlusResults.Exists && fiConsoleOutputFile.Length == 0)
                     {
                         return processingResult;
                     }
@@ -366,7 +366,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             var blnSuccess = StartMSGFPlusLocal(javaExePath, cmdStr);
 
-            if (!blnSuccess & string.IsNullOrEmpty(mMSGFDBUtils.ConsoleOutputErrorMsg))
+            if (!blnSuccess && string.IsNullOrEmpty(mMSGFDBUtils.ConsoleOutputErrorMsg))
             {
                 // Wait 2 seconds to give the log file a chance to finalize
                 Thread.Sleep(2000);
@@ -551,7 +551,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                                              (double)(mMSGFDBUtils.ContinuumSpectraSkipped + mMSGFDBUtils.SpectraSearched);
                     var strPercentSkipped = (dblFractionSkipped * 100).ToString("0.0") + "%";
 
-                    if (dblFractionSkipped > 0.2 & !spectraAreCentroided)
+                    if (dblFractionSkipped > 0.2 && !spectraAreCentroided)
                     {
                         LogError("MSGF+ skipped " + strPercentSkipped + " of the spectra because they did not appear centroided");
                         tooManySkippedSpectra = true;

@@ -647,7 +647,7 @@ namespace AnalysisManagerSequestPlugin
 
                             blnFilesMatch = true;
                         }
-                        else if (dblSecondDiff >= 3598 & dblSecondDiff <= 3602)
+                        else if (dblSecondDiff >= 3598 && dblSecondDiff <= 3602)
                         {
                             // File times are an hour apart (give or take 2 seconds); count this as the same
 

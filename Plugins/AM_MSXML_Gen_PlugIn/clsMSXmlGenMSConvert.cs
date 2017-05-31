@@ -77,11 +77,11 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     // So, the following means to apply peak picking to all spectra (MS1 and MS2) and then keep the top 150 peaks (sorted by intensity)
                     // --filter "peakPicking true 1-" --filter "threshold count 150 most-intense"
 
-                    if (mCentroidMS1 & !mCentroidMS2)
+                    if (mCentroidMS1 && !mCentroidMS2)
                     {
                         cmdStr += " --filter \"peakPicking true 1\"";
                     }
-                    else if (!mCentroidMS1 & mCentroidMS2)
+                    else if (!mCentroidMS1 && mCentroidMS2)
                     {
                         cmdStr += " --filter \"peakPicking true 2-\"";
                     }

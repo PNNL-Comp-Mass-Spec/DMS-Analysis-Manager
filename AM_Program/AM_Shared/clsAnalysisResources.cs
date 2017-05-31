@@ -4328,7 +4328,7 @@ namespace AnalysisManagerBase
                 // Open the file and confirm it has data rows
                 using (var srInFile = new StreamReader(new FileStream(fiFileInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    while (!srInFile.EndOfStream & !blnDataFound)
+                    while (!srInFile.EndOfStream && !blnDataFound)
                     {
                         var strLineIn = srInFile.ReadLine();
                         if (!string.IsNullOrEmpty(strLineIn))
@@ -4481,7 +4481,7 @@ namespace AnalysisManagerBase
 
                 if (m_DebugLevel == 1 && DateTime.UtcNow.Subtract(m_SplitFastaLastUpdateTime).TotalSeconds >= 60 ||
                     m_DebugLevel > 1 && DateTime.UtcNow.Subtract(m_SplitFastaLastUpdateTime).TotalSeconds >= 20 ||
-                    percentComplete >= 100 & m_SplitFastaLastPercentComplete < 100)
+                    percentComplete >= 100 && m_SplitFastaLastPercentComplete < 100)
                 {
                     m_SplitFastaLastUpdateTime = DateTime.UtcNow;
                     m_SplitFastaLastPercentComplete = percentComplete;

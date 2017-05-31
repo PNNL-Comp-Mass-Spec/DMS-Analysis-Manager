@@ -259,7 +259,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                                 scanTypeNameColIndex = 10;
                             }
 
-                            if (scanTypeNameColIndex < 0 & !scanStatsExLoaded)
+                            if (scanTypeNameColIndex < 0 && !scanStatsExLoaded)
                             {
                                 // Need to read the ScanStatsEx file
 

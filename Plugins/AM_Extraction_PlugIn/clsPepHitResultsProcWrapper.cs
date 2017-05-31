@@ -249,7 +249,7 @@ namespace AnalysisManagerExtractionPlugin
                     // Make sure the key PHRP result files were created
                     var lstFilesToCheck = new List<string>();
 
-                    if (createFirstHitsFile & !createSynopsisFile)
+                    if (createFirstHitsFile && !createSynopsisFile)
                     {
                         // We're processing Inspect data, and PHRP simply created the _fht.txt file
                         // Thus, only look for the first-hits file

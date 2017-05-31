@@ -126,7 +126,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                         blnDotDFolder = true;
                         break;
                     default:
-                        if (!File.Exists(isosFilePath) & !File.Exists(ScansFilePath))
+                        if (!File.Exists(isosFilePath) && !File.Exists(ScansFilePath))
                         {
                             if (mInputFilePath.ToLower().EndsWith(".d"))
                             {
@@ -733,7 +733,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             }
 
             // Determine reason for Decon2LS finish
-            if (mDeconToolsFinishedDespiteProgRunnerError & !mDeconToolsExceptionThrown)
+            if (mDeconToolsFinishedDespiteProgRunnerError && !mDeconToolsExceptionThrown)
             {
                 // ProgRunner reported an error code
                 // However, the log file says things completed successfully

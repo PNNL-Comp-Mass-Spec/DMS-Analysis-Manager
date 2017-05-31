@@ -437,7 +437,7 @@ namespace AnalysisManagerIDPickerPlugIn
             lstFileNamesToGet.Add(clsPHRPReader.GetPHRPSeqToProteinMapFileName(eResultType, strDatasetName), true);
             lstFileNamesToGet.Add(clsPHRPReader.GetPHRPPepToProteinMapFileName(eResultType, strDatasetName), false);
 
-            if (eResultType != clsPHRPReader.ePeptideHitResultType.MODa & eResultType != clsPHRPReader.ePeptideHitResultType.MODPlus)
+            if (eResultType != clsPHRPReader.ePeptideHitResultType.MODa && eResultType != clsPHRPReader.ePeptideHitResultType.MODPlus)
             {
                 lstFileNamesToGet.Add(clsPHRPReader.GetMSGFFileName(synFileName), true);
             }

@@ -219,13 +219,13 @@ namespace AnalysisManagerSequestPlugin
 
                 mSequestSearchEndTime = DateTime.UtcNow;
 
-                if (blnSuccess & !mResetPVM & !mAbortSinceSequestIsStalled)
+                if (blnSuccess && !mResetPVM && !mAbortSinceSequestIsStalled)
                 {
                     intDTACountRemaining = 0;
                 }
                 else
                 {
-                    if (!mResetPVM & !mAbortSinceSequestIsStalled)
+                    if (!mResetPVM && !mAbortSinceSequestIsStalled)
                     {
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
                             " ... CmdRunner returned false; ExitCode = " + mCmdRunner.ExitCode);
@@ -237,7 +237,7 @@ namespace AnalysisManagerSequestPlugin
                     if (intDTACountRemaining > 0)
                     {
                         blnSuccess = false;
-                        if (mNodeCountSpawnErrorOccurences < MAX_NODE_RESPAWN_ATTEMPTS & mNodeCountActiveErrorOccurences < MAX_NODE_RESPAWN_ATTEMPTS)
+                        if (mNodeCountSpawnErrorOccurences < MAX_NODE_RESPAWN_ATTEMPTS && mNodeCountActiveErrorOccurences < MAX_NODE_RESPAWN_ATTEMPTS)
                         {
                             var intMaxPVMResetAttempts = 4;
 
@@ -302,7 +302,7 @@ namespace AnalysisManagerSequestPlugin
             UpdateSequestNodeProcessingStats(false);
 
             // Verify out file creation
-            if (m_DebugLevel >= 2 & !blnProcessingError)
+            if (m_DebugLevel >= 2 && !blnProcessingError)
             {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... Verifying out file creation");
             }
@@ -911,7 +911,7 @@ namespace AnalysisManagerSequestPlugin
                 blnAppendSuccess = true;
 
                 KeyValuePair<string, DateTime> objEntry;
-                if (mOutFileCandidates.Count > 0 & !mSequestVersionInfoStored)
+                if (mOutFileCandidates.Count > 0 && !mSequestVersionInfoStored)
                 {
                     // Determine tool version
 

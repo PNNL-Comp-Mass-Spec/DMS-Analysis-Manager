@@ -45,7 +45,7 @@ namespace AnalysisManagerBase
             var blnSuccess1 = SplitCattedDTAsOnly(datasetName, resultsFolderPath);
             var blnSuccess2 = SplitCattedOutsOnly(datasetName, resultsFolderPath);
 
-            return blnSuccess1 & blnSuccess2;
+            return blnSuccess1 && blnSuccess2;
         }
 
         public bool SplitCattedDTAsOnly(string datasetName, string resultsFolderPath)

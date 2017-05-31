@@ -363,7 +363,7 @@ namespace AnalysisManagerPBFGenerator
 
             //Set up and execute a program runner to run PBFGen
             CmdStr = " -s " + rawFilePath;
-            // CmdStr &= " -o " & m_WorkDir
+            // CmdStr += " -o " + m_WorkDir
 
             if (m_DebugLevel >= 1)
             {

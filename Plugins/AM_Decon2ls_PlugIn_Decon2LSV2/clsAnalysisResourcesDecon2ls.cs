@@ -175,7 +175,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 return false;
             }
 
-            if (countMS1 == 0 & countMSn > 0)
+            if (countMS1 == 0 && countMSn > 0)
             {
                 if (!EnableMSMSProcessingInParamFile(fiParamFile))
                 {

@@ -462,7 +462,7 @@ namespace AnalysisManagerBase
             ExitCode = m_ProgRunner.ExitCode;
             m_ProgRunner = null;
 
-            if (useResCode & ExitCode != 0)
+            if (useResCode && ExitCode != 0)
             {
                 if (ProgramAborted && m_AbortProgramPostLogEntry || !ProgramAborted)
                 {

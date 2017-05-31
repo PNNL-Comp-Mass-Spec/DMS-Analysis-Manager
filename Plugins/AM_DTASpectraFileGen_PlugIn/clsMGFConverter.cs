@@ -156,7 +156,7 @@ namespace DTASpectraFileGen
             {
                 XMLTextReaderSkipWhitespace(objXMLReader);
 
-                if (objXMLReader.NodeType == XmlNodeType.EndElement & objXMLReader.Name == strCurrentElementName)
+                if (objXMLReader.NodeType == XmlNodeType.EndElement && objXMLReader.Name == strCurrentElementName)
                 {
                     break;
                 }
@@ -298,7 +298,7 @@ namespace DTASpectraFileGen
                 blnSuccess = true;
             }
 
-            if (blnSuccess && !(objXMLReader.NodeType == XmlNodeType.Whitespace) & objXMLReader.HasValue)
+            if (blnSuccess && objXMLReader.NodeType != XmlNodeType.Whitespace && objXMLReader.HasValue)
             {
                 strValue = objXMLReader.Value;
             }

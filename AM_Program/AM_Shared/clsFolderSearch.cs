@@ -654,13 +654,13 @@ namespace AnalysisManagerBase
                         }
                         else
                         {
-                            blnValidFolder = FindValidFolderUNC(pathToCheck.Item1, fileNameToFind, folderNameToFind, maxAttempts, logFolderNotFound & pathToCheck.Item2);
+                            blnValidFolder = FindValidFolderUNC(pathToCheck.Item1, fileNameToFind, folderNameToFind, maxAttempts, logFolderNotFound && pathToCheck.Item2);
 
                             if (!blnValidFolder && !string.IsNullOrEmpty(fileNameToFind) && !string.IsNullOrEmpty(folderNameToFind))
                             {
                                 // Look for a subfolder named folderNameToFind that contains file fileNameToFind
                                 var pathToCheckAlt = Path.Combine(pathToCheck.Item1, folderNameToFind);
-                                blnValidFolder = FindValidFolderUNC(pathToCheckAlt, fileNameToFind, string.Empty, maxAttempts, logFolderNotFound & pathToCheck.Item2);
+                                blnValidFolder = FindValidFolderUNC(pathToCheckAlt, fileNameToFind, string.Empty, maxAttempts, logFolderNotFound && pathToCheck.Item2);
 
                                 if (blnValidFolder)
                                 {

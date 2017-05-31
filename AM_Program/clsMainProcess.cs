@@ -355,7 +355,7 @@ namespace AnalysisManagerProg
 
                 InitStatusTools();
 
-                while ((loopCount < maxLoopCount) & requestJobs)
+                while (loopCount < maxLoopCount && requestJobs)
                 {
                     UpdateStatusIdle("No analysis jobs found");
 
@@ -390,7 +390,7 @@ namespace AnalysisManagerProg
                     var mgrActive = m_MgrSettings.GetParam("mgractive", false);
                     var mgrActiveLocal = m_MgrSettings.GetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_ACTIVE_LOCAL, false);
 
-                    if (!(mgrActive & mgrActiveLocal))
+                    if (!(mgrActive && mgrActiveLocal))
                     {
                         string strManagerDisableReason;
                         if (!mgrActiveLocal)
@@ -2868,7 +2868,7 @@ namespace AnalysisManagerProg
             var workDirFiles = workDir.GetFiles();
             var workDirFolders = workDir.GetDirectories();
 
-            if ((workDirFolders.Length == 0) & (workDirFiles.Length == 1))
+            if (workDirFolders.Length == 0 && workDirFiles.Length == 1)
             {
                 // If the only file in the working directory is a JobParameters xml file, try to delete it.
                 // It is likely left over from a previous job that never actually started

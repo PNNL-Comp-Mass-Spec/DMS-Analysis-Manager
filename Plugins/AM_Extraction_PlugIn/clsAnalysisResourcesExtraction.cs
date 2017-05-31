@@ -744,7 +744,7 @@ namespace AnalysisManagerExtractionPlugin
                     FileSearch.FindAndRetrieveMiscFiles("taxonomy.xml", false);
                 }
 
-                if (!fiModDefsFile.Exists & ResultType != RESULT_TYPE_MSALIGN)
+                if (!fiModDefsFile.Exists && ResultType != RESULT_TYPE_MSALIGN)
                 {
                     m_message = "Unable to create the ModDefs.txt file; update T_Param_File_Mass_Mods";
                     LogWarning(
@@ -801,7 +801,7 @@ namespace AnalysisManagerExtractionPlugin
                 string strToolVersionFileNewName = string.Empty;
 
                 string strToolNameForScript = m_jobParams.GetJobParameter("ToolName", string.Empty);
-                if (eResultType == PHRPReader.clsPHRPReader.ePeptideHitResultType.MSGFDB & strToolNameForScript == "MSGFPlus_IMS")
+                if (eResultType == PHRPReader.clsPHRPReader.ePeptideHitResultType.MSGFDB && strToolNameForScript == "MSGFPlus_IMS")
                 {
                     // PeptideListToXML expects the ToolVersion file to be named "Tool_Version_Info_MSGFPlus.txt"
                     // However, this is the MSGFPlus_IMS script, so the file is currently "Tool_Version_Info_MSGFPlus_IMS.txt"

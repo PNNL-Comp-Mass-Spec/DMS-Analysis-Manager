@@ -1302,7 +1302,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
             blnSuccess = cmdRunner.RunProgram(strExePath, CmdStr, strProgramDescription, true, intMaxRuntimeSeconds);
 
-            if (mCmdRunnerErrors.Count == 0 & !string.IsNullOrEmpty(cmdRunner.CachedConsoleError))
+            if (mCmdRunnerErrors.Count == 0 && !string.IsNullOrEmpty(cmdRunner.CachedConsoleError))
             {
                 LogWarning("Cached console error is not empty, but mCmdRunnerErrors is empty; need to add code to parse CmdRunner.CachedConsoleError");
             }

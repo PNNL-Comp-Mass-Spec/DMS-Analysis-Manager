@@ -396,7 +396,7 @@ namespace AnalysisManagerProg
             }
 
             // Verify at least one row returned
-            if (dtSettings.Rows.Count < 1 & returnErrorIfNoParameters)
+            if (dtSettings.Rows.Count < 1 && returnErrorIfNoParameters)
             {
                 // No data was returned
                 mErrMsg = "clsAnalysisMgrSettings.LoadMgrSettingsFromDBWork; Manager '" + managerName + "' not defined in the manager control database; using " + connectionString;

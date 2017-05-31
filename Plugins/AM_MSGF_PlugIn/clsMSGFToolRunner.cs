@@ -170,7 +170,7 @@ namespace AnalysisManagerMSGFPlugin
             {
                 var blnProcessingError = false;
 
-                if (mUsingMSGFDB & eResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB)
+                if (mUsingMSGFDB && eResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB)
                 {
                     // Analysis tool is MSGF+ so we don't actually need to run the MSGF re-scorer
                     // Simply copy the values from the MSGFDB result file
@@ -1128,7 +1128,7 @@ namespace AnalysisManagerMSGFPlugin
                 LogDebug("CreateMSGFFirstHitsFile returned " + blnSuccess, 3);
             }
 
-            if (blnSuccess & eResultType != clsPHRPReader.ePeptideHitResultType.MSGFDB)
+            if (blnSuccess && eResultType != clsPHRPReader.ePeptideHitResultType.MSGFDB)
             {
                 LogDebug("Call UpdateProteinModsFile for eResultType " + eResultType, 3);
 
@@ -1649,14 +1649,14 @@ namespace AnalysisManagerMSGFPlugin
 
                 mProcessingMSGFDBCollisionModeData = false;
 
-                if (lstCIDData.Count <= 1 & lstETDData.Count > 1)
+                if (lstCIDData.Count <= 1 && lstETDData.Count > 1)
                 {
                     // Only ETD data is present
                     mETDMode = true;
                     return RunMSGF(intMSGFInputFileLineCount, strMSGFInputFilePath, strMSGFResultsFilePath);
                 }
 
-                if (lstCIDData.Count > 1 & lstETDData.Count > 1)
+                if (lstCIDData.Count > 1 && lstETDData.Count > 1)
                 {
                     // Mix of both CID and ETD data found
 

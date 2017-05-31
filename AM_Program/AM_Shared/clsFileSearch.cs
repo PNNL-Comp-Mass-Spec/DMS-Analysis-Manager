@@ -579,7 +579,7 @@ namespace AnalysisManagerBase
 
                 if (logFileNotFound)
                 {
-                    if (searchArchivedDatasetFolder || (!m_AuroraAvailable & MyEMSLSearchDisabled))
+                    if (searchArchivedDatasetFolder || (!m_AuroraAvailable && MyEMSLSearchDisabled))
                     {
                         OnErrorEvent("Data file not found: " + fileToFind);
                     }
@@ -1406,7 +1406,7 @@ namespace AnalysisManagerBase
             var targetZipFilePath = Path.Combine(m_WorkingDir, DatasetName + "_dta.zip");
             var targetCDTAFilePath = Path.Combine(m_WorkingDir, DatasetName + "_dta.txt");
 
-            if (!File.Exists(targetCDTAFilePath) & !File.Exists(targetZipFilePath))
+            if (!File.Exists(targetCDTAFilePath) && !File.Exists(targetZipFilePath))
             {
                 string strErrorMessage;
 

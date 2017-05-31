@@ -464,7 +464,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             success = StartMSGFPlus(javaExePath, "MSGF+", cmdStr);
 
-            if (!success & string.IsNullOrEmpty(mMSGFDBUtils.ConsoleOutputErrorMsg))
+            if (!success && string.IsNullOrEmpty(mMSGFDBUtils.ConsoleOutputErrorMsg))
             {
                 // Parse the console output file one more time in hopes of finding an error message
                 ParseMSGFPlusConsoleOutputFile(m_WorkDir);

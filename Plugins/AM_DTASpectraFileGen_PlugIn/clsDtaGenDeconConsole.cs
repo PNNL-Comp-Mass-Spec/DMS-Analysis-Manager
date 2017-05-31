@@ -236,7 +236,7 @@ namespace DTASpectraFileGen
                 blnSuccess = false;
             }
 
-            if (blnFinishedProcessing & !blnSuccess)
+            if (blnFinishedProcessing && !blnSuccess)
             {
                 mDeconConsoleFinishedDespiteProgRunnerError = true;
             }
@@ -254,7 +254,7 @@ namespace DTASpectraFileGen
                 break;
             }
 
-            if (mDeconConsoleFinishedDespiteProgRunnerError & !mDeconConsoleExceptionThrown)
+            if (mDeconConsoleFinishedDespiteProgRunnerError && !mDeconConsoleExceptionThrown)
             {
                 // ProgRunner reported an error code
                 // However, the log file says things completed successfully

@@ -211,7 +211,7 @@ namespace AnalysisManagerBase
                 throw new IOException("clsAnalysisResults,CopyFileWithRetry: Source file not found for copy operation: " + SrcFilePath);
             }
 
-            while (AttemptCount <= MaxRetryCount & !blnSuccess)
+            while (AttemptCount <= MaxRetryCount && !blnSuccess)
             {
                 AttemptCount += 1;
 
@@ -381,7 +381,7 @@ namespace AnalysisManagerBase
                 throw new DirectoryNotFoundException("Folder path cannot be empty when calling CreateFolderWithRetry");
             }
 
-            while (AttemptCount <= MaxRetryCount & !blnSuccess)
+            while (AttemptCount <= MaxRetryCount && !blnSuccess)
             {
                 AttemptCount += 1;
 
@@ -501,7 +501,7 @@ namespace AnalysisManagerBase
             if (MaxRetryCount < 1)
                 MaxRetryCount = 1;
 
-            while (AttemptCount <= MaxRetryCount & !blnSuccess)
+            while (AttemptCount <= MaxRetryCount && !blnSuccess)
             {
                 AttemptCount += 1;
 

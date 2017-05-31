@@ -472,9 +472,9 @@ namespace DTASpectraFileGen
                 mDeconMSnProgressWatcher.EnableRaisingEvents = true;
             }
 
-            while (LocCharge <= ExplicitChargeEnd & !m_AbortRequested)
+            while (LocCharge <= ExplicitChargeEnd && !m_AbortRequested)
             {
-                if (LocCharge == 0 & CreateDefaultCharges || LocCharge > 0)
+                if (LocCharge == 0 && CreateDefaultCharges || LocCharge > 0)
                 {
                     // If we are using extract_msn.exe, then need to loop through .dta creation until no more files are created
                     // Limit to chunks of LOOPING_CHUNK_SIZE scans due to limitation of extract_msn.exe

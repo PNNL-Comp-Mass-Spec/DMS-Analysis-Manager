@@ -213,7 +213,7 @@ namespace AnalysisManagerExtractionPlugin
                         return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (eResult != CloseOutType.CLOSEOUT_SUCCESS & eResult != CloseOutType.CLOSEOUT_NO_DATA)
+                if (eResult != CloseOutType.CLOSEOUT_SUCCESS && eResult != CloseOutType.CLOSEOUT_NO_DATA)
                 {
                     LogError("Error " + strCurrentAction);
                     processingSuccess = false;
@@ -577,7 +577,7 @@ namespace AnalysisManagerExtractionPlugin
 
             var result = mMSGFDBUtils.CreatePeptideToProteinMapping(resultsFileName, resultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder);
 
-            if (result != CloseOutType.CLOSEOUT_SUCCESS & result != CloseOutType.CLOSEOUT_NO_DATA)
+            if (result != CloseOutType.CLOSEOUT_SUCCESS && result != CloseOutType.CLOSEOUT_NO_DATA)
             {
                 return result;
             }
@@ -916,7 +916,7 @@ namespace AnalysisManagerExtractionPlugin
             {
                 var eResult = pepExtractTool.PerformExtraction();
 
-                if ((eResult != CloseOutType.CLOSEOUT_SUCCESS) & (eResult != CloseOutType.CLOSEOUT_NO_DATA))
+                if ((eResult != CloseOutType.CLOSEOUT_SUCCESS) && (eResult != CloseOutType.CLOSEOUT_NO_DATA))
                 {
                     //log error and return result calling routine handles the error appropriately
                     LogError("Error encountered during extraction");
@@ -2434,7 +2434,7 @@ namespace AnalysisManagerExtractionPlugin
 
             if (m_DebugLevel >= 1)
             {
-                if (System.DateTime.UtcNow.Subtract(dtLastPHRPStatusLog).TotalSeconds >= PHRP_DETAILED_LOG_INTERVAL_SECONDS & m_DebugLevel >= 3 ||
+                if (System.DateTime.UtcNow.Subtract(dtLastPHRPStatusLog).TotalSeconds >= PHRP_DETAILED_LOG_INTERVAL_SECONDS && m_DebugLevel >= 3 ||
                     System.DateTime.UtcNow.Subtract(dtLastPHRPStatusLog).TotalSeconds >= PHRP_LOG_INTERVAL_SECONDS)
                 {
                     dtLastPHRPStatusLog = System.DateTime.UtcNow;

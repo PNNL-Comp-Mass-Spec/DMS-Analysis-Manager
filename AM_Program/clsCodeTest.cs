@@ -1342,7 +1342,7 @@ namespace AnalysisManagerProg
 
             var success = progRunner.RunProgram(strAppPath, "input.xml", "X!Tandem", false);
 
-            if (progRunner.CacheStandardOutput & !progRunner.EchoOutputToConsole)
+            if (progRunner.CacheStandardOutput && !progRunner.EchoOutputToConsole)
             {
                 Console.WriteLine(progRunner.CachedConsoleOutput);
             }

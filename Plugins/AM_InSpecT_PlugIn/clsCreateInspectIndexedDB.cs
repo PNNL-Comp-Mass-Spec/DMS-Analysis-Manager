@@ -98,7 +98,7 @@ namespace AnalysisManagerInSpecTPlugIn
                     var createTime = fi.CreationTimeUtc;
                     var currentTime = DateTime.UtcNow;
                     var durationTime = currentTime - createTime;
-                    while (File.Exists(dbLockFilename) & durationTime.Hours < sngMaxWaitTimeHours)
+                    while (File.Exists(dbLockFilename) && durationTime.Hours < sngMaxWaitTimeHours)
                     {
                         // Sleep for 2 seconds
                         Thread.Sleep(2000);

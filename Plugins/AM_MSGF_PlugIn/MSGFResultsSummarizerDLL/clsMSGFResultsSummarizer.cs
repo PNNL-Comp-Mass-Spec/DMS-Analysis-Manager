@@ -1343,7 +1343,7 @@ namespace MSGFResultsSummarizer
                         var normalized = false;
                         var intSeqID = clsPSMInfo.UNKNOWN_SEQID;
 
-                        if (sequenceInfoAvailable & (lstResultToSeqMap != null))
+                        if (sequenceInfoAvailable && (lstResultToSeqMap != null))
                         {
                             if (!lstResultToSeqMap.TryGetValue(objPSM.ResultID, out intSeqID))
                             {

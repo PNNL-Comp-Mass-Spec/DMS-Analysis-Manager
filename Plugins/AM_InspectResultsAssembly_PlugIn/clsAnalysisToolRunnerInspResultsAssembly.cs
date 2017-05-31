@@ -178,7 +178,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                     {
                         filteredResultsAreEmpty = true;
                     }
-                    else if (pepToProteinMappingResult != CloseOutType.CLOSEOUT_SUCCESS & pepToProteinMappingResult != CloseOutType.CLOSEOUT_NO_DATA)
+                    else if (pepToProteinMappingResult != CloseOutType.CLOSEOUT_SUCCESS && pepToProteinMappingResult != CloseOutType.CLOSEOUT_NO_DATA)
                     {
                         processingSuccess = false;
                     }
@@ -963,7 +963,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
             // The following could be used to enable protein selection
             // That would require that the database file be present, and this can take quite a bit longer
-            //'CmdStr &= " -a -d " & dbFilename
+            //'CmdStr += " -a -d " + dbFilename
 
             if (m_DebugLevel >= 1)
             {

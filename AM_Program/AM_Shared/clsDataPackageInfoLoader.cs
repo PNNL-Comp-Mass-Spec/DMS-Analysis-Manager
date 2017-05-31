@@ -286,7 +286,7 @@ namespace AnalysisManagerBase
                 var retryCount = RETRY_COUNT;
                 var success = false;
 
-                while (retryCount > 0 & !success)
+                while (retryCount > 0 && !success)
                 {
                     try
                     {

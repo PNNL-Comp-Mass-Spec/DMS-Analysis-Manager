@@ -40,7 +40,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 CreateJobPathFiles = true
             };
 
-            if (blnCreatePrideXMLFiles & !blnCreateMSGFReportFilesOnly)
+            if (blnCreatePrideXMLFiles && !blnCreateMSGFReportFilesOnly)
             {
                 udtOptions.RetrieveMzXMLFile = true;
             }

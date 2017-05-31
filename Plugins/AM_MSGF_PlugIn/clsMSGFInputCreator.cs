@@ -697,7 +697,7 @@ namespace AnalysisManagerMSGFPlugin
                     }
                 }
 
-                if (!(blnSuccess & blnPassesFilters))
+                if (!(blnSuccess && blnPassesFilters))
                     continue;
 
                 int intScanNumberToWrite;

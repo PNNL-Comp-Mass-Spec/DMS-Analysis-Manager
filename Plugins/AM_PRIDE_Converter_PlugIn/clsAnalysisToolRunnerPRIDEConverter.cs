@@ -1362,7 +1362,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                             }
                         }
 
-                        if (blnValidPSM & !blnThresholdChecked)
+                        if (blnValidPSM && !blnThresholdChecked)
                         {
                             // Switch to filtering on MSGFSpecProbThreshold instead of on FDR or PepFDR
                             if (dblMSGFSpecProb < MSGF_SPECPROB_NOTDEFINED && udtFilterThresholds.MSGFSpecProbThreshold < 0.0001)
@@ -2567,7 +2567,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     // Example official tags are:
                     //  Human proteome project
                     //  Human plasma project
-                    //WritePXHeader(swPXFile, "project_tag", TBD & "Official project tag assigned by the repository", dctTemplateParameters)
+                    //WritePXHeader(swPXFile, "project_tag", TBD + "Official project tag assigned by the repository", dctTemplateParameters)
 
                     if (dctTemplateParameters.ContainsKey("pubmed_id"))
                     {
@@ -2977,7 +2977,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
         private string GetNEWTCv(int newtID, string newtName)
         {
-            if (newtID == 0 & string.IsNullOrWhiteSpace(newtName))
+            if (newtID == 0 && string.IsNullOrWhiteSpace(newtName))
             {
                 newtID = 2323;
                 newtName = "unclassified Bacteria";
@@ -3373,7 +3373,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 // Retrieve the dataset files for this dataset
                 mPreviousDatasetName = strDataset;
 
-                if (mCreatePrideXMLFiles & !mCreateMSGFReportFilesOnly)
+                if (mCreatePrideXMLFiles && !mCreateMSGFReportFilesOnly)
                 {
                     // Create the .mzXML files if it is missing
                     blnSuccess = CreateMzXMLFileIfMissing(strDataset, objAnalysisResults, dctDatasetRawFilePaths);
@@ -4474,7 +4474,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                         break;
                                     case "FileFormat":
 
-                                        if (eFileLocation == eMzIDXMLFileLocation.InputSpectraData & !searchedMzML)
+                                        if (eFileLocation == eMzIDXMLFileLocation.InputSpectraData && !searchedMzML)
                                         {
                                             // Override the accession and name attributes for this node
 
@@ -4527,7 +4527,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                                         break;
                                     case "cvParam":
-                                        if (readModAccession & !readingSpecificityRules)
+                                        if (readModAccession && !readingSpecificityRules)
                                         {
                                             var udtModInfo = ReadWriteCvParam(objXmlReader, objXmlWriter, lstElementCloseDepths);
 

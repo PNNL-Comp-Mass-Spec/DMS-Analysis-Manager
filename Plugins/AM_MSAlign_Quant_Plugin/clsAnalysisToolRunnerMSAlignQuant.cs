@@ -265,8 +265,8 @@ namespace AnalysisManagerMSAlignQuantPlugIn
 
                 // Optionally make a trimmed version of the ResultTable file for testing purposes
 
-                //var  strFullResultsPath = Path.Combine(m_WorkDir, strMSAlignResultTableName);
-                //var  strTrimmedFilePath = Path.Combine(m_WorkDir, Dataset & "_TrimmedResults.tmp");
+                //var strFullResultsPath = Path.Combine(m_WorkDir, strMSAlignResultTableName);
+                //var strTrimmedFilePath = Path.Combine(m_WorkDir, Dataset + "_TrimmedResults.tmp");
                 //
                 //using (var srFullResults = new StreamReader(new FileStream(strFullResultsPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 //using (var swTrimmedResults = new StreamWriter(new FileStream(strTrimmedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
