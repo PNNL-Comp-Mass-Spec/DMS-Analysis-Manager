@@ -62,6 +62,21 @@ namespace AnalysisManagerProg
         /// </summary>
         public const string MGR_PARAM_DEFAULT_DMS_CONN_STRING = "DefaultDMSConnString";
 
+        /// <summary>
+        /// Manager parameter: local task queue path
+        /// </summary>
+        public const string MGR_PARAM_FAILED_RESULTS_FOLDER_PATH = "FailedResultsFolderPath";
+
+        /// <summary>
+        /// Manager parameter: local task queue path
+        /// </summary>
+        public const string MGR_PARAM_LOCAL_TASK_QUEUE_PATH = "LocalTaskQueuePath";
+
+        /// <summary>
+        /// Manager parameter: local work dir path
+        /// </summary>
+        public const string MGR_PARAM_LOCAL_WORK_DIR_PATH = "LocalWorkDirPath";
+
         #endregion
 
         #region "Module variables"
@@ -193,9 +208,15 @@ namespace AnalysisManagerProg
             }
 
             // Determine if manager is deactivated locally
-            if (!Convert.ToBoolean(mParamDictionary[MGR_PARAM_MGR_ACTIVE_LOCAL]))
+            if (!mParamDictionary.TryGetValue(MGR_PARAM_MGR_ACTIVE_LOCAL, out var activeLocalText))
             {
-                WriteToEmergencyLog(mEmergencyLogSource, mEmergencyLogName, DEACTIVATED_LOCALLY);
+                var msg = "Manager parameter " + MGR_PARAM_MGR_ACTIVE_LOCAL + " is missing from file AnalysisManagerProg.exe.config";
+                WriteToEmergencyLog(msg);
+            }
+
+            if (!bool.TryParse(activeLocalText, out var activeLocal) || !activeLocal)
+            {
+                WriteToEmergencyLog(DEACTIVATED_LOCALLY);
                 mErrMsg = DEACTIVATED_LOCALLY;
                 return false;
             }
@@ -217,48 +238,34 @@ namespace AnalysisManagerProg
         /// <param name="paramDictionary"></param>
         /// <returns></returns>
         /// <remarks></remarks>
-        private bool CheckInitialSettings(Dictionary<string, string> paramDictionary)
+        private bool CheckInitialSettings(IReadOnlyDictionary<string, string> paramDictionary)
         {
             string errorMessage;
 
             // Verify manager settings dictionary exists
             if (paramDictionary == null)
             {
-                errorMessage = "clsAnalysisMgrSettings.CheckInitialSettings(); Manager parameter string dictionary not found";
+                errorMessage = "CheckInitialSettings: Manager parameter string dictionary not found";
 
-                if (mTraceMode)
-                    ShowTraceMessage("Error in " + errorMessage);
-
-                WriteToEmergencyLog(mEmergencyLogSource, mEmergencyLogName, errorMessage);
+                WriteToEmergencyLog(errorMessage);
                 return false;
             }
 
             // Verify intact config file was found
-            string strValue;
-            if (!paramDictionary.TryGetValue(MGR_PARAM_USING_DEFAULTS, out strValue))
+            if (!paramDictionary.TryGetValue(MGR_PARAM_USING_DEFAULTS, out var usingDefaultsText))
             {
-                errorMessage = "clsAnalysisMgrSettings.CheckInitialSettings(); 'UsingDefaults' entry not found in Config file";
+                errorMessage = "CheckInitialSettings: 'UsingDefaults' entry not found in Config file";
 
-                if (mTraceMode)
-                    ShowTraceMessage("Error in " + errorMessage);
-
-                WriteToEmergencyLog(mEmergencyLogSource, mEmergencyLogName, errorMessage);
+                WriteToEmergencyLog(errorMessage);
             }
             else
             {
-                bool blnValue;
-                if (bool.TryParse(strValue, out blnValue))
+                if (bool.TryParse(usingDefaultsText, out var usingDefaults) && usingDefaults)
                 {
-                    if (blnValue)
-                    {
-                        errorMessage = "clsAnalysisMgrSettings.CheckInitialSettings(); Config file problem, contains UsingDefaults=True";
+                    errorMessage = "CheckInitialSettings: Config file problem, contains UsingDefaults=True";
 
-                        if (mTraceMode)
-                            ShowTraceMessage("Error in " + errorMessage);
-
-                        WriteToEmergencyLog(mEmergencyLogSource, mEmergencyLogName, errorMessage);
-                        return false;
-                    }
+                    WriteToEmergencyLog(errorMessage);
+                    return false;
                 }
             }
 
@@ -326,7 +333,7 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
-        /// Gets manager config settings from manager control DB
+        /// Gets manager config settings from manager control DB (Manager_Control)
         /// </summary>
         /// <returns>True for success; False for error</returns>
         /// <remarks></remarks>
@@ -338,10 +345,10 @@ namespace AnalysisManagerProg
 
             if (string.IsNullOrEmpty(managerName))
             {
-                mErrMsg = "MgrName parameter not found in m_ParamDictionary; it should be defined in the AnalysisManagerProg.exe.config file";
+                mErrMsg = "Manager parameter " + MGR_PARAM_MGR_NAME + " is missing from file AnalysisManagerProg.exe.config";
 
                 if (mTraceMode)
-                    ShowTraceMessage("Error in LoadMgrSettingsFromDB: " + mErrMsg);
+                    LogError("Error in LoadMgrSettingsFromDB: " + mErrMsg);
 
                 return false;
             }
@@ -473,7 +480,7 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
-        /// Gets global settings from Broker DB (aka Pipeline DB)
+        /// Gets global settings from Broker DB (typically DMS_Pipeline)
         /// </summary>
         /// <returns>True for success; False for error</returns>
         /// <remarks></remarks>
@@ -567,24 +574,13 @@ namespace AnalysisManagerProg
         /// <remarks>Returns empty string if key isn't found</remarks>
         public string GetParam(string itemKey)
         {
-            var value = string.Empty;
+            if (mParamDictionary == null)
+                return string.Empty;
 
-            if ((mParamDictionary != null))
-            {
-                if (mParamDictionary.TryGetValue(itemKey, out value))
-                {
-                    if (string.IsNullOrWhiteSpace(value))
-                    {
-                        return string.Empty;
-                    }
-                }
-                else
-                {
-                    return string.Empty;
-                }
-            }
+            if (!mParamDictionary.TryGetValue(itemKey, out var value))
+                return string.Empty;
 
-            return value;
+            return string.IsNullOrWhiteSpace(value) ? string.Empty : value;
         }
 
         /// <summary>
@@ -798,7 +794,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception)
             {
-                // Leave this as the default
+                // Access denied to change the overflow policy; safe to ignore
             }
 
             EventLog.WriteEntry(sourceName, message, EventLogEntryType.Error);
