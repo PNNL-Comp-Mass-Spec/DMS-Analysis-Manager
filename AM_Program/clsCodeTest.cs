@@ -20,7 +20,6 @@ namespace AnalysisManagerProg
     /// </summary>
     public class clsCodeTest : clsLoggerBase
     {
-        private const string WORKING_DIRECTORY = @"C:\DMS_WorkDir";
         private Protein_Exporter.clsGetFASTAFromDMS m_FastaTools;
         private bool m_GenerationComplete;
         private readonly string m_FastaToolsCnStr = "Data Source=proteinseqs;Initial Catalog=Protein_Sequences;Integrated Security=SSPI;";
@@ -68,7 +67,11 @@ namespace AnalysisManagerProg
 
                 m_DebugLevel = 2;
 
-                m_mgrParams.SetParam("workdir", @"C:\DMS_WorkDir");
+                if (clsGlobal.LinuxOS)
+                    m_mgrParams.SetParam("workdir", m_mgrParams.GetParam(clsAnalysisMgrSettings.MGR_PARAM_LOCAL_WORK_DIR_PATH));
+                else
+                    m_mgrParams.SetParam("workdir", @"C:\DMS_WorkDir");
+
                 m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, "Monroe_Test");
                 m_mgrParams.SetParam("debuglevel", m_DebugLevel.ToString());
             }
@@ -249,7 +252,7 @@ namespace AnalysisManagerProg
         {
             var objJobParams = new clsAnalysisJob(m_mgrParams, intDebugLevel);
 
-            m_mgrParams.SetParam("workdir", WORKING_DIRECTORY);
+            m_mgrParams.SetParam("workdir", GetWorkDirPath());
             m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, "Monroe_Test");
             m_mgrParams.SetParam("debuglevel", intDebugLevel.ToString());
 
@@ -273,7 +276,7 @@ namespace AnalysisManagerProg
 
             var objSummaryFile = new clsSummaryFile();
 
-            myEMSLUtilities = new clsMyEMSLUtilities(DEBUG_LEVEL, WORKING_DIRECTORY);
+            myEMSLUtilities = new clsMyEMSLUtilities(DEBUG_LEVEL, GetWorkDirPath());
             RegisterEvents(myEMSLUtilities);
 
             var objToolRunner = new clsCodeTestAM();
@@ -296,10 +299,10 @@ namespace AnalysisManagerProg
             var statusTools = new clsStatusFile("Status.xml", intDebugLevel);
             RegisterEvents(statusTools);
 
-            var myEMSLUtilities = new clsMyEMSLUtilities(intDebugLevel, WORKING_DIRECTORY);
+            var myEMSLUtilities = new clsMyEMSLUtilities(intDebugLevel, GetWorkDirPath());
             RegisterEvents(myEMSLUtilities);
 
-            m_mgrParams.SetParam("workdir", WORKING_DIRECTORY);
+            m_mgrParams.SetParam("workdir", GetWorkDirPath());
             m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, "Monroe_Test");
             m_mgrParams.SetParam("debuglevel", intDebugLevel.ToString());
             m_mgrParams.SetParam("zipprogram", @"C:\PKWARE\PKZIPC\pkzipc.exe");
@@ -313,6 +316,12 @@ namespace AnalysisManagerProg
             objResources.Setup("CodeTest", m_mgrParams, objJobParams, statusTools, myEMSLUtilities);
 
             return objResources;
+        }
+
+        private string GetWorkDirPath()
+        {
+            var workDirPath = m_mgrParams.GetParam("workdir");
+            return string.IsNullOrWhiteSpace(workDirPath) ? string.Empty : workDirPath;
         }
 
         /// <summary>
@@ -506,7 +515,33 @@ namespace AnalysisManagerProg
 
             var objToolRunner = GetCodeTestToolRunner(out objJobParams, out myEMSLUtilities);
 
-            var resFolderName = Path.Combine(WORKING_DIRECTORY, "TestResults");
+            if (string.IsNullOrWhiteSpace(m_mgrParams.GetParam(clsAnalysisMgrSettings.MGR_PARAM_FAILED_RESULTS_FOLDER_PATH)))
+            {
+                if (clsGlobal.LinuxOS)
+                {
+                    var localWorkDirPath = m_mgrParams.GetParam(clsAnalysisMgrSettings.MGR_PARAM_LOCAL_WORK_DIR_PATH);
+                    if (!string.IsNullOrWhiteSpace(localWorkDirPath))
+                    {
+                        var localWorkDir = new DirectoryInfo(localWorkDirPath);
+
+                        if (localWorkDir.Parent == null)
+                            m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_FAILED_RESULTS_FOLDER_PATH, "");
+                        else
+                            m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_FAILED_RESULTS_FOLDER_PATH, Path.Combine(localWorkDir.Parent.FullName, "DMS_FailedResults"));
+
+                    }
+                    else
+                    {
+                        m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_FAILED_RESULTS_FOLDER_PATH, "");
+                    }
+                }
+                else
+                {
+                    m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_FAILED_RESULTS_FOLDER_PATH, @"C:\DMS_FailedResults");
+                }
+            }
+
+            var resFolderName = Path.Combine(GetWorkDirPath(), "TestResults");
             var resultsFolder = new DirectoryInfo(resFolderName);
             if (!resultsFolder.Exists)
                 resultsFolder.Create();
@@ -522,13 +557,13 @@ namespace AnalysisManagerProg
 
                     for (var j = 1; j < 1000; j++)
                     {
-                        outFile.WriteLine("{0}\t{1}", j, rand.Next(0,10000));
+                        outFile.WriteLine("{0}\t{1}", j, rand.Next(0, 10000));
                     }
                 }
             }
 
             var objAnalysisResults = new clsAnalysisResults(m_mgrParams, objJobParams);
-            objAnalysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(WORKING_DIRECTORY, resFolderName));
+            objAnalysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(GetWorkDirPath(), resFolderName));
         }
 
         /// <summary>
@@ -624,6 +659,12 @@ namespace AnalysisManagerProg
         /// </summary>
         public void TestConnectRSA()
         {
+            if (clsGlobal.LinuxOS)
+            {
+                LogError("Cannot use TestConnectRSA on Linux");
+                return;
+            }
+
             var host = "prismweb2";
             var username = "svc-dms";
 
@@ -707,7 +748,7 @@ namespace AnalysisManagerProg
             var statusTools = new clsStatusFile("Status.xml", intDebugLevel);
             RegisterEvents(statusTools);
 
-            var myEMSLUtilities = new clsMyEMSLUtilities(intDebugLevel, WORKING_DIRECTORY);
+            var myEMSLUtilities = new clsMyEMSLUtilities(intDebugLevel, GetWorkDirPath());
             RegisterEvents(myEMSLUtilities);
 
             objJobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetNum", "QC_05_2_05Dec05_Doc_0508-08");
@@ -908,8 +949,19 @@ namespace AnalysisManagerProg
         /// </summary>
         public void TestGetToolVersionInfo()
         {
-            var dllFile = "AM_Shared.dll";
-            var dllFile64Bit = @"C:\Windows\System32\wer.dll";
+            string dllFile;
+            string dllFile64Bit;
+
+            if (clsGlobal.LinuxOS)
+            {
+                dllFile = "AM_Shared.dll";
+                dllFile64Bit = "PeptideToProteinMapEngine.dll";
+            }
+            else
+            {
+                dllFile = "AM_Shared.dll";
+                dllFile64Bit = @"C:\Windows\System32\wer.dll";
+            }
 
             clsAnalysisJob objJobParams;
             clsMyEMSLUtilities myEMSLUtilities;
@@ -930,7 +982,7 @@ namespace AnalysisManagerProg
         /// </summary>
         public void TestLogging()
         {
-            var logFileNameBase = @"Logs\AnalysisMgr";
+            var logFileNameBase = Path.Combine("Logs", "AnalysisMgr");
 
             clsLogTools.CreateFileLogger(logFileNameBase);
 
@@ -1246,10 +1298,23 @@ namespace AnalysisManagerProg
         /// </summary>
         public void GenerateScanStatsFile()
         {
-            const string inputFilePath = "QC_Shew_16_01_111_03Feb17_Wally_16-09-27.raw";
+            if (clsGlobal.LinuxOS)
+            {
+                LogError("Cannot use GenerateScanStatsFile on Linux");
+                return;
+            }
+
+            const string inputFileName = "QC_Shew_16_01_111_03Feb17_Wally_16-09-27.raw";
             const string workingDir = @"C:\DMS_WorkDir";
 
-            var success = GenerateScanStatsFile(Path.Combine(workingDir, inputFilePath), workingDir);
+            var inputFile = new FileInfo(Path.Combine(workingDir, inputFileName));
+            if (!inputFile.Exists)
+            {
+                LogError("GenerateScanStatsFile; File not found: " + inputFile.FullName);
+                return;
+            }
+
+            var success = GenerateScanStatsFile(inputFile.FullName, workingDir);
             Console.WriteLine("Success: " + success);
         }
 

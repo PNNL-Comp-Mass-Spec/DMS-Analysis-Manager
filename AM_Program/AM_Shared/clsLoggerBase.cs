@@ -43,7 +43,7 @@ namespace AnalysisManagerBase
             Console.ResetColor();
 
             clsLogTools.LoggerTypes loggerType;
-            if (logToDb)
+            if (logToDb && !clsGlobal.OfflineMode)
             {
                 loggerType = clsLogTools.LoggerTypes.LogDb;
             }

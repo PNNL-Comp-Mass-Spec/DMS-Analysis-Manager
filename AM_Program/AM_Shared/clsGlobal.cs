@@ -210,9 +210,13 @@ namespace AnalysisManagerBase
         /// <remarks>When offline, does not contact any databases or remote shares</remarks>
         public static void EnableOfflineMode(bool runningLinux = true)
         {
-            Console.WriteLine("Offline mode enabled globally");
             OfflineMode = true;
             LinuxOS = runningLinux;
+
+            if (runningLinux)
+                Console.WriteLine("Offline mode enabled globally (running Linux)");
+            else
+                Console.WriteLine("Offline mode enabled globally");
         }
 
         /// <summary>
@@ -1258,7 +1262,11 @@ namespace AnalysisManagerBase
         /// <remarks>The message is shown in dark grey in the console.</remarks>
         public static void LogDebug(string statusMessage, bool writeToLog = true)
         {
-            Console.ForegroundColor = ConsoleColor.DarkGray;
+            if (LinuxOS)
+                Console.ForegroundColor = ConsoleColor.Blue;
+            else
+                Console.ForegroundColor = ConsoleColor.DarkGray;
+
             Console.WriteLine("  " + statusMessage);
             Console.ResetColor();
 

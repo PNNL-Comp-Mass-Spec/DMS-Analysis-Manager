@@ -1092,6 +1092,11 @@ namespace AnalysisManagerProg
         /// </summary>
         public static void CreateAnalysisManagerEventLog()
         {
+            if (clsGlobal.LinuxOS)
+            {
+                Console.WriteLine("The Windows event log cannot be initialized on Linux (CreateAnalysisManagerEventLog)");
+                return;
+            }
             var blnSuccess = CreateAnalysisManagerEventLog(CUSTOM_LOG_SOURCE_NAME, CUSTOM_LOG_NAME);
 
             if (blnSuccess)

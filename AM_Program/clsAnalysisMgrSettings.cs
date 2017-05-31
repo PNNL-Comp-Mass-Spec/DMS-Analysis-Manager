@@ -293,14 +293,36 @@ namespace AnalysisManagerProg
         /// <returns></returns>
         public bool LoadDBSettings()
         {
-            var success = LoadMgrSettingsFromDB();
-
-            if (success)
+            if (clsGlobal.OfflineMode)
             {
-                success = LoadBrokerDBSettings();
+                // Assure that manager settings LocalTaskQueuePath and LocalWorkDirPath are defined in the AnalysisManagerProg.exe.config file
+
+                var taskQueuePath = GetParam(MGR_PARAM_LOCAL_TASK_QUEUE_PATH);
+                if (string.IsNullOrWhiteSpace(taskQueuePath))
+                {
+                    var msg = "Manager parameter " + MGR_PARAM_LOCAL_TASK_QUEUE_PATH + " is missing from file AnalysisManagerProg.exe.config";
+                    LogError(msg);
+                    return false;
+                }
+
+                var workDirPath = GetParam(MGR_PARAM_LOCAL_WORK_DIR_PATH);
+                if (string.IsNullOrWhiteSpace(workDirPath))
+                {
+                    var msg = "Manager parameter " + MGR_PARAM_LOCAL_TASK_QUEUE_PATH + " is missing from file AnalysisManagerProg.exe.config";
+                    LogError(msg);
+                    return false;
+                }
+
+                return true;
             }
 
-            return success;
+            var success = LoadMgrSettingsFromDB();
+
+            if (!success)
+                return false;
+
+            var brokerSuccess = LoadBrokerDBSettings();
+            return brokerSuccess;
         }
 
         /// <summary>
@@ -635,12 +657,17 @@ namespace AnalysisManagerProg
         /// <remarks></remarks>
         private void WriteErrorMsg(string errorMessage, bool allowLogToDB = true)
         {
-            WriteToEmergencyLog(mEmergencyLogSource, mEmergencyLogName, errorMessage);
-            LogError(errorMessage);
+            if (!clsGlobal.LinuxOS)
+            {
+                WriteToEmergencyLog(errorMessage);
+            }
 
             if (allowLogToDB)
             {
-                // Also post a log to the database
+                LogError(errorMessage, true);
+            }
+            else
+            {
                 LogError(errorMessage);
             }
 
@@ -720,8 +747,23 @@ namespace AnalysisManagerProg
             }
         }
 
+        private void WriteToEmergencyLog(string message)
+        {
+            WriteToEmergencyLog(mEmergencyLogSource, mEmergencyLogName, message);
+        }
+
         private void WriteToEmergencyLog(string sourceName, string logName, string message)
         {
+
+            if (clsGlobal.LinuxOS)
+            {
+                LogError(message);
+                return;
+            }
+
+            if (mTraceMode)
+                ShowTraceMessage(message);
+
             // Post a message to the the Windows application event log named LogName
             // If the application log does not exist yet, we will try to create it
             // However, in order to do that, the program needs to be running from an elevated (administrative level) command prompt
