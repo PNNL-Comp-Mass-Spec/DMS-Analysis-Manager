@@ -406,12 +406,6 @@ namespace AnalysisManagerProg
         {
             // Query the Pipeline DB to find jobs that ran DTA Refinery
 
-            // Dim strSql As String = "SELECT JSH.Dataset, J.Dataset_ID, JSH.Job, JSH.Output_Folder, DFP.Dataset_Folder_Path" &
-            //   " FROM DMS_Pipeline.dbo.V_Job_Steps_History JSH INNER JOIN" &
-            //   "      DMS_Pipeline.dbo.T_Jobs J ON JSH.Job = J.Job INNER JOIN" &
-            //   "      DMS5.dbo.V_Dataset_Folder_Paths DFP ON J.Dataset_ID = DFP.Dataset_ID" &
-            //   " WHERE (JSH.Job Between " & intJobStart & " and " & intJobEnd & ") AND (JSH.Tool = 'DTA_Refinery') AND (JSH.Most_Recent_Entry = 1) AND (JSH.State = 5)"
-
             var strSql =
                 "SELECT JS.Dataset, J.Dataset_ID, JS.Job, JS.Output_Folder, DFP.Dataset_Folder_Path, JS.Transfer_Folder_Path" +
                 " FROM DMS_Pipeline.dbo.V_Job_Steps JS INNER JOIN" +
@@ -1020,6 +1014,18 @@ namespace AnalysisManagerProg
             catch (Exception ex)
             {
                 LogError("Test exception", ex);
+            }
+
+            Console.ResetColor();
+            foreach (ConsoleColor eColor in Enum.GetValues(typeof(ConsoleColor)))
+            {
+
+                Console.Write("{0,-12} [", eColor);
+
+                Console.ForegroundColor = eColor;
+                Console.Write("test message");
+                Console.ResetColor();
+                Console.WriteLine("]");
             }
 
             LogMessage("Testing complete");
