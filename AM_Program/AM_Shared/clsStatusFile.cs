@@ -297,6 +297,7 @@ namespace AnalysisManagerBase
                 if (m_MemoryUsageLogger == null)
                 {
                     m_MemoryUsageLogger = new clsMemoryUsageLogger(memoryUsageLogFolderPath, minimumMemoryUsageLogIntervalMinutes);
+                    RegisterEvents(m_MemoryUsageLogger);
                 }
                 else
                 {

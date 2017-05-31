@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using PRISM;
 
 //*********************************************************************************************************
 // Written by Matthew Monroe for the US Department of Energy
@@ -12,7 +13,7 @@ using System.IO;
 
 namespace AnalysisManagerBase
 {
-    public class clsMemoryUsageLogger
+    public class clsMemoryUsageLogger : clsEventNotifier
     {
 
         #region "Module variables"
@@ -106,43 +107,77 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public float GetFreeMemoryMB()
         {
+            if (clsGlobal.LinuxOS)
+            {
+                return clsGlobal.GetFreeMemoryMB();
+            }
+
+            return GetFreeMemoryMBWindows();
+        }
+
+        private float GetFreeMemoryMBWindows()
+        {
             try
             {
                 if (m_PerfCounterFreeMemory == null)
                 {
-                    return 0;
+                    return clsGlobal.GetFreeMemoryMB();
                 }
 
                 return m_PerfCounterFreeMemory.NextValue();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                OnErrorEvent("Exception accessing performance counter m_PerfCounterFreeMemory", ex);
                 return -1;
             }
         }
 
         public string GetMemoryUsageHeader()
         {
-            return "Date" + COL_SEP + "Time" + COL_SEP + "ProcessMemoryUsage_MB" + COL_SEP + "FreeMemory_MB" + COL_SEP + "PoolPaged_MB" + COL_SEP + "PoolNonpaged_MB";
+            return
+                "Date" + COL_SEP +
+                "Time" + COL_SEP +
+                "ProcessMemoryUsage_MB" + COL_SEP +
+                "FreeMemory_MB" + COL_SEP +
+                "PoolPaged_MB" + COL_SEP +
+                "PoolNonpaged_MB";
         }
 
         public string GetMemoryUsageSummary()
         {
-
             if (!m_PerfCountersIntitialized)
             {
                 InitializePerfCounters();
             }
 
+            var processMemoryUsageMB = GetProcessMemoryUsageMB();
+            var freeMemoryMB = GetFreeMemoryMB();
+            float poolPagedMemory;
+            float poolNonpagedMemory;
+
+            if (clsGlobal.LinuxOS)
+            {
+                poolPagedMemory = 0;
+                poolNonpagedMemory = 0;
+            }
+            else
+            {
+                poolPagedMemory = GetPoolPagedMemory();
+                poolNonpagedMemory = GetPoolNonpagedMemory();
+            }
+
             var currentTime = DateTime.Now;
 
-            return currentTime.ToString("yyyy-MM-dd") + COL_SEP +
-                currentTime.ToString("hh:mm:ss tt") + COL_SEP +
-                GetProcessMemoryUsageMB().ToString("0.0") + COL_SEP +
-                GetFreeMemoryMB().ToString("0.0") + COL_SEP +
-                GetPoolPagedMemory().ToString("0.0") + COL_SEP +
-                GetPoolNonpagedMemory().ToString("0.0");
+            var usageSummary =
+                $"{currentTime:yyyy-MM-dd}{COL_SEP}" +
+                $"{currentTime:hh:mm:ss tt}{COL_SEP}" +
+                $"{processMemoryUsageMB:F1}{COL_SEP}" +
+                $"{freeMemoryMB:F1}{COL_SEP}" +
+                $"{poolPagedMemory:F1}{COL_SEP}" +
+                $"{poolNonpagedMemory:F1}";
 
+            return usageSummary;
         }
 
         /// <summary>
@@ -161,8 +196,9 @@ namespace AnalysisManagerBase
 
                 return (float)(m_PerfCounterPoolNonpagedBytes.NextValue() / 1024.0 / 1024);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                OnErrorEvent("Exception accessing performance counter m_PerfCounterPoolNonpagedBytes", ex);
                 return -1;
             }
         }
@@ -183,8 +219,9 @@ namespace AnalysisManagerBase
 
                 return (float)(m_PerfCounterPoolPagedBytes.NextValue() / 1024.0 / 1024);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                OnErrorEvent("Exception accessing performance counter m_PerfCounterPoolPagedBytes", ex);
                 return -1;
             }
         }
@@ -194,7 +231,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <returns>Memory usage, in MB</returns>
         /// <remarks></remarks>
-        public static float GetProcessMemoryUsageMB()
+        public float GetProcessMemoryUsageMB()
         {
             try
             {
@@ -204,8 +241,9 @@ namespace AnalysisManagerBase
                 // The WorkingSet is the total physical memory usage
                 return (float)(clsGlobal.BytesToMB(objProcess.WorkingSet64));
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                OnErrorEvent("Exception determining memory usage of the current process", ex);
                 return 0;
             }
 
@@ -214,48 +252,42 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Initializes the performance counters
         /// </summary>
-        /// <returns>Any errors that occur; empty string if no errors</returns>
-        /// <remarks></remarks>
-        public string InitializePerfCounters()
+        public void InitializePerfCounters()
         {
-            var msgErrors = string.Empty;
-
-            try
+            if (clsGlobal.LinuxOS)
             {
-                m_PerfCounterFreeMemory = new PerformanceCounter("Memory", "Available MBytes") {ReadOnly = true};
-            }
-            catch (Exception ex)
-            {
-                if (msgErrors.Length > 0)
-                    msgErrors += "; ";
-                msgErrors += "Error instantiating the Memory: 'Available MBytes' performance counter: " + ex.Message;
+                m_PerfCountersIntitialized = true;
+                return;
             }
 
             try
             {
-                m_PerfCounterPoolPagedBytes = new PerformanceCounter("Memory", "Pool Paged Bytes") {ReadOnly = true};
+                m_PerfCounterFreeMemory = new PerformanceCounter("Memory", "Available MBytes") { ReadOnly = true };
             }
             catch (Exception ex)
             {
-                if (msgErrors.Length > 0)
-                    msgErrors += "; ";
-                msgErrors += "Error instantiating the Memory: 'Pool Paged Bytes' performance counter: " + ex.Message;
+                OnErrorEvent("Exception instantiating performance counter 'Available MBytes'", ex);
             }
 
             try
             {
-                m_PerfCounterPoolNonpagedBytes = new PerformanceCounter("Memory", "Pool NonPaged Bytes") {ReadOnly = true};
+                m_PerfCounterPoolPagedBytes = new PerformanceCounter("Memory", "Pool Paged Bytes") { ReadOnly = true };
             }
             catch (Exception ex)
             {
-                if (msgErrors.Length > 0)
-                    msgErrors += "; ";
-                msgErrors += "Error instantiating the Memory: 'Pool NonPaged Bytes' performance counter: " + ex.Message;
+                OnErrorEvent("Exception instantiating performance counter 'Pool Paged Bytes'", ex);
+            }
+
+            try
+            {
+                m_PerfCounterPoolNonpagedBytes = new PerformanceCounter("Memory", "Pool NonPaged Bytes") { ReadOnly = true };
+            }
+            catch (Exception ex)
+            {
+                OnErrorEvent("Exception instantiating performance counter 'Pool NonPaged Bytes'", ex);
             }
 
             m_PerfCountersIntitialized = true;
-
-            return msgErrors;
 
         }
 
