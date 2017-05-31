@@ -308,32 +308,31 @@ namespace AnalysisManagerBase
                 m_LastWriteTime = DateTime.UtcNow;
 
                 // We're creating a new log file each month
-                var strLogFileName = "MemoryUsageLog_" + DateTime.Now.ToString("yyyy-MM") + ".txt";
-                string strLogFilePath;
+                var logFileName = "MemoryUsageLog_" + DateTime.Now.ToString("yyyy-MM") + ".txt";
+                string logFilePath;
 
                 if (!string.IsNullOrWhiteSpace(m_LogFolderPath))
                 {
-                    strLogFilePath = Path.Combine(m_LogFolderPath, strLogFileName);
+                    logFilePath = Path.Combine(m_LogFolderPath, logFileName);
                 }
                 else
                 {
-                    strLogFilePath = string.Copy(strLogFileName);
+                    logFilePath = string.Copy(logFileName);
                 }
 
-                var blnWriteHeader = !File.Exists(strLogFilePath);
+                var writeHeader = !File.Exists(logFilePath);
 
-                using (var swOutFile = new StreamWriter(new FileStream(strLogFilePath, FileMode.Append, FileAccess.Write, FileShare.Read)))
+                using (var swOutFile = new StreamWriter(new FileStream(logFilePath, FileMode.Append, FileAccess.Write, FileShare.Read)))
                 {
 
-                    if (blnWriteHeader)
+                    if (writeHeader)
                     {
-                        GetMemoryUsageHeader();
+                        swOutFile.WriteLine(GetMemoryUsageHeader());
                     }
 
                     swOutFile.WriteLine(GetMemoryUsageSummary());
 
                 }
-
 
             }
             catch
