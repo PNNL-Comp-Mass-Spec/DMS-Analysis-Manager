@@ -70,15 +70,6 @@ namespace AnalysisManagerProg.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("False")]
-        public bool ProcessLocalTasks {
-            get {
-                return ((bool)(this["ProcessLocalTasks"]));
-            }
-        }
-        
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("/file1/temp/DMSTasks")]
         public string LocalTaskQueuePath {
             get {

@@ -17,9 +17,6 @@
     <Setting Name="DefaultDMSConnString" Type="System.String" Scope="Application">
       <Value Profile="(Default)">Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI</Value>
     </Setting>
-    <Setting Name="ProcessLocalTasks" Type="System.Boolean" Scope="Application">
-      <Value Profile="(Default)">False</Value>
-    </Setting>
     <Setting Name="LocalTaskQueuePath" Type="System.String" Scope="Application">
       <Value Profile="(Default)">/file1/temp/DMSTasks</Value>
     </Setting>
