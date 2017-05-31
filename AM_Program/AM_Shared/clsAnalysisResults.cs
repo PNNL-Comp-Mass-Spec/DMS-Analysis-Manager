@@ -27,10 +27,15 @@ namespace AnalysisManagerBase
         private const int DEFAULT_RETRY_COUNT = 3;
 
         private const int DEFAULT_RETRY_HOLDOFF_SEC = 15;
-        // access to the job parameters
 
+        /// <summary>
+        /// access to the job parameters
+        /// </summary>
         private readonly IJobParams m_jobParams;
-        // access to mgr parameters
+
+        /// <summary>
+        /// Access to manager parameters
+        /// </summary>
         private readonly IMgrParams m_mgrParams;
 
         private readonly string m_MgrName;
@@ -259,13 +264,13 @@ namespace AnalysisManagerBase
 
         public void CopyFailedResultsToArchiveFolder(string ResultsFolderPath)
         {
-            var strFailedResultsFolderPath = string.Empty;
+            var failedResultsFolderPath = string.Empty;
 
             try
             {
-                strFailedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
+                failedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
 
-                if (string.IsNullOrEmpty(strFailedResultsFolderPath))
+                if (string.IsNullOrEmpty(failedResultsFolderPath))
                 {
                     // Failed results folder path is not defined; don't try to copy the results anywhere
                     LogError("FailedResultsFolderPath is not defined for this manager; cannot copy results");
@@ -273,10 +278,10 @@ namespace AnalysisManagerBase
                 }
 
                 // Make sure the target folder exists
-                CreateFolderWithRetry(strFailedResultsFolderPath, 2, 5);
+                CreateFolderWithRetry(failedResultsFolderPath, 2, 5);
 
                 var diSourceFolder = new DirectoryInfo(ResultsFolderPath);
-                var diTargetFolder = new DirectoryInfo(strFailedResultsFolderPath);
+                var diTargetFolder = new DirectoryInfo(failedResultsFolderPath);
                 var strFolderInfoFilePath = "??";
 
                 // Create an info file that describes the saved results
@@ -313,7 +318,7 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                LogError("Error copying results from " + ResultsFolderPath + " to " + strFailedResultsFolderPath, ex);
+                LogError("Error copying results from " + ResultsFolderPath + " to " + failedResultsFolderPath, ex);
             }
 
         }

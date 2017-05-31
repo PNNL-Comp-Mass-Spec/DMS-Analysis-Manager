@@ -51,7 +51,7 @@ namespace AnalysisManagerBase
         protected IJobParams m_jobParams;
 
         /// <summary>
-        /// access to mgr parameters
+        /// Access to manager parameters
         /// </summary>
         protected IMgrParams m_mgrParams;
 
