@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace AnalysisManagerBase
 {
@@ -20,8 +21,8 @@ namespace AnalysisManagerBase
             if (clsGlobal.LinuxOS)
                 return;
 
-            mWindowsProcessStats = new PRISMWin.clsProcessStats();
-            mWindowsProcessStats.ErrorEvent += OnErrorEvent;
+            mWindowsProcessStats = new PRISMWin.clsProcessStats(LIMIT_LOGGING_BY_TIME_OF_DAY);
+            mWindowsProcessStats.ErrorEvent += OnWindowsProcessErrorEvent;
 
         }
 
@@ -138,5 +139,20 @@ namespace AnalysisManagerBase
             return mWindowsProcessStats.GetCPUUtilization();
         }
 
+        /// <summary>
+        /// Report an error
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="ex">Exception (allowed to be nothing)</param>
+        protected void OnWindowsProcessErrorEvent(string message, Exception ex)
+        {
+            var virtualMachineOnPIC = clsGlobal.UsingVirtualMachineOnPIC();
+
+            if (!virtualMachineOnPIC)
+            {
+                OnErrorEvent(message, ex);
+            }
+
+        }
     }
 }
