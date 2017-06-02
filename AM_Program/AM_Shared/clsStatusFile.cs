@@ -69,11 +69,11 @@ namespace AnalysisManagerBase
 
         private DateTime m_LastMessageQueueErrorTime;
 
-        private readonly Dictionary<EnumMgrStatus, string> MgrStatusMap;
+        private readonly Dictionary<EnumMgrStatus, string> mMgrStatusMap;
 
-        private readonly Dictionary<EnumTaskStatus, string> TaskStatusMap;
+        private readonly Dictionary<EnumTaskStatus, string> mTaskStatusMap;
 
-        private readonly Dictionary<EnumTaskStatusDetail, string> TaskStatusDetailMap;
+        private readonly Dictionary<EnumTaskStatusDetail, string> mTaskStatusDetailMap;
 
         #endregion
 
@@ -267,12 +267,11 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public clsStatusFile(string statusFilePath, int debugLevel)
         {
-            MgrStatusMap = new Dictionary<EnumMgrStatus, string>();
-            TaskStatusMap = new Dictionary<EnumTaskStatus, string>();
-            TaskStatusDetailMap = new Dictionary<EnumTaskStatusDetail, string>();
+            mMgrStatusMap = new Dictionary<EnumMgrStatus, string>();
+            mTaskStatusMap = new Dictionary<EnumTaskStatus, string>();
+            mTaskStatusDetailMap = new Dictionary<EnumTaskStatusDetail, string>();
 
-            DefineEnumToStringMapping(MgrStatusMap, TaskStatusMap, TaskStatusDetailMap);
-
+            DefineEnumToStringMapping(mMgrStatusMap, mTaskStatusMap, mTaskStatusDetailMap);
 
             FileNamePath = statusFilePath;
             MgrName = string.Empty;
@@ -296,7 +295,6 @@ namespace AnalysisManagerBase
 
             ClearCachedInfo();
 
-            InitializePerformanceCounters();
         }
 
         /// <summary>
@@ -442,7 +440,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public EnumMgrStatus ConvertToMgrStatusFromText(string statusText)
         {
-            foreach (var item in MgrStatusMap)
+            foreach (var item in mMgrStatusMap)
             {
                 if (string.Equals(item.Value, statusText, StringComparison.OrdinalIgnoreCase))
                     return item.Key;
@@ -462,7 +460,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public EnumTaskStatus ConvertToTaskStatusFromText(string statusText)
         {
-            foreach (var item in TaskStatusMap)
+            foreach (var item in mTaskStatusMap)
             {
                 if (string.Equals(item.Value, statusText, StringComparison.OrdinalIgnoreCase))
                     return item.Key;
@@ -482,7 +480,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public EnumTaskStatusDetail ConvertToTaskDetailStatusFromText(string statusText)
         {
-            foreach (var item in TaskStatusDetailMap)
+            foreach (var item in mTaskStatusDetailMap)
             {
                 if (string.Equals(item.Value, statusText, StringComparison.OrdinalIgnoreCase))
                     return item.Key;
@@ -502,7 +500,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         private string ConvertMgrStatusToString(EnumMgrStatus statusEnum)
         {
-            if (MgrStatusMap.TryGetValue(statusEnum, out var statusText))
+            if (mMgrStatusMap.TryGetValue(statusEnum, out var statusText))
                 return statusText;
 
             // Unknown enum
@@ -519,7 +517,7 @@ namespace AnalysisManagerBase
         private string ConvertTaskStatusToString(EnumTaskStatus statusEnum)
         {
 
-            if (TaskStatusMap.TryGetValue(statusEnum, out var statusText))
+            if (mTaskStatusMap.TryGetValue(statusEnum, out var statusText))
                 return statusText;
 
             // Unknown enum
@@ -536,7 +534,7 @@ namespace AnalysisManagerBase
         private string ConvertTaskStatusDetailToString(EnumTaskStatusDetail statusEnum)
         {
 
-            if (TaskStatusDetailMap.TryGetValue(statusEnum, out var statusText))
+            if (mTaskStatusDetailMap.TryGetValue(statusEnum, out var statusText))
                 return statusText;
 
             // Unknown enum
