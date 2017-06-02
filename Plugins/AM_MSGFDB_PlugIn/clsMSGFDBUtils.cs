@@ -405,8 +405,9 @@ namespace AnalysisManagerMSGFDBPlugIn
                             break;
                     }
 
-                    OnStatusEvent("Auto-updating instrument ID from " + instrumentIDCurrent + " to " + instrumentIDNew + " (" + strInstIDDescription +
-                                  ") " + autoSwitchReason);
+                    OnStatusEvent("Auto-updating instrument ID " +
+                                  "from " + instrumentIDCurrent + " to " + instrumentIDNew +
+                                  " (" + strInstIDDescription + ") " + autoSwitchReason);
                 }
 
                 instrumentIDCurrent = instrumentIDNew;
@@ -1125,7 +1126,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <remarks>Should not be affected by hyperthreading, so a computer with two 4-core chips will report 8 cores</remarks>
         public int GetCoreCount()
         {
-            return PRISMWin.clsProcessStats.GetCoreCount();
+            return clsGlobal.GetCoreCount();
         }
 
         private Dictionary<string, string> GetMSFGDBParameterNames()
