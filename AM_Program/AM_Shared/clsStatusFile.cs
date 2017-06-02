@@ -62,7 +62,6 @@ namespace AnalysisManagerBase
         private clsMessageSender m_MessageSender;
 
         private clsMessageQueueLogger m_QueueLogger;
-        private PerformanceCounter mCPUUsagePerformanceCounter;
 
         private DateTime m_LastFileWriteTime;
 
@@ -559,27 +558,14 @@ namespace AnalysisManagerBase
 
         }
 
-        private void InitializePerformanceCounters()
+        /// <summary>
+        /// Returns the number of cores
+        /// </summary>
+        /// <returns>The number of cores on this computer</returns>
+        /// <remarks>Should not be affected by hyperthreading, so a computer with two 4-core chips will report 8 cores</remarks>
+        public int GetCoreCount()
         {
-            var blnVirtualMachineOnPIC = clsGlobal.UsingVirtualMachineOnPIC();
-
-            try
-            {
-                mCPUUsagePerformanceCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total")
-                {
-                    ReadOnly = true
-                };
-            }
-            catch (Exception ex)
-            {
-                // To avoid seeing this in the logs continually, we will only post this log message between 12 am and 12:30 am
-                if (!blnVirtualMachineOnPIC && DateTime.Now.Hour == 0 && DateTime.Now.Minute <= 30)
-                {
-                    OnErrorEvent("Error instantiating the Processor.[% Processor Time] performance counter " +
-                                 "(this message is only logged between 12 am and 12:30 am): " + ex.Message);
-                }
-            }
-
+            return clsGlobal.GetCoreCount();
         }
 
         /// <summary>
@@ -588,36 +574,11 @@ namespace AnalysisManagerBase
         /// <returns>Value between 0 and 100</returns>
         /// <remarks>
         /// This is CPU usage for all running applications, not just this application
-        /// For CPU usage of a single application use PRISM.clsProgRunner.GetCoreUsageByProcessID()
+        /// For CPU usage of a single application use clsGlobal.ProcessInfo.GetCoreUsageByProcessID()
         /// </remarks>
         private float GetCPUUtilization()
         {
-            float cpuUtilization = 0;
-
-            try
-            {
-                if ((mCPUUsagePerformanceCounter != null))
-                {
-                    cpuUtilization = mCPUUsagePerformanceCounter.NextValue();
-                }
-            }
-            catch (Exception)
-            {
-                // Ignore errors here
-            }
-
-            return cpuUtilization;
-
-        }
-
-        /// <summary>
-        /// Returns the number of cores
-        /// </summary>
-        /// <returns>The number of cores on this computer</returns>
-        /// <remarks>Should not be affected by hyperthreading, so a computer with two 4-core chips will report 8 cores</remarks>
-        public int GetCoreCount()
-        {
-            return PRISMWin.clsProcessStats.GetCoreCount();
+            return clsGlobal.ProcessInfo.GetCPUUtilization();
         }
 
         /// <summary>

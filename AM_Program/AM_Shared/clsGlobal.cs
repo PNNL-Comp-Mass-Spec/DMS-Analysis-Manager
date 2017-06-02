@@ -1261,6 +1261,16 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
+        /// Returns the number of cores
+        /// </summary>
+        /// <returns>The number of cores on this computer</returns>
+        /// <remarks>Should not be affected by hyperthreading, so a computer with two 4-core chips will report 8 cores</remarks>
+        public static int GetCoreCount()
+        {
+            return ProcessInfo.GetCoreCount();
+        }
+
+        /// <summary>
         /// Reports the amount of free memory on this computer (in MB)
         /// </summary>
         /// <returns>Free memory, in MB</returns>

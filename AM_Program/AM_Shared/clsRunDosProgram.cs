@@ -286,13 +286,14 @@ namespace AnalysisManagerBase
                     return 0;
                 }
 
-                var currentCoreUsage = PRISMWin.clsProcessStats.GetCoreUsageByProcessID(m_ProgRunner.PID);
-                if (currentCoreUsage < 0)
+                var coreUsage = clsGlobal.ProcessInfo.GetCoreUsageByProcessID(m_ProgRunner.PID);
+
+                if (coreUsage < 0)
                 {
                     return -1;
                 }
 
-                return currentCoreUsage;
+                return coreUsage;
             }
             catch (Exception ex)
             {
@@ -447,7 +448,7 @@ namespace AnalysisManagerBase
                     }
                 } // end while
 
-                PRISMWin.clsProcessStats.ClearCachedPerformanceCounterForProcessID(cachedProcessID);
+                clsGlobal.ProcessInfo.ClearCachedPerformanceCounterForProcessID(cachedProcessID);
 
             }
             catch (Exception ex)
