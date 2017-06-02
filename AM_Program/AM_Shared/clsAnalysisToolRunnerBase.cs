@@ -2985,7 +2985,7 @@ namespace AnalysisManagerBase
                                 LogMessage("Error reported by DLLVersionInspector for " + Path.GetFileName(strDLLFilePath) + ": " + strValue, 0, true);
                                 blnSuccess = false;
                                 break;
-                            // default:
+                                // default:
                                 // Ignore the line
 
                         }
@@ -3958,6 +3958,10 @@ namespace AnalysisManagerBase
                 m_SummaryFile.Add("Protein Collection List" + '\t' + m_jobParams.GetParam("ProteinCollectionList"));
                 m_SummaryFile.Add("Protein Options List" + '\t' + m_jobParams.GetParam("ProteinOptions"));
                 m_SummaryFile.Add("Fasta File Name" + '\t' + m_jobParams.GetParam("PeptideSearch", clsAnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME));
+
+                if (m_StopTime < m_StartTime)
+                    m_StopTime = DateTime.UtcNow;
+
                 m_SummaryFile.Add("Analysis Time (hh:mm:ss)" + '\t' + CalcElapsedTime(m_StartTime, m_StopTime));
 
                 // Add another separator
@@ -4118,12 +4122,10 @@ namespace AnalysisManagerBase
             m_StatusTools.StoreCoreUsageHistory(mCoreUsageHistory);
 
             // If the Program has been running for at least 3 minutes, store the actual CoreUsage in the database
-
             if (DateTime.UtcNow.Subtract(mProgRunnerStartTime).TotalMinutes < 3)
                 return;
 
             // Average the data in the history queue
-
             var coreUsageAvg = (from item in mCoreUsageHistory.ToArray() select item.Value).Average();
 
             m_StatusTools.ProgRunnerCoreUsage = coreUsageAvg;
