@@ -1155,7 +1155,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Determines the most appropriate folder to use to obtain dataset files from
         /// Optionally, can require that a certain file also be present in the folder for it to be deemed valid
-        /// If no folder is deemed valid, then returns the path defined by Job Param "DatasetStoragePath"
+        /// If no folder is deemed valid, returns the path defined by Job Param "DatasetStoragePath"
         /// </summary>
         /// <param name="dsName">Name of the dataset</param>
         /// <param name="fileNameToFind">Optional: Name of a file that must exist in the dataset folder; can contain a wildcard, e.g. *.zip</param>
@@ -3351,7 +3351,7 @@ namespace AnalysisManagerBase
         /// Looks for the specified file in the given folder
         /// If present, returns the full path to the file
         /// If not present, looks for a file named FileName_StoragePathInfo.txt; if that file is found, opens the file and reads the path
-        /// If the file isn't found (and the _StoragePathInfo.txt file isn't present), then returns an empty string
+        /// If the file isn't found (and the _StoragePathInfo.txt file isn't present), returns an empty string
         /// </summary>
         /// <param name="FolderPath">The folder to look in</param>
         /// <param name="FileName">The file name to find</param>

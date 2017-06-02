@@ -347,7 +347,7 @@ namespace AnalysisManagerBase
         /// <param name="progNameLoc">The path to the program to run</param>
         /// <param name="cmdLine">The arguments to pass to the program, for example /N=35</param>
         /// <param name="progName">The name of the program to use for the Window title</param>
-        /// <param name="useResCode">If true, then returns False if the ProgRunner ExitCode is non-zero</param>
+        /// <param name="useResCode">If true, returns False if the ProgRunner ExitCode is non-zero</param>
         /// <param name="maxRuntimeSeconds">If a positive number, then program execution will be aborted if the runtime exceeds maxRuntimeSeconds</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>maxRuntimeSeconds will be increased to 15 seconds if it is between 1 and 14 seconds</remarks>

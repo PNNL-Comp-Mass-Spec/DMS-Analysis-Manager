@@ -114,10 +114,19 @@ namespace AnalysisManagerBase
 
         }
 
+        /// <summary>
+        /// Status file path
+        /// </summary>
         public string FileNamePath { get; set; }
 
+        /// <summary>
+        /// Manager name
+        /// </summary>
         public string MgrName { get; set; }
 
+        /// <summary>
+        /// Manager status
+        /// </summary>
         public EnumMgrStatus MgrStatus { get; set; }
 
         /// <summary>
@@ -131,8 +140,14 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public int CpuUtilization { get; set; }
 
+        /// <summary>
+        /// Step tool name
+        /// </summary>
         public string Tool { get; set; }
 
+        /// <summary>
+        /// Task status
+        /// </summary>
         public EnumTaskStatus TaskStatus { get; set; }
 
         /// <summary>
@@ -143,11 +158,11 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Progress (value between 0 and 100)
         /// </summary>
-        /// <value></value>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public float Progress { get; set; }
 
+        /// <summary>
+        /// Core usage history for a process being run by the ProgRunner
+        /// </summary>
         public Queue<KeyValuePair<DateTime, float>> ProgRunnerCoreUsageHistory => m_ProgRunnerCoreUsageHistory;
 
         /// <summary>
@@ -162,12 +177,24 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public float ProgRunnerCoreUsage { get; set; }
 
+        /// <summary>
+        /// Current task
+        /// </summary>
         public string CurrentOperation { get; set; }
 
+        /// <summary>
+        /// Task status detail
+        /// </summary>
         public EnumTaskStatusDetail TaskStatusDetail { get; set; }
 
+        /// <summary>
+        /// Job number
+        /// </summary>
         public int JobNumber { get; set; }
 
+        /// <summary>
+        /// Step number
+        /// </summary>
         public int JobStep { get; set; }
 
         public string WorkDirPath { get; set; }
@@ -175,9 +202,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Dataset name
         /// </summary>
-        /// <value></value>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public string Dataset { get; set; }
 
         /// <summary>
@@ -188,9 +212,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Most recent job info
         /// </summary>
-        /// <value></value>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public string MostRecentJobInfo { get; set; }
 
         public List<string> RecentErrorMessages
@@ -209,13 +230,9 @@ namespace AnalysisManagerBase
             }
         }
 
-
         /// <summary>
-        /// Number of spectrum files created
+        /// Number of spectrum files created or number of scans being searched
         /// </summary>
-        /// <value></value>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public int SpectrumCount { get; set; }
 
         /// <summary>
@@ -731,6 +748,10 @@ namespace AnalysisManagerBase
             m_BrokerDBLogger.LogStatus(udtStatusInfo, forceLogToBrokerDB);
         }
 
+        /// <summary>
+        /// Store core usage history
+        /// </summary>
+        /// <param name="coreUsageHistory"></param>
         public void StoreCoreUsageHistory(Queue<KeyValuePair<DateTime, float>> coreUsageHistory)
         {
             m_ProgRunnerCoreUsageHistory = coreUsageHistory;
@@ -1339,6 +1360,7 @@ namespace AnalysisManagerBase
 
         /// <summary>
         /// Updates status file to show manager disabled
+        /// (either in the manager control DB or via the local AnalysisManagerProg.exe.config file)
         /// </summary>
         /// <remarks></remarks>
         public void UpdateDisabled(EnumMgrStatus managerStatus)
@@ -1347,7 +1369,8 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Logs to the status file that the manager is disabled (either in the manager control DB or via the local AnalysisManagerProg.exe.config file)
+        /// Logs to the status file that the manager is disabled
+        /// (either in the manager control DB or via the local AnalysisManagerProg.exe.config file)
         /// </summary>
         /// <param name="managerStatus"></param>
         /// <param name="managerDisableMessage">Description of why the manager is disabled (leave blank if unknown)</param>
@@ -1358,7 +1381,8 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Logs to the status file that the manager is disabled (either in the manager control DB or via the local AnalysisManagerProg.exe.config file)
+        /// Logs to the status file that the manager is disabled
+        /// (either in the manager control DB or via the local AnalysisManagerProg.exe.config file)
         /// </summary>
         /// <param name="managerStatus"></param>
         /// <param name="managerDisableMessage">Description of why the manager is disabled (leave blank if unknown)</param>

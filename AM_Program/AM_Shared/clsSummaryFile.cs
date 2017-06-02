@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 
 //*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy 
+// Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2006, Battelle Memorial Institute
 // Created 06/07/2006
@@ -21,7 +21,7 @@ namespace AnalysisManagerBase
     {
 
         #region "Module Variables"
-        
+
         private readonly List<string> m_lines = new List<string>();
 
         #endregion
@@ -79,5 +79,5 @@ namespace AnalysisManagerBase
         #endregion
 
     }
-    
+
 }

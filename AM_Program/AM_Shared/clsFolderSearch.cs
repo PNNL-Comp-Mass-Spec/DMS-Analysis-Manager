@@ -421,7 +421,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Determines the most appropriate folder to use to obtain dataset files from
         /// Optionally, can require that a certain file also be present in the folder for it to be deemed valid
-        /// If no folder is deemed valid, then returns the path defined by "DatasetStoragePath"
+        /// If no folder is deemed valid, returns the path defined by "DatasetStoragePath"
         /// </summary>
         /// <param name="dsName">Name of the dataset</param>
         /// <param name="fileNameToFind">Name of a file that must exist in the folder; can contain a wildcard, e.g. *.zip</param>
@@ -440,7 +440,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Determines the most appropriate folder to use to obtain dataset files from
         /// Optionally, can require that a certain file also be present in the folder for it to be deemed valid
-        /// If no folder is deemed valid, then returns the path defined by "DatasetStoragePath"
+        /// If no folder is deemed valid, returns the path defined by "DatasetStoragePath"
         /// </summary>
         /// <param name="dsName">Name of the dataset</param>
         /// <param name="fileNameToFind">Name of a file that must exist in the folder; can contain a wildcard, e.g. *.zip</param>
@@ -465,7 +465,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Determines the most appropriate folder to use to obtain dataset files from
         /// Optionally, can require that a certain file also be present in the folder for it to be deemed valid
-        /// If no folder is deemed valid, then returns the path defined by "DatasetStoragePath"
+        /// If no folder is deemed valid, returns the path defined by "DatasetStoragePath"
         /// </summary>
         /// <param name="dsName">Name of the dataset</param>
         /// <param name="fileNameToFind">Name of a file that must exist in the folder; can contain a wildcard, e.g. *.zip</param>
@@ -483,7 +483,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Determines the most appropriate folder to use to obtain dataset files from
         /// Optionally, can require that a certain file also be present in the folder for it to be deemed valid
-        /// If no folder is deemed valid, then returns the path defined by "DatasetStoragePath"
+        /// If no folder is deemed valid, returns the path defined by "DatasetStoragePath"
         /// </summary>
         /// <param name="dsName">Name of the dataset</param>
         /// <param name="fileNameToFind">Name of a file that must exist in the folder; can contain a wildcard, e.g. *.zip</param>
@@ -502,7 +502,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Determines the most appropriate folder to use to obtain dataset files from
         /// Optionally, can require that a certain file also be present in the folder for it to be deemed valid
-        /// If no folder is deemed valid, then returns the path defined by "DatasetStoragePath"
+        /// If no folder is deemed valid, returns the path defined by "DatasetStoragePath"
         /// </summary>
         /// <param name="dsName">Name of the dataset</param>
         /// <param name="fileNameToFind">Name of a file that must exist in the folder; can contain a wildcard, e.g. *.zip</param>
@@ -521,7 +521,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Determines the most appropriate folder to use to obtain dataset files from
         /// Optionally, can require that a certain file also be present in the folder for it to be deemed valid
-        /// If no folder is deemed valid, then returns the path defined by Job Param "DatasetStoragePath"
+        /// If no folder is deemed valid, returns the path defined by Job Param "DatasetStoragePath"
         /// </summary>
         /// <param name="dsName">Name of the dataset</param>
         /// <param name="fileNameToFind">Optional: Name of a file that must exist in the dataset folder; can contain a wildcard, e.g. *.zip</param>
@@ -548,7 +548,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Determines the most appropriate folder to use to obtain dataset files from
         /// Optionally, can require that a certain file also be present in the folder for it to be deemed valid
-        /// If no folder is deemed valid, then returns the path defined by Job Param "DatasetStoragePath"
+        /// If no folder is deemed valid, returns the path defined by Job Param "DatasetStoragePath"
         /// </summary>
         /// <param name="dsName">Name of the dataset</param>
         /// <param name="fileNameToFind">Optional: Name of a file that must exist in the dataset folder; can contain a wildcard, e.g. *.zip</param>
