@@ -3938,28 +3938,17 @@ namespace AnalysisManagerBase
                 m_SummaryFile.Add(Environment.NewLine);
 
                 // Construct the Tool description (combination of Tool name and Step Tool name)
-                var strTool = m_jobParams.GetParam("ToolName");
+                var toolName = m_jobParams.GetParam("ToolName");
+                var stepTool = m_jobParams.GetParam("StepTool");
 
-                var strToolAndStepTool = m_jobParams.GetParam("StepTool") ?? string.Empty;
-
-                if (strToolAndStepTool != strTool)
-                {
-                    if (strToolAndStepTool.Length > 0)
-                    {
-                        strToolAndStepTool += " (" + strTool + ")";
-                    }
-                    else
-                    {
-                        strToolAndStepTool += strTool;
-                    }
-                }
+                var toolAndStepTool = clsAnalysisJob.GetJobToolDescription(toolName, stepTool, string.Empty);
 
                 // Add the data
                 m_SummaryFile.Add("Job Number" + '\t' + Job);
                 m_SummaryFile.Add("Job Step" + '\t' + m_jobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step"));
                 m_SummaryFile.Add("Date" + '\t' + DateTime.Now);
                 m_SummaryFile.Add("Processor" + '\t' + m_MachName);
-                m_SummaryFile.Add("Tool" + '\t' + strToolAndStepTool);
+                m_SummaryFile.Add("Tool" + '\t' + toolAndStepTool);
                 m_SummaryFile.Add("Dataset Name" + '\t' + Dataset);
                 m_SummaryFile.Add("Xfer Folder" + '\t' + m_jobParams.GetParam("transferFolderPath"));
                 m_SummaryFile.Add("Param File Name" + '\t' + m_jobParams.GetParam("parmFileName"));

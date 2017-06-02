@@ -1161,27 +1161,41 @@ namespace AnalysisManagerBase
 
             var toolName = GetParam("ToolName");
 
-            var toolAndStepTool = GetParam("StepTool");
-            if (string.IsNullOrWhiteSpace(toolAndStepTool))
-                toolAndStepTool = string.Empty;
+            var stepTool = GetParam("StepTool");
 
-            var stepNumber = GetParam(STEP_PARAMETERS_SECTION, "Step") ?? string.Empty;
+            var stepNumber = GetParam(STEP_PARAMETERS_SECTION, "Step");
 
-            if (!string.IsNullOrWhiteSpace(toolName) && !string.Equals(toolAndStepTool, toolName))
+            return GetJobToolDescription(toolName, stepTool, stepNumber);
+
+        }
+
+        /// <summary>
+        /// Generate a description of the tool, step tool, and optionally the step number for the current analysis job
+        /// Example tool names are "Sequest, Step 3" or "DTA_Gen (Sequest), Step 1" or "DataExtractor (XTandem), Step 4"
+        /// </summary>
+        /// <param name="toolName">Tool name</param>
+        /// <param name="stepTool">Step tool name (allowed to be equivalent to toolName, or blank)</param>
+        /// <param name="stepNumber">Step number (if blank, step number is not included)</param>
+        /// <returns>Tool name, possibly including step tool name, and optionally including step number</returns>
+        public static string GetJobToolDescription(string toolName, string stepTool, string stepNumber)
+        {
+            string toolAndStepTool;
+
+            if (!string.IsNullOrWhiteSpace(stepTool))
             {
-                if (toolAndStepTool.Length > 0)
-                {
-                    toolAndStepTool += " (" + toolName + ")";
-                }
+                if (string.IsNullOrWhiteSpace(toolName) || string.Equals(stepTool, toolName))
+                    toolAndStepTool = stepTool;
                 else
-                {
-                    toolAndStepTool += toolName;
-                }
+                    toolAndStepTool = stepTool + " (" + toolName + ")";
+            }
+            else
+            {
+                toolAndStepTool = toolName;
             }
 
-            if (stepNumber.Length > 0)
+            if (!string.IsNullOrWhiteSpace(stepNumber))
             {
-                toolAndStepTool += ", Step " + stepNumber;
+                return toolAndStepTool + ", Step " + stepNumber;
             }
 
             return toolAndStepTool;
