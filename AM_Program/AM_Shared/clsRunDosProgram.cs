@@ -195,6 +195,21 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
+        /// External program that the ProgRunner is running
+        /// This is the full path to the program file
+        /// </summary>
+        public string ProcessPath
+        {
+            get
+            {
+                if (string.IsNullOrWhiteSpace(m_ProgRunner?.Program))
+                    return string.Empty;
+
+                return m_ProgRunner.Program;
+            }
+        }
+
+        /// <summary>
         /// Returns true if program was aborted via call to AbortProgramNow()
         /// </summary>
         public bool ProgramAborted { get; private set; }
