@@ -25,6 +25,7 @@ namespace AnalysisManagerBase
     {
 
         #region "Constants"
+
         public const bool LOG_LOCAL_ONLY = true;
         public const bool LOG_DATABASE = false;
 
@@ -33,14 +34,17 @@ namespace AnalysisManagerBase
         public const string STEPTOOL_PARAMFILESTORAGEPATH_PREFIX = "StepTool_ParamFileStoragePath_";
 
         public const string SERVER_CACHE_HASHCHECK_FILE_SUFFIX = ".hashcheck";
+
         #endregion
 
         #region "Enums"
+
         public enum eAnalysisResourceOptions
         {
             OrgDbRequired = 0,
             MyEMSLSearchDisabled = 1
         }
+
         #endregion
 
         #region Properties
@@ -55,13 +59,31 @@ namespace AnalysisManagerBase
         /// </summary>
         public static bool OfflineMode { get; private set; }
 
-        #endregion
+        /// <summary>
+        /// System process info
+        /// </summary>
+        public static SystemProcessInfo ProcessInfo {
+            get
+            {
+                if (mSystemProcessInfo == null)
+                {
+                    mSystemProcessInfo = new SystemProcessInfo();
+                    RegisterEvents(mSystemProcessInfo);
+
+                }
+                return mSystemProcessInfo;
+            }
+        }
+
+    #endregion
 
         #region "Module variables"
 
         private static string mAppFolderPath;
 
         private static SystemMemoryInfo mSystemMemoryInfo;
+
+        private static SystemProcessInfo mSystemProcessInfo;
 
         #endregion
 
