@@ -4140,11 +4140,25 @@ namespace AnalysisManagerBase
         /// <remarks>Public because used by clsDtaGenThermoRaw</remarks>
         public void UpdateProgRunnerCpuUsage(clsRunDosProgram cmdRunner, int secondsBetweenUpdates)
         {
-            // Note that the call to GetCoreUsage() will take at least 1 second
-            var coreUsage = cmdRunner.GetCoreUsage();
+            try
+            {
+                // Note that the call to GetCoreUsage() will take at least 1 second
+                var coreUsage = cmdRunner.GetCoreUsage();
 
-            UpdateProgRunnerCpuUsage(cmdRunner.ProcessID, coreUsage, secondsBetweenUpdates);
+                UpdateProgRunnerCpuUsage(cmdRunner.ProcessID, coreUsage, secondsBetweenUpdates);
+            }
+            catch (Exception ex)
+            {
+                // Log a warning since this is not a fatal error
+                if (string.IsNullOrWhiteSpace(cmdRunner.ProcessPath))
+                    LogWarning("Exception getting core usage for process ID " + cmdRunner.ProcessID + ": " + ex.Message);
+                else
+                {
+                    var processName = Path.GetFileName(cmdRunner.ProcessPath);
+                    LogWarning("Exception getting core usage for " + processName + ", process ID " + cmdRunner.ProcessID + ": " + ex.Message);
+                }
 
+            }
         }
 
         /// <summary>

@@ -508,11 +508,22 @@ namespace AnalysisManagerMasicPlugin
                     CalculateNewStatus(objMasicProgRunner.Program);
                     UpdateStatusFile();
 
-                    // Note that the call to GetCoreUsage() will take at least 1 second
-                    var processId = objMasicProgRunner.PID;
-                    var coreUsage = processId > 0 ? PRISMWin.clsProcessStats.GetCoreUsageByProcessID(processId) : 0;
+                    var processID = 0;
 
-                    UpdateProgRunnerCpuUsage(objMasicProgRunner.PID, coreUsage, SECONDS_BETWEEN_UPDATE);
+                    try
+                    {
+                        // Note that the call to GetCoreUsage() will take at least 1 second
+                        processID = objMasicProgRunner.PID;
+                        var coreUsage = clsGlobal.ProcessInfo.GetCoreUsageByProcessID(processID);
+
+                        UpdateProgRunnerCpuUsage(objMasicProgRunner.PID, coreUsage, SECONDS_BETWEEN_UPDATE);
+                    }
+                    catch (Exception ex)
+                    {
+                        // Sometimes we get exception "Performance counter not found for processID 4896" if the process ends before we can check its core usage
+                        // Log a warning since this is not a fatal error
+                        LogWarning("Exception getting core usage for MASIC, process ID " + processID + ": " + ex.Message);
+                    }
 
                     LogProgress("MASIC");
                 }
