@@ -71,7 +71,8 @@ namespace AnalysisManagerBase
 
         private float GetCoreUsageByProcessNameLinux(string processName, out List<int> processIDs)
         {
-            return mLinuxSystemInfo.GetCoreUsageByProcessName(processName, out processIDs);
+            var argumentText = string.Empty;
+            return mLinuxSystemInfo.GetCoreUsageByProcessName(processName, argumentText, out processIDs);
         }
 
         private float GetCoreUsageByProcessNameWindows(string processName, out List<int> processIDs)

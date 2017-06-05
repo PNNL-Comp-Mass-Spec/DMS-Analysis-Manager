@@ -52,6 +52,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// When true, we are running on Linux and thus should not access any Windows features
         /// </summary>
+        /// <remarks>Call EnableOfflineMode to set this to true</remarks>
         public static bool LinuxOS { get; private set; }
 
         /// <summary>
