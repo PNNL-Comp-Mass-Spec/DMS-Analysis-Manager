@@ -144,6 +144,7 @@
     <Compile Include="clsSqLiteUtilities.cs" />
     <Compile Include="clsStatusFile.cs" />
     <Compile Include="clsSummaryFile.cs" />
+    <Compile Include="clsSystemProcessInfo.cs" />
     <Compile Include="clsXMLParamFileReader.cs" />
     <Compile Include="clsXMLUtils.cs" />
     <Compile Include="ExceptionClasses.cs" />
