@@ -10,9 +10,15 @@ namespace AnalysisManagerTest
     public class StatusFileTests
     {
         [Test]
-        public void TestWriteStatusFile()
+        [TestCase("StatusTest.xml", false, false)]
+        [TestCase("StatusTestOffline.xml", true, false)]
+        [TestCase("StatusTestLinux.xml", true, true)]
+        public void TestWriteStatusFile(string statusFileName, bool offlineMode, bool linuxOS)
         {
-            var statusFile = new FileInfo("StatusTest.xml");
+            if (offlineMode || linuxOS)
+                clsGlobal.EnableOfflineMode(linuxOS);
+
+            var statusFile = new FileInfo(statusFileName);
             var debugLevel = 2;
 
             var statusTools = new clsStatusFile(statusFile.FullName, debugLevel);
