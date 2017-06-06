@@ -159,6 +159,16 @@ namespace AnalysisManagerProg
             m_MgrFolderPath = fiMgr.DirectoryName;
         }
 
+        private static void ConfirmWindowsEventLog()
+        {
+            // Confirm that the application event log exists
+            if (EventLog.SourceExists(CUSTOM_LOG_SOURCE_NAME))
+                return;
+
+            var sourceData = new EventSourceCreationData(CUSTOM_LOG_SOURCE_NAME, CUSTOM_LOG_NAME);
+            EventLog.CreateEventSource(sourceData);
+        }
+
         /// <summary>
         /// Initializes the manager settings
         /// </summary>
@@ -236,11 +246,9 @@ namespace AnalysisManagerProg
             // Delete any temporary files that may be left in the app directory
             RemoveTempFiles();
 
-            // Confirm that the application event log exists
-            if (!EventLog.SourceExists(CUSTOM_LOG_SOURCE_NAME))
+            if (!clsGlobal.OfflineMode)
             {
-                var sourceData = new EventSourceCreationData(CUSTOM_LOG_SOURCE_NAME, CUSTOM_LOG_NAME);
-                EventLog.CreateEventSource(sourceData);
+                ConfirmWindowsEventLog();
             }
 
             // Setup the loggers
