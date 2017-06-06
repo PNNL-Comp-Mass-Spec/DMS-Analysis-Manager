@@ -1858,33 +1858,7 @@ namespace AnalysisManagerProg
                     return null;
                 }
 
-                var settings = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
-
-                foreach (XmlNode settingNode in settingNodes)
-                {
-                    if (settingNode.Attributes == null)
-                    {
-                        if (TraceMode)
-                            ShowTraceMessage(string.Format("Skipping setting node because no attributes: {0}", settingNode));
-                        continue;
-                    }
-
-                    var settingName = settingNode.Attributes["name"].Value;
-
-                    var valueNode = settingNode.SelectSingleNode("value");
-                    if (valueNode == null)
-                    {
-                        if (TraceMode)
-                            ShowTraceMessage(string.Format("Skipping setting node because no value node: <setting name=\"{0}\"/>", settingName));
-                        continue;
-                    }
-
-                    var value = valueNode.InnerText;
-
-                    settings.Add(settingName, value);
-                }
-
-                return settings;
+                return clsAnalysisMgrSettings.ParseXMLSettings(settingNodes, TraceMode);
 
             }
             catch (Exception ex)
@@ -2162,7 +2136,7 @@ namespace AnalysisManagerProg
                 if (TraceMode)
                     ShowTraceMessage("Reading application config file");
 
-                // Get settings from config file
+                // Load settings from config file AnalysisManagerProg.exe.config
                 var lstMgrSettings = LoadMgrSettingsFromFile();
 
                 if (lstMgrSettings == null)
@@ -2171,22 +2145,24 @@ namespace AnalysisManagerProg
                 if (TraceMode)
                     ShowTraceMessage("Storing manager settings in m_MgrSettings");
 
-                // Load settings from the database
-                if (!m_MgrSettings.LoadSettings(lstMgrSettings))
+                // Store the new settings then retrieve updated settings from the database
+                // or from ManagerSettingsLocal.xml if clsGlobal.OfflineMode is true
+                if (m_MgrSettings.LoadSettings(lstMgrSettings))
+                    return true;
+
+                if (!string.IsNullOrWhiteSpace(m_MgrSettings.ErrMsg))
                 {
-                    if (!string.IsNullOrWhiteSpace(m_MgrSettings.ErrMsg))
-                    {
-                        // Manager has been deactivated, so report this
-                        LogMessage(m_MgrSettings.ErrMsg);
-                        UpdateStatusDisabled(EnumMgrStatus.DISABLED_LOCAL, "Disabled Locally");
-                    }
-                    else
-                    {
-                        // Unknown problem reading config file
-                        LogError("Error re-reading config file in ReloadManagerSettings");
-                    }
-                    return false;
+                    // Manager has been deactivated, so report this
+                    LogMessage(m_MgrSettings.ErrMsg);
+                    UpdateStatusDisabled(EnumMgrStatus.DISABLED_LOCAL, "Disabled Locally");
                 }
+                else
+                {
+                    // Unknown problem reading config file
+                    LogError("Error re-reading config file in ReloadManagerSettings");
+                }
+
+                return false;
             }
             catch (Exception ex)
             {
@@ -2194,7 +2170,6 @@ namespace AnalysisManagerProg
                 return false;
             }
 
-            return true;
         }
 
         private void RemoveTempFiles()

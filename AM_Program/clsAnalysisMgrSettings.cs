@@ -7,6 +7,7 @@
 //*********************************************************************************************************
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
@@ -82,7 +83,8 @@ namespace AnalysisManagerProg
         #region "Module variables"
 
         private const string SP_NAME_ACKMANAGERUPDATE = "AckManagerUpdateRequired";
-        private Dictionary<string, string> mParamDictionary;
+
+        private readonly Dictionary<string, string> mParamDictionary;
 
         private string mErrMsg = string.Empty;
         private readonly string mEmergencyLogSource;
@@ -174,6 +176,8 @@ namespace AnalysisManagerProg
             mMgrFolderPath = mgrFolderPath;
             mTraceMode = traceMode;
 
+            mParamDictionary = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
             if (!LoadSettings(lstMgrSettings))
             {
                 if (!string.IsNullOrEmpty(mErrMsg))
@@ -198,7 +202,7 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
-        /// Loads manager settings from the database
+        /// Updates manager settings, then loads settings from the database or from ManagerSettingsLocal.xml if clsGlobal.OfflineMode is true
         /// </summary>
         /// <param name="configFileSettings">Manager settings loaded from file AnalysisManagerProg.exe.config</param>
         /// <returns>True if successful; False on error</returns>
@@ -207,7 +211,12 @@ namespace AnalysisManagerProg
         {
             mErrMsg = string.Empty;
 
-            mParamDictionary = configFileSettings;
+            mParamDictionary.Clear();
+
+            foreach (var item in configFileSettings)
+            {
+                mParamDictionary.Add(item.Key, item.Value);
+            }
 
             // Test the settings retrieved from the config file
             if (!CheckInitialSettings(mParamDictionary))
@@ -230,15 +239,10 @@ namespace AnalysisManagerProg
                 return false;
             }
 
-            // Get settings from Manager Control DB and Broker DB
-            if (!LoadDBSettings())
-            {
-                // Errors have already been logged; return False
-                return false;
-            }
+            // Load settings from Manager Control DB and Broker DB
+            // or from ManagerSettingsLocal.xml if clsGlobal.OfflineMode is true
+            return LoadDBSettings();
 
-            // No problems found
-            return true;
         }
 
         /// <summary>
@@ -304,32 +308,16 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
-        /// Retrieves the manager and global settings from various databases
+        /// Retrieves the manager and global settings from the Manager Control and Broker databases
+        /// Or, if clsGlobal.OfflineMode is true, load settings from file ManagerSettingsLocal.xml
         /// </summary>
         /// <returns></returns>
         public bool LoadDBSettings()
         {
             if (clsGlobal.OfflineMode)
             {
-                // Assure that manager settings LocalTaskQueuePath and LocalWorkDirPath are defined in the AnalysisManagerProg.exe.config file
-
-                var taskQueuePath = GetParam(MGR_PARAM_LOCAL_TASK_QUEUE_PATH);
-                if (string.IsNullOrWhiteSpace(taskQueuePath))
-                {
-                    var msg = "Manager parameter " + MGR_PARAM_LOCAL_TASK_QUEUE_PATH + " is missing from file AnalysisManagerProg.exe.config";
-                    LogError(msg);
-                    return false;
-                }
-
-                var workDirPath = GetParam(MGR_PARAM_LOCAL_WORK_DIR_PATH);
-                if (string.IsNullOrWhiteSpace(workDirPath))
-                {
-                    var msg = "Manager parameter " + MGR_PARAM_LOCAL_TASK_QUEUE_PATH + " is missing from file AnalysisManagerProg.exe.config";
-                    LogError(msg);
-                    return false;
-                }
-
-                return true;
+                var successLocal = LoadLocalSettings();
+                return successLocal;
             }
 
             var success = LoadMgrSettingsFromDB();
@@ -403,10 +391,12 @@ namespace AnalysisManagerProg
 
             if (string.IsNullOrEmpty(managerName))
             {
-                mErrMsg =
-                    "MgrCnfgDbConnectStr parameter not found in m_ParamDictionary; it should be defined in the AnalysisManagerProg.exe.config file";
+                mErrMsg = "MgrCnfgDbConnectStr parameter not found in m_ParamDictionary; " +
+                          "it should be defined in the AnalysisManagerProg.exe.config file";
+
                 if (mTraceMode)
                     ShowTraceMessage("LoadMgrSettingsFromDBWork: " + mErrMsg);
+
                 dtSettings = null;
                 return false;
             }
@@ -446,11 +436,154 @@ namespace AnalysisManagerProg
             return true;
         }
 
+        private bool LoadLocalSettings()
+        {
+            var settings = ReadLocalSettingsFile();
+            if (settings == null)
+                return false;
+
+            // Add/Update settings
+            foreach (var setting in settings)
+            {
+                if (mParamDictionary.ContainsKey(setting.Key))
+                {
+                    mParamDictionary[setting.Key] = setting.Value;
+                }
+                else
+                {
+                    mParamDictionary.Add(setting.Key, setting.Value);
+                }
+            }
+
+            // Validate several key local manager settings
+
+            var taskQueuePath = GetParam(MGR_PARAM_LOCAL_TASK_QUEUE_PATH);
+            if (string.IsNullOrWhiteSpace(taskQueuePath))
+            {
+                var msg = "Manager parameter " + MGR_PARAM_LOCAL_TASK_QUEUE_PATH + " is missing from file ManagerSettingsLocal.xml";
+                LogError(msg);
+                return false;
+            }
+
+            var workDirPath = GetParam(MGR_PARAM_LOCAL_WORK_DIR_PATH);
+            if (string.IsNullOrWhiteSpace(workDirPath))
+            {
+                var msg = "Manager parameter " + MGR_PARAM_LOCAL_TASK_QUEUE_PATH + " is missing from file ManagerSettingsLocal.xml";
+                LogError(msg);
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Parse a list of XML nodes from AnalysisManagerProg.exe.config or ManagerSettingsLocal.xml
+        /// </summary>
+        /// <param name="settingNodes">XML nodes</param>
+        /// <param name="traceEnabled">If true, display trace statements</param>
+        /// <returns>Dictionary of settiongs</returns>
+        public static Dictionary<string, string> ParseXMLSettings(IEnumerable settingNodes, bool traceEnabled)
+        {
+
+            var settings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (XmlNode settingNode in settingNodes)
+            {
+                if (settingNode.Attributes == null)
+                {
+                    if (traceEnabled)
+                        ShowTraceMessage(string.Format("Skipping setting node because no attributes: {0}", settingNode));
+                    continue;
+                }
+
+                var settingName = settingNode.Attributes["name"].Value;
+
+                var valueNode = settingNode.SelectSingleNode("value");
+                if (valueNode == null)
+                {
+                    if (traceEnabled)
+                        ShowTraceMessage(string.Format("Skipping setting node because no value node: <setting name=\"{0}\"/>", settingName));
+                    continue;
+                }
+
+                var value = valueNode.InnerText;
+
+                settings.Add(settingName, value);
+            }
+
+            return settings;
+        }
+
+        /// <summary>
+        /// Read settings from file ManagerSettingsLocal.xml
+        /// </summary>
+        /// <returns></returns>
+        private Dictionary<string, string> ReadLocalSettingsFile()
+        {
+            XmlDocument configDoc;
+
+            try
+            {
+                // Construct the path to the config document
+                var configFilePath = Path.Combine(mMgrFolderPath, "ManagerSettingsLocal.xml");
+                var configfile = new FileInfo(configFilePath);
+                if (!configfile.Exists)
+                {
+                    LogError("ReadLocalSettingsFile; manager config file not found: " + configFilePath);
+                    return null;
+                }
+
+                // Load the config document
+                configDoc = new XmlDocument();
+                configDoc.Load(configFilePath);
+            }
+            catch (Exception ex)
+            {
+                LogError("ReadLocalSettingsFile; exception loading settings file", ex);
+                return null;
+            }
+
+            try
+            {
+                // Retrieve the settings node
+                var appSettingsNode = configDoc.SelectSingleNode("//settings");
+
+                if (appSettingsNode == null)
+                {
+                    LogError("ReadLocalSettingsFile; settings node not found");
+                    return null;
+                }
+
+                // Read each of the settings
+                var settingNodes = appSettingsNode.SelectNodes("//setting[@name]");
+                if (settingNodes == null)
+                {
+                    LogError("ReadLocalSettingsFile; settings/*/setting nodes not found");
+                    return null;
+                }
+
+                return ParseXMLSettings(settingNodes, mTraceMode);
+
+            }
+            catch (Exception ex)
+            {
+                LogError("ReadLocalSettingsFile; Exception reading settings file", ex);
+                return null;
+            }
+
+        }
+
+        /// <summary>
+        /// Update mParamDictionary with settings in dtSettings, optionally skipping existing parameters
+        /// </summary>
+        /// <param name="dtSettings"></param>
+        /// <param name="skipExistingParameters"></param>
+        /// <param name="managerName"></param>
+        /// <returns></returns>
         private bool StoreParameters(DataTable dtSettings, bool skipExistingParameters, string managerName)
         {
             bool success;
 
-            // Fill a string dictionary with the manager parameters that have been found
             try
             {
                 foreach (DataRow oRow in dtSettings.Rows)
@@ -761,6 +894,8 @@ namespace AnalysisManagerProg
 
         private void WriteToEmergencyLog(string sourceName, string logName, string message)
         {
+            if (mTraceMode)
+                ShowTraceMessage(message);
 
             if (clsGlobal.LinuxOS)
             {
@@ -768,9 +903,11 @@ namespace AnalysisManagerProg
                 return;
             }
 
-            if (mTraceMode)
-                ShowTraceMessage(message);
+            WriteToEmergencyLogWindows(sourceName, logName, message);
+        }
 
+        private void WriteToEmergencyLogWindows(string sourceName, string logName, string message)
+        {
             // Post a message to the the Windows application event log named LogName
             // If the application log does not exist yet, we will try to create it
             // However, in order to do that, the program needs to be running from an elevated (administrative level) command prompt
