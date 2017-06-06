@@ -62,7 +62,8 @@ namespace AnalysisManagerProg
         private clsPluginLoader m_PluginLoader;
 
         private clsSummaryFile m_SummaryFile;
-        private FileSystemWatcher m_FileWatcher;
+        private FileSystemWatcher m_ConfigFileWatcher;
+        private FileSystemWatcher m_LocalSettingsFileWatcher;
 
         private bool m_ConfigChanged;
 
@@ -268,17 +269,15 @@ namespace AnalysisManagerProg
                 return false;
             }
 
-            // Setup a file watcher for the config file
-            m_FileWatcher = new FileSystemWatcher
-            {
-                Path = m_MgrFolderPath,
-                IncludeSubdirectories = false,
-                Filter = configFileName,
-                NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size,
-                EnableRaisingEvents = true
-            };
+            // Setup a file watcher for the config file(s)
+            m_ConfigFileWatcher = CreateConfigFileWatcher(configFileName);
+            m_ConfigFileWatcher.Changed += m_ConfigFileWatcher_Changed;
 
-            m_FileWatcher.Changed += m_FileWatcher_Changed;
+            if (clsGlobal.OfflineMode)
+            {
+                m_LocalSettingsFileWatcher = CreateConfigFileWatcher(clsAnalysisMgrSettings.LOCAL_MANAGER_SETTINGS_FILE);
+                m_LocalSettingsFileWatcher.Changed += m_ConfigFileWatcher_Changed;
+            }
 
             // Get the debug level
             m_DebugLevel = (short)(m_MgrSettings.GetParam("debuglevel", 2));
@@ -373,7 +372,10 @@ namespace AnalysisManagerProg
                         {
                             return;
                         }
-                        m_FileWatcher.EnableRaisingEvents = true;
+
+                        m_ConfigFileWatcher.EnableRaisingEvents = true;
+                        if (m_LocalSettingsFileWatcher != null)
+                            m_LocalSettingsFileWatcher.EnableRaisingEvents = true;
                     }
                     else
                     {
@@ -1172,6 +1174,20 @@ namespace AnalysisManagerProg
             }
 
             return true;
+        }
+
+        private FileSystemWatcher CreateConfigFileWatcher(string configFileName)
+        {
+            var watcher = new FileSystemWatcher
+            {
+                Path = m_MgrFolderPath,
+                IncludeSubdirectories = false,
+                Filter = configFileName,
+                NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size,
+                EnableRaisingEvents = true
+            };
+
+            return watcher;
         }
 
         private bool DataPackageIdMissing()
@@ -2976,9 +2992,13 @@ namespace AnalysisManagerProg
         /// <param name="sender"></param>
         /// <param name="e"></param>
         /// <remarks></remarks>
-        private void m_FileWatcher_Changed(object sender, FileSystemEventArgs e)
+        private void m_ConfigFileWatcher_Changed(object sender, FileSystemEventArgs e)
         {
-            m_FileWatcher.EnableRaisingEvents = false;
+            m_ConfigFileWatcher.EnableRaisingEvents = false;
+
+            if (m_LocalSettingsFileWatcher != null)
+                m_LocalSettingsFileWatcher.EnableRaisingEvents = false;
+
             m_ConfigChanged = true;
 
             if (m_DebugLevel > 3)

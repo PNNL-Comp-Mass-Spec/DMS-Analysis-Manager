@@ -39,6 +39,12 @@ namespace AnalysisManagerProg
         public const string DEACTIVATED_LOCALLY = "Manager deactivated locally";
 
         /// <summary>
+        /// File with settings loaded when OfflineMode is enabled
+        /// </summary>
+        /// <remarks>Includes key settings that are retrieved from the Manager_Control database when OfflineMode is false</remarks>
+        public const string LOCAL_MANAGER_SETTINGS_FILE = "ManagerSettingsLocal.xml";
+
+        /// <summary>
         /// Manager parameter: config database connection string
         /// </summary>
         public const string MGR_PARAM_MGR_CFG_DB_CONN_STRING = "MgrCnfgDbConnectStr";
@@ -77,7 +83,7 @@ namespace AnalysisManagerProg
         /// Manager parameter: local work dir path
         /// </summary>
         public const string MGR_PARAM_LOCAL_WORK_DIR_PATH = "LocalWorkDirPath";
-
+        
         #endregion
 
         #region "Module variables"
@@ -460,7 +466,7 @@ namespace AnalysisManagerProg
             var taskQueuePath = GetParam(MGR_PARAM_LOCAL_TASK_QUEUE_PATH);
             if (string.IsNullOrWhiteSpace(taskQueuePath))
             {
-                var msg = "Manager parameter " + MGR_PARAM_LOCAL_TASK_QUEUE_PATH + " is missing from file ManagerSettingsLocal.xml";
+                var msg = "Manager parameter " + MGR_PARAM_LOCAL_TASK_QUEUE_PATH + " is missing from file " + LOCAL_MANAGER_SETTINGS_FILE;
                 LogError(msg);
                 return false;
             }
@@ -468,7 +474,7 @@ namespace AnalysisManagerProg
             var workDirPath = GetParam(MGR_PARAM_LOCAL_WORK_DIR_PATH);
             if (string.IsNullOrWhiteSpace(workDirPath))
             {
-                var msg = "Manager parameter " + MGR_PARAM_LOCAL_TASK_QUEUE_PATH + " is missing from file ManagerSettingsLocal.xml";
+                var msg = "Manager parameter " + MGR_PARAM_LOCAL_TASK_QUEUE_PATH + " is missing from file " + LOCAL_MANAGER_SETTINGS_FILE;
                 LogError(msg);
                 return false;
             }
@@ -525,7 +531,7 @@ namespace AnalysisManagerProg
             try
             {
                 // Construct the path to the config document
-                var configFilePath = Path.Combine(mMgrFolderPath, "ManagerSettingsLocal.xml");
+                var configFilePath = Path.Combine(mMgrFolderPath, LOCAL_MANAGER_SETTINGS_FILE);
                 var configfile = new FileInfo(configFilePath);
                 if (!configfile.Exists)
                 {
