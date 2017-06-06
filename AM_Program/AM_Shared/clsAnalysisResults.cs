@@ -261,26 +261,52 @@ namespace AnalysisManagerBase
 
         }
 
-
-        public void CopyFailedResultsToArchiveFolder(string ResultsFolderPath)
+        /// <summary>
+        /// Copy failed results from sourceFolderPath to the DMS_FailedResults directory on the local computer
+        /// </summary>
+        /// <param name="sourceFolderPath">Source folder path</param>
+        public void CopyFailedResultsToArchiveFolder(string sourceFolderPath)
         {
-            var failedResultsFolderPath = string.Empty;
+            if (clsGlobal.OfflineMode)
+            {
+                // Offline mode jobs each have their own work directory
+                // Thus, copying of failed results is not applicable
+                return;
+            }
+
+            var failedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
+
+            if (string.IsNullOrEmpty(failedResultsFolderPath))
+            {
+                // Failed results folder path is not defined; don't try to copy the results anywhere
+                LogError("FailedResultsFolderPath is not defined for this manager; cannot copy results");
+                return;
+            }
+
+            CopyFailedResultsToArchiveFolder(sourceFolderPath, failedResultsFolderPath);
+        }
+
+        /// <summary>
+        /// Copy failed results from sourceFolderPath to the DMS_FailedResults directory on the local computer
+        /// </summary>
+        /// <param name="sourceFolderPath">Source folder path</param>
+        /// <param name="failedResultsFolderPath">Failed results folder path, e.g. C:\DMS_FailedResults</param>
+        public void CopyFailedResultsToArchiveFolder(string sourceFolderPath, string failedResultsFolderPath)
+        {
+            if (clsGlobal.OfflineMode)
+            {
+                // Offline mode jobs each have their own work directory
+                // Thus, copying of failed results is not applicable
+                return;
+            }
 
             try
             {
-                failedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
-
-                if (string.IsNullOrEmpty(failedResultsFolderPath))
-                {
-                    // Failed results folder path is not defined; don't try to copy the results anywhere
-                    LogError("FailedResultsFolderPath is not defined for this manager; cannot copy results");
-                    return;
-                }
 
                 // Make sure the target folder exists
                 CreateFolderWithRetry(failedResultsFolderPath, 2, 5);
 
-                var diSourceFolder = new DirectoryInfo(ResultsFolderPath);
+                var diSourceFolder = new DirectoryInfo(sourceFolderPath);
                 var diTargetFolder = new DirectoryInfo(failedResultsFolderPath);
                 var strFolderInfoFilePath = "??";
 
@@ -298,7 +324,7 @@ namespace AnalysisManagerBase
                 // Make sure the source folder exists
                 if (!diSourceFolder.Exists)
                 {
-                    LogError("Results folder not found; cannot copy results: " + ResultsFolderPath);
+                    LogError("Results folder not found; cannot copy results: " + sourceFolderPath);
                 }
                 else
                 {
@@ -318,11 +344,10 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                LogError("Error copying results from " + ResultsFolderPath + " to " + failedResultsFolderPath, ex);
+                LogError("Error copying results from " + sourceFolderPath + " to " + failedResultsFolderPath, ex);
             }
 
         }
-
 
         private void CopyFailedResultsCreateInfoFile(string strFolderInfoFilePath, string strResultsFolderName)
         {

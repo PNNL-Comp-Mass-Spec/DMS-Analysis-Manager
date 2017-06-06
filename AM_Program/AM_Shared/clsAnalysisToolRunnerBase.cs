@@ -402,6 +402,14 @@ namespace AnalysisManagerBase
         /// </remarks>
         public virtual void CopyFailedResultsToArchiveFolder()
         {
+            if (clsGlobal.OfflineMode)
+            {
+                // Offline mode jobs each have their own work directory
+                // Thus, copying of failed results is not applicable
+                LogWarning("Processing interrupted; see local work directory: " + m_WorkDir);
+                return;
+            }
+
             var failedResultsFolderPath = m_mgrParams.GetParam("FailedResultsFolderPath");
             if (string.IsNullOrWhiteSpace(failedResultsFolderPath))
             {
@@ -410,6 +418,7 @@ namespace AnalysisManagerBase
             }
 
             LogWarning("Processing interrupted; copying results to archive folder: " + failedResultsFolderPath);
+
 
             // Bump up the debug level if less than 2
             if (m_DebugLevel < 2)
@@ -433,7 +442,7 @@ namespace AnalysisManagerBase
 
             // Copy the results folder to the Archive folder
             var analysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
-            analysisResults.CopyFailedResultsToArchiveFolder(folderPathToArchive);
+            analysisResults.CopyFailedResultsToArchiveFolder(folderPathToArchive, failedResultsFolderPath);
         }
 
         /// <summary>
@@ -2331,7 +2340,7 @@ namespace AnalysisManagerBase
             var resFolderNamePath = string.Empty;
             var currentFileName = string.Empty;
 
-            var blnErrorEncountered = false;
+            var errorEncountered = false;
 
             // Move files into results folder
             try
@@ -2500,7 +2509,7 @@ namespace AnalysisManagerBase
                             // Copy also failed
                             // Continue moving files; we'll fail the results at the end of this function
                             LogError(" MoveResultFiles: error moving/copying file: " + tmpFileName, ex2);
-                            blnErrorEncountered = true;
+                            errorEncountered = true;
                         }
                     }
 
@@ -2541,7 +2550,7 @@ namespace AnalysisManagerBase
                 LogErrorToDatabase("Error moving results files, job " + Job + ex.Message);
                 UpdateStatusMessage("Error moving results files");
 
-                blnErrorEncountered = true;
+                errorEncountered = true;
             }
 
             try
@@ -2554,7 +2563,7 @@ namespace AnalysisManagerBase
                 // Ignore errors here
             }
 
-            if (blnErrorEncountered)
+            if (errorEncountered)
             {
                 // Try to save whatever files were moved into the results folder
                 var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
