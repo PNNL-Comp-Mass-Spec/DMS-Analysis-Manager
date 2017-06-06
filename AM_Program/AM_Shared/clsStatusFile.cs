@@ -334,6 +334,12 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public void ConfigureBrokerDBLogging(bool logStatusToBrokerDB, string brokerDBConnectionString, float brokerDBStatusUpdateIntervalMinutes)
         {
+            if (clsGlobal.OfflineMode)
+            {
+                LogToBrokerQueue = false;
+                return;
+            }
+
             LogToBrokerQueue = logStatusToBrokerDB;
 
             if (logStatusToBrokerDB)
@@ -367,6 +373,12 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public void ConfigureMessageQueueLogging(bool logStatusToMessageQueue, string msgQueueURI, string messageQueueTopicMgrStatus)
         {
+            if (clsGlobal.OfflineMode)
+            {
+                LogToBrokerQueue = false;
+                return;
+            }
+
             LogToMsgQueue = logStatusToMessageQueue;
             MessageQueueURI = msgQueueURI;
             MessageQueueTopic = messageQueueTopicMgrStatus;
