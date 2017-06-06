@@ -320,11 +320,8 @@ namespace AnalysisManagerBase
             }
             else
             {
-                if ((m_MemoryUsageLogger != null))
-                {
-                    // Stop logging memory usage
-                    m_MemoryUsageLogger = null;
-                }
+                // Stop logging memory usage
+                m_MemoryUsageLogger = null;
             }
         }
 
@@ -892,8 +889,7 @@ namespace AnalysisManagerBase
         {
 
             var runTimeHours = GetRunTime();
-
-            WriteStatusFile(this, lastUpdate, processId, cpuUtilization, runTimeHours, freeMemoryMB, true, forceLogToBrokerDB);
+            WriteStatusFile(this, lastUpdate, processId, cpuUtilization, freeMemoryMB, runTimeHours, true, forceLogToBrokerDB);
 
             CheckForAbortProcessingFile();
 
@@ -1034,7 +1030,7 @@ namespace AnalysisManagerBase
 
                 var progRunnerCoreUsageHistory = status.ProgRunnerCoreUsageHistory;
 
-                if (status.ProgRunnerProcessID != 0 && (progRunnerCoreUsageHistory != null))
+                if (status.ProgRunnerProcessID != 0 && progRunnerCoreUsageHistory != null)
                 {
                     xWriter.WriteStartElement("ProgRunnerCoreUsage");
                     xWriter.WriteAttributeString("Count", progRunnerCoreUsageHistory.Count.ToString());
