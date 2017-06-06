@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<settings>
+    <setting name="AuroraAvailable"><value>False</value></setting>
+    <setting name="configfilename"><value>AnalysisManagerProg.exe.config</value></setting>
+    <setting name="debuglevel"><value>3</value></setting>
+    <setting name="LocalTaskQueuePath"><value>/file1/temp/DMSTasks</value></setting>
+    <setting name="LocalWorkDirPath"><value>/file1/temp/DMSWorkDir</value></setting>
+    <setting name="logfilename"><value>Logs/AnalysisMgr</value></setting>
+    <setting name="LogMemoryUsage"><value>True</value></setting>
+    <setting name="ManagerErrorCleanupMode"><value>2</value></setting>
+    <setting name="ManagerUpdateRequired"><value>false</value></setting>
+    <setting name="maxrepetitions"><value>300</value></setting>
+    <setting name="MinimumMemoryUsageLogInterval"><value>1</value></setting>
+    <setting name="MSGFDbProgLoc"><value>/opt/DMS_Programs/MSGFDB</value></setting>
+    <setting name="MyEmslAvailable"><value>False</value></setting>
+    <setting name="orgdbdir"><value>/file1/temp/DMSOrgDBs</value></setting>
+    <setting name="statusfilelocation"><value>Status.xml</value></setting>
+</settings>
