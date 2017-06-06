@@ -176,15 +176,17 @@ namespace AnalysisManagerProg
         /// <remarks></remarks>
         private bool InitMgr()
         {
-            // Create a database logger connected to DMS5
-            // Once the initial parameters have been successfully read,
-            // we remove this logger than make a new one using the connection string read from the Manager Control DB
-            var defaultDmsConnectionString = Properties.Settings.Default.DefaultDMSConnString;
             var hostName = System.Net.Dns.GetHostName();
 
-            clsLogTools.CreateDbLogger(defaultDmsConnectionString, "Analysis Tool Manager: " + hostName, true);
+            if (!clsGlobal.OfflineMode)
+            {
+                // Create a database logger connected to DMS5
+                // Once the initial parameters have been successfully read,
+                // we remove this logger than make a new one using the connection string read from the Manager Control DB
+                var defaultDmsConnectionString = Properties.Settings.Default.DefaultDMSConnString;
 
-            // Get settings from config file
+                clsLogTools.CreateDbLogger(defaultDmsConnectionString, "Analysis Tool Manager: " + hostName, true);
+            }
 
             try
             {
@@ -259,8 +261,11 @@ namespace AnalysisManagerProg
 
             var logCnStr = m_MgrSettings.GetParam("connectionstring");
 
-            clsLogTools.RemoveDefaultDbLogger();
-            clsLogTools.CreateDbLogger(logCnStr, "Analysis Tool Manager: " + m_MgrName, false);
+            if (!clsGlobal.OfflineMode)
+            {
+                clsLogTools.RemoveDefaultDbLogger();
+                clsLogTools.CreateDbLogger(logCnStr, "Analysis Tool Manager: " + m_MgrName, false);
+            }
 
             // Make the initial log entry
             if (TraceMode)
