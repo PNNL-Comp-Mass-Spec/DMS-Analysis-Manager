@@ -260,11 +260,11 @@ namespace AnalysisManagerProg
 
             clsLogTools.CreateFileLogger(logFileNameBase);
 
-            var logCnStr = m_MgrSettings.GetParam("connectionstring");
 
             if (!clsGlobal.OfflineMode)
             {
                 clsLogTools.RemoveDefaultDbLogger();
+                var logCnStr = m_MgrSettings.GetParam("connectionstring");
                 clsLogTools.CreateDbLogger(logCnStr, "Analysis Tool Manager: " + m_MgrName, false);
             }
 
@@ -1661,7 +1661,7 @@ namespace AnalysisManagerProg
         {
             clsCleanupMgrErrors.eCleanupModeConstants eManagerErrorCleanupMode;
 
-            var strManagerErrorCleanupMode = m_MgrSettings.GetParam("ManagerErrorCleanupMode");
+            var strManagerErrorCleanupMode = m_MgrSettings.GetParam("ManagerErrorCleanupMode", "0");
 
             switch (strManagerErrorCleanupMode.Trim())
             {
@@ -1831,7 +1831,7 @@ namespace AnalysisManagerProg
         {
             if (m_StatusTools == null)
             {
-                var statusFileLoc = Path.Combine(m_MgrFolderPath, m_MgrSettings.GetParam("statusfilelocation"));
+                var statusFileLoc = Path.Combine(m_MgrFolderPath, m_MgrSettings.GetParam("statusfilelocation", "Status.xml"));
 
                 if (TraceMode)
                     ShowTraceMessage("Initialize m_StatusTools using " + statusFileLoc);
