@@ -275,7 +275,7 @@ namespace AnalysisManagerProg
             LogMessage(startupMsg);
 
             var configFileName = m_MgrSettings.GetParam("configfilename");
-            if ((string.IsNullOrEmpty(configFileName)))
+            if (string.IsNullOrEmpty(configFileName))
             {
                 //  Manager parameter error; log an error and exit
                 LogError("Manager parameter 'configfilename' is undefined; this likely indicates a problem retrieving manager parameters.  Shutting down the manager");
@@ -319,7 +319,18 @@ namespace AnalysisManagerProg
             if (TraceMode)
                 ShowTraceMessage("Setup the manager cleanup class");
 
-            m_MgrErrorCleanup = new clsCleanupMgrErrors(m_MgrSettings.GetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_CFG_DB_CONN_STRING), m_MgrName, m_DebugLevel, m_MgrFolderPath, m_WorkDirPath);
+            string mgrConfigDBConnectionString;
+            if (clsGlobal.OfflineMode)
+            {
+                mgrConfigDBConnectionString = string.Empty;
+            }
+            else
+            {
+                // Data Source=proteinseqs;Initial Catalog=manager_control
+                mgrConfigDBConnectionString = m_MgrSettings.GetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_CFG_DB_CONN_STRING);
+            }
+
+            m_MgrErrorCleanup = new clsCleanupMgrErrors(mgrConfigDBConnectionString, m_MgrName, m_DebugLevel, m_MgrFolderPath, m_WorkDirPath);
 
             if (TraceMode)
                 ShowTraceMessage("Initialize the Summary file");

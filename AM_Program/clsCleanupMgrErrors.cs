@@ -105,18 +105,13 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="mgrConfigDBConnectionString"></param>
+        /// <param name="mgrConfigDBConnectionString">Connection string to the manager_control database; if empty, database access is disabled</param>
         /// <param name="managerName"></param>
         /// <param name="debugLevel"></param>
         /// <param name="mgrFolderPath"></param>
         /// <param name="workingDirPath"></param>
         public clsCleanupMgrErrors(string mgrConfigDBConnectionString, string managerName, int debugLevel, string mgrFolderPath, string workingDirPath)
         {
-            if (string.IsNullOrEmpty(mgrConfigDBConnectionString))
-            {
-                throw new Exception("Manager config DB connection string is not defined");
-            }
-
             if (string.IsNullOrEmpty(managerName))
             {
                 throw new Exception("Manager name is not defined");
@@ -302,7 +297,7 @@ namespace AnalysisManagerProg
                             var currentUser = Environment.UserDomainName + @"\" + Environment.UserName;
 
                             LogWarning("IOException deleting " + diSubDirectory.FullName + "; will try granting modify access to user " + currentUser);
-                            folderAcl.AddAccessRule(new FileSystemAccessRule(currentUser, FileSystemRights.Modify, 
+                            folderAcl.AddAccessRule(new FileSystemAccessRule(currentUser, FileSystemRights.Modify,
                                                                              InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit, PropagationFlags.None, AccessControlType.Allow));
 
                             try
@@ -530,6 +525,9 @@ namespace AnalysisManagerProg
 
         private void ReportManagerErrorCleanup(eCleanupActionCodeConstants eMgrCleanupActionCode, string strFailureMessage)
         {
+            if (string.IsNullOrWhiteSpace(mMgrConfigDBConnectionString))
+                return;
+
             try
             {
                 if (strFailureMessage == null)
