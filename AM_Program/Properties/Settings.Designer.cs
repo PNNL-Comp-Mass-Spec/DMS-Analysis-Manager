@@ -67,23 +67,5 @@ namespace AnalysisManagerProg.Properties {
                 return ((string)(this["DefaultDMSConnString"]));
             }
         }
-        
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("/file1/temp/DMSTasks")]
-        public string LocalTaskQueuePath {
-            get {
-                return ((string)(this["LocalTaskQueuePath"]));
-            }
-        }
-        
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("/file1/temp/DMSWorkDir")]
-        public string LocalWorkDirPath {
-            get {
-                return ((string)(this["LocalWorkDirPath"]));
-            }
-        }
     }
 }

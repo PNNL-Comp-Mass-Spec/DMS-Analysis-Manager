@@ -370,9 +370,8 @@ namespace AnalysisManagerProg
                 Console.WriteLine("Use /DLL:Path to display the version of all DLLs in the specified folder (surround path with double quotes if spaces)");
                 Console.WriteLine();
 
-                // exeName + ".config" is AnalysisManagerProg.exe.config
                 Console.WriteLine("Use /Offline to enable offline mode (database access and use of external servers is disabled). " +
-                                  "Requires that the "+ exeName + ".config file have settings LocalTaskQueuePath and LocalWorkDirPath");
+                                  "Requires that the ManagerSettingsLocal.xml file has several settings defined, including LocalTaskQueuePath and LocalWorkDirPath");
                 Console.WriteLine();
                 Console.WriteLine("Use /Linux to disable access to Windows-specific methods. " +
                                   "Both /Offline and /Linux are auto-enabled if the path separation character is /");
