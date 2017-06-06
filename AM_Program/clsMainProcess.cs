@@ -193,6 +193,7 @@ namespace AnalysisManagerProg
                 if (TraceMode)
                     ShowTraceMessage("Reading application config file");
 
+                // Load settings from config file AnalysisManagerProg.exe.config
                 var lstMgrSettings = LoadMgrSettingsFromFile();
 
                 // Get the manager settings

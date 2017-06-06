@@ -58,7 +58,8 @@ namespace AnalysisManagerProg
             mLastStatusTime = DateTime.UtcNow.AddMinutes(-1);
 
             try
-            {   // Get settings from config file
+            {
+                // Load settings from config file AnalysisManagerProg.exe.config
                 var mainProcess = new clsMainProcess(TRACE_MODE_ENABLED);
 
                 var lstMgrSettings = mainProcess.LoadMgrSettingsFromFile();

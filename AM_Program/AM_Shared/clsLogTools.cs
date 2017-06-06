@@ -415,7 +415,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Configures the Db logger
+        /// Configures the DB logger
         /// </summary>
         /// <param name="connStr">Database connection string</param>
         /// <param name="moduleName">Module name used by logger</param>
