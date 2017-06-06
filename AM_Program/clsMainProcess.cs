@@ -2560,7 +2560,7 @@ namespace AnalysisManagerProg
         /// <param name="strMessage"></param>
         public static void ShowTraceMessage(string strMessage)
         {
-            Console.ForegroundColor = ConsoleColor.DarkGray;
+            clsGlobal.EnableConsoleTraceColor();
             Console.WriteLine(DateTime.Now.ToString("hh:mm:ss.fff tt") + ": " + strMessage);
             Console.ResetColor();
         }

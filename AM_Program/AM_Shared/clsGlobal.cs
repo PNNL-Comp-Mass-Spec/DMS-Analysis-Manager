@@ -1188,6 +1188,18 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
+        /// Set the console color to DarkGray if LinuxOS is false or Blue if it is true
+        /// </summary>
+        /// <remarks>To revert to the default, use Console.ResetColor();</remarks>
+        public static void EnableConsoleTraceColor()
+        {
+            if (LinuxOS)
+                Console.ForegroundColor = ConsoleColor.Blue;
+            else
+                Console.ForegroundColor = ConsoleColor.DarkGray;
+        }
+
+        /// <summary>
         /// Notify the user at console that an error occurred while writing to a log file or posting a log message to the database
         /// </summary>
         /// <param name="logMessage"></param>
@@ -1295,10 +1307,7 @@ namespace AnalysisManagerBase
         /// <remarks>The message is shown in dark grey in the console.</remarks>
         public static void LogDebug(string statusMessage, bool writeToLog = true)
         {
-            if (LinuxOS)
-                Console.ForegroundColor = ConsoleColor.Blue;
-            else
-                Console.ForegroundColor = ConsoleColor.DarkGray;
+            EnableConsoleTraceColor();
 
             Console.WriteLine("  " + statusMessage);
             Console.ResetColor();

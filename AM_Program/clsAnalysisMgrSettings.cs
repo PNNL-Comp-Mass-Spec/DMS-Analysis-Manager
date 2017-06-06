@@ -185,7 +185,16 @@ namespace AnalysisManagerProg
             }
 
             if (mTraceMode)
+            {
                 ShowTraceMessage("Initialized clsAnalysisMgrSettings");
+
+                clsGlobal.EnableConsoleTraceColor();
+                foreach (var setting in mParamDictionary)
+                {
+                    Console.WriteLine("  {0,-30} {1}", setting.Key, setting.Value);
+                }
+                Console.ResetColor();
+            }
         }
 
         /// <summary>
@@ -624,7 +633,9 @@ namespace AnalysisManagerProg
 
         private static void ShowTraceMessage(string strMessage)
         {
+            clsGlobal.EnableConsoleTraceColor();
             Console.WriteLine(DateTime.Now.ToString("hh:mm:ss.fff tt") + ": " + strMessage);
+            Console.ResetColor();
         }
 
         /// <summary>
