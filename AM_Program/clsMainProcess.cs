@@ -245,7 +245,7 @@ namespace AnalysisManagerProg
 
             // Setup the loggers
 
-            var logFileNameBase = m_MgrSettings.GetParam("logfilename");
+            var logFileNameBase = GetBaseLogFileName();
 
             clsLogTools.CreateFileLogger(logFileNameBase);
 
@@ -1592,6 +1592,16 @@ namespace AnalysisManagerProg
             clsGlobal.EnableOfflineMode(runningLinux);
         }
 
+        private string GetBaseLogFileName()
+        {
+
+            var logFileNameBase = m_MgrSettings.GetParam("logfilename");
+            if (string.IsNullOrWhiteSpace(logFileNameBase))
+                return "AnalysisMgr";
+
+            return logFileNameBase;
+        }
+
         private string GetRecentLogFilename()
         {
             string lastFilename;
@@ -1599,7 +1609,8 @@ namespace AnalysisManagerProg
             try
             {
                 // Obtain a list of log files
-                var files = Directory.GetFiles(m_MgrFolderPath, m_MgrSettings.GetParam("logfilename") + "*.txt");
+                var logFileNameBase = GetBaseLogFileName();
+                var files = Directory.GetFiles(m_MgrFolderPath, logFileNameBase + "*.txt");
 
                 // Change the file names to lowercase (to assure that the sorting works)
                 for (var x = 0; x <= files.Length - 1; x++)
