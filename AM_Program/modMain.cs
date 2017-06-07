@@ -68,18 +68,29 @@ namespace AnalysisManagerProg
 
             try
             {
+                bool validArgs;
+
                 // Look for /T or /Test on the command line
                 // If present, this means "code test mode" is enabled
                 //
                 // Other valid switches are /I, /NoStatus, /T, /Test, /Trace, /EL, /Offline, /Version, /Q, and /?
                 //
-                if (!objParseCommandLine.ParseCommandLine())
+                if (objParseCommandLine.ParseCommandLine())
                 {
-                    Console.WriteLine("Error parsing the command line arguments");
-                    return -1;
+                    validArgs = SetOptionsUsingCommandLineParameters(objParseCommandLine);
                 }
-
-                var validArgs = SetOptionsUsingCommandLineParameters(objParseCommandLine);
+                else
+                {
+                    if (objParseCommandLine.NoParameters)
+                    {
+                        validArgs = true;
+                    }
+                    else
+                    {
+                        Console.WriteLine("Error parsing the command line arguments");
+                        return -1;
+                    }
+                }
 
                 if (objParseCommandLine.NeedToShowHelp || !validArgs)
                 {
@@ -156,6 +167,7 @@ namespace AnalysisManagerProg
                 };
 
                 var intReturnCode = objDMSMain.Main();
+
                 return intReturnCode;
             }
             catch (Exception ex)
