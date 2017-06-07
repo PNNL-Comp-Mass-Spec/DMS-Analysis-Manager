@@ -13,6 +13,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Xml;
 using AnalysisManagerBase;
@@ -209,9 +210,10 @@ namespace AnalysisManagerProg
                 ShowTraceMessage("Initialized clsAnalysisMgrSettings");
 
                 clsGlobal.EnableConsoleTraceColor();
-                foreach (var setting in mParamDictionary)
+                foreach (var key in (from item in mParamDictionary.Keys orderby item select item))
                 {
-                    Console.WriteLine("  {0,-30} {1}", setting.Key, setting.Value);
+                    var value = mParamDictionary[key];
+                    Console.WriteLine("  {0,-30} {1}", key, value);
                 }
                 Console.ResetColor();
             }
