@@ -229,7 +229,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             // Determine the path to MSGF+
             // The manager parameter is MSGFDbProgLoc because originally the software was named MSGFDB (aka MS-GFDB)
-            mMSGFDbProgLoc = DetermineProgramLocation("MSGFPlus", "MSGFDbProgLoc", strMSGFJarfile);
+            mMSGFDbProgLoc = DetermineProgramLocation("MSGFDbProgLoc", strMSGFJarfile);
 
             if (string.IsNullOrWhiteSpace(mMSGFDbProgLoc))
             {
@@ -608,7 +608,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             var strTSVFilePath = Path.Combine(m_WorkDir, Dataset + clsMSGFDBUtils.MSGFPLUS_TSV_SUFFIX);
 
             // Determine the path to the MzidToTsvConverter
-            var mzidToTsvConverterProgLoc = DetermineProgramLocation("MzidToTsvConverter", "MzidToTsvConverterProgLoc", "MzidToTsvConverter.exe");
+            var mzidToTsvConverterProgLoc = DetermineProgramLocation("MzidToTsvConverterProgLoc", "MzidToTsvConverter.exe");
 
             if (string.IsNullOrEmpty(mzidToTsvConverterProgLoc))
             {

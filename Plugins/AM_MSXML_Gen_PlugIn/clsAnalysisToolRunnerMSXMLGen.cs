@@ -633,7 +633,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             {
                 // ReAdW
                 // Note that msXmlGenerator will likely be ReAdW.exe
-                mMSXmlGeneratorAppPath = DetermineProgramLocation("ReAdW", "ReAdWProgLoc", msXmlGenerator);
+                mMSXmlGeneratorAppPath = DetermineProgramLocation("ReAdWProgLoc", msXmlGenerator);
             }
             else if (msXmlGenerator.ToLower().Contains("msconvert"))
             {

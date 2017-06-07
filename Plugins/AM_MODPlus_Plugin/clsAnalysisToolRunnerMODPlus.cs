@@ -85,7 +85,7 @@ namespace AnalysisManagerMODPlusPlugin
                 }
 
                 // Determine the path to the MODPlus program
-                mMODPlusProgLoc = DetermineProgramLocation("MODPlus", "MODPlusProgLoc", MODPlus_JAR_NAME);
+                mMODPlusProgLoc = DetermineProgramLocation("MODPlusProgLoc", MODPlus_JAR_NAME);
 
                 if (string.IsNullOrWhiteSpace(mMODPlusProgLoc))
                 {
@@ -190,7 +190,7 @@ namespace AnalysisManagerMODPlusPlugin
         {
             // Set up and execute a program runner to run MSConvert
 
-            var msConvertProgLoc = DetermineProgramLocation("MSConvert", "ProteoWizardDir", "msconvert.exe");
+            var msConvertProgLoc = DetermineProgramLocation("ProteoWizardDir", "msconvert.exe");
             if (string.IsNullOrWhiteSpace(msConvertProgLoc))
             {
                 if (string.IsNullOrWhiteSpace(m_message))

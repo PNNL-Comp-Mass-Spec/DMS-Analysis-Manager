@@ -387,7 +387,7 @@ namespace AnalysisManagerExtractionPlugin
                 }
 
                 // Determine the path to the MODa or MODPlus program
-                var modxProgLoc = DetermineProgramLocation(toolName, toolName + "ProgLoc", modxProgJarName);
+                var modxProgLoc = DetermineProgramLocation(toolName + "ProgLoc", modxProgJarName);
 
                 var fiMODx = new FileInfo(modxProgLoc);
 
@@ -490,7 +490,7 @@ namespace AnalysisManagerExtractionPlugin
                 }
 
                 // Determine the path to the MzidToTsvConverter
-                var mzidToTsvConverterProgLoc = DetermineProgramLocation("MzidToTsvConverter", "MzidToTsvConverterProgLoc", "MzidToTsvConverter.exe");
+                var mzidToTsvConverterProgLoc = DetermineProgramLocation("MzidToTsvConverterProgLoc", "MzidToTsvConverter.exe");
 
                 if (string.IsNullOrEmpty(mzidToTsvConverterProgLoc))
                 {

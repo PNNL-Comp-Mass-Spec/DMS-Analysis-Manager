@@ -30,7 +30,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 LogMessage("Running MultiAlign Aggregator");
 
                 // Determine the path to the LCMSFeatureFinder folder
-                var progLoc = DetermineProgramLocation("MultiAlign", "MultiAlignProgLoc", "MultiAlignConsole.exe");
+                var progLoc = DetermineProgramLocation("MultiAlignProgLoc", "MultiAlignConsole.exe");
 
                 if (string.IsNullOrWhiteSpace(progLoc))
                 {

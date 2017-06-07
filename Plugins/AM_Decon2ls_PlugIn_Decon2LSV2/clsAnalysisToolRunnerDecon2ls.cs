@@ -682,7 +682,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             }
 
             // Determine the path to the DeconTools folder
-            var progLoc = DetermineProgramLocation("DeconTools", "DeconToolsProgLoc", "DeconConsole.exe");
+            var progLoc = DetermineProgramLocation("DeconToolsProgLoc", "DeconConsole.exe");
 
             if (string.IsNullOrWhiteSpace(progLoc))
             {

@@ -64,7 +64,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
 
                 // Determine the path to the PeakDetector program
                 string progLoc = null;
-                progLoc = DetermineProgramLocation("DeconPeakDetector", "DeconPeakDetectorProgLoc", DECON_PEAK_DETECTOR_EXE_NAME);
+                progLoc = DetermineProgramLocation("DeconPeakDetectorProgLoc", DECON_PEAK_DETECTOR_EXE_NAME);
 
                 if (string.IsNullOrWhiteSpace(progLoc))
                 {

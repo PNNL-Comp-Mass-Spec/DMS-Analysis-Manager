@@ -61,7 +61,7 @@ namespace AnalysisManagerSMAQCPlugIn
                 }
 
                 // Determine the path to the SMAQC program
-                var progLoc = DetermineProgramLocation("SMAQC", "SMAQCProgLoc", "SMAQC.exe");
+                var progLoc = DetermineProgramLocation("SMAQCProgLoc", "SMAQC.exe");
 
                 if (string.IsNullOrWhiteSpace(progLoc))
                 {

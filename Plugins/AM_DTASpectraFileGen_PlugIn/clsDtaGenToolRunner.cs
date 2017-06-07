@@ -417,7 +417,7 @@ namespace DTASpectraFileGen
                 if (eDtaGeneratorType == eDTAGeneratorConstants.DeconConsole)
                 {
                     // Possibly use a specific version of DeconTools
-                    var progLoc = DetermineProgramLocation("DeconMSn", "DeconToolsProgLoc", "DeconConsole.exe");
+                    var progLoc = DetermineProgramLocation("DeconToolsProgLoc", "DeconConsole.exe");
 
                     if (string.IsNullOrWhiteSpace(progLoc))
                     {

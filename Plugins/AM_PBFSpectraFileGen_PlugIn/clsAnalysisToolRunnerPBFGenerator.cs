@@ -62,7 +62,7 @@ namespace AnalysisManagerPBFGenerator
                 }
 
                 // Determine the path to the PbfGen program
-                var progLoc = DetermineProgramLocation("PBF_Gen", "PbfGenProgLoc", "PbfGen.exe");
+                var progLoc = DetermineProgramLocation("PbfGenProgLoc", "PbfGen.exe");
 
                 if (string.IsNullOrWhiteSpace(progLoc))
                 {

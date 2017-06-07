@@ -86,7 +86,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                 }
 
                 // Determine the path to the MSDeconv program
-                mMSDeconvProgLoc = DetermineProgramLocation("MSDeconv", "MSDeconvProgLoc", MSDECONV_JAR_NAME);
+                mMSDeconvProgLoc = DetermineProgramLocation("MSDeconvProgLoc", MSDECONV_JAR_NAME);
 
                 if (string.IsNullOrWhiteSpace(mMSDeconvProgLoc))
                 {

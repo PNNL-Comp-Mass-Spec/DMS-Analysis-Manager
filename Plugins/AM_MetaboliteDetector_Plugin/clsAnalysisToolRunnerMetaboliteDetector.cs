@@ -61,7 +61,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                 }
 
                 // Determine the path to the MetaboliteDetector program
-                mMetaboliteDetectorProgLoc = DetermineProgramLocation("MetaboliteDetector", "MetaboliteDetectorProgLoc", "MetaboliteDetector.exe");
+                mMetaboliteDetectorProgLoc = DetermineProgramLocation("MetaboliteDetectorProgLoc", "MetaboliteDetector.exe");
 
                 if (string.IsNullOrWhiteSpace(mMetaboliteDetectorProgLoc))
                     return CloseOutType.CLOSEOUT_FAILED;

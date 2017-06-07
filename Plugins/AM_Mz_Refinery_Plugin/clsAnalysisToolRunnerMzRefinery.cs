@@ -104,7 +104,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 // Verify that program files exist
 
                 // Determine the path to MSConvert (as of March 10, 2015 the official release of Proteowizard contains MSConvert.exe that supports the MzRefiner filter)
-                mMSConvertProgLoc = DetermineProgramLocation("MzRefinery", "ProteoWizardDir", "msconvert.exe");
+                mMSConvertProgLoc = DetermineProgramLocation("ProteoWizardDir", "msconvert.exe");
 
                 if (string.IsNullOrWhiteSpace(mMSConvertProgLoc))
                 {
@@ -112,7 +112,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 }
 
                 // Determine the path to the PPM error charter program
-                mPpmErrorCharterProgLoc = DetermineProgramLocation("MzRefinery", "MzRefineryProgLoc", "PPMErrorCharter.exe");
+                mPpmErrorCharterProgLoc = DetermineProgramLocation("MzRefineryProgLoc", "PPMErrorCharter.exe");
 
                 if (string.IsNullOrWhiteSpace(mPpmErrorCharterProgLoc))
                 {
@@ -342,7 +342,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             // Determine the path to MSGF+
             // The manager parameter is MSGFDbProgLoc because originally the software was named MSGFDB (aka MS-GFDB)
-            mMSGFPlusProgLoc = DetermineProgramLocation("MSGFPlus", "MSGFDbProgLoc", strMSGFJarfile);
+            mMSGFPlusProgLoc = DetermineProgramLocation("MSGFDbProgLoc", strMSGFJarfile);
 
             if (string.IsNullOrWhiteSpace(mMSGFPlusProgLoc))
             {

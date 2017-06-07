@@ -67,7 +67,7 @@ namespace AnalysisManagerProSightQuantPlugIn
                 }
 
                 // Determine the path to the TargetedWorkflowConsole.exe program
-                mTargetedWorkflowsProgLoc = DetermineProgramLocation("MSAlign_Quant", "TargetedWorkflowsProgLoc", "TargetedWorkflowConsole.exe");
+                mTargetedWorkflowsProgLoc = DetermineProgramLocation("TargetedWorkflowsProgLoc", "TargetedWorkflowConsole.exe");
 
                 if (string.IsNullOrWhiteSpace(mTargetedWorkflowsProgLoc))
                 {

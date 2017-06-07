@@ -65,7 +65,7 @@ namespace AnalysisManagerProMexPlugIn
                 }
 
                 // Determine the path to the ProMex program
-                string progLoc = DetermineProgramLocation("ProMex", "ProMexProgLoc", "ProMex.exe");
+                string progLoc = DetermineProgramLocation("ProMexProgLoc", "ProMex.exe");
 
                 if (string.IsNullOrWhiteSpace(progLoc))
                 {

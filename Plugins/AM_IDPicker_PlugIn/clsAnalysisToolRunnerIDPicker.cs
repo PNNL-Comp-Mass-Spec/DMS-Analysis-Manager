@@ -116,7 +116,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 string progLocQonvert = string.Empty;
                 if (!skipIDPicker)
                 {
-                    progLocQonvert = DetermineProgramLocation("IDPicker", "IDPickerProgLoc", IDPicker_Qonvert);
+                    progLocQonvert = DetermineProgramLocation("IDPickerProgLoc", IDPicker_Qonvert);
 
                     if (string.IsNullOrWhiteSpace(progLocQonvert))
                     {
@@ -1375,7 +1375,7 @@ namespace AnalysisManagerIDPickerPlugIn
             List<FileInfo> ioToolFiles = new List<FileInfo>();
 
             // Determine the path to the PeptideListToXML.exe
-            mPeptideListToXMLExePath = DetermineProgramLocation("PeptideListToXML", "PeptideListToXMLProgLoc", PEPTIDE_LIST_TO_XML_EXE);
+            mPeptideListToXMLExePath = DetermineProgramLocation("PeptideListToXMLProgLoc", PEPTIDE_LIST_TO_XML_EXE);
 
             if (blnSkipIDPicker)
             {

@@ -1422,22 +1422,8 @@ namespace AnalysisManagerBase
             // Check whether the settings file specifies that a specific version of the step tool be used
             var strStepToolVersion = m_jobParams.GetParam(StepToolName + "_Version");
 
-            return DetermineProgramLocation(strProgLocManagerParamName, strExeName, strStepToolVersion);
-
-        }
-
-        /// <summary>
-        /// Determine the path to the correct version of the step tool
-        /// </summary>
-        /// <param name="strProgLocManagerParamName">The name of the manager parameter that defines the path to the folder with the exe, e.g. LCMSFeatureFinderProgLoc</param>
-        /// <param name="strExeName">The name of the exe file, e.g. LCMSFeatureFinder.exe</param>
-        /// <param name="strStepToolVersion">Specific step tool version to use (will be the name of a subfolder located below the primary ProgLoc location)</param>
-        /// <returns>The path to the program, or an empty string if there is a problem</returns>
-        /// <remarks></remarks>
-        protected string DetermineProgramLocation(string strProgLocManagerParamName, string strExeName, string strStepToolVersion)
-        {
-
             return DetermineProgramLocation(StepToolName, strProgLocManagerParamName, strExeName, strStepToolVersion, m_mgrParams, out m_message);
+
         }
 
         /// <summary>
@@ -1717,7 +1703,7 @@ namespace AnalysisManagerBase
             {
                 // ReadW
                 // Note that msXmlGenerator will likely be ReAdW.exe
-                strMSXmlGeneratorAppPath = DetermineProgramLocation("ReAdW", "ReAdWProgLoc", strMSXmlGeneratorExe);
+                strMSXmlGeneratorAppPath = DetermineProgramLocation("ReAdWProgLoc", strMSXmlGeneratorExe);
 
             }
             else if (strMSXmlGeneratorExe.ToLower().Contains("msconvert"))

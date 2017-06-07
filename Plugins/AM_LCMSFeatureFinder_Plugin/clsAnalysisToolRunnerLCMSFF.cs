@@ -54,7 +54,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
 
             // Determine the path to the LCMSFeatureFinder folder
             string progLoc = null;
-            progLoc = base.DetermineProgramLocation("LCMSFeatureFinder", "LCMSFeatureFinderProgLoc", "LCMSFeatureFinder.exe");
+            progLoc = base.DetermineProgramLocation("LCMSFeatureFinderProgLoc", "LCMSFeatureFinder.exe");
 
             if (string.IsNullOrWhiteSpace(progLoc))
             {

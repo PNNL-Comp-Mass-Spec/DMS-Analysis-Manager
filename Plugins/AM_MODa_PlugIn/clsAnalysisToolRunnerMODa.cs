@@ -81,7 +81,7 @@ namespace AnalysisManagerMODaPlugIn
                 }
 
                 // Determine the path to the MODa program
-                mMODaProgLoc = DetermineProgramLocation("MODa", "MODaProgLoc", MODa_JAR_NAME);
+                mMODaProgLoc = DetermineProgramLocation("MODaProgLoc", MODa_JAR_NAME);
 
                 if (string.IsNullOrWhiteSpace(mMODaProgLoc))
                 {

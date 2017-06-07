@@ -117,7 +117,7 @@ namespace AnalysisManagerMSAlignPlugIn
 
                 // Determine the path to the MSAlign program
                 // Note that
-                mMSAlignProgLoc = DetermineProgramLocation("MSAlign", "MSAlignProgLoc", Path.Combine("jar", MSAlign_JAR_NAME));
+                mMSAlignProgLoc = DetermineProgramLocation("MSAlignProgLoc", Path.Combine("jar", MSAlign_JAR_NAME));
 
                 if (string.IsNullOrWhiteSpace(mMSAlignProgLoc))
                 {

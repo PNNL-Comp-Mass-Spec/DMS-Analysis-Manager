@@ -57,7 +57,7 @@ namespace AnalysisManagerMultiAlignPlugIn
 
             // Determine the path to the MultiAlign folder
             string progLoc = null;
-            progLoc = DetermineProgramLocation("MultiAlign", "MultiAlignProgLoc", "MultiAlignConsole.exe");
+            progLoc = DetermineProgramLocation("MultiAlignProgLoc", "MultiAlignConsole.exe");
 
             if (string.IsNullOrWhiteSpace(progLoc))
             {

@@ -71,7 +71,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 }
 
                 // Determine the path to the LipidTools program
-                mLipidToolsProgLoc = DetermineProgramLocation("LipidTools", "LipidToolsProgLoc", "LipidTools.exe");
+                mLipidToolsProgLoc = DetermineProgramLocation("LipidToolsProgLoc", "LipidTools.exe");
 
                 if (string.IsNullOrWhiteSpace(mLipidToolsProgLoc))
                 {

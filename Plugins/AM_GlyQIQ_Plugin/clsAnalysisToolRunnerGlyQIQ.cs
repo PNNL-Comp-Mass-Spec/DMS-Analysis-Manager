@@ -90,8 +90,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 }
 
                 // Determine the path to the IQGlyQ program
-                string progLoc = null;
-                progLoc = DetermineProgramLocation("GlyQIQ", "GlyQIQProgLoc", "IQGlyQ_Console.exe");
+                var progLoc = DetermineProgramLocation("GlyQIQProgLoc", "IQGlyQ_Console.exe");
 
                 if (string.IsNullOrWhiteSpace(progLoc))
                 {

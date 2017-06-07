@@ -72,7 +72,7 @@ namespace AnalysisManagerNOMSIPlugin
                 mSpectraProcessed = 0;
 
                 // Determine the path to NOMSI
-                var progLoc = DetermineProgramLocation("NOMSI", "NOMSIProgLoc", "NOMSI.exe");
+                var progLoc = DetermineProgramLocation("NOMSIProgLoc", "NOMSI.exe");
 
                 if (string.IsNullOrWhiteSpace(progLoc))
                 {

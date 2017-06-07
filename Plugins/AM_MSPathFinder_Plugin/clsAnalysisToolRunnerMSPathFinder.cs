@@ -90,7 +90,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                 }
 
                 // Determine the path to the MSPathFinder program (Top-down version)
-                var progLoc = DetermineProgramLocation("MSPathFinder", "MSPathFinderProgLoc", "MSPathFinderT.exe");
+                var progLoc = DetermineProgramLocation("MSPathFinderProgLoc", "MSPathFinderT.exe");
 
                 if (string.IsNullOrWhiteSpace(progLoc))
                 {

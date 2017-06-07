@@ -119,7 +119,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                 // Determine the path to the MSAlign_Histone program
                 // Note that
-                mMSAlignProgLoc = DetermineProgramLocation("MSAlign_Histone", "MSAlignHistoneProgLoc", Path.Combine("jar", MSAlign_JAR_NAME));
+                mMSAlignProgLoc = DetermineProgramLocation("MSAlignHistoneProgLoc", Path.Combine("jar", MSAlign_JAR_NAME));
 
                 if (string.IsNullOrWhiteSpace(mMSAlignProgLoc))
                 {

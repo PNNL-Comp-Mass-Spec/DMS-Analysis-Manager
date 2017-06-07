@@ -2898,7 +2898,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
 
             // Determine the path to the PRIDEConverter program
-            mPrideConverterProgLoc = DetermineProgramLocation("PRIDEConverter", "PRIDEConverterProgLoc", "pride-converter-2.0-SNAPSHOT.jar");
+            mPrideConverterProgLoc = DetermineProgramLocation("PRIDEConverterProgLoc", "pride-converter-2.0-SNAPSHOT.jar");
 
             if (string.IsNullOrEmpty(mPrideConverterProgLoc))
             {
