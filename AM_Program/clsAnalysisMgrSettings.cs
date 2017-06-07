@@ -94,7 +94,7 @@ namespace AnalysisManagerProg
         /// Manager parameter: local work dir path
         /// </summary>
         public const string MGR_PARAM_LOCAL_WORK_DIR_PATH = "LocalWorkDirPath";
-        
+
         #endregion
 
         #region "Module variables"
@@ -454,6 +454,10 @@ namespace AnalysisManagerProg
             return true;
         }
 
+        /// <summary>
+        /// Update mParamDictionary using settings in file ManagerSettingsLocal.xml
+        /// </summary>
+        /// <returns></returns>
         private bool LoadLocalSettings()
         {
             var settings = ReadLocalSettingsFile();
@@ -490,6 +494,9 @@ namespace AnalysisManagerProg
                 LogError(msg);
                 return false;
             }
+
+            if (GetParam(MGR_PARAM_MGR_ACTIVE_LOCAL, false))
+                SetParam(MGR_PARAM_MGR_ACTIVE, "true");
 
             return true;
         }
