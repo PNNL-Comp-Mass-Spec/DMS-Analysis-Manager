@@ -975,7 +975,7 @@ namespace AnalysisManagerBase
             string legacyFastaToUse;
             var orgDBDescription = string.Copy(proteinCollectionInfo.OrgDBDescription);
 
-            if (proteinCollectionInfo.UsingSplitFasta && !string.Equals(StepToolName, "DataExtractor", StringComparison.CurrentCultureIgnoreCase))
+            if (proteinCollectionInfo.UsingSplitFasta && !RunningDataExtraction)
             {
                 if (!proteinCollectionInfo.UsingLegacyFasta)
                 {
@@ -2699,7 +2699,7 @@ namespace AnalysisManagerBase
                 }
 
                 string legacyFastaName;
-                if (proteinCollectionInfo.UsingSplitFasta)
+                if (proteinCollectionInfo.UsingSplitFasta && !RunningDataExtraction)
                 {
                     legacyFastaName = GetSplitFastaFileName(m_jobParams, out var _);
                 }
