@@ -69,11 +69,10 @@ namespace AnalysisManagerExtractionPlugin
             mRetrieveOrganismDB = true;
             m_PendingFileRenames = new Dictionary<string, string>();
 
-            string strResultType = m_jobParams.GetParam("ResultType");
-            var createPepToProtMapFile = false;
+            var strResultType = m_jobParams.GetParam("ResultType");
 
             //Get analysis results files
-            if (GetInputFiles(strResultType, out createPepToProtMapFile) != CloseOutType.CLOSEOUT_SUCCESS)
+            if (GetInputFiles(strResultType, out var createPepToProtMapFile) != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -84,14 +83,14 @@ namespace AnalysisManagerExtractionPlugin
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (!base.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
             foreach (var entry in m_PendingFileRenames)
             {
-                FileInfo sourceFile = new FileInfo(Path.Combine(m_WorkingDir, entry.Key));
+                var sourceFile = new FileInfo(Path.Combine(m_WorkingDir, entry.Key));
                 if (sourceFile.Exists)
                 {
                     sourceFile.MoveTo(Path.Combine(m_WorkingDir, entry.Value));
@@ -100,8 +99,8 @@ namespace AnalysisManagerExtractionPlugin
 
             if (mRetrieveOrganismDB)
             {
-                var blnSkipProteinMods = m_jobParams.GetJobParameter("SkipProteinMods", false);
-                if (!blnSkipProteinMods || createPepToProtMapFile)
+                var skipProteinMods = m_jobParams.GetJobParameter("SkipProteinMods", false);
+                if (!skipProteinMods || createPepToProtMapFile)
                 {
                     // Retrieve the Fasta file; required to create the _ProteinMods.txt file
                     if (!RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")))
@@ -118,6 +117,7 @@ namespace AnalysisManagerExtractionPlugin
         /// Retrieves input files (ie, .out files) needed for extraction
         /// </summary>
         /// <param name="strResultType">String specifying type of analysis results input to extraction process</param>
+        /// <param name="createPepToProtMapFile"></param>
         /// <returns>CloseOutType specifying results</returns>
         /// <remarks></remarks>
         private CloseOutType GetInputFiles(string strResultType, out bool createPepToProtMapFile)
@@ -208,9 +208,7 @@ namespace AnalysisManagerExtractionPlugin
 
         private CloseOutType GetXTandemFiles()
         {
-            string fileToGet = null;
-
-            fileToGet = DatasetName + "_xt.zip";
+            var fileToGet = DatasetName + "_xt.zip";
             if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, true))
             {
                 //Errors were reported in function call, so just return
@@ -244,12 +242,10 @@ namespace AnalysisManagerExtractionPlugin
 
         private CloseOutType GetInspectFiles()
         {
-            string fileToGet = null;
-
             // Get the zipped Inspect results files
 
             // This file contains the p-value filtered results
-            fileToGet = DatasetName + "_inspect.zip";
+            var fileToGet = DatasetName + "_inspect.zip";
             if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, false))
             {
                 //Errors were reported in function call, so just return
@@ -297,9 +293,7 @@ namespace AnalysisManagerExtractionPlugin
 
         private CloseOutType GetMODaFiles()
         {
-            string fileToGet = null;
-
-            fileToGet = DatasetName + "_moda.zip";
+            var fileToGet = DatasetName + "_moda.zip";
             if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, true))
             {
                 //Errors were reported in function call, so just return
@@ -322,9 +316,7 @@ namespace AnalysisManagerExtractionPlugin
 
         private CloseOutType GetMODPlusFiles()
         {
-            string fileToGet = null;
-
-            fileToGet = DatasetName + "_modp.zip";
+            var fileToGet = DatasetName + "_modp.zip";
             if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, true))
             {
                 //Errors were reported in function call, so just return
@@ -359,15 +351,13 @@ namespace AnalysisManagerExtractionPlugin
             var currentStep = "Initializing";
             createPepToProtMapFile = false;
 
-            bool blnUseLegacyMSGFDB = false;
             var splitFastaEnabled = m_jobParams.GetJobParameter("SplitFasta", false);
-            string suffixToAdd = null;
-            string mzidSuffix = null;
 
             var numberOfClonedSteps = 1;
 
             try
             {
+                string suffixToAdd;
                 if (splitFastaEnabled)
                 {
                     numberOfClonedSteps = m_jobParams.GetJobParameter("NumberOfClonedSteps", 0);
@@ -385,9 +375,8 @@ namespace AnalysisManagerExtractionPlugin
                     suffixToAdd = string.Empty;
                 }
 
-                string SourceFolderPath = null;
                 currentStep = "Determining results file type based on the results file name";
-                blnUseLegacyMSGFDB = false;
+                var blnUseLegacyMSGFDB = false;
 
                 var fileToFind = DatasetName + "_msgfplus" + suffixToAdd + ".mzid.gz";
                 SourceFolderPath = FileSearch.FindDataFile(fileToFind, true, false);
@@ -610,9 +599,7 @@ namespace AnalysisManagerExtractionPlugin
 
         private CloseOutType GetMSAlignFiles()
         {
-            string fileToGet = null;
-
-            fileToGet = DatasetName + "_MSAlign_ResultTable.txt";
+            var fileToGet = DatasetName + "_MSAlign_ResultTable.txt";
             if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, false))
             {
                 //Errors were reported in function call, so just return
@@ -627,9 +614,7 @@ namespace AnalysisManagerExtractionPlugin
 
         private CloseOutType GetMSPathFinderFiles()
         {
-            string fileToGet = null;
-
-            fileToGet = DatasetName + "_IcTsv.zip";
+            var fileToGet = DatasetName + "_IcTsv.zip";
 
             if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, true))
             {
@@ -701,16 +686,14 @@ namespace AnalysisManagerExtractionPlugin
         /// <remarks></remarks>
         protected internal CloseOutType RetrieveMiscFiles(string ResultType)
         {
-            string strParamFileName = m_jobParams.GetParam("ParmFileName");
-            string ModDefsFilename = Path.GetFileNameWithoutExtension(strParamFileName) + MOD_DEFS_FILE_SUFFIX;
-
-            bool blnSuccess = false;
+            var strParamFileName = m_jobParams.GetParam("ParmFileName");
+            var ModDefsFilename = Path.GetFileNameWithoutExtension(strParamFileName) + MOD_DEFS_FILE_SUFFIX;
 
             try
             {
-                // Call RetrieveGeneratedParamFile() now to re-create the parameter file, retrieve the _ModDefs.txt file, 
+                // Call RetrieveGeneratedParamFile() now to re-create the parameter file, retrieve the _ModDefs.txt file,
                 //   and retrieve the MassCorrectionTags.txt file
-                // Although the ModDefs file should have been created when Sequest, X!Tandem, Inspect, MSGFDB, or MSAlign ran, 
+                // Although the ModDefs file should have been created when Sequest, X!Tandem, Inspect, MSGFDB, or MSAlign ran,
                 //   we re-generate it here just in case T_Param_File_Mass_Mods had missing information
                 // Furthermore, we need the search engine parameter file for the PHRPReader
 
@@ -719,7 +702,7 @@ namespace AnalysisManagerExtractionPlugin
                 //  FROM V_Param_File_Mass_Mod_Info
                 //  WHERE Param_File_Name = 'ParamFileName'
 
-                blnSuccess = RetrieveGeneratedParamFile(strParamFileName);
+                var blnSuccess = RetrieveGeneratedParamFile(strParamFileName);
 
                 if (!blnSuccess)
                 {
@@ -790,18 +773,18 @@ namespace AnalysisManagerExtractionPlugin
 
         protected bool RetrieveToolVersionFile(string strResultType)
         {
-            bool blnSuccess = false;
+            bool blnSuccess;
 
             try
             {
                 // Make sure the ResultType is valid
-                var eResultType = PHRPReader.clsPHRPReader.GetPeptideHitResultType(strResultType);
+                var eResultType = clsPHRPReader.GetPeptideHitResultType(strResultType);
 
-                string strToolVersionFile = PHRPReader.clsPHRPReader.GetToolVersionInfoFilename(eResultType);
-                string strToolVersionFileNewName = string.Empty;
+                var strToolVersionFile = clsPHRPReader.GetToolVersionInfoFilename(eResultType);
+                var strToolVersionFileNewName = string.Empty;
 
-                string strToolNameForScript = m_jobParams.GetJobParameter("ToolName", string.Empty);
-                if (eResultType == PHRPReader.clsPHRPReader.ePeptideHitResultType.MSGFDB && strToolNameForScript == "MSGFPlus_IMS")
+                var strToolNameForScript = m_jobParams.GetJobParameter("ToolName", string.Empty);
+                if (eResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB && strToolNameForScript == "MSGFPlus_IMS")
                 {
                     // PeptideListToXML expects the ToolVersion file to be named "Tool_Version_Info_MSGFPlus.txt"
                     // However, this is the MSGFPlus_IMS script, so the file is currently "Tool_Version_Info_MSGFPlus_IMS.txt"

@@ -489,11 +489,10 @@ namespace AnalysisManagerBase
                     return string.Empty;
                 }
 
-                string remoteCacheFilePath;
 
                 var success = CopyFileToServerCache(
                     cacheFolderPath, toolNameVersionFolder, sourceFilePath, strDatasetYearQuarter,
-                    purgeOldFilesIfNeeded: purgeOldFilesIfNeeded, remoteCacheFilePath: out remoteCacheFilePath);
+                    purgeOldFilesIfNeeded: purgeOldFilesIfNeeded, remoteCacheFilePath: out var remoteCacheFilePath);
 
                 if (!success)
                 {
@@ -519,24 +518,29 @@ namespace AnalysisManagerBase
         /// Copies a file (typically a mzXML or mzML file) to a server cache folder
         /// Will store the file in the subfolder strSubfolderInTarget and, below that, in a folder with a name like 2013_2
         /// </summary>
-        /// <param name="strCacheFolderPath">Cache folder base path, e.g. \\proto-6\MSXML_Cache</param>
-        /// <param name="strSubfolderInTarget">Subfolder name to create below strCacheFolderPath (optional), e.g. MSXML_Gen_1_93 or MSConvert</param>
-        /// <param name="strsourceFilePath">Path to the data file</param>
-        /// <param name="strDatasetYearQuarter">
+        /// <param name="cacheFolderPath">Cache folder base path, e.g. \\proto-6\MSXML_Cache</param>
+        /// <param name="subfolderInTarget">Subfolder name to create below strCacheFolderPath (optional), e.g. MSXML_Gen_1_93 or MSConvert</param>
+        /// <param name="sourceFilePath">Path to the data file</param>
+        /// <param name="datasetYearQuarter">
         /// Dataset year quarter text (optional)
         /// Example value is 2013_2; if this this parameter is blank, then will auto-determine using Job Parameter DatasetStoragePath
         /// </param>
-        /// <param name="blnPurgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 20 TB</param>
+        /// <param name="purgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 20 TB</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>
         /// Determines the Year_Quarter folder named using the DatasetStoragePath or DatasetArchivePath job parameter
         /// If those parameters are not defined, then copies the file anyway
         /// </remarks>
-        protected bool CopyFileToServerCache(string strCacheFolderPath, string strSubfolderInTarget, string strsourceFilePath, string strDatasetYearQuarter, bool blnPurgeOldFilesIfNeeded)
+        protected bool CopyFileToServerCache(
+            string cacheFolderPath,
+            string subfolderInTarget,
+            string sourceFilePath,
+            string datasetYearQuarter,
+            bool purgeOldFilesIfNeeded)
         {
-            string remoteCacheFilePath;
-            return CopyFileToServerCache(strCacheFolderPath, strSubfolderInTarget, strsourceFilePath, strDatasetYearQuarter,
-                blnPurgeOldFilesIfNeeded, out remoteCacheFilePath);
+            return CopyFileToServerCache(
+                cacheFolderPath, subfolderInTarget, sourceFilePath,
+                datasetYearQuarter, purgeOldFilesIfNeeded, out var _);
 
         }
 
@@ -1641,8 +1645,7 @@ namespace AnalysisManagerBase
                 "FROM V_MgrParams " +
                 "WHERE ManagerName = '" + managerName + "' AND " + " ParameterName IN ('debuglevel', 'MgrSettingGroupName')";
 
-            List<List<string>> lstResults;
-            var success = clsGlobal.GetQueryResults(sqlQuery, connectionString, out lstResults, "GetCurrentMgrSettingsFromDB");
+            var success = clsGlobal.GetQueryResults(sqlQuery, connectionString, out var lstResults, "GetCurrentMgrSettingsFromDB");
 
             if (!success || lstResults.Count <= 0)
                 return currentDebugLevel;
@@ -2439,8 +2442,7 @@ namespace AnalysisManagerBase
                         {
                             var fileExtension = Path.GetExtension(tmpFileName);
 
-                            int rejectCount;
-                            if (dctRejectStats.TryGetValue(fileExtension, out rejectCount))
+                            if (dctRejectStats.TryGetValue(fileExtension, out var rejectCount))
                             {
                                 dctRejectStats[fileExtension] = rejectCount + 1;
                             }
@@ -2466,8 +2468,7 @@ namespace AnalysisManagerBase
                     {
                         var fileExtension = Path.GetExtension(tmpFileName);
 
-                        int acceptCount;
-                        if (dctAcceptStats.TryGetValue(fileExtension, out acceptCount))
+                        if (dctAcceptStats.TryGetValue(fileExtension, out var acceptCount))
                         {
                             dctAcceptStats[fileExtension] = acceptCount + 1;
                         }
@@ -2839,9 +2840,8 @@ namespace AnalysisManagerBase
                             // Keep track of the number of times we have an exception
                             intFileDeleteErrorCount += 1;
 
-                            int occurrences;
                             var strExceptionName = ex.GetType().ToString();
-                            if (dctErrorSummary.TryGetValue(strExceptionName, out occurrences))
+                            if (dctErrorSummary.TryGetValue(strExceptionName, out var occurrences))
                             {
                                 dctErrorSummary[strExceptionName] = occurrences + 1;
                             }
@@ -3618,7 +3618,6 @@ namespace AnalysisManagerBase
 
                 var strVersionInfoFilePath = Path.Combine(m_WorkDir, Path.GetFileNameWithoutExtension(ioFileInfo.Name) + "_VersionInfo.txt");
 
-                string strVersion;
 
                 var strArgs = PossiblyQuotePath(ioFileInfo.FullName) + " /O:" + PossiblyQuotePath(strVersionInfoFilePath);
 
@@ -3647,7 +3646,7 @@ namespace AnalysisManagerBase
 
                 Thread.Sleep(100);
 
-                blnSuccess = ReadVersionInfoFile(strDLLFilePath, strVersionInfoFilePath, out strVersion);
+                blnSuccess = ReadVersionInfoFile(strDLLFilePath, strVersionInfoFilePath, out var strVersion);
 
                 // Delete the version info file
                 try

@@ -582,8 +582,7 @@ namespace AnalysisManagerBase
             if (m_ResourceOptions == null)
                 return false;
 
-            bool enabled;
-            if (m_ResourceOptions.TryGetValue(resourceOption, out enabled))
+            if (m_ResourceOptions.TryGetValue(resourceOption, out var enabled))
             {
                 return enabled;
             }
@@ -986,9 +985,8 @@ namespace AnalysisManagerBase
 
                 // Running a SplitFasta job; need to update the name of the fasta file to be of the form FastaFileName_NNx_nn.fasta
                 // where NN is the number of total cloned steps and nn is this job's specific step number
-                int numberOfClonedSteps;
 
-                legacyFastaToUse = GetSplitFastaFileName(m_jobParams, out m_message, out numberOfClonedSteps);
+                legacyFastaToUse = GetSplitFastaFileName(m_jobParams, out m_message, out var numberOfClonedSteps);
 
                 if (string.IsNullOrEmpty(legacyFastaToUse))
                 {
@@ -1429,10 +1427,9 @@ namespace AnalysisManagerBase
             sqlStr.Append("From V_DMS_Data_Packages ");
             sqlStr.Append("Where ID = " + dataPackageID.ToString());
 
-            DataTable resultSet;
 
             // Get a table to hold the results of the query
-            var success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), connectionString, "GetDataPackageStoragePath", RETRY_COUNT, out resultSet);
+            var success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), connectionString, "GetDataPackageStoragePath", RETRY_COUNT, out var resultSet);
 
             if (!success)
             {
@@ -1726,8 +1723,7 @@ namespace AnalysisManagerBase
                                 if (!srLastUsedfile.EndOfStream)
                                 {
                                     var strLastUseDate = srLastUsedfile.ReadLine();
-                                    DateTime dtLastUsedActual;
-                                    if (DateTime.TryParse(strLastUseDate, out dtLastUsedActual))
+                                    if (DateTime.TryParse(strLastUseDate, out var dtLastUsedActual))
                                     {
                                         dtLastUsed = DateMax(dtLastUsed, dtLastUsedActual);
                                     }
@@ -1905,11 +1901,9 @@ namespace AnalysisManagerBase
 
             LogMessage("Getting mzML file");
 
-            string errorMessage;
-            bool fileMissingFromCache;
             const bool unzipFile = true;
 
-            var success = m_FileSearch.RetrieveCachedMzMLFile(unzipFile, out errorMessage, out fileMissingFromCache);
+            var success = m_FileSearch.RetrieveCachedMzMLFile(unzipFile, out var errorMessage, out var fileMissingFromCache);
             if (!success)
             {
                 return HandleMsXmlRetrieveFailure(fileMissingFromCache, errorMessage, DOT_MZML_EXTENSION);
@@ -1935,11 +1929,9 @@ namespace AnalysisManagerBase
             {
                 // Look for a .mzXML file in the cache instead
 
-                string errorMessage;
-                bool fileMissingFromCache;
                 const bool unzipFile = true;
 
-                var success = m_FileSearch.RetrieveCachedMzXMLFile(unzipFile, out errorMessage, out fileMissingFromCache);
+                var success = m_FileSearch.RetrieveCachedMzXMLFile(unzipFile, out var errorMessage, out var fileMissingFromCache);
                 if (!success)
                 {
                     return HandleMsXmlRetrieveFailure(fileMissingFromCache, errorMessage, DOT_MZXML_EXTENSION);
@@ -1963,10 +1955,8 @@ namespace AnalysisManagerBase
 
             LogMessage("Getting PBF file");
 
-            string errorMessage;
-            bool fileMissingFromCache;
 
-            var success = m_FileSearch.RetrieveCachedPBFFile(out errorMessage, out fileMissingFromCache);
+            var success = m_FileSearch.RetrieveCachedPBFFile(out var errorMessage, out var fileMissingFromCache);
             if (!success)
             {
                 return HandleMsXmlRetrieveFailure(fileMissingFromCache, errorMessage, DOT_PBF_EXTENSION);
@@ -2147,8 +2137,7 @@ namespace AnalysisManagerBase
         protected string GetRawDataTypeName()
         {
 
-            string errorMessage;
-            var rawDataTypeName = GetRawDataTypeName(m_jobParams, out errorMessage);
+            var rawDataTypeName = GetRawDataTypeName(m_jobParams, out var errorMessage);
 
             if (string.IsNullOrWhiteSpace(rawDataTypeName))
             {
@@ -2177,9 +2166,8 @@ namespace AnalysisManagerBase
         /// <remarks>Returns an empty string if an error</remarks>
         public static string GetSplitFastaFileName(IJobParams jobParams, out string errorMessage)
         {
-            int numberOfClonedSteps;
 
-            return GetSplitFastaFileName(jobParams, out errorMessage, out numberOfClonedSteps);
+            return GetSplitFastaFileName(jobParams, out errorMessage, out var _);
 
         }
 
@@ -2311,8 +2299,7 @@ namespace AnalysisManagerBase
                 if (stepAttrib == null)
                     continue;
 
-                int stepNumber;
-                if (int.TryParse(stepAttrib.Value, out stepNumber))
+                if (int.TryParse(stepAttrib.Value, out var stepNumber))
                 {
                     // Add or update the XML for this section
                     stepNumToParamsMap[stepNumber] = section;
@@ -2468,10 +2455,9 @@ namespace AnalysisManagerBase
             sqlStr.Append(" WHERE Data_Package_ID = " + dataPackageID.ToString());
             sqlStr.Append(" ORDER BY Dataset");
 
-            DataTable resultSet;
 
             // Get a table to hold the results of the query
-            var success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), connectionString, "LoadDataPackageDatasetInfo", RETRY_COUNT, out resultSet);
+            var success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), connectionString, "LoadDataPackageDatasetInfo", RETRY_COUNT, out var resultSet);
 
             if (!success)
             {
@@ -2558,10 +2544,9 @@ namespace AnalysisManagerBase
             sqlStr.Append(" WHERE Data_Package_ID = " + DataPackageID.ToString());
             sqlStr.Append(" ORDER BY Dataset, Tool");
 
-            DataTable resultSet;
 
             // Get a table to hold the results of the query
-            var success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), ConnectionString, "LoadDataPackageJobInfo", RETRY_COUNT, out resultSet);
+            var success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), ConnectionString, "LoadDataPackageJobInfo", RETRY_COUNT, out var resultSet);
 
             if (!success)
             {
@@ -2665,14 +2650,13 @@ namespace AnalysisManagerBase
             sqlStr.Append("FROM V_Analysis_Job_Export_DataPkg ");
             sqlStr.Append("WHERE Job = " + jobNumber);
 
-            DataTable resultSet;
             jobInfo = new clsDataPackageJobInfo(0, string.Empty);
 
             // Gigasax.DMS5
             var dmsConnectionString = m_mgrParams.GetParam("connectionstring");
 
             // Get a table to hold the results of the query
-            var success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), dmsConnectionString, "LookupJobInfo", RETRY_COUNT, out resultSet);
+            var success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), dmsConnectionString, "LookupJobInfo", RETRY_COUNT, out var resultSet);
 
             if (!success)
             {
@@ -2717,8 +2701,7 @@ namespace AnalysisManagerBase
                 string legacyFastaName;
                 if (proteinCollectionInfo.UsingSplitFasta)
                 {
-                    string errorMessage;
-                    legacyFastaName = GetSplitFastaFileName(m_jobParams, out errorMessage);
+                    legacyFastaName = GetSplitFastaFileName(m_jobParams, out var _);
                 }
                 else
                 {
@@ -2728,9 +2711,8 @@ namespace AnalysisManagerBase
                 var sqlQuery = "SELECT File_Size_KB FROM V_Organism_DB_File_Export WHERE (FileName = '" + legacyFastaName + "')";
 
                 // Results, as a list of columns (first row only if multiple rows)
-                List<string> lstResults;
 
-                var success = clsGlobal.GetQueryResultsTopRow(sqlQuery, dmsConnectionString, out lstResults, "LookupLegacyDBSizeWithIndices");
+                var success = clsGlobal.GetQueryResultsTopRow(sqlQuery, dmsConnectionString, out var lstResults, "LookupLegacyDBSizeWithIndices");
 
                 if (!success || lstResults == null || lstResults.Count == 0)
                 {
@@ -2749,8 +2731,7 @@ namespace AnalysisManagerBase
                     return 0;
                 }
 
-                int fileSizeKB;
-                if (!int.TryParse(lstResults.First(), out fileSizeKB))
+                if (!int.TryParse(lstResults.First(), out var fileSizeKB))
                 {
                     LogMessage("Legacy fasta file size is not numeric, job " + m_JobNum + ", file " + legacyFastaName + ": " + lstResults.First(), 0, true);
                     return 0;
@@ -3231,8 +3212,7 @@ namespace AnalysisManagerBase
             foreach (var fiFileToPurge in lstFastaFilesByLastUse)
             {
                 // Abort this process if the LastUsed date of this file is less than 5 days old
-                DateTime dtLastUsed;
-                if (dctFastaFiles.TryGetValue(fiFileToPurge, out dtLastUsed))
+                if (dctFastaFiles.TryGetValue(fiFileToPurge, out var dtLastUsed))
                 {
                     if (DateTime.UtcNow.Subtract(dtLastUsed).TotalDays < 5)
                     {
@@ -3382,8 +3362,7 @@ namespace AnalysisManagerBase
                 foreach (var fiFileToPurge in lstFastaFilesByLastUse)
                 {
                     // Abort this process if the LastUsed date of this file is less than 5 days old
-                    DateTime dtLastUsed;
-                    if (dctFastaFiles.TryGetValue(fiFileToPurge, out dtLastUsed))
+                    if (dctFastaFiles.TryGetValue(fiFileToPurge, out var dtLastUsed))
                     {
                         if (DateTime.UtcNow.Subtract(dtLastUsed).TotalDays < 5)
                         {
@@ -3719,11 +3698,9 @@ namespace AnalysisManagerBase
                                 {
                                     // Look for a mzML.gz file instead
 
-                                    string errorMessage;
-                                    bool fileMissingFromCache;
 
                                     var success = m_FileSearch.RetrieveCachedMSXMLFile(DOT_MZML_EXTENSION, false,
-                                        out errorMessage, out fileMissingFromCache);
+                                        out var errorMessage, out var _);
 
                                     if (!success)
                                     {
@@ -4124,9 +4101,8 @@ namespace AnalysisManagerBase
                 {"modplus", IGenerateFile.ParamFileType.MODPlus}
             };
 
-            IGenerateFile.ParamFileType paramFileType;
 
-            if (toolNameToTypeMapping.TryGetValue(toolName, out paramFileType))
+            if (toolNameToTypeMapping.TryGetValue(toolName, out var paramFileType))
             {
                 return paramFileType;
             }
@@ -4433,8 +4409,7 @@ namespace AnalysisManagerBase
                                 if (strSplitLine.Length <= intNumericDataColIndex)
                                     continue;
 
-                                double value;
-                                if (double.TryParse(strSplitLine[intNumericDataColIndex], out value))
+                                if (double.TryParse(strSplitLine[intNumericDataColIndex], out var _))
                                 {
                                     blnDataFound = true;
                                 }
@@ -4506,7 +4481,7 @@ namespace AnalysisManagerBase
                 return false;
             }
 
-            if (blnLogFreeMemoryOnSuccess)
+            if (logFreeMemoryOnSuccess)
             {
                 var message = stepToolName + " will use " + freeMemoryRequiredMB + " MB; " +
                              "system has " + freeMemoryMB.ToString("0") + " MB available";
