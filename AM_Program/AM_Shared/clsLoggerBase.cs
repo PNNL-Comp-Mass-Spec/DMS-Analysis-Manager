@@ -8,8 +8,8 @@ namespace AnalysisManagerBase
 
         /// <summary>
         /// Debug level
-        /// Values from 0 (minimum output) to 5 (max detail)
         /// </summary>
+        /// <remarks>Ranges from 0 (minimum output) to 5 (max detail)</remarks>
         protected short m_DebugLevel = 1;
 
         /// <summary>

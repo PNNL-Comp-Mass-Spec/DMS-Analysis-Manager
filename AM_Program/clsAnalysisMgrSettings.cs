@@ -52,6 +52,16 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Manager parameter: manager active
         /// </summary>
+        /// <remarks>
+        /// Defined in the manager control database
+        /// If clsGlobal.OfflineMode is true, equivalent to MgrActive_Local
+        /// </remarks>
+        public const string MGR_PARAM_MGR_ACTIVE = "mgractive";
+
+        /// <summary>
+        /// Manager parameter: manager active
+        /// </summary>
+        /// <remarks>Defined in AnalysisManagerProg.exe.config</remarks>
         public const string MGR_PARAM_MGR_ACTIVE_LOCAL = "MgrActive_Local";
 
         /// <summary>

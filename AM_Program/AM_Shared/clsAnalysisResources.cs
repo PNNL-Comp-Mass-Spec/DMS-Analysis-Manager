@@ -156,6 +156,9 @@ namespace AnalysisManagerBase
         // This constant is used by clsAnalysisToolRunnerMSGFDB, clsAnalysisResourcesMSGFDB, and clsAnalysisResourcesDtaRefinery
         public const string SPECTRA_ARE_NOT_CENTROIDED = "None of the spectra are centroided; unable to process";
 
+        /// <summary>
+        /// Instrument data file type enum
+        /// </summary>
         public enum eRawDataTypeConstants
         {
             Unknown = 0,
@@ -180,12 +183,18 @@ namespace AnalysisManagerBase
             // Used by Maxis01; Inside the .D folder is the analysis.baf file; there is also .m subfolder that has a microTOFQMaxAcquisition.method file; there is not a ser or fid file
         }
 
+        /// <summary>
+        /// Enum for mzXML and mzML
+        /// </summary>
         public enum MSXMLOutputTypeConstants
         {
             mzXML = 0,
             mzML = 1
         }
 
+        /// <summary>
+        /// Used by Phospho_FDR_Aggregator, Pride_MzXML, and AScore plugins
+        /// </summary>
         public enum DataPackageFileRetrievalModeConstants
         {
             Undefined = 0,
@@ -240,6 +249,9 @@ namespace AnalysisManagerBase
 
         private bool mCachedDatasetAndJobInfoIsDefined;
 
+        /// <summary>
+        /// Spectrum type classifier
+        /// </summary>
         public SpectraTypeClassifier.clsSpectrumTypeClassifier mSpectraTypeClassifier;
 
         private clsFileCopyUtilities m_FileCopyUtilities;
@@ -270,12 +282,26 @@ namespace AnalysisManagerBase
                     m_FileSearch.DatasetName = m_DatasetName;
             }
         }
+
+        /// <summary>
+        /// Debug level
+        /// </summary>
+        /// <remarks>Ranges from 0 (minimum output) to 5 (max detail)</remarks>
         public short DebugLevel => m_DebugLevel;
 
+        /// <summary>
+        /// Folder search utility
+        /// </summary>
         public clsFolderSearch FolderSearch => m_FolderSearch;
 
+        /// <summary>
+        /// File search utility
+        /// </summary>
         public clsFileSearch FileSearch => m_FileSearch;
 
+        /// <summary>
+        /// True when MyEMSL search is diabled
+        /// </summary>
         public bool MyEMSLSearchDisabled
         {
             get => m_MyEMSLSearchDisabled;
@@ -297,6 +323,9 @@ namespace AnalysisManagerBase
             }
         }
 
+        /// <summary>
+        /// MyEMSL utilities
+        /// </summary>
         public clsMyEMSLUtilities MyEMSLUtilities => m_MyEMSLUtilities;
 
         /// <summary>
@@ -304,8 +333,19 @@ namespace AnalysisManagerBase
         /// </summary>
         public string Message => m_message;
 
+        /// <summary>
+        /// True when the step tool is DataExtractor
+        /// </summary>
+        private bool RunningDataExtraction => string.Equals(StepToolName, "DataExtractor", StringComparison.OrdinalIgnoreCase);
+
+        /// <summary>
+        /// Step tool name
+        /// </summary>
         public string StepToolName { get; private set; }
 
+        /// <summary>
+        /// Work directory
+        /// </summary>
         public string WorkDir => m_WorkingDir;
 
         #endregion
@@ -525,8 +565,18 @@ namespace AnalysisManagerBase
             throw new NotImplementedException("Plugin " + StepToolName + " must implement CopyResourcesToRemote to allow for remote processing");
         }
 
+        /// <summary>
+        /// Abstract method to retrieve resources
+        /// </summary>
+        /// <returns></returns>
+        /// <remarks>Each step tool implements this method</remarks>
         public abstract CloseOutType GetResources();
 
+        /// <summary>
+        /// Retrieve a true/false option of type eAnalysisResourceOptions
+        /// </summary>
+        /// <param name="resourceOption"></param>
+        /// <returns></returns>
         public bool GetOption(clsGlobal.eAnalysisResourceOptions resourceOption)
         {
             if (m_ResourceOptions == null)
@@ -558,6 +608,11 @@ namespace AnalysisManagerBase
             return CloseOutType.CLOSEOUT_FAILED;
         }
 
+        /// <summary>
+        /// Set a true/false option of type eAnalysisResourceOptions
+        /// </summary>
+        /// <param name="resourceOption"></param>
+        /// <param name="enabled"></param>
         public void SetOption(clsGlobal.eAnalysisResourceOptions resourceOption, bool enabled)
         {
             if (m_ResourceOptions == null)
@@ -617,6 +672,10 @@ namespace AnalysisManagerBase
 
         }
 
+        /// <summary>
+        /// Cache current dataset and job info
+        /// </summary>
+        /// <remarks>Restore the cached info using RestoreCachedDataAndJobInfo</remarks>
         public void CacheCurrentDataAndJobInfo()
         {
             if (mCachedDatasetAndJobInfoIsDefined)
@@ -630,6 +689,9 @@ namespace AnalysisManagerBase
 
         }
 
+        /// <summary>
+        /// Restore cached datasets and job info
+        /// </summary>
         public void RestoreCachedDataAndJobInfo()
         {
             if (!mCachedDatasetAndJobInfoIsDefined)
@@ -1506,6 +1568,10 @@ namespace AnalysisManagerBase
 
         }
 
+        /// <summary>
+        /// Get a list of the default decoy protein prefixes
+        /// </summary>
+        /// <returns></returns>
         public static List<string> GetDefaultDecoyPrefixes()
         {
 
@@ -2004,6 +2070,11 @@ namespace AnalysisManagerBase
 
         }
 
+        /// <summary>
+        /// Convert a raw data type string to raw data type enum (i.e. instrument data type)
+        /// </summary>
+        /// <param name="strRawDataType"></param>
+        /// <returns></returns>
         public static eRawDataTypeConstants GetRawDataType(string strRawDataType)
         {
 
@@ -2044,6 +2115,12 @@ namespace AnalysisManagerBase
 
         }
 
+        /// <summary>
+        /// Determine the raw data type (i.e. instrument data type)
+        /// </summary>
+        /// <param name="jobParams"></param>
+        /// <param name="errorMessage"></param>
+        /// <returns></returns>
         public static string GetRawDataTypeName(IJobParams jobParams, out string errorMessage)
         {
 
@@ -2176,6 +2253,12 @@ namespace AnalysisManagerBase
 
         }
 
+        /// <summary>
+        /// Compute the split fasta iteration for the current job step
+        /// </summary>
+        /// <param name="jobParams"></param>
+        /// <param name="errorMessage"></param>
+        /// <returns></returns>
         public static int GetSplitFastaIteration(IJobParams jobParams, out string errorMessage)
         {
 
@@ -4211,6 +4294,11 @@ namespace AnalysisManagerBase
 
         }
 
+        /// <summary>
+        /// Validate that data in a _dta.txt ifle is centroided
+        /// </summary>
+        /// <param name="strCDTAPath"></param>
+        /// <returns></returns>
         public bool ValidateCDTAFileIsCentroided(string strCDTAPath)
         {
 
@@ -4396,7 +4484,14 @@ namespace AnalysisManagerBase
 
         }
 
-        public static bool ValidateFreeMemorySize(int freeMemoryRequiredMB, string stepToolName, bool blnLogFreeMemoryOnSuccess)
+        /// <summary>
+        /// Verify that the system has the specified amount of memory available
+        /// </summary>
+        /// <param name="freeMemoryRequiredMB"></param>
+        /// <param name="stepToolName"></param>
+        /// <param name="logFreeMemoryOnSuccess"></param>
+        /// <returns></returns>
+        public static bool ValidateFreeMemorySize(int freeMemoryRequiredMB, string stepToolName, bool logFreeMemoryOnSuccess)
         {
 
             var freeMemoryMB = clsGlobal.GetFreeMemoryMB();
