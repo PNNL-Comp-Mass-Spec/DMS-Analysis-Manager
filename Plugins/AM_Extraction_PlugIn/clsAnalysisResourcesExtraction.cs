@@ -379,8 +379,9 @@ namespace AnalysisManagerExtractionPlugin
                 var blnUseLegacyMSGFDB = false;
 
                 var fileToFind = DatasetName + "_msgfplus" + suffixToAdd + ".mzid.gz";
-                SourceFolderPath = FileSearch.FindDataFile(fileToFind, true, false);
-                if (!string.IsNullOrEmpty(SourceFolderPath))
+                var sourceFolder = FileSearch.FindDataFile(fileToFind, true, false);
+                string mzidSuffix;
+                if (!string.IsNullOrEmpty(sourceFolder))
                 {
                     // Running MSGF+ with gzipped results
                     mzidSuffix = ".mzid.gz";
@@ -389,31 +390,34 @@ namespace AnalysisManagerExtractionPlugin
                 {
                     // File not found; look for _msgfdb.mzid.gz
                     var fileToGetAlternative = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(fileToFind, "Dataset_msgfdb.txt");
-                    SourceFolderPath = FileSearch.FindDataFile(fileToGetAlternative, true, false);
+                    var mzidSourceFolderAlt = FileSearch.FindDataFile(fileToGetAlternative, true, false);
 
-                    if (!string.IsNullOrEmpty(SourceFolderPath))
+                    if (!string.IsNullOrEmpty(mzidSourceFolderAlt))
                     {
                         // Running MSGF+ with gzipped results
                         mzidSuffix = ".mzid.gz";
+                        sourceFolder = mzidSourceFolderAlt;
                     }
                     else
                     {
                         // File not found; look for a .zip file
-                        SourceFolderPath = FileSearch.FindDataFile(DatasetName + "_msgfplus" + suffixToAdd + ".zip", true, false);
-                        if (!string.IsNullOrEmpty(SourceFolderPath))
+                        var zipSourceFolder = FileSearch.FindDataFile(DatasetName + "_msgfplus" + suffixToAdd + ".zip", true, false);
+                        if (!string.IsNullOrEmpty(zipSourceFolder))
                         {
                             // Running MSGF+ with zipped results
                             mzidSuffix = ".zip";
+                            sourceFolder = zipSourceFolder;
                         }
                         else
                         {
                             // File not found; try _msgfdb
-                            SourceFolderPath = FileSearch.FindDataFile(DatasetName + "_msgfdb" + suffixToAdd + ".zip", true, false);
-                            if (!string.IsNullOrEmpty(SourceFolderPath))
+                            var zipSourceFolderAlt = FileSearch.FindDataFile(DatasetName + "_msgfdb" + suffixToAdd + ".zip", true, false);
+                            if (!string.IsNullOrEmpty(zipSourceFolderAlt))
                             {
                                 // File Found
                                 blnUseLegacyMSGFDB = true;
                                 mzidSuffix = ".zip";
+                                sourceFolder = zipSourceFolderAlt;
                             }
                             else
                             {
@@ -428,11 +432,10 @@ namespace AnalysisManagerExtractionPlugin
 
                 // ReSharper disable once UseImplicitlyTypedVariableEvident
 
-                for (int iteration = 1; iteration <= numberOfClonedSteps; iteration++)
+                for (var iteration = 1; iteration <= numberOfClonedSteps; iteration++)
                 {
-                    var blnSkipMSGFResultsZipFileCopy = false;
-                    string fileToGet = null;
-                    string strBaseName = null;
+                    var skipMSGFResultsZipFileCopy = false;
+                    string strBaseName;
 
                     if (splitFastaEnabled)
                     {
@@ -457,39 +460,40 @@ namespace AnalysisManagerExtractionPlugin
                     {
                         strBaseName = DatasetName + "_msgfplus" + suffixToAdd;
 
-                        fileToGet = DatasetName + "_msgfplus" + suffixToAdd + ".tsv";
-                        currentStep = "Retrieving " + fileToGet;
+                        var tsvFile = DatasetName + "_msgfplus" + suffixToAdd + ".tsv";
+                        currentStep = "Retrieving " + tsvFile;
 
-                        SourceFolderPath = FileSearch.FindDataFile(fileToGet, false, false);
-                        if (string.IsNullOrEmpty(SourceFolderPath))
+                        var tsvSourceFolder = FileSearch.FindDataFile(tsvFile, false, false);
+                        if (string.IsNullOrEmpty(tsvSourceFolder))
                         {
-                            var fileToGetAlternative = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(fileToGet, "Dataset_msgfdb.txt");
-                            SourceFolderPath = FileSearch.FindDataFile(fileToGetAlternative, false, false);
-                            if (!string.IsNullOrEmpty(SourceFolderPath))
+                            var fileToGetAlternative = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(tsvFile, "Dataset_msgfdb.txt");
+                            var tsvSourceFolderAlt = FileSearch.FindDataFile(fileToGetAlternative, false, false);
+                            if (!string.IsNullOrEmpty(tsvSourceFolderAlt))
                             {
-                                fileToGet = fileToGetAlternative;
+                                tsvFile = fileToGetAlternative;
+                                tsvSourceFolder = tsvSourceFolderAlt;
                             }
                         }
 
-                        if (!string.IsNullOrEmpty(SourceFolderPath))
+                        if (!string.IsNullOrEmpty(tsvSourceFolder))
                         {
-                            if (!SourceFolderPath.StartsWith(MYEMSL_PATH_FLAG))
+                            if (!tsvSourceFolder.StartsWith(MYEMSL_PATH_FLAG))
                             {
                                 // Examine the date of the TSV file
                                 // If less than 4 hours old, retrieve it; otherwise, grab the _msgfplus.mzid.gz file and re-generate the .tsv file
 
-                                var fiTSVFile = new FileInfo(Path.Combine(SourceFolderPath, fileToGet));
-                                if (System.DateTime.UtcNow.Subtract(fiTSVFile.LastWriteTimeUtc).TotalHours < 4)
+                                var fiTSVFile = new FileInfo(Path.Combine(tsvSourceFolder, tsvFile));
+                                if (DateTime.UtcNow.Subtract(fiTSVFile.LastWriteTimeUtc).TotalHours < 4)
                                 {
                                     // File is recent; grab it
-                                    if (!CopyFileToWorkDir(fileToGet, SourceFolderPath, m_WorkingDir))
+                                    if (!CopyFileToWorkDir(tsvFile, tsvSourceFolder, m_WorkingDir))
                                     {
                                         // File copy failed; that's OK; we'll grab the _msgfplus.mzid.gz file
                                     }
                                     else
                                     {
-                                        blnSkipMSGFResultsZipFileCopy = true;
-                                        m_jobParams.AddResultFileToSkip(fileToGet);
+                                        skipMSGFResultsZipFileCopy = true;
+                                        m_jobParams.AddResultFileToSkip(tsvFile);
                                     }
                                 }
 
@@ -498,17 +502,17 @@ namespace AnalysisManagerExtractionPlugin
                         }
                     }
 
-                    if (!blnSkipMSGFResultsZipFileCopy)
+                    if (!skipMSGFResultsZipFileCopy)
                     {
-                        fileToGet = strBaseName + mzidSuffix;
-                        currentStep = "Retrieving " + fileToGet;
+                        var mzidFile = strBaseName + mzidSuffix;
+                        currentStep = "Retrieving " + mzidFile;
 
                         if (!FileSearch.FindAndRetrieveMiscFiles(mzidFile, unzip: true, searchArchivedDatasetFolder: true, logFileNotFound: true))
                         {
                             //Errors were reported in function call, so just return
                             return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                         }
-                        m_jobParams.AddResultFileToSkip(fileToGet);
+                        m_jobParams.AddResultFileToSkip(mzidFile);
                     }
 
                     // Manually add several files to skip
@@ -530,8 +534,8 @@ namespace AnalysisManagerExtractionPlugin
                     }
 
                     // Get the peptide to protein mapping file
-                    fileToGet = DatasetName + "_msgfplus" + suffixToAdd + "_PepToProtMap.txt";
-                    currentStep = "Retrieving " + fileToGet;
+                    var pepToProtMapFile = DatasetName + "_msgfplus" + suffixToAdd + "_PepToProtMap.txt";
+                    currentStep = "Retrieving " + pepToProtMapFile;
 
                     if (!FileSearch.FindAndRetrievePHRPDataFile(ref pepToProtMapFile, synopsisFileName: "", addToResultFileSkipList: true, logFileNotFound: false))
                     {
@@ -563,9 +567,9 @@ namespace AnalysisManagerExtractionPlugin
                     }
                     else
                     {
-                        if (splitFastaEnabled)
+                        if (splitFastaEnabled && !string.IsNullOrWhiteSpace(sourceFolder))
                         {
-                            var fiPepToProtMapFile = new FileInfo(Path.Combine(SourceFolderPath, fileToGet));
+                            var fiPepToProtMapFile = new FileInfo(Path.Combine(sourceFolder, pepToProtMapFile));
                             m_jobParams.AddServerFileToDelete(fiPepToProtMapFile.FullName);
                         }
                     }
@@ -574,16 +578,17 @@ namespace AnalysisManagerExtractionPlugin
                     {
                         // Retrieve the _ConsoleOutput file
 
-                        fileToGet = "MSGFPlus_ConsoleOutput" + suffixToAdd + ".txt";
-                        currentStep = "Retrieving " + fileToGet;
+                        var consoleOutputFile = "MSGFPlus_ConsoleOutput" + suffixToAdd + ".txt";
+                        currentStep = "Retrieving " + consoleOutputFile;
 
                         if (!FileSearch.FindAndRetrieveMiscFiles(consoleOutputFile, unzip: false, searchArchivedDatasetFolder: true, logFileNotFound: false))
                         {
                             // This is not an important error; ignore it
                         }
+
+                        m_jobParams.AddResultFileToSkip(consoleOutputFile);
                     }
 
-                    m_jobParams.AddResultFileToSkip(fileToGet);
                 }
             }
             catch (Exception ex)
