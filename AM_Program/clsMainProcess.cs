@@ -107,34 +107,28 @@ namespace AnalysisManagerProg
         {
             try
             {
-                if (TraceMode)
-                    ShowTraceMessage("Initializing the manager");
+                ShowTrace("Initializing the manager");
 
                 if (!InitMgr())
                 {
-                    if (TraceMode)
-                        ShowTraceMessage("InitMgr returned false; aborting");
+                    ShowTrace("InitMgr returned false; aborting");
                     return -1;
                 }
 
-                if (TraceMode)
-                    ShowTraceMessage("Call DoAnalysis");
+                ShowTrace("Call DoAnalysis");
 
                 DoAnalysis();
 
-                if (TraceMode)
-                    ShowTraceMessage("Exiting clsMainProcess.Main with error code = 0");
+                ShowTrace("Exiting clsMainProcess.Main with error code = 0");
                 return 0;
             }
             catch (Exception ex)
             {
                 // Report any exceptions not handled at a lower level to the system application log
                 var errMsg = "Critical exception starting application: " + ex.Message;
-                if (TraceMode)
-                    ShowTraceMessage(errMsg + "; " + clsGlobal.GetExceptionStackTrace(ex, true));
+                ShowTrace(errMsg + "; " + clsGlobal.GetExceptionStackTrace(ex, true));
                 PostToEventLog(errMsg + "; " + clsGlobal.GetExceptionStackTrace(ex, false));
-                if (TraceMode)
-                    ShowTraceMessage("Exiting clsMainProcess.Main with error code = 1");
+                ShowTrace("Exiting clsMainProcess.Main with error code = 1");
                 return 1;
             }
         }
@@ -142,9 +136,9 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Constructor
         /// </summary>
-        public clsMainProcess(bool blnTraceModeEnabled)
+        public clsMainProcess(bool traceModeEnabled)
         {
-            TraceMode = blnTraceModeEnabled;
+            TraceMode = traceModeEnabled;
             m_ConfigChanged = false;
             m_DebugLevel = 0;
             m_NeedToAbortProcessing = false;
@@ -190,22 +184,21 @@ namespace AnalysisManagerProg
 
             try
             {
-                if (TraceMode)
-                    ShowTraceMessage("Reading application config file");
+                ShowTrace("Reading application config file");
 
                 // Load settings from config file AnalysisManagerProg.exe.config
                 var lstMgrSettings = LoadMgrSettingsFromFile();
 
-                // Get the manager settings
+                // Get the manager settings from the database or from ManagerSettingsLocal.xml if clsGlobal.OfflineMode is true
                 // If you get an exception here while debugging in Visual Studio, be sure
                 //   that "UsingDefaults" is set to False in CaptureTaskManager.exe.config
                 try
                 {
                     if (TraceMode)
                     {
-                        ShowTraceMessage("Instantiating clsAnalysisMgrSettings");
+                        ShowTrace("Instantiating clsAnalysisMgrSettings");
                         foreach (var setting in lstMgrSettings)
-                            ShowTraceMessage(string.Format("  {0}: {1}", setting.Key, setting.Value));
+                            ShowTrace(string.Format("  {0}: {1}", setting.Key, setting.Value));
                     }
                     m_MgrSettings = new clsAnalysisMgrSettings(CUSTOM_LOG_SOURCE_NAME, CUSTOM_LOG_NAME, lstMgrSettings, m_MgrFolderPath, TraceMode);
                 }
@@ -243,8 +236,7 @@ namespace AnalysisManagerProg
             }
 
             m_MgrName = m_MgrSettings.ManagerName;
-            if (TraceMode)
-                ShowTraceMessage("Manager name is " + m_MgrName);
+            ShowTrace("Manager name is " + m_MgrName);
 
             // Delete any temporary files that may be left in the app directory
             RemoveTempFiles();
@@ -269,8 +261,7 @@ namespace AnalysisManagerProg
             }
 
             // Make the initial log entry
-            if (TraceMode)
-                ShowTraceMessage("Initializing log file " + clsLogTools.CurrentFileAppenderPath);
+            ShowTrace("Initializing log file " + clsLogTools.CurrentFileAppenderPath);
 
             var startupMsg = "=== Started Analysis Manager V" + System.Windows.Forms.Application.ProductVersion + " ===== ";
             LogMessage(startupMsg);
@@ -310,15 +301,13 @@ namespace AnalysisManagerProg
             }
 
             // Setup the tool for getting tasks
-            if (TraceMode)
-                ShowTraceMessage("Instantiate m_AnalysisTask as new clsAnalysisJob");
+            ShowTrace("Instantiate m_AnalysisTask as new clsAnalysisJob");
             m_AnalysisTask = new clsAnalysisJob(m_MgrSettings, m_DebugLevel);
 
             m_WorkDirPath = m_MgrSettings.GetParam("workdir");
 
             // Setup the manager cleanup class
-            if (TraceMode)
-                ShowTraceMessage("Setup the manager cleanup class");
+            ShowTrace("Setup the manager cleanup class");
 
             string mgrConfigDBConnectionString;
             if (clsGlobal.OfflineMode)
@@ -333,14 +322,12 @@ namespace AnalysisManagerProg
 
             m_MgrErrorCleanup = new clsCleanupMgrErrors(mgrConfigDBConnectionString, m_MgrName, m_DebugLevel, m_MgrFolderPath, m_WorkDirPath);
 
-            if (TraceMode)
-                ShowTraceMessage("Initialize the Summary file");
+            ShowTrace("Initialize the Summary file");
 
             m_SummaryFile = new clsSummaryFile();
             m_SummaryFile.Clear();
 
-            if (TraceMode)
-                ShowTraceMessage("Initialize the Plugin Loader");
+            ShowTrace("Initialize the Plugin Loader");
 
             m_PluginLoader = new clsPluginLoader(m_SummaryFile, m_MgrFolderPath);
 
@@ -354,8 +341,7 @@ namespace AnalysisManagerProg
         /// <remarks></remarks>
         public void DoAnalysis()
         {
-            if (TraceMode)
-                ShowTraceMessage("Entering clsMainProcess.DoAnalysis");
+            ShowTrace("Entering clsMainProcess.DoAnalysis");
 
             var loopCount = 0;
             var tasksStartedCount = 0;
@@ -369,8 +355,7 @@ namespace AnalysisManagerProg
 
             try
             {
-                if (TraceMode)
-                    ShowTraceMessage("Entering clsMainProcess.DoAnalysis Try/Catch block");
+                ShowTrace("Entering clsMainProcess.DoAnalysis Try/Catch block");
 
                 var maxLoopCount = m_MgrSettings.GetParam("maxrepetitions", 1);
                 var requestJobs = true;
@@ -390,8 +375,7 @@ namespace AnalysisManagerProg
                         // Local config file has changed
                         m_ConfigChanged = false;
 
-                        if (TraceMode)
-                            ShowTraceMessage("Reloading manager settings since config file has changed");
+                        ShowTrace("Reloading manager settings since config file has changed");
 
                         if (!ReloadManagerSettings())
                         {
@@ -414,7 +398,7 @@ namespace AnalysisManagerProg
                     }
 
                     // Check to see if manager is still active
-                    var mgrActive = m_MgrSettings.GetParam("mgractive", false);
+                    var mgrActive = m_MgrSettings.GetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_ACTIVE, false);
                     var mgrActiveLocal = m_MgrSettings.GetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_ACTIVE_LOCAL, false);
 
                     if (!(mgrActive && mgrActiveLocal))
@@ -533,8 +517,7 @@ namespace AnalysisManagerProg
                         break;
                     }
 
-                    if (TraceMode)
-                        ShowTraceMessage("Requesting a new task from DMS_Pipeline");
+                    ShowTrace("Requesting a new task from DMS_Pipeline");
 
                     // Re-initialize these utilities for each analysis job
                     m_MyEMSLUtilities = new clsMyEMSLUtilities(m_DebugLevel, m_WorkDirPath);
@@ -547,8 +530,7 @@ namespace AnalysisManagerProg
                     switch (taskReturn)
                     {
                         case clsDBTask.RequestTaskResult.NoTaskFound:
-                            if (TraceMode)
-                                ShowTraceMessage("No tasks found");
+                            ShowTrace("No tasks found");
 
                             // No tasks found
                             if (m_DebugLevel >= 3)
@@ -561,8 +543,7 @@ namespace AnalysisManagerProg
 
                             break;
                         case clsDBTask.RequestTaskResult.ResultError:
-                            if (TraceMode)
-                                ShowTraceMessage("Error requesting a task");
+                            ShowTrace("Error requesting a task");
 
                             // There was a problem getting the task; errors were logged by RequestTaskResult
                             criticalMgrErrorCount += 1;
@@ -570,8 +551,7 @@ namespace AnalysisManagerProg
                             break;
                         case clsDBTask.RequestTaskResult.TaskFound:
 
-                            if (TraceMode)
-                                ShowTraceMessage("Task found");
+                            ShowTrace("Task found");
 
                             tasksStartedCount += 1;
                             successiveDeadLockCount = 0;
@@ -617,8 +597,7 @@ namespace AnalysisManagerProg
 
                             break;
                         case clsDBTask.RequestTaskResult.TooManyRetries:
-                            if (TraceMode)
-                                ShowTraceMessage("Too many retries calling the stored procedure");
+                            ShowTrace("Too many retries calling the stored procedure");
 
                             // There were too many retries calling the stored procedure; errors were logged by RequestTaskResult
                             // Bump up loopCount to the maximum to exit the loop
@@ -628,8 +607,7 @@ namespace AnalysisManagerProg
                             break;
                         case clsDBTask.RequestTaskResult.Deadlock:
 
-                            if (TraceMode)
-                                ShowTraceMessage("Deadlock");
+                            ShowTrace("Deadlock");
 
                             // A deadlock error occured
                             // Query the DB again, but only if we have not had 3 deadlock results in a row
@@ -650,8 +628,7 @@ namespace AnalysisManagerProg
 
                     if (NeedToAbortProcessing())
                     {
-                        if (TraceMode)
-                            ShowTraceMessage("Need to abort processing");
+                        ShowTrace("Need to abort processing");
                         break;
                     }
                     loopCount += 1;
@@ -659,8 +636,7 @@ namespace AnalysisManagerProg
                     // If the only problem was deleting non result files, we want to stop the manager
                     if (m_MgrErrorCleanup.DetectErrorDeletingFilesFlagFile())
                     {
-                        if (TraceMode)
-                            ShowTraceMessage("Error deleting files flag file");
+                        ShowTrace("Error deleting files flag file");
                         errorDeletingFilesFlagFile = true;
                         loopCount = maxLoopCount;
                     }
@@ -694,8 +670,7 @@ namespace AnalysisManagerProg
                     LogMessage("Analysis complete for all available jobs");
                 }
 
-                if (TraceMode)
-                    ShowTraceMessage("Closing the manager");
+                ShowTrace("Closing the manager");
                 UpdateClose("Closing manager.");
             }
             catch (Exception ex)
@@ -707,8 +682,7 @@ namespace AnalysisManagerProg
             {
                 if (m_StatusTools != null)
                 {
-                    if (TraceMode)
-                        ShowTraceMessage("Disposing message queue via m_StatusTools.DisposeMessageQueue");
+                    ShowTrace("Disposing message queue via m_StatusTools.DisposeMessageQueue");
                     m_StatusTools.DisposeMessageQueue();
                 }
             }
@@ -727,8 +701,7 @@ namespace AnalysisManagerProg
             var runningRemoteFlag = m_AnalysisTask.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "RunningRemote", 0);
             var runningRemote = (runningRemoteFlag > 0);
 
-            if (TraceMode)
-                ShowTraceMessage("Processing job " + jobNum + ", " + jobToolDescription);
+            ShowTrace("Processing job " + jobNum + ", " + jobToolDescription);
 
             // Initialize summary and status files
             m_SummaryFile.Clear();
@@ -800,8 +773,7 @@ namespace AnalysisManagerProg
 
             if (NeedToAbortProcessing())
             {
-                if (TraceMode)
-                    ShowTraceMessage("NeedToAbortProcessing; closing job step task");
+                ShowTrace("NeedToAbortProcessing; closing job step task");
                 m_AnalysisTask.CloseTask(CloseOutType.CLOSEOUT_FAILED, "Processing aborted");
                 m_MgrErrorCleanup.CleanWorkDir();
                 UpdateStatusIdle("Processing aborted");
@@ -811,8 +783,7 @@ namespace AnalysisManagerProg
             // Make sure we have enough free space on the drive with the working directory and on the drive with the transfer folder
             if (!ValidateFreeDiskSpace(toolResourcer, out m_MostRecentErrorMessage))
             {
-                if (TraceMode)
-                    ShowTraceMessage("Insufficient free space; closing job step task");
+                ShowTrace("Insufficient free space; closing job step task");
                 if (string.IsNullOrEmpty(m_MostRecentErrorMessage))
                 {
                     m_MostRecentErrorMessage = "Insufficient free space (location undefined)";
@@ -873,8 +844,7 @@ namespace AnalysisManagerProg
                     success = RunJobRemotely(toolResourcer, jobNum, stepNum, out eToolRunnerResult);
                     if (!success)
                     {
-                        if (TraceMode)
-                            ShowTraceMessage("Error staging the job to run remotely; closing job step task");
+                        ShowTrace("Error staging the job to run remotely; closing job step task");
 
                         if (string.IsNullOrEmpty(m_MostRecentErrorMessage))
                         {
@@ -910,8 +880,7 @@ namespace AnalysisManagerProg
             m_StatusTools.UpdateAndWrite(EnumMgrStatus.RUNNING, EnumTaskStatus.CLOSING, EnumTaskStatusDetail.CLOSING, 100);
             try
             {
-                if (TraceMode)
-                    ShowTraceMessage("Task completed successfully; closing the job step task");
+                ShowTrace("Task completed successfully; closing the job step task");
 
                 CloseOutType closeOut;
                 if (runJobsRemotely)
@@ -1685,8 +1654,7 @@ namespace AnalysisManagerProg
         private bool HandleJobFailure(IToolRunner toolRunner, CloseOutType eToolRunnerResult)
         {
 
-            if (TraceMode)
-                ShowTraceMessage("Tool run error; cleaning up");
+            ShowTrace("Tool run error; cleaning up");
 
             try
             {
@@ -1833,8 +1801,7 @@ namespace AnalysisManagerProg
             {
                 var statusFileLoc = Path.Combine(m_MgrFolderPath, m_MgrSettings.GetParam("statusfilelocation", "Status.xml"));
 
-                if (TraceMode)
-                    ShowTraceMessage("Initialize m_StatusTools using " + statusFileLoc);
+                ShowTrace("Initialize m_StatusTools using " + statusFileLoc);
 
                 m_StatusTools = new clsStatusFile(statusFileLoc, m_DebugLevel)
                 {
@@ -1978,8 +1945,7 @@ namespace AnalysisManagerProg
 
             if (!string.Equals(managerName, autoDefinedName))
             {
-                if (TraceMode)
-                    ShowTraceMessage("Auto-defining the manager name as " + autoDefinedName);
+                ShowTrace("Auto-defining the manager name as " + autoDefinedName);
                 lstMgrSettings[clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME] = autoDefinedName;
             }
 
@@ -2185,8 +2151,7 @@ namespace AnalysisManagerProg
         {
             try
             {
-                if (TraceMode)
-                    ShowTraceMessage("Reading application config file");
+                ShowTrace("Reading application config file");
 
                 // Load settings from config file AnalysisManagerProg.exe.config
                 var lstMgrSettings = LoadMgrSettingsFromFile();
@@ -2194,8 +2159,7 @@ namespace AnalysisManagerProg
                 if (lstMgrSettings == null)
                     return false;
 
-                if (TraceMode)
-                    ShowTraceMessage("Storing manager settings in m_MgrSettings");
+                ShowTrace("Storing manager settings in m_MgrSettings");
 
                 // Store the new settings then retrieve updated settings from the database
                 // or from ManagerSettingsLocal.xml if clsGlobal.OfflineMode is true
@@ -2258,8 +2222,7 @@ namespace AnalysisManagerProg
                 {
                     if (DateTime.UtcNow.Subtract(fiFile.LastWriteTimeUtc).TotalHours > 24)
                     {
-                        if (TraceMode)
-                            ShowTraceMessage("Deleting temp file " + fiFile.FullName);
+                        ShowTrace("Deleting temp file " + fiFile.FullName);
                         fiFile.Delete();
                     }
                 }
@@ -2280,8 +2243,7 @@ namespace AnalysisManagerProg
 
             try
             {
-                if (TraceMode)
-                    ShowTraceMessage("Getting job resources");
+                ShowTrace("Getting job resources");
 
                 eToolRunnerResult = toolResourcer.GetResources();
                 if (eToolRunnerResult == CloseOutType.CLOSEOUT_SUCCESS)
@@ -2290,8 +2252,7 @@ namespace AnalysisManagerProg
                 }
 
                 m_MostRecentErrorMessage = "GetResources returned result: " + eToolRunnerResult;
-                if (TraceMode)
-                    ShowTraceMessage(m_MostRecentErrorMessage + "; closing job step task");
+                ShowTrace(m_MostRecentErrorMessage + "; closing job step task");
 
                 LogError(m_MgrName + ": " + clsGlobal.AppendToComment(m_MostRecentErrorMessage, toolResourcer.Message) + ", Job " + jobNum + ", Dataset " + datasetName);
                 m_AnalysisTask.CloseTask(eToolRunnerResult, toolResourcer.Message);
@@ -2334,8 +2295,7 @@ namespace AnalysisManagerProg
             try
             {
 
-                if (TraceMode)
-                    ShowTraceMessage("Running the step tool locally");
+                ShowTrace("Running the step tool locally");
 
                 eToolRunnerResult = toolRunner.RunTool();
 
@@ -2348,8 +2308,7 @@ namespace AnalysisManagerProg
                         m_MostRecentErrorMessage = "Unknown ToolRunner Error";
                     }
 
-                    if (TraceMode)
-                        ShowTraceMessage("Error running the tool; closing job step task");
+                    ShowTrace("Error running the tool; closing job step task");
 
                     LogError(m_MgrName + ": " + m_MostRecentErrorMessage + ", Job " + jobNum + ", Dataset " + datasetName);
                     m_AnalysisTask.CloseTask(eToolRunnerResult, m_MostRecentErrorMessage, toolRunner.EvalCode, toolRunner.EvalMessage);
@@ -2383,8 +2342,7 @@ namespace AnalysisManagerProg
                 if (toolRunner.NeedToAbortProcessing)
                 {
                     m_NeedToAbortProcessing = true;
-                    if (TraceMode)
-                        ShowTraceMessage("toolRunner.NeedToAbortProcessing = True; closing job step task");
+                    ShowTrace("toolRunner.NeedToAbortProcessing = True; closing job step task");
                     m_AnalysisTask.CloseTask(CloseOutType.CLOSEOUT_FAILED, m_MostRecentErrorMessage, toolRunner.EvalCode, toolRunner.EvalMessage);
                 }
 
@@ -2416,8 +2374,7 @@ namespace AnalysisManagerProg
             try
             {
 
-                if (TraceMode)
-                    ShowTraceMessage("Instantiating clsRemoteTransferUtility");
+                ShowTrace("Instantiating clsRemoteTransferUtility");
 
                 var transferUtility = new clsRemoteTransferUtility(m_MgrSettings, m_AnalysisTask);
                 RegisterEvents(transferUtility);
@@ -2435,8 +2392,7 @@ namespace AnalysisManagerProg
                     return false;
                 }
 
-                if (TraceMode)
-                    ShowTraceMessage("Transferring files to remote host to run remotely");
+                ShowTrace("Transferring files to remote host to run remotely");
 
                 try
                 {
@@ -2460,8 +2416,7 @@ namespace AnalysisManagerProg
                     return false;
                 }
 
-                if (TraceMode)
-                    ShowTraceMessage("Creating the .info file in the remote task queue folder ");
+                ShowTrace("Creating the .info file in the remote task queue folder ");
 
                 // All files have been copied remotely
                 // Create the .info file so remote managers can start processing
@@ -2581,14 +2536,20 @@ namespace AnalysisManagerProg
             return true;
         }
 
+        private void ShowTrace(string message)
+        {
+            if (TraceMode)
+                ShowTraceMessage(message);
+        }
+
         /// <summary>
         /// Display a trace message at the console, preceded by a time stamp
         /// </summary>
-        /// <param name="strMessage"></param>
-        public static void ShowTraceMessage(string strMessage)
+        /// <param name="message"></param>
+        public static void ShowTraceMessage(string message)
         {
             clsGlobal.EnableConsoleTraceColor();
-            Console.WriteLine(DateTime.Now.ToString("hh:mm:ss.fff tt") + ": " + strMessage);
+            Console.WriteLine(DateTime.Now.ToString("hh:mm:ss.fff tt") + ": " + message);
             Console.ResetColor();
         }
 
@@ -2665,40 +2626,36 @@ namespace AnalysisManagerProg
         /// <remarks></remarks>
         private bool UpdateManagerSettings(ref DateTime dtLastConfigDBUpdate, double MinutesBetweenUpdates)
         {
-            var blnSuccess = true;
 
-            if ((DateTime.UtcNow.Subtract(dtLastConfigDBUpdate).TotalMinutes >= MinutesBetweenUpdates))
+            if (!(DateTime.UtcNow.Subtract(dtLastConfigDBUpdate).TotalMinutes >= MinutesBetweenUpdates))
+                return true;
+
+            dtLastConfigDBUpdate = DateTime.UtcNow;
+
+            ShowTrace("Loading manager settings from the manager control DB");
+
+            if (!m_MgrSettings.LoadDBSettings())
             {
-                dtLastConfigDBUpdate = DateTime.UtcNow;
+                string msg;
 
-                if (TraceMode)
-                    ShowTraceMessage("Loading manager settings from the manager control DB");
-
-                if (!m_MgrSettings.LoadDBSettings())
+                if (string.IsNullOrWhiteSpace(m_MgrSettings.ErrMsg))
                 {
-                    string msg;
-
-                    if (string.IsNullOrEmpty(m_MgrSettings.ErrMsg))
-                    {
-                        msg = "Error calling m_MgrSettings.LoadMgrSettingsFromDB to update manager settings";
-                    }
-                    else
-                    {
-                        msg = m_MgrSettings.ErrMsg;
-                    }
-
-                    LogError(msg);
-
-                    blnSuccess = false;
+                    msg = "Error calling m_MgrSettings.LoadMgrSettingsFromDB to update manager settings";
                 }
                 else
                 {
-                    // Need to synchronize some of the settings
-                    UpdateStatusToolLoggingSettings(m_StatusTools);
+                    msg = m_MgrSettings.ErrMsg;
                 }
+
+                LogError(msg);
+
+                return false;
             }
 
-            return blnSuccess;
+            // Need to synchronize some of the settings
+            UpdateStatusToolLoggingSettings(m_StatusTools);
+
+            return true;
         }
 
         private void UpdateStatusDisabled(EnumMgrStatus managerStatus, string managerDisableMessage)
@@ -2717,8 +2674,8 @@ namespace AnalysisManagerProg
 
         private void UpdateStatusIdle(string ManagerIdleMessage)
         {
+            ShowTrace("Manager is idle");
             var recentErrorMessages = DetermineRecentErrorMessages(5, ref m_MostRecentJobInfo);
-
             m_StatusTools.UpdateIdle(ManagerIdleMessage, recentErrorMessages, m_MostRecentJobInfo, true);
         }
 
