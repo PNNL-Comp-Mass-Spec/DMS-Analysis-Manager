@@ -58,7 +58,6 @@ namespace AnalysisManagerBase
 
         #endregion
 
-
         #region "Properties"
 
         public string DatasetName { get; set; }
@@ -248,10 +247,10 @@ namespace AnalysisManagerBase
         /// <param name="fileName">Name of file to be retrieved</param>
         /// <param name="unzip">TRUE if retrieved file should be unzipped after retrieval</param>
         /// <param name="searchArchivedDatasetFolder">TRUE if the EMSL archive (Aurora) should also be searched</param>
-        /// <param name="logFileNotFound"></param>
+        /// <param name="logFileNotFound">True if an error should be logged when a file is not found</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks></remarks>
-        private bool FindAndRetrieveMiscFiles(string fileName, bool unzip, bool searchArchivedDatasetFolder, bool logFileNotFound)
+        public bool FindAndRetrieveMiscFiles(string fileName, bool unzip, bool searchArchivedDatasetFolder, bool logFileNotFound)
         {
             string sourceFolderPath;
             return FindAndRetrieveMiscFiles(fileName, unzip, searchArchivedDatasetFolder, out sourceFolderPath, logFileNotFound);
@@ -337,12 +336,18 @@ namespace AnalysisManagerBase
         /// <param name="fileToGet">File to find; if the file is found with an alternative name, this variable is updated with the new name</param>
         /// <param name="synopsisFileName">Synopsis file name, if known</param>
         /// <param name="addToResultFileSkipList">If true, add the filename to the list of files to skip copying to the result folder</param>
+        /// <param name="logFileNotFound">True if an error should be logged when a file is not found</param>
         /// <returns>True if success, false if not found</returns>
         /// <remarks>Used by the IDPicker and MSGF plugins</remarks>
-        public bool FindAndRetrievePHRPDataFile(ref string fileToGet, string synopsisFileName, bool addToResultFileSkipList = true)
+        public bool FindAndRetrievePHRPDataFile(
+            ref string fileToGet,
+            string synopsisFileName,
+            bool addToResultFileSkipList = true,
+            bool logFileNotFound = true)
         {
 
-            var blnSuccess = FindAndRetrieveMiscFiles(fileToGet, false);
+            var blnSuccess = FindAndRetrieveMiscFiles(
+                fileToGet, unzip: false, searchArchivedDatasetFolder: true, logFileNotFound: logFileNotFound);
 
             if (!blnSuccess && fileToGet.ToLower().Contains("msgfplus"))
             {
@@ -352,7 +357,9 @@ namespace AnalysisManagerBase
 
                 if (!string.Equals(alternativeName, fileToGet))
                 {
-                    blnSuccess = FindAndRetrieveMiscFiles(alternativeName, false);
+                    blnSuccess = FindAndRetrieveMiscFiles(
+                        alternativeName, unzip: false, searchArchivedDatasetFolder: true, logFileNotFound: logFileNotFound);
+
                     if (blnSuccess)
                     {
                         fileToGet = alternativeName;

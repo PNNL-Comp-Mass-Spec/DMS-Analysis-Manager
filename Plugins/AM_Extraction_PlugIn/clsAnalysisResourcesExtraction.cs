@@ -503,7 +503,7 @@ namespace AnalysisManagerExtractionPlugin
                         fileToGet = strBaseName + mzidSuffix;
                         currentStep = "Retrieving " + fileToGet;
 
-                        if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, true))
+                        if (!FileSearch.FindAndRetrieveMiscFiles(mzidFile, unzip: true, searchArchivedDatasetFolder: true, logFileNotFound: true))
                         {
                             //Errors were reported in function call, so just return
                             return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -533,7 +533,7 @@ namespace AnalysisManagerExtractionPlugin
                     fileToGet = DatasetName + "_msgfplus" + suffixToAdd + "_PepToProtMap.txt";
                     currentStep = "Retrieving " + fileToGet;
 
-                    if (!FileSearch.FindAndRetrievePHRPDataFile(ref fileToGet, ""))
+                    if (!FileSearch.FindAndRetrievePHRPDataFile(ref pepToProtMapFile, synopsisFileName: "", addToResultFileSkipList: true, logFileNotFound: false))
                     {
                         // Errors were reported in function call
 
@@ -577,7 +577,7 @@ namespace AnalysisManagerExtractionPlugin
                         fileToGet = "MSGFPlus_ConsoleOutput" + suffixToAdd + ".txt";
                         currentStep = "Retrieving " + fileToGet;
 
-                        if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, false))
+                        if (!FileSearch.FindAndRetrieveMiscFiles(consoleOutputFile, unzip: false, searchArchivedDatasetFolder: true, logFileNotFound: false))
                         {
                             // This is not an important error; ignore it
                         }
