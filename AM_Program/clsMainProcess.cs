@@ -1237,7 +1237,7 @@ namespace AnalysisManagerProg
                     var intYear = Convert.ToInt32(objMatch.Groups["Year"].Value);
 
                     var dtCurrentDate = DateTime.Parse(intYear + "-" + intMonth + "-" + intDay);
-                    var dtNewDate = dtCurrentDate.Subtract(new TimeSpan(1, 0, 0, 0));
+                    var dtNewDate = dtCurrentDate.AddDays(-1);
 
                     var strPreviousLogFilePath = objMatch.Groups["BaseName"].Value + dtNewDate.ToString("MM-dd-yyyy") + Path.GetExtension(strLogFilePath);
                     return strPreviousLogFilePath;
@@ -1598,32 +1598,23 @@ namespace AnalysisManagerProg
 
         private string GetRecentLogFilename()
         {
-            string lastFilename;
-
             try
             {
                 // Obtain a list of log files
                 var logFileNameBase = GetBaseLogFileName();
                 var files = Directory.GetFiles(m_MgrFolderPath, logFileNameBase + "*.txt");
 
-                // Change the file names to lowercase (to assure that the sorting works)
-                for (var x = 0; x <= files.Length - 1; x++)
-                {
-                    files[x] = files[x].ToLower();
-                }
+                if (files.Length == 0)
+                    return string.Empty;
 
-                // Sort the files by filename
-                Array.Sort(files);
-
-                // Return the last filename in the list
-                lastFilename = files[files.Length - 1];
+                var newestLogFile = (from item in files orderby item.ToLower() select item).Last();
+                return newestLogFile;
             }
             catch (Exception)
             {
                 return string.Empty;
             }
 
-            return lastFilename;
         }
 
         private clsCleanupMgrErrors.eCleanupModeConstants GetManagerErrorCleanupMode()
