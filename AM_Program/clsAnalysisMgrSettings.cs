@@ -506,7 +506,19 @@ namespace AnalysisManagerProg
             }
 
             if (GetParam(MGR_PARAM_MGR_ACTIVE_LOCAL, false))
+            {
+                // MgrActive_Local is true, set mgractive to true
                 SetParam(MGR_PARAM_MGR_ACTIVE, "true");
+            }
+
+            if (string.IsNullOrWhiteSpace(GetParam("workdir")))
+            {
+                // Define the work directory based on the manager name
+                if (workDirPath.Contains("/"))
+                    SetParam("workdir", clsPathUtils.CombineLinuxPaths(workDirPath, ManagerName));
+                else
+                    SetParam("workdir", Path.Combine(workDirPath, ManagerName));
+            }
 
             return true;
         }
