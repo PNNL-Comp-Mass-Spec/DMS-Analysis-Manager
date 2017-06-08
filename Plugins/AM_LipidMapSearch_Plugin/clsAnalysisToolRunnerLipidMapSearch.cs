@@ -160,7 +160,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                     // Write the console output to a text file
                     Thread.Sleep(250);
 
-                    StreamWriter swConsoleOutputfile = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
+                    var swConsoleOutputfile = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
                     swConsoleOutputfile.WriteLine(mCmdRunner.CachedConsoleOutput);
                     swConsoleOutputfile.Close();
                 }
@@ -191,7 +191,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
 
                     if (mCmdRunner.ExitCode != 0)
                     {
-                        LogWarning("LipidTools returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
+                        LogWarning("LipidTools returned a non-zero exit code: " + mCmdRunner.ExitCode);
                     }
                     else
                     {
@@ -264,12 +264,12 @@ namespace AnalysisManagerLipidMapSearchPlugIn
         private string DownloadNewLipidMapsDB(DirectoryInfo diLipidMapsDBFolder, string strNewestLipidMapsDBFileName)
         {
             var lockFileFound = false;
-            string strLockFilePath = string.Empty;
+            var strLockFilePath = string.Empty;
 
-            string strHashCheckFilePath = string.Empty;
-            string strNewestLipidMapsDBFileHash = string.Empty;
+            var strHashCheckFilePath = string.Empty;
+            var strNewestLipidMapsDBFileHash = string.Empty;
 
-            DateTime dtLipidMapsDBFileTime = DateTime.Now;
+            var dtLipidMapsDBFileTime = DateTime.Now;
 
             // Look for a recent .lock file
 
@@ -321,7 +321,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
 
             // Call the LipidTools.exe program to obtain the latest database
 
-            string strTimeStamp = DateTime.Now.ToString("yyyy-MM-dd");
+            var strTimeStamp = DateTime.Now.ToString("yyyy-MM-dd");
             var newLipidMapsDBFilePath = Path.Combine(diLipidMapsDBFolder.FullName, LIPID_MAPS_DB_FILENAME_PREFIX + strTimeStamp);
 
             // Create a new lock file
@@ -329,8 +329,8 @@ namespace AnalysisManagerLipidMapSearchPlugIn
 
             // Call the LipidTools program to obtain the latest database from http://www.lipidmaps.org/
             string cmdStr = null;
-            bool blnSuccess = false;
-            string strLipidMapsDBFileLocal = Path.Combine(m_WorkDir, LIPID_MAPS_DB_FILENAME_PREFIX + strTimeStamp + ".txt");
+            var blnSuccess = false;
+            var strLipidMapsDBFileLocal = Path.Combine(m_WorkDir, LIPID_MAPS_DB_FILENAME_PREFIX + strTimeStamp + ".txt");
 
             LogMessage("Downloading latest LipidMaps database");
 
@@ -359,7 +359,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
 
                 if (mCmdRunner.ExitCode != 0)
                 {
-                    LogWarning("LipidTools returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
+                    LogWarning("LipidTools returned a non-zero exit code: " + mCmdRunner.ExitCode);
                 }
                 else
                 {
@@ -478,7 +478,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
             string strParamFileFolderPath = null;
 
             string strNewestLipidMapsDBFileName = null;
-            DateTime dtLipidMapsDBFileTime = DateTime.MinValue;
+            var dtLipidMapsDBFileTime = DateTime.MinValue;
 
             string strSourceFilePath = null;
             string strTargetFilePath = null;
@@ -573,7 +573,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
 
         private Dictionary<string, string> GetLipidMapsParameterNames()
         {
-            var dctParamNames = new Dictionary<string, string>(25, StringComparer.CurrentCultureIgnoreCase);
+            var dctParamNames = new Dictionary<string, string>(25, StringComparer.OrdinalIgnoreCase);
 
             dctParamNames.Add("AlignmentToleranceNET", "an");
             dctParamNames.Add("AlignmentToleranceMassPPM", "am");
@@ -649,10 +649,10 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 string strLineIn = null;
                 double dblSubProgressAddon = 0;
 
-                int intSubProgressCount = 0;
-                int intSubProgressCountTotal = 0;
+                var intSubProgressCount = 0;
+                var intSubProgressCountTotal = 0;
 
-                int intEffectiveProgress = 0;
+                var intEffectiveProgress = 0;
                 intEffectiveProgress = PROGRESS_PCT_LIPID_TOOLS_STARTING;
 
                 using (var srInFile = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
@@ -665,7 +665,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                             continue;
 
                         // Update progress if the line starts with one of the expected phrases
-                        foreach (KeyValuePair<string, int> oItem in mConsoleOutputProgressMap)
+                        foreach (var oItem in mConsoleOutputProgressMap)
                         {
                             if (strLineIn.StartsWith(oItem.Key))
                             {
@@ -753,7 +753,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
 
                         if (!strLineIn.StartsWith("#") && strLineIn.Contains("="))
                         {
-                            int intCharIndex = 0;
+                            var intCharIndex = 0;
                             intCharIndex = strLineIn.IndexOf('=');
                             if (intCharIndex > 0)
                             {
@@ -772,7 +772,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                         if (string.IsNullOrWhiteSpace(strKey))
                             continue;
 
-                        string strArgumentSwitch = string.Empty;
+                        var strArgumentSwitch = string.Empty;
 
                         // Check whether strKey is one of the standard keys defined in dctParamNames
                         if (dctParamNames.TryGetValue(strKey, out strArgumentSwitch))
@@ -785,7 +785,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                         }
                         else if (strKey.ToLower() == "noscangroups")
                         {
-                            bool blnValue = false;
+                            var blnValue = false;
                             if (bool.TryParse(strValue, out blnValue))
                             {
                                 if (blnValue)
@@ -830,7 +830,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
 
                 Thread.Sleep(500);
 
-                foreach (string strFileName in lstFilesToMove)
+                foreach (var strFileName in lstFilesToMove)
                 {
                     var fiSourceFile = new FileInfo(Path.Combine(m_WorkDir, strFileName));
 
@@ -883,8 +883,8 @@ namespace AnalysisManagerLipidMapSearchPlugIn
         /// <remarks></remarks>
         private bool StoreToolVersionInfo(string strLipidToolsProgLoc)
         {
-            string strToolVersionInfo = string.Empty;
-            bool blnSuccess = false;
+            var strToolVersionInfo = string.Empty;
+            var blnSuccess = false;
 
             if (m_DebugLevel >= 2)
             {
@@ -912,7 +912,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 return false;
 
             // Store paths to key DLLs in ioToolFiles
-            List<FileInfo> ioToolFiles = new List<FileInfo>();
+            var ioToolFiles = new List<FileInfo>();
             ioToolFiles.Add(ioLipidTools);
 
             try

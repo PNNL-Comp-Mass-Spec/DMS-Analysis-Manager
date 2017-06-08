@@ -177,7 +177,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
                 }
 
                 string strLineIn = null;
-                int peakDetectProgress = 0;
+                var peakDetectProgress = 0;
 
                 using (var srInFile = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
@@ -188,7 +188,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
                         if (string.IsNullOrWhiteSpace(strLineIn))
                             continue;
 
-                        Match reMatch = reProgress.Match(strLineIn);
+                        var reMatch = reProgress.Match(strLineIn);
 
                         if (reMatch.Success)
                         {
@@ -217,14 +217,14 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
         private bool RunDeconPeakDetector(string strPeakDetectorProgLoc)
         {
             string CmdStr = null;
-            bool blnSuccess = false;
+            var blnSuccess = false;
 
             var peakDetectorParamFileName = m_jobParams.GetJobParameter("PeakDetectorParamFile", "");
             var paramFilePath = Path.Combine(m_WorkDir, peakDetectorParamFileName);
 
             mConsoleOutputErrorMsg = string.Empty;
 
-            string rawDataType = m_jobParams.GetParam("RawDataType");
+            var rawDataType = m_jobParams.GetParam("RawDataType");
             var eRawDataType = clsAnalysisResources.GetRawDataType(rawDataType);
 
             if (eRawDataType == clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile)
@@ -272,7 +272,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
 
                 if (mCmdRunner.ExitCode != 0)
                 {
-                    LogWarning("PeakDetector returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
+                    LogWarning("PeakDetector returned a non-zero exit code: " + mCmdRunner.ExitCode);
                 }
                 else
                 {
@@ -298,7 +298,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
         /// <remarks></remarks>
         private bool StoreToolVersionInfo(string strPeakDetectorPath)
         {
-            string strToolVersionInfo = string.Empty;
+            var strToolVersionInfo = string.Empty;
 
             if (m_DebugLevel >= 2)
             {
@@ -316,7 +316,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
             base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, dllPath);
 
             // Store paths to key files in ioToolFiles
-            List<FileInfo> ioToolFiles = new List<FileInfo>();
+            var ioToolFiles = new List<FileInfo>();
             ioToolFiles.Add(new FileInfo(strPeakDetectorPath));
             ioToolFiles.Add(new FileInfo(dllPath));
 

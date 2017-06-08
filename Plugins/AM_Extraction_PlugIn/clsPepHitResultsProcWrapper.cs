@@ -104,10 +104,10 @@ namespace AnalysisManagerExtractionPlugin
             string fastaFilePath, string resultType)
         {
             string ModDefsFileName = null;
-            string ParamFileName = m_JobParams.GetParam("ParmFileName");
+            var ParamFileName = m_JobParams.GetParam("ParmFileName");
 
             string cmdStr = null;
-            bool blnSuccess = false;
+            var blnSuccess = false;
 
             try
             {
@@ -126,7 +126,7 @@ namespace AnalysisManagerExtractionPlugin
                 var ioInputFile = new FileInfo(peptideSearchResultsFileName);
                 m_PHRPConsoleOutputFilePath = Path.Combine(ioInputFile.DirectoryName, "PHRPOutput.txt");
 
-                string progLoc = m_MgrParams.GetParam("PHRPProgLoc");
+                var progLoc = m_MgrParams.GetParam("PHRPProgLoc");
                 progLoc = Path.Combine(progLoc, "PeptideHitResultsProcRunner.exe");
 
                 // Verify that program file exists
@@ -162,8 +162,8 @@ namespace AnalysisManagerExtractionPlugin
                 // Thus, we only need to use these switches if either of these should be false
                 if (!createFirstHitsFile || !createSynopsisFile)
                 {
-                    cmdStr += " /InsFHT:" + createFirstHitsFile.ToString();
-                    cmdStr += " /InsSyn:" + createSynopsisFile.ToString();
+                    cmdStr += " /InsFHT:" + createFirstHitsFile;
+                    cmdStr += " /InsSyn:" + createSynopsisFile;
                 }
 
                 // PHRP defaults to use /MSGFPlusSpecEValue:5E-7  and  /MSGFPlusEValue:0.75
@@ -209,7 +209,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 if (cmdRunner.ExitCode != 0)
                 {
-                    m_ErrMsg = "PHRP runner returned a non-zero error code: " + cmdRunner.ExitCode.ToString();
+                    m_ErrMsg = "PHRP runner returned a non-zero error code: " + cmdRunner.ExitCode;
 
                     // Parse the console output file for any lines that contain "Error"
                     // Append them to m_ErrMsg
@@ -267,7 +267,7 @@ namespace AnalysisManagerExtractionPlugin
                         {
                             if (!string.IsNullOrEmpty(fastaFilePath))
                             {
-                                string strWarningMessage = string.Empty;
+                                var strWarningMessage = string.Empty;
 
                                 if (PeptideHitResultsProcessor.clsPHRPBaseClass.ValidateProteinFastaFile(fastaFilePath, out strWarningMessage))
                                 {
@@ -281,7 +281,7 @@ namespace AnalysisManagerExtractionPlugin
                         }
                     }
 
-                    foreach (string strFileName in lstFilesToCheck)
+                    foreach (var strFileName in lstFilesToCheck)
                     {
                         if (ioInputFile.Directory.GetFiles("*" + strFileName).Length == 0)
                         {

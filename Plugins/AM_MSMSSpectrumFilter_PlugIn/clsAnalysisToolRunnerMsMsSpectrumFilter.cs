@@ -276,7 +276,7 @@ namespace MSMSSpectrumFilterAM
             // =================================== "vxl_VP2P74_B_4_F12_rn1_14May08_Falcon_080403-F4.1001.1001.2_1_2.dta" ==================================
             const string DTA_FILENAME_REGEX = @"^\s*[=]{5,}\s+\""([^.]+)\.\d+\.\d+\..+dta";
 
-            int intDTACount = 0;
+            var intDTACount = 0;
             string strLineIn = null;
 
             try
@@ -429,8 +429,8 @@ namespace MSMSSpectrumFilterAM
             string strInputFilePath = null;
             string strBakFilePath = null;
 
-            bool blnSuccess = false;
-            bool blnFilesMatch = false;
+            var blnSuccess = false;
+            var blnFilesMatch = false;
 
             try
             {
@@ -546,9 +546,9 @@ namespace MSMSSpectrumFilterAM
             string strRawFileName = null;
             string strFinniganRawFilePath = null;
 
-            bool blnScanStatsFilesExist = false;
+            var blnScanStatsFilesExist = false;
 
-            bool blnSuccess = false;
+            var blnSuccess = false;
 
             try
             {
@@ -696,7 +696,7 @@ namespace MSMSSpectrumFilterAM
             // Error msg handled by VerifyDirExists
 
             // Settings file exist?
-            string SettingsNamePath = Path.Combine(m_WorkDir, m_SettingsFileName);
+            var SettingsNamePath = Path.Combine(m_WorkDir, m_SettingsFileName);
             if (!VerifyFileExists(SettingsNamePath))
                 return false;
             // Error msg handled by VerifyFileExists
@@ -733,8 +733,8 @@ namespace MSMSSpectrumFilterAM
         /// <remarks></remarks>
         private bool StoreToolVersionInfo()
         {
-            string strToolVersionInfo = string.Empty;
-            string strAppFolderPath = clsGlobal.GetAppFolderPath();
+            var strToolVersionInfo = string.Empty;
+            var strAppFolderPath = clsGlobal.GetAppFolderPath();
 
             if (m_DebugLevel >= 2)
             {
@@ -754,7 +754,7 @@ namespace MSMSSpectrumFilterAM
             }
 
             // Store the path to MsMsDataFileReader.dll in ioToolFiles
-            List<FileInfo> ioToolFiles = new List<FileInfo>();
+            var ioToolFiles = new List<FileInfo>();
             ioToolFiles.Add(new FileInfo(Path.Combine(strAppFolderPath, "MsMsDataFileReader.dll")));
 
             try
@@ -820,8 +820,8 @@ namespace MSMSSpectrumFilterAM
         protected virtual CloseOutType ZipConcDtaFile()
         {
             // Zips the concatenated dta file
-            string DtaFileName = m_Dataset + "_dta.txt";
-            string DtaFilePath = Path.Combine(m_WorkDir, DtaFileName);
+            var DtaFileName = m_Dataset + "_dta.txt";
+            var DtaFilePath = Path.Combine(m_WorkDir, DtaFileName);
 
             // Verify file exists
             if (File.Exists(DtaFilePath))
@@ -839,14 +839,14 @@ namespace MSMSSpectrumFilterAM
             {
                 if (!base.ZipFile(DtaFilePath, false))
                 {
-                    string Msg = "Error zipping concat dta file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step");
+                    var Msg = "Error zipping concat dta file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step");
                     LogError(Msg);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
             }
             catch (Exception ex)
             {
-                string Msg = "Exception zipping concat dta file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step") + ": " + ex.Message;
+                var Msg = "Exception zipping concat dta file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step") + ": " + ex.Message;
                 LogError(Msg);
                 return CloseOutType.CLOSEOUT_FAILED;
             }

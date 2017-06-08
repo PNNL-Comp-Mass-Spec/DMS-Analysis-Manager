@@ -20,18 +20,9 @@ namespace AnalysisManagerOMSSAPlugIn
     {
         #region "Module Variables"
 
-        protected const float PROGRESS_PCT_OMSSA_RUNNING = 5;
-        protected const float PROGRESS_PCT_PEPTIDEHIT_START = 95;
-        protected const float PROGRESS_PCT_PEPTIDEHIT_COMPLETE = 99;
-
-        //--------------------------------------------------------------------------------------------
-        //Future section to monitor OMSSA log file for progress determination
-        //--------------------------------------------------------------------------------------------
-        //Dim WithEvents m_StatFileWatch As FileSystemWatcher
-        //Protected m_XtSetupFile As String = "default_input.xml"
-        //--------------------------------------------------------------------------------------------
-        //End future section
-        //--------------------------------------------------------------------------------------------
+        private const float PROGRESS_PCT_OMSSA_RUNNING = 5;
+        private const float PROGRESS_PCT_PEPTIDEHIT_START = 95;
+        private const float PROGRESS_PCT_PEPTIDEHIT_COMPLETE = 99;
 
         #endregion
 
@@ -79,7 +70,7 @@ namespace AnalysisManagerOMSSAPlugIn
             }
 
             // verify that program file exists
-            string progLoc = m_mgrParams.GetParam("OMSSAprogloc");
+            var progLoc = m_mgrParams.GetParam("OMSSAprogloc");
             if (!File.Exists(progLoc))
             {
                 if (progLoc.Length == 0)
@@ -88,24 +79,8 @@ namespace AnalysisManagerOMSSAPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            //--------------------------------------------------------------------------------------------
-            //Future section to monitor OMSSA log file for progress determination
-            //--------------------------------------------------------------------------------------------
-            //'Get the OMSSA log file name for a File Watcher to monitor
-            //Dim OMSSALogFileName As String = GetOMSSALogFileName(Path.Combine(m_WorkDir, m_OMSSASetupFile))
-            //If OMSSALogFileName = "" Then
-            //	m_logger.PostEntry("Error getting OMSSA log file name", ILogger.logMsgType.logError, True)
-            //	Return CloseOutType.CLOSEOUT_FAILED
-            //End If
+            var inputFilename = Path.Combine(m_WorkDir, "OMSSA_Input.xml");
 
-            //'Setup and start a File Watcher to monitor the OMSSA log file
-            //StartFileWatcher(m_workdir, OMSSALogFileName)
-            //--------------------------------------------------------------------------------------------
-            //End future section
-            //--------------------------------------------------------------------------------------------
-
-            string inputFilename = Path.Combine(m_WorkDir, "OMSSA_Input.xml");
-            
             //Set up and execute a program runner to run OMSSA
             var cmdStr = " -pm " + inputFilename;
 
@@ -190,7 +165,7 @@ namespace AnalysisManagerOMSSAPlugIn
         {
             //Zip the output file
             string strOMSSAResultsFilePath = null;
-            bool blnSuccess = false;
+            var blnSuccess = false;
 
             strOMSSAResultsFilePath = Path.Combine(m_WorkDir, m_Dataset + "_om.omx");
 
@@ -209,7 +184,7 @@ namespace AnalysisManagerOMSSAPlugIn
             LogProgress("OMSSA");
         }
 
-        protected bool ConvertOMSSA2PepXmlFile()
+        private bool ConvertOMSSA2PepXmlFile()
         {
             string CmdStr = null;
             var result = true;
@@ -230,7 +205,7 @@ namespace AnalysisManagerOMSSAPlugIn
                 }
 
                 // verify that program formatdb.exe file exists
-                string progLoc = m_mgrParams.GetParam("omssa2pepprogloc");
+                var progLoc = m_mgrParams.GetParam("omssa2pepprogloc");
                 if (!File.Exists(progLoc))
                 {
                     if (progLoc.Length == 0)
@@ -239,8 +214,8 @@ namespace AnalysisManagerOMSSAPlugIn
                     return false;
                 }
 
-                string outputFilename = Path.Combine(m_WorkDir, m_Dataset + "_pepxml.xml");
-                string inputFilename = Path.Combine(m_WorkDir, m_Dataset + "_om_large.omx");
+                var outputFilename = Path.Combine(m_WorkDir, m_Dataset + "_pepxml.xml");
+                var inputFilename = Path.Combine(m_WorkDir, m_Dataset + "_om_large.omx");
 
                 //Set up and execute a program runner to run Omssa2PepXml.exe
                 //omssa2pepxml.exe -xml -o C:\DMS_WorkDir\QC_Shew_09_02_pt5_a_20May09_Earth_09-04-20_pepxml.xml C:\DMS_WorkDir\QC_Shew_09_02_pt5_a_20May09_Earth_09-04-20_omx_large.omx
@@ -276,9 +251,9 @@ namespace AnalysisManagerOMSSAPlugIn
         /// Stores the tool version info in the database
         /// </summary>
         /// <remarks></remarks>
-        protected bool StoreToolVersionInfo()
+        private bool StoreToolVersionInfo()
         {
-            string strToolVersionInfo = string.Empty;
+            var strToolVersionInfo = string.Empty;
 
             if (m_DebugLevel >= 2)
             {
@@ -286,7 +261,7 @@ namespace AnalysisManagerOMSSAPlugIn
             }
 
             // Store paths to key files in ioToolFiles
-            List<FileInfo> ioToolFiles = new List<FileInfo>();
+            var ioToolFiles = new List<FileInfo>();
             ioToolFiles.Add(new FileInfo(m_mgrParams.GetParam("OMSSAprogloc")));
             ioToolFiles.Add(new FileInfo(m_mgrParams.GetParam("omssa2pepprogloc")));
 
@@ -300,32 +275,6 @@ namespace AnalysisManagerOMSSAPlugIn
                 return false;
             }
         }
-
-        //--------------------------------------------------------------------------------------------
-        //Future section to monitor OMSSA log file for progress determination
-        //--------------------------------------------------------------------------------------------
-        //	Private Sub StartFileWatcher(ByVal DirToWatch As String, ByVal FileToWatch As String)
-
-        //'Watches the OMSSA status file and reports changes
-
-        //'Setup
-        //m_StatFileWatch = New FileSystemWatcher
-        //With m_StatFileWatch
-        //	.BeginInit()
-        //	.Path = DirToWatch
-        //	.IncludeSubdirectories = False
-        //	.Filter = FileToWatch
-        //	.NotifyFilter = NotifyFilters.LastWrite Or NotifyFilters.Size
-        //	.EndInit()
-        //End With
-
-        //'Start monitoring
-        //m_StatFileWatch.EnableRaisingEvents = True
-
-        //	End Sub
-        //--------------------------------------------------------------------------------------------
-        //End future section
-        //--------------------------------------------------------------------------------------------
 
         #endregion
     }

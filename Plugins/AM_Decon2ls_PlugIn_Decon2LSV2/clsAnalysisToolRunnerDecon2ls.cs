@@ -788,7 +788,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                         return eResult;
                     }
 
-                    LogError("AssembleResults returned " + eResult.ToString());
+                    LogError("AssembleResults returned " + eResult);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
             }
@@ -988,7 +988,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     // TODO: Add support for this after Decon2LS is updated
                     // Return DeconToolsFileTypeConstants.Bruker_15T
 
-                    LogError("Decon2LS_V2 does not yet support Bruker MALDI data (" + eRawDataType.ToString() + ")");
+                    LogError("Decon2LS_V2 does not yet support Bruker MALDI data (" + eRawDataType + ")");
 
                     return DeconToolsFileTypeConstants.Undefined;
 
@@ -997,7 +997,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     // TODO: Add support for this after Decon2LS is updated
                     // Return DeconToolsFileTypeConstants.Bruker_15T
 
-                    LogError("Decon2LS_V2 does not yet support Bruker MALDI data (" + eRawDataType.ToString() + ")");
+                    LogError("Decon2LS_V2 does not yet support Bruker MALDI data (" + eRawDataType + ")");
 
                     return DeconToolsFileTypeConstants.Undefined;
                 case clsAnalysisResources.eRawDataTypeConstants.mzXML:

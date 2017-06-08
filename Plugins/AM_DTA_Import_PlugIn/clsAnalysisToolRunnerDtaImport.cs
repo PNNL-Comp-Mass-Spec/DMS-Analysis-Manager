@@ -56,9 +56,9 @@ namespace AnalysisManagerDtaImportPlugIn
 
         private CloseOutType CopyManualDTAs()
         {
-            string SourceFolderNamePath = string.Empty;
-            string TargetFolderNamePath = string.Empty;
-            string CompleteFolderNamePath = string.Empty;
+            var SourceFolderNamePath = string.Empty;
+            var TargetFolderNamePath = string.Empty;
+            var CompleteFolderNamePath = string.Empty;
 
             try
             {

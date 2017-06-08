@@ -21,7 +21,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
                 return result;
             }
 
-            string strRawDataType = m_jobParams.GetJobParameter("RawDataType", "");
+            var strRawDataType = m_jobParams.GetJobParameter("RawDataType", "");
 
             // Retrieve the peak detector parameter file
 

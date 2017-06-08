@@ -98,7 +98,7 @@ namespace DTASpectraFileGen
         public bool ConvertMGFtoDTA(clsAnalysisResources.eRawDataTypeConstants eRawDataType, string strDatasetName)
         {
             string strMGFFilePath = null;
-            bool blnSuccess = false;
+            var blnSuccess = false;
 
             m_ErrMsg = string.Empty;
 
@@ -177,15 +177,15 @@ namespace DTASpectraFileGen
 
         private bool ParseMzMLFile(string strMzMLFilePath, out bool blnAutoNumberScans, Dictionary<string, udtScanInfoType> lstSpectrumIDToScanNumber)
         {
-            string strSpectrumID = string.Empty;
+            var strSpectrumID = string.Empty;
 
-            int intScanNumberStart = 0;
-            int intScanNumberEnd = 0;
-            int intCharge = 0;
+            var intScanNumberStart = 0;
+            var intScanNumberEnd = 0;
+            var intCharge = 0;
 
             var intScanNumberCurrent = 0;
-            string strValue = string.Empty;
-            int intValue = 0;
+            var strValue = string.Empty;
+            var intValue = 0;
 
             blnAutoNumberScans = false;
 
@@ -202,7 +202,7 @@ namespace DTASpectraFileGen
                     if (!(objXMLReader.ReadState == ReadState.Interactive))
                         break;
 
-                    udtScanInfoType udtScanInfo = new udtScanInfoType();
+                    var udtScanInfo = new udtScanInfoType();
                     if (objXMLReader.NodeType == XmlNodeType.Element)
                     {
                         switch (objXMLReader.Name)
@@ -285,8 +285,8 @@ namespace DTASpectraFileGen
 
         private string XMLTextReaderGetInnerText(XmlTextReader objXMLReader)
         {
-            string strValue = string.Empty;
-            bool blnSuccess = false;
+            var strValue = string.Empty;
+            var blnSuccess = false;
 
             if (objXMLReader.NodeType == XmlNodeType.Element)
             {
@@ -321,8 +321,8 @@ namespace DTASpectraFileGen
             string strLineIn = null;
             string strTitle = null;
 
-            bool blnSuccess = false;
-            bool blnAutoNumberScans = false;
+            var blnSuccess = false;
+            var blnAutoNumberScans = false;
 
             var lstSpectrumIDtoScanNumber = new Dictionary<string, udtScanInfoType>();
 

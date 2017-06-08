@@ -123,7 +123,7 @@ namespace AnalysisManagerMODPlusPlugin
 
                         startScanFound = true;
 
-                        Match reMatch = mExtractChargeAndScan.Match(dataLine);
+                        var reMatch = mExtractChargeAndScan.Match(dataLine);
 
                         mCurrentScanChargeCombo = 0;
 

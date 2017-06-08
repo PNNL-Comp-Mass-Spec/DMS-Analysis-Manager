@@ -23,7 +23,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
             var fileSpecList = m_jobParams.GetParam("TargetJobFileList").Split(',').ToList();
 
-            foreach (string fileSpec in fileSpecList.ToList())
+            foreach (var fileSpec in fileSpecList.ToList())
             {
                 var fileSpecTerms = fileSpec.Split(':').ToList();
                 if (fileSpecTerms.Count <= 2 || !(fileSpecTerms[2].ToLower().Trim() == "copy"))

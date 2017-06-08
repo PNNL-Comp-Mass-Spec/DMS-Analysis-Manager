@@ -64,7 +64,7 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
 
             // verify that program file exists
             // progLoc will be something like this: "C:\DMS_Programs\MSDataFileTrimmer\MSDataFileTrimmer.exe"
-            string progLoc = m_mgrParams.GetParam("MSDataFileTrimmerprogloc");
+            var progLoc = m_mgrParams.GetParam("MSDataFileTrimmerprogloc");
             if (!File.Exists(progLoc))
             {
                 if (progLoc.Length == 0)
@@ -128,7 +128,7 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo()
         {
-            string strToolVersionInfo = string.Empty;
+            var strToolVersionInfo = string.Empty;
 
             if (m_DebugLevel >= 2)
             {
@@ -136,7 +136,7 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
             }
 
             // Store paths to key files in ioToolFiles
-            List<FileInfo> ioToolFiles = new List<FileInfo>();
+            var ioToolFiles = new List<FileInfo>();
             ioToolFiles.Add(new FileInfo(m_mgrParams.GetParam("MSDataFileTrimmerprogloc")));
 
             try

@@ -48,7 +48,7 @@ namespace AnalysisManagerProMexPlugIn
             // Otherwise, for MSPathFinder scripts, the ProMex parameter file is defined in the Job's settings file, and is thus accessible as job parameter ProMexParamFile
 
             var toolName = m_jobParams.GetParam("ToolName");
-            var proMexScript = toolName.StartsWith("ProMex", StringComparison.CurrentCultureIgnoreCase);
+            var proMexScript = toolName.StartsWith("ProMex", StringComparison.OrdinalIgnoreCase);
             var proMexBruker = IsProMexBrukerJob(m_jobParams);
 
             if (proMexScript)
@@ -120,7 +120,7 @@ namespace AnalysisManagerProMexPlugIn
         public static bool IsProMexBrukerJob(IJobParams jobParams)
         {
             var toolName = jobParams.GetParam("ToolName");
-            var proMexBruker = toolName.StartsWith("ProMex_Bruker", StringComparison.CurrentCultureIgnoreCase);
+            var proMexBruker = toolName.StartsWith("ProMex_Bruker", StringComparison.OrdinalIgnoreCase);
 
             return proMexBruker;
         }

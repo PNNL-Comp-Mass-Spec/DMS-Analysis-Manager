@@ -102,11 +102,11 @@ namespace AnalysisManager_AScore_PlugIn
             try
             {
                 // extract contents of results file for current job to local file in working directory
-                BaseModule currentJob = MakeJobSourceModule(jobFieldNames, vals);
+                var currentJob = MakeJobSourceModule(jobFieldNames, vals);
                 ExtractResultsForJob(currentJob, ExtractionParms, ExtractedResultsFileName);
                 
                 // copy DTA file for current job to working directory
-                string jobText = vals[jobIdx];
+                var jobText = vals[jobIdx];
                 int jobNumber;
                 if (!int.TryParse(jobText, out jobNumber))
                 {
@@ -114,29 +114,29 @@ namespace AnalysisManager_AScore_PlugIn
                     return false;
                 }
 
-                string resultsFolderPath = vals[resultsFldrIdx];
-                string paramFileNameForPSMTool = vals[paramFileIdx];
-                string datasetName = vals[datasetNameIdx];
-                string datasetType = vals[datasetTypeIdx];
-                string analysisTool = vals[toolIdx];
+                var resultsFolderPath = vals[resultsFldrIdx];
+                var paramFileNameForPSMTool = vals[paramFileIdx];
+                var datasetName = vals[datasetNameIdx];
+                var datasetType = vals[datasetTypeIdx];
+                var analysisTool = vals[toolIdx];
                 
-                string dtaFilePath = CopyDTAResults(datasetName, resultsFolderPath, jobNumber, analysisTool, mConnectionString);
+                var dtaFilePath = CopyDTAResults(datasetName, resultsFolderPath, jobNumber, analysisTool, mConnectionString);
                 if (string.IsNullOrEmpty(dtaFilePath))
                 {
                     return false;
                 }
                 
                 string fragtype;
-                if (datasetType.IndexOf("HCD", StringComparison.CurrentCultureIgnoreCase) > 0)
+                if (datasetType.IndexOf("HCD", StringComparison.OrdinalIgnoreCase) > 0)
                     fragtype = "hcd";
-                else if (datasetType.IndexOf("ETD", StringComparison.CurrentCultureIgnoreCase) > 0)
+                else if (datasetType.IndexOf("ETD", StringComparison.OrdinalIgnoreCase) > 0)
                 {
                     fragtype = "etd";
                 }
                 else
                 {
-                    string settingsFileName = vals[settingsFileIdx];
-                    string findFragmentation = (paramFileNameForPSMTool + "_" + settingsFileName).ToLower();
+                    var settingsFileName = vals[settingsFileIdx];
+                    var findFragmentation = (paramFileNameForPSMTool + "_" + settingsFileName).ToLower();
                     if (findFragmentation.Contains("hcd"))
                     {
                         fragtype = "hcd";
@@ -154,19 +154,19 @@ namespace AnalysisManager_AScore_PlugIn
 
                 // process extracted results file and DTA file with AScore
                 const string ascoreOutputFile = ASCORE_OUTPUT_FILE_NAME_BASE + ".txt"; 
-                string ascoreOutputFilePath = Path.Combine(WorkingDir, ascoreOutputFile);
+                var ascoreOutputFilePath = Path.Combine(WorkingDir, ascoreOutputFile);
 
-                string fhtFile = Path.Combine(WorkingDir, ExtractedResultsFileName);
-                string dtaFile = Path.Combine(WorkingDir, dtaFilePath);
-                string paramFileToUse = Path.Combine(WorkingDir, Path.GetFileNameWithoutExtension(ascoreParamFileName) + "_" + fragtype + ".xml");
+                var fhtFile = Path.Combine(WorkingDir, ExtractedResultsFileName);
+                var dtaFile = Path.Combine(WorkingDir, dtaFilePath);
+                var paramFileToUse = Path.Combine(WorkingDir, Path.GetFileNameWithoutExtension(ascoreParamFileName) + "_" + fragtype + ".xml");
 
                 if (!File.Exists(paramFileToUse))
                 {
-                    string msg = "Parameter file not found: " + paramFileToUse;
+                    var msg = "Parameter file not found: " + paramFileToUse;
                     OnWarningMessage(new MageStatusEventArgs(msg));
                     Console.WriteLine(msg);
 
-                    string paramFileToUse2 = Path.Combine(WorkingDir, ascoreParamFileName);
+                    var paramFileToUse2 = Path.Combine(WorkingDir, ascoreParamFileName);
                     if (Path.GetExtension(paramFileToUse2).Length == 0)
                         paramFileToUse2 += ".xml";
 
@@ -229,7 +229,7 @@ namespace AnalysisManager_AScore_PlugIn
 
                     // load AScore results into SQLite database
                     const string tableName = "t_results_ascore";
-                    string dbFilePath = Path.Combine(WorkingDir, ResultsDBFileName);
+                    var dbFilePath = Path.Combine(WorkingDir, ResultsDBFileName);
                     clsAScoreMagePipeline.ImportFileToSQLite(fiAScoreFile.FullName, dbFilePath, tableName);
                 }
                 
@@ -279,11 +279,11 @@ namespace AnalysisManager_AScore_PlugIn
         {
             // search job results folders for list of results files to process and accumulate into buffer module
             var fileList = new SimpleSink();
-            ProcessingPipeline pgFileList = ExtractionPipelines.MakePipelineToGetListOfFiles(currentJob, fileList, extractionParms);
+            var pgFileList = ExtractionPipelines.MakePipelineToGetListOfFiles(currentJob, fileList, extractionParms);
             pgFileList.RunRoot(null);
 
             // add job metadata to results database via a Mage pipeline
-            string resultsDBPath = Path.Combine(WorkingDir, ResultsDBFileName);
+            var resultsDBPath = Path.Combine(WorkingDir, ResultsDBFileName);
             var resultsDB = new DestinationType("SQLite_Output", resultsDBPath, "t_results_metadata");
             var peJobMetadata = ExtractionPipelines.MakePipelineToExportJobMetadata(currentJob, resultsDB);
             peJobMetadata.RunRoot(null);
@@ -296,7 +296,7 @@ namespace AnalysisManager_AScore_PlugIn
             // extract contents of files
             //DestinationType destination = new DestinationType("SQLite_Output", Path.Combine(mWorkingDir, mResultsDBFileName), "t_results");
             var destination = new DestinationType("File_Output", WorkingDir, extractedResultsFileName);
-            ProcessingPipeline peFileContents = ExtractionPipelines.MakePipelineToExtractFileContents(new SinkWrapper(fileList), extractionParms, destination);
+            var peFileContents = ExtractionPipelines.MakePipelineToExtractFileContents(new SinkWrapper(fileList), extractionParms, destination);
             peFileContents.RunRoot(null);
         }
 
@@ -353,7 +353,7 @@ namespace AnalysisManager_AScore_PlugIn
                 clsGlobal.LogWarning("Unable to delete _dta.zip file: " + ex.Message);
             }
 
-            string unzippedDtaResultsFilePath = Path.ChangeExtension(dtaZipPathLocal, ".txt");
+            var unzippedDtaResultsFilePath = Path.ChangeExtension(dtaZipPathLocal, ".txt");
             return unzippedDtaResultsFilePath;
         }
 
@@ -390,7 +390,7 @@ namespace AnalysisManager_AScore_PlugIn
                 return null;
             }
 
-            string dtaZipPathLocal = Path.Combine(WorkingDir, lstArchiveFiles.First().FileInfo.Filename);
+            var dtaZipPathLocal = Path.Combine(WorkingDir, lstArchiveFiles.First().FileInfo.Filename);
 
             return dtaZipPathLocal;
         }
@@ -444,7 +444,7 @@ namespace AnalysisManager_AScore_PlugIn
             }
 
             var fiDtaZipRemote = new FileInfo(dtaZipSourceFilePath);
-            string dtaZipPathLocal = Path.Combine(WorkingDir, fiDtaZipRemote.Name);
+            var dtaZipPathLocal = Path.Combine(WorkingDir, fiDtaZipRemote.Name);
 
             // Copy the DTA file locally, overwriting if it already exists
             fiDtaZipRemote.CopyTo(dtaZipPathLocal, true);
@@ -463,9 +463,9 @@ namespace AnalysisManager_AScore_PlugIn
         {
             try
             {
-                string sqlWhere = "WHERE Job = " + jobNumber + " AND Tool LIKE '%" + toolName + "%' AND (ISNULL(Input_Folder, '') <> '')";
+                var sqlWhere = "WHERE Job = " + jobNumber + " AND Tool LIKE '%" + toolName + "%' AND (ISNULL(Input_Folder, '') <> '')";
 
-                string sqlQuery = "";
+                var sqlQuery = "";
                 sqlQuery += " SELECT Input_Folder, 1 AS Preference, GetDate() AS Saved FROM DMS_Pipeline.dbo.V_Job_Steps " + sqlWhere;
                 sqlQuery += " UNION ";
                 sqlQuery += " SELECT Input_Folder, 2 AS Preference, Saved FROM DMS_Pipeline.dbo.V_Job_Steps_History " + sqlWhere;
@@ -498,15 +498,15 @@ namespace AnalysisManager_AScore_PlugIn
 
         private string ReadJobParametersFile(string jobParameterFilePath)
         {
-            string dtaFolderName = string.Empty;
+            var dtaFolderName = string.Empty;
 
             try
             {
                 var oXmlDoc = new XmlDocument();
                 oXmlDoc.Load(jobParameterFilePath);
 
-                string folderVals = GetIniValue(oXmlDoc, "StepParameters", "SharedResultsFolders");
-                List<string> folders = folderVals.Split(',').ToList();
+                var folderVals = GetIniValue(oXmlDoc, "StepParameters", "SharedResultsFolders");
+                var folders = folderVals.Split(',').ToList();
                 dtaFolderName = folders.Last(); //this is the default folder if all else fails
                 if (folders.Count > 1)
                 {
@@ -563,7 +563,7 @@ namespace AnalysisManager_AScore_PlugIn
         {
             if (!string.IsNullOrEmpty(keyName))
             {
-                XmlElement section = GetSection(oXmlDoc, sectionName);
+                var section = GetSection(oXmlDoc, sectionName);
                 if (section != null)
                 {
                     return (XmlElement)section.SelectSingleNode("item[@key='" + keyName + "']");

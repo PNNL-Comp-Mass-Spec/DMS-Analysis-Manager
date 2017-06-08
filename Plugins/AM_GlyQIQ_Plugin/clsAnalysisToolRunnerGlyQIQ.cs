@@ -328,7 +328,7 @@ namespace AnalysisManagerGlyQIQPlugin
         {
             try
             {
-                bool headerSkipped = false;
+                var headerSkipped = false;
 
                 var totalPSMs = 0;
                 var uniqueCodeFormulaCombos = new SortedSet<string>();
@@ -383,7 +383,7 @@ namespace AnalysisManagerGlyQIQPlugin
                     }
                 }
 
-                udtPSMStatsType udtPSMStats = new udtPSMStatsType();
+                var udtPSMStats = new udtPSMStatsType();
                 udtPSMStats.Clear();
                 udtPSMStats.TotalPSMs = totalPSMs;
                 udtPSMStats.UniquePeptideCount = uniqueCodeFormulaCombos.Count;
@@ -505,7 +505,7 @@ namespace AnalysisManagerGlyQIQPlugin
         {
             const int MAX_RETRY_COUNT = 3;
 
-            bool blnSuccess = false;
+            var blnSuccess = false;
 
             try
             {
@@ -590,8 +590,8 @@ namespace AnalysisManagerGlyQIQPlugin
                 }
 
                 //Execute the SP (retry the call up to 3 times)
-                int ResCode = 0;
-                string strErrorMessage = string.Empty;
+                var ResCode = 0;
+                var strErrorMessage = string.Empty;
                 ResCode = mStoredProcedureExecutor.ExecuteSP(objCommand, MAX_RETRY_COUNT, out strErrorMessage);
 
                 if (ResCode == 0)
@@ -691,7 +691,7 @@ namespace AnalysisManagerGlyQIQPlugin
 
         protected bool RunGlyQIQ()
         {
-            bool blnSuccess = false;
+            var blnSuccess = false;
             var currentTask = "Initializing";
 
             try
@@ -703,7 +703,7 @@ namespace AnalysisManagerGlyQIQPlugin
                     return false;
                 }
 
-                string rawDataType = m_jobParams.GetParam("RawDataType");
+                var rawDataType = m_jobParams.GetParam("RawDataType");
                 var eRawDataType = clsAnalysisResources.GetRawDataType(rawDataType);
 
                 if (eRawDataType == clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile)
@@ -725,7 +725,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 m_progress = PROGRESS_PCT_STARTING;
 
                 mGlyQRunners = new Dictionary<int, clsGlyQIqRunner>();
-                List<Thread> lstThreads = new List<Thread>();
+                var lstThreads = new List<Thread>();
 
                 for (var core = 1; core <= mCoreCount; core++)
                 {
@@ -738,7 +738,7 @@ namespace AnalysisManagerGlyQIQPlugin
                     glyQRunner.CmdRunnerWaiting += CmdRunner_LoopWaiting;
                     mGlyQRunners.Add(core, glyQRunner);
 
-                    Thread newThread = new Thread(new ThreadStart(glyQRunner.StartAnalysis));
+                    var newThread = new Thread(new ThreadStart(glyQRunner.StartAnalysis));
                     newThread.Priority = ThreadPriority.BelowNormal;
                     newThread.Start();
                     lstThreads.Add(newThread);
@@ -750,7 +750,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 currentTask = "Waiting for all of the threads to exit";
 
                 var dtStartTime = DateTime.UtcNow;
-                SortedSet<int> completedCores = new SortedSet<int>();
+                var completedCores = new SortedSet<int>();
 
                 while (true)
                 {
@@ -807,7 +807,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 }
 
                 blnSuccess = true;
-                int exitCode = 0;
+                var exitCode = 0;
 
                 currentTask = "Looking for console output error messages";
 
@@ -839,7 +839,7 @@ namespace AnalysisManagerGlyQIQPlugin
 
                     if (exitCode != 0)
                     {
-                        LogWarning("GlyQ-IQ returned a non-zero exit code: " + exitCode.ToString());
+                        LogWarning("GlyQ-IQ returned a non-zero exit code: " + exitCode);
                     }
                     else
                     {
@@ -873,8 +873,8 @@ namespace AnalysisManagerGlyQIQPlugin
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo(string strProgLoc)
         {
-            string strToolVersionInfo = string.Empty;
-            bool blnSuccess = false;
+            var strToolVersionInfo = string.Empty;
+            var blnSuccess = false;
 
             if (m_DebugLevel >= 2)
             {

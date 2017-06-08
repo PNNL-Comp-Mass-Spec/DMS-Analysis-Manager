@@ -74,8 +74,8 @@ namespace AnalysisManagerInSpecTPlugIn
 
             string CloneStepRenum = null;
             string stepNum = null;
-            int parallelZipNum = 0;
-            bool isParallelized = false;
+            var parallelZipNum = 0;
+            var isParallelized = false;
 
             CloneStepRenum = m_jobParams.GetParam("CloneStepRenumberStart");
             stepNum = m_jobParams.GetParam("Step");
@@ -90,10 +90,10 @@ namespace AnalysisManagerInSpecTPlugIn
                 parallelZipNum = Convert.ToInt32(stepNum) - Convert.ToInt32(CloneStepRenum) + 1;
                 DtaResultFileName = DatasetName + "_" + Convert.ToString(parallelZipNum) + "_dta.txt";
                 isParallelized = true;
-                LogMessage("Processing parallelized Inspect segment " + parallelZipNum.ToString());
+                LogMessage("Processing parallelized Inspect segment " + parallelZipNum);
             }
 
-            string DtaResultFolderName = FileSearch.FindDataFile(DtaResultFileName);
+            var DtaResultFolderName = FileSearch.FindDataFile(DtaResultFileName);
 
             if (string.IsNullOrEmpty(DtaResultFolderName))
             {

@@ -46,7 +46,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         public const string MSGFPLUS_TSV_SUFFIX = "_msgfplus.tsv";
 
         // Obsolete setting: Old MS-GFDB program
-        //Public Const MSGFDB_JAR_NAME As String = "MSGFDB.jar"
+        // public const string MSGFDB_JAR_NAME = "MSGFDB.jar";
 
         public const string MSGFPLUS_JAR_NAME = "MSGFPlus.jar";
         public const string MSGFPLUS_CONSOLE_OUTPUT_FILE = "MSGFPlus_ConsoleOutput.txt";
@@ -69,7 +69,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         private readonly IJobParams m_jobParams;
 
         private readonly string m_WorkDir;
-        private readonly int m_JobNum;
         private readonly short m_DebugLevel;
 
         private readonly bool mMSGFPlus;
@@ -134,7 +133,6 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             m_WorkDir = workDir;
 
-            m_JobNum = jobNum;
             m_DebugLevel = debugLevel;
 
             mMSGFPlus = msgfPlus;
@@ -864,7 +862,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                         if (File.Exists(strResultsFilePath))
                         {
-                            success = ValidatePeptideToProteinMapResults(strResultsFilePath, ignorePeptideToProteinMapperErrors);
+                            success = ValidatePeptideToProteinMapResults(strResultsFilePath, ignorePeptideToProteinMapperErrors: true);
                         }
                         else
                         {
@@ -874,7 +872,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                     else
                     {
                         OnErrorEvent("Error in CreatePeptideToProteinMapping");
-                        success = false;
                     }
                 }
 
@@ -1133,7 +1130,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         {
             // Keys are the parameter name in the MS-GF+ parameter file
             // Values are the command line switch name
-            var dctParamNames = new Dictionary<string, string>(25, StringComparer.CurrentCultureIgnoreCase)
+            var dctParamNames = new Dictionary<string, string>(25, StringComparer.OrdinalIgnoreCase)
             {
                 {"PMTolerance", "t"},
                 {MSGFPLUS_OPTION_TDA, "tda"},
@@ -1520,7 +1517,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             return true;
         }
 
-        private bool MisleadingModDef(string definitionData, string definitionDataClean, string definitionType, string expectedTag, string invalidTag)
+        private bool MisleadingModDef(string definitionDataClean, string definitionType, string expectedTag, string invalidTag)
         {
             if (definitionDataClean.Contains("," + invalidTag + ","))
             {
@@ -1768,7 +1765,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                         if (strLineIn.StartsWith("Ignoring spectrum"))
                         {
                             // Spectra are typically ignored either because they have too few ions, or because the data is not centroided
-                            if (strLineIn.IndexOf("spectrum is not centroided", StringComparison.CurrentCultureIgnoreCase) > 0)
+                            if (strLineIn.IndexOf("spectrum is not centroided", StringComparison.OrdinalIgnoreCase) > 0)
                             {
                                 mContinuumSpectraSkipped += 1;
                             }
@@ -1924,6 +1921,12 @@ namespace AnalysisManagerMSGFDBPlugIn
             {
                 var fiParameterFile = new FileInfo(strParameterFilePath);
 
+                if (string.IsNullOrWhiteSpace(fiParameterFile.DirectoryName))
+                {
+                    OnErrorEvent("Unable to determine the parent directory of " + fiParameterFile.FullName);
+                    return false;
+                }
+
                 var strModFilePath = Path.Combine(fiParameterFile.DirectoryName, MOD_FILE_NAME);
 
                 // Note that ParseMSGFDbValidateMod will set this to True if a dynamic or static mod is STY phosphorylation
@@ -1951,9 +1954,9 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                             if (ParseMSGFDbValidateMod(strCustomAADef, out strCustomAADefClean))
                             {
-                                if (MisleadingModDef(strCustomAADef, strCustomAADefClean, "Custom AA", "custom", "opt"))
+                                if (MisleadingModDef(strCustomAADefClean, "Custom AA", "custom", "opt"))
                                     return false;
-                                if (MisleadingModDef(strCustomAADef, strCustomAADefClean, "Custom AA", "custom", "fix"))
+                                if (MisleadingModDef(strCustomAADefClean, "Custom AA", "custom", "fix"))
                                     return false;
                                 swModFile.WriteLine(strCustomAADefClean);
                             }
@@ -1978,9 +1981,9 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                             if (ParseMSGFDbValidateMod(strStaticMod, out strModClean))
                             {
-                                if (MisleadingModDef(strStaticMod, strModClean, "Static mod", "fix", "opt"))
+                                if (MisleadingModDef(strModClean, "Static mod", "fix", "opt"))
                                     return false;
-                                if (MisleadingModDef(strStaticMod, strModClean, "Static mod", "fix", "custom"))
+                                if (MisleadingModDef(strModClean, "Static mod", "fix", "custom"))
                                     return false;
                                 swModFile.WriteLine(strModClean);
                             }
@@ -2005,9 +2008,9 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                             if (ParseMSGFDbValidateMod(strDynamicMod, out strModClean))
                             {
-                                if (MisleadingModDef(strDynamicMod, strModClean, "Dynamic mod", "opt", "fix"))
+                                if (MisleadingModDef(strModClean, "Dynamic mod", "opt", "fix"))
                                     return false;
-                                if (MisleadingModDef(strDynamicMod, strModClean, "Dynamic mod", "opt", "custom"))
+                                if (MisleadingModDef(strModClean, "Dynamic mod", "opt", "custom"))
                                     return false;
                                 swModFile.WriteLine(strModClean);
                             }
@@ -2091,13 +2094,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                 OnErrorEvent("Parameter file Not found:  " + strParameterFilePath);
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
             }
-
-            //Dim strDatasetType As String
-            //Dim blnHCD As Boolean = False
-            //strDatasetType = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetType")
-            //If strDatasetType.ToUpper().Contains("HCD") Then
-            //	blnHCD = True
-            //End If
 
             var strSearchEngineName = GetSearchEngineName();
 
@@ -2496,14 +2492,14 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             // By default, MS-GF+ filters out spectra with fewer than 20 data points
             // Override this threshold to 5 data points
-            if (strMSGFDbCmdLineOptions.IndexOf("-minNumPeaks", StringComparison.CurrentCultureIgnoreCase) < 0)
+            if (strMSGFDbCmdLineOptions.IndexOf("-minNumPeaks", StringComparison.OrdinalIgnoreCase) < 0)
             {
                 strMSGFDbCmdLineOptions += " -minNumPeaks 5";
             }
 
             // Auto-add the "addFeatures" switch if not present
             // This is required to post-process the results with Percolator
-            if (mMSGFPlus && strMSGFDbCmdLineOptions.IndexOf("-addFeatures", StringComparison.CurrentCultureIgnoreCase) < 0)
+            if (mMSGFPlus && strMSGFDbCmdLineOptions.IndexOf("-addFeatures", StringComparison.OrdinalIgnoreCase) < 0)
             {
                 strMSGFDbCmdLineOptions += " -addFeatures 1";
             }
@@ -2852,44 +2848,6 @@ namespace AnalysisManagerMSGFDBPlugIn
             return true;
         }
 
-        /// <summary>
-        ///
-        /// </summary>
-        /// <param name="sbOptions"></param>
-        /// <param name="strKeyName"></param>
-        /// <param name="strValue"></param>
-        /// <param name="strParameterName"></param>
-        /// <returns></returns>
-        /// <remarks></remarks>
-        private bool ParseMSFDBParamLine(StringBuilder sbOptions, string strKeyName, string strValue, string strParameterName)
-        {
-            var strCommandLineSwitchName = strParameterName;
-
-            return ParseMSFDBParamLine(sbOptions, strKeyName, strValue, strParameterName, strCommandLineSwitchName);
-        }
-
-        /// <summary>
-        /// Validate the command line argument and append to sbOptions
-        /// </summary>
-        /// <param name="sbOptions"></param>
-        /// <param name="strKeyName"></param>
-        /// <param name="strValue"></param>
-        /// <param name="strParameterName"></param>
-        /// <param name="strCommandLineSwitchName"></param>
-        /// <returns></returns>
-        /// <remarks></remarks>
-        private bool ParseMSFDBParamLine(StringBuilder sbOptions, string strKeyName, string strValue, string strParameterName, string strCommandLineSwitchName)
-        {
-            if (clsGlobal.IsMatch(strKeyName, strParameterName))
-            {
-                sbOptions.Append(" -" + strCommandLineSwitchName + " " + strValue);
-                return true;
-            }
-
-            return false;
-
-        }
-
         private string ReverseString(string strText)
         {
             var chReversed = strText.ToCharArray();
@@ -2984,7 +2942,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             return blnSuccess;
         }
 
-        private void WriteProteinSequence(StreamWriter swOutFile, string strSequence)
+        private void WriteProteinSequence(TextWriter swOutFile, string strSequence)
         {
             var intIndex = 0;
 

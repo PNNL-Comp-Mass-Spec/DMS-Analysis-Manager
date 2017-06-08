@@ -392,7 +392,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             // Read the MSGF+ Parameter File
             string strMSGFPlusCmdLineOptions;
 
-            var overrideParams = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
+            var overrideParams = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
             var jobScript = m_jobParams.GetJobParameter("ToolName", "");
             if (jobScript.ToLower().StartsWith("modplus"))
@@ -442,7 +442,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 intJavaMemorySize = 512;
 
             //Set up and execute a program runner to run MSGF+
-            var cmdStr = " -Xmx" + intJavaMemorySize.ToString() + "M -jar " + msgfplusJarFilePath;
+            var cmdStr = " -Xmx" + intJavaMemorySize + "M -jar " + msgfplusJarFilePath;
 
             // Define the input file, output file, and fasta file
             cmdStr += " -s " + m_Dataset + msXmlFileExtension;
@@ -524,7 +524,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 {
                     if (mCmdRunner.ExitCode != 0)
                     {
-                        LogWarning("MSGF+ returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
+                        LogWarning("MSGF+ returned a non-zero exit code: " + mCmdRunner.ExitCode);
                     }
                     else
                     {
@@ -1213,7 +1213,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 {
                     if (mCmdRunner.ExitCode != 0)
                     {
-                        LogWarning("MSConvert/MzRefinery returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
+                        LogWarning("MSConvert/MzRefinery returned a non-zero exit code: " + mCmdRunner.ExitCode);
                     }
                     else
                     {
@@ -1270,7 +1270,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                 if (mCmdRunner.ExitCode != 0)
                 {
-                    LogWarning("PPMErrorCharter returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
+                    LogWarning("PPMErrorCharter returned a non-zero exit code: " + mCmdRunner.ExitCode);
                 }
                 else
                 {

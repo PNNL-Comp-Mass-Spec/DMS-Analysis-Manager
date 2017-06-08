@@ -723,7 +723,7 @@ namespace AnalysisManagerBase
 
             foreach (var intVersion in lstValuesToCheck)
             {
-                var msXmlFoldername = MSXmlFoldernameBase + intVersion.ToString() + "_" + DatasetID;
+                var msXmlFoldername = MSXmlFoldernameBase + intVersion + "_" + DatasetID;
 
                 // Look for the MSXmlFolder
                 // If the folder cannot be found, then m_FolderSearch.FindValidFolder will return the folder defined by "DatasetStoragePath"
@@ -2849,7 +2849,7 @@ namespace AnalysisManagerBase
                             {
                                 // Stop trying to delete files; it's not worth continuing to try
                                 OnWarningEvent("Unable to delete all of the files in queue filesToDelete; " +
-                                    "Queue Length = " + filesToDelete.Count.ToString() + "; " +
+                                    "Queue Length = " + filesToDelete.Count + "; " +
                                     "this warning can be safely ignored (function RetrieveBrukerMALDIImagingFolders)");
                                 break;
                             }

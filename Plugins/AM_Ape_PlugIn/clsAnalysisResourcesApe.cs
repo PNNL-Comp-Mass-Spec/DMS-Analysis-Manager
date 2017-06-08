@@ -32,16 +32,16 @@ namespace AnalysisManager_Ape_PlugIn
         /// </summary>
         protected bool RunApeGetResources()
         {
-            bool blnSuccess = false;
+            var blnSuccess = false;
 
-            string apeOperations = m_jobParams.GetParam("ApeOperations");
+            var apeOperations = m_jobParams.GetParam("ApeOperations");
 
             if (string.IsNullOrWhiteSpace(apeOperations)) {
                 m_message = "ApeOperations parameter is not defined";
                 return false;
             }
 
-            foreach (string apeOperation in apeOperations.Split(','))
+            foreach (var apeOperation in apeOperations.Split(','))
             {
                 if (!string.IsNullOrWhiteSpace(apeOperation)) {
                     blnSuccess = RunApeOperation(apeOperation.Trim());
@@ -64,7 +64,7 @@ namespace AnalysisManager_Ape_PlugIn
         /// <returns></returns>
         private bool RunApeOperation(string apeOperation)
         {
-            bool blnSuccess =  true;
+            var blnSuccess =  true;
 
             // Note: case statements must be lowercase
             switch (apeOperation.ToLower())
@@ -91,12 +91,12 @@ namespace AnalysisManager_Ape_PlugIn
 
         private bool GetWorkflowFiles()
         {
-            bool blnSuccess = true;
+            var blnSuccess = true;
 
-            string dataPackageFolderPath = Path.Combine(m_jobParams.GetParam("transferFolderPath"), m_jobParams.GetParam("OutputFolderName"));
-            string analysisType = m_jobParams.GetParam("AnalysisType");
+            var dataPackageFolderPath = Path.Combine(m_jobParams.GetParam("transferFolderPath"), m_jobParams.GetParam("OutputFolderName"));
+            var analysisType = m_jobParams.GetParam("AnalysisType");
 
-            string strStepInputFolderPath = Path.Combine(dataPackageFolderPath, m_jobParams.GetParam("StepInputFolderName"));
+            var strStepInputFolderPath = Path.Combine(dataPackageFolderPath, m_jobParams.GetParam("StepInputFolderName"));
             LogMessage("Retrieving SQlite database: " + System.IO.Path.Combine(strStepInputFolderPath, "Results.db3"));
             if (!CopyFileToWorkDir("Results.db3", strStepInputFolderPath, m_WorkingDir))
             {
@@ -104,10 +104,10 @@ namespace AnalysisManager_Ape_PlugIn
                 return false;
             }
 
-            string strInputFileExtension = string.Empty;
+            var strInputFileExtension = string.Empty;
 
             //// Retrieve the Ape Workflow file specified for this job
-            string strApeWorkflowFileName = m_jobParams.GetParam("ApeWorkflowName");
+            var strApeWorkflowFileName = m_jobParams.GetParam("ApeWorkflowName");
             // Retrieve the Workflow file name specified for this job
             if (string.IsNullOrEmpty(strApeWorkflowFileName))
             {
@@ -115,8 +115,8 @@ namespace AnalysisManager_Ape_PlugIn
                 return false;
             }
 
-            string strDMSWorkflowsFolderPath = m_mgrParams.GetParam("DMSWorkflowsFolderPath", @"\\gigasax\DMS_Workflows");
-            string strApeWorkflowDirectory = Path.Combine(strDMSWorkflowsFolderPath, "Ape", analysisType);
+            var strDMSWorkflowsFolderPath = m_mgrParams.GetParam("DMSWorkflowsFolderPath", @"\\gigasax\DMS_Workflows");
+            var strApeWorkflowDirectory = Path.Combine(strDMSWorkflowsFolderPath, "Ape", analysisType);
 
             LogMessage("Retrieving workflow file: " + System.IO.Path.Combine(strApeWorkflowDirectory, strApeWorkflowFileName));
 
@@ -132,9 +132,9 @@ namespace AnalysisManager_Ape_PlugIn
 
         private bool GetQRollupFiles()
         {
-            bool blnSuccess = true;
+            var blnSuccess = true;
 
-            string dataPackageFolderPath = Path.Combine(m_jobParams.GetParam("transferFolderPath"), m_jobParams.GetParam("OutputFolderName"));
+            var dataPackageFolderPath = Path.Combine(m_jobParams.GetParam("transferFolderPath"), m_jobParams.GetParam("OutputFolderName"));
 
             if (!CopyFileToWorkDir("Results.db3", Path.Combine(dataPackageFolderPath, m_jobParams.GetParam("StepInputFolderName")), m_WorkingDir))
             {

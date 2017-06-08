@@ -73,7 +73,7 @@ namespace AnalysisManagerMultiAlignPlugIn
             }
 
             // Note that MultiAlign will append ".db3" to this filename
-            string MultiAlignDatabaseName = string.Copy(m_Dataset);
+            var MultiAlignDatabaseName = string.Copy(m_Dataset);
 
             // Set up and execute a program runner to run MultiAlign
             CmdStr = " input.txt " + Path.Combine(m_WorkDir, m_jobParams.GetParam("ParmFileName")) + " " + m_WorkDir + " " + MultiAlignDatabaseName;
@@ -147,15 +147,15 @@ namespace AnalysisManagerMultiAlignPlugIn
         {
             string[] Files = null;
             var LogExtension = "-log.txt";
-            string NewFilename = m_Dataset + LogExtension;
+            var NewFilename = m_Dataset + LogExtension;
             //This is what MultiAlign is currently naming the log file
-            string LogNameFilter = m_Dataset + ".db3-log*.txt";
+            var LogNameFilter = m_Dataset + ".db3-log*.txt";
             try
             {
                 //Get the log file name.  There should only be one log file
                 Files = Directory.GetFiles(m_WorkDir, LogNameFilter);
                 //go through each log file found.  Again, there should only be one log file
-                foreach (string TmpFile in Files)
+                foreach (var TmpFile in Files)
                 {
                     //Check to see if the log file exists.  If so, only rename one of them
                     if (!File.Exists(NewFilename))
@@ -186,8 +186,8 @@ namespace AnalysisManagerMultiAlignPlugIn
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo(string strMultiAlignProgLoc)
         {
-            string strToolVersionInfo = string.Empty;
-            bool blnSuccess = false;
+            var strToolVersionInfo = string.Empty;
+            var blnSuccess = false;
 
             if (m_DebugLevel >= 2)
             {
@@ -234,7 +234,7 @@ namespace AnalysisManagerMultiAlignPlugIn
                 return false;
 
             // Store paths to key DLLs in ioToolFiles
-            List<FileInfo> ioToolFiles = new List<FileInfo>();
+            var ioToolFiles = new List<FileInfo>();
             ioToolFiles.Add(new FileInfo(Path.Combine(ioMultiAlignProg.DirectoryName, "MultiAlignEngine.dll")));
             ioToolFiles.Add(new FileInfo(Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLOmics.dll")));
 

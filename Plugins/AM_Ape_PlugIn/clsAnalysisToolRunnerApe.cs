@@ -40,7 +40,7 @@ namespace AnalysisManager_Ape_PlugIn
                 LogMessage(m_CurrentApeTask);
 
                 //Change the name of the log file for the local log file to the plugin log filename
-                String LogFileName = Path.Combine(m_WorkDir, "Ape_Log");
+                var LogFileName = Path.Combine(m_WorkDir, "Ape_Log");
                 log4net.GlobalContext.Properties["LogName"] = LogFileName;
                 clsLogTools.ChangeLogFileName(LogFileName);
 
@@ -122,9 +122,9 @@ namespace AnalysisManager_Ape_PlugIn
        protected bool RunApe()
        {
            // run the appropriate Mage pipeline(s) according to operations list parameter
-           string apeOperations = m_jobParams.GetParam("ApeOperations");
+           var apeOperations = m_jobParams.GetParam("ApeOperations");
            var ops = new clsApeAMOperations(m_jobParams, m_mgrParams);
-           bool bSuccess = ops.RunApeOperations(apeOperations);
+           var bSuccess = ops.RunApeOperations(apeOperations);
 
            if (!bSuccess)
                m_message = "Error running ApeOperations: " + ops.ErrorMessage;
@@ -140,7 +140,7 @@ namespace AnalysisManager_Ape_PlugIn
         protected bool StoreToolVersionInfo()
         {
 
-            string strToolVersionInfo = string.Empty;
+            var strToolVersionInfo = string.Empty;
 
             if (m_DebugLevel >= 2) {
                 LogDebug("Determining tool version info");
@@ -148,9 +148,9 @@ namespace AnalysisManager_Ape_PlugIn
 
             try
             {
-                System.Reflection.AssemblyName oAssemblyName = System.Reflection.Assembly.Load("Ape").GetName();
+                var oAssemblyName = System.Reflection.Assembly.Load("Ape").GetName();
 
-                string strNameAndVersion = oAssemblyName.Name + ", Version=" + oAssemblyName.Version;
+                var strNameAndVersion = oAssemblyName.Name + ", Version=" + oAssemblyName.Version;
                 strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion);
             }
             catch (Exception ex)

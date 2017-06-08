@@ -30,17 +30,16 @@ namespace AnalysisManager_Ape_PlugIn
         /// <summary>
         /// Setup and run Ape pipeline according to job parameters
         /// </summary>
-        public bool GetQRollupResults(String dataPackageID)
+        public bool GetQRollupResults(string dataPackageID)
         {
-            bool blnSuccess = true;
-            blnSuccess = GetQRollupResultsAll();
+            var blnSuccess = GetQRollupResultsAll();
             return blnSuccess;
         }
 
         private bool GetQRollupResultsAll()
         {
-            bool blnSuccess = true;
-            Ape.SqlConversionHandler mHandle = new Ape.SqlConversionHandler(delegate(bool done, bool success, int percent, string msg)
+            var blnSuccess = true;
+            var mHandle = new Ape.SqlConversionHandler(delegate(bool done, bool success, int percent, string msg)
             {
                 Console.WriteLine(msg);
 
@@ -61,8 +60,8 @@ namespace AnalysisManager_Ape_PlugIn
 
             });
 
-            string apeMTSServerName = GetJobParam("ApeMTSServer");
-            string apeMTSDatabaseName = GetJobParam("ApeMTSDatabase");
+            var apeMTSServerName = GetJobParam("ApeMTSServer");
+            var apeMTSDatabaseName = GetJobParam("ApeMTSDatabase");
             //Need these for backward compatibility
             if (string.IsNullOrEmpty(apeMTSServerName))
             {
@@ -73,17 +72,17 @@ namespace AnalysisManager_Ape_PlugIn
                 apeMTSDatabaseName = GetJobParam("QRollupMTSDatabase");
             }
 
-            string apeDatabase = Path.Combine(mWorkingDir, "Results.db3");
+            var apeDatabase = Path.Combine(mWorkingDir, "Results.db3");
 
             var paramList = new List<string>();
             paramList.Add(apeMTSDatabaseName + ";@MTDBName;" + apeMTSDatabaseName + ";False;sqldbtype.varchar;;");
             paramList.Add("1;@ReturnPeptidesTable;1;True;sqldbtype.tinyint;" + apeMTSDatabaseName + "_Peptides;sqldbtype.tinyint");
             paramList.Add("1;@ReturnExperimentsTable;1;True;sqldbtype.tinyint;" + apeMTSDatabaseName + "_Experiments;sqldbtype.tinyint");
 
-            string dotnetConnString = "Server=" + apeMTSServerName + ";database=" + apeMTSDatabaseName + ";uid=mtuser;Password=mt4fun";
+            var dotnetConnString = "Server=" + apeMTSServerName + ";database=" + apeMTSDatabaseName + ";uid=mtuser;Password=mt4fun";
 
             Ape.SqlServerToSQLite.ProgressChanged += new Ape.SqlServerToSQLite.ProgressChangedEventHandler(OnProgressChanged);
-            string QIDList = GetQIDList();
+            var QIDList = GetQIDList();
             if (string.IsNullOrEmpty(QIDList))
             {
                 return false;
@@ -96,9 +95,9 @@ namespace AnalysisManager_Ape_PlugIn
 
         private string GetQIDList()
         {
-            string constr = RequireMgrParam("connectionstring");
-            string apeMTSDatabaseName = GetJobParam("ApeMTSDatabase");
-            string dataPackageID = GetJobParam("DataPackageID");
+            var constr = RequireMgrParam("connectionstring");
+            var apeMTSDatabaseName = GetJobParam("ApeMTSDatabase");
+            var dataPackageID = GetJobParam("DataPackageID");
 
             if (string.IsNullOrEmpty(apeMTSDatabaseName))
             {
@@ -112,7 +111,7 @@ namespace AnalysisManager_Ape_PlugIn
                 return string.Empty;
             }
 
-            string sqlText = "SELECT DISTINCT vmts.QID FROM V_Mage_Data_Package_Analysis_Jobs vdp " +
+            var sqlText = "SELECT DISTINCT vmts.QID FROM V_Mage_Data_Package_Analysis_Jobs vdp " +
                              "join V_MTS_PM_Results_List_Report vmts on vmts.Job = vdp.Job " +
                              "WHERE Data_Package_ID = " + dataPackageID + " and Task_Database = '" + apeMTSDatabaseName + "'";
 
@@ -128,20 +127,20 @@ namespace AnalysisManager_Ape_PlugIn
                 sqlText = sqlText + " and Ini_File_Name = '" + GetJobParam("ApeMDIniFilename") + "'";
             };
 
-            string QIDList = string.Empty;
-            int intQIDCount = 0;
-            using (SqlConnection conn = new SqlConnection(constr))
+            var QIDList = string.Empty;
+            var intQIDCount = 0;
+            using (var conn = new SqlConnection(constr))
             {
                 conn.Open();
                 // Get the matching QIDs for this data package
-                SqlCommand query = new SqlCommand(sqlText, conn);
-                using (SqlDataReader reader = query.ExecuteReader())
+                var query = new SqlCommand(sqlText, conn);
+                using (var reader = query.ExecuteReader())
                 {
                     while (reader.Read())
                     {
                         if (!string.IsNullOrEmpty(reader[0].ToString()))
                         {
-                            QIDList += reader[0].ToString() + ", ";
+                            QIDList += reader[0] + ", ";
                             intQIDCount += 1;
                         }
                     }

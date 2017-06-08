@@ -147,7 +147,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
                     if (m_DebugLevel >= 1)
                     {
-                        LogDebug("Assembling parallelized inspect files; file count = " + numResultFiles.ToString());
+                        LogDebug("Assembling parallelized inspect files; file count = " + numResultFiles);
                     }
 
                     // AssembleResults will create _inspect.txt, _inspect_fht.txt, and _inspect_filtered.txt
@@ -250,8 +250,6 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
         private CloseOutType AssembleResults(int intNumResultFiles)
         {
-            var strFileName = "";
-
             try
             {
                 if (m_DebugLevel >= 3)
@@ -273,7 +271,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                     LogDebug("Assembling parallelized inspect error files");
                 }
 
-                strFileName = m_Dataset + "_error.txt";
+                var strFileName = m_Dataset + "_error.txt";
                 result = AssembleFiles(strFileName, ResultFileType.INSPECT_ERROR, intNumResultFiles);
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
@@ -335,17 +333,17 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
             string s = null;
             string DatasetName = null;
-            int fileNameCounter = 0;
+            var fileNameCounter = 0;
             var InspectResultsFile = "";
-            int intLinesRead = 0;
+            var intLinesRead = 0;
 
-            bool blnFilesContainHeaderLine = false;
-            bool blnHeaderLineWritten = false;
-            bool blnAddSegmentNumberToEachLine = false;
-            bool blnAddBlankLineBetweenFiles = false;
+            var blnFilesContainHeaderLine = false;
+            var blnHeaderLineWritten = false;
+            var blnAddSegmentNumberToEachLine = false;
+            var blnAddBlankLineBetweenFiles = false;
 
-            int intTabIndex = 0;
-            int intSlashIndex = 0;
+            var intTabIndex = 0;
+            var intSlashIndex = 0;
 
             try
             {
@@ -392,7 +390,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                             break;
                         default:
                             // Unknown ResultFileType
-                            LogError("clsAnalysisToolRunnerInspResultsAssembly->AssembleFiles: Unknown Inspect Result File Type: " + resFileType.ToString());
+                            LogError("clsAnalysisToolRunnerInspResultsAssembly->AssembleFiles: Unknown Inspect Result File Type: " + resFileType);
                             error = true;
                             break;
                     }
@@ -434,7 +432,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                                         {
                                             tw.WriteLine("Segment\t" + "Message");
                                         }
-                                        tw.WriteLine(fileNameCounter.ToString() + "\t" + s);
+                                        tw.WriteLine(fileNameCounter + "\t" + s);
                                     }
                                     else
                                     {
@@ -470,7 +468,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
                                 if (blnAddSegmentNumberToEachLine)
                                 {
-                                    tw.WriteLine(fileNameCounter.ToString() + "\t" + s);
+                                    tw.WriteLine(fileNameCounter + "\t" + s);
                                 }
                                 else
                                 {
@@ -521,14 +519,14 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
         private CloseOutType CreatePeptideToProteinMapping()
         {
-            string OrgDbDir = m_mgrParams.GetParam("orgdbdir");
+            var OrgDbDir = m_mgrParams.GetParam("orgdbdir");
 
             // Note that job parameter "generatedFastaName" gets defined by clsAnalysisResources.RetrieveOrgDB
-            string dbFilename = Path.Combine(OrgDbDir, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"));
+            var dbFilename = Path.Combine(OrgDbDir, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"));
             string strInputFilePath = null;
 
-            bool blnIgnorePeptideToProteinMapperErrors = false;
-            bool blnSuccess = false;
+            var blnIgnorePeptideToProteinMapperErrors = false;
+            var blnSuccess = false;
 
             UpdateStatusRunning(mPercentCompleteStartLevels[(int) eInspectResultsProcessingSteps.CreatePeptideToProteinMapping]);
 
@@ -538,7 +536,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             {
                 // Validate that the input file has at least one entry; if not, then no point in continuing
                 string strLineIn = null;
-                int intLinesRead = 0;
+                var intLinesRead = 0;
 
                 var srInFile = new StreamReader(new FileStream(strInputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read));
 
@@ -664,7 +662,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             string strLineIn = null;
             string[] strSplitLine = null;
 
-            int intModCount = 0;
+            var intModCount = 0;
 
             try
             {
@@ -744,8 +742,8 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         /// <remarks></remarks>
         private CloseOutType FilterInspectResultsByFirstHits()
         {
-            string strInspectResultsFilePath = Path.Combine(m_WorkDir, mInspectResultsFileName);
-            string strFilteredFilePath = Path.Combine(m_WorkDir, m_Dataset + FIRST_HITS_INSPECT_FILE_SUFFIX);
+            var strInspectResultsFilePath = Path.Combine(m_WorkDir, mInspectResultsFileName);
+            var strFilteredFilePath = Path.Combine(m_WorkDir, m_Dataset + FIRST_HITS_INSPECT_FILE_SUFFIX);
 
             UpdateStatusRunning(mPercentCompleteStartLevels[(int) eInspectResultsProcessingSteps.RunpValue]);
 
@@ -762,8 +760,8 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         /// <remarks></remarks>
         private CloseOutType FilterInspectResultsByPValue()
         {
-            string strInspectResultsFilePath = Path.Combine(m_WorkDir, mInspectResultsFileName);
-            string strFilteredFilePath = Path.Combine(m_WorkDir, m_Dataset + FILTERED_INSPECT_FILE_SUFFIX);
+            var strInspectResultsFilePath = Path.Combine(m_WorkDir, mInspectResultsFileName);
+            var strFilteredFilePath = Path.Combine(m_WorkDir, m_Dataset + FILTERED_INSPECT_FILE_SUFFIX);
 
             UpdateStatusRunning(mPercentCompleteStartLevels[(int) eInspectResultsProcessingSteps.RunpValue]);
 
@@ -790,7 +788,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         private bool RenameAndZipInspectFile(string strSourceFilePath, string strZipFilePath, bool blnDeleteSourceAfterZip)
         {
             string strTargetFilePath = null;
-            bool blnSuccess = false;
+            var blnSuccess = false;
 
             // Zip up file specified by strSourceFilePath
             // Rename to _inspect.txt before zipping
@@ -826,8 +824,8 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         /// <remarks></remarks>
         private CloseOutType RescoreAssembledInspectResults()
         {
-            string strInspectResultsFilePath = Path.Combine(m_WorkDir, mInspectResultsFileName);
-            string strFilteredFilePath = Path.Combine(m_WorkDir, m_Dataset + FILTERED_INSPECT_FILE_SUFFIX);
+            var strInspectResultsFilePath = Path.Combine(m_WorkDir, mInspectResultsFileName);
+            var strFilteredFilePath = Path.Combine(m_WorkDir, m_Dataset + FILTERED_INSPECT_FILE_SUFFIX);
 
             UpdateStatusRunning(mPercentCompleteStartLevels[(int) eInspectResultsProcessingSteps.RunpValue]);
 
@@ -876,18 +874,18 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         {
             string CmdStr = null;
 
-            string InspectDir = m_mgrParams.GetParam("inspectdir");
-            string pvalDistributionFilename = Path.Combine(m_WorkDir, m_Dataset + "_PValueDistribution.txt");
+            var InspectDir = m_mgrParams.GetParam("inspectdir");
+            var pvalDistributionFilename = Path.Combine(m_WorkDir, m_Dataset + "_PValueDistribution.txt");
 
             // The following code is only required if you use the -a and -d switches
-            //'Dim orgDbDir As String = m_mgrParams.GetParam("orgdbdir")
-            //'Dim fastaFilename As String = Path.Combine(orgDbDir, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
-            //'Dim dbFilename As String = fastaFilename.Replace("fasta", "trie")
+            //'var orgDbDir = m_mgrParams.GetParam("orgdbdir")
+            //'var fastaFilename = Path.Combine(orgDbDir, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"))
+            //'var dbFilename = fastaFilename.Replace("fasta", "trie")
 
-            string pythonProgLoc = m_mgrParams.GetParam("pythonprogloc");
+            var pythonProgLoc = m_mgrParams.GetParam("pythonprogloc");
             var pthresh = "";
 
-            bool blnShuffledDBUsed = false;
+            var blnShuffledDBUsed = false;
 
             // Check whether a shuffled DB was created prior to running Inspect
             blnShuffledDBUsed = ValidateShuffledDBInUse(strInspectResultsInputFilePath);
@@ -904,7 +902,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             }
 
             // verify that python program file exists
-            string progLoc = pythonProgLoc;
+            var progLoc = pythonProgLoc;
             if (!File.Exists(progLoc))
             {
                 LogError("Cannot find python.exe program file: " + progLoc);
@@ -912,7 +910,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             }
 
             // verify that PValue python script exists
-            string pvalueScriptPath = Path.Combine(InspectDir, PVALUE_MINLENGTH5_SCRIPT);
+            var pvalueScriptPath = Path.Combine(InspectDir, PVALUE_MINLENGTH5_SCRIPT);
             if (!File.Exists(pvalueScriptPath))
             {
                 LogError("Cannot find PValue script: " + pvalueScriptPath);
@@ -986,7 +984,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             {
                 // Note: Log the non-zero exit code as an error, but return CLOSEOUT_SUCCESS anyway
                 LogError(
-                    Path.GetFileName(pvalueScriptPath) + " returned a non-zero exit code: " + cmdRunner.ExitCode.ToString());
+                    Path.GetFileName(pvalueScriptPath) + " returned a non-zero exit code: " + cmdRunner.ExitCode);
             }
 
             return CloseOutType.CLOSEOUT_SUCCESS;
@@ -998,9 +996,9 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo()
         {
-            string strToolVersionInfo = string.Empty;
-            string strAppFolderPath = clsGlobal.GetAppFolderPath();
-            bool blnSuccess = false;
+            var strToolVersionInfo = string.Empty;
+            var strAppFolderPath = clsGlobal.GetAppFolderPath();
+            var blnSuccess = false;
 
             if (m_DebugLevel >= 2)
             {
@@ -1031,7 +1029,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 return false;
 
             // Store the path to important DLLs in ioToolFiles
-            List<FileInfo> ioToolFiles = new List<FileInfo>();
+            var ioToolFiles = new List<FileInfo>();
             ioToolFiles.Add(new FileInfo(Path.Combine(strAppFolderPath, "AnalysisManagerInspResultsAssemblyPlugIn.dll")));
             ioToolFiles.Add(new FileInfo(Path.Combine(strAppFolderPath, "PeptideToProteinMapEngine.dll")));
             ioToolFiles.Add(new FileInfo(Path.Combine(strAppFolderPath, "ProteinFileReader.dll")));
@@ -1058,7 +1056,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         /// <remarks></remarks>
         private bool UpdatePTModsFile(string strInspectDir, string strInspectParameterFilePath)
         {
-            int intIndex = 0;
+            var intIndex = 0;
 
             string strPTModsFilePath = null;
             string strPTModsFilePathOld = null;
@@ -1073,9 +1071,9 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
             bool[] blnModProcessed = null;
 
-            bool blnMatchFound = false;
-            bool blnPrevLineWasBlank = false;
-            bool blnDifferenceFound = false;
+            var blnMatchFound = false;
+            var blnPrevLineWasBlank = false;
+            var blnDifferenceFound = false;
 
             try
             {
@@ -1265,15 +1263,15 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
         private bool ValidateShuffledDBInUse(string strInspectResultsPath)
         {
-            int intLinesRead = 0;
+            var intLinesRead = 0;
 
-            string strLineIn = string.Empty;
+            var strLineIn = string.Empty;
             string[] strSplitLine = null;
 
-            int intDecoyProteinCount = 0;
-            int intNormalProteinCount = 0;
+            var intDecoyProteinCount = 0;
+            var intNormalProteinCount = 0;
 
-            bool blnShuffledDBUsed = false;
+            var blnShuffledDBUsed = false;
 
             var chSepChars = new char[] { '\t' };
 
@@ -1356,7 +1354,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         /// <remarks></remarks>
         private CloseOutType ZipInspectResults()
         {
-            bool blnSuccess = false;
+            var blnSuccess = false;
 
             try
             {
@@ -1416,8 +1414,8 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         {
             // Note that percentComplete is a value between 0 and 100
 
-            float sngStartPercent = mPercentCompleteStartLevels[(int) eInspectResultsProcessingSteps.CreatePeptideToProteinMapping];
-            float sngEndPercent = mPercentCompleteStartLevels[(int) eInspectResultsProcessingSteps.CreatePeptideToProteinMapping + 1];
+            var sngStartPercent = mPercentCompleteStartLevels[(int) eInspectResultsProcessingSteps.CreatePeptideToProteinMapping];
+            var sngEndPercent = mPercentCompleteStartLevels[(int) eInspectResultsProcessingSteps.CreatePeptideToProteinMapping + 1];
             float sngPercentCompleteEffective = 0;
 
             sngPercentCompleteEffective = sngStartPercent + (float)(percentComplete / 100.0 * (sngEndPercent - sngStartPercent));

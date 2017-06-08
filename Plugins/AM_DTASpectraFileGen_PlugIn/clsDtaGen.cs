@@ -203,7 +203,7 @@ namespace DTASpectraFileGen
             // extract_msn.exe and lcq_dta.exe sometimes leave files with funky filenames containing non-DOS characters.
             // This function removes those files
 
-            DirectoryInfo workDir = new DirectoryInfo(m_WorkDir);
+            var workDir = new DirectoryInfo(m_WorkDir);
 
             var reValidFiles = new Regex(@".dta$|.txt$|.csv$|.raw$|.params$|.wiff$|.xml$|.mgf$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
@@ -229,8 +229,8 @@ namespace DTASpectraFileGen
 
         protected void LogDTACreationStats(string strProcedureName, string strDTAToolName, string strErrorMessage)
         {
-            string strMostRecentBlankDTA = string.Empty;
-            string strMostRecentValidDTA = string.Empty;
+            var strMostRecentBlankDTA = string.Empty;
+            var strMostRecentValidDTA = string.Empty;
 
             if (strProcedureName == null)
             {
@@ -254,7 +254,7 @@ namespace DTASpectraFileGen
             {
                 var objFolderInfo = new DirectoryInfo(m_WorkDir);
                 var objFiles = objFolderInfo.GetFiles("*.dta");
-                int intDTACount = 0;
+                var intDTACount = 0;
 
                 if (objFiles == null || objFiles.Length <= 0)
                 {
@@ -319,7 +319,7 @@ namespace DTASpectraFileGen
                         if (intMostRecentValidDTAIndex >= 0)
                         {
                             OnStatusEvent(strProcedureName + ", The most recent .Dta file created is " + strMostRecentValidDTA + " with size " +
-                                          lngDTAFileSize.ToString() + " bytes");
+                                          lngDTAFileSize + " bytes");
                         }
                         else
                         {
@@ -334,7 +334,7 @@ namespace DTASpectraFileGen
                 }
 
                 // Log the number of .Dta files that were found
-                OnStatusEvent(strProcedureName + ", " + strDTAToolName + " created " + intDTACount.ToString() + " .dta files");
+                OnStatusEvent(strProcedureName + ", " + strDTAToolName + " created " + intDTACount + " .dta files");
             }
             catch (Exception ex)
             {

@@ -168,9 +168,9 @@ namespace AnalysisManagerMODaPlugIn
 
         protected bool StartMODa(string JavaProgLoc)
         {
-            int intJavaMemorySize = 0;
+            var intJavaMemorySize = 0;
             string CmdStr = null;
-            bool blnSuccess = false;
+            var blnSuccess = false;
 
             // We will store the MODa version info in the database after the header block is written to file MODa_ConsoleOutput.txt
 
@@ -186,7 +186,7 @@ namespace AnalysisManagerMODaPlugIn
             // Define the path to the fasta file
             // Note that job parameter "generatedFastaName" gets defined by clsAnalysisResources.RetrieveOrgDB
             var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
-            string dbFilename = m_jobParams.GetParam("PeptideSearch", "generatedFastaName");
+            var dbFilename = m_jobParams.GetParam("PeptideSearch", "generatedFastaName");
             var fastaFilePath = Path.Combine(localOrgDbFolder, dbFilename);
 
             if (!UpdateParameterFile(paramFileName, spectrumFileName, fastaFilePath))
@@ -205,7 +205,7 @@ namespace AnalysisManagerMODaPlugIn
             mMODaResultsFilePath = Path.Combine(m_WorkDir, m_Dataset + MODA_RESULTS_FILE_SUFFIX);
 
             // Set up and execute a program runner to run MODa
-            CmdStr = " -Xmx" + intJavaMemorySize.ToString() + "M -jar " + mMODaProgLoc;
+            CmdStr = " -Xmx" + intJavaMemorySize + "M -jar " + mMODaProgLoc;
             CmdStr += " -i " + paramFilePath;
             CmdStr += " -o " + mMODaResultsFilePath;
 
@@ -249,7 +249,7 @@ namespace AnalysisManagerMODaPlugIn
 
                 if (mCmdRunner.ExitCode != 0)
                 {
-                    LogWarning("MODa returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
+                    LogWarning("MODa returned a non-zero exit code: " + mCmdRunner.ExitCode);
                 }
                 else
                 {
@@ -324,12 +324,12 @@ namespace AnalysisManagerMODaPlugIn
                 }
 
                 string strLineIn = null;
-                int intLinesRead = 0;
+                var intLinesRead = 0;
 
-                int intValue = 0;
+                var intValue = 0;
                 var intScansProcessed = 0;
                 var intTotalScans = 0;
-                string strMODaVersionAndDate = string.Empty;
+                var strMODaVersionAndDate = string.Empty;
 
                 mConsoleOutputErrorMsg = string.Empty;
 
@@ -445,7 +445,7 @@ namespace AnalysisManagerMODaPlugIn
             strToolVersionInfo = string.Copy(mMODaVersion);
 
             // Store paths to key files in ioToolFiles
-            List<FileInfo> ioToolFiles = new List<FileInfo>();
+            var ioToolFiles = new List<FileInfo>();
             ioToolFiles.Add(new FileInfo(mMODaProgLoc));
 
             try
@@ -484,8 +484,8 @@ namespace AnalysisManagerMODaPlugIn
                     LogDebug("Trimming console output file at " + strConsoleOutputFilePath);
                 }
 
-                int intScanNumber = 0;
-                int intScanNumberOutputThreshold = 0;
+                var intScanNumber = 0;
+                var intScanNumberOutputThreshold = 0;
 
                 var fiConsoleOutputFile = new FileInfo(strConsoleOutputFilePath);
                 var fiTrimmedFilePath = new FileInfo(strConsoleOutputFilePath + ".trimmed");

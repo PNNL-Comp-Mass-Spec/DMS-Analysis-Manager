@@ -558,11 +558,9 @@ namespace AnalysisManagerExtractionPlugin
                             {
                                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                             }
-                            else
-                            {
-                                // This class will auto-create the PepToProtMap.txt file after the fasta file is retrieved
-                                createPepToProtMapFile = true;
-                            }
+
+                            // This class will auto-create the PepToProtMap.txt file after the fasta file is retrieved
+                            createPepToProtMapFile = true;
                         }
                     }
                     else

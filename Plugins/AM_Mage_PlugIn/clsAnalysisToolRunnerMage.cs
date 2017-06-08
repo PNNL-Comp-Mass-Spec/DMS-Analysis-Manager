@@ -155,7 +155,7 @@ namespace AnalysisManager_Mage_PlugIn
                         {
 
                             var sampleName = drReader.GetString(1);
-                            if (!sampleNames.Contains(sampleName, StringComparer.CurrentCultureIgnoreCase))
+                            if (!sampleNames.Contains(sampleName, StringComparer.OrdinalIgnoreCase))
                                 sampleNames.Add(sampleName);
 
                             validDatasetIDs++;
@@ -171,7 +171,7 @@ namespace AnalysisManager_Mage_PlugIn
 
                     // Make sure the sample names in sampleNames correspond to the names defined in t_alias
                     // At the same time, count the number of ions defined for each sample
-                    var sampleToIonMapping = new Dictionary<string, byte>(StringComparer.CurrentCultureIgnoreCase);
+                    var sampleToIonMapping = new Dictionary<string, byte>(StringComparer.OrdinalIgnoreCase);
 
                     query = "SELECT Sample, Count(Ion) as Ions " +
                             "FROM T_alias " +

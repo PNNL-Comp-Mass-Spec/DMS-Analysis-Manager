@@ -1175,7 +1175,7 @@ namespace AnalysisManagerMSGFPlugin
 
             // Initialize the column mapping
             // Using a case-insensitive comparer
-            var objColumnHeaders = new SortedDictionary<string, int>(StringComparer.CurrentCultureIgnoreCase)
+            var objColumnHeaders = new SortedDictionary<string, int>(StringComparer.OrdinalIgnoreCase)
             {
                 // Define the default column mapping
                 {MSGF_RESULT_COLUMN_SpectrumFile, 0},
@@ -1610,7 +1610,7 @@ namespace AnalysisManagerMSGFPlugin
                             // Confirm the column index of the Collision_Mode column
                             for (var intIndex = 0; intIndex <= strSplitLine.Count - 1; intIndex++)
                             {
-                                if (string.Equals(strSplitLine[intIndex], MSGF_RESULT_COLUMN_Collision_Mode, StringComparison.CurrentCultureIgnoreCase))
+                                if (string.Equals(strSplitLine[intIndex], MSGF_RESULT_COLUMN_Collision_Mode, StringComparison.OrdinalIgnoreCase))
                                 {
                                     intCollisionModeColIndex = intIndex;
                                 }
@@ -1915,7 +1915,7 @@ namespace AnalysisManagerMSGFPlugin
             m_StatusTools.CurrentOperation = "Running MSGF";
             m_StatusTools.UpdateAndWrite(m_progress);
 
-            var CmdStr = " -Xmx" + intJavaMemorySize.ToString() + "M ";
+            var CmdStr = " -Xmx" + intJavaMemorySize + "M ";
 
             if (mUsingMSGFDB)
             {
@@ -2109,7 +2109,7 @@ namespace AnalysisManagerMSGFPlugin
                             // Assume this is the headerline, look for SpecProb
                             for (var intIndex = 0; intIndex <= strSplitLine.Length - 1; intIndex++)
                             {
-                                if (String.Equals(strSplitLine[intIndex], "SpecProb", StringComparison.InvariantCultureIgnoreCase))
+                                if (string.Equals(strSplitLine[intIndex], "SpecProb", StringComparison.InvariantCultureIgnoreCase))
                                 {
                                     intMSGFSpecProbColIndex = intIndex;
                                     break;
@@ -2555,7 +2555,7 @@ namespace AnalysisManagerMSGFPlugin
                             // Assume this is the header line, look for MSGF_SpecProb
                             for (var intIndex = 0; intIndex <= strSplitLine.Count - 1; intIndex++)
                             {
-                                if (string.Equals(strSplitLine[intIndex], "MSGF_SpecProb", StringComparison.CurrentCultureIgnoreCase))
+                                if (string.Equals(strSplitLine[intIndex], "MSGF_SpecProb", StringComparison.OrdinalIgnoreCase))
                                 {
                                     intMSGFSpecProbColIndex = intIndex;
                                     break;

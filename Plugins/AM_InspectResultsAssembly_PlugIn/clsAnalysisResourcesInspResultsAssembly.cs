@@ -30,8 +30,8 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
             string numClonedSteps = null;
 
-            string transferFolderName = Path.Combine(m_jobParams.GetParam("transferFolderPath"), DatasetName);
-            string zippedResultName = DatasetName + "_inspect.zip";
+            var transferFolderName = Path.Combine(m_jobParams.GetParam("transferFolderPath"), DatasetName);
+            var zippedResultName = DatasetName + "_inspect.zip";
             const string searchLogResultName = "InspectSearchLog.txt";
 
             transferFolderName = Path.Combine(transferFolderName, m_jobParams.GetParam("OutputFolderName"));
@@ -117,16 +117,16 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         protected bool RetrieveMultiInspectResultFiles()
         {
             string InspectResultsFile = null;
-            string strFileName = string.Empty;
+            var strFileName = string.Empty;
 
-            int numOfResultFiles = 0;
-            int fileNum = 0;
-            string DatasetName = m_jobParams.GetParam("datasetNum");
-            string transferFolderName = Path.Combine(m_jobParams.GetParam("transferFolderPath"), DatasetName);
+            var numOfResultFiles = 0;
+            var fileNum = 0;
+            var DatasetName = m_jobParams.GetParam("datasetNum");
+            var transferFolderName = Path.Combine(m_jobParams.GetParam("transferFolderPath"), DatasetName);
             string dtaFilename = null;
 
             var intFileCopyCount = 0;
-            int intLogFileIndex = 0;
+            var intLogFileIndex = 0;
 
             transferFolderName = Path.Combine(transferFolderName, m_jobParams.GetParam("OutputFolderName"));
 

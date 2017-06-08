@@ -7,10 +7,10 @@ namespace AnalysisManager_Mage_PlugIn
 {
 
     /// <summary>
-    /// Class that defines basic Mage pipelines and functions that 
-    /// provide sub-operations that make up file extraction operations 
+    /// Class that defines basic Mage pipelines and functions that
+    /// provide sub-operations that make up file extraction operations
     /// that Mac Mage plug-in can execute.
-    /// 
+    ///
     /// These extraction operations are essentially identical to the operations
     /// permormed by the MageFileExtractor tool.
     /// </summary>
@@ -26,7 +26,7 @@ namespace AnalysisManager_Mage_PlugIn
 
         #endregion
 
-        #region Constructors 
+        #region Constructors
 
         /// <summary>
         /// Constructor
@@ -42,7 +42,7 @@ namespace AnalysisManager_Mage_PlugIn
         /// <summary>
         /// Setup and run Mage Extractor pipleline according to job parameters
         /// </summary>
-        public void ExtractFromJobs(String sql)
+        public void ExtractFromJobs(string sql)
         {
             GetExtractionParametersFromJobParameters();
             BaseModule jobList = GetListOfDMSItems(sql);

@@ -326,7 +326,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 javaMemorySize = 512;
 
             // Set up and execute a program runner to run MSGFDB
-            var cmdStr = " -Xmx" + javaMemorySize.ToString() + "M -jar " + msgfdbJarFilePath;
+            var cmdStr = " -Xmx" + javaMemorySize + "M -jar " + msgfdbJarFilePath;
 
             // Define the input file, output file, and fasta file
             switch (eInputFileFormat)
@@ -425,7 +425,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 {
                     if (mCmdRunner.ExitCode != 0)
                     {
-                        LogWarning("MSGF+ returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
+                        LogWarning("MSGF+ returned a non-zero exit code: " + mCmdRunner.ExitCode);
                     }
                     else
                     {

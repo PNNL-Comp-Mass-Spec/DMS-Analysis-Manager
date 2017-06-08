@@ -87,7 +87,7 @@ namespace AnalysisManagerInSpecTPlugIn
             string OrgDbDir = null;
 
             string strBaseFilePath = null;
-            clsCreateInspectIndexedDB objIndexedDBCreator = new clsCreateInspectIndexedDB();
+            var objIndexedDBCreator = new clsCreateInspectIndexedDB();
 
             string strFileNameAdder = null;
             string strParallelizedText = null;
@@ -142,7 +142,7 @@ namespace AnalysisManagerInSpecTPlugIn
                 }
                 else
                 {
-                    strFileNameAdder = "_" + (Convert.ToInt32(m_StepNum) - Convert.ToInt32(m_CloneStepRenum) + 1).ToString();
+                    strFileNameAdder = "_" + (Convert.ToInt32(m_StepNum) - Convert.ToInt32(m_CloneStepRenum) + 1);
                     strParallelizedText = "parallelized";
                     m_isParallelInspect = true;
                 }
@@ -174,7 +174,7 @@ namespace AnalysisManagerInSpecTPlugIn
                 if (!m_isParallelInspect)
                 {
                     //Zip the output file
-                    bool blnSuccess = false;
+                    var blnSuccess = false;
                     blnSuccess = base.ZipFile(mInspectResultsFilePath, true);
                     if (!blnSuccess)
                     {
@@ -211,7 +211,7 @@ namespace AnalysisManagerInSpecTPlugIn
         /// <remarks></remarks>
         private string BuildInspectInputFile()
         {
-            string result = string.Empty;
+            var result = string.Empty;
 
             // set up input to reference spectra file, and parameter file
             string ParamFilename = null;
@@ -221,7 +221,7 @@ namespace AnalysisManagerInSpecTPlugIn
             string inputFilename = null;
             string strInputSpectra = null;
 
-            bool blnUseShuffledDB = false;
+            var blnUseShuffledDB = false;
 
             try
             {
@@ -390,7 +390,7 @@ namespace AnalysisManagerInSpecTPlugIn
         protected bool ParseInspectErrorsFile(string errorFilename)
         {
             string strInputFilePath = null;
-            string strLineIn = string.Empty;
+            var strLineIn = string.Empty;
 
             try
             {
@@ -467,8 +467,8 @@ namespace AnalysisManagerInSpecTPlugIn
         private CloseOutType RunInSpecT(string InspectDir)
         {
             string CmdStr = null;
-            string ParamFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"));
-            bool blnSuccess = false;
+            var ParamFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"));
+            var blnSuccess = false;
 
             // Build the Inspect Input Parameters file
             mInspectCustomParamFileName = BuildInspectInputFile();
@@ -487,7 +487,7 @@ namespace AnalysisManagerInSpecTPlugIn
             }
 
             // verify that program file exists
-            string progLoc = Path.Combine(InspectDir, INSPECT_EXE_NAME);
+            var progLoc = Path.Combine(InspectDir, INSPECT_EXE_NAME);
             if (!File.Exists(progLoc))
             {
                 LogError("Cannot find Inspect program file: " + progLoc);
@@ -520,7 +520,7 @@ namespace AnalysisManagerInSpecTPlugIn
             {
                 if (mCmdRunner.ExitCode != 0)
                 {
-                    LogWarning("Inspect returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
+                    LogWarning("Inspect returned a non-zero exit code: " + mCmdRunner.ExitCode);
                 }
                 else
                 {
@@ -624,8 +624,8 @@ namespace AnalysisManagerInSpecTPlugIn
 
         private void ParseInspectSearchLogFile(string strSearchLogFilePath)
         {
-            string strLineIn = string.Empty;
-            string strLastEntry = string.Empty;
+            var strLineIn = string.Empty;
+            var strLastEntry = string.Empty;
             string[] strSplitline = null;
             string strProgress = null;
 
@@ -692,7 +692,7 @@ namespace AnalysisManagerInSpecTPlugIn
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo(string strInspectFolder)
         {
-            string strToolVersionInfo = string.Empty;
+            var strToolVersionInfo = string.Empty;
 
             if (m_DebugLevel >= 2)
             {
@@ -700,7 +700,7 @@ namespace AnalysisManagerInSpecTPlugIn
             }
 
             // Store paths to key files in ioToolFiles
-            List<FileInfo> ioToolFiles = new List<FileInfo>();
+            var ioToolFiles = new List<FileInfo>();
             ioToolFiles.Add(new FileInfo(Path.Combine(strInspectFolder, INSPECT_EXE_NAME)));
 
             try

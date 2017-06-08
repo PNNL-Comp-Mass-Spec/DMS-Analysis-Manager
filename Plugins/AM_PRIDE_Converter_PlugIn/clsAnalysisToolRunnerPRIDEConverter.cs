@@ -3177,11 +3177,11 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             mCachedProteinPSMCounts = new Dictionary<int, int>();
 
             // Initialize the PXFile lists
-            mPxMasterFileList = new Dictionary<string, clsPXFileInfoBase>(StringComparer.CurrentCultureIgnoreCase);
+            mPxMasterFileList = new Dictionary<string, clsPXFileInfoBase>(StringComparer.OrdinalIgnoreCase);
             mPxResultFiles = new Dictionary<int, clsPXFileInfo>();
 
             // Initialize the CDTAFileStats dictionary
-            mCDTAFileStats = new Dictionary<string, clsPXFileInfoBase>(StringComparer.CurrentCultureIgnoreCase);
+            mCDTAFileStats = new Dictionary<string, clsPXFileInfoBase>(StringComparer.OrdinalIgnoreCase);
 
             // Clear the previous dataset objects
             mPreviousDatasetName = string.Empty;
@@ -3194,9 +3194,9 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             mSearchToolsUsed = new SortedSet<string>();
             mExperimentNEWTInfo = new Dictionary<int, string>();
 
-            mModificationsUsed = new Dictionary<string, clsSampleMetadata.udtCvParamInfoType>(StringComparer.CurrentCultureIgnoreCase);
+            mModificationsUsed = new Dictionary<string, clsSampleMetadata.udtCvParamInfoType>(StringComparer.OrdinalIgnoreCase);
 
-            mMzIdSampleInfo = new Dictionary<string, clsSampleMetadata>(StringComparer.CurrentCultureIgnoreCase);
+            mMzIdSampleInfo = new Dictionary<string, clsSampleMetadata>(StringComparer.OrdinalIgnoreCase);
 
             // Determine the filter thresholds
             var udtFilterThresholds = new udtFilterThresholdsType();
@@ -3585,9 +3585,9 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         {
             const string OBSOLETE_FIELD_FLAG = "SKIP_OBSOLETE_FIELD";
 
-            var dctParameters = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
+            var dctParameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-            var dctKeyNameOverrides = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase)
+            var dctKeyNameOverrides = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
                 {"name", "submitter_name"},
                 {"email", "submitter_email"},
@@ -4148,7 +4148,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                     foreach (var item in lstFilesToRetry)
                     {
-                        if (mPreviousDatasetFilesToDelete.Contains(item, StringComparer.CurrentCultureIgnoreCase))
+                        if (mPreviousDatasetFilesToDelete.Contains(item, StringComparer.OrdinalIgnoreCase))
                         {
                             mPreviousDatasetFilesToDelete.Remove(item);
                         }
@@ -4372,7 +4372,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 }
 
                 // First look for a job-specific version of the .mzid file
-                var strSourceFileName = "Job" + dataPkgJob.ToString() + "_" + dataPkgDataset + "_msgfplus" + filePartText + ".mzid";
+                var strSourceFileName = "Job" + dataPkgJob + "_" + dataPkgDataset + "_msgfplus" + filePartText + ".mzid";
                 strMzIDFilePath = Path.Combine(m_WorkDir, strSourceFileName);
 
                 if (!File.Exists(strMzIDFilePath))
@@ -4666,7 +4666,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                     if (JobFileRenameRequired(dataPkgJob))
                     {
-                        strMzIDFilePath = Path.Combine(m_WorkDir, dataPkgDataset + "_Job" + dataPkgJob.ToString() + "_msgfplus.mzid");
+                        strMzIDFilePath = Path.Combine(m_WorkDir, dataPkgDataset + "_Job" + dataPkgJob + "_msgfplus.mzid");
                     }
                     else
                     {

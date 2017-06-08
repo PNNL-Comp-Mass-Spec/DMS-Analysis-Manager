@@ -32,11 +32,11 @@ namespace AnalysisManagerPBFGenerator
 
         protected bool RetrieveInstrumentData()
         {
-            string currentTask = "Initializing";
+            var currentTask = "Initializing";
 
             try
             {
-                string rawDataType = m_jobParams.GetJobParameter("RawDataType", "");
+                var rawDataType = m_jobParams.GetJobParameter("RawDataType", "");
                 var eRawDataType = GetRawDataType(rawDataType);
 
                 if (eRawDataType == eRawDataTypeConstants.ThermoRawFile)

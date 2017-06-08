@@ -177,12 +177,12 @@ namespace AnalysisManagerMSGFPlugin
 
         private string ConstructMGFMappingCode(int intScanNumber, int intCharge)
         {
-            return intScanNumber.ToString() + "_" + intCharge.ToString();
+            return intScanNumber + "_" + intCharge;
         }
 
         private string ConstructMSGFResultCode(int intScanNumber, int intCharge, string strPeptide)
         {
-            return intScanNumber.ToString() + "_" + intCharge.ToString() + "_" + strPeptide;
+            return intScanNumber + "_" + intCharge + "_" + strPeptide;
         }
 
         private string ConstructMSGFResultCode(string strScanNumber, string strCharge, string strPeptide)

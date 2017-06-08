@@ -65,7 +65,7 @@ namespace AnalysisManagerProMexPlugIn
                 }
 
                 // Determine the path to the ProMex program
-                string progLoc = DetermineProgramLocation("ProMexProgLoc", "ProMex.exe");
+                var progLoc = DetermineProgramLocation("ProMexProgLoc", "ProMex.exe");
 
                 if (string.IsNullOrWhiteSpace(progLoc))
                 {
@@ -160,7 +160,7 @@ namespace AnalysisManagerProMexPlugIn
 
         protected Dictionary<string, string> GetProMexParameterNames()
         {
-            var dctParamNames = new Dictionary<string, string>(25, StringComparer.CurrentCultureIgnoreCase);
+            var dctParamNames = new Dictionary<string, string>(25, StringComparer.OrdinalIgnoreCase);
 
             dctParamNames.Add("MinCharge", "minCharge");
             dctParamNames.Add("MaxCharge", "maxCharge");
@@ -259,7 +259,7 @@ namespace AnalysisManagerProMexPlugIn
                             }
                             else
                             {
-                                Match oMatch = reCheckProgress.Match(strLineIn);
+                                var oMatch = reCheckProgress.Match(strLineIn);
                                 if (oMatch.Success)
                                 {
                                     float.TryParse(oMatch.Groups[1].ToString(), out progressComplete);
@@ -320,9 +320,9 @@ namespace AnalysisManagerProMexPlugIn
 
                         if (!string.IsNullOrWhiteSpace(kvSetting.Key))
                         {
-                            string strValue = kvSetting.Value;
+                            var strValue = kvSetting.Value;
 
-                            string strArgumentSwitch = string.Empty;
+                            var strArgumentSwitch = string.Empty;
 
                             // Check whether kvSetting.key is one of the standard keys defined in dctParamNames
 
@@ -359,10 +359,10 @@ namespace AnalysisManagerProMexPlugIn
         /// <remarks>Valid modification definition contains 5 parts and doesn't contain any whitespace</remarks>
         protected bool ParseProMexValidateMod(string strMod, out string strModClean)
         {
-            int intPoundIndex = 0;
+            var intPoundIndex = 0;
             string[] strSplitMod = null;
 
-            string strComment = string.Empty;
+            var strComment = string.Empty;
 
             strModClean = string.Empty;
 
@@ -391,7 +391,7 @@ namespace AnalysisManagerProMexPlugIn
 
             // Reconstruct the mod definition, making sure there is no whitespace
             strModClean = strSplitMod[0].Trim();
-            for (int intIndex = 1; intIndex <= strSplitMod.Length - 1; intIndex++)
+            for (var intIndex = 1; intIndex <= strSplitMod.Length - 1; intIndex++)
             {
                 strModClean += "," + strSplitMod[intIndex].Trim();
             }
@@ -444,14 +444,14 @@ namespace AnalysisManagerProMexPlugIn
         protected bool StartProMex(string progLoc)
         {
             string CmdStr = null;
-            bool blnSuccess = false;
+            var blnSuccess = false;
 
             mConsoleOutputErrorMsg = string.Empty;
 
             // Read the ProMex Parameter File
             // The parameter file name specifies the mass modifications to consider, plus also the analysis parameters
 
-            string strCmdLineOptions = string.Empty;
+            var strCmdLineOptions = string.Empty;
 
             var eResult = ParseProMexParameterFile(out strCmdLineOptions);
 
@@ -538,7 +538,7 @@ namespace AnalysisManagerProMexPlugIn
 
                 if (mCmdRunner.ExitCode != 0)
                 {
-                    LogWarning("ProMex returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
+                    LogWarning("ProMex returned a non-zero exit code: " + mCmdRunner.ExitCode);
                 }
                 else
                 {
@@ -584,7 +584,7 @@ namespace AnalysisManagerProMexPlugIn
 
             // Store the PBF file in the spectra cache folder; not in the job result folder
 
-            string msXmlCacheFolderPath = m_mgrParams.GetParam("MSXMLCacheFolderPath", string.Empty);
+            var msXmlCacheFolderPath = m_mgrParams.GetParam("MSXMLCacheFolderPath", string.Empty);
             var msXmlCacheFolder = new DirectoryInfo(msXmlCacheFolderPath);
 
             if (!msXmlCacheFolder.Exists)
@@ -631,8 +631,8 @@ namespace AnalysisManagerProMexPlugIn
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo(string strProgLoc)
         {
-            string strToolVersionInfo = string.Empty;
-            bool blnSuccess = false;
+            var strToolVersionInfo = string.Empty;
+            var blnSuccess = false;
 
             if (m_DebugLevel >= 2)
             {

@@ -177,7 +177,7 @@ namespace DTASpectraFileGen
         /// <remarks></remarks>
         private bool ConvertMGFtoDTA(string strInputFilePathFull, string strOutputFolderPath)
         {
-            bool blnSuccess = false;
+            var blnSuccess = false;
 
             if (m_DebugLevel > 0)
             {

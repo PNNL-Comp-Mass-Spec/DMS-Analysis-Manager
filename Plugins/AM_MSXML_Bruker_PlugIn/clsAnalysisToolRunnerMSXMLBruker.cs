@@ -66,7 +66,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            string msXMLCacheFolderPath = m_mgrParams.GetParam("MSXMLCacheFolderPath", string.Empty);
+            var msXMLCacheFolderPath = m_mgrParams.GetParam("MSXMLCacheFolderPath", string.Empty);
             mMSXmlCacheFolder = new DirectoryInfo(msXMLCacheFolderPath);
 
             if (!mMSXmlCacheFolder.Exists)
@@ -75,7 +75,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            string processingErrorMessage = string.Empty;
+            var processingErrorMessage = string.Empty;
             FileInfo fiResultsFile = null;
 
             var eResult = CreateMSXmlFile(out fiResultsFile);
@@ -157,21 +157,21 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
                 LogDebug("clsAnalysisToolRunnerMSXMLGen.CreateMSXmlFile(): Enter");
             }
 
-            string msXmlGenerator = m_jobParams.GetParam("MSXMLGenerator");
+            var msXmlGenerator = m_jobParams.GetParam("MSXMLGenerator");
             // Typically CompassXport.exe
 
-            string msXmlFormat = m_jobParams.GetParam("MSXMLOutputType");
+            var msXmlFormat = m_jobParams.GetParam("MSXMLOutputType");
             // Typically mzXML or mzML
             var CentroidMSXML = Convert.ToBoolean(m_jobParams.GetParam("CentroidMSXML"));
 
             string CompassXportProgramPath = null;
 
-            bool blnSuccess = false;
+            var blnSuccess = false;
 
             // Initialize the Results File output parameter to a dummy name for now
             fiResultsFile = new FileInfo(Path.Combine(m_WorkDir, "NonExistent_Placeholder_File.tmp"));
 
-            if (string.Equals(msXmlGenerator, COMPASS_XPORT, StringComparison.CurrentCultureIgnoreCase))
+            if (string.Equals(msXmlGenerator, COMPASS_XPORT, StringComparison.OrdinalIgnoreCase))
             {
                 CompassXportProgramPath = m_mgrParams.GetParam("CompassXportLoc");
 
@@ -240,15 +240,15 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             // CompassXport created one CSV file for each spectrum in the dataset
             // Confirm that fewer than 100 CSV files were created
 
-            DirectoryInfo diWorkDir = new DirectoryInfo(m_WorkDir);
-            List<FileInfo> fiFiles = diWorkDir.GetFiles("*.csv").ToList();
+            var diWorkDir = new DirectoryInfo(m_WorkDir);
+            var fiFiles = diWorkDir.GetFiles("*.csv").ToList();
 
             if (fiFiles.Count < MAX_CSV_FILES)
             {
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
 
-            m_message = "CompassXport created " + fiFiles.Count.ToString() +
+            m_message = "CompassXport created " + fiFiles.Count +
                         " CSV files. The CSV conversion mode is only appropriate for datasets with fewer than " + MAX_CSV_FILES +
                         " spectra; create a mzXML file instead (e.g., settings file mzXML_Bruker.xml)";
             LogError(m_message);
@@ -309,7 +309,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo()
         {
-            string strToolVersionInfo = string.Empty;
+            var strToolVersionInfo = string.Empty;
 
             if (m_DebugLevel >= 2)
             {
@@ -317,11 +317,11 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             }
 
             // Store paths to key files in ioToolFiles
-            List<FileInfo> ioToolFiles = new List<FileInfo>();
+            var ioToolFiles = new List<FileInfo>();
 
-            string msXmlGenerator = m_jobParams.GetParam("MSXMLGenerator");
+            var msXmlGenerator = m_jobParams.GetParam("MSXMLGenerator");
             // Typically CompassXport.exe
-            if (string.Equals(msXmlGenerator, COMPASS_XPORT, StringComparison.CurrentCultureIgnoreCase))
+            if (string.Equals(msXmlGenerator, COMPASS_XPORT, StringComparison.OrdinalIgnoreCase))
             {
                 var compassXportPath = m_mgrParams.GetParam("CompassXportLoc");
                 if (string.IsNullOrEmpty(compassXportPath))

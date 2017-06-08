@@ -19,8 +19,8 @@ namespace AnalysisManagerLipidMapSearchPlugIn
             }
 
             // Retrieve the parameter file
-            string strParamFileName = m_jobParams.GetParam("ParmFileName");
-            string strParamFileStoragePath = m_jobParams.GetParam("ParmFileStoragePath");
+            var strParamFileName = m_jobParams.GetParam("ParmFileName");
+            var strParamFileStoragePath = m_jobParams.GetParam("ParmFileStoragePath");
 
             if (!FileSearch.RetrieveFile(strParamFileName, strParamFileStoragePath))
             {
@@ -141,8 +141,8 @@ namespace AnalysisManagerLipidMapSearchPlugIn
             // SourceJob2FolderPath          = "\\proto-3\LTQ_Orb_3\2011_1\XG_lipid_pt5aNeg\DLS201206180955_Auto852151"
             // SourceJob2FolderPathArchive   = "\\adms.emsl.pnl.gov\dmsarch\LTQ_Orb_3\2011_1\XG_lipid_pt5aNeg\DLS201206180955_Auto852151"
 
-            string strSourceJob2 = m_jobParams.GetParam("JobParameters", "SourceJob2");
-            int intSourceJob2 = 0;
+            var strSourceJob2 = m_jobParams.GetParam("JobParameters", "SourceJob2");
+            var intSourceJob2 = 0;
 
             if (string.IsNullOrWhiteSpace(strSourceJob2))
             {
@@ -230,7 +230,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 {
                     // Raw file still not found; try MyEMSL
 
-                    string DSFolderPath = FolderSearch.FindValidFolder(strDatasetName, strFileToFind, RetrievingInstrumentDataFolder: false);
+                    var DSFolderPath = FolderSearch.FindValidFolder(strDatasetName, strFileToFind, RetrievingInstrumentDataFolder: false);
                     if (DSFolderPath.StartsWith(MYEMSL_PATH_FLAG))
                     {
                         // Queue this file for download

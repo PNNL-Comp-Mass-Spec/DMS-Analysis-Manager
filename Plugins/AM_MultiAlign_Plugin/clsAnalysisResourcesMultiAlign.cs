@@ -24,11 +24,11 @@ namespace AnalysisManagerMultiAlignPlugIn
 
             LogMessage("Getting required files");
 
-            string strInputFileExtension = string.Empty;
+            var strInputFileExtension = string.Empty;
 
             var splitString = m_jobParams.GetParam("TargetJobFileList").Split(',');
 
-            foreach (string row in splitString)
+            foreach (var row in splitString)
             {
                 var fileNameExt = row.Split(':');
                 if (fileNameExt.Length < 3)
@@ -97,8 +97,8 @@ namespace AnalysisManagerMultiAlignPlugIn
         {
             const string INPUT_FILENAME = "input.txt";
 
-            string TargetFilePath = Path.Combine(m_WorkingDir, INPUT_FILENAME);
-            string DatasetFilePath = Path.Combine(m_WorkingDir, DatasetName + strInputFileExtension);
+            var TargetFilePath = Path.Combine(m_WorkingDir, INPUT_FILENAME);
+            var DatasetFilePath = Path.Combine(m_WorkingDir, DatasetName + strInputFileExtension);
 
             var blnSuccess = true;
 

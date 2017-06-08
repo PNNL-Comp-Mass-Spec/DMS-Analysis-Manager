@@ -63,14 +63,14 @@ namespace AnalysisManagerSequestPlugin
 
         public void ArchiveSequestParamFile(string strSrcFilePath, string strTargetFolderPath)
         {
-            bool blnNeedToArchiveFile = false;
+            var blnNeedToArchiveFile = false;
             string strTargetFilePath = null;
 
             string strNewNameBase = null;
             string strNewName = null;
             string strNewPath = null;
 
-            int intRevisionNumber = 0;
+            var intRevisionNumber = 0;
 
             var lstLineIgnoreRegExSpecs = new List<Regex>();
             lstLineIgnoreRegExSpecs.Add(new Regex(@"mass_type_parent *=.*"));
@@ -121,7 +121,7 @@ namespace AnalysisManagerSequestPlugin
                         }
 
                         intRevisionNumber += 1;
-                        strNewName = strNewNameBase + "_v" + intRevisionNumber.ToString() + Path.GetExtension(strTargetFilePath);
+                        strNewName = strNewNameBase + "_v" + intRevisionNumber + Path.GetExtension(strTargetFilePath);
                     } while (true);
 
                     if (m_DebugLevel >= 2)
@@ -393,7 +393,7 @@ namespace AnalysisManagerSequestPlugin
             if (m_mgrParams.GetParam("cluster", true))
             {
                 // Check the cluster nodes, updating local database copies as necessary
-                string OrbDBName = m_jobParams.GetParam("PeptideSearch", "generatedFastaName");
+                var OrbDBName = m_jobParams.GetParam("PeptideSearch", "generatedFastaName");
                 if (string.IsNullOrEmpty(OrbDBName))
                 {
                     m_message = "generatedFastaName parameter is empty; RetrieveOrgDB did not create a fasta file";
@@ -426,8 +426,8 @@ namespace AnalysisManagerSequestPlugin
         /// <remarks></remarks>
         private bool VerifyDatabase(string OrgDBName, string OrgDBPath)
         {
-            string HostFilePath = m_mgrParams.GetParam("hostsfilelocation");
-            string NodeDbLoc = m_mgrParams.GetParam("nodedblocation");
+            var HostFilePath = m_mgrParams.GetParam("hostsfilelocation");
+            var NodeDbLoc = m_mgrParams.GetParam("nodedblocation");
 
             string strLogMessage = null;
 
@@ -443,7 +443,7 @@ namespace AnalysisManagerSequestPlugin
             }
 
             // Define the path to the database on the head node
-            string OrgDBFilePath = Path.Combine(OrgDBPath, OrgDBName);
+            var OrgDBFilePath = Path.Combine(OrgDBPath, OrgDBName);
             if (!File.Exists(OrgDBFilePath))
             {
                 m_message = "Database file can't be found on master";
@@ -462,7 +462,7 @@ namespace AnalysisManagerSequestPlugin
             var intNodeCountFileAlreadyExists = 0;
             var intNodeCountNotEnoughFreeSpace = 0;
 
-            foreach (string NodeName in Nodes)
+            foreach (var NodeName in Nodes)
             {
                 if (!VerifyRemoteDatabase(OrgDBFilePath, @"\\" + NodeName + @"\" + NodeDbLoc, ref blnFileAlreadyExists, ref blnNotEnoughFreeSpace))
                 {
@@ -493,7 +493,7 @@ namespace AnalysisManagerSequestPlugin
                 double dblNodeCountSuccessPct = 0;
                 dblNodeCountSuccessPct = (intNodeCountProcessed - intNodeCountFailed) / (float)intNodeCountProcessed * 100;
 
-                strLogMessage = "Error, unable to verify database on " + intNodeCountFailed.ToString() + " node";
+                strLogMessage = "Error, unable to verify database on " + intNodeCountFailed + " node";
                 if (intNodeCountFailed > 1)
                     strLogMessage += "s";
                 strLogMessage += " (" + dblNodeCountSuccessPct.ToString("0") + "% succeeded)";
@@ -512,7 +512,7 @@ namespace AnalysisManagerSequestPlugin
                         m_message = "see " + m_MgrName + " manager log for details";
                     }
 
-                    LogError("Aborting since did not succeed on at least " + MINIMUM_NODE_SUCCESS_PCT.ToString() + "% of the nodes");
+                    LogError("Aborting since did not succeed on at least " + MINIMUM_NODE_SUCCESS_PCT + "% of the nodes");
                     return false;
                 }
                 else
@@ -528,15 +528,15 @@ namespace AnalysisManagerSequestPlugin
             {
                 if (intNodeCountFileAlreadyExists == 0)
                 {
-                    LogMessage("Copied database to " + intNodeCountProcessed.ToString() + " nodes");
+                    LogMessage("Copied database to " + intNodeCountProcessed + " nodes");
                 }
                 else
                 {
-                    strLogMessage = "Verified database exists on " + intNodeCountProcessed.ToString() + " nodes";
+                    strLogMessage = "Verified database exists on " + intNodeCountProcessed + " nodes";
 
                     if (intNodeCountProcessed - intNodeCountFileAlreadyExists > 0)
                     {
-                        strLogMessage += " (newly copied to " + (intNodeCountProcessed - intNodeCountFileAlreadyExists).ToString() + " nodes)";
+                        strLogMessage += " (newly copied to " + (intNodeCountProcessed - intNodeCountFileAlreadyExists) + " nodes)";
                     }
 
                     LogMessage(strLogMessage);
@@ -555,7 +555,7 @@ namespace AnalysisManagerSequestPlugin
         /// <remarks></remarks>
         private List<string> GetHostList(string HostFilePath)
         {
-            List<string> lstNodes = new List<string>();
+            var lstNodes = new List<string>();
             string InpLine = null;
             string[] LineFields = null;
             string[] Separators = { " " };
@@ -600,7 +600,7 @@ namespace AnalysisManagerSequestPlugin
         {
             const int DETAILED_LOG_THRESHOLD = 3;
 
-            bool blnFilesMatch = false;
+            var blnFilesMatch = false;
             ;
             double dblSecondDiff = 0;
 
@@ -614,8 +614,8 @@ namespace AnalysisManagerSequestPlugin
                 if (m_DebugLevel > DETAILED_LOG_THRESHOLD)
                 {
                     LogDebug("Comparing files: " + ioFileA.FullName + " vs. " + ioFileB.FullName);
-                    LogDebug(" ... file sizes: " + ioFileA.Length.ToString() + " vs. " + ioFileB.Length.ToString());
-                    LogDebug(" ... file dates: " + ioFileA.LastWriteTimeUtc.ToString() + " vs. " + ioFileB.LastWriteTimeUtc.ToString());
+                    LogDebug(" ... file sizes: " + ioFileA.Length + " vs. " + ioFileB.Length);
+                    LogDebug(" ... file dates: " + ioFileA.LastWriteTimeUtc + " vs. " + ioFileB.LastWriteTimeUtc);
                 }
 
                 if (ioFileA.Length == ioFileB.Length)
@@ -691,7 +691,7 @@ namespace AnalysisManagerSequestPlugin
         /// <remarks>Assumes DestPath is URL containing IP address of node and destination share name</remarks>
         private bool VerifyRemoteDatabase(string OrgDBFilePath, string DestPath, ref bool blnFileAlreadyExists, ref bool blnNotEnoughFreeSpace)
         {
-            bool CopyNeeded = false;
+            var CopyNeeded = false;
 
             blnFileAlreadyExists = false;
             blnNotEnoughFreeSpace = false;
@@ -701,7 +701,7 @@ namespace AnalysisManagerSequestPlugin
                 LogMessage("Verifying database " + DestPath);
             }
 
-            string DestFile = Path.Combine(DestPath, Path.GetFileName(OrgDBFilePath));
+            var DestFile = Path.Combine(DestPath, Path.GetFileName(OrgDBFilePath));
             try
             {
                 if (File.Exists(DestFile))

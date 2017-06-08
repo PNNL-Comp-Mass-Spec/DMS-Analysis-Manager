@@ -96,7 +96,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 LogMessage("Running TargetedWorkflowsConsole");
 
                 // Set up and execute a program runner to run TargetedWorkflowsConsole
-                string strRawDataType = m_jobParams.GetParam("RawDataType");
+                var strRawDataType = m_jobParams.GetParam("RawDataType");
                 string cmdStr = null;
 
                 switch (strRawDataType.ToLower())
@@ -141,7 +141,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                     // Write the console output to a text file
                     Thread.Sleep(250);
 
-                    using (StreamWriter swConsoleOutputfile = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                    using (var swConsoleOutputfile = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                     {
                         swConsoleOutputfile.WriteLine(mCmdRunner.CachedConsoleOutput);
                     }
@@ -159,7 +159,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 if (processingSuccess)
                 {
                     // Make sure that the quantitation output file was created
-                    string strOutputFileName = m_Dataset + "_quant.txt";
+                    var strOutputFileName = m_Dataset + "_quant.txt";
 
                     if (!File.Exists(Path.Combine(m_WorkDir, strOutputFileName)))
                     {
@@ -184,7 +184,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
 
                     if (mCmdRunner.ExitCode != 0)
                     {
-                        LogWarning("TargetedWorkflowsConsole returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
+                        LogWarning("TargetedWorkflowsConsole returned a non-zero exit code: " + mCmdRunner.ExitCode);
                     }
                     else
                     {
@@ -388,11 +388,11 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 string strLineIn = null;
                 string strLineInLCase = null;
 
-                int intCharIndex = 0;
+                var intCharIndex = 0;
 
                 double dblSubProgressAddon = 0;
 
-                int intEffectiveProgress = 0;
+                var intEffectiveProgress = 0;
                 intEffectiveProgress = PROGRESS_TARGETED_WORKFLOWS_STARTING;
 
                 mConsoleOutputErrorMsg = string.Empty;
@@ -408,7 +408,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                             strLineInLCase = strLineIn.ToLower();
 
                             // Update progress if the line contains any one of the expected phrases
-                            foreach (KeyValuePair<string, int> oItem in mConsoleOutputProgressMap)
+                            foreach (var oItem in mConsoleOutputProgressMap)
                             {
                                 if (strLineIn.Contains(oItem.Key))
                                 {
@@ -449,7 +449,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                             if (intCharIndex >= 0)
                             {
                                 // Error message found; update m_message
-                                string strNewError = strLineIn.Substring(intCharIndex);
+                                var strNewError = strLineIn.Substring(intCharIndex);
 
                                 if (strNewError.Contains("all peptides contain unknown modifications"))
                                 {
@@ -493,8 +493,8 @@ namespace AnalysisManagerMSAlignQuantPlugIn
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo(string strTargetedWorkflowsConsoleProgLoc)
         {
-            string strToolVersionInfo = string.Empty;
-            bool blnSuccess = false;
+            var strToolVersionInfo = string.Empty;
+            var blnSuccess = false;
 
             if (m_DebugLevel >= 2)
             {
@@ -522,7 +522,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 return false;
 
             // Store paths to key DLLs in ioToolFiles
-            List<FileInfo> ioToolFiles = new List<FileInfo>();
+            var ioToolFiles = new List<FileInfo>();
             ioToolFiles.Add(ioTargetedWorkflowsConsole);
 
             ioToolFiles.Add(new FileInfo(Path.Combine(ioTargetedWorkflowsConsole.DirectoryName, "DeconTools.Backend.dll")));

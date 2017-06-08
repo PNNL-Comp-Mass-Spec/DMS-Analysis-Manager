@@ -383,9 +383,9 @@ namespace AnalysisManagerMSGFDBPlugIn
                         if (headerColumns.Count >= 11)
                         {
                             // Check whether column 11 has ScanTypeName info
-                            if (headerColumns[10].IndexOf("MS", StringComparison.CurrentCultureIgnoreCase) >= 0 ||
-                                headerColumns[10].IndexOf("SRM", StringComparison.CurrentCultureIgnoreCase) >= 0 ||
-                                headerColumns[10].IndexOf("MRM", StringComparison.CurrentCultureIgnoreCase) >= 0)
+                            if (headerColumns[10].IndexOf("MS", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                headerColumns[10].IndexOf("SRM", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                headerColumns[10].IndexOf("MRM", StringComparison.OrdinalIgnoreCase) >= 0)
                             {
                                 return true;
                             }
@@ -394,9 +394,9 @@ namespace AnalysisManagerMSGFDBPlugIn
                         if (headerColumns.Count >= 16)
                         {
                             // Check whether column 15 has "Collision Mode" values
-                            if (headerColumns[15].IndexOf("HCD", StringComparison.CurrentCultureIgnoreCase) >= 0 ||
-                                headerColumns[15].IndexOf("CID", StringComparison.CurrentCultureIgnoreCase) >= 0 ||
-                                headerColumns[15].IndexOf("ETD", StringComparison.CurrentCultureIgnoreCase) >= 0)
+                            if (headerColumns[15].IndexOf("HCD", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                headerColumns[15].IndexOf("CID", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                headerColumns[15].IndexOf("ETD", StringComparison.OrdinalIgnoreCase) >= 0)
                             {
                                 return true;
                             }
@@ -405,9 +405,9 @@ namespace AnalysisManagerMSGFDBPlugIn
                         if (headerColumns.Count >= 17)
                         {
                             // Check whether column 15 has "Collision Mode" values
-                            if (headerColumns[16].IndexOf("HCD", StringComparison.CurrentCultureIgnoreCase) >= 0 ||
-                                headerColumns[16].IndexOf("CID", StringComparison.CurrentCultureIgnoreCase) >= 0 ||
-                                headerColumns[16].IndexOf("ETD", StringComparison.CurrentCultureIgnoreCase) >= 0)
+                            if (headerColumns[16].IndexOf("HCD", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                headerColumns[16].IndexOf("CID", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                headerColumns[16].IndexOf("ETD", StringComparison.OrdinalIgnoreCase) >= 0)
                             {
                                 return true;
                             }
@@ -430,15 +430,15 @@ namespace AnalysisManagerMSGFDBPlugIn
                     {
                         var strScanType = lstColumns[columnIndex];
 
-                        if (strScanType.IndexOf("HCD", StringComparison.CurrentCultureIgnoreCase) >= 0)
+                        if (strScanType.IndexOf("HCD", StringComparison.OrdinalIgnoreCase) >= 0)
                         {
                             blnDetailedScanTypesDefined = true;
                         }
-                        else if (strScanType.IndexOf("CID", StringComparison.CurrentCultureIgnoreCase) >= 0)
+                        else if (strScanType.IndexOf("CID", StringComparison.OrdinalIgnoreCase) >= 0)
                         {
                             blnDetailedScanTypesDefined = true;
                         }
-                        else if (strScanType.IndexOf("ETD", StringComparison.CurrentCultureIgnoreCase) >= 0)
+                        else if (strScanType.IndexOf("ETD", StringComparison.OrdinalIgnoreCase) >= 0)
                         {
                             blnDetailedScanTypesDefined = true;
                         }
@@ -479,9 +479,9 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return false;
 
                 // Assume column 11 is the ScanTypeName column
-                if (lstColumns[10].IndexOf("MS", StringComparison.CurrentCultureIgnoreCase) >= 0 ||
-                    lstColumns[10].IndexOf("SRM", StringComparison.CurrentCultureIgnoreCase) >= 0 ||
-                    lstColumns[10].IndexOf("MRM", StringComparison.CurrentCultureIgnoreCase) >= 0)
+                if (lstColumns[10].IndexOf("MS", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    lstColumns[10].IndexOf("SRM", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    lstColumns[10].IndexOf("MRM", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
                     return true;
                 }

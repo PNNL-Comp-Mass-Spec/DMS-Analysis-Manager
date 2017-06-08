@@ -30,17 +30,16 @@ namespace AnalysisManager_Ape_PlugIn
         /// <summary>
         /// Setup and run Ape pipeline according to job parameters
         /// </summary>
-        public bool GetQRollupResults(String dataPackageID)
+        public bool GetQRollupResults(string dataPackageID)
         {
-            bool blnSuccess = true;
-            blnSuccess = GetViperResultsAll();
+            var blnSuccess = GetViperResultsAll();
             return blnSuccess;
         }
 
         private bool GetViperResultsAll()
         {
-            bool blnSuccess = true;
-            Ape.SqlConversionHandler mHandle = new Ape.SqlConversionHandler(delegate(bool done, bool success, int percent, string msg)
+            var blnSuccess = true;
+            var mHandle = new Ape.SqlConversionHandler(delegate(bool done, bool success, int percent, string msg)
             {
                 Console.WriteLine(msg);
 
@@ -61,19 +60,19 @@ namespace AnalysisManager_Ape_PlugIn
 
             });
 
-            string apeMTSServerName = GetJobParam("ApeMTSServer");
-            string apeMTSDatabaseName = GetJobParam("ApeMTSDatabase");
-            string apeDatabase = Path.Combine(mWorkingDir, "Results.db3");
+            var apeMTSServerName = GetJobParam("ApeMTSServer");
+            var apeMTSDatabaseName = GetJobParam("ApeMTSDatabase");
+            var apeDatabase = Path.Combine(mWorkingDir, "Results.db3");
 
-            List<string> paramList = new List<string>();
+            var paramList = new List<string>();
             paramList.Add("1;@ReturnMTTable;1;True;sqldbtype.tinyint;T_Mass_Tags;sqldbtype.tinyint");
             paramList.Add("1;@ReturnProteinTable;1;True;sqldbtype.tinyint;T_Proteins;sqldbtype.tinyint");
             paramList.Add("1;@ReturnProteinMapTable;1;True;sqldbtype.tinyint;T_Mass_Tag_to_Protein_Map;sqldbtype.tinyint");
 
-            string dotnetConnString = "Server=" + apeMTSServerName + ";database=" + apeMTSDatabaseName + ";uid=mtuser;Password=mt4fun";
+            var dotnetConnString = "Server=" + apeMTSServerName + ";database=" + apeMTSDatabaseName + ";uid=mtuser;Password=mt4fun";
 
             Ape.SqlServerToSQLite.ProgressChanged += new Ape.SqlServerToSQLite.ProgressChangedEventHandler(OnProgressChanged);
-            string MDIDList = GetMDIDList();
+            var MDIDList = GetMDIDList();
             if (string.IsNullOrEmpty(MDIDList))
             {
                 return false;
@@ -86,9 +85,9 @@ namespace AnalysisManager_Ape_PlugIn
 
         private string GetMDIDList()
         {
-            string constr = RequireMgrParam("connectionstring");
-            string apeMTSDatabaseName = GetJobParam("ApeMTSDatabase");
-            string dataPackageID = GetJobParam("DataPackageID");
+            var constr = RequireMgrParam("connectionstring");
+            var apeMTSDatabaseName = GetJobParam("ApeMTSDatabase");
+            var dataPackageID = GetJobParam("DataPackageID");
 
             if (string.IsNullOrEmpty(apeMTSDatabaseName))
             {
@@ -102,7 +101,7 @@ namespace AnalysisManager_Ape_PlugIn
                 return string.Empty;
             }
 
-            string sqlText = "SELECT DISTINCT vmts.MD_ID FROM V_Mage_Data_Package_Analysis_Jobs vdp " +
+            var sqlText = "SELECT DISTINCT vmts.MD_ID FROM V_Mage_Data_Package_Analysis_Jobs vdp " +
                              "join V_MTS_PM_Results_List_Report vmts on vmts.Job = vdp.Job " +
                              "WHERE Data_Package_ID = " + dataPackageID + " and Task_Database = '" + apeMTSDatabaseName + "'";
 
@@ -118,20 +117,20 @@ namespace AnalysisManager_Ape_PlugIn
                 sqlText = sqlText + " and Ini_File_Name = '" + GetJobParam("ApeMDIniFilename") + "'";
             };
 
-            string MDIDList = string.Empty;
-            int intMDIDCount = 0;
-            using (SqlConnection conn = new SqlConnection(constr))
+            var MDIDList = string.Empty;
+            var intMDIDCount = 0;
+            using (var conn = new SqlConnection(constr))
             {
                 conn.Open();
                 // Get the matching MD_IDs for this data package
-                SqlCommand query = new SqlCommand(sqlText, conn);
-                using (SqlDataReader reader = query.ExecuteReader())
+                var query = new SqlCommand(sqlText, conn);
+                using (var reader = query.ExecuteReader())
                 {
                     while (reader.Read())
                     {
                         if (!string.IsNullOrEmpty(reader[0].ToString()))
                         {
-                            MDIDList += reader[0].ToString() + ", ";
+                            MDIDList += reader[0] + ", ";
                             intMDIDCount += 1;
                         }
                     }

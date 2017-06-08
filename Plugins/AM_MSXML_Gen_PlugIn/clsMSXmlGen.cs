@@ -147,7 +147,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     mSourceFilePath = Path.Combine(mWorkDir, mDatasetName + clsAnalysisResources.DOT_MZML_EXTENSION);
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException("Unsupported raw data type: " + mRawDataType.ToString());
+                    throw new ArgumentOutOfRangeException("Unsupported raw data type: " + mRawDataType);
             }
 
             mErrorMessage = string.Empty;
@@ -236,7 +236,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 if (cmdRunner.ExitCode != 0)
                 {
                     mErrorMessage = Path.GetFileNameWithoutExtension(mProgramPath) + " returned a non-zero exit code: " +
-                                    cmdRunner.ExitCode.ToString();
+                                    cmdRunner.ExitCode;
                     return false;
                 }
 
@@ -384,7 +384,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                         break;
                     default:
-                        mErrorMessage = "Unrecognized output type: " + eOutputType.ToString();
+                        mErrorMessage = "Unrecognized output type: " + eOutputType;
 
                         return false;
                 }

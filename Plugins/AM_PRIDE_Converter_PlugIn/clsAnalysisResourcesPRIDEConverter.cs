@@ -172,7 +172,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
         public static string GetGeneratedFastaParamNameForJob(int Job)
         {
-            return "Job" + Job.ToString() + "_GeneratedFasta";
+            return "Job" + Job + "_GeneratedFasta";
         }
 
         public static string GetMSGFReportTemplateFilename(IJobParams JobParams, bool WarnIfJobParamMissing)

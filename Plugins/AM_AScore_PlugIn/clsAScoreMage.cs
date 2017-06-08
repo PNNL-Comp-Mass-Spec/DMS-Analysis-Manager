@@ -115,7 +115,7 @@ namespace AnalysisManager_AScore_PlugIn
         /// </summary>
         public bool Run()
         {
-            string dataPackageID = m_jobParams.RequireJobParam("DataPackageID");
+            var dataPackageID = m_jobParams.RequireJobParam("DataPackageID");
 
             if (mParamFilename == string.Empty)
                 return true;
@@ -126,7 +126,7 @@ namespace AnalysisManager_AScore_PlugIn
             }
 
             //not sure how to show that this was a success
-            SimpleSink ascoreJobsToProcess = GetListOfDataPackageJobsToProcess(dataPackageID, mSearchType);
+            var ascoreJobsToProcess = GetListOfDataPackageJobsToProcess(dataPackageID, mSearchType);
             ApplyAScoreToJobs(ascoreJobsToProcess);
 
             //  SimpleSink reporterIonJobsToProcess = GetListOfDataPackageJobsToProcess(dataPackageID, "MASIC_Finnigan");
@@ -150,7 +150,7 @@ namespace AnalysisManager_AScore_PlugIn
             }
 
             const string strParamFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "AScore";
-            string strMAParameterFileStoragePath = m_mgrParams.RequireMgrParam(strParamFileStoragePathKeyName);
+            var strMAParameterFileStoragePath = m_mgrParams.RequireMgrParam(strParamFileStoragePathKeyName);
             if (string.IsNullOrEmpty(strMAParameterFileStoragePath))
             {
                 strMAParameterFileStoragePath = @"\\gigasax\DMS_Parameter_Files\AScore";
@@ -201,9 +201,9 @@ namespace AnalysisManager_AScore_PlugIn
         private SimpleSink GetListOfDataPackageJobsToProcess(string dataPackageID, string tool)
         {
             const string sqlTemplate = @"SELECT * FROM V_Mage_Data_Package_Analysis_Jobs WHERE Data_Package_ID = {0} AND Tool LIKE '%{1}%'";
-            string connStr = m_mgrParams.RequireMgrParam("ConnectionString");
-            string sql = string.Format(sqlTemplate, new object[] { dataPackageID, tool });
-            SimpleSink jobList = GetListOfItemsFromDB(sql, connStr);
+            var connStr = m_mgrParams.RequireMgrParam("ConnectionString");
+            var sql = string.Format(sqlTemplate, new object[] { dataPackageID, tool });
+            var jobList = GetListOfItemsFromDB(sql, connStr);
             return jobList;
         }
 
@@ -213,7 +213,7 @@ namespace AnalysisManager_AScore_PlugIn
         /// <param name="jobsToProcess"></param>
         private void ApplyAScoreToJobs(SimpleSink jobsToProcess)
         {
-            string connStr = m_mgrParams.RequireMgrParam("ConnectionString");
+            var connStr = m_mgrParams.RequireMgrParam("ConnectionString");
 
             var ascoreModule = new MageAScoreModule(connStr);
             ascoreModule.WarningMessageUpdated += ascoreModule_WarningMessageUpdated;
@@ -265,7 +265,7 @@ namespace AnalysisManager_AScore_PlugIn
         public static SimpleSink GetListOfItemsFromDB(string sql, string connectionString)
         {
             var itemList = new SimpleSink();
-            MSSQLReader reader = MakeDBReaderModule(sql, connectionString);
+            var reader = MakeDBReaderModule(sql, connectionString);
             var pipeline = ProcessingPipeline.Assemble("Get Items", reader, itemList);
             pipeline.RunRoot(null);
             return itemList;
@@ -277,7 +277,7 @@ namespace AnalysisManager_AScore_PlugIn
         /// <param name="sql">Query to use</param>
         /// <param name="connectionString"></param>
         /// <returns></returns>
-        public static MSSQLReader MakeDBReaderModule(String sql, string connectionString)
+        public static MSSQLReader MakeDBReaderModule(string sql, string connectionString)
         {
             var reader = new MSSQLReader
             {
@@ -331,7 +331,7 @@ namespace AnalysisManager_AScore_PlugIn
             };
 
             var writer = new SQLiteWriter();
-            string tableName = (!string.IsNullOrEmpty(dbTableName)) ? dbTableName : Path.GetFileNameWithoutExtension(inputFilePath);
+            var tableName = (!string.IsNullOrEmpty(dbTableName)) ? dbTableName : Path.GetFileNameWithoutExtension(inputFilePath);
             writer.DbPath = dbFilePath;
             writer.TableName = tableName;
 
@@ -361,7 +361,7 @@ namespace AnalysisManager_AScore_PlugIn
             filter.SetContext(context);
 
             var writer = new SQLiteWriter();
-            string tableName = (!string.IsNullOrEmpty(dbTableName)) ? dbTableName : Path.GetFileNameWithoutExtension(inputFilePath);
+            var tableName = (!string.IsNullOrEmpty(dbTableName)) ? dbTableName : Path.GetFileNameWithoutExtension(inputFilePath);
             writer.DbPath = dbFilePath;
             writer.TableName = tableName;
 
@@ -378,7 +378,7 @@ namespace AnalysisManager_AScore_PlugIn
 
             // extractionType should be 'Sequest First Hits' or 'MSGF+ First Hits'
             // Legacy jobs may have 'MSGFDB First Hits'
-            String extractionType = m_jobParams.RequireJobParam("ExtractionType");
+            var extractionType = m_jobParams.RequireJobParam("ExtractionType");
 
             if (extractionType == "MSGFDB First Hits")
                 extractionType = "MSGF+ First Hits";

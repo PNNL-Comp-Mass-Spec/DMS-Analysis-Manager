@@ -194,7 +194,7 @@ namespace AnalysisManager_AScore_PlugIn
             var msg = "Exporting table t_results_ascore to " + Path.GetFileName(writer.FilePath);
             LogMessage(msg);
 
-            ProcessingPipeline pipeline = ProcessingPipeline.Assemble("ExportTable", reader, writer);
+            var pipeline = ProcessingPipeline.Assemble("ExportTable", reader, writer);
             pipeline.RunRoot(null);
 
         }
@@ -249,7 +249,7 @@ namespace AnalysisManager_AScore_PlugIn
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo()
         {
-            string strAppFolderPath = clsGlobal.GetAppFolderPath();
+            var strAppFolderPath = clsGlobal.GetAppFolderPath();
 
             var fiIDMdll = new FileInfo(Path.Combine(strAppFolderPath, "AScore_DLL.dll"));
 
@@ -264,7 +264,7 @@ namespace AnalysisManager_AScore_PlugIn
         protected bool StoreToolVersionInfoDLL(string strAScoreDLLPath)
         {
 
-            string strToolVersionInfo = string.Empty;
+            var strToolVersionInfo = string.Empty;
 
             if (m_DebugLevel >= 2)
             {

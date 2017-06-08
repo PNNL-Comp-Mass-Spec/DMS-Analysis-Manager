@@ -76,7 +76,7 @@ namespace AnalysisManagerResultsCleanupPlugin
         {
             string strTransferDirectoryPath = null;
             string strResultsFolderName = null;
-            CloseOutType eResult = CloseOutType.CLOSEOUT_SUCCESS;
+            var eResult = CloseOutType.CLOSEOUT_SUCCESS;
 
             try
             {
@@ -96,7 +96,7 @@ namespace AnalysisManagerResultsCleanupPlugin
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                DirectoryInfo diTransferFolder = new DirectoryInfo(strTransferDirectoryPath);
+                var diTransferFolder = new DirectoryInfo(strTransferDirectoryPath);
 
                 if (!diTransferFolder.Exists)
                 {
@@ -120,8 +120,8 @@ namespace AnalysisManagerResultsCleanupPlugin
 
         protected CloseOutType RemoveOldResultsDb3Files(DirectoryInfo diResultsFolder)
         {
-            int intStepFolderCount = 0;
-            int intStepNumber = 0;
+            var intStepFolderCount = 0;
+            var intStepNumber = 0;
 
             try
             {
@@ -141,7 +141,7 @@ namespace AnalysisManagerResultsCleanupPlugin
                     {
                         if (!dctResultsFiles.ContainsKey(intStepNumber))
                         {
-                            foreach (FileInfo fiFile in diSubfolder.GetFiles(RESULTS_DB3_FILE))
+                            foreach (var fiFile in diSubfolder.GetFiles(RESULTS_DB3_FILE))
                             {
                                 dctResultsFiles.Add(intStepNumber, fiFile);
                                 break;
@@ -153,8 +153,8 @@ namespace AnalysisManagerResultsCleanupPlugin
                 if (dctResultsFiles.Count > 1)
                 {
                     // Delete the Results.db3 files for the steps prior to intLastStep
-                    int intLastStep = dctResultsFiles.Keys.Max();
-                    int intFileCountDeleted = 0;
+                    var intLastStep = dctResultsFiles.Keys.Max();
+                    var intFileCountDeleted = 0;
 
                     var lnqQuery = from item in dctResultsFiles where item.Key < intLastStep select item;
                     foreach (var item in lnqQuery)
@@ -211,8 +211,8 @@ namespace AnalysisManagerResultsCleanupPlugin
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo()
         {
-            string strToolVersionInfo = string.Empty;
-            string strAppFolderPath = clsGlobal.GetAppFolderPath();
+            var strToolVersionInfo = string.Empty;
+            var strAppFolderPath = clsGlobal.GetAppFolderPath();
 
             if (m_DebugLevel >= 2)
             {
@@ -232,7 +232,7 @@ namespace AnalysisManagerResultsCleanupPlugin
             }
 
             // Store the path to AnalysisManagerProg.exe and AnalysisManagerResultsCleanupPlugin.dll in ioToolFiles
-            List<FileInfo> ioToolFiles = new List<FileInfo>();
+            var ioToolFiles = new List<FileInfo>();
             ioToolFiles.Add(new FileInfo(Path.Combine(strAppFolderPath, "AnalysisManagerProg.exe")));
             ioToolFiles.Add(new FileInfo(Path.Combine(strAppFolderPath, "AnalysisManagerResultsCleanupPlugin.dll")));
 

@@ -50,7 +50,7 @@ namespace AnalysisManagerXTandemPlugIn
 
             // Make sure the _DTA.txt file has parent ion lines with text: scan=x and cs=y
             // X!Tandem uses this information to determine the scan number
-            string strCDTAPath = Path.Combine(m_WorkingDir, DatasetName + "_dta.txt");
+            var strCDTAPath = Path.Combine(m_WorkingDir, DatasetName + "_dta.txt");
             const bool blnReplaceSourceFile = true;
             const bool blnDeleteSourceFileIfUpdated = true;
 
@@ -127,11 +127,11 @@ namespace AnalysisManagerXTandemPlugIn
         {
             // set up taxonomy file to reference the organsim DB file (fasta)
 
-            string WorkingDir = m_mgrParams.GetParam("WorkDir");
-            string OrgDBName = m_jobParams.GetParam("PeptideSearch", "generatedFastaName");
-            string OrganismName = m_jobParams.GetParam("OrganismName");
-            string LocalOrgDBFolder = m_mgrParams.GetParam("orgdbdir");
-            string OrgFilePath = Path.Combine(LocalOrgDBFolder, OrgDBName);
+            var WorkingDir = m_mgrParams.GetParam("WorkDir");
+            var OrgDBName = m_jobParams.GetParam("PeptideSearch", "generatedFastaName");
+            var OrganismName = m_jobParams.GetParam("OrganismName");
+            var LocalOrgDBFolder = m_mgrParams.GetParam("orgdbdir");
+            var OrgFilePath = Path.Combine(LocalOrgDBFolder, OrgDBName);
 
             //edit base taxonomy file into actual
             try
@@ -175,12 +175,12 @@ namespace AnalysisManagerXTandemPlugIn
 
             // set up input to reference spectra file, taxonomy file, and parameter file
 
-            string WorkingDir = m_mgrParams.GetParam("WorkDir");
-            string OrganismName = m_jobParams.GetParam("OrganismName");
-            string ParamFilePath = Path.Combine(WorkingDir, m_jobParams.GetParam("parmFileName"));
-            string SpectrumFilePath = Path.Combine(WorkingDir, DatasetName + "_dta.txt");
-            string TaxonomyFilePath = Path.Combine(WorkingDir, "taxonomy.xml");
-            string OutputFilePath = Path.Combine(WorkingDir, DatasetName + "_xt.xml");
+            var WorkingDir = m_mgrParams.GetParam("WorkDir");
+            var OrganismName = m_jobParams.GetParam("OrganismName");
+            var ParamFilePath = Path.Combine(WorkingDir, m_jobParams.GetParam("parmFileName"));
+            var SpectrumFilePath = Path.Combine(WorkingDir, DatasetName + "_dta.txt");
+            var TaxonomyFilePath = Path.Combine(WorkingDir, "taxonomy.xml");
+            var OutputFilePath = Path.Combine(WorkingDir, DatasetName + "_xt.xml");
 
             //make input file
             //start by adding the contents of the parameter file.
@@ -253,7 +253,7 @@ namespace AnalysisManagerXTandemPlugIn
 
             string strMessage = null;
 
-            bool blnSuccess = false;
+            var blnSuccess = false;
 
             try
             {

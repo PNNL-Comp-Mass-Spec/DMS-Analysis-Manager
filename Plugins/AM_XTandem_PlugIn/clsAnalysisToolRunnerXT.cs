@@ -85,7 +85,7 @@ namespace AnalysisManagerXTandemPlugIn
             }
 
             // Define the path to the X!Tandem .Exe
-            string progLoc = m_mgrParams.GetParam("xtprogloc");
+            var progLoc = m_mgrParams.GetParam("xtprogloc");
             if (progLoc.Length == 0)
             {
                 m_message = "Parameter 'xtprogloc' not defined for this manager";
@@ -135,7 +135,7 @@ namespace AnalysisManagerXTandemPlugIn
 
                 if (mCmdRunner.ExitCode != 0)
                 {
-                    LogWarning("Tandem.exe returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
+                    LogWarning("Tandem.exe returned a non-zero exit code: " + mCmdRunner.ExitCode);
                 }
                 else
                 {
@@ -215,7 +215,7 @@ namespace AnalysisManagerXTandemPlugIn
             var strToolVersionInfo = string.Copy(mXTandemVersion);
 
             // Store paths to key files in ioToolFiles
-            List<FileInfo> ioToolFiles = new List<FileInfo>();
+            var ioToolFiles = new List<FileInfo>();
             ioToolFiles.Add(new FileInfo(m_mgrParams.GetParam("xtprogloc")));
 
             try
@@ -232,7 +232,7 @@ namespace AnalysisManagerXTandemPlugIn
         protected string DetermineXTandemProgramLocation(string progLoc)
         {
             // Check whether the settings file specifies that a specific version of the step tool be used
-            string strXTandemStepToolVersion = m_jobParams.GetParam("XTandem_Version");
+            var strXTandemStepToolVersion = m_jobParams.GetParam("XTandem_Version");
 
             if (!string.IsNullOrWhiteSpace(strXTandemStepToolVersion))
             {
@@ -240,7 +240,7 @@ namespace AnalysisManagerXTandemPlugIn
                 // strXTandemStepToolVersion will be similar to "v2011.12.1.1"
                 // Insert the specific version just before \bin\ in progLoc
 
-                int intInsertIndex = 0;
+                var intInsertIndex = 0;
                 intInsertIndex = progLoc.ToLower().IndexOf("\\bin\\", StringComparison.Ordinal);
 
                 if (intInsertIndex > 0)
@@ -385,7 +385,7 @@ namespace AnalysisManagerXTandemPlugIn
             try
             {
                 FileList = Directory.GetFiles(m_WorkDir, "*_xt.xml");
-                foreach (string TmpFile in FileList)
+                foreach (var TmpFile in FileList)
                 {
                     TmpFilePath = Path.Combine(m_WorkDir, Path.GetFileName(TmpFile));
                     if (!base.ZipFile(TmpFilePath, true))
@@ -405,7 +405,7 @@ namespace AnalysisManagerXTandemPlugIn
             try
             {
                 FileList = Directory.GetFiles(m_WorkDir, "*_xt.xml");
-                foreach (string TmpFile in FileList)
+                foreach (var TmpFile in FileList)
                 {
                     File.SetAttributes(TmpFile, File.GetAttributes(TmpFile) & (~FileAttributes.ReadOnly));
                     File.Delete(TmpFile);

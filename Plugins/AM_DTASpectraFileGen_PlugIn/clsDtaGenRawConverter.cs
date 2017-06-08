@@ -29,7 +29,7 @@ namespace DTASpectraFileGen
         {
             string strDTAToolPath = null;
 
-            string rawConverterDir = m_MgrParams.GetParam("RawConverterProgLoc");
+            var rawConverterDir = m_MgrParams.GetParam("RawConverterProgLoc");
             strDTAToolPath = Path.Combine(rawConverterDir, RAWCONVERTER_FILENAME);
 
             return strDTAToolPath;
@@ -78,7 +78,7 @@ namespace DTASpectraFileGen
         {
             try
             {
-                string strRawDataType = m_JobParams.GetJobParameter("RawDataType", "");
+                var strRawDataType = m_JobParams.GetJobParameter("RawDataType", "");
 
                 var oMGFConverter = new clsMGFConverter(m_DebugLevel, m_WorkDir)
                 {
@@ -133,7 +133,7 @@ namespace DTASpectraFileGen
                         rawFilePath = Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_RAW_EXTENSION);
                         break;
                     default:
-                        m_ErrMsg = "Raw data file type not supported: " + eRawDataType.ToString();
+                        m_ErrMsg = "Raw data file type not supported: " + eRawDataType;
                         return false;
                 }
 

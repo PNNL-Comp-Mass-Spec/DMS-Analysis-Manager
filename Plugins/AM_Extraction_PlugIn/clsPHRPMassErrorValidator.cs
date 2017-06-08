@@ -52,7 +52,7 @@ namespace AnalysisManagerExtractionPlugin
         private clsSearchEngineParameters LoadSearchEngineParameters(clsPHRPReader objPHRPReader, string strSearchEngineParamFilePath, clsPHRPReader.ePeptideHitResultType eResultType)
         {
             clsSearchEngineParameters objSearchEngineParams = null;
-            bool blnSuccess = false;
+            var blnSuccess = false;
 
             try
             {
@@ -116,7 +116,7 @@ namespace AnalysisManagerExtractionPlugin
                 mPHRPReader.WarningEvent += mPHRPReader_WarningEvent;
 
                 // Report any errors cached during instantiation of mPHRPReader
-                foreach (string strMessage in mPHRPReader.ErrorMessages)
+                foreach (var strMessage in mPHRPReader.ErrorMessages)
                 {
                     if (string.IsNullOrEmpty(mErrorMessage))
                     {
@@ -128,7 +128,7 @@ namespace AnalysisManagerExtractionPlugin
                     return false;
 
                 // Report any warnings cached during instantiation of mPHRPReader
-                foreach (string strMessage in mPHRPReader.WarningMessages)
+                foreach (var strMessage in mPHRPReader.WarningMessages)
                 {
                     if (strMessage.StartsWith("Warning, taxonomy file not found"))
                     {
@@ -163,7 +163,7 @@ namespace AnalysisManagerExtractionPlugin
                 // Define the precursor mass tolerance threshold
                 // At a minimum, use 6 Da, though we'll bump that up by 1 Da for each charge state (7 Da for CS 2, 8 Da for CS 3, 9 Da for CS 4, etc.)
                 // However, for MSGF+ we require that the masses match within 0.1 Da because the IsotopeError column allows for a more accurate comparison
-                double dblPrecursorMassTolerance = objSearchEngineParams.PrecursorMassToleranceDa;
+                var dblPrecursorMassTolerance = objSearchEngineParams.PrecursorMassToleranceDa;
 
                 if (dblPrecursorMassTolerance < 6)
                 {
@@ -180,7 +180,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 var intErrorCount = 0;
                 var intPsmCount = 0;
-                DateTime dtLastProgress = System.DateTime.UtcNow;
+                var dtLastProgress = System.DateTime.UtcNow;
 
                 string strPeptideDescription = null;
                 var lstLargestMassErrors = new SortedDictionary<double, string>();
@@ -224,7 +224,7 @@ namespace AnalysisManagerExtractionPlugin
                         Console.WriteLine(statusMessage);
                     }
 
-                    clsPSM objCurrentPSM = mPHRPReader.CurrentPSM;
+                    var objCurrentPSM = mPHRPReader.CurrentPSM;
 
                     if (objCurrentPSM.PeptideMonoisotopicMass <= 0)
                     {
@@ -269,7 +269,7 @@ namespace AnalysisManagerExtractionPlugin
                     }
                     else
                     {
-                        double dblMinValue = lstLargestMassErrors.Keys.Min();
+                        var dblMinValue = lstLargestMassErrors.Keys.Min();
                         if (dblMassError > dblMinValue && !lstLargestMassErrors.ContainsKey(dblMassError))
                         {
                             lstLargestMassErrors.Remove(dblMinValue);

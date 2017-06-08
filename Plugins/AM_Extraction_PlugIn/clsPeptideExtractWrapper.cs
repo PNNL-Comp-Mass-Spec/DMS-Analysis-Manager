@@ -110,7 +110,7 @@ namespace AnalysisManagerExtractionPlugin
         /// <remarks></remarks>
         public CloseOutType PerformExtraction()
         {
-            clsPeptideFileExtractor.StartupArguments StartParams = new clsPeptideFileExtractor.StartupArguments(m_MgrParams.GetParam("workdir"),
+            var StartParams = new clsPeptideFileExtractor.StartupArguments(m_MgrParams.GetParam("workdir"),
                 m_JobParams.GetParam("DatasetNum"))
             {
                 ExpandMultiORF = true,
@@ -188,8 +188,8 @@ namespace AnalysisManagerExtractionPlugin
             //Verifies an _syn.txt file was created, and that valid data was found (file size > 0 bytes)
 
             //Test for presence of _syn.txt file
-            string[] workFiles = Directory.GetFiles(m_MgrParams.GetParam("workdir"));
-            string workFileMatch = string.Empty;
+            var workFiles = Directory.GetFiles(m_MgrParams.GetParam("workdir"));
+            var workFileMatch = string.Empty;
 
             var reCheckSuffix = new Regex(@"_syn.txt$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 

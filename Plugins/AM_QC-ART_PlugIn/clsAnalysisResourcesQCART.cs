@@ -433,7 +433,7 @@ namespace AnalysisManagerQCARTPlugin
             out string baselineMetadataFilePath,
             out bool criticalError)
         {
-            baselineMetadataFilePath = String.Empty;
+            baselineMetadataFilePath = string.Empty;
             criticalError = false;
             var currentTask = "Initializing";
 
@@ -795,7 +795,7 @@ namespace AnalysisManagerQCARTPlugin
             try
             {
                 var datasetParseErrors = new List<string>();
-                var datasetsMatched = new SortedSet<string>(StringComparer.CurrentCultureIgnoreCase);
+                var datasetsMatched = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
 
                 if (datasetNamesToRetrieveMectrics.Count == 0)
                 {

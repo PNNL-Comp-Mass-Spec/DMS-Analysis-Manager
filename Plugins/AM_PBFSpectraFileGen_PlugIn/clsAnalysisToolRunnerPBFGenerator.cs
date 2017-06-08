@@ -77,7 +77,7 @@ namespace AnalysisManagerPBFGenerator
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                string msXMLCacheFolderPath = m_mgrParams.GetParam("MSXMLCacheFolderPath", string.Empty);
+                var msXMLCacheFolderPath = m_mgrParams.GetParam("MSXMLCacheFolderPath", string.Empty);
                 mMSXmlCacheFolder = new DirectoryInfo(msXMLCacheFolderPath);
 
                 if (!mMSXmlCacheFolder.Exists)
@@ -236,7 +236,7 @@ namespace AnalysisManagerPBFGenerator
 
                 if (fiResults.Exists && mInstrumentFileSizeBytes > 0)
                 {
-                    float percentComplete = fiResults.Length / (float)mInstrumentFileSizeBytes * 100;
+                    var percentComplete = fiResults.Length / (float)mInstrumentFileSizeBytes * 100;
                     return percentComplete;
                 }
             }
@@ -330,11 +330,11 @@ namespace AnalysisManagerPBFGenerator
         protected bool StartPBFFileCreation(string progLoc)
         {
             string CmdStr = null;
-            bool blnSuccess = false;
+            var blnSuccess = false;
 
             mConsoleOutputErrorMsg = string.Empty;
 
-            string rawDataType = m_jobParams.GetJobParameter("RawDataType", "");
+            var rawDataType = m_jobParams.GetJobParameter("RawDataType", "");
             var eRawDataType = clsAnalysisResources.GetRawDataType(rawDataType);
 
             if (eRawDataType != clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile)
@@ -416,7 +416,7 @@ namespace AnalysisManagerPBFGenerator
 
                 if (cmdRunner.ExitCode != 0)
                 {
-                    LogWarning("PBFGen returned a non-zero exit code: " + cmdRunner.ExitCode.ToString());
+                    LogWarning("PBFGen returned a non-zero exit code: " + cmdRunner.ExitCode);
                 }
                 else
                 {
@@ -442,8 +442,8 @@ namespace AnalysisManagerPBFGenerator
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo(string strProgLoc)
         {
-            string strToolVersionInfo = string.Empty;
-            bool blnSuccess = false;
+            var strToolVersionInfo = string.Empty;
+            var blnSuccess = false;
 
             if (m_DebugLevel >= 2)
             {

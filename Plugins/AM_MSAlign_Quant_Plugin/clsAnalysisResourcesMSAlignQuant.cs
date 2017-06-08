@@ -29,7 +29,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                     "' is not defined (obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); will assume: " + strParamFileStoragePath);
             }
 
-            string strParamFileName = m_jobParams.GetJobParameter("MSAlignQuantParamFile", string.Empty);
+            var strParamFileName = m_jobParams.GetJobParameter("MSAlignQuantParamFile", string.Empty);
             if (string.IsNullOrEmpty(strParamFileName))
             {
                 m_message = clsAnalysisToolRunnerBase.NotifyMissingParameter(m_jobParams, "MSAlignQuantParamFile");
@@ -55,7 +55,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
             m_jobParams.AddResultFileToSkip(strMSAlignResultsTable);
 
             // Get the instrument data file
-            string strRawDataType = m_jobParams.GetParam("RawDataType");
+            var strRawDataType = m_jobParams.GetParam("RawDataType");
 
             switch (strRawDataType.ToLower())
             {

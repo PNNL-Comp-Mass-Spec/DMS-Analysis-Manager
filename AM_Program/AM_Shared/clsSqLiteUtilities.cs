@@ -306,8 +306,8 @@ namespace AnalysisManagerBase
             string tableNameFilter)
         {
 
-            var dctObjects = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
-            dctIndexToTableMap = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
+            var dctObjects = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            dctIndexToTableMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
             var cmd = new SQLiteCommand(cnDatabase);
 

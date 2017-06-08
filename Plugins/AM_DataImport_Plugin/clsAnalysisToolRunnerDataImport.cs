@@ -98,8 +98,8 @@ namespace AnalysisManagerDataImportPlugIn
         /// <remarks>The name of the new subfolder comes from m_ResFolderName</remarks>
         protected bool MoveImportedFiles()
         {
-            string strTargetFolder = "??";
-            string strTargetFilePath = "??";
+            var strTargetFolder = "??";
+            var strTargetFilePath = "??";
 
             try
             {
@@ -124,7 +124,7 @@ namespace AnalysisManagerDataImportPlugIn
                     fiTargetFolder.Create();
                 }
 
-                foreach (FileInfo fiFile in mSourceFiles)
+                foreach (var fiFile in mSourceFiles)
                 {
                     try
                     {
@@ -218,7 +218,7 @@ namespace AnalysisManagerDataImportPlugIn
 
                 // Copy files from the source folder to the working directory
                 mSourceFiles.Clear();
-                foreach (FileInfo fiFile in fiSourceFolder.GetFiles(strSourceFileSpec))
+                foreach (var fiFile in fiSourceFolder.GetFiles(strSourceFileSpec))
                 {
                     try
                     {
@@ -275,8 +275,8 @@ namespace AnalysisManagerDataImportPlugIn
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo()
         {
-            string strToolVersionInfo = string.Empty;
-            string strAppFolderPath = clsGlobal.GetAppFolderPath();
+            var strToolVersionInfo = string.Empty;
+            var strAppFolderPath = clsGlobal.GetAppFolderPath();
 
             if (m_DebugLevel >= 2)
             {
@@ -290,7 +290,7 @@ namespace AnalysisManagerDataImportPlugIn
             }
 
             // Store the path to AnalysisManagerDataImportPlugIn.dll in ioToolFiles
-            List<FileInfo> ioToolFiles = new List<FileInfo>();
+            var ioToolFiles = new List<FileInfo>();
             ioToolFiles.Add(new FileInfo(Path.Combine(strAppFolderPath, "AnalysisManagerDataImportPlugIn.dll")));
 
             try

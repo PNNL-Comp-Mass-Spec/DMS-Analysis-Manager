@@ -271,7 +271,7 @@ namespace AnalysisManagerICR2LSPlugIn
                     //If problem is locked file, retry
                     if (m_DebugLevel > 0)
                     {
-                        LogError("Error deleting data file, attempt #" + RetryCount.ToString());
+                        LogError("Error deleting data file, attempt #" + RetryCount);
                     }
                     ErrMsg = ex.Message;
                     RetryCount += 1;

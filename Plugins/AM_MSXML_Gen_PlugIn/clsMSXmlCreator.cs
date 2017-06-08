@@ -144,7 +144,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             // Turn on Centroiding, which will result in faster mzXML file generation time and smaller .mzXML files
             var CentroidMSXML = true;
 
-            bool blnSuccess = false;
+            var blnSuccess = false;
 
             // mzXML filename is dataset plus .mzXML
             string strMzXmlFilePath = null;
@@ -160,7 +160,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
             // Instantiate the processing class
             // Note that mMSXmlGeneratorAppPath should have been populated by StoreToolVersionInfo() by an Analysis Manager plugin using clsAnalysisToolRunnerBase.GetMSXmlGeneratorAppPath()
-            string strMSXmlGeneratorExe = Path.GetFileName(mMSXmlGeneratorAppPath);
+            var strMSXmlGeneratorExe = Path.GetFileName(mMSXmlGeneratorAppPath);
 
             if (!File.Exists(mMSXmlGeneratorAppPath))
             {
@@ -174,7 +174,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 OnStatusEvent("Creating the .mzXML file for " + m_Dataset);
             }
 
-            string rawDataType = m_jobParams.GetParam("RawDataType");
+            var rawDataType = m_jobParams.GetParam("RawDataType");
             var eRawDataType = clsAnalysisResources.GetRawDataType(rawDataType);
 
             if (strMSXmlGeneratorExe.ToLower().Contains("readw"))
@@ -196,7 +196,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                 // Lookup Centroid Settings
                 CentroidMSXML = m_jobParams.GetJobParameter("CentroidMSXML", true);
-                int CentroidPeakCountToRetain = 0;
+                var CentroidPeakCountToRetain = 0;
 
                 // Look for parameter CentroidPeakCountToRetain in the MSXMLGenerator section
                 CentroidPeakCountToRetain = m_jobParams.GetJobParameter("MSXMLGenerator", "CentroidPeakCountToRetain", 0);

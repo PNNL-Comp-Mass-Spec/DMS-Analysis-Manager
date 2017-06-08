@@ -129,7 +129,7 @@ namespace AnalysisManagerMSDeconvPlugIn
 
                     if (mCmdRunner.ExitCode != 0)
                     {
-                        LogWarning("MSDeconv returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
+                        LogWarning("MSDeconv returned a non-zero exit code: " + mCmdRunner.ExitCode);
                     }
                     else
                     {
@@ -251,7 +251,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                 }
 
                 string strLineIn = null;
-                int intLinesRead = 0;
+                var intLinesRead = 0;
 
                 short intActualProgress = 0;
 
@@ -372,7 +372,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                 if (lstScanGaps.Count > 0)
                 {
                     // Compute the average scan gap
-                    int scanGapSum = lstScanGaps.Sum();
+                    var scanGapSum = lstScanGaps.Sum();
                     var scanGapAverage = scanGapSum / (float)lstScanGaps.Count;
 
                     if (scanGapAverage >= 2)
@@ -437,7 +437,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                 intJavaMemorySize = 512;
 
             //Set up and execute a program runner to run MSDeconv
-            var CmdStr = " -Xmx" + intJavaMemorySize.ToString() + "M -jar " + mMSDeconvProgLoc;
+            var CmdStr = " -Xmx" + intJavaMemorySize + "M -jar " + mMSDeconvProgLoc;
 
             // Define the input file and processing options
             // Note that capitalization matters for the extension; it must be .mzXML
@@ -498,7 +498,7 @@ namespace AnalysisManagerMSDeconvPlugIn
             var strToolVersionInfo = string.Copy(mMSDeconvVersion);
 
             // Store paths to key files in ioToolFiles
-            List<FileInfo> ioToolFiles = new List<FileInfo>();
+            var ioToolFiles = new List<FileInfo>();
             ioToolFiles.Add(new FileInfo(mMSDeconvProgLoc));
 
             try
@@ -539,13 +539,13 @@ namespace AnalysisManagerMSDeconvPlugIn
                 }
 
                 string strLineIn = null;
-                bool blnKeepLine = false;
+                var blnKeepLine = false;
 
-                int intScanNumber = 0;
-                string strMostRecentProgressLine = string.Empty;
-                string strMostRecentProgressLineWritten = string.Empty;
+                var intScanNumber = 0;
+                var strMostRecentProgressLine = string.Empty;
+                var strMostRecentProgressLineWritten = string.Empty;
 
-                int intScanNumberOutputThreshold = 0;
+                var intScanNumberOutputThreshold = 0;
 
                 string strTrimmedFilePath = null;
                 strTrimmedFilePath = strConsoleOutputFilePath + ".trimmed";

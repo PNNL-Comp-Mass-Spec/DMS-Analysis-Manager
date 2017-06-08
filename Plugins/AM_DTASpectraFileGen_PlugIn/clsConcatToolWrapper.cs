@@ -32,30 +32,26 @@ namespace DTASpectraFileGen
 
         #region "Module variables"
 
-        private bool m_CatInProgress = false;
+        private bool m_CatInProgress;
         private IConcatenateFiles m_CatTools;
-        private string m_ErrMsg = "";
-        private string m_DataPath = "";
-        private float m_Progress = 0.0f;        //Percent complete, 0-100
+        private string m_ErrMsg;
+        private string m_DataPath;
+
+        // Percent complete, value between 0-100
+        private float m_Progress;
 
         #endregion
 
         #region "Properties"
 
-        public float Progress
-        {
-            get { return m_Progress; }
-        }
+        public float Progress => m_Progress;
 
-        public string ErrMsg
-        {
-            get { return m_ErrMsg; }
-        }
+        public string ErrMsg => m_ErrMsg;
 
         public string DataPath
         {
-            get { return m_DataPath; }
-            set { m_DataPath = value; }
+            get => m_DataPath;
+            set => m_DataPath = value;
         }
 
         #endregion
@@ -65,6 +61,7 @@ namespace DTASpectraFileGen
         public clsConcatToolWrapper(string DataPath)
         {
             m_DataPath = DataPath;
+            m_ErrMsg = "";
         }
 
         public bool ConcatenateFiles(ConcatFileTypes FileType, string RootFileName)
@@ -77,8 +74,10 @@ namespace DTASpectraFileGen
             try
             {
                 //Perform the concatenation
-                m_CatTools = new clsConcatenateFiles(m_DataPath, RootFileName);
-                m_CatTools.DeleteSourceFilesWhenConcatenating = blnDeleteSourceFilesWhenConcatenating;
+                m_CatTools = new clsConcatenateFiles(m_DataPath, RootFileName) {
+                        DeleteSourceFilesWhenConcatenating = blnDeleteSourceFilesWhenConcatenating
+                    };
+
                 m_CatTools.ErrorNotification += m_CatTools_ErrorNotification;
                 m_CatTools.EndTask += m_CatTools_EndingTask;
                 m_CatTools.Progress += m_CatTools_Progress;
@@ -99,7 +98,7 @@ namespace DTASpectraFileGen
                         break;
                     default:
                         //Shouldn't ever get here
-                        m_ErrMsg = "Invalid concatenation selection: " + FileType.ToString();
+                        m_ErrMsg = "Invalid concatenation selection: " + FileType;
                         return false;
                 }
 
@@ -128,10 +127,6 @@ namespace DTASpectraFileGen
             m_CatInProgress = false;
             m_ErrMsg = errorMessage;
         }
-
-        //Private Sub m_CatTools_StartingTask(ByVal taskIdentString As String) Handles m_CatTools.StartingTask
-        //	m_CatInProgress = True
-        //End Sub
 
         private void m_CatTools_EndingTask()
         {

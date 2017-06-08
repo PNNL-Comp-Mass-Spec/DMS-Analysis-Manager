@@ -371,7 +371,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
         {
             if (mMSXmlOutputFileType != clsAnalysisResources.MSXMLOutputTypeConstants.mzML)
             {
-                LogError("Unsupported file extension for RecalculatePrecursors=True; must be mzML, not " + mMSXmlOutputFileType.ToString());
+                LogError("Unsupported file extension for RecalculatePrecursors=True; must be mzML, not " + mMSXmlOutputFileType);
                 return false;
             }
 
@@ -385,7 +385,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             }
             else
             {
-                LogError("Unsupported dataset type for RecalculatePrecursors=True; must be .Raw, not " + eRawDataType.ToString());
+                LogError("Unsupported dataset type for RecalculatePrecursors=True; must be .Raw, not " + eRawDataType);
                 return false;
             }
 

@@ -369,7 +369,7 @@ namespace MSGFResultsSummarizer
 
                         if (objPSM.Charge >= 0)
                         {
-                            var strScanChargeCombo = objPSM.ScanNumber.ToString() + "_" + objPSM.Charge.ToString();
+                            var strScanChargeCombo = objPSM.ScanNumber + "_" + objPSM.Charge;
 
                             if (!lstUniqueSpectra.ContainsKey(strScanChargeCombo))
                             {

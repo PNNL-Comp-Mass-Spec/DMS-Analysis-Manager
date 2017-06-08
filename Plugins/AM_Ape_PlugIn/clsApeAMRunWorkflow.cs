@@ -26,7 +26,7 @@ namespace AnalysisManager_Ape_PlugIn
 
 		public bool RunWorkflow()
 		{
-			bool blnSuccess = true;
+			var blnSuccess = true;
 			var progressHandler = new Ape.SqlConversionHandler(delegate(bool done, bool success, int percent, string msg)
 			{
 				Console.WriteLine(msg);
@@ -48,9 +48,9 @@ namespace AnalysisManager_Ape_PlugIn
 
 			});
 
-			string apeWorkflow = Path.Combine(mWorkingDir, GetJobParam("ApeWorkflowName"));
-			string apeDatabase = Path.Combine(mWorkingDir, "Results.db3");
-			string apeWorkflowStepList = Convert.ToString(GetJobParam("ApeWorkflowStepList"));
+			var apeWorkflow = Path.Combine(mWorkingDir, GetJobParam("ApeWorkflowName"));
+			var apeDatabase = Path.Combine(mWorkingDir, "Results.db3");
+			var apeWorkflowStepList = Convert.ToString(GetJobParam("ApeWorkflowStepList"));
 
 			if (string.IsNullOrEmpty(apeWorkflowStepList))
 			{
@@ -59,7 +59,7 @@ namespace AnalysisManager_Ape_PlugIn
 			}
 
 			// Check whether we should compact the database
-			bool apeCompactDatabase = Convert.ToBoolean(GetJobParam("ApeCompactDatabase"));
+			var apeCompactDatabase = Convert.ToBoolean(GetJobParam("ApeCompactDatabase"));
 
 			Ape.SqlServerToSQLite.ProgressChanged += OnProgressChanged;
 			Ape.SqlServerToSQLite.StartWorkflow(apeWorkflowStepList, apeWorkflow, apeDatabase, apeDatabase, false, apeCompactDatabase, progressHandler);
@@ -71,8 +71,8 @@ namespace AnalysisManager_Ape_PlugIn
 			}
 			else
 			{
-				string analysisType = GetJobParam("AnalysisType", string.Empty);
-				if (!string.Equals(analysisType, "improv", StringComparison.CurrentCultureIgnoreCase))
+				var analysisType = GetJobParam("AnalysisType", string.Empty);
+				if (!string.Equals(analysisType, "improv", StringComparison.OrdinalIgnoreCase))
 				{
 					// Add the protein parsimony tables
 					blnSuccess = StartProteinParsimony(apeDatabase);

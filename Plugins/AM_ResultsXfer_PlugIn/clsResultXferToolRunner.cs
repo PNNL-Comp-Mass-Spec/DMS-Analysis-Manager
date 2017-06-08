@@ -503,8 +503,8 @@ namespace AnalysisManagerResultsXferPlugin
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo()
         {
-            string strToolVersionInfo = string.Empty;
-            string strAppFolderPath = clsGlobal.GetAppFolderPath();
+            var strToolVersionInfo = string.Empty;
+            var strAppFolderPath = clsGlobal.GetAppFolderPath();
 
             if (m_DebugLevel >= 2)
             {
@@ -524,7 +524,7 @@ namespace AnalysisManagerResultsXferPlugin
             }
 
             // Store the path to AnalysisManagerProg.exe and AnalysisManagerResultsXferPlugin.dll in ioToolFiles
-            List<FileInfo> ioToolFiles = new List<FileInfo>();
+            var ioToolFiles = new List<FileInfo>();
             ioToolFiles.Add(new FileInfo(Path.Combine(strAppFolderPath, "AnalysisManagerProg.exe")));
             ioToolFiles.Add(new FileInfo(Path.Combine(strAppFolderPath, "AnalysisManagerResultsXferPlugin.dll")));
 

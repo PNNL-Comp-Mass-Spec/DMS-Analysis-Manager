@@ -56,7 +56,7 @@ namespace AnalysisManagerBase
         public bool SplitCattedDTAsOnly(string datasetName, string resultsFolderPath, List<string> lstFilesToSkip)
         {
 
-            var lstFilesToSkipSortedSet = new SortedSet<string>(StringComparer.CurrentCultureIgnoreCase);
+            var lstFilesToSkipSortedSet = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var strEntry in lstFilesToSkip)
             {
@@ -90,7 +90,7 @@ namespace AnalysisManagerBase
         public bool SplitCattedOutsOnly(string datasetName, string resultsFolderPath, List<string> lstFilesToSkip)
         {
 
-            var lstFilesToSkipSortedSet = new SortedSet<string>(StringComparer.CurrentCultureIgnoreCase);
+            var lstFilesToSkipSortedSet = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var strEntry in lstFilesToSkip)
             {

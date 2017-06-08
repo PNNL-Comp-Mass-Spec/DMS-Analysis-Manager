@@ -30,8 +30,8 @@ namespace AnalysisManagerInSpecTPlugIn
 
             string CmdStr = null;
 
-            int intRandomNumberSeed = 0;
-            bool blnShuffleDBPreventRepeats = false;
+            var intRandomNumberSeed = 0;
+            var blnShuffleDBPreventRepeats = false;
 
             string strDBFileNameInput = null;
             string strOutputNameBase = null;
@@ -41,9 +41,9 @@ namespace AnalysisManagerInSpecTPlugIn
             string dbTrieFilename = null;
 
             string pythonProgLoc = null;
-            bool blnUseShuffledDB = false;
+            var blnUseShuffledDB = false;
 
-            float sngMaxWaitTimeHours = MAX_WAITTIME_HOURS;
+            var sngMaxWaitTimeHours = MAX_WAITTIME_HOURS;
 
             try
             {
@@ -137,7 +137,7 @@ namespace AnalysisManagerInSpecTPlugIn
                     }
 
                     // Verify that the PrepDB python script exists
-                    string PrebDBScriptPath = Path.Combine(InspectDir, PREPDB_SCRIPT);
+                    var PrebDBScriptPath = Path.Combine(InspectDir, PREPDB_SCRIPT);
                     if (!File.Exists(PrebDBScriptPath))
                     {
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
@@ -146,7 +146,7 @@ namespace AnalysisManagerInSpecTPlugIn
                     }
 
                     // Verify that the ShuffleDB python script exists
-                    string ShuffleDBScriptPath = Path.Combine(InspectDir, SHUFFLEDB_SCRIPT);
+                    var ShuffleDBScriptPath = Path.Combine(InspectDir, SHUFFLEDB_SCRIPT);
                     if (blnUseShuffledDB)
                     {
                         if (!File.Exists(ShuffleDBScriptPath))
@@ -163,7 +163,7 @@ namespace AnalysisManagerInSpecTPlugIn
                     }
 
                     //Create lock file
-                    bool bSuccess = false;
+                    var bSuccess = false;
                     bSuccess = CreateLockFile(dbLockFilename);
                     if (!bSuccess)
                     {
@@ -213,7 +213,7 @@ namespace AnalysisManagerInSpecTPlugIn
 
                         if (intRandomNumberSeed != 0)
                         {
-                            CmdStr += " -d " + intRandomNumberSeed.ToString();
+                            CmdStr += " -d " + intRandomNumberSeed;
                         }
 
                         if (DebugLevel >= 1)

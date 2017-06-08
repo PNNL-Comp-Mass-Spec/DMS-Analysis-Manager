@@ -41,13 +41,7 @@ namespace AnalysisManager_Mage_PlugIn
 
         #region Properties
 
-        public string WorkingDir
-        {
-            get
-            {
-                return WorkingDirPath;
-            }
-        }
+        public string WorkingDir => WorkingDirPath;
 
         #endregion
 
@@ -109,7 +103,7 @@ namespace AnalysisManager_Mage_PlugIn
         /// </summary>
         /// <param name="sql">Query to use</param>
         /// <returns></returns>
-        protected MSSQLReader MakeDBReaderModule(String sql)
+        protected MSSQLReader MakeDBReaderModule(string sql)
         {
             var reader = new MSSQLReader { ConnectionString = RequireMgrParam("ConnectionString"), SQLText = sql };
             return reader;

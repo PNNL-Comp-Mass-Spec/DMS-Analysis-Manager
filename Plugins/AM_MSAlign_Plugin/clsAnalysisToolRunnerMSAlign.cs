@@ -176,11 +176,11 @@ namespace AnalysisManagerMSAlignPlugIn
                 //Set up and execute a program runner to run MSAlign
                 if (eMSalignVersion == eMSAlignVersionType.v0pt5)
                 {
-                    CmdStr = " -Xmx" + intJavaMemorySize.ToString() + "M -classpath jar\\malign.jar;jar\\* edu.ucsd.msalign.spec.web.Pipeline .\\";
+                    CmdStr = " -Xmx" + intJavaMemorySize + "M -classpath jar\\malign.jar;jar\\* edu.ucsd.msalign.spec.web.Pipeline .\\";
                 }
                 else
                 {
-                    CmdStr = " -Xmx" + intJavaMemorySize.ToString() + "M -classpath jar\\*; edu.ucsd.msalign.align.console.MsAlignPipeline .\\";
+                    CmdStr = " -Xmx" + intJavaMemorySize + "M -classpath jar\\*; edu.ucsd.msalign.align.console.MsAlignPipeline .\\";
                 }
 
                 LogDebug(JavaProgLoc + " " + CmdStr);
@@ -231,7 +231,7 @@ namespace AnalysisManagerMSAlignPlugIn
 
                     if (mCmdRunner.ExitCode != 0)
                     {
-                        LogWarning("MSAlign returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
+                        LogWarning("MSAlign returned a non-zero exit code: " + mCmdRunner.ExitCode);
                     }
                     else
                     {
@@ -550,7 +550,7 @@ namespace AnalysisManagerMSAlignPlugIn
             {
                 // Initialize the dictionary that maps new names to legacy names
                 // Version 0.5 used the legacy names, e.g. it used "threshold" instead of "eValueThreshold"
-                var dctLegacyKeyMap = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
+                var dctLegacyKeyMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
                 dctLegacyKeyMap.Add("errorTolerance", "fragmentTolerance");
                 dctLegacyKeyMap.Add("eValueThreshold", "threshold");
                 dctLegacyKeyMap.Add("shiftNumber", "shifts");
@@ -1155,7 +1155,7 @@ namespace AnalysisManagerMSAlignPlugIn
                     else
                     {
                         // Copy the results file to the work directory
-                        string strTargetFileName = string.Copy(fiSearchResultFile.Name);
+                        var strTargetFileName = string.Copy(fiSearchResultFile.Name);
 
                         if (eMSalignVersion == eMSAlignVersionType.v0pt5)
                         {

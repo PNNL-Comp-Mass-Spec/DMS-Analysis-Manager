@@ -632,7 +632,7 @@ namespace AnalysisManagerICR2LSPlugIn
                     break;
                 default:
                     // Unknown mode
-                    LogError("Unknown ICR2LS processing Mode: " + eICR2LSMode.ToString());
+                    LogError("Unknown ICR2LS processing Mode: " + eICR2LSMode);
                     return false;
             }
 
@@ -649,7 +649,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 if (scanToResumeAfter > 0 && minScan < scanToResumeAfter)
                     minScan = scanToResumeAfter + 1;
 
-                strArguments += " /F:" + minScan.ToString() + " /L:" + maxScan.ToString();
+                strArguments += " /F:" + minScan + " /L:" + maxScan;
             }
 
             if (skipMS2)
@@ -720,7 +720,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 // ProgRunner returned false, check the Exit Code
                 if (mCmdRunner.ExitCode != 0)
                 {
-                    LogWarning("ICR2LS.exe returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
+                    LogWarning("ICR2LS.exe returned a non-zero exit code: " + mCmdRunner.ExitCode);
                 }
                 else
                 {
@@ -918,7 +918,7 @@ namespace AnalysisManagerICR2LSPlugIn
                     LogDebug(
                         "clsAnalysisToolRunnerICRBase.CmdRunner_LoopWaiting(); " + "Processing Time = " +
                         DateTime.UtcNow.Subtract(m_StartTime).TotalMinutes.ToString("0.0") + " minutes; " + "Progress = " +
-                        m_progress.ToString("0.00") + "; " + "Scans Processed = " + mICR2LSStatus.ScansProcessed.ToString());
+                        m_progress.ToString("0.00") + "; " + "Scans Processed = " + mICR2LSStatus.ScansProcessed);
                 }
             }
 

@@ -8,7 +8,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
 		public override AnalysisManagerBase.CloseOutType GetResources()
 		{
-			string SearchType = m_jobParams.GetParam("MultiAlignSearchType");
+			var SearchType = m_jobParams.GetParam("MultiAlignSearchType");
 
 			if (string.IsNullOrEmpty(SearchType))
 			{

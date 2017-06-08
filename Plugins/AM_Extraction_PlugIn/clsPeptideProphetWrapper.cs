@@ -129,7 +129,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 if (mCmdRunner.ExitCode != 0)
                 {
-                    m_ErrMsg = "Peptide prophet runner returned a non-zero error code: " + mCmdRunner.ExitCode.ToString();
+                    m_ErrMsg = "Peptide prophet runner returned a non-zero error code: " + mCmdRunner.ExitCode;
 
                     // Parse the console output file for any lines that contain "Error"
                     // Append them to m_ErrMsg

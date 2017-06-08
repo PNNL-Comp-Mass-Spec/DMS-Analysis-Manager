@@ -64,7 +64,7 @@ namespace DTASpectraFileGen
         /// <remarks>The default path can be overridden by updating m_DtaToolNameLoc using clsDtaGen.UpdateDtaToolNameLoc</remarks>
         protected override string ConstructDTAToolPath()
         {
-            string deconToolsDir = m_MgrParams.GetParam("DeconToolsProgLoc");         // DeconConsole.exe is stored in the DeconTools folder
+            var deconToolsDir = m_MgrParams.GetParam("DeconToolsProgLoc");         // DeconConsole.exe is stored in the DeconTools folder
 
             var strDTAToolPath = Path.Combine(deconToolsDir, DECON_CONSOLE_FILENAME);
 
@@ -114,9 +114,9 @@ namespace DTASpectraFileGen
         /// <remarks></remarks>
         private bool ConvertMGFtoDTA()
         {
-            bool blnSuccess = false;
+            var blnSuccess = false;
 
-            string strRawDataType = m_JobParams.GetJobParameter("RawDataType", "");
+            var strRawDataType = m_JobParams.GetJobParameter("RawDataType", "");
 
             var oMGFConverter = new clsMGFConverter(m_DebugLevel, m_WorkDir)
             {
@@ -164,7 +164,7 @@ namespace DTASpectraFileGen
                     RawFilePath = Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_RAW_EXTENSION);
                     break;
                 default:
-                    m_ErrMsg = "Data file type not supported by the DeconMSn workflow in DeconConsole: " + eRawDataType.ToString();
+                    m_ErrMsg = "Data file type not supported by the DeconMSn workflow in DeconConsole: " + eRawDataType;
                     return false;
             }
 
@@ -226,8 +226,8 @@ namespace DTASpectraFileGen
 
             // Parse the DeconTools .Log file to see whether it contains message "Finished file processing"
 
-            DateTime dtFinishTime = DateTime.Now;
-            bool blnFinishedProcessing = false;
+            var dtFinishTime = DateTime.Now;
+            var blnFinishedProcessing = false;
 
             ParseDeconToolsLogFile(out blnFinishedProcessing, out dtFinishTime);
 
@@ -245,7 +245,7 @@ namespace DTASpectraFileGen
             // If it exists, an exception occurred
             var diWorkdir = new DirectoryInfo(Path.Combine(m_WorkDir));
 
-            foreach (FileInfo fiFile in diWorkdir.GetFiles(m_Dataset + "*BAD_ERROR_log.txt"))
+            foreach (var fiFile in diWorkdir.GetFiles(m_Dataset + "*BAD_ERROR_log.txt"))
             {
                 m_ErrMsg = "Error running DeconTools; Bad_Error_log file exists";
                 OnErrorEvent(m_ErrMsg + ": " + fiFile.Name);
@@ -285,8 +285,8 @@ namespace DTASpectraFileGen
 
         protected override void MonitorProgress()
         {
-            DateTime dtFinishTime = DateTime.Now;
-            bool blnFinishedProcessing = false;
+            var dtFinishTime = DateTime.Now;
+            var blnFinishedProcessing = false;
 
             ParseDeconToolsLogFile(out blnFinishedProcessing, out dtFinishTime);
 
@@ -319,7 +319,7 @@ namespace DTASpectraFileGen
 
         private void ParseDeconToolsLogFile(out bool blnFinishedProcessing, out DateTime dtFinishTime)
         {
-            string strScanLine = string.Empty;
+            var strScanLine = string.Empty;
 
             blnFinishedProcessing = false;
             dtFinishTime = System.DateTime.MinValue;
@@ -384,7 +384,7 @@ namespace DTASpectraFileGen
 
                             if (m_DebugLevel >= 3)
                             {
-                                OnStatusEvent("DeconConsole log file reports 'finished file processing' at " + dtFinishTime.ToString());
+                                OnStatusEvent("DeconConsole log file reports 'finished file processing' at " + dtFinishTime);
                             }
 
                             //'If intWorkFlowStep < TOTAL_WORKFLOW_STEPS Then
@@ -457,7 +457,7 @@ namespace DTASpectraFileGen
 
                 strProgressStats = strScanLine.Split(';');
 
-                for (int i = 0; i <= strProgressStats.Length - 1; i++)
+                for (var i = 0; i <= strProgressStats.Length - 1; i++)
                 {
                     var kvStat = ParseKeyValue(strProgressStats[i]);
                     if (!string.IsNullOrWhiteSpace(kvStat.Key))
@@ -490,7 +490,7 @@ namespace DTASpectraFileGen
         /// <remarks></remarks>
         private KeyValuePair<string, string> ParseKeyValue(string strData)
         {
-            int intCharIndex = 0;
+            var intCharIndex = 0;
             intCharIndex = strData.IndexOf('=');
 
             if (intCharIndex > 0)

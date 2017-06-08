@@ -1,5 +1,4 @@
 ﻿
-using System;
 using System.Collections.Generic;
 
 namespace AnalysisManager_RepoPkgr_PlugIn
@@ -7,7 +6,7 @@ namespace AnalysisManager_RepoPkgr_PlugIn
     /// <summary>
     /// Class that allows SQL for database queries to be defined.
     /// Queries are defined as template objects that are accessed using a name tag.
-    /// Clients obtain a template object using its name tag 
+    /// Clients obtain a template object using its name tag
     /// and use it to generate SQL for actual database query
     /// </summary>
     public class QueryDefinitions
@@ -16,8 +15,8 @@ namespace AnalysisManager_RepoPkgr_PlugIn
         public enum TagName { Main, Broker };
 
         // inernal list of connection strings
-        private readonly Dictionary<QueryDefinitions.TagName, string> _dbConnectionStrings =
-          new Dictionary<QueryDefinitions.TagName, string>();
+        private readonly Dictionary<TagName, string> _dbConnectionStrings =
+          new Dictionary<TagName, string>();
 
         /// <summary>
         /// Set connection string for given database tag name
@@ -28,19 +27,19 @@ namespace AnalysisManager_RepoPkgr_PlugIn
         {
             _dbConnectionStrings[dbTag] = connectionString;
         }
-        
+
         /// <summary>
         /// Get connection string for given database tag name
         /// </summary>
         /// <param name="dbTag"></param>
         /// <returns></returns>
-        public string GetCnStr(QueryDefinitions.TagName dbTag)
+        public string GetCnStr(TagName dbTag)
         {
             return _dbConnectionStrings[dbTag];
         }
-        
+
         /// <summary>
-        /// Get connection string for given 
+        /// Get connection string for given
         /// </summary>
         /// <param name="queryTmpltName"></param>
         /// <returns></returns>
@@ -62,7 +61,7 @@ namespace AnalysisManager_RepoPkgr_PlugIn
                 }},
                 {"DataPkgAggJobsQueryTemplate",  new QueryDefinition {
                   BaseSQL = "SELECT * FROM V_DMS_Data_Package_Aggregation_Jobs WHERE {0} = {1}",
-                  DatabaseTagName = QueryDefinitions.TagName.Broker
+                  DatabaseTagName = TagName.Broker
                 }}
               };
 
@@ -82,8 +81,8 @@ namespace AnalysisManager_RepoPkgr_PlugIn
         public class QueryDefinition
         {
             public string BaseSQL { get; set; }
-            private string IdColName { get; set; }
-            public QueryDefinitions.TagName DatabaseTagName { get; set; }
+            private string IdColName { get; }
+            public TagName DatabaseTagName { get; set; }
             public string FilterSQL { get; set; }
 
             /// <summary>
@@ -92,7 +91,7 @@ namespace AnalysisManager_RepoPkgr_PlugIn
             public QueryDefinition()
             {
                 // default values
-                DatabaseTagName = QueryDefinitions.TagName.Main;
+                DatabaseTagName = TagName.Main;
                 IdColName = "Data_Package_ID";
             }
 
@@ -104,10 +103,10 @@ namespace AnalysisManager_RepoPkgr_PlugIn
             /// <returns>SQL</returns>
             public string Sql(string id, string filter = "")
             {
-                var sql = String.Format(BaseSQL, IdColName, id);
-                if (!String.IsNullOrEmpty(filter) && !String.IsNullOrEmpty(FilterSQL))
+                var sql = string.Format(BaseSQL, IdColName, id);
+                if (!string.IsNullOrEmpty(filter) && !string.IsNullOrEmpty(FilterSQL))
                 {
-                    sql += " AND " + String.Format(FilterSQL, filter);
+                    sql += " AND " + string.Format(FilterSQL, filter);
                 }
                 return sql;
             }

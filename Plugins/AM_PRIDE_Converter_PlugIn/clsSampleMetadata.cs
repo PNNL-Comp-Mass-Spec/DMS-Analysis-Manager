@@ -51,7 +51,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             Tissue = string.Empty;
             CellType = string.Empty;
             Disease = string.Empty;
-            Modifications = new Dictionary<string, udtCvParamInfoType>(StringComparer.CurrentCultureIgnoreCase);
+            Modifications = new Dictionary<string, udtCvParamInfoType>(StringComparer.OrdinalIgnoreCase);
             InstrumentGroup = string.Empty;
             Quantification = string.Empty;
             ExperimentalFactor = string.Empty;

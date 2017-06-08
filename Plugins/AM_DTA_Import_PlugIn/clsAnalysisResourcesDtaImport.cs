@@ -35,7 +35,7 @@ namespace AnalysisManagerDtaImportPlugIn
 
         private CloseOutType ValidateDTA()
         {
-            string SourceFolderNamePath = string.Empty;
+            var SourceFolderNamePath = string.Empty;
             try
             {
                 // Note: the DTAFolderLocation is defined in the Manager_Control DB, and is specific for this manager
@@ -53,8 +53,8 @@ namespace AnalysisManagerDtaImportPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                string zipFileName = DatasetName + "_dta.zip";
-                string[] fileEntries = Directory.GetFiles(SourceFolderNamePath, zipFileName);
+                var zipFileName = DatasetName + "_dta.zip";
+                var fileEntries = Directory.GetFiles(SourceFolderNamePath, zipFileName);
 
                 // Process the list of files found in the directory.
                 if (fileEntries.Length < 1)
@@ -65,7 +65,7 @@ namespace AnalysisManagerDtaImportPlugIn
                 }
 
                 //If valid zip file is found, then uzip the contents
-                foreach (string fileName in fileEntries)
+                foreach (var fileName in fileEntries)
                 {
                     if (UnzipFileStart(Path.Combine(m_WorkingDir, fileName), m_WorkingDir, "clsAnalysisResourcesDtaImport.ValidateDTA", false))
                     {
@@ -81,7 +81,7 @@ namespace AnalysisManagerDtaImportPlugIn
                     }
                 }
 
-                string txtFileName = DatasetName + "_dta.txt";
+                var txtFileName = DatasetName + "_dta.txt";
                 fileEntries = Directory.GetFiles(m_WorkingDir, txtFileName);
                 if (fileEntries.Length < 1)
                 {

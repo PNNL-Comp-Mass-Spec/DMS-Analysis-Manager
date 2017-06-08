@@ -56,16 +56,8 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         #endregion
 
         #region Properties
-        public string Message
-        {
-            get
-            {
-                if (string.IsNullOrEmpty(mMessage))
-                    return string.Empty;
-                else
-                    return mMessage;
-            }
-        }
+
+        public string Message => string.IsNullOrEmpty(mMessage) ? string.Empty : mMessage;
 
         #endregion
 
@@ -146,7 +138,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsMultiAlignMage.RunTool(): Enter");
             }
 
-            if (String.IsNullOrWhiteSpace(sMultiAlignConsolePath))
+            if (string.IsNullOrWhiteSpace(sMultiAlignConsolePath))
             {
                 mMessage = "MultiAlignConsolePath is empty";
                 return false;
@@ -336,7 +328,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         /// <param name="sql">Query to use</param>
         /// <param name="connectionString"></param>
         /// <returns></returns>
-        public static MSSQLReader MakeDBReaderModule(String sql, string connectionString)
+        public static MSSQLReader MakeDBReaderModule(string sql, string connectionString)
         {
             var reader = new MSSQLReader
             {
@@ -387,7 +379,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
             var TargetFilePath = Path.Combine(mWorkingDir, INPUT_FILENAME);
 
-            // Create the MultiAlign input file 
+            // Create the MultiAlign input file
 
             try
             {
@@ -739,7 +731,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         #region Mage MultiAlign class
 
         /// <summary>
-        /// This is a Mage module that does MultiAlign processing 
+        /// This is a Mage module that does MultiAlign processing
         /// of results for jobs that are supplied to it via standard tabular input
         /// </summary>
         public class MageMultiAlign : ContentFilter
@@ -880,7 +872,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         // ------------------------------------------------------------------------------
         #region Classes for handling parameters
 
-        // class for managing IJobParams object 
+        // class for managing IJobParams object
         public class JobParameters
         {
             private readonly IJobParams mJobParms;

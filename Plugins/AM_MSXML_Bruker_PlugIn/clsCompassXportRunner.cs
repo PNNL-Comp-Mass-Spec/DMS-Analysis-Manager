@@ -95,13 +95,13 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
         {
             string CmdStr = null;
 
-            int intFormatMode = 0;
+            var intFormatMode = 0;
 
             string strSourceFolderPath = null;
             string strInputFilePath = null;
             string strOutputFilePath = null;
 
-            bool blnSuccess = false;
+            var blnSuccess = false;
 
             mErrorMessage = string.Empty;
 
@@ -150,7 +150,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
 
             //Set up and execute a program runner to run CompassXport executable
 
-            CmdStr = " -mode " + intFormatMode.ToString() + " -a " + strInputFilePath + " -o " + strOutputFilePath;
+            CmdStr = " -mode " + intFormatMode + " -a " + strInputFilePath + " -o " + strOutputFilePath;
 
             if (mCentroidMSXML)
             {
@@ -181,7 +181,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
                 if (cmdRunner.ExitCode != 0)
                 {
                     mErrorMessage = Path.GetFileNameWithoutExtension(mCompassXportProgramPath) + " returned a non-zero exit code: " +
-                                    cmdRunner.ExitCode.ToString();
+                                    cmdRunner.ExitCode;
                     blnSuccess = false;
                 }
                 else

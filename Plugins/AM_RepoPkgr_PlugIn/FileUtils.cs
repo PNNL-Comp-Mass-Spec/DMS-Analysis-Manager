@@ -66,7 +66,7 @@ namespace AnalysisManager_RepoPkgr_PlugIn
             // get file handler object to access the workDir
             var diWorkDir = new DirectoryInfo(workDir);
 
-            int filesUpdated = 0;
+            var filesUpdated = 0;
 
             // for each zip file in target folder
             foreach (var tarFi in diTargetDir.GetFiles("*.zip"))
@@ -107,7 +107,7 @@ namespace AnalysisManager_RepoPkgr_PlugIn
                 }
 
                 // move the gzip file to target directory
-                string targetFilePath = Path.Combine(targetDir, gzFileName);
+                var targetFilePath = Path.Combine(targetDir, gzFileName);
                 if (File.Exists(targetFilePath))
                     File.Delete(targetFilePath);
 

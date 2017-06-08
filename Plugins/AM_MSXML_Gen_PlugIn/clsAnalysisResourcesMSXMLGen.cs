@@ -30,13 +30,13 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 currentTask = "Determine RawDataType";
 
                 var toolName = m_jobParams.GetParam("ToolName");
-                var proMexBruker = toolName.StartsWith("ProMex_Bruker", StringComparison.CurrentCultureIgnoreCase);
+                var proMexBruker = toolName.StartsWith("ProMex_Bruker", StringComparison.OrdinalIgnoreCase);
 
                 if (proMexBruker)
                 {
                     // Make sure the settings file has MSXMLOutputType=mzML, not mzXML
 
-                    string msXmlFormat = m_jobParams.GetParam("MSXMLOutputType");
+                    var msXmlFormat = m_jobParams.GetParam("MSXMLOutputType");
                     if (string.IsNullOrWhiteSpace(msXmlFormat))
                     {
                         LogError("Job parameter MSXMLOutputType must be defined in the settings file");
@@ -51,7 +51,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 }
 
                 // Get input data file
-                string strRawDataType = m_jobParams.GetParam("RawDataType");
+                var strRawDataType = m_jobParams.GetParam("RawDataType");
 
                 var retrievalAttempts = 0;
 

@@ -1136,7 +1136,7 @@ namespace AnalysisManagerBase
                             GetHumanReadableTimeInterval(DateTime.UtcNow.Subtract(fiFastaFile.CreationTimeUtc)) + " ago at " +
                             fiFastaFile.CreationTime.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT);
 
-                        strFastaFileMsg += "; file size: " + fiFastaFile.Length.ToString() + " bytes";
+                        strFastaFileMsg += "; file size: " + fiFastaFile.Length + " bytes";
 
                         LogDebugMessage(strFastaFileMsg);
                     }
@@ -1425,7 +1425,7 @@ namespace AnalysisManagerBase
 
             sqlStr.Append("Select [Share Path] AS StoragePath ");
             sqlStr.Append("From V_DMS_Data_Packages ");
-            sqlStr.Append("Where ID = " + dataPackageID.ToString());
+            sqlStr.Append("Where ID = " + dataPackageID);
 
 
             // Get a table to hold the results of the query
@@ -1445,7 +1445,7 @@ namespace AnalysisManagerBase
                 // No data was returned
                 // Log an error
 
-                var errorMessage = "GetDataPackageStoragePath; Data package not found: " + dataPackageID.ToString();
+                var errorMessage = "GetDataPackageStoragePath; Data package not found: " + dataPackageID;
                 clsGlobal.LogError(errorMessage);
                 return string.Empty;
             }
@@ -2222,7 +2222,7 @@ namespace AnalysisManagerBase
             }
 
             var fastaNameBase = Path.GetFileNameWithoutExtension(legacyFastaFileName);
-            var splitFastaName = fastaNameBase + "_" + numberOfClonedSteps.ToString() + "x_";
+            var splitFastaName = fastaNameBase + "_" + numberOfClonedSteps + "x_";
 
             if (numberOfClonedSteps < 10)
             {
@@ -2452,7 +2452,7 @@ namespace AnalysisManagerBase
             sqlStr.Append("        Experiment, Experiment_Reason, Experiment_Comment, Organism, Experiment_NEWT_ID, Experiment_NEWT_Name, ");
             sqlStr.Append("        Dataset_Folder_Path, Archive_Folder_Path, RawDataType");
             sqlStr.Append(" FROM V_DMS_Data_Package_Datasets");
-            sqlStr.Append(" WHERE Data_Package_ID = " + dataPackageID.ToString());
+            sqlStr.Append(" WHERE Data_Package_ID = " + dataPackageID);
             sqlStr.Append(" ORDER BY Dataset");
 
 
@@ -2471,7 +2471,7 @@ namespace AnalysisManagerBase
             if (resultSet.Rows.Count < 1)
             {
                 // No data was returned
-                var warningMessage = "LoadDataPackageDatasetInfo; No datasets were found for data package " + dataPackageID.ToString();
+                var warningMessage = "LoadDataPackageDatasetInfo; No datasets were found for data package " + dataPackageID;
                 clsGlobal.LogError(warningMessage);
                 return false;
             }
@@ -2541,7 +2541,7 @@ namespace AnalysisManagerBase
             sqlStr.Append("        OrganismDBName, ProteinCollectionList, ProteinOptions,");
             sqlStr.Append("        ServerStoragePath, ArchiveStoragePath, ResultsFolder, DatasetFolder, SharedResultsFolder, RawDataType");
             sqlStr.Append(" FROM V_DMS_Data_Package_Aggregation_Jobs");
-            sqlStr.Append(" WHERE Data_Package_ID = " + DataPackageID.ToString());
+            sqlStr.Append(" WHERE Data_Package_ID = " + DataPackageID);
             sqlStr.Append(" ORDER BY Dataset, Tool");
 
 
@@ -2568,7 +2568,7 @@ namespace AnalysisManagerBase
                 sqlStr.Clear();
                 sqlStr.Append(" SELECT Count(*) AS Datasets");
                 sqlStr.Append(" FROM S_V_DMS_Data_Package_Aggregation_Datasets");
-                sqlStr.Append(" WHERE Data_Package_ID = " + DataPackageID.ToString());
+                sqlStr.Append(" WHERE Data_Package_ID = " + DataPackageID);
 
                 // Get a table to hold the results of the query
                 success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), ConnectionString, "LoadDataPackageJobInfo", RETRY_COUNT, out resultSet);
@@ -2589,7 +2589,7 @@ namespace AnalysisManagerBase
                     }
                 }
 
-                warningMessage = "LoadDataPackageJobInfo; No jobs were found for data package " + DataPackageID.ToString();
+                warningMessage = "LoadDataPackageJobInfo; No jobs were found for data package " + DataPackageID;
                 clsGlobal.LogWarning(warningMessage);
                 return false;
             }
@@ -4088,7 +4088,7 @@ namespace AnalysisManagerBase
         protected IGenerateFile.ParamFileType SetParamfileType(string toolName)
         {
 
-            var toolNameToTypeMapping = new Dictionary<String, IGenerateFile.ParamFileType>(StringComparer.CurrentCultureIgnoreCase)
+            var toolNameToTypeMapping = new Dictionary<string, IGenerateFile.ParamFileType>(StringComparer.OrdinalIgnoreCase)
             {
                 {"sequest", IGenerateFile.ParamFileType.BioWorks_Current},
                 {"xtandem", IGenerateFile.ParamFileType.X_Tandem},

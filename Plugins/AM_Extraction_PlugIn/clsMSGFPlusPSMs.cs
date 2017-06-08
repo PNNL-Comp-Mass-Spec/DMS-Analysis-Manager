@@ -76,7 +76,7 @@ namespace AnalysisManagerExtractionPlugin
             udtPSM.Peptide = RemovePrefixAndSuffix(udtPSM.Peptide);
 
             var updateScores = false;
-            bool addPeptide = false;
+            var addPeptide = false;
 
             if (mSpecEValues.Count < mMaximumPSMsToKeep)
             {
@@ -156,7 +156,7 @@ namespace AnalysisManagerExtractionPlugin
 
                     foreach (var psm in mPSMs)
                     {
-                        string peptideToFind = psm.Value.Peptide;
+                        var peptideToFind = psm.Value.Peptide;
                         double storedScore = 0;
                         if (bestScoreByPeptide.TryGetValue(peptideToFind, out storedScore))
                         {

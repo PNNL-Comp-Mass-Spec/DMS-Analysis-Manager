@@ -26,14 +26,6 @@ namespace AnalysisManagerDtaRefineryPlugIn
         private bool mXTandemHasFinished;
 
         private clsRunDosProgram mCmdRunner;
-        //--------------------------------------------------------------------------------------------
-        //Future section to monitor DTA_Refinery log file for progress determination
-        //--------------------------------------------------------------------------------------------
-        //Dim WithEvents m_StatFileWatch As FileSystemWatcher
-        //Private m_XtSetupFile As String = "default_input.xml"
-        //--------------------------------------------------------------------------------------------
-        //End future section
-        //--------------------------------------------------------------------------------------------
 
         #endregion
 
@@ -495,32 +487,6 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 LogProgress("DtaRefinery");
             }
         }
-
-        //--------------------------------------------------------------------------------------------
-        //Future section to monitor log file for progress determination
-        //--------------------------------------------------------------------------------------------
-        //	Private Sub StartFileWatcher(DirToWatch As String, FileToWatch As String)
-
-        //'Watches the DTA_Refinery status file and reports changes
-
-        //'Setup
-        //m_StatFileWatch = New FileSystemWatcher
-        //With m_StatFileWatch
-        //	.BeginInit()
-        //	.Path = DirToWatch
-        //	.IncludeSubdirectories = False
-        //	.Filter = FileToWatch
-        //	.NotifyFilter = NotifyFilters.LastWrite Or NotifyFilters.Size
-        //	.EndInit()
-        //End With
-
-        //'Start monitoring
-        //m_StatFileWatch.EnableRaisingEvents = True
-
-        //	End Sub
-        //--------------------------------------------------------------------------------------------
-        //End future section
-        //--------------------------------------------------------------------------------------------
 
         #endregion
     }

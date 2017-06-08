@@ -1333,7 +1333,7 @@ namespace AnalysisManagerBase
                     break;
                 default:
                     // Should never get this value
-                    m_message = "DeleteRawDataFiles, Invalid RawDataType specified: " + eRawDataType.ToString();
+                    m_message = "DeleteRawDataFiles, Invalid RawDataType specified: " + eRawDataType;
                     return false;
             }
 
@@ -2369,7 +2369,7 @@ namespace AnalysisManagerBase
                     var tmpFileNameLcase = Path.GetFileName(tmpFileName).ToLower();
 
                     // Check to see if the filename is defined in ResultFilesToSkip
-                    // Note that entries in ResultFilesToSkip are not case sensitive since they were instantiated using SortedSet(Of String)(StringComparer.CurrentCultureIgnoreCase)
+                    // Note that entries in ResultFilesToSkip are not case sensitive since they were instantiated using SortedSet<string>(StringComparer.OrdinalIgnoreCase)
                     if (m_jobParams.ResultFilesToSkip.Contains(tmpFileNameLcase))
                     {
                         // File found in the ResultFilesToSkip list; do not move it

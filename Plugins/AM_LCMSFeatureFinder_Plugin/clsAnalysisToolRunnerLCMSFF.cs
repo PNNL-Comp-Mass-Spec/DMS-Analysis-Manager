@@ -38,7 +38,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
         public override CloseOutType RunTool()
         {
             string CmdStr = null;
-            bool blnSuccess = false;
+            var blnSuccess = false;
 
             //Do the base class stuff
             if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
@@ -144,8 +144,8 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo(string strFeatureFinderProgLoc)
         {
-            string strToolVersionInfo = string.Empty;
-            bool blnSuccess = false;
+            var strToolVersionInfo = string.Empty;
+            var blnSuccess = false;
 
             if (m_DebugLevel >= 2)
             {
@@ -175,7 +175,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
                 return false;
 
             // Lookup the version of the FeatureFinder Library (in the feature finder folder)
-            string strFeatureFinderDllLoc = Path.Combine(ioFeatureFinderInfo.DirectoryName, "FeatureFinder.dll");
+            var strFeatureFinderDllLoc = Path.Combine(ioFeatureFinderInfo.DirectoryName, "FeatureFinder.dll");
             blnSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, strFeatureFinderDllLoc);
             if (!blnSuccess)
                 return false;
@@ -186,7 +186,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
                 return false;
 
             // Store paths to key DLLs in ioToolFiles
-            List<FileInfo> ioToolFiles = new List<FileInfo>();
+            var ioToolFiles = new List<FileInfo>();
             ioToolFiles.Add(new FileInfo(strFeatureFinderProgLoc));
             ioToolFiles.Add(new FileInfo(strFeatureFinderDllLoc));
 

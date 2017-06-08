@@ -334,7 +334,7 @@ namespace AnalysisManagerExtractionPlugin
 
                     foreach (var decoyPrefix in decoyPrefixes)
                     {
-                        int proteinCount = 0;
+                        var proteinCount = 0;
                         var fractionDecoy = clsAnalysisResources.GetDecoyFastaCompositionStats(fiFastaFile, decoyPrefix, out proteinCount);
 
                         if (fractionDecoy * 100 >= MINIMUM_PERCENT_DECOY)
@@ -392,7 +392,7 @@ namespace AnalysisManagerExtractionPlugin
                 var fiMODx = new FileInfo(modxProgLoc);
 
                 //Set up and execute a program runner to run anal_moda.jar or tda_plus.jar
-                var cmdStr = " -Xmx" + javaMemorySize.ToString() + "M -jar " + Path.Combine(fiMODx.DirectoryName, modxFilterJarName);
+                var cmdStr = " -Xmx" + javaMemorySize + "M -jar " + Path.Combine(fiMODx.DirectoryName, modxFilterJarName);
                 cmdStr += " -i " + resultsFilePath;
 
                 if (!isModPlus)
@@ -433,7 +433,7 @@ namespace AnalysisManagerExtractionPlugin
                     if (progRunner.ExitCode != 0)
                     {
                         LogWarning(
-                            modxFilterJarName + " returned a non-zero exit code: " + progRunner.ExitCode.ToString());
+                            modxFilterJarName + " returned a non-zero exit code: " + progRunner.ExitCode);
                     }
                     else
                     {
@@ -624,7 +624,7 @@ namespace AnalysisManagerExtractionPlugin
                 {
                     // ReSharper disable once UseImplicitlyTypedVariableEvident
 
-                    for (int iteration = 1; iteration <= numberOfClonedSteps; iteration++)
+                    for (var iteration = 1; iteration <= numberOfClonedSteps; iteration++)
                     {
                         var sourceFilePath = Path.Combine(m_WorkDir, m_Dataset + "_msgfplus_Part" + iteration + ".tsv");
                         var linesRead = 0;
@@ -678,8 +678,8 @@ namespace AnalysisManagerExtractionPlugin
                                     var scanNumber = splitLine[dctHeaderMapping["ScanNum"]];
                                     var chargeState = splitLine[dctHeaderMapping["Charge"]];
 
-                                    int scanNumberValue = 0;
-                                    int chargeStateValue = 0;
+                                    var scanNumberValue = 0;
+                                    var chargeStateValue = 0;
                                     int.TryParse(scanNumber, out scanNumberValue);
                                     int.TryParse(chargeState, out chargeStateValue);
 
@@ -707,7 +707,7 @@ namespace AnalysisManagerExtractionPlugin
 
                                     clsMSGFPlusPSMs hitsForScan = null;
 
-                                    clsMSGFPlusPSMs.udtPSMType udtPSM = new clsMSGFPlusPSMs.udtPSMType();
+                                    var udtPSM = new clsMSGFPlusPSMs.udtPSMType();
                                     udtPSM.Peptide = peptide;
                                     udtPSM.SpecEValue = specEValue;
                                     udtPSM.DataLine = strLineIn;
@@ -749,7 +749,7 @@ namespace AnalysisManagerExtractionPlugin
                     foreach (var scanChargeCombo in lstScansByScore)
                     {
                         var hitsForScan = dctScanChargeTopHits[scanChargeCombo];
-                        string lastPeptide = string.Empty;
+                        var lastPeptide = string.Empty;
 
                         foreach (var psm in hitsForScan.PSMs)
                         {
@@ -799,14 +799,14 @@ namespace AnalysisManagerExtractionPlugin
 
                 var lstPepProtMappingWritten = new SortedSet<string>();
 
-                string lastPeptideFull = string.Empty;
+                var lastPeptideFull = string.Empty;
                 var addCurrentPeptide = false;
 
                 using (var swTempFile = new StreamWriter(new FileStream(fiTempFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
                     // ReSharper disable once UseImplicitlyTypedVariableEvident
 
-                    for (int iteration = 1; iteration <= numberOfClonedSteps; iteration++)
+                    for (var iteration = 1; iteration <= numberOfClonedSteps; iteration++)
                     {
                         var sourceFilePath = Path.Combine(m_WorkDir, m_Dataset + "_msgfplus_Part" + iteration + "_PepToProtMap.txt");
                         var linesRead = 0;
@@ -904,7 +904,7 @@ namespace AnalysisManagerExtractionPlugin
         /// <remarks></remarks>
         private CloseOutType PerformPeptideExtraction()
         {
-            clsPeptideExtractWrapper pepExtractTool = new clsPeptideExtractWrapper(m_mgrParams, m_jobParams, ref m_StatusTools);
+            var pepExtractTool = new clsPeptideExtractWrapper(m_mgrParams, m_jobParams, ref m_StatusTools);
 
             //Run the extractor
             if (m_DebugLevel > 3)
@@ -964,7 +964,7 @@ namespace AnalysisManagerExtractionPlugin
             }
             try
             {
-                string strTargetFilePath = Path.Combine(m_WorkDir, m_Dataset + "_syn.txt");
+                var strTargetFilePath = Path.Combine(m_WorkDir, m_Dataset + "_syn.txt");
                 strSynFilePath = string.Copy(strTargetFilePath);
 
                 eResult = phrp.ExtractDataFromResults(strTargetFilePath, mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_SEQUEST);
@@ -985,7 +985,7 @@ namespace AnalysisManagerExtractionPlugin
             }
 
             // Validate that the mass errors are within tolerance
-            string strParamFileName = m_jobParams.GetParam("ParmFileName");
+            var strParamFileName = m_jobParams.GetParam("ParmFileName");
             if (!ValidatePHRPResultMassErrors(strSynFilePath, clsPHRPReader.ePeptideHitResultType.Sequest, strParamFileName))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -1016,7 +1016,7 @@ namespace AnalysisManagerExtractionPlugin
 
             try
             {
-                string strTargetFilePath = Path.Combine(m_WorkDir, m_Dataset + "_xt.xml");
+                var strTargetFilePath = Path.Combine(m_WorkDir, m_Dataset + "_xt.xml");
                 strSynFilePath = Path.Combine(m_WorkDir, m_Dataset + "_xt.txt");
 
                 var eResult = phrp.ExtractDataFromResults(strTargetFilePath, mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_XTANDEM);
@@ -1121,7 +1121,7 @@ namespace AnalysisManagerExtractionPlugin
             }
 
             // Validate that the mass errors are within tolerance
-            string strParamFileName = m_jobParams.GetParam("ParmFileName");
+            var strParamFileName = m_jobParams.GetParam("ParmFileName");
             if (!ValidatePHRPResultMassErrors(strSynFilePath, clsPHRPReader.ePeptideHitResultType.MSAlign, strParamFileName))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -1201,13 +1201,13 @@ namespace AnalysisManagerExtractionPlugin
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                //' Validate that the mass errors are within tolerance
-                //Dim strParamFileName As String = m_jobParams.GetParam("ParmFileName")
-                //If Not ValidatePHRPResultMassErrors(strSynFilePath, clsPHRPReader.ePeptideHitResultType.MODa, strParamFileName) Then
-                //	Return CloseOutType.CLOSEOUT_FAILED
-                //Else
-                //	Return CloseOutType.CLOSEOUT_SUCCESS
-                //End If
+                // Could validate that the mass errors are within tolerance
+                //var paramFileName = m_jobParams.GetParam("ParmFileName");
+                //if (!ValidatePHRPResultMassErrors(strSynFilePath, clsPHRPReader.ePeptideHitResultType.MODa, paramFileName))
+                //    return CloseOutType.CLOSEOUT_FAILED;
+                //else
+                //    return CloseOutType.CLOSEOUT_SUCCESS;
+
             }
             catch (Exception ex)
             {
@@ -1284,13 +1284,13 @@ namespace AnalysisManagerExtractionPlugin
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                //' Validate that the mass errors are within tolerance
-                //Dim strParamFileName As String = m_jobParams.GetParam("ParmFileName")
-                //If Not ValidatePHRPResultMassErrors(strSynFilePath, clsPHRPReader.ePeptideHitResultType.MODPlus, strParamFileName) Then
-                //	Return CloseOutType.CLOSEOUT_FAILED
-                //Else
-                //	Return CloseOutType.CLOSEOUT_SUCCESS
-                //End If
+                // Could validate that the mass errors are within tolerance
+                //var paramFileName = m_jobParams.GetParam("ParmFileName");
+                //if (!ValidatePHRPResultMassErrors(strSynFilePath, clsPHRPReader.ePeptideHitResultType.MODPlus, paramFileName))
+                //    return CloseOutType.CLOSEOUT_FAILED;
+                //else
+                //    return CloseOutType.CLOSEOUT_SUCCESS;
+
             }
             catch (Exception ex)
             {
@@ -1345,7 +1345,7 @@ namespace AnalysisManagerExtractionPlugin
                         }
 
                         // ReSharper disable once UseImplicitlyTypedVariableEvident
-                        for (int iteration = 1; iteration <= numberOfClonedSteps; iteration++)
+                        for (var iteration = 1; iteration <= numberOfClonedSteps; iteration++)
                         {
                             currentStep = "Verifying that .tsv files exist; iteration " + iteration;
 
@@ -1482,7 +1482,7 @@ namespace AnalysisManagerExtractionPlugin
                 }
 
                 // Validate that the mass errors are within tolerance
-                string strParamFileName = m_jobParams.GetParam("ParmFileName");
+                var strParamFileName = m_jobParams.GetParam("ParmFileName");
                 if (!ValidatePHRPResultMassErrors(strSynFilePath, clsPHRPReader.ePeptideHitResultType.MSGFDB, strParamFileName))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -1567,7 +1567,7 @@ namespace AnalysisManagerExtractionPlugin
                 }
 
                 // Validate that the mass errors are within tolerance
-                string strParamFileName = m_jobParams.GetParam("ParmFileName");
+                var strParamFileName = m_jobParams.GetParam("ParmFileName");
                 if (!ValidatePHRPResultMassErrors(strSynFilePath, clsPHRPReader.ePeptideHitResultType.MSPathFinder, strParamFileName))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -1592,7 +1592,7 @@ namespace AnalysisManagerExtractionPlugin
             var diConsoleOutputFiles = new DirectoryInfo(Path.Combine(diWorkingDirectory.FullName, "ConsoleOutputFiles"));
             diConsoleOutputFiles.Create();
 
-            foreach (FileInfo fiFile in diWorkingDirectory.GetFiles("MSGFPlus_ConsoleOutput_Part*.txt"))
+            foreach (var fiFile in diWorkingDirectory.GetFiles("MSGFPlus_ConsoleOutput_Part*.txt"))
             {
                 var targetPath = Path.Combine(diConsoleOutputFiles.FullName, fiFile.Name);
                 fiFile.MoveTo(targetPath);
@@ -1635,13 +1635,13 @@ namespace AnalysisManagerExtractionPlugin
 
         private CloseOutType RunPhrpForInSpecT()
         {
-            bool CreateInspectFirstHitsFile = false;
-            bool CreateInspectSynopsisFile = false;
+            var CreateInspectFirstHitsFile = false;
+            var CreateInspectSynopsisFile = false;
 
             string strTargetFilePath = null;
             string strSynFilePath = null;
 
-            bool blnSuccess = false;
+            var blnSuccess = false;
 
             var phrp = new clsPepHitResultsProcWrapper(m_mgrParams, m_jobParams);
             RegisterEvents(phrp);
@@ -1735,7 +1735,7 @@ namespace AnalysisManagerExtractionPlugin
             }
 
             // Validate that the mass errors are within tolerance
-            string strParamFileName = m_jobParams.GetParam("ParmFileName");
+            var strParamFileName = m_jobParams.GetParam("ParmFileName");
             if (!ValidatePHRPResultMassErrors(strSynFilePath, clsPHRPReader.ePeptideHitResultType.Inspect, strParamFileName))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -1758,16 +1758,16 @@ namespace AnalysisManagerExtractionPlugin
 
             string strPepProphetOutputFilePath = null;
 
-            CloseOutType eResult = CloseOutType.CLOSEOUT_SUCCESS;
-            bool blnIgnorePeptideProphetErrors = false;
+            var eResult = CloseOutType.CLOSEOUT_SUCCESS;
+            var blnIgnorePeptideProphetErrors = false;
 
-            int intFileIndex = 0;
+            var intFileIndex = 0;
             float sngParentSynFileSizeMB = 0;
-            bool blnSuccess = false;
+            var blnSuccess = false;
 
             blnIgnorePeptideProphetErrors = m_jobParams.GetJobParameter("IgnorePeptideProphetErrors", false);
 
-            string progLoc = m_mgrParams.GetParam("PeptideProphetRunnerProgLoc");
+            var progLoc = m_mgrParams.GetParam("PeptideProphetRunnerProgLoc");
 
             // verify that program file exists
             if (!File.Exists(progLoc))
@@ -1935,7 +1935,7 @@ namespace AnalysisManagerExtractionPlugin
 
                     for (intFileIndex = 0; intFileIndex <= strFileList.Length - 1; intFileIndex++)
                     {
-                        strFileList[intFileIndex] = strBaseName + "_part" + (intFileIndex + 1).ToString() + PEPPROPHET_RESULT_FILE_SUFFIX;
+                        strFileList[intFileIndex] = strBaseName + "_part" + (intFileIndex + 1) + PEPPROPHET_RESULT_FILE_SUFFIX;
 
                         // Add this file to the global delete list
                         m_jobParams.AddResultFileToSkip(strFileList[intFileIndex]);
@@ -1988,7 +1988,7 @@ namespace AnalysisManagerExtractionPlugin
         /// <remarks></remarks>
         private void DeleteTemporaryFiles(string[] strFileList)
         {
-            int intFileIndex = 0;
+            var intFileIndex = 0;
 
             Thread.Sleep(1000);                       //Delay for 1 second
             PRISM.clsProgRunner.GarbageCollectNow();
@@ -2024,21 +2024,21 @@ namespace AnalysisManagerExtractionPlugin
         protected bool InterleaveFiles(ref string[] strFileList, string strCombinedFilePath, bool blnLookForHeaderLine)
         {
 
-            int intFileCount = 0;
+            var intFileCount = 0;
             StreamReader[] srInFiles = null;
 
             string strLineIn = null;
             string[] strSplitLine = null;
 
-            int intFileIndex = 0;
+            var intFileIndex = 0;
             int[] intLinesRead = null;
-            int intTotalLinesRead = 0;
+            var intTotalLinesRead = 0;
 
-            int intTotalLinesReadSaved = 0;
+            var intTotalLinesReadSaved = 0;
 
-            bool blnContinueReading = false;
-            bool blnProcessLine = false;
-            bool blnSuccess = false;
+            var blnContinueReading = false;
+            var blnProcessLine = false;
+            var blnSuccess = false;
 
             try
             {
@@ -2157,18 +2157,18 @@ namespace AnalysisManagerExtractionPlugin
         {
             string strBaseName = null;
 
-            int intLinesRead = 0;
-            int intTargetFileIndex = 0;
+            var intLinesRead = 0;
+            var intTargetFileIndex = 0;
 
             string strLineIn = null;
             string[] strSplitLine = null;
 
             StreamWriter[] swOutFiles = null;
 
-            int intSplitCount = 0;
+            var intSplitCount = 0;
 
-            bool blnProcessLine = false;
-            bool blnSuccess = false;
+            var blnProcessLine = false;
+            var blnSuccess = false;
 
             try
             {
@@ -2206,7 +2206,7 @@ namespace AnalysisManagerExtractionPlugin
 
                         for (var intIndex = 0; intIndex <= intSplitCount - 1; intIndex++)
                         {
-                            strSplitFileList[intIndex] = strBaseName + "_part" + (intIndex + 1).ToString() + Path.GetExtension(fiFileInfo.Name);
+                            strSplitFileList[intIndex] = strBaseName + "_part" + (intIndex + 1) + Path.GetExtension(fiFileInfo.Name);
                             swOutFiles[intIndex] =
                                 new StreamWriter(new FileStream(strSplitFileList[intIndex], FileMode.Create, FileAccess.Write, FileShare.Read));
                         }
@@ -2278,8 +2278,8 @@ namespace AnalysisManagerExtractionPlugin
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo()
         {
-            string strToolVersionInfo = string.Empty;
-            bool blnSuccess = false;
+            var strToolVersionInfo = string.Empty;
+            var blnSuccess = false;
 
             if (m_DebugLevel >= 2)
             {
@@ -2290,7 +2290,7 @@ namespace AnalysisManagerExtractionPlugin
 
             try
             {
-                string progLoc = m_mgrParams.GetParam("PHRPProgLoc");
+                var progLoc = m_mgrParams.GetParam("PHRPProgLoc");
                 var diPHRP = new DirectoryInfo(progLoc);
 
                 // verify that program file exists
@@ -2322,7 +2322,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 // Lookup the version of the PeptideProphetRunner
 
-                string strPeptideProphetRunnerLoc = m_mgrParams.GetParam("PeptideProphetRunnerProgLoc");
+                var strPeptideProphetRunnerLoc = m_mgrParams.GetParam("PeptideProphetRunnerProgLoc");
                 var ioPeptideProphetRunner = new FileInfo(strPeptideProphetRunnerLoc);
 
                 if (ioPeptideProphetRunner.Exists)
@@ -2354,7 +2354,7 @@ namespace AnalysisManagerExtractionPlugin
         protected bool ValidatePHRPResultMassErrors(string strInputFilePath, clsPHRPReader.ePeptideHitResultType eResultType,
             string strSearchEngineParamFileName)
         {
-            bool blnSuccess = false;
+            var blnSuccess = false;
 
             try
             {
@@ -2366,12 +2366,12 @@ namespace AnalysisManagerExtractionPlugin
                 blnSuccess = oValidator.ValidatePHRPResultMassErrors(strInputFilePath, eResultType, paramFilePath);
                 if (!blnSuccess)
                 {
-                    string toolName = m_jobParams.GetJobParameter("ToolName", "");
+                    var toolName = m_jobParams.GetJobParameter("ToolName", "");
 
                     if (toolName.ToLower().StartsWith("inspect"))
                     {
                         // Ignore this error for inspect if running an unrestricted search
-                        string paramFileName = m_jobParams.GetJobParameter("ParmFileName", "");
+                        var paramFileName = m_jobParams.GetJobParameter("ParmFileName", "");
                         if (paramFileName.IndexOf("Unrestrictive", StringComparison.OrdinalIgnoreCase) >= 0)
                         {
                             blnSuccess = true;

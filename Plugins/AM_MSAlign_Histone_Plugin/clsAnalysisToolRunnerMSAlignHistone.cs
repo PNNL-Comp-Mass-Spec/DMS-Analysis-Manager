@@ -153,7 +153,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 }
 
                 // Read the MSAlign Parameter File
-                string strParamFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"));
+                var strParamFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"));
 
                 var cmdLineGenerated = CreateMSAlignCommandLine(strParamFilePath, out var strMSAlignCmdLineOptions);
                 if (!cmdLineGenerated)
@@ -230,7 +230,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                     if (cmdRunner.ExitCode != 0)
                     {
-                        LogWarning("MSAlign_Histone returned a non-zero exit code: " + cmdRunner.ExitCode.ToString());
+                        LogWarning("MSAlign_Histone returned a non-zero exit code: " + cmdRunner.ExitCode);
                     }
                     else
                     {
@@ -334,9 +334,9 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
             string strProteinResidues = null;
 
-            int intIndex = 0;
-            int intResidueCount = 0;
-            int intLength = 0;
+            var intIndex = 0;
+            var intResidueCount = 0;
+            var intLength = 0;
             var intWarningCount = 0;
 
             try
@@ -459,7 +459,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 lstSubfolderNames.Add("xsl");
                 lstSubfolderNames.Add("etc");
 
-                foreach (string strSubFolder in lstSubfolderNames)
+                foreach (var strSubFolder in lstSubfolderNames)
                 {
                     var strTargetSubfolder = Path.Combine(diMSAlignWork.FullName, strSubFolder);
 
@@ -472,7 +472,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                         return false;
                     }
 
-                    foreach (FileInfo fiFile in diSubfolder[0].GetFiles())
+                    foreach (var fiFile in diSubfolder[0].GetFiles())
                     {
                         fiFile.CopyTo(Path.Combine(strTargetSubfolder, fiFile.Name));
                     }
@@ -528,7 +528,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
             string strLineIn = null;
 
-            int intEqualsIndex = 0;
+            var intEqualsIndex = 0;
             string strKeyName = null;
             string strValue = null;
 
@@ -537,7 +537,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             try
             {
                 // Initialize the dictionary that maps parameter names in the parameter file to command line switches
-                var dctParameterMap = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
+                var dctParameterMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
                 dctParameterMap.Add("activation", "a");
                 dctParameterMap.Add("search", "s");
                 dctParameterMap.Add("protection", "p");
@@ -624,7 +624,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                                     }
                                 }
 
-                                string strSwitch = string.Empty;
+                                var strSwitch = string.Empty;
                                 if (dctParameterMap.TryGetValue(strKeyName, out strSwitch))
                                 {
                                     strCommandLine += " -" + strSwitch + " " + strValue;
@@ -705,7 +705,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             // Keys in this dictionary are the expected file name
             // Values are the new name to rename the file to
             var dctResultFiles = new Dictionary<string, string>();
-            string strBaseName = Path.GetFileNameWithoutExtension(mInputPropertyValues.SpectrumFileName);
+            var strBaseName = Path.GetFileNameWithoutExtension(mInputPropertyValues.SpectrumFileName);
 
             dctResultFiles.Add(strBaseName + "." + OUTPUT_FILE_EXTENSION_PTM_SEARCH, strDatasetName + "_PTM_Search_Result.xml");
             dctResultFiles.Add(strBaseName + "." + OUTPUT_FILE_EXTENSION_TOP_RESULT, string.Empty);
@@ -729,8 +729,8 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 // Thus, we will read the source file with a reader and create a new fasta file
 
                 // Define the path to the fasta file
-                string OrgDbDir = m_mgrParams.GetParam("orgdbdir");
-                string strFASTAFilePath = Path.Combine(OrgDbDir, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"));
+                var OrgDbDir = m_mgrParams.GetParam("orgdbdir");
+                var strFASTAFilePath = Path.Combine(OrgDbDir, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"));
 
                 var fiFastaFile = new FileInfo(strFASTAFilePath);
 
@@ -776,14 +776,14 @@ namespace AnalysisManagerMSAlignHistonePlugIn
         protected bool MakeReportFiles(string JavaProgLoc, string strMSAlignCmdLineOptions, int intJavaMemorySize)
         {
             string CmdStr = null;
-            bool blnSuccess = false;
+            var blnSuccess = false;
 
             try
             {
                 LogMessage("Creating MSAlign_Histone Report Files");
 
                 //Set up and execute a program runner to run MSAlign_Histone
-                CmdStr = " -Xmx" + intJavaMemorySize.ToString() + "M -classpath jar\\*; edu.iupui.msalign.align.histone.view.HistoneHtmlConsole " +
+                CmdStr = " -Xmx" + intJavaMemorySize + "M -classpath jar\\*; edu.iupui.msalign.align.histone.view.HistoneHtmlConsole " +
                          strMSAlignCmdLineOptions;
 
                 LogDebug(JavaProgLoc + " " + CmdStr);
@@ -807,7 +807,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                     if (cmdRunner.ExitCode != 0)
                     {
-                        LogWarning("MSAlign_Histone returned a non-zero exit code during report creation: " + cmdRunner.ExitCode.ToString());
+                        LogWarning("MSAlign_Histone returned a non-zero exit code during report creation: " + cmdRunner.ExitCode);
                     }
                     else
                     {
@@ -864,7 +864,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 }
 
                 string strLineIn = null;
-                int intLinesRead = 0;
+                var intLinesRead = 0;
 
                 short intProgress;
                 short intActualProgress = 0;
@@ -961,7 +961,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             var strToolVersionInfo = string.Copy(mMSAlignVersion);
 
             // Store paths to key files in ioToolFiles
-            List<FileInfo> ioToolFiles = new List<FileInfo>();
+            var ioToolFiles = new List<FileInfo>();
             ioToolFiles.Add(new FileInfo(mMSAlignProgLoc));
 
             try
@@ -1004,13 +1004,13 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 }
 
                 string strLineIn = null;
-                bool blnKeepLine = false;
+                var blnKeepLine = false;
 
-                int intScanNumber = 0;
-                string strMostRecentProgressLine = string.Empty;
-                string strMostRecentProgressLineWritten = string.Empty;
+                var intScanNumber = 0;
+                var strMostRecentProgressLine = string.Empty;
+                var strMostRecentProgressLineWritten = string.Empty;
 
-                int intScanNumberOutputThreshold = 0;
+                var intScanNumberOutputThreshold = 0;
 
                 string strTrimmedFilePath = null;
                 strTrimmedFilePath = strConsoleOutputFilePath + ".trimmed";
@@ -1088,14 +1088,14 @@ namespace AnalysisManagerMSAlignHistonePlugIn
         {
             var processingError = false;
 
-            string strEValueResultFilePath = string.Empty;
-            string strFinalResultFilePath = string.Empty;
+            var strEValueResultFilePath = string.Empty;
+            var strFinalResultFilePath = string.Empty;
 
             try
             {
                 var dctResultsFilesToMove = GetExpectedMSAlignResultFiles(m_Dataset);
 
-                foreach (KeyValuePair<string, string> kvItem in dctResultsFilesToMove)
+                foreach (var kvItem in dctResultsFilesToMove)
                 {
                     var fiSearchResultFile = new FileInfo(Path.Combine(mMSAlignWorkFolderPath, kvItem.Key));
 
@@ -1169,7 +1169,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             {
                 var dctResultFiles = GetExpectedMSAlignResultFiles(m_Dataset);
 
-                foreach (KeyValuePair<string, string> kvItem in dctResultFiles)
+                foreach (var kvItem in dctResultFiles)
                 {
                     var fiSearchResultFile = new FileInfo(Path.Combine(mMSAlignWorkFolderPath, kvItem.Key));
 
@@ -1210,8 +1210,8 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             string strOutputFilePath = null;
 
             string strLineIn = null;
-            bool blnValidDataFound = false;
-            int intLinesRead = 0;
+            var blnValidDataFound = false;
+            var intLinesRead = 0;
 
             try
             {
@@ -1267,7 +1267,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                                     // The second column has Prsm_ID
 
                                     // Look for an integer in the second column
-                                    int intValue = 0;
+                                    var intValue = 0;
                                     if (int.TryParse(strSplitLine[1], out intValue))
                                     {
                                         // Integer found; line is valid
@@ -1312,7 +1312,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 strSourceFolderPath = Path.Combine(mMSAlignWorkFolderPath, strFolderName);
 
                 // Confirm that the folder has one or more files or subfolders
-                DirectoryInfo diSourceFolder = new DirectoryInfo(strSourceFolderPath);
+                var diSourceFolder = new DirectoryInfo(strSourceFolderPath);
                 if (diSourceFolder.GetFileSystemInfos().Length == 0)
                 {
                     if (m_DebugLevel >= 1)
@@ -1324,7 +1324,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                 if (m_DebugLevel >= 1)
                 {
-                    string strLogMessage = "Zipping " + strFolderName.ToUpper() + " folder at " + strSourceFolderPath;
+                    var strLogMessage = "Zipping " + strFolderName.ToUpper() + " folder at " + strSourceFolderPath;
 
                     if (m_DebugLevel >= 2)
                     {

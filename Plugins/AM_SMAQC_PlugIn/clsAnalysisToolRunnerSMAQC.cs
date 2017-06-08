@@ -97,7 +97,7 @@ namespace AnalysisManagerSMAQCPlugIn
                 var CmdStr = PossiblyQuotePath(m_WorkDir);                       // Path to folder containing input files
                 CmdStr += " /O:" + PossiblyQuotePath(resultsFilePath);           // Text file to write the results to
                 CmdStr += " /DB:" + PossiblyQuotePath(m_WorkDir);                // Folder where SQLite DB will be created
-                CmdStr += " /I:" + InstrumentID.ToString();                      // Instrument ID
+                CmdStr += " /I:" + InstrumentID;                      // Instrument ID
                 CmdStr += " /M:" + PossiblyQuotePath(strParameterFilePath);      // Path to XML file specifying measurements to run
 
                 m_jobParams.AddResultFileToSkip("SMAQC.s3db");                   // Don't keep the SQLite DB
@@ -150,7 +150,7 @@ namespace AnalysisManagerSMAQCPlugIn
 
                     if (mCmdRunner.ExitCode != 0)
                     {
-                        LogWarning("SMAQC returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
+                        LogWarning("SMAQC returned a non-zero exit code: " + mCmdRunner.ExitCode);
                     }
                     else
                     {
@@ -356,7 +356,7 @@ namespace AnalysisManagerSMAQCPlugIn
                     RetryCount -= 1;
                     m_message = "clsAnalysisToolRunnerSMAQC.LookupInstrumentIDFromDB; Exception obtaining InstrumentID from the database: " +
                                 ex.Message + "; ConnectionString: " + ConnectionString;
-                    m_message += ", RetryCount = " + RetryCount.ToString();
+                    m_message += ", RetryCount = " + RetryCount;
                     LogError(m_message);
                     Thread.Sleep(5000);             //Delay for 5 second before trying again
                 }
@@ -669,7 +669,7 @@ namespace AnalysisManagerSMAQCPlugIn
             {
                 if (m_DebugLevel >= 2)
                 {
-                    LogDebug("Posting SMAQC Results to the database (using Dataset ID " + intDatasetID.ToString() + ")");
+                    LogDebug("Posting SMAQC Results to the database (using Dataset ID " + intDatasetID + ")");
                 }
 
                 // We need to remove the encoding line from strXMLResults before posting to the DB

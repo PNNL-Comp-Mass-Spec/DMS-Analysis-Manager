@@ -40,7 +40,7 @@ namespace AnalysisManagerSequestPlugin
 
         protected int mTotalOutFileCount = 0;
         protected string mTempConcatenatedOutFilePath = string.Empty;
-        protected SortedSet<string> mOutFileNamesAppended = new SortedSet<string>(StringComparer.CurrentCultureIgnoreCase);
+        protected SortedSet<string> mOutFileNamesAppended = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
 
         // Out file search times (in seconds) for recently created .out files
         protected Queue<float> mRecentOutFileSearchTimes = new Queue<float>(MAX_OUT_FILE_SEARCH_TIMES_TO_TRACK);
@@ -201,9 +201,9 @@ namespace AnalysisManagerSequestPlugin
 
                     if (reMatch.Success)
                     {
-                        cleanedFileName = reMatch.Groups["rootname"].Value + "." + Convert.ToInt32(reMatch.Groups["startscan"].Value).ToString() + "." +
-                                          Convert.ToInt32(reMatch.Groups["endscan"].Value).ToString() + "." +
-                                          Convert.ToInt32(reMatch.Groups["cs"].Value).ToString() + "." + reMatch.Groups["extension"].Value;
+                        cleanedFileName = reMatch.Groups["rootname"].Value + "." + Convert.ToInt32(reMatch.Groups["startscan"].Value) + "." +
+                                          Convert.ToInt32(reMatch.Groups["endscan"].Value) + "." +
+                                          Convert.ToInt32(reMatch.Groups["cs"].Value) + "." + reMatch.Groups["extension"].Value;
                     }
                     else
                     {
@@ -284,7 +284,7 @@ namespace AnalysisManagerSequestPlugin
         /// <param name="blnUpdateDTACount">Set to True to update m_DtaCount</param>
         protected void CalculateNewStatus(bool blnUpdateDTACount)
         {
-            int OutFileCount = 0;
+            var OutFileCount = 0;
 
             if (blnUpdateDTACount)
             {
@@ -336,8 +336,8 @@ namespace AnalysisManagerSequestPlugin
                 }
 
                 // Now split the DTA file, skipping DTAs corresponding to .Out files that were copied over
-                clsSplitCattedFiles FileSplitter = new clsSplitCattedFiles();
-                bool blnSuccess = false;
+                var FileSplitter = new clsSplitCattedFiles();
+                var blnSuccess = false;
                 blnSuccess = FileSplitter.SplitCattedDTAsOnly(m_Dataset, m_WorkDir, lstDTAsToSkip);
 
                 if (!blnSuccess)
@@ -368,7 +368,7 @@ namespace AnalysisManagerSequestPlugin
         {
             string strLineIn = null;
 
-            var lstDTAsToSkip = new SortedSet<string>(StringComparer.CurrentCultureIgnoreCase);
+            var lstDTAsToSkip = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
 
             try
             {
@@ -431,9 +431,9 @@ namespace AnalysisManagerSequestPlugin
             string[] DtaFiles = null;
             clsProgRunner[] RunProgs = null;
             StreamWriter[] Textfiles = null;
-            int NumFiles = 0;
-            int ProcIndx = 0;
-            bool StillRunning = false;
+            var NumFiles = 0;
+            var ProcIndx = 0;
+            var StillRunning = false;
 
             //12/19/2008 - The number of processors used to be configurable but now this is done with clustering.
             //This code is left here so we can still debug to make sure everything still works
@@ -457,11 +457,11 @@ namespace AnalysisManagerSequestPlugin
 
             for (ProcIndx = 0; ProcIndx <= NumProcessors - 1; ProcIndx++)
             {
-                var DumStr = Path.Combine(m_WorkDir, "FileList" + ProcIndx.ToString() + ".txt");
+                var DumStr = Path.Combine(m_WorkDir, "FileList" + ProcIndx + ".txt");
                 m_jobParams.AddResultFileToSkip(DumStr);
 
                 RunProgs[ProcIndx] = new clsProgRunner();
-                RunProgs[ProcIndx].Name = "Seq" + ProcIndx.ToString();
+                RunProgs[ProcIndx].Name = "Seq" + ProcIndx;
                 RunProgs[ProcIndx].CreateNoWindow = Convert.ToBoolean(m_mgrParams.GetParam("createnowindow"));
                 RunProgs[ProcIndx].Program = m_mgrParams.GetParam("seqprogloc");
                 RunProgs[ProcIndx].Arguments = CmdStr + DumStr;
@@ -473,7 +473,7 @@ namespace AnalysisManagerSequestPlugin
 
             //Break up file list into lists for each processor
             ProcIndx = 0;
-            foreach (string DumStr in DtaFiles)
+            foreach (var DumStr in DtaFiles)
             {
                 Textfiles[ProcIndx].WriteLine(DumStr);
                 ProcIndx += 1;
@@ -523,24 +523,24 @@ namespace AnalysisManagerSequestPlugin
                     if (m_DebugLevel > 4)
                     {
                         LogDebug(
-                            "clsAnalysisToolRunnerSeqBase.MakeOutFiles(): RunProgs(" + ProcIndx.ToString() + ").State = " +
-                            RunProgs[ProcIndx].State.ToString());
+                            "clsAnalysisToolRunnerSeqBase.MakeOutFiles(): RunProgs(" + ProcIndx + ").State = " +
+                            RunProgs[ProcIndx].State);
                     }
                     if ((RunProgs[ProcIndx].State != 0))
                     {
                         if (m_DebugLevel > 4)
                         {
                             LogDebug(
-                                "clsAnalysisToolRunnerSeqBase.MakeOutFiles()_2: RunProgs(" + ProcIndx.ToString() + ").State = " +
-                                RunProgs[ProcIndx].State.ToString());
+                                "clsAnalysisToolRunnerSeqBase.MakeOutFiles()_2: RunProgs(" + ProcIndx + ").State = " +
+                                RunProgs[ProcIndx].State);
                         }
                         if (((int) RunProgs[ProcIndx].State != 10))
                         {
                             if (m_DebugLevel > 4)
                             {
                                 LogDebug(
-                                    "clsAnalysisToolRunnerSeqBase.MakeOutFiles()_3: RunProgs(" + ProcIndx.ToString() + ").State = " +
-                                    RunProgs[ProcIndx].State.ToString());
+                                    "clsAnalysisToolRunnerSeqBase.MakeOutFiles()_3: RunProgs(" + ProcIndx + ").State = " +
+                                    RunProgs[ProcIndx].State);
                             }
                             StillRunning = true;
                             break;
@@ -550,8 +550,8 @@ namespace AnalysisManagerSequestPlugin
                             if (m_DebugLevel >= 1)
                             {
                                 LogDebug(
-                                    "clsAnalysisToolRunnerSeqBase.MakeOutFiles()_4: RunProgs(" + ProcIndx.ToString() + ").State = " +
-                                    RunProgs[ProcIndx].State.ToString());
+                                    "clsAnalysisToolRunnerSeqBase.MakeOutFiles()_4: RunProgs(" + ProcIndx + ").State = " +
+                                    RunProgs[ProcIndx].State);
                             }
                         }
                     }
@@ -570,7 +570,7 @@ namespace AnalysisManagerSequestPlugin
                 RunProgs[ProcIndx] = null;
                 if (m_DebugLevel >= 1)
                 {
-                    LogDebug("Set RunProgs(" + ProcIndx.ToString() + ") to Nothing");
+                    LogDebug("Set RunProgs(" + ProcIndx + ") to Nothing");
                 }
             }
 
@@ -628,8 +628,8 @@ namespace AnalysisManagerSequestPlugin
         {
             var MAX_RETRY_ATTEMPTS = 5;
             var MAX_INTERLOCK_WAIT_TIME_MINUTES = 30;
-            int intRetriesRemaining = 0;
-            bool blnSuccess = false;
+            var intRetriesRemaining = 0;
+            var blnSuccess = false;
             var oRandom = new Random();
 
             if (m_DebugLevel >= 2)
@@ -641,8 +641,8 @@ namespace AnalysisManagerSequestPlugin
 
             do
             {
-                DateTime dtInterlockWaitStartTime = DateTime.UtcNow;
-                DateTime dtInterlockWaitLastLogtime = DateTime.UtcNow;
+                var dtInterlockWaitStartTime = DateTime.UtcNow;
+                var dtInterlockWaitLastLogtime = DateTime.UtcNow;
 
                 while (Interlocked.Read(ref mOutFileHandlerInUse) > 0)
                 {
@@ -749,8 +749,8 @@ namespace AnalysisManagerSequestPlugin
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo(string strOutFilePath)
         {
-            List<FileInfo> ioToolFiles = new List<FileInfo>();
-            string strToolVersionInfo = string.Empty;
+            var ioToolFiles = new List<FileInfo>();
+            var strToolVersionInfo = string.Empty;
 
             if (m_DebugLevel >= 2)
             {
@@ -879,7 +879,7 @@ namespace AnalysisManagerSequestPlugin
                         }
                         else
                         {
-                            m_message = ioFiles.Length.ToString() + " .DTA files are present, but each is empty";
+                            m_message = ioFiles.Length + " .DTA files are present, but each is empty";
                         }
                         LogError(m_message);
                         return false;
@@ -928,16 +928,16 @@ namespace AnalysisManagerSequestPlugin
             string strLineIn = null;
             string strHostName = null;
 
-            int intValue = 0;
+            var intValue = 0;
 
-            bool blnShowDetailedRates = false;
+            var blnShowDetailedRates = false;
 
-            int intHostCount = 0;
-            int intNodeCountStarted = 0;
-            int intNodeCountActive = 0;
-            int intDTACount = 0;
+            var intHostCount = 0;
+            var intNodeCountStarted = 0;
+            var intNodeCountActive = 0;
+            var intDTACount = 0;
 
-            int intNodeCountExpected = 0;
+            var intNodeCountExpected = 0;
 
             string strProcessingMsg = null;
 
@@ -1152,15 +1152,15 @@ namespace AnalysisManagerSequestPlugin
                     const float LOW_THRESHOLD_MULTIPLIER = 0.25f;
                     const float HIGH_THRESHOLD_MULTIPLIER = 4;
 
-                    int intNodeCountThisHost = 0;
+                    var intNodeCountThisHost = 0;
 
                     float sngProcessingRate = 0;
                     float sngProcessingRateMedian = 0;
 
                     float sngThresholdRate = 0;
-                    int intWarningCount = 0;
+                    var intWarningCount = 0;
 
-                    foreach (KeyValuePair<string, int> objItem in dctHostCounts)
+                    foreach (var objItem in dctHostCounts)
                     {
                         intNodeCountThisHost = 0;
                         dctHostNodeCount.TryGetValue(objItem.Key, out intNodeCountThisHost);
@@ -1172,7 +1172,7 @@ namespace AnalysisManagerSequestPlugin
                     }
 
                     // Determine the median number of spectra processed (ignoring the head nodes)
-                    List<float> lstRatesFiltered = (from item in dctHostProcessingRate where !item.Key.ToLower().Contains("seqcluster") select item.Value).ToList();
+                    var lstRatesFiltered = (from item in dctHostProcessingRate where !item.Key.ToLower().Contains("seqcluster") select item.Value).ToList();
                     sngProcessingRateMedian = ComputeMedian(lstRatesFiltered);
 
                     // Only show warnings if sngProcessingRateMedian is at least 10; otherwise, we don't have enough sampling statistics
@@ -1183,7 +1183,7 @@ namespace AnalysisManagerSequestPlugin
                         intWarningCount = 0;
                         sngThresholdRate = (float)(LOW_THRESHOLD_MULTIPLIER * sngProcessingRateMedian);
 
-                        foreach (KeyValuePair<string, float> objItem in dctHostProcessingRate)
+                        foreach (var objItem in dctHostProcessingRate)
                         {
                             if (objItem.Value < sngThresholdRate && !objItem.Key.ToLower().Contains("seqcluster"))
                             {
@@ -1210,7 +1210,7 @@ namespace AnalysisManagerSequestPlugin
                         intWarningCount = 0;
                         sngThresholdRate = (float)(HIGH_THRESHOLD_MULTIPLIER * sngProcessingRateMedian);
 
-                        foreach (KeyValuePair<string, float> objItem in dctHostProcessingRate)
+                        foreach (var objItem in dctHostProcessingRate)
                         {
                             if (objItem.Value > sngThresholdRate && !objItem.Key.ToLower().Contains("seqcluster"))
                             {
@@ -1308,8 +1308,8 @@ namespace AnalysisManagerSequestPlugin
 
         protected float ComputeMedian(List<float> lstValues)
         {
-            int intMidpoint = 0;
-            List<float> lstSortedValues = (from item in lstValues orderby item select item).ToList();
+            var intMidpoint = 0;
+            var lstSortedValues = (from item in lstValues orderby item select item).ToList();
 
             if (lstSortedValues.Count == 0)
             {
@@ -1345,8 +1345,8 @@ namespace AnalysisManagerSequestPlugin
         /// <remarks></remarks>
         protected virtual bool ZipConcatOutFile(string WorkDir, int JobNum)
         {
-            string OutFileName = m_Dataset + "_out.txt";
-            string OutFilePath = Path.Combine(WorkDir, OutFileName);
+            var OutFileName = m_Dataset + "_out.txt";
+            var OutFilePath = Path.Combine(WorkDir, OutFileName);
 
             LogMessage("Zipping concatenated output file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
 
@@ -1364,7 +1364,7 @@ namespace AnalysisManagerSequestPlugin
                 if (!base.ZipFile(OutFilePath, false))
                 {
                     m_message = "Error zipping concat out file";
-                    string Msg = m_message + ", job " + m_JobNum + ", step " + m_jobParams.GetParam("Step");
+                    var Msg = m_message + ", job " + m_JobNum + ", step " + m_jobParams.GetParam("Step");
                     LogError(Msg);
                     return false;
                 }
@@ -1372,7 +1372,7 @@ namespace AnalysisManagerSequestPlugin
             catch (Exception ex)
             {
                 m_message = "Exception zipping concat out file";
-                string Msg = m_message + ", job " + m_JobNum + ", step " + m_jobParams.GetParam("Step") + ": " + ex.Message + "; " +
+                var Msg = m_message + ", job " + m_JobNum + ", step " + m_jobParams.GetParam("Step") + ": " + ex.Message + "; " +
                              clsGlobal.GetExceptionStackTrace(ex);
                 LogError(Msg);
                 return false;

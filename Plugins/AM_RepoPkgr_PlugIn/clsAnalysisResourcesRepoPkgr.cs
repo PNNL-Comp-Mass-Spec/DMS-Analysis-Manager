@@ -87,7 +87,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
             var dctInstrumentDataToRetrieve = new Dictionary<clsDataPackageJobInfo, KeyValuePair<string, string>>();
 
             // Keys in this dictionary are dataset name, values are the full path to the instrument data file for the dataset
-            var dctDatasetRawFilePaths = new Dictionary<String, String>();
+            var dctDatasetRawFilePaths = new Dictionary<string, string>();
 
             // Keys in this dictionary are dataset name, values are the raw_data_type for the dataset
             var dctDatasetRawDataTypes = new Dictionary<string, string>();
@@ -101,7 +101,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
             var jobsToProcess = lstDataPackagePeptideHitJobs.ToList();
             jobsToProcess.AddRange(lstAdditionalJobs.ToList());
 
-            var jobCountToProcess = jobsToProcess.Count();
+            var jobCountToProcess = jobsToProcess.Count;
             var jobsProcessed = 0;
 
             var dtLastProgressUpdate = DateTime.UtcNow;
@@ -126,7 +126,6 @@ namespace AnalysisManager_RepoPkgr_Plugin
                     {
                         // Don't create .mzXML files for .UIMF files
                         // Instead simply add the .uimf path to dctDatasetRawFilePaths
-                        ;
                     }
                     else
                     {
@@ -143,11 +142,11 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
                         if (!string.IsNullOrEmpty(mzXMLFilePath))
                         {
-                            dctInstrumentDataToRetrieve.Add(udtJobInfo, new KeyValuePair<String, String>(mzXMLFilePath, strHashcheckFilePath));
+                            dctInstrumentDataToRetrieve.Add(udtJobInfo, new KeyValuePair<string, string>(mzXMLFilePath, strHashcheckFilePath));
                         }
                         else if (!string.IsNullOrEmpty(mzMLFilePath))
                         {
-                            dctInstrumentDataToRetrieve.Add(udtJobInfo, new KeyValuePair<String, String>(mzMLFilePath, strHashcheckFilePath));
+                            dctInstrumentDataToRetrieve.Add(udtJobInfo, new KeyValuePair<string, string>(mzMLFilePath, strHashcheckFilePath));
                         }
                         else
                         {
@@ -155,7 +154,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                             if (udtJobInfo.RawDataType == RAW_DATA_TYPE_DOT_RAW_FILES)
                             {
                                 // Will need to retrieve the .Raw file for this dataset
-                                dctInstrumentDataToRetrieve.Add(udtJobInfo, new KeyValuePair<String, String>(String.Empty, String.Empty));
+                                dctInstrumentDataToRetrieve.Add(udtJobInfo, new KeyValuePair<string, string>(string.Empty, string.Empty));
                             }
                             else
                             {
@@ -228,7 +227,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
             {
                 var jobId = m_jobParams.GetJobParameter("Job", "??");
                 var dataPackageID = m_jobParams.GetJobParameter("DataPackageID", "??");
-                var msg = "Instrument data file not found for " + missingInstrumentDataCount + 
+                var msg = "Instrument data file not found for " + missingInstrumentDataCount +
                     clsGlobal.CheckPlural(missingInstrumentDataCount, " dataset", " datasets") + " in data package " + dataPackageID;
                 m_jobParams.AddAdditionalParameter("JobParameters", clsAnalysisToolRunnerRepoPkgr.WARNING_INSTRUMENT_DATA_MISSING, msg);
 

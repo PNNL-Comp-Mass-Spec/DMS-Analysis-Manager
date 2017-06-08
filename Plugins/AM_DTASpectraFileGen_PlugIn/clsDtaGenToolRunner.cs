@@ -141,7 +141,7 @@ namespace DTASpectraFileGen
 
         private eDTAGeneratorConstants GetDTAGenerator(out clsDtaGen spectraGen)
         {
-            string strErrorMessage = string.Empty;
+            var strErrorMessage = string.Empty;
 
             var eDtaGeneratorType = GetDTAGeneratorInfo(m_jobParams, out m_ConcatenateDTAs, out strErrorMessage);
             spectraGen = null;
@@ -188,15 +188,15 @@ namespace DTASpectraFileGen
 
         public static eDTAGeneratorConstants GetDTAGeneratorInfo(IJobParams oJobParams, out string strErrorMessage)
         {
-            bool blnConcatenateDTAs = false;
+            var blnConcatenateDTAs = false;
             return GetDTAGeneratorInfo(oJobParams, out blnConcatenateDTAs, out strErrorMessage);
         }
 
         public static eDTAGeneratorConstants GetDTAGeneratorInfo(IJobParams oJobParams, out bool blnConcatenateDTAs, out string strErrorMessage)
         {
-            string strDTAGenerator = oJobParams.GetJobParameter("DtaGenerator", "");
-            string strRawDataType = oJobParams.GetJobParameter("RawDataType", "");
-            bool blnMGFInstrumentData = oJobParams.GetJobParameter("MGFInstrumentData", false);
+            var strDTAGenerator = oJobParams.GetJobParameter("DtaGenerator", "");
+            var strRawDataType = oJobParams.GetJobParameter("RawDataType", "");
+            var blnMGFInstrumentData = oJobParams.GetJobParameter("MGFInstrumentData", false);
 
             strErrorMessage = string.Empty;
             blnConcatenateDTAs = true;
@@ -312,7 +312,7 @@ namespace DTASpectraFileGen
             try
             {
                 var dtaFiles = Directory.GetFiles(m_WorkDir, "*.dta");
-                foreach (string TmpFile in dtaFiles)
+                foreach (var TmpFile in dtaFiles)
                 {
                     DeleteFileWithRetries(TmpFile);
                 }
@@ -325,7 +325,7 @@ namespace DTASpectraFileGen
 
             //Delete unzipped concatenated dta files
             var cdtaFiles = Directory.GetFiles(m_WorkDir, "*" + CDTA_FILE_SUFFIX);
-            foreach (string TmpFile in cdtaFiles)
+            foreach (var TmpFile in cdtaFiles)
             {
                 try
                 {
@@ -349,7 +349,7 @@ namespace DTASpectraFileGen
 
         private SpectraFileProcessorParams GetDtaGenInitParams()
         {
-            SpectraFileProcessorParams initParams = new SpectraFileProcessorParams
+            var initParams = new SpectraFileProcessorParams
             {
                 DebugLevel = m_DebugLevel,
                 JobParams = m_jobParams,
@@ -406,7 +406,7 @@ namespace DTASpectraFileGen
             }
 
             // Store the Version info in the database
-            bool blnSuccess = false;
+            var blnSuccess = false;
             if (eDtaGeneratorType == eDTAGeneratorConstants.MGFtoDTA)
             {
                 // MGFtoDTA Dll
@@ -563,7 +563,7 @@ namespace DTASpectraFileGen
                 // Read _DTA_Original.txt and _DTA_Centroided.txt in parallel
                 // Create the final _DTA.txt file
 
-                bool blnSuccess = false;
+                var blnSuccess = false;
                 strCDTAFileFinal = Path.Combine(m_WorkDir, m_Dataset + CDTA_FILE_SUFFIX);
 
                 blnSuccess = MergeCDTAs(strCDTAFileOriginal, strCDTAFileCentroided, strCDTAFileFinal);
@@ -595,7 +595,7 @@ namespace DTASpectraFileGen
 
             // Make sure at least one .dta file was created
             var diWorkDir = new DirectoryInfo(m_WorkDir);
-            int intDTACount = diWorkDir.GetFiles("*.dta").Length;
+            var intDTACount = diWorkDir.GetFiles("*.dta").Length;
 
             if (intDTACount == 0)
             {
@@ -607,7 +607,7 @@ namespace DTASpectraFileGen
                 LogMessage("Concatenating spectra files, job " + m_JobNum + ", step " + m_StepNum);
             }
 
-            clsConcatToolWrapper ConcatTools = new clsConcatToolWrapper(diWorkDir.FullName);
+            var ConcatTools = new clsConcatToolWrapper(diWorkDir.FullName);
 
             if (!ConcatTools.ConcatenateFiles(clsConcatToolWrapper.ConcatFileTypes.CONCAT_DTA, m_Dataset))
             {
@@ -633,8 +633,8 @@ namespace DTASpectraFileGen
 
         private string GetMSConvertAppPath()
         {
-            string ProteoWizardDir = m_mgrParams.GetParam("ProteoWizardDir");         // MSConvert.exe is stored in the ProteoWizard folder
-            string progLoc = Path.Combine(ProteoWizardDir, clsDtaGenMSConvert.MSCONVERT_FILENAME);
+            var ProteoWizardDir = m_mgrParams.GetParam("ProteoWizardDir");         // MSConvert.exe is stored in the ProteoWizard folder
+            var progLoc = Path.Combine(ProteoWizardDir, clsDtaGenMSConvert.MSCONVERT_FILENAME);
 
             return progLoc;
         }
@@ -662,7 +662,7 @@ namespace DTASpectraFileGen
                 lstFilesToDelete.AddRange(Directory.GetFiles(m_WorkDir, "*" + clsAnalysisResources.DOT_MZML_EXTENSION));
                 lstFilesToDelete.AddRange(Directory.GetFiles(m_WorkDir, "*" + clsAnalysisResources.DOT_MGF_EXTENSION));
 
-                foreach (string MyFile in lstFilesToDelete)
+                foreach (var MyFile in lstFilesToDelete)
                 {
                     if (m_DebugLevel >= 2)
                     {
@@ -767,7 +767,7 @@ namespace DTASpectraFileGen
                         }
 
                         List<string> msMsDataListCentroid = null;
-                        bool blnNextSpectrumAvailable = false;
+                        var blnNextSpectrumAvailable = false;
 
                         while (!ScanHeadersMatch(udtParentIonDataHeader, udtFragIonDataHeader))
                         {
@@ -836,7 +836,7 @@ namespace DTASpectraFileGen
                             dtLastStatus = DateTime.UtcNow;
                             if (m_DebugLevel >= 1)
                             {
-                                LogMessage("Merging CDTAs, scan " + udtParentIonDataHeader.ScanNumberStart.ToString());
+                                LogMessage("Merging CDTAs, scan " + udtParentIonDataHeader.ScanNumberStart);
                             }
                         }
                     }
@@ -944,7 +944,7 @@ namespace DTASpectraFileGen
 
         private CloseOutType StartAndWaitForDTAGenerator(clsDtaGen oDTAGenerator, string strCallingFunction, bool blnSecondPass)
         {
-            ProcessStatus retVal = oDTAGenerator.Start();
+            var retVal = oDTAGenerator.Start();
             if (retVal == ProcessStatus.SF_ERROR)
             {
                 LogError("Error starting spectra processor: " + oDTAGenerator.ErrMsg);
@@ -1016,7 +1016,7 @@ namespace DTASpectraFileGen
         /// <remarks></remarks>
         private bool StoreToolVersionInfo(string strDtaGeneratorAppPath, eDTAGeneratorConstants eDtaGenerator)
         {
-            string strToolVersionInfo = string.Empty;
+            var strToolVersionInfo = string.Empty;
 
             if (m_DebugLevel >= 2)
             {
@@ -1040,7 +1040,7 @@ namespace DTASpectraFileGen
             }
 
             // Store strDtaGeneratorAppPath in ioToolFiles
-            List<FileInfo> ioToolFiles = new List<FileInfo>();
+            var ioToolFiles = new List<FileInfo>();
             ioToolFiles.Add(fiDtaGenerator);
 
             if (eDtaGenerator == eDTAGeneratorConstants.DeconConsole || eDtaGenerator == eDTAGeneratorConstants.DeconMSn)
@@ -1112,7 +1112,7 @@ namespace DTASpectraFileGen
 
         private bool StoreToolVersionInfoDLL(string strDtaGeneratorDLLPath)
         {
-            string strToolVersionInfo = string.Empty;
+            var strToolVersionInfo = string.Empty;
 
             if (m_DebugLevel >= 2)
             {
@@ -1123,7 +1123,7 @@ namespace DTASpectraFileGen
             base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strDtaGeneratorDLLPath);
 
             // Store paths to key files in ioToolFiles
-            List<FileInfo> ioToolFiles = new List<FileInfo>();
+            var ioToolFiles = new List<FileInfo>();
             ioToolFiles.Add(new FileInfo(strDtaGeneratorDLLPath));
 
             // Possibly also store the MSConvert version
@@ -1201,8 +1201,8 @@ namespace DTASpectraFileGen
         /// <remarks></remarks>
         private CloseOutType ZipConcDtaFile()
         {
-            string DtaFileName = m_Dataset + "_dta.txt";
-            string DtaFilePath = Path.Combine(m_WorkDir, DtaFileName);
+            var DtaFileName = m_Dataset + "_dta.txt";
+            var DtaFilePath = Path.Combine(m_WorkDir, DtaFileName);
 
             LogMessage("Zipping concatenated spectra file, job " + m_JobNum + ", step " + m_StepNum);
 
@@ -1223,7 +1223,7 @@ namespace DTASpectraFileGen
             }
             catch (Exception ex)
             {
-                string msg = "Exception zipping concat dta file, job " + m_JobNum + ", step " + m_StepNum + ": " + ex.Message;
+                var msg = "Exception zipping concat dta file, job " + m_JobNum + ", step " + m_StepNum + ": " + ex.Message;
                 LogError(msg);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -1234,7 +1234,7 @@ namespace DTASpectraFileGen
             var fiZipFile = new FileInfo(base.GetZipFilePathForFile(DtaFilePath));
             if (!fiZipFile.Exists || fiZipFile.Length <= 0)
             {
-                string msg = "Error zipping concat dta file, job " + m_JobNum + ", step " + m_StepNum;
+                var msg = "Error zipping concat dta file, job " + m_JobNum + ", step " + m_StepNum;
                 LogError(msg);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -1250,13 +1250,13 @@ namespace DTASpectraFileGen
                     return CloseOutType.CLOSEOUT_SUCCESS;
                 }
 
-                string msg = "Error zipping concat dta file using SharpZipLib, job " + m_JobNum + ", step " + m_StepNum;
+                var msg = "Error zipping concat dta file using SharpZipLib, job " + m_JobNum + ", step " + m_StepNum;
                 LogError(msg);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
             catch (Exception ex)
             {
-                string msg = "Exception zipping concat dta file using SharpZipLib, job " + m_JobNum + ", step " + m_StepNum;
+                var msg = "Exception zipping concat dta file using SharpZipLib, job " + m_JobNum + ", step " + m_StepNum;
                 LogError(msg, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }

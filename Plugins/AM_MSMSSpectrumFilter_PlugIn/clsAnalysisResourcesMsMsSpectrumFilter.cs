@@ -231,7 +231,7 @@ namespace MSMSSpectrumFilterAM
                 }
 
                 // Look for the _ScanStatsEx.txt file
-                string strScanStatsExPath = Path.Combine(fiNewestScanStatsFile.Directory.FullName, Path.GetFileNameWithoutExtension(fiNewestScanStatsFile.Name) + "Ex.txt");
+                var strScanStatsExPath = Path.Combine(fiNewestScanStatsFile.Directory.FullName, Path.GetFileNameWithoutExtension(fiNewestScanStatsFile.Name) + "Ex.txt");
 
                 if (File.Exists(strScanStatsExPath))
                 {

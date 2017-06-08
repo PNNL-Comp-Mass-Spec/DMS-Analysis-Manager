@@ -61,7 +61,7 @@ namespace AnalysisManager_Ape_PlugIn
 
         public string RequireMgrParam(string paramName)
         {
-            string val = mMgrParms.GetParam(paramName);
+            var val = mMgrParms.GetParam(paramName);
             if (string.IsNullOrEmpty(val))
             {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, string.Format("Required job parameter '{0}' was missing.", paramName));
@@ -71,7 +71,7 @@ namespace AnalysisManager_Ape_PlugIn
 
         public string RequireJobParam(string paramName)
         {
-            string val = mJobParms.GetParam(paramName);
+            var val = mJobParms.GetParam(paramName);
             if (string.IsNullOrEmpty(val)) {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, string.Format("Required job parameter '{0}' was missing.", paramName));
             }

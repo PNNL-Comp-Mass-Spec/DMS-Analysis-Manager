@@ -24,7 +24,7 @@ namespace AnalysisManager_IDM_Plugin
         {
             try
             {
-                bool skipIDM = false;
+                var skipIDM = false;
 
                 //Do the base class stuff
                 if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
@@ -53,7 +53,7 @@ namespace AnalysisManager_IDM_Plugin
                             skipIDM = true;
 
                         //success = sqLiteUtils.CopySqliteTable(fiIDMResultsDB.FullName, "t_precursor_interference", Path.Combine(m_WorkDir, "Results.db3"));
-                        
+
                     }
                     catch (Exception ex)
                     {
@@ -79,7 +79,7 @@ namespace AnalysisManager_IDM_Plugin
                     }
 
                     //Change the name of the log file for the local log file to the plug in log filename
-                    String LogFileName = Path.Combine(m_WorkDir, "IDM_Log");
+                    var LogFileName = Path.Combine(m_WorkDir, "IDM_Log");
                     GlobalContext.Properties["LogName"] = LogFileName;
                     clsLogTools.ChangeLogFileName(LogFileName);
 
@@ -149,8 +149,6 @@ namespace AnalysisManager_IDM_Plugin
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            return CloseOutType.CLOSEOUT_SUCCESS;
-
         }
 
         protected void InterfenceDetectorProgressHandler(InterferenceDetector id, ProgressInfo e)
@@ -168,7 +166,7 @@ namespace AnalysisManager_IDM_Plugin
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo()
         {
-            string strAppFolderPath = clsGlobal.GetAppFolderPath();
+            var strAppFolderPath = clsGlobal.GetAppFolderPath();
 
             var fiIDMdll = new FileInfo(Path.Combine(strAppFolderPath, "InterDetect.dll"));
 
@@ -178,7 +176,7 @@ namespace AnalysisManager_IDM_Plugin
         protected bool StoreToolVersionInfoDLL(string strIDMdllPath)
         {
 
-            string strToolVersionInfo = string.Empty;
+            var strToolVersionInfo = string.Empty;
 
             if (m_DebugLevel >= 2)
             {

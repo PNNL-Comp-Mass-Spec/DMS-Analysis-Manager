@@ -47,11 +47,6 @@ namespace DTASpectraFileGen
 
         #region "API Declares"
 
-        // Used for getting dta count in spectra file via ICR2LS
-        // Private Declare Function lopen Lib "kernel32" Alias "_lopen" (lpPathName As String, iReadWrite As Integer) As Integer
-        // Private Declare Function lclose Lib "kernel32" Alias "_lclose" (hFile As Integer) As Integer
-        // Private Declare Function XnumScans Lib "icr2ls32.dll" (FileHandle As Integer) As Integer
-
         // API constants
         private const short OF_READ = 0x0;
         private const short OF_READWRITE = 0x2;
@@ -177,7 +172,7 @@ namespace DTASpectraFileGen
                     strExtension = clsAnalysisResources.DOT_MZML_EXTENSION;
                     break;
                 default:
-                    m_ErrMsg = "Unsupported data type: " + m_RawDataType.ToString();
+                    m_ErrMsg = "Unsupported data type: " + m_RawDataType;
                     return false;
             }
 
@@ -261,7 +256,7 @@ namespace DTASpectraFileGen
             //	Alternate method of determining MaxScan using XCalibur OCX.
             //   Possibly causes .raw file lock.
             //**************************************************************************************************************************************************************
-            int NumScans = 0;
+            var NumScans = 0;
 
             var XRawFile = new MSFileReaderLib.MSFileReader_XRawfile();
             XRawFile.Open(RawFile);
@@ -374,7 +369,7 @@ namespace DTASpectraFileGen
             var ExplicitChargeEnd = (short)m_JobParams.GetJobParameter("Charges", "ExplicitChargeEnd", 0);
 
             // Get the maximum number of scans in the file
-            string RawFile = string.Copy(strInstrumentDataFilePath);
+            var RawFile = string.Copy(strInstrumentDataFilePath);
             if (Path.GetExtension(strInstrumentDataFilePath).ToLower() != clsAnalysisResources.DOT_RAW_EXTENSION)
             {
                 RawFile = Path.ChangeExtension(RawFile, clsAnalysisResources.DOT_RAW_EXTENSION);
@@ -393,7 +388,7 @@ namespace DTASpectraFileGen
             {
                 case -1:
                     // Generic error getting number of scans
-                    m_ErrMsg = "Unknown error getting number of scans; Maxscan = " + m_MaxScanInFile.ToString();
+                    m_ErrMsg = "Unknown error getting number of scans; Maxscan = " + m_MaxScanInFile;
                     return false;
                 case 0:
                     // Unable to read file; treat this is a warning
@@ -406,7 +401,7 @@ namespace DTASpectraFileGen
                         break;
                     }
                     // This should never happen
-                    m_ErrMsg = "Critical error getting number of scans; Maxscan = " + m_MaxScanInFile.ToString();
+                    m_ErrMsg = "Critical error getting number of scans; Maxscan = " + m_MaxScanInFile;
                     return false;
             }
 
@@ -433,7 +428,7 @@ namespace DTASpectraFileGen
             mCmdRunner.ErrorEvent += CmdRunner_ErrorEvent;
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
-            int LocCharge = 0;
+            var LocCharge = 0;
 
             // Loop through the requested charge states, starting first with the default charges if appropriate
             if (CreateDefaultCharges)
@@ -481,7 +476,7 @@ namespace DTASpectraFileGen
                     // (only used if selected in manager settings, but "UseDTALooping" is typically set to True)
 
                     var LocScanStart = ScanStart;
-                    int LocScanStop = 0;
+                    var LocScanStop = 0;
 
                     if (m_RunningExtractMSn && m_MgrParams.GetParam("UseDTALooping", false))
                     {
@@ -513,10 +508,10 @@ namespace DTASpectraFileGen
                         var cmdStr = "-I" + IonCount + " -G1";
                         if (LocCharge > 0)
                         {
-                            cmdStr += " -C" + LocCharge.ToString();
+                            cmdStr += " -C" + LocCharge;
                         }
 
-                        cmdStr += " -F" + LocScanStart.ToString() + " -L" + LocScanStop.ToString();
+                        cmdStr += " -F" + LocScanStart + " -L" + LocScanStop;
 
                         // For ExtractMSn, -S means the number of allowed different intermediate scans for grouping (default=1), for example -S1
                         // For DeconMSn, -S means the type of spectra to process, for example -SALL or -SCID
@@ -645,7 +640,7 @@ namespace DTASpectraFileGen
 
         protected virtual void MonitorProgress()
         {
-            string[] FileList = Directory.GetFiles(m_WorkDir, "*.dta");
+            var FileList = Directory.GetFiles(m_WorkDir, "*.dta");
             m_SpectraFileCount = FileList.GetLength(0);
         }
 
@@ -697,7 +692,7 @@ namespace DTASpectraFileGen
                 var reMatch = reDTAFile.Match(DTAFileName);
                 if (reMatch.Success)
                 {
-                    int intScanNumber = 0;
+                    var intScanNumber = 0;
                     if (int.TryParse(reMatch.Groups[1].Value, out intScanNumber))
                     {
                         m_Progress = intScanNumber / (float)m_MaxScanInFile * 100f;
@@ -721,7 +716,7 @@ namespace DTASpectraFileGen
             {
                 // Verify at least one .dta file has been created
                 // Returns the number of dta files in the working directory
-                string[] FileList = Directory.GetFiles(m_WorkDir, "*.dta");
+                var FileList = Directory.GetFiles(m_WorkDir, "*.dta");
 
                 if (FileList.GetLength(0) < 1)
                 {
@@ -732,7 +727,7 @@ namespace DTASpectraFileGen
             else
             {
                 // Verify that the _dta.txt file was created
-                string[] FileList = Directory.GetFiles(m_WorkDir, m_Dataset + "_dta.txt");
+                var FileList = Directory.GetFiles(m_WorkDir, m_Dataset + "_dta.txt");
 
                 if (FileList.GetLength(0) == 0)
                 {

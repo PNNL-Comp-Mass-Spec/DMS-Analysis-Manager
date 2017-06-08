@@ -213,7 +213,7 @@ namespace AnalysisManager_Mage_PlugIn
                 if (lstMatchingFiles.Count == 0)
                 {
                     var analysisType = _jobParams.GetJobParameter("AnalysisType", string.Empty);
-                    if (analysisType.IndexOf("iTRAQ", System.StringComparison.CurrentCultureIgnoreCase) >= 0)
+                    if (analysisType.IndexOf("iTRAQ", System.StringComparison.OrdinalIgnoreCase) >= 0)
                     {
                         throw new System.Exception("File T_alias.txt was not found in " + inputFolderPath + "; this file is required because this is an iTRAQ analysis");
                     }

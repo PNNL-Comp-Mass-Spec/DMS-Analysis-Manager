@@ -1657,10 +1657,10 @@ namespace AnalysisManagerBase
 
         }
 
-        private static bool TextFilesMatchIgnoreLine(string strText, List<Regex> lstLineIgnoreRegExSpecs)
+        private static bool TextFilesMatchIgnoreLine(string strText, IReadOnlyCollection<Regex> lstLineIgnoreRegExSpecs)
         {
 
-            if ((lstLineIgnoreRegExSpecs != null))
+            if (lstLineIgnoreRegExSpecs != null)
             {
                 foreach (var matchSpec in lstLineIgnoreRegExSpecs)
                 {

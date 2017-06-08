@@ -126,9 +126,9 @@ namespace AnalysisManagerSequestPlugin
             string[] OutFiles = null;
             string ProgLoc = null;
 
-            int intDTACountRemaining = 0;
-            bool blnSuccess = false;
-            bool blnProcessingError = false;
+            var intDTACountRemaining = 0;
+            var blnSuccess = false;
+            var blnProcessingError = false;
 
             mOutFileCandidates.Clear();
             mOutFileCandidateInfo.Clear();
@@ -259,7 +259,7 @@ namespace AnalysisManagerSequestPlugin
                     else
                     {
                         // No .DTAs remain; if we have as many .out files as the original source .dta files, then treat this as success, otherwise as a failure
-                        int intOutFileCount = 0;
+                        var intOutFileCount = 0;
                         intOutFileCount = GetOUTFileCountRemaining() + mTotalOutFileCount;
 
                         if (intOutFileCount == m_DtaCount)
@@ -435,8 +435,8 @@ namespace AnalysisManagerSequestPlugin
         protected void AddClusterStatsToSummaryFile()
         {
             // Write the statistics to the summary file
-            m_SummaryFile.Add(Environment.NewLine + "Cluster node count: ".PadRight(24) + mSequestNodeProcessingStats.NumNodeMachines.ToString());
-            m_SummaryFile.Add("Sequest process count: ".PadRight(24) + mSequestNodeProcessingStats.NumSlaveProcesses.ToString());
+            m_SummaryFile.Add(Environment.NewLine + "Cluster node count: ".PadRight(24) + mSequestNodeProcessingStats.NumNodeMachines);
+            m_SummaryFile.Add("Sequest process count: ".PadRight(24) + mSequestNodeProcessingStats.NumSlaveProcesses);
             m_SummaryFile.Add("Searched file count: ".PadRight(24) + mSequestNodeProcessingStats.SearchedFileCount.ToString("#,##0"));
             m_SummaryFile.Add("Total search time: ".PadRight(24) + mSequestNodeProcessingStats.TotalSearchTimeSeconds.ToString("#,##0") + " secs");
             m_SummaryFile.Add("Average search time: ".PadRight(24) + mSequestNodeProcessingStats.AvgSearchTime.ToString("##0.000") + " secs/spectrum");
@@ -448,7 +448,7 @@ namespace AnalysisManagerSequestPlugin
             {
                 var diWorkDir = new DirectoryInfo(m_WorkDir);
 
-                foreach (FileInfo fiFile in diWorkDir.GetFiles("*.out", SearchOption.TopDirectoryOnly))
+                foreach (var fiFile in diWorkDir.GetFiles("*.out", SearchOption.TopDirectoryOnly))
                 {
                     HandleOutFileChange(fiFile.Name);
                 }
@@ -465,7 +465,7 @@ namespace AnalysisManagerSequestPlugin
 
             try
             {
-                double dblMinutesSinceLastOutFileStored = DateTime.UtcNow.Subtract(mLastOutFileStoreTime).TotalMinutes;
+                var dblMinutesSinceLastOutFileStored = DateTime.UtcNow.Subtract(mLastOutFileStoreTime).TotalMinutes;
 
                 if (dblMinutesSinceLastOutFileStored > SEQUEST_STALLED_WAIT_TIME_MINUTES)
                 {
@@ -477,7 +477,7 @@ namespace AnalysisManagerSequestPlugin
                         {
                             // We already reset SEQUEST once, and another 30 minutes has elapsed
                             // Examine the number of .dta files that remain
-                            int intDTAsRemaining = GetDTAFileCountRemaining();
+                            var intDTAsRemaining = GetDTAFileCountRemaining();
 
                             if (intDTAsRemaining <= (int)(m_DtaCount * 0.999))
                             {
@@ -490,7 +490,7 @@ namespace AnalysisManagerSequestPlugin
                                 m_EvalMessage = "Sequest is stalled, but only " + intDTAsRemaining + " .DTA file" +
                                                 CheckForPlurality(intDTAsRemaining) + " remain";
 
-                                foreach (FileInfo fiFile in diWorkDir.GetFiles("*.dta", SearchOption.TopDirectoryOnly).ToList())
+                                foreach (var fiFile in diWorkDir.GetFiles("*.dta", SearchOption.TopDirectoryOnly).ToList())
                                 {
                                     fiFile.Delete();
                                 }
@@ -620,7 +620,7 @@ namespace AnalysisManagerSequestPlugin
             string strLineIn = null;
             string strHostName = null;
 
-            bool blnFoundSpawned = false;
+            var blnFoundSpawned = false;
 
             try
             {
@@ -678,8 +678,8 @@ namespace AnalysisManagerSequestPlugin
                             " ... found " + mSequestNodesSpawned + " nodes in the sequest.log file");
                     }
 
-                    int intNodeCountMinimum = 0;
-                    int intNodeCountExpected = 0;
+                    var intNodeCountMinimum = 0;
+                    var intNodeCountExpected = 0;
 
                     intNodeCountExpected = m_mgrParams.GetParam("SequestNodeCountExpected", 0);
                     intNodeCountMinimum = (int)Math.Floor(0.85 * intNodeCountExpected);
@@ -688,7 +688,7 @@ namespace AnalysisManagerSequestPlugin
                     {
                         // If fewer than intNodeCountMinimum .DTA files are present in the work directory, then the node count spawned will be small
                         // Thus, need to count the number of DTAs
-                        int intDTACountRemaining = GetDTAFileCountRemaining();
+                        var intDTACountRemaining = GetDTAFileCountRemaining();
 
                         if (intDTACountRemaining > mSequestNodesSpawned)
                         {
@@ -750,7 +750,7 @@ namespace AnalysisManagerSequestPlugin
         /// <remarks>If -1 returned, error message is in module variable m_ErrMsg</remarks>
         protected float GetSingleFromSeqLogFileString(string InpFileStr, string RegexStr)
         {
-            float RetVal = 0.0f;
+            var RetVal = 0.0f;
             string TmpStr = null;
 
             try
@@ -774,7 +774,7 @@ namespace AnalysisManagerSequestPlugin
         protected float ComputeMedianProcessingTime()
         {
             float[] sngOutFileProcessingTimes = null;
-            int intMidPoint = 0;
+            var intMidPoint = 0;
 
             if (mRecentOutFileSearchTimes.Count < 1)
                 return 0;
@@ -823,8 +823,8 @@ namespace AnalysisManagerSequestPlugin
 
                     if (!mOutFileCandidateInfo.ContainsKey(OutFileName))
                     {
-                        DateTime dtQueueTime = DateTime.UtcNow;
-                        KeyValuePair<string, DateTime> objEntry = new KeyValuePair<string, DateTime>(OutFileName, dtQueueTime);
+                        var dtQueueTime = DateTime.UtcNow;
+                        var objEntry = new KeyValuePair<string, DateTime>(OutFileName, dtQueueTime);
 
                         mOutFileCandidates.Enqueue(objEntry);
                         mOutFileCandidateInfo.Add(OutFileName, dtQueueTime);
@@ -887,8 +887,8 @@ namespace AnalysisManagerSequestPlugin
         protected bool ProcessCandidateOutFiles(bool blnProcessAllRemainingFiles)
         {
             string strSourceFileName = null;
-            bool blnSuccess = false;
-            bool blnAppendSuccess = false;
+            var blnSuccess = false;
+            var blnAppendSuccess = false;
 
             var intItemsProcessed = 0;
 
@@ -1055,7 +1055,7 @@ namespace AnalysisManagerSequestPlugin
 
         protected bool ResetPVMWithRetry(int intMaxPVMResetAttempts)
         {
-            bool blnSuccess = false;
+            var blnSuccess = false;
 
             if (intMaxPVMResetAttempts < 1)
                 intMaxPVMResetAttempts = 1;
@@ -1092,7 +1092,7 @@ namespace AnalysisManagerSequestPlugin
             string PVMProgFolder = null;     // Folder with PVM
             string ExePath = null;           // Full path to PVM exe
 
-            bool blnSuccess = false;
+            var blnSuccess = false;
 
             try
             {
@@ -1152,7 +1152,7 @@ namespace AnalysisManagerSequestPlugin
         protected bool ResetPVMHalt(string PVMProgFolder)
         {
             string strBatchFilePath = null;
-            bool blnSuccess = false;
+            var blnSuccess = false;
 
             try
             {
@@ -1200,7 +1200,7 @@ namespace AnalysisManagerSequestPlugin
         protected bool ResetPVMWipeTemp(string PVMProgFolder)
         {
             string strBatchFilePath = null;
-            bool blnSuccess = false;
+            var blnSuccess = false;
 
             try
             {
@@ -1248,7 +1248,7 @@ namespace AnalysisManagerSequestPlugin
         protected bool ResetPVMStartPVM(string PVMProgFolder)
         {
             string strBatchFilePath = null;
-            bool blnSuccess = false;
+            var blnSuccess = false;
 
             try
             {
@@ -1304,7 +1304,7 @@ namespace AnalysisManagerSequestPlugin
         protected bool ResetPVMAddNodes(string PVMProgFolder)
         {
             string strBatchFilePath = null;
-            bool blnSuccess = false;
+            var blnSuccess = false;
 
             try
             {
@@ -1355,7 +1355,7 @@ namespace AnalysisManagerSequestPlugin
             {
                 var diWorkDir = new DirectoryInfo(m_WorkDir);
 
-                foreach (FileInfo fiFile in diWorkDir.GetFiles("sequest*.log*"))
+                foreach (var fiFile in diWorkDir.GetFiles("sequest*.log*"))
                 {
                     UpdateSequestNodeProcessingStatsOneFile(fiFile.FullName);
                 }
@@ -1368,12 +1368,12 @@ namespace AnalysisManagerSequestPlugin
 
         protected void UpdateSequestNodeProcessingStatsOneFile(string SeqLogFilePath)
         {
-            int NumNodeMachines = 0;
-            int NumSlaveProcesses = 0;
+            var NumNodeMachines = 0;
+            var NumSlaveProcesses = 0;
             double TotalSearchTimeSeconds = 0;
-            int SearchedFileCount = 0;
+            var SearchedFileCount = 0;
 
-            int intDTAsSearched = 0;
+            var intDTAsSearched = 0;
 
             // Verify sequest.log file exists
             if (!File.Exists(SeqLogFilePath))
@@ -1410,12 +1410,12 @@ namespace AnalysisManagerSequestPlugin
             }
             catch (Exception ex)
             {
-                string Msg = "UpdateNodeStats: Exception reading sequest log file: " + ex.Message;
+                var Msg = "UpdateNodeStats: Exception reading sequest log file: " + ex.Message;
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, Msg);
                 return;
             }
 
-            string strFileContents = sbContents.ToString();
+            var strFileContents = sbContents.ToString();
 
             // Node machine count
             NumNodeMachines = GetIntegerFromSeqLogFileString(strFileContents, "starting the sequest task on\\s+\\d+\\s+node");
@@ -1426,7 +1426,7 @@ namespace AnalysisManagerSequestPlugin
             }
             else if (NumNodeMachines < 0)
             {
-                string Msg = "UpdateNodeStats: Exception retrieving node machine count: " + m_ErrMsg;
+                var Msg = "UpdateNodeStats: Exception retrieving node machine count: " + m_ErrMsg;
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, Msg);
             }
 
@@ -1444,7 +1444,7 @@ namespace AnalysisManagerSequestPlugin
             }
             else if (NumSlaveProcesses < 0)
             {
-                string Msg = "UpdateNodeStats: Exception retrieving slave process count: " + m_ErrMsg;
+                var Msg = "UpdateNodeStats: Exception retrieving slave process count: " + m_ErrMsg;
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, Msg);
             }
 
@@ -1598,7 +1598,7 @@ namespace AnalysisManagerSequestPlugin
 
                 // Look for nodes that have been missing for at least 5 minutes
                 var intNodeCountActive = 0;
-                foreach (KeyValuePair<string, DateTime> objItem in mSequestNodes)
+                foreach (var objItem in mSequestNodes)
                 {
                     if (DateTime.UtcNow.Subtract(objItem.Value).TotalMinutes <= STALE_NODE_THRESHOLD_MINUTES)
                     {
@@ -1607,7 +1607,7 @@ namespace AnalysisManagerSequestPlugin
                 }
 
                 // Define the minimum node count as 50% of the number of nodes spawned
-                int intActiveNodeCountMinimum = 0;
+                var intActiveNodeCountMinimum = 0;
                 intActiveNodeCountMinimum = (int)Math.Floor(0.5 * mSequestNodesSpawned);
 
                 if (intNodeCountActive < intActiveNodeCountMinimum && !mIgnoreNodeCountActiveErrors)

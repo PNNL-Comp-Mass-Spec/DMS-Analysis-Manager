@@ -216,7 +216,7 @@ namespace AnalysisManagerMODPlusPlugin
 
             mStatus = MODPlusRunnerStatusCodes.Running;
 
-            string cmdStr = string.Empty;
+            var cmdStr = string.Empty;
 
             cmdStr += " -Xmx" + JavaMemorySizeMB + "M";
             cmdStr += " -jar " + clsGlobal.PossiblyQuotePath(mModPlusJarFilePath);
@@ -308,7 +308,7 @@ namespace AnalysisManagerMODPlusPlugin
                             continue;
                         }
 
-                        Match reMatch = reCheckProgress.Match(strLineIn);
+                        var reMatch = reCheckProgress.Match(strLineIn);
                         if (reMatch.Success)
                         {
                             int.TryParse(reMatch.Groups[1].ToString(), out spectraSearched);

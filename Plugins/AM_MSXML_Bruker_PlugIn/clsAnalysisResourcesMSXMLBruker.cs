@@ -28,7 +28,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             }
 
             //Get input data file
-            string strRawDataType = m_jobParams.GetParam("RawDataType");
+            var strRawDataType = m_jobParams.GetParam("RawDataType");
             var eRawDataType = GetRawDataType(strRawDataType);
 
             switch (eRawDataType)

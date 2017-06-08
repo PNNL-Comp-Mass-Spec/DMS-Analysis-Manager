@@ -85,14 +85,14 @@ namespace AnalysisManagerIDPickerPlugIn
             string strFASTAFilePath = null;
             string strResultType = null;
             string strSynFilePath = null;
-            string strErrorMessage = string.Empty;
+            var strErrorMessage = string.Empty;
 
             // As of January 21, 2015 we are now always skipping IDPicker (and thus simply creating the .pepXML file)
             var skipIDPicker = ALWAYS_SKIP_IDPICKER;
 
             var processingSuccess = true;
 
-            mIDPickerOptions = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
+            mIDPickerOptions = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             mCmdRunnerErrors = new ConcurrentBag<string>();
             mCmdRunnerErrorsToIgnore = new ConcurrentBag<string>();
             mFilenamesToAddToReportFolder = new List<string>();
@@ -113,7 +113,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 m_progress = PROGRESS_PCT_IDPicker_SEARCHING_FOR_FILES;
 
                 // Determine the path to the IDPicker program (idpQonvert); folder will also contain idpAssemble.exe and idpReport.exe
-                string progLocQonvert = string.Empty;
+                var progLocQonvert = string.Empty;
                 if (!skipIDPicker)
                 {
                     progLocQonvert = DetermineProgramLocation("IDPickerProgLoc", IDPicker_Qonvert);
@@ -203,7 +203,7 @@ namespace AnalysisManagerIDPickerPlugIn
                     // Don't keep this file since we're skipping IDPicker
                     m_jobParams.AddResultFileToSkip("Tool_Version_Info_IDPicker.txt");
 
-                    string strParamFileNameLocal = m_jobParams.GetParam(clsAnalysisResourcesIDPicker.IDPICKER_PARAM_FILENAME_LOCAL);
+                    var strParamFileNameLocal = m_jobParams.GetParam(clsAnalysisResourcesIDPicker.IDPICKER_PARAM_FILENAME_LOCAL);
                     if (string.IsNullOrEmpty(strParamFileNameLocal))
                     {
                         m_jobParams.AddResultFileToSkip(clsAnalysisResourcesIDPicker.DEFAULT_IDPICKER_PARAM_FILE_NAME);
@@ -299,12 +299,12 @@ namespace AnalysisManagerIDPickerPlugIn
         private bool RunIDPickerWrapper(clsPHRPReader.ePeptideHitResultType ePHRPResultType, string strSynFilePath, string fastaFilePath,
             out bool blnProcessingError, out bool blnCriticalError)
         {
-            bool blnSuccess = false;
+            var blnSuccess = false;
             blnProcessingError = false;
             blnCriticalError = false;
 
             // Determine the prefix used by decoy proteins
-            string strDecoyPrefix = string.Empty;
+            var strDecoyPrefix = string.Empty;
 
             if (ePHRPResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB)
             {
@@ -422,9 +422,9 @@ namespace AnalysisManagerIDPickerPlugIn
         /// <remarks></remarks>
         private string AppendArgument(string CmdArgs, string OptionName, string ArgumentName, string ValueIfMissing, bool AppendIfMissing)
         {
-            string strValue = string.Empty;
-            bool blnIsMissing = false;
-            bool blnAppendParam = false;
+            var strValue = string.Empty;
+            var blnIsMissing = false;
+            var blnAppendParam = false;
 
             if (mIDPickerOptions.TryGetValue(OptionName, out strValue))
             {
@@ -488,7 +488,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
         private void ClearConcurrentBag(ref ConcurrentBag<string> oBag)
         {
-            string item = string.Empty;
+            var item = string.Empty;
             while (!oBag.IsEmpty)
             {
                 oBag.TryTake(out item);
@@ -523,7 +523,7 @@ namespace AnalysisManagerIDPickerPlugIn
         {
             string strParamFileName = null;
 
-            int iHitsPerSpectrum = 0;
+            var iHitsPerSpectrum = 0;
 
             string CmdStr = null;
 
@@ -531,7 +531,7 @@ namespace AnalysisManagerIDPickerPlugIn
             // However, for huge fasta files, conversion could take several hours
             const int intMaxRuntimeMinutes = 480;
 
-            bool blnSuccess = false;
+            var blnSuccess = false;
 
             try
             {
@@ -599,7 +599,7 @@ namespace AnalysisManagerIDPickerPlugIn
         {
             string strProtein = null;
             string strProteinPrefix = null;
-            int intCount = 0;
+            var intCount = 0;
 
             strDecoyPrefix = string.Empty;
 
@@ -662,7 +662,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 else if (lstPrefixStats.Count > 1)
                 {
                     // Find the prefix (key) in lstPrefixStats with the highest occurrence count
-                    int intMaxCount = -1;
+                    var intMaxCount = -1;
                     foreach (var kvEntry in lstPrefixStats)
                     {
                         if (kvEntry.Value > intMaxCount)
@@ -687,7 +687,7 @@ namespace AnalysisManagerIDPickerPlugIn
         {
             var blnIgnore = false;
 
-            foreach (string strIgnoreText in mCmdRunnerErrorsToIgnore)
+            foreach (var strIgnoreText in mCmdRunnerErrorsToIgnore)
             {
                 if (strErrorMessage.Contains(strIgnoreText))
                 {
@@ -795,8 +795,8 @@ namespace AnalysisManagerIDPickerPlugIn
                 {
                     while (oReader.MoveNext())
                     {
-                        bool found = false;
-                        foreach (string strPrefixToCheck in lstPrefixesToCheck)
+                        var found = false;
+                        foreach (var strPrefixToCheck in lstPrefixesToCheck)
                         {
                             if (oReader.CurrentPSM.ProteinFirst.ToUpper().StartsWith(strPrefixToCheck))
                             {
@@ -830,7 +830,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
         private CloseOutType MoveFilesIntoIDPickerSubfolder()
         {
-            bool blnErrorEncountered = false;
+            var blnErrorEncountered = false;
             string ResFolderNamePath = null;
 
             try
@@ -853,12 +853,12 @@ namespace AnalysisManagerIDPickerPlugIn
                     lstFileSpecs.Add("Run*.bat");
                 }
 
-                foreach (string strFileSpec in lstFileSpecs)
+                foreach (var strFileSpec in lstFileSpecs)
                 {
                     fiFilesToMove.AddRange(diSourceFolder.GetFiles(strFileSpec));
                 }
 
-                foreach (FileInfo fiFile in fiFilesToMove)
+                foreach (var fiFile in fiFilesToMove)
                 {
                     var intAttempts = 0;
                     var blnSuccess = false;
@@ -885,7 +885,7 @@ namespace AnalysisManagerIDPickerPlugIn
                     if (!blnSuccess)
                     {
                         blnErrorEncountered = true;
-                        LogError("Unable to move " + fiFile.Name + " into the IDPicker subfolder; tried " + (intAttempts - 1).ToString() + " times");
+                        LogError("Unable to move " + fiFile.Name + " into the IDPicker subfolder; tried " + (intAttempts - 1) + " times");
                     }
                 }
             }
@@ -911,8 +911,8 @@ namespace AnalysisManagerIDPickerPlugIn
         private void ParseConsoleOutputFileForErrors(string strConsoleOutputFilePath)
         {
             string strLineIn = null;
-            bool blnUnhandledException = false;
-            string strExceptionText = string.Empty;
+            var blnUnhandledException = false;
+            var strExceptionText = string.Empty;
 
             try
             {
@@ -976,7 +976,7 @@ namespace AnalysisManagerIDPickerPlugIn
             string progLoc = null;
             const int intMaxRuntimeMinutes = 90;
 
-            bool blnSuccess = false;
+            var blnSuccess = false;
 
             // Create the Assemble.txt file
             // Since we're only processing one dataset, the file will only have one line
@@ -1047,7 +1047,7 @@ namespace AnalysisManagerIDPickerPlugIn
             string CmdStr = null;
             const int intMaxRuntimeMinutes = 90;
 
-            bool blnSuccess = false;
+            var blnSuccess = false;
 
             // Define the errors that we can ignore
             ClearConcurrentBag(ref mCmdRunnerErrorsToIgnore);
@@ -1113,7 +1113,7 @@ namespace AnalysisManagerIDPickerPlugIn
             string progLoc = null;
             const int intMaxRuntimeMinutes = 60;
 
-            bool blnSuccess = false;
+            var blnSuccess = false;
 
             strOutputFolderName = "IDPicker";
 
@@ -1160,7 +1160,7 @@ namespace AnalysisManagerIDPickerPlugIn
                     var blnTSVFileFound = false;
 
                     // Move the .tsv files from the Report folder up one level
-                    foreach (FileInfo fiFile in diReportFolder.GetFiles("*.tsv"))
+                    foreach (var fiFile in diReportFolder.GetFiles("*.tsv"))
                     {
                         fiFile.MoveTo(Path.Combine(m_WorkDir, fiFile.Name));
                         blnTSVFileFound = true;
@@ -1183,7 +1183,7 @@ namespace AnalysisManagerIDPickerPlugIn
                     mFilenamesToAddToReportFolder.Add(IPD_Assemble_CONSOLE_OUTPUT);
                     mFilenamesToAddToReportFolder.Add(IPD_Report_CONSOLE_OUTPUT);
 
-                    foreach (string strFileName in mFilenamesToAddToReportFolder)
+                    foreach (var strFileName in mFilenamesToAddToReportFolder)
                     {
                         CopyFileIntoReportFolder(strFileName, diReportFolder.FullName);
                     }
@@ -1205,7 +1205,7 @@ namespace AnalysisManagerIDPickerPlugIn
             else
             {
                 // Check whether mCmdRunnerErrors contains a known error message
-                foreach (string strError in mCmdRunnerErrors)
+                foreach (var strError in mCmdRunnerErrors)
                 {
                     if (strError.Contains("no spectra in workspace"))
                     {
@@ -1234,7 +1234,7 @@ namespace AnalysisManagerIDPickerPlugIn
         private bool RunProgramWork(string strProgramDescription, string strExePath, string CmdStr, string strConsoleOutputFileName,
             bool blnCaptureConsoleOutputViaDosRedirection, int intMaxRuntimeMinutes)
         {
-            bool blnSuccess = false;
+            var blnSuccess = false;
 
             if (m_DebugLevel >= 1)
             {
@@ -1256,12 +1256,12 @@ namespace AnalysisManagerIDPickerPlugIn
                 // Capture the console output (including output to the error stream) via redirection symbols:
                 //    strExePath CmdStr > ConsoleOutputFile.txt 2>&1
 
-                string strExePathOriginal = string.Copy(strExePath);
-                string CmdStrOriginal = string.Copy(CmdStr);
+                var strExePathOriginal = string.Copy(strExePath);
+                var CmdStrOriginal = string.Copy(CmdStr);
 
                 strProgramDescription = strProgramDescription.Replace(" ", "_");
 
-                string strBatchFileName = "Run_" + strProgramDescription + ".bat";
+                var strBatchFileName = "Run_" + strProgramDescription + ".bat";
                 mFilenamesToAddToReportFolder.Add(strBatchFileName);
 
                 // Update the Exe path to point to the RunProgram batch file; update CmdStr to be empty
@@ -1298,7 +1298,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 cmdRunner.ConsoleOutputFilePath = Path.Combine(m_WorkDir, strConsoleOutputFileName);
             }
 
-            int intMaxRuntimeSeconds = intMaxRuntimeMinutes * 60;
+            var intMaxRuntimeSeconds = intMaxRuntimeMinutes * 60;
 
             blnSuccess = cmdRunner.RunProgram(strExePath, CmdStr, strProgramDescription, true, intMaxRuntimeSeconds);
 
@@ -1315,7 +1315,7 @@ namespace AnalysisManagerIDPickerPlugIn
             {
                 // Append the error messages to the log
                 // Note that clsProgRunner will have already included them in the ConsoleOutput.txt file
-                foreach (string strError in mCmdRunnerErrors)
+                foreach (var strError in mCmdRunnerErrors)
                 {
                     if (!strError.ToLower().StartsWith("warning"))
                     {
@@ -1336,7 +1336,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
                 if (cmdRunner.ExitCode != 0)
                 {
-                    LogWarning(strProgramDescription + " returned a non-zero exit code: " + cmdRunner.ExitCode.ToString());
+                    LogWarning(strProgramDescription + " returned a non-zero exit code: " + cmdRunner.ExitCode);
                 }
                 else
                 {
@@ -1361,10 +1361,10 @@ namespace AnalysisManagerIDPickerPlugIn
         /// <remarks></remarks>
         private bool StoreToolVersionInfo(string strIDPickerProgLoc, bool blnSkipIDPicker)
         {
-            string strToolVersionInfo = string.Empty;
+            var strToolVersionInfo = string.Empty;
             string strExePath = null;
 
-            bool blnSuccess = false;
+            var blnSuccess = false;
 
             if (m_DebugLevel >= 2)
             {
@@ -1372,7 +1372,7 @@ namespace AnalysisManagerIDPickerPlugIn
             }
 
             // We will store paths to key files in ioToolFiles
-            List<FileInfo> ioToolFiles = new List<FileInfo>();
+            var ioToolFiles = new List<FileInfo>();
 
             // Determine the path to the PeptideListToXML.exe
             mPeptideListToXMLExePath = DetermineProgramLocation("PeptideListToXMLProgLoc", PEPTIDE_LIST_TO_XML_EXE);
@@ -1474,7 +1474,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
                 if ((strSplitLine != null))
                 {
-                    foreach (string strItem in strSplitLine)
+                    foreach (var strItem in strSplitLine)
                     {
                         var strItem2 = strItem.Trim(chNewLineChars);
 

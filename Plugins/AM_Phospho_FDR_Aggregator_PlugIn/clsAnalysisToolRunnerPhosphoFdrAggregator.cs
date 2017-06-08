@@ -92,7 +92,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
                 // Determine the path to the Ascore program
                 // AScoreProgLoc will be something like this: "C:\DMS_Programs\AScore\AScore_Console.exe"
-                string progLocAScore = m_mgrParams.GetParam("AScoreprogloc");
+                var progLocAScore = m_mgrParams.GetParam("AScoreprogloc");
                 if (!File.Exists(progLocAScore))
                 {
                     if (string.IsNullOrWhiteSpace(progLocAScore))
@@ -346,7 +346,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
         protected bool ConcatenateResultFiles(string fileSuffix)
         {
-            string currentFile = string.Empty;
+            var currentFile = string.Empty;
             var firstfileProcessed = false;
 
             try
@@ -491,7 +491,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                     });
                     break;
                 default:
-                    throw new Exception("Programming bug in ProcessSynopsisFiles; unrecognized value for datasetType: " + datasetType.ToString());
+                    throw new Exception("Programming bug in ProcessSynopsisFiles; unrecognized value for datasetType: " + datasetType);
             }
 
             if (string.IsNullOrWhiteSpace(bestAScoreParamFileName))
@@ -542,7 +542,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             udtJobMetadata.FirstHitsFilePath = Path.Combine(jobFolder.FullName, fhtfile);
             udtJobMetadata.SynopsisFilePath = Path.Combine(jobFolder.FullName, synFile);
 
-            bool success = false;
+            var success = false;
 
             if (!File.Exists(udtJobMetadata.FirstHitsFilePath))
             {
@@ -668,7 +668,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             foreach (var jobFolder in diWorkingFolder.GetDirectories("Job*"))
             {
                 var jobNumberText = jobFolder.Name.Substring(3);
-                int jobNumber = 0;
+                var jobNumber = 0;
 
                 if (int.TryParse(jobNumberText, out jobNumber))
                 {
@@ -747,7 +747,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                             }
                             else
                             {
-                                Match oMatch = reCheckProgress.Match(strLineIn);
+                                var oMatch = reCheckProgress.Match(strLineIn);
                                 if (oMatch.Success)
                                 {
                                     int.TryParse(oMatch.Groups[1].ToString(), out ascoreProgress);
@@ -1031,7 +1031,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
                 if (mCmdRunner.ExitCode != 0)
                 {
-                    LogWarning("AScore returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
+                    LogWarning("AScore returned a non-zero exit code: " + mCmdRunner.ExitCode);
                 }
                 else
                 {
@@ -1056,8 +1056,8 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo(string strProgLoc)
         {
-            string strToolVersionInfo = string.Empty;
-            bool blnSuccess = false;
+            var strToolVersionInfo = string.Empty;
+            var blnSuccess = false;
 
             if (m_DebugLevel >= 2)
             {

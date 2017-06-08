@@ -154,7 +154,7 @@ namespace DTASpectraFileGen
                         rawFilePath = Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_MZML_EXTENSION);
                         break;
                     default:
-                        m_ErrMsg = "Raw data file type not supported: " + eRawDataType.ToString();
+                        m_ErrMsg = "Raw data file type not supported: " + eRawDataType;
                         return false;
                 }
 
@@ -178,7 +178,7 @@ namespace DTASpectraFileGen
                 {
                     case -1:
                         // Generic error getting number of scans
-                        m_ErrMsg = "Unknown error getting number of scans; Maxscan = " + m_MaxScanInFile.ToString();
+                        m_ErrMsg = "Unknown error getting number of scans; Maxscan = " + m_MaxScanInFile;
                         return false;
                     case 0:
                         // Unable to read file; treat this is a warning
@@ -191,7 +191,7 @@ namespace DTASpectraFileGen
                             break;
                         }
                         // This should never happen
-                        m_ErrMsg = "Critical error getting number of scans; Maxscan = " + m_MaxScanInFile.ToString();
+                        m_ErrMsg = "Critical error getting number of scans; Maxscan = " + m_MaxScanInFile;
                         return false;
                 }
 

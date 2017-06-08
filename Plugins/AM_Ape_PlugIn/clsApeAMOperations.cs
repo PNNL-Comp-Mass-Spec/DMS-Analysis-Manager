@@ -39,8 +39,8 @@ namespace AnalysisManager_Ape_PlugIn
         /// <param name="apeOperations"></param>
         /// <returns></returns>
         public bool RunApeOperations(string apeOperations) {
-            bool ok = false;
-            foreach (string apeOperation in apeOperations.Split(',')) {
+            var ok = false;
+            foreach (var apeOperation in apeOperations.Split(',')) {
                 ok = RunApeOperation(apeOperation.Trim());
                 if (!ok) break;
             }

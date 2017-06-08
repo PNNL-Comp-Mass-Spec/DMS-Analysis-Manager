@@ -183,7 +183,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                             if (chargeStateOld != chargeStateNew)
                             {
                                 // Charge state has changed; need to update the titleLine
-                                titleLine = reDtaChargeUpdater.Replace(titleLine, chargeStateNew.ToString() + ".dta");
+                                titleLine = reDtaChargeUpdater.Replace(titleLine, chargeStateNew + ".dta");
                             }
                             writer.WriteLine(titleLine);
 

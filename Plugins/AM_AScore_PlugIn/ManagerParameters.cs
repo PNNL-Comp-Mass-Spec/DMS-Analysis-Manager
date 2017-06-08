@@ -16,7 +16,7 @@ namespace AnalysisManager_AScore_PlugIn
 
 		public string RequireMgrParam(string paramName)
 		{
-			string val = mMgrParms.GetParam(paramName);
+			var val = mMgrParms.GetParam(paramName);
 			if (string.IsNullOrWhiteSpace(val))
 			{
 				throw new MageException(string.Format("Required manager parameter '{0}' was missing.", paramName));

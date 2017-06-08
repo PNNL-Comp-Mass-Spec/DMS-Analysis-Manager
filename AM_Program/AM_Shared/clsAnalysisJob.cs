@@ -58,7 +58,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// List of file names to NOT move to the result folder; this list is used by MoveResultFiles()
         /// </summary>
-        protected SortedSet<string> m_ResultFilesToSkip = new SortedSet<string>(StringComparer.CurrentCultureIgnoreCase);
+        protected SortedSet<string> m_ResultFilesToSkip = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
         /// List of file extensions (or even partial file names like _peaks.txt) to NOT move to the result folder
@@ -67,22 +67,22 @@ namespace AnalysisManagerBase
         /// Comparison checks if the end of the fileName matches any entry ResultFileExtensionsToSkip:
         /// If TmpFileNameLcase.EndsWith(ext.ToLower()) Then OkToMove = False
         /// </remarks>
-        protected SortedSet<string> m_ResultFileExtensionsToSkip = new SortedSet<string>(StringComparer.CurrentCultureIgnoreCase);
+        protected SortedSet<string> m_ResultFileExtensionsToSkip = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
         /// List of file names that WILL be moved to the result folder, even if they are in ResultFilesToSkip or ResultFileExtensionsToSkip
         /// </summary>
-        protected SortedSet<string> m_ResultFilesToKeep = new SortedSet<string>(StringComparer.CurrentCultureIgnoreCase);
+        protected SortedSet<string> m_ResultFilesToKeep = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
         /// List of file path to delete from the storage server (must be full file paths)
         /// </summary>
-        protected SortedSet<string> m_ServerFilesToDelete = new SortedSet<string>(StringComparer.CurrentCultureIgnoreCase);
+        protected SortedSet<string> m_ServerFilesToDelete = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
         /// List of dataset names and dataset IDs
         /// </summary>
-        protected Dictionary<string, int> m_DatasetInfoList = new Dictionary<string, int>(StringComparer.CurrentCultureIgnoreCase);
+        protected Dictionary<string, int> m_DatasetInfoList = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
         #endregion
 
@@ -145,7 +145,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public clsAnalysisJob(IMgrParams mgrParams, short debugLvl) : base(mgrParams, debugLvl)
         {
-            m_JobParams = new Dictionary<string, Dictionary<string, string>>(StringComparer.CurrentCultureIgnoreCase);
+            m_JobParams = new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
             Reset();
         }
 
@@ -579,7 +579,7 @@ namespace AnalysisManagerBase
             if (!m_JobParams.TryGetValue(section, out var oParams))
             {
                 // Need to add a section with a blank name
-                oParams = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
+                oParams = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
                 m_JobParams.Add(section, oParams);
             }
 

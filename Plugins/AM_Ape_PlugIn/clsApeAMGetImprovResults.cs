@@ -30,17 +30,16 @@ namespace AnalysisManager_Ape_PlugIn
         /// <summary>
         /// Setup and run Ape pipeline according to job parameters
         /// </summary>
-        public bool GetImprovResults(String dataPackageID)
+        public bool GetImprovResults(string dataPackageID)
         {
-            bool blnSuccess = true;
-            blnSuccess = GetImprovResultsAll();
+            var blnSuccess = GetImprovResultsAll();
             return blnSuccess;
         }
 
         private bool GetImprovResultsAll()
         {
-            bool blnSuccess = true;
-            Ape.SqlConversionHandler mHandle = new Ape.SqlConversionHandler(delegate(bool done, bool success, int percent, string msg)
+            var blnSuccess = true;
+            var mHandle = new Ape.SqlConversionHandler(delegate(bool done, bool success, int percent, string msg)
             {
                 Console.WriteLine(msg);
 
@@ -61,8 +60,8 @@ namespace AnalysisManager_Ape_PlugIn
 
             });
 
-            string apeMTSServerName = GetJobParam("ApeMTSServer");
-            string apeMTSDatabaseName = GetJobParam("ApeMTSDatabase");
+            var apeMTSServerName = GetJobParam("ApeMTSServer");
+            var apeMTSDatabaseName = GetJobParam("ApeMTSDatabase");
             //Need these for backward compatibility
             if (string.IsNullOrEmpty(apeMTSServerName))
             {
@@ -72,11 +71,11 @@ namespace AnalysisManager_Ape_PlugIn
             {
                 apeMTSDatabaseName = GetJobParam("ImprovMTSDatabase");
             }
-            string apeImprovMinPMTQuality = GetJobParam("ImprovMinPMTQuality");
-            string apeMSGFThreshold = GetJobParam("ImprovMSGFThreshold");
-            string apeDatabase = Path.Combine(mWorkingDir, "Results.db3");
+            var apeImprovMinPMTQuality = GetJobParam("ImprovMinPMTQuality");
+            var apeMSGFThreshold = GetJobParam("ImprovMSGFThreshold");
+            var apeDatabase = Path.Combine(mWorkingDir, "Results.db3");
 
-            List<string> paramList = new List<string>();
+            var paramList = new List<string>();
 //            paramList.Add(apeMTSDatabaseName + ";@MTDBName;" + apeMTSDatabaseName + ";False;sqldbtype.varchar;;");
             paramList.Add(apeImprovMinPMTQuality + ";@MinimumPMTQualityScore;0;False;sqldbtype.real;;");
             paramList.Add("0.1;@MSGFThreshold;0.1;False;sqldbtype.real;;");
@@ -89,10 +88,10 @@ namespace AnalysisManager_Ape_PlugIn
             paramList.Add("1;@ReturnPeptideTable;1;True;sqldbtype.tinyint;T_Peptides;sqldbtype.tinyint");
 
 
-            string dotnetConnString = "Server=" + apeMTSServerName + ";database=" + apeMTSDatabaseName+ ";uid=mtuser;Password=mt4fun";
+            var dotnetConnString = "Server=" + apeMTSServerName + ";database=" + apeMTSDatabaseName+ ";uid=mtuser;Password=mt4fun";
             //mCurrentDBConnectionString = "Provider=sqloledb;Data Source=Albert;Initial Catalog=MT_Sea_Sediments_SBI_P590;User ID=mtuser;Password=mt4fun"
             Ape.SqlServerToSQLite.ProgressChanged += new Ape.SqlServerToSQLite.ProgressChangedEventHandler(OnProgressChanged);
-            string jobList = GetJobIDList();
+            var jobList = GetJobIDList();
             if (string.IsNullOrEmpty(jobList))
             {
                 return false;
@@ -131,8 +130,8 @@ namespace AnalysisManager_Ape_PlugIn
 
         private string GetJobIDList()
         {
-            string constr = RequireMgrParam("connectionstring");
-            string dataPackageID = GetJobParam("DataPackageID");
+            var constr = RequireMgrParam("connectionstring");
+            var dataPackageID = GetJobParam("DataPackageID");
 
             if (string.IsNullOrEmpty(dataPackageID))
             {
@@ -140,23 +139,23 @@ namespace AnalysisManager_Ape_PlugIn
                 return string.Empty;
             }
 
-            string sqlText = "SELECT Job FROM V_Mage_Data_Package_Analysis_Jobs " +
+            var sqlText = "SELECT Job FROM V_Mage_Data_Package_Analysis_Jobs " +
                              "WHERE Data_Package_ID = " + dataPackageID + " and Tool Like 'Sequest%'";
 
-            string jobList = string.Empty;
-            int intJobCount = 0;
-            using (SqlConnection conn = new SqlConnection(constr))
+            var jobList = string.Empty;
+            var intJobCount = 0;
+            using (var conn = new SqlConnection(constr))
             {
                 conn.Open();
                 // Get the matching jobs from the Data Package
-                SqlCommand query = new SqlCommand(sqlText, conn);
-                using (SqlDataReader reader = query.ExecuteReader())
+                var query = new SqlCommand(sqlText, conn);
+                using (var reader = query.ExecuteReader())
                 {
                     while (reader.Read())
                     {
                         if (!string.IsNullOrEmpty(reader[0].ToString()))
                         {
-                            jobList += reader[0].ToString() + ", ";
+                            jobList += reader[0] + ", ";
                             intJobCount += 1;
                         }
                     }

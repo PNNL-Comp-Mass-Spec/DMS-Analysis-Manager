@@ -33,7 +33,7 @@ namespace AnalysisManagerIDPickerPlugIn
             }
 
             // Retrieve the parameter file for the associated peptide search tool (Sequest, XTandem, MSGF+, etc.)
-            string strParamFileName = m_jobParams.GetParam("ParmFileName");
+            var strParamFileName = m_jobParams.GetParam("ParmFileName");
 
             if (!FileSearch.FindAndRetrieveMiscFiles(strParamFileName, false))
             {
@@ -151,7 +151,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 return string.Empty;
             }
 
-            string sqlQuery = "SELECT OrganismDBName FROM V_Analysis_Job WHERE (Job = " + m_JobNum + ")";
+            var sqlQuery = "SELECT OrganismDBName FROM V_Analysis_Job WHERE (Job = " + m_JobNum + ")";
 
             var lstResults = new List<string>();
 
@@ -204,13 +204,13 @@ namespace AnalysisManagerIDPickerPlugIn
 
             if (m_DebugLevel >= 2)
             {
-                LogDebug("Retrieving the " + eResultType.ToString() + " files");
+                LogDebug("Retrieving the " + eResultType + " files");
             }
 
             var synFileNameExpected = clsPHRPReader.GetPHRPSynopsisFileName(eResultType, strDatasetName);
             var synFilePath = string.Empty;
 
-            foreach (KeyValuePair<string, bool> kvEntry in lstFileNamesToGet)
+            foreach (var kvEntry in lstFileNamesToGet)
             {
                 var fileToGet = string.Copy(kvEntry.Key);
                 var fileRequired = kvEntry.Value;
@@ -248,7 +248,7 @@ namespace AnalysisManagerIDPickerPlugIn
                     // Check whether the synopsis file is empty
                     synFilePath = Path.Combine(m_WorkingDir, Path.GetFileName(fileToGet));
 
-                    string strErrorMessage = string.Empty;
+                    var strErrorMessage = string.Empty;
                     if (!ValidateFileHasData(synFilePath, "Synopsis file", out strErrorMessage))
                     {
                         // The synopsis file is empty
@@ -266,7 +266,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 // X!Tandem requires a few additional parameter files
                 var lstExtraFilesToGet = clsPHRPParserXTandem.GetAdditionalSearchEngineParamFileNames(Path.Combine(m_WorkingDir, strSearchEngineParamFileName));
 
-                foreach (string strFileName in lstExtraFilesToGet)
+                foreach (var strFileName in lstExtraFilesToGet)
                 {
                     if (!FileSearch.FindAndRetrieveMiscFiles(strFileName, false))
                     {
@@ -284,7 +284,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 return false;
             }
 
-            foreach (KeyValuePair<string, string> item in mInputFileRenames)
+            foreach (var item in mInputFileRenames)
             {
                 var fiFile = new FileInfo(Path.Combine(m_WorkingDir, item.Key));
                 if (!fiFile.Exists)
@@ -322,7 +322,7 @@ namespace AnalysisManagerIDPickerPlugIn
         /// <remarks></remarks>
         private bool RetrieveIDPickerParamFile()
         {
-            string strIDPickerParamFileName = m_jobParams.GetParam("IDPickerParamFile");
+            var strIDPickerParamFileName = m_jobParams.GetParam("IDPickerParamFile");
             string strIDPickerParamFilePath = null;
             string strParamFileStoragePathKeyName = null;
 
@@ -442,8 +442,8 @@ namespace AnalysisManagerIDPickerPlugIn
                 lstFileNamesToGet.Add(clsPHRPReader.GetMSGFFileName(synFileName), true);
             }
 
-            string strToolVersionFile = clsPHRPReader.GetToolVersionInfoFilename(eResultType);
-            string strToolNameForScript = m_jobParams.GetJobParameter("ToolName", "");
+            var strToolVersionFile = clsPHRPReader.GetToolVersionInfoFilename(eResultType);
+            var strToolNameForScript = m_jobParams.GetJobParameter("ToolName", "");
             if (eResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB && strToolNameForScript == "MSGFPlus_IMS")
             {
                 // PeptideListToXML expects the ToolVersion file to be named "Tool_Version_Info_MSGFPlus.txt"

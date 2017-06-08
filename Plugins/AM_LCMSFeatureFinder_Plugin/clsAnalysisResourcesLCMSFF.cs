@@ -111,7 +111,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
             var success = UpdateFeatureFinderIniFile(strLCMSFFIniFileName);
             if (!success)
             {
-                string Msg = "clsAnalysisResourcesLCMSFF.GetResources(), failed customizing .Ini file " + strLCMSFFIniFileName;
+                var Msg = "clsAnalysisResourcesLCMSFF.GetResources(), failed customizing .Ini file " + strLCMSFFIniFileName;
                 if (string.IsNullOrEmpty(m_message))
                 {
                     m_message = Msg;
@@ -125,8 +125,8 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
 
         protected string GetValue(string strLine)
         {
-            int intEqualsIndex = 0;
-            string strValue = string.Empty;
+            var intEqualsIndex = 0;
+            var strValue = string.Empty;
 
             if (!string.IsNullOrEmpty(strLine))
             {
@@ -150,15 +150,15 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
             // In addition, look for an entry for DeconToolsFilterFileName;
             //  if present, verify that the file exists and copy it locally (so that it will be included in the results folder)
 
-            string SrcFilePath = Path.Combine(m_WorkingDir, strLCMSFFIniFileName);
-            string TargetFilePath = Path.Combine(m_WorkingDir, strLCMSFFIniFileName + "_new");
-            string IsosFilePath = Path.Combine(m_WorkingDir, DatasetName + ISOS_FILE_SUFFIX);
+            var SrcFilePath = Path.Combine(m_WorkingDir, strLCMSFFIniFileName);
+            var TargetFilePath = Path.Combine(m_WorkingDir, strLCMSFFIniFileName + "_new");
+            var IsosFilePath = Path.Combine(m_WorkingDir, DatasetName + ISOS_FILE_SUFFIX);
 
             string strLineIn = null;
             string strLineInLCase = null;
 
-            bool blnInputFileDefined = false;
-            bool blnOutputDirectoryDefined = false;
+            var blnInputFileDefined = false;
+            var blnOutputDirectoryDefined = false;
 
             var result = true;
 
@@ -215,7 +215,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
                                         else
                                         {
                                             // Copy the file locally
-                                            string strTargetFilePath = Path.Combine(m_WorkingDir, fiFileInfo.Name);
+                                            var strTargetFilePath = Path.Combine(m_WorkingDir, fiFileInfo.Name);
                                             fiFileInfo.CopyTo(strTargetFilePath);
                                         }
                                     }

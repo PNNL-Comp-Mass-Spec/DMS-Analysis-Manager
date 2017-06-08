@@ -101,7 +101,7 @@ namespace AnalysisManagerProSightQuantPlugIn
                 LogMessage("Running TargetedWorkflowsConsole");
 
                 // Set up and execute a program runner to run TargetedWorkflowsConsole
-                string strRawDataType = m_jobParams.GetParam("RawDataType");
+                var strRawDataType = m_jobParams.GetParam("RawDataType");
                 string cmdStr;
 
                 switch (strRawDataType.ToLower())
@@ -145,7 +145,7 @@ namespace AnalysisManagerProSightQuantPlugIn
                     // Write the console output to a text file
                     System.Threading.Thread.Sleep(250);
 
-                    using (StreamWriter swConsoleOutputfile = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                    using (var swConsoleOutputfile = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                     {
                         swConsoleOutputfile.WriteLine(mCmdRunner.CachedConsoleOutput);
                     }
@@ -163,7 +163,7 @@ namespace AnalysisManagerProSightQuantPlugIn
                 if (processingSuccess)
                 {
                     // Make sure that the quantitation output file was created
-                    string strOutputFileName = m_Dataset + "_quant.txt";
+                    var strOutputFileName = m_Dataset + "_quant.txt";
                     if (!File.Exists(Path.Combine(m_WorkDir, strOutputFileName)))
                     {
                         m_message = "ProSight_Quant result file not found (" + strOutputFileName + ")";
@@ -186,7 +186,7 @@ namespace AnalysisManagerProSightQuantPlugIn
 
                     if (mCmdRunner.ExitCode != 0)
                     {
-                        LogWarning("TargetedWorkflowsConsole returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
+                        LogWarning("TargetedWorkflowsConsole returned a non-zero exit code: " + mCmdRunner.ExitCode);
                     }
                     else
                     {
@@ -256,7 +256,7 @@ namespace AnalysisManagerProSightQuantPlugIn
         /// <remarks></remarks>
         protected string CreateTargetedQuantParamFile()
         {
-            string strTargetedQuantParamFilePath = string.Empty;
+            var strTargetedQuantParamFilePath = string.Empty;
             string strProSightPCResultsFile = null;
             string strWorkflowParamFileName = null;
 
@@ -272,7 +272,7 @@ namespace AnalysisManagerProSightQuantPlugIn
                     return string.Empty;
                 }
 
-                using (System.Xml.XmlTextWriter swTargetedQuantXMLFile = new System.Xml.XmlTextWriter(strTargetedQuantParamFilePath, System.Text.Encoding.UTF8))
+                using (var swTargetedQuantXMLFile = new System.Xml.XmlTextWriter(strTargetedQuantParamFilePath, System.Text.Encoding.UTF8))
                 {
                     swTargetedQuantXMLFile.Formatting = Formatting.Indented;
                     swTargetedQuantXMLFile.Indentation = 4;
@@ -367,12 +367,12 @@ namespace AnalysisManagerProSightQuantPlugIn
                 string strLineIn = null;
                 string strLineInLCase = null;
 
-                int intLinesRead = 0;
-                int intCharIndex = 0;
+                var intLinesRead = 0;
+                var intCharIndex = 0;
 
                 double dblSubProgressAddon = 0;
 
-                int intEffectiveProgress = 0;
+                var intEffectiveProgress = 0;
                 intEffectiveProgress = PROGRESS_TARGETED_WORKFLOWS_STARTING;
 
                 mConsoleOutputErrorMsg = string.Empty;
@@ -390,7 +390,7 @@ namespace AnalysisManagerProSightQuantPlugIn
                             strLineInLCase = strLineIn.ToLower();
 
                             // Update progress if the line contains any one of the expected phrases
-                            foreach (KeyValuePair<string, int> oItem in mConsoleOutputProgressMap)
+                            foreach (var oItem in mConsoleOutputProgressMap)
                             {
                                 if (strLineIn.Contains(oItem.Key))
                                 {
@@ -466,8 +466,8 @@ namespace AnalysisManagerProSightQuantPlugIn
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo(string strTargetedWorkflowsConsoleProgLoc)
         {
-            string strToolVersionInfo = string.Empty;
-            bool blnSuccess = false;
+            var strToolVersionInfo = string.Empty;
+            var blnSuccess = false;
 
             if (m_DebugLevel >= 2)
             {
@@ -497,7 +497,7 @@ namespace AnalysisManagerProSightQuantPlugIn
                 return false;
 
             // Store paths to key DLLs in ioToolFiles
-            List<FileInfo> ioToolFiles = new List<FileInfo>();
+            var ioToolFiles = new List<FileInfo>();
             ioToolFiles.Add(ioTargetedWorkflowsConsole);
 
             ioToolFiles.Add(new FileInfo(Path.Combine(ioTargetedWorkflowsConsole.DirectoryName, "DeconTools.Backend.dll")));

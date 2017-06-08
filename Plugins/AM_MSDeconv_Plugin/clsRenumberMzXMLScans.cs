@@ -112,7 +112,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                 if (!reader.OpenFile(fiOriginalFile.FullName))
                     return false;
 
-                string lineTerminator = Environment.NewLine;
+                var lineTerminator = Environment.NewLine;
 
                 using (var fsIndexedFile = new FileStream(fiIndexedFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
                 using (var writer = new StreamWriter(fsIndexedFile))
@@ -124,10 +124,10 @@ namespace AnalysisManagerMSDeconvPlugIn
 
                         if (reMatch.Success)
                         {
-                            int scanNumber = 0;
+                            var scanNumber = 0;
                             if (int.TryParse(reMatch.Groups[1].ToString(), out scanNumber))
                             {
-                                long currentOffset = reader.CurrentLineByteOffsetStart + reMatch.Index;
+                                var currentOffset = reader.CurrentLineByteOffsetStart + reMatch.Index;
 
                                 scanOffsetMap.Add(scanNumber, currentOffset);
                             }
@@ -138,7 +138,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                             lineTerminator = reader.CurrentLineTerminator;
 
                             // Note: adding 2 to the offset becauser <index has two spaces in front of it
-                            long indexOffset = reader.CurrentLineByteOffsetStart + 2;
+                            var indexOffset = reader.CurrentLineByteOffsetStart + 2;
 
                             writer.Write("  <index name=\"scan\">" + lineTerminator);
 
@@ -298,7 +298,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                 {
                     // Update the scan number
                     var oldScanNumberText = reader.Value;
-                    int oldScanNum = 0;
+                    var oldScanNum = 0;
 
                     if (int.TryParse(oldScanNumberText, out oldScanNum))
                     {
@@ -333,8 +333,8 @@ namespace AnalysisManagerMSDeconvPlugIn
                 {
                     // Update the scan number of the precursor ion
                     var oldScanNumberText = reader.Value;
-                    int oldScanNum = 0;
-                    int newScanNum = 0;
+                    var oldScanNum = 0;
+                    var newScanNum = 0;
 
                     if (int.TryParse(oldScanNumberText, out oldScanNum))
                     {

@@ -121,7 +121,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                         // Parse out the values
 
-                        int scanNumber = 0;
+                        var scanNumber = 0;
                         if (TryGetValueInt(dataColumns, scanNumberColIndex, out scanNumber))
                         {
                             var strCollisionMode = string.Empty;
@@ -318,7 +318,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <returns></returns>
         private bool FirstColumnIsInteger(string[] dataColumns)
         {
-            int dataValue = 0;
+            var dataValue = 0;
             return int.TryParse(dataColumns[0], out dataValue);
         }
 

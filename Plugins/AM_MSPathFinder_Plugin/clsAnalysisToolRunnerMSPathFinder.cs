@@ -38,10 +38,7 @@ namespace AnalysisManagerMSPathFinderPlugin
         private const float PROGRESS_PCT_CALCULATING_DECOY_EVALUES = 85;
         private const float PROGRESS_PCT_COMPLETE = 99;
 
-        //Private Const MSPathFinder_RESULTS_FILE_SUFFIX As String = "_MSPathFinder.txt"
-        //Private Const MSPathFinder_FILTERED_RESULTS_FILE_SUFFIX As String = "_MSPathFinder.id.txt"
-
-        private enum MSPathFinderSearchStage : int
+        private enum MSPathFinderSearchStage
         {
             Start = 0,
             GeneratingSequenceTags = 1,
@@ -59,8 +56,8 @@ namespace AnalysisManagerMSPathFinderPlugin
         #region "Module Variables"
 
         private string mConsoleOutputErrorMsg;
-        private int m_filteredPromexFeatures = 0;
-        private int m_unfilteredPromexFeatures = 0;
+        private int m_filteredPromexFeatures;
+        private int m_unfilteredPromexFeatures;
 
         private clsRunDosProgram mCmdRunner;
 
@@ -198,27 +195,23 @@ namespace AnalysisManagerMSPathFinderPlugin
 
         private Dictionary<string, string> GetMSPathFinderParameterNames()
         {
-            var dctParamNames = new Dictionary<string, string>(25, StringComparer.CurrentCultureIgnoreCase);
-
-            dctParamNames.Add("PMTolerance", "t");
-            dctParamNames.Add("FragTolerance", "f");
-            dctParamNames.Add("SearchMode", "m");
-            dctParamNames.Add("ActivationMethod", "act");
-            dctParamNames.Add("TDA", "tda");
-
-            dctParamNames.Add("minLength", "minLength");
-            dctParamNames.Add("maxLength", "maxLength");
-
-            dctParamNames.Add("minCharge", "minCharge");
-            dctParamNames.Add("maxCharge", "maxCharge");
-
-            dctParamNames.Add("minFragCharge", "minFragCharge");
-            dctParamNames.Add("maxFragCharge", "maxFragCharge");
-
-            dctParamNames.Add("minMass", "minMass");
-            dctParamNames.Add("maxMass", "maxMass");
-
-            dctParamNames.Add("tagSearch", "tagSearch");
+            var dctParamNames = new Dictionary<string, string>(25, StringComparer.OrdinalIgnoreCase)
+            {
+                {"PMTolerance", "t"},
+                {"FragTolerance", "f"},
+                {"SearchMode", "m"},
+                {"ActivationMethod", "act"},
+                {"TDA", "tda"},
+                {"minLength", "minLength"},
+                {"maxLength", "maxLength"},
+                {"minCharge", "minCharge"},
+                {"maxCharge", "maxCharge"},
+                {"minFragCharge", "minFragCharge"},
+                {"maxFragCharge", "maxFragCharge"},
+                {"minMass", "minMass"},
+                {"maxMass", "maxMass"},
+                {"tagSearch", "tagSearch"}
+            };
 
             // The following are special cases;
             // do not add to dctParamNames
@@ -246,8 +239,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                 return false;
             }
 
-            string strProteinOptions = null;
-            strProteinOptions = m_jobParams.GetParam("ProteinOptions");
+            var strProteinOptions = m_jobParams.GetParam("ProteinOptions");
             if (!string.IsNullOrEmpty(strProteinOptions))
             {
                 if (strProteinOptions.ToLower().Contains("seq_direction=decoy"))
@@ -261,21 +253,14 @@ namespace AnalysisManagerMSPathFinderPlugin
 
         private bool LineStartsWith(string strLineIn, string matchString)
         {
-            if (strLineIn.ToLower().StartsWith(matchString.ToLower()))
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            return strLineIn.ToLower().StartsWith(matchString.ToLower());
         }
 
         private const string REGEX_PROMEX_RESULTS = @"ProMex[^\d]+(\d+)/(\d+) features loaded";
         private const string REGEX_MSPATHFINDER_PROGRESS = @"([0-9.]+)% complete";
-        private Regex rePromexFeatureStats = new Regex(REGEX_PROMEX_RESULTS, RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        private Regex reCheckProgress = new Regex(REGEX_MSPATHFINDER_PROGRESS, RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        private Regex reProcessingProteins = new Regex(@"(\d+) proteins done", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private readonly Regex rePromexFeatureStats = new Regex(REGEX_PROMEX_RESULTS, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private readonly Regex reCheckProgress = new Regex(REGEX_MSPATHFINDER_PROGRESS, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private readonly Regex reProcessingProteins = new Regex(@"(\d+) proteins done", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
         /// Parse the MSPathFinder console output file to track the search progress
@@ -419,7 +404,6 @@ namespace AnalysisManagerMSPathFinderPlugin
                 percentCompleteLevels[(int) MSPathFinderSearchStage.CalculatingEValuesForDecoySpectra] = PROGRESS_PCT_CALCULATING_DECOY_EVALUES;
                 percentCompleteLevels[(int) MSPathFinderSearchStage.Complete] = PROGRESS_PCT_COMPLETE;
 
-                var filteredFeatures = 0;
                 var unfilteredFeatures = 0;
 
                 var targetProteinsSearched = 0;
@@ -455,7 +439,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                         {
                             // Error processing FileName.msf1lt: Error details;
 
-                            string errorMessage = null;
+                            string errorMessage;
 
                             var colonIndex = strLineIn.IndexOf(':');
                             if (colonIndex > 0)
@@ -484,7 +468,8 @@ namespace AnalysisManagerMSPathFinderPlugin
                             mConsoleOutputErrorMsg += "; " + errorMessage;
                             continue;
                         }
-                        else if (LineStartsWith(strLineIn, "Generating sequence tags for MS/MS spectra"))
+
+                        if (LineStartsWith(strLineIn, "Generating sequence tags for MS/MS spectra"))
                         {
                             currentStage = MSPathFinderSearchStage.GeneratingSequenceTags;
                         }
@@ -522,8 +507,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                         var oProgressMatch = reCheckProgress.Match(strLineIn);
                         if (oProgressMatch.Success)
                         {
-                            float progressValue = 0;
-                            if (float.TryParse(oProgressMatch.Groups[1].ToString(), out progressValue))
+                            if (float.TryParse(oProgressMatch.Groups[1].ToString(), out var progressValue))
                             {
                                 progressCompleteCurrentStage = progressValue;
                                 percentCompleteFound = true;
@@ -542,7 +526,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                             var oPromexResults = rePromexFeatureStats.Match(strLineIn);
                             if (oPromexResults.Success)
                             {
-                                if (int.TryParse(oPromexResults.Groups[1].ToString(), out filteredFeatures))
+                                if (int.TryParse(oPromexResults.Groups[1].ToString(), out var filteredFeatures))
                                 {
                                     m_filteredPromexFeatures = filteredFeatures;
                                 }
@@ -556,8 +540,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                         var oProteinSerchedMatch = reProcessingProteins.Match(strLineIn);
                         if (oProteinSerchedMatch.Success)
                         {
-                            int proteinsSearched = 0;
-                            if (int.TryParse(oProteinSerchedMatch.Groups[1].ToString(), out proteinsSearched))
+                            if (int.TryParse(oProteinSerchedMatch.Groups[1].ToString(), out var proteinsSearched))
                             {
                                 if (searchingDecoyDB)
                                 {
@@ -615,19 +598,23 @@ namespace AnalysisManagerMSPathFinderPlugin
         /// <param name="lstDynamicMods">List of Dynamic Mods</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks></remarks>
-        private bool ParseMSPathFinderModifications(string strParameterFilePath, StringBuilder sbOptions, int intNumMods, List<string> lstStaticMods,
-            List<string> lstDynamicMods)
+        private bool ParseMSPathFinderModifications(string strParameterFilePath, StringBuilder sbOptions, int intNumMods, IReadOnlyCollection<string> lstStaticMods,
+            IReadOnlyCollection<string> lstDynamicMods)
         {
             const string MOD_FILE_NAME = "MSPathFinder_Mods.txt";
-            bool blnSuccess = false;
-            string strModFilePath = null;
-            string errMsg = null;
+            bool blnSuccess;
 
             try
             {
                 var fiParameterFile = new FileInfo(strParameterFilePath);
 
-                strModFilePath = Path.Combine(fiParameterFile.DirectoryName, MOD_FILE_NAME);
+                if (string.IsNullOrWhiteSpace(fiParameterFile.DirectoryName))
+                {
+                    LogError("Cannot determine the parent directory of " + fiParameterFile.FullName);
+                    return false;
+                }
+
+                var strModFilePath = Path.Combine(fiParameterFile.DirectoryName, MOD_FILE_NAME);
 
                 sbOptions.Append(" -mod " + strModFilePath);
 
@@ -648,15 +635,14 @@ namespace AnalysisManagerMSPathFinderPlugin
                     {
                         foreach (var strStaticMod in lstStaticMods)
                         {
-                            var strModClean = string.Empty;
 
-                            if (ParseMSPathFinderValidateMod(strStaticMod, out strModClean))
+                            if (ParseMSPathFinderValidateMod(strStaticMod, out var strModClean))
                             {
                                 if (strModClean.Contains(",opt,"))
                                 {
                                     // Static (fixed) mod is listed as dynamic
                                     // Abort the analysis since the parameter file is misleading and needs to be fixed
-                                    errMsg =
+                                    var errMsg =
                                         "Static mod definition contains ',opt,'; update the param file to have ',fix,' or change to 'DynamicMod='";
                                     LogError(errMsg, errMsg + "; " + strStaticMod);
                                     return false;
@@ -680,15 +666,14 @@ namespace AnalysisManagerMSPathFinderPlugin
                     {
                         foreach (var strDynamicMod in lstDynamicMods)
                         {
-                            var strModClean = string.Empty;
 
-                            if (ParseMSPathFinderValidateMod(strDynamicMod, out strModClean))
+                            if (ParseMSPathFinderValidateMod(strDynamicMod, out var strModClean))
                             {
                                 if (strModClean.Contains(",fix,"))
                                 {
                                     // Dynamic (optional) mod is listed as static
                                     // Abort the analysis since the parameter file is misleading and needs to be fixed
-                                    errMsg =
+                                    var errMsg =
                                         "Dynamic mod definition contains ',fix,'; update the param file to have ',opt,' or change to 'StaticMod='";
                                     LogError(errMsg, errMsg + "; " + strDynamicMod);
                                     return false;
@@ -708,8 +693,7 @@ namespace AnalysisManagerMSPathFinderPlugin
             }
             catch (Exception ex)
             {
-                errMsg = "Exception creating MSPathFinder Mods file";
-                LogError(errMsg, ex);
+                LogError("Exception creating MSPathFinder Mods file", ex);
                 blnSuccess = false;
             }
 
@@ -720,18 +704,17 @@ namespace AnalysisManagerMSPathFinderPlugin
         /// Read the MSPathFinder options file and convert the options to command line switches
         /// </summary>
         /// <param name="fastaFileIsDecoy">True if the fasta file has had forward and reverse index files created</param>
-        /// <param name="strCmdLineOptions">Output: MSPathFinder command line arguments</param>
+        /// <param name="cmdLineOptions">Output: MSPathFinder command line arguments</param>
+        /// <param name="tdaEnabled"></param>
         /// <returns>Options string if success; empty string if an error</returns>
         /// <remarks></remarks>
-        public CloseOutType ParseMSPathFinderParameterFile(bool fastaFileIsDecoy, out string strCmdLineOptions, out bool tdaEnabled)
+        public CloseOutType ParseMSPathFinderParameterFile(bool fastaFileIsDecoy, out string cmdLineOptions, out bool tdaEnabled)
         {
             var intNumMods = 0;
             var lstStaticMods = new List<string>();
             var lstDynamicMods = new List<string>();
 
-            string errMsg = null;
-
-            strCmdLineOptions = string.Empty;
+            cmdLineOptions = string.Empty;
             tdaEnabled = false;
 
             var strParameterFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"));
@@ -760,25 +743,24 @@ namespace AnalysisManagerMSPathFinderPlugin
                         if (!string.IsNullOrWhiteSpace(kvSetting.Key))
                         {
                             var strValue = kvSetting.Value;
-                            int intValue = 0;
 
-                            var strArgumentSwitch = string.Empty;
 
                             // Check whether kvSetting.key is one of the standard keys defined in dctParamNames
-                            if (dctParamNames.TryGetValue(kvSetting.Key, out strArgumentSwitch))
+                            if (dctParamNames.TryGetValue(kvSetting.Key, out var strArgumentSwitch))
                             {
                                 sbOptions.Append(" -" + strArgumentSwitch + " " + strValue);
 
                             }
                             else if (clsGlobal.IsMatch(kvSetting.Key, "NumMods"))
                             {
+                                int intValue;
                                 if (int.TryParse(strValue, out intValue))
                                 {
                                     intNumMods = intValue;
                                 }
                                 else
                                 {
-                                    errMsg = "Invalid value for NumMods in MSPathFinder parameter file";
+                                    var errMsg = "Invalid value for NumMods in MSPathFinder parameter file";
                                     LogError(errMsg, errMsg + ": " + strLineIn);
                                     srParamFile.Close();
                                     return CloseOutType.CLOSEOUT_FAILED;
@@ -815,9 +797,9 @@ namespace AnalysisManagerMSPathFinderPlugin
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            strCmdLineOptions = sbOptions.ToString();
+            cmdLineOptions = sbOptions.ToString();
 
-            if (strCmdLineOptions.Contains("-tda 1"))
+            if (cmdLineOptions.Contains("-tda 1"))
             {
                 tdaEnabled = true;
                 // Make sure the .Fasta file is not a Decoy fasta
@@ -841,21 +823,18 @@ namespace AnalysisManagerMSPathFinderPlugin
         /// <remarks>Valid modification definition contains 5 parts and doesn't contain any whitespace</remarks>
         private bool ParseMSPathFinderValidateMod(string strMod, out string strModClean)
         {
-            int intPoundIndex = 0;
-            string[] strSplitMod = null;
-
             var strComment = string.Empty;
 
             strModClean = string.Empty;
 
-            intPoundIndex = strMod.IndexOf('#');
+            var intPoundIndex = strMod.IndexOf('#');
             if (intPoundIndex > 0)
             {
                 strComment = strMod.Substring(intPoundIndex);
                 strMod = strMod.Substring(0, intPoundIndex - 1).Trim();
             }
 
-            strSplitMod = strMod.Split(',');
+            var strSplitMod = strMod.Split(',');
 
             if (strSplitMod.Length < 5)
             {
@@ -892,7 +871,7 @@ namespace AnalysisManagerMSPathFinderPlugin
         private bool PostProcessMSPathFinderResults()
         {
             // Move the output files into a subfolder so that we can zip them
-            string compressDirPath = null;
+            string compressDirPath;
 
             try
             {
@@ -967,23 +946,20 @@ namespace AnalysisManagerMSPathFinderPlugin
 
         private bool StartMSPathFinder(string progLoc, bool fastaFileIsDecoy, out bool tdaEnabled)
         {
-            string CmdStr = null;
-            bool success = false;
-
             mConsoleOutputErrorMsg = string.Empty;
 
             // Read the MSPathFinder Parameter File
             // The parameter file name specifies the mass modifications to consider, plus also the analysis parameters
 
-            var strCmdLineOptions = string.Empty;
 
-            var eResult = ParseMSPathFinderParameterFile(fastaFileIsDecoy, out strCmdLineOptions, out tdaEnabled);
+            var eResult = ParseMSPathFinderParameterFile(fastaFileIsDecoy, out var cmdLineOptions, out tdaEnabled);
 
             if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return false;
             }
-            else if (string.IsNullOrEmpty(strCmdLineOptions))
+
+            if (string.IsNullOrEmpty(cmdLineOptions))
             {
                 if (string.IsNullOrEmpty(m_message))
                 {
@@ -1003,15 +979,15 @@ namespace AnalysisManagerMSPathFinderPlugin
 
             //Set up and execute a program runner to run MSPathFinder
 
-            CmdStr = " -s " + pbfFilePath;
-            CmdStr += " -feature " + featureFilePath;
-            CmdStr += " -d " + fastaFilePath;
-            CmdStr += " -o " + m_WorkDir;
-            CmdStr += " " + strCmdLineOptions;
+            var cmdStr = " -s " + pbfFilePath;
+            cmdStr += " -feature " + featureFilePath;
+            cmdStr += " -d " + fastaFilePath;
+            cmdStr += " -o " + m_WorkDir;
+            cmdStr += " " + cmdLineOptions;
 
             if (m_DebugLevel >= 1)
             {
-                LogDebug(progLoc + " " + CmdStr);
+                LogDebug(progLoc + " " + cmdStr);
             }
 
             mCmdRunner = new clsRunDosProgram(m_WorkDir);
@@ -1030,7 +1006,7 @@ namespace AnalysisManagerMSPathFinderPlugin
 
             // Start the program and wait for it to finish
             // However, while it's running, LoopWaiting will get called via events
-            success = mCmdRunner.RunProgram(progLoc, CmdStr, "MSPathFinder", true);
+            var success = mCmdRunner.RunProgram(progLoc, cmdStr, "MSPathFinder", true);
 
             if (!mCmdRunner.WriteConsoleOutputToFile)
             {
@@ -1070,7 +1046,7 @@ namespace AnalysisManagerMSPathFinderPlugin
 
                 if (mCmdRunner.ExitCode != 0)
                 {
-                    LogWarning("MSPathFinder returned a non-zero exit code: " + mCmdRunner.ExitCode.ToString());
+                    LogWarning("MSPathFinder returned a non-zero exit code: " + mCmdRunner.ExitCode);
                 }
                 else
                 {
@@ -1097,7 +1073,6 @@ namespace AnalysisManagerMSPathFinderPlugin
         private bool StoreToolVersionInfo(string strProgLoc)
         {
             var strToolVersionInfo = string.Empty;
-            bool blnSuccess = false;
 
             if (m_DebugLevel >= 2)
             {
@@ -1110,7 +1085,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                 try
                 {
                     strToolVersionInfo = "Unknown";
-                    return base.SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>(), blnSaveToolVersionTextFile: false);
+                    return SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>(), blnSaveToolVersionTextFile: false);
                 }
                 catch (Exception ex)
                 {
@@ -1120,20 +1095,24 @@ namespace AnalysisManagerMSPathFinderPlugin
             }
 
             // Lookup the version of the .NET application
-            blnSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, fiProgram.FullName);
+            var blnSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, fiProgram.FullName);
             if (!blnSuccess)
                 return false;
 
             // Store paths to key DLLs in ioToolFiles
-            var ioToolFiles = new List<FileInfo>();
-            ioToolFiles.Add(fiProgram);
+            var ioToolFiles = new List<FileInfo> {
+                fiProgram
+            };
 
-            ioToolFiles.Add(new FileInfo(Path.Combine(fiProgram.Directory.FullName, "InformedProteomics.Backend.dll")));
-            ioToolFiles.Add(new FileInfo(Path.Combine(fiProgram.Directory.FullName, "InformedProteomics.TopDown.dll")));
+            if (fiProgram.Directory != null)
+            {
+                ioToolFiles.Add(new FileInfo(Path.Combine(fiProgram.Directory.FullName, "InformedProteomics.Backend.dll")));
+                ioToolFiles.Add(new FileInfo(Path.Combine(fiProgram.Directory.FullName, "InformedProteomics.TopDown.dll")));
+            }
 
             try
             {
-                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile: false);
+                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile: false);
             }
             catch (Exception ex)
             {

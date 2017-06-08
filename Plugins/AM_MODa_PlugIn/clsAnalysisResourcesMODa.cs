@@ -106,7 +106,7 @@ namespace AnalysisManagerMODaPlugIn
                 mDTAtoMGF.CreateIndexFile = true;
 
                 // Convert the _dta.txt file for this dataset
-                FileInfo fiCDTAFile = new FileInfo(Path.Combine(m_WorkingDir, DatasetName + "_dta.txt"));
+                var fiCDTAFile = new FileInfo(Path.Combine(m_WorkingDir, DatasetName + "_dta.txt"));
 
                 if (!fiCDTAFile.Exists)
                 {

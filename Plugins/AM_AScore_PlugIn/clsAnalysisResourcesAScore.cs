@@ -49,7 +49,7 @@ namespace AnalysisManager_AScore_PlugIn
         private bool RetrieveFastaFile()
         {
 
-            string currentTask = "Initializing";
+            var currentTask = "Initializing";
 
 
             try

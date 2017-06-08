@@ -249,7 +249,7 @@ namespace AnalysisManagerGlyQIQPlugin
 
             mStatus = GlyQIqRunnerStatusCodes.Running;
 
-            string cmdStr = string.Empty;
+            var cmdStr = string.Empty;
             var blnSuccess = mCmdRunner.RunProgram(BatchFilePath, cmdStr, "GlyQ-IQ", true);
 
             if (blnSuccess)
@@ -299,7 +299,7 @@ namespace AnalysisManagerGlyQIQPlugin
 
                             if (reMatch.Success)
                             {
-                                string targetName = reMatch.Groups[1].Value;
+                                var targetName = reMatch.Groups[1].Value;
 
                                 if (mTargets.ContainsKey(targetName))
                                 {

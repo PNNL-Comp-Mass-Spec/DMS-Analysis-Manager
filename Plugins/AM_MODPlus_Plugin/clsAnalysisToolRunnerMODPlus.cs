@@ -244,7 +244,7 @@ namespace AnalysisManagerMODPlusPlugin
 
             if (msConvertRunner.ExitCode != 0)
             {
-                LogWarning("MSConvert returned a non-zero exit code: " + msConvertRunner.ExitCode.ToString());
+                LogWarning("MSConvert returned a non-zero exit code: " + msConvertRunner.ExitCode);
             }
             else
             {
@@ -312,7 +312,7 @@ namespace AnalysisManagerMODPlusPlugin
                     return new Dictionary<int, string>();
                 }
 
-                int threadNumber = 0;
+                var threadNumber = 0;
                 if (!int.TryParse(reMatch.Groups[1].Value, out threadNumber))
                 {
                     LogError("RegEx logic error extracting the thread number from the MGF file name: " + fiMgfFile.Name);
@@ -354,7 +354,7 @@ namespace AnalysisManagerMODPlusPlugin
         private void DefineParamfileDatasetAndFasta(XmlDocument doc, string fastaFilePath)
         {
             // Define the path to the dataset file
-            XmlNodeList nodeList = doc.SelectNodes("/search/dataset");
+            var nodeList = doc.SelectNodes("/search/dataset");
             if (nodeList.Count > 0)
             {
                 // This value will get updated to the correct name later in this function
@@ -501,15 +501,15 @@ namespace AnalysisManagerMODPlusPlugin
         private XmlNode MakeXPath(XmlDocument doc, XmlNode parent, string xpath, Dictionary<string, string> attributes)
         {
             // Grab the next node name in the xpath; or return parent if empty
-            string[] partsOfXPath = xpath.Trim('/').Split('/');
-            string nextNodeInXPath = partsOfXPath.First();
+            var partsOfXPath = xpath.Trim('/').Split('/');
+            var nextNodeInXPath = partsOfXPath.First();
             if (string.IsNullOrEmpty(nextNodeInXPath))
             {
                 return parent;
             }
 
             // Get or create the node from the name
-            XmlNode node = parent.SelectSingleNode(nextNodeInXPath);
+            var node = parent.SelectSingleNode(nextNodeInXPath);
             if (node == null)
             {
                 var newNode = doc.CreateElement(nextNodeInXPath);
@@ -520,7 +520,7 @@ namespace AnalysisManagerMODPlusPlugin
                     // Add the attributes
                     foreach (var attrib in attributes)
                     {
-                        XmlAttribute newAttr = doc.CreateAttribute(attrib.Key);
+                        var newAttr = doc.CreateAttribute(attrib.Key);
                         newAttr.Value = attrib.Value;
                         newNode.Attributes.Append(newAttr);
                     }
@@ -536,7 +536,7 @@ namespace AnalysisManagerMODPlusPlugin
             else
             {
                 // Rejoin the remainder of the array as an xpath expression and recurse
-                string rest = string.Join("/", partsOfXPath.Skip(1).ToArray());
+                var rest = string.Join("/", partsOfXPath.Skip(1).ToArray());
                 return MakeXPath(doc, node, rest, attributes);
             }
         }
@@ -767,7 +767,7 @@ namespace AnalysisManagerMODPlusPlugin
 
                 // Determine the number of threads
                 var threadCountText = m_jobParams.GetJobParameter("MODPlusThreads", "90%");
-                int threadCount = ParseThreadCount(threadCountText, maxThreadsToAllow);
+                var threadCount = ParseThreadCount(threadCountText, maxThreadsToAllow);
 
                 // Convert the .mzXML or .mzML file to the MGF format
                 var spectrumFileName = m_Dataset;
@@ -800,7 +800,7 @@ namespace AnalysisManagerMODPlusPlugin
                 }
                 else
                 {
-                    bool success = ConvertMsXmlToMGF(fiSpectrumFile, fiMgfFile);
+                    var success = ConvertMsXmlToMGF(fiSpectrumFile, fiMgfFile);
                     if (!success)
                     {
                         return false;
@@ -810,7 +810,7 @@ namespace AnalysisManagerMODPlusPlugin
                 currentTask = "Split the MGF file";
 
                 // Create one MGF file for each thread
-                List<FileInfo> mgfFiles = SplitMGFFiles(fiMgfFile, threadCount);
+                var mgfFiles = SplitMGFFiles(fiMgfFile, threadCount);
                 if (mgfFiles.Count == 0)
                 {
                     if (string.IsNullOrWhiteSpace(m_message))
@@ -825,7 +825,7 @@ namespace AnalysisManagerMODPlusPlugin
                 // Define the path to the fasta file
                 // Note that job parameter "generatedFastaName" gets defined by clsAnalysisResources.RetrieveOrgDB
                 var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
-                string dbFilename = m_jobParams.GetParam("PeptideSearch", "generatedFastaName");
+                var dbFilename = m_jobParams.GetParam("PeptideSearch", "generatedFastaName");
                 var fastaFilePath = Path.Combine(localOrgDbFolder, dbFilename);
 
                 var paramFileName = m_jobParams.GetParam("ParmFileName");
@@ -851,7 +851,7 @@ namespace AnalysisManagerMODPlusPlugin
                 ResetProgRunnerCpuUsage();
 
                 mMODPlusRunners = new Dictionary<int, clsMODPlusRunner>();
-                List<Thread> lstThreads = new List<Thread>();
+                var lstThreads = new List<Thread>();
 
                 foreach (var paramFile in paramFileList)
                 {
@@ -867,7 +867,7 @@ namespace AnalysisManagerMODPlusPlugin
 
                     mMODPlusRunners.Add(threadNum, modPlusRunner);
 
-                    Thread newThread = new Thread(new ThreadStart(modPlusRunner.StartAnalysis));
+                    var newThread = new Thread(new ThreadStart(modPlusRunner.StartAnalysis));
                     newThread.Priority = ThreadPriority.BelowNormal;
                     newThread.Start();
                     lstThreads.Add(newThread);
@@ -879,7 +879,7 @@ namespace AnalysisManagerMODPlusPlugin
                 currentTask = "Waiting for all of the threads to exit";
 
                 var dtStartTime = DateTime.UtcNow;
-                SortedSet<int> completedThreads = new SortedSet<int>();
+                var completedThreads = new SortedSet<int>();
 
                 const int SECONDS_BETWEEN_UPDATES = 15;
                 var dtLastStatusUpdate = DateTime.UtcNow;
@@ -1021,7 +1021,7 @@ namespace AnalysisManagerMODPlusPlugin
 
                     if (exitCode != 0)
                     {
-                        LogWarning("MODPlus returned a non-zero exit code: " + exitCode.ToString());
+                        LogWarning("MODPlus returned a non-zero exit code: " + exitCode);
                     }
                     else
                     {
@@ -1064,7 +1064,7 @@ namespace AnalysisManagerMODPlusPlugin
             strToolVersionInfo = string.Copy(mMODPlusVersion);
 
             // Store paths to key files in ioToolFiles
-            List<FileInfo> ioToolFiles = new List<FileInfo>();
+            var ioToolFiles = new List<FileInfo>();
             var fiMODPlusProg = new FileInfo(mMODPlusProgLoc);
             ioToolFiles.Add(fiMODPlusProg);
 

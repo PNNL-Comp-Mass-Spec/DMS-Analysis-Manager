@@ -8,7 +8,7 @@ namespace AnalysisManager_Mage_PlugIn
 {
 
     /// <summary>
-    /// Class that defines basic Mage pipelines and functions that 
+    /// Class that defines basic Mage pipelines and functions that
     /// provide sub-operations that make up operations that Mac Mage plug-in can execute
     /// </summary>
     public class MageAMFileProcessingPipelines : MageAMPipelineBase
@@ -36,10 +36,10 @@ namespace AnalysisManager_Mage_PlugIn
         /// <param name="fileNameSelector">File name selector to select result files from list of jobs</param>
         /// <param name="tableName">SQLite table name that receives extracted contents of files</param>
         /// <param name="fileProcessName">Process to apply to file content extraction</param>
-        public void ImportJobResults(String jobListQuery, string fileNameSelector, string tableName, string fileProcessName)
+        public void ImportJobResults(string jobListQuery, string fileNameSelector, string tableName, string fileProcessName)
         {
 
-            // get list of jobs from data package that have ReporterIon results 
+            // get list of jobs from data package that have ReporterIon results
             BaseModule jobList = GetListOfDMSItems(jobListQuery);
 
             // get selected list reporter ion files from list of jobs
@@ -60,7 +60,7 @@ namespace AnalysisManager_Mage_PlugIn
         /// <param name="jobListQuery">Query to run to get list of jobs</param>
         /// <param name="fileNameSelector">File name selector to select result files from list of jobs</param>
         /// <param name="tableName">SQLite table name that receives extracted contents of files</param>
-        public void ImportFileList(String jobListQuery, string fileNameSelector, string tableName)
+        public void ImportFileList(string jobListQuery, string fileNameSelector, string tableName)
         {
 
             // get list of datasets from jobs from data package (Note: NOT the data package dataset list)
@@ -206,7 +206,7 @@ namespace AnalysisManager_Mage_PlugIn
         }
 
         /// <summary>
-        /// make Mage pipeline using given sql as source of factors and use it 
+        /// make Mage pipeline using given sql as source of factors and use it
         /// to create and populate a factors table in a SQLite database (in crosstab format)
         /// </summary>
         /// <param name="sql">Query to use a source of factors</param>
@@ -256,7 +256,7 @@ namespace AnalysisManager_Mage_PlugIn
         }
 
         /// <summary>
-        /// make Mage pipeline to use given sql to get list of jobs 
+        /// make Mage pipeline to use given sql to get list of jobs
         /// from data package into a SQLite database table
         /// </summary>
         /// <param name="sql"></param>

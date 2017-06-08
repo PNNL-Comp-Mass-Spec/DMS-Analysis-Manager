@@ -75,7 +75,7 @@ namespace AnalysisManagerBase
             sqlStr.Append("        Experiment, Experiment_Reason, Experiment_Comment, Organism, Experiment_NEWT_ID, Experiment_NEWT_Name, ");
             sqlStr.Append("        Dataset_Folder_Path, Archive_Folder_Path, RawDataType");
             sqlStr.Append(" FROM V_DMS_Data_Package_Datasets");
-            sqlStr.Append(" WHERE Data_Package_ID = " + dataPackageID.ToString());
+            sqlStr.Append(" WHERE Data_Package_ID = " + dataPackageID);
             sqlStr.Append(" ORDER BY Dataset");
 
             DataTable resultSet;
@@ -159,7 +159,7 @@ namespace AnalysisManagerBase
             sqlStr.Append("        OrganismDBName, ProteinCollectionList, ProteinOptions,");
             sqlStr.Append("        ServerStoragePath, ArchiveStoragePath, ResultsFolder, DatasetFolder, SharedResultsFolder, RawDataType");
             sqlStr.Append(" FROM V_DMS_Data_Package_Aggregation_Jobs");
-            sqlStr.Append(" WHERE Data_Package_ID = " + DataPackageID.ToString());
+            sqlStr.Append(" WHERE Data_Package_ID = " + DataPackageID);
             sqlStr.Append(" ORDER BY Dataset, Tool");
 
             DataTable resultSet;
@@ -187,7 +187,7 @@ namespace AnalysisManagerBase
                 sqlStr.Clear();
                 sqlStr.Append(" SELECT Count(*) AS Datasets");
                 sqlStr.Append(" FROM S_V_DMS_Data_Package_Aggregation_Datasets");
-                sqlStr.Append(" WHERE Data_Package_ID = " + DataPackageID.ToString());
+                sqlStr.Append(" WHERE Data_Package_ID = " + DataPackageID);
 
                 // Get a table to hold the results of the query
                 success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), ConnectionString, "LoadDataPackageJobInfo", RETRY_COUNT, out resultSet);
@@ -208,7 +208,7 @@ namespace AnalysisManagerBase
                     }
                 }
 
-                warningMessage = "LoadDataPackageJobInfo; No jobs were found for data package " + DataPackageID.ToString();
+                warningMessage = "LoadDataPackageJobInfo; No jobs were found for data package " + DataPackageID;
                 clsGlobal.LogError(warningMessage);
                 return false;
             }

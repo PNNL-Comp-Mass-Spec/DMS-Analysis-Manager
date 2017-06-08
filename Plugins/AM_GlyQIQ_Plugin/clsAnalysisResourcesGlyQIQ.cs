@@ -15,7 +15,6 @@ namespace AnalysisManagerGlyQIQPlugin
 {
     public class clsAnalysisResourcesGlyQIQ : clsAnalysisResources
     {
-        // Public Const WORKING_PARAMETERS_FOLDER_NAME As String = "WorkingParameters"
         protected const string LOCKS_FOLDER_NAME = "LocksFolder";
 
         public const string JOB_PARAM_ACTUAL_CORE_COUNT = "GlyQ_IQ_ActualCoreCount";
@@ -28,14 +27,11 @@ namespace AnalysisManagerGlyQIQPlugin
 
         protected struct udtGlyQIQParams
         {
-            //Public ApplicationsFolderPath As String
             public Dictionary<int, DirectoryInfo> WorkingParameterFolders;
             public string FactorsName;
             public string TargetsName;
             public int NumTargets;
-            //Public TimeStamp As String
             public string ConsoleOperatingParametersFileName;
-            //Public OperationParametersFileName As String
             public string IQParamFileName;
         }
 
@@ -64,7 +60,7 @@ namespace AnalysisManagerGlyQIQPlugin
             if (maxAllowedCores > 4)
                 maxAllowedCores -= 1;
 
-            int coreCount = clsAnalysisToolRunnerBase.ParseThreadCount(coreCountText, maxAllowedCores);
+            var coreCount = clsAnalysisToolRunnerBase.ParseThreadCount(coreCountText, maxAllowedCores);
 
             m_jobParams.AddAdditionalParameter("GlyQ-IQ", JOB_PARAM_ACTUAL_CORE_COUNT, coreCount.ToString());
 
@@ -106,7 +102,7 @@ namespace AnalysisManagerGlyQIQPlugin
             try
             {
                 // numTargets is initialized to -1 because we don't want to count the header line
-                int numTargets = -1;
+                var numTargets = -1;
 
                 using (var srInFile = new StreamReader(new FileStream(targetsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
@@ -245,7 +241,7 @@ namespace AnalysisManagerGlyQIQPlugin
 
                 for (var core = 1; core <= coreCount; core++)
                 {
-                    string folderName = "WorkingParametersCore" + core;
+                    var folderName = "WorkingParametersCore" + core;
 
                     lstWorkingDirectories.Add(core, new DirectoryInfo(Path.Combine(m_WorkingDir, folderName)));
                 }
@@ -424,7 +420,7 @@ namespace AnalysisManagerGlyQIQPlugin
         {
             try
             {
-                string rawDataType = m_jobParams.GetJobParameter("RawDataType", "");
+                var rawDataType = m_jobParams.GetJobParameter("RawDataType", "");
                 var eRawDataType = GetRawDataType(rawDataType);
 
                 if (eRawDataType == eRawDataTypeConstants.ThermoRawFile)
@@ -439,7 +435,7 @@ namespace AnalysisManagerGlyQIQPlugin
 
                 // Retrieve the _peaks.txt file
                 string fileToFind = null;
-                string sourceFolderPath = string.Empty;
+                var sourceFolderPath = string.Empty;
 
                 fileToFind = DatasetName + "_peaks.txt";
                 if (!FileSearch.FindAndRetrieveMiscFiles(fileToFind, unzip: false, searchArchivedDatasetFolder: false, sourceFolderPath: out sourceFolderPath))
@@ -512,7 +508,7 @@ namespace AnalysisManagerGlyQIQPlugin
                         var core = workingDirectory.Key;
 
                         var outputFilePath = Path.Combine(workingDirectory.Value.FullName,
-                            Path.GetFileNameWithoutExtension(fiTargetsFile.Name) + "_Part" + core.ToString() + ".txt");
+                            Path.GetFileNameWithoutExtension(fiTargetsFile.Name) + "_Part" + core + ".txt");
                         lstWriters.Add(new StreamWriter(new FileStream(outputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)));
                         lstOutputFiles.Add(core, new FileInfo(outputFilePath));
                     }

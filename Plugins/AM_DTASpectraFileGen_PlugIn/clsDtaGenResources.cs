@@ -35,12 +35,12 @@ namespace DTASpectraFileGen
                 return result;
             }
 
-            string strRawDataType = m_jobParams.GetJobParameter("RawDataType", "");
-            bool blnMGFInstrumentData = m_jobParams.GetJobParameter("MGFInstrumentData", false);
+            var strRawDataType = m_jobParams.GetJobParameter("RawDataType", "");
+            var blnMGFInstrumentData = m_jobParams.GetJobParameter("MGFInstrumentData", false);
 
-            string strErrorMessage = string.Empty;
+            var strErrorMessage = string.Empty;
 
-            string zippedDTAFilePath = string.Empty;
+            var zippedDTAFilePath = string.Empty;
 
             var eDtaGeneratorType = clsDtaGenToolRunner.GetDTAGeneratorInfo(m_jobParams, out strErrorMessage);
             if (eDtaGeneratorType == clsDtaGenToolRunner.eDTAGeneratorConstants.Unknown)
@@ -64,7 +64,7 @@ namespace DTASpectraFileGen
 
             if (blnMGFInstrumentData)
             {
-                string strFileToFind = DatasetName + DOT_MGF_EXTENSION;
+                var strFileToFind = DatasetName + DOT_MGF_EXTENSION;
                 if (!FileSearch.FindAndRetrieveMiscFiles(strFileToFind, false))
                 {
                     LogError("Instrument data not found: " + strFileToFind);
@@ -105,7 +105,7 @@ namespace DTASpectraFileGen
                     var datasetID = m_jobParams.GetJobParameter("DatasetID", 0);
                     var folderNameToFind = "DTA_Gen_1_26_" + datasetID;
                     var fileToFind = DatasetName + "_dta.zip";
-                    bool validFolderFound = false;
+                    var validFolderFound = false;
                     string folderNotFoundMessage;
 
                     var existingDtaFolder = FolderSearch.FindValidFolder(DatasetName,

@@ -80,12 +80,12 @@ namespace AnalysisManagerOMSSAPlugIn
             m_jobParams.AddResultFileExtensionToSkip(DatasetName + ".xml");
 
             // set up run parameter file to reference spectra file, taxonomy file, and analysis parameter file
-            string errorMessage = string.Empty;
+            var errorMessage = string.Empty;
             success = MakeInputFile(ref errorMessage);
 
             if (!success)
             {
-                string msg = "clsAnalysisResourcesOM.GetResources(), failed making input file: " + errorMessage;
+                var msg = "clsAnalysisResourcesOM.GetResources(), failed making input file: " + errorMessage;
                 LogError(msg);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -98,8 +98,8 @@ namespace AnalysisManagerOMSSAPlugIn
             try
             {
                 // set up formatdb.exe to reference the organsim DB file (fasta)
-                string OrgDBName = m_jobParams.GetParam("PeptideSearch", "generatedFastaName");
-                string LocalOrgDBFolder = m_mgrParams.GetParam("orgdbdir");
+                var OrgDBName = m_jobParams.GetParam("PeptideSearch", "generatedFastaName");
+                var LocalOrgDBFolder = m_mgrParams.GetParam("orgdbdir");
 
                 LogMessage("Running formatdb.exe");
 
@@ -112,7 +112,7 @@ namespace AnalysisManagerOMSSAPlugIn
                 }
 
                 // verify that program formatdb.exe file exists
-                string progLoc = m_mgrParams.GetParam("formatdbprogloc");
+                var progLoc = m_mgrParams.GetParam("formatdbprogloc");
                 if (!File.Exists(progLoc))
                 {
                     if (progLoc.Length == 0)
@@ -191,23 +191,23 @@ namespace AnalysisManagerOMSSAPlugIn
 
         protected bool MakeInputFile(ref string strErrorMessage)
         {
-            string OmssaDefaultInput = Path.Combine(m_WorkingDir, OMSSA_DEFAULT_INPUT_FILE);
-            string OmssaInput = Path.Combine(m_WorkingDir, OMSSA_INPUT_FILE);
-            string ParamFilePath = Path.Combine(m_WorkingDir, m_jobParams.GetParam("parmFileName"));
+            var OmssaDefaultInput = Path.Combine(m_WorkingDir, OMSSA_DEFAULT_INPUT_FILE);
+            var OmssaInput = Path.Combine(m_WorkingDir, OMSSA_INPUT_FILE);
+            var ParamFilePath = Path.Combine(m_WorkingDir, m_jobParams.GetParam("parmFileName"));
 
-            string SearchSettings = Path.Combine(m_mgrParams.GetParam("orgdbdir"), m_jobParams.GetParam("PeptideSearch", "generatedFastaName"));
-            string MSInfilename = Path.Combine(m_WorkingDir, DatasetName + ".xml");
-            string MSOmxOutFilename = Path.Combine(m_WorkingDir, DatasetName + "_om.omx");
-            string MSOmxLargeOutFilename = Path.Combine(m_WorkingDir, DatasetName + "_om_large.omx");
+            var SearchSettings = Path.Combine(m_mgrParams.GetParam("orgdbdir"), m_jobParams.GetParam("PeptideSearch", "generatedFastaName"));
+            var MSInfilename = Path.Combine(m_WorkingDir, DatasetName + ".xml");
+            var MSOmxOutFilename = Path.Combine(m_WorkingDir, DatasetName + "_om.omx");
+            var MSOmxLargeOutFilename = Path.Combine(m_WorkingDir, DatasetName + "_om_large.omx");
             m_jobParams.AddResultFileExtensionToSkip(DatasetName + "_om_large.omx");
-            string MSCsvOutFilename = Path.Combine(m_WorkingDir, DatasetName + "_om.csv");
+            var MSCsvOutFilename = Path.Combine(m_WorkingDir, DatasetName + "_om.csv");
 
             string strOutputFilePath = null;
 
-            int intMatchCount = 0;
+            var intMatchCount = 0;
 
             XmlNode objMostRecentComment = null;
-            bool blnCopyThisComment = false;
+            var blnCopyThisComment = false;
 
             try
             {
@@ -303,7 +303,7 @@ namespace AnalysisManagerOMSSAPlugIn
                             {
                                 // More than one node was matched
                                 // Delete the extra nodes
-                                for (int i = intMatchCount - 1; i >= 1; i += -1)
+                                for (var i = intMatchCount - 1; i >= 1; i += -1)
                                 {
                                     objSelectedNodes.Item(i).ParentNode.RemoveChild(objSelectedNodes.Item(i));
                                 }
