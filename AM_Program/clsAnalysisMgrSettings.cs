@@ -157,9 +157,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                var msg = "Exception calling " + SP_NAME_ACKMANAGERUPDATE + ex.Message;
-                Console.WriteLine(msg);
-                LogError(msg, ex);
+                LogError("Exception calling " + SP_NAME_ACKMANAGERUPDATE, ex);
             }
         }
 
@@ -246,8 +244,8 @@ namespace AnalysisManagerProg
             // Determine if manager is deactivated locally
             if (!mParamDictionary.TryGetValue(MGR_PARAM_MGR_ACTIVE_LOCAL, out var activeLocalText))
             {
-                var msg = "Manager parameter " + MGR_PARAM_MGR_ACTIVE_LOCAL + " is missing from file AnalysisManagerProg.exe.config";
-                WriteToEmergencyLog(msg);
+                mErrMsg = "Manager parameter " + MGR_PARAM_MGR_ACTIVE_LOCAL + " is missing from file AnalysisManagerProg.exe.config";
+                WriteToEmergencyLog(mErrMsg);
             }
 
             if (!bool.TryParse(activeLocalText, out var activeLocal) || !activeLocal)
@@ -271,31 +269,29 @@ namespace AnalysisManagerProg
         /// <remarks></remarks>
         private bool CheckInitialSettings(IReadOnlyDictionary<string, string> paramDictionary)
         {
-            string errorMessage;
-
             // Verify manager settings dictionary exists
             if (paramDictionary == null)
             {
-                errorMessage = "CheckInitialSettings: Manager parameter string dictionary not found";
+                mErrMsg = "CheckInitialSettings: Manager parameter string dictionary not found";
 
-                WriteToEmergencyLog(errorMessage);
+                WriteToEmergencyLog(mErrMsg);
                 return false;
             }
 
             // Verify intact config file was found
             if (!paramDictionary.TryGetValue(MGR_PARAM_USING_DEFAULTS, out var usingDefaultsText))
             {
-                errorMessage = "CheckInitialSettings: 'UsingDefaults' entry not found in Config file";
+                mErrMsg = "CheckInitialSettings: 'UsingDefaults' entry not found in Config file";
 
-                WriteToEmergencyLog(errorMessage);
+                WriteToEmergencyLog(mErrMsg);
             }
             else
             {
                 if (bool.TryParse(usingDefaultsText, out var usingDefaults) && usingDefaults)
                 {
-                    errorMessage = "CheckInitialSettings: Config file problem, contains UsingDefaults=True";
+                    mErrMsg = "CheckInitialSettings: Config file problem, contains UsingDefaults=True";
 
-                    WriteToEmergencyLog(errorMessage);
+                    WriteToEmergencyLog(mErrMsg);
                     return false;
                 }
             }
@@ -482,16 +478,16 @@ namespace AnalysisManagerProg
             var taskQueuePath = GetParam(MGR_PARAM_LOCAL_TASK_QUEUE_PATH);
             if (string.IsNullOrWhiteSpace(taskQueuePath))
             {
-                var msg = "Manager parameter " + MGR_PARAM_LOCAL_TASK_QUEUE_PATH + " is missing from file " + LOCAL_MANAGER_SETTINGS_FILE;
-                LogError(msg);
+                mErrMsg = "Manager parameter " + MGR_PARAM_LOCAL_TASK_QUEUE_PATH + " is missing from file " + LOCAL_MANAGER_SETTINGS_FILE;
+                LogError(mErrMsg);
                 return false;
             }
 
             var workDirPath = GetParam(MGR_PARAM_LOCAL_WORK_DIR_PATH);
             if (string.IsNullOrWhiteSpace(workDirPath))
             {
-                var msg = "Manager parameter " + MGR_PARAM_LOCAL_TASK_QUEUE_PATH + " is missing from file " + LOCAL_MANAGER_SETTINGS_FILE;
-                LogError(msg);
+                mErrMsg = "Manager parameter " + MGR_PARAM_LOCAL_WORK_DIR_PATH + " is missing from file " + LOCAL_MANAGER_SETTINGS_FILE;
+                LogError(mErrMsg);
                 return false;
             }
 
@@ -554,7 +550,8 @@ namespace AnalysisManagerProg
                 var configfile = new FileInfo(configFilePath);
                 if (!configfile.Exists)
                 {
-                    LogError("ReadLocalSettingsFile; manager config file not found: " + configFilePath);
+                    mErrMsg = "ReadLocalSettingsFile; manager config file not found: " + configFilePath;
+                    LogError(mErrMsg);
                     return null;
                 }
 
@@ -564,7 +561,8 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                LogError("ReadLocalSettingsFile; exception loading settings file", ex);
+                mErrMsg = "ReadLocalSettingsFile; exception loading settings file";
+                LogError(mErrMsg, ex);
                 return null;
             }
 
@@ -575,7 +573,8 @@ namespace AnalysisManagerProg
 
                 if (appSettingsNode == null)
                 {
-                    LogError("ReadLocalSettingsFile; settings node not found");
+                    mErrMsg = "ReadLocalSettingsFile; settings node not found";
+                    LogError(mErrMsg);
                     return null;
                 }
 
@@ -583,7 +582,8 @@ namespace AnalysisManagerProg
                 var settingNodes = appSettingsNode.SelectNodes("//setting[@name]");
                 if (settingNodes == null)
                 {
-                    LogError("ReadLocalSettingsFile; settings/*/setting nodes not found");
+                    mErrMsg = "ReadLocalSettingsFile; settings/*/setting nodes not found";
+                    LogError(mErrMsg);
                     return null;
                 }
 
@@ -592,7 +592,8 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                LogError("ReadLocalSettingsFile; Exception reading settings file", ex);
+                mErrMsg = "ReadLocalSettingsFile; exception reading settings file";
+                LogError(mErrMsg, ex);
                 return null;
             }
 
