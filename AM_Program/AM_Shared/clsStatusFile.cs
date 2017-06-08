@@ -375,7 +375,7 @@ namespace AnalysisManagerBase
         {
             if (clsGlobal.OfflineMode)
             {
-                LogToBrokerQueue = false;
+                LogToMsgQueue = false;
                 return;
             }
 
