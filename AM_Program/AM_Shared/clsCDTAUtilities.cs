@@ -301,56 +301,54 @@ namespace AnalysisManagerBase
                             if (string.IsNullOrEmpty(strLineIn))
                             {
                                 swOutFile.WriteLine();
+                                continue;
                             }
-                            else
+
+                            var intScanNumberStart = 0;
+                            var intCharge = 0;
+
+                            if (strLineIn.StartsWith("="))
                             {
-                                var intScanNumberStart = 0;
-                                var intCharge = 0;
+                                // Parse the DTA header line, for example:
+                                // =================================== "H20120523_JQ_CPTAC2_4TP_Exp1_IMAC_01.0002.0002.3.dta" ==================================
 
-                                if (strLineIn.StartsWith("="))
-                                {
-                                    // Parse the DTA header line, for example:
-                                    // =================================== "H20120523_JQ_CPTAC2_4TP_Exp1_IMAC_01.0002.0002.3.dta" ==================================
-
-                                    // Remove the leading and trailing characters, then extract the scan and charge
-                                    var strDTAHeader = strLineIn.Trim('=', ' ', '"');
+                                // Remove the leading and trailing characters, then extract the scan and charge
+                                var strDTAHeader = strLineIn.Trim('=', ' ', '"');
 
 
-                                    objReader.ExtractScanInfoFromDtaHeader(strDTAHeader, out intScanNumberStart, out var intScanNumberEnd, out var intScanCount, out intCharge);
+                                objReader.ExtractScanInfoFromDtaHeader(strDTAHeader, out intScanNumberStart, out var intScanNumberEnd, out var intScanCount, out intCharge);
 
-                                    blnParentIonLineIsNext = true;
-
-                                }
-                                else if (blnParentIonLineIsNext)
-                                {
-                                    // strLineIn contains the parent ion line text
-
-                                    // Construct the parent ion line to write out
-                                    // Will contain the MH+ value of the parent ion (thus always the 1+ mass, even if actually a different charge)
-                                    // Next contains the charge state, then scan= and cs= tags, for example:
-                                    // 447.34573 1   scan=3 cs=1
-
-                                    if (!strLineIn.Contains("scan="))
-                                    {
-                                        // Append scan=x to the parent ion line
-                                        strLineIn = strLineIn.Trim() + "   scan=" + intScanNumberStart;
-                                        blnParentIonLineUpdated = true;
-                                    }
-
-                                    if (!strLineIn.Contains("cs="))
-                                    {
-                                        // Append cs=y to the parent ion line
-                                        strLineIn = strLineIn.Trim() + " cs=" + intCharge;
-                                        blnParentIonLineUpdated = true;
-                                    }
-
-                                    blnParentIonLineIsNext = false;
-
-                                }
-
-                                swOutFile.WriteLine(strLineIn);
+                                blnParentIonLineIsNext = true;
 
                             }
+                            else if (blnParentIonLineIsNext)
+                            {
+                                // strLineIn contains the parent ion line text
+
+                                // Construct the parent ion line to write out
+                                // Will contain the MH+ value of the parent ion (thus always the 1+ mass, even if actually a different charge)
+                                // Next contains the charge state, then scan= and cs= tags, for example:
+                                // 447.34573 1   scan=3 cs=1
+
+                                if (!strLineIn.Contains("scan="))
+                                {
+                                    // Append scan=x to the parent ion line
+                                    strLineIn = strLineIn.Trim() + "   scan=" + intScanNumberStart;
+                                    blnParentIonLineUpdated = true;
+                                }
+
+                                if (!strLineIn.Contains("cs="))
+                                {
+                                    // Append cs=y to the parent ion line
+                                    strLineIn = strLineIn.Trim() + " cs=" + intCharge;
+                                    blnParentIonLineUpdated = true;
+                                }
+
+                                blnParentIonLineIsNext = false;
+
+                            }
+
+                            swOutFile.WriteLine(strLineIn);
                         }
 
                     }

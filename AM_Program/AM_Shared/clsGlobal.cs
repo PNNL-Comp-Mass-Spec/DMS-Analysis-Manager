@@ -1820,31 +1820,30 @@ namespace AnalysisManagerBase
                     {
                         var strLineIn = srInfile.ReadLine();
 
-                        if (!string.IsNullOrWhiteSpace(strLineIn) && !strLineIn.StartsWith("#") && strLineIn.Contains('='))
+                        if (string.IsNullOrWhiteSpace(strLineIn) || strLineIn.StartsWith("#") || !strLineIn.Contains('='))
+                            continue;
+
+                        var strSplitLine = strLineIn.Split('=');
+
+
+                        if (strSplitLine.Length < 2)
+                            continue;
+
+                        // Set this to true for now
+                        blnValidFile = true;
+
+                        switch (strSplitLine[0].ToLower())
                         {
-                            var strSplitLine = strLineIn.Split('=');
-
-
-                            if (strSplitLine.Length >= 2)
-                            {
-                                // Set this to true for now
-                               blnValidFile = true;
-
-                                switch (strSplitLine[0].ToLower())
-                                {
-                                    case "size":
-                                        long.TryParse(strSplitLine[1], out lngExpectedFileSizeBytes);
-                                        break;
-                                    case "modification_date_utc":
-                                        DateTime.TryParse(strSplitLine[1], out dtExpectedFileDate);
-                                        break;
-                                    case "hash":
-                                        strExpectedHash = string.Copy(strSplitLine[1]);
-                                        break;
-                                }
-                            }
+                            case "size":
+                                long.TryParse(strSplitLine[1], out lngExpectedFileSizeBytes);
+                                break;
+                            case "modification_date_utc":
+                                DateTime.TryParse(strSplitLine[1], out dtExpectedFileDate);
+                                break;
+                            case "hash":
+                                strExpectedHash = string.Copy(strSplitLine[1]);
+                                break;
                         }
-
                     }
                 }
 

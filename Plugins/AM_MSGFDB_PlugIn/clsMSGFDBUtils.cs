@@ -2108,237 +2108,237 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                         var kvSetting = clsGlobal.GetKeyValueSetting(strLineIn);
 
-                        if (!string.IsNullOrWhiteSpace(kvSetting.Key))
+                        if (string.IsNullOrWhiteSpace(kvSetting.Key))
+                            continue;
+
+                        var strValue = kvSetting.Value;
+
+
+                        // Check whether kvSetting.key is one of the standard keys defined in dctParamNames
+                        int intValue;
+                        if (dctParamNames.TryGetValue(kvSetting.Key, out var strArgumentSwitch))
                         {
-                            var strValue = kvSetting.Value;
-
-
-                            // Check whether kvSetting.key is one of the standard keys defined in dctParamNames
-                            int intValue;
-                            if (dctParamNames.TryGetValue(kvSetting.Key, out var strArgumentSwitch))
+                            if (clsGlobal.IsMatch(kvSetting.Key, MSGFPLUS_OPTION_FRAGMENTATION_METHOD))
                             {
-                                if (clsGlobal.IsMatch(kvSetting.Key, MSGFPLUS_OPTION_FRAGMENTATION_METHOD))
+                                if (string.IsNullOrWhiteSpace(strValue) && !string.IsNullOrWhiteSpace(strScanTypeFilePath))
                                 {
-                                    if (string.IsNullOrWhiteSpace(strValue) && !string.IsNullOrWhiteSpace(strScanTypeFilePath))
-                                    {
-                                        // No setting for FragmentationMethodID, and a ScanType file was created
-                                        // Use FragmentationMethodID 0 (as written in the spectrum, or CID)
-                                        strValue = "0";
+                                    // No setting for FragmentationMethodID, and a ScanType file was created
+                                    // Use FragmentationMethodID 0 (as written in the spectrum, or CID)
+                                    strValue = "0";
 
-                                        OnStatusEvent("Using Fragmentation method -m " + strValue + " because a ScanType file was created");
-                                    }
-                                    else if (!string.IsNullOrWhiteSpace(strAssumedScanType))
-                                    {
-                                        // Override FragmentationMethodID using strAssumedScanType
-                                        // AssumedScanType is an optional job setting; see for example:
-                                        //  IonTrapDefSettings_AssumeHCD.xml with <item key="AssumedScanType" value="HCD"/>
-                                        switch (strAssumedScanType.ToUpper())
-                                        {
-                                            case "CID":
-                                                strValue = "1";
-                                                break;
-                                            case "ETD":
-                                                strValue = "2";
-                                                break;
-                                            case "HCD":
-                                                strValue = "3";
-                                                break;
-                                            case "UVPD":
-                                                // Previously, with MS-GFDB, fragmentationType 4 meant Merge ETD and CID
-                                                // Now with MS-GF+, fragmentationType 4 means UVPD
-                                                strValue = "4";
-                                                break;
-                                            default:
-                                                // Invalid string
-                                                mErrorMessage = "Invalid assumed scan type '" + strAssumedScanType +
-                                                                "'; must be CID, ETD, HCD, or UVPD";
-                                                OnErrorEvent(mErrorMessage);
-                                                return CloseOutType.CLOSEOUT_FAILED;
-                                        }
-
-                                        OnStatusEvent("Using Fragmentation method -m " + strValue + " because of Assumed scan type " + strAssumedScanType);
-                                    }
-                                    else
-                                    {
-                                        OnStatusEvent("Using Fragmentation method -m " + strValue);
-                                    }
+                                    OnStatusEvent("Using Fragmentation method -m " + strValue + " because a ScanType file was created");
                                 }
-                                else if (clsGlobal.IsMatch(kvSetting.Key, MSGFPLUS_OPTION_INSTRUMENT_ID))
+                                else if (!string.IsNullOrWhiteSpace(strAssumedScanType))
                                 {
-                                    if (!string.IsNullOrWhiteSpace(strScanTypeFilePath))
+                                    // Override FragmentationMethodID using strAssumedScanType
+                                    // AssumedScanType is an optional job setting; see for example:
+                                    //  IonTrapDefSettings_AssumeHCD.xml with <item key="AssumedScanType" value="HCD"/>
+                                    switch (strAssumedScanType.ToUpper())
                                     {
-                                        var eResult = DetermineInstrumentID(ref strValue, strScanTypeFilePath, instrumentGroup);
-                                        if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
-                                        {
-                                            return eResult;
-                                        }
-                                    }
-                                    else if (!string.IsNullOrWhiteSpace(instrumentGroup))
-                                    {
-
-                                        if (!CanDetermineInstIdFromInstGroup(instrumentGroup, out var instrumentIDNew, out var autoSwitchReason))
-                                        {
-                                            var datasetName = m_jobParams.GetParam("JobParameters", "DatasetNum");
-
-                                            if (LookupScanTypesForDataset(datasetName, out var countLowResMSn, out var countHighResMSn, out var countHCDMSn))
-                                            {
-                                                ExamineScanTypes(countLowResMSn, countHighResMSn, countHCDMSn, out instrumentIDNew, out autoSwitchReason);
-                                            }
-                                        }
-
-                                        AutoUpdateInstrumentIDIfChanged(ref strValue, instrumentIDNew, autoSwitchReason);
-                                    }
-                                }
-
-                                var strArgumentSwitchOriginal = string.Copy(strArgumentSwitch);
-
-                                AdjustSwitchesForMSGFPlus(mMSGFPlus, ref strArgumentSwitch, ref strValue);
-
-                                if (overrideParams.TryGetValue(strArgumentSwitch, out var valueOverride))
-                                {
-                                    OnStatusEvent("Overriding switch " + strArgumentSwitch + " to use -" + strArgumentSwitch + " " + valueOverride +
-                                                  " instead of -" + strArgumentSwitch + " " + strValue);
-                                    strValue = string.Copy(valueOverride);
-                                }
-
-                                if (string.IsNullOrEmpty(strArgumentSwitch))
-                                {
-                                    if (m_DebugLevel >= 1 && !clsGlobal.IsMatch(strArgumentSwitchOriginal, MSGFPLUS_OPTION_SHOWDECOY))
-                                    {
-                                        OnWarningEvent("Skipping switch " + strArgumentSwitchOriginal + " since it is not valid for this version of " + strSearchEngineName);
-                                    }
-                                }
-                                else if (string.IsNullOrEmpty(strValue))
-                                {
-                                    if (m_DebugLevel >= 1)
-                                    {
-                                        OnWarningEvent("Skipping switch " + strArgumentSwitch + " since the value is empty");
-                                    }
-                                }
-                                else
-                                {
-                                    sbOptions.Append(" -" + strArgumentSwitch + " " + strValue);
-                                }
-
-                                if (clsGlobal.IsMatch(strArgumentSwitch, "showDecoy"))
-                                {
-                                    blnShowDecoyParamPresent = true;
-                                    if (int.TryParse(strValue, out intValue))
-                                    {
-                                        if (intValue > 0)
-                                        {
-                                            blnShowDecoy = true;
-                                        }
-                                    }
-                                }
-                                else if (clsGlobal.IsMatch(strArgumentSwitch, "tda"))
-                                {
-                                    if (int.TryParse(strValue, out intValue))
-                                    {
-                                        if (intValue > 0)
-                                        {
-                                            blnTDA = true;
-                                        }
-                                    }
-                                }
-                            }
-                            else if (clsGlobal.IsMatch(kvSetting.Key, "uniformAAProb"))
-                            {
-                                if (mMSGFPlus)
-                                {
-                                    // Not valid for MS-GF+; skip it
-                                }
-                                else
-                                {
-                                    if (string.IsNullOrWhiteSpace(strValue) || clsGlobal.IsMatch(strValue, "auto"))
-                                    {
-                                        if (fastaFileSizeKB < SMALL_FASTA_FILE_THRESHOLD_KB)
-                                        {
-                                            sbOptions.Append(" -uniformAAProb 1");
-                                        }
-                                        else
-                                        {
-                                            sbOptions.Append(" -uniformAAProb 0");
-                                        }
-                                    }
-                                    else
-                                    {
-                                        if (int.TryParse(strValue, out intValue))
-                                        {
-                                            sbOptions.Append(" -uniformAAProb " + intValue);
-                                        }
-                                        else
-                                        {
-                                            mErrorMessage = "Invalid value for uniformAAProb in MS-GF+ parameter file";
-                                            OnErrorEvent(mErrorMessage + ": " + strLineIn);
-                                            srParamFile.Dispose();
+                                        case "CID":
+                                            strValue = "1";
+                                            break;
+                                        case "ETD":
+                                            strValue = "2";
+                                            break;
+                                        case "HCD":
+                                            strValue = "3";
+                                            break;
+                                        case "UVPD":
+                                            // Previously, with MS-GFDB, fragmentationType 4 meant Merge ETD and CID
+                                            // Now with MS-GF+, fragmentationType 4 means UVPD
+                                            strValue = "4";
+                                            break;
+                                        default:
+                                            // Invalid string
+                                            mErrorMessage = "Invalid assumed scan type '" + strAssumedScanType +
+                                                            "'; must be CID, ETD, HCD, or UVPD";
+                                            OnErrorEvent(mErrorMessage);
                                             return CloseOutType.CLOSEOUT_FAILED;
-                                        }
                                     }
-                                }
-                            }
-                            else if (clsGlobal.IsMatch(kvSetting.Key, "NumThreads"))
-                            {
-                                if (string.IsNullOrWhiteSpace(strValue) || clsGlobal.IsMatch(strValue, "all"))
-                                {
-                                    // Do not append -thread to the command line; MS-GF+ will use all available cores by default
+
+                                    OnStatusEvent("Using Fragmentation method -m " + strValue + " because of Assumed scan type " + strAssumedScanType);
                                 }
                                 else
                                 {
-                                    if (int.TryParse(strValue, out intParamFileThreadCount))
+                                    OnStatusEvent("Using Fragmentation method -m " + strValue);
+                                }
+                            }
+                            else if (clsGlobal.IsMatch(kvSetting.Key, MSGFPLUS_OPTION_INSTRUMENT_ID))
+                            {
+                                if (!string.IsNullOrWhiteSpace(strScanTypeFilePath))
+                                {
+                                    var eResult = DetermineInstrumentID(ref strValue, strScanTypeFilePath, instrumentGroup);
+                                    if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
                                     {
-                                        // intParamFileThreadCount now has the thread count
+                                        return eResult;
                                     }
-                                    else
+                                }
+                                else if (!string.IsNullOrWhiteSpace(instrumentGroup))
+                                {
+
+                                    if (!CanDetermineInstIdFromInstGroup(instrumentGroup, out var instrumentIDNew, out var autoSwitchReason))
                                     {
-                                        OnWarningEvent("Invalid value for NumThreads in MS-GF+ parameter file: " + strLineIn);
+                                        var datasetName = m_jobParams.GetParam("JobParameters", "DatasetNum");
+
+                                        if (LookupScanTypesForDataset(datasetName, out var countLowResMSn, out var countHighResMSn, out var countHCDMSn))
+                                        {
+                                            ExamineScanTypes(countLowResMSn, countHighResMSn, countHCDMSn, out instrumentIDNew, out autoSwitchReason);
+                                        }
+                                    }
+
+                                    AutoUpdateInstrumentIDIfChanged(ref strValue, instrumentIDNew, autoSwitchReason);
+                                }
+                            }
+
+                            var strArgumentSwitchOriginal = string.Copy(strArgumentSwitch);
+
+                            AdjustSwitchesForMSGFPlus(mMSGFPlus, ref strArgumentSwitch, ref strValue);
+
+                            if (overrideParams.TryGetValue(strArgumentSwitch, out var valueOverride))
+                            {
+                                OnStatusEvent("Overriding switch " + strArgumentSwitch + " to use -" + strArgumentSwitch + " " + valueOverride +
+                                              " instead of -" + strArgumentSwitch + " " + strValue);
+                                strValue = string.Copy(valueOverride);
+                            }
+
+                            if (string.IsNullOrEmpty(strArgumentSwitch))
+                            {
+                                if (m_DebugLevel >= 1 && !clsGlobal.IsMatch(strArgumentSwitchOriginal, MSGFPLUS_OPTION_SHOWDECOY))
+                                {
+                                    OnWarningEvent("Skipping switch " + strArgumentSwitchOriginal + " since it is not valid for this version of " + strSearchEngineName);
+                                }
+                            }
+                            else if (string.IsNullOrEmpty(strValue))
+                            {
+                                if (m_DebugLevel >= 1)
+                                {
+                                    OnWarningEvent("Skipping switch " + strArgumentSwitch + " since the value is empty");
+                                }
+                            }
+                            else
+                            {
+                                sbOptions.Append(" -" + strArgumentSwitch + " " + strValue);
+                            }
+
+                            if (clsGlobal.IsMatch(strArgumentSwitch, "showDecoy"))
+                            {
+                                blnShowDecoyParamPresent = true;
+                                if (int.TryParse(strValue, out intValue))
+                                {
+                                    if (intValue > 0)
+                                    {
+                                        blnShowDecoy = true;
                                     }
                                 }
                             }
-                            else if (clsGlobal.IsMatch(kvSetting.Key, "NumMods"))
+                            else if (clsGlobal.IsMatch(strArgumentSwitch, "tda"))
                             {
                                 if (int.TryParse(strValue, out intValue))
                                 {
-                                    intNumMods = intValue;
+                                    if (intValue > 0)
+                                    {
+                                        blnTDA = true;
+                                    }
+                                }
+                            }
+                        }
+                        else if (clsGlobal.IsMatch(kvSetting.Key, "uniformAAProb"))
+                        {
+                            if (mMSGFPlus)
+                            {
+                                // Not valid for MS-GF+; skip it
+                            }
+                            else
+                            {
+                                if (string.IsNullOrWhiteSpace(strValue) || clsGlobal.IsMatch(strValue, "auto"))
+                                {
+                                    if (fastaFileSizeKB < SMALL_FASTA_FILE_THRESHOLD_KB)
+                                    {
+                                        sbOptions.Append(" -uniformAAProb 1");
+                                    }
+                                    else
+                                    {
+                                        sbOptions.Append(" -uniformAAProb 0");
+                                    }
                                 }
                                 else
                                 {
-                                    mErrorMessage = "Invalid value for NumMods in MS-GF+ parameter file";
-                                    OnErrorEvent(mErrorMessage + ": " + strLineIn);
-                                    srParamFile.Dispose();
-                                    return CloseOutType.CLOSEOUT_FAILED;
+                                    if (int.TryParse(strValue, out intValue))
+                                    {
+                                        sbOptions.Append(" -uniformAAProb " + intValue);
+                                    }
+                                    else
+                                    {
+                                        mErrorMessage = "Invalid value for uniformAAProb in MS-GF+ parameter file";
+                                        OnErrorEvent(mErrorMessage + ": " + strLineIn);
+                                        srParamFile.Dispose();
+                                        return CloseOutType.CLOSEOUT_FAILED;
+                                    }
                                 }
                             }
-                            else if (clsGlobal.IsMatch(kvSetting.Key, "StaticMod"))
-                            {
-                                if (!string.IsNullOrWhiteSpace(strValue) && !clsGlobal.IsMatch(strValue, "none"))
-                                {
-                                    lstStaticMods.Add(strValue);
-                                }
-                            }
-                            else if (clsGlobal.IsMatch(kvSetting.Key, "DynamicMod"))
-                            {
-                                if (!string.IsNullOrWhiteSpace(strValue) && !clsGlobal.IsMatch(strValue, "none"))
-                                {
-                                    lstDynamicMods.Add(strValue);
-                                }
-                            }
-                            else if (clsGlobal.IsMatch(kvSetting.Key, "CustomAA"))
-                            {
-                                if (!string.IsNullOrWhiteSpace(strValue) && !clsGlobal.IsMatch(strValue, "none"))
-                                {
-                                    lstCustomAminoAcids.Add(strValue);
-                                }
-                            }
-
-                            //If clsGlobal.IsMatch(kvSetting.Key, MSGFPLUS_OPTION_FRAGMENTATION_METHOD) Then
-                            //	If Integer.TryParse(strValue, out intValue) Then
-                            //		If intValue = 3 Then
-                            //			blnHCD = True
-                            //		End If
-                            //	End If
-                            //End If
                         }
+                        else if (clsGlobal.IsMatch(kvSetting.Key, "NumThreads"))
+                        {
+                            if (string.IsNullOrWhiteSpace(strValue) || clsGlobal.IsMatch(strValue, "all"))
+                            {
+                                // Do not append -thread to the command line; MS-GF+ will use all available cores by default
+                            }
+                            else
+                            {
+                                if (int.TryParse(strValue, out intParamFileThreadCount))
+                                {
+                                    // intParamFileThreadCount now has the thread count
+                                }
+                                else
+                                {
+                                    OnWarningEvent("Invalid value for NumThreads in MS-GF+ parameter file: " + strLineIn);
+                                }
+                            }
+                        }
+                        else if (clsGlobal.IsMatch(kvSetting.Key, "NumMods"))
+                        {
+                            if (int.TryParse(strValue, out intValue))
+                            {
+                                intNumMods = intValue;
+                            }
+                            else
+                            {
+                                mErrorMessage = "Invalid value for NumMods in MS-GF+ parameter file";
+                                OnErrorEvent(mErrorMessage + ": " + strLineIn);
+                                srParamFile.Dispose();
+                                return CloseOutType.CLOSEOUT_FAILED;
+                            }
+                        }
+                        else if (clsGlobal.IsMatch(kvSetting.Key, "StaticMod"))
+                        {
+                            if (!string.IsNullOrWhiteSpace(strValue) && !clsGlobal.IsMatch(strValue, "none"))
+                            {
+                                lstStaticMods.Add(strValue);
+                            }
+                        }
+                        else if (clsGlobal.IsMatch(kvSetting.Key, "DynamicMod"))
+                        {
+                            if (!string.IsNullOrWhiteSpace(strValue) && !clsGlobal.IsMatch(strValue, "none"))
+                            {
+                                lstDynamicMods.Add(strValue);
+                            }
+                        }
+                        else if (clsGlobal.IsMatch(kvSetting.Key, "CustomAA"))
+                        {
+                            if (!string.IsNullOrWhiteSpace(strValue) && !clsGlobal.IsMatch(strValue, "none"))
+                            {
+                                lstCustomAminoAcids.Add(strValue);
+                            }
+                        }
+
+                        // if (clsGlobal.IsMatch(kvSetting.Key, MSGFPLUS_OPTION_FRAGMENTATION_METHOD)) {
+                        //	 if (int.TryParse(strValue, out intValue)) {
+                        //		if (intValue == 3) {
+                        //			blnHCD = True;
+                        //      }
+                        //	 }
+                        // }
                     }
                 }
 
@@ -2864,13 +2864,13 @@ namespace AnalysisManagerMSGFDBPlugIn
                         var strLineIn = srInFile.ReadLine();
                         intLinesRead += 1;
 
-                        if (intLinesRead > 1 && !string.IsNullOrEmpty(strLineIn))
+                        if (intLinesRead <= 1 || string.IsNullOrEmpty(strLineIn))
+                            continue;
+
+                        intPeptideCount += 1;
+                        if (strLineIn.Contains(PROTEIN_NAME_NO_MATCH))
                         {
-                            intPeptideCount += 1;
-                            if (strLineIn.Contains(PROTEIN_NAME_NO_MATCH))
-                            {
-                                intPeptideCountNoMatch += 1;
-                            }
+                            intPeptideCountNoMatch += 1;
                         }
                     }
                 }

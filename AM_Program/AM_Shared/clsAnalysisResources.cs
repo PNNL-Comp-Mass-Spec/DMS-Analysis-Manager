@@ -1538,17 +1538,17 @@ namespace AnalysisManagerBase
                         continue;
                     }
 
-                    if (dataLine.StartsWith(">"))
+                    if (!dataLine.StartsWith(">"))
+                        continue;
+
+                    // Protein header line found
+                    if (dataLine.StartsWith(prefixToFind))
                     {
-                        // Protein header line found
-                        if (dataLine.StartsWith(prefixToFind))
-                        {
-                            reverseProteinCount += 1;
-                        }
-                        else
-                        {
-                            forwardProteinCount += 1;
-                        }
+                        reverseProteinCount += 1;
+                    }
+                    else
+                    {
+                        forwardProteinCount += 1;
                     }
                 }
             }
@@ -4395,24 +4395,24 @@ namespace AnalysisManagerBase
                     while (!srInFile.EndOfStream && !blnDataFound)
                     {
                         var strLineIn = srInFile.ReadLine();
-                        if (!string.IsNullOrEmpty(strLineIn))
+                        if (string.IsNullOrEmpty(strLineIn))
+                            continue;
+
+                        if (intNumericDataColIndex < 0)
                         {
-                            if (intNumericDataColIndex < 0)
+                            blnDataFound = true;
+                        }
+                        else
+                        {
+                            // Split on the tab character and check if the first column is numeric
+                            var strSplitLine = strLineIn.Split('\t');
+
+                            if (strSplitLine.Length <= intNumericDataColIndex)
+                                continue;
+
+                            if (double.TryParse(strSplitLine[intNumericDataColIndex], out var _))
                             {
                                 blnDataFound = true;
-                            }
-                            else
-                            {
-                                // Split on the tab character and check if the first column is numeric
-                                var strSplitLine = strLineIn.Split('\t');
-
-                                if (strSplitLine.Length <= intNumericDataColIndex)
-                                    continue;
-
-                                if (double.TryParse(strSplitLine[intNumericDataColIndex], out var _))
-                                {
-                                    blnDataFound = true;
-                                }
                             }
                         }
                     }
