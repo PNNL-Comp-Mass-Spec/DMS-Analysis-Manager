@@ -100,9 +100,8 @@ namespace AnalysisManagerBase
                     var strParamName = parameter.Name.LocalName;
                     var strParamValue = parameter.Value;
 
-                    Dictionary<string, string> dctSectionSettings;
 
-                    if (!dctParameters.TryGetValue(strSection, out dctSectionSettings))
+                    if (!dctParameters.TryGetValue(strSection, out var dctSectionSettings))
                     {
                         dctSectionSettings = new Dictionary<string, string>();
                         dctParameters.Add(strSection, dctSectionSettings);
@@ -125,8 +124,7 @@ namespace AnalysisManagerBase
             if (string.IsNullOrEmpty(strValue))
                 return blnValueIfMissing;
 
-            bool blnValue;
-            if (bool.TryParse(strValue, out blnValue))
+            if (bool.TryParse(strValue, out var blnValue))
             {
                 return blnValue;
             }
@@ -140,9 +138,8 @@ namespace AnalysisManagerBase
 
             foreach (var section in mSections)
             {
-                string strValue;
 
-                if (section.Value.TryGetValue(strParameterName, out strValue))
+                if (section.Value.TryGetValue(strParameterName, out var strValue))
                 {
                     return strValue;
                 }
@@ -156,13 +153,11 @@ namespace AnalysisManagerBase
         public string GetParameterBySection(string strSectionName, string strParameterName, string strValueIfMissing)
         {
 
-            Dictionary<string, string> dctParameters;
 
-            if (mSections.TryGetValue(strSectionName, out dctParameters))
+            if (mSections.TryGetValue(strSectionName, out var dctParameters))
             {
-                string strValue;
 
-                if (dctParameters.TryGetValue(strParameterName, out strValue))
+                if (dctParameters.TryGetValue(strParameterName, out var strValue))
                 {
                     return strValue;
                 }

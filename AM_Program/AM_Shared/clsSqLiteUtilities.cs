@@ -66,8 +66,7 @@ namespace AnalysisManagerBase
                     }
 
                     // Get list of indices in source DB
-                    Dictionary<string, string> dctIndexToTableMap;
-                    var dctIndexInfo = GetDBObjects(cnSourceDB, "index", out dctIndexToTableMap);
+                    var dctIndexInfo = GetDBObjects(cnSourceDB, "index", out var dctIndexToTableMap);
 
                     if (File.Exists(targetDBPath))
                     {
@@ -130,8 +129,7 @@ namespace AnalysisManagerBase
 
                                 if (appendingToExistingDB)
                                 {
-                                    string indexTargetTable;
-                                    if (dctIndexToTableMap.TryGetValue(kvp.Key, out indexTargetTable))
+                                    if (dctIndexToTableMap.TryGetValue(kvp.Key, out var indexTargetTable))
                                     {
                                         if (dctExistingTables.ContainsKey(indexTargetTable))
                                         {
@@ -223,8 +221,7 @@ namespace AnalysisManagerBase
                     var tableCreateSql = result.ToString();
 
                     // Look for any indices on this table
-                    Dictionary<string, string> dctIndexToTableMap;
-                    var dctIndexInfo = GetDBObjects(cnSourceDB, "index", out dctIndexToTableMap, tableName);
+                    var dctIndexInfo = GetDBObjects(cnSourceDB, "index", out var dctIndexToTableMap, tableName);
 
                     // Connect to the target database
                     using (var cnTarget = new SQLiteConnection("Data Source = " + targetDBPath))
@@ -281,8 +278,7 @@ namespace AnalysisManagerBase
         private Dictionary<string, string> GetDBObjects(SQLiteConnection cnDatabase, string objectType)
         {
             var tableName = string.Empty;
-            Dictionary<string, string> dctIndexToTableMap;
-            return GetDBObjects(cnDatabase, objectType, out dctIndexToTableMap, tableName);
+            return GetDBObjects(cnDatabase, objectType, out var dctIndexToTableMap, tableName);
         }
 
         private Dictionary<string, string> GetDBObjects(SQLiteConnection cnDatabase, string objectType, out Dictionary<string, string> dctIndexToTableMap)

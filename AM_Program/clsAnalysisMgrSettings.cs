@@ -706,13 +706,12 @@ namespace AnalysisManagerProg
                 " [Param File Storage Path] AS ParameterValue" + " FROM V_Pipeline_Step_Tools_Detail_Report" +
                 " WHERE ISNULL([Param File Storage Path], '') <> ''";
 
-            DataTable dt;
 
             if (mTraceMode)
                 ShowTraceMessage("Query V_Pipeline_Step_Tools_Detail_Report in broker");
 
             // Get a table to hold the results of the query
-            var success = clsGlobal.GetDataTableByQuery(sqlStr, connectionString, "LoadBrokerDBSettings", retryCount, out dt);
+            var success = clsGlobal.GetDataTableByQuery(sqlStr, connectionString, "LoadBrokerDBSettings", retryCount, out var dt);
 
             // If loop exited due to errors, return false
             if (!success)

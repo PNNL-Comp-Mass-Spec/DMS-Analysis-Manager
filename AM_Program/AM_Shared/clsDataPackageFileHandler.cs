@@ -166,13 +166,11 @@ namespace AnalysisManagerBase
                 // Look for a CacheInfo.txt file in the matched input folder
                 // Note that FindValidFolder will search both the dataset folder and in folder inputFolderName below the dataset folder
 
-                bool validFolderFound;
-                string folderNotFoundMessage;
 
                 var datasetFolderPath = mAnalysisResources.FindValidFolder(
                     dataset, "*_CacheInfo.txt", folderNameToFind: inputFolderName, maxAttempts: 1,
                     logFolderNotFound: false, retrievingInstrumentDataFolder: false, assumeUnpurged: false,
-                    validFolderFound: out validFolderFound, folderNotFoundMessage: out folderNotFoundMessage);
+                    validFolderFound: out var validFolderFound, folderNotFoundMessage: out var folderNotFoundMessage);
 
                 if (!validFolderFound)
                 {
@@ -833,10 +831,9 @@ namespace AnalysisManagerBase
                         // Now perform any required file renames
                         foreach (var fileToRename in lstPendingFileRenames)
                         {
-                            string newFilePath;
                             if (RenameDuplicatePHRPFile(localFolderPath, fileToRename, workingDir,
-                                "Job" + dataPkgJob.Job + "_", dataPkgJob.Job,
-                                out newFilePath))
+    "Job" + dataPkgJob.Job + "_", dataPkgJob.Job,
+    out var newFilePath))
                             {
                                 // Rename succeeded
                                 lstFoundFiles.Remove(Path.Combine(localFolderPath, fileToRename));
@@ -923,8 +920,7 @@ namespace AnalysisManagerBase
 
                                 if (udtOptions.CreateJobPathFiles)
                                 {
-                                    string strErrorMessage;
-                                    var sourceConcatenatedDTAFilePath = mAnalysisResources.FileSearch.FindCDTAFile(out strErrorMessage);
+                                    var sourceConcatenatedDTAFilePath = mAnalysisResources.FileSearch.FindCDTAFile(out var strErrorMessage);
 
                                     if (string.IsNullOrEmpty(sourceConcatenatedDTAFilePath))
                                     {
@@ -1176,9 +1172,8 @@ namespace AnalysisManagerBase
             if (udtOptions.RetrieveMzXMLFile)
             {
                 // See if a .mzXML file already exists for this dataset
-                string hashcheckFilePath;
 
-                var mzXMLFilePath = mAnalysisResources.FileSearch.FindMZXmlFile(out hashcheckFilePath);
+                var mzXMLFilePath = mAnalysisResources.FileSearch.FindMZXmlFile(out var hashcheckFilePath);
 
                 if (string.IsNullOrEmpty(mzXMLFilePath))
                 {
@@ -1200,8 +1195,7 @@ namespace AnalysisManagerBase
                 }
             }
 
-            bool blnIsFolder;
-            var rawFilePath = mAnalysisResources.FolderSearch.FindDatasetFileOrFolder(out blnIsFolder, udtOptions.AssumeInstrumentDataUnpurged);
+            var rawFilePath = mAnalysisResources.FolderSearch.FindDatasetFileOrFolder(out var blnIsFolder, udtOptions.AssumeInstrumentDataUnpurged);
 
 
             if (!string.IsNullOrEmpty(rawFilePath))

@@ -264,13 +264,11 @@ namespace AnalysisManagerBase
             }
 
             var DataFileName = DatasetName + fileExtension;
-            bool validFolderFound;
-            string folderNotFoundMessage;
 
             var DSFolderPath = FindValidFolder(DatasetName, DataFileName, folderNameToFind: "", maxAttempts: maxAttempts,
                 logFolderNotFound: true, retrievingInstrumentDataFolder: false,
                 assumeUnpurged: assumeUnpurged,
-                validFolderFound: out validFolderFound, folderNotFoundMessage: out folderNotFoundMessage);
+                validFolderFound: out var validFolderFound, folderNotFoundMessage: out var folderNotFoundMessage);
 
             if (!string.IsNullOrEmpty(DSFolderPath))
             {
@@ -315,8 +313,6 @@ namespace AnalysisManagerBase
                 folderExtension = "." + folderExtension;
             }
 
-            bool validFolderFound;
-            string folderNotFoundMessage;
 
             var fileNameToFind = string.Empty;
             var folderExtensionWildcard = "*" + folderExtension;
@@ -329,8 +325,8 @@ namespace AnalysisManagerBase
                 logFolderNotFound: true,
                 retrievingInstrumentDataFolder: true,
                 assumeUnpurged: assumeUnpurged,
-                validFolderFound: out validFolderFound,
-                folderNotFoundMessage: out folderNotFoundMessage);
+                validFolderFound: out var validFolderFound,
+                folderNotFoundMessage: out var folderNotFoundMessage);
 
             if (serverPath.StartsWith(MYEMSL_PATH_FLAG))
             {
@@ -361,13 +357,11 @@ namespace AnalysisManagerBase
             // Data files are in a subfolder off of the main dataset folder
             // Files are renamed with dataset name because MASIC requires this. Other analysis types don't care
 
-            bool validFolderFound;
-            string folderNotFoundMessage;
 
             var serverPath = FindValidFolder(DatasetName, "", "*" + clsAnalysisResources.DOT_D_EXTENSION, maxAttempts,
                 logFolderNotFound: true, retrievingInstrumentDataFolder: false,
                 assumeUnpurged: assumeUnpurged,
-                validFolderFound: out validFolderFound, folderNotFoundMessage: out folderNotFoundMessage);
+                validFolderFound: out var validFolderFound, folderNotFoundMessage: out var folderNotFoundMessage);
 
             var diServerFolder = new DirectoryInfo(serverPath);
 
@@ -398,13 +392,11 @@ namespace AnalysisManagerBase
 
             // First Check for the existence of a 0.ser Folder
             var FileNameToFind = string.Empty;
-            bool validFolderFound;
-            string folderNotFoundMessage;
 
             var DSFolderPath = FindValidFolder(DatasetName, FileNameToFind, clsAnalysisResources.BRUKER_ZERO_SER_FOLDER, clsFolderSearch.DEFAULT_MAX_RETRY_COUNT,
                 logFolderNotFound: true, retrievingInstrumentDataFolder: true,
                 assumeUnpurged: assumeUnpurged,
-                validFolderFound: out validFolderFound, folderNotFoundMessage: out folderNotFoundMessage);
+                validFolderFound: out var validFolderFound, folderNotFoundMessage: out var folderNotFoundMessage);
 
             if (!string.IsNullOrEmpty(DSFolderPath))
             {
@@ -452,13 +444,11 @@ namespace AnalysisManagerBase
         {
 
             const string folderNameToFind = "";
-            bool validFolderFound;
-            string folderNotFoundMessage;
 
             return FindValidFolder(dsName, fileNameToFind, folderNameToFind, DEFAULT_MAX_RETRY_COUNT,
                 logFolderNotFound: true, retrievingInstrumentDataFolder: RetrievingInstrumentDataFolder,
                 assumeUnpurged: assumeUnpurged,
-                validFolderFound: out validFolderFound, folderNotFoundMessage: out folderNotFoundMessage);
+                validFolderFound: out var validFolderFound, folderNotFoundMessage: out var folderNotFoundMessage);
 
         }
 
@@ -536,12 +526,10 @@ namespace AnalysisManagerBase
             int maxRetryCount, bool logFolderNotFound, bool retrievingInstrumentDataFolder)
         {
 
-            bool validFolderFound;
-            string folderNotFoundMessage;
 
             return FindValidFolder(dsName, fileNameToFind, folderNameToFind, maxRetryCount, logFolderNotFound, retrievingInstrumentDataFolder,
                 assumeUnpurged: false,
-                validFolderFound: out validFolderFound, folderNotFoundMessage: out folderNotFoundMessage);
+                validFolderFound: out var validFolderFound, folderNotFoundMessage: out var folderNotFoundMessage);
 
         }
 

@@ -416,9 +416,8 @@ namespace AnalysisManagerProg
             const string strConnectionString = "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI;";
             const short RetryCount = 2;
 
-            DataTable Dt;
 
-            var blnSuccess = clsGlobal.GetDataTableByQuery(strSql, strConnectionString, "ProcessDtaRefineryLogFiles", RetryCount, out Dt);
+            var blnSuccess = clsGlobal.GetDataTableByQuery(strSql, strConnectionString, "ProcessDtaRefineryLogFiles", RetryCount, out var Dt);
 
             if (!blnSuccess)
             {
@@ -504,10 +503,8 @@ namespace AnalysisManagerProg
         /// </summary>
         public void TestArchiveFailedResults()
         {
-            clsAnalysisJob objJobParams;
-            clsMyEMSLUtilities myEMSLUtilities;
 
-            var objToolRunner = GetCodeTestToolRunner(out objJobParams, out myEMSLUtilities);
+            var objToolRunner = GetCodeTestToolRunner(out var objJobParams, out var myEMSLUtilities);
 
             if (string.IsNullOrWhiteSpace(m_mgrParams.GetParam(clsAnalysisMgrSettings.MGR_PARAM_FAILED_RESULTS_FOLDER_PATH)))
             {
@@ -891,10 +888,8 @@ namespace AnalysisManagerProg
         {
             var OutFileName = "MyTestDataset_out.txt";
 
-            clsAnalysisJob objJobParams;
-            clsMyEMSLUtilities myEMSLUtilities;
 
-            var objToolRunner = GetCodeTestToolRunner(out objJobParams, out myEMSLUtilities);
+            var objToolRunner = GetCodeTestToolRunner(out var objJobParams, out var myEMSLUtilities);
 
             objJobParams.AddResultFileToSkip(OutFileName);
 
@@ -907,10 +902,8 @@ namespace AnalysisManagerProg
         public void TestDeliverResults()
         {
 
-            clsAnalysisJob objJobParams;
-            clsMyEMSLUtilities myEMSLUtilities;
 
-            var objToolRunner = GetCodeTestToolRunner(out objJobParams, out myEMSLUtilities);
+            var objToolRunner = GetCodeTestToolRunner(out var objJobParams, out var myEMSLUtilities);
 
             objJobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "OutputFolderName", "Test_Results_" + DateTime.Now.ToString("hh_mm_ss"));
             objJobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "transferFolderPath", @"\\proto-3\DMS3_XFER");
@@ -957,10 +950,8 @@ namespace AnalysisManagerProg
                 dllFile64Bit = @"C:\Windows\System32\wer.dll";
             }
 
-            clsAnalysisJob objJobParams;
-            clsMyEMSLUtilities myEMSLUtilities;
 
-            var objToolRunner = GetCodeTestToolRunner(out objJobParams, out myEMSLUtilities);
+            var objToolRunner = GetCodeTestToolRunner(out var objJobParams, out var myEMSLUtilities);
 
             var toolVersionInfo = string.Empty;
 
@@ -980,10 +971,8 @@ namespace AnalysisManagerProg
 
             clsLogTools.CreateFileLogger(logFileNameBase);
 
-            clsAnalysisJob objJobParams;
-            clsMyEMSLUtilities myEMSLUtilities;
 
-            var objToolRunner = GetCodeTestToolRunner(out objJobParams, out myEMSLUtilities);
+            var objToolRunner = GetCodeTestToolRunner(out var objJobParams, out var myEMSLUtilities);
 
             m_DebugLevel = 2;
             objJobParams.DebugLevel = m_DebugLevel;
@@ -1062,8 +1051,7 @@ namespace AnalysisManagerProg
 
             if (proteinCollectionInfo.UsingSplitFasta)
             {
-                string errorMessage;
-                legacyFastaName = clsAnalysisResources.GetSplitFastaFileName(objJobParams, out errorMessage);
+                legacyFastaName = clsAnalysisResources.GetSplitFastaFileName(objJobParams, out var errorMessage);
             }
             else
             {
@@ -1084,9 +1072,8 @@ namespace AnalysisManagerProg
             const string callingFunction = "TestRunQuery";
             const short retryCount = 2;
             const int timeoutSeconds = 30;
-            DataTable dtResults;
 
-            clsGlobal.GetDataTableByQuery(sqlStr, connectionString, callingFunction, retryCount, out dtResults, timeoutSeconds);
+            clsGlobal.GetDataTableByQuery(sqlStr, connectionString, callingFunction, retryCount, out var dtResults, timeoutSeconds);
 
             foreach (DataRow row in dtResults.Rows)
             {
@@ -1113,9 +1100,8 @@ namespace AnalysisManagerProg
             const string callingFunction = "TestRunSP";
             const short retryCount = 2;
             const int timeoutSeconds = 30;
-            DataTable dtResults;
 
-            clsGlobal.GetDataTableByCmd(cmd, connectionString, callingFunction, retryCount, out dtResults, timeoutSeconds);
+            clsGlobal.GetDataTableByCmd(cmd, connectionString, callingFunction, retryCount, out var dtResults, timeoutSeconds);
 
             foreach (DataRow row in dtResults.Rows)
             {
@@ -1149,10 +1135,8 @@ namespace AnalysisManagerProg
         /// </summary>
         public void TestGZip()
         {
-            clsAnalysisJob objJobParams;
-            clsMyEMSLUtilities myEMSLUtilities;
 
-            var objToolRunner = GetCodeTestToolRunner(out objJobParams, out myEMSLUtilities);
+            var objToolRunner = GetCodeTestToolRunner(out var objJobParams, out var myEMSLUtilities);
 
             const string sourceFilePath = @"F:\Temp\ZipTest\QExact01\UDD-1_27Feb13_Gimli_12-07-03_HCD.mgf";
 
@@ -1189,10 +1173,8 @@ namespace AnalysisManagerProg
         /// <remarks>This uses ionic zip</remarks>
         public void TestZip()
         {
-            clsAnalysisJob objJobParams;
-            clsMyEMSLUtilities myEMSLUtilities;
 
-            var objToolRunner = GetCodeTestToolRunner(out objJobParams, out myEMSLUtilities);
+            var objToolRunner = GetCodeTestToolRunner(out var objJobParams, out var myEMSLUtilities);
 
             const string sourceFilePath = @"F:\Temp\ZipTest\QExact01\UDD-1_27Feb13_Gimli_12-07-03_HCD.mgf";
 
@@ -1244,10 +1226,8 @@ namespace AnalysisManagerProg
                 strSourceDatasetFolder = @"\\Proto-10\9T_FTICR_Imaging\2010_4\ratjoint071110_INCAS_MS";
             }
 
-            clsAnalysisJob objJobParams;
-            clsMyEMSLUtilities myEMSLUtilities;
 
-            var objToolRunner = GetCodeTestToolRunner(out objJobParams, out myEMSLUtilities);
+            var objToolRunner = GetCodeTestToolRunner(out var objJobParams, out var myEMSLUtilities);
 
             m_mgrParams.SetParam("ChameleonCachedDataFolder", @"H:\9T_Imaging");
 
@@ -1495,10 +1475,8 @@ namespace AnalysisManagerProg
         /// </summary>
         public void TestMSXmlCachePurge()
         {
-            clsAnalysisJob objJobParams;
-            clsMyEMSLUtilities myEMSLUtilities;
 
-            var objToolRunner = GetCodeTestToolRunner(out objJobParams, out myEMSLUtilities);
+            var objToolRunner = GetCodeTestToolRunner(out var objJobParams, out var myEMSLUtilities);
 
             const string cacheFolderPath = @"\\proto-2\past\PurgeTest";
 
@@ -1612,10 +1590,8 @@ namespace AnalysisManagerProg
         /// </summary>
         public void TestGetVersionInfo()
         {
-            clsAnalysisJob objJobParams;
-            clsMyEMSLUtilities myEMSLUtilities;
 
-            var objToolRunner = GetCodeTestToolRunner(out objJobParams, out myEMSLUtilities);
+            var objToolRunner = GetCodeTestToolRunner(out var objJobParams, out var myEMSLUtilities);
 
             var pathToTestx86 = @"F:\My Documents\Projects\DataMining\DMS_Programs\DLLVersionInspector\bin\32bit_Dll_Examples\UIMFLibrary.dll";
             var pathToTestx64 = @"F:\My Documents\Projects\DataMining\DMS_Programs\DLLVersionInspector\bin\64bit_Dll_Examples\UIMFLibrary.dll";

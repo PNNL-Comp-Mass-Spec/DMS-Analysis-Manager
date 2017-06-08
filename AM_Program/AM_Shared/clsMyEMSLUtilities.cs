@@ -114,8 +114,7 @@ namespace AnalysisManagerBase
         public static string AddFileToMyEMSLFolderPath(string myEmslFolderPath, string fileName)
         {
 
-            string folderPathClean;
-            var myEMSLFileID = DatasetInfoBase.ExtractMyEMSLFileID(myEmslFolderPath, out folderPathClean);
+            var myEMSLFileID = DatasetInfoBase.ExtractMyEMSLFileID(myEmslFolderPath, out var folderPathClean);
 
             var filePath = Path.Combine(folderPathClean, fileName);
 
@@ -163,9 +162,8 @@ namespace AnalysisManagerBase
 
             if (myEMSLFileID > 0)
             {
-                ArchivedFileInfo matchingFileInfo;
 
-                if (!GetCachedArchivedFileInfo(myEMSLFileID, out matchingFileInfo))
+                if (!GetCachedArchivedFileInfo(myEMSLFileID, out var matchingFileInfo))
                 {
                     // File not found in m_RecentlyFoundMyEMSLFiles
                     // Instead check m_AllFoundMyEMSLFiles

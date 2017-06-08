@@ -927,8 +927,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     // Verify that the file matches the .hashcheck value
                     var hashcheckFilePath = fiTrimmedFasta.FullName + clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX;
 
-                    string hashCheckError;
-                    if (clsGlobal.ValidateFileVsHashcheck(fiTrimmedFasta.FullName, hashcheckFilePath, out hashCheckError))
+                    if (clsGlobal.ValidateFileVsHashcheck(fiTrimmedFasta.FullName, hashcheckFilePath, out var hashCheckError))
                     {
                         // The trimmed fasta file is valid
                         OnStatusEvent("Using existing trimmed fasta: " + fiTrimmedFasta.Name);
@@ -1273,8 +1272,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 var decoyPrefixes = clsAnalysisResources.GetDefaultDecoyPrefixes();
                 foreach (var decoyPrefix in decoyPrefixes)
                 {
-                    int proteinCount;
-                    var fractionDecoy = clsAnalysisResources.GetDecoyFastaCompositionStats(fiFastaFile, decoyPrefix, out proteinCount);
+                    var fractionDecoy = clsAnalysisResources.GetDecoyFastaCompositionStats(fiFastaFile, decoyPrefix, out var proteinCount);
                     if (fractionDecoy >= 0.25)
                     {
                         fastaFileIsDecoy = true;
@@ -1294,8 +1292,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             {
                 var strTDASetting = GetSettingFromMSGFDbParamFile(strMSGFDBParameterFilePath, "TDA");
 
-                int tdaValue;
-                if (!int.TryParse(strTDASetting, out tdaValue))
+                if (!int.TryParse(strTDASetting, out var tdaValue))
                 {
                     OnErrorEvent("TDA value is not numeric: " + strTDASetting);
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -1466,9 +1463,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                         }
                         else if (intScanNumberColIndex >= 0)
                         {
-                            int intScanNumber;
 
-                            if (!int.TryParse(lstColumns[intScanNumberColIndex], out intScanNumber))
+                            if (!int.TryParse(lstColumns[intScanNumberColIndex], out var intScanNumber))
                                 continue;
 
                             if (intScanTypeNameColIndex < 0)
@@ -1950,9 +1946,8 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                         foreach (var strCustomAADef in lstCustomAminoAcids)
                         {
-                            string strCustomAADefClean;
 
-                            if (ParseMSGFDbValidateMod(strCustomAADef, out strCustomAADefClean))
+                            if (ParseMSGFDbValidateMod(strCustomAADef, out var strCustomAADefClean))
                             {
                                 if (MisleadingModDef(strCustomAADefClean, "Custom AA", "custom", "opt"))
                                     return false;
@@ -1977,9 +1972,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                     {
                         foreach (var strStaticMod in lstStaticMods)
                         {
-                            string strModClean;
 
-                            if (ParseMSGFDbValidateMod(strStaticMod, out strModClean))
+                            if (ParseMSGFDbValidateMod(strStaticMod, out var strModClean))
                             {
                                 if (MisleadingModDef(strModClean, "Static mod", "fix", "opt"))
                                     return false;
@@ -2004,9 +1998,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                     {
                         foreach (var strDynamicMod in lstDynamicMods)
                         {
-                            string strModClean;
 
-                            if (ParseMSGFDbValidateMod(strDynamicMod, out strModClean))
+                            if (ParseMSGFDbValidateMod(strDynamicMod, out var strModClean))
                             {
                                 if (MisleadingModDef(strModClean, "Dynamic mod", "opt", "fix"))
                                     return false;
@@ -2076,7 +2069,6 @@ namespace AnalysisManagerMSGFDBPlugIn
             const int SMALL_FASTA_FILE_THRESHOLD_KB = 20;
 
             var intParamFileThreadCount = 0;
-            int intDMSDefinedThreadCount;
 
             var intNumMods = 0;
             var lstStaticMods = new List<string>();
@@ -2120,11 +2112,10 @@ namespace AnalysisManagerMSGFDBPlugIn
                         {
                             var strValue = kvSetting.Value;
 
-                            string strArgumentSwitch;
 
                             // Check whether kvSetting.key is one of the standard keys defined in dctParamNames
                             int intValue;
-                            if (dctParamNames.TryGetValue(kvSetting.Key, out strArgumentSwitch))
+                            if (dctParamNames.TryGetValue(kvSetting.Key, out var strArgumentSwitch))
                             {
                                 if (clsGlobal.IsMatch(kvSetting.Key, MSGFPLUS_OPTION_FRAGMENTATION_METHOD))
                                 {
@@ -2184,17 +2175,12 @@ namespace AnalysisManagerMSGFDBPlugIn
                                     }
                                     else if (!string.IsNullOrWhiteSpace(instrumentGroup))
                                     {
-                                        string instrumentIDNew;
-                                        string autoSwitchReason;
 
-                                        if (!CanDetermineInstIdFromInstGroup(instrumentGroup, out instrumentIDNew, out autoSwitchReason))
+                                        if (!CanDetermineInstIdFromInstGroup(instrumentGroup, out var instrumentIDNew, out var autoSwitchReason))
                                         {
                                             var datasetName = m_jobParams.GetParam("JobParameters", "DatasetNum");
-                                            int countLowResMSn;
-                                            int countHighResMSn;
-                                            int countHCDMSn;
 
-                                            if (LookupScanTypesForDataset(datasetName, out countLowResMSn, out countHighResMSn, out countHCDMSn))
+                                            if (LookupScanTypesForDataset(datasetName, out var countLowResMSn, out var countHighResMSn, out var countHCDMSn))
                                             {
                                                 ExamineScanTypes(countLowResMSn, countHighResMSn, countHCDMSn, out instrumentIDNew, out autoSwitchReason);
                                             }
@@ -2208,8 +2194,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                                 AdjustSwitchesForMSGFPlus(mMSGFPlus, ref strArgumentSwitch, ref strValue);
 
-                                string valueOverride;
-                                if (overrideParams.TryGetValue(strArgumentSwitch, out valueOverride))
+                                if (overrideParams.TryGetValue(strArgumentSwitch, out var valueOverride))
                                 {
                                     OnStatusEvent("Overriding switch " + strArgumentSwitch + " to use -" + strArgumentSwitch + " " + valueOverride +
                                                   " instead of -" + strArgumentSwitch + " " + strValue);
@@ -2387,7 +2372,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             // Define the thread count; note that MSGFDBThreads could be "all"
             var strDMSDefinedThreadCount = m_jobParams.GetJobParameter("MSGFDBThreads", string.Empty);
             if (string.IsNullOrWhiteSpace(strDMSDefinedThreadCount) || strDMSDefinedThreadCount.ToLower() == "all" ||
-                !int.TryParse(strDMSDefinedThreadCount, out intDMSDefinedThreadCount))
+                !int.TryParse(strDMSDefinedThreadCount, out var intDMSDefinedThreadCount))
             {
                 intDMSDefinedThreadCount = 0;
             }
@@ -2536,10 +2521,8 @@ namespace AnalysisManagerMSGFDBPlugIn
             if (string.IsNullOrEmpty(instrumentGroup))
                 instrumentGroup = "#Undefined#";
 
-            string instrumentIDNew;
-            string autoSwitchReason;
 
-            if (!CanDetermineInstIdFromInstGroup(instrumentGroup, out instrumentIDNew, out autoSwitchReason))
+            if (!CanDetermineInstIdFromInstGroup(instrumentGroup, out var instrumentIDNew, out var autoSwitchReason))
             {
                 // Instrument ID is not obvious from the instrument group
                 // Examine the scan types in scanTypeFilePath
@@ -2551,12 +2534,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // Count the number of High res CID or ETD spectra
                 // Count HCD spectra separately since MS-GF+ has a special scoring model for HCD spectra
 
-                Dictionary<int, string> lstLowResMSn;
-                Dictionary<int, string> lstHighResMSn;
-                Dictionary<int, string> lstHCDMSn;
-                Dictionary<int, string> lstOther;
 
-                var blnSuccess = LoadScanTypeFile(scanTypeFilePath, out lstLowResMSn, out lstHighResMSn, out lstHCDMSn, out lstOther);
+                var blnSuccess = LoadScanTypeFile(scanTypeFilePath, out var lstLowResMSn, out var lstHighResMSn, out var lstHCDMSn, out var lstOther);
 
                 if (!blnSuccess)
                 {
@@ -2657,11 +2636,10 @@ namespace AnalysisManagerMSGFDBPlugIn
                 sqlStr.Append(" FROM V_Dataset_ScanType_CrossTab");
                 sqlStr.Append(" WHERE Dataset = '" + datasetName + "'");
 
-                DataTable dtResults;
                 const int retryCount = 2;
 
                 //Get a table to hold the results of the query
-                var blnSuccess = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), connectionString, "LookupScanTypesForDataset", retryCount, out dtResults);
+                var blnSuccess = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), connectionString, "LookupScanTypesForDataset", retryCount, out var dtResults);
 
                 if (!blnSuccess)
                 {

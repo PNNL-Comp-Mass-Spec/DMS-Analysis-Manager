@@ -315,10 +315,8 @@ namespace AnalysisManagerBase
                                     // Remove the leading and trailing characters, then extract the scan and charge
                                     var strDTAHeader = strLineIn.Trim('=', ' ', '"');
 
-                                    int intScanNumberEnd;
-                                    int intScanCount;
 
-                                    objReader.ExtractScanInfoFromDtaHeader(strDTAHeader, out intScanNumberStart, out intScanNumberEnd, out intScanCount, out intCharge);
+                                    objReader.ExtractScanInfoFromDtaHeader(strDTAHeader, out intScanNumberStart, out var intScanNumberEnd, out var intScanCount, out intCharge);
 
                                     blnParentIonLineIsNext = true;
 

@@ -376,8 +376,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (lstColumnIndicesToCheck.Count == 0)
                 {
-                    float sngValue;
-                    if (float.TryParse(headerColumns[0], out sngValue) || float.TryParse(headerColumns[1], out sngValue))
+                    if (float.TryParse(headerColumns[0], out var sngValue) || float.TryParse(headerColumns[1], out sngValue))
                     {
                         // This file does not have a header line
                         if (headerColumns.Count >= 11)
@@ -463,7 +462,6 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 // Parse the scan headers to look for ScanTypeName
 
-                float sngValue;
                 var lstColumns = headerLine.Split('\t').ToList();
 
                 if (lstColumns.Contains("ScanTypeName"))
@@ -471,7 +469,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return true;
                 }
 
-                if (!float.TryParse(lstColumns[0], out sngValue) && !float.TryParse(lstColumns[1], out sngValue))
+                if (!float.TryParse(lstColumns[0], out var sngValue) && !float.TryParse(lstColumns[1], out sngValue))
                     return false;
 
                 // This file does not have a header line

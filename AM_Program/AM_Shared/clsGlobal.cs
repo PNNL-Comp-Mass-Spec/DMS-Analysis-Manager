@@ -511,9 +511,8 @@ namespace AnalysisManagerBase
             int timeoutSeconds = 5)
         {
 
-            List<List<string>> lstResultTable;
 
-            var success = GetQueryResults(sqlQuery, connectionString, out lstResultTable, callingFunction, retryCount, timeoutSeconds, maxRowsToReturn: 1);
+            var success = GetQueryResults(sqlQuery, connectionString, out var lstResultTable, callingFunction, retryCount, timeoutSeconds, maxRowsToReturn: 1);
 
             if (success)
             {
@@ -723,9 +722,8 @@ namespace AnalysisManagerBase
         /// <remarks>Returns false if an exception</remarks>
         public static bool CBoolSafe(string value)
         {
-            bool blnValue;
 
-            if (bool.TryParse(value, out blnValue))
+            if (bool.TryParse(value, out var blnValue))
                 return blnValue;
 
             return false;
@@ -741,9 +739,8 @@ namespace AnalysisManagerBase
         /// <remarks>Returns false if an exception</remarks>
         public static bool CBoolSafe(string value, bool defaultValue)
         {
-            bool blnValue;
 
-            if (bool.TryParse(value, out blnValue))
+            if (bool.TryParse(value, out var blnValue))
                 return blnValue;
 
             return defaultValue;
@@ -759,9 +756,8 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public static int CIntSafe(string value, int defaultValue)
         {
-            int intValue;
 
-            if (int.TryParse(value, out intValue))
+            if (int.TryParse(value, out var intValue))
                 return intValue;
 
             return defaultValue;
@@ -777,9 +773,8 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public static float CSngSafe(string value, float defaultValue)
         {
-            float sngValue;
 
-            if (float.TryParse(value, out sngValue))
+            if (float.TryParse(value, out var sngValue))
                 return sngValue;
 
             return defaultValue;
@@ -1919,11 +1914,8 @@ namespace AnalysisManagerBase
             if (diDirectory.Root.FullName.StartsWith(@"\\") || !diDirectory.Root.FullName.Contains(":"))
             {
                 // Directory path is a remote share; use GetDiskFreeSpaceEx in Kernel32.dll
-                long freeBytesAvailableToUser;
-                long lngTotalNumberOfBytes;
-                long totalNumberOfFreeBytes;
 
-                if (PRISMWin.clsDiskInfo.GetDiskFreeSpace(diDirectory.FullName, out freeBytesAvailableToUser, out lngTotalNumberOfBytes, out totalNumberOfFreeBytes))
+                if (PRISMWin.clsDiskInfo.GetDiskFreeSpace(diDirectory.FullName, out var freeBytesAvailableToUser, out var lngTotalNumberOfBytes, out var totalNumberOfFreeBytes))
                 {
                     freeSpaceMB = BytesToMB(totalNumberOfFreeBytes);
                 }

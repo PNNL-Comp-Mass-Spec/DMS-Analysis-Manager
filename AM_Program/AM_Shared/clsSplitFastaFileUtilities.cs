@@ -228,9 +228,8 @@ namespace AnalysisManagerBase
             SqlStr.Append(" FROM V_Legacy_Static_File_Locations");
             SqlStr.Append(" WHERE FileName = '" + legacyFASTAFileName + "'");
 
-            DataTable dtResults;
 
-            var blnSuccess = clsGlobal.GetDataTableByQuery(SqlStr.ToString(), mProteinSeqsDBConnectionString, "GetLegacyFastaFilePath", retryCount, out dtResults);
+            var blnSuccess = clsGlobal.GetDataTableByQuery(SqlStr.ToString(), mProteinSeqsDBConnectionString, "GetLegacyFastaFilePath", retryCount, out var dtResults);
 
             if (!blnSuccess)
             {
@@ -414,11 +413,9 @@ namespace AnalysisManagerBase
 
             try
             {
-                string organismName;
-                string organismNameBaseFasta;
 
                 strCurrentTask = "GetLegacyFastaFilePath for splitFastaName";
-                var fastaFilePath = GetLegacyFastaFilePath(splitFastaName, out organismName);
+                var fastaFilePath = GetLegacyFastaFilePath(splitFastaName, out var organismName);
 
                 if (!string.IsNullOrWhiteSpace(fastaFilePath))
                 {
@@ -430,7 +427,7 @@ namespace AnalysisManagerBase
                 // Split file not found
                 // Query DMS for the location of baseFastaName
                 strCurrentTask = "GetLegacyFastaFilePath for baseFastaName";
-                var baseFastaFilePath = GetLegacyFastaFilePath(baseFastaName, out organismNameBaseFasta);
+                var baseFastaFilePath = GetLegacyFastaFilePath(baseFastaName, out var organismNameBaseFasta);
                 if (string.IsNullOrWhiteSpace(baseFastaFilePath))
                 {
                     // Base file not found
@@ -449,9 +446,8 @@ namespace AnalysisManagerBase
                 }
 
                 // Try to create a lock file
-                string lockFilePath;
                 strCurrentTask = "CreateLockStream";
-                var lockStream = CreateLockStream(fiBaseFastaFile, out lockFilePath);
+                var lockStream = CreateLockStream(fiBaseFastaFile, out var lockFilePath);
 
                 if (lockStream == null)
                 {

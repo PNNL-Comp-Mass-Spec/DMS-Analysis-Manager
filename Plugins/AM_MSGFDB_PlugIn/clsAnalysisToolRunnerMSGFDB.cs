@@ -82,11 +82,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
 
                 // Run MSGF+ (includes indexing the fasta file)
-                FileInfo fiMSGFPlusResults;
-                bool processingError;
 
-                bool tooManySkippedSpectra;
-                var processingResult = RunMSGFPlus(javaProgLoc, out fiMSGFPlusResults, out processingError, out tooManySkippedSpectra);
+                var processingResult = RunMSGFPlus(javaProgLoc, out var fiMSGFPlusResults, out var processingError, out var tooManySkippedSpectra);
                 if (processingResult != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     if (string.IsNullOrEmpty(m_message))
@@ -242,11 +239,8 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             mMSGFPlusComplete = false;
 
-            eInputFileFormatTypes eInputFileFormat;
-            string strScanTypeFilePath;
-            string strAssumedScanType;
 
-            var result = DetermineAssumedScanType(out strAssumedScanType, out eInputFileFormat, out strScanTypeFilePath);
+            var result = DetermineAssumedScanType(out var strAssumedScanType, out var eInputFileFormat, out var strScanTypeFilePath);
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 // Immediately exit the plugin; results and console output files will not be saved
@@ -265,11 +259,8 @@ namespace AnalysisManagerMSGFDBPlugIn
             var javaExePath = string.Copy(javaProgLoc);
             var msgfdbJarFilePath = string.Copy(mMSGFDbProgLoc);
 
-            string fastaFilePath;
-            float fastaFileSizeKB;
-            bool fastaFileIsDecoy;
 
-            result = mMSGFDBUtils.InitializeFastaFile(javaExePath, msgfdbJarFilePath, out fastaFileSizeKB, out fastaFileIsDecoy, out fastaFilePath,
+            result = mMSGFDBUtils.InitializeFastaFile(javaExePath, msgfdbJarFilePath, out var fastaFileSizeKB, out var fastaFileIsDecoy, out var fastaFilePath,
                                                       strParameterFilePath);
 
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
@@ -281,10 +272,9 @@ namespace AnalysisManagerMSGFDBPlugIn
             var strInstrumentGroup = m_jobParams.GetJobParameter("JobParameters", "InstrumentGroup", string.Empty);
 
             // Read the MSGFDB Parameter File
-            string strMSGFDbCmdLineOptions;
 
             result = mMSGFDBUtils.ParseMSGFPlusParameterFile(fastaFileSizeKB, fastaFileIsDecoy, strAssumedScanType, strScanTypeFilePath,
-                                                             strInstrumentGroup, strParameterFilePath, out strMSGFDbCmdLineOptions);
+                                                             strInstrumentGroup, strParameterFilePath, out var strMSGFDbCmdLineOptions);
 
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {

@@ -291,8 +291,7 @@ namespace AnalysisManagerProg
                 if (objParseCommandLine.IsParameterPresent("DLL"))
                 {
                     mDisplayDllVersions = true;
-                    string strValue;
-                    if (objParseCommandLine.RetrieveValueForParameter("DLL", out strValue))
+                    if (objParseCommandLine.RetrieveValueForParameter("DLL", out var strValue))
                     {
                         if (!string.IsNullOrWhiteSpace(strValue))
                         {

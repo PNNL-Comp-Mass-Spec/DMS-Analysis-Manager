@@ -121,8 +121,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                         // Parse out the values
 
-                        var scanNumber = 0;
-                        if (TryGetValueInt(dataColumns, scanNumberColIndex, out scanNumber))
+                        if (TryGetValueInt(dataColumns, scanNumberColIndex, out var scanNumber))
                         {
                             var strCollisionMode = string.Empty;
                             var storeData = false;
@@ -273,12 +272,10 @@ namespace AnalysisManagerMSGFDBPlugIn
                                 scanStatsExLoaded = true;
                             }
 
-                            var scanNumber = 0;
-                            var scanType = 0;
-                            if (!TryGetValueInt(dataColumns, scanNumberColIndex, out scanNumber))
+                            if (!TryGetValueInt(dataColumns, scanNumberColIndex, out var scanNumber))
                                 continue;
 
-                            if (!TryGetValueInt(dataColumns, scanTypeColIndex, out scanType))
+                            if (!TryGetValueInt(dataColumns, scanTypeColIndex, out var scanType))
                                 continue;
 
                             var scanTypeName = string.Empty;
@@ -291,8 +288,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                                 TryGetValueStr(dataColumns, scanTypeNameColIndex, out scanTypeName);
                             }
 
-                            float scanTime = 0;
-                            TryGetValueSng(dataColumns, scanTimeColIndex, out scanTime);
+                            TryGetValueSng(dataColumns, scanTimeColIndex, out var scanTime);
 
                             swOutFile.WriteLine(scanNumber + "\t" + scanTypeName + "\t" + scanType + "\t" + scanTime.ToString("0.0000"));
 
@@ -318,8 +314,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <returns></returns>
         private bool FirstColumnIsInteger(string[] dataColumns)
         {
-            var dataValue = 0;
-            return int.TryParse(dataColumns[0], out dataValue);
+            return int.TryParse(dataColumns[0], out var dataValue);
         }
 
         /// <summary>

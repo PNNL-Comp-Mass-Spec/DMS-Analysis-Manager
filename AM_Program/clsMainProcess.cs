@@ -509,8 +509,7 @@ namespace AnalysisManagerProg
                     // Check whether the computer is likely to install the monthly Windows Updates within the next few hours
                     // Do not request a job between 12 am and 6 am on Thursday in the week with the second Tuesday of the month
                     // Do not request a job between 2 am and 4 am or between 9 am and 11 am on Sunday in the week with the second Tuesday of the month
-                    string pendingWindowsUpdateMessage;
-                    if (clsWindowsUpdateStatus.UpdatesArePending(out pendingWindowsUpdateMessage))
+                    if (clsWindowsUpdateStatus.UpdatesArePending(out var pendingWindowsUpdateMessage))
                     {
                         LogMessage(pendingWindowsUpdateMessage);
                         UpdateStatusIdle(pendingWindowsUpdateMessage);
@@ -1415,8 +1414,7 @@ namespace AnalysisManagerProg
                     var strErrorMessageClean = qErrorMsgQueue.Dequeue();
 
                     // Find the newest timestamp for this message
-                    DateTime timeStamp;
-                    if (!uniqueErrorMessages.TryGetValue(strErrorMessageClean, out timeStamp))
+                    if (!uniqueErrorMessages.TryGetValue(strErrorMessageClean, out var timeStamp))
                     {
                         // This code should not be reached
                         timeStamp = DateTime.MinValue;
@@ -1486,8 +1484,7 @@ namespace AnalysisManagerProg
             }
 
             // Check whether strErrorMessageClean is in the hash table
-            DateTime existingTimeStamp;
-            if (uniqueErrorMessages.TryGetValue(strErrorMessageClean, out existingTimeStamp))
+            if (uniqueErrorMessages.TryGetValue(strErrorMessageClean, out var existingTimeStamp))
             {
                 // The error message is present
                 // Update the timestamp associated with strErrorMessageClean if the time stamp is newer than the stored one
@@ -1530,8 +1527,7 @@ namespace AnalysisManagerProg
                 var strQueuedError = qErrorMsgQueue.Peek();
 
                 // Get the timestamp associated with strQueuedError, as tracked by the hashtable
-                DateTime queuedTimeStamp;
-                if (!uniqueErrorMessages.TryGetValue(strQueuedError, out queuedTimeStamp))
+                if (!uniqueErrorMessages.TryGetValue(strQueuedError, out var queuedTimeStamp))
                 {
                     // The error message is not in the hashtable; this is unexpected
                 }
@@ -2000,13 +1996,11 @@ namespace AnalysisManagerProg
                     var timeStampText = lineParts[0];
                     var message = lineParts[1];
 
-                    DateTime timeStamp;
-                    if (DateTime.TryParse(timeStampText, out timeStamp))
+                    if (DateTime.TryParse(timeStampText, out var timeStamp))
                     {
                         // Valid message; store it
 
-                        DateTime cachedTimeStamp;
-                        if (cachedMessages.TryGetValue(message, out cachedTimeStamp))
+                        if (cachedMessages.TryGetValue(message, out var cachedTimeStamp))
                         {
                             if (timeStamp > cachedTimeStamp)
                             {
@@ -2044,8 +2038,7 @@ namespace AnalysisManagerProg
                     cachedMessages = new Dictionary<string, DateTime>();
                 }
 
-                DateTime timeStamp;
-                if (cachedMessages.TryGetValue(errorMessage, out timeStamp))
+                if (cachedMessages.TryGetValue(errorMessage, out var timeStamp))
                 {
                     if (DateTime.UtcNow.Subtract(timeStamp).TotalHours < logIntervalHours)
                     {

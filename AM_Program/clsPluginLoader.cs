@@ -207,11 +207,9 @@ namespace AnalysisManagerProg
         {
             var xpath = "//ToolRunners/ToolRunner[@Tool='" + toolName.ToLower() + "']";
 
-            string className;
-            string assyName;
             IToolRunner myToolRunner = null;
 
-            if (GetPluginInfo(xpath, out className, out assyName))
+            if (GetPluginInfo(xpath, out var className, out var assyName))
             {
 #if PLUGIN_DEBUG_MODE_ENABLED
                 myToolRunner = DebugModeGetToolRunner(className);
@@ -248,11 +246,9 @@ namespace AnalysisManagerProg
         public IAnalysisResources GetAnalysisResources(string toolName)
         {
             var xpath = "//Resourcers/Resourcer[@Tool='" + toolName + "']";
-            string className;
-            string assyName;
             IAnalysisResources myModule = null;
 
-            if (GetPluginInfo(xpath, out className, out assyName))
+            if (GetPluginInfo(xpath, out var className, out var assyName))
             {
 #if PLUGIN_DEBUG_MODE_ENABLED
                 myModule = DebugModeGetAnalysisResources(className);

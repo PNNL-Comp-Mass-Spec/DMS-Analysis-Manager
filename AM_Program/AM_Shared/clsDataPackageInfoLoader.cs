@@ -78,10 +78,9 @@ namespace AnalysisManagerBase
             sqlStr.Append(" WHERE Data_Package_ID = " + dataPackageID);
             sqlStr.Append(" ORDER BY Dataset");
 
-            DataTable resultSet;
 
             // Get a table to hold the results of the query
-            var success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), connectionString, "LoadDataPackageDatasetInfo", RETRY_COUNT, out resultSet);
+            var success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), connectionString, "LoadDataPackageDatasetInfo", RETRY_COUNT, out var resultSet);
 
             if (!success)
             {
@@ -162,10 +161,9 @@ namespace AnalysisManagerBase
             sqlStr.Append(" WHERE Data_Package_ID = " + DataPackageID);
             sqlStr.Append(" ORDER BY Dataset, Tool");
 
-            DataTable resultSet;
 
             // Get a table to hold the results of the query
-            var success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), ConnectionString, "LoadDataPackageJobInfo", RETRY_COUNT, out resultSet);
+            var success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), ConnectionString, "LoadDataPackageJobInfo", RETRY_COUNT, out var resultSet);
 
             if (!success)
             {
@@ -445,8 +443,7 @@ namespace AnalysisManagerBase
         protected List<clsDataPackageJobInfo> RetrieveDataPackagePeptideHitJobInfo()
         {
 
-            List<clsDataPackageJobInfo> lstAdditionalJobs;
-            return RetrieveDataPackagePeptideHitJobInfo(out lstAdditionalJobs);
+            return RetrieveDataPackagePeptideHitJobInfo(out var lstAdditionalJobs);
 
         }
 
@@ -469,8 +466,7 @@ namespace AnalysisManagerBase
                 return new List<clsDataPackageJobInfo>();
             }
 
-            string errorMsg;
-            var lstDataPackagePeptideHitJobs = RetrieveDataPackagePeptideHitJobInfo(connectionString, mDataPackageID, out lstAdditionalJobs, out errorMsg);
+            var lstDataPackagePeptideHitJobs = RetrieveDataPackagePeptideHitJobInfo(connectionString, mDataPackageID, out lstAdditionalJobs, out var errorMsg);
 
             if (!string.IsNullOrWhiteSpace(errorMsg))
             {
@@ -494,8 +490,7 @@ namespace AnalysisManagerBase
             out string errorMsg)
         {
 
-            List<clsDataPackageJobInfo> lstAdditionalJobs;
-            return RetrieveDataPackagePeptideHitJobInfo(connectionString, dataPackageID, out lstAdditionalJobs, out errorMsg);
+            return RetrieveDataPackagePeptideHitJobInfo(connectionString, dataPackageID, out var lstAdditionalJobs, out errorMsg);
 
         }
 
@@ -584,20 +579,17 @@ namespace AnalysisManagerBase
 
                         foreach (var dataPkgJob in splitFastaJobs)
                         {
-                            Dictionary<string, string> dataPkgJobParameters;
 
-                            var success = LookupJobParametersFromHistory(brokerConnection, dataPkgJob.Job, out dataPkgJobParameters, out errorMsg);
+                            var success = LookupJobParametersFromHistory(brokerConnection, dataPkgJob.Job, out var dataPkgJobParameters, out errorMsg);
 
                             if (!success)
                             {
                                 return new List<clsDataPackageJobInfo>();
                             }
 
-                            string numberOfClonedSteps;
-                            if (dataPkgJobParameters.TryGetValue("NumberOfClonedSteps", out numberOfClonedSteps))
+                            if (dataPkgJobParameters.TryGetValue("NumberOfClonedSteps", out var numberOfClonedSteps))
                             {
-                                int clonedStepCount;
-                                if (int.TryParse(numberOfClonedSteps, out clonedStepCount))
+                                if (int.TryParse(numberOfClonedSteps, out var clonedStepCount))
                                     dataPkgJob.NumberOfClonedSteps = clonedStepCount;
                             }
 

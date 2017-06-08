@@ -103,8 +103,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                         if (lstData.Count >= 3)
                         {
                             // Add this file to the list of files to copy
-                            long intFileSizeBytes;
-                            if (long.TryParse(lstData[1], out intFileSizeBytes))
+                            if (long.TryParse(lstData[1], out var intFileSizeBytes))
                             {
                                 dctFilesToCopy.Add(lstData[0], intFileSizeBytes);
                                 fileSizeTotalKB += (long)(intFileSizeBytes / 1024.0);
@@ -169,11 +168,10 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                FileInfo fiRemoteLockFile2;
 
                 var blnRemoteLockFileCreated = CreateRemoteSuffixArrayLockFile(
                     fiFastaFile.Name, fiFastaFile.Directory.FullName,
-                    out fiRemoteLockFile2, intDebugLevel, sngMaxWaitTimeHours);
+                    out var fiRemoteLockFile2, intDebugLevel, sngMaxWaitTimeHours);
 
                 if (blnRemoteLockFileCreated)
                 {
@@ -230,12 +228,11 @@ namespace AnalysisManagerMSGFDBPlugIn
 
         private bool CopyIndexFilesToRemote(FileInfo fiFastaFile, string strRemoteIndexFolderPath, int intDebugLevel)
         {
-            string strErrorMessage;
             var strManager = GetPseudoManagerName();
             const bool createIndexFileForExistingFiles = false;
 
             var success = CopyIndexFilesToRemote(fiFastaFile, strRemoteIndexFolderPath, intDebugLevel, strManager, createIndexFileForExistingFiles,
-                                                 out strErrorMessage);
+                                                 out var strErrorMessage);
             if (!success)
             {
                 OnErrorEvent(strErrorMessage);
@@ -454,8 +451,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                                 {
                                     var strLine2 = srCannoFile.ReadLine();
 
-                                    int intLine1Value;
-                                    if (int.TryParse(strLine1, out intLine1Value))
+                                    if (int.TryParse(strLine1, out var intLine1Value))
                                     {
                                         if (strLine2 != null && char.IsLetter(strLine2[0]))
                                         {
@@ -479,12 +475,10 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (!blnReindexingRequired)
                 {
-                    string strExistingFiles;
-                    string strMissingFiles;
 
                     strCurrentTask = "Validating that expected files exist";
                     var lstExistingFiles = FindExistingSuffixArrayFiles(blnFastaFileIsDecoy, msgfPlus, strOutputNameBase, fiFastaFile.DirectoryName,
-                                                                        lstFilesToFind, out strExistingFiles, out strMissingFiles);
+                                                                        lstFilesToFind, out var strExistingFiles, out var strMissingFiles);
 
                     if (lstExistingFiles.Count < lstFilesToFind.Count)
                     {
@@ -533,11 +527,10 @@ namespace AnalysisManagerMSGFDBPlugIn
                     var strRemoteIndexFolderPath = DetermineRemoteMSGFPlusIndexFilesFolderPath(
                         fiFastaFile.Name, strMSGFPlusIndexFilesFolderPathBase, strMSGFPlusIndexFilesFolderPathLegacyDB);
 
-                    bool diskFreeSpaceBelowThreshold;
 
                     var blnCheckForLockFile = true;
                     eResult = CopyExistingIndexFilesFromRemote(fiFastaFile, blnUsingLegacyFasta, strRemoteIndexFolderPath, blnCheckForLockFile,
-                                                               intDebugLevel, sngMaxWaitTimeHours, out diskFreeSpaceBelowThreshold);
+                                                               intDebugLevel, sngMaxWaitTimeHours, out var diskFreeSpaceBelowThreshold);
 
                     if (diskFreeSpaceBelowThreshold)
                     {
@@ -551,10 +544,9 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                         // Create a remote lock file
 
-                        FileInfo fiRemoteLockFile;
 
                         strCurrentTask = "Create the remote lock file";
-                        var blnRemoteLockFileCreated = CreateRemoteSuffixArrayLockFile(fiFastaFile.Name, strRemoteIndexFolderPath, out fiRemoteLockFile,
+                        var blnRemoteLockFileCreated = CreateRemoteSuffixArrayLockFile(fiFastaFile.Name, strRemoteIndexFolderPath, out var fiRemoteLockFile,
                                                                                         intDebugLevel, sngMaxWaitTimeHours);
 
                         if (blnRemoteLockFileCreated)
@@ -710,10 +702,8 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 var strOutputNameBase = Path.GetFileNameWithoutExtension(fiFastaFile.Name);
 
-                string existingFiles;
-                string missingfiles;
                 var lstExistingFiles = FindExistingSuffixArrayFiles(blnFastaFileIsDecoy, msgfPlus, strOutputNameBase, fiFastaFile.DirectoryName,
-                                                                    new List<string>(), out existingFiles, out missingfiles);
+                                    new List<string>(), out var existingFiles, out var missingfiles);
 
                 foreach (var fiIndexFileToDelete in lstExistingFiles)
                 {
@@ -915,9 +905,8 @@ namespace AnalysisManagerMSGFDBPlugIn
             var reMatch = reExtractNum.Match(strFastaFileName);
             if (reMatch.Success)
             {
-                int intGeneratedFastaFileNumber;
 
-                if (int.TryParse(reMatch.Groups[1].Value, out intGeneratedFastaFileNumber))
+                if (int.TryParse(reMatch.Groups[1].Value, out var intGeneratedFastaFileNumber))
                 {
                     // Round down to the nearest 1000
                     // Thus, 003949 will round to 3000
@@ -948,11 +937,9 @@ namespace AnalysisManagerMSGFDBPlugIn
         private List<FileInfo> FindExistingSuffixArrayFiles(bool blnFastaFileIsDecoy, bool msgfPlus, string strOutputNameBase,
                                                             string strFolderPathToSearch, ICollection<string> lstFilesToFind)
         {
-            string strExistingFiles;
-            string strMissingFiles;
 
             return FindExistingSuffixArrayFiles(blnFastaFileIsDecoy, msgfPlus, strOutputNameBase, strFolderPathToSearch, lstFilesToFind,
-                                                out strExistingFiles, out strMissingFiles);
+                                                out var strExistingFiles, out var strMissingFiles);
         }
 
         /// <summary>

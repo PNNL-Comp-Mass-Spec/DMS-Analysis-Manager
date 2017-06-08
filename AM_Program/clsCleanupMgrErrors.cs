@@ -266,9 +266,8 @@ namespace AnalysisManagerProg
             {
                 foreach (var fiFile in diWorkFolder.GetFiles())
                 {
-                    string errorMessage;
 
-                    if (!oFileTools.DeleteFileWithRetry(fiFile, DELETE_RETRY_COUNT, out errorMessage))
+                    if (!oFileTools.DeleteFileWithRetry(fiFile, DELETE_RETRY_COUNT, out var errorMessage))
                     {
                         LogError(errorMessage);
                         failedDeleteCount += 1;

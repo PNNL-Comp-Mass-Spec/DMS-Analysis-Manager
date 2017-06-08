@@ -128,8 +128,7 @@ namespace AnalysisManagerBase
                             var previousLine = string.Empty;
                             while (true)
                             {
-                                int scanNumber;
-                                var spectrumData = GetNextMGFSpectrum(srMgfFile, ref previousLine, ref bytesRead, out scanNumber);
+                                var spectrumData = GetNextMGFSpectrum(srMgfFile, ref previousLine, ref bytesRead, out var scanNumber);
                                 if (spectrumData.Count == 0)
                                 {
                                     break;

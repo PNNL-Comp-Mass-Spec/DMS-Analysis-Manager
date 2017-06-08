@@ -237,8 +237,7 @@ namespace AnalysisManagerBase
         /// <remarks>Logs an error if the file is not found</remarks>
         public bool FindAndRetrieveMiscFiles(string fileName, bool unzip, bool searchArchivedDatasetFolder)
         {
-            string sourceFolderPath;
-            return FindAndRetrieveMiscFiles(fileName, unzip, searchArchivedDatasetFolder, out sourceFolderPath);
+            return FindAndRetrieveMiscFiles(fileName, unzip, searchArchivedDatasetFolder, out var sourceFolderPath);
         }
 
         /// <summary>
@@ -252,8 +251,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public bool FindAndRetrieveMiscFiles(string fileName, bool unzip, bool searchArchivedDatasetFolder, bool logFileNotFound)
         {
-            string sourceFolderPath;
-            return FindAndRetrieveMiscFiles(fileName, unzip, searchArchivedDatasetFolder, out sourceFolderPath, logFileNotFound);
+            return FindAndRetrieveMiscFiles(fileName, unzip, searchArchivedDatasetFolder, out var sourceFolderPath, logFileNotFound);
         }
 
         /// <summary>
@@ -886,10 +884,9 @@ namespace AnalysisManagerBase
             var matchedFilePath = sortQuery.First().FullName;
 
             // Confirm that the file has a .hashcheck file and that the information in the .hashcheck file matches the file
-            string errorMessage;
             hashCheckFilePath = matchedFilePath + clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX;
 
-            if (clsGlobal.ValidateFileVsHashcheck(matchedFilePath, hashCheckFilePath, out errorMessage))
+            if (clsGlobal.ValidateFileVsHashcheck(matchedFilePath, hashCheckFilePath, out var errorMessage))
             {
                 return matchedFilePath;
             }
@@ -1415,10 +1412,9 @@ namespace AnalysisManagerBase
 
             if (!File.Exists(targetCDTAFilePath) && !File.Exists(targetZipFilePath))
             {
-                string strErrorMessage;
 
                 // Find the CDTA file
-                var sourceFilePath = FindCDTAFile(out strErrorMessage);
+                var sourceFilePath = FindCDTAFile(out var strErrorMessage);
 
                 if (string.IsNullOrEmpty(sourceFilePath))
                 {
@@ -1630,8 +1626,7 @@ namespace AnalysisManagerBase
         public bool RetrieveMZXmlFile(bool createStoragePathInfoOnly, out string sourceFilePath)
         {
 
-            string hashCheckFilePath;
-            sourceFilePath = FindMZXmlFile(out hashCheckFilePath);
+            sourceFilePath = FindMZXmlFile(out var hashCheckFilePath);
 
             if (string.IsNullOrEmpty(sourceFilePath))
             {
@@ -1700,7 +1695,6 @@ namespace AnalysisManagerBase
         {
 
             string strTargetFilePath;
-            string strErrorMessage;
             bool blnComputeHash;
 
             if (createStoragePathInfoOnly)
@@ -1715,7 +1709,7 @@ namespace AnalysisManagerBase
                 blnComputeHash = true;
             }
 
-            if (clsGlobal.ValidateFileVsHashcheck(strTargetFilePath, hashCheckFilePath, out strErrorMessage, blnCheckDate: true, blnComputeHash: blnComputeHash))
+            if (clsGlobal.ValidateFileVsHashcheck(strTargetFilePath, hashCheckFilePath, out var strErrorMessage, blnCheckDate: true, blnComputeHash: blnComputeHash))
             {
                 return true;
             }
@@ -2637,9 +2631,7 @@ namespace AnalysisManagerBase
             }
 
             // See if any imaging section filters are defined
-            int startSectionX;
-            int endSectionX;
-            var blnApplySectionFilter = GetBrukerImagingSectionFilter(m_jobParams, out startSectionX, out endSectionX);
+            var blnApplySectionFilter = GetBrukerImagingSectionFilter(m_jobParams, out var startSectionX, out var endSectionX);
 
             // Look for the dataset folder; it must contain .Zip files with names like 0_R00X442.zip
             // If a matching folder isn't found, then ServerPath will contain the folder path defined by Job Param "DatasetStoragePath"
@@ -2709,11 +2701,8 @@ namespace AnalysisManagerBase
                         unzipFile = false;
 
                         // Determine the R, X, and Y coordinates for this .Zip file
-                        int coordR;
-                        int coordX;
-                        int coordY;
 
-                        if (GetBrukerImagingFileCoords(zipFilePathRemote, reRegExRXY, reRegExRX, out coordR, out coordX, out coordY))
+                        if (GetBrukerImagingFileCoords(zipFilePathRemote, reRegExRXY, reRegExRX, out var coordR, out var coordX, out var coordY))
                         {
                             // Compare to startSectionX and endSectionX
                             if (coordX >= startSectionX && coordX <= endSectionX)

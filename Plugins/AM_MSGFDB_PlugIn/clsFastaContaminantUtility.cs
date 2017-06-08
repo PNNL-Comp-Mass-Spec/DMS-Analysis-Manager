@@ -58,8 +58,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
         public void WriteProteinToFasta(StreamWriter fastaWriter, string proteinName)
         {
-            KeyValuePair<string, string> kvDetails;
-            if (mProteins.TryGetValue(proteinName, out kvDetails))
+            if (mProteins.TryGetValue(proteinName, out var kvDetails))
             {
                 fastaWriter.WriteLine(">" + proteinName + " " + kvDetails.Key);
 
