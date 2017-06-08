@@ -131,9 +131,10 @@ namespace AnalysisManagerProg
             {
                 var strOutFilePath = Path.Combine(strFolderPath, strFileNameBase + intIndex + "_" + objRand.Next(1, 99) + ".txt");
 
-                var swOutFile = new StreamWriter(new FileStream(strOutFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
-                swOutFile.WriteLine(System.DateTime.Now.ToString(DATE_TIME_FORMAT) + " - This is a test file.");
-                swOutFile.Close();
+                using (var swOutFile = new StreamWriter(new FileStream(strOutFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                {
+                    swOutFile.WriteLine(System.DateTime.Now.ToString(DATE_TIME_FORMAT) + " - This is a test file.");
+                }
 
                 System.Threading.Thread.Sleep(50);
             }

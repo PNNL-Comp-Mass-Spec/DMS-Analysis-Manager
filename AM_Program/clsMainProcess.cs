@@ -1328,47 +1328,49 @@ namespace AnalysisManagerProg
                     {
                         if (File.Exists(strLogFilePath))
                         {
-                            var srInFile = new StreamReader(new FileStream(strLogFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
-
-                            if (intErrorMessageCountToReturn < 1)
-                                intErrorMessageCountToReturn = 1;
-
-                            while (!srInFile.EndOfStream)
+                            using (var srInFile = new StreamReader(new FileStream(strLogFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                             {
-                                strLineIn = srInFile.ReadLine();
 
-                                if (strLineIn == null)
-                                    continue;
+                                if (intErrorMessageCountToReturn < 1)
+                                    intErrorMessageCountToReturn = 1;
 
-                                var oMatchError = reErrorLine.Match(strLineIn);
-
-                                if (oMatchError.Success)
+                                while (!srInFile.EndOfStream)
                                 {
-                                    DetermineRecentErrorCacheError(oMatchError, strLineIn, uniqueErrorMessages, qErrorMsgQueue, intErrorMessageCountToReturn);
+                                    strLineIn = srInFile.ReadLine();
+
+                                    if (strLineIn == null)
+                                        continue;
+
+                                    var oMatchError = reErrorLine.Match(strLineIn);
+
+                                    if (oMatchError.Success)
+                                    {
+                                        DetermineRecentErrorCacheError(oMatchError, strLineIn, uniqueErrorMessages, qErrorMsgQueue,
+                                                                       intErrorMessageCountToReturn);
+                                    }
+
+                                    if (!blnCheckForMostRecentJob)
+                                        continue;
+
+                                    var oMatchJob = reJobStartLine.Match(strLineIn);
+                                    if (!oMatchJob.Success)
+                                        continue;
+
+                                    try
+                                    {
+                                        strMostRecentJobInfoFromLogs = ConstructMostRecentJobInfoText(
+                                            oMatchJob.Groups["Date"].Value,
+                                            Convert.ToInt32(oMatchJob.Groups["Job"].Value),
+                                            oMatchJob.Groups["Dataset"].Value,
+                                            oMatchJob.Groups["Tool"].Value);
+                                    }
+                                    catch (Exception)
+                                    {
+                                        // Ignore errors here
+                                    }
                                 }
 
-                                if (!blnCheckForMostRecentJob)
-                                    continue;
-
-                                var oMatchJob = reJobStartLine.Match(strLineIn);
-                                if (!oMatchJob.Success)
-                                    continue;
-
-                                try
-                                {
-                                    strMostRecentJobInfoFromLogs = ConstructMostRecentJobInfoText(
-                                        oMatchJob.Groups["Date"].Value,
-                                        Convert.ToInt32(oMatchJob.Groups["Job"].Value),
-                                        oMatchJob.Groups["Dataset"].Value,
-                                        oMatchJob.Groups["Tool"].Value);
-                                }
-                                catch (Exception)
-                                {
-                                    // Ignore errors here
-                                }
                             }
-
-                            srInFile.Close();
 
                             if (blnCheckForMostRecentJob && strMostRecentJobInfoFromLogs.Length > 0)
                             {
