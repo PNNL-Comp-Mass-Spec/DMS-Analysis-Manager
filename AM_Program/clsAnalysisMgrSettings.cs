@@ -81,18 +81,29 @@ namespace AnalysisManagerProg
         public const string MGR_PARAM_DEFAULT_DMS_CONN_STRING = "DefaultDMSConnString";
 
         /// <summary>
-        /// Manager parameter: local task queue path
+        /// Manager parameter: failed results folder path
         /// </summary>
+        /// <remarks>Directory where results from failed analysis tasks are stored</remarks>
         public const string MGR_PARAM_FAILED_RESULTS_FOLDER_PATH = "FailedResultsFolderPath";
 
         /// <summary>
         /// Manager parameter: local task queue path
+        /// Used by managers running in Offline mode
         /// </summary>
+        /// <remarks>
+        /// Directory with a Job .info, .status, .lock, etc. files,
+        /// organized by subdirectories named after each step tool
+        /// </remarks>
         public const string MGR_PARAM_LOCAL_TASK_QUEUE_PATH = "LocalTaskQueuePath";
 
         /// <summary>
         /// Manager parameter: local work dir path
+        /// Used by managers running in Offline mode
         /// </summary>
+        /// <remarks>
+        /// Directory with JobX_StepY subfolders containing files required for a single job step
+        /// Each manager also has its own subdirectory for staging files
+        /// </remarks>
         public const string MGR_PARAM_LOCAL_WORK_DIR_PATH = "LocalWorkDirPath";
 
         #endregion

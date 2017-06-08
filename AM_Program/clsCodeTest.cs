@@ -321,8 +321,7 @@ namespace AnalysisManagerProg
 
         private string GetWorkDirPath()
         {
-            var workDirPath = m_mgrParams.GetParam("workdir");
-            return string.IsNullOrWhiteSpace(workDirPath) ? string.Empty : workDirPath;
+            return m_mgrParams.GetParam("workdir");
         }
 
         /// <summary>
