@@ -342,7 +342,11 @@ namespace AnalysisManagerProg
             if (clsGlobal.OfflineMode)
             {
                 var successLocal = LoadLocalSettings();
-                return successLocal;
+                if (!successLocal)
+                    return false;
+
+                var foldersValidated = ValidateOfflineTaskDirectories();
+                return foldersValidated;
             }
 
             var success = LoadMgrSettingsFromDB();
@@ -375,8 +379,7 @@ namespace AnalysisManagerProg
                 return false;
             }
 
-            DataTable dtSettings;
-            var success = LoadMgrSettingsFromDBWork(managerName, out dtSettings, returnErrorIfNoParameters: true);
+            var success = LoadMgrSettingsFromDBWork(managerName, out var dtSettings, returnErrorIfNoParameters: true);
             if (!success)
             {
                 return false;
@@ -825,6 +828,54 @@ namespace AnalysisManagerProg
                 mParamDictionary.Add(itemKey, itemValue);
             }
         }
+
+        private bool ValidateOfflineTaskDirectories()
+        {
+            try
+            {
+                var taskQueuePath = GetParam(MGR_PARAM_LOCAL_TASK_QUEUE_PATH);
+                var taskQueue = new DirectoryInfo(taskQueuePath);
+                if (!taskQueue.Exists)
+                {
+                    mErrMsg = "Local task queue directory not found: " + taskQueuePath;
+                    LogError(mErrMsg);
+                    return false;
+                }
+
+                var localWorkDirPath = GetParam(MGR_PARAM_LOCAL_WORK_DIR_PATH);
+                var localWorkDir = new DirectoryInfo(localWorkDirPath);
+                if (!localWorkDir.Exists)
+                {
+                    mErrMsg = "Working directory not found: " + localWorkDirPath;
+                    LogError(mErrMsg);
+                    return false;
+                }
+
+                var workDirPath = GetParam("workdir");
+                var workDir = new DirectoryInfo(workDirPath);
+                if (workDir.Exists)
+                    return true;
+
+                LogMessage("Working directory not found, will try to create it: " + workDirPath);
+
+                workDir.Create();
+                workDir.Refresh();
+
+                if (workDir.Exists)
+                    return true;
+
+                mErrMsg = "Working directory not found and unable to create it: " + workDirPath;
+                LogError(mErrMsg);
+                return false;
+            }
+            catch (Exception ex)
+            {
+                mErrMsg = "Exception validating the offline task directories";
+                LogError(mErrMsg, ex);
+                return false;
+            }
+        }
+
 
         /// <summary>
         /// Writes an error message to the application log and the database
