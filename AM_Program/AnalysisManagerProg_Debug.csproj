@@ -62,6 +62,14 @@
     <Reference Include="PEKtoCSVConverter">
       <HintPath>..\AM_Common\PEKtoCSVConverter.dll</HintPath>
     </Reference>
+    <Reference Include="PeptideHitResultsProcessor, Version=1.5.6274.32624, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\AM_Common\PeptideHitResultsProcessor.dll</HintPath>
+    </Reference>
+    <Reference Include="PeptideToProteinMapEngine, Version=1.1.6368.31619, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\AM_Common\PeptideToProteinMapEngine.dll</HintPath>
+    </Reference>
     <Reference Include="PHRPReader">
       <HintPath>..\AM_Common\PHRPReader.dll</HintPath>
     </Reference>
