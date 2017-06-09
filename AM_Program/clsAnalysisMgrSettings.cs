@@ -150,6 +150,16 @@ namespace AnalysisManagerProg
                 // Data Source=proteinseqs;Initial Catalog=manager_control
                 var connectionString = GetParam(MGR_PARAM_MGR_CFG_DB_CONN_STRING);
 
+                if (string.IsNullOrWhiteSpace(connectionString))
+                {
+                    if (clsGlobal.OfflineMode)
+                        LogDebug("Skipping call to " + SP_NAME_ACKMANAGERUPDATE + " since offline");
+                    else
+                        LogError("Skipping call to " + SP_NAME_ACKMANAGERUPDATE + " since the Manager Control connection string is empty");
+
+                    return;
+                }
+
                 if (mTraceMode)
                     ShowTraceMessage("AckManagerUpdateRequired using " + connectionString);
 

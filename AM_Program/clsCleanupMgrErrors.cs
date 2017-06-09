@@ -525,7 +525,14 @@ namespace AnalysisManagerProg
         private void ReportManagerErrorCleanup(eCleanupActionCodeConstants eMgrCleanupActionCode, string strFailureMessage)
         {
             if (string.IsNullOrWhiteSpace(mMgrConfigDBConnectionString))
+            {
+                if (clsGlobal.OfflineMode)
+                    LogDebug("Skipping call to " + SP_NAME_REPORTMGRCLEANUP + " since offline");
+                else
+                    LogError("Skipping call to " + SP_NAME_REPORTMGRCLEANUP + " since the Manager Control connection string is empty");
+
                 return;
+            }
 
             try
             {

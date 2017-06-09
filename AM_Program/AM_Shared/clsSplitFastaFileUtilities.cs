@@ -250,11 +250,24 @@ namespace AnalysisManagerBase
 
         }
 
-        private bool StoreSplitFastaFileNames(string organismName, List<clsFastaFileSplitter.udtFastaFileInfoType> lstSplitFastaInfo)
+        private bool StoreSplitFastaFileNames(string organismName, IEnumerable<clsFastaFileSplitter.udtFastaFileInfoType> lstSplitFastaInfo)
         {
 
             var splitFastaName = "??";
 
+            if (string.IsNullOrWhiteSpace(mDMSConnectionString))
+            {
+                if (clsGlobal.OfflineMode)
+                {
+                    // This procedure should not be called when running offline since the FASTA file
+                    // should have already been split prior to the remote task starting
+                    OnWarningEvent("Skipping call to " + SP_NAME_UPDATE_ORGANISM_DB_FILE + " since offline");
+                    return true;
+                }
+
+                OnErrorEvent("Cannot call " + SP_NAME_UPDATE_ORGANISM_DB_FILE + " since the DMS Connection string is empty");
+                return false;
+            }
 
             try
             {
@@ -339,9 +352,27 @@ namespace AnalysisManagerBase
 
         }
 
-
+        /// <summary>
+        /// Call RefreshCachedOrganismDBInfo in the Protein Sequences database
+        /// to update T_DMS_Organism_DB_Info in MT_Main on the ProteinSeqs server
+        /// using data from V_DMS_Organism_DB_File_Import
+        /// (which pulls from V_Organism_DB_File_Export in DMS5)
+        /// </summary>
         private void UpdateCachedOrganismDBInfo()
         {
+            if (string.IsNullOrWhiteSpace(mProteinSeqsDBConnectionString))
+            {
+                if (clsGlobal.OfflineMode)
+                {
+                    // This procedure should not be called when running offline since the FASTA file
+                    // should have already been split prior to the remote task starting
+                    OnWarningEvent("Skipping call to " + SP_NAME_REFRESH_CACHED_ORG_DB_INFO + " since offline");
+                    return;
+                }
+
+                OnErrorEvent("Cannot call " + SP_NAME_REFRESH_CACHED_ORG_DB_INFO + " since the ProteinSeqs Connection string is empty");
+                return;
+            }
 
             try
             {
