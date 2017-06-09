@@ -112,6 +112,7 @@
     <Compile Include="clsMessageQueueLogger.cs" />
     <Compile Include="clsMessageSender.cs" />
     <Compile Include="clsMyEMSLUtilities.cs" />
+    <Compile Include="clsOfflineProcessing.cs" />
     <Compile Include="clsProteinCollectionInfo.cs" />
     <Compile Include="clsProteowizardTools.cs" />
     <Compile Include="clsRemoteMonitor.cs" />
