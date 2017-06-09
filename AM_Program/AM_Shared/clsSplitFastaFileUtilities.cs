@@ -94,7 +94,7 @@ namespace AnalysisManagerBase
                         mWaitingForLockFile = true;
 
                         var LockTimeoutTime = lockFi.LastWriteTimeUtc.AddMinutes(60);
-                        OnProgressUpdate(LOCK_FILE_PROGRESS_TEXT + " found; waiting until it is deleted or until " + 
+                        OnProgressUpdate(LOCK_FILE_PROGRESS_TEXT + " found; waiting until it is deleted or until " +
                             LockTimeoutTime.ToLocalTime() + ": " + lockFi.Name, 0);
 
                         while (lockFi.Exists && DateTime.UtcNow < LockTimeoutTime)
@@ -125,7 +125,7 @@ namespace AnalysisManagerBase
                     // If another process is still using it, an exception will be thrown
                     lockStream = new StreamWriter(new FileStream(lockFi.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite));
 
-                    // We have successfully created a lock file, 
+                    // We have successfully created a lock file,
                     // so we should exit the Do Loop
                     break;
 

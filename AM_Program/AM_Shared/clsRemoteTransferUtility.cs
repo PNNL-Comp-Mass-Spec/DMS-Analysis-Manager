@@ -1539,6 +1539,5 @@ namespace AnalysisManagerBase
         }
 
         #endregion
-
     }
 }

@@ -28,7 +28,7 @@ namespace AnalysisManagerBase
         private readonly string m_MgrName;
         private readonly clsMyEMSLUtilities m_MyEMSLUtilities;
 
-        private readonly PRISM.clsFileTools m_FileTools;
+        private readonly clsFileTools m_FileTools;
 
         #endregion
 
@@ -53,8 +53,8 @@ namespace AnalysisManagerBase
         /// <param name="mgrName"></param>
         /// <param name="debugLevel"></param>
         public clsFileCopyUtilities(
-            PRISM.clsFileTools prismFileTools, 
-            clsMyEMSLUtilities myEmslUtilities, 
+            clsFileTools prismFileTools,
+            clsMyEMSLUtilities myEmslUtilities,
             string mgrName,
             short debugLevel)
         {
@@ -125,10 +125,10 @@ namespace AnalysisManagerBase
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks>If the file was found in MyEMSL, then sourceFolderPath will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
         public bool CopyFileToWorkDir(
-            string sourceFileName, 
-            string sourceFolderPath, 
-            string targetFolderPath, 
-            clsLogTools.LogLevels logMsgTypeIfNotFound, 
+            string sourceFileName,
+            string sourceFolderPath,
+            string targetFolderPath,
+            clsLogTools.LogLevels logMsgTypeIfNotFound,
             int maxCopyAttempts)
         {
 
@@ -238,13 +238,13 @@ namespace AnalysisManagerBase
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks></remarks>
         private bool CopyFileToWorkDirWithRename(
-            string datasetName, 
-            string sourceFileName, 
-            string sourceFolderPath, 
+            string datasetName,
+            string sourceFileName,
+            string sourceFolderPath,
             string targetFolderPath)
         {
             const int maxCopyAttempts = 3;
-            return CopyFileToWorkDirWithRename(datasetName, sourceFileName, sourceFolderPath, targetFolderPath, 
+            return CopyFileToWorkDirWithRename(datasetName, sourceFileName, sourceFolderPath, targetFolderPath,
                 clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly: false, maxCopyAttempts: maxCopyAttempts);
         }
 
@@ -312,7 +312,7 @@ namespace AnalysisManagerBase
             int maxCopyAttempts)
         {
 
-            var sourceFilePath = string.Empty;
+            var sourceFilePath = String.Empty;
 
             try
             {
@@ -455,7 +455,7 @@ namespace AnalysisManagerBase
         public bool CreateStoragePathInfoFile(string sourceFilePath, string DestFilePath)
         {
 
-            var strInfoFilePath = string.Empty;
+            var strInfoFilePath = String.Empty;
 
             try
             {
@@ -574,7 +574,7 @@ namespace AnalysisManagerBase
                 }
 
                 LogMessageOrError(msg, logMsgTypeIfNotFound);
-                
+
                 return false;
             }
 
@@ -600,6 +600,5 @@ namespace AnalysisManagerBase
 
 
         #endregion
-        
     }
 }
