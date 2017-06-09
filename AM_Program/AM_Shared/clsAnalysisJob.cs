@@ -898,7 +898,7 @@ namespace AnalysisManagerBase
                 cmd.Parameters.Add(new SqlParameter("@infoOnly", SqlDbType.TinyInt)).Value = 0;
                 cmd.Parameters.Add(new SqlParameter("@analysisManagerVersion", SqlDbType.VarChar, 128)).Value = managerVersion;
 
-                var remoteInfo = clsRemoteTransferUtility.GetRemoteInfoXml(m_MgrParams);
+                var remoteInfo = runJobsRemotely ? clsRemoteTransferUtility.GetRemoteInfoXml(m_MgrParams) : string.Empty;
                 cmd.Parameters.Add(new SqlParameter("@remoteInfo", SqlDbType.VarChar, 900)).Value = remoteInfo;
 
                 if (m_DebugLevel > 4)
