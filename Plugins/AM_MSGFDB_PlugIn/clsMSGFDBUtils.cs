@@ -758,10 +758,16 @@ namespace AnalysisManagerMSGFDBPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (resultsIncludeAutoAddedDecoyPeptides)
+            string fastaFileToSearch;
+            if (!resultsIncludeAutoAddedDecoyPeptides)
+            {
+                fastaFileToSearch = fastaFilePath;
+            }
+            else
             {
                 // Read the original fasta file to create a decoy fasta file
                 var decoyFastaFilePath = GenerateDecoyFastaFile(fastaFilePath, m_WorkDir);
+                fastaFileToSearch = decoyFastaFilePath;
 
                 if (string.IsNullOrEmpty(decoyFastaFilePath))
                 {
@@ -796,7 +802,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     PeptideInputFileFormat = ePeptideInputFileFormat,
                     PeptideFileSkipFirstLine = false,
                     ProteinDataRemoveSymbolCharacters = true,
-                    ProteinInputFilePath = fastaFilePath,
+                    ProteinInputFilePath = fastaFileToSearch,
                     SaveProteinToPeptideMappingFile = true,
                     SearchAllProteinsForPeptideSequence = true,
                     SearchAllProteinsSkipCoverageComputationSteps = true,
