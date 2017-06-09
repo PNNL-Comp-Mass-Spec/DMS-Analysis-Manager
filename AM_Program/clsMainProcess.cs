@@ -455,12 +455,6 @@ namespace AnalysisManagerProg
                         m_MgrErrorCleanup.DeleteStatusFlagFile(m_DebugLevel);
                     }
 
-                    // Verify that the working directory exists
-                    if (!VerifyWorkDir())
-                    {
-                        return;
-                    }
-
                     // Verify that an error hasn't left the the system in an odd state
                     if (StatusFlagFileError())
                     {
@@ -506,14 +500,14 @@ namespace AnalysisManagerProg
                         break;
                     }
 
-                    // Check whether the computer is likely to install the monthly Windows Updates within the next few hours
-                    // Do not request a job between 12 am and 6 am on Thursday in the week with the second Tuesday of the month
-                    // Do not request a job between 2 am and 4 am or between 9 am and 11 am on Sunday in the week with the second Tuesday of the month
-                    if (clsWindowsUpdateStatus.UpdatesArePending(out var pendingWindowsUpdateMessage))
+                    if (!clsGlobal.LinuxOS)
                     {
-                        LogMessage(pendingWindowsUpdateMessage);
-                        UpdateStatusIdle(pendingWindowsUpdateMessage);
-                        break;
+                        if (WindowsUpdatesArePending())
+                        {
+                            // Do not request a job between 12 am and 6 am on Thursday in the week with the second Tuesday of the month
+                            // Do not request a job between 2 am and 4 am or between 9 am and 11 am on Sunday in the week with the second Tuesday of the month
+                            break;
+                        }
                     }
 
                     ShowTrace("Requesting a new task from DMS_Pipeline");
@@ -2817,8 +2811,7 @@ namespace AnalysisManagerProg
             // Verify working directory is valid
             if (!Directory.Exists(m_WorkDirPath))
             {
-                var msg = "Invalid working directory: " + m_WorkDirPath;
-                LogError(msg);
+                LogError("Invalid working directory: " + m_WorkDirPath);
                 Thread.Sleep(1500);
                 return false;
             }
@@ -2889,6 +2882,20 @@ namespace AnalysisManagerProg
 
             LogError("Working directory not empty: " + m_WorkDirPath);
             return false;
+        }
+
+        /// <summary>
+        /// Check whether the computer is likely to install the monthly Windows Updates within the next few hours
+        /// </summary>
+        /// <returns>True if Windows updates are pending</returns>
+        private bool WindowsUpdatesArePending()
+        {
+            if (!clsWindowsUpdateStatus.UpdatesArePending(out var pendingWindowsUpdateMessage))
+                return false;
+
+            LogMessage(pendingWindowsUpdateMessage);
+            UpdateStatusIdle(pendingWindowsUpdateMessage);
+            return true;
         }
 
         #endregion
