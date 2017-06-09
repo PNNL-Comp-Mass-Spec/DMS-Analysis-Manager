@@ -6,6 +6,7 @@ using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Linq;
 
@@ -281,6 +282,61 @@ namespace AnalysisManagerBase
             if (!m_ServerFilesToDelete.Contains(filePath))
             {
                 m_ServerFilesToDelete.Add(filePath);
+            }
+        }
+
+        /// <summary>
+        /// Look for .lock files that are over 24 hours old and do not have a .jobstatus file modified within the last 12 hours
+        /// If found, delete them
+        /// </summary>
+        /// <param name="taskQueueFolder"></param>
+        private void DeleteOldLockFiles(DirectoryInfo taskQueueFolder)
+        {
+            try
+            {
+                var lockFiles = taskQueueFolder.GetFiles("*.lock");
+                if (lockFiles.Length == 0)
+                    return;
+
+                var agedFileThreshold = DateTime.UtcNow.AddHours(-24);
+
+                var agedLockFiles = (from lockFile in lockFiles where lockFile.LastWriteTimeUtc < agedFileThreshold select lockFile).ToList();
+
+                if (agedLockFiles.Count == 0)
+                    return;
+
+                var jobStatusFiles = new Dictionary<string, FileInfo>();
+                foreach (var jobStatusFile in taskQueueFolder.GetFiles("*.jobstatus"))
+                {
+                    var baseName = Path.GetFileName(jobStatusFile.Name);
+                    if (jobStatusFiles.ContainsKey(baseName))
+                        continue;
+
+                    jobStatusFiles.Add(baseName, jobStatusFile);
+                }
+
+                foreach (var lockFile in agedLockFiles)
+                {
+                    var baseName = Path.GetFileName(lockFile.Name);
+
+                    if (jobStatusFiles.TryGetValue(baseName, out var jobStatusFile))
+                    {
+                        if (DateTime.UtcNow.Subtract(jobStatusFile.LastWriteTimeUtc).TotalHours < 12)
+                        {
+                            // The lock file is aged, but the jobstatus file is less than 12 hours old
+                            continue;
+                        }
+                    }
+
+                    var fileAgeHours = DateTime.UtcNow.Subtract(lockFile.LastWriteTimeUtc).TotalHours;
+
+                    LogWarning(string.Format("Deleting aged lock file modified {0:F0} hours ago: {1}", fileAgeHours, lockFile.FullName));
+                    lockFile.Delete();
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception deleting old lock files in " + taskQueueFolder.FullName, ex);
             }
         }
 
@@ -838,9 +894,19 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public override RequestTaskResult RequestTask()
         {
+            RequestTaskResult result;
 
-            var retVal = RequestAnalysisJob();
-            switch (retVal)
+            if (clsGlobal.OfflineMode)
+            {
+                result = RequestOfflineAnalysisJob();
+            }
+            else
+            {
+                var runJobsRemotely = m_MgrParams.GetParam("RunJobsRemotely", false);
+                result = RequestAnalysisJobFromDB(runJobsRemotely);
+            }
+
+            switch (result)
             {
                 case RequestTaskResult.NoTaskFound:
                     m_TaskWasAssigned = false;
@@ -852,7 +918,7 @@ namespace AnalysisManagerBase
                     m_TaskWasAssigned = false;
                     break;
             }
-            return retVal;
+            return result;
 
         }
 
@@ -861,10 +927,8 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <returns></returns>
         /// <remarks></remarks>
-        private RequestTaskResult RequestAnalysisJob()
+        private RequestTaskResult RequestAnalysisJobFromDB(bool runJobsRemotely)
         {
-
-            RequestTaskResult taskResult;
 
             var productVersion = clsGlobal.GetAssemblyVersion() ?? "??";
 
@@ -911,6 +975,8 @@ namespace AnalysisManagerBase
                 // Execute the SP
                 var retVal = PipelineDBProcedureExecutor.ExecuteSP(cmd, 1);
 
+                RequestTaskResult taskResult;
+
                 switch (retVal)
                 {
                     case RET_VAL_OK:
@@ -949,14 +1015,113 @@ namespace AnalysisManagerBase
                         break;
                 }
 
+                return taskResult;
+
             }
             catch (Exception ex)
             {
                 LogError("Exception requesting analysis job", ex);
-                taskResult = RequestTaskResult.ResultError;
+                return RequestTaskResult.ResultError;
             }
 
-            return taskResult;
+        }
+
+        private RequestTaskResult RequestOfflineAnalysisJob()
+        {
+            try
+            {
+
+                var reJobStepTimestamp = new Regex(@"(?<JobStep>Job\d+_Step\d+)_(?<TimeStamp>.+)\.info", RegexOptions.Compiled);
+
+                var stepToolList = m_MgrParams.GetParam("StepToolsEnabled");
+
+                if (string.IsNullOrWhiteSpace(stepToolList))
+                {
+                    LogError("No step tools are enabled; update manager parameter StepToolsEnabled in ManagerSettingsLocal.xml");
+                    return RequestTaskResult.ResultError;
+                }
+
+                var stepTools = stepToolList.Split(',');
+
+                var taskQueuePathBase = m_MgrParams.GetParam("LocalTaskQueuePath");
+                if (string.IsNullOrWhiteSpace(taskQueuePathBase))
+                {
+                    LogError("Manager parameter LocalTaskQueuePath is empty; update ManagerSettingsLocal.xml");
+                    return RequestTaskResult.ResultError;
+                }
+
+                foreach (var stepTool in stepTools)
+                {
+                    var taskQueueFolder = new DirectoryInfo(Path.Combine(taskQueuePathBase, stepTool));
+                    if (!taskQueueFolder.Exists)
+                    {
+                        LogWarning("Task queue folder not found: " + taskQueueFolder.FullName);
+                        continue;
+                    }
+
+                    DeleteOldLockFiles(taskQueueFolder);
+
+                    var infoFiles = taskQueueFolder.GetFiles("*.info");
+                    if (infoFiles.Length == 0)
+                        continue;
+
+                    // Keys in this dictionary are of the form Job1449939_Step3
+                    // Values are are KeyValuePair of Timestamp and .info file, where Timestamp is of the form 20170518_0353
+                    var jobStepInfoFiles = new Dictionary<string, KeyValuePair<string, FileInfo>>();
+
+                    foreach (var infoFile in infoFiles)
+                    {
+                        var match = reJobStepTimestamp.Match(infoFile.Name);
+
+                        if (!match.Success)
+                        {
+                            LogDebug("Ignoring .info file that has an unrecognized name format: " + infoFile.FullName);
+                            continue;
+                        }
+
+                        var jobStep = match.Groups["JobStep"].Value;
+                        var timeStamp = match.Groups["TimeStamp"].Value;
+
+                        if (!jobStepInfoFiles.TryGetValue(jobStep, out var existingInfo))
+                        {
+                            jobStepInfoFiles.Add(jobStep, new KeyValuePair<string, FileInfo>(timeStamp, infoFile));
+                            continue;
+                        }
+
+                        var existingTimestamp = existingInfo.Key;
+                        if (string.CompareOrdinal(timeStamp, existingTimestamp) > 0)
+                        {
+                            // Rename the .info file with existingTimestamp to be .oldinfo
+                            clsOfflineProcessing.RenameFileChangeExtension(existingInfo.Value, ".oldinfo", true);
+                            jobStepInfoFiles[jobStep] = new KeyValuePair<string, FileInfo>(timeStamp, infoFile);
+                        }
+                        else
+                        {
+                            // Rename the .info file with timestamp to be .oldinfo, leaving the dictionary unchanged
+                            clsOfflineProcessing.RenameFileChangeExtension(infoFile, ".oldinfo", true);
+                        }
+                    }
+
+                    if (jobStepInfoFiles.Count == 0)
+                    {
+                        continue;
+                    }
+
+                    // Select the oldest file in jobStepInfoFiles
+                    var infoFileToProcess = (from item in jobStepInfoFiles.Values orderby item.Value.LastWriteTimeUtc select item.Value).First();
+
+                    if (SelectOfflineJobInfoFile(infoFileToProcess))
+                        return RequestTaskResult.TaskFound;
+
+                }
+
+                return RequestTaskResult.NoTaskFound;
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception checking for an available offline analysis job", ex);
+                return RequestTaskResult.ResultError;
+            }
 
         }
 
@@ -980,7 +1145,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Saves job Parameters to an XML File
+        /// Saves job Parameters to an XML File in the working directory
         /// </summary>
         /// <param name="workDir">Full path to work directory</param>
         /// <param name="jobParamsXML">Contains the xml for all the job parameters</param>
@@ -1038,6 +1203,123 @@ namespace AnalysisManagerBase
 
         }
 
+
+        /// <summary>
+        /// Try to create a .lock file for a givne candidate .info file
+        /// </summary>
+        /// <param name="infoFile"></param>
+        /// <returns></returns>
+        private bool SelectOfflineJobInfoFile(FileSystemInfo infoFile)
+        {
+            try
+            {
+                var lockFilePath = Path.ChangeExtension(infoFile.FullName, ".lock");
+
+                if (File.Exists(lockFilePath))
+                {
+                    // Another process already created the lock file
+                    return false;
+                }
+
+                using (var lockFile = new StreamWriter(new FileStream(lockFilePath, FileMode.CreateNew, FileAccess.ReadWrite, FileShare.Read)))
+                {
+                    // Successfully created the lock file
+                    lockFile.WriteLine(DateTime.Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
+                }
+
+                // Parse the .info file
+
+                var splitChars = new[] { '=' };
+                m_JobId = 0;
+                var stepNum = 0;
+                var workDir = string.Empty;
+                var staged = string.Empty;
+
+                using (var reader = new StreamReader(new FileStream(infoFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                {
+                    while (!reader.EndOfStream)
+                    {
+                        var dataLine = reader.ReadLine();
+                        if (string.IsNullOrWhiteSpace(dataLine))
+                            continue;
+
+                        var lineParts = dataLine.Split(splitChars, 2);
+                        if (lineParts.Length < 2)
+                            continue;
+
+                        var key = lineParts[0];
+                        var value = lineParts[1];
+
+                        switch (key)
+                        {
+                            case "Job":
+                                m_JobId = int.Parse(value);
+                                break;
+                            case "Step":
+                                stepNum = int.Parse(value);
+                                break;
+                            case "WorkDir":
+                                workDir = value;
+                                break;
+                            case "Staged":
+                                staged = value;
+                                break;
+                        }
+                    }
+                }
+
+                if (m_JobId == 0)
+                {
+                    clsOfflineProcessing.FinalizeJob(infoFile.FullName, false, 1, "Job missing from .info file");
+                    return false;
+                }
+
+                if (stepNum == 0)
+                {
+                    clsOfflineProcessing.FinalizeJob(infoFile.FullName, false, 1, "Step missing from .info file");
+                    return false;
+                }
+
+                if (string.IsNullOrWhiteSpace(workDir))
+                {
+                    clsOfflineProcessing.FinalizeJob(infoFile.FullName, false, 1, "WorkDir missing from .info file");
+                    return false;
+                }
+
+                LogMessage(string.Format("Processing offline job {0}, step {1}, WorkDir {2}, staged {3}", m_JobId, stepNum, workDir, staged));
+
+
+                // Read JobParams.xml and update the job parameters
+                var jobParamsFile = Path.Combine(workDir, "JobParams.xml");
+                string jobParamsXML;
+
+                using (var reader = new StreamReader(new FileStream(jobParamsFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                {
+                    jobParamsXML = reader.ReadToEnd();
+                }
+
+                var dctParameters = FillParamDictXml(jobParamsXML).ToList();
+
+                foreach (var udtParamInfo in dctParameters)
+                {
+                    SetParam(udtParamInfo.Section, udtParamInfo.ParamName, udtParamInfo.Value);
+                }
+
+                return true;
+            }
+            catch (IOException)
+            {
+                // .lock file created by another process
+                return false;
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception in LockOfflineJobInfoFile", ex);
+                return false;
+            }
+
+        }
+
         /// <summary>
         /// Contact the Pipeline database to close the analysis job
         /// </summary>
@@ -1090,7 +1372,8 @@ namespace AnalysisManagerBase
         {
 
             // Setup for execution of the stored procedure
-            var cmd = new SqlCommand(SP_NAME_SET_COMPLETE) {
+            var cmd = new SqlCommand(SP_NAME_SET_COMPLETE)
+            {
                 CommandType = CommandType.StoredProcedure
             };
 
