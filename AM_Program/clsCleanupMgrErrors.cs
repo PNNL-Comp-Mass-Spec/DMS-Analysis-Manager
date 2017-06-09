@@ -491,9 +491,9 @@ namespace AnalysisManagerProg
         /// <remarks></remarks>
         public bool DetectStatusFlagFile()
         {
-            var TestFile = FlagFilePath;
+            var flagFile = new FileInfo(FlagFilePath);
 
-            return File.Exists(TestFile);
+            return flagFile.Exists;
         }
 
         /// <summary>
@@ -502,18 +502,18 @@ namespace AnalysisManagerProg
         /// <remarks></remarks>
         public void DeleteErrorDeletingFilesFlagFile()
         {
-            var TestFile = Path.Combine(mMgrFolderPath, ERROR_DELETING_FILES_FILENAME);
+            var deletionFlagFile = new FileInfo(Path.Combine(mMgrFolderPath, ERROR_DELETING_FILES_FILENAME));
 
             try
             {
-                if (File.Exists(TestFile))
+                if (deletionFlagFile.Exists)
                 {
-                    File.Delete(TestFile);
+                    deletionFlagFile.Delete();
                 }
             }
             catch (Exception ex)
             {
-                LogError("DeleteStatusFlagFile", ex);
+                LogError("Error deleting " + ERROR_DELETING_FILES_FILENAME, ex);
             }
         }
 
