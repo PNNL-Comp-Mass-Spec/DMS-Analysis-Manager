@@ -15,4 +15,5 @@
     <setting name="MyEmslAvailable"><value>False</value></setting>
     <setting name="OrgDbDir"><value>/file1/temp/DMSOrgDBs</value></setting>
     <setting name="StatusFileLocation"><value>Status.xml</value></setting>
+    <setting name="StepToolsEnabled"><value>Test_MSGFPlus, MSGFPlus</value></setting>
 </settings>
