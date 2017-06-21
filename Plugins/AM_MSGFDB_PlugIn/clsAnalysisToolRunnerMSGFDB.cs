@@ -14,7 +14,7 @@ using AnalysisManagerBase;
 namespace AnalysisManagerMSGFDBPlugIn
 {
     /// <summary>
-    /// Class for running MSGFDB or MSGF+ analysis
+    /// Class for running MSGF+ analysis
     /// </summary>
     public class clsAnalysisToolRunnerMSGFDB : clsAnalysisToolRunnerBase
     {
@@ -35,7 +35,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         private bool mToolVersionWritten;
 
         // Path to MSGFPlus.jar
-        private string mMSGFDbProgLoc;
+        private string mMSGFPlusProgLoc;
 
         private bool mResultsIncludeAutoAddedDecoyPeptides;
 
@@ -44,7 +44,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         private bool mMSGFPlusComplete;
         private DateTime mMSGFPlusCompletionTime;
 
-        private clsMSGFDBUtils mMSGFDBUtils;
+        private clsMSGFDBUtils mMSGFPlusUtils;
 
         private clsRunDosProgram mCmdRunner;
 
@@ -53,7 +53,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         #region "Methods"
 
         /// <summary>
-        /// Runs MSGFDB tool
+        /// Runs MSGF+ tool (aka MS-GF+)
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
         /// <remarks></remarks>
@@ -226,9 +226,9 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             // Determine the path to MSGF+
             // The manager parameter is MSGFDbProgLoc because originally the software was named MSGFDB (aka MS-GFDB)
-            mMSGFDbProgLoc = DetermineProgramLocation("MSGFDbProgLoc", strMSGFJarfile);
+            mMSGFPlusProgLoc = DetermineProgramLocation("MSGFDbProgLoc", msgfPlusJarfile);
 
-            if (string.IsNullOrWhiteSpace(mMSGFDbProgLoc))
+            if (string.IsNullOrWhiteSpace(mMSGFPlusProgLoc))
             {
                 // Returning CLOSEOUT_FAILED will cause the plugin to immediately exit; results and console output files will not be saved
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -247,21 +247,22 @@ namespace AnalysisManagerMSGFDBPlugIn
                 return result;
             }
 
-            // Initialize mMSGFDBUtils
-            mMSGFDBUtils = new clsMSGFDBUtils(m_mgrParams, m_jobParams, Job, m_WorkDir, m_DebugLevel, msgfPlus: true);
-            RegisterEvents(mMSGFDBUtils);
+            // Initialize mMSGFPlusUtils
+            mMSGFPlusUtils = new clsMSGFDBUtils(m_mgrParams, m_jobParams, Job, m_WorkDir, m_DebugLevel, msgfPlus: true);
+            RegisterEvents(mMSGFPlusUtils);
 
-            mMSGFDBUtils.IgnorePreviousErrorEvent += mMSGFDBUtils_IgnorePreviousErrorEvent;
+            mMSGFPlusUtils.IgnorePreviousErrorEvent += mMSGFDBUtils_IgnorePreviousErrorEvent;
 
             // Get the FASTA file and index it if necessary
             // Passing in the path to the parameter file so we can look for TDA=0 when using large .Fasta files
             var parameterFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"));
             var javaExePath = string.Copy(javaProgLoc);
-            var msgfdbJarFilePath = string.Copy(mMSGFDbProgLoc);
+            var msgfPlusJarFilePath = string.Copy(mMSGFPlusProgLoc);
 
-
-            result = mMSGFDBUtils.InitializeFastaFile(javaExePath, msgfdbJarFilePath, out var fastaFileSizeKB, out var fastaFileIsDecoy, out var fastaFilePath,
-                                                      strParameterFilePath);
+            result = mMSGFPlusUtils.InitializeFastaFile(
+                javaExePath, msgfPlusJarFilePath,
+                out var fastaFileSizeKB, out var fastaFileIsDecoy,
+                out var fastaFilePath, parameterFilePath);
 
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
@@ -283,7 +284,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 return result;
             }
 
-            if (string.IsNullOrEmpty(strMSGFDbCmdLineOptions))
+            if (string.IsNullOrEmpty(msgfPlusCmdLineOptions))
             {
                 if (string.IsNullOrEmpty(m_message))
                 {
@@ -294,11 +295,11 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
 
             // This will be set to True if the parameter file contains both TDA=1 and showDecoy=1
-            mResultsIncludeAutoAddedDecoyPeptides = mMSGFDBUtils.ResultsIncludeAutoAddedDecoyPeptides;
+            mResultsIncludeAutoAddedDecoyPeptides = mMSGFPlusUtils.ResultsIncludeAutoAddedDecoyPeptides;
 
             LogMessage("Running MSGF+");
 
-            // If an MSGFDB analysis crashes with an "out-of-memory" error, we need to reserve more memory for Java
+            // If an MSGF+ analysis crashes with an "out-of-memory" error, we need to reserve more memory for Java
             // The amount of memory required depends on both the fasta file size and the size of the input .mzML file, since data from all spectra are cached in memory
             // Customize this on a per-job basis using the MSGFDBJavaMemorySize setting in the settings file
             // (job 611216 succeeded with a value of 5000)
@@ -316,8 +317,8 @@ namespace AnalysisManagerMSGFDBPlugIn
             if (javaMemorySize < 512)
                 javaMemorySize = 512;
 
-            // Set up and execute a program runner to run MSGFDB
-            var cmdStr = " -Xmx" + javaMemorySize + "M -jar " + msgfdbJarFilePath;
+            // Set up and execute a program runner to run MSGF+
+            var cmdStr = " -Xmx" + javaMemorySize + "M -jar " + msgfPlusJarFilePath;
 
             // Define the input file, output file, and fasta file
             switch (eInputFileFormat)
@@ -341,7 +342,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             cmdStr += " -d " + PossiblyQuotePath(fastaFilePath);
 
             // Append the remaining options loaded from the parameter file
-            cmdStr += " " + strMSGFDbCmdLineOptions;
+            cmdStr += " " + msgfPlusCmdLineOptions;
 
             // Make sure the machine has enough free memory to run MSGFDB
             var logFreeMemoryOnSuccess = (m_DebugLevel >= 1);
@@ -368,16 +369,16 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             if (!mToolVersionWritten)
             {
-                if (string.IsNullOrWhiteSpace(mMSGFDBUtils.MSGFPlusVersion))
+                if (string.IsNullOrWhiteSpace(mMSGFPlusUtils.MSGFPlusVersion))
                 {
                     ParseConsoleOutputFile(mWorkingDirectoryInUse);
                 }
                 mToolVersionWritten = StoreToolVersionInfo();
             }
 
-            if (!string.IsNullOrEmpty(mMSGFDBUtils.ConsoleOutputErrorMsg))
+            if (!string.IsNullOrEmpty(mMSGFPlusUtils.ConsoleOutputErrorMsg))
             {
-                LogMessage(mMSGFDBUtils.ConsoleOutputErrorMsg, 1, true);
+                LogMessage(mMSGFPlusUtils.ConsoleOutputErrorMsg, 1, true);
             }
 
             fiMSGFPlusResults.Refresh();
@@ -427,38 +428,38 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             if (mMSGFPlusComplete)
             {
-                if (mMSGFDBUtils.TaskCountCompleted < mMSGFDBUtils.TaskCountTotal)
+                if (mMSGFPlusUtils.TaskCountCompleted < mMSGFPlusUtils.TaskCountTotal)
                 {
-                    var savedCountCompleted = mMSGFDBUtils.TaskCountCompleted;
+                    var savedCountCompleted = mMSGFPlusUtils.TaskCountCompleted;
 
                     // MSGF+ finished, but the log file doesn't report that all of the threads finished
                     // Wait 5 more seconds, then parse the log file again
                     // Keep checking and waiting for up to 45 seconds
 
-                    LogWarning("MSGF+ finished, but the log file reports " + mMSGFDBUtils.TaskCountCompleted + " / " + mMSGFDBUtils.TaskCountTotal +
+                    LogWarning("MSGF+ finished, but the log file reports " + mMSGFPlusUtils.TaskCountCompleted + " / " + mMSGFPlusUtils.TaskCountTotal +
                                " completed tasks");
 
                     var waitStartTime = DateTime.UtcNow;
                     while (DateTime.UtcNow.Subtract(waitStartTime).TotalSeconds < 45)
                     {
                         Thread.Sleep(5000);
-                        mMSGFDBUtils.ParseMSGFPlusConsoleOutputFile(mWorkingDirectoryInUse);
+                        mMSGFPlusUtils.ParseMSGFPlusConsoleOutputFile(mWorkingDirectoryInUse);
 
-                        if (mMSGFDBUtils.TaskCountCompleted == mMSGFDBUtils.TaskCountTotal)
+                        if (mMSGFPlusUtils.TaskCountCompleted == mMSGFPlusUtils.TaskCountTotal)
                         {
                             break;
                         }
                     }
 
-                    if (mMSGFDBUtils.TaskCountCompleted == mMSGFDBUtils.TaskCountTotal)
+                    if (mMSGFPlusUtils.TaskCountCompleted == mMSGFPlusUtils.TaskCountTotal)
                     {
                         LogMessage("Reparsing the MSGF+ log file now indicates that all tasks finished " + "(waited " +
                                    DateTime.UtcNow.Subtract(waitStartTime).TotalSeconds.ToString("0") + " seconds)");
                     }
-                    else if (mMSGFDBUtils.TaskCountCompleted > savedCountCompleted)
+                    else if (mMSGFPlusUtils.TaskCountCompleted > savedCountCompleted)
                     {
-                        LogWarning("Reparsing the MSGF+ log file now indicates that " + mMSGFDBUtils.TaskCountCompleted + " tasks finished. " +
-                                   "That is an increase over the previous value but still not all " + mMSGFDBUtils.TaskCountTotal + " tasks");
+                        LogWarning("Reparsing the MSGF+ log file now indicates that " + mMSGFPlusUtils.TaskCountCompleted + " tasks finished. " +
+                                   "That is an increase over the previous value but still not all " + mMSGFPlusUtils.TaskCountTotal + " tasks");
                     }
                     else
                     {
@@ -466,21 +467,21 @@ namespace AnalysisManagerMSGFDBPlugIn
                     }
                 }
 
-                if (mMSGFDBUtils.TaskCountCompleted < mMSGFDBUtils.TaskCountTotal)
+                if (mMSGFPlusUtils.TaskCountCompleted < mMSGFPlusUtils.TaskCountTotal)
                 {
-                    if (mMSGFDBUtils.TaskCountCompleted == mMSGFDBUtils.TaskCountTotal - 1)
+                    if (mMSGFPlusUtils.TaskCountCompleted == mMSGFPlusUtils.TaskCountTotal - 1)
                     {
                         // All but one of the tasks finished
                         LogWarning(
-                            "MSGF+ finished, but the logs indicate that one of the " + mMSGFDBUtils.TaskCountTotal + " tasks did not complete; " +
+                            "MSGF+ finished, but the logs indicate that one of the " + mMSGFPlusUtils.TaskCountTotal + " tasks did not complete; " +
                             "this could indicate an error", true);
                     }
                     else
                     {
                         // 2 or more tasks did not finish
                         mMSGFPlusComplete = false;
-                        LogError("MSGF+ finished, but the logs are incomplete, showing " + mMSGFDBUtils.TaskCountCompleted + " / " +
-                                 mMSGFDBUtils.TaskCountTotal + " completed search tasks");
+                        LogError("MSGF+ finished, but the logs are incomplete, showing " + mMSGFPlusUtils.TaskCountCompleted + " / " +
+                                 mMSGFPlusUtils.TaskCountTotal + " completed search tasks");
 
                         // Do not return CLOSEOUT_FAILED, as that causes the plugin to immediately exit; results and console output files would not be saved in that case
                         // Instead, set processingError to true
@@ -491,14 +492,14 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
             else
             {
-                if (mMSGFDBUtils.TaskCountCompleted > 0)
+                if (mMSGFPlusUtils.TaskCountCompleted > 0)
                 {
                     var msg = string.Copy(m_message);
                     if (string.IsNullOrWhiteSpace(msg))
                     {
                         msg = "MSGF+ processing failed";
                     }
-                    msg += "; logs show " + mMSGFDBUtils.TaskCountCompleted + " / " + mMSGFDBUtils.TaskCountTotal + " completed search tasks";
+                    msg += "; logs show " + mMSGFPlusUtils.TaskCountCompleted + " / " + mMSGFPlusUtils.TaskCountTotal + " completed search tasks";
                     LogError(msg);
                 }
 
@@ -512,7 +513,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             m_StatusTools.UpdateAndWrite(m_progress);
             LogMessage("MSGF+ Search Complete", 3);
 
-            if (mMSGFDBUtils.ContinuumSpectraSkipped > 0)
+            if (mMSGFPlusUtils.ContinuumSpectraSkipped > 0)
             {
                 // See if any spectra were processed
                 if (!fiMSGFPlusResults.Exists)
@@ -551,8 +552,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                     {
                         LogWarning(
                             "MSGF+ processed some of the spectra, but it skipped " +
-                            mMSGFDBUtils.ContinuumSpectraSkipped + " spectra that were not centroided " +
-                            "(" + strPercentSkipped + " skipped)", true);
+                            mMSGFPlusUtils.ContinuumSpectraSkipped + " spectra that were not centroided " +
+                            "(" + percentSkipped + " skipped)", true);
                     }
                 }
             }
@@ -614,7 +615,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             {
                 if (string.IsNullOrEmpty(m_message))
                 {
-                    LogError("Error calling mMSGFDBUtils.ConvertMZIDToTSV; path not returned");
+                    LogError("Error calling mMSGFPlusUtils.ConvertMZIDToTSV; path not returned");
                 }
                 return string.Empty;
             }
@@ -731,7 +732,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             dtLastConsoleOutputParse = DateTime.UtcNow;
 
             ParseConsoleOutputFile(mWorkingDirectoryInUse);
-            if (!mToolVersionWritten && !string.IsNullOrWhiteSpace(mMSGFDBUtils.MSGFPlusVersion))
+            if (!mToolVersionWritten && !string.IsNullOrWhiteSpace(mMSGFPlusUtils.MSGFPlusVersion))
             {
                 mToolVersionWritten = StoreToolVersionInfo();
             }
@@ -812,9 +813,9 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             try
             {
-                if ((mMSGFDBUtils != null))
+                if ((mMSGFPlusUtils != null))
                 {
-                    sngMSGFBProgress = mMSGFDBUtils.ParseMSGFPlusConsoleOutputFile(workingDirectory);
+                    sngMSGFBProgress = mMSGFPlusUtils.ParseMSGFPlusConsoleOutputFile(workingDirectory);
                 }
 
                 if (m_progress < sngMSGFBProgress)
@@ -857,7 +858,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 // Gzip the output file
                 currentTask = "Zipping " + resultsFileName;
-                var result = mMSGFDBUtils.ZipOutputFile(this, resultsFileName);
+                var result = mMSGFPlusUtils.ZipOutputFile(this, resultsFileName);
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return result;
@@ -921,7 +922,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
                 currentTask = "Calling CreatePeptideToProteinMapping";
-                result = mMSGFDBUtils.CreatePeptideToProteinMapping(msgfPlusResultsFileName, mResultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder);
+                result = mMSGFPlusUtils.CreatePeptideToProteinMapping(msgfPlusResultsFileName, mResultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder);
                 if (!clsAnalysisJob.SuccessOrNoData(result))
                 {
                     return result;
@@ -977,7 +978,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             // Store paths to key files in ioToolFiles
             var ioToolFiles = new List<FileInfo> {
-                new FileInfo(mMSGFDbProgLoc)
+                new FileInfo(mMSGFPlusProgLoc)
             };
 
             try
