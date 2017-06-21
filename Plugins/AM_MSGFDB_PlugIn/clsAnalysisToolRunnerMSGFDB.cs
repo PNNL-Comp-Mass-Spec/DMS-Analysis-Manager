@@ -327,6 +327,21 @@ namespace AnalysisManagerMSGFDBPlugIn
             if (javaMemorySize < 512)
                 javaMemorySize = 512;
 
+            // Possibly increase the java memory size based on the size of the FASTA file
+            var minimumJavaMemoryMB = 7.5 * fastaFileSizeKB / 1024.0 + 1000;
+
+            // Round up minimumJavaMemoryMB to the neareast 500
+            minimumJavaMemoryMB = Math.Ceiling(minimumJavaMemoryMB / 500.0) * 500;
+
+            if (javaMemorySize < minimumJavaMemoryMB)
+            {
+                LogWarning(
+                    string.Format("Increasing Java memory size from {0:N0} MB to {1:N0} MB due to a large FASTA file ({2:N0} MB)",
+                    javaMemorySize, minimumJavaMemoryMB, fastaFileSizeKB / 1024.0));
+
+                javaMemorySize = (int)minimumJavaMemoryMB;
+            }
+
             // Set up and execute a program runner to run MSGF+
             var cmdStr = " -Xmx" + javaMemorySize + "M -jar " + msgfPlusJarFilePath;
 
