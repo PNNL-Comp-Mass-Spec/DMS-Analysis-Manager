@@ -121,9 +121,19 @@ namespace AnalysisManagerMSGFDBPlugIn
                 {
                     // Look for a "dirty" mzid file
                     var dirtyResultsFilename = Path.GetFileNameWithoutExtension(fiMSGFPlusResults.Name) + "_dirty.gz";
-                    var fiMSGFPlusDirtyResults = new FileInfo(Path.Combine(fiMSGFPlusResults.Directory.FullName, dirtyResultsFilename));
 
-                    if (fiMSGFPlusDirtyResults.Exists)
+                    bool dirtyFileExists;
+                    if (fiMSGFPlusResults.Directory == null)
+                    {
+                        dirtyFileExists = false;
+                    }
+                    else
+                    {
+                        var fiMSGFPlusDirtyResults = new FileInfo(Path.Combine(fiMSGFPlusResults.Directory.FullName, dirtyResultsFilename));
+                        dirtyFileExists = fiMSGFPlusDirtyResults.Exists;
+                    }
+
+                    if (dirtyFileExists)
                     {
                         m_message = "MSGF+ _dirty.gz file found; this indicates a processing error";
                         processingError = true;
