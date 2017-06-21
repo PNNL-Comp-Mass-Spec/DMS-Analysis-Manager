@@ -12,6 +12,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Xml;
@@ -177,9 +178,24 @@ namespace AnalysisManagerProg
                 // Create a database logger connected to DMS5
                 // Once the initial parameters have been successfully read,
                 // we remove this logger than make a new one using the connection string read from the Manager Control DB
-                var defaultDmsConnectionString = Properties.Settings.Default.DefaultDMSConnString;
+                string dmsConnectionString;
 
-                clsLogTools.CreateDbLogger(defaultDmsConnectionString, "Analysis Tool Manager: " + hostName, true);
+                // Open AnalysisManagerProg.exe.config to look for setting DefaultDMSConnString, so we know which server to log to by default
+                var dmsConnectionStringFromConfig = GetXmlConfigDefaultConnectionString();
+
+                if (string.IsNullOrWhiteSpace(dmsConnectionStringFromConfig))
+                {
+                    // Use the hard-coded default that points to Gigasax
+                    dmsConnectionString = Properties.Settings.Default.DefaultDMSConnString;
+                }
+                else
+                {
+                    // Use the connection string from AnalysisManagerProg.exe.config
+                    dmsConnectionString = dmsConnectionStringFromConfig;
+                }
+
+                ShowTrace("Instantiate a DbLogger using " + dmsConnectionString);
+                clsLogTools.CreateDbLogger(dmsConnectionString, "Analysis Tool Manager: " + hostName, true);
             }
 
             try
@@ -1604,6 +1620,72 @@ namespace AnalysisManagerProg
             }
             catch (Exception)
             {
+                return string.Empty;
+            }
+
+        }
+
+        /// <summary>
+        /// Extract the value DefaultDMSConnString from AnalysisManagerProg.exe.config
+        /// </summary>
+        /// <returns></returns>
+        private string GetXmlConfigDefaultConnectionString()
+        {
+            return GetXmlConfigFileSetting("DefaultDMSConnString");
+        }
+
+        /// <summary>
+        /// Extract the value for the given setting from AnalysisManagerProg.exe.config
+        /// </summary>
+        /// <returns></returns>
+        private string GetXmlConfigFileSetting(string settingName)
+        {
+
+            if (string.IsNullOrWhiteSpace(settingName))
+                throw new ArgumentException("Setting name cannot be blank", nameof(settingName));
+
+            try
+            {
+                var configFilePath = Path.Combine(m_MgrFolderPath, m_MgrExeName + ".config");
+                var configfile = new FileInfo(configFilePath);
+
+                if (!configfile.Exists)
+                {
+                    LogError("File not found: " + configFilePath);
+                    return string.Empty;
+                }
+
+                var configXml = new StringBuilder();
+
+                // Open AnalysisManagerProg.exe.config using a simple text reader in case the file has malformed XML
+
+                ShowTrace(string.Format("Extracting setting {0} from {1}", settingName, configfile.FullName));
+
+                using (var reader = new StreamReader(new FileStream(configfile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                {
+                    while (!reader.EndOfStream)
+                    {
+                        var dataLine = reader.ReadLine();
+                        if (string.IsNullOrWhiteSpace(dataLine))
+                            continue;
+
+                        configXml.Append(dataLine);
+                    }
+                }
+
+                var matcher = new Regex(settingName + ".+?<value>(?<ConnString>.+?)</value>", RegexOptions.IgnoreCase);
+
+                var match = matcher.Match(configXml.ToString());
+
+                if (match.Success)
+                    return match.Groups["ConnString"].Value;
+
+                LogError(settingName + " setting not found in " + configFilePath);
+                return string.Empty;
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception reading setting " + settingName + " in AnalysisManagerProg.exe.config", ex);
                 return string.Empty;
             }
 
