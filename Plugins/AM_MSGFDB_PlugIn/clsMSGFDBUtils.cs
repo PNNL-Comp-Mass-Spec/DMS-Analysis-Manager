@@ -561,22 +561,24 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 // Dynamically set the amount of required memory based on the size of the .mzid file
                 var fileSizeMB = fiMzidFile.Length / 1024.0 / 1024.0;
-                var javaMemorySizeMB = 10000;
+                int javaMemorySizeMB;
 
-                if (fileSizeMB < 1000)
-                    javaMemorySizeMB = 8000;
-                if (fileSizeMB < 800)
-                    javaMemorySizeMB = 7000;
-                if (fileSizeMB < 600)
-                    javaMemorySizeMB = 6000;
-                if (fileSizeMB < 400)
-                    javaMemorySizeMB = 5000;
-                if (fileSizeMB < 300)
-                    javaMemorySizeMB = 4000;
-                if (fileSizeMB < 200)
-                    javaMemorySizeMB = 3000;
                 if (fileSizeMB < 100)
                     javaMemorySizeMB = 2000;
+                else if (fileSizeMB < 200)
+                    javaMemorySizeMB = 3000;
+                else if (fileSizeMB < 300)
+                    javaMemorySizeMB = 4000;
+                else if (fileSizeMB < 400)
+                    javaMemorySizeMB = 5000;
+                else if (fileSizeMB < 600)
+                    javaMemorySizeMB = 6000;
+                else if (fileSizeMB < 800)
+                    javaMemorySizeMB = 7000;
+                else if (fileSizeMB < 1000)
+                    javaMemorySizeMB = 8000;
+                else
+                    javaMemorySizeMB = 10000;
 
                 // Set up and execute a program runner to run the MzIDToTsv module of MSGFPlus
                 var cmdStr = GetMZIDtoTSVCommandLine(mzidFileName, tsvFileName, m_WorkDir, msgfDbProgLoc, javaMemorySizeMB);
