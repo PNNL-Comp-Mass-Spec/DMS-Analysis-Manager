@@ -180,9 +180,9 @@ namespace AnalysisManagerBase
         /// If deletion succeeds, then removes the file from the queue
         /// </summary>
         /// <param name="filesToDelete">Queue of files to delete (full file paths)</param>
-        /// <param name="strFileToQueueForDeletion">Optional: new file to add to the queue; blank to do nothing</param>
+        /// <param name="fileToQueueForDeletion">Optional: new file to add to the queue; blank to do nothing</param>
         /// <remarks></remarks>
-        protected void DeleteQueuedFiles(Queue<string> filesToDelete, string strFileToQueueForDeletion)
+        protected void DeleteQueuedFiles(Queue<string> filesToDelete, string fileToQueueForDeletion)
         {
             if (filesToDelete.Count > 0)
             {
@@ -193,9 +193,9 @@ namespace AnalysisManagerBase
 
                 try
                 {
-                    var strFileToDelete = filesToDelete.Peek();
+                    var fileToDelete = filesToDelete.Peek();
 
-                    File.Delete(strFileToDelete);
+                    File.Delete(fileToDelete);
 
                     // If we get here, then the delete succeeded, so we can dequeue the file
                     filesToDelete.Dequeue();
@@ -208,9 +208,9 @@ namespace AnalysisManagerBase
 
             }
 
-            if (!string.IsNullOrEmpty(strFileToQueueForDeletion))
+            if (!string.IsNullOrEmpty(fileToQueueForDeletion))
             {
-                filesToDelete.Enqueue(strFileToQueueForDeletion);
+                filesToDelete.Enqueue(fileToQueueForDeletion);
             }
 
         }
@@ -344,10 +344,10 @@ namespace AnalysisManagerBase
             bool logFileNotFound = true)
         {
 
-            var blnSuccess = FindAndRetrieveMiscFiles(
+            var success = FindAndRetrieveMiscFiles(
                 fileToGet, unzip: false, searchArchivedDatasetFolder: true, logFileNotFound: logFileNotFound);
 
-            if (!blnSuccess && fileToGet.ToLower().Contains("msgfplus"))
+            if (!success && fileToGet.ToLower().Contains("msgfplus"))
             {
                 if (string.IsNullOrEmpty(synopsisFileName))
                     synopsisFileName = "Dataset_msgfdb.txt";
@@ -355,17 +355,17 @@ namespace AnalysisManagerBase
 
                 if (!string.Equals(alternativeName, fileToGet))
                 {
-                    blnSuccess = FindAndRetrieveMiscFiles(
+                    success = FindAndRetrieveMiscFiles(
                         alternativeName, unzip: false, searchArchivedDatasetFolder: true, logFileNotFound: logFileNotFound);
 
-                    if (blnSuccess)
+                    if (success)
                     {
                         fileToGet = alternativeName;
                     }
                 }
             }
 
-            if (!blnSuccess)
+            if (!success)
             {
                 return false;
             }
@@ -384,10 +384,10 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <returns>The path to the _dta.zip file (or _dta.txt file)</returns>
         /// <remarks></remarks>
-        public string FindCDTAFile(out string strErrorMessage)
+        public string FindCDTAFile(out string errorMessage)
         {
 
-            strErrorMessage = string.Empty;
+            errorMessage = string.Empty;
 
             // Retrieve zipped DTA file
             var sourceFileName = DatasetName + "_dta.zip";
@@ -414,7 +414,7 @@ namespace AnalysisManagerBase
             {
                 // No folder found containing the zipped DTA files; return False
                 // (the FindDataFile procedure should have already logged an error)
-                strErrorMessage = "Could not find " + sourceFileName + " using FindDataFile";
+                errorMessage = "Could not find " + sourceFileName + " using FindDataFile";
                 return string.Empty;
             }
 
@@ -478,12 +478,12 @@ namespace AnalysisManagerBase
                 // Note that "SharedResultsFolders" will typically only contain one folder path,
                 //  but can contain a comma-separated list of folders
 
-                var strDatasetFolderName = m_jobParams.GetParam("DatasetFolderName");
-                var strInputFolderName = m_jobParams.GetParam("inputFolderName");
+                var datasetFolderName = m_jobParams.GetParam("DatasetFolderName");
+                var inputFolderName = m_jobParams.GetParam("inputFolderName");
 
                 var sharedResultFolderNames = GetSharedResultFolderList().ToList();
 
-                var strParentFolderPaths = new List<string> {
+                var parentFolderPaths = new List<string> {
                     m_jobParams.GetParam("transferFolderPath"),
                     m_jobParams.GetParam("DatasetStoragePath")};
 
@@ -491,34 +491,34 @@ namespace AnalysisManagerBase
                 {
                     if (!MyEMSLSearchDisabled)
                     {
-                        strParentFolderPaths.Add(MYEMSL_PATH_FLAG);
+                        parentFolderPaths.Add(MYEMSL_PATH_FLAG);
                     }
                     if (m_AuroraAvailable)
                     {
-                        strParentFolderPaths.Add(m_jobParams.GetParam("DatasetArchivePath"));
+                        parentFolderPaths.Add(m_jobParams.GetParam("DatasetArchivePath"));
                     }
                 }
 
                 var foldersToSearch = new List<string>();
 
-                foreach (var strParentFolderPath in strParentFolderPaths)
+                foreach (var parentFolderPath in parentFolderPaths)
                 {
-                    if (!string.IsNullOrEmpty(strParentFolderPath))
+                    if (!string.IsNullOrEmpty(parentFolderPath))
                     {
-                        if (!string.IsNullOrEmpty(strInputFolderName))
+                        if (!string.IsNullOrEmpty(inputFolderName))
                         {
                             // Parent Folder \ Dataset Folder \ Input folder
-                            foldersToSearch.Add(FindDataFileAddFolder(strParentFolderPath, strDatasetFolderName, strInputFolderName));
+                            foldersToSearch.Add(FindDataFileAddFolder(parentFolderPath, datasetFolderName, inputFolderName));
                         }
 
-                        foreach (var strSharedFolderName in sharedResultFolderNames)
+                        foreach (var sharedFolderName in sharedResultFolderNames)
                         {
                             // Parent Folder \ Dataset Folder \  Shared results folder
-                            foldersToSearch.Add(FindDataFileAddFolder(strParentFolderPath, strDatasetFolderName, strSharedFolderName));
+                            foldersToSearch.Add(FindDataFileAddFolder(parentFolderPath, datasetFolderName, sharedFolderName));
                         }
 
                         // Parent Folder \ Dataset Folder
-                        foldersToSearch.Add(FindDataFileAddFolder(strParentFolderPath, strDatasetFolderName, string.Empty));
+                        foldersToSearch.Add(FindDataFileAddFolder(parentFolderPath, datasetFolderName, string.Empty));
                     }
 
                 }
@@ -607,52 +607,51 @@ namespace AnalysisManagerBase
 
         }
 
-        private string FindDataFileAddFolder(string strParentFolderPath, string strDatasetFolderName, string strInputFolderName)
+        private string FindDataFileAddFolder(string parentFolderPath, string datasetFolderName, string inputFolderName)
         {
-            var strTargetFolderPath = Path.Combine(strParentFolderPath, strDatasetFolderName);
-            if (!string.IsNullOrEmpty(strInputFolderName))
+            var targetFolderPath = Path.Combine(parentFolderPath, datasetFolderName);
+            if (!string.IsNullOrEmpty(inputFolderName))
             {
-                strTargetFolderPath = Path.Combine(strTargetFolderPath, strInputFolderName);
+                targetFolderPath = Path.Combine(targetFolderPath, inputFolderName);
             }
 
-            return strTargetFolderPath;
+            return targetFolderPath;
 
         }
 
         /// <summary>
-        /// Looks for file strFileName in strFolderPath or any of its subfolders
+        /// Looks for file fileName in folderPath or any of its subfolders
         /// The filename may contain a wildcard character, in which case the first match will be returned
         /// </summary>
-        /// <param name="strFolderPath">Folder path to examine</param>
-        /// <param name="strFileName">File name to find</param>
+        /// <param name="folderPath">Folder path to examine</param>
+        /// <param name="fileName">File name to find</param>
         /// <returns>Full path to the file, if found; empty string if no match</returns>
         /// <remarks></remarks>
-        public static string FindFileInDirectoryTree(string strFolderPath, string strFileName)
+        public static string FindFileInDirectoryTree(string folderPath, string fileName)
         {
-            return FindFileInDirectoryTree(strFolderPath, strFileName, new SortedSet<string>());
+            return FindFileInDirectoryTree(folderPath, fileName, new SortedSet<string>());
         }
 
         /// <summary>
-        /// Looks for file strFileName in strFolderPath or any of its subfolders
+        /// Looks for file fileName in folderPath or any of its subfolders
         /// The filename may contain a wildcard character, in which case the first match will be returned
         /// </summary>
-        /// <param name="strFolderPath">Folder path to examine</param>
-        /// <param name="strFileName">File name to find</param>
+        /// <param name="folderPath">Folder path to examine</param>
+        /// <param name="fileName">File name to find</param>
         /// <param name="lstFolderNamesToSkip">List of folder names that should not be examined</param>
         /// <returns>Full path to the file, if found; empty string if no match</returns>
         /// <remarks></remarks>
-        public static string FindFileInDirectoryTree(string strFolderPath, string strFileName, SortedSet<string> lstFolderNamesToSkip)
+        public static string FindFileInDirectoryTree(string folderPath, string fileName, SortedSet<string> lstFolderNamesToSkip)
         {
-            var diFolder = new DirectoryInfo(strFolderPath);
+            var diFolder = new DirectoryInfo(folderPath);
 
             if (diFolder.Exists)
             {
                 // Examine the files for this folder
-                string strFilePathMatch;
-                foreach (var fiFile in diFolder.GetFiles(strFileName))
+                foreach (var fiFile in diFolder.GetFiles(fileName))
                 {
-                    strFilePathMatch = fiFile.FullName;
-                    return strFilePathMatch;
+                    var filePathMatch = fiFile.FullName;
+                    return filePathMatch;
                 }
 
                 // Match not found
@@ -662,10 +661,10 @@ namespace AnalysisManagerBase
                 {
                     if (!lstFolderNamesToSkip.Contains(ioSubFolder.Name))
                     {
-                        strFilePathMatch = FindFileInDirectoryTree(ioSubFolder.FullName, strFileName);
-                        if (!string.IsNullOrEmpty(strFilePathMatch))
+                        var filePathMatch = FindFileInDirectoryTree(ioSubFolder.FullName, fileName);
+                        if (!string.IsNullOrEmpty(filePathMatch))
                         {
-                            return strFilePathMatch;
+                            return filePathMatch;
                         }
                     }
                 }
@@ -685,11 +684,11 @@ namespace AnalysisManagerBase
         {
 
             // First look in the MsXML cache folder
-            var strMatchingFilePath = FindMsXmlFileInCache(clsAnalysisResources.MSXMLOutputTypeConstants.mzXML, out hashCheckFilePath);
+            var matchingFilePath = FindMsXmlFileInCache(clsAnalysisResources.MSXMLOutputTypeConstants.mzXML, out hashCheckFilePath);
 
-            if (!string.IsNullOrEmpty(strMatchingFilePath))
+            if (!string.IsNullOrEmpty(matchingFilePath))
             {
-                return strMatchingFilePath;
+                return matchingFilePath;
             }
 
             // Not found in the cache; look in the dataset folder
@@ -701,27 +700,27 @@ namespace AnalysisManagerBase
 
             const int MAX_ATTEMPTS = 1;
 
-            var lstValuesToCheck = new List<int>();
+            var valuesToCheck = new List<int>();
 
             // Initialize the values we'll look for
             // Note that these values are added to the list in the order of the preferred file to retrieve
 
-            //                                  Example folder name          CentroidMSXML  MSXMLGenerator   CentroidPeakCount    MSXMLOutputType
-            lstValuesToCheck.Add(215);       // MSXML_Gen_1_215_DatasetID,   True           MSConvert        -1                   mzXML
-            lstValuesToCheck.Add(149);       // MSXML_Gen_1_149_DatasetID,   True           MSConvert        1000                 mzXML
-            lstValuesToCheck.Add(148);       // MSXML_Gen_1_148_DatasetID,   True           MSConvert        500                  mzXML
-            lstValuesToCheck.Add(154);       // MSXML_Gen_1_154_DatasetID,   True           MSConvert        250                  mzXML
-            lstValuesToCheck.Add(132);       // MSXML_Gen_1_132_DatasetID,   True           MSConvert        150                  mzXML
-            lstValuesToCheck.Add(93);        // MSXML_Gen_1_93_DatasetID,    True           ReadW.exe        n/a                  mzXML
-            lstValuesToCheck.Add(126);       // MSXML_Gen_1_126_DatasetID,   True           ReadW.exe        n/a                  mzXML; ReAdW_Version=v2.1
-            lstValuesToCheck.Add(177);       // MSXML_Gen_1_177_DatasetID,   False          MSConvert.exe    n/a                  mzXML
-            lstValuesToCheck.Add(39);        // MSXML_Gen_1_39_DatasetID,    False          ReadW.exe        n/a                  mzXML
+            //                               Example folder name          CentroidMSXML  MSXMLGenerator   CentroidPeakCount    MSXMLOutputType
+            valuesToCheck.Add(215);       // MSXML_Gen_1_215_DatasetID,   True           MSConvert        -1                   mzXML
+            valuesToCheck.Add(149);       // MSXML_Gen_1_149_DatasetID,   True           MSConvert        1000                 mzXML
+            valuesToCheck.Add(148);       // MSXML_Gen_1_148_DatasetID,   True           MSConvert        500                  mzXML
+            valuesToCheck.Add(154);       // MSXML_Gen_1_154_DatasetID,   True           MSConvert        250                  mzXML
+            valuesToCheck.Add(132);       // MSXML_Gen_1_132_DatasetID,   True           MSConvert        150                  mzXML
+            valuesToCheck.Add(93);        // MSXML_Gen_1_93_DatasetID,    True           ReadW.exe        n/a                  mzXML
+            valuesToCheck.Add(126);       // MSXML_Gen_1_126_DatasetID,   True           ReadW.exe        n/a                  mzXML; ReAdW_Version=v2.1
+            valuesToCheck.Add(177);       // MSXML_Gen_1_177_DatasetID,   False          MSConvert.exe    n/a                  mzXML
+            valuesToCheck.Add(39);        // MSXML_Gen_1_39_DatasetID,    False          ReadW.exe        n/a                  mzXML
 
             hashCheckFilePath = string.Empty;
 
-            foreach (var intVersion in lstValuesToCheck)
+            foreach (var version in valuesToCheck)
             {
-                var msXmlFoldername = MSXmlFoldernameBase + intVersion + "_" + DatasetID;
+                var msXmlFoldername = MSXmlFoldernameBase + version + "_" + DatasetID;
 
                 // Look for the MSXmlFolder
                 // If the folder cannot be found, then m_FolderSearch.FindValidFolder will return the folder defined by "DatasetStoragePath"
@@ -823,17 +822,17 @@ namespace AnalysisManagerBase
             }
 
             // Determine the YearQuarter code for this dataset
-            var strDatasetStoragePath = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetStoragePath");
-            if (string.IsNullOrEmpty(strDatasetStoragePath) && (m_AuroraAvailable || !MyEMSLSearchDisabled))
+            var datasetStoragePath = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetStoragePath");
+            if (string.IsNullOrEmpty(datasetStoragePath) && (m_AuroraAvailable || !MyEMSLSearchDisabled))
             {
-                strDatasetStoragePath = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetArchivePath");
+                datasetStoragePath = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetArchivePath");
             }
 
-            var strYearQuarter = clsAnalysisResources.GetDatasetYearQuarter(strDatasetStoragePath);
+            var yearQuarter = clsAnalysisResources.GetDatasetYearQuarter(datasetStoragePath);
 
             var lstMatchingFiles = new List<FileInfo>();
 
-            if (string.IsNullOrEmpty(strYearQuarter))
+            if (string.IsNullOrEmpty(yearQuarter))
             {
                 // Perform an exhaustive recursive search of the MSXML file cache
                 var lstFilesToAppend = diCacheFolder.GetFiles(MsXMLFilename, SearchOption.AllDirectories);
@@ -854,7 +853,7 @@ namespace AnalysisManagerBase
                 // Look for the file in the top level subfolders of the MSXML file cache
                 foreach (var diToolFolder in diCacheFolder.GetDirectories())
                 {
-                    var lstSubFolders = diToolFolder.GetDirectories(strYearQuarter);
+                    var lstSubFolders = diToolFolder.GetDirectories(yearQuarter);
 
                     if (lstSubFolders.Length > 0)
                     {
@@ -900,9 +899,9 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <returns>The path to the .pbf file</returns>
         /// <remarks></remarks>
-        private string FindPBFFile(out string strErrorMessage)
+        private string FindPBFFile(out string errorMessage)
         {
-            strErrorMessage = string.Empty;
+            errorMessage = string.Empty;
 
             var sourceFileName = DatasetName + clsAnalysisResources.DOT_PBF_EXTENSION;
             var sourceFolderPath = FindDataFile(sourceFileName);
@@ -918,7 +917,7 @@ namespace AnalysisManagerBase
                 return Path.Combine(sourceFolderPath, sourceFileName);
             }
 
-            strErrorMessage = "Could not find " + sourceFileName + " using FindDataFile";
+            errorMessage = "Could not find " + sourceFileName + " using FindDataFile";
             return string.Empty;
 
         }
@@ -926,7 +925,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Split apart coordinates that look like "R00X438Y093" into R, X, and Y
         /// </summary>
-        /// <param name="strCoord"></param>
+        /// <param name="coord"></param>
         /// <param name="reRegExRXY"></param>
         /// <param name="reRegExRX"></param>
         /// <param name="R"></param>
@@ -934,34 +933,34 @@ namespace AnalysisManagerBase
         /// <param name="Y"></param>
         /// <returns>True if success, false otherwise</returns>
         /// <remarks></remarks>
-        private bool GetBrukerImagingFileCoords(string strCoord, Regex reRegExRXY, Regex reRegExRX, out int R, out int X, out int Y)
+        private bool GetBrukerImagingFileCoords(string coord, Regex reRegExRXY, Regex reRegExRX, out int R, out int X, out int Y)
         {
             // Try to match names like R00X438Y093
-            var reMatch = reRegExRXY.Match(strCoord);
+            var reMatch = reRegExRXY.Match(coord);
 
-            var blnSuccess = false;
+            var success = false;
 
             if (reMatch.Success)
             {
                 // Match succeeded; extract out the coordinates
                 if (int.TryParse(reMatch.Groups["R"].Value, out R))
-                    blnSuccess = true;
+                    success = true;
                 if (int.TryParse(reMatch.Groups["X"].Value, out X))
-                    blnSuccess = true;
+                    success = true;
                 int.TryParse(reMatch.Groups["Y"].Value, out Y);
 
             }
             else
             {
                 // Try to match names like R00X438
-                reMatch = reRegExRX.Match(strCoord);
+                reMatch = reRegExRX.Match(coord);
 
                 if (reMatch.Success)
                 {
                     if (int.TryParse(reMatch.Groups["R"].Value, out R))
-                        blnSuccess = true;
+                        success = true;
                     if (int.TryParse(reMatch.Groups["X"].Value, out X))
-                        blnSuccess = true;
+                        success = true;
                     Y = 0;
                 }
                 else
@@ -972,7 +971,7 @@ namespace AnalysisManagerBase
                 }
             }
 
-            return blnSuccess;
+            return success;
 
         }
 
@@ -987,29 +986,29 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         private bool GetBrukerImagingSectionFilter(IJobParams jobParams, out int startSectionX, out int endSectionX)
         {
-            var blnApplySectionFilter = false;
+            var applySectionFilter = false;
             startSectionX = -1;
             endSectionX = int.MaxValue;
 
-            var strParam = jobParams.GetParam("MALDI_Imaging_startSectionX");
-            if (!string.IsNullOrEmpty(strParam))
+            var param = jobParams.GetParam("MALDI_Imaging_startSectionX");
+            if (!string.IsNullOrEmpty(param))
             {
-                if (int.TryParse(strParam, out startSectionX))
+                if (int.TryParse(param, out startSectionX))
                 {
-                    blnApplySectionFilter = true;
+                    applySectionFilter = true;
                 }
             }
 
-            strParam = jobParams.GetParam("MALDI_Imaging_endSectionX");
-            if (!string.IsNullOrEmpty(strParam))
+            param = jobParams.GetParam("MALDI_Imaging_endSectionX");
+            if (!string.IsNullOrEmpty(param))
             {
-                if (int.TryParse(strParam, out endSectionX))
+                if (int.TryParse(param, out endSectionX))
                 {
-                    blnApplySectionFilter = true;
+                    applySectionFilter = true;
                 }
             }
 
-            return blnApplySectionFilter;
+            return applySectionFilter;
 
         }
 
@@ -1022,27 +1021,27 @@ namespace AnalysisManagerBase
 
             var sharedResultFolderNames = new List<string>();
 
-            var strSharedResultFolders = m_jobParams.GetParam("SharedResultsFolders");
+            var sharedResultFolders = m_jobParams.GetParam("SharedResultsFolders");
 
-            if (strSharedResultFolders.Contains(","))
+            if (sharedResultFolders.Contains(","))
             {
                 // Split on commas and populate sharedResultFolderNames
-                foreach (var strItem in strSharedResultFolders.Split(','))
+                foreach (var item in sharedResultFolders.Split(','))
                 {
-                    var strItemTrimmed = strItem.Trim();
-                    if (strItemTrimmed.Length > 0)
+                    var itemTrimmed = item.Trim();
+                    if (itemTrimmed.Length > 0)
                     {
-                        sharedResultFolderNames.Add(strItemTrimmed);
+                        sharedResultFolderNames.Add(itemTrimmed);
                     }
                 }
 
-                // Reverse the list so that the last item in strSharedResultFolders is the first item in sharedResultFolderNames
+                // Reverse the list so that the last item in sharedResultFolders is the first item in sharedResultFolderNames
                 sharedResultFolderNames.Reverse();
             }
             else
             {
-                // Just one item in strSharedResultFolders
-                sharedResultFolderNames.Add(strSharedResultFolders);
+                // Just one item in sharedResultFolders
+                sharedResultFolderNames.Add(sharedResultFolders);
             }
 
             return sharedResultFolderNames;
@@ -1302,26 +1301,26 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Retrieves file PNNLOmicsElementData.xml from the program directory of the program specified by strProgLocName
+        /// Retrieves file PNNLOmicsElementData.xml from the program directory of the program specified by progLocName
         /// </summary>
-        /// <param name="strProgLocName"></param>
+        /// <param name="progLocName"></param>
         /// <returns></returns>
-        /// <remarks>strProgLocName is tyipcally DeconToolsProgLoc, LipidToolsProgLoc, or TargetedWorkflowsProgLoc</remarks>
-        public bool RetrievePNNLOmicsResourceFiles(string strProgLocName)
+        /// <remarks>progLocName is tyipcally DeconToolsProgLoc, LipidToolsProgLoc, or TargetedWorkflowsProgLoc</remarks>
+        public bool RetrievePNNLOmicsResourceFiles(string progLocName)
         {
 
             const string OMICS_ELEMENT_DATA_FILE = "PNNLOmicsElementData.xml";
 
             try
             {
-                var strProgLoc = m_mgrParams.GetParam(strProgLocName);
-                if (string.IsNullOrEmpty(strProgLocName))
+                var progLoc = m_mgrParams.GetParam(progLocName);
+                if (string.IsNullOrEmpty(progLocName))
                 {
-                    OnErrorEvent("Manager parameter " + strProgLocName + " is not defined; cannot retrieve file " + OMICS_ELEMENT_DATA_FILE);
+                    OnErrorEvent("Manager parameter " + progLocName + " is not defined; cannot retrieve file " + OMICS_ELEMENT_DATA_FILE);
                     return false;
                 }
 
-                var fiSourceFile = new FileInfo(Path.Combine(strProgLoc, OMICS_ELEMENT_DATA_FILE));
+                var fiSourceFile = new FileInfo(Path.Combine(progLoc, OMICS_ELEMENT_DATA_FILE));
 
                 if (!fiSourceFile.Exists)
                 {
@@ -1414,11 +1413,11 @@ namespace AnalysisManagerBase
             {
 
                 // Find the CDTA file
-                var sourceFilePath = FindCDTAFile(out var strErrorMessage);
+                var sourceFilePath = FindCDTAFile(out var errorMessage);
 
                 if (string.IsNullOrEmpty(sourceFilePath))
                 {
-                    OnErrorEvent(strErrorMessage);
+                    OnErrorEvent(errorMessage);
                     return false;
                 }
 
@@ -1563,15 +1562,15 @@ namespace AnalysisManagerBase
         private bool RetrieveMgfFile(bool getCdfAlso, bool createStoragePathInfoOnly, int maxAttempts)
         {
 
-            var strMGFFilePath = m_FolderSearch.FindMGFFile(maxAttempts, assumeUnpurged: false);
+            var mgfFilePath = m_FolderSearch.FindMGFFile(maxAttempts, assumeUnpurged: false);
 
-            if (string.IsNullOrEmpty(strMGFFilePath))
+            if (string.IsNullOrEmpty(mgfFilePath))
             {
                 OnErrorEvent("Source mgf file not found using FindMGFFile");
                 return false;
             }
 
-            var fiMGFFile = new FileInfo(strMGFFilePath);
+            var fiMGFFile = new FileInfo(mgfFilePath);
             if (!fiMGFFile.Exists)
             {
                 OnErrorEvent("Source mgf file not found: " + fiMGFFile.FullName);
@@ -1694,43 +1693,43 @@ namespace AnalysisManagerBase
         private bool RetrieveMzXMLFileVerifyHash(FileInfo fiSourceFile, string hashCheckFilePath, bool createStoragePathInfoOnly)
         {
 
-            string strTargetFilePath;
-            bool blnComputeHash;
+            string targetFilePath;
+            bool computeHash;
 
             if (createStoragePathInfoOnly)
             {
-                strTargetFilePath = fiSourceFile.FullName;
+                targetFilePath = fiSourceFile.FullName;
                 // Don't compute the hash, since we're accessing the file over the network
-                blnComputeHash = false;
+                computeHash = false;
             }
             else
             {
-                strTargetFilePath = Path.Combine(m_WorkingDir, fiSourceFile.Name);
-                blnComputeHash = true;
+                targetFilePath = Path.Combine(m_WorkingDir, fiSourceFile.Name);
+                computeHash = true;
             }
 
-            if (clsGlobal.ValidateFileVsHashcheck(strTargetFilePath, hashCheckFilePath, out var strErrorMessage, blnCheckDate: true, blnComputeHash: blnComputeHash))
+            if (clsGlobal.ValidateFileVsHashcheck(targetFilePath, hashCheckFilePath, out var errorMessage, checkDate: true, computeHash: computeHash))
             {
                 return true;
             }
 
-            OnErrorEvent("MzXML/MzML file validation error in RetrieveMzXMLFileVerifyHash: " + strErrorMessage);
+            OnErrorEvent("MzXML/MzML file validation error in RetrieveMzXMLFileVerifyHash: " + errorMessage);
 
             try
             {
                 if (createStoragePathInfoOnly)
                 {
                     // Delete the local StoragePathInfo file
-                    var strStoragePathInfoFile = Path.Combine(m_WorkingDir, fiSourceFile.Name + clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX);
-                    if (File.Exists(strStoragePathInfoFile))
+                    var storagePathInfoFile = Path.Combine(m_WorkingDir, fiSourceFile.Name + clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX);
+                    if (File.Exists(storagePathInfoFile))
                     {
-                        File.Delete(strStoragePathInfoFile);
+                        File.Delete(storagePathInfoFile);
                     }
                 }
                 else
                 {
                     // Delete the local file to force it to be re-generated
-                    File.Delete(strTargetFilePath);
+                    File.Delete(targetFilePath);
                 }
 
             }
@@ -1742,7 +1741,7 @@ namespace AnalysisManagerBase
             try
             {
                 // Delete the remote mzXML or mzML file only if we computed the hash and we had a hash mismatch
-                if (blnComputeHash)
+                if (computeHash)
                 {
                     fiSourceFile.Delete();
                 }
@@ -1993,28 +1992,28 @@ namespace AnalysisManagerBase
                 // MASIC Results Folder Found
                 // If more than one folder, use the folder with the newest _ScanStats.txt file
                 var dtNewestScanStatsFileDate = DateTime.MinValue;
-                var strNewestScanStatsFilePath = string.Empty;
+                var newestScanStatsFilePath = string.Empty;
 
                 foreach (var diSubFolder in diSubfolders)
                 {
                     var fiScanStatsFile = new FileInfo(Path.Combine(diSubFolder.FullName, ScanStatsFilename));
                     if (fiScanStatsFile.Exists)
                     {
-                        if (string.IsNullOrEmpty(strNewestScanStatsFilePath) || fiScanStatsFile.LastWriteTimeUtc > dtNewestScanStatsFileDate)
+                        if (string.IsNullOrEmpty(newestScanStatsFilePath) || fiScanStatsFile.LastWriteTimeUtc > dtNewestScanStatsFileDate)
                         {
-                            strNewestScanStatsFilePath = fiScanStatsFile.FullName;
+                            newestScanStatsFilePath = fiScanStatsFile.FullName;
                             dtNewestScanStatsFileDate = fiScanStatsFile.LastWriteTimeUtc;
                         }
                     }
                 }
 
-                if (string.IsNullOrEmpty(strNewestScanStatsFilePath))
+                if (string.IsNullOrEmpty(newestScanStatsFilePath))
                 {
                     OnErrorEvent("MASIC ScanStats file not found below " + diFolderInfo.FullName);
                     return false;
                 }
 
-                var fiSourceFile = new FileInfo(strNewestScanStatsFilePath);
+                var fiSourceFile = new FileInfo(newestScanStatsFilePath);
 
                 if (fiSourceFile.Directory == null)
                 {
@@ -2209,16 +2208,16 @@ namespace AnalysisManagerBase
 
         }
 
-        private bool RetrieveSICFileMyEMSL(string strFileToFind, string strSICFolderName, List<string> lstNonCriticalFileSuffixes)
+        private bool RetrieveSICFileMyEMSL(string fileToFind, string sicFolderName, IReadOnlyCollection<string> lstNonCriticalFileSuffixes)
         {
 
-            var matchingMyEMSLFiles = m_MyEMSLUtilities.FindFiles(strFileToFind, strSICFolderName, DatasetName, recurse: false);
+            var matchingMyEMSLFiles = m_MyEMSLUtilities.FindFiles(fileToFind, sicFolderName, DatasetName, recurse: false);
 
             if (matchingMyEMSLFiles.Count > 0)
             {
                 if (m_DebugLevel >= 3)
                 {
-                    OnDebugEvent("Found MASIC results file in MyEMSL, " + Path.Combine(strSICFolderName, strFileToFind));
+                    OnDebugEvent("Found MASIC results file in MyEMSL, " + Path.Combine(sicFolderName, fileToFind));
                 }
 
                 m_MyEMSLUtilities.AddFileToDownloadQueue(matchingMyEMSLFiles.First().FileInfo);
@@ -2226,11 +2225,11 @@ namespace AnalysisManagerBase
             }
             else
             {
-                var blnIgnoreFile = SafeToIgnore(strFileToFind, lstNonCriticalFileSuffixes);
+                var ignoreFile = SafeToIgnore(fileToFind, lstNonCriticalFileSuffixes);
 
-                if (!blnIgnoreFile)
+                if (!ignoreFile)
                 {
-                    OnErrorEvent(strFileToFind + " not found in MyEMSL, subfolder " + strSICFolderName);
+                    OnErrorEvent(fileToFind + " not found in MyEMSL, subfolder " + sicFolderName);
                     return false;
                 }
             }
@@ -2239,20 +2238,25 @@ namespace AnalysisManagerBase
 
         }
 
-        private bool RetrieveSICFileUNC(string strFileToFind, string MASICResultsFolderPath, bool createStoragePathInfoOnly, int maxCopyAttempts, List<string> lstNonCriticalFileSuffixes)
+        private bool RetrieveSICFileUNC(
+            string fileToFind,
+            string MASICResultsFolderPath,
+            bool createStoragePathInfoOnly,
+            int maxCopyAttempts,
+            IReadOnlyCollection<string> lstNonCriticalFileSuffixes)
         {
 
-            var fiSourceFile = new FileInfo(Path.Combine(MASICResultsFolderPath, strFileToFind));
+            var fiSourceFile = new FileInfo(Path.Combine(MASICResultsFolderPath, fileToFind));
 
             if (m_DebugLevel >= 3)
             {
                 OnDebugEvent("Copying MASIC results file: " + fiSourceFile.FullName);
             }
 
-            var blnIgnoreFile = SafeToIgnore(fiSourceFile.Name, lstNonCriticalFileSuffixes);
+            var ignoreFile = SafeToIgnore(fiSourceFile.Name, lstNonCriticalFileSuffixes);
 
             clsLogTools.LogLevels logMsgTypeIfNotFound;
-            if (blnIgnoreFile)
+            if (ignoreFile)
             {
                 logMsgTypeIfNotFound = clsLogTools.LogLevels.DEBUG;
             }
@@ -2274,7 +2278,7 @@ namespace AnalysisManagerBase
             if (success)
                 return true;
 
-            if (blnIgnoreFile)
+            if (ignoreFile)
             {
                 if (m_DebugLevel >= 3)
                 {
@@ -2283,7 +2287,7 @@ namespace AnalysisManagerBase
             }
             else
             {
-                OnErrorEvent(strFileToFind + " not found at " + fiSourceFile.Directory.FullName);
+                OnErrorEvent(fileToFind + " not found at " + fiSourceFile.Directory.FullName);
                 return false;
             }
 
@@ -2332,7 +2336,7 @@ namespace AnalysisManagerBase
         public bool RetrieveSpectra(string rawDataType, bool createStoragePathInfoOnly, int maxAttempts)
         {
 
-            var blnSuccess = false;
+            var success = false;
             var StoragePath = m_jobParams.GetParam("DatasetStoragePath");
 
             OnStatusEvent("Retrieving spectra file(s)");
@@ -2348,47 +2352,47 @@ namespace AnalysisManagerBase
                         // For Agilent Ion Trap datasets acquired on Agilent_SL1 or Agilent_XCT1 in 2005,
                         //  we would pre-process the data beforehand to create MGF files
                         // The following call can be used to retrieve the files
-                        blnSuccess = RetrieveMgfFile(getCdfAlso: true, createStoragePathInfoOnly: createStoragePathInfoOnly, maxAttempts: maxAttempts);
+                        success = RetrieveMgfFile(getCdfAlso: true, createStoragePathInfoOnly: createStoragePathInfoOnly, maxAttempts: maxAttempts);
                     }
                     else
                     {
                         // DeconTools_V2 now supports reading the .D files directly
                         // Call RetrieveDotDFolder() to copy the folder and all subfolders
-                        blnSuccess = RetrieveDotDFolder(createStoragePathInfoOnly, maxAttempts, blnSkipBAFFiles: true);
+                        success = RetrieveDotDFolder(createStoragePathInfoOnly, maxAttempts, skipBAFFiles: true);
                     }
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.AgilentQStarWiffFile:
                     // Agilent/QSTAR TOF data
-                    blnSuccess = RetrieveDatasetFile(clsAnalysisResources.DOT_WIFF_EXTENSION, createStoragePathInfoOnly, maxAttempts);
+                    success = RetrieveDatasetFile(clsAnalysisResources.DOT_WIFF_EXTENSION, createStoragePathInfoOnly, maxAttempts);
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.ZippedSFolders:
                     // FTICR data
-                    blnSuccess = RetrieveSFolders(createStoragePathInfoOnly, maxAttempts);
+                    success = RetrieveSFolders(createStoragePathInfoOnly, maxAttempts);
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile:
                     // Finnigan ion trap/LTQ-FT data
-                    blnSuccess = RetrieveDatasetFile(clsAnalysisResources.DOT_RAW_EXTENSION, createStoragePathInfoOnly, maxAttempts);
+                    success = RetrieveDatasetFile(clsAnalysisResources.DOT_RAW_EXTENSION, createStoragePathInfoOnly, maxAttempts);
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.MicromassRawFolder:
                     // Micromass QTOF data
-                    blnSuccess = RetrieveDotRawFolder(createStoragePathInfoOnly, maxAttempts);
+                    success = RetrieveDotRawFolder(createStoragePathInfoOnly, maxAttempts);
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.UIMF:
                     // IMS UIMF data
-                    blnSuccess = RetrieveDatasetFile(clsAnalysisResources.DOT_UIMF_EXTENSION, createStoragePathInfoOnly, maxAttempts);
+                    success = RetrieveDatasetFile(clsAnalysisResources.DOT_UIMF_EXTENSION, createStoragePathInfoOnly, maxAttempts);
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.mzXML:
-                    blnSuccess = RetrieveDatasetFile(clsAnalysisResources.DOT_MZXML_EXTENSION, createStoragePathInfoOnly, maxAttempts);
+                    success = RetrieveDatasetFile(clsAnalysisResources.DOT_MZXML_EXTENSION, createStoragePathInfoOnly, maxAttempts);
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.mzML:
-                    blnSuccess = RetrieveDatasetFile(clsAnalysisResources.DOT_MZML_EXTENSION, createStoragePathInfoOnly, maxAttempts);
+                    success = RetrieveDatasetFile(clsAnalysisResources.DOT_MZML_EXTENSION, createStoragePathInfoOnly, maxAttempts);
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder:
@@ -2399,20 +2403,20 @@ namespace AnalysisManagerBase
                     // We previously didn't need this file for DeconTools, but, now that DeconTools is using CompassXtract, we need the file
                     // In contrast, ICR-2LS only needs the ser or FID file, plus the apexAcquisition.method file in the .md folder
 
-                    var blnSkipBAFFiles = false;
+                    var skipBAFFiles = false;
 
-                    var strStepTool = m_jobParams.GetJobParameter("StepTool", "Unknown");
+                    var stepTool = m_jobParams.GetJobParameter("StepTool", "Unknown");
 
-                    if (strStepTool == "ICR2LS")
+                    if (stepTool == "ICR2LS")
                     {
-                        blnSkipBAFFiles = true;
+                        skipBAFFiles = true;
                     }
 
-                    blnSuccess = RetrieveDotDFolder(createStoragePathInfoOnly, maxAttempts, blnSkipBAFFiles);
+                    success = RetrieveDotDFolder(createStoragePathInfoOnly, maxAttempts, skipBAFFiles);
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.BrukerMALDIImaging:
-                    blnSuccess = RetrieveBrukerMALDIImagingFolders(unzipOverNetwork: true);
+                    success = RetrieveBrukerMALDIImagingFolders(unzipOverNetwork: true);
 
                     break;
                 default:
@@ -2431,7 +2435,7 @@ namespace AnalysisManagerBase
             }
 
             // Return the result of the spectra retrieval
-            return blnSuccess;
+            return success;
         }
 
         ///
@@ -2440,10 +2444,10 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks></remarks>
-        private bool RetrieveDotDFolder(bool createStoragePathInfoOnly, int maxAttempts, bool blnSkipBAFFiles)
+        private bool RetrieveDotDFolder(bool createStoragePathInfoOnly, int maxAttempts, bool skipBAFFiles)
         {
             var fileNamesToSkip = new List<string>();
-            if (blnSkipBAFFiles)
+            if (skipBAFFiles)
             {
                 fileNamesToSkip.Add("analysis.baf");
             }
@@ -2631,7 +2635,7 @@ namespace AnalysisManagerBase
             }
 
             // See if any imaging section filters are defined
-            var blnApplySectionFilter = GetBrukerImagingSectionFilter(m_jobParams, out var startSectionX, out var endSectionX);
+            var applySectionFilter = GetBrukerImagingSectionFilter(m_jobParams, out var startSectionX, out var endSectionX);
 
             // Look for the dataset folder; it must contain .Zip files with names like 0_R00X442.zip
             // If a matching folder isn't found, then ServerPath will contain the folder path defined by Job Param "DatasetStoragePath"
@@ -2640,9 +2644,9 @@ namespace AnalysisManagerBase
             try
             {
                 // Look for the .mis file (ImagingSequence file)
-                var strImagingSeqFilePathFinal = Path.Combine(diCachedDataFolder.FullName, DatasetName + ".mis");
+                var imagingSeqFilePathFinal = Path.Combine(diCachedDataFolder.FullName, DatasetName + ".mis");
 
-                if (!File.Exists(strImagingSeqFilePathFinal))
+                if (!File.Exists(imagingSeqFilePathFinal))
                 {
                     // Copy the .mis file (ImagingSequence file) over from the storage server
                     var MisFiles = Directory.GetFiles(serverPath, "*.mis");
@@ -2657,14 +2661,14 @@ namespace AnalysisManagerBase
                     // We'll copy the first file in MisFiles[0]
                     // Log a warning if we will be renaming the file
 
-                    if (!clsGlobal.IsMatch(Path.GetFileName(MisFiles[0]), strImagingSeqFilePathFinal))
+                    if (!clsGlobal.IsMatch(Path.GetFileName(MisFiles[0]), imagingSeqFilePathFinal))
                     {
 
                         OnDebugEvent("Note: Renaming .mis file (ImagingSequence file) from " + Path.GetFileName(MisFiles[0]) +
-                            " to " + Path.GetFileName(strImagingSeqFilePathFinal));
+                            " to " + Path.GetFileName(imagingSeqFilePathFinal));
                     }
 
-                    if (!m_FileCopyUtilities.CopyFileWithRetry(MisFiles[0], strImagingSeqFilePathFinal, true))
+                    if (!m_FileCopyUtilities.CopyFileWithRetry(MisFiles[0], imagingSeqFilePathFinal, true))
                     {
                         // Abort processing
                         OnErrorEvent("Error copying ImagingSequence (.mis) file; unable to process MALDI imaging data");
@@ -2696,7 +2700,7 @@ namespace AnalysisManagerBase
                     zipFilePathRemote = zipFilePath;
 
                     bool unzipFile;
-                    if (blnApplySectionFilter)
+                    if (applySectionFilter)
                     {
                         unzipFile = false;
 
@@ -2732,9 +2736,9 @@ namespace AnalysisManagerBase
 
                         if (!entry.IsDirectory)
                         {
-                            var strPathToCheck = Path.Combine(unzipFolderPathBase, entry.FileName.Replace('/', '\\'));
+                            var pathToCheck = Path.Combine(unzipFolderPathBase, entry.FileName.Replace('/', '\\'));
 
-                            if (!File.Exists(strPathToCheck))
+                            if (!File.Exists(pathToCheck))
                             {
                                 unzipFile = true;
                                 break;
@@ -3018,18 +3022,18 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Returns True if the filename ends with any of the suffixes in lstNonCriticalFileSuffixes
         /// </summary>
-        /// <param name="strFileName"></param>
+        /// <param name="fileName"></param>
         /// <param name="lstNonCriticalFileSuffixes"></param>
         /// <returns></returns>
         /// <remarks></remarks>
-        private bool SafeToIgnore(string strFileName, List<string> lstNonCriticalFileSuffixes)
+        private bool SafeToIgnore(string fileName, IReadOnlyCollection<string> lstNonCriticalFileSuffixes)
         {
 
             if ((lstNonCriticalFileSuffixes != null))
             {
-                foreach (var strSuffix in lstNonCriticalFileSuffixes)
+                foreach (var suffix in lstNonCriticalFileSuffixes)
                 {
-                    if (strFileName.EndsWith(strSuffix, StringComparison.InvariantCultureIgnoreCase))
+                    if (fileName.EndsWith(suffix, StringComparison.InvariantCultureIgnoreCase))
                     {
                         // It's OK that this file is missing
                         return true;
@@ -3055,7 +3059,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public bool UnzipFileStart(string zipFilePath, string outFolderPath, string callingFunctionName, bool forceExternalZipProgramUse)
         {
-            var strUnzipperName = "??";
+            var unzipperName = "??";
 
             try
             {
@@ -3071,7 +3075,7 @@ namespace AnalysisManagerBase
                     return false;
                 }
 
-                var strExternalUnzipperFilePath = m_mgrParams.GetParam("zipprogram", string.Empty);
+                var externalUnzipperFilePath = m_mgrParams.GetParam("zipprogram", string.Empty);
 
                 var fiFileInfo = new FileInfo(zipFilePath);
                 var fileSizeMB = clsGlobal.BytesToMB(fiFileInfo.Length);
@@ -3084,13 +3088,13 @@ namespace AnalysisManagerBase
                     return false;
                 }
 
-                var blnUseExternalUnzipper = false;
+                var useExternalUnzipper = false;
 
                 if (zipFilePath.EndsWith(clsAnalysisResources.DOT_GZ_EXTENSION, StringComparison.InvariantCultureIgnoreCase))
                 {
                     // This is a gzipped file
                     // Use Ionic.Zip
-                    strUnzipperName = clsIonicZipTools.IONIC_ZIP_NAME;
+                    unzipperName = clsIonicZipTools.IONIC_ZIP_NAME;
                     m_IonicZipTools.DebugLevel = m_DebugLevel;
                     return m_IonicZipTools.GUnzipFile(zipFilePath, outFolderPath);
                 }
@@ -3099,59 +3103,59 @@ namespace AnalysisManagerBase
                 // However, if the .Exe file for the external zipper is not found, then fall back to use Ionic.Zip
                 if (forceExternalZipProgramUse || fileSizeMB >= IONIC_ZIP_MAX_FILESIZE_MB)
                 {
-                    if (strExternalUnzipperFilePath.Length > 0 && strExternalUnzipperFilePath.ToLower() != "na")
+                    if (externalUnzipperFilePath.Length > 0 && externalUnzipperFilePath.ToLower() != "na")
                     {
-                        if (File.Exists(strExternalUnzipperFilePath))
+                        if (File.Exists(externalUnzipperFilePath))
                         {
-                            blnUseExternalUnzipper = true;
+                            useExternalUnzipper = true;
                         }
                     }
 
-                    if (!blnUseExternalUnzipper)
+                    if (!useExternalUnzipper)
                     {
 
-                        OnWarningEvent("External zip program not found: " + strExternalUnzipperFilePath + "; will instead use Ionic.Zip");
+                        OnWarningEvent("External zip program not found: " + externalUnzipperFilePath + "; will instead use Ionic.Zip");
                     }
                 }
 
-                if (blnUseExternalUnzipper)
+                if (useExternalUnzipper)
                 {
-                    strUnzipperName = Path.GetFileName(strExternalUnzipperFilePath);
+                    unzipperName = Path.GetFileName(externalUnzipperFilePath);
 
-                    var UnZipper = new PRISM.ZipTools(outFolderPath, strExternalUnzipperFilePath);
+                    var UnZipper = new PRISM.ZipTools(outFolderPath, externalUnzipperFilePath);
 
                     var dtStartTime = DateTime.UtcNow;
-                    var blnSuccess = UnZipper.UnzipFile("", zipFilePath, outFolderPath);
+                    var success = UnZipper.UnzipFile("", zipFilePath, outFolderPath);
                     var dtEndTime = DateTime.UtcNow;
 
-                    if (blnSuccess)
+                    if (success)
                     {
-                        m_IonicZipTools.ReportZipStats(fiFileInfo, dtStartTime, dtEndTime, false, strUnzipperName);
+                        m_IonicZipTools.ReportZipStats(fiFileInfo, dtStartTime, dtEndTime, false, unzipperName);
                     }
                     else
                     {
-                        OnErrorEvent("Error unzipping " + Path.GetFileName(zipFilePath) + " using " + strUnzipperName);
+                        OnErrorEvent("Error unzipping " + Path.GetFileName(zipFilePath) + " using " + unzipperName);
                         OnStatusEvent("CallingFunction: " + callingFunctionName);
                     }
 
-                    return blnSuccess;
+                    return success;
                 }
                 else
                 {
                     // Use Ionic.Zip
-                    strUnzipperName = clsIonicZipTools.IONIC_ZIP_NAME;
+                    unzipperName = clsIonicZipTools.IONIC_ZIP_NAME;
                     m_IonicZipTools.DebugLevel = m_DebugLevel;
-                    var blnSuccess = m_IonicZipTools.UnzipFile(zipFilePath, outFolderPath);
+                    var success = m_IonicZipTools.UnzipFile(zipFilePath, outFolderPath);
 
-                    return blnSuccess;
+                    return success;
                 }
 
             }
             catch (Exception ex)
             {
                 var errMsg = "Exception while unzipping '" + zipFilePath + "'";
-                if (!string.IsNullOrEmpty(strUnzipperName))
-                    errMsg += " using " + strUnzipperName;
+                if (!string.IsNullOrEmpty(unzipperName))
+                    errMsg += " using " + unzipperName;
 
                 OnErrorEvent(errMsg, ex);
                 OnStatusEvent("CallingFunction: " + callingFunctionName);

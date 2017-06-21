@@ -146,9 +146,9 @@ namespace AnalysisManagerBase
         /// Send status information to the database
         /// </summary>
         /// <param name="udtStatusInfo"></param>
-        /// <param name="blnForceLogToDB"></param>
+        /// <param name="forceLogToDB"></param>
         /// <remarks>This function is valid, but the primary way that we track status is when WriteStatusFile calls LogStatusToMessageQueue</remarks>
-        public void LogStatus(udtStatusInfoType udtStatusInfo, bool blnForceLogToDB)
+        public void LogStatus(udtStatusInfoType udtStatusInfo, bool forceLogToDB)
         {
 
             try
@@ -159,7 +159,7 @@ namespace AnalysisManagerBase
                     return;
                 }
 
-                if (!blnForceLogToDB && DateTime.UtcNow.Subtract(m_LastWriteTime).TotalMinutes < m_DBStatusUpdateIntervalMinutes)
+                if (!forceLogToDB && DateTime.UtcNow.Subtract(m_LastWriteTime).TotalMinutes < m_DBStatusUpdateIntervalMinutes)
                 {
                     // Not enough time has elapsed since the last write; exit sub
                     return;
@@ -226,61 +226,61 @@ namespace AnalysisManagerBase
 
         }
 
-        private void AddSPParameter(SqlParameterCollection objParameters, string strParamName, string strValue, int intVarCharLength)
+        private void AddSPParameter(SqlParameterCollection objParameters, string paramName, string value, int varCharLength)
         {
             // Make sure the parameter starts with an @ sign
-            if (!strParamName.StartsWith("@"))
+            if (!paramName.StartsWith("@"))
             {
-                strParamName = "@" + strParamName;
+                paramName = "@" + paramName;
             }
 
-            objParameters.Add(new SqlParameter(strParamName, SqlDbType.VarChar, intVarCharLength)).Value = strValue;
+            objParameters.Add(new SqlParameter(paramName, SqlDbType.VarChar, varCharLength)).Value = value;
         }
 
-        private void AddSPParameter(SqlParameterCollection objParameters, string strParamName, int intValue)
+        private void AddSPParameter(SqlParameterCollection objParameters, string paramName, int value)
         {
             // Make sure the parameter starts with an @ sign
-            if (!strParamName.StartsWith("@"))
+            if (!paramName.StartsWith("@"))
             {
-                strParamName = "@" + strParamName;
+                paramName = "@" + paramName;
             }
 
-            objParameters.Add(new SqlParameter(strParamName, SqlDbType.Int)).Value = intValue;
+            objParameters.Add(new SqlParameter(paramName, SqlDbType.Int)).Value = value;
         }
 
-        private void AddSPParameter(SqlParameterCollection objParameters, string strParamName, DateTime dtValue)
+        private void AddSPParameter(SqlParameterCollection objParameters, string paramName, DateTime dtValue)
         {
             // Make sure the parameter starts with an @ sign
-            if (!strParamName.StartsWith("@"))
+            if (!paramName.StartsWith("@"))
             {
-                strParamName = "@" + strParamName;
+                paramName = "@" + paramName;
             }
 
-            objParameters.Add(new SqlParameter(strParamName, SqlDbType.DateTime)).Value = dtValue;
+            objParameters.Add(new SqlParameter(paramName, SqlDbType.DateTime)).Value = dtValue;
         }
 
-        private void AddSPParameter(SqlParameterCollection objParameters, string strParamName, float sngValue)
+        private void AddSPParameter(SqlParameterCollection objParameters, string paramName, float sngValue)
         {
             // Make sure the parameter starts with an @ sign
-            if (!strParamName.StartsWith("@"))
+            if (!paramName.StartsWith("@"))
             {
-                strParamName = "@" + strParamName;
+                paramName = "@" + paramName;
             }
 
-            objParameters.Add(new SqlParameter(strParamName, SqlDbType.Real)).Value = sngValue;
+            objParameters.Add(new SqlParameter(paramName, SqlDbType.Real)).Value = sngValue;
         }
 
-        private void AddSPParameterOutput(SqlParameterCollection objParameters, string strParamName, string strValue, int intVarCharLength)
+        private void AddSPParameterOutput(SqlParameterCollection objParameters, string paramName, string value, int varCharLength)
         {
             // Make sure the parameter starts with an @ sign
-            if (!strParamName.StartsWith("@"))
+            if (!paramName.StartsWith("@"))
             {
-                strParamName = "@" + strParamName;
+                paramName = "@" + paramName;
             }
 
-            objParameters.Add(new SqlParameter(strParamName, SqlDbType.VarChar, intVarCharLength));
-            objParameters[strParamName].Direction = ParameterDirection.Output;
-            objParameters[strParamName].Value = strValue;
+            objParameters.Add(new SqlParameter(paramName, SqlDbType.VarChar, varCharLength));
+            objParameters[paramName].Direction = ParameterDirection.Output;
+            objParameters[paramName].Value = value;
         }
 
 

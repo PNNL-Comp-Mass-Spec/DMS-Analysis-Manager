@@ -393,17 +393,17 @@ namespace AnalysisManagerBase
         {
             try
             {
-                var strPathToCheck = Path.Combine(GetStatusFileDirectory(), ABORT_PROCESSING_NOW_FILENAME);
+                var pathToCheck = Path.Combine(GetStatusFileDirectory(), ABORT_PROCESSING_NOW_FILENAME);
 
-                if (!File.Exists(strPathToCheck))
+                if (!File.Exists(pathToCheck))
                     return;
 
                 m_AbortProcessingNow = true;
 
-                var strNewPath = strPathToCheck + ".done";
+                var newPath = pathToCheck + ".done";
 
-                File.Delete(strNewPath);
-                File.Move(strPathToCheck, strNewPath);
+                File.Delete(newPath);
+                File.Move(pathToCheck, newPath);
             }
             catch (Exception)
             {
@@ -720,10 +720,10 @@ namespace AnalysisManagerBase
                 if (m_RecentErrorMessageCount > 1)
                 {
                     // Append the next two error messages
-                    for (var intIndex = 1; intIndex <= m_RecentErrorMessageCount - 1; intIndex++)
+                    for (var index = 1; index <= m_RecentErrorMessageCount - 1; index++)
                     {
-                        udtStatusInfo.MostRecentErrorMessage += Environment.NewLine + m_RecentErrorMessages[intIndex];
-                        if (intIndex >= 2)
+                        udtStatusInfo.MostRecentErrorMessage += Environment.NewLine + m_RecentErrorMessages[index];
+                        if (index >= 2)
                             break;
                     }
                 }
@@ -772,24 +772,24 @@ namespace AnalysisManagerBase
             }
         }
 
-        private void StoreNewErrorMessage(string strErrorMessage, bool blnClearExistingMessages)
+        private void StoreNewErrorMessage(string errorMessage, bool clearExistingMessages)
         {
 
-            if (blnClearExistingMessages)
+            if (clearExistingMessages)
             {
-                if (strErrorMessage == null)
+                if (errorMessage == null)
                 {
                     m_RecentErrorMessageCount = 0;
                 }
                 else
                 {
                     m_RecentErrorMessageCount = 1;
-                    m_RecentErrorMessages[0] = strErrorMessage;
+                    m_RecentErrorMessages[0] = errorMessage;
                 }
             }
             else
             {
-                if (!string.IsNullOrEmpty(strErrorMessage))
+                if (!string.IsNullOrEmpty(errorMessage))
                 {
                     if (m_RecentErrorMessageCount < MAX_ERROR_MESSAGE_COUNT_TO_CACHE)
                     {
@@ -797,13 +797,13 @@ namespace AnalysisManagerBase
                     }
 
                     // Shift each of the entries by one
-                    for (var intIndex = m_RecentErrorMessageCount; intIndex >= 1; intIndex += -1)
+                    for (var index = m_RecentErrorMessageCount; index >= 1; index += -1)
                     {
-                        m_RecentErrorMessages[intIndex] = m_RecentErrorMessages[intIndex - 1];
+                        m_RecentErrorMessages[index] = m_RecentErrorMessages[index - 1];
                     }
 
                     // Store the new message
-                    m_RecentErrorMessages[0] = strErrorMessage;
+                    m_RecentErrorMessages[0] = errorMessage;
                 }
             }
 
@@ -1103,8 +1103,8 @@ namespace AnalysisManagerBase
                     logWarning = false;
             }
 
-            var blnSuccess = WriteStatusFileToDisk(tempStatusFilePath, xmlText, logWarning);
-            if (blnSuccess)
+            var success = WriteStatusFileToDisk(tempStatusFilePath, xmlText, logWarning);
+            if (success)
             {
                 try
                 {
@@ -1148,7 +1148,7 @@ namespace AnalysisManagerBase
         {
             const int WRITE_FAILURE_LOG_THRESHOLD = 5;
 
-            bool blnSuccess;
+            bool success;
 
             try
             {
@@ -1162,7 +1162,7 @@ namespace AnalysisManagerBase
                 // Reset the error counter
                 m_WritingErrorCountSaved = 0;
 
-                blnSuccess = true;
+                success = true;
 
             }
             catch (Exception ex)
@@ -1173,17 +1173,17 @@ namespace AnalysisManagerBase
                 if (m_WritingErrorCountSaved >= WRITE_FAILURE_LOG_THRESHOLD && logWarning)
                 {
                     // 5 or more errors in a row have occurred
-                    // Post an entry to the log, only when intWritingErrorCountSaved is 5, 10, 20, 30, etc.
+                    // Post an entry to the log, only when writingErrorCountSaved is 5, 10, 20, 30, etc.
                     if (m_WritingErrorCountSaved == WRITE_FAILURE_LOG_THRESHOLD || m_WritingErrorCountSaved % 10 == 0)
                     {
                         var msg = "Error writing status file " + Path.GetFileName(statusFilePath) + ": " + ex.Message;
                         OnWarningEvent(msg);
                     }
                 }
-                blnSuccess = false;
+                success = false;
             }
 
-            return blnSuccess;
+            return success;
 
         }
 
@@ -1481,9 +1481,9 @@ namespace AnalysisManagerBase
 
         #region "Event handlers"
 
-        private void MessageSender_ErrorEvent(string strMessage, Exception ex)
+        private void MessageSender_ErrorEvent(string message, Exception ex)
         {
-            OnErrorEvent(strMessage, ex);
+            OnErrorEvent(message, ex);
         }
 
         #endregion

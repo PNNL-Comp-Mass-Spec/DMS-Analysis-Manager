@@ -372,11 +372,11 @@ namespace AnalysisManagerBase
 
                 var dtStartTime = DateTime.UtcNow;
 
-                var strArgs = "-f -k " + clsGlobal.PossiblyQuotePath(fiFile.FullName);
+                var args = "-f -k " + clsGlobal.PossiblyQuotePath(fiFile.FullName);
 
                 if (m_DebugLevel >= 3)
                 {
-                    OnStatusEvent(fiGZip.FullName + " " + strArgs);
+                    OnStatusEvent(fiGZip.FullName + " " + args);
                 }
 
                 var progRunner = new clsRunDosProgram(clsGlobal.GetAppFolderPath())
@@ -390,7 +390,7 @@ namespace AnalysisManagerBase
                 };
                 RegisterEvents(progRunner);
 
-                var success = progRunner.RunProgram(fiGZip.FullName, strArgs, "GZip", false);
+                var success = progRunner.RunProgram(fiGZip.FullName, args, "GZip", false);
 
                 if (!success)
                 {
@@ -526,7 +526,7 @@ namespace AnalysisManagerBase
         public void ReportZipStats(FileSystemInfo fiFileSystemInfo, DateTime dtStartTime, DateTime dtEndTime, bool FileWasZipped, string ZipProgramName)
         {
 
-            long lngTotalSizeBytes = 0;
+            long totalSizeBytes = 0;
             double dblUnzipSpeedMBPerSec;
 
             if (ZipProgramName == null)
@@ -536,23 +536,23 @@ namespace AnalysisManagerBase
 
             if (fiFileSystemInfo is FileInfo)
             {
-                lngTotalSizeBytes = ((FileInfo)fiFileSystemInfo).Length;
+                totalSizeBytes = ((FileInfo)fiFileSystemInfo).Length;
 
             }
             else if (fiFileSystemInfo is DirectoryInfo)
             {
                 var diFolderInfo = (DirectoryInfo)fiFileSystemInfo;
 
-                lngTotalSizeBytes = 0;
+                totalSizeBytes = 0;
                 foreach (var fiEntry in diFolderInfo.GetFiles("*", SearchOption.AllDirectories))
                 {
-                    lngTotalSizeBytes += fiEntry.Length;
+                    totalSizeBytes += fiEntry.Length;
                 }
             }
 
             if (dblUnzipTimeSeconds > 0)
             {
-                dblUnzipSpeedMBPerSec = clsGlobal.BytesToMB(lngTotalSizeBytes) / dblUnzipTimeSeconds;
+                dblUnzipSpeedMBPerSec = clsGlobal.BytesToMB(totalSizeBytes) / dblUnzipTimeSeconds;
             }
             else
             {

@@ -403,19 +403,19 @@ namespace AnalysisManagerProg
 
                     if (!(mgrActive && mgrActiveLocal))
                     {
-                        string strManagerDisableReason;
+                        string managerDisableReason;
                         if (!mgrActiveLocal)
                         {
-                            strManagerDisableReason = "Disabled locally via AnalysisManagerProg.exe.config";
-                            UpdateStatusDisabled(EnumMgrStatus.DISABLED_LOCAL, strManagerDisableReason);
+                            managerDisableReason = "Disabled locally via AnalysisManagerProg.exe.config";
+                            UpdateStatusDisabled(EnumMgrStatus.DISABLED_LOCAL, managerDisableReason);
                         }
                         else
                         {
-                            strManagerDisableReason = "Disabled in Manager Control DB";
-                            UpdateStatusDisabled(EnumMgrStatus.DISABLED_MC, strManagerDisableReason);
+                            managerDisableReason = "Disabled in Manager Control DB";
+                            UpdateStatusDisabled(EnumMgrStatus.DISABLED_MC, managerDisableReason);
                         }
 
-                        LogMessage("Manager inactive: " + strManagerDisableReason);
+                        LogMessage("Manager inactive: " + managerDisableReason);
                         Thread.Sleep(750);
                         return;
                     }
@@ -1086,9 +1086,9 @@ namespace AnalysisManagerProg
                 Console.WriteLine("The Windows event log cannot be initialized on Linux (CreateAnalysisManagerEventLog)");
                 return;
             }
-            var blnSuccess = CreateAnalysisManagerEventLog(CUSTOM_LOG_SOURCE_NAME, CUSTOM_LOG_NAME);
+            var success = CreateAnalysisManagerEventLog(CUSTOM_LOG_SOURCE_NAME, CUSTOM_LOG_NAME);
 
-            if (blnSuccess)
+            if (success)
             {
                 Console.WriteLine();
                 clsGlobal.LogDebug("Windows Event Log '" + CUSTOM_LOG_NAME + "' has been validated for source '" + CUSTOM_LOG_SOURCE_NAME + "'", false);
@@ -1212,28 +1212,28 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Given a log file with a name like AnalysisMgr_03-25-2009.txt, returns the log file name for the previous day
         /// </summary>
-        /// <param name="strLogFilePath"></param>
+        /// <param name="logFilePath"></param>
         /// <returns></returns>
         /// <remarks></remarks>
-        private string DecrementLogFilePath(string strLogFilePath)
+        private string DecrementLogFilePath(string logFilePath)
         {
             try
             {
                 var reLogFileName = new Regex(@"(?<BaseName>.+_)(?<Month>\d+)-(?<Day>\d+)-(?<Year>\d+).\S+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-                var objMatch = reLogFileName.Match(strLogFilePath);
+                var objMatch = reLogFileName.Match(logFilePath);
 
                 if (objMatch.Success)
                 {
-                    var intMonth = Convert.ToInt32(objMatch.Groups["Month"].Value);
-                    var intDay = Convert.ToInt32(objMatch.Groups["Day"].Value);
-                    var intYear = Convert.ToInt32(objMatch.Groups["Year"].Value);
+                    var month = Convert.ToInt32(objMatch.Groups["Month"].Value);
+                    var day = Convert.ToInt32(objMatch.Groups["Day"].Value);
+                    var year = Convert.ToInt32(objMatch.Groups["Year"].Value);
 
-                    var dtCurrentDate = DateTime.Parse(intYear + "-" + intMonth + "-" + intDay);
+                    var dtCurrentDate = DateTime.Parse(year + "-" + month + "-" + day);
                     var dtNewDate = dtCurrentDate.AddDays(-1);
 
-                    var strPreviousLogFilePath = objMatch.Groups["BaseName"].Value + dtNewDate.ToString("MM-dd-yyyy") + Path.GetExtension(strLogFilePath);
-                    return strPreviousLogFilePath;
+                    var previousLogFilePath = objMatch.Groups["BaseName"].Value + dtNewDate.ToString("MM-dd-yyyy") + Path.GetExtension(logFilePath);
+                    return previousLogFilePath;
                 }
 
             }
@@ -1247,16 +1247,16 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
-        /// Parses the log files for this manager to determine the recent error messages, returning up to intErrorMessageCountToReturn of them
+        /// Parses the log files for this manager to determine the recent error messages, returning up to errorMessageCountToReturn of them
         /// Will use objLogger to determine the most recent log file
         /// Also examines the message info stored in objLogger
-        /// Lastly, if strMostRecentJobInfo is empty, then will update it with info on the most recent job started
+        /// Lastly, if mostRecentJobInfo is empty, then will update it with info on the most recent job started
         /// </summary>
-        /// <param name="intErrorMessageCountToReturn">Maximum number of error messages to return</param>
-        /// <param name="strMostRecentJobInfo">Info on the most recent job started by this manager</param>
+        /// <param name="errorMessageCountToReturn">Maximum number of error messages to return</param>
+        /// <param name="mostRecentJobInfo">Info on the most recent job started by this manager</param>
         /// <returns>List of recent errors</returns>
         /// <remarks></remarks>
-        public IEnumerable<string> DetermineRecentErrorMessages(int intErrorMessageCountToReturn, ref string strMostRecentJobInfo)
+        public IEnumerable<string> DetermineRecentErrorMessages(int errorMessageCountToReturn, ref string mostRecentJobInfo)
         {
             // This regex will match all text up to the first comma (this is the time stamp), followed by a comma, then the error message, then the text ", Error,"
             const string ERROR_MATCH_REGEX = "^(?<Date>[^,]+),(?<Error>.+), Error, *$";
@@ -1275,84 +1275,84 @@ namespace AnalysisManagerProg
             // In this list, keys are error message strings and values are the corresponding time of the error
             var recentErrorMessages = new List<KeyValuePair<string, DateTime>>();
 
-            if (strMostRecentJobInfo == null)
-                strMostRecentJobInfo = string.Empty;
+            if (mostRecentJobInfo == null)
+                mostRecentJobInfo = string.Empty;
 
             try
             {
-                var strMostRecentJobInfoFromLogs = string.Empty;
+                var mostRecentJobInfoFromLogs = string.Empty;
 
-                if (intErrorMessageCountToReturn < 1)
-                    intErrorMessageCountToReturn = 1;
+                if (errorMessageCountToReturn < 1)
+                    errorMessageCountToReturn = 1;
 
                 // Initialize the RegEx that splits out the timestamp from the error message
                 var reErrorLine = new Regex(ERROR_MATCH_REGEX, RegexOptions.Compiled | RegexOptions.IgnoreCase);
                 var reJobStartLine = new Regex(JOB_START_REGEX, RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
                 // Initialize the queue that holds recent error messages
-                var qErrorMsgQueue = new Queue<string>(intErrorMessageCountToReturn);
+                var qErrorMsgQueue = new Queue<string>(errorMessageCountToReturn);
 
                 // Initialize the hashtable to hold the error messages, but without date stamps
                 var uniqueErrorMessages = new Dictionary<string, DateTime>((StringComparer.InvariantCultureIgnoreCase));
 
                 // Examine the most recent error reported by objLogger
-                var strLineIn = clsLogTools.MostRecentErrorMessage;
-                bool blnLoggerReportsError;
-                if (!string.IsNullOrWhiteSpace(strLineIn))
+                var lineIn = clsLogTools.MostRecentErrorMessage;
+                bool loggerReportsError;
+                if (!string.IsNullOrWhiteSpace(lineIn))
                 {
-                    blnLoggerReportsError = true;
+                    loggerReportsError = true;
                 }
                 else
                 {
-                    blnLoggerReportsError = false;
+                    loggerReportsError = false;
                 }
 
-                var strLogFilePath = GetRecentLogFilename();
+                var logFilePath = GetRecentLogFilename();
 
-                if (intErrorMessageCountToReturn > 1 || !blnLoggerReportsError)
+                if (errorMessageCountToReturn > 1 || !loggerReportsError)
                 {
-                    // Recent error message reported by objLogger is empty or intErrorMessageCountToReturn is greater than one
-                    // Open log file strLogFilePath to find the most recent error messages
+                    // Recent error message reported by objLogger is empty or errorMessageCountToReturn is greater than one
+                    // Open log file logFilePath to find the most recent error messages
                     // If not enough error messages are found, we will look through previous log files
 
-                    var intLogFileCountProcessed = 0;
-                    var blnCheckForMostRecentJob = true;
+                    var logFileCountProcessed = 0;
+                    var checkForMostRecentJob = true;
 
-                    while (qErrorMsgQueue.Count < intErrorMessageCountToReturn && intLogFileCountProcessed < MAX_LOG_FILES_TO_SEARCH)
+                    while (qErrorMsgQueue.Count < errorMessageCountToReturn && logFileCountProcessed < MAX_LOG_FILES_TO_SEARCH)
                     {
-                        if (File.Exists(strLogFilePath))
+                        if (File.Exists(logFilePath))
                         {
-                            using (var srInFile = new StreamReader(new FileStream(strLogFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                            using (var srInFile = new StreamReader(new FileStream(logFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                             {
 
-                                if (intErrorMessageCountToReturn < 1)
-                                    intErrorMessageCountToReturn = 1;
+                                if (errorMessageCountToReturn < 1)
+                                    errorMessageCountToReturn = 1;
 
                                 while (!srInFile.EndOfStream)
                                 {
-                                    strLineIn = srInFile.ReadLine();
+                                    lineIn = srInFile.ReadLine();
 
-                                    if (strLineIn == null)
+                                    if (lineIn == null)
                                         continue;
 
-                                    var oMatchError = reErrorLine.Match(strLineIn);
+                                    var oMatchError = reErrorLine.Match(lineIn);
 
                                     if (oMatchError.Success)
                                     {
-                                        DetermineRecentErrorCacheError(oMatchError, strLineIn, uniqueErrorMessages, qErrorMsgQueue,
-                                                                       intErrorMessageCountToReturn);
+                                        DetermineRecentErrorCacheError(oMatchError, lineIn, uniqueErrorMessages, qErrorMsgQueue,
+                                                                       errorMessageCountToReturn);
                                     }
 
-                                    if (!blnCheckForMostRecentJob)
+                                    if (!checkForMostRecentJob)
                                         continue;
 
-                                    var oMatchJob = reJobStartLine.Match(strLineIn);
+                                    var oMatchJob = reJobStartLine.Match(lineIn);
                                     if (!oMatchJob.Success)
                                         continue;
 
                                     try
                                     {
-                                        strMostRecentJobInfoFromLogs = ConstructMostRecentJobInfoText(
+                                        mostRecentJobInfoFromLogs = ConstructMostRecentJobInfoText(
                                             oMatchJob.Groups["Date"].Value,
                                             Convert.ToInt32(oMatchJob.Groups["Job"].Value),
                                             oMatchJob.Groups["Dataset"].Value,
@@ -1366,69 +1366,69 @@ namespace AnalysisManagerProg
 
                             }
 
-                            if (blnCheckForMostRecentJob && strMostRecentJobInfoFromLogs.Length > 0)
+                            if (checkForMostRecentJob && mostRecentJobInfoFromLogs.Length > 0)
                             {
                                 // We determine the most recent job; no need to check other log files
-                                blnCheckForMostRecentJob = false;
+                                checkForMostRecentJob = false;
                             }
                         }
                         // else: Log file not found; that's OK, we'll decrement the name by one day and keep checking
 
                         // Increment the log file counter, regardless of whether or not the log file was found
-                        intLogFileCountProcessed += 1;
+                        logFileCountProcessed += 1;
 
-                        if (qErrorMsgQueue.Count >= intErrorMessageCountToReturn)
+                        if (qErrorMsgQueue.Count >= errorMessageCountToReturn)
                             continue;
 
-                        // We still haven't found intErrorMessageCountToReturn error messages
-                        // Keep checking older log files as long as qErrorMsgQueue.Count < intErrorMessageCountToReturn
+                        // We still haven't found errorMessageCountToReturn error messages
+                        // Keep checking older log files as long as qErrorMsgQueue.Count < errorMessageCountToReturn
 
                         // Decrement the log file path by one day
-                        strLogFilePath = DecrementLogFilePath(strLogFilePath);
-                        if (string.IsNullOrEmpty(strLogFilePath))
+                        logFilePath = DecrementLogFilePath(logFilePath);
+                        if (string.IsNullOrEmpty(logFilePath))
                         {
                             break;
                         }
                     }
                 }
 
-                if (blnLoggerReportsError)
+                if (loggerReportsError)
                 {
                     // Append the error message reported by the Logger to the error message queue (treating it as the newest error)
-                    strLineIn = clsLogTools.MostRecentErrorMessage;
-                    var objMatch = reErrorLine.Match(strLineIn);
+                    lineIn = clsLogTools.MostRecentErrorMessage;
+                    var objMatch = reErrorLine.Match(lineIn);
 
                     if (objMatch.Success)
                     {
-                        DetermineRecentErrorCacheError(objMatch, strLineIn, uniqueErrorMessages, qErrorMsgQueue, intErrorMessageCountToReturn);
+                        DetermineRecentErrorCacheError(objMatch, lineIn, uniqueErrorMessages, qErrorMsgQueue, errorMessageCountToReturn);
                     }
                 }
 
-                // Populate strRecentErrorMessages and dtRecentErrorMessageDates using the messages stored in qErrorMsgQueue
+                // Populate recentErrorMessages and dtRecentErrorMessageDates using the messages stored in qErrorMsgQueue
                 while (qErrorMsgQueue.Count > 0)
                 {
-                    var strErrorMessageClean = qErrorMsgQueue.Dequeue();
+                    var errorMessageClean = qErrorMsgQueue.Dequeue();
 
                     // Find the newest timestamp for this message
-                    if (!uniqueErrorMessages.TryGetValue(strErrorMessageClean, out var timeStamp))
+                    if (!uniqueErrorMessages.TryGetValue(errorMessageClean, out var timeStamp))
                     {
                         // This code should not be reached
                         timeStamp = DateTime.MinValue;
                     }
 
-                    recentErrorMessages.Add(new KeyValuePair<string, DateTime>(timeStamp + ", " + strErrorMessageClean.TrimStart(' '), timeStamp));
+                    recentErrorMessages.Add(new KeyValuePair<string, DateTime>(timeStamp + ", " + errorMessageClean.TrimStart(' '), timeStamp));
                 }
 
                 var sortedAndFilteredRecentErrors = (from item in recentErrorMessages
                                                      orderby item.Value descending
-                                                     select item.Key).Take(intErrorMessageCountToReturn);
+                                                     select item.Key).Take(errorMessageCountToReturn);
 
-                if (string.IsNullOrEmpty(strMostRecentJobInfo))
+                if (string.IsNullOrEmpty(mostRecentJobInfo))
                 {
-                    if (!string.IsNullOrWhiteSpace(strMostRecentJobInfoFromLogs))
+                    if (!string.IsNullOrWhiteSpace(mostRecentJobInfoFromLogs))
                     {
-                        // Update strMostRecentJobInfo
-                        strMostRecentJobInfo = strMostRecentJobInfoFromLogs;
+                        // Update mostRecentJobInfo
+                        mostRecentJobInfo = mostRecentJobInfoFromLogs;
                     }
                 }
 
@@ -1452,13 +1452,13 @@ namespace AnalysisManagerProg
 
         private void DetermineRecentErrorCacheError(
             Match oMatch,
-            string strErrorMessage,
+            string errorMessage,
             IDictionary<string, DateTime> uniqueErrorMessages,
             Queue<string> qErrorMsgQueue,
-            int intMaxErrorMessageCountToReturn)
+            int maxErrorMessageCountToReturn)
         {
             DateTime timeStamp;
-            string strErrorMessageClean;
+            string errorMessageClean;
 
             // See if this error is present in uniqueErrorMessages yet
             // If it is present, update the timestamp in uniqueErrorMessages
@@ -1466,29 +1466,29 @@ namespace AnalysisManagerProg
 
             if (oMatch.Groups.Count >= 2)
             {
-                var strTimestamp = oMatch.Groups["Date"].Value;
-                if (!DateTime.TryParse(strTimestamp, out timeStamp))
+                var timestamp = oMatch.Groups["Date"].Value;
+                if (!DateTime.TryParse(timestamp, out timeStamp))
                     timeStamp = DateTime.MinValue;
 
-                strErrorMessageClean = oMatch.Groups["Error"].Value;
+                errorMessageClean = oMatch.Groups["Error"].Value;
             }
             else
             {
                 // Regex didn't match; this is unexpected
                 timeStamp = DateTime.MinValue;
-                strErrorMessageClean = strErrorMessage;
+                errorMessageClean = errorMessage;
             }
 
-            // Check whether strErrorMessageClean is in the hash table
-            if (uniqueErrorMessages.TryGetValue(strErrorMessageClean, out var existingTimeStamp))
+            // Check whether errorMessageClean is in the hash table
+            if (uniqueErrorMessages.TryGetValue(errorMessageClean, out var existingTimeStamp))
             {
                 // The error message is present
-                // Update the timestamp associated with strErrorMessageClean if the time stamp is newer than the stored one
+                // Update the timestamp associated with errorMessageClean if the time stamp is newer than the stored one
                 try
                 {
                     if (timeStamp > existingTimeStamp)
                     {
-                        uniqueErrorMessages[strErrorMessageClean] = timeStamp;
+                        uniqueErrorMessages[errorMessageClean] = timeStamp;
                     }
                 }
                 catch (Exception)
@@ -1499,18 +1499,18 @@ namespace AnalysisManagerProg
             else
             {
                 // The error message is not present
-                uniqueErrorMessages.Add(strErrorMessageClean, timeStamp);
+                uniqueErrorMessages.Add(errorMessageClean, timeStamp);
             }
 
-            if (qErrorMsgQueue.Contains(strErrorMessageClean))
+            if (qErrorMsgQueue.Contains(errorMessageClean))
                 return;
 
             // Queue this message
-            // However, if we already have intErrorMessageCountToReturn messages queued, then dequeue the oldest one
+            // However, if we already have errorMessageCountToReturn messages queued, then dequeue the oldest one
 
-            if (qErrorMsgQueue.Count < intMaxErrorMessageCountToReturn)
+            if (qErrorMsgQueue.Count < maxErrorMessageCountToReturn)
             {
-                qErrorMsgQueue.Enqueue(strErrorMessageClean);
+                qErrorMsgQueue.Enqueue(errorMessageClean);
             }
             else
             {
@@ -1518,12 +1518,12 @@ namespace AnalysisManagerProg
                 // However, only do this if the new error message has a timestamp newer than the oldest queued message
                 //  (this is a consideration when processing multiple log files)
 
-                var blnAddItemToQueue = true;
+                var addItemToQueue = true;
 
-                var strQueuedError = qErrorMsgQueue.Peek();
+                var queuedError = qErrorMsgQueue.Peek();
 
-                // Get the timestamp associated with strQueuedError, as tracked by the hashtable
-                if (!uniqueErrorMessages.TryGetValue(strQueuedError, out var queuedTimeStamp))
+                // Get the timestamp associated with queuedError, as tracked by the hashtable
+                if (!uniqueErrorMessages.TryGetValue(queuedError, out var queuedTimeStamp))
                 {
                     // The error message is not in the hashtable; this is unexpected
                 }
@@ -1536,20 +1536,20 @@ namespace AnalysisManagerProg
                         {
                             // The queued error message's timestamp is equal to or newer than the new message's timestamp
                             // Do not add the new item to the queue
-                            blnAddItemToQueue = false;
+                            addItemToQueue = false;
                         }
                     }
                     catch (Exception)
                     {
                         // Date comparison failed; Do not add the new item to the queue
-                        blnAddItemToQueue = false;
+                        addItemToQueue = false;
                     }
                 }
 
-                if (blnAddItemToQueue)
+                if (addItemToQueue)
                 {
                     qErrorMsgQueue.Dequeue();
-                    qErrorMsgQueue.Enqueue(strErrorMessageClean);
+                    qErrorMsgQueue.Enqueue(errorMessageClean);
                 }
             }
         }
@@ -1613,9 +1613,9 @@ namespace AnalysisManagerProg
         {
             clsCleanupMgrErrors.eCleanupModeConstants eManagerErrorCleanupMode;
 
-            var strManagerErrorCleanupMode = m_MgrSettings.GetParam("ManagerErrorCleanupMode", "0");
+            var managerErrorCleanupMode = m_MgrSettings.GetParam("ManagerErrorCleanupMode", "0");
 
-            switch (strManagerErrorCleanupMode.Trim())
+            switch (managerErrorCleanupMode.Trim())
             {
                 case "0":
                     eManagerErrorCleanupMode = clsCleanupMgrErrors.eCleanupModeConstants.Disabled;
@@ -2540,7 +2540,7 @@ namespace AnalysisManagerProg
         /// <returns>True if a flag file exists, false if safe to proceed</returns>
         private bool StatusFlagFileError()
         {
-            bool blnMgrCleanupSuccess;
+            bool mgrCleanupSuccess;
 
             if (!m_MgrErrorCleanup.DetectStatusFlagFile())
             {
@@ -2550,17 +2550,17 @@ namespace AnalysisManagerProg
 
             try
             {
-                blnMgrCleanupSuccess = m_MgrErrorCleanup.AutoCleanupManagerErrors(GetManagerErrorCleanupMode(), m_DebugLevel);
+                mgrCleanupSuccess = m_MgrErrorCleanup.AutoCleanupManagerErrors(GetManagerErrorCleanupMode(), m_DebugLevel);
             }
             catch (Exception ex)
             {
                 LogError("Error calling AutoCleanupManagerErrors", ex);
                 m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.StatusFlagFileError(): " + ex.Message, m_MostRecentJobInfo, true);
 
-                blnMgrCleanupSuccess = false;
+                mgrCleanupSuccess = false;
             }
 
-            if (blnMgrCleanupSuccess)
+            if (mgrCleanupSuccess)
             {
                 LogWarning("Flag file found; automatically cleaned the work directory and deleted the flag file(s)");
 

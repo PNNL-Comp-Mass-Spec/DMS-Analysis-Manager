@@ -74,7 +74,7 @@ namespace AnalysisManagerBase
         {
 
             var startTime = DateTime.UtcNow;
-            var intAttemptCount = 0;
+            var attemptCount = 0;
 
             StreamWriter lockStream;
 
@@ -83,7 +83,7 @@ namespace AnalysisManagerBase
 
             do
             {
-                intAttemptCount += 1;
+                attemptCount += 1;
                 var creatingLockFile = false;
 
                 try
@@ -153,7 +153,7 @@ namespace AnalysisManagerBase
                 // Something went wrong; wait for 15 seconds then try again
                 Thread.Sleep(15000);
 
-                if (intAttemptCount >= 4)
+                if (attemptCount >= 4)
                 {
                     // Something went wrong 4 times in a row (typically either creating or deleting the .Lock file)
                     // Abort
@@ -229,9 +229,9 @@ namespace AnalysisManagerBase
             SqlStr.Append(" WHERE FileName = '" + legacyFASTAFileName + "'");
 
 
-            var blnSuccess = clsGlobal.GetDataTableByQuery(SqlStr.ToString(), mProteinSeqsDBConnectionString, "GetLegacyFastaFilePath", retryCount, out var dtResults);
+            var success = clsGlobal.GetDataTableByQuery(SqlStr.ToString(), mProteinSeqsDBConnectionString, "GetLegacyFastaFilePath", retryCount, out var dtResults);
 
-            if (!blnSuccess)
+            if (!success)
             {
                 return string.Empty;
             }
@@ -440,12 +440,12 @@ namespace AnalysisManagerBase
         public bool ValidateSplitFastaFile(string baseFastaName, string splitFastaName)
         {
 
-            var strCurrentTask = "Initializing";
+            var currentTask = "Initializing";
 
             try
             {
 
-                strCurrentTask = "GetLegacyFastaFilePath for splitFastaName";
+                currentTask = "GetLegacyFastaFilePath for splitFastaName";
                 var fastaFilePath = GetLegacyFastaFilePath(splitFastaName, out var organismName);
 
                 if (!string.IsNullOrWhiteSpace(fastaFilePath))
@@ -457,7 +457,7 @@ namespace AnalysisManagerBase
 
                 // Split file not found
                 // Query DMS for the location of baseFastaName
-                strCurrentTask = "GetLegacyFastaFilePath for baseFastaName";
+                currentTask = "GetLegacyFastaFilePath for baseFastaName";
                 var baseFastaFilePath = GetLegacyFastaFilePath(baseFastaName, out var organismNameBaseFasta);
                 if (string.IsNullOrWhiteSpace(baseFastaFilePath))
                 {
@@ -477,7 +477,7 @@ namespace AnalysisManagerBase
                 }
 
                 // Try to create a lock file
-                strCurrentTask = "CreateLockStream";
+                currentTask = "CreateLockStream";
                 var lockStream = CreateLockStream(fiBaseFastaFile, out var lockFilePath);
 
                 if (lockStream == null)
@@ -491,13 +491,13 @@ namespace AnalysisManagerBase
                 // Check again for the existence of the desired .Fasta file
                 // It's possible another process created the .Fasta file while this process was waiting for the other process's lock file to disappear
 
-                strCurrentTask = "GetLegacyFastaFilePath for splitFastaName (2nd time)";
+                currentTask = "GetLegacyFastaFilePath for splitFastaName (2nd time)";
                 fastaFilePath = GetLegacyFastaFilePath(splitFastaName, out organismName);
                 if (!string.IsNullOrWhiteSpace(fastaFilePath))
                 {
                     // The file now exists
                     mErrorMessage = string.Empty;
-                    strCurrentTask = "DeleteLockStream (fasta file now exists)";
+                    currentTask = "DeleteLockStream (fasta file now exists)";
                     DeleteLockStream(lockFilePath, lockStream);
                     return true;
                 }
@@ -517,7 +517,7 @@ namespace AnalysisManagerBase
                 mSplitter.WarningEvent += mSplitter_WarningEvent;
                 mSplitter.ProgressChanged += mSplitter_ProgressChanged;
 
-                strCurrentTask = "SplitFastaFile " + fiBaseFastaFile.FullName;
+                currentTask = "SplitFastaFile " + fiBaseFastaFile.FullName;
                 var success = mSplitter.SplitFastaFile(fiBaseFastaFile.FullName, fiBaseFastaFile.DirectoryName, mNumSplitParts);
 
                 if (!success)
@@ -532,7 +532,7 @@ namespace AnalysisManagerBase
                 }
 
                 // Verify that the fasta files were created
-                strCurrentTask = "Verify new files";
+                currentTask = "Verify new files";
                 foreach (var splitFileInfo in mSplitter.SplitFastaFileInfo)
                 {
                     var fiSplitFastaFile = new FileInfo(splitFileInfo.FilePath);
@@ -548,7 +548,7 @@ namespace AnalysisManagerBase
                 OnProgressUpdate("Fasta file successfully split into " + mNumSplitParts + " parts", 100);
 
                 // Store the newly created Fasta file names, plus their protein and residue stats, in DMS
-                strCurrentTask = "StoreSplitFastaFileNames";
+                currentTask = "StoreSplitFastaFileNames";
                 success = StoreSplitFastaFileNames(organismNameBaseFasta, mSplitter.SplitFastaFileInfo);
                 if (!success)
                 {
@@ -562,7 +562,7 @@ namespace AnalysisManagerBase
                 }
 
                 // Call the procedure that syncs up this information with ProteinSeqs
-                strCurrentTask = "UpdateCachedOrganismDBInfo";
+                currentTask = "UpdateCachedOrganismDBInfo";
                 UpdateCachedOrganismDBInfo();
 
                 // Delete any cached MSGFPlus index files corresponding to the split fasta files
@@ -607,13 +607,13 @@ namespace AnalysisManagerBase
                 }
 
                 // Delete the lock file
-                strCurrentTask = "DeleteLockStream (fasta file created)";
+                currentTask = "DeleteLockStream (fasta file created)";
                 DeleteLockStream(lockFilePath, lockStream);
 
             }
             catch (Exception ex)
             {
-                mErrorMessage = "Exception in ValidateSplitFastaFile for " + splitFastaName + " at " + strCurrentTask + ": " + ex.Message;
+                mErrorMessage = "Exception in ValidateSplitFastaFile for " + splitFastaName + " at " + currentTask + ": " + ex.Message;
                 OnErrorEvent(mErrorMessage);
                 return false;
             }
@@ -625,22 +625,22 @@ namespace AnalysisManagerBase
         #region "Events and Event Handlers"
 
         public event SplittingBaseFastafileEventHandler SplittingBaseFastafile;
-        public delegate void SplittingBaseFastafileEventHandler(string strBaseFastaFileName, int numSplitParts);
+        public delegate void SplittingBaseFastafileEventHandler(string baseFastaFileName, int numSplitParts);
 
-        private void OnSplittingBaseFastafile(string strBaseFastaFileName, int numSplitParts)
+        private void OnSplittingBaseFastafile(string baseFastaFileName, int numSplitParts)
         {
-            SplittingBaseFastafile?.Invoke(strBaseFastaFileName, numSplitParts);
+            SplittingBaseFastafile?.Invoke(baseFastaFileName, numSplitParts);
         }
 
-        private void mSplitter_ErrorEvent(string strMessage)
+        private void mSplitter_ErrorEvent(string message)
         {
-            mErrorMessage = "Fasta Splitter Error: " + strMessage;
-            OnErrorEvent(strMessage);
+            mErrorMessage = "Fasta Splitter Error: " + message;
+            OnErrorEvent(message);
         }
 
-        private void mSplitter_WarningEvent(string strMessage)
+        private void mSplitter_WarningEvent(string message)
         {
-            OnWarningEvent(strMessage);
+            OnWarningEvent(message);
         }
 
         private void mSplitter_ProgressChanged(string taskDescription, float percentComplete)

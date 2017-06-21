@@ -601,7 +601,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public void SetParam(string paramName, string paramValue)
         {
-            var blnMatchFound = false;
+            var matchFound = false;
 
             if (paramValue == null)
                 paramValue = string.Empty;
@@ -611,11 +611,11 @@ namespace AnalysisManagerBase
                 if (section.Value.ContainsKey(paramName))
                 {
                     section.Value[paramName] = paramValue;
-                    blnMatchFound = true;
+                    matchFound = true;
                 }
             }
 
-            if (!blnMatchFound && m_JobParams.Count > 0)
+            if (!matchFound && m_JobParams.Count > 0)
             {
                 // Add the parameter to the first section
                 m_JobParams.First().Value.Add(paramName, paramValue);

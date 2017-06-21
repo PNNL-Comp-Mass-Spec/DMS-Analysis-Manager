@@ -147,133 +147,133 @@ namespace AnalysisManagerMSGFDBPlugIn
         }
 
         /// <summary>
-        /// Update strArgumentSwitch and strValue if using the MS-GFDB syntax yet should be using the MS-GF+ syntax (or vice versa)
+        /// Update argumentSwitch and argumentValue if using the MS-GFDB syntax yet should be using the MS-GF+ syntax (or vice versa)
         /// </summary>
         /// <param name="msgfPlus"></param>
-        /// <param name="strArgumentSwitch"></param>
-        /// <param name="strValue"></param>
+        /// <param name="argumentSwitch"></param>
+        /// <param name="argumentValue"></param>
         /// <remarks></remarks>
-        private void AdjustSwitchesForMSGFPlus(bool msgfPlus, ref string strArgumentSwitch, ref string strValue)
+        private void AdjustSwitchesForMSGFPlus(bool msgfPlus, ref string argumentSwitch, ref string argumentValue)
         {
-            int intValue;
+            int value;
 
             if (msgfPlus)
             {
                 // MS-GF+
 
-                if (clsGlobal.IsMatch(strArgumentSwitch, "nnet"))
+                if (clsGlobal.IsMatch(argumentSwitch, "nnet"))
                 {
                     // Auto-switch to ntt
-                    strArgumentSwitch = "ntt";
-                    if (int.TryParse(strValue, out intValue))
+                    argumentSwitch = "ntt";
+                    if (int.TryParse(argumentValue, out value))
                     {
-                        switch (intValue)
+                        switch (value)
                         {
                             case 0:
-                                strValue = "2";         // Fully-tryptic
+                                argumentValue = "2";         // Fully-tryptic
                                 break;
                             case 1:
-                                strValue = "1";         // Partially tryptic
+                                argumentValue = "1";         // Partially tryptic
                                 break;
                             case 2:
-                                strValue = "0";         // No-enzyme search
+                                argumentValue = "0";         // No-enzyme search
                                 break;
                             default:
                                 // Assume partially tryptic
-                                strValue = "1";
+                                argumentValue = "1";
                                 break;
                         }
                     }
                 }
-                else if (clsGlobal.IsMatch(strArgumentSwitch, "c13"))
+                else if (clsGlobal.IsMatch(argumentSwitch, "c13"))
                 {
                     // Auto-switch to ti
-                    strArgumentSwitch = "ti";
-                    if (int.TryParse(strValue, out intValue))
+                    argumentSwitch = "ti";
+                    if (int.TryParse(argumentValue, out value))
                     {
-                        if (intValue == 0)
+                        if (value == 0)
                         {
-                            strValue = "0,0";
+                            argumentValue = "0,0";
                         }
-                        else if (intValue == 1)
+                        else if (value == 1)
                         {
-                            strValue = "-1,1";
+                            argumentValue = "-1,1";
                         }
-                        else if (intValue == 2)
+                        else if (value == 2)
                         {
-                            strValue = "-1,2";
+                            argumentValue = "-1,2";
                         }
                         else
                         {
-                            strValue = "0,1";
+                            argumentValue = "0,1";
                         }
                     }
                     else
                     {
-                        strValue = "0,1";
+                        argumentValue = "0,1";
                     }
                 }
-                else if (clsGlobal.IsMatch(strArgumentSwitch, "showDecoy"))
+                else if (clsGlobal.IsMatch(argumentSwitch, "showDecoy"))
                 {
                     // Not valid for MS-GF+; skip it
-                    strArgumentSwitch = string.Empty;
+                    argumentSwitch = string.Empty;
                 }
             }
             else
             {
                 // MS-GFDB
 
-                if (clsGlobal.IsMatch(strArgumentSwitch, "ntt"))
+                if (clsGlobal.IsMatch(argumentSwitch, "ntt"))
                 {
                     // Auto-switch to nnet
-                    strArgumentSwitch = "nnet";
-                    if (int.TryParse(strValue, out intValue))
+                    argumentSwitch = "nnet";
+                    if (int.TryParse(argumentValue, out value))
                     {
-                        switch (intValue)
+                        switch (value)
                         {
                             case 2:
-                                strValue = "0";         // Fully-tryptic
+                                argumentValue = "0";         // Fully-tryptic
                                 break;
                             case 1:
-                                strValue = "1";         // Partially tryptic
+                                argumentValue = "1";         // Partially tryptic
                                 break;
                             case 0:
-                                strValue = "2";         // No-enzyme search
+                                argumentValue = "2";         // No-enzyme search
                                 break;
                             default:
                                 // Assume partially tryptic
-                                strValue = "1";
+                                argumentValue = "1";
                                 break;
                         }
                     }
                 }
-                else if (clsGlobal.IsMatch(strArgumentSwitch, "ti"))
+                else if (clsGlobal.IsMatch(argumentSwitch, "ti"))
                 {
                     // Auto-switch to c13
                     // Use the digit after the comma in the "ti" specification
-                    strArgumentSwitch = "c13";
-                    var intCharIndex = strValue.IndexOf(",", StringComparison.Ordinal);
-                    if (intCharIndex >= 0)
+                    argumentSwitch = "c13";
+                    var charIndex = argumentValue.IndexOf(",", StringComparison.Ordinal);
+                    if (charIndex >= 0)
                     {
-                        strValue = strValue.Substring(intCharIndex + 1);
+                        argumentValue = argumentValue.Substring(charIndex + 1);
                     }
                     else
                     {
                         // Comma not found
-                        if (int.TryParse(strValue, out intValue))
+                        if (int.TryParse(argumentValue, out value))
                         {
-                            strValue = intValue.ToString();
+                            argumentValue = value.ToString();
                         }
                         else
                         {
-                            strValue = "1";
+                            argumentValue = "1";
                         }
                     }
                 }
-                else if (clsGlobal.IsMatch(strArgumentSwitch, "addFeatures"))
+                else if (clsGlobal.IsMatch(argumentSwitch, "addFeatures"))
                 {
                     // Not valid for MS-GFDB; skip it
-                    strArgumentSwitch = string.Empty;
+                    argumentSwitch = string.Empty;
                 }
             }
         }
@@ -386,26 +386,30 @@ namespace AnalysisManagerMSGFDBPlugIn
             {
                 if (m_DebugLevel >= 1)
                 {
-                    var strInstIDDescription = "??";
+                    string instrumentDescription;
+
                     switch (instrumentIDNew)
                     {
                         case "0":
-                            strInstIDDescription = "Low-res MSn";
+                            instrumentDescription = "Low-res MSn";
                             break;
                         case "1":
-                            strInstIDDescription = "High-res MSn";
+                            instrumentDescription = "High-res MSn";
                             break;
                         case "2":
-                            strInstIDDescription = "TOF";
+                            instrumentDescription = "TOF";
                             break;
                         case "3":
-                            strInstIDDescription = "Q-Exactive";
+                            instrumentDescription = "Q-Exactive";
+                            break;
+                        default:
+                            instrumentDescription = "??";
                             break;
                     }
 
                     OnStatusEvent("Auto-updating instrument ID " +
                                   "from " + instrumentIDCurrent + " to " + instrumentIDNew +
-                                  " (" + strInstIDDescription + ") " + autoSwitchReason);
+                                  " (" + instrumentDescription + ") " + autoSwitchReason);
                 }
 
                 instrumentIDCurrent = instrumentIDNew;
@@ -426,7 +430,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             {
                 // In November 2016, this file was renamed from Dataset_msgfdb.tsv to Dataset_msgfplus.tsv
                 var tsvFileName = datasetName + MSGFPLUS_TSV_SUFFIX;
-                var strTSVFilePath = Path.Combine(m_WorkDir, tsvFileName);
+                var tsvFilePath = Path.Combine(m_WorkDir, tsvFileName);
 
                 // Examine the size of the .mzid file
                 var fiMzidFile = new FileInfo(Path.Combine(m_WorkDir, mzidFileName));
@@ -475,9 +479,9 @@ namespace AnalysisManagerMSGFDBPlugIn
                 RegisterEvents(objCreateTSV);
 
                 // This process is typically quite fast, so we do not track CPU usage
-                var blnSuccess = objCreateTSV.RunProgram(mzidToTsvConverterProgLoc, cmdStr, "MzIDToTsv", true);
+                var success = objCreateTSV.RunProgram(mzidToTsvConverterProgLoc, cmdStr, "MzIDToTsv", true);
 
-                if (!blnSuccess)
+                if (!success)
                 {
                     OnErrorEvent("MzidToTsvConverter.exe returned an error code converting the .mzid file To a .tsv file: " + objCreateTSV.ExitCode);
                     return string.Empty;
@@ -498,7 +502,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     // Ignore errors here
                 }
 
-                return strTSVFilePath;
+                return tsvFilePath;
             }
             catch (Exception ex)
             {
@@ -512,23 +516,23 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// </summary>
         /// <param name="javaProgLoc">Full path to Java</param>
         /// <param name="msgfDbProgLoc">Folder with MSGFPlusjar</param>
-        /// <param name="strDatasetName">Dataset name (output file will be named DatasetName_msgfdb.tsv)</param>
-        /// <param name="strMZIDFileName">.mzid file name (assumed to be in the work directory)</param>
+        /// <param name="datasetName">Dataset name (output file will be named DatasetName_msgfdb.tsv)</param>
+        /// <param name="mzidFileName">.mzid file name (assumed to be in the work directory)</param>
         /// <returns>TSV file path, or an empty string if an error</returns>
         /// <remarks></remarks>
         [Obsolete("Use the version of ConvertMzidToTsv that simply accepts a dataset name and .mzid file path and uses MzidToTsvConverter.exe")]
-        public string ConvertMZIDToTSV(string javaProgLoc, string msgfDbProgLoc, string strDatasetName, string strMZIDFileName)
+        public string ConvertMZIDToTSV(string javaProgLoc, string msgfDbProgLoc, string datasetName, string mzidFileName)
         {
-            string strTSVFilePath;
+            string tsvFilePath;
 
             try
             {
                 // In November 2016, this file was renamed from Dataset_msgfdb.tsv to Dataset_msgfplus.tsv
-                var tsvFileName = strDatasetName + MSGFPLUS_TSV_SUFFIX;
-                strTSVFilePath = Path.Combine(m_WorkDir, tsvFileName);
+                var tsvFileName = datasetName + MSGFPLUS_TSV_SUFFIX;
+                tsvFilePath = Path.Combine(m_WorkDir, tsvFileName);
 
                 // Examine the size of the .mzid file
-                var fiMzidFile = new FileInfo(Path.Combine(m_WorkDir, strMZIDFileName));
+                var fiMzidFile = new FileInfo(Path.Combine(m_WorkDir, mzidFileName));
                 if (!fiMzidFile.Exists)
                 {
                     OnErrorEvent("Error in clsMSGFDBUtils->ConvertMZIDToTSV; Mzid file not found: " + fiMzidFile.FullName);
@@ -575,7 +579,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     javaMemorySizeMB = 2000;
 
                 // Set up and execute a program runner to run the MzIDToTsv module of MSGFPlus
-                var cmdStr = GetMZIDtoTSVCommandLine(strMZIDFileName, tsvFileName, m_WorkDir, msgfDbProgLoc, javaMemorySizeMB);
+                var cmdStr = GetMZIDtoTSVCommandLine(mzidFileName, tsvFileName, m_WorkDir, msgfDbProgLoc, javaMemorySizeMB);
 
                 // Make sure the machine has enough free memory to run MSGFPlus
                 const bool LOG_FREE_MEMORY_ON_SUCCESS = false;
@@ -602,9 +606,9 @@ namespace AnalysisManagerMSGFDBPlugIn
                 RegisterEvents(objCreateTSV);
 
                 // This process is typically quite fast, so we do not track CPU usage
-                var blnSuccess = objCreateTSV.RunProgram(javaProgLoc, cmdStr, "MzIDToTsv", true);
+                var success = objCreateTSV.RunProgram(javaProgLoc, cmdStr, "MzIDToTsv", true);
 
-                if (!blnSuccess)
+                if (!success)
                 {
                     OnErrorEvent("MSGFPlus returned an error code converting the .mzid file to a .tsv file: " + objCreateTSV.ExitCode);
                     return string.Empty;
@@ -631,7 +635,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 return string.Empty;
             }
 
-            return strTSVFilePath;
+            return tsvFilePath;
         }
 
         /// <summary>
@@ -734,8 +738,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                     linesRead = 0;
                     while (!reader.EndOfStream && linesRead < 10)
                     {
-                        var strLineIn = reader.ReadLine();
-                        if (!string.IsNullOrEmpty(strLineIn))
+                        var dataLine = reader.ReadLine();
+                        if (!string.IsNullOrEmpty(dataLine))
                         {
                             linesRead += 1;
                         }
@@ -825,14 +829,14 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 mPeptideToProteinMapper.CloseLogFileNow();
 
-                var strResultsFilePath = Path.GetFileNameWithoutExtension(inputFilePath) +
+                var pepToProtMapFileName = Path.GetFileNameWithoutExtension(inputFilePath) +
                     PeptideToProteinMapEngine.clsPeptideToProteinMapEngine.FILENAME_SUFFIX_PEP_TO_PROTEIN_MAPPING;
 
-                strResultsFilePath = Path.Combine(m_WorkDir, strResultsFilePath);
+                var pepToProtMapFilePath = Path.Combine(m_WorkDir, pepToProtMapFileName);
 
                 if (success)
                 {
-                    if (!File.Exists(strResultsFilePath))
+                    if (!File.Exists(pepToProtMapFilePath))
                     {
                         OnErrorEvent("Peptide to protein mapping file was not created");
                         success = false;
@@ -844,7 +848,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                             OnStatusEvent("Peptide to protein mapping complete");
                         }
 
-                        success = ValidatePeptideToProteinMapResults(strResultsFilePath, ignorePeptideToProteinMapperErrors);
+                        success = ValidatePeptideToProteinMapResults(pepToProtMapFilePath, ignorePeptideToProteinMapperErrors);
                     }
                 }
                 else
@@ -866,9 +870,9 @@ namespace AnalysisManagerMSGFDBPlugIn
                     {
                         OnWarningEvent("Ignoring protein mapping error since 'IgnorePeptideToProteinMapError' = True");
 
-                        if (File.Exists(strResultsFilePath))
+                        if (File.Exists(pepToProtMapFilePath))
                         {
-                            success = ValidatePeptideToProteinMapResults(strResultsFilePath, ignorePeptideToProteinMapperErrors: true);
+                            success = ValidatePeptideToProteinMapResults(pepToProtMapFilePath, ignorePeptideToProteinMapperErrors: true);
                         }
                         else
                         {
@@ -1016,11 +1020,11 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
         }
 
-        public void DeleteFileInWorkDir(string strFilename)
+        public void DeleteFileInWorkDir(string filename)
         {
             try
             {
-                var targetFile = new FileInfo(Path.Combine(m_WorkDir, strFilename));
+                var targetFile = new FileInfo(Path.Combine(m_WorkDir, filename));
 
                 if (targetFile.Exists)
                 {
@@ -1196,30 +1200,30 @@ namespace AnalysisManagerMSGFDBPlugIn
             return "MS-GFDB";
         }
 
-        public string GetSettingFromMSGFDbParamFile(string strParameterFilePath, string strSettingToFind)
+        public string GetSettingFromMSGFDbParamFile(string parameterFilePath, string settingToFind)
         {
-            return GetSettingFromMSGFDbParamFile(strParameterFilePath, strSettingToFind, string.Empty);
+            return GetSettingFromMSGFDbParamFile(parameterFilePath, settingToFind, string.Empty);
         }
 
-        public string GetSettingFromMSGFDbParamFile(string strParameterFilePath, string strSettingToFind, string strValueIfNotFound)
+        public string GetSettingFromMSGFDbParamFile(string parameterFilePath, string settingToFind, string valueIfNotFound)
         {
-            if (!File.Exists(strParameterFilePath))
+            if (!File.Exists(parameterFilePath))
             {
-                OnErrorEvent("Parameter file not found: " + strParameterFilePath);
-                return strValueIfNotFound;
+                OnErrorEvent("Parameter file not found: " + parameterFilePath);
+                return valueIfNotFound;
             }
 
             try
             {
-                using (var srParamFile = new StreamReader(new FileStream(strParameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using (var srParamFile = new StreamReader(new FileStream(parameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
                     while (!srParamFile.EndOfStream)
                     {
-                        var strLineIn = srParamFile.ReadLine();
+                        var dataLine = srParamFile.ReadLine();
 
-                        var kvSetting = clsGlobal.GetKeyValueSetting(strLineIn);
+                        var kvSetting = clsGlobal.GetKeyValueSetting(dataLine);
 
-                        if (!string.IsNullOrWhiteSpace(kvSetting.Key) && clsGlobal.IsMatch(kvSetting.Key, strSettingToFind))
+                        if (!string.IsNullOrWhiteSpace(kvSetting.Key) && clsGlobal.IsMatch(kvSetting.Key, settingToFind))
                         {
                             return kvSetting.Value;
                         }
@@ -1232,24 +1236,24 @@ namespace AnalysisManagerMSGFDBPlugIn
                 OnErrorEvent(mErrorMessage, ex);
             }
 
-            return strValueIfNotFound;
+            return valueIfNotFound;
         }
 
         public CloseOutType InitializeFastaFile(string javaProgLoc, string msgfDbProgLoc, out float fastaFileSizeKB, out bool fastaFileIsDecoy,
-            out string fastaFilePath, string strMSGFDBParameterFilePath)
+            out string fastaFilePath, string msgfPlusParameterFilePath)
         {
             return InitializeFastaFile(javaProgLoc, msgfDbProgLoc, out fastaFileSizeKB, out fastaFileIsDecoy, out fastaFilePath,
-                strMSGFDBParameterFilePath, 0);
+                                       msgfPlusParameterFilePath, 0);
         }
 
         public CloseOutType InitializeFastaFile(string javaProgLoc, string msgfDbProgLoc, out float fastaFileSizeKB, out bool fastaFileIsDecoy,
-            out string fastaFilePath, string strMSGFDBParameterFilePath, int maxFastaFileSizeMB)
+            out string fastaFilePath, string msgfPlusParameterFilePath, int maxFastaFileSizeMB)
         {
             var oRand = new Random();
 
-            var strMgrName = m_mgrParams.GetParam("MgrName", "Undefined-Manager");
+            var mgrName = m_mgrParams.GetParam("MgrName", "Undefined-Manager");
 
-            var objIndexedDBCreator = new clsCreateMSGFDBSuffixArrayFiles(strMgrName);
+            var objIndexedDBCreator = new clsCreateMSGFDBSuffixArrayFiles(mgrName);
             RegisterEvents(objIndexedDBCreator);
 
             // Define the path to the fasta file
@@ -1270,9 +1274,9 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             fastaFileSizeKB = (float)(fiFastaFile.Length / 1024.0);
 
-            var strProteinOptions = m_jobParams.GetParam("ProteinOptions");
+            var proteinOptions = m_jobParams.GetParam("ProteinOptions");
 
-            if (string.IsNullOrEmpty(strProteinOptions) || strProteinOptions == "na")
+            if (string.IsNullOrEmpty(proteinOptions) || proteinOptions == "na")
             {
                 // Determine the fraction of the proteins that start with Reversed_ or XXX_ or XXX.
                 var decoyPrefixes = clsAnalysisResources.GetDefaultDecoyPrefixes();
@@ -1288,19 +1292,19 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
             else
             {
-                if (strProteinOptions.ToLower().Contains("seq_direction=decoy"))
+                if (proteinOptions.ToLower().Contains("seq_direction=decoy"))
                 {
                     fastaFileIsDecoy = true;
                 }
             }
 
-            if (!string.IsNullOrEmpty(strMSGFDBParameterFilePath))
+            if (!string.IsNullOrEmpty(msgfPlusParameterFilePath))
             {
-                var strTDASetting = GetSettingFromMSGFDbParamFile(strMSGFDBParameterFilePath, "TDA");
+                var tdaSetting = GetSettingFromMSGFDbParamFile(msgfPlusParameterFilePath, "TDA");
 
-                if (!int.TryParse(strTDASetting, out var tdaValue))
+                if (!int.TryParse(tdaSetting, out var tdaValue))
                 {
-                    OnErrorEvent("TDA value is not numeric: " + strTDASetting);
+                    OnErrorEvent("TDA value is not numeric: " + tdaSetting);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -1318,7 +1322,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                             OnStatusEvent("Processing large FASTA file with forward-only search; auto switching to -tda 0");
                         }
                     }
-                    else if (strMSGFDBParameterFilePath.ToLower().EndsWith("_NoDecoy.txt".ToLower()))
+                    else if (msgfPlusParameterFilePath.ToLower().EndsWith("_NoDecoy.txt".ToLower()))
                     {
                         // Parameter file ends in _NoDecoy.txt and TDA = 0, thus we're performing a forward-only search
                         // Auto-change fastaFileIsDecoy to True to prevent the reverse indices from being created
@@ -1382,8 +1386,8 @@ namespace AnalysisManagerMSGFDBPlugIn
             // Either copy them from Gigasax (or Proto-7) or re-create them
             //
             var indexIteration = 0;
-            var strMSGFPlusIndexFilesFolderPath = m_mgrParams.GetParam("MSGFPlusIndexFilesFolderPath", @"\\gigasax\MSGFPlus_Index_Files");
-            var strMSGFPlusIndexFilesFolderPathLegacyDB = m_mgrParams.GetParam("MSGFPlusIndexFilesFolderPathLegacyDB", @"\\proto-7\MSGFPlus_Index_Files");
+            var msgfPlusIndexFilesFolderPath = m_mgrParams.GetParam("MSGFPlusIndexFilesFolderPath", @"\\gigasax\MSGFPlus_Index_Files");
+            var msgfPlusIndexFilesFolderPathLegacyDB = m_mgrParams.GetParam("MSGFPlusIndexFilesFolderPathLegacyDB", @"\\proto-7\MSGFPlus_Index_Files");
 
             while (indexIteration <= 2)
             {
@@ -1391,7 +1395,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 // Note that fastaFilePath will get updated by the IndexedDBCreator if we're running Legacy MSGFDB
                 var result = objIndexedDBCreator.CreateSuffixArrayFiles(m_WorkDir, m_DebugLevel, javaProgLoc, msgfDbProgLoc, fastaFilePath,
-                    fastaFileIsDecoy, strMSGFPlusIndexFilesFolderPath, strMSGFPlusIndexFilesFolderPathLegacyDB);
+                    fastaFileIsDecoy, msgfPlusIndexFilesFolderPath, msgfPlusIndexFilesFolderPathLegacyDB);
 
                 if (result == CloseOutType.CLOSEOUT_SUCCESS)
                 {
@@ -1423,18 +1427,18 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Reads the contents of a _ScanType.txt file, returning the scan info using three generic dictionary objects
         /// </summary>
-        /// <param name="strScanTypeFilePath"></param>
+        /// <param name="scanTypeFilePath"></param>
         /// <param name="lstLowResMSn">Low Res MSn spectra</param>
         /// <param name="lstHighResMSn">High Res MSn spectra (but not HCD)</param>
         /// <param name="lstHCDMSn">HCD Spectra</param>
         /// <param name="lstOther">Spectra that are not MSn</param>
         /// <returns></returns>
         /// <remarks></remarks>
-        public bool LoadScanTypeFile(string strScanTypeFilePath, out Dictionary<int, string> lstLowResMSn, out Dictionary<int, string> lstHighResMSn,
+        public bool LoadScanTypeFile(string scanTypeFilePath, out Dictionary<int, string> lstLowResMSn, out Dictionary<int, string> lstHighResMSn,
             out Dictionary<int, string> lstHCDMSn, out Dictionary<int, string> lstOther)
         {
-            var intScanNumberColIndex = -1;
-            var intScanTypeNameColIndex = -1;
+            var scanNumberColIndex = -1;
+            var scanTypeNameColIndex = -1;
 
             lstLowResMSn = new Dictionary<int, string>();
             lstHighResMSn = new Dictionary<int, string>();
@@ -1443,67 +1447,67 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             try
             {
-                if (!File.Exists(strScanTypeFilePath))
+                if (!File.Exists(scanTypeFilePath))
                 {
-                    mErrorMessage = "ScanType file not found: " + strScanTypeFilePath;
+                    mErrorMessage = "ScanType file not found: " + scanTypeFilePath;
                     return false;
                 }
 
-                using (var srScanTypeFile = new StreamReader(new FileStream(strScanTypeFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using (var srScanTypeFile = new StreamReader(new FileStream(scanTypeFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
                     while (!srScanTypeFile.EndOfStream)
                     {
-                        var strLineIn = srScanTypeFile.ReadLine();
+                        var dataLine = srScanTypeFile.ReadLine();
 
-                        if (string.IsNullOrWhiteSpace(strLineIn))
+                        if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
 
-                        var lstColumns = strLineIn.Split('\t').ToList();
+                        var lstColumns = dataLine.Split('\t').ToList();
 
-                        if (intScanNumberColIndex < 0)
+                        if (scanNumberColIndex < 0)
                         {
                             // Parse the header line to define the mapping
                             // Expected headers are ScanNumber   ScanTypeName   ScanType
-                            intScanNumberColIndex = lstColumns.IndexOf("ScanNumber");
-                            intScanTypeNameColIndex = lstColumns.IndexOf("ScanTypeName");
+                            scanNumberColIndex = lstColumns.IndexOf("ScanNumber");
+                            scanTypeNameColIndex = lstColumns.IndexOf("ScanTypeName");
                         }
-                        else if (intScanNumberColIndex >= 0)
+                        else if (scanNumberColIndex >= 0)
                         {
 
-                            if (!int.TryParse(lstColumns[intScanNumberColIndex], out var intScanNumber))
+                            if (!int.TryParse(lstColumns[scanNumberColIndex], out var scanNumber))
                                 continue;
 
-                            if (intScanTypeNameColIndex < 0)
+                            if (scanTypeNameColIndex < 0)
                                 continue;
 
-                            var strScanType = lstColumns[intScanTypeNameColIndex];
-                            var strScanTypeLCase = strScanType.ToLower();
+                            var scanType = lstColumns[scanTypeNameColIndex];
+                            var scanTypeLCase = scanType.ToLower();
 
-                            if (strScanTypeLCase.Contains("hcd"))
+                            if (scanTypeLCase.Contains("hcd"))
                             {
-                                lstHCDMSn.Add(intScanNumber, strScanType);
+                                lstHCDMSn.Add(scanNumber, scanType);
                             }
-                            else if (strScanTypeLCase.Contains("hmsn"))
+                            else if (scanTypeLCase.Contains("hmsn"))
                             {
-                                lstHighResMSn.Add(intScanNumber, strScanType);
+                                lstHighResMSn.Add(scanNumber, scanType);
                             }
-                            else if (strScanTypeLCase.Contains("msn"))
+                            else if (scanTypeLCase.Contains("msn"))
                             {
                                 // Not HCD and doesn't contain HMSn; assume low-res
-                                lstLowResMSn.Add(intScanNumber, strScanType);
+                                lstLowResMSn.Add(scanNumber, scanType);
                             }
-                            else if (strScanTypeLCase.Contains("cid") || strScanTypeLCase.Contains("etd"))
+                            else if (scanTypeLCase.Contains("cid") || scanTypeLCase.Contains("etd"))
                             {
                                 // The ScanTypeName likely came from the "Collision Mode" column of a MASIC ScanStatsEx file; we don't know if it is high res MSn or low res MSn
                                 // This will be the case for MASIC results from prior to February 1, 2010, since those results did not have the ScanTypeName column in the _ScanStats.txt file
                                 // We'll assume low res
-                                lstLowResMSn.Add(intScanNumber, strScanType);
+                                lstLowResMSn.Add(scanNumber, scanType);
                             }
                             else
                             {
                                 // Does not contain MSn or HCD
                                 // Likely SRM or MS1
-                                lstOther.Add(intScanNumber, strScanType);
+                                lstOther.Add(scanNumber, scanType);
                             }
                         }
                     }
@@ -1681,7 +1685,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <remarks>MSGFPlus version is available via the MSGFDbVersion property</remarks>
         public float ParseMSGFPlusConsoleOutputFile(string workingDirectory)
         {
-            var strConsoleOutputFilePath = "??";
+            var consoleOutputFilePath = "??";
 
             float sngEffectiveProgress = 0;
             float percentCompleteAllTasks = 0;
@@ -1689,12 +1693,12 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             try
             {
-                strConsoleOutputFilePath = Path.Combine(workingDirectory, MSGFPLUS_CONSOLE_OUTPUT_FILE);
-                if (!File.Exists(strConsoleOutputFilePath))
+                consoleOutputFilePath = Path.Combine(workingDirectory, MSGFPLUS_CONSOLE_OUTPUT_FILE);
+                if (!File.Exists(consoleOutputFilePath))
                 {
                     if (m_DebugLevel >= 4)
                     {
-                        OnStatusEvent("Console output file not found: " + strConsoleOutputFilePath);
+                        OnStatusEvent("Console output file not found: " + consoleOutputFilePath);
                     }
 
                     return 0;
@@ -1702,7 +1706,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (m_DebugLevel >= 4)
                 {
-                    OnStatusEvent("Parsing file " + strConsoleOutputFilePath);
+                    OnStatusEvent("Parsing file " + consoleOutputFilePath);
                 }
 
                 // This is the total threads that MS-GF+ reports that it is using
@@ -1719,44 +1723,44 @@ namespace AnalysisManagerMSGFDBPlugIn
                 mContinuumSpectraSkipped = 0;
                 mSpectraSearched = 0;
 
-                using (var srInFile = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var srInFile = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    var intLinesRead = 0;
+                    var linesRead = 0;
                     while (!srInFile.EndOfStream)
                     {
-                        var strLineIn = srInFile.ReadLine();
-                        intLinesRead += 1;
+                        var dataLine = srInFile.ReadLine();
+                        linesRead += 1;
 
-                        if (string.IsNullOrWhiteSpace(strLineIn))
+                        if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
 
-                        var strLineInLcase = strLineIn.ToLower();
+                        var dataLineLcase = dataLine.ToLower();
 
-                        if (intLinesRead <= 3)
+                        if (linesRead <= 3)
                         {
                             // Originally the first line was the MS-GF+ version
                             // Starting in November 2016, the first line is the command line and the second line is a separator (series of dashes)
                             // The third line is the MS-GF+ version
-                            if (string.IsNullOrWhiteSpace(mMSGFPlusVersion) && (strLineIn.StartsWith("MS-GF+ Release")))
+                            if (string.IsNullOrWhiteSpace(mMSGFPlusVersion) && (dataLine.StartsWith("MS-GF+ Release")))
                             {
                                 if (m_DebugLevel >= 2 && string.IsNullOrWhiteSpace(mMSGFPlusVersion))
                                 {
-                                    OnStatusEvent("MS-GF+ version: " + strLineIn);
+                                    OnStatusEvent("MS-GF+ version: " + dataLine);
                                 }
 
-                                mMSGFPlusVersion = string.Copy(strLineIn);
+                                mMSGFPlusVersion = string.Copy(dataLine);
                             }
                             else
                             {
-                                if (strLineInLcase.Contains("error"))
+                                if (dataLineLcase.Contains("error"))
                                 {
                                     if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                                     {
                                         mConsoleOutputErrorMsg = "Error running MS-GF+: ";
                                     }
-                                    if (!mConsoleOutputErrorMsg.Contains(strLineIn))
+                                    if (!mConsoleOutputErrorMsg.Contains(dataLine))
                                     {
-                                        mConsoleOutputErrorMsg += "; " + strLineIn;
+                                        mConsoleOutputErrorMsg += "; " + dataLine;
                                     }
                                 }
                             }
@@ -1764,32 +1768,32 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                         // Look for warning messages
                         // Additionally, update progress if the line starts with one of the expected phrases
-                        if (strLineIn.StartsWith("Ignoring spectrum"))
+                        if (dataLine.StartsWith("Ignoring spectrum"))
                         {
                             // Spectra are typically ignored either because they have too few ions, or because the data is not centroided
-                            if (strLineIn.IndexOf("spectrum is not centroided", StringComparison.OrdinalIgnoreCase) > 0)
+                            if (dataLine.IndexOf("spectrum is not centroided", StringComparison.OrdinalIgnoreCase) > 0)
                             {
                                 mContinuumSpectraSkipped += 1;
                             }
                         }
-                        else if (strLineIn.StartsWith("Loading database files"))
+                        else if (dataLine.StartsWith("Loading database files"))
                         {
                             if (sngEffectiveProgress < PROGRESS_PCT_MSGFPLUS_LOADING_DATABASE)
                             {
                                 sngEffectiveProgress = PROGRESS_PCT_MSGFPLUS_LOADING_DATABASE;
                             }
                         }
-                        else if (strLineIn.StartsWith("Reading spectra"))
+                        else if (dataLine.StartsWith("Reading spectra"))
                         {
                             if (sngEffectiveProgress < PROGRESS_PCT_MSGFPLUS_READING_SPECTRA)
                             {
                                 sngEffectiveProgress = PROGRESS_PCT_MSGFPLUS_READING_SPECTRA;
                             }
                         }
-                        else if (strLineIn.StartsWith("Using"))
+                        else if (dataLine.StartsWith("Using"))
                         {
                             // Extract out the thread or task count
-                            var oThreadMatch = reExtractThreadCount.Match(strLineIn);
+                            var oThreadMatch = reExtractThreadCount.Match(dataLine);
 
                             if (oThreadMatch.Success)
                             {
@@ -1801,34 +1805,34 @@ namespace AnalysisManagerMSGFDBPlugIn
                                 }
                             }
                         }
-                        else if (strLineIn.StartsWith("Splitting"))
+                        else if (dataLine.StartsWith("Splitting"))
                         {
-                            var oTaskMatch = reExtractTaskCount.Match(strLineIn);
+                            var oTaskMatch = reExtractTaskCount.Match(dataLine);
 
                             if (oTaskMatch.Success)
                             {
                                 int.TryParse(oTaskMatch.Groups["TaskCount"].Value, out totalTasks);
                             }
                         }
-                        else if (strLineIn.StartsWith("Spectrum"))
+                        else if (dataLine.StartsWith("Spectrum"))
                         {
                             // Extract out the number of spectra that MS-GF+ will actually search
 
-                            var oMatch = reSpectraSearched.Match(strLineIn);
+                            var oMatch = reSpectraSearched.Match(dataLine);
 
                             if (oMatch.Success)
                             {
                                 int.TryParse(oMatch.Groups["SpectrumCount"].Value, out mSpectraSearched);
                             }
                         }
-                        else if (strLineIn.StartsWith("Computing EFDRs") || strLineIn.StartsWith("Computing q-values"))
+                        else if (dataLine.StartsWith("Computing EFDRs") || dataLine.StartsWith("Computing q-values"))
                         {
                             if (sngEffectiveProgress < PROGRESS_PCT_MSGFPLUS_COMPUTING_FDRS)
                             {
                                 sngEffectiveProgress = PROGRESS_PCT_MSGFPLUS_COMPUTING_FDRS;
                             }
                         }
-                        else if (strLineIn.StartsWith("MS-GF+ complete") || strLineIn.StartsWith("MS-GF+ complete"))
+                        else if (dataLine.StartsWith("MS-GF+ complete") || dataLine.StartsWith("MS-GF+ complete"))
                         {
                             if (sngEffectiveProgress < PROGRESS_PCT_MSGFPLUS_COMPLETE)
                             {
@@ -1837,13 +1841,13 @@ namespace AnalysisManagerMSGFDBPlugIn
                         }
                         else if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                         {
-                            if (strLineInLcase.Contains("error") && !strLineInLcase.Contains("isotopeerror:"))
+                            if (dataLineLcase.Contains("error") && !dataLineLcase.Contains("isotopeerror:"))
                             {
-                                mConsoleOutputErrorMsg += "; " + strLineIn;
+                                mConsoleOutputErrorMsg += "; " + dataLine;
                             }
                         }
 
-                        var reMatch = reTaskComplete.Match(strLineIn);
+                        var reMatch = reTaskComplete.Match(dataLine);
                         if (reMatch.Success)
                         {
                             var taskNumber = int.Parse(reMatch.Groups["TaskNumber"].Value);
@@ -1858,7 +1862,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                             }
                         }
 
-                        var reProgressMatch = rePercentComplete.Match(strLineIn);
+                        var reProgressMatch = rePercentComplete.Match(dataLine);
                         if (reProgressMatch.Success)
                         {
                             var newTasksComplete = int.Parse(reProgressMatch.Groups["TasksComplete"].Value);
@@ -1896,7 +1900,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    OnWarningEvent("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    OnWarningEvent("Error parsing console output file (" + consoleOutputFilePath + "): " + ex.Message);
                 }
             }
 
@@ -1906,22 +1910,22 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Parses the static modifications, dynamic modifications, and custom amino acid information to create the MS-GF+ Mods file
         /// </summary>
-        /// <param name="strParameterFilePath">Full path to the MSGF parameter file; will create file MSGFPlus_Mods.txt in the same folder</param>
+        /// <param name="parameterFilePath">Full path to the MSGF parameter file; will create file MSGFPlus_Mods.txt in the same folder</param>
         /// <param name="sbOptions">String builder of command line arguments to pass to MS-GF+</param>
-        /// <param name="intNumMods">Max Number of Modifications per peptide</param>
+        /// <param name="numMods">Max Number of Modifications per peptide</param>
         /// <param name="lstStaticMods">List of Static Mods</param>
         /// <param name="lstDynamicMods">List of Dynamic Mods</param>
         /// <param name="lstCustomAminoAcids">List of Custom Amino Acids</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks></remarks>
-        private bool ParseMSGFDBModifications(string strParameterFilePath, StringBuilder sbOptions, int intNumMods,
+        private bool ParseMSGFDBModifications(string parameterFilePath, StringBuilder sbOptions, int numMods,
             IReadOnlyCollection<string> lstStaticMods, IReadOnlyCollection<string> lstDynamicMods, IReadOnlyCollection<string> lstCustomAminoAcids)
         {
-            bool blnSuccess;
+            bool success;
 
             try
             {
-                var fiParameterFile = new FileInfo(strParameterFilePath);
+                var fiParameterFile = new FileInfo(parameterFilePath);
 
                 if (string.IsNullOrWhiteSpace(fiParameterFile.DirectoryName))
                 {
@@ -1929,20 +1933,20 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return false;
                 }
 
-                var strModFilePath = Path.Combine(fiParameterFile.DirectoryName, MOD_FILE_NAME);
+                var modFilePath = Path.Combine(fiParameterFile.DirectoryName, MOD_FILE_NAME);
 
                 // Note that ParseMSGFDbValidateMod will set this to True if a dynamic or static mod is STY phosphorylation
                 mPhosphorylationSearch = false;
 
                 sbOptions.Append(" -mod " + MOD_FILE_NAME);
 
-                using (var swModFile = new StreamWriter(new FileStream(strModFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var swModFile = new StreamWriter(new FileStream(modFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
                     swModFile.WriteLine("# This file is used to specify modifications for MS-GF+");
                     swModFile.WriteLine();
                     swModFile.WriteLine("# Max Number of Modifications per peptide");
                     swModFile.WriteLine("# If this value is large, the search will be slow");
-                    swModFile.WriteLine("NumMods=" + intNumMods);
+                    swModFile.WriteLine("NumMods=" + numMods);
 
                     if (lstCustomAminoAcids.Count > 0)
                     {
@@ -1950,16 +1954,16 @@ namespace AnalysisManagerMSGFDBPlugIn
                         swModFile.WriteLine();
                         swModFile.WriteLine("# Custom Amino Acids");
 
-                        foreach (var strCustomAADef in lstCustomAminoAcids)
+                        foreach (var customAADef in lstCustomAminoAcids)
                         {
 
-                            if (ParseMSGFDbValidateMod(strCustomAADef, out var strCustomAADefClean))
+                            if (ParseMSGFDbValidateMod(customAADef, out var customAADefClean))
                             {
-                                if (MisleadingModDef(strCustomAADefClean, "Custom AA", "custom", "opt"))
+                                if (MisleadingModDef(customAADefClean, "Custom AA", "custom", "opt"))
                                     return false;
-                                if (MisleadingModDef(strCustomAADefClean, "Custom AA", "custom", "fix"))
+                                if (MisleadingModDef(customAADefClean, "Custom AA", "custom", "fix"))
                                     return false;
-                                swModFile.WriteLine(strCustomAADefClean);
+                                swModFile.WriteLine(customAADefClean);
                             }
                             else
                             {
@@ -1976,16 +1980,16 @@ namespace AnalysisManagerMSGFDBPlugIn
                     }
                     else
                     {
-                        foreach (var strStaticMod in lstStaticMods)
+                        foreach (var staticMod in lstStaticMods)
                         {
 
-                            if (ParseMSGFDbValidateMod(strStaticMod, out var strModClean))
+                            if (ParseMSGFDbValidateMod(staticMod, out var modClean))
                             {
-                                if (MisleadingModDef(strModClean, "Static mod", "fix", "opt"))
+                                if (MisleadingModDef(modClean, "Static mod", "fix", "opt"))
                                     return false;
-                                if (MisleadingModDef(strModClean, "Static mod", "fix", "custom"))
+                                if (MisleadingModDef(modClean, "Static mod", "fix", "custom"))
                                     return false;
-                                swModFile.WriteLine(strModClean);
+                                swModFile.WriteLine(modClean);
                             }
                             else
                             {
@@ -2002,16 +2006,16 @@ namespace AnalysisManagerMSGFDBPlugIn
                     }
                     else
                     {
-                        foreach (var strDynamicMod in lstDynamicMods)
+                        foreach (var dynamicMod in lstDynamicMods)
                         {
 
-                            if (ParseMSGFDbValidateMod(strDynamicMod, out var strModClean))
+                            if (ParseMSGFDbValidateMod(dynamicMod, out var modClean))
                             {
-                                if (MisleadingModDef(strModClean, "Dynamic mod", "opt", "fix"))
+                                if (MisleadingModDef(modClean, "Dynamic mod", "opt", "fix"))
                                     return false;
-                                if (MisleadingModDef(strModClean, "Dynamic mod", "opt", "custom"))
+                                if (MisleadingModDef(modClean, "Dynamic mod", "opt", "custom"))
                                     return false;
-                                swModFile.WriteLine(strModClean);
+                                swModFile.WriteLine(modClean);
                             }
                             else
                             {
@@ -2021,16 +2025,16 @@ namespace AnalysisManagerMSGFDBPlugIn
                     }
                 }
 
-                blnSuccess = true;
+                success = true;
             }
             catch (Exception ex)
             {
                 mErrorMessage = "Exception creating MS-GF+ Mods file";
                 OnErrorEvent(mErrorMessage, ex);
-                blnSuccess = false;
+                success = false;
             }
 
-            return blnSuccess;
+            return success;
         }
 
         /// <summary>
@@ -2038,21 +2042,21 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// </summary>
         /// <param name="fastaFileSizeKB">Size of the .Fasta file, in KB</param>
         /// <param name="fastaFileIsDecoy">True if the fasta file has had forward and reverse index files created</param>
-        /// <param name="strAssumedScanType">Empty string if no assumed scan type; otherwise CID, ETD, or HCD</param>
-        /// <param name="strScanTypeFilePath">The path to the ScanType file (which lists the scan type for each scan); should be empty string if no ScanType file</param>
+        /// <param name="assumedScanType">Empty string if no assumed scan type; otherwise CID, ETD, or HCD</param>
+        /// <param name="scanTypeFilePath">The path to the ScanType file (which lists the scan type for each scan); should be empty string if no ScanType file</param>
         /// <param name="instrumentGroup">DMS Instrument Group name</param>
-        /// <param name="strParameterFilePath">Full path to the MS-GF+ parameter file to use</param>
-        /// <param name="strMSGFDbCmdLineOptions">Output: MS-GF+ command line arguments</param>
+        /// <param name="parameterFilePath">Full path to the MS-GF+ parameter file to use</param>
+        /// <param name="msgfPlusCmdLineOptions">Output: MS-GF+ command line arguments</param>
         /// <returns>Options string if success; empty string if an error</returns>
         /// <remarks></remarks>
-        public CloseOutType ParseMSGFPlusParameterFile(float fastaFileSizeKB, bool fastaFileIsDecoy, string strAssumedScanType,
-            string strScanTypeFilePath, string instrumentGroup, string strParameterFilePath,
-            out string strMSGFDbCmdLineOptions)
+        public CloseOutType ParseMSGFPlusParameterFile(float fastaFileSizeKB, bool fastaFileIsDecoy, string assumedScanType,
+            string scanTypeFilePath, string instrumentGroup, string parameterFilePath,
+            out string msgfPlusCmdLineOptions)
         {
             var overrideParams = new Dictionary<string, string>();
 
-            return ParseMSGFPlusParameterFile(fastaFileSizeKB, fastaFileIsDecoy, strAssumedScanType, strScanTypeFilePath, instrumentGroup,
-                strParameterFilePath, overrideParams, out strMSGFDbCmdLineOptions);
+            return ParseMSGFPlusParameterFile(fastaFileSizeKB, fastaFileIsDecoy, assumedScanType, scanTypeFilePath, instrumentGroup,
+                parameterFilePath, overrideParams, out msgfPlusCmdLineOptions);
         }
 
         /// <summary>
@@ -2060,40 +2064,40 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// </summary>
         /// <param name="fastaFileSizeKB">Size of the .Fasta file, in KB</param>
         /// <param name="fastaFileIsDecoy">True if the fasta file has had forward and reverse index files created</param>
-        /// <param name="strAssumedScanType">Empty string if no assumed scan type; otherwise CID, ETD, or HCD</param>
-        /// <param name="strScanTypeFilePath">The path to the ScanType file (which lists the scan type for each scan); should be empty string if no ScanType file</param>
+        /// <param name="assumedScanType">Empty string if no assumed scan type; otherwise CID, ETD, or HCD</param>
+        /// <param name="scanTypeFilePath">The path to the ScanType file (which lists the scan type for each scan); should be empty string if no ScanType file</param>
         /// <param name="instrumentGroup">DMS Instrument Group name</param>
-        /// <param name="strParameterFilePath">Full path to the MS-GF+ parameter file to use</param>
+        /// <param name="parameterFilePath">Full path to the MS-GF+ parameter file to use</param>
         /// <param name="overrideParams">Parameters to override settings in the MS-GF+ parameter file</param>
-        /// <param name="strMSGFDbCmdLineOptions">Output: MS-GF+ command line arguments</param>
+        /// <param name="msgfPlusCmdLineOptions">Output: MS-GF+ command line arguments</param>
         /// <returns>Options string if success; empty string if an error</returns>
         /// <remarks></remarks>
-        public CloseOutType ParseMSGFPlusParameterFile(float fastaFileSizeKB, bool fastaFileIsDecoy, string strAssumedScanType,
-            string strScanTypeFilePath, string instrumentGroup, string strParameterFilePath,
-            Dictionary<string, string> overrideParams, out string strMSGFDbCmdLineOptions)
+        public CloseOutType ParseMSGFPlusParameterFile(float fastaFileSizeKB, bool fastaFileIsDecoy, string assumedScanType,
+            string scanTypeFilePath, string instrumentGroup, string parameterFilePath,
+            Dictionary<string, string> overrideParams, out string msgfPlusCmdLineOptions)
         {
             const int SMALL_FASTA_FILE_THRESHOLD_KB = 20;
 
-            var intParamFileThreadCount = 0;
+            var paramFileThreadCount = 0;
 
-            var intNumMods = 0;
+            var numMods = 0;
             var lstStaticMods = new List<string>();
             var lstDynamicMods = new List<string>();
             var lstCustomAminoAcids = new List<string>();
 
-            var blnShowDecoyParamPresent = false;
-            var blnShowDecoy = false;
-            var blnTDA = false;
+            var showDecoyParamPresent = false;
+            var showDecoy = false;
+            var isTDA = false;
 
-            strMSGFDbCmdLineOptions = string.Empty;
+            msgfPlusCmdLineOptions = string.Empty;
 
-            if (!File.Exists(strParameterFilePath))
+            if (!File.Exists(parameterFilePath))
             {
-                OnErrorEvent("Parameter file Not found:  " + strParameterFilePath);
+                OnErrorEvent("Parameter file Not found:  " + parameterFilePath);
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
             }
 
-            var strSearchEngineName = GetSearchEngineName();
+            var searchEngineName = GetSearchEngineName();
 
             var sbOptions = new StringBuilder(500);
 
@@ -2106,75 +2110,75 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // Initialize the Param Name dictionary
                 var dctParamNames = GetMSFGDBParameterNames();
 
-                using (var srParamFile = new StreamReader(new FileStream(strParameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using (var srParamFile = new StreamReader(new FileStream(parameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
                     while (!srParamFile.EndOfStream)
                     {
-                        var strLineIn = srParamFile.ReadLine();
+                        var dataLine = srParamFile.ReadLine();
 
-                        var kvSetting = clsGlobal.GetKeyValueSetting(strLineIn);
+                        var kvSetting = clsGlobal.GetKeyValueSetting(dataLine);
 
                         if (string.IsNullOrWhiteSpace(kvSetting.Key))
                             continue;
 
-                        var strValue = kvSetting.Value;
+                        var valueText = kvSetting.Value;
 
 
                         // Check whether kvSetting.key is one of the standard keys defined in dctParamNames
-                        int intValue;
-                        if (dctParamNames.TryGetValue(kvSetting.Key, out var strArgumentSwitch))
+                        int value;
+                        if (dctParamNames.TryGetValue(kvSetting.Key, out var argumentSwitch))
                         {
                             if (clsGlobal.IsMatch(kvSetting.Key, MSGFPLUS_OPTION_FRAGMENTATION_METHOD))
                             {
-                                if (string.IsNullOrWhiteSpace(strValue) && !string.IsNullOrWhiteSpace(strScanTypeFilePath))
+                                if (string.IsNullOrWhiteSpace(valueText) && !string.IsNullOrWhiteSpace(scanTypeFilePath))
                                 {
                                     // No setting for FragmentationMethodID, and a ScanType file was created
                                     // Use FragmentationMethodID 0 (as written in the spectrum, or CID)
-                                    strValue = "0";
+                                    valueText = "0";
 
-                                    OnStatusEvent("Using Fragmentation method -m " + strValue + " because a ScanType file was created");
+                                    OnStatusEvent("Using Fragmentation method -m " + valueText + " because a ScanType file was created");
                                 }
-                                else if (!string.IsNullOrWhiteSpace(strAssumedScanType))
+                                else if (!string.IsNullOrWhiteSpace(assumedScanType))
                                 {
-                                    // Override FragmentationMethodID using strAssumedScanType
+                                    // Override FragmentationMethodID using assumedScanType
                                     // AssumedScanType is an optional job setting; see for example:
                                     //  IonTrapDefSettings_AssumeHCD.xml with <item key="AssumedScanType" value="HCD"/>
-                                    switch (strAssumedScanType.ToUpper())
+                                    switch (assumedScanType.ToUpper())
                                     {
                                         case "CID":
-                                            strValue = "1";
+                                            valueText = "1";
                                             break;
                                         case "ETD":
-                                            strValue = "2";
+                                            valueText = "2";
                                             break;
                                         case "HCD":
-                                            strValue = "3";
+                                            valueText = "3";
                                             break;
                                         case "UVPD":
                                             // Previously, with MS-GFDB, fragmentationType 4 meant Merge ETD and CID
                                             // Now with MS-GF+, fragmentationType 4 means UVPD
-                                            strValue = "4";
+                                            valueText = "4";
                                             break;
                                         default:
                                             // Invalid string
-                                            mErrorMessage = "Invalid assumed scan type '" + strAssumedScanType +
+                                            mErrorMessage = "Invalid assumed scan type '" + assumedScanType +
                                                             "'; must be CID, ETD, HCD, or UVPD";
                                             OnErrorEvent(mErrorMessage);
                                             return CloseOutType.CLOSEOUT_FAILED;
                                     }
 
-                                    OnStatusEvent("Using Fragmentation method -m " + strValue + " because of Assumed scan type " + strAssumedScanType);
+                                    OnStatusEvent("Using Fragmentation method -m " + valueText + " because of Assumed scan type " + assumedScanType);
                                 }
                                 else
                                 {
-                                    OnStatusEvent("Using Fragmentation method -m " + strValue);
+                                    OnStatusEvent("Using Fragmentation method -m " + valueText);
                                 }
                             }
                             else if (clsGlobal.IsMatch(kvSetting.Key, MSGFPLUS_OPTION_INSTRUMENT_ID))
                             {
-                                if (!string.IsNullOrWhiteSpace(strScanTypeFilePath))
+                                if (!string.IsNullOrWhiteSpace(scanTypeFilePath))
                                 {
-                                    var eResult = DetermineInstrumentID(ref strValue, strScanTypeFilePath, instrumentGroup);
+                                    var eResult = DetermineInstrumentID(ref valueText, scanTypeFilePath, instrumentGroup);
                                     if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
                                     {
                                         return eResult;
@@ -2193,58 +2197,58 @@ namespace AnalysisManagerMSGFDBPlugIn
                                         }
                                     }
 
-                                    AutoUpdateInstrumentIDIfChanged(ref strValue, instrumentIDNew, autoSwitchReason);
+                                    AutoUpdateInstrumentIDIfChanged(ref valueText, instrumentIDNew, autoSwitchReason);
                                 }
                             }
 
-                            var strArgumentSwitchOriginal = string.Copy(strArgumentSwitch);
+                            var argumentSwitchOriginal = string.Copy(argumentSwitch);
 
-                            AdjustSwitchesForMSGFPlus(mMSGFPlus, ref strArgumentSwitch, ref strValue);
+                            AdjustSwitchesForMSGFPlus(mMSGFPlus, ref argumentSwitch, ref valueText);
 
-                            if (overrideParams.TryGetValue(strArgumentSwitch, out var valueOverride))
+                            if (overrideParams.TryGetValue(argumentSwitch, out var valueOverride))
                             {
-                                OnStatusEvent("Overriding switch " + strArgumentSwitch + " to use -" + strArgumentSwitch + " " + valueOverride +
-                                              " instead of -" + strArgumentSwitch + " " + strValue);
-                                strValue = string.Copy(valueOverride);
+                                OnStatusEvent("Overriding switch " + argumentSwitch + " to use -" + argumentSwitch + " " + valueOverride +
+                                              " instead of -" + argumentSwitch + " " + valueText);
+                                valueText = string.Copy(valueOverride);
                             }
 
-                            if (string.IsNullOrEmpty(strArgumentSwitch))
+                            if (string.IsNullOrEmpty(argumentSwitch))
                             {
-                                if (m_DebugLevel >= 1 && !clsGlobal.IsMatch(strArgumentSwitchOriginal, MSGFPLUS_OPTION_SHOWDECOY))
+                                if (m_DebugLevel >= 1 && !clsGlobal.IsMatch(argumentSwitchOriginal, MSGFPLUS_OPTION_SHOWDECOY))
                                 {
-                                    OnWarningEvent("Skipping switch " + strArgumentSwitchOriginal + " since it is not valid for this version of " + strSearchEngineName);
+                                    OnWarningEvent("Skipping switch " + argumentSwitchOriginal + " since it is not valid for this version of " + searchEngineName);
                                 }
                             }
-                            else if (string.IsNullOrEmpty(strValue))
+                            else if (string.IsNullOrEmpty(valueText))
                             {
                                 if (m_DebugLevel >= 1)
                                 {
-                                    OnWarningEvent("Skipping switch " + strArgumentSwitch + " since the value is empty");
+                                    OnWarningEvent("Skipping switch " + argumentSwitch + " since the value is empty");
                                 }
                             }
                             else
                             {
-                                sbOptions.Append(" -" + strArgumentSwitch + " " + strValue);
+                                sbOptions.Append(" -" + argumentSwitch + " " + valueText);
                             }
 
-                            if (clsGlobal.IsMatch(strArgumentSwitch, "showDecoy"))
+                            if (clsGlobal.IsMatch(argumentSwitch, "showDecoy"))
                             {
-                                blnShowDecoyParamPresent = true;
-                                if (int.TryParse(strValue, out intValue))
+                                showDecoyParamPresent = true;
+                                if (int.TryParse(valueText, out value))
                                 {
-                                    if (intValue > 0)
+                                    if (value > 0)
                                     {
-                                        blnShowDecoy = true;
+                                        showDecoy = true;
                                     }
                                 }
                             }
-                            else if (clsGlobal.IsMatch(strArgumentSwitch, "tda"))
+                            else if (clsGlobal.IsMatch(argumentSwitch, "tda"))
                             {
-                                if (int.TryParse(strValue, out intValue))
+                                if (int.TryParse(valueText, out value))
                                 {
-                                    if (intValue > 0)
+                                    if (value > 0)
                                     {
-                                        blnTDA = true;
+                                        isTDA = true;
                                     }
                                 }
                             }
@@ -2257,7 +2261,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                             }
                             else
                             {
-                                if (string.IsNullOrWhiteSpace(strValue) || clsGlobal.IsMatch(strValue, "auto"))
+                                if (string.IsNullOrWhiteSpace(valueText) || clsGlobal.IsMatch(valueText, "auto"))
                                 {
                                     if (fastaFileSizeKB < SMALL_FASTA_FILE_THRESHOLD_KB)
                                     {
@@ -2270,14 +2274,14 @@ namespace AnalysisManagerMSGFDBPlugIn
                                 }
                                 else
                                 {
-                                    if (int.TryParse(strValue, out intValue))
+                                    if (int.TryParse(valueText, out value))
                                     {
-                                        sbOptions.Append(" -uniformAAProb " + intValue);
+                                        sbOptions.Append(" -uniformAAProb " + value);
                                     }
                                     else
                                     {
                                         mErrorMessage = "Invalid value for uniformAAProb in MS-GF+ parameter file";
-                                        OnErrorEvent(mErrorMessage + ": " + strLineIn);
+                                        OnErrorEvent(mErrorMessage + ": " + dataLine);
                                         srParamFile.Dispose();
                                         return CloseOutType.CLOSEOUT_FAILED;
                                     }
@@ -2286,83 +2290,83 @@ namespace AnalysisManagerMSGFDBPlugIn
                         }
                         else if (clsGlobal.IsMatch(kvSetting.Key, "NumThreads"))
                         {
-                            if (string.IsNullOrWhiteSpace(strValue) || clsGlobal.IsMatch(strValue, "all"))
+                            if (string.IsNullOrWhiteSpace(valueText) || clsGlobal.IsMatch(valueText, "all"))
                             {
                                 // Do not append -thread to the command line; MS-GF+ will use all available cores by default
                             }
                             else
                             {
-                                if (int.TryParse(strValue, out intParamFileThreadCount))
+                                if (int.TryParse(valueText, out paramFileThreadCount))
                                 {
-                                    // intParamFileThreadCount now has the thread count
+                                    // paramFileThreadCount now has the thread count
                                 }
                                 else
                                 {
-                                    OnWarningEvent("Invalid value for NumThreads in MS-GF+ parameter file: " + strLineIn);
+                                    OnWarningEvent("Invalid value for NumThreads in MS-GF+ parameter file: " + dataLine);
                                 }
                             }
                         }
                         else if (clsGlobal.IsMatch(kvSetting.Key, "NumMods"))
                         {
-                            if (int.TryParse(strValue, out intValue))
+                            if (int.TryParse(valueText, out value))
                             {
-                                intNumMods = intValue;
+                                numMods = value;
                             }
                             else
                             {
                                 mErrorMessage = "Invalid value for NumMods in MS-GF+ parameter file";
-                                OnErrorEvent(mErrorMessage + ": " + strLineIn);
+                                OnErrorEvent(mErrorMessage + ": " + dataLine);
                                 srParamFile.Dispose();
                                 return CloseOutType.CLOSEOUT_FAILED;
                             }
                         }
                         else if (clsGlobal.IsMatch(kvSetting.Key, "StaticMod"))
                         {
-                            if (!string.IsNullOrWhiteSpace(strValue) && !clsGlobal.IsMatch(strValue, "none"))
+                            if (!string.IsNullOrWhiteSpace(valueText) && !clsGlobal.IsMatch(valueText, "none"))
                             {
-                                lstStaticMods.Add(strValue);
+                                lstStaticMods.Add(valueText);
                             }
                         }
                         else if (clsGlobal.IsMatch(kvSetting.Key, "DynamicMod"))
                         {
-                            if (!string.IsNullOrWhiteSpace(strValue) && !clsGlobal.IsMatch(strValue, "none"))
+                            if (!string.IsNullOrWhiteSpace(valueText) && !clsGlobal.IsMatch(valueText, "none"))
                             {
-                                lstDynamicMods.Add(strValue);
+                                lstDynamicMods.Add(valueText);
                             }
                         }
                         else if (clsGlobal.IsMatch(kvSetting.Key, "CustomAA"))
                         {
-                            if (!string.IsNullOrWhiteSpace(strValue) && !clsGlobal.IsMatch(strValue, "none"))
+                            if (!string.IsNullOrWhiteSpace(valueText) && !clsGlobal.IsMatch(valueText, "none"))
                             {
-                                lstCustomAminoAcids.Add(strValue);
+                                lstCustomAminoAcids.Add(valueText);
                             }
                         }
 
                         // if (clsGlobal.IsMatch(kvSetting.Key, MSGFPLUS_OPTION_FRAGMENTATION_METHOD)) {
-                        //	 if (int.TryParse(strValue, out intValue)) {
-                        //		if (intValue == 3) {
-                        //			blnHCD = True;
+                        //	 if (int.TryParse(valueText, out value)) {
+                        //		if (value == 3) {
+                        //			isHCD = True;
                         //      }
                         //	 }
                         // }
                     }
                 }
 
-                if (blnTDA)
+                if (isTDA)
                 {
                     if (mMSGFPlus)
                     {
                         // Parameter file contains TDA=1 and we're running MS-GF+
                         mResultsIncludeAutoAddedDecoyPeptides = true;
                     }
-                    else if (blnShowDecoy)
+                    else if (showDecoy)
                     {
                         // Parameter file contains both TDA=1 and showDecoy=1
                         mResultsIncludeAutoAddedDecoyPeptides = true;
                     }
                 }
 
-                if (!blnShowDecoyParamPresent && !mMSGFPlus)
+                if (!showDecoyParamPresent && !mMSGFPlus)
                 {
                     // Add showDecoy to sbOptions
                     sbOptions.Append(" -showDecoy 0");
@@ -2376,25 +2380,25 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
 
             // Define the thread count; note that MSGFDBThreads could be "all"
-            var strDMSDefinedThreadCount = m_jobParams.GetJobParameter("MSGFDBThreads", string.Empty);
-            if (string.IsNullOrWhiteSpace(strDMSDefinedThreadCount) || strDMSDefinedThreadCount.ToLower() == "all" ||
-                !int.TryParse(strDMSDefinedThreadCount, out var intDMSDefinedThreadCount))
+            var dmsDefinedThreadCountText = m_jobParams.GetJobParameter("MSGFDBThreads", string.Empty);
+            if (string.IsNullOrWhiteSpace(dmsDefinedThreadCountText) || dmsDefinedThreadCountText.ToLower() == "all" ||
+                !int.TryParse(dmsDefinedThreadCountText, out var dmsDefinedThreadCount))
             {
-                intDMSDefinedThreadCount = 0;
+                dmsDefinedThreadCount = 0;
             }
 
-            if (intDMSDefinedThreadCount > 0)
+            if (dmsDefinedThreadCount > 0)
             {
-                intParamFileThreadCount = intDMSDefinedThreadCount;
+                paramFileThreadCount = dmsDefinedThreadCount;
             }
 
             // If running on a Proto storage server (e.g. Proto-4, Proto-5, or Proto-11),
             // we will limit the number of cores used to 75% of the total core count
             var limitCoreUsage = Dns.GetHostName().ToLower().StartsWith("proto-");
 
-            if (intParamFileThreadCount <= 0 || limitCoreUsage)
+            if (paramFileThreadCount <= 0 || limitCoreUsage)
             {
-                // Set intParamFileThreadCount to the number of cores on this computer
+                // Set paramFileThreadCount to the number of cores on this computer
                 // However, do not exceed 8 cores because this can actually slow down MS-GF+ due to context switching
                 // Furthermore, Java will restrict all of the threads to a single NUMA node, and we don't want too many threads on a single node
 
@@ -2403,19 +2407,19 @@ namespace AnalysisManagerMSGFDBPlugIn
                 if (limitCoreUsage)
                 {
                     var maxAllowedCores = (int)Math.Floor(coreCount * 0.75);
-                    if (intParamFileThreadCount > 0 && intParamFileThreadCount < maxAllowedCores)
+                    if (paramFileThreadCount > 0 && paramFileThreadCount < maxAllowedCores)
                     {
-                        // Leave intParamFileThreadCount unchanged
+                        // Leave paramFileThreadCount unchanged
                     }
                     else
                     {
-                        intParamFileThreadCount = maxAllowedCores;
+                        paramFileThreadCount = maxAllowedCores;
                     }
                 }
                 else
                 {
-                    // Prior to July 2014 we would use "coreCount - 1" when the computer had more than 4 cores because MS-GF+ would actually use intParamFileThreadCount+1 cores
-                    // Starting with version v10072, MS-GF+ actually uses all the cores, so we started using intParamFileThreadCount = coreCount
+                    // Prior to July 2014 we would use "coreCount - 1" when the computer had more than 4 cores because MS-GF+ would actually use paramFileThreadCount+1 cores
+                    // Starting with version v10072, MS-GF+ actually uses all the cores, so we started using paramFileThreadCount = coreCount
 
                     // Then, in April 2015, we started running two copies of MS-GF+ simultaneously on machines with > 4 cores
                     //  because even if we tell MS-GF+ to use all the cores, we saw a lot of idle time
@@ -2423,50 +2427,50 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                     if (coreCount > 4)
                     {
-                        intParamFileThreadCount = coreCount - 1;
+                        paramFileThreadCount = coreCount - 1;
                     }
                     else
                     {
-                        intParamFileThreadCount = coreCount;
+                        paramFileThreadCount = coreCount;
                     }
                 }
 
-                if (intParamFileThreadCount > 8)
+                if (paramFileThreadCount > 8)
                 {
                     if (coreCount >= 16)
                     {
                         // There are enough spare cores that we can use 75% of all of the cores
                         var maxAllowedCores = (int)Math.Floor(coreCount * 0.75);
-                        if (intParamFileThreadCount > maxAllowedCores)
+                        if (paramFileThreadCount > maxAllowedCores)
                         {
-                            OnStatusEvent("The system has " + coreCount + " cores; " + strSearchEngineName + " will use " + maxAllowedCores + " cores " +
-                                          "(bumped down from " + intParamFileThreadCount + " to avoid overloading a single NUMA node)");
-                            intParamFileThreadCount = maxAllowedCores;
+                            OnStatusEvent("The system has " + coreCount + " cores; " + searchEngineName + " will use " + maxAllowedCores + " cores " +
+                                          "(bumped down from " + paramFileThreadCount + " to avoid overloading a single NUMA node)");
+                            paramFileThreadCount = maxAllowedCores;
                         }
                     }
                     else
                     {
                         // Example message: The system has 12 cores; MS-GF+ will use 8 cores (bumped down from 9 to avoid overloading a single NUMA node)
-                        OnStatusEvent("The system has " + coreCount + " cores; " + strSearchEngineName + " will use 8 cores " +
-                                      "(bumped down from " + intParamFileThreadCount + " to avoid overloading a single NUMA node)");
-                        intParamFileThreadCount = 8;
+                        OnStatusEvent("The system has " + coreCount + " cores; " + searchEngineName + " will use 8 cores " +
+                                      "(bumped down from " + paramFileThreadCount + " to avoid overloading a single NUMA node)");
+                        paramFileThreadCount = 8;
                     }
                 }
                 else
                 {
                     // Example message: The system has 8 cores; MS-GF+ will use 7 cores")
-                    OnStatusEvent("The system has " + coreCount + " cores; " + strSearchEngineName + " will use " + intParamFileThreadCount + " cores");
+                    OnStatusEvent("The system has " + coreCount + " cores; " + searchEngineName + " will use " + paramFileThreadCount + " cores");
                 }
             }
 
-            if (intParamFileThreadCount > 0)
+            if (paramFileThreadCount > 0)
             {
-                sbOptions.Append(" -thread " + intParamFileThreadCount);
+                sbOptions.Append(" -thread " + paramFileThreadCount);
             }
 
             // Create the modification file and append the -mod switch
             // We'll also set mPhosphorylationSearch to True if a dynamic or static mod is STY phosphorylation
-            if (!ParseMSGFDBModifications(strParameterFilePath, sbOptions, intNumMods, lstStaticMods, lstDynamicMods, lstCustomAminoAcids))
+            if (!ParseMSGFDBModifications(parameterFilePath, sbOptions, numMods, lstStaticMods, lstDynamicMods, lstCustomAminoAcids))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -2479,23 +2483,23 @@ namespace AnalysisManagerMSGFDBPlugIn
             // then MS-GF+ will use a model trained for TMT peptides (without phospho)
             // In this case, the user should probably use a parameter file with Protocol=1 defined (which leads to sbOptions having "-protocol 1")
 
-            strMSGFDbCmdLineOptions = sbOptions.ToString();
+            msgfPlusCmdLineOptions = sbOptions.ToString();
 
             // By default, MS-GF+ filters out spectra with fewer than 20 data points
             // Override this threshold to 5 data points
-            if (strMSGFDbCmdLineOptions.IndexOf("-minNumPeaks", StringComparison.OrdinalIgnoreCase) < 0)
+            if (msgfPlusCmdLineOptions.IndexOf("-minNumPeaks", StringComparison.OrdinalIgnoreCase) < 0)
             {
-                strMSGFDbCmdLineOptions += " -minNumPeaks 5";
+                msgfPlusCmdLineOptions += " -minNumPeaks 5";
             }
 
             // Auto-add the "addFeatures" switch if not present
             // This is required to post-process the results with Percolator
-            if (mMSGFPlus && strMSGFDbCmdLineOptions.IndexOf("-addFeatures", StringComparison.OrdinalIgnoreCase) < 0)
+            if (mMSGFPlus && msgfPlusCmdLineOptions.IndexOf("-addFeatures", StringComparison.OrdinalIgnoreCase) < 0)
             {
-                strMSGFDbCmdLineOptions += " -addFeatures 1";
+                msgfPlusCmdLineOptions += " -addFeatures 1";
             }
 
-            if (strMSGFDbCmdLineOptions.Contains("-tda 1"))
+            if (msgfPlusCmdLineOptions.Contains("-tda 1"))
             {
                 // Make sure the .Fasta file is not a Decoy fasta
                 if (fastaFileIsDecoy)
@@ -2541,9 +2545,9 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // Count HCD spectra separately since MS-GF+ has a special scoring model for HCD spectra
 
 
-                var blnSuccess = LoadScanTypeFile(scanTypeFilePath, out var lstLowResMSn, out var lstHighResMSn, out var lstHCDMSn, out var lstOther);
+                var success = LoadScanTypeFile(scanTypeFilePath, out var lstLowResMSn, out var lstHighResMSn, out var lstHCDMSn, out var lstOther);
 
-                if (!blnSuccess)
+                if (!success)
                 {
                     if (string.IsNullOrEmpty(mErrorMessage))
                     {
@@ -2645,9 +2649,9 @@ namespace AnalysisManagerMSGFDBPlugIn
                 const int retryCount = 2;
 
                 //Get a table to hold the results of the query
-                var blnSuccess = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), connectionString, "LookupScanTypesForDataset", retryCount, out var dtResults);
+                var success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), connectionString, "LookupScanTypesForDataset", retryCount, out var dtResults);
 
-                if (!blnSuccess)
+                if (!success)
                 {
                     OnErrorEvent("Excessive failures attempting to retrieve dataset scan types in LookupScanTypesForDataset");
                     dtResults.Dispose();
@@ -2695,25 +2699,25 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Validates that the modification definition text
         /// </summary>
-        /// <param name="strMod">Modification definition</param>
-        /// <param name="strModClean">Cleaned-up modification definition (output param)</param>
+        /// <param name="modDef">Modification definition</param>
+        /// <param name="modClean">Cleaned-up modification definition (output param)</param>
         /// <returns>True if valid; false if invalid</returns>
         /// <remarks>Valid modification definition contains 5 parts and doesn't contain any whitespace</remarks>
-        private bool ParseMSGFDbValidateMod(string strMod, out string strModClean)
+        private bool ParseMSGFDbValidateMod(string modDef, out string modClean)
         {
-            var strComment = string.Empty;
+            var comment = string.Empty;
 
-            strModClean = string.Empty;
+            modClean = string.Empty;
 
-            var intPoundIndex = strMod.IndexOf('#');
-            if (intPoundIndex > 0)
+            var poundIndex = modDef.IndexOf('#');
+            if (poundIndex > 0)
             {
-                strComment = strMod.Substring(intPoundIndex);
-                strMod = strMod.Substring(0, intPoundIndex - 1).Trim();
+                comment = modDef.Substring(poundIndex);
+                modDef = modDef.Substring(0, poundIndex - 1).Trim();
             }
 
             // Split on commas, change tabs to spaces, and remove whitespace
-            var modParts = strMod.Split(',');
+            var modParts = modDef.Split(',');
             for (var i = 0; i <= modParts.Length - 1; i++)
             {
                 modParts[i] = modParts[i].Replace("\t", " ").Trim();
@@ -2731,13 +2735,13 @@ namespace AnalysisManagerMSGFDBPlugIn
                 {
                     // Invalid custom AA definition; must have 5 sections, for example:
                     // C5H7N1O2S0,J,custom,P,Hydroxylation     # Hydroxyproline
-                    mErrorMessage = "Invalid custom AA string; must have 5 sections: " + strMod;
+                    mErrorMessage = "Invalid custom AA string; must have 5 sections: " + modDef;
                 }
                 else
                 {
                     // Invalid dynamic or static mod definition; must have 5 sections, for example:
                     // O1, M, opt, any, Oxidation
-                    mErrorMessage = "Invalid modification string; must have 5 sections: " + strMod;
+                    mErrorMessage = "Invalid modification string; must have 5 sections: " + modDef;
                 }
 
                 OnErrorEvent(mErrorMessage);
@@ -2745,28 +2749,28 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
 
             // Reconstruct the mod (or custom AA) definition, making sure there is no whitespace
-            strModClean = string.Copy(modParts[0]);
+            modClean = string.Copy(modParts[0]);
 
             if (customAminoAcidDef)
             {
                 // Make sure that the custom amino acid definition does not have any invalid characters
                 var reInvalidCharacters = new Regex(@"[^CHNOS0-9]", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-                var lstInvalidCharacters = reInvalidCharacters.Matches(strModClean);
+                var lstInvalidCharacters = reInvalidCharacters.Matches(modClean);
 
                 if (lstInvalidCharacters.Count > 0)
                 {
-                    mErrorMessage = "Custom amino acid empirical formula " + strModClean + " has invalid characters. " +
+                    mErrorMessage = "Custom amino acid empirical formula " + modClean + " has invalid characters. " +
                                     "It must only contain C, H, N, O, and S, and optionally an integer after each element, for example: C6H7N3O";
                     OnErrorEvent(mErrorMessage);
                     return false;
                 }
 
-                // Make sure that all of the elements in strModClean have a number after them
+                // Make sure that all of the elements in modClean have a number after them
                 // For example, auto-change C6H7N3O to C6H7N3O1
 
                 var reElementSplitter = new Regex(@"(?<Atom>[A-Z])(?<Count>\d*)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-                var lstElements = reElementSplitter.Matches(strModClean);
+                var lstElements = reElementSplitter.Matches(modClean);
                 var reconstructedFormula = string.Empty;
 
                 foreach (Match subPart in lstElements)
@@ -2776,7 +2780,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                     if (elementSymbol != "C" && elementSymbol != "H" && elementSymbol != "N" && elementSymbol != "O" && elementSymbol != "S")
                     {
-                        mErrorMessage = "Invalid element " + elementSymbol + " in the custom amino acid empirical formula " + strModClean + "; " +
+                        mErrorMessage = "Invalid element " + elementSymbol + " in the custom amino acid empirical formula " + modClean + "; " +
                                         "MS-GF+ only supports C, H, N, O, and S";
                         OnErrorEvent(mErrorMessage);
                         return false;
@@ -2792,32 +2796,32 @@ namespace AnalysisManagerMSGFDBPlugIn
                     }
                 }
 
-                if (!string.Equals(strModClean, reconstructedFormula))
+                if (!string.Equals(modClean, reconstructedFormula))
                 {
                     OnStatusEvent("Auto updated the custom amino acid empirical formula to include a 1 " +
-                                  "after elements that did not have an element count listed: " + strModClean + " --> " + reconstructedFormula);
-                    strModClean = reconstructedFormula;
+                                  "after elements that did not have an element count listed: " + modClean + " --> " + reconstructedFormula);
+                    modClean = reconstructedFormula;
                 }
             }
 
-            for (var intIndex = 1; intIndex <= modParts.Length - 1; intIndex++)
+            for (var index = 1; index <= modParts.Length - 1; index++)
             {
-                strModClean += "," + modParts[intIndex];
+                modClean += "," + modParts[index];
             }
 
             // Possibly append the comment (which will start with a # sign)
-            if (!string.IsNullOrWhiteSpace(strComment))
+            if (!string.IsNullOrWhiteSpace(comment))
             {
-                strModClean += "     " + strComment;
+                modClean += "     " + comment;
             }
 
             // Check whether this is a phosphorylation mod
             if (!customAminoAcidDef)
             {
-                if (modParts[(int) eModDefinitionParts.Name].ToUpper().StartsWith("PHOSPH") ||
-                    modParts[(int) eModDefinitionParts.EmpiricalFormulaOrMass].ToUpper() == "HO3P")
+                if (modParts[(int)eModDefinitionParts.Name].ToUpper().StartsWith("PHOSPH") ||
+                    modParts[(int)eModDefinitionParts.EmpiricalFormulaOrMass].ToUpper() == "HO3P")
                 {
-                    if (modParts[(int) eModDefinitionParts.Residues].ToUpper().IndexOfAny(new[]
+                    if (modParts[(int)eModDefinitionParts.Residues].ToUpper().IndexOfAny(new[]
                     {
                         'S',
                         'T',
@@ -2832,9 +2836,9 @@ namespace AnalysisManagerMSGFDBPlugIn
             return true;
         }
 
-        private string ReverseString(string strText)
+        private string ReverseString(string text)
         {
-            var chReversed = strText.ToCharArray();
+            var chReversed = text.ToCharArray();
             Array.Reverse(chReversed);
             return new string(chReversed);
         }
@@ -2844,62 +2848,62 @@ namespace AnalysisManagerMSGFDBPlugIn
             return false;
         }
 
-        private bool ValidatePeptideToProteinMapResults(string strPeptideToProteinMapFilePath, bool ignorePeptideToProteinMapperErrors)
+        private bool ValidatePeptideToProteinMapResults(string pepToProtMapFilePath, bool ignorePeptideToProteinMapperErrors)
         {
             const string PROTEIN_NAME_NO_MATCH = "__NoMatch__";
 
-            bool blnSuccess;
+            bool success;
 
-            var intPeptideCount = 0;
-            var intPeptideCountNoMatch = 0;
-            var intLinesRead = 0;
+            var peptideCount = 0;
+            var peptideCountNoMatch = 0;
+            var linesRead = 0;
 
             try
             {
-                // Validate that none of the results in strPeptideToProteinMapFilePath has protein name PROTEIN_NAME_NO_MATCH
+                // Validate that none of the results in pepToProtMapFilePath has protein name PROTEIN_NAME_NO_MATCH
 
                 if (m_DebugLevel >= 2)
                 {
-                    OnStatusEvent("Validating peptide to protein mapping, file " + Path.GetFileName(strPeptideToProteinMapFilePath));
+                    OnStatusEvent("Validating peptide to protein mapping, file " + Path.GetFileName(pepToProtMapFilePath));
                 }
 
-                using (var srInFile = new StreamReader(new FileStream(strPeptideToProteinMapFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using (var srInFile = new StreamReader(new FileStream(pepToProtMapFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
                     while (!srInFile.EndOfStream)
                     {
-                        var strLineIn = srInFile.ReadLine();
-                        intLinesRead += 1;
+                        var dataLine = srInFile.ReadLine();
+                        linesRead += 1;
 
-                        if (intLinesRead <= 1 || string.IsNullOrEmpty(strLineIn))
+                        if (linesRead <= 1 || string.IsNullOrEmpty(dataLine))
                             continue;
 
-                        intPeptideCount += 1;
-                        if (strLineIn.Contains(PROTEIN_NAME_NO_MATCH))
+                        peptideCount += 1;
+                        if (dataLine.Contains(PROTEIN_NAME_NO_MATCH))
                         {
-                            intPeptideCountNoMatch += 1;
+                            peptideCountNoMatch += 1;
                         }
                     }
                 }
 
-                if (intPeptideCount == 0)
+                if (peptideCount == 0)
                 {
                     mErrorMessage = "Peptide to protein mapping file is empty";
-                    OnErrorEvent(mErrorMessage + ", file " + Path.GetFileName(strPeptideToProteinMapFilePath));
-                    blnSuccess = false;
+                    OnErrorEvent(mErrorMessage + ", file " + Path.GetFileName(pepToProtMapFilePath));
+                    success = false;
                 }
-                else if (intPeptideCountNoMatch == 0)
+                else if (peptideCountNoMatch == 0)
                 {
                     if (m_DebugLevel >= 2)
                     {
-                        OnStatusEvent("Peptide to protein mapping validation complete; processed " + intPeptideCount + " peptides");
+                        OnStatusEvent("Peptide to protein mapping validation complete; processed " + peptideCount + " peptides");
                     }
 
-                    blnSuccess = true;
+                    success = true;
                 }
                 else
                 {
                     // Value between 0 and 100
-                    var dblErrorPercent = intPeptideCountNoMatch / (double)intPeptideCount * 100.0;
+                    var dblErrorPercent = peptideCountNoMatch / (double)peptideCount * 100.0;
 
                     mErrorMessage = dblErrorPercent.ToString("0.0") + "% of the entries in the peptide to protein map file did not match to a protein in the FASTA file";
                     OnErrorEvent(mErrorMessage);
@@ -2907,12 +2911,12 @@ namespace AnalysisManagerMSGFDBPlugIn
                     if (ignorePeptideToProteinMapperErrors)
                     {
                         OnWarningEvent("Ignoring protein mapping error since 'IgnorePeptideToProteinMapError' = True");
-                        blnSuccess = true;
+                        success = true;
                     }
                     else
                     {
                         IgnorePreviousErrorEvent?.Invoke();
-                        blnSuccess = false;
+                        success = false;
                     }
                 }
             }
@@ -2920,21 +2924,21 @@ namespace AnalysisManagerMSGFDBPlugIn
             {
                 mErrorMessage = "Error validating peptide to protein map file";
                 OnErrorEvent(mErrorMessage, ex);
-                blnSuccess = false;
+                success = false;
             }
 
-            return blnSuccess;
+            return success;
         }
 
-        private void WriteProteinSequence(TextWriter swOutFile, string strSequence)
+        private void WriteProteinSequence(TextWriter swOutFile, string sequence)
         {
-            var intIndex = 0;
+            var index = 0;
 
-            while (intIndex < strSequence.Length)
+            while (index < sequence.Length)
             {
-                var intLength = Math.Min(60, strSequence.Length - intIndex);
-                swOutFile.WriteLine(strSequence.Substring(intIndex, intLength));
-                intIndex += 60;
+                var length = Math.Min(60, sequence.Length - index);
+                swOutFile.WriteLine(sequence.Substring(index, length));
+                index += 60;
             }
         }
 

@@ -48,24 +48,24 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Create the ScanStats file for the given dataset file
         /// </summary>
-        /// <param name="strInputFilePath">Dataset file</param>
-        /// <param name="strOutputFolderPath">Output folder</param>
+        /// <param name="inputFilePath">Dataset file</param>
+        /// <param name="outputFolderPath">Output folder</param>
         /// <returns></returns>
         /// <remarks>Will list DatasetID as 0 in the output file</remarks>
-        public bool GenerateScanStatsFile(string strInputFilePath, string strOutputFolderPath)
+        public bool GenerateScanStatsFile(string inputFilePath, string outputFolderPath)
         {
-            return GenerateScanStatsFile(strInputFilePath, strOutputFolderPath, 0);
+            return GenerateScanStatsFile(inputFilePath, outputFolderPath, 0);
         }
 
         /// <summary>
         /// Create the ScanStats file for the given dataset file
         /// </summary>
-        /// <param name="strInputFilePath">Dataset file</param>
-        /// <param name="strOutputFolderPath">Output folder</param>
-        /// <param name="intDatasetID">Dataset ID</param>
+        /// <param name="inputFilePath">Dataset file</param>
+        /// <param name="outputFolderPath">Output folder</param>
+        /// <param name="datasetID">Dataset ID</param>
         /// <returns></returns>
         /// <remarks></remarks>
-        public bool GenerateScanStatsFile(string strInputFilePath, string strOutputFolderPath, int intDatasetID)
+        public bool GenerateScanStatsFile(string inputFilePath, string outputFolderPath, int datasetID)
         {
 
             try
@@ -84,7 +84,7 @@ namespace AnalysisManagerBase
                 mMSFileInfoScanner.CheckCentroidingStatus = false;
 
                 mMSFileInfoScanner.UpdateDatasetStatsTextFile = false;
-                mMSFileInfoScanner.DatasetIDOverride = intDatasetID;
+                mMSFileInfoScanner.DatasetIDOverride = datasetID;
 
                 if (ScanStart > 0 || ScanEnd > 0)
                 {
@@ -92,17 +92,17 @@ namespace AnalysisManagerBase
                     mMSFileInfoScanner.ScanEnd = ScanEnd;
                 }
 
-                var success = mMSFileInfoScanner.ProcessMSFileOrFolder(strInputFilePath, strOutputFolderPath);
+                var success = mMSFileInfoScanner.ProcessMSFileOrFolder(inputFilePath, outputFolderPath);
 
                 if (success)
                     return true;
 
-                mErrorMessage = "Error generating ScanStats file using " + strInputFilePath;
-                var strMsgAddnl = mMSFileInfoScanner.GetErrorMessage();
+                mErrorMessage = "Error generating ScanStats file using " + inputFilePath;
+                var msgAddnl = mMSFileInfoScanner.GetErrorMessage();
 
-                if (!string.IsNullOrEmpty(strMsgAddnl))
+                if (!string.IsNullOrEmpty(msgAddnl))
                 {
-                    mErrorMessage = mErrorMessage + ": " + strMsgAddnl;
+                    mErrorMessage = mErrorMessage + ": " + msgAddnl;
                 }
                 return false;
 

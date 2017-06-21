@@ -147,32 +147,32 @@ namespace AnalysisManagerProg
             ReportManagerErrorCleanup(eCleanupActionCodeConstants.Start);
 
             // Delete all folders and subfolders in work folder
-            var blnSuccess = CleanWorkDir(mWorkingDirPath, 1);
-            string strFailureMessage;
+            var success = CleanWorkDir(mWorkingDirPath, 1);
+            string failureMessage;
 
-            if (!blnSuccess)
+            if (!success)
             {
-                strFailureMessage = "unable to clear work directory";
+                failureMessage = "unable to clear work directory";
             }
             else
             {
                 // If successful, then deletes flag files: flagfile.txt and flagFile_Svr.txt
-                blnSuccess = DeleteDeconServerFlagFile(debugLevel);
+                success = DeleteDeconServerFlagFile(debugLevel);
 
-                if (!blnSuccess)
+                if (!success)
                 {
-                    strFailureMessage = "error deleting " + DECON_SERVER_FLAG_FILE_NAME;
+                    failureMessage = "error deleting " + DECON_SERVER_FLAG_FILE_NAME;
                 }
                 else
                 {
-                    blnSuccess = DeleteStatusFlagFile(debugLevel);
-                    if (!blnSuccess)
+                    success = DeleteStatusFlagFile(debugLevel);
+                    if (!success)
                     {
-                        strFailureMessage = "error deleting " + FLAG_FILE_NAME;
+                        failureMessage = "error deleting " + FLAG_FILE_NAME;
                     }
                     else
                     {
-                        strFailureMessage = string.Empty;
+                        failureMessage = string.Empty;
                     }
                 }
             }
@@ -180,16 +180,16 @@ namespace AnalysisManagerProg
             // If successful, call SP with ReportManagerErrorCleanup @ActionCode=2
             //  otherwise call SP ReportManagerErrorCleanup with @ActionCode=3
 
-            if (blnSuccess)
+            if (success)
             {
                 ReportManagerErrorCleanup(eCleanupActionCodeConstants.Success);
             }
             else
             {
-                ReportManagerErrorCleanup(eCleanupActionCodeConstants.Fail, strFailureMessage);
+                ReportManagerErrorCleanup(eCleanupActionCodeConstants.Fail, failureMessage);
             }
 
-            return blnSuccess;
+            return success;
         }
 
         /// <summary>
@@ -322,37 +322,37 @@ namespace AnalysisManagerProg
                                 }
                                 catch (Exception ex3)
                                 {
-                                    var strFailureMessage = "Error deleting folder " + diSubDirectory.FullName + ": " + ex3.Message;
-                                    LogError(strFailureMessage);
+                                    var failureMessage = "Error deleting folder " + diSubDirectory.FullName + ": " + ex3.Message;
+                                    LogError(failureMessage);
                                     failedDeleteCount += 1;
                                 }
                             }
                             catch (Exception ex2)
                             {
-                                var strFailureMessage = "Error updating permissions for folder " + diSubDirectory.FullName + ": " + ex2.Message;
-                                LogError(strFailureMessage);
+                                var failureMessage = "Error updating permissions for folder " + diSubDirectory.FullName + ": " + ex2.Message;
+                                LogError(failureMessage);
                                 failedDeleteCount += 1;
                             }
                         }
                         catch (Exception ex)
                         {
-                            var strFailureMessage = "Error deleting folder " + diSubDirectory.FullName + ": " + ex.Message;
-                            LogError(strFailureMessage);
+                            var failureMessage = "Error deleting folder " + diSubDirectory.FullName + ": " + ex.Message;
+                            LogError(failureMessage);
                             failedDeleteCount += 1;
                         }
                     }
                     else
                     {
-                        var strFailureMessage = "Error deleting working directory subfolder " + diSubDirectory.FullName;
-                        LogError(strFailureMessage);
+                        var failureMessage = "Error deleting working directory subfolder " + diSubDirectory.FullName;
+                        LogError(failureMessage);
                         failedDeleteCount += 1;
                     }
                 }
             }
             catch (Exception ex)
             {
-                var strFailureMessage = "Error deleting files/folders in " + diWorkFolder.FullName;
-                LogError(strFailureMessage, ex);
+                var failureMessage = "Error deleting files/folders in " + diWorkFolder.FullName;
+                LogError(failureMessage, ex);
                 return false;
             }
 
@@ -372,8 +372,8 @@ namespace AnalysisManagerProg
         {
             try
             {
-                var strPath = Path.Combine(mMgrFolderPath, ERROR_DELETING_FILES_FILENAME);
-                using (var writer = new StreamWriter(new FileStream(strPath, FileMode.Append, FileAccess.Write, FileShare.Read)))
+                var path = Path.Combine(mMgrFolderPath, ERROR_DELETING_FILES_FILENAME);
+                using (var writer = new StreamWriter(new FileStream(path, FileMode.Append, FileAccess.Write, FileShare.Read)))
                 {
                     writer.WriteLine(DateTime.Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
                     writer.Flush();
@@ -393,8 +393,8 @@ namespace AnalysisManagerProg
         {
             try
             {
-                var strPath = FlagFilePath;
-                using (var writer = new StreamWriter(new FileStream(strPath, FileMode.Append, FileAccess.Write, FileShare.Read)))
+                var path = FlagFilePath;
+                using (var writer = new StreamWriter(new FileStream(path, FileMode.Append, FileAccess.Write, FileShare.Read)))
                 {
                     writer.WriteLine(DateTime.Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
                     writer.Flush();
@@ -413,35 +413,35 @@ namespace AnalysisManagerProg
         /// <remarks></remarks>
         public bool DeleteDeconServerFlagFile(int DebugLevel)
         {
-            var strFlagFilePath = Path.Combine(mMgrFolderPath, DECON_SERVER_FLAG_FILE_NAME);
+            var flagFilePath = Path.Combine(mMgrFolderPath, DECON_SERVER_FLAG_FILE_NAME);
 
-            return DeleteFlagFile(strFlagFilePath, DebugLevel);
+            return DeleteFlagFile(flagFilePath, DebugLevel);
         }
 
         /// <summary>
-        /// Deletes the file given by strFlagFilePath
+        /// Deletes the file given by flagFilePath
         /// </summary>
-        /// <param name="strFlagFilePath">Full path to the file to delete</param>
-        /// <param name="intDebugLevel"></param>
+        /// <param name="flagFilePath">Full path to the file to delete</param>
+        /// <param name="debugLevel"></param>
         /// <returns>True if no flag file exists or if file was successfully deleted</returns>
         /// <remarks></remarks>
-        private bool DeleteFlagFile(string strFlagFilePath, int intDebugLevel)
+        private bool DeleteFlagFile(string flagFilePath, int debugLevel)
         {
             try
             {
-                if (File.Exists(strFlagFilePath))
+                if (File.Exists(flagFilePath))
                 {
                     try
                     {
                         // DeleteFileWithRetries will throw an exception if it cannot delete the file
                         // Thus, need to wrap it with an Exception handler
 
-                        if (clsAnalysisToolRunnerBase.DeleteFileWithRetries(strFlagFilePath, intDebugLevel))
+                        if (clsAnalysisToolRunnerBase.DeleteFileWithRetries(flagFilePath, debugLevel))
                         {
                             return true;
                         }
 
-                        LogError("Error deleting file " + strFlagFilePath);
+                        LogError("Error deleting file " + flagFilePath);
                         return false;
                     }
                     catch (Exception ex)
@@ -467,9 +467,9 @@ namespace AnalysisManagerProg
         /// <remarks></remarks>
         public bool DeleteStatusFlagFile(int DebugLevel)
         {
-            var strFlagFilePath = FlagFilePath;
+            var flagFilePath = FlagFilePath;
 
-            return DeleteFlagFile(strFlagFilePath, DebugLevel);
+            return DeleteFlagFile(flagFilePath, DebugLevel);
         }
 
         /// <summary>
@@ -522,7 +522,7 @@ namespace AnalysisManagerProg
             ReportManagerErrorCleanup(eMgrCleanupActionCode, string.Empty);
         }
 
-        private void ReportManagerErrorCleanup(eCleanupActionCodeConstants eMgrCleanupActionCode, string strFailureMessage)
+        private void ReportManagerErrorCleanup(eCleanupActionCodeConstants eMgrCleanupActionCode, string failureMessage)
         {
             if (string.IsNullOrWhiteSpace(mMgrConfigDBConnectionString))
             {
@@ -536,8 +536,8 @@ namespace AnalysisManagerProg
 
             try
             {
-                if (strFailureMessage == null)
-                    strFailureMessage = string.Empty;
+                if (failureMessage == null)
+                    failureMessage = string.Empty;
 
                 var myConnection = new SqlConnection(mMgrConfigDBConnectionString);
                 myConnection.Open();
@@ -552,7 +552,7 @@ namespace AnalysisManagerProg
                 cmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
                 cmd.Parameters.Add(new SqlParameter("@ManagerName", SqlDbType.VarChar, 128)).Value = mManagerName;
                 cmd.Parameters.Add(new SqlParameter("@State", SqlDbType.Int)).Value = eMgrCleanupActionCode;
-                cmd.Parameters.Add(new SqlParameter("@FailureMsg", SqlDbType.VarChar, 512)).Value = strFailureMessage;
+                cmd.Parameters.Add(new SqlParameter("@FailureMsg", SqlDbType.VarChar, 512)).Value = failureMessage;
                 cmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
 
                 // Execute the SP
@@ -560,17 +560,17 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                string strErrorMessage;
+                string errorMessage;
                 if (mMgrConfigDBConnectionString == null)
                 {
-                    strErrorMessage = "Exception calling " + SP_NAME_REPORTMGRCLEANUP + " in ReportManagerErrorCleanup; empty connection string";
+                    errorMessage = "Exception calling " + SP_NAME_REPORTMGRCLEANUP + " in ReportManagerErrorCleanup; empty connection string";
                 }
                 else
                 {
-                    strErrorMessage = "Exception calling " + SP_NAME_REPORTMGRCLEANUP + " in ReportManagerErrorCleanup with connection string " + mMgrConfigDBConnectionString;
+                    errorMessage = "Exception calling " + SP_NAME_REPORTMGRCLEANUP + " in ReportManagerErrorCleanup with connection string " + mMgrConfigDBConnectionString;
                 }
 
-                LogError(strErrorMessage, ex);
+                LogError(errorMessage, ex);
             }
         }
     }

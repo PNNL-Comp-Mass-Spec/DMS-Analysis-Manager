@@ -1360,7 +1360,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile: false);
+                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, saveToolVersionTextFile: false);
             }
             catch (Exception ex)
             {

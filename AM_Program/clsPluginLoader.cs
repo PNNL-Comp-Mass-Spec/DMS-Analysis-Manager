@@ -118,7 +118,7 @@ namespace AnalysisManagerProg
         private bool GetPluginInfo(string XPath, out string className, out string assyName)
         {
             var doc = new XmlDocument();
-            var strPluginInfo = string.Empty;
+            var pluginInfo = string.Empty;
 
             className = string.Empty;
             assyName = string.Empty;
@@ -130,7 +130,7 @@ namespace AnalysisManagerProg
                     throw new ArgumentException("XPath must be defined", nameof(XPath));
                 }
 
-                strPluginInfo = "XPath=\"" + XPath + "\"; className=\"" + className + "\"; assyName=" + assyName + "\"";
+                pluginInfo = "XPath=\"" + XPath + "\"; className=\"" + className + "\"; assyName=" + assyName + "\"";
 
                 //read the tool runner info file
                 doc.Load(GetPluginInfoFilePath(m_pluginConfigFile));
@@ -146,14 +146,14 @@ namespace AnalysisManagerProg
 
                 if (nodeList == null)
                 {
-                    throw new Exception(string.Format("XPath did not have a match for '{0}' in {1}", strPluginInfo, m_pluginConfigFile));
+                    throw new Exception(string.Format("XPath did not have a match for '{0}' in {1}", pluginInfo, m_pluginConfigFile));
                 }
 
                 // make sure that we found exactly one element,
                 // and if we did, retrieve its information
                 if (nodeList.Count != 1)
                 {
-                    throw new Exception("Could not resolve tool name; " + strPluginInfo);
+                    throw new Exception("Could not resolve tool name; " + pluginInfo);
                 }
 
                 foreach (XmlElement n in nodeList)
@@ -165,7 +165,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                m_ErrorMessages.Add("Error in GetPluginInfo:" + ex.Message + "; " + strPluginInfo);
+                m_ErrorMessages.Add("Error in GetPluginInfo:" + ex.Message + "; " + pluginInfo);
                 return false;
             }
         }

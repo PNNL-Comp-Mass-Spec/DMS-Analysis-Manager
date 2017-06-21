@@ -28,13 +28,13 @@ namespace AnalysisManagerBase
         #endregion
 
         #region "Methods"
-        public bool WriteXMLToFile(string strXMLText, string strOutputFilePath)
+        public bool WriteXMLToFile(string strXMLText, string outputFilePath)
         {
 
             XmlDocument objXMLDoc;
             XmlTextWriter swOutfile;
 
-            var blnSuccess = false;
+            var success = false;
 
             m_ErrMsg = "";
 
@@ -54,7 +54,7 @@ namespace AnalysisManagerBase
             try
             {
                 // Initialize the XML writer
-                swOutfile = new XmlTextWriter(new FileStream(strOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read), System.Text.Encoding.UTF8)
+                swOutfile = new XmlTextWriter(new FileStream(outputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read), System.Text.Encoding.UTF8)
                 {
                     Formatting = Formatting.Indented,
                     Indentation = 2,
@@ -64,7 +64,7 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                m_ErrMsg = "Error opening the output file (" + strOutputFilePath + ") in WriteXMLToFile: " + ex.Message;
+                m_ErrMsg = "Error opening the output file (" + outputFilePath + ") in WriteXMLToFile: " + ex.Message;
                 return false;
             }
 
@@ -74,7 +74,7 @@ namespace AnalysisManagerBase
                 objXMLDoc.WriteTo(swOutfile);
                 swOutfile.Close();
 
-                blnSuccess = true;
+                success = true;
 
             }
             catch (Exception ex)
@@ -83,7 +83,7 @@ namespace AnalysisManagerBase
                 swOutfile.Close();
             }
 
-            return blnSuccess;
+            return success;
 
         }
         #endregion

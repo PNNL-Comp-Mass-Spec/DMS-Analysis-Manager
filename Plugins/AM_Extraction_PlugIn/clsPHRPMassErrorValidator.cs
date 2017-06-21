@@ -84,8 +84,8 @@ namespace AnalysisManagerExtractionPlugin
         }
 
         /// <summary>
-        /// Parses strInputFilePath to count the number of entries where the difference in mass 
-        /// between the precursor neutral mass value and the computed monoisotopic mass value 
+        /// Parses strInputFilePath to count the number of entries where the difference in mass
+        /// between the precursor neutral mass value and the computed monoisotopic mass value
         /// is more than 6 Da away (more for higher charge states)
         /// </summary>
         /// <param name="strInputFilePath"></param>
@@ -164,11 +164,12 @@ namespace AnalysisManagerExtractionPlugin
                 // At a minimum, use 6 Da, though we'll bump that up by 1 Da for each charge state (7 Da for CS 2, 8 Da for CS 3, 9 Da for CS 4, etc.)
                 // However, for MSGF+ we require that the masses match within 0.1 Da because the IsotopeError column allows for a more accurate comparison
                 var dblPrecursorMassTolerance = objSearchEngineParams.PrecursorMassToleranceDa;
-
                 if (dblPrecursorMassTolerance < 6)
                 {
                     dblPrecursorMassTolerance = 6;
                 }
+
+                var highResMS1 = objSearchEngineParams.PrecursorMassToleranceDa < 0.75;
 
                 if (mDebugLevel >= 2)
                 {
@@ -238,7 +239,9 @@ namespace AnalysisManagerExtractionPlugin
                     double dblToleranceCurrent = 0;
 
                     string psmIsotopeError;
-                    if (eResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB && objCurrentPSM.TryGetScore("IsotopeError", out psmIsotopeError))
+                    if (eResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB &&
+                        highResMS1 &&
+                        objCurrentPSM.TryGetScore("IsotopeError", out psmIsotopeError))
                     {
                         // The integer value of dblMassError should match psmIsotopeError
                         // However, scale up the tolerance based on the peptide mass

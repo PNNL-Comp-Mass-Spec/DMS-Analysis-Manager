@@ -217,7 +217,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             out bool processingError,
             out bool tooManySkippedSpectra)
         {
-            var strMSGFJarfile = clsMSGFDBUtils.MSGFPLUS_JAR_NAME;
+            var msgfPlusJarfile = clsMSGFDBUtils.MSGFPLUS_JAR_NAME;
 
             fiMSGFPlusResults = new FileInfo(Path.Combine(m_WorkDir, Dataset + "_msgfplus.mzid"));
 
@@ -240,7 +240,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             mMSGFPlusComplete = false;
 
 
-            var result = DetermineAssumedScanType(out var strAssumedScanType, out var eInputFileFormat, out var strScanTypeFilePath);
+            var result = DetermineAssumedScanType(out var assumedScanType, out var eInputFileFormat, out var scanTypeFilePath);
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 // Immediately exit the plugin; results and console output files will not be saved
@@ -255,7 +255,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             // Get the FASTA file and index it if necessary
             // Passing in the path to the parameter file so we can look for TDA=0 when using large .Fasta files
-            var strParameterFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"));
+            var parameterFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"));
             var javaExePath = string.Copy(javaProgLoc);
             var msgfdbJarFilePath = string.Copy(mMSGFDbProgLoc);
 
@@ -269,12 +269,13 @@ namespace AnalysisManagerMSGFDBPlugIn
                 return result;
             }
 
-            var strInstrumentGroup = m_jobParams.GetJobParameter("JobParameters", "InstrumentGroup", string.Empty);
+            var instrumentGroup = m_jobParams.GetJobParameter("JobParameters", "InstrumentGroup", string.Empty);
 
             // Read the MSGFDB Parameter File
 
-            result = mMSGFDBUtils.ParseMSGFPlusParameterFile(fastaFileSizeKB, fastaFileIsDecoy, strAssumedScanType, strScanTypeFilePath,
-                                                             strInstrumentGroup, strParameterFilePath, out var strMSGFDbCmdLineOptions);
+            result = mMSGFPlusUtils.ParseMSGFPlusParameterFile(
+                fastaFileSizeKB, fastaFileIsDecoy, assumedScanType, scanTypeFilePath,
+                instrumentGroup, parameterFilePath, out var msgfPlusCmdLineOptions);
 
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
@@ -343,9 +344,9 @@ namespace AnalysisManagerMSGFDBPlugIn
             cmdStr += " " + strMSGFDbCmdLineOptions;
 
             // Make sure the machine has enough free memory to run MSGFDB
-            var blnLogFreeMemoryOnSuccess = !(m_DebugLevel < 1);
+            var logFreeMemoryOnSuccess = (m_DebugLevel >= 1);
 
-            if (!clsAnalysisResources.ValidateFreeMemorySize(javaMemorySize, "MSGF+", blnLogFreeMemoryOnSuccess))
+            if (!clsAnalysisResources.ValidateFreeMemorySize(javaMemorySize, "MSGF+", logFreeMemoryOnSuccess))
             {
                 m_message = "Not enough free memory to run MSGF+";
                 // Immediately exit the plugin; results and console output files will not be saved
@@ -354,9 +355,9 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             mWorkingDirectoryInUse = string.Copy(m_WorkDir);
 
-            var blnSuccess = StartMSGFPlusLocal(javaExePath, cmdStr);
+            var success = StartMSGFPlusLocal(javaExePath, cmdStr);
 
-            if (!blnSuccess && string.IsNullOrEmpty(mMSGFDBUtils.ConsoleOutputErrorMsg))
+            if (!success && string.IsNullOrEmpty(mMSGFPlusUtils.ConsoleOutputErrorMsg))
             {
                 // Wait 2 seconds to give the log file a chance to finalize
                 Thread.Sleep(2000);
@@ -381,7 +382,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             fiMSGFPlusResults.Refresh();
 
-            if (blnSuccess)
+            if (success)
             {
                 if (!mMSGFPlusComplete)
                 {
@@ -537,13 +538,13 @@ namespace AnalysisManagerMSGFDBPlugIn
                         m_jobParams.GetJobParameter("CentroidDTAs", false) ||
                         m_jobParams.GetJobParameter("CentroidMGF", false);
 
-                    var dblFractionSkipped = mMSGFDBUtils.ContinuumSpectraSkipped /
-                                             (double)(mMSGFDBUtils.ContinuumSpectraSkipped + mMSGFDBUtils.SpectraSearched);
-                    var strPercentSkipped = (dblFractionSkipped * 100).ToString("0.0") + "%";
+                    var fractionSkipped = mMSGFPlusUtils.ContinuumSpectraSkipped /
+                                             (double)(mMSGFPlusUtils.ContinuumSpectraSkipped + mMSGFPlusUtils.SpectraSearched);
+                    var percentSkipped = (fractionSkipped * 100).ToString("0.0") + "%";
 
-                    if (dblFractionSkipped > 0.2 && !spectraAreCentroided)
+                    if (fractionSkipped > 0.2 && !spectraAreCentroided)
                     {
-                        LogError("MSGF+ skipped " + strPercentSkipped + " of the spectra because they did not appear centroided");
+                        LogError("MSGF+ skipped " + percentSkipped + " of the spectra because they did not appear centroided");
                         tooManySkippedSpectra = true;
                     }
                     else
@@ -590,13 +591,11 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Convert the .mzid file created by MSGF+ to a .tsv file
         /// </summary>
-        /// <param name="strMZIDFileName"></param>
+        /// <param name="mzidFileName"></param>
         /// <returns>The name of the .tsv file if successful; empty string if an error</returns>
         /// <remarks></remarks>
-        private string ConvertMZIDToTSV(string strMZIDFileName)
+        private string ConvertMZIDToTSV(string mzidFileName)
         {
-            var strTSVFilePath = Path.Combine(m_WorkDir, Dataset + clsMSGFDBUtils.MSGFPLUS_TSV_SUFFIX);
-
             // Determine the path to the MzidToTsvConverter
             var mzidToTsvConverterProgLoc = DetermineProgramLocation("MzidToTsvConverterProgLoc", "MzidToTsvConverter.exe");
 
@@ -609,9 +608,9 @@ namespace AnalysisManagerMSGFDBPlugIn
                 return string.Empty;
             }
 
-            strTSVFilePath = mMSGFDBUtils.ConvertMZIDToTSV(mzidToTsvConverterProgLoc, Dataset, strMZIDFileName);
+            var tsvFilePath = mMSGFPlusUtils.ConvertMZIDToTSV(mzidToTsvConverterProgLoc, Dataset, mzidFileName);
 
-            if (string.IsNullOrEmpty(strTSVFilePath))
+            if (string.IsNullOrEmpty(tsvFilePath))
             {
                 if (string.IsNullOrEmpty(m_message))
                 {
@@ -624,11 +623,11 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             if (splitFastaEnabled)
             {
-                var tsvFileName = ParallelMSGFPlusRenameFile(Path.GetFileName(strTSVFilePath));
+                var tsvFileName = ParallelMSGFPlusRenameFile(Path.GetFileName(tsvFilePath));
                 return tsvFileName;
             }
 
-            return Path.GetFileName(strTSVFilePath);
+            return Path.GetFileName(tsvFilePath);
 
         }
 
@@ -646,11 +645,11 @@ namespace AnalysisManagerMSGFDBPlugIn
             base.CopyFailedResultsToArchiveFolder();
         }
 
-        private bool CreateScanTypeFile(out string strScanTypeFilePath)
+        private bool CreateScanTypeFile(out string scanTypeFilePath)
         {
             var objScanTypeFileCreator = new clsScanTypeFileCreator(m_WorkDir, Dataset);
 
-            strScanTypeFilePath = string.Empty;
+            scanTypeFilePath = string.Empty;
 
             if (objScanTypeFileCreator.CreateScanTypeFile())
             {
@@ -658,11 +657,11 @@ namespace AnalysisManagerMSGFDBPlugIn
                 {
                     LogMessage("Created ScanType file: " + Path.GetFileName(objScanTypeFileCreator.ScanTypeFilePath));
                 }
-                strScanTypeFilePath = objScanTypeFileCreator.ScanTypeFilePath;
+                scanTypeFilePath = objScanTypeFileCreator.ScanTypeFilePath;
                 return true;
             }
 
-            var strErrorMessage = "Error creating scan type file: " + objScanTypeFileCreator.ErrorMessage;
+            var errorMessage = "Error creating scan type file: " + objScanTypeFileCreator.ErrorMessage;
             var detailedMessage = string.Empty;
 
             if (!string.IsNullOrEmpty(objScanTypeFileCreator.ExceptionDetails))
@@ -670,23 +669,23 @@ namespace AnalysisManagerMSGFDBPlugIn
                 detailedMessage += "; " + objScanTypeFileCreator.ExceptionDetails;
             }
 
-            LogError(strErrorMessage, detailedMessage);
+            LogError(errorMessage, detailedMessage);
             return false;
         }
 
-        private CloseOutType DetermineAssumedScanType(out string strAssumedScanType, out eInputFileFormatTypes eInputFileFormat,
-                                                      out string strScanTypeFilePath)
+        private CloseOutType DetermineAssumedScanType(out string assumedScanType, out eInputFileFormatTypes eInputFileFormat,
+                                                      out string scanTypeFilePath)
         {
-            strAssumedScanType = string.Empty;
+            assumedScanType = string.Empty;
 
-            var strScriptNameLCase = m_jobParams.GetParam("ToolName").ToLower();
-            strScanTypeFilePath = string.Empty;
+            var scriptNameLCase = m_jobParams.GetParam("ToolName").ToLower();
+            scanTypeFilePath = string.Empty;
 
-            if (strScriptNameLCase.Contains("mzxml") || strScriptNameLCase.Contains("msgfplus_bruker"))
+            if (scriptNameLCase.Contains("mzxml") || scriptNameLCase.Contains("msgfplus_bruker"))
             {
                 eInputFileFormat = eInputFileFormatTypes.MzXML;
             }
-            else if (strScriptNameLCase.Contains("mzml"))
+            else if (scriptNameLCase.Contains("mzml"))
             {
                 eInputFileFormat = eInputFileFormatTypes.MzML;
             }
@@ -700,12 +699,12 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return CloseOutType.CLOSEOUT_NO_DTA_FILES;
                 }
 
-                strAssumedScanType = m_jobParams.GetParam("AssumedScanType");
+                assumedScanType = m_jobParams.GetParam("AssumedScanType");
 
-                if (string.IsNullOrWhiteSpace(strAssumedScanType))
+                if (string.IsNullOrWhiteSpace(assumedScanType))
                 {
                     // Create the ScanType file (lists scan type for each scan number)
-                    if (!CreateScanTypeFile(out strScanTypeFilePath))
+                    if (!CreateScanTypeFile(out scanTypeFilePath))
                     {
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
@@ -865,7 +864,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
 
                 string msgfPlusResultsFileName;
-                if (Path.GetExtension(resultsFileName).ToLower() == ".mzid")
+                var extension = Path.GetExtension(resultsFileName);
+                if (extension != null && extension.ToLower() == ".mzid")
                 {
                     // Convert the .mzid file to a .tsv file
 
@@ -973,7 +973,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         {
             LogMessage("Determining tool version info", 2);
 
-            var strToolVersionInfo = string.Copy(mMSGFDBUtils.MSGFPlusVersion);
+            var toolVersionInfo = string.Copy(mMSGFPlusUtils.MSGFPlusVersion);
 
             // Store paths to key files in ioToolFiles
             var ioToolFiles = new List<FileInfo> {
@@ -982,9 +982,9 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             try
             {
-                // Need to pass blnSaveToolVersionTextFile to True so that the ToolVersionInfo file gets created
+                // Need to pass saveToolVersionTextFile to True so that the ToolVersionInfo file gets created
                 // The PeptideListToXML program uses that file when creating .pepXML files
-                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile: true);
+                return SetStepTaskToolVersion(toolVersionInfo, ioToolFiles, saveToolVersionTextFile: true);
             }
             catch (Exception ex)
             {

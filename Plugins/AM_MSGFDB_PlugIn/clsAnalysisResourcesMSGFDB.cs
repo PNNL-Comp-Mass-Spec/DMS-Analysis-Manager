@@ -75,14 +75,14 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
 
                 // The ToolName job parameter holds the name of the job script we are executing
-                var strScriptName = m_jobParams.GetParam("ToolName");
+                var scriptName = m_jobParams.GetParam("ToolName");
 
-                if (strScriptName.ToLower().Contains("mzxml") || strScriptName.ToLower().Contains("msgfplus_bruker"))
+                if (scriptName.ToLower().Contains("mzxml") || scriptName.ToLower().Contains("msgfplus_bruker"))
                 {
                     currentTask = "Get mzXML file";
                     result = GetMzXMLFile();
                 }
-                else if (strScriptName.ToLower().Contains("mzml"))
+                else if (scriptName.ToLower().Contains("mzml"))
                 {
                     currentTask = "Get mzML file";
                     result = GetMzMLFile();
@@ -197,20 +197,20 @@ namespace AnalysisManagerMSGFDBPlugIn
 
         private CloseOutType GetMasicFiles()
         {
-            var strAssumedScanType = m_jobParams.GetParam("AssumedScanType");
+            var assumedScanType = m_jobParams.GetParam("AssumedScanType");
 
-            if (!string.IsNullOrWhiteSpace(strAssumedScanType))
+            if (!string.IsNullOrWhiteSpace(assumedScanType))
             {
                 // Scan type is assumed; we don't need the Masic ScanStats.txt files or the .Raw file
-                switch (strAssumedScanType.ToUpper())
+                switch (assumedScanType.ToUpper())
                 {
                     case "CID":
                     case "ETD":
                     case "HCD":
-                        LogMessage("Assuming scan type is '" + strAssumedScanType + "'", 1);
+                        LogMessage("Assuming scan type is '" + assumedScanType + "'", 1);
                         break;
                     default:
-                        LogError("Invalid assumed scan type '" + strAssumedScanType + "'; must be CID, ETD, or HCD");
+                        LogError("Invalid assumed scan type '" + assumedScanType + "'; must be CID, ETD, or HCD");
                         return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -219,44 +219,44 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             // Retrieve the MASIC ScanStats.txt file (and possibly the ScanStatsEx.txt file)
 
-            var blnSuccess = FileSearch.RetrieveScanStatsFiles(createStoragePathInfoOnly: false, retrieveScanStatsFile: true, retrieveScanStatsExFile: false);
+            var success = FileSearch.RetrieveScanStatsFiles(createStoragePathInfoOnly: false, retrieveScanStatsFile: true, retrieveScanStatsExFile: false);
 
             if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (blnSuccess)
+            if (success)
             {
                 // Open the ScanStats file and read the header line to see if column ScanTypeName is present
                 // Also confirm that there are MSn spectra labeled as HCD, CID, or ETD
-                var strScanStatsOrExFilePath = Path.Combine(m_WorkingDir, DatasetName + "_ScanStats.txt");
+                var scanStatsOrExFilePath = Path.Combine(m_WorkingDir, DatasetName + "_ScanStats.txt");
 
-                var blnScanTypeColumnFound = ValidateScanStatsFileHasScanTypeNameColumn(strScanStatsOrExFilePath);
+                var scanTypeColumnFound = ValidateScanStatsFileHasScanTypeNameColumn(scanStatsOrExFilePath);
 
-                if (!blnScanTypeColumnFound)
+                if (!scanTypeColumnFound)
                 {
                     // We also have to retrieve the _ScanStatsEx.txt file
-                    blnSuccess = FileSearch.RetrieveScanStatsFiles(createStoragePathInfoOnly: false, retrieveScanStatsFile: false, retrieveScanStatsExFile: true);
+                    success = FileSearch.RetrieveScanStatsFiles(createStoragePathInfoOnly: false, retrieveScanStatsFile: false, retrieveScanStatsExFile: true);
 
                     if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
                     {
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
 
-                    if (blnSuccess)
+                    if (success)
                     {
-                        strScanStatsOrExFilePath = Path.Combine(m_WorkingDir, DatasetName + "_ScanStatsEx.txt");
+                        scanStatsOrExFilePath = Path.Combine(m_WorkingDir, DatasetName + "_ScanStatsEx.txt");
                     }
                 }
 
-                if (blnScanTypeColumnFound || blnSuccess)
+                if (scanTypeColumnFound || success)
                 {
-                    var detailedScanTypesDefined = ValidateScanStatsFileHasDetailedScanTypes(strScanStatsOrExFilePath);
+                    var detailedScanTypesDefined = ValidateScanStatsFileHasDetailedScanTypes(scanStatsOrExFilePath);
 
                     if (!detailedScanTypesDefined)
                     {
-                        if (blnScanTypeColumnFound)
+                        if (scanTypeColumnFound)
                         {
                             m_message = "ScanTypes defined in the ScanTypeName column";
                         }
@@ -272,7 +272,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
             }
 
-            if (blnSuccess)
+            if (success)
             {
                 LogMessage("Retrieved MASIC ScanStats and ScanStatsEx files", 1);
                 return CloseOutType.CLOSEOUT_SUCCESS;
@@ -286,8 +286,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            var strScanStatsFilePath = Path.Combine(m_WorkingDir, DatasetName + "_ScanStats.txt");
-            var detailedScanTypesDefinedNewFile = ValidateScanStatsFileHasDetailedScanTypes(strScanStatsFilePath);
+            var scanStatsFilePath = Path.Combine(m_WorkingDir, DatasetName + "_ScanStats.txt");
+            var detailedScanTypesDefinedNewFile = ValidateScanStatsFileHasDetailedScanTypes(scanStatsFilePath);
 
             if (!detailedScanTypesDefinedNewFile)
             {
@@ -334,7 +334,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        public static bool ValidateScanStatsFileHasDetailedScanTypes(string strScanStatsFilePath)
+        public static bool ValidateScanStatsFileHasDetailedScanTypes(string scanStatsFilePath)
         {
             var lstColumnNameWithScanType = new List<string>
             {
@@ -344,9 +344,9 @@ namespace AnalysisManagerMSGFDBPlugIn
             };
             var lstColumnIndicesToCheck = new List<int>();
 
-            var blnDetailedScanTypesDefined = false;
+            var detailedScanTypesDefined = false;
 
-            using (var srScanStatsFile = new StreamReader(new FileStream(strScanStatsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+            using (var srScanStatsFile = new StreamReader(new FileStream(scanStatsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
             {
                 string headerLine = null;
 
@@ -367,10 +367,10 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 foreach (var columnName in lstColumnNameWithScanType)
                 {
-                    var intScanTypeIndex = headerColumns.IndexOf(columnName);
-                    if (intScanTypeIndex >= 0)
+                    var scanTypeIndex = headerColumns.IndexOf(columnName);
+                    if (scanTypeIndex >= 0)
                     {
-                        lstColumnIndicesToCheck.Add(intScanTypeIndex);
+                        lstColumnIndicesToCheck.Add(scanTypeIndex);
                     }
                 }
 
@@ -417,7 +417,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 if (lstColumnIndicesToCheck.Count <= 0)
                     return false;
 
-                while (!srScanStatsFile.EndOfStream && !blnDetailedScanTypesDefined)
+                while (!srScanStatsFile.EndOfStream && !detailedScanTypesDefined)
                 {
                     var dataLine = srScanStatsFile.ReadLine();
                     if (string.IsNullOrWhiteSpace(dataLine))
@@ -427,31 +427,31 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                     foreach (var columnIndex in lstColumnIndicesToCheck)
                     {
-                        var strScanType = lstColumns[columnIndex];
+                        var scanType = lstColumns[columnIndex];
 
-                        if (strScanType.IndexOf("HCD", StringComparison.OrdinalIgnoreCase) >= 0)
+                        if (scanType.IndexOf("HCD", StringComparison.OrdinalIgnoreCase) >= 0)
                         {
-                            blnDetailedScanTypesDefined = true;
+                            detailedScanTypesDefined = true;
                         }
-                        else if (strScanType.IndexOf("CID", StringComparison.OrdinalIgnoreCase) >= 0)
+                        else if (scanType.IndexOf("CID", StringComparison.OrdinalIgnoreCase) >= 0)
                         {
-                            blnDetailedScanTypesDefined = true;
+                            detailedScanTypesDefined = true;
                         }
-                        else if (strScanType.IndexOf("ETD", StringComparison.OrdinalIgnoreCase) >= 0)
+                        else if (scanType.IndexOf("ETD", StringComparison.OrdinalIgnoreCase) >= 0)
                         {
-                            blnDetailedScanTypesDefined = true;
+                            detailedScanTypesDefined = true;
                         }
                     }
                 }
             }
 
-            return blnDetailedScanTypesDefined;
+            return detailedScanTypesDefined;
         }
 
-        private bool ValidateScanStatsFileHasScanTypeNameColumn(string strScanStatsFilePath)
+        private bool ValidateScanStatsFileHasScanTypeNameColumn(string scanStatsFilePath)
         {
 
-            using (var srScanStatsFile = new StreamReader(new FileStream(strScanStatsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+            using (var srScanStatsFile = new StreamReader(new FileStream(scanStatsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
             {
                 if (srScanStatsFile.EndOfStream)
                     return false;

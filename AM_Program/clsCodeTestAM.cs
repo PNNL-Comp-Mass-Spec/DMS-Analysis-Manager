@@ -52,13 +52,13 @@ namespace AnalysisManagerProg
             CreateTestFiles(m_WorkDir, 5, "TestResultFile");
 
             // Make some subfolders with more files
-            var strSubFolderPath = Path.Combine(m_WorkDir, "Plots");
-            Directory.CreateDirectory(strSubFolderPath);
-            CreateTestFiles(strSubFolderPath, 4, "Plot");
+            var subFolderPath = Path.Combine(m_WorkDir, "Plots");
+            Directory.CreateDirectory(subFolderPath);
+            CreateTestFiles(subFolderPath, 4, "Plot");
 
-            strSubFolderPath = Path.Combine(strSubFolderPath, "MoreStuff");
-            Directory.CreateDirectory(strSubFolderPath);
-            var success = CreateTestFiles(strSubFolderPath, 5, "Stuff");
+            subFolderPath = Path.Combine(subFolderPath, "MoreStuff");
+            Directory.CreateDirectory(subFolderPath);
+            var success = CreateTestFiles(subFolderPath, 5, "Stuff");
 
             // Stop the job timer
             m_StopTime = System.DateTime.UtcNow;
@@ -100,9 +100,9 @@ namespace AnalysisManagerProg
             // Move the Plots folder to the result files folder
             var diPlotsFolder = new DirectoryInfo(Path.Combine(m_WorkDir, "Plots"));
 
-            var strTargetFolderPath = Path.Combine(Path.Combine(m_WorkDir, m_ResFolderName), "Plots");
-            if (diPlotsFolder.Exists && !Directory.Exists(strTargetFolderPath))
-                diPlotsFolder.MoveTo(strTargetFolderPath);
+            var targetFolderPath = Path.Combine(Path.Combine(m_WorkDir, m_ResFolderName), "Plots");
+            if (diPlotsFolder.Exists && !Directory.Exists(targetFolderPath))
+                diPlotsFolder.MoveTo(targetFolderPath);
 
             if (!success || eReturnCode == CloseOutType.CLOSEOUT_FAILED)
             {
@@ -123,15 +123,15 @@ namespace AnalysisManagerProg
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        private bool CreateTestFiles(string strFolderPath, int intFilesToCreate, string strFileNameBase)
+        private bool CreateTestFiles(string folderPath, int filesToCreate, string fileNameBase)
         {
             var objRand = new System.Random();
 
-            for (var intIndex = 1; intIndex <= intFilesToCreate; intIndex++)
+            for (var index = 1; index <= filesToCreate; index++)
             {
-                var strOutFilePath = Path.Combine(strFolderPath, strFileNameBase + intIndex + "_" + objRand.Next(1, 99) + ".txt");
+                var outFilePath = Path.Combine(folderPath, fileNameBase + index + "_" + objRand.Next(1, 99) + ".txt");
 
-                using (var swOutFile = new StreamWriter(new FileStream(strOutFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var swOutFile = new StreamWriter(new FileStream(outFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
                     swOutFile.WriteLine(System.DateTime.Now.ToString(DATE_TIME_FORMAT) + " - This is a test file.");
                 }

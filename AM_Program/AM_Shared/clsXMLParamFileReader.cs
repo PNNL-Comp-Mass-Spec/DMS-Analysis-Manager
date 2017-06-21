@@ -23,26 +23,26 @@ namespace AnalysisManagerBase
         {
             get
             {
-                var intCount = 0;
+                var count = 0;
 
                 foreach (var section in mSections)
                 {
-                    intCount += section.Value.Count;
+                    count += section.Value.Count;
                 }
 
-                return intCount;
+                return count;
             }
         }
 
         public int SectionCount => mSections.Count;
 
-        public clsXMLParamFileReader(string strParamFilePath)
+        public clsXMLParamFileReader(string paramFilePath)
         {
-            mParamFilePath = strParamFilePath;
+            mParamFilePath = paramFilePath;
 
-            if (!System.IO.File.Exists(strParamFilePath))
+            if (!System.IO.File.Exists(paramFilePath))
             {
-                throw new System.IO.FileNotFoundException(strParamFilePath);
+                throw new System.IO.FileNotFoundException(paramFilePath);
             }
 
             mSections = CacheXMLParamFile(mParamFilePath);
@@ -51,17 +51,17 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Parse an XML parameter file with the hierarchy of Section, ParamName, ParamValue 
         /// </summary>
-        /// <param name="strParamFilePath"></param>
+        /// <param name="paramFilePath"></param>
         /// <returns>Dictionary object where keys are section names and values are dictionary objects of key/value pairs</returns>
         /// <remarks></remarks>
-        protected Dictionary<string, Dictionary<string, string>> CacheXMLParamFile(string strParamFilePath)
+        protected Dictionary<string, Dictionary<string, string>> CacheXMLParamFile(string paramFilePath)
         {
 
             var dctSections = new Dictionary<string, Dictionary<string, string>>();
 
             // Read the entire XML file into a Linq to XML XDocument object
             // Note: For this to work, the project must have a reference to System.XML.Linq
-            var xParamFile = System.Xml.Linq.XDocument.Load(strParamFilePath);
+            var xParamFile = System.Xml.Linq.XDocument.Load(paramFilePath);
 
             var parameters = xParamFile.Elements();
 
@@ -96,74 +96,74 @@ namespace AnalysisManagerBase
                         continue;
 
                     // Store this as a parameter
-                    var strSection = parameter.Parent.Name.LocalName;
-                    var strParamName = parameter.Name.LocalName;
-                    var strParamValue = parameter.Value;
+                    var section = parameter.Parent.Name.LocalName;
+                    var paramName = parameter.Name.LocalName;
+                    var paramValue = parameter.Value;
 
 
-                    if (!dctParameters.TryGetValue(strSection, out var dctSectionSettings))
+                    if (!dctParameters.TryGetValue(section, out var dctSectionSettings))
                     {
                         dctSectionSettings = new Dictionary<string, string>();
-                        dctParameters.Add(strSection, dctSectionSettings);
+                        dctParameters.Add(section, dctSectionSettings);
                     }
 
-                    if (!dctSectionSettings.ContainsKey(strParamName))
+                    if (!dctSectionSettings.ContainsKey(paramName))
                     {
-                        dctSectionSettings.Add(strParamName, strParamValue);
+                        dctSectionSettings.Add(paramName, paramValue);
                     }
                 }
             }
 
         }
 
-        public bool GetParameter(string strParameterName, bool blnValueIfMissing)
+        public bool GetParameter(string parameterName, bool valueIfMissing)
         {
 
-            var strValue = GetParameter(strParameterName, string.Empty);
+            var value = GetParameter(parameterName, string.Empty);
 
-            if (string.IsNullOrEmpty(strValue))
-                return blnValueIfMissing;
+            if (string.IsNullOrEmpty(value))
+                return valueIfMissing;
 
-            if (bool.TryParse(strValue, out var blnValue))
+            if (bool.TryParse(value, out var boolValue))
             {
-                return blnValue;
+                return boolValue;
             }
 
-            return blnValueIfMissing;
+            return valueIfMissing;
 
         }
 
-        public string GetParameter(string strParameterName, string strValueIfMissing)
+        public string GetParameter(string parameterName, string valueIfMissing)
         {
 
             foreach (var section in mSections)
             {
 
-                if (section.Value.TryGetValue(strParameterName, out var strValue))
+                if (section.Value.TryGetValue(parameterName, out var value))
                 {
-                    return strValue;
+                    return value;
                 }
 
             }
 
-            return strValueIfMissing;
+            return valueIfMissing;
 
         }
 
-        public string GetParameterBySection(string strSectionName, string strParameterName, string strValueIfMissing)
+        public string GetParameterBySection(string sectionName, string parameterName, string valueIfMissing)
         {
 
 
-            if (mSections.TryGetValue(strSectionName, out var dctParameters))
+            if (mSections.TryGetValue(sectionName, out var dctParameters))
             {
 
-                if (dctParameters.TryGetValue(strParameterName, out var strValue))
+                if (dctParameters.TryGetValue(parameterName, out var value))
                 {
-                    return strValue;
+                    return value;
                 }
             }
 
-            return strValueIfMissing;
+            return valueIfMissing;
 
         }
     }

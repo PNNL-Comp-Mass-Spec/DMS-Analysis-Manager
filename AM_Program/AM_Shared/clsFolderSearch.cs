@@ -98,7 +98,7 @@ namespace AnalysisManagerBase
         /// For instruments with multiple data folders, returns the path to the first folder
         /// For instrument with multiple zipped data files, returns the dataset folder path
         /// </summary>
-        /// <param name="blnIsFolder">Output variable: true if the path returned is a folder path; false if a file</param>
+        /// <param name="isFolder">Output variable: true if the path returned is a folder path; false if a file</param>
         /// <param name="assumeUnpurged">
         /// When true, assume that the instrument data exists on the storage server
         /// (and thus do not search MyEMSL or the archive for the file)
@@ -106,9 +106,9 @@ namespace AnalysisManagerBase
         /// <returns>The full path to the dataset file or folder</returns>
         /// <remarks>When assumeUnpurged is true, this function returns the expected path
         /// to the instrument data file (or folder) on the storage server, even if the file/folder wasn't actually found</remarks>
-        public string FindDatasetFileOrFolder(out bool blnIsFolder, bool assumeUnpurged)
+        public string FindDatasetFileOrFolder(out bool isFolder, bool assumeUnpurged)
         {
-            return FindDatasetFileOrFolder(DEFAULT_MAX_RETRY_COUNT, out blnIsFolder, assumeUnpurged: assumeUnpurged);
+            return FindDatasetFileOrFolder(DEFAULT_MAX_RETRY_COUNT, out isFolder, assumeUnpurged: assumeUnpurged);
         }
 
         /// <summary>
@@ -118,7 +118,7 @@ namespace AnalysisManagerBase
         /// For instrument with multiple zipped data files, returns the dataset folder path
         /// </summary>
         /// <param name="maxAttempts">Maximum number of attempts to look for the folder</param>
-        /// <param name="blnIsFolder">Output variable: true if the path returned is a folder path; false if a file</param>
+        /// <param name="isFolder">Output variable: true if the path returned is a folder path; false if a file</param>
         /// <param name="assumeUnpurged">
         /// When true, assume that the instrument data exists on the storage server
         /// (and thus do not search MyEMSL or the archive for the file)
@@ -126,13 +126,13 @@ namespace AnalysisManagerBase
         /// <returns>The full path to the dataset file or folder</returns>
         /// <remarks>When assumeUnpurged is true, this function returns the expected path
         /// to the instrument data file (or folder) on the storage server, even if the file/folder wasn't actually found</remarks>
-        public string FindDatasetFileOrFolder(int maxAttempts, out bool blnIsFolder, bool assumeUnpurged = false)
+        public string FindDatasetFileOrFolder(int maxAttempts, out bool isFolder, bool assumeUnpurged = false)
         {
             var RawDataType = m_jobParams.GetParam("RawDataType");
             var StoragePath = m_jobParams.GetParam("DatasetStoragePath");
-            var strFileOrFolderPath = string.Empty;
+            var fileOrFolderPath = string.Empty;
 
-            blnIsFolder = false;
+            isFolder = false;
 
             var eRawDataType = clsAnalysisResources.GetRawDataType(RawDataType);
             switch (eRawDataType)
@@ -145,50 +145,50 @@ namespace AnalysisManagerBase
                         // For Agilent Ion Trap datasets acquired on Agilent_SL1 or Agilent_XCT1 in 2005,
                         //  we would pre-process the data beforehand to create MGF files
                         // The following call can be used to retrieve the files
-                        strFileOrFolderPath = FindMGFFile(maxAttempts, assumeUnpurged);
+                        fileOrFolderPath = FindMGFFile(maxAttempts, assumeUnpurged);
                     }
                     else
                     {
                         // DeconTools_V2 now supports reading the .D files directly
                         // Call RetrieveDotDFolder() to copy the folder and all subfolders
-                        strFileOrFolderPath = FindDotDFolder(assumeUnpurged);
-                        blnIsFolder = true;
+                        fileOrFolderPath = FindDotDFolder(assumeUnpurged);
+                        isFolder = true;
                     }
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.AgilentQStarWiffFile:
                     // Agilent/QSTAR TOF data
-                    strFileOrFolderPath = FindDatasetFile(maxAttempts, clsAnalysisResources.DOT_WIFF_EXTENSION, assumeUnpurged);
+                    fileOrFolderPath = FindDatasetFile(maxAttempts, clsAnalysisResources.DOT_WIFF_EXTENSION, assumeUnpurged);
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.ZippedSFolders:
                     // FTICR data
-                    strFileOrFolderPath = FindSFolders(assumeUnpurged);
-                    blnIsFolder = true;
+                    fileOrFolderPath = FindSFolders(assumeUnpurged);
+                    isFolder = true;
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile:
                     // Finnigan ion trap/LTQ-FT data
-                    strFileOrFolderPath = FindDatasetFile(maxAttempts, clsAnalysisResources.DOT_RAW_EXTENSION, assumeUnpurged);
+                    fileOrFolderPath = FindDatasetFile(maxAttempts, clsAnalysisResources.DOT_RAW_EXTENSION, assumeUnpurged);
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.MicromassRawFolder:
                     // Micromass QTOF data
-                    strFileOrFolderPath = FindDotRawFolder(assumeUnpurged);
-                    blnIsFolder = true;
+                    fileOrFolderPath = FindDotRawFolder(assumeUnpurged);
+                    isFolder = true;
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.UIMF:
                     // IMS UIMF data
-                    strFileOrFolderPath = FindDatasetFile(maxAttempts, clsAnalysisResources.DOT_UIMF_EXTENSION, assumeUnpurged);
+                    fileOrFolderPath = FindDatasetFile(maxAttempts, clsAnalysisResources.DOT_UIMF_EXTENSION, assumeUnpurged);
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.mzXML:
-                    strFileOrFolderPath = FindDatasetFile(maxAttempts, clsAnalysisResources.DOT_MZXML_EXTENSION, assumeUnpurged);
+                    fileOrFolderPath = FindDatasetFile(maxAttempts, clsAnalysisResources.DOT_MZXML_EXTENSION, assumeUnpurged);
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.mzML:
-                    strFileOrFolderPath = FindDatasetFile(maxAttempts, clsAnalysisResources.DOT_MZML_EXTENSION, assumeUnpurged);
+                    fileOrFolderPath = FindDatasetFile(maxAttempts, clsAnalysisResources.DOT_MZML_EXTENSION, assumeUnpurged);
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder:
@@ -198,18 +198,18 @@ namespace AnalysisManagerBase
                     // Both the MSXml step tool and DeconTools require the .Baf file
                     // We previously didn't need this file for DeconTools, but, now that DeconTools is using CompassXtract, so we need the file
 
-                    strFileOrFolderPath = FindDotDFolder(assumeUnpurged);
-                    blnIsFolder = true;
+                    fileOrFolderPath = FindDotDFolder(assumeUnpurged);
+                    isFolder = true;
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.BrukerMALDIImaging:
-                    strFileOrFolderPath = FindBrukerMALDIImagingFolders(assumeUnpurged);
-                    blnIsFolder = true;
+                    fileOrFolderPath = FindBrukerMALDIImagingFolders(assumeUnpurged);
+                    isFolder = true;
 
                     break;
             }
 
-            return strFileOrFolderPath;
+            return fileOrFolderPath;
         }
 
 
@@ -560,12 +560,12 @@ namespace AnalysisManagerBase
             out bool validFolderFound,
             out string folderNotFoundMessage)
         {
-            var strBestPath = string.Empty;
+            var bestPath = string.Empty;
 
             // The tuples in this list are the path to check, and True if we should warn that the folder was not found
             var lstPathsToCheck = new List<Tuple<string, bool>>();
 
-            var blnValidFolder = false;
+            var validFolder = false;
 
             validFolderFound = false;
             folderNotFoundMessage = string.Empty;
@@ -622,9 +622,9 @@ namespace AnalysisManagerBase
                 if (datasetFolderName != dsName)
                     AddPathToCheck(lstPathsToCheck, Path.Combine(m_jobParams.GetParam("transferFolderPath"), dsName), false);
 
-                var blnFileNotFoundEncountered = false;
+                var fileNotFoundEncountered = false;
 
-                strBestPath = lstPathsToCheck.First().Item1;
+                bestPath = lstPathsToCheck.First().Item1;
                 foreach (var pathToCheck in lstPathsToCheck)
                 {
                     try
@@ -638,36 +638,36 @@ namespace AnalysisManagerBase
                         if (pathToCheck.Item1 == MYEMSL_PATH_FLAG)
                         {
                             const bool recurseMyEMSL = false;
-                            blnValidFolder = FindValidFolderMyEMSL(dsName, fileNameToFind, folderNameToFind, false, recurseMyEMSL);
+                            validFolder = FindValidFolderMyEMSL(dsName, fileNameToFind, folderNameToFind, false, recurseMyEMSL);
                         }
                         else
                         {
-                            blnValidFolder = FindValidFolderUNC(pathToCheck.Item1, fileNameToFind, folderNameToFind, maxAttempts, logFolderNotFound && pathToCheck.Item2);
+                            validFolder = FindValidFolderUNC(pathToCheck.Item1, fileNameToFind, folderNameToFind, maxAttempts, logFolderNotFound && pathToCheck.Item2);
 
-                            if (!blnValidFolder && !string.IsNullOrEmpty(fileNameToFind) && !string.IsNullOrEmpty(folderNameToFind))
+                            if (!validFolder && !string.IsNullOrEmpty(fileNameToFind) && !string.IsNullOrEmpty(folderNameToFind))
                             {
                                 // Look for a subfolder named folderNameToFind that contains file fileNameToFind
                                 var pathToCheckAlt = Path.Combine(pathToCheck.Item1, folderNameToFind);
-                                blnValidFolder = FindValidFolderUNC(pathToCheckAlt, fileNameToFind, string.Empty, maxAttempts, logFolderNotFound && pathToCheck.Item2);
+                                validFolder = FindValidFolderUNC(pathToCheckAlt, fileNameToFind, string.Empty, maxAttempts, logFolderNotFound && pathToCheck.Item2);
 
-                                if (blnValidFolder)
+                                if (validFolder)
                                 {
                                     var pathToCheckOverride = new Tuple<string, bool>(pathToCheckAlt, pathToCheck.Item2);
-                                    strBestPath = string.Copy(pathToCheck.Item1);
+                                    bestPath = string.Copy(pathToCheck.Item1);
                                     break;
                                 }
                             }
 
                         }
 
-                        if (blnValidFolder)
+                        if (validFolder)
                         {
-                            strBestPath = string.Copy(pathToCheck.Item1);
+                            bestPath = string.Copy(pathToCheck.Item1);
                             break;
                         }
                         else
                         {
-                            blnFileNotFoundEncountered = true;
+                            fileNotFoundEncountered = true;
                         }
 
                     }
@@ -677,13 +677,13 @@ namespace AnalysisManagerBase
                     }
                 } // for each item in lstPathsToCheck
 
-                if (blnValidFolder)
+                if (validFolder)
                 {
                     validFolderFound = true;
 
-                    if (m_DebugLevel >= 4 || m_DebugLevel >= 1 && blnFileNotFoundEncountered)
+                    if (m_DebugLevel >= 4 || m_DebugLevel >= 1 && fileNotFoundEncountered)
                     {
-                        var msg = "FindValidFolder, Valid dataset folder has been found:  " + strBestPath;
+                        var msg = "FindValidFolder, Valid dataset folder has been found:  " + bestPath;
                         if (fileNameToFind.Length > 0)
                         {
                             msg += " (matched file " + fileNameToFind + ")";
@@ -727,12 +727,12 @@ namespace AnalysisManagerBase
                 folderNotFoundMessage = "Exception looking for a valid dataset folder";
             }
 
-            return strBestPath;
+            return bestPath;
 
         }
 
         /// <summary>
-        /// Determines whether the folder specified by strPathToCheck is appropriate for retrieving dataset files
+        /// Determines whether the folder specified by pathToCheck is appropriate for retrieving dataset files
         /// </summary>
         /// <param name="dataset">Dataset name</param>
         /// <param name="fileNameToFind">Optional: Name of a file that must exist in the dataset folder; can contain a wildcard, e.g. *.zip</param>
@@ -791,7 +791,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Determines whether the folder specified by strPathToCheck is appropriate for retrieving dataset files
+        /// Determines whether the folder specified by pathToCheck is appropriate for retrieving dataset files
         /// </summary>
         /// <param name="pathToCheck">Path to examine</param>
         /// <param name="fileNameToFind">Optional: Name of a file that must exist in the dataset folder; can contain a wildcard, e.g. *.zip</param>
@@ -811,7 +811,7 @@ namespace AnalysisManagerBase
             }
 
             // Folder was found
-            var blnValidFolder = true;
+            var validFolder = true;
 
             if (m_DebugLevel > 3)
             {
@@ -838,7 +838,7 @@ namespace AnalysisManagerBase
                     // FindValidFolder will append folderNameToFind to the dataset folder path and call this method again
                     if (objFolderInfo.GetFiles(fileNameToFind, SearchOption.TopDirectoryOnly).Length == 0)
                     {
-                        blnValidFolder = false;
+                        validFolder = false;
                     }
                 }
                 else
@@ -856,13 +856,13 @@ namespace AnalysisManagerBase
 
                     if (!fileFound)
                     {
-                        blnValidFolder = false;
+                        validFolder = false;
                     }
                 }
             }
 
             // Optionally look for folderNameToFind
-            if (blnValidFolder && !string.IsNullOrEmpty(folderNameToFind))
+            if (validFolder && !string.IsNullOrEmpty(folderNameToFind))
             {
                 if (folderNameToFind.Contains("*"))
                 {
@@ -877,7 +877,7 @@ namespace AnalysisManagerBase
 
                     if (objFolderInfo.GetDirectories(folderNameToFind).Length == 0)
                     {
-                        blnValidFolder = false;
+                        validFolder = false;
                     }
                 }
                 else
@@ -891,12 +891,12 @@ namespace AnalysisManagerBase
                     // Note: Using a 1 second holdoff between retries
                     if (!FolderExistsWithRetry(Path.Combine(pathToCheck, folderNameToFind), 1, maxAttempts, logFolderNotFound))
                     {
-                        blnValidFolder = false;
+                        validFolder = false;
                     }
                 }
             }
 
-            return blnValidFolder;
+            return validFolder;
 
         }
 

@@ -451,7 +451,7 @@ namespace AnalysisManagerMODaPlugIn
             try
             {
                 // Tool_Version_Info_MODa.txt is required by IDPicker
-                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile: true);
+                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, saveToolVersionTextFile: true);
             }
             catch (Exception ex)
             {

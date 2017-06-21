@@ -329,14 +329,14 @@ namespace AnalysisManagerBase
 
         }
 
-        private string GetJobInfoFilePath(int intJob)
+        private string GetJobInfoFilePath(int job)
         {
-            return GetJobInfoFilePath(intJob, mAnalysisResources.WorkDir);
+            return GetJobInfoFilePath(job, mAnalysisResources.WorkDir);
         }
 
-        public static string GetJobInfoFilePath(int intJob, string strWorkDirPath)
+        public static string GetJobInfoFilePath(int job, string workDirPath)
         {
-            return Path.Combine(strWorkDirPath, JOB_INFO_FILE_PREFIX + intJob + ".txt");
+            return Path.Combine(workDirPath, JOB_INFO_FILE_PREFIX + job + ".txt");
         }
 
         /// <summary>
@@ -477,15 +477,15 @@ namespace AnalysisManagerBase
             string sourceFolderPath,
             string sourceFilename,
             string targetFolderPath,
-            string strPrefixToAdd,
-            int intJob,
+            string prefixToAdd,
+            int job,
             out string newFilePath)
         {
 
             try
             {
                 var fiFileToRename = new FileInfo(Path.Combine(sourceFolderPath, sourceFilename));
-                newFilePath = Path.Combine(targetFolderPath, strPrefixToAdd + fiFileToRename.Name);
+                newFilePath = Path.Combine(targetFolderPath, prefixToAdd + fiFileToRename.Name);
 
                 Thread.Sleep(100);
                 fiFileToRename.MoveTo(newFilePath);
@@ -496,7 +496,7 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Exception renaming PHRP file " + sourceFilename + " For job " + intJob + " (data package has multiple jobs For the same dataset)", ex);
+                OnErrorEvent("Exception renaming PHRP file " + sourceFilename + " For job " + job + " (data package has multiple jobs For the same dataset)", ex);
                 newFilePath = string.Empty;
                 return false;
             }
@@ -522,8 +522,6 @@ namespace AnalysisManagerBase
 
             var sourceFolderPath = "??";
             var sourceFilename = "??";
-
-            bool blnSuccess;
 
             // Keys in this dictionary are DatasetID, values are a command of the form "Copy \\Server\Share\Folder\Dataset.raw Dataset.raw"
             // Note that we're explicitly defining the target filename to make sure the case of the letters matches the dataset name's case
@@ -597,7 +595,7 @@ namespace AnalysisManagerBase
                 // Cache the current dataset and job info
                 mAnalysisResources.CacheCurrentDataAndJobInfo();
 
-                var intJobsProcessed = 0;
+                var jobsProcessed = 0;
 
 
                 foreach (var dataPkgJob in lstDataPackagePeptideHitJobs)
@@ -631,21 +629,21 @@ namespace AnalysisManagerBase
                         // This tracks the _pepXML.zip filename, which will be unzipped if it was found
                         var zippedPepXmlFile = string.Empty;
 
-                        bool blnPrefixRequired;
+                        bool prefixRequired;
 
-                        var strSynopsisFileName = clsPHRPReader.GetPHRPSynopsisFileName(dataPkgJob.PeptideHitResultType, dataPkgJob.Dataset);
-                        var strSynopsisMSGFFileName = clsPHRPReader.GetMSGFFileName(strSynopsisFileName);
+                        var synopsisFileName = clsPHRPReader.GetPHRPSynopsisFileName(dataPkgJob.PeptideHitResultType, dataPkgJob.Dataset);
+                        var synopsisMSGFFileName = clsPHRPReader.GetMSGFFileName(synopsisFileName);
 
                         if (udtOptions.RetrievePHRPFiles)
                         {
-                            lstFilesToGet.Add(strSynopsisFileName, true);
+                            lstFilesToGet.Add(synopsisFileName, true);
 
                             lstFilesToGet.Add(clsPHRPReader.GetPHRPResultToSeqMapFileName(dataPkgJob.PeptideHitResultType, dataPkgJob.Dataset), true);
                             lstFilesToGet.Add(clsPHRPReader.GetPHRPSeqInfoFileName(dataPkgJob.PeptideHitResultType, dataPkgJob.Dataset), true);
                             lstFilesToGet.Add(clsPHRPReader.GetPHRPSeqToProteinMapFileName(dataPkgJob.PeptideHitResultType, dataPkgJob.Dataset), true);
                             lstFilesToGet.Add(clsPHRPReader.GetPHRPModSummaryFileName(dataPkgJob.PeptideHitResultType, dataPkgJob.Dataset), true);
 
-                            lstFilesToGet.Add(strSynopsisMSGFFileName, false);
+                            lstFilesToGet.Add(synopsisMSGFFileName, false);
                         }
 
                         // Names of mzid result files that we should look for
@@ -691,9 +689,9 @@ namespace AnalysisManagerBase
 
                         // Check whether a synopsis file by this name has already been copied locally
                         // If it has, then we have multiple jobs for the same dataset with the same analysis tool, and we'll thus need to add a prefix to each filename
-                        if (!udtOptions.CreateJobPathFiles && File.Exists(Path.Combine(workingDir, strSynopsisFileName)))
+                        if (!udtOptions.CreateJobPathFiles && File.Exists(Path.Combine(workingDir, synopsisFileName)))
                         {
-                            blnPrefixRequired = true;
+                            prefixRequired = true;
 
                             localFolderPath = Path.Combine(workingDir, "FileRename");
                             if (!Directory.Exists(localFolderPath))
@@ -704,7 +702,7 @@ namespace AnalysisManagerBase
                         }
                         else
                         {
-                            blnPrefixRequired = false;
+                            prefixRequired = false;
                             localFolderPath = string.Copy(workingDir);
                         }
 
@@ -715,7 +713,7 @@ namespace AnalysisManagerBase
                         var lstFoundFiles = new List<string>();
 
 
-                        bool blnFileCopied;
+                        bool fileCopied;
                         foreach (var sourceFile in lstFilesToGet)
                         {
                             sourceFilename = sourceFile.Key;
@@ -779,20 +777,20 @@ namespace AnalysisManagerBase
                             else
                             {
                                 // Note for files in MyEMSL, this call will simply add the file to the download queue; use ProcessMyEMSLDownloadQueue() to retrieve the file
-                                blnFileCopied = mAnalysisResources.CopyFileToWorkDir(sourceFilename, sourceFolderPath, localFolderPath, eLogMsgTypeIfNotFound);
+                                fileCopied = mAnalysisResources.CopyFileToWorkDir(sourceFilename, sourceFolderPath, localFolderPath, eLogMsgTypeIfNotFound);
 
-                                if (!blnFileCopied)
+                                if (!fileCopied)
                                 {
                                     var alternateFileName = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(sourceFilename, "Dataset_msgfdb.txt");
-                                    blnFileCopied = mAnalysisResources.CopyFileToWorkDir(alternateFileName, sourceFolderPath, localFolderPath, eLogMsgTypeIfNotFound);
-                                    if (blnFileCopied)
+                                    fileCopied = mAnalysisResources.CopyFileToWorkDir(alternateFileName, sourceFolderPath, localFolderPath, eLogMsgTypeIfNotFound);
+                                    if (fileCopied)
                                     {
                                         sourceFilename = alternateFileName;
                                     }
                                 }
 
 
-                                if (!blnFileCopied)
+                                if (!fileCopied)
                                 {
                                     if (eLogMsgTypeIfNotFound != clsLogTools.LogLevels.DEBUG)
                                     {
@@ -807,7 +805,7 @@ namespace AnalysisManagerBase
                                     OnStatusEvent("Copied " + sourceFilename + " from folder " + sourceFolderPath);
                                     lstFoundFiles.Add(Path.Combine(localFolderPath, sourceFilename));
 
-                                    if (blnPrefixRequired)
+                                    if (prefixRequired)
                                     {
                                         lstPendingFileRenames.Add(sourceFilename);
                                     }
@@ -832,8 +830,8 @@ namespace AnalysisManagerBase
                         foreach (var fileToRename in lstPendingFileRenames)
                         {
                             if (RenameDuplicatePHRPFile(localFolderPath, fileToRename, workingDir,
-    "Job" + dataPkgJob.Job + "_", dataPkgJob.Job,
-    out var newFilePath))
+                                "Job" + dataPkgJob.Job + "_", dataPkgJob.Job,
+                                out var newFilePath))
                             {
                                 // Rename succeeded
                                 lstFoundFiles.Remove(Path.Combine(localFolderPath, fileToRename));
@@ -900,9 +898,9 @@ namespace AnalysisManagerBase
                                         {
                                             eLogMsgTypeIfNotFound = clsLogTools.LogLevels.ERROR;
 
-                                            blnFileCopied = mAnalysisResources.CopyFileToWorkDir(sourceMzMLFile.Name, sourceMzMLFile.DirectoryName, localFolderPath, eLogMsgTypeIfNotFound);
+                                            fileCopied = mAnalysisResources.CopyFileToWorkDir(sourceMzMLFile.Name, sourceMzMLFile.DirectoryName, localFolderPath, eLogMsgTypeIfNotFound);
 
-                                            if (blnFileCopied)
+                                            if (fileCopied)
                                             {
                                                 OnStatusEvent("Copied " + sourceMzMLFile.Name + " from folder " + sourceMzMLFile.DirectoryName);
                                                 lstFoundFiles.Add(Path.Combine(localFolderPath, sourceMzMLFile.Name));
@@ -920,11 +918,11 @@ namespace AnalysisManagerBase
 
                                 if (udtOptions.CreateJobPathFiles)
                                 {
-                                    var sourceConcatenatedDTAFilePath = mAnalysisResources.FileSearch.FindCDTAFile(out var strErrorMessage);
+                                    var sourceConcatenatedDTAFilePath = mAnalysisResources.FileSearch.FindCDTAFile(out var errorMessage);
 
                                     if (string.IsNullOrEmpty(sourceConcatenatedDTAFilePath))
                                     {
-                                        OnErrorEvent(strErrorMessage);
+                                        OnErrorEvent(errorMessage);
                                         mAnalysisResources.RestoreCachedDataAndJobInfo();
                                         return false;
                                     }
@@ -950,8 +948,8 @@ namespace AnalysisManagerBase
 
                         if (udtOptions.CreateJobPathFiles)
                         {
-                            var strJobInfoFilePath = GetJobInfoFilePath(dataPkgJob.Job);
-                            using (var swJobInfoFile = new StreamWriter(new FileStream(strJobInfoFilePath, FileMode.Append, FileAccess.Write, FileShare.Read)))
+                            var jobInfoFilePath = GetJobInfoFilePath(dataPkgJob.Job);
+                            using (var swJobInfoFile = new StreamWriter(new FileStream(jobInfoFilePath, FileMode.Append, FileAccess.Write, FileShare.Read)))
                             {
                                 foreach (var filePath in lstFoundFiles)
                                 {
@@ -999,7 +997,7 @@ namespace AnalysisManagerBase
                                     return false;
                                 }
 
-                                if (blnPrefixRequired)
+                                if (prefixRequired)
                                 {
                                     if (RenameDuplicatePHRPFile(
                                         workingDir, datasetName + "_msgfplus.mzid",
@@ -1043,9 +1041,9 @@ namespace AnalysisManagerBase
                         }
                     }
 
-                    intJobsProcessed += 1;
+                    jobsProcessed += 1;
                     var sngProgress = clsAnalysisToolRunnerBase.ComputeIncrementalProgress(
-                        progressPercentAtStart, progressPercentAtFinish, intJobsProcessed,
+                        progressPercentAtStart, progressPercentAtFinish, jobsProcessed,
                         lstDataPackagePeptideHitJobs.Count + lstAdditionalJobs.Count);
 
                     OnProgressUpdate("RetrieveDataPackagePeptideHitJobPHRPFiles (PeptideHit Jobs)", sngProgress);
@@ -1068,9 +1066,9 @@ namespace AnalysisManagerBase
                         }
                     }
 
-                    intJobsProcessed += 1;
+                    jobsProcessed += 1;
                     var sngProgress = clsAnalysisToolRunnerBase.ComputeIncrementalProgress(
-                        progressPercentAtStart, progressPercentAtFinish, intJobsProcessed,
+                        progressPercentAtStart, progressPercentAtFinish, jobsProcessed,
                         lstDataPackagePeptideHitJobs.Count + lstAdditionalJobs.Count);
 
                     OnProgressUpdate("RetrieveDataPackagePeptideHitJobPHRPFiles (Additional Jobs)", sngProgress);
@@ -1114,8 +1112,8 @@ namespace AnalysisManagerBase
                 if (dctRawFileRetrievalCommands.Count > 0)
                 {
                     // Create a batch file with commands for retrieve the dataset files
-                    var strBatchFilePath = Path.Combine(workingDir, "RetrieveInstrumentData.bat");
-                    using (var swOutfile = new StreamWriter(new FileStream(strBatchFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                    var batchFilePath = Path.Combine(workingDir, "RetrieveInstrumentData.bat");
+                    using (var swOutfile = new StreamWriter(new FileStream(batchFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                     {
                         foreach (var item in dctRawFileRetrievalCommands.Values)
                         {
@@ -1132,21 +1130,20 @@ namespace AnalysisManagerBase
                 {
                     // All of the PHRP data files have been successfully retrieved; now retrieve the mzXML files or the .Raw files
                     // If udtOptions.CreateJobPathFiles = True then we will create StoragePathInfo files
-                    blnSuccess = RetrieveDataPackageMzXMLFiles(dctInstrumentDataToRetrieve, udtOptions);
+                    var success = RetrieveDataPackageMzXMLFiles(dctInstrumentDataToRetrieve, udtOptions);
+                    return success;
                 }
                 else
                 {
-                    blnSuccess = true;
+                    return true;
                 }
 
             }
             catch (Exception ex)
             {
                 OnErrorEvent("RetrieveDataPackagePeptideHitJobPHRPFiles; Exception during copy of file: " + sourceFilename + " from folder " + sourceFolderPath, ex);
-                blnSuccess = false;
+                return false;
             }
-
-            return blnSuccess;
 
         }
 
@@ -1195,25 +1192,25 @@ namespace AnalysisManagerBase
                 }
             }
 
-            var rawFilePath = mAnalysisResources.FolderSearch.FindDatasetFileOrFolder(out var blnIsFolder, udtOptions.AssumeInstrumentDataUnpurged);
+            var rawFilePath = mAnalysisResources.FolderSearch.FindDatasetFileOrFolder(out var isFolder, udtOptions.AssumeInstrumentDataUnpurged);
 
 
             if (!string.IsNullOrEmpty(rawFilePath))
             {
-                string strCopyCommand;
-                if (blnIsFolder)
+                string copyCommand;
+                if (isFolder)
                 {
                     var fileName = Path.GetFileName(rawFilePath);
-                    strCopyCommand = "if not exist " + fileName + " copy " + rawFilePath + @" .\" + fileName + " /S /I";
+                    copyCommand = "if not exist " + fileName + " copy " + rawFilePath + @" .\" + fileName + " /S /I";
                 }
                 else
                 {
                     // Make sure the case of the filename matches the case of the dataset name
                     // Also, make sure the extension is lowercase
                     var fileName = dataPkgJob.Dataset + Path.GetExtension(rawFilePath).ToLower();
-                    strCopyCommand = "if not exist " + fileName + " copy " + rawFilePath + " " + fileName;
+                    copyCommand = "if not exist " + fileName + " copy " + rawFilePath + " " + fileName;
                 }
-                dctRawFileRetrievalCommands.Add(dataPkgJob.DatasetID, strCopyCommand);
+                dctRawFileRetrievalCommands.Add(dataPkgJob.DatasetID, copyCommand);
                 dctDatasetRawFilePaths.Add(dataPkgJob.Dataset, rawFilePath);
             }
 
@@ -1235,9 +1232,9 @@ namespace AnalysisManagerBase
         public bool RetrieveDataPackageMzXMLFiles(Dictionary<clsDataPackageJobInfo, KeyValuePair<string, string>> dctInstrumentDataToRetrieve, udtDataPackageRetrievalOptionsType udtOptions)
         {
 
-            bool blnSuccess;
+            bool success;
 
-            var intCurrentJob = 0;
+            var currentJob = 0;
 
             try
             {
@@ -1277,10 +1274,10 @@ namespace AnalysisManagerBase
                     // The key in kvMzXMLFileInfo is the path to the .mzXML or .mzML file
                     // The value in kvMzXMLFileInfo is the path to the .hashcheck file
                     var kvMzXMLFileInfo = kvItem.Value;
-                    var strMzXMLFilePath = kvMzXMLFileInfo.Key;
-                    var strHashcheckFilePath = kvMzXMLFileInfo.Value;
+                    var mzXMLFilePath = kvMzXMLFileInfo.Key;
+                    var hashcheckFilePath = kvMzXMLFileInfo.Value;
 
-                    intCurrentJob = kvItem.Key.Job;
+                    currentJob = kvItem.Key.Job;
 
 
                     if (!lstDatasetsProcessed.Contains(kvItem.Key.Dataset))
@@ -1291,38 +1288,38 @@ namespace AnalysisManagerBase
                             return false;
                         }
 
-                        if (string.IsNullOrEmpty(strMzXMLFilePath))
+                        if (string.IsNullOrEmpty(mzXMLFilePath))
                         {
                             // The .mzXML or .mzML file was not found; we will need to obtain the .Raw file
-                            blnSuccess = false;
+                            success = false;
                         }
                         else
                         {
                             // mzXML or .mzML file exists; either retrieve it or create a StoragePathInfo file
-                            blnSuccess = mAnalysisResources.FileSearch.RetrieveMZXmlFileUsingSourceFile(createStoragePathInfoOnly, strMzXMLFilePath, strHashcheckFilePath);
+                            success = mAnalysisResources.FileSearch.RetrieveMZXmlFileUsingSourceFile(createStoragePathInfoOnly, mzXMLFilePath, hashcheckFilePath);
                         }
 
-                        if (blnSuccess)
+                        if (success)
                         {
                             // .mzXML or .mzML file found and copied locally
                             string msXmlFileExtension;
 
-                            if (strMzXMLFilePath.EndsWith(clsAnalysisResources.DOT_GZ_EXTENSION, StringComparison.InvariantCultureIgnoreCase))
+                            if (mzXMLFilePath.EndsWith(clsAnalysisResources.DOT_GZ_EXTENSION, StringComparison.InvariantCultureIgnoreCase))
                             {
-                                msXmlFileExtension = Path.GetExtension(strMzXMLFilePath.Substring(0, strMzXMLFilePath.Length - clsAnalysisResources.DOT_GZ_EXTENSION.Length));
+                                msXmlFileExtension = Path.GetExtension(mzXMLFilePath.Substring(0, mzXMLFilePath.Length - clsAnalysisResources.DOT_GZ_EXTENSION.Length));
                             }
                             else
                             {
-                                msXmlFileExtension = Path.GetExtension(strMzXMLFilePath);
+                                msXmlFileExtension = Path.GetExtension(mzXMLFilePath);
                             }
 
                             if (udtOptions.CreateJobPathFiles)
                             {
-                                OnStatusEvent(msXmlFileExtension + " file found for job " + intCurrentJob + " at " + strMzXMLFilePath);
+                                OnStatusEvent(msXmlFileExtension + " file found for job " + currentJob + " at " + mzXMLFilePath);
                             }
                             else
                             {
-                                OnStatusEvent("Copied " + msXmlFileExtension + " file for job " + intCurrentJob + " from " + strMzXMLFilePath);
+                                OnStatusEvent("Copied " + msXmlFileExtension + " file for job " + currentJob + " from " + mzXMLFilePath);
                             }
                         }
                         else
@@ -1333,7 +1330,7 @@ namespace AnalysisManagerBase
 
                             if (!mAnalysisResources.FileSearch.RetrieveSpectra(kvItem.Key.RawDataType, createStoragePathInfoOnly, maxAttempts: 1))
                             {
-                                OnErrorEvent("Error occurred retrieving instrument data file for job " + intCurrentJob);
+                                OnErrorEvent("Error occurred retrieving instrument data file for job " + currentJob);
                                 return false;
                             }
 
@@ -1361,16 +1358,16 @@ namespace AnalysisManagerBase
                 // Restore the dataset and job info for this aggregation job
                 mAnalysisResources.RestoreCachedDataAndJobInfo();
 
-                blnSuccess = true;
+                success = true;
 
             }
             catch (Exception ex)
             {
-                OnErrorEvent("RetrieveDataPackageMzXMLFiles; Exception retrieving mzXML file or .Raw file for job " + intCurrentJob, ex);
-                blnSuccess = false;
+                OnErrorEvent("RetrieveDataPackageMzXMLFiles; Exception retrieving mzXML file or .Raw file for job " + currentJob, ex);
+                success = false;
             }
 
-            return blnSuccess;
+            return success;
 
         }
 

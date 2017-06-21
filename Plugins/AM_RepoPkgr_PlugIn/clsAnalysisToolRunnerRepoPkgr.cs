@@ -368,7 +368,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                     if (!Directory.Exists(strDatasetFilePathLocal))
                     {
                         // Copy the dataset folder locally
-                        objAnalysisResults.CopyDirectory(strDatasetFilePathRemote, strDatasetFilePathLocal, Overwrite: true);
+                        objAnalysisResults.CopyDirectory(strDatasetFilePathRemote, strDatasetFilePathLocal, overwrite: true);
                     }
 
                 }
@@ -378,7 +378,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                     if (!File.Exists(strDatasetFilePathLocal))
                     {
                         // Copy the dataset file locally
-                        objAnalysisResults.CopyFileWithRetry(strDatasetFilePathRemote, strDatasetFilePathLocal, Overwrite: true);
+                        objAnalysisResults.CopyFileWithRetry(strDatasetFilePathRemote, strDatasetFilePathLocal, overwrite: true);
                     }
                 }
 
@@ -439,7 +439,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                     strDatasetYearQuarter = string.Empty;
                 }
 
-                CopyMzXMLFileToServerCache(fiMzXmlFileGZipped.FullName, strDatasetYearQuarter, strMSXmlGeneratorName, blnPurgeOldFilesIfNeeded: true);
+                CopyMzXMLFileToServerCache(fiMzXmlFileGZipped.FullName, strDatasetYearQuarter, strMSXmlGeneratorName, purgeOldFilesIfNeeded: true);
 
                 m_jobParams.AddResultFileToSkip(Path.GetFileName(fiMzXmlFilePathLocal.FullName + clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX));
 
@@ -681,11 +681,11 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
                 if (IsFolder)
                 {
-                    objAnalysisResults.CopyDirectory(strSourceFilePath, strDestPath, Overwrite: true);
+                    objAnalysisResults.CopyDirectory(strSourceFilePath, strDestPath, overwrite: true);
                 }
                 else
                 {
-                    objAnalysisResults.CopyFileWithRetry(strSourceFilePath, strDestPath, Overwrite: true);
+                    objAnalysisResults.CopyFileWithRetry(strSourceFilePath, strDestPath, overwrite: true);
                 }
 
             }
@@ -708,12 +708,12 @@ namespace AnalysisManager_RepoPkgr_Plugin
             var ioToolFiles = new List<FileInfo>();
 
             // Lookup the version of the AnalysisManagerPrideConverter plugin
-            if (!StoreToolVersionInfoForLoadedAssembly(ref strToolVersionInfo, "AnalysisManager_RepoPkgr_Plugin", blnIncludeRevision: false))
+            if (!StoreToolVersionInfoForLoadedAssembly(ref strToolVersionInfo, "AnalysisManager_RepoPkgr_Plugin", includeRevision: false))
                 return false;
 
             try
             {
-                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, blnSaveToolVersionTextFile: false);
+                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, saveToolVersionTextFile: false);
             }
             catch (Exception ex)
             {

@@ -485,7 +485,7 @@ namespace AnalysisManagerBase
                 LogDebug(string.Format("Fasta file not found on remote host; copying {0} to {1}", sourceFile.Name, transferUtility.RemoteHostName));
             }
 
-            var success = transferUtility.CopyFileToRemote(sourceFile.FullName, transferUtility.RemoteOrgDBPath);
+            var success = transferUtility.CopyFileToRemote(sourceFile.FullName, transferUtility.RemoteOrgDBPath, useLockFile: true);
             if (success)
                 return true;
 
@@ -657,16 +657,16 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Appends file specified file path to the JobInfo file for the given Job
         /// </summary>
-        /// <param name="intJob"></param>
-        /// <param name="strFilePath"></param>
+        /// <param name="job"></param>
+        /// <param name="filePath"></param>
         /// <remarks></remarks>
-        protected void AppendToJobInfoFile(int intJob, string strFilePath)
+        protected void AppendToJobInfoFile(int job, string filePath)
         {
-            var strJobInfoFilePath = clsDataPackageFileHandler.GetJobInfoFilePath(intJob, m_WorkingDir);
+            var jobInfoFilePath = clsDataPackageFileHandler.GetJobInfoFilePath(job, m_WorkingDir);
 
-            using (var swJobInfoFile = new StreamWriter(new FileStream(strJobInfoFilePath, FileMode.Append, FileAccess.Write, FileShare.Read)))
+            using (var swJobInfoFile = new StreamWriter(new FileStream(jobInfoFilePath, FileMode.Append, FileAccess.Write, FileShare.Read)))
             {
-                swJobInfoFile.WriteLine(strFilePath);
+                swJobInfoFile.WriteLine(filePath);
             }
 
         }
@@ -731,7 +731,7 @@ namespace AnalysisManagerBase
         {
 
             {
-                var blnWaitingForLockFile = false;
+                var waitingForLockFile = false;
                 var dtLockFileCreated = DateTime.UtcNow;
 
                 // Look for a recent .lock file
@@ -741,7 +741,7 @@ namespace AnalysisManagerBase
                 {
                     if (DateTime.UtcNow.Subtract(fiLockFile.LastWriteTimeUtc).TotalMinutes < maxWaitTimeMinutes)
                     {
-                        blnWaitingForLockFile = true;
+                        waitingForLockFile = true;
                         dtLockFileCreated = fiLockFile.LastWriteTimeUtc;
 
                         var debugMessage = dataFileDescription + " lock file found; will wait for file to be deleted or age; " +
@@ -755,13 +755,13 @@ namespace AnalysisManagerBase
                     }
                 }
 
-                if (blnWaitingForLockFile)
+                if (waitingForLockFile)
                 {
                     var dtLastProgressTime = DateTime.UtcNow;
                     if (logIntervalMinutes < 1)
                         logIntervalMinutes = 1;
 
-                    while (blnWaitingForLockFile)
+                    while (waitingForLockFile)
                     {
                         // Wait 5 seconds
                         Thread.Sleep(5000);
@@ -770,11 +770,11 @@ namespace AnalysisManagerBase
 
                         if (!fiLockFile.Exists)
                         {
-                            blnWaitingForLockFile = false;
+                            waitingForLockFile = false;
                         }
                         else if (DateTime.UtcNow.Subtract(dtLockFileCreated).TotalMinutes > maxWaitTimeMinutes)
                         {
-                            blnWaitingForLockFile = false;
+                            waitingForLockFile = false;
                         }
                         else
                         {
@@ -807,13 +807,13 @@ namespace AnalysisManagerBase
         public static string CreateLockFile(string dataFilePath, string taskDescription)
         {
 
-            var strLockFilePath = dataFilePath + LOCK_FILE_EXTENSION;
-            using (var swLockFile = new StreamWriter(new FileStream(strLockFilePath, FileMode.CreateNew, FileAccess.Write, FileShare.Read)))
+            var lockFilePath = dataFilePath + LOCK_FILE_EXTENSION;
+            using (var swLockFile = new StreamWriter(new FileStream(lockFilePath, FileMode.CreateNew, FileAccess.Write, FileShare.Read)))
             {
                 swLockFile.WriteLine(taskDescription + " at " + DateTime.Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
             }
 
-            return strLockFilePath;
+            return lockFilePath;
 
         }
 
@@ -1127,18 +1127,18 @@ namespace AnalysisManagerBase
 
                     try
                     {
-                        var strFastaFileMsg = "Fasta file last modified: " +
+                        var fastaFileMsg = "Fasta file last modified: " +
                             GetHumanReadableTimeInterval(
                                 DateTime.UtcNow.Subtract(fiFastaFile.LastWriteTimeUtc)) + " ago at " +
                                 fiFastaFile.LastWriteTime.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT);
 
-                        strFastaFileMsg += "; file created: " +
+                        fastaFileMsg += "; file created: " +
                             GetHumanReadableTimeInterval(DateTime.UtcNow.Subtract(fiFastaFile.CreationTimeUtc)) + " ago at " +
                             fiFastaFile.CreationTime.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT);
 
-                        strFastaFileMsg += "; file size: " + fiFastaFile.Length + " bytes";
+                        fastaFileMsg += "; file size: " + fiFastaFile.Length + " bytes";
 
-                        LogDebugMessage(strFastaFileMsg);
+                        LogDebugMessage(fastaFileMsg);
                     }
                     catch (Exception)
                     {
@@ -1266,8 +1266,8 @@ namespace AnalysisManagerBase
         protected bool GenerateScanStatsFile(bool deleteRawDataFile)
         {
 
-            var strRawDataType = m_jobParams.GetParam("RawDataType");
-            var intDatasetID = m_jobParams.GetJobParameter("DatasetID", 0);
+            var rawDataType = m_jobParams.GetParam("RawDataType");
+            var datasetID = m_jobParams.GetJobParameter("DatasetID", 0);
 
             var strMSFileInfoScannerDir = m_mgrParams.GetParam("MSFileInfoScannerDir");
             if (string.IsNullOrEmpty(strMSFileInfoScannerDir))
@@ -1283,33 +1283,33 @@ namespace AnalysisManagerBase
                 return false;
             }
 
-            string strInputFilePath;
+            string inputFilePath;
 
             // Confirm that this dataset is a Thermo .Raw file or a .UIMF file
-            switch (GetRawDataType(strRawDataType))
+            switch (GetRawDataType(rawDataType))
             {
                 case eRawDataTypeConstants.ThermoRawFile:
-                    strInputFilePath = m_DatasetName + DOT_RAW_EXTENSION;
+                    inputFilePath = m_DatasetName + DOT_RAW_EXTENSION;
                     break;
                 case eRawDataTypeConstants.UIMF:
-                    strInputFilePath = m_DatasetName + DOT_UIMF_EXTENSION;
+                    inputFilePath = m_DatasetName + DOT_UIMF_EXTENSION;
                     break;
                 default:
-                    LogError("Invalid dataset type for auto-generating ScanStats.txt file: " + strRawDataType);
+                    LogError("Invalid dataset type for auto-generating ScanStats.txt file: " + rawDataType);
                     return false;
             }
 
-            strInputFilePath = Path.Combine(m_WorkingDir, strInputFilePath);
+            inputFilePath = Path.Combine(m_WorkingDir, inputFilePath);
 
-            if (!File.Exists(strInputFilePath))
+            if (!File.Exists(inputFilePath))
             {
-                if (!m_FileSearch.RetrieveSpectra(strRawDataType))
+                if (!m_FileSearch.RetrieveSpectra(rawDataType))
                 {
-                    var strExtraMsg = m_message;
+                    var extraMsg = m_message;
                     m_message = "Error retrieving spectra file";
-                    if (!string.IsNullOrWhiteSpace(strExtraMsg))
+                    if (!string.IsNullOrWhiteSpace(extraMsg))
                     {
-                        m_message += "; " + strExtraMsg;
+                        m_message += "; " + extraMsg;
                     }
                     LogMessage(m_message, 0, true);
                     return false;
@@ -1323,18 +1323,18 @@ namespace AnalysisManagerBase
             }
 
             // Make sure the raw data file does not get copied to the results folder
-            m_jobParams.AddResultFileToSkip(Path.GetFileName(strInputFilePath));
+            m_jobParams.AddResultFileToSkip(Path.GetFileName(inputFilePath));
 
             var objScanStatsGenerator = new clsScanStatsGenerator(strMSFileInfoScannerDLLPath, m_DebugLevel);
 
             // Create the _ScanStats.txt and _ScanStatsEx.txt files
-            var blnSuccess = objScanStatsGenerator.GenerateScanStatsFile(strInputFilePath, m_WorkingDir, intDatasetID);
+            var success = objScanStatsGenerator.GenerateScanStatsFile(inputFilePath, m_WorkingDir, datasetID);
 
-            if (blnSuccess)
+            if (success)
             {
                 if (m_DebugLevel >= 1)
                 {
-                    LogMessage("Generated ScanStats file using " + strInputFilePath);
+                    LogMessage("Generated ScanStats file using " + inputFilePath);
                 }
 
                 Thread.Sleep(125);
@@ -1344,7 +1344,7 @@ namespace AnalysisManagerBase
                 {
                     try
                     {
-                        File.Delete(strInputFilePath);
+                        File.Delete(inputFilePath);
                     }
                     catch (Exception)
                     {
@@ -1362,7 +1362,7 @@ namespace AnalysisManagerBase
                 }
             }
 
-            return blnSuccess;
+            return success;
 
         }
 
@@ -1459,15 +1459,15 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Examines the folder tree in strFolderPath to find the a folder with a name like 2013_2
+        /// Examines the folder tree in folderPath to find the a folder with a name like 2013_2
         /// </summary>
-        /// <param name="strFolderPath"></param>
+        /// <param name="folderPath"></param>
         /// <returns>Matching folder name if found, otherwise an empty string</returns>
         /// <remarks></remarks>
-        public static string GetDatasetYearQuarter(string strFolderPath)
+        public static string GetDatasetYearQuarter(string folderPath)
         {
 
-            if (string.IsNullOrEmpty(strFolderPath))
+            if (string.IsNullOrEmpty(folderPath))
             {
                 return string.Empty;
             }
@@ -1476,13 +1476,13 @@ namespace AnalysisManagerBase
             // Valid matches include: 2014_1, 2014_01, 2014_4
             var reYearQuarter = new Regex("^[0-9]{4}_0*[1-4]$", RegexOptions.Compiled);
 
-            // Split strFolderPath on the path separator
-            var lstFolders = strFolderPath.Split(Path.DirectorySeparatorChar).ToList();
+            // Split folderPath on the path separator
+            var lstFolders = folderPath.Split(Path.DirectorySeparatorChar).ToList();
             lstFolders.Reverse();
 
-            foreach (var strFolder in lstFolders)
+            foreach (var folder in lstFolders)
             {
-                var reMatch = reYearQuarter.Match(strFolder);
+                var reMatch = reYearQuarter.Match(folder);
                 if (reMatch.Success)
                 {
                     return reMatch.Value;
@@ -1722,8 +1722,8 @@ namespace AnalysisManagerBase
                             {
                                 if (!srLastUsedfile.EndOfStream)
                                 {
-                                    var strLastUseDate = srLastUsedfile.ReadLine();
-                                    if (DateTime.TryParse(strLastUseDate, out var dtLastUsedActual))
+                                    var lastUseDate = srLastUsedfile.ReadLine();
+                                    if (DateTime.TryParse(lastUseDate, out var dtLastUsedActual))
                                     {
                                         dtLastUsed = DateMax(dtLastUsed, dtLastUsedActual);
                                     }
@@ -1822,27 +1822,27 @@ namespace AnalysisManagerBase
 
             errorMessage = string.Empty;
 
-            var strDatasetStoragePath = jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetStoragePath");
-            if (string.IsNullOrEmpty(strDatasetStoragePath))
+            var datasetStoragePath = jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetStoragePath");
+            if (string.IsNullOrEmpty(datasetStoragePath))
             {
-                strDatasetStoragePath = jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetArchivePath");
+                datasetStoragePath = jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetArchivePath");
             }
 
-            if (string.IsNullOrEmpty(strDatasetStoragePath))
+            if (string.IsNullOrEmpty(datasetStoragePath))
             {
                 errorMessage = "JobParameters does not contain DatasetStoragePath or DatasetArchivePath; cannot construct MSXmlCache path";
                 return string.Empty;
             }
 
-            var strYearQuarter = GetDatasetYearQuarter(strDatasetStoragePath);
-            if (string.IsNullOrEmpty(strYearQuarter))
+            var yearQuarter = GetDatasetYearQuarter(datasetStoragePath);
+            if (string.IsNullOrEmpty(yearQuarter))
             {
-                errorMessage = "Unable to extract the dataset Year_Quarter code from " + strDatasetStoragePath + "; cannot construct MSXmlCache path";
+                errorMessage = "Unable to extract the dataset Year_Quarter code from " + datasetStoragePath + "; cannot construct MSXmlCache path";
                 return string.Empty;
             }
 
             // Combine the cache folder path, ToolNameVersion, and the dataset Year_Quarter code
-            var targetFolderPath = Path.Combine(cacheFolderPathBase, msXmlToolNameVersionFolder, strYearQuarter);
+            var targetFolderPath = Path.Combine(cacheFolderPathBase, msXmlToolNameVersionFolder, yearQuarter);
 
             return targetFolderPath;
 
@@ -2063,17 +2063,17 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Convert a raw data type string to raw data type enum (i.e. instrument data type)
         /// </summary>
-        /// <param name="strRawDataType"></param>
+        /// <param name="rawDataType"></param>
         /// <returns></returns>
-        public static eRawDataTypeConstants GetRawDataType(string strRawDataType)
+        public static eRawDataTypeConstants GetRawDataType(string rawDataType)
         {
 
-            if (string.IsNullOrEmpty(strRawDataType))
+            if (string.IsNullOrEmpty(rawDataType))
             {
                 return eRawDataTypeConstants.Unknown;
             }
 
-            switch (strRawDataType.ToLower())
+            switch (rawDataType.ToLower())
             {
                 case RAW_DATA_TYPE_DOT_D_FOLDERS:
                     return eRawDataTypeConstants.AgilentDFolder;
@@ -2858,7 +2858,7 @@ namespace AnalysisManagerBase
         public bool OverrideCurrentDatasetAndJobInfo(clsDataPackageJobInfo dataPkgJob)
         {
 
-            var blnAggregationJob = false;
+            var aggregationJob = false;
 
             if (string.IsNullOrEmpty(dataPkgJob.Dataset))
             {
@@ -2868,10 +2868,10 @@ namespace AnalysisManagerBase
 
             if (clsGlobal.IsMatch(dataPkgJob.Dataset, "Aggregation"))
             {
-                blnAggregationJob = true;
+                aggregationJob = true;
             }
 
-            if (!blnAggregationJob)
+            if (!aggregationJob)
             {
                 // Update job params to have the details for the current dataset
                 // This is required so that we can use FindDataFile to find the desired files
@@ -3422,35 +3422,35 @@ namespace AnalysisManagerBase
         public static string ResolveStoragePath(string FolderPath, string FileName)
         {
 
-            var strPhysicalFilePath = string.Empty;
+            var physicalFilePath = string.Empty;
 
-            var strFilePath = Path.Combine(FolderPath, FileName);
+            var filePath = Path.Combine(FolderPath, FileName);
 
-            if (File.Exists(strFilePath))
+            if (File.Exists(filePath))
             {
                 // The desired file is located in folder FolderPath
-                strPhysicalFilePath = strFilePath;
+                physicalFilePath = filePath;
             }
             else
             {
                 // The desired file was not found
-                strFilePath += STORAGE_PATH_INFO_FILE_SUFFIX;
+                filePath += STORAGE_PATH_INFO_FILE_SUFFIX;
 
-                if (File.Exists(strFilePath))
+                if (File.Exists(filePath))
                 {
                     // The _StoragePathInfo.txt file is present
                     // Open that file to read the file path on the first line of the file
 
-                    using (var srInFile = new StreamReader(new FileStream(strFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                    using (var srInFile = new StreamReader(new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                     {
-                        var strLineIn = srInFile.ReadLine();
-                        strPhysicalFilePath = strLineIn;
+                        var lineIn = srInFile.ReadLine();
+                        physicalFilePath = lineIn;
                     }
 
                 }
             }
 
-            return strPhysicalFilePath;
+            return physicalFilePath;
 
         }
 
@@ -3468,21 +3468,21 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public static string ResolveSerStoragePath(string FolderPath)
         {
-            string strPhysicalFilePath;
+            string physicalFilePath;
 
-            var strFilePath = Path.Combine(FolderPath, STORAGE_PATH_INFO_FILE_SUFFIX);
+            var filePath = Path.Combine(FolderPath, STORAGE_PATH_INFO_FILE_SUFFIX);
 
-            if (File.Exists(strFilePath))
+            if (File.Exists(filePath))
             {
                 // The desired file is located in folder FolderPath
                 // The _StoragePathInfo.txt file is present
                 // Open that file to read the file path on the first line of the file
 
-                using (var srInFile = new StreamReader(new FileStream(strFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var srInFile = new StreamReader(new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
 
-                    var strLineIn = srInFile.ReadLine();
-                    strPhysicalFilePath = strLineIn;
+                    var lineIn = srInFile.ReadLine();
+                    physicalFilePath = lineIn;
 
                 }
             }
@@ -3491,23 +3491,23 @@ namespace AnalysisManagerBase
                 // The desired file was not found
 
                 // Look for a ser file in the dataset folder
-                strPhysicalFilePath = Path.Combine(FolderPath, BRUKER_SER_FILE);
-                var fiFile = new FileInfo(strPhysicalFilePath);
+                physicalFilePath = Path.Combine(FolderPath, BRUKER_SER_FILE);
+                var fiFile = new FileInfo(physicalFilePath);
 
                 if (!fiFile.Exists)
                 {
                     // See if a folder named 0.ser exists in FolderPath
-                    strPhysicalFilePath = Path.Combine(FolderPath, BRUKER_ZERO_SER_FOLDER);
-                    var diFolder = new DirectoryInfo(strPhysicalFilePath);
+                    physicalFilePath = Path.Combine(FolderPath, BRUKER_ZERO_SER_FOLDER);
+                    var diFolder = new DirectoryInfo(physicalFilePath);
                     if (!diFolder.Exists)
                     {
-                        strPhysicalFilePath = string.Empty;
+                        physicalFilePath = string.Empty;
                     }
                 }
 
             }
 
-            return strPhysicalFilePath;
+            return physicalFilePath;
 
         }
 
@@ -3532,7 +3532,7 @@ namespace AnalysisManagerBase
             out Dictionary<int, clsDataPackageJobInfo> dctDataPackageJobs)
         {
 
-            bool blnSuccess;
+            bool success;
 
             try
             {
@@ -3699,10 +3699,10 @@ namespace AnalysisManagerBase
                                     // Look for a mzML.gz file instead
 
 
-                                    var success = m_FileSearch.RetrieveCachedMSXMLFile(DOT_MZML_EXTENSION, false,
+                                    var retrieved = m_FileSearch.RetrieveCachedMSXMLFile(DOT_MZML_EXTENSION, false,
                                         out var errorMessage, out var _);
 
-                                    if (!success)
+                                    if (!retrieved)
                                     {
                                         if (string.IsNullOrWhiteSpace(errorMessage))
                                         {
@@ -3782,16 +3782,16 @@ namespace AnalysisManagerBase
                 // Restore the dataset and job info for this aggregation job
                 OverrideCurrentDatasetAndJobInfo(currentDatasetAndJobInfo);
 
-                blnSuccess = true;
+                success = true;
 
             }
             catch (Exception ex)
             {
                 LogError("Exception in RetrieveAggregateFiles", ex);
-                blnSuccess = false;
+                success = false;
             }
 
-            return blnSuccess;
+            return success;
 
         }
 
@@ -3838,9 +3838,9 @@ namespace AnalysisManagerBase
             var dataPackageFileHander = new clsDataPackageFileHandler(connectionString, dataPackageID, this);
             RegisterEvents(dataPackageFileHander);
 
-            var blnSuccess = dataPackageFileHander.RetrieveDataPackagePeptideHitJobPHRPFiles(udtOptions, out lstDataPackagePeptideHitJobs, progressPercentAtStart, progressPercentAtFinish);
+            var success = dataPackageFileHander.RetrieveDataPackagePeptideHitJobPHRPFiles(udtOptions, out lstDataPackagePeptideHitJobs, progressPercentAtStart, progressPercentAtFinish);
 
-            return blnSuccess;
+            return success;
 
         }
 
@@ -3959,7 +3959,7 @@ namespace AnalysisManagerBase
                 var connectionString = m_mgrParams.GetParam("connectionstring");
                 var datasetID = m_jobParams.GetJobParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetID", 0);
 
-                var blnSuccess = ParFileGen.MakeFile(paramFileName, paramFileType, fastaFilePath, m_WorkingDir, connectionString, datasetID);
+                var success = ParFileGen.MakeFile(paramFileName, paramFileType, fastaFilePath, m_WorkingDir, connectionString, datasetID);
 
                 // Examine the size of the ModDefs.txt file
                 // Add it to the ignore list if it is empty (no point in tracking a 0-byte file)
@@ -3969,7 +3969,7 @@ namespace AnalysisManagerBase
                     m_jobParams.AddResultFileToSkip(fiModDefs.Name);
                 }
 
-                if (blnSuccess)
+                if (success)
                 {
                     if (m_DebugLevel >= 3)
                     {
@@ -4107,11 +4107,11 @@ namespace AnalysisManagerBase
                 return paramFileType;
             }
 
-            var strToolNameLCase = toolName.ToLower();
+            var toolNameLCase = toolName.ToLower();
 
             foreach (var entry in toolNameToTypeMapping)
             {
-                if (strToolNameLCase.Contains(entry.Key.ToLower()))
+                if (toolNameLCase.Contains(entry.Key.ToLower()))
                 {
                     return entry.Value;
                 }
@@ -4125,9 +4125,9 @@ namespace AnalysisManagerBase
         /// Next, calls StorePackedJobParameterList to store the list (items will be separated by tab characters)
         /// </summary>
         /// <param name="dctItems">Dictionary items to store as a packed job parameter</param>
-        /// <param name="strParameterName">Packed job parameter name</param>
+        /// <param name="parameterName">Packed job parameter name</param>
         /// <remarks></remarks>
-        protected void StorePackedJobParameterDictionary(Dictionary<string, int> dctItems, string strParameterName)
+        protected void StorePackedJobParameterDictionary(Dictionary<string, int> dctItems, string parameterName)
         {
             var lstItems = new List<string>();
 
@@ -4136,7 +4136,7 @@ namespace AnalysisManagerBase
                 lstItems.Add(item.Key + "=" + item.Value);
             }
 
-            StorePackedJobParameterList(lstItems, strParameterName);
+            StorePackedJobParameterList(lstItems, parameterName);
 
         }
         /// <summary>
@@ -4144,9 +4144,9 @@ namespace AnalysisManagerBase
         /// Next, calls StorePackedJobParameterList to store the list (items will be separated by tab characters)
         /// </summary>
         /// <param name="dctItems">Dictionary items to store as a packed job parameter</param>
-        /// <param name="strParameterName">Packed job parameter name</param>
+        /// <param name="parameterName">Packed job parameter name</param>
         /// <remarks></remarks>
-        public void StorePackedJobParameterDictionary(Dictionary<string, string> dctItems, string strParameterName)
+        public void StorePackedJobParameterDictionary(Dictionary<string, string> dctItems, string parameterName)
         {
             var lstItems = new List<string>();
 
@@ -4155,7 +4155,7 @@ namespace AnalysisManagerBase
                 lstItems.Add(item.Key + "=" + item.Value);
             }
 
-            StorePackedJobParameterList(lstItems, strParameterName);
+            StorePackedJobParameterList(lstItems, parameterName);
 
         }
 
@@ -4163,11 +4163,11 @@ namespace AnalysisManagerBase
         /// Convert a string list to a packed job parameter (items are separated by tab characters)
         /// </summary>
         /// <param name="lstItems">List items to store as a packed job parameter</param>
-        /// <param name="strParameterName">Packed job parameter name</param>
+        /// <param name="parameterName">Packed job parameter name</param>
         /// <remarks></remarks>
-        protected void StorePackedJobParameterList(List<string> lstItems, string strParameterName)
+        protected void StorePackedJobParameterList(List<string> lstItems, string parameterName)
         {
-            m_jobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, strParameterName, clsGlobal.FlattenList(lstItems, "\t"));
+            m_jobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, parameterName, clsGlobal.FlattenList(lstItems, "\t"));
 
         }
 
@@ -4210,63 +4210,63 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Removes any spectra with 2 or fewer ions in a _DTA.txt ifle
         /// </summary>
-        /// <param name="strWorkDir">Folder with the CDTA file</param>
-        /// <param name="strInputFileName">CDTA filename</param>
+        /// <param name="workDir">Folder with the CDTA file</param>
+        /// <param name="inputFileName">CDTA filename</param>
         /// <returns>True if success; false if an error</returns>
-        protected bool ValidateCDTAFileRemoveSparseSpectra(string strWorkDir, string strInputFileName)
+        protected bool ValidateCDTAFileRemoveSparseSpectra(string workDir, string inputFileName)
         {
-            var blnSuccess = m_CDTAUtilities.RemoveSparseSpectra(strWorkDir, strInputFileName);
-            if (!blnSuccess && string.IsNullOrEmpty(m_message))
+            var success = m_CDTAUtilities.RemoveSparseSpectra(workDir, inputFileName);
+            if (!success && string.IsNullOrEmpty(m_message))
             {
                 m_message = "m_CDTAUtilities.RemoveSparseSpectra returned False";
             }
 
-            return blnSuccess;
+            return success;
 
         }
 
         /// <summary>
         /// Makes sure the specified _DTA.txt file has scan=x and cs=y tags in the parent ion line
         /// </summary>
-        /// <param name="strSourceFilePath">Input _DTA.txt file to parse</param>
-        /// <param name="blnReplaceSourceFile">If True, then replaces the source file with and updated file</param>
-        /// <param name="blnDeleteSourceFileIfUpdated">
-        /// Only valid if blnReplaceSourceFile=True;
+        /// <param name="sourceFilePath">Input _DTA.txt file to parse</param>
+        /// <param name="replaceSourceFile">If True, then replaces the source file with and updated file</param>
+        /// <param name="deleteSourceFileIfUpdated">
+        /// Only valid if replaceSourceFile=True;
         /// If True, then the source file is deleted if an updated version is created.
         /// If false, then the source file is renamed to .old if an updated version is created.
         /// </param>
-        /// <param name="strOutputFilePath">
-        /// Output file path to use for the updated file; required if blnReplaceSourceFile=False; ignored if blnReplaceSourceFile=True
+        /// <param name="outputFilePath">
+        /// Output file path to use for the updated file; required if replaceSourceFile=False; ignored if replaceSourceFile=True
         /// </param>
         /// <returns>True if success; false if an error</returns>
-        protected bool ValidateCDTAFileScanAndCSTags(string strSourceFilePath, bool blnReplaceSourceFile, bool blnDeleteSourceFileIfUpdated, string strOutputFilePath)
+        protected bool ValidateCDTAFileScanAndCSTags(string sourceFilePath, bool replaceSourceFile, bool deleteSourceFileIfUpdated, string outputFilePath)
         {
-            var blnSuccess = m_CDTAUtilities.ValidateCDTAFileScanAndCSTags(strSourceFilePath, blnReplaceSourceFile, blnDeleteSourceFileIfUpdated, strOutputFilePath);
-            if (!blnSuccess && string.IsNullOrEmpty(m_message))
+            var success = m_CDTAUtilities.ValidateCDTAFileScanAndCSTags(sourceFilePath, replaceSourceFile, deleteSourceFileIfUpdated, outputFilePath);
+            if (!success && string.IsNullOrEmpty(m_message))
             {
                 m_message = "m_CDTAUtilities.ValidateCDTAFileScanAndCSTags returned False";
             }
 
-            return blnSuccess;
+            return success;
 
         }
 
         /// <summary>
         /// Condenses CDTA files that are over 2 GB in size
         /// </summary>
-        /// <param name="strWorkDir"></param>
-        /// <param name="strInputFileName"></param>
+        /// <param name="workDir"></param>
+        /// <param name="inputFileName"></param>
         /// <returns></returns>
         /// <remarks></remarks>
-        protected bool ValidateCDTAFileSize(string strWorkDir, string strInputFileName)
+        protected bool ValidateCDTAFileSize(string workDir, string inputFileName)
         {
-            var blnSuccess = m_CDTAUtilities.ValidateCDTAFileSize(strWorkDir, strInputFileName);
-            if (!blnSuccess && string.IsNullOrEmpty(m_message))
+            var success = m_CDTAUtilities.ValidateCDTAFileSize(workDir, inputFileName);
+            if (!success && string.IsNullOrEmpty(m_message))
             {
                 m_message = "m_CDTAUtilities.ValidateCDTAFileSize returned False";
             }
 
-            return blnSuccess;
+            return success;
 
         }
 
@@ -4287,9 +4287,9 @@ namespace AnalysisManagerBase
                 mSpectraTypeClassifier.ErrorEvent += mSpectraTypeClassifier_ErrorEvent;
                 mSpectraTypeClassifier.ReadingSpectra += mSpectraTypeClassifier_ReadingSpectra;
 
-                var blnSuccess = mSpectraTypeClassifier.CheckCDTAFile(strCDTAPath);
+                var success = mSpectraTypeClassifier.CheckCDTAFile(strCDTAPath);
 
-                if (!blnSuccess)
+                if (!success)
                 {
                     if (string.IsNullOrEmpty(m_message))
                     {
@@ -4346,116 +4346,116 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Validate that the specified file exists and has at least one tab-delimited row with a numeric value in the first column
         /// </summary>
-        /// <param name="strFilePath">Path to the file</param>
-        /// <param name="strFileDescription">File description, e.g. Synopsis</param>
-        /// <param name="strErrorMessage"></param>
+        /// <param name="filePath">Path to the file</param>
+        /// <param name="fileDescription">File description, e.g. Synopsis</param>
+        /// <param name="errorMessage"></param>
         /// <returns>True if the file has data; otherwise false</returns>
         /// <remarks></remarks>
-        public static bool ValidateFileHasData(string strFilePath, string strFileDescription, out string strErrorMessage)
+        public static bool ValidateFileHasData(string filePath, string fileDescription, out string errorMessage)
         {
-            const int intNumericDataColIndex = 0;
-            return ValidateFileHasData(strFilePath, strFileDescription, out strErrorMessage, intNumericDataColIndex);
+            const int numericDataColIndex = 0;
+            return ValidateFileHasData(filePath, fileDescription, out errorMessage, numericDataColIndex);
         }
 
         /// <summary>
         /// Validate that the specified file exists and has at least one tab-delimited row with a numeric value
         /// </summary>
-        /// <param name="strFilePath">Path to the file</param>
-        /// <param name="strFileDescription">File description, e.g. Synopsis</param>
-        /// <param name="strErrorMessage"></param>
-        /// <param name="intNumericDataColIndex">Index of the numeric data column; use -1 to simply look for any text in the file</param>
+        /// <param name="filePath">Path to the file</param>
+        /// <param name="fileDescription">File description, e.g. Synopsis</param>
+        /// <param name="errorMessage"></param>
+        /// <param name="numericDataColIndex">Index of the numeric data column; use -1 to simply look for any text in the file</param>
         /// <returns>True if the file has data; otherwise false</returns>
         /// <remarks></remarks>
-        public static bool ValidateFileHasData(string strFilePath, string strFileDescription, out string strErrorMessage, int intNumericDataColIndex)
+        public static bool ValidateFileHasData(string filePath, string fileDescription, out string errorMessage, int numericDataColIndex)
         {
 
-            var blnDataFound = false;
+            var dataFound = false;
 
-            strErrorMessage = string.Empty;
+            errorMessage = string.Empty;
 
             try
             {
-                var fiFileInfo = new FileInfo(strFilePath);
+                var fiFileInfo = new FileInfo(filePath);
 
                 if (!fiFileInfo.Exists)
                 {
-                    strErrorMessage = strFileDescription + " file not found: " + fiFileInfo.Name;
+                    errorMessage = fileDescription + " file not found: " + fiFileInfo.Name;
                     return false;
                 }
 
                 if (fiFileInfo.Length == 0)
                 {
-                    strErrorMessage = strFileDescription + " file is empty (zero-bytes)";
+                    errorMessage = fileDescription + " file is empty (zero-bytes)";
                     return false;
                 }
 
                 // Open the file and confirm it has data rows
                 using (var srInFile = new StreamReader(new FileStream(fiFileInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    while (!srInFile.EndOfStream && !blnDataFound)
+                    while (!srInFile.EndOfStream && !dataFound)
                     {
-                        var strLineIn = srInFile.ReadLine();
-                        if (string.IsNullOrEmpty(strLineIn))
+                        var lineIn = srInFile.ReadLine();
+                        if (string.IsNullOrEmpty(lineIn))
                             continue;
 
-                        if (intNumericDataColIndex < 0)
+                        if (numericDataColIndex < 0)
                         {
-                            blnDataFound = true;
+                            dataFound = true;
                         }
                         else
                         {
                             // Split on the tab character and check if the first column is numeric
-                            var strSplitLine = strLineIn.Split('\t');
+                            var splitLine = lineIn.Split('\t');
 
-                            if (strSplitLine.Length <= intNumericDataColIndex)
+                            if (splitLine.Length <= numericDataColIndex)
                                 continue;
 
-                            if (double.TryParse(strSplitLine[intNumericDataColIndex], out var _))
+                            if (double.TryParse(splitLine[numericDataColIndex], out var _))
                             {
-                                blnDataFound = true;
+                                dataFound = true;
                             }
                         }
                     }
                 }
 
-                if (!blnDataFound)
+                if (!dataFound)
                 {
-                    strErrorMessage = strFileDescription + " is empty (no data)";
+                    errorMessage = fileDescription + " is empty (no data)";
                 }
 
             }
             catch (Exception)
             {
-                strErrorMessage = "Exception validating " + strFileDescription + " file";
+                errorMessage = "Exception validating " + fileDescription + " file";
                 return false;
             }
 
-            return blnDataFound;
+            return dataFound;
 
         }
 
         /// <summary>
         /// Validates that sufficient free memory is available to run Java
         /// </summary>
-        /// <param name="strMemorySizeJobParamName">Name of the job parameter that defines the amount of memory (in MB) that must be available on the system</param>
-        /// <param name="blnLogFreeMemoryOnSuccess">If True, then post a log entry if sufficient memory is, in fact, available</param>
+        /// <param name="memorySizeJobParamName">Name of the job parameter that defines the amount of memory (in MB) that must be available on the system</param>
+        /// <param name="logFreeMemoryOnSuccess">If True, then post a log entry if sufficient memory is, in fact, available</param>
         /// <returns>True if sufficient free memory; false if not enough free memory</returns>
-        /// <remarks>Typical names for strJavaMemorySizeJobParamName are MSGFJavaMemorySize, MSGFDBJavaMemorySize, and MSDeconvJavaMemorySize.
+        /// <remarks>Typical names for javaMemorySizeJobParamName are MSGFJavaMemorySize, MSGFDBJavaMemorySize, and MSDeconvJavaMemorySize.
         /// These parameters are loaded from DMS Settings Files (table T_Settings_Files in DMS5, copied to table T_Job_Parameters in DMS_Pipeline)
         /// </remarks>
-        protected bool ValidateFreeMemorySize(string strMemorySizeJobParamName, bool blnLogFreeMemoryOnSuccess = true)
+        protected bool ValidateFreeMemorySize(string memorySizeJobParamName, bool logFreeMemoryOnSuccess = true)
         {
-            // Lookup parameter strMemorySizeJobParamName; assume 2000 MB if not defined
-            var freeMemoryRequiredMB = m_jobParams.GetJobParameter(strMemorySizeJobParamName, 2000);
+            // Lookup parameter memorySizeJobParamName; assume 2000 MB if not defined
+            var freeMemoryRequiredMB = m_jobParams.GetJobParameter(memorySizeJobParamName, 2000);
 
             // Require freeMemoryRequiredMB be at least 0.5 GB
             if (freeMemoryRequiredMB < 512)
                 freeMemoryRequiredMB = 512;
 
             if (m_DebugLevel < 1)
-                blnLogFreeMemoryOnSuccess = false;
+                logFreeMemoryOnSuccess = false;
 
-            return ValidateFreeMemorySize(freeMemoryRequiredMB, StepToolName, blnLogFreeMemoryOnSuccess);
+            return ValidateFreeMemorySize(freeMemoryRequiredMB, StepToolName, logFreeMemoryOnSuccess);
 
         }
 
@@ -4483,6 +4483,7 @@ namespace AnalysisManagerBase
 
             if (logFreeMemoryOnSuccess)
             {
+                // Example message: MSGF+ will use 4000 MB; system has 7296 MB available
                 var message = stepToolName + " will use " + freeMemoryRequiredMB + " MB; " +
                              "system has " + freeMemoryMB.ToString("0") + " MB available";
                 clsGlobal.LogDebug(message);
@@ -4522,12 +4523,12 @@ namespace AnalysisManagerBase
 
             const int MINIMUM_LOG_INTERVAL_SEC = 10;
 
-            var blnForcelog = m_DebugLevel >= 1 && statusMsg.Contains(Protein_Exporter.clsGetFASTAFromDMS.LOCK_FILE_PROGRESS_TEXT);
+            var forcelog = m_DebugLevel >= 1 && statusMsg.Contains(Protein_Exporter.clsGetFASTAFromDMS.LOCK_FILE_PROGRESS_TEXT);
 
-            if (m_DebugLevel >= 3 || blnForcelog)
+            if (m_DebugLevel >= 3 || forcelog)
             {
                 // Limit the logging to once every MINIMUM_LOG_INTERVAL_SEC seconds
-                if (blnForcelog || DateTime.UtcNow.Subtract(m_FastaToolsLastLogTime).TotalSeconds >= MINIMUM_LOG_INTERVAL_SEC ||
+                if (forcelog || DateTime.UtcNow.Subtract(m_FastaToolsLastLogTime).TotalSeconds >= MINIMUM_LOG_INTERVAL_SEC ||
                     fractionDone - m_FastaToolFractionDoneSaved >= 0.25)
                 {
                     m_FastaToolsLastLogTime = DateTime.UtcNow;
@@ -4569,9 +4570,9 @@ namespace AnalysisManagerBase
 
         }
 
-        private void m_SplitFastaFileUtility_SplittingBaseFastaFile(string strBaseFastaFileName, int numSplitParts)
+        private void m_SplitFastaFileUtility_SplittingBaseFastaFile(string baseFastaFileName, int numSplitParts)
         {
-            LogDebugMessage("Splitting " + strBaseFastaFileName + " into " + numSplitParts + " parts");
+            LogDebugMessage("Splitting " + baseFastaFileName + " into " + numSplitParts + " parts");
         }
 
         #endregion
@@ -4587,7 +4588,7 @@ namespace AnalysisManagerBase
 
         #region "SpectraTypeClassifier Events"
 
-        private void mSpectraTypeClassifier_ErrorEvent(string strMessage)
+        private void mSpectraTypeClassifier_ErrorEvent(string message)
         {
         }
 

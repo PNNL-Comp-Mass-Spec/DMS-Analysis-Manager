@@ -401,15 +401,15 @@ namespace AnalysisManagerProg
 
             while (success)
             {
-                var strMgrSettingsGroup = GetGroupNameFromSettings(dtSettings);
-                if (string.IsNullOrEmpty(strMgrSettingsGroup))
+                var mgrSettingsGroup = GetGroupNameFromSettings(dtSettings);
+                if (string.IsNullOrEmpty(mgrSettingsGroup))
                 {
                     break;
                 }
 
                 // This manager has group-based settings defined; load them now
 
-                success = LoadMgrSettingsFromDBWork(strMgrSettingsGroup, out dtSettings, returnErrorIfNoParameters: false);
+                success = LoadMgrSettingsFromDBWork(mgrSettingsGroup, out dtSettings, returnErrorIfNoParameters: false);
 
                 if (success)
                 {
@@ -816,19 +816,19 @@ namespace AnalysisManagerProg
         /// <returns>Value for specified parameter; valueIfMissing if not found</returns>
         public string GetParam(string itemKey, string valueIfMissing)
         {
-            var strValue = GetParam(itemKey);
-            if (string.IsNullOrEmpty(strValue))
+            var value = GetParam(itemKey);
+            if (string.IsNullOrEmpty(value))
             {
                 return valueIfMissing;
             }
 
-            return strValue;
+            return value;
         }
 
-        private static void ShowTraceMessage(string strMessage)
+        private static void ShowTraceMessage(string message)
         {
             clsGlobal.EnableConsoleTraceColor();
-            Console.WriteLine(DateTime.Now.ToString("hh:mm:ss.fff tt") + ": " + strMessage);
+            Console.WriteLine(DateTime.Now.ToString("hh:mm:ss.fff tt") + ": " + message);
             Console.ResetColor();
         }
 

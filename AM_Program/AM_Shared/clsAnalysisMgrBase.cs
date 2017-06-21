@@ -35,7 +35,7 @@ namespace AnalysisManagerBase
         private bool IsLockQueueLogMessageNeeded(ref DateTime dtLockQueueWaitTimeStart, ref DateTime dtLastLockQueueWaitTimeLog)
         {
 
-            int intWaitTimeLogIntervalSeconds;
+            int waitTimeLogIntervalSeconds;
 
             if (dtLockQueueWaitTimeStart == DateTime.MinValue)
                 dtLockQueueWaitTimeStart = DateTime.UtcNow;
@@ -44,20 +44,20 @@ namespace AnalysisManagerBase
 
             if (waitTimeMinutes >= 30)
             {
-                intWaitTimeLogIntervalSeconds = 240;
+                waitTimeLogIntervalSeconds = 240;
             } else if (waitTimeMinutes >= 15)
             {
-                intWaitTimeLogIntervalSeconds = 120;
+                waitTimeLogIntervalSeconds = 120;
             } else if (waitTimeMinutes >= 5)
             {
-                intWaitTimeLogIntervalSeconds = 60;
+                waitTimeLogIntervalSeconds = 60;
             }
             else
             {
-                intWaitTimeLogIntervalSeconds = 30;
+                waitTimeLogIntervalSeconds = 30;
             }
 
-            if (DateTime.UtcNow.Subtract(dtLastLockQueueWaitTimeLog).TotalSeconds >= intWaitTimeLogIntervalSeconds)
+            if (DateTime.UtcNow.Subtract(dtLastLockQueueWaitTimeLog).TotalSeconds >= waitTimeLogIntervalSeconds)
             {
                 return true;
             }

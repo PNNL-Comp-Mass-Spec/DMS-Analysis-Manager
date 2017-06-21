@@ -141,37 +141,37 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Examines intCount to determine which string to return
+        /// Examines count to determine which string to return
         /// </summary>
-        /// <param name="intCount"></param>
-        /// <param name="strTextIfOneItem"></param>
-        /// <param name="strTextIfZeroOrMultiple"></param>
-        /// <returns>Returns strTextIfOneItem if intCount is 1; otherwise, returns strTextIfZeroOrMultiple</returns>
+        /// <param name="count"></param>
+        /// <param name="textIfOneItem"></param>
+        /// <param name="textIfZeroOrMultiple"></param>
+        /// <returns>Returns textIfOneItem if count is 1; otherwise, returns textIfZeroOrMultiple</returns>
         /// <remarks></remarks>
-        public static string CheckPlural(int intCount, string strTextIfOneItem, string strTextIfZeroOrMultiple)
+        public static string CheckPlural(int count, string textIfOneItem, string textIfZeroOrMultiple)
         {
-            if (intCount == 1)
+            if (count == 1)
             {
-                return strTextIfOneItem;
+                return textIfOneItem;
             }
 
-            return strTextIfZeroOrMultiple;
+            return textIfZeroOrMultiple;
         }
 
         /// <summary>
         /// Collapse an array of items to a tab-delimited list
         /// </summary>
-        /// <param name="strItems"></param>
+        /// <param name="items"></param>
         /// <returns></returns>
         /// <remarks></remarks>
-        public static string CollapseLine(string[] strItems)
+        public static string CollapseLine(string[] items)
         {
-            if (strItems == null || strItems.Length == 0)
+            if (items == null || items.Length == 0)
             {
                 return string.Empty;
             }
 
-            return CollapseList(strItems.ToList());
+            return CollapseList(items.ToList());
         }
 
         /// <summary>
@@ -188,15 +188,12 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Decrypts password received from ini file
+        /// Decrypts password
         /// </summary>
         /// <param name="enPwd">Encoded password</param>
         /// <returns>Clear text password</returns>
         public static string DecodePassword(string enPwd)
         {
-            // Decrypts password received from ini file
-            // Password was created by alternately subtracting or adding 1 to the ASCII value of each character
-
             // Convert the password string to a character array
             var pwdChars = enPwd.ToCharArray();
             var pwdBytes = new List<byte>();
@@ -310,16 +307,16 @@ namespace AnalysisManagerBase
             // the goal is to extract out the text after Version= but before the next comma
 
             var reGetVersion = new Regex("version=([0-9.]+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-            var strVersion = objAssembly.FullName;
+            var version = objAssembly.FullName;
 
-            var reMatch = reGetVersion.Match(strVersion);
+            var reMatch = reGetVersion.Match(version);
 
             if (reMatch.Success)
             {
-                strVersion = reMatch.Groups[1].Value;
+                version = reMatch.Groups[1].Value;
             }
 
-            return strVersion;
+            return version;
 
         }
 
@@ -593,68 +590,74 @@ namespace AnalysisManagerBase
 
         }
 
-        public static KeyValuePair<string, string> GetKeyValueSetting(string strText)
+        /// <summary>
+        /// Parse settingText to extract the key name and value (separated by an equals sign)
+        /// </summary>
+        /// <param name="settingText"></param>
+        /// <returns>Key/Value pair</returns>
+        /// <remarks>If the line starts with # it is treated as a comment line and an empty key/value pair will be returned</remarks>
+        public static KeyValuePair<string, string> GetKeyValueSetting(string settingText)
         {
 
             var emptyKvPair = new KeyValuePair<string, string>(string.Empty, string.Empty);
 
-            if (string.IsNullOrWhiteSpace(strText))
+            if (string.IsNullOrWhiteSpace(settingText))
                 return emptyKvPair;
 
-            strText = strText.Trim();
+            settingText = settingText.Trim();
 
-            if (strText.StartsWith("#") || !strText.Contains('='))
+            if (settingText.StartsWith("#") || !settingText.Contains('='))
                 return emptyKvPair;
 
-            var intCharIndex = strText.IndexOf("=", StringComparison.Ordinal);
+            var charIndex = settingText.IndexOf("=", StringComparison.Ordinal);
 
-            if (intCharIndex <= 0)
+            if (charIndex <= 0)
                 return emptyKvPair;
 
-            var strKey = strText.Substring(0, intCharIndex).Trim();
-            string strValue;
+            var key = settingText.Substring(0, charIndex).Trim();
+            string value;
 
-            if (intCharIndex < strText.Length - 1)
+            if (charIndex < settingText.Length - 1)
             {
-                strValue = strText.Substring(intCharIndex + 1).Trim();
+                value = settingText.Substring(charIndex + 1).Trim();
             }
             else
             {
-                strValue = string.Empty;
+                value = string.Empty;
             }
 
-            return new KeyValuePair<string, string>(strKey, strValue);
+            return new KeyValuePair<string, string>(key, value);
         }
 
         /// <summary>
         /// Compare two strings (not case sensitive)
         /// </summary>
-        /// <param name="strText1"></param>
-        /// <param name="strText2"></param>
+        /// <param name="text1"></param>
+        /// <param name="text2"></param>
         /// <returns>True if they match; false if not</returns>
         /// <remarks>A null string is considered equivalent to an empty string.  Thus, two null strings are considered equal</remarks>
-        public static bool IsMatch(string strText1, string strText2)
+        public static bool IsMatch(string text1, string text2)
         {
-            return IsMatch(strText1, strText2, true);
+            return IsMatch(text1, text2, true);
         }
 
         /// <summary>
         /// Compare two strings (not case sensitive)
         /// </summary>
-        /// <param name="strText1"></param>
-        /// <param name="strText2"></param>
+        /// <param name="text1"></param>
+        /// <param name="text2"></param>
         /// <param name="treatNullAsEmptyString">When true, a null string is considered equivalent to an empty string</param>
         /// <returns>True if they match; false if not</returns>
         /// <remarks>Two null strings are considered equal, even if treatNullAsEmptyString is false</remarks>
-        public static bool IsMatch(string strText1, string strText2, bool treatNullAsEmptyString)
+        public static bool IsMatch(string text1, string text2, bool treatNullAsEmptyString)
         {
 
-            if (treatNullAsEmptyString && string.IsNullOrWhiteSpace(strText1) && string.IsNullOrWhiteSpace(strText2))
+            if (treatNullAsEmptyString && string.IsNullOrWhiteSpace(text1) && string.IsNullOrWhiteSpace(text2))
             {
                 return true;
             }
 
-            if (string.Compare(strText1, strText2, StringComparison.OrdinalIgnoreCase) == 0)
+            if (string.Compare(text1, text2, StringComparison.OrdinalIgnoreCase) == 0)
             {
                 return true;
             }
@@ -663,20 +666,20 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Parses the headers in strHeaderLine to look for the names specified in lstHeaderNames
+        /// Parses the headers in headerLine to look for the names specified in headerNames
         /// </summary>
-        /// <param name="strHeaderLine"></param>
-        /// <param name="lstHeaderNames"></param>
+        /// <param name="headerLine"></param>
+        /// <param name="headerNames"></param>
         /// <param name="isCaseSensitive"></param>
         /// <returns>Dictionary with the header names and 0-based column index</returns>
-        /// <remarks>Header names not found in strHeaderLine will have an index of -1</remarks>
-        public static Dictionary<string, int> ParseHeaderLine(string strHeaderLine, List<string> lstHeaderNames, bool isCaseSensitive)
+        /// <remarks>Header names not found in headerLine will have an index of -1</remarks>
+        public static Dictionary<string, int> ParseHeaderLine(string headerLine, List<string> headerNames, bool isCaseSensitive)
         {
             var dctHeaderMapping = new Dictionary<string, int>();
 
-            var lstColumns = strHeaderLine.Split('\t').ToList();
+            var lstColumns = headerLine.Split('\t').ToList();
 
-            foreach (var headerName in lstHeaderNames)
+            foreach (var headerName in headerNames)
             {
                 var colIndex = -1;
 
@@ -704,7 +707,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Examines strPath to look for spaces
+        /// Examines filePath to look for spaces
         /// </summary>
         /// <param name="filePath"></param>
         /// <returns>filePath as-is if no spaces, otherwise filePath surrounded by double quotes </returns>
@@ -723,8 +726,8 @@ namespace AnalysisManagerBase
         public static bool CBoolSafe(string value)
         {
 
-            if (bool.TryParse(value, out var blnValue))
-                return blnValue;
+            if (bool.TryParse(value, out var boolValue))
+                return boolValue;
 
             return false;
 
@@ -740,8 +743,8 @@ namespace AnalysisManagerBase
         public static bool CBoolSafe(string value, bool defaultValue)
         {
 
-            if (bool.TryParse(value, out var blnValue))
-                return blnValue;
+            if (bool.TryParse(value, out var boolValue))
+                return boolValue;
 
             return defaultValue;
 
@@ -804,17 +807,17 @@ namespace AnalysisManagerBase
                     return false;
                 }
 
-                var strBaseName = Path.GetFileNameWithoutExtension(TargetFileName);
-                if (strBaseName == null)
+                var baseName = Path.GetFileNameWithoutExtension(TargetFileName);
+                if (baseName == null)
                 {
                     // Cannot continue without a base filename
                     return false;
                 }
 
-                var strExtension = Path.GetExtension(TargetFileName);
-                if (string.IsNullOrEmpty(strExtension))
+                var extension = Path.GetExtension(TargetFileName);
+                if (string.IsNullOrEmpty(extension))
                 {
-                    strExtension = ".bak";
+                    extension = ".bak";
                 }
 
                 if (VersionCountToKeep > 9)
@@ -822,31 +825,31 @@ namespace AnalysisManagerBase
                 if (VersionCountToKeep < 0)
                     VersionCountToKeep = 0;
 
-                // Backup any existing copies of strTargetFilePath
-                for (var intRevision = VersionCountToKeep - 1; intRevision >= 0; intRevision += -1)
+                // Backup any existing copies of bargetFilePath
+                for (var revision = VersionCountToKeep - 1; revision >= 0; revision += -1)
                 {
                     try
                     {
-                        var strBaseNameCurrent = string.Copy(strBaseName);
-                        if (intRevision > 0)
+                        var baseNameCurrent = string.Copy(baseName);
+                        if (revision > 0)
                         {
-                            strBaseNameCurrent += "_" + intRevision;
+                            baseNameCurrent += "_" + revision;
                         }
-                        strBaseNameCurrent += strExtension;
+                        baseNameCurrent += extension;
 
-                        var ioFileToRename = new FileInfo(Path.Combine(TargetFolder, strBaseNameCurrent));
-                        var strNewFilePath = Path.Combine(TargetFolder, strBaseName + "_" + (intRevision + 1) + strExtension);
+                        var ioFileToRename = new FileInfo(Path.Combine(TargetFolder, baseNameCurrent));
+                        var newFilePath = Path.Combine(TargetFolder, baseName + "_" + (revision + 1) + extension);
 
-                        // Confirm that strNewFilePath doesn't exist; delete it if it does
-                        if (File.Exists(strNewFilePath))
+                        // Confirm that newFilePath doesn't exist; delete it if it does
+                        if (File.Exists(newFilePath))
                         {
-                            File.Delete(strNewFilePath);
+                            File.Delete(newFilePath);
                         }
 
-                        // Rename the current file to strNewFilePath
+                        // Rename the current file to newFilePath
                         if (ioFileToRename.Exists)
                         {
-                            ioFileToRename.MoveTo(strNewFilePath);
+                            ioFileToRename.MoveTo(newFilePath);
                         }
 
                     }
@@ -857,10 +860,10 @@ namespace AnalysisManagerBase
 
                 }
 
-                var strFinalFilePath = Path.Combine(TargetFolder, TargetFileName);
+                var finalFilePath = Path.Combine(TargetFolder, TargetFileName);
 
-                // Now copy the file from SourceFilePath to strNewFilePath
-                ioSrcFile.CopyTo(strFinalFilePath, true);
+                // Now copy the file from SourceFilePath to newFilePath
+                ioSrcFile.CopyTo(finalFilePath, true);
 
             }
             catch (Exception)
@@ -991,30 +994,30 @@ namespace AnalysisManagerBase
         private static string ByteArrayToString(byte[] arrInput)
         {
 
-            var  strOutput = new StringBuilder(arrInput.Length);
+            var  output = new StringBuilder(arrInput.Length);
 
             for (var i = 0; i <= arrInput.Length - 1; i++)
             {
-                strOutput.Append(arrInput[i].ToString("X2"));
+                output.Append(arrInput[i].ToString("X2"));
             }
 
-            return strOutput.ToString().ToLower();
+            return output.ToString().ToLower();
 
         }
 
         /// <summary>
         /// Computes the MD5 hash for a file
         /// </summary>
-        /// <param name="strPath"></param>
+        /// <param name="filePath"></param>
         /// <returns></returns>
         /// <remarks></remarks>
-        public static string ComputeFileHashMD5(string strPath)
+        public static string ComputeFileHashMD5(string filePath)
         {
 
             string hashValue;
 
             // open file (as read-only)
-            using (Stream objReader = new FileStream(strPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            using (Stream objReader = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
             {
                 // Hash contents of this stream
                 hashValue = ComputeMD5Hash(objReader);
@@ -1042,16 +1045,16 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Computes the SHA-1 hash for a file
         /// </summary>
-        /// <param name="strPath"></param>
+        /// <param name="filePath"></param>
         /// <returns></returns>
         /// <remarks></remarks>
-        public static string ComputeFileHashSha1(string strPath)
+        public static string ComputeFileHashSha1(string filePath)
         {
 
             string hashValue;
 
             // open file (as read-only)
-            using (Stream objReader = new FileStream(strPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            using (Stream objReader = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
             {
                 // Hash contents of this stream
                 hashValue = ComputeSha1Hash(objReader);
@@ -1125,28 +1128,28 @@ namespace AnalysisManagerBase
         /// Creates a .hashcheck file for the specified file
         /// The file will be created in the same folder as the data file, and will contain size, modification_date_utc, and hash
         /// </summary>
-        /// <param name="strDataFilePath"></param>
-        /// <param name="blnComputeMD5Hash">If True, then computes the MD5 hash</param>
+        /// <param name="dataFilePath"></param>
+        /// <param name="computeMD5Hash">If True, then computes the MD5 hash</param>
         /// <returns>The full path to the .hashcheck file; empty string if a problem</returns>
         /// <remarks></remarks>
-        public static string CreateHashcheckFile(string strDataFilePath, bool blnComputeMD5Hash)
+        public static string CreateHashcheckFile(string dataFilePath, bool computeMD5Hash)
         {
 
-            string strMD5Hash;
+            string md5Hash;
 
-            if (!File.Exists(strDataFilePath))
+            if (!File.Exists(dataFilePath))
                 return string.Empty;
 
-            if (blnComputeMD5Hash)
+            if (computeMD5Hash)
             {
-                strMD5Hash = ComputeFileHashMD5(strDataFilePath);
+                md5Hash = ComputeFileHashMD5(dataFilePath);
             }
             else
             {
-                strMD5Hash = string.Empty;
+                md5Hash = string.Empty;
             }
 
-            return CreateHashcheckFile(strDataFilePath, strMD5Hash);
+            return CreateHashcheckFile(dataFilePath, md5Hash);
 
         }
 
@@ -1154,31 +1157,31 @@ namespace AnalysisManagerBase
         /// Creates a .hashcheck file for the specified file
         /// The file will be created in the same folder as the data file, and will contain size, modification_date_utc, and hash
         /// </summary>
-        /// <param name="strDataFilePath"></param>
-        /// <param name="strMD5Hash"></param>
+        /// <param name="dataFilePath"></param>
+        /// <param name="md5Hash"></param>
         /// <returns>The full path to the .hashcheck file; empty string if a problem</returns>
         /// <remarks></remarks>
-        public static string CreateHashcheckFile(string strDataFilePath, string strMD5Hash)
+        public static string CreateHashcheckFile(string dataFilePath, string md5Hash)
         {
 
-            var fiDataFile = new FileInfo(strDataFilePath);
+            var fiDataFile = new FileInfo(dataFilePath);
 
             if (!fiDataFile.Exists)
                 return string.Empty;
 
-            var strHashFilePath = fiDataFile.FullName + SERVER_CACHE_HASHCHECK_FILE_SUFFIX;
-            if (string.IsNullOrWhiteSpace(strMD5Hash))
-                strMD5Hash = string.Empty;
+            var hashFilePath = fiDataFile.FullName + SERVER_CACHE_HASHCHECK_FILE_SUFFIX;
+            if (string.IsNullOrWhiteSpace(md5Hash))
+                md5Hash = string.Empty;
 
-            using (var swOutFile = new StreamWriter(new FileStream(strHashFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+            using (var swOutFile = new StreamWriter(new FileStream(hashFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
             {
                 swOutFile.WriteLine("# Hashcheck file created " + DateTime.Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
                 swOutFile.WriteLine("size=" + fiDataFile.Length);
                 swOutFile.WriteLine("modification_date_utc=" + fiDataFile.LastWriteTimeUtc.ToString("yyyy-MM-dd hh:mm:ss tt"));
-                swOutFile.WriteLine("hash=" + strMD5Hash);
+                swOutFile.WriteLine("hash=" + md5Hash);
             }
 
-            return strHashFilePath;
+            return hashFilePath;
 
         }
 
@@ -1219,17 +1222,17 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Compares two files, byte-by-byte
         /// </summary>
-        /// <param name="strFilePath1">Path to the first file</param>
-        /// <param name="strFilePath2">Path to the second file</param>
+        /// <param name="filePath1">Path to the first file</param>
+        /// <param name="filePath2">Path to the second file</param>
         /// <returns>True if the files match; false if they don't match; also returns false if either file is missing</returns>
         /// <remarks></remarks>
-        public static bool FilesMatch(string strFilePath1, string strFilePath2)
+        public static bool FilesMatch(string filePath1, string filePath2)
         {
 
             try
             {
-                var fiFile1 = new FileInfo(strFilePath1);
-                var fiFile2 = new FileInfo(strFilePath2);
+                var fiFile1 = new FileInfo(filePath1);
+                var fiFile2 = new FileInfo(filePath2);
 
                 if (!fiFile1.Exists || !fiFile2.Exists)
                 {
@@ -1427,39 +1430,39 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Replaces text in a string, ignoring case
         /// </summary>
-        /// <param name="strTextToSearch"></param>
-        /// <param name="strTextToFind"></param>
-        /// <param name="strReplacementText"></param>
+        /// <param name="textToSearch"></param>
+        /// <param name="textToFind"></param>
+        /// <param name="replacementText"></param>
         /// <returns></returns>
         /// <remarks></remarks>
-        public static string ReplaceIgnoreCase(string strTextToSearch, string strTextToFind, string strReplacementText)
+        public static string ReplaceIgnoreCase(string textToSearch, string textToFind, string replacementText)
         {
 
-            var intCharIndex = strTextToSearch.IndexOf(strTextToFind, StringComparison.InvariantCultureIgnoreCase);
+            var charIndex = textToSearch.IndexOf(textToFind, StringComparison.InvariantCultureIgnoreCase);
 
-            if (intCharIndex < 0)
+            if (charIndex < 0)
             {
-                return strTextToSearch;
+                return textToSearch;
             }
 
-            string strNewText;
-            if (intCharIndex == 0)
+            string newText;
+            if (charIndex == 0)
             {
-                strNewText = string.Empty;
+                newText = string.Empty;
             }
             else
             {
-                strNewText = strTextToSearch.Substring(0, intCharIndex);
+                newText = textToSearch.Substring(0, charIndex);
             }
 
-            strNewText += strReplacementText;
+            newText += replacementText;
 
-            if (intCharIndex + strTextToFind.Length < strTextToSearch.Length)
+            if (charIndex + textToFind.Length < textToSearch.Length)
             {
-                strNewText += strTextToSearch.Substring(intCharIndex + strTextToFind.Length);
+                newText += textToSearch.Substring(charIndex + textToFind.Length);
             }
 
-            return strNewText;
+            return newText;
         }
 
         /// <summary>
@@ -1506,17 +1509,20 @@ namespace AnalysisManagerBase
         /// <param name="comparisonStartLine">Line at which to start the comparison; if 0 or 1, then compares all lines</param>
         /// <param name="comparisonEndLine">Line at which to end the comparison; if 0, then compares all the way to the end</param>
         /// <param name="ignoreWhitespace">If true, then removes white space from the beginning and end of each line before compaing</param>
-        /// <param name="lstLineIgnoreRegExSpecs">List of RegEx match specs that indicate lines to ignore</param>
+        /// <param name="lineIgnoreRegExSpecs">List of RegEx match specs that indicate lines to ignore</param>
         /// <returns></returns>
         /// <remarks></remarks>
-        public static bool TextFilesMatch(string filePath1, string filePath2, int comparisonStartLine, int comparisonEndLine, bool ignoreWhitespace, List<Regex> lstLineIgnoreRegExSpecs)
+        public static bool TextFilesMatch(
+            string filePath1, string filePath2,
+            int comparisonStartLine, int comparisonEndLine,
+            bool ignoreWhitespace, List<Regex> lineIgnoreRegExSpecs)
         {
 
             var chWhiteSpaceChars = new List<char>() {'\t', ' '}.ToArray();
 
             try
             {
-                var intLineNumber = 0;
+                var lineNumber = 0;
 
                 using (var srFile1 = new StreamReader(new FileStream(filePath1, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
@@ -1525,37 +1531,37 @@ namespace AnalysisManagerBase
 
                         while (!srFile1.EndOfStream)
                         {
-                            var strLineIn1 = srFile1.ReadLine();
-                            intLineNumber += 1;
+                            var dataLine1 = srFile1.ReadLine();
+                            lineNumber += 1;
 
-                            if (comparisonEndLine > 0 && intLineNumber > comparisonEndLine)
+                            if (comparisonEndLine > 0 && lineNumber > comparisonEndLine)
                             {
                                 // No need to compare further; files match up to this point
                                 break;
                             }
 
-                            if (strLineIn1 == null)
-                                strLineIn1 = string.Empty;
+                            if (dataLine1 == null)
+                                dataLine1 = string.Empty;
 
                             if (!srFile2.EndOfStream)
                             {
-                                var strLineIn2 = srFile2.ReadLine();
+                                var dataLine2 = srFile2.ReadLine();
 
-                                if (intLineNumber >= comparisonStartLine)
+                                if (lineNumber >= comparisonStartLine)
                                 {
-                                    if (strLineIn2 == null)
-                                        strLineIn2 = string.Empty;
+                                    if (dataLine2 == null)
+                                        dataLine2 = string.Empty;
 
                                     if (ignoreWhitespace)
                                     {
-                                        strLineIn1 = strLineIn1.Trim(chWhiteSpaceChars);
-                                        strLineIn2 = strLineIn2.Trim(chWhiteSpaceChars);
+                                        dataLine1 = dataLine1.Trim(chWhiteSpaceChars);
+                                        dataLine2 = dataLine2.Trim(chWhiteSpaceChars);
                                     }
 
-                                    if (strLineIn1 != strLineIn2)
+                                    if (dataLine1 != dataLine2)
                                     {
                                         // Lines don't match; are we ignoring both of them?
-                                        if (TextFilesMatchIgnoreLine(strLineIn1, lstLineIgnoreRegExSpecs) && TextFilesMatchIgnoreLine(strLineIn2, lstLineIgnoreRegExSpecs))
+                                        if (TextFilesMatchIgnoreLine(dataLine1, lineIgnoreRegExSpecs) && TextFilesMatchIgnoreLine(dataLine2, lineIgnoreRegExSpecs))
                                         {
                                             // Ignoring both lines
                                         }
@@ -1582,9 +1588,9 @@ namespace AnalysisManagerBase
                             // See if the remaining lines are blank
                             do
                             {
-                                if (strLineIn1.Length != 0)
+                                if (dataLine1.Length != 0)
                                 {
-                                    if (!TextFilesMatchIgnoreLine(strLineIn1, lstLineIgnoreRegExSpecs))
+                                    if (!TextFilesMatchIgnoreLine(dataLine1, lineIgnoreRegExSpecs))
                                     {
                                         // Files do not match
                                         return false;
@@ -1596,11 +1602,11 @@ namespace AnalysisManagerBase
                                     break;
                                 }
 
-                                strLineIn1 = srFile1.ReadLine();
-                                if (strLineIn1 == null)
-                                    strLineIn1 = string.Empty;
+                                dataLine1 = srFile1.ReadLine();
+                                if (dataLine1 == null)
+                                    dataLine1 = string.Empty;
                                 else
-                                    strLineIn1 = strLineIn1.Trim(chWhiteSpaceChars);
+                                    dataLine1 = dataLine1.Trim(chWhiteSpaceChars);
 
                             } while (true);
 
@@ -1623,15 +1629,15 @@ namespace AnalysisManagerBase
                         // See if the remaining lines are blank
                         do
                         {
-                            var strLineExtra = srFile2.ReadLine();
-                            if (strLineExtra == null)
-                                strLineExtra = string.Empty;
+                            var lineExtra = srFile2.ReadLine();
+                            if (lineExtra == null)
+                                lineExtra = string.Empty;
                             else
-                                strLineExtra = strLineExtra.Trim(chWhiteSpaceChars);
+                                lineExtra = lineExtra.Trim(chWhiteSpaceChars);
 
-                            if (strLineExtra.Length != 0)
+                            if (lineExtra.Length != 0)
                             {
-                                if (!TextFilesMatchIgnoreLine(strLineExtra, lstLineIgnoreRegExSpecs))
+                                if (!TextFilesMatchIgnoreLine(lineExtra, lineIgnoreRegExSpecs))
                                 {
                                     // Files do not match
                                     return false;
@@ -1652,21 +1658,20 @@ namespace AnalysisManagerBase
 
         }
 
-        private static bool TextFilesMatchIgnoreLine(string strText, IReadOnlyCollection<Regex> lstLineIgnoreRegExSpecs)
+        private static bool TextFilesMatchIgnoreLine(string dataLine, IReadOnlyCollection<Regex> lineIgnoreRegExSpecs)
         {
+            if (lineIgnoreRegExSpecs == null)
+                return false;
 
-            if (lstLineIgnoreRegExSpecs != null)
+            foreach (var matchSpec in lineIgnoreRegExSpecs)
             {
-                foreach (var matchSpec in lstLineIgnoreRegExSpecs)
-                {
-                    if (matchSpec == null)
-                        continue;
+                if (matchSpec == null)
+                    continue;
 
-                    if (matchSpec.Match(strText).Success)
-                    {
-                        // Line matches; ignore it
-                        return true;
-                    }
+                if (matchSpec.Match(dataLine).Success)
+                {
+                    // Line matches; ignore it
+                    return true;
                 }
             }
 
@@ -1738,14 +1743,14 @@ namespace AnalysisManagerBase
         /// Next compares the stored values to the actual values
         /// Checks file size and file date, but does not compute the hash
         /// </summary>
-        /// <param name="strDataFilePath">Data file to check.</param>
-        /// <param name="strHashFilePath">Hashcheck file for the given data file (auto-defined if blank)</param>
-        /// <param name="strErrorMessage"></param>
+        /// <param name="dataFilePath">Data file to check.</param>
+        /// <param name="hashFilePath">Hashcheck file for the given data file (auto-defined if blank)</param>
+        /// <param name="errorMessage"></param>
         /// <returns>True if the hashcheck file exists and the actual file matches the expected values; false if a mismatch or a problem</returns>
         /// <remarks>The .hashcheck file has the same name as the data file, but with ".hashcheck" appended</remarks>
-        public static bool ValidateFileVsHashcheck(string strDataFilePath, string strHashFilePath, out string strErrorMessage)
+        public static bool ValidateFileVsHashcheck(string dataFilePath, string hashFilePath, out string errorMessage)
         {
-            return ValidateFileVsHashcheck(strDataFilePath, strHashFilePath, out strErrorMessage, blnCheckDate: true, blnComputeHash: false, blnCheckSize: true);
+            return ValidateFileVsHashcheck(dataFilePath, hashFilePath, out errorMessage, checkDate: true, computeHash: false, checkSize: true);
         }
 
         /// <summary>
@@ -1754,18 +1759,18 @@ namespace AnalysisManagerBase
         /// Next compares the stored values to the actual values
         /// Checks file size, plus optionally date and hash
         /// </summary>
-        /// <param name="strDataFilePath">Data file to check.</param>
-        /// <param name="strHashFilePath">Hashcheck file for the given data file (auto-defined if blank)</param>
-        /// <param name="strErrorMessage"></param>
-        /// <param name="blnCheckDate">If True, then compares UTC modification time; times must agree within 2 seconds</param>
-        /// <param name="blnComputeHash"></param>
+        /// <param name="dataFilePath">Data file to check.</param>
+        /// <param name="hashFilePath">Hashcheck file for the given data file (auto-defined if blank)</param>
+        /// <param name="errorMessage"></param>
+        /// <param name="checkDate">If True, then compares UTC modification time; times must agree within 2 seconds</param>
+        /// <param name="computeHash"></param>
         /// <returns>True if the hashcheck file exists and the actual file matches the expected values; false if a mismatch or a problem</returns>
         /// <remarks>The .hashcheck file has the same name as the data file, but with ".hashcheck" appended</remarks>
         public static bool ValidateFileVsHashcheck(
-            string strDataFilePath, string strHashFilePath, out string strErrorMessage,
-            bool blnCheckDate, bool blnComputeHash)
+            string dataFilePath, string hashFilePath, out string errorMessage,
+            bool checkDate, bool computeHash)
         {
-            return ValidateFileVsHashcheck(strDataFilePath, strHashFilePath, out strErrorMessage, blnCheckDate, blnComputeHash, blnCheckSize: true);
+            return ValidateFileVsHashcheck(dataFilePath, hashFilePath, out errorMessage, checkDate, computeHash, checkSize: true);
         }
 
         /// <summary>
@@ -1773,118 +1778,118 @@ namespace AnalysisManagerBase
         /// If found, opens the file and reads the stored values: size, modification_date_utc, and hash
         /// Next compares the stored values to the actual values
         /// </summary>
-        /// <param name="strDataFilePath">Data file to check.</param>
-        /// <param name="strHashFilePath">Hashcheck file for the given data file (auto-defined if blank)</param>
-        /// <param name="strErrorMessage"></param>
-        /// <param name="blnCheckDate">If True, then compares UTC modification time; times must agree within 2 seconds</param>
-        /// <param name="blnComputeHash"></param>
-        /// <param name="blnCheckSize"></param>
+        /// <param name="dataFilePath">Data file to check.</param>
+        /// <param name="hashFilePath">Hashcheck file for the given data file (auto-defined if blank)</param>
+        /// <param name="errorMessage"></param>
+        /// <param name="checkDate">If True, then compares UTC modification time; times must agree within 2 seconds</param>
+        /// <param name="computeHash"></param>
+        /// <param name="checkSize"></param>
         /// <returns>True if the hashcheck file exists and the actual file matches the expected values; false if a mismatch or a problem</returns>
         /// <remarks>The .hashcheck file has the same name as the data file, but with ".hashcheck" appended</remarks>
         public static bool ValidateFileVsHashcheck(
-            string strDataFilePath, string strHashFilePath, out string strErrorMessage,
-            bool blnCheckDate, bool blnComputeHash, bool blnCheckSize)
+            string dataFilePath, string hashFilePath, out string errorMessage,
+            bool checkDate, bool computeHash, bool checkSize)
         {
 
-            var blnValidFile = false;
-            strErrorMessage = string.Empty;
+            var validFile = false;
+            errorMessage = string.Empty;
 
             try
             {
-                var fiDataFile = new FileInfo(strDataFilePath);
+                var fiDataFile = new FileInfo(dataFilePath);
 
-                if (string.IsNullOrEmpty(strHashFilePath))
-                    strHashFilePath = fiDataFile.FullName + SERVER_CACHE_HASHCHECK_FILE_SUFFIX;
-                var fiHashCheck = new FileInfo(strHashFilePath);
+                if (string.IsNullOrEmpty(hashFilePath))
+                    hashFilePath = fiDataFile.FullName + SERVER_CACHE_HASHCHECK_FILE_SUFFIX;
+                var fiHashCheck = new FileInfo(hashFilePath);
 
                 if (!fiDataFile.Exists)
                 {
-                    strErrorMessage = "Data file not found at " + fiDataFile.FullName;
+                    errorMessage = "Data file not found at " + fiDataFile.FullName;
                     return false;
                 }
 
                 if (!fiHashCheck.Exists)
                 {
-                    strErrorMessage = "Data file at " + fiDataFile.FullName + " does not have a corresponding .hashcheck file named " + fiHashCheck.Name;
+                    errorMessage = "Data file at " + fiDataFile.FullName + " does not have a corresponding .hashcheck file named " + fiHashCheck.Name;
                     return false;
                 }
 
-                long lngExpectedFileSizeBytes = 0;
+                long expectedFileSizeBytes = 0;
                 var dtExpectedFileDate = DateTime.MinValue;
-                var strExpectedHash = string.Empty;
+                var expectedHash = string.Empty;
 
                 // Read the details in the HashCheck file
                 using (var srInfile = new StreamReader(new FileStream(fiHashCheck.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
                     while (!srInfile.EndOfStream)
                     {
-                        var strLineIn = srInfile.ReadLine();
+                        var dataLine = srInfile.ReadLine();
 
-                        if (string.IsNullOrWhiteSpace(strLineIn) || strLineIn.StartsWith("#") || !strLineIn.Contains('='))
+                        if (string.IsNullOrWhiteSpace(dataLine) || dataLine.StartsWith("#") || !dataLine.Contains('='))
                             continue;
 
-                        var strSplitLine = strLineIn.Split('=');
+                        var lineParts = dataLine.Split('=');
 
 
-                        if (strSplitLine.Length < 2)
+                        if (lineParts.Length < 2)
                             continue;
 
                         // Set this to true for now
-                        blnValidFile = true;
+                        validFile = true;
 
-                        switch (strSplitLine[0].ToLower())
+                        switch (lineParts[0].ToLower())
                         {
                             case "size":
-                                long.TryParse(strSplitLine[1], out lngExpectedFileSizeBytes);
+                                long.TryParse(lineParts[1], out expectedFileSizeBytes);
                                 break;
                             case "modification_date_utc":
-                                DateTime.TryParse(strSplitLine[1], out dtExpectedFileDate);
+                                DateTime.TryParse(lineParts[1], out dtExpectedFileDate);
                                 break;
                             case "hash":
-                                strExpectedHash = string.Copy(strSplitLine[1]);
+                                expectedHash = string.Copy(lineParts[1]);
                                 break;
                         }
                     }
                 }
 
-                if (blnCheckSize && fiDataFile.Length != lngExpectedFileSizeBytes)
+                if (checkSize && fiDataFile.Length != expectedFileSizeBytes)
                 {
-                    strErrorMessage = "File size mismatch: expecting " + lngExpectedFileSizeBytes.ToString("#,##0") + " but computed " + fiDataFile.Length.ToString("#,##0");
+                    errorMessage = "File size mismatch: expecting " + expectedFileSizeBytes.ToString("#,##0") + " but computed " + fiDataFile.Length.ToString("#,##0");
                     return false;
                 }
 
                 // Only compare dates if we are not comparing hash values
-                if (!blnComputeHash && blnCheckDate)
+                if (!computeHash && checkDate)
                 {
                     if (Math.Abs(fiDataFile.LastWriteTimeUtc.Subtract(dtExpectedFileDate).TotalSeconds) > 2)
                     {
-                        strErrorMessage = "File modification date mismatch: expecting " +
+                        errorMessage = "File modification date mismatch: expecting " +
                             dtExpectedFileDate.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT) + " UTC but actually " +
                             fiDataFile.LastWriteTimeUtc.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT) + " UTC";
                         return false;
                     }
                 }
 
-                if (blnComputeHash)
+                if (computeHash)
                 {
                     // Compute the hash of the file
-                    var strActualHash = ComputeFileHashMD5(strDataFilePath);
+                    var actualHash = ComputeFileHashMD5(dataFilePath);
 
-                    if (strActualHash != strExpectedHash)
+                    if (actualHash != expectedHash)
                     {
-                        strErrorMessage = "Hash mismatch: expecting " + strExpectedHash + " but computed " + strActualHash;
+                        errorMessage = "Hash mismatch: expecting " + expectedHash + " but computed " + actualHash;
                         return false;
                     }
                 }
 
-                return blnValidFile;
+                return validFile;
             }
             catch (Exception ex)
             {
                 Console.WriteLine("Error in ValidateFileVsHashcheck: " + ex.Message);
             }
 
-            return blnValidFile;
+            return validFile;
 
         }
 
@@ -1914,7 +1919,11 @@ namespace AnalysisManagerBase
             {
                 // Directory path is a remote share; use GetDiskFreeSpaceEx in Kernel32.dll
 
-                if (PRISMWin.clsDiskInfo.GetDiskFreeSpace(diDirectory.FullName, out var freeBytesAvailableToUser, out var lngTotalNumberOfBytes, out var totalNumberOfFreeBytes))
+                if (PRISMWin.clsDiskInfo.GetDiskFreeSpace(
+                    diDirectory.FullName,
+                    out var freeBytesAvailableToUser,
+                    out var totalNumberOfBytes,
+                    out var totalNumberOfFreeBytes))
                 {
                     freeSpaceMB = BytesToMB(totalNumberOfFreeBytes);
                 }

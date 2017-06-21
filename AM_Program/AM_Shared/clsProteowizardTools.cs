@@ -21,7 +21,7 @@ namespace AnalysisManagerBase
 
         public bool RegisterProteoWizard()
         {
-            var blnValueMissing = false;
+            var valueMissing = false;
 
             try
             {
@@ -29,7 +29,7 @@ namespace AnalysisManagerBase
                 //  registry entry at HKEY_CURRENT_USER\Software\ProteoWizard
                 //  to indicate that we agree to the Thermo license
 
-                bool blnSubKeyMissing;
+                bool subKeyMissing;
                 try
                 {
                     if (mDebugLevel >= 2)
@@ -45,11 +45,11 @@ namespace AnalysisManagerBase
 
                     if (regProteoWizard == null)
                     {
-                        blnSubKeyMissing = true;
+                        subKeyMissing = true;
                     }
                     else
                     {
-                        blnSubKeyMissing = false;
+                        subKeyMissing = false;
 
                         if (mDebugLevel >= 2)
                         {
@@ -60,21 +60,21 @@ namespace AnalysisManagerBase
 
                         if (objValue == null)
                         {
-                            blnValueMissing = true;
+                            valueMissing = true;
                         }
                         else if (string.IsNullOrEmpty(Convert.ToString(objValue)))
                         {
-                            blnValueMissing = true;
+                            valueMissing = true;
                         }
                         else
                         {
                             if (bool.Parse(Convert.ToString(objValue)))
                             {
-                                blnValueMissing = false;
+                                valueMissing = false;
                             }
                             else
                             {
-                                blnValueMissing = true;
+                                valueMissing = true;
                             }
                         }
 
@@ -87,11 +87,11 @@ namespace AnalysisManagerBase
                 catch (Exception ex)
                 {
                     OnWarningEvent("Exception looking for key (possibly not found): " + ex.Message);
-                    blnSubKeyMissing = true;
-                    blnValueMissing = true;
+                    subKeyMissing = true;
+                    valueMissing = true;
                 }
 
-                if (blnSubKeyMissing || blnValueMissing)
+                if (subKeyMissing || valueMissing)
                 {
                     var regSoftware = Microsoft.Win32.Registry.CurrentUser.OpenSubKey("Software", true);
                     if (regSoftware == null)
@@ -99,7 +99,7 @@ namespace AnalysisManagerBase
 
                     RegistryKey regProteoWizard;
 
-                    if (blnSubKeyMissing)
+                    if (subKeyMissing)
                     {
                         if (mDebugLevel >= 1)
                         {

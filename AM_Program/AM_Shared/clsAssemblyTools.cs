@@ -50,36 +50,36 @@ namespace AnalysisManagerBase
             {
                 var versionInfo = FileVersionInfo.GetVersionInfo(dllFile.FullName);
 
-                var strFileInfo = "File:             " + dllFile.FullName + Environment.NewLine;
+                var fileInfo = "File:             " + dllFile.FullName + Environment.NewLine;
 
                 if (!string.IsNullOrWhiteSpace(versionInfo.InternalName) && versionInfo.InternalName != dllFile.Name)
                 {
-                    strFileInfo += "InternalName:     " + versionInfo.InternalName + Environment.NewLine;
+                    fileInfo += "InternalName:     " + versionInfo.InternalName + Environment.NewLine;
                 }
 
                 if (versionInfo.InternalName != versionInfo.OriginalFilename)
                 {
-                    strFileInfo += "OriginalFilename: " + versionInfo.OriginalFilename + Environment.NewLine;
+                    fileInfo += "OriginalFilename: " + versionInfo.OriginalFilename + Environment.NewLine;
                 }
 
                 if (!string.IsNullOrWhiteSpace(versionInfo.ProductName))
                 {
-                    strFileInfo += "Product:          " + versionInfo.ProductName + Environment.NewLine;
+                    fileInfo += "Product:          " + versionInfo.ProductName + Environment.NewLine;
                 }
 
-                strFileInfo += "ProductVersion:   " + versionInfo.ProductVersion + Environment.NewLine;
+                fileInfo += "ProductVersion:   " + versionInfo.ProductVersion + Environment.NewLine;
 
                 if (versionInfo.FileVersion != versionInfo.ProductVersion)
                 {
-                    strFileInfo += "FileVersion:      " + versionInfo.FileVersion + Environment.NewLine;
+                    fileInfo += "FileVersion:      " + versionInfo.FileVersion + Environment.NewLine;
                 }
 
                 if (!string.IsNullOrWhiteSpace(versionInfo.FileDescription) && versionInfo.FileDescription != versionInfo.ProductName)
                 {
-                    strFileInfo += "FileDescription:  " + versionInfo.FileDescription + Environment.NewLine;
+                    fileInfo += "FileDescription:  " + versionInfo.FileDescription + Environment.NewLine;
                 }
 
-                objSummaryFile.Add(strFileInfo);
+                objSummaryFile.Add(fileInfo);
             }
 
         }

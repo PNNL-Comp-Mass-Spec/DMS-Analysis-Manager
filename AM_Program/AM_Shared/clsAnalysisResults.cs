@@ -72,72 +72,72 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Copies a source directory to the destination directory. Allows overwriting.
         /// </summary>
-        /// <param name="SourcePath">The source directory path.</param>
-        /// <param name="DestPath">The destination directory path.</param>
-        /// <param name="Overwrite">True if the destination file can be overwritten; otherwise, false.</param>
+        /// <param name="sourcePath">The source directory path.</param>
+        /// <param name="destPath">The destination directory path.</param>
+        /// <param name="overwrite">True if the destination file can be overwritten; otherwise, false.</param>
         /// <remarks></remarks>
-        public void CopyDirectory(string SourcePath, string DestPath, bool Overwrite)
+        public void CopyDirectory(string sourcePath, string destPath, bool overwrite)
         {
-            CopyDirectory(SourcePath, DestPath, Overwrite, MaxRetryCount: DEFAULT_RETRY_COUNT, continueOnError: true);
+            CopyDirectory(sourcePath, destPath, overwrite, maxRetryCount: DEFAULT_RETRY_COUNT, continueOnError: true);
         }
 
         /// <summary>
         /// Copies a source directory to the destination directory. Allows overwriting.
         /// </summary>
-        /// <param name="SourcePath">The source directory path.</param>
-        /// <param name="DestPath">The destination directory path.</param>
-        /// <param name="Overwrite">True if the destination file can be overwritten; otherwise, false.</param>
-        /// <param name="MaxRetryCount">The number of times to retry a failed copy of a file; if 0 or 1 then only tries once</param>
+        /// <param name="sourcePath">The source directory path.</param>
+        /// <param name="destPath">The destination directory path.</param>
+        /// <param name="overwrite">True if the destination file can be overwritten; otherwise, false.</param>
+        /// <param name="maxRetryCount">The number of times to retry a failed copy of a file; if 0 or 1 then only tries once</param>
         /// <param name="continueOnError">When true, then will continue copying even if an error occurs</param>
         /// <remarks></remarks>
-        public void CopyDirectory(string SourcePath, string DestPath, bool Overwrite, int MaxRetryCount, bool continueOnError)
+        public void CopyDirectory(string sourcePath, string destPath, bool overwrite, int maxRetryCount, bool continueOnError)
         {
-            var diSourceDir = new DirectoryInfo(SourcePath);
-            var diDestDir = new DirectoryInfo(DestPath);
+            var diSourceDir = new DirectoryInfo(sourcePath);
+            var diDestDir = new DirectoryInfo(destPath);
 
-            string strMessage;
+            string message;
 
             // The source directory must exist, otherwise throw an exception
             if (!FolderExistsWithRetry(diSourceDir.FullName, 3, 3))
             {
-                strMessage = "Source directory does not exist: " + diSourceDir.FullName;
+                message = "Source directory does not exist: " + diSourceDir.FullName;
                 if (continueOnError)
                 {
-                    LogError(strMessage);
+                    LogError(message);
                     return;
                 }
 
-                throw new DirectoryNotFoundException(strMessage);
+                throw new DirectoryNotFoundException(message);
             }
 
             // If destination SubDir's parent SubDir does not exist throw an exception
             if (diDestDir.Parent == null)
             {
-                strMessage = "Unable to determine the parent folder of " + diDestDir.FullName;
+                message = "Unable to determine the parent folder of " + diDestDir.FullName;
                 if (continueOnError)
                 {
-                    LogError(strMessage);
+                    LogError(message);
                     return;
                 }
 
-                throw new DirectoryNotFoundException(strMessage);
+                throw new DirectoryNotFoundException(message);
             }
 
             if (!FolderExistsWithRetry(diDestDir.Parent.FullName, 1, 1))
             {
-                strMessage = "Destination directory does not exist: " + diDestDir.Parent.FullName;
+                message = "Destination directory does not exist: " + diDestDir.Parent.FullName;
                 if (continueOnError)
                 {
-                    LogError(strMessage);
+                    LogError(message);
                     return;
                 }
 
-                throw new DirectoryNotFoundException(strMessage);
+                throw new DirectoryNotFoundException(message);
             }
 
             if (!FolderExistsWithRetry(diDestDir.FullName, 3, 3))
             {
-                CreateFolderWithRetry(DestPath, MaxRetryCount, DEFAULT_RETRY_HOLDOFF_SEC);
+                CreateFolderWithRetry(destPath, maxRetryCount, DEFAULT_RETRY_HOLDOFF_SEC);
             }
 
             // Copy all the files of the current directory
@@ -145,19 +145,19 @@ namespace AnalysisManagerBase
             {
                 try
                 {
-                    var strTargetPath = Path.Combine(diDestDir.FullName, childFile.Name);
-                    if (Overwrite)
+                    var targetPath = Path.Combine(diDestDir.FullName, childFile.Name);
+                    if (overwrite)
                     {
-                        CopyFileWithRetry(childFile.FullName, strTargetPath, true, MaxRetryCount, DEFAULT_RETRY_HOLDOFF_SEC);
+                        CopyFileWithRetry(childFile.FullName, targetPath, true, maxRetryCount, DEFAULT_RETRY_HOLDOFF_SEC);
 
                     }
                     else
                     {
                         // Only copy if the file does not yet exist
                         // We are not throwing an error if the file exists in the target
-                        if (!File.Exists(strTargetPath))
+                        if (!File.Exists(targetPath))
                         {
-                            CopyFileWithRetry(childFile.FullName, strTargetPath, false, MaxRetryCount, DEFAULT_RETRY_HOLDOFF_SEC);
+                            CopyFileWithRetry(childFile.FullName, targetPath, false, maxRetryCount, DEFAULT_RETRY_HOLDOFF_SEC);
                         }
                     }
                 }
@@ -177,69 +177,69 @@ namespace AnalysisManagerBase
             // Copy all the sub-directories by recursively calling this same routine
             foreach (var subDir in diSourceDir.GetDirectories())
             {
-                CopyDirectory(subDir.FullName, Path.Combine(diDestDir.FullName, subDir.Name), Overwrite, MaxRetryCount, continueOnError);
+                CopyDirectory(subDir.FullName, Path.Combine(diDestDir.FullName, subDir.Name), overwrite, maxRetryCount, continueOnError);
             }
         }
 
-        public void CopyFileWithRetry(string SrcFilePath, string DestFilePath, bool Overwrite)
+        public void CopyFileWithRetry(string srcFilePath, string destFilePath, bool overwrite)
         {
-            const bool blnIncreaseHoldoffOnEachRetry = false;
-            CopyFileWithRetry(SrcFilePath, DestFilePath, Overwrite, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_HOLDOFF_SEC, blnIncreaseHoldoffOnEachRetry);
+            const bool increaseHoldoffOnEachRetry = false;
+            CopyFileWithRetry(srcFilePath, destFilePath, overwrite, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_HOLDOFF_SEC, increaseHoldoffOnEachRetry);
         }
 
-        public void CopyFileWithRetry(string SrcFilePath, string DestFilePath, bool Overwrite, bool blnIncreaseHoldoffOnEachRetry)
+        public void CopyFileWithRetry(string srcFilePath, string destFilePath, bool overwrite, bool increaseHoldoffOnEachRetry)
         {
-            CopyFileWithRetry(SrcFilePath, DestFilePath, Overwrite, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_HOLDOFF_SEC, blnIncreaseHoldoffOnEachRetry);
+            CopyFileWithRetry(srcFilePath, destFilePath, overwrite, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_HOLDOFF_SEC, increaseHoldoffOnEachRetry);
         }
 
-        public void CopyFileWithRetry(string SrcFilePath, string DestFilePath, bool Overwrite, int MaxRetryCount, int RetryHoldoffSeconds)
+        public void CopyFileWithRetry(string srcFilePath, string destFilePath, bool overwrite, int maxRetryCount, int retryHoldoffSeconds)
         {
-            const bool blnIncreaseHoldoffOnEachRetry = false;
-            CopyFileWithRetry(SrcFilePath, DestFilePath, Overwrite, MaxRetryCount, RetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry);
+            const bool increaseHoldoffOnEachRetry = false;
+            CopyFileWithRetry(srcFilePath, destFilePath, overwrite, maxRetryCount, retryHoldoffSeconds, increaseHoldoffOnEachRetry);
         }
 
 
-        public void CopyFileWithRetry(string SrcFilePath, string DestFilePath, bool Overwrite, int MaxRetryCount, int RetryHoldoffSeconds, bool blnIncreaseHoldoffOnEachRetry)
+        public void CopyFileWithRetry(string srcFilePath, string destFilePath, bool overwrite, int maxRetryCount, int retryHoldoffSeconds, bool increaseHoldoffOnEachRetry)
         {
             var AttemptCount = 0;
-            var blnSuccess = false;
-            float sngRetryHoldoffSeconds = RetryHoldoffSeconds;
+            var success = false;
+            float sngRetryHoldoffSeconds = retryHoldoffSeconds;
 
             if (sngRetryHoldoffSeconds < 1)
                 sngRetryHoldoffSeconds = 1;
-            if (MaxRetryCount < 1)
-                MaxRetryCount = 1;
+            if (maxRetryCount < 1)
+                maxRetryCount = 1;
 
             // First make sure the source file exists
-            if (!File.Exists(SrcFilePath))
+            if (!File.Exists(srcFilePath))
             {
-                throw new IOException("clsAnalysisResults,CopyFileWithRetry: Source file not found for copy operation: " + SrcFilePath);
+                throw new IOException("clsAnalysisResults,CopyFileWithRetry: Source file not found for copy operation: " + srcFilePath);
             }
 
-            while (AttemptCount <= MaxRetryCount && !blnSuccess)
+            while (AttemptCount <= maxRetryCount && !success)
             {
                 AttemptCount += 1;
 
                 try
                 {
                     ResetTimestampForQueueWaitTimeLogging();
-                    if (m_FileTools.CopyFileUsingLocks(SrcFilePath, DestFilePath, m_MgrName, Overwrite))
+                    if (m_FileTools.CopyFileUsingLocks(srcFilePath, destFilePath, m_MgrName, overwrite))
                     {
-                        blnSuccess = true;
+                        success = true;
                     }
                     else
                     {
-                        LogError("CopyFileUsingLocks returned false copying " + SrcFilePath + " to " + DestFilePath);
+                        LogError("CopyFileUsingLocks returned false copying " + srcFilePath + " to " + destFilePath);
                     }
 
                 }
                 catch (Exception ex)
                 {
-                    LogError("clsAnalysisResults,CopyFileWithRetry: error copying " + SrcFilePath + " to " + DestFilePath, ex);
+                    LogError("clsAnalysisResults,CopyFileWithRetry: error copying " + srcFilePath + " to " + destFilePath, ex);
 
-                    if (!Overwrite && File.Exists(DestFilePath))
+                    if (!overwrite && File.Exists(destFilePath))
                     {
-                        throw new IOException("Tried to overwrite an existing file when Overwrite = False: " + DestFilePath);
+                        throw new IOException("Tried to overwrite an existing file when overwrite = False: " + destFilePath);
                     }
 
                     // Wait several seconds before retrying
@@ -248,13 +248,13 @@ namespace AnalysisManagerBase
                     PRISM.clsProgRunner.GarbageCollectNow();
                 }
 
-                if (!blnSuccess && blnIncreaseHoldoffOnEachRetry)
+                if (!success && increaseHoldoffOnEachRetry)
                 {
                     sngRetryHoldoffSeconds *= 1.5f;
                 }
             }
 
-            if (!blnSuccess)
+            if (!success)
             {
                 throw new IOException("Excessive failures during file copy");
             }
@@ -308,17 +308,17 @@ namespace AnalysisManagerBase
 
                 var diSourceFolder = new DirectoryInfo(sourceFolderPath);
                 var diTargetFolder = new DirectoryInfo(failedResultsFolderPath);
-                var strFolderInfoFilePath = "??";
+                var folderInfoFilePath = "??";
 
                 // Create an info file that describes the saved results
                 try
                 {
-                    strFolderInfoFilePath = Path.Combine(diTargetFolder.FullName, FAILED_RESULTS_FOLDER_INFO_TEXT + diSourceFolder.Name + ".txt");
-                    CopyFailedResultsCreateInfoFile(strFolderInfoFilePath, diSourceFolder.Name);
+                    folderInfoFilePath = Path.Combine(diTargetFolder.FullName, FAILED_RESULTS_FOLDER_INFO_TEXT + diSourceFolder.Name + ".txt");
+                    CopyFailedResultsCreateInfoFile(folderInfoFilePath, diSourceFolder.Name);
                 }
                 catch (Exception ex)
                 {
-                    LogError("Error creating the results folder info file at " + strFolderInfoFilePath, ex);
+                    LogError("Error creating the results folder info file at " + folderInfoFilePath, ex);
                 }
 
                 // Make sure the source folder exists
@@ -331,12 +331,12 @@ namespace AnalysisManagerBase
                     // Look for failed results folders that were archived over FAILED_RESULTS_FOLDER_RETAIN_DAYS days ago
                     DeleteOldFailedResultsFolders(diTargetFolder);
 
-                    var strTargetFolderPath = Path.Combine(diTargetFolder.FullName, diSourceFolder.Name);
+                    var targetFolderPath = Path.Combine(diTargetFolder.FullName, diSourceFolder.Name);
 
                     // Actually copy the results folder
-                    LogMessage("Copying results folder to failed results archive: " + strTargetFolderPath);
+                    LogMessage("Copying results folder to failed results archive: " + targetFolderPath);
 
-                    CopyDirectory(diSourceFolder.FullName, strTargetFolderPath, true, 2, true);
+                    CopyDirectory(diSourceFolder.FullName, targetFolderPath, true, 2, true);
 
                     LogMessage("Copy complete");
                 }
@@ -349,12 +349,12 @@ namespace AnalysisManagerBase
 
         }
 
-        private void CopyFailedResultsCreateInfoFile(string strFolderInfoFilePath, string strResultsFolderName)
+        private void CopyFailedResultsCreateInfoFile(string folderInfoFilePath, string resultsFolderName)
         {
-            using (var swInfoFile = new StreamWriter(new FileStream(strFolderInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+            using (var swInfoFile = new StreamWriter(new FileStream(folderInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
             {
                 swInfoFile.WriteLine("Date" + '\t' + DateTime.Now);
-                swInfoFile.WriteLine("ResultsFolderName" + '\t' + strResultsFolderName);
+                swInfoFile.WriteLine("ResultsFolderName" + '\t' + resultsFolderName);
                 swInfoFile.WriteLine("Manager" + '\t' + m_mgrParams.GetParam("MgrName"));
 
                 if ((m_jobParams != null))
@@ -382,56 +382,56 @@ namespace AnalysisManagerBase
 
         }
 
-        public void CreateFolderWithRetry(string FolderPath)
+        public void CreateFolderWithRetry(string folderPath)
         {
-            const bool blnIncreaseHoldoffOnEachRetry = false;
-            CreateFolderWithRetry(FolderPath, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_HOLDOFF_SEC, blnIncreaseHoldoffOnEachRetry);
+            const bool increaseHoldoffOnEachRetry = false;
+            CreateFolderWithRetry(folderPath, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_HOLDOFF_SEC, increaseHoldoffOnEachRetry);
         }
 
-        public void CreateFolderWithRetry(string FolderPath, int MaxRetryCount, int RetryHoldoffSeconds)
+        public void CreateFolderWithRetry(string folderPath, int maxRetryCount, int retryHoldoffSeconds)
         {
-            const bool blnIncreaseHoldoffOnEachRetry = false;
-            CreateFolderWithRetry(FolderPath, MaxRetryCount, RetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry);
+            const bool increaseHoldoffOnEachRetry = false;
+            CreateFolderWithRetry(folderPath, maxRetryCount, retryHoldoffSeconds, increaseHoldoffOnEachRetry);
         }
 
 
-        public void CreateFolderWithRetry(string FolderPath, int MaxRetryCount, int RetryHoldoffSeconds, bool blnIncreaseHoldoffOnEachRetry)
+        public void CreateFolderWithRetry(string folderPath, int maxRetryCount, int retryHoldoffSeconds, bool increaseHoldoffOnEachRetry)
         {
             var AttemptCount = 0;
-            var blnSuccess = false;
-            float sngRetryHoldoffSeconds = RetryHoldoffSeconds;
+            var success = false;
+            float sngRetryHoldoffSeconds = retryHoldoffSeconds;
 
             if (sngRetryHoldoffSeconds < 1)
                 sngRetryHoldoffSeconds = 1;
-            if (MaxRetryCount < 1)
-                MaxRetryCount = 1;
+            if (maxRetryCount < 1)
+                maxRetryCount = 1;
 
-            if (string.IsNullOrWhiteSpace(FolderPath))
+            if (string.IsNullOrWhiteSpace(folderPath))
             {
                 throw new DirectoryNotFoundException("Folder path cannot be empty when calling CreateFolderWithRetry");
             }
 
-            while (AttemptCount <= MaxRetryCount && !blnSuccess)
+            while (AttemptCount <= maxRetryCount && !success)
             {
                 AttemptCount += 1;
 
                 try
                 {
-                    if (Directory.Exists(FolderPath))
+                    if (Directory.Exists(folderPath))
                     {
                         // If the folder already exists, then there is nothing to do
-                        blnSuccess = true;
+                        success = true;
                     }
                     else
                     {
-                        Directory.CreateDirectory(FolderPath);
-                        blnSuccess = true;
+                        Directory.CreateDirectory(folderPath);
+                        success = true;
                     }
 
                 }
                 catch (Exception ex)
                 {
-                    LogError("clsAnalysisResults: error creating folder " + FolderPath, ex);
+                    LogError("clsAnalysisResults: error creating folder " + folderPath, ex);
 
                     // Wait several seconds before retrying
                     Thread.Sleep((int)(Math.Floor(sngRetryHoldoffSeconds * 1000)));
@@ -439,15 +439,15 @@ namespace AnalysisManagerBase
                     PRISM.clsProgRunner.GarbageCollectNow();
                 }
 
-                if (!blnSuccess && blnIncreaseHoldoffOnEachRetry)
+                if (!success && increaseHoldoffOnEachRetry)
                 {
                     sngRetryHoldoffSeconds *= 1.5f;
                 }
             }
 
-            if (!blnSuccess)
+            if (!success)
             {
-                if (!FolderExistsWithRetry(FolderPath, 1, 3))
+                if (!FolderExistsWithRetry(folderPath, 1, 3))
                 {
                     throw new IOException("Excessive failures during folder creation");
                 }
@@ -458,7 +458,7 @@ namespace AnalysisManagerBase
 
         private void DeleteOldFailedResultsFolders(DirectoryInfo diTargetFolder)
         {
-            var strTargetFilePath = "";
+            var targetFilePath = "";
 
             // Determine the folder archive time by reading the modification times on the ResultsFolderInfo_ files
             foreach (var fiFileInfo in diTargetFolder.GetFiles(FAILED_RESULTS_FOLDER_INFO_TEXT + "*"))
@@ -470,14 +470,14 @@ namespace AnalysisManagerBase
 
                 try
                 {
-                    var strOldResultsFolderName = Path.GetFileNameWithoutExtension(fiFileInfo.Name).Substring(FAILED_RESULTS_FOLDER_INFO_TEXT.Length);
+                    var oldResultsFolderName = Path.GetFileNameWithoutExtension(fiFileInfo.Name).Substring(FAILED_RESULTS_FOLDER_INFO_TEXT.Length);
                     if (fiFileInfo.DirectoryName == null)
                     {
                         LogWarning("Unable to determine the parent directory of " + fiFileInfo.FullName);
                         continue;
                     }
 
-                    var diOldResultsFolder = new DirectoryInfo(Path.Combine(fiFileInfo.DirectoryName, strOldResultsFolderName));
+                    var diOldResultsFolder = new DirectoryInfo(Path.Combine(fiFileInfo.DirectoryName, oldResultsFolderName));
 
                     if (diOldResultsFolder.Exists)
                     {
@@ -487,13 +487,13 @@ namespace AnalysisManagerBase
 
                     try
                     {
-                        strTargetFilePath = Path.Combine(fiFileInfo.DirectoryName, "x_" + fiFileInfo.Name);
-                        fiFileInfo.CopyTo(strTargetFilePath, true);
+                        targetFilePath = Path.Combine(fiFileInfo.DirectoryName, "x_" + fiFileInfo.Name);
+                        fiFileInfo.CopyTo(targetFilePath, true);
                         fiFileInfo.Delete();
                     }
                     catch (Exception ex)
                     {
-                        LogError("Error renaming failed results info file to " + strTargetFilePath, ex);
+                        LogError("Error renaming failed results info file to " + targetFilePath, ex);
                     }
 
                 }
@@ -505,45 +505,45 @@ namespace AnalysisManagerBase
 
         }
 
-        public bool FolderExistsWithRetry(string FolderPath)
+        public bool FolderExistsWithRetry(string folderPath)
         {
-            const bool blnIncreaseHoldoffOnEachRetry = false;
-            return FolderExistsWithRetry(FolderPath, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_HOLDOFF_SEC, blnIncreaseHoldoffOnEachRetry);
+            const bool increaseHoldoffOnEachRetry = false;
+            return FolderExistsWithRetry(folderPath, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_HOLDOFF_SEC, increaseHoldoffOnEachRetry);
         }
 
-        public bool FolderExistsWithRetry(string FolderPath, int MaxRetryCount, int RetryHoldoffSeconds)
+        public bool FolderExistsWithRetry(string folderPath, int maxRetryCount, int retryHoldoffSeconds)
         {
-            const bool blnIncreaseHoldoffOnEachRetry = false;
-            return FolderExistsWithRetry(FolderPath, MaxRetryCount, RetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry);
+            const bool increaseHoldoffOnEachRetry = false;
+            return FolderExistsWithRetry(folderPath, maxRetryCount, retryHoldoffSeconds, increaseHoldoffOnEachRetry);
         }
 
-        public bool FolderExistsWithRetry(string FolderPath, int MaxRetryCount, int RetryHoldoffSeconds, bool blnIncreaseHoldoffOnEachRetry)
+        public bool FolderExistsWithRetry(string folderPath, int maxRetryCount, int retryHoldoffSeconds, bool increaseHoldoffOnEachRetry)
         {
 
             var AttemptCount = 0;
-            var blnSuccess = false;
-            var blnFolderExists = false;
+            var success = false;
+            var folderExists = false;
 
-            float sngRetryHoldoffSeconds = RetryHoldoffSeconds;
+            float sngRetryHoldoffSeconds = retryHoldoffSeconds;
 
             if (sngRetryHoldoffSeconds < 1)
                 sngRetryHoldoffSeconds = 1;
-            if (MaxRetryCount < 1)
-                MaxRetryCount = 1;
+            if (maxRetryCount < 1)
+                maxRetryCount = 1;
 
-            while (AttemptCount <= MaxRetryCount && !blnSuccess)
+            while (AttemptCount <= maxRetryCount && !success)
             {
                 AttemptCount += 1;
 
                 try
                 {
-                    blnFolderExists = Directory.Exists(FolderPath);
-                    blnSuccess = true;
+                    folderExists = Directory.Exists(folderPath);
+                    success = true;
 
                 }
                 catch (Exception ex)
                 {
-                    LogError("clsAnalysisResults: error looking for folder " + FolderPath, ex);
+                    LogError("clsAnalysisResults: error looking for folder " + folderPath, ex);
 
                     // Wait several seconds before retrying
                     Thread.Sleep((int)(Math.Floor(sngRetryHoldoffSeconds * 1000)));
@@ -551,20 +551,20 @@ namespace AnalysisManagerBase
                     PRISM.clsProgRunner.GarbageCollectNow();
                 }
 
-                if (!blnSuccess && blnIncreaseHoldoffOnEachRetry)
+                if (!success && increaseHoldoffOnEachRetry)
                 {
                     sngRetryHoldoffSeconds *= 1.5f;
                 }
 
             }
 
-            if (!blnSuccess)
+            if (!success)
             {
                 // Exception occurred; return False
                 return false;
             }
 
-            return blnFolderExists;
+            return folderExists;
 
         }
 

@@ -42,10 +42,10 @@ namespace AnalysisManagerBase
 
         public bool SplitCattedDTAsAndOuts(string datasetName, string resultsFolderPath)
         {
-            var blnSuccess1 = SplitCattedDTAsOnly(datasetName, resultsFolderPath);
-            var blnSuccess2 = SplitCattedOutsOnly(datasetName, resultsFolderPath);
+            var success1 = SplitCattedDTAsOnly(datasetName, resultsFolderPath);
+            var success2 = SplitCattedOutsOnly(datasetName, resultsFolderPath);
 
-            return blnSuccess1 && blnSuccess2;
+            return success1 && success2;
         }
 
         public bool SplitCattedDTAsOnly(string datasetName, string resultsFolderPath)
@@ -58,9 +58,9 @@ namespace AnalysisManagerBase
 
             var lstFilesToSkipSortedSet = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
 
-            foreach (var strEntry in lstFilesToSkip)
+            foreach (var entry in lstFilesToSkip)
             {
-                lstFilesToSkipSortedSet.Add(strEntry);
+                lstFilesToSkipSortedSet.Add(entry);
             }
 
             return SplitCattedDTAsOnly(datasetName, resultsFolderPath, lstFilesToSkipSortedSet);
@@ -92,9 +92,9 @@ namespace AnalysisManagerBase
 
             var lstFilesToSkipSortedSet = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
 
-            foreach (var strEntry in lstFilesToSkip)
+            foreach (var entry in lstFilesToSkip)
             {
-                lstFilesToSkipSortedSet.Add(strEntry);
+                lstFilesToSkipSortedSet.Add(entry);
             }
 
             return SplitCattedOutsOnly(datasetName, resultsFolderPath, lstFilesToSkipSortedSet);

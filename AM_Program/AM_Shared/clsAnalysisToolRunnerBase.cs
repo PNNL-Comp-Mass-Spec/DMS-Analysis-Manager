@@ -478,12 +478,12 @@ namespace AnalysisManagerBase
                 }
 
                 // Determine the year_quarter text for this dataset
-                var strDatasetStoragePath = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetStoragePath");
-                if (string.IsNullOrEmpty(strDatasetStoragePath))
-                    strDatasetStoragePath = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetArchivePath");
+                var datasetStoragePath = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetStoragePath");
+                if (string.IsNullOrEmpty(datasetStoragePath))
+                    datasetStoragePath = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetArchivePath");
 
-                var strDatasetYearQuarter = clsAnalysisResources.GetDatasetYearQuarter(strDatasetStoragePath);
-                if (string.IsNullOrEmpty(strDatasetYearQuarter))
+                var datasetYearQuarter = clsAnalysisResources.GetDatasetYearQuarter(datasetStoragePath);
+                if (string.IsNullOrEmpty(datasetYearQuarter))
                 {
                     LogError("Unable to determine DatasetYearQuarter using the DatasetStoragePath or DatasetArchivePath; cannot construct MSXmlCache path");
                     return string.Empty;
@@ -491,7 +491,7 @@ namespace AnalysisManagerBase
 
 
                 var success = CopyFileToServerCache(
-                    cacheFolderPath, toolNameVersionFolder, sourceFilePath, strDatasetYearQuarter,
+                    cacheFolderPath, toolNameVersionFolder, sourceFilePath, datasetYearQuarter,
                     purgeOldFilesIfNeeded: purgeOldFilesIfNeeded, remoteCacheFilePath: out var remoteCacheFilePath);
 
                 if (!success)
@@ -516,10 +516,10 @@ namespace AnalysisManagerBase
 
         /// <summary>
         /// Copies a file (typically a mzXML or mzML file) to a server cache folder
-        /// Will store the file in the subfolder strSubfolderInTarget and, below that, in a folder with a name like 2013_2
+        /// Will store the file in the subfolder subfolderInTarget and, below that, in a folder with a name like 2013_2
         /// </summary>
         /// <param name="cacheFolderPath">Cache folder base path, e.g. \\proto-6\MSXML_Cache</param>
-        /// <param name="subfolderInTarget">Subfolder name to create below strCacheFolderPath (optional), e.g. MSXML_Gen_1_93 or MSConvert</param>
+        /// <param name="subfolderInTarget">Subfolder name to create below cacheFolderPath (optional), e.g. MSXML_Gen_1_93 or MSConvert</param>
         /// <param name="sourceFilePath">Path to the data file</param>
         /// <param name="datasetYearQuarter">
         /// Dataset year quarter text (optional)
@@ -546,10 +546,10 @@ namespace AnalysisManagerBase
 
         /// <summary>
         /// Copies a file (typically a mzXML or mzML file) to a server cache folder
-        /// Will store the file in the subfolder strSubfolderInTarget and, below that, in a folder with a name like 2013_2
+        /// Will store the file in the subfolder subfolderInTarget and, below that, in a folder with a name like 2013_2
         /// </summary>
         /// <param name="cacheFolderPath">Cache folder base path, e.g. \\proto-11\MSXML_Cache</param>
-        /// <param name="subfolderInTarget">Subfolder name to create below strCacheFolderPath (optional), e.g. MSXML_Gen_1_93 or MSConvert</param>
+        /// <param name="subfolderInTarget">Subfolder name to create below cacheFolderPath (optional), e.g. MSXML_Gen_1_93 or MSConvert</param>
         /// <param name="sourceFilePath">Path to the data file</param>
         /// <param name="datasetYearQuarter">
         /// Dataset year quarter text (optional)
@@ -600,11 +600,11 @@ namespace AnalysisManagerBase
                 if (string.IsNullOrEmpty(datasetYearQuarter))
                 {
                     // Determine the year_quarter text for this dataset
-                    var strDatasetStoragePath = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetStoragePath");
-                    if (string.IsNullOrEmpty(strDatasetStoragePath))
-                        strDatasetStoragePath = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetArchivePath");
+                    var datasetStoragePath = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetStoragePath");
+                    if (string.IsNullOrEmpty(datasetStoragePath))
+                        datasetStoragePath = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetArchivePath");
 
-                    datasetYearQuarter = clsAnalysisResources.GetDatasetYearQuarter(strDatasetStoragePath);
+                    datasetYearQuarter = clsAnalysisResources.GetDatasetYearQuarter(datasetStoragePath);
                 }
 
                 if (!string.IsNullOrEmpty(datasetYearQuarter))
@@ -617,9 +617,9 @@ namespace AnalysisManagerBase
                 m_jobParams.AddResultFileExtensionToSkip(clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX);
 
                 // Create the .hashcheck file
-                var strHashcheckFilePath = clsGlobal.CreateHashcheckFile(sourceFilePath, blnComputeMD5Hash: true);
+                var hashcheckFilePath = clsGlobal.CreateHashcheckFile(sourceFilePath, computeMD5Hash: true);
 
-                if (string.IsNullOrEmpty(strHashcheckFilePath))
+                if (string.IsNullOrEmpty(hashcheckFilePath))
                 {
                     LogError("Error in CopyFileToServerCache: Hashcheck file was not created");
                     return false;
@@ -652,7 +652,7 @@ namespace AnalysisManagerBase
                 }
 
                 // Copy over the .Hashcheck file
-                m_FileTools.CopyFile(strHashcheckFilePath, Path.Combine(fiTargetFile.DirectoryName, Path.GetFileName(strHashcheckFilePath)), true);
+                m_FileTools.CopyFile(hashcheckFilePath, Path.Combine(fiTargetFile.DirectoryName, Path.GetFileName(hashcheckFilePath)), true);
 
                 if (purgeOldFilesIfNeeded)
                 {
@@ -673,32 +673,32 @@ namespace AnalysisManagerBase
         /// Copies the .mzXML file to the generic MSXML_Cache folder, e.g. \\proto-6\MSXML_Cache\MSConvert
         /// </summary>
         /// <param name="strsourceFilePath"></param>
-        /// <param name="strDatasetYearQuarter">Dataset year quarter text, e.g. 2013_2;  if this this parameter is blank, then will auto-determine using Job Parameter DatasetStoragePath</param>
-        /// <param name="strMSXmlGeneratorName">Name of the MzXML generator, e.g. MSConvert</param>
-        /// <param name="blnPurgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 20 TB</param>
+        /// <param name="datasetYearQuarter">Dataset year quarter text, e.g. 2013_2;  if this this parameter is blank, then will auto-determine using Job Parameter DatasetStoragePath</param>
+        /// <param name="msXmlGeneratorName">Name of the MzXML generator, e.g. MSConvert</param>
+        /// <param name="purgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 20 TB</param>
         /// <returns>True if success; false if an error</returns>
         /// <remarks>
         /// Contrast with CopyMSXmlToCache in clsAnalysisToolRunnerMSXMLGen, where the target folder is
         /// of the form \\proto-6\MSXML_Cache\MSConvert\MSXML_Gen_1_93
         /// </remarks>
-        protected bool CopyMzXMLFileToServerCache(string strsourceFilePath, string strDatasetYearQuarter, string strMSXmlGeneratorName, bool blnPurgeOldFilesIfNeeded)
+        protected bool CopyMzXMLFileToServerCache(string sourceFilePath, string datasetYearQuarter, string msXmlGeneratorName, bool purgeOldFilesIfNeeded)
         {
 
             try
             {
                 var strMSXMLCacheFolderPath = m_mgrParams.GetParam("MSXMLCacheFolderPath", string.Empty);
 
-                if (string.IsNullOrEmpty(strMSXmlGeneratorName))
+                if (string.IsNullOrEmpty(msXmlGeneratorName))
                 {
-                    strMSXmlGeneratorName = m_jobParams.GetJobParameter("MSXMLGenerator", string.Empty);
+                    msXmlGeneratorName = m_jobParams.GetJobParameter("MSXMLGenerator", string.Empty);
 
-                    if (!string.IsNullOrEmpty(strMSXmlGeneratorName))
+                    if (!string.IsNullOrEmpty(msXmlGeneratorName))
                     {
-                        strMSXmlGeneratorName = Path.GetFileNameWithoutExtension(strMSXmlGeneratorName);
+                        msXmlGeneratorName = Path.GetFileNameWithoutExtension(msXmlGeneratorName);
                     }
                 }
 
-                var success = CopyFileToServerCache(strMSXMLCacheFolderPath, strMSXmlGeneratorName, strsourceFilePath, strDatasetYearQuarter, blnPurgeOldFilesIfNeeded);
+                var success = CopyFileToServerCache(strMSXMLCacheFolderPath, msXmlGeneratorName, sourceFilePath, datasetYearQuarter, purgeOldFilesIfNeeded);
                 return success;
 
             }
@@ -745,12 +745,12 @@ namespace AnalysisManagerBase
 
             var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
 
-            var blnErrorEncountered = false;
-            var intFailedFileCount = 0;
+            var errorEncountered = false;
+            var failedFileCount = 0;
 
-            const int intRetryCount = 10;
-            const int intRetryHoldoffSeconds = 15;
-            const bool blnIncreaseHoldoffOnEachRetry = true;
+            const int retryCount = 10;
+            const int retryHoldoffSeconds = 15;
+            const bool increaseHoldoffOnEachRetry = true;
 
             try
             {
@@ -809,23 +809,23 @@ namespace AnalysisManagerBase
                 // Copy the files and subfolders
                 var success = CopyResultsFolderRecursive(
                     sourceFolderPath, sourceFolderPath, targetDirectoryPath, objAnalysisResults,
-                    ref blnErrorEncountered, ref intFailedFileCount, intRetryCount,
-                    intRetryHoldoffSeconds, blnIncreaseHoldoffOnEachRetry);
+                    ref errorEncountered, ref failedFileCount, retryCount,
+                    retryHoldoffSeconds, increaseHoldoffOnEachRetry);
 
                 if (!success)
-                    blnErrorEncountered = true;
+                    errorEncountered = true;
 
             }
             catch (Exception ex)
             {
                 LogError("Error copying results folder to " + Path.GetPathRoot(targetDirectoryPath), ex);
-                blnErrorEncountered = true;
+                errorEncountered = true;
             }
 
-            if (blnErrorEncountered)
+            if (errorEncountered)
             {
-                var msg = "Error copying " + intFailedFileCount +
-                    clsGlobal.CheckPlural(intFailedFileCount, " file", " files") +
+                var msg = "Error copying " + failedFileCount +
+                    clsGlobal.CheckPlural(failedFileCount, " file", " files") +
                     " to transfer folder";
                 LogError(msg);
                 objAnalysisResults.CopyFailedResultsToArchiveFolder(sourceFolderPath);
@@ -837,7 +837,7 @@ namespace AnalysisManagerBase
 
         /// <summary>
         /// Copies each of the files in the source folder to the target folder
-        /// Uses CopyFileWithRetry to retry the copy up to intRetryCount times
+        /// Uses CopyFileWithRetry to retry the copy up to retryCount times
         /// </summary>
         /// <param name="rootSourceFolderPath"></param>
         /// <param name="sourceFolderPath"></param>
@@ -958,7 +958,7 @@ namespace AnalysisManagerBase
             }
 
             // Recursively call this function for each subfolder
-            // If any of the subfolders have an error, we'll continue copying, but will set blnErrorEncountered to True
+            // If any of the subfolders have an error, we'll continue copying, but will set errorEncountered to True
             var success = true;
 
             var diSourceFolder = new DirectoryInfo(sourceFolderPath);
@@ -1071,12 +1071,12 @@ namespace AnalysisManagerBase
                 return string.Empty;
             }
 
-            string strRemoteTransferFolderPath;
+            string remoteTransferFolderPath;
 
             if (clsGlobal.IsMatch(Dataset, "Aggregation"))
             {
                 // Do not append "Aggregation" to the path since this is a generic dataset name applied to jobs that use Data Packages
-                strRemoteTransferFolderPath = string.Copy(transferFolderPath);
+                remoteTransferFolderPath = string.Copy(transferFolderPath);
             }
             else
             {
@@ -1084,24 +1084,24 @@ namespace AnalysisManagerBase
                 var datasetFolderName = m_jobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "DatasetFolderName");
                 if (string.IsNullOrWhiteSpace(datasetFolderName))
                     datasetFolderName = Dataset;
-                strRemoteTransferFolderPath = Path.Combine(transferFolderPath, datasetFolderName);
+                remoteTransferFolderPath = Path.Combine(transferFolderPath, datasetFolderName);
             }
 
             // Create the target folder if it doesn't exist
             try
             {
-                objAnalysisResults.CreateFolderWithRetry(strRemoteTransferFolderPath, MaxRetryCount: 5, RetryHoldoffSeconds: 20, blnIncreaseHoldoffOnEachRetry: true);
+                objAnalysisResults.CreateFolderWithRetry(remoteTransferFolderPath, maxRetryCount: 5, retryHoldoffSeconds: 20, increaseHoldoffOnEachRetry: true);
             }
             catch (Exception ex)
             {
-                LogError("Error creating dataset folder in transfer directory, " + Path.GetPathRoot(strRemoteTransferFolderPath), ex);
+                LogError("Error creating dataset folder in transfer directory, " + Path.GetPathRoot(remoteTransferFolderPath), ex);
                 return string.Empty;
             }
 
-            // Now append the output folder name to strRemoteTransferFolderPath
-            strRemoteTransferFolderPath = Path.Combine(strRemoteTransferFolderPath, m_ResFolderName);
+            // Now append the output folder name to remoteTransferFolderPath
+            remoteTransferFolderPath = Path.Combine(remoteTransferFolderPath, m_ResFolderName);
 
-            return strRemoteTransferFolderPath;
+            return remoteTransferFolderPath;
 
         }
 
@@ -1120,12 +1120,12 @@ namespace AnalysisManagerBase
         /// Makes up to 3 attempts to delete specified file
         /// </summary>
         /// <param name="FileNamePath">Full path to file for deletion</param>
-        /// <param name="intDebugLevel">Debug Level for logging; 1=minimal logging; 5=detailed logging</param>
+        /// <param name="debugLevel">Debug Level for logging; 1=minimal logging; 5=detailed logging</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks>Raises exception if error occurs</remarks>
-        public static bool DeleteFileWithRetries(string FileNamePath, int intDebugLevel)
+        public static bool DeleteFileWithRetries(string FileNamePath, int debugLevel)
         {
-            return DeleteFileWithRetries(FileNamePath, intDebugLevel, 3);
+            return DeleteFileWithRetries(FileNamePath, debugLevel, 3);
         }
 
         /// <summary>
@@ -1393,18 +1393,18 @@ namespace AnalysisManagerBase
 
         }
 
-        protected void DeleteTemporaryfile(string strFilePath)
+        protected void DeleteTemporaryfile(string filePath)
         {
             try
             {
-                if (File.Exists(strFilePath))
+                if (File.Exists(filePath))
                 {
-                    File.Delete(strFilePath);
+                    File.Delete(filePath);
                 }
             }
             catch (Exception ex)
             {
-                LogMessage("Exception deleting temporary file " + strFilePath + ": " + ex.Message, 0, true);
+                LogMessage("Exception deleting temporary file " + filePath + ": " + ex.Message, 0, true);
             }
 
         }
@@ -1412,36 +1412,36 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Determine the path to the correct version of the step tool
         /// </summary>
-        /// <param name="strProgLocManagerParamName">The name of the manager parameter that defines the path to the folder with the exe, e.g. LCMSFeatureFinderProgLoc</param>
-        /// <param name="strExeName">The name of the exe file, e.g. LCMSFeatureFinder.exe</param>
+        /// <param name="progLocManagerParamName">The name of the manager parameter that defines the path to the folder with the exe, e.g. LCMSFeatureFinderProgLoc</param>
+        /// <param name="exeName">The name of the exe file, e.g. LCMSFeatureFinder.exe</param>
         /// <returns>The path to the program, or an empty string if there is a problem</returns>
         /// <remarks></remarks>
-        protected string DetermineProgramLocation(string strProgLocManagerParamName, string strExeName)
+        protected string DetermineProgramLocation(string progLocManagerParamName, string exeName)
         {
 
             // Check whether the settings file specifies that a specific version of the step tool be used
-            var strStepToolVersion = m_jobParams.GetParam(StepToolName + "_Version");
+            var stepToolVersion = m_jobParams.GetParam(StepToolName + "_Version");
 
-            return DetermineProgramLocation(StepToolName, strProgLocManagerParamName, strExeName, strStepToolVersion, m_mgrParams, out m_message);
+            return DetermineProgramLocation(StepToolName, progLocManagerParamName, exeName, stepToolVersion, m_mgrParams, out m_message);
 
         }
 
         /// <summary>
         /// Determine the path to the correct version of the step tool
         /// </summary>
-        /// <param name="strStepToolName">The name of the step tool, e.g. LCMSFeatureFinder</param>
-        /// <param name="strProgLocManagerParamName">The name of the manager parameter that defines the path to the folder with the exe, e.g. LCMSFeatureFinderProgLoc</param>
-        /// <param name="strExeName">The name of the exe file, e.g. LCMSFeatureFinder.exe</param>
-        /// <param name="strStepToolVersion">Specific step tool version to use (will be the name of a subfolder located below the primary ProgLoc location)</param>
+        /// <param name="stepToolName">The name of the step tool, e.g. LCMSFeatureFinder</param>
+        /// <param name="progLocManagerParamName">The name of the manager parameter that defines the path to the folder with the exe, e.g. LCMSFeatureFinderProgLoc</param>
+        /// <param name="exeName">The name of the exe file, e.g. LCMSFeatureFinder.exe</param>
+        /// <param name="stepToolVersion">Specific step tool version to use (will be the name of a subfolder located below the primary ProgLoc location)</param>
         /// <param name="mgrParams">Manager parameters</param>
         /// <param name="errorMessage">Output: error message</param>
         /// <returns>The path to the program, or an empty string if there is a problem</returns>
         /// <remarks></remarks>
         public static string DetermineProgramLocation(
-            string strStepToolName,
-            string strProgLocManagerParamName,
-            string strExeName,
-            string strStepToolVersion,
+            string stepToolName,
+            string progLocManagerParamName,
+            string exeName,
+            string stepToolVersion,
             IMgrParams mgrParams,
             out string errorMessage)
         {
@@ -1449,38 +1449,38 @@ namespace AnalysisManagerBase
             errorMessage = string.Empty;
 
             // Lookup the path to the folder that contains the Step tool
-            var progLoc = mgrParams.GetParam(strProgLocManagerParamName);
+            var progLoc = mgrParams.GetParam(progLocManagerParamName);
 
             if (string.IsNullOrWhiteSpace(progLoc))
             {
-                errorMessage = "Manager parameter " + strProgLocManagerParamName + " is not defined in the Manager Control DB";
+                errorMessage = "Manager parameter " + progLocManagerParamName + " is not defined in the Manager Control DB";
                 clsGlobal.LogError(errorMessage);
                 return string.Empty;
             }
 
             // Check whether the settings file specifies that a specific version of the step tool be used
 
-            if (!string.IsNullOrWhiteSpace(strStepToolVersion))
+            if (!string.IsNullOrWhiteSpace(stepToolVersion))
             {
                 // Specific version is defined; verify that the folder exists
-                progLoc = Path.Combine(progLoc, strStepToolVersion);
+                progLoc = Path.Combine(progLoc, stepToolVersion);
 
                 if (!Directory.Exists(progLoc))
                 {
-                    errorMessage = "Version-specific folder not found for " + strStepToolName;
+                    errorMessage = "Version-specific folder not found for " + stepToolName;
                     clsGlobal.LogError(errorMessage + ": " + progLoc);
                     return string.Empty;
                 }
 
-                clsGlobal.LogMessage("Using specific version of " + strStepToolName + ": " + progLoc);
+                clsGlobal.LogMessage("Using specific version of " + stepToolName + ": " + progLoc);
             }
 
             // Define the path to the .Exe, then verify that it exists
-            progLoc = Path.Combine(progLoc, strExeName);
+            progLoc = Path.Combine(progLoc, exeName);
 
             if (!File.Exists(progLoc))
             {
-                errorMessage = "Cannot find " + strStepToolName + " program file " + strExeName;
+                errorMessage = "Cannot find " + stepToolName + " program file " + exeName;
                 clsGlobal.LogError(errorMessage + " at " + progLoc);
                 return string.Empty;
             }
@@ -1492,27 +1492,27 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Gets the dictionary for the packed job parameter
         /// </summary>
-        /// <param name="strPackedJobParameterName">Packaged job parameter name</param>
+        /// <param name="packedJobParameterName">Packaged job parameter name</param>
         /// <returns>List of strings</returns>
         /// <remarks>Data will have been stored by function clsAnalysisResources.StorePackedJobParameterDictionary</remarks>
-        protected Dictionary<string, string> ExtractPackedJobParameterDictionary(string strPackedJobParameterName)
+        protected Dictionary<string, string> ExtractPackedJobParameterDictionary(string packedJobParameterName)
         {
 
             var dctData = new Dictionary<string, string>();
 
-            var lstData = ExtractPackedJobParameterList(strPackedJobParameterName);
+            var lstData = ExtractPackedJobParameterList(packedJobParameterName);
 
             foreach (var item in lstData)
             {
-                var intEqualsIndex = item.LastIndexOf('=');
-                if (intEqualsIndex > 0)
+                var equalsIndex = item.LastIndexOf('=');
+                if (equalsIndex > 0)
                 {
-                    var strKey = item.Substring(0, intEqualsIndex);
-                    var strValue = item.Substring(intEqualsIndex + 1);
+                    var key = item.Substring(0, equalsIndex);
+                    var value = item.Substring(equalsIndex + 1);
 
-                    if (!dctData.ContainsKey(strKey))
+                    if (!dctData.ContainsKey(key))
                     {
-                        dctData.Add(strKey, strValue);
+                        dctData.Add(key, value);
                     }
                 }
                 else
@@ -1528,21 +1528,21 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Gets the list of values for the packed job parameter
         /// </summary>
-        /// <param name="strPackedJobParameterName">Packaged job parameter name</param>
+        /// <param name="packedJobParameterName">Packaged job parameter name</param>
         /// <returns>List of strings</returns>
         /// <remarks>Data will have been stored by function clsAnalysisResources.StorePackedJobParameterDictionary</remarks>
-        protected List<string> ExtractPackedJobParameterList(string strPackedJobParameterName)
+        protected List<string> ExtractPackedJobParameterList(string packedJobParameterName)
         {
 
-            var strList = m_jobParams.GetJobParameter(strPackedJobParameterName, string.Empty);
+            var list = m_jobParams.GetJobParameter(packedJobParameterName, string.Empty);
 
-            if (string.IsNullOrEmpty(strList))
+            if (string.IsNullOrEmpty(list))
             {
                 return new List<string>();
             }
 
             // Split the list on tab characters
-            return strList.Split('\t').ToList();
+            return list.Split('\t').ToList();
         }
 
         /// <summary>
@@ -1558,31 +1558,31 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Looks up the current debug level for the manager.  If the call to the server fails, m_DebugLevel will be left unchanged
         /// </summary>
-        /// <param name="intUpdateIntervalSeconds">
+        /// <param name="updateIntervalSeconds">
         /// The minimum number of seconds between updates
-        /// If fewer than intUpdateIntervalSeconds seconds have elapsed since the last call to this function, then no update will occur
+        /// If fewer than updateIntervalSeconds seconds have elapsed since the last call to this function, then no update will occur
         /// </param>
         /// <returns></returns>
         /// <remarks></remarks>
-        protected bool GetCurrentMgrSettingsFromDB(int intUpdateIntervalSeconds)
+        protected bool GetCurrentMgrSettingsFromDB(int updateIntervalSeconds)
         {
-            return GetCurrentMgrSettingsFromDB(intUpdateIntervalSeconds, m_mgrParams, ref m_DebugLevel);
+            return GetCurrentMgrSettingsFromDB(updateIntervalSeconds, m_mgrParams, ref m_DebugLevel);
         }
 
         /// <summary>
         /// Looks up the current debug level for the manager.  If the call to the server fails, DebugLevel will be left unchanged
         /// </summary>
-        /// <param name="intUpdateIntervalSeconds">Update interval, in seconds</param>
+        /// <param name="updateIntervalSeconds">Update interval, in seconds</param>
         /// <param name="objMgrParams">Manager params</param>
         /// <param name="debugLevel">Input/Output parameter: set to the current debug level, will be updated to the debug level in the manager control DB</param>
         /// <returns>True for success; False for error</returns>
         /// <remarks></remarks>
-        public static bool GetCurrentMgrSettingsFromDB(int intUpdateIntervalSeconds, IMgrParams objMgrParams, ref short debugLevel)
+        public static bool GetCurrentMgrSettingsFromDB(int updateIntervalSeconds, IMgrParams objMgrParams, ref short debugLevel)
         {
 
             try
             {
-                if (intUpdateIntervalSeconds > 0 && DateTime.UtcNow.Subtract(mLastManagerSettingsUpdateTime).TotalSeconds < intUpdateIntervalSeconds)
+                if (updateIntervalSeconds > 0 && DateTime.UtcNow.Subtract(mLastManagerSettingsUpdateTime).TotalSeconds < updateIntervalSeconds)
                 {
                     return true;
                 }
@@ -2346,14 +2346,14 @@ namespace AnalysisManagerBase
                 // Log status
                 if (m_DebugLevel >= 2)
                 {
-                    var strLogMessage = "Move Result Files to " + resFolderNamePath;
+                    var logMessage = "Move Result Files to " + resFolderNamePath;
                     if (m_DebugLevel >= 3)
                     {
-                        strLogMessage += "; ResultFilesToSkip contains " + m_jobParams.ResultFilesToSkip.Count + " entries" + "; " +
+                        logMessage += "; ResultFilesToSkip contains " + m_jobParams.ResultFilesToSkip.Count + " entries" + "; " +
                             "ResultFileExtensionsToSkip contains " + m_jobParams.ResultFileExtensionsToSkip.Count + " entries" + "; " +
                             "ResultFilesToKeep contains " + m_jobParams.ResultFilesToKeep.Count + " entries";
                     }
-                    LogMessage(strLogMessage, m_DebugLevel);
+                    LogMessage(logMessage, m_DebugLevel);
                 }
 
                 // Obtain a list of all files in the working directory
@@ -2562,13 +2562,13 @@ namespace AnalysisManagerBase
             return true;
         }
 
-        public static string NotifyMissingParameter(IJobParams oJobParams, string strParameterName)
+        public static string NotifyMissingParameter(IJobParams oJobParams, string parameterName)
         {
 
-            var strSettingsFile = oJobParams.GetJobParameter("SettingsFileName", "?UnknownSettingsFile?");
-            var strToolName = oJobParams.GetJobParameter("ToolName", "?UnknownToolName?");
+            var settingsFile = oJobParams.GetJobParameter("SettingsFileName", "?UnknownSettingsFile?");
+            var toolName = oJobParams.GetJobParameter("ToolName", "?UnknownToolName?");
 
-            return "Settings file " + strSettingsFile + " for tool " + strToolName + " does not have parameter " + strParameterName + " defined";
+            return "Settings file " + settingsFile + " for tool " + toolName + " does not have parameter " + parameterName + " defined";
 
         }
 
@@ -2602,12 +2602,12 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Adds double quotes around a path if it contains a space
         /// </summary>
-        /// <param name="strPath"></param>
+        /// <param name="path"></param>
         /// <returns>The path (updated if necessary)</returns>
         /// <remarks></remarks>
-        public static string PossiblyQuotePath(string strPath)
+        public static string PossiblyQuotePath(string path)
         {
-            return clsGlobal.PossiblyQuotePath(strPath);
+            return clsGlobal.PossiblyQuotePath(path);
         }
 
         /// <summary>
@@ -2648,11 +2648,11 @@ namespace AnalysisManagerBase
 
         /// <summary>
         /// Determines the space usage of data files in the cache folder, e.g. at \\proto-11\MSXML_Cache
-        /// If usage is over intSpaceUsageThresholdGB, then deletes the oldest files until usage falls below intSpaceUsageThresholdGB
+        /// If usage is over spaceUsageThresholdGB, then deletes the oldest files until usage falls below spaceUsageThresholdGB
         /// </summary>
-        /// <param name="strCacheFolderPath">Path to the file cache</param>
+        /// <param name="cacheFolderPath">Path to the file cache</param>
         /// <param name="spaceUsageThresholdGB">Maximum space usage, in GB (cannot be less than 1000 on Proto-x servers; 10 otherwise)</param>
-        private void PurgeOldServerCacheFiles(string strCacheFolderPath, int spaceUsageThresholdGB)
+        private void PurgeOldServerCacheFiles(string cacheFolderPath, int spaceUsageThresholdGB)
         {
 
             {
@@ -2662,17 +2662,17 @@ namespace AnalysisManagerBase
                 double dblTotalSizeMB = 0;
 
                 double dblSizeDeletedMB = 0;
-                var intFileDeleteCount = 0;
-                var intFileDeleteErrorCount = 0;
+                var fileDeleteCount = 0;
+                var fileDeleteErrorCount = 0;
 
                 var dctErrorSummary = new Dictionary<string, int>();
 
-                if (string.IsNullOrWhiteSpace(strCacheFolderPath))
+                if (string.IsNullOrWhiteSpace(cacheFolderPath))
                 {
-                    throw new ArgumentOutOfRangeException(nameof(strCacheFolderPath), "Cache folder path cannot be empty");
+                    throw new ArgumentOutOfRangeException(nameof(cacheFolderPath), "Cache folder path cannot be empty");
                 }
 
-                if (strCacheFolderPath.StartsWith(@"\\proto-", StringComparison.InvariantCultureIgnoreCase))
+                if (cacheFolderPath.StartsWith(@"\\proto-", StringComparison.InvariantCultureIgnoreCase))
                 {
                     if (spaceUsageThresholdGB < 1000)
                         spaceUsageThresholdGB = 1000;
@@ -2690,7 +2690,7 @@ namespace AnalysisManagerBase
                         return;
                     }
 
-                    var diCacheFolder = new DirectoryInfo(strCacheFolderPath);
+                    var diCacheFolder = new DirectoryInfo(cacheFolderPath);
 
                     if (!diCacheFolder.Exists)
                     {
@@ -2734,9 +2734,9 @@ namespace AnalysisManagerBase
                         if (!fiItem.FullName.EndsWith(clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX, StringComparison.InvariantCultureIgnoreCase))
                             continue;
 
-                        var strDataFilePath = fiItem.FullName.Substring(0, fiItem.FullName.Length - clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX.Length);
+                        var dataFilePath = fiItem.FullName.Substring(0, fiItem.FullName.Length - clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX.Length);
 
-                        var fiDataFile = new FileInfo(strDataFilePath);
+                        var fiDataFile = new FileInfo(dataFilePath);
 
                         if (!fiDataFile.Exists)
                             continue;
@@ -2813,7 +2813,7 @@ namespace AnalysisManagerBase
                                 kvItem.Value.FullName));
 
                             dblSizeDeletedMB += fileSizeMB;
-                            intFileDeleteCount += 1;
+                            fileDeleteCount += 1;
 
                             if (fiHashCheckFile.Exists)
                             {
@@ -2824,16 +2824,16 @@ namespace AnalysisManagerBase
                         catch (Exception ex)
                         {
                             // Keep track of the number of times we have an exception
-                            intFileDeleteErrorCount += 1;
+                            fileDeleteErrorCount += 1;
 
-                            var strExceptionName = ex.GetType().ToString();
-                            if (dctErrorSummary.TryGetValue(strExceptionName, out var occurrences))
+                            var exceptionName = ex.GetType().ToString();
+                            if (dctErrorSummary.TryGetValue(exceptionName, out var occurrences))
                             {
-                                dctErrorSummary[strExceptionName] = occurrences + 1;
+                                dctErrorSummary[exceptionName] = occurrences + 1;
                             }
                             else
                             {
-                                dctErrorSummary.Add(strExceptionName, 1);
+                                dctErrorSummary.Add(exceptionName, 1);
                             }
 
                         }
@@ -2844,11 +2844,11 @@ namespace AnalysisManagerBase
                         }
                     }
 
-                    LogMessage("Deleted " + intFileDeleteCount + " file(s) from " + strCacheFolderPath + ", recovering " + dblSizeDeletedMB.ToString("0.0") + " MB in disk space");
+                    LogMessage("Deleted " + fileDeleteCount + " file(s) from " + cacheFolderPath + ", recovering " + dblSizeDeletedMB.ToString("0.0") + " MB in disk space");
 
-                    if (intFileDeleteErrorCount > 0)
+                    if (fileDeleteErrorCount > 0)
                     {
-                        LogMessage("Unable to delete " + intFileDeleteErrorCount + " file(s) from " + strCacheFolderPath, 0, true);
+                        LogMessage("Unable to delete " + fileDeleteErrorCount + " file(s) from " + cacheFolderPath, 0, true);
                         foreach (var kvItem in dctErrorSummary)
                         {
                             LogMessage("  " + kvItem.Key + ": " + kvItem.Value, 1, true);
@@ -2891,8 +2891,8 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         protected void RedefineAggregationJobDatasetAndTransferFolder()
         {
-            var strTransferFolderPath = m_jobParams.GetParam("transferFolderPath");
-            var diTransferFolder = new DirectoryInfo(strTransferFolderPath);
+            var transferFolderPath = m_jobParams.GetParam("transferFolderPath");
+            var diTransferFolder = new DirectoryInfo(transferFolderPath);
 
             m_Dataset = diTransferFolder.Name;
 
@@ -2901,8 +2901,8 @@ namespace AnalysisManagerBase
                 throw new DirectoryNotFoundException("Unable to determine the parent folder of " + diTransferFolder.FullName);
             }
 
-            strTransferFolderPath = diTransferFolder.Parent.FullName;
-            m_jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "transferFolderPath", strTransferFolderPath);
+            transferFolderPath = diTransferFolder.Parent.FullName;
+            m_jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "transferFolderPath", transferFolderPath);
 
         }
 
@@ -2910,75 +2910,75 @@ namespace AnalysisManagerBase
         /// Extracts the contents of the Version= line in a Tool Version Info file
         /// </summary>
         /// <param name="strDLLFilePath"></param>
-        /// <param name="strVersionInfoFilePath"></param>
-        /// <param name="strVersion"></param>
+        /// <param name="versionInfoFilePath"></param>
+        /// <param name="version"></param>
         /// <returns></returns>
         /// <remarks></remarks>
-        protected bool ReadVersionInfoFile(string strDLLFilePath, string strVersionInfoFilePath, out string strVersion)
+        protected bool ReadVersionInfoFile(string strDLLFilePath, string versionInfoFilePath, out string version)
         {
 
-            strVersion = string.Empty;
-            var blnSuccess = false;
+            version = string.Empty;
+            var success = false;
 
             try
             {
-                if (!File.Exists(strVersionInfoFilePath))
+                if (!File.Exists(versionInfoFilePath))
                 {
-                    LogMessage("Version Info File not found: " + strVersionInfoFilePath, 0, true);
+                    LogMessage("Version Info File not found: " + versionInfoFilePath, 0, true);
                     return false;
                 }
 
-                // Open strVersionInfoFilePath and read the Version= line
-                using (var srInFile = new StreamReader(new FileStream(strVersionInfoFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                // Open versionInfoFilePath and read the Version= line
+                using (var srInFile = new StreamReader(new FileStream(versionInfoFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
 
                     while (!srInFile.EndOfStream)
                     {
-                        var strLineIn = srInFile.ReadLine();
+                        var lineIn = srInFile.ReadLine();
 
-                        if (string.IsNullOrWhiteSpace(strLineIn))
+                        if (string.IsNullOrWhiteSpace(lineIn))
                         {
                             continue;
                         }
 
-                        var intEqualsLoc = strLineIn.IndexOf('=');
+                        var equalsLoc = lineIn.IndexOf('=');
 
-                        if (intEqualsLoc <= 0)
+                        if (equalsLoc <= 0)
                             continue;
 
-                        var strKey = strLineIn.Substring(0, intEqualsLoc);
-                        string strValue;
+                        var key = lineIn.Substring(0, equalsLoc);
+                        string value;
 
-                        if (intEqualsLoc < strLineIn.Length)
+                        if (equalsLoc < lineIn.Length)
                         {
-                            strValue = strLineIn.Substring(intEqualsLoc + 1);
+                            value = lineIn.Substring(equalsLoc + 1);
                         }
                         else
                         {
-                            strValue = string.Empty;
+                            value = string.Empty;
                         }
 
-                        switch (strKey.ToLower())
+                        switch (key.ToLower())
                         {
                             case "filename":
                                 break;
                             case "path":
                                 break;
                             case "version":
-                                strVersion = string.Copy(strValue);
-                                if (string.IsNullOrWhiteSpace(strVersion))
+                                version = string.Copy(value);
+                                if (string.IsNullOrWhiteSpace(version))
                                 {
                                     LogMessage("Empty version line in Version Info file for " + Path.GetFileName(strDLLFilePath), 0, true);
-                                    blnSuccess = false;
+                                    success = false;
                                 }
                                 else
                                 {
-                                    blnSuccess = true;
+                                    success = true;
                                 }
                                 break;
                             case "error":
-                                LogMessage("Error reported by DLLVersionInspector for " + Path.GetFileName(strDLLFilePath) + ": " + strValue, 0, true);
-                                blnSuccess = false;
+                                LogMessage("Error reported by DLLVersionInspector for " + Path.GetFileName(strDLLFilePath) + ": " + value, 0, true);
+                                success = false;
                                 break;
                                 // default:
                                 // Ignore the line
@@ -2994,7 +2994,7 @@ namespace AnalysisManagerBase
                 LogError("Error reading Version Info File for " + Path.GetFileName(strDLLFilePath), ex);
             }
 
-            return blnSuccess;
+            return success;
 
         }
 
@@ -3169,17 +3169,17 @@ namespace AnalysisManagerBase
         /// Creates a Tool Version Info file
         /// </summary>
         /// <param name="folderPath"></param>
-        /// <param name="strToolVersionInfo"></param>
+        /// <param name="toolVersionInfo"></param>
         /// <returns></returns>
         /// <remarks></remarks>
-        protected bool SaveToolVersionInfoFile(string folderPath, string strToolVersionInfo)
+        protected bool SaveToolVersionInfoFile(string folderPath, string toolVersionInfo)
         {
 
             try
             {
-                var strToolVersionFilePath = Path.Combine(folderPath, ToolVersionInfoFile);
+                var toolVersionFilePath = Path.Combine(folderPath, ToolVersionInfoFile);
 
-                using (var swToolVersionFile = new StreamWriter(new FileStream(strToolVersionFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
+                using (var swToolVersionFile = new StreamWriter(new FileStream(toolVersionFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
                 {
 
                     swToolVersionFile.WriteLine("Date: " + DateTime.Now.ToString(DATE_TIME_FORMAT));
@@ -3189,7 +3189,7 @@ namespace AnalysisManagerBase
                     swToolVersionFile.WriteLine("Tool: " + m_jobParams.GetParam("StepTool"));
                     swToolVersionFile.WriteLine("ToolVersionInfo:");
 
-                    swToolVersionFile.WriteLine(strToolVersionInfo.Replace("; ", Environment.NewLine));
+                    swToolVersionFile.WriteLine(toolVersionInfo.Replace("; ", Environment.NewLine));
 
                 }
 
@@ -3207,53 +3207,53 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Communicates with database to record the tool version(s) for the current step task
         /// </summary>
-        /// <param name="strToolVersionInfo">Version info (maximum length is 900 characters)</param>
+        /// <param name="toolVersionInfo">Version info (maximum length is 900 characters)</param>
         /// <returns>True for success, False for failure</returns>
         /// <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
-        protected bool SetStepTaskToolVersion(string strToolVersionInfo)
+        protected bool SetStepTaskToolVersion(string toolVersionInfo)
         {
-            return SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>());
+            return SetStepTaskToolVersion(toolVersionInfo, new List<FileInfo>());
         }
 
         /// <summary>
         /// Communicates with database to record the tool version(s) for the current step task
         /// </summary>
-        /// <param name="strToolVersionInfo">Version info (maximum length is 900 characters)</param>
+        /// <param name="toolVersionInfo">Version info (maximum length is 900 characters)</param>
         /// <param name="ioToolFiles">FileSystemInfo list of program files related to the step tool</param>
         /// <returns>True for success, False for failure</returns>
         /// <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
-        protected bool SetStepTaskToolVersion(string strToolVersionInfo, List<FileInfo> ioToolFiles)
+        protected bool SetStepTaskToolVersion(string toolVersionInfo, List<FileInfo> ioToolFiles)
         {
 
-            return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, true);
+            return SetStepTaskToolVersion(toolVersionInfo, ioToolFiles, true);
         }
 
         /// <summary>
         /// Communicates with database to record the tool version(s) for the current step task
         /// </summary>
-        /// <param name="strToolVersionInfo">Version info (maximum length is 900 characters)</param>
+        /// <param name="toolVersionInfo">Version info (maximum length is 900 characters)</param>
         /// <param name="ioToolFiles">FileSystemInfo list of program files related to the step tool</param>
         /// <returns>True for success, False for failure</returns>
         /// <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
-        protected bool SetStepTaskToolVersion(string strToolVersionInfo, IEnumerable<FileInfo> ioToolFiles)
+        protected bool SetStepTaskToolVersion(string toolVersionInfo, IEnumerable<FileInfo> ioToolFiles)
         {
 
-            return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, true);
+            return SetStepTaskToolVersion(toolVersionInfo, ioToolFiles, true);
         }
 
         /// <summary>
         /// Communicates with database to record the tool version(s) for the current step task
         /// </summary>
-        /// <param name="strToolVersionInfo">Version info (maximum length is 900 characters)</param>
+        /// <param name="toolVersionInfo">Version info (maximum length is 900 characters)</param>
         /// <param name="ioToolFiles">FileSystemInfo list of program files related to the step tool</param>
-        /// <param name="blnSaveToolVersionTextFile">if true, then creates a text file with the tool version information</param>
+        /// <param name="saveToolVersionTextFile">if true, then creates a text file with the tool version information</param>
         /// <returns>True for success, False for failure</returns>
         /// <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
-        protected bool SetStepTaskToolVersion(string strToolVersionInfo, IEnumerable<FileInfo> ioToolFiles, bool blnSaveToolVersionTextFile)
+        protected bool SetStepTaskToolVersion(string toolVersionInfo, IEnumerable<FileInfo> ioToolFiles, bool saveToolVersionTextFile)
         {
 
-            var strExeInfo = string.Empty;
-            string strToolVersionInfoCombined;
+            var exeInfo = string.Empty;
+            string toolVersionInfoCombined;
 
             if (ioToolFiles != null)
             {
@@ -3263,8 +3263,8 @@ namespace AnalysisManagerBase
                     {
                         if (ioFileInfo.Exists)
                         {
-                            strExeInfo = clsGlobal.AppendToComment(strExeInfo, ioFileInfo.Name + ": " + ioFileInfo.LastWriteTime.ToString(DATE_TIME_FORMAT));
-                            LogMessage("EXE Info: " + strExeInfo, 2);
+                            exeInfo = clsGlobal.AppendToComment(exeInfo, ioFileInfo.Name + ": " + ioFileInfo.LastWriteTime.ToString(DATE_TIME_FORMAT));
+                            LogMessage("EXE Info: " + exeInfo, 2);
                         }
                         else
                         {
@@ -3279,19 +3279,19 @@ namespace AnalysisManagerBase
                 }
             }
 
-            // Append the .Exe info to strToolVersionInfo
-            if (string.IsNullOrEmpty(strExeInfo))
+            // Append the .Exe info to toolVersionInfo
+            if (string.IsNullOrEmpty(exeInfo))
             {
-                strToolVersionInfoCombined = string.Copy(strToolVersionInfo);
+                toolVersionInfoCombined = string.Copy(toolVersionInfo);
             }
             else
             {
-                strToolVersionInfoCombined = clsGlobal.AppendToComment(strToolVersionInfo, strExeInfo);
+                toolVersionInfoCombined = clsGlobal.AppendToComment(toolVersionInfo, exeInfo);
             }
 
-            if (blnSaveToolVersionTextFile)
+            if (saveToolVersionTextFile)
             {
-                SaveToolVersionInfoFile(m_WorkDir, strToolVersionInfoCombined);
+                SaveToolVersionInfoFile(m_WorkDir, toolVersionInfoCombined);
             }
 
             // Setup for execution of the stored procedure
@@ -3304,7 +3304,7 @@ namespace AnalysisManagerBase
             cmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
             cmd.Parameters.Add(new SqlParameter("@job", SqlDbType.Int)).Value = m_jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job", 0);
             cmd.Parameters.Add(new SqlParameter("@step", SqlDbType.Int)).Value = m_jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step", 0);
-            cmd.Parameters.Add(new SqlParameter("@ToolVersionInfo", SqlDbType.VarChar, 900)).Value = strToolVersionInfoCombined;
+            cmd.Parameters.Add(new SqlParameter("@ToolVersionInfo", SqlDbType.VarChar, 900)).Value = toolVersionInfoCombined;
 
             var objAnalysisTask = new clsAnalysisJob(m_mgrParams, m_DebugLevel);
 
@@ -3369,46 +3369,46 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Uses Reflection to determine the version info for an assembly already loaded in memory
         /// </summary>
-        /// <param name="strToolVersionInfo">Version info string to append the version info to</param>
-        /// <param name="strAssemblyName">Assembly Name</param>
+        /// <param name="toolVersionInfo">Version info string to append the version info to</param>
+        /// <param name="assemblyName">Assembly Name</param>
         /// <returns>True if success; false if an error</returns>
         /// <remarks>Use StoreToolVersionInfoOneFile for DLLs not loaded in memory</remarks>
-        protected bool StoreToolVersionInfoForLoadedAssembly(ref string strToolVersionInfo, string strAssemblyName)
+        protected bool StoreToolVersionInfoForLoadedAssembly(ref string toolVersionInfo, string assemblyName)
         {
-            return StoreToolVersionInfoForLoadedAssembly(ref strToolVersionInfo, strAssemblyName, blnIncludeRevision: true);
+            return StoreToolVersionInfoForLoadedAssembly(ref toolVersionInfo, assemblyName, includeRevision: true);
         }
 
         /// <summary>
         /// Uses Reflection to determine the version info for an assembly already loaded in memory
         /// </summary>
-        /// <param name="strToolVersionInfo">Version info string to append the version info to</param>
-        /// <param name="strAssemblyName">Assembly Name</param>
-        /// <param name="blnIncludeRevision">Set to True to include a version of the form 1.5.4821.24755; set to omit the revision, giving a version of the form 1.5.4821</param>
+        /// <param name="toolVersionInfo">Version info string to append the version info to</param>
+        /// <param name="assemblyName">Assembly Name</param>
+        /// <param name="includeRevision">Set to True to include a version of the form 1.5.4821.24755; set to omit the revision, giving a version of the form 1.5.4821</param>
         /// <returns>True if success; false if an error</returns>
         /// <remarks>Use StoreToolVersionInfoOneFile for DLLs not loaded in memory</remarks>
-        protected bool StoreToolVersionInfoForLoadedAssembly(ref string strToolVersionInfo, string strAssemblyName, bool blnIncludeRevision)
+        protected bool StoreToolVersionInfoForLoadedAssembly(ref string toolVersionInfo, string assemblyName, bool includeRevision)
         {
 
             try
             {
-                var assemblyName = System.Reflection.Assembly.Load(strAssemblyName).GetName();
+                var assembly = System.Reflection.Assembly.Load(assemblyName).GetName();
 
-                string strNameAndVersion;
-                if (blnIncludeRevision)
+                string nameAndVersion;
+                if (includeRevision)
                 {
-                    strNameAndVersion = assemblyName.Name + ", Version=" + assemblyName.Version;
+                    nameAndVersion = assembly.Name + ", Version=" + assembly.Version;
                 }
                 else
                 {
-                    strNameAndVersion = assemblyName.Name + ", Version=" + assemblyName.Version.Major + "." + assemblyName.Version.Minor + "." + assemblyName.Version.Build;
+                    nameAndVersion = assembly.Name + ", Version=" + assembly.Version.Major + "." + assembly.Version.Minor + "." + assembly.Version.Build;
                 }
 
-                strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion);
+                toolVersionInfo = clsGlobal.AppendToComment(toolVersionInfo, nameAndVersion);
 
             }
             catch (Exception ex)
             {
-                LogError("Exception determining Assembly info for " + strAssemblyName, ex);
+                LogError("Exception determining Assembly info for " + assemblyName, ex);
                 return false;
             }
 
@@ -3420,14 +3420,14 @@ namespace AnalysisManagerBase
         /// Determines the version info for a .NET DLL using reflection
         /// If reflection fails, then uses System.Diagnostics.FileVersionInfo
         /// </summary>
-        /// <param name="strToolVersionInfo">Version info string to append the version info to</param>
+        /// <param name="toolVersionInfo">Version info string to append the version info to</param>
         /// <param name="strDLLFilePath">Path to the DLL</param>
         /// <returns>True if success; false if an error</returns>
         /// <remarks></remarks>
-        public bool StoreToolVersionInfoOneFile(ref string strToolVersionInfo, string strDLLFilePath)
+        public bool StoreToolVersionInfoOneFile(ref string toolVersionInfo, string strDLLFilePath)
         {
 
-            bool blnSuccess;
+            bool success;
 
             try
             {
@@ -3443,10 +3443,10 @@ namespace AnalysisManagerBase
                 var assembly = System.Reflection.Assembly.LoadFrom(ioFileInfo.FullName);
                 var assemblyName = assembly.GetName();
 
-                var strNameAndVersion = assemblyName.Name + ", Version=" + assemblyName.Version;
-                strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion);
+                var nameAndVersion = assemblyName.Name + ", Version=" + assemblyName.Version;
+                toolVersionInfo = clsGlobal.AppendToComment(toolVersionInfo, nameAndVersion);
 
-                blnSuccess = true;
+                success = true;
             }
             catch (BadImageFormatException)
             {
@@ -3456,10 +3456,10 @@ namespace AnalysisManagerBase
                 // Instead try StoreToolVersionInfoOneFile32Bit or StoreToolVersionInfoOneFile64Bit
 
                 // Use this when compiled as AnyCPU
-                blnSuccess = StoreToolVersionInfoOneFile32Bit(ref strToolVersionInfo, strDLLFilePath);
+                success = StoreToolVersionInfoOneFile32Bit(ref toolVersionInfo, strDLLFilePath);
 
                 // Use this when compiled as 32-bit
-                // blnSuccess = StoreToolVersionInfoOneFile64Bit(strToolVersionInfo, strDLLFilePath)
+                // success = StoreToolVersionInfoOneFile64Bit(toolVersionInfo, strDLLFilePath)
 
             }
             catch (Exception ex)
@@ -3469,26 +3469,26 @@ namespace AnalysisManagerBase
                 //    <supportedRuntime version="v4.0" />
                 //  </startup>
                 LogError("Exception determining Assembly info for " + Path.GetFileName(strDLLFilePath), ex);
-                blnSuccess = false;
+                success = false;
             }
 
-            if (!blnSuccess)
+            if (!success)
             {
-                blnSuccess = StoreToolVersionInfoViaSystemDiagnostics(ref strToolVersionInfo, strDLLFilePath);
+                success = StoreToolVersionInfoViaSystemDiagnostics(ref toolVersionInfo, strDLLFilePath);
             }
 
-            return blnSuccess;
+            return success;
 
         }
 
         /// <summary>
         /// Determines the version info for a .NET DLL using System.Diagnostics.FileVersionInfo
         /// </summary>
-        /// <param name="strToolVersionInfo">Version info string to append the version info to</param>
+        /// <param name="toolVersionInfo">Version info string to append the version info to</param>
         /// <param name="strDLLFilePath">Path to the DLL</param>
         /// <returns>True if success; false if an error</returns>
         /// <remarks></remarks>
-        protected bool StoreToolVersionInfoViaSystemDiagnostics(ref string strToolVersionInfo, string strDLLFilePath)
+        protected bool StoreToolVersionInfoViaSystemDiagnostics(ref string toolVersionInfo, string strDLLFilePath)
         {
 
             try
@@ -3504,35 +3504,35 @@ namespace AnalysisManagerBase
 
                 var oFileVersionInfo = FileVersionInfo.GetVersionInfo(strDLLFilePath);
 
-                var strName = oFileVersionInfo.FileDescription;
-                if (string.IsNullOrEmpty(strName))
+                var name = oFileVersionInfo.FileDescription;
+                if (string.IsNullOrEmpty(name))
                 {
-                    strName = oFileVersionInfo.InternalName;
+                    name = oFileVersionInfo.InternalName;
                 }
 
-                if (string.IsNullOrEmpty(strName))
+                if (string.IsNullOrEmpty(name))
                 {
-                    strName = oFileVersionInfo.FileName;
+                    name = oFileVersionInfo.FileName;
                 }
 
-                if (string.IsNullOrEmpty(strName))
+                if (string.IsNullOrEmpty(name))
                 {
-                    strName = ioFileInfo.Name;
+                    name = ioFileInfo.Name;
                 }
 
-                var strVersion = oFileVersionInfo.FileVersion;
-                if (string.IsNullOrEmpty(strVersion))
+                var version = oFileVersionInfo.FileVersion;
+                if (string.IsNullOrEmpty(version))
                 {
-                    strVersion = oFileVersionInfo.ProductVersion;
+                    version = oFileVersionInfo.ProductVersion;
                 }
 
-                if (string.IsNullOrEmpty(strVersion))
+                if (string.IsNullOrEmpty(version))
                 {
-                    strVersion = "??";
+                    version = "??";
                 }
 
-                var strNameAndVersion = strName + ", Version=" + strVersion;
-                strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion);
+                var nameAndVersion = name + ", Version=" + version;
+                toolVersionInfo = clsGlobal.AppendToComment(toolVersionInfo, nameAndVersion);
 
                 return true;
 
@@ -3548,41 +3548,41 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Uses the DLLVersionInspector to determine the version of a 32-bit .NET DLL or .Exe
         /// </summary>
-        /// <param name="strToolVersionInfo"></param>
+        /// <param name="toolVersionInfo"></param>
         /// <param name="strDLLFilePath"></param>
         /// <returns>True if success; false if an error</returns>
         /// <remarks></remarks>
-        protected bool StoreToolVersionInfoOneFile32Bit(ref string strToolVersionInfo, string strDLLFilePath)
+        protected bool StoreToolVersionInfoOneFile32Bit(ref string toolVersionInfo, string strDLLFilePath)
         {
-            return StoreToolVersionInfoOneFileUseExe(ref strToolVersionInfo, strDLLFilePath, "DLLVersionInspector_x86.exe");
+            return StoreToolVersionInfoOneFileUseExe(ref toolVersionInfo, strDLLFilePath, "DLLVersionInspector_x86.exe");
         }
 
         /// <summary>
         /// Uses the DLLVersionInspector to determine the version of a 64-bit .NET DLL or .Exe
         /// </summary>
-        /// <param name="strToolVersionInfo"></param>
+        /// <param name="toolVersionInfo"></param>
         /// <param name="strDLLFilePath"></param>
         /// <returns>True if success; false if an error</returns>
         /// <remarks></remarks>
-        protected bool StoreToolVersionInfoOneFile64Bit(ref string strToolVersionInfo, string strDLLFilePath)
+        protected bool StoreToolVersionInfoOneFile64Bit(ref string toolVersionInfo, string strDLLFilePath)
         {
-            return StoreToolVersionInfoOneFileUseExe(ref strToolVersionInfo, strDLLFilePath, "DLLVersionInspector_x64.exe");
+            return StoreToolVersionInfoOneFileUseExe(ref toolVersionInfo, strDLLFilePath, "DLLVersionInspector_x64.exe");
         }
 
         /// <summary>
         /// Uses the specified DLLVersionInspector to determine the version of a .NET DLL or .Exe
         /// </summary>
-        /// <param name="strToolVersionInfo"></param>
+        /// <param name="toolVersionInfo"></param>
         /// <param name="strDLLFilePath"></param>
         /// <param name="versionInspectorExeName">DLLVersionInspector_x86.exe or DLLVersionInspector_x64.exe</param>
         /// <returns>True if success; false if an error</returns>
         /// <remarks></remarks>
-        protected bool StoreToolVersionInfoOneFileUseExe(ref string strToolVersionInfo, string strDLLFilePath, string versionInspectorExeName)
+        protected bool StoreToolVersionInfoOneFileUseExe(ref string toolVersionInfo, string strDLLFilePath, string versionInspectorExeName)
         {
 
             try
             {
-                var strAppPath = Path.Combine(clsGlobal.GetAppFolderPath(), versionInspectorExeName);
+                var appPath = Path.Combine(clsGlobal.GetAppFolderPath(), versionInspectorExeName);
 
                 var ioFileInfo = new FileInfo(strDLLFilePath);
 
@@ -3593,23 +3593,23 @@ namespace AnalysisManagerBase
                     return false;
                 }
 
-                if (!File.Exists(strAppPath))
+                if (!File.Exists(appPath))
                 {
                     m_message = "DLLVersionInspector not found by StoreToolVersionInfoOneFileUseExe";
-                    LogMessage(m_message + ": " + strAppPath, 0, true);
+                    LogMessage(m_message + ": " + appPath, 0, true);
                     return false;
                 }
 
                 // Call DLLVersionInspector_x86.exe or DLLVersionInspector_x64.exe to determine the tool version
 
-                var strVersionInfoFilePath = Path.Combine(m_WorkDir, Path.GetFileNameWithoutExtension(ioFileInfo.Name) + "_VersionInfo.txt");
+                var versionInfoFilePath = Path.Combine(m_WorkDir, Path.GetFileNameWithoutExtension(ioFileInfo.Name) + "_VersionInfo.txt");
 
 
-                var strArgs = PossiblyQuotePath(ioFileInfo.FullName) + " /O:" + PossiblyQuotePath(strVersionInfoFilePath);
+                var args = PossiblyQuotePath(ioFileInfo.FullName) + " /O:" + PossiblyQuotePath(versionInfoFilePath);
 
                 if (m_DebugLevel >= 3)
                 {
-                    LogDebug(strAppPath + " " + strArgs);
+                    LogDebug(appPath + " " + args);
                 }
 
                 var progRunner = new clsRunDosProgram(clsGlobal.GetAppFolderPath())
@@ -3623,24 +3623,24 @@ namespace AnalysisManagerBase
                 };
                 RegisterEvents(progRunner);
 
-                var blnSuccess = progRunner.RunProgram(strAppPath, strArgs, "DLLVersionInspector", false);
+                var success = progRunner.RunProgram(appPath, args, "DLLVersionInspector", false);
 
-                if (!blnSuccess)
+                if (!success)
                 {
                     return false;
                 }
 
                 Thread.Sleep(100);
 
-                blnSuccess = ReadVersionInfoFile(strDLLFilePath, strVersionInfoFilePath, out var strVersion);
+                success = ReadVersionInfoFile(strDLLFilePath, versionInfoFilePath, out var version);
 
                 // Delete the version info file
                 try
                 {
-                    if (File.Exists(strVersionInfoFilePath))
+                    if (File.Exists(versionInfoFilePath))
                     {
                         Thread.Sleep(100);
-                        File.Delete(strVersionInfoFilePath);
+                        File.Delete(versionInfoFilePath);
                     }
                 }
                 catch (Exception)
@@ -3648,12 +3648,12 @@ namespace AnalysisManagerBase
                     // Ignore errors here
                 }
 
-                if (!blnSuccess || string.IsNullOrWhiteSpace(strVersion))
+                if (!success || string.IsNullOrWhiteSpace(version))
                 {
                     return false;
                 }
 
-                strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strVersion);
+                toolVersionInfo = clsGlobal.AppendToComment(toolVersionInfo, version);
 
                 return true;
 
@@ -4262,7 +4262,7 @@ namespace AnalysisManagerBase
 
         protected bool ValidateCDTAFile(string strDTAFilePath)
         {
-            var blnDataFound = false;
+            var dataFound = false;
 
             try
             {
@@ -4277,18 +4277,18 @@ namespace AnalysisManagerBase
 
                     while (!srReader.EndOfStream)
                     {
-                        var strLineIn = srReader.ReadLine();
+                        var lineIn = srReader.ReadLine();
 
-                        if (!string.IsNullOrWhiteSpace(strLineIn))
+                        if (!string.IsNullOrWhiteSpace(lineIn))
                         {
-                            blnDataFound = true;
+                            dataFound = true;
                             break;
                         }
                     }
 
                 }
 
-                if (!blnDataFound)
+                if (!dataFound)
                 {
                     LogError("The _DTA.txt file is empty");
                 }
@@ -4300,7 +4300,7 @@ namespace AnalysisManagerBase
                 return false;
             }
 
-            return blnDataFound;
+            return dataFound;
 
         }
 

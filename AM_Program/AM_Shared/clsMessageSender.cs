@@ -174,15 +174,15 @@ namespace AnalysisManagerBase
         #region "Events and Event Handlers"
 
         public event ErrorEventEventHandler ErrorEvent;
-        public delegate void ErrorEventEventHandler(string strMessage, Exception ex);
+        public delegate void ErrorEventEventHandler(string message, Exception ex);
 
         /// <summary>
         /// Report an error
         /// </summary>
-        /// <param name="strMessage"></param>
-        protected void OnErrorEvent(string strMessage)
+        /// <param name="message"></param>
+        protected void OnErrorEvent(string message)
         {
-            ErrorEvent?.Invoke(strMessage, null);
+            ErrorEvent?.Invoke(message, null);
         }
 
         #endregion

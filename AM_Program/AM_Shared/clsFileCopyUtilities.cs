@@ -455,7 +455,7 @@ namespace AnalysisManagerBase
         public bool CreateStoragePathInfoFile(string sourceFilePath, string DestFilePath)
         {
 
-            var strInfoFilePath = String.Empty;
+            var infoFilePath = String.Empty;
 
             try
             {
@@ -464,9 +464,9 @@ namespace AnalysisManagerBase
                     return false;
                 }
 
-                strInfoFilePath = DestFilePath + STORAGE_PATH_INFO_FILE_SUFFIX;
+                infoFilePath = DestFilePath + STORAGE_PATH_INFO_FILE_SUFFIX;
 
-                using (var swOutFile = new StreamWriter(new FileStream(strInfoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var swOutFile = new StreamWriter(new FileStream(infoFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
                     swOutFile.WriteLine(sourceFilePath);
                 }
@@ -474,7 +474,7 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Exception in CreateStoragePathInfoFile for " + strInfoFilePath, ex);
+                OnErrorEvent("Exception in CreateStoragePathInfoFile for " + infoFilePath, ex);
                 return false;
             }
 

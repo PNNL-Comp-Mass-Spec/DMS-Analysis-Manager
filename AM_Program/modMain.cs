@@ -166,9 +166,9 @@ namespace AnalysisManagerProg
                     DisableMyEMSL = mDisableMyEMSL
                 };
 
-                var intReturnCode = objDMSMain.Main();
+                var returnCode = objDMSMain.Main();
 
-                return intReturnCode;
+                return returnCode;
             }
             catch (Exception ex)
             {
@@ -233,12 +233,12 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Returns the .NET assembly version followed by the program date
         /// </summary>
-        /// <param name="strProgramDate"></param>
+        /// <param name="programDate"></param>
         /// <returns></returns>
         /// <remarks></remarks>
-        private static string GetAppVersion(string strProgramDate)
+        private static string GetAppVersion(string programDate)
         {
-            return Assembly.GetExecutingAssembly().GetName().Version + " (" + strProgramDate + ")";
+            return Assembly.GetExecutingAssembly().GetName().Version + " (" + programDate + ")";
         }
 
         private static bool SetOptionsUsingCommandLineParameters(PRISM.clsParseCommandLine objParseCommandLine)
@@ -291,11 +291,11 @@ namespace AnalysisManagerProg
                 if (objParseCommandLine.IsParameterPresent("DLL"))
                 {
                     mDisplayDllVersions = true;
-                    if (objParseCommandLine.RetrieveValueForParameter("DLL", out var strValue))
+                    if (objParseCommandLine.RetrieveValueForParameter("DLL", out var value))
                     {
-                        if (!string.IsNullOrWhiteSpace(strValue))
+                        if (!string.IsNullOrWhiteSpace(value))
                         {
-                            mDisplayDllPath = strValue;
+                            mDisplayDllPath = value;
                         }
                     }
                 }
@@ -321,37 +321,37 @@ namespace AnalysisManagerProg
             }
         }
 
-        private static void ShowErrorMessage(string strMessage)
+        private static void ShowErrorMessage(string message)
         {
-            const string strSeparator = "------------------------------------------------------------------------------";
+            const string separator = "------------------------------------------------------------------------------";
 
             Console.WriteLine();
-            Console.WriteLine(strSeparator);
-            Console.WriteLine(strMessage);
-            Console.WriteLine(strSeparator);
+            Console.WriteLine(separator);
+            Console.WriteLine(message);
+            Console.WriteLine(separator);
             Console.WriteLine();
 
-            WriteToErrorStream(strMessage);
+            WriteToErrorStream(message);
         }
 
-        private static void ShowErrorMessage(string strTitle, IEnumerable<string> items)
+        private static void ShowErrorMessage(string title, IEnumerable<string> items)
         {
-            const string strSeparator = "------------------------------------------------------------------------------";
+            const string separator = "------------------------------------------------------------------------------";
 
             Console.WriteLine();
-            Console.WriteLine(strSeparator);
-            Console.WriteLine(strTitle);
-            var strMessage = strTitle + ":";
+            Console.WriteLine(separator);
+            Console.WriteLine(title);
+            var message = title + ":";
 
             foreach (var item in items)
             {
                 Console.WriteLine("   " + item);
-                strMessage += " " + item;
+                message += " " + item;
             }
-            Console.WriteLine(strSeparator);
+            Console.WriteLine(separator);
             Console.WriteLine();
 
-            WriteToErrorStream(strMessage);
+            WriteToErrorStream(message);
         }
 
         private static void ShowProgramHelp()
@@ -411,13 +411,13 @@ namespace AnalysisManagerProg
             }
         }
 
-        private static void WriteToErrorStream(string strErrorMessage)
+        private static void WriteToErrorStream(string errorMessage)
         {
             try
             {
                 using (var swErrorStream = new StreamWriter(Console.OpenStandardError()))
                 {
-                    swErrorStream.WriteLine(strErrorMessage);
+                    swErrorStream.WriteLine(errorMessage);
                 }
             }
             catch (Exception)
@@ -426,9 +426,9 @@ namespace AnalysisManagerProg
             }
         }
 
-        public static void ShowTraceMessage(string strMessage)
+        public static void ShowTraceMessage(string message)
         {
-            clsMainProcess.ShowTraceMessage(strMessage);
+            clsMainProcess.ShowTraceMessage(message);
         }
     }
 }
