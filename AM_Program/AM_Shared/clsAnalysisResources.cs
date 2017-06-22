@@ -1326,16 +1326,16 @@ namespace AnalysisManagerBase
             m_jobParams.AddResultFileToSkip(Path.GetFileName(inputFilePath));
 
             var objScanStatsGenerator = new clsScanStatsGenerator(strMSFileInfoScannerDLLPath, m_DebugLevel);
+            RegisterEvents(objScanStatsGenerator);
+
+            LogMessage("Generating the ScanStats files for " + Path.GetFileName(inputFilePath));
 
             // Create the _ScanStats.txt and _ScanStatsEx.txt files
             var success = objScanStatsGenerator.GenerateScanStatsFile(inputFilePath, m_WorkingDir, datasetID);
 
             if (success)
             {
-                if (m_DebugLevel >= 1)
-                {
-                    LogMessage("Generated ScanStats file using " + inputFilePath);
-                }
+                LogMessage("Generated ScanStats file using " + inputFilePath);
 
                 Thread.Sleep(125);
                 PRISM.clsProgRunner.GarbageCollectNow();
