@@ -411,6 +411,8 @@ namespace AnalysisManagerBase
 
             m_FileCopyUtilities.ResetTimestampForQueueWaitTime += FileCopyUtilities_ResetTimestampForQueueWaitTime;
 
+            m_FileCopyUtilities.CopyWithLocksComplete += FileCopyUtilities_CopyWithLocksComplete;
+
             m_ResourceOptions = new Dictionary<clsGlobal.eAnalysisResourceOptions, bool>();
             SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, false);
             SetOption(clsGlobal.eAnalysisResourceOptions.MyEMSLSearchDisabled, false);
@@ -4578,6 +4580,11 @@ namespace AnalysisManagerBase
         #endregion
 
         #region "FileCopyUtilities Events"
+
+        private void FileCopyUtilities_CopyWithLocksComplete(DateTime startTimeUtc, string destFilePath)
+        {
+            LogCopyStats(startTimeUtc, destFilePath);
+        }
 
         private void FileCopyUtilities_ResetTimestampForQueueWaitTime()
         {

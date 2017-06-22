@@ -223,8 +223,11 @@ namespace AnalysisManagerBase
                 try
                 {
                     ResetTimestampForQueueWaitTimeLogging();
+                    var startTime = DateTime.UtcNow;
+
                     if (m_FileTools.CopyFileUsingLocks(srcFilePath, destFilePath, m_MgrName, overwrite))
                     {
+                        LogCopyStats(startTime, destFilePath);
                         success = true;
                     }
                     else

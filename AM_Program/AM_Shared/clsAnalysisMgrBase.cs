@@ -1,5 +1,6 @@
 ﻿
 using System;
+using System.IO;
 using PRISM;
 
 namespace AnalysisManagerBase
@@ -74,6 +75,36 @@ namespace AnalysisManagerBase
             m_FileTools.LockQueueTimedOut += m_FileTools_LockQueueTimedOut;
             m_FileTools.LockQueueWaitComplete += m_FileTools_LockQueueWaitComplete;
             m_FileTools.WaitingForLockQueue += m_FileTools_WaitingForLockQueue;
+        }
+
+        /// <summary>
+        /// Log stats related to copying a file
+        /// </summary>
+        /// <param name="startTimeUtc">Time the copy started (or the time that CopyFileUsingLocks was called)</param>
+        /// <param name="destFilePath">Destination file path (used to determine the file size)</param>
+        /// <param name="logThresholdSeconds">Threshold for logging the file copy details</param>
+        /// <remarks>Only writes to the log if the copy time exceeds logThresholdSeconds</remarks>
+        protected void LogCopyStats(DateTime startTimeUtc, string destFilePath, int logThresholdSeconds = 10)
+        {
+            var elapsedSeconds = DateTime.UtcNow.Subtract(startTimeUtc).TotalSeconds;
+            if (elapsedSeconds < logThresholdSeconds)
+                return;
+
+            var destFile = new FileInfo(destFilePath);
+            if (destFile.Exists)
+            {
+                var fileSizeMB = destFile.Length / 1024.0 / 1024;
+                var copyRateMBperSec = fileSizeMB / elapsedSeconds;
+
+                // Note that m_FileTools may have been waiting for a lock file queue to subside,
+                // in which case the copyRate doesn't represent the actual connection speed between the two computers
+                LogDebug(string.Format("  Retrieved {0:N0} MB file in {1:N0} seconds, copying at {2:N0} MB/sec: {3}",
+                    fileSizeMB, elapsedSeconds, copyRateMBperSec, destFile.Name));
+            }
+            else
+            {
+                LogError("Cannot log copy time since target file not found: " + destFilePath);
+            }
         }
 
         /// <summary>

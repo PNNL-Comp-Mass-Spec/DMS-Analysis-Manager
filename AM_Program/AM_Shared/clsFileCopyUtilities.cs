@@ -41,6 +41,9 @@ namespace AnalysisManagerBase
         public event ResetTimestampForQueueWaitTimeHandler ResetTimestampForQueueWaitTime;
         public delegate void ResetTimestampForQueueWaitTimeHandler();
 
+        public event CopyWithLocksCompleteHandler CopyWithLocksComplete;
+        public delegate void CopyWithLocksCompleteHandler(DateTime startTimeUtc, string destFilePath);
+
         #endregion
 
         #region "Methods"
@@ -404,8 +407,11 @@ namespace AnalysisManagerBase
                 try
                 {
                     OnResetTimestampForQueueWaitTime();
+                    var startTime = DateTime.UtcNow;
+
                     if (m_FileTools.CopyFileUsingLocks(srcFilePath, destFilePath, m_MgrName, overwrite))
                     {
+                        OnCopyWithLocksComplete(startTime, destFilePath);
                         return true;
                     }
 
@@ -580,6 +586,16 @@ namespace AnalysisManagerBase
 
             return false;
 
+        }
+
+        /// <summary>
+        /// Raise event CopyWithLocksComplete
+        /// </summary>
+        /// <param name="startTimeUtc">Time the copy started (or the time that CopyFileUsingLocks was called)</param>
+        /// <param name="destFilePath">Destination file path (used to determine the file size)</param>
+        private void OnCopyWithLocksComplete(DateTime startTimeUtc, string destFilePath)
+        {
+            CopyWithLocksComplete?.Invoke(startTimeUtc, destFilePath);
         }
 
         private void LogMessageOrError(string msg, clsLogTools.LogLevels logMsgTypeIfNotFound)

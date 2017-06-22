@@ -635,7 +635,10 @@ namespace AnalysisManagerBase
                 var fiTargetFile = new FileInfo(Path.Combine(ditargetDirectory.FullName, sourceFileName));
 
                 ResetTimestampForQueueWaitTimeLogging();
+                var startTime = DateTime.UtcNow;
+
                 var success = m_FileTools.CopyFileUsingLocks(sourceFilePath, fiTargetFile.FullName, m_MachName, true);
+                LogCopyStats(startTime, fiTargetFile.FullName);
 
                 if (!success)
                 {
@@ -3868,8 +3871,14 @@ namespace AnalysisManagerBase
                         var success = false;
                         while (!success)
                         {
+                            var startTime = DateTime.UtcNow;
+
                             success = m_FileTools.CopyFileUsingLocks(fiSourceFile, fiTargetFile.FullName, m_MachName, true);
-                            if (!success)
+                            if (success)
+                            {
+                                LogCopyStats(startTime, fiTargetFile.FullName);
+                            }
+                            else
                             {
                                 retriesRemaining -= 1;
                                 if (retriesRemaining < 0)
