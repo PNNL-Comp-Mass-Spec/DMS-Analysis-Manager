@@ -216,10 +216,12 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 switch (eRawDataType)
                 {
                     case eRawDataTypeConstants.ThermoRawFile:
+                        LogMessage("Examining the scan types in the .raw file");
                         success = ExamineScanTypesInRawFile(datasetFilePath, out countMs1, out countMSn);
                         break;
 
                     case eRawDataTypeConstants.UIMF:
+                        LogMessage("Examining the scan types in the .UIMF file");
                         success = ExamineScanTypesInUIMFFile(datasetFilePath, out countMs1, out countMSn);
                         break;
 
@@ -255,6 +257,8 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     }
 
                     var lastProgress = DateTime.UtcNow;
+                    var lastProgressLog = DateTime.UtcNow;
+                    var scanCount = rawFileReader.FileInfo.ScanEnd - rawFileReader.FileInfo.ScanStart + 1;
 
                     for (var scanNumber = rawFileReader.FileInfo.ScanStart; scanNumber <= rawFileReader.FileInfo.ScanEnd; scanNumber++)
                     {
@@ -277,7 +281,21 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                         if (DateTime.UtcNow.Subtract(lastProgress).TotalMilliseconds >= 500)
                         {
                             lastProgress = DateTime.UtcNow;
-                            LogDebug("Examining scan levels in .raw file, scan " + scanNumber, 10);
+
+                            if (DateTime.UtcNow.Subtract(lastProgressLog).TotalSeconds < 60)
+                            {
+                                // Show progress at the console, but do not write to the log file
+                                LogDebug("Examining scan levels in .raw file, scan " + scanNumber, 10);
+                            }
+                            else
+                            {
+                                lastProgressLog = DateTime.UtcNow;
+                                LogDebug("Examining scan levels in .raw file, scan " + scanNumber, 1);
+
+                                // Note: do not multiply by 100 since we want to call UpdateAndWrite with a number between 0 and 1 (meaning 0 to 1%)
+                                var percentComplete = scanNumber / (float)scanCount;
+                                m_StatusTools.UpdateAndWrite(percentComplete);
+                            }
                         }
                     }
 
