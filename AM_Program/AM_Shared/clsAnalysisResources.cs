@@ -763,6 +763,8 @@ namespace AnalysisManagerBase
             int maxWaitTimeMinutes = 120,
             int logIntervalMinutes = 5)
         {
+            if (dataFilePath.EndsWith(LOCK_FILE_EXTENSION, StringComparison.OrdinalIgnoreCase))
+                throw new ArgumentException("dataFilePath may not end in .lock", nameof(dataFilePath));
 
             var waitingForLockFile = false;
             var dtLockFileCreated = DateTime.UtcNow;

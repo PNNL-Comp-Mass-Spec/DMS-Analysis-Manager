@@ -202,6 +202,7 @@ namespace AnalysisManagerBase
                 return false;
             }
         }
+
         /// <summary>
         /// Determine the status of a remotely running job
         /// </summary>
