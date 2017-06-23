@@ -180,7 +180,7 @@ namespace AnalysisManagerBase
         public string StatusInfoFile => GetBaseStatusFilename() + ".info";
 
         /// <summary>
-        /// Filename of the .info file
+        /// Filename of the .lock file
         /// </summary>
         public string StatusLockFile => GetBaseStatusFilename() + ".lock";
 
@@ -232,7 +232,6 @@ namespace AnalysisManagerBase
             RemoteWorkDirPath = string.Empty;
             WorkDir = string.Empty;
         }
-
 
         /// <summary>
         /// Look for a lock file named dataFileName + ".lock" in directory remoteDirectoryPath
