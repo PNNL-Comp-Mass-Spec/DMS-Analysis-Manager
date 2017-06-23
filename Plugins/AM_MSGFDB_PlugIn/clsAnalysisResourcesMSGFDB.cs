@@ -132,16 +132,14 @@ namespace AnalysisManagerMSGFDBPlugIn
         }
 
         /// <summary>
-        /// Call this function to copy files from the working directory to a remote host for remote processing
-        /// Plugins that implement this will skip files that are not be needed by the ToolRunner class of the plugin
-        /// Plugins should also copy fasta files if appropriate
+        /// Copy the working directory files, the job parameters file, and and FASTA file to the remote host
         /// </summary>
         /// <returns>True if success, false if an error</returns>
         public override bool CopyResourcesToRemote(clsRemoteTransferUtility transferUtility)
         {
             try
             {
-                // Save job parameters to an XML file
+                // Save job parameters to XML file JobParams.xml
                 // Required because the tool runner needs to load the name of the generated parameter file and generated OrgDB (generatedFastaName)
                 SaveCurrentJobParameters();
             }

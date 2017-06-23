@@ -2552,7 +2552,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     WritePXHeader(swPXFile, "submitter_name", "Matthew Monroe", dctTemplateParameters);
                     WritePXHeader(swPXFile, "submitter_email", "matthew.monroe@pnnl.gov", dctTemplateParameters);
                     WritePXHeader(swPXFile, "submitter_affiliation", PNNL_NAME_COUNTRY, dctTemplateParameters);
-                    WritePXHeader(swPXFile, "submitter_pride_login", "matthew.monroe@pnl.gov", dctTemplateParameters);
+                    WritePXHeader(swPXFile, "submitter_pride_login", "matthew.monroe@pnnl.gov", dctTemplateParameters);
 
                     WritePXHeader(swPXFile, "lab_head_name", "Richard D. Smith", dctTemplateParameters);
                     WritePXHeader(swPXFile, "lab_head_email", "dick.smith@pnnl.gov", dctTemplateParameters);
@@ -2890,9 +2890,9 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
         private bool DefineProgramPaths()
         {
-            // JavaProgLoc will typically be "C:\Program Files\Java\jre7\bin\Java.exe"
-            var JavaProgLoc = GetJavaProgLoc();
-            if (string.IsNullOrEmpty(JavaProgLoc))
+            // javaProgLoc will typically be "C:\Program Files\Java\jre7\bin\Java.exe"
+            var javaProgLoc = GetJavaProgLoc();
+            if (string.IsNullOrEmpty(javaProgLoc))
             {
                 return false;
             }

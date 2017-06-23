@@ -675,7 +675,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Copies the .mzXML file to the generic MSXML_Cache folder, e.g. \\proto-6\MSXML_Cache\MSConvert
         /// </summary>
-        /// <param name="strsourceFilePath"></param>
+        /// <param name="sourceFilePath"></param>
         /// <param name="datasetYearQuarter">Dataset year quarter text, e.g. 2013_2;  if this this parameter is blank, then will auto-determine using Job Parameter DatasetStoragePath</param>
         /// <param name="msXmlGeneratorName">Name of the MzXML generator, e.g. MSConvert</param>
         /// <param name="purgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 20 TB</param>
@@ -1054,7 +1054,8 @@ namespace AnalysisManagerBase
                 return string.Empty;
             }
 
-            // Now verify transfer directory exists
+            // Verify that the transfer directory exists
+            // If this is an Aggregation job, we create missing folders later in this method
             try
             {
                 objAnalysisResults.FolderExistsWithRetry(transferFolderPath);

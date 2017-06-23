@@ -805,7 +805,7 @@ namespace AnalysisManagerBase
         /// <param name="dataFilePath">Data file path</param>
         /// <param name="taskDescription">Description of current task; will be written the lock file, followed by " at yyyy-MM-dd hh:mm:ss tt"</param>
         /// <returns>Full path to the lock file</returns>
-        /// <remarks></remarks>
+        /// <remarks>An exception will be thrown if the lock file already exists</remarks>
         public static string CreateLockFile(string dataFilePath, string taskDescription)
         {
 
@@ -1593,7 +1593,9 @@ namespace AnalysisManagerBase
         /// <returns></returns>
         protected SortedSet<string> GetDefaultWorkDirFilesToIgnore()
         {
-            // Construct the filename, for example JobParameters_1394245.xml
+            // Construct the JobParameters filename, for example JobParameters_1394245.xml
+            // We skip this file because the remote manager loads parameters from JobParams.xml
+            // (JobParams.xml has more info than the JobParameters_1394245.xml file)
             var jobParametersFilename = clsAnalysisJob.JobParametersFilename(m_JobNum);
 
             var filesToIgnore = new SortedSet<string> { jobParametersFilename };
@@ -4068,7 +4070,7 @@ namespace AnalysisManagerBase
                 srMemoryStreamReader.Close();
                 objMemoryStream.Close();
 
-                // Since xmlText now contains the XML, we can now safely close XWriter
+                // Since xmlText now contains the XML, we can now safely close the xWriter
             }
 
             var jobParamsFile = new FileInfo(Path.Combine(WorkDir, clsAnalysisJob.OFFLINE_JOB_PARAMS_FILE));

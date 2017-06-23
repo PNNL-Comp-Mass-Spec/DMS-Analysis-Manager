@@ -181,32 +181,62 @@ namespace AnalysisManagerBase
             }
         }
 
+        /// <summary>
+        /// Copy the file, optionally overwriting
+        /// </summary>
+        /// <param name="srcFilePath">Source file path</param>
+        /// <param name="destFilePath">Destination file path</param>
+        /// <param name="overwrite">True to overwrite if it exists</param>
+        /// <remarks>Tries up to 3 times, waiting 15 seconds between attempts</remarks>
         public void CopyFileWithRetry(string srcFilePath, string destFilePath, bool overwrite)
         {
             const bool increaseHoldoffOnEachRetry = false;
             CopyFileWithRetry(srcFilePath, destFilePath, overwrite, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_HOLDOFF_SEC, increaseHoldoffOnEachRetry);
         }
 
+        /// <summary>
+        /// Copy the file, optionally overwriting
+        /// </summary>
+        /// <param name="srcFilePath">Source file path</param>
+        /// <param name="destFilePath">Destination file path</param>
+        /// <param name="overwrite">True to overwrite if it exists</param>
+        /// <param name="increaseHoldoffOnEachRetry"></param>
         public void CopyFileWithRetry(string srcFilePath, string destFilePath, bool overwrite, bool increaseHoldoffOnEachRetry)
         {
             CopyFileWithRetry(srcFilePath, destFilePath, overwrite, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_HOLDOFF_SEC, increaseHoldoffOnEachRetry);
         }
 
+        /// <summary>
+        /// Copy the file, optionally overwriting
+        /// </summary>
+        /// <param name="srcFilePath">Source file path</param>
+        /// <param name="destFilePath">Destination file path</param>
+        /// <param name="overwrite">True to overwrite if it exists</param>
+        /// <param name="maxRetryCount">Maximum attempts</param>
+        /// <param name="retryHoldoffSeconds">Seconds between attempts</param>
         public void CopyFileWithRetry(string srcFilePath, string destFilePath, bool overwrite, int maxRetryCount, int retryHoldoffSeconds)
         {
             const bool increaseHoldoffOnEachRetry = false;
             CopyFileWithRetry(srcFilePath, destFilePath, overwrite, maxRetryCount, retryHoldoffSeconds, increaseHoldoffOnEachRetry);
         }
 
-
+        /// <summary>
+        /// Copy the file, optionally overwriting
+        /// </summary>
+        /// <param name="srcFilePath">Source file path</param>
+        /// <param name="destFilePath">Destination file path</param>
+        /// <param name="overwrite">True to overwrite if it exists</param>
+        /// <param name="maxRetryCount">Maximum attempts</param>
+        /// <param name="retryHoldoffSeconds">Seconds between attempts</param>
+        /// <param name="increaseHoldoffOnEachRetry">If true, increase the holdoff between each attempt</param>
         public void CopyFileWithRetry(string srcFilePath, string destFilePath, bool overwrite, int maxRetryCount, int retryHoldoffSeconds, bool increaseHoldoffOnEachRetry)
         {
-            var AttemptCount = 0;
+            var attemptCount = 0;
             var success = false;
-            float sngRetryHoldoffSeconds = retryHoldoffSeconds;
+            float actualRetryHoldoffSeconds = retryHoldoffSeconds;
 
-            if (sngRetryHoldoffSeconds < 1)
-                sngRetryHoldoffSeconds = 1;
+            if (actualRetryHoldoffSeconds < 1)
+                actualRetryHoldoffSeconds = 1;
             if (maxRetryCount < 1)
                 maxRetryCount = 1;
 
@@ -216,9 +246,9 @@ namespace AnalysisManagerBase
                 throw new IOException("clsAnalysisResults,CopyFileWithRetry: Source file not found for copy operation: " + srcFilePath);
             }
 
-            while (AttemptCount <= maxRetryCount && !success)
+            while (attemptCount <= maxRetryCount && !success)
             {
-                AttemptCount += 1;
+                attemptCount += 1;
 
                 try
                 {
@@ -246,14 +276,14 @@ namespace AnalysisManagerBase
                     }
 
                     // Wait several seconds before retrying
-                    Thread.Sleep((int)(Math.Floor(sngRetryHoldoffSeconds * 1000)));
+                    Thread.Sleep((int)(Math.Floor(actualRetryHoldoffSeconds * 1000)));
 
                     PRISM.clsProgRunner.GarbageCollectNow();
                 }
 
                 if (!success && increaseHoldoffOnEachRetry)
                 {
-                    sngRetryHoldoffSeconds *= 1.5f;
+                    actualRetryHoldoffSeconds *= 1.5f;
                 }
             }
 
@@ -385,27 +415,44 @@ namespace AnalysisManagerBase
 
         }
 
+        /// <summary>
+        /// Create the folder (if it does not yet exist)
+        /// </summary>
+        /// <param name="folderPath">Folder to create</param>
+        /// <remarks>Tries up to 3 times, waiting 15 seconds between attempts</remarks>
         public void CreateFolderWithRetry(string folderPath)
         {
             const bool increaseHoldoffOnEachRetry = false;
             CreateFolderWithRetry(folderPath, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_HOLDOFF_SEC, increaseHoldoffOnEachRetry);
         }
 
+        /// <summary>
+        /// Create the folder (if it does not yet exist)
+        /// </summary>
+        /// <param name="folderPath">Folder to create</param>
+        /// <param name="maxRetryCount">Maximum attempts</param>
+        /// <param name="retryHoldoffSeconds">Seconds between attempts</param>
         public void CreateFolderWithRetry(string folderPath, int maxRetryCount, int retryHoldoffSeconds)
         {
             const bool increaseHoldoffOnEachRetry = false;
             CreateFolderWithRetry(folderPath, maxRetryCount, retryHoldoffSeconds, increaseHoldoffOnEachRetry);
         }
 
-
+        /// <summary>
+        /// Create the folder (if it does not yet exist)
+        /// </summary>
+        /// <param name="folderPath">Folder to create</param>
+        /// <param name="maxRetryCount">Maximum attempts</param>
+        /// <param name="retryHoldoffSeconds">Seconds between attempts</param>
+        /// <param name="increaseHoldoffOnEachRetry">If true, increase the holdoff between each attempt</param>
         public void CreateFolderWithRetry(string folderPath, int maxRetryCount, int retryHoldoffSeconds, bool increaseHoldoffOnEachRetry)
         {
-            var AttemptCount = 0;
+            var attemptCount = 0;
             var success = false;
-            float sngRetryHoldoffSeconds = retryHoldoffSeconds;
+            float actualRetryHoldoffSeconds = retryHoldoffSeconds;
 
-            if (sngRetryHoldoffSeconds < 1)
-                sngRetryHoldoffSeconds = 1;
+            if (actualRetryHoldoffSeconds < 1)
+                actualRetryHoldoffSeconds = 1;
             if (maxRetryCount < 1)
                 maxRetryCount = 1;
 
@@ -414,9 +461,9 @@ namespace AnalysisManagerBase
                 throw new DirectoryNotFoundException("Folder path cannot be empty when calling CreateFolderWithRetry");
             }
 
-            while (AttemptCount <= maxRetryCount && !success)
+            while (attemptCount <= maxRetryCount && !success)
             {
-                AttemptCount += 1;
+                attemptCount += 1;
 
                 try
                 {
@@ -437,14 +484,14 @@ namespace AnalysisManagerBase
                     LogError("clsAnalysisResults: error creating folder " + folderPath, ex);
 
                     // Wait several seconds before retrying
-                    Thread.Sleep((int)(Math.Floor(sngRetryHoldoffSeconds * 1000)));
+                    Thread.Sleep((int)(Math.Floor(actualRetryHoldoffSeconds * 1000)));
 
                     PRISM.clsProgRunner.GarbageCollectNow();
                 }
 
                 if (!success && increaseHoldoffOnEachRetry)
                 {
-                    sngRetryHoldoffSeconds *= 1.5f;
+                    actualRetryHoldoffSeconds *= 1.5f;
                 }
             }
 
@@ -457,7 +504,6 @@ namespace AnalysisManagerBase
             }
 
         }
-
 
         private void DeleteOldFailedResultsFolders(DirectoryInfo diTargetFolder)
         {
@@ -508,35 +554,56 @@ namespace AnalysisManagerBase
 
         }
 
+        /// <summary>
+        /// Check for the existence of a folder, retrying if an error
+        /// </summary>
+        /// <param name="folderPath"></param>
+        /// <returns>True if the directory exists, otherwise false</returns>
+        /// <remarks>Checks up to 3 times, waiting 15 seconds between attempts</remarks>
         public bool FolderExistsWithRetry(string folderPath)
         {
             const bool increaseHoldoffOnEachRetry = false;
             return FolderExistsWithRetry(folderPath, DEFAULT_RETRY_COUNT, DEFAULT_RETRY_HOLDOFF_SEC, increaseHoldoffOnEachRetry);
         }
 
+        /// <summary>
+        /// Check for the existence of a folder, retrying if an error
+        /// </summary>
+        /// <param name="folderPath">Folder to check</param>
+        /// <param name="maxRetryCount">Maximum attempts</param>
+        /// <param name="retryHoldoffSeconds">Seconds between attempts</param>
+        /// <returns>True if the directory exists, otherwise false</returns>
         public bool FolderExistsWithRetry(string folderPath, int maxRetryCount, int retryHoldoffSeconds)
         {
             const bool increaseHoldoffOnEachRetry = false;
             return FolderExistsWithRetry(folderPath, maxRetryCount, retryHoldoffSeconds, increaseHoldoffOnEachRetry);
         }
 
+        /// <summary>
+        /// Check for the existence of a folder, retrying if an error
+        /// </summary>
+        /// <param name="folderPath">Folder to check</param>
+        /// <param name="maxRetryCount">Maximum attempts</param>
+        /// <param name="retryHoldoffSeconds">Seconds between attempts</param>
+        /// <param name="increaseHoldoffOnEachRetry">If true, increase the holdoff between each attempt</param>
+        /// <returns>True if the directory exists, otherwise false</returns>
         public bool FolderExistsWithRetry(string folderPath, int maxRetryCount, int retryHoldoffSeconds, bool increaseHoldoffOnEachRetry)
         {
 
-            var AttemptCount = 0;
+            var attemptCount = 0;
             var success = false;
             var folderExists = false;
 
-            float sngRetryHoldoffSeconds = retryHoldoffSeconds;
+            float actualRetryHoldoffSeconds = retryHoldoffSeconds;
 
-            if (sngRetryHoldoffSeconds < 1)
-                sngRetryHoldoffSeconds = 1;
+            if (actualRetryHoldoffSeconds < 1)
+                actualRetryHoldoffSeconds = 1;
             if (maxRetryCount < 1)
                 maxRetryCount = 1;
 
-            while (AttemptCount <= maxRetryCount && !success)
+            while (attemptCount <= maxRetryCount && !success)
             {
-                AttemptCount += 1;
+                attemptCount += 1;
 
                 try
                 {
@@ -549,14 +616,14 @@ namespace AnalysisManagerBase
                     LogError("clsAnalysisResults: error looking for folder " + folderPath, ex);
 
                     // Wait several seconds before retrying
-                    Thread.Sleep((int)(Math.Floor(sngRetryHoldoffSeconds * 1000)));
+                    Thread.Sleep((int)(Math.Floor(actualRetryHoldoffSeconds * 1000)));
 
                     PRISM.clsProgRunner.GarbageCollectNow();
                 }
 
                 if (!success && increaseHoldoffOnEachRetry)
                 {
-                    sngRetryHoldoffSeconds *= 1.5f;
+                    actualRetryHoldoffSeconds *= 1.5f;
                 }
 
             }
