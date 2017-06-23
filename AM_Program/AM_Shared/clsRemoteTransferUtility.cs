@@ -605,7 +605,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="sourceFilePath">Source file path</param>
         /// <param name="remoteDirectoryPath">Remote target directory</param>
-        /// <param name="useLockFile">True to use lock files when the destination directory might be accessed via multiple managers simultaneously</param>
+        /// <param name="useLockFile">True to use a lock file when the destination directory might be accessed via multiple managers simultaneously</param>
         /// <returns>True on success, false if an error</returns>
         /// <remarks>Calls UpdateParameters if necessary; that method will throw an exception if there are missing parameters or configuration issues</remarks>
         public bool CopyFileToRemote(string sourceFilePath, string remoteDirectoryPath, bool useLockFile = false)
@@ -639,7 +639,7 @@ namespace AnalysisManagerBase
         /// <param name="sourceFileNames">Source file names; wildcards are allowed</param>
         /// <param name="remoteDirectoryPath">Remote target directory</param>
         /// <param name="useDefaultManagerRemoteInfo">True to use RemoteInfo defined for the manager; False to use RemoteInfo associated with the job (typically should be true)</param>
-        /// <param name="useLockFiles">True to use lock files when the destination directory might be accessed via multiple managers simultaneously</param>
+        /// <param name="useLockFile">True to use a lock file when the destination directory might be accessed via multiple managers simultaneously</param>
         /// <returns>True on success, false if an error</returns>
         /// <remarks>Calls UpdateParameters if necessary; that method will throw an exception if there are missing parameters or configuration issues</remarks>
         public bool CopyFilesToRemote(
@@ -647,7 +647,7 @@ namespace AnalysisManagerBase
             IEnumerable<string> sourceFileNames,
             string remoteDirectoryPath,
             bool useDefaultManagerRemoteInfo,
-            bool useLockFiles)
+            bool useLockFile)
         {
             if (IsParameterUpdateRequired(useDefaultManagerRemoteInfo))
             {
@@ -656,7 +656,7 @@ namespace AnalysisManagerBase
                 UpdateParameters(useDefaultManagerRemoteInfo);
             }
 
-            return CopyFilesToRemote(sourceDirectoryPath, sourceFileNames, remoteDirectoryPath, useLockFiles);
+            return CopyFilesToRemote(sourceDirectoryPath, sourceFileNames, remoteDirectoryPath, useLockFile);
         }
 
         /// <summary>
@@ -665,13 +665,13 @@ namespace AnalysisManagerBase
         /// <param name="sourceDirectoryPath">Source directory</param>
         /// <param name="sourceFileNames">Source file names; wildcards are allowed</param>
         /// <param name="remoteDirectoryPath">Remote target directory</param>
-        /// <param name="useLockFiles">True to use lock files when the destination directory might be accessed via multiple managers simultaneously</param>
+        /// <param name="useLockFile">True to use a lock file when the destination directory might be accessed via multiple managers simultaneously</param>
         /// <returns>True on success, false if an error</returns>
         public bool CopyFilesToRemote(
             string sourceDirectoryPath,
             IEnumerable<string> sourceFileNames,
             string remoteDirectoryPath,
-            bool useLockFiles)
+            bool useLockFile)
         {
             if (string.IsNullOrWhiteSpace(sourceDirectoryPath))
             {
@@ -719,7 +719,7 @@ namespace AnalysisManagerBase
                     }
                 }
 
-                return CopyFilesToRemote(filesToCopy, remoteDirectoryPath, useLockFiles);
+                return CopyFilesToRemote(filesToCopy, remoteDirectoryPath, useLockFile);
 
             }
             catch (Exception ex)
@@ -735,9 +735,9 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="sourceFiles">Source files</param>
         /// <param name="remoteDirectoryPath">Remote target directory</param>
-        /// <param name="useLockFiles">True to use lock files when the destination directory might be accessed via multiple managers simultaneously</param>
+        /// <param name="useLockFile">True to use a lock file when the destination directory might be accessed via multiple managers simultaneously</param>
         /// <returns>True on success, false if an error</returns>
-        public bool CopyFilesToRemote(IEnumerable<FileInfo> sourceFiles, string remoteDirectoryPath, bool useLockFiles = false)
+        public bool CopyFilesToRemote(IEnumerable<FileInfo> sourceFiles, string remoteDirectoryPath, bool useLockFile = false)
         {
             if (!mParametersValidated)
                 throw new Exception("Call UpdateParameters before calling CopyFilesToRemote");
@@ -761,7 +761,7 @@ namespace AnalysisManagerBase
 
                 SftpClient sftp;
 
-                if (useLockFiles)
+                if (useLockFile)
                 {
                     sftp = new SftpClient(RemoteHostName, RemoteHostUser, mPrivateKeyFile);
                     sftp.Connect();
@@ -775,6 +775,9 @@ namespace AnalysisManagerBase
                 {
                     scp.Connect();
 
+                    var lockFileDefined = false;
+                    var lockFileDataFile = string.Empty;
+
                     foreach (var sourceFile in uniqueFiles)
                     {
                         if (!sourceFile.Exists)
@@ -784,8 +787,11 @@ namespace AnalysisManagerBase
                             continue;
                         }
 
-                        if (useLockFiles)
+                        if (useLockFile && !lockFileDefined)
                         {
+                            // Only create a lock file for the first file we copy
+                            // That lock file will not be deleted until after all files have been copied
+
                             CheckForRemoteLockFile(sftp, remoteDirectoryPath, sourceFile.Name, out var lockFileWasFound, out var lockFileWasAged);
 
                             if (lockFileWasFound && !lockFileWasAged)
@@ -819,6 +825,9 @@ namespace AnalysisManagerBase
 
                                 return false;
                             }
+
+                            lockFileDefined = true;
+                            lockFileDataFile = sourceFile.Name;
                         }
 
                         OnDebugEvent("  Copying " + sourceFile.FullName);
@@ -826,19 +835,19 @@ namespace AnalysisManagerBase
                         var targetFilePath = clsPathUtils.CombineLinuxPaths(remoteDirectoryPath, sourceFile.Name);
                         scp.Upload(sourceFile, targetFilePath);
 
-                        if (useLockFiles)
-                        {
-                            DeleteLockFile(sftp, remoteDirectoryPath, sourceFile.Name);
-                        }
-
                         success = true;
+                    }
+
+                    if (useLockFile && !string.IsNullOrWhiteSpace(lockFileDataFile))
+                    {
+                        DeleteLockFile(sftp, remoteDirectoryPath, lockFileDataFile);
                     }
 
                     scp.Disconnect();
 
                 }
 
-                if (useLockFiles)
+                if (useLockFile)
                 {
                     sftp.Disconnect();
                 }
