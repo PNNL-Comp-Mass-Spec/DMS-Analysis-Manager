@@ -321,7 +321,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 Thread.Sleep(500);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
-                if (!blnSuccess | jobFailureCount > 0)
+                if (!blnSuccess || jobFailureCount > 0)
                 {
                     // Something went wrong
                     // In order to help diagnose things, we will move whatever files were created into the result folder,
@@ -331,6 +331,9 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 }
 
                 DefineFilesToSkipTransfer();
+
+                // Override the TransferFolderPath job parameter with mCacheFolderPath
+                m_jobParams.SetParam("transferFolderPath", mCacheFolderPath);
 
                 var success = CopyResultsToTransferDirectory();
 
