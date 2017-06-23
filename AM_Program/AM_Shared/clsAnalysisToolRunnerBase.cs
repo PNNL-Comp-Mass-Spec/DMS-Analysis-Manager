@@ -1058,7 +1058,14 @@ namespace AnalysisManagerBase
             // If this is an Aggregation job, we create missing folders later in this method
             try
             {
-                objAnalysisResults.FolderExistsWithRetry(transferFolderPath);
+                var folderExists = objAnalysisResults.FolderExistsWithRetry(transferFolderPath);
+
+                if (!folderExists && !clsGlobal.IsMatch(Dataset, "Aggregation"))
+                {
+                    LogError("Transfer directory not found: " + transferFolderPath);
+                    return string.Empty;
+                }
+
             }
             catch (Exception ex)
             {
@@ -1103,9 +1110,7 @@ namespace AnalysisManagerBase
             }
 
             // Now append the output folder name to remoteTransferFolderPath
-            remoteTransferFolderPath = Path.Combine(remoteTransferFolderPath, m_ResFolderName);
-
-            return remoteTransferFolderPath;
+            return Path.Combine(remoteTransferFolderPath, m_ResFolderName);
 
         }
 
