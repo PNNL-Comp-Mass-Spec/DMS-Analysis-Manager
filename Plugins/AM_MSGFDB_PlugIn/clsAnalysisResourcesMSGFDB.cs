@@ -160,10 +160,24 @@ namespace AnalysisManagerMSGFDBPlugIn
                 if (!copyWorkDirSuccess)
                     return false;
 
-                // Copy the FASTA file to the remote computer
-                var copyOrgDbSuccess = CopyGeneratedOrgDBToRemote(transferUtility);
+                var attemptCount = 0;
 
-                return copyOrgDbSuccess;
+                while (true)
+                {
+
+                    // Copy the FASTA file to the remote computer
+                    var copyOrgDbSuccess = CopyGeneratedOrgDBToRemote(transferUtility);
+                    if (copyOrgDbSuccess)
+                        return true;
+
+                    attemptCount++;
+                    if (attemptCount >= 3)
+                        return false;
+
+                    LogWarning("Copy of FASTA file to remote host failed; will try again in 5 seconds");
+
+                    System.Threading.Thread.Sleep(5000);
+                }
 
             }
             catch (Exception ex)
