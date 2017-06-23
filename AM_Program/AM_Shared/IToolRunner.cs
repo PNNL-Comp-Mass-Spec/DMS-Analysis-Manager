@@ -95,9 +95,10 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Make the local results directory, move files into that directory, then copy the files to the transfer directory on the Proto-x server
         /// </summary>
+        /// <param name="transferFolderPathOverride">Optional: specific transfer folder path to use; if empty, uses job param transferFolderPath</param>
         /// <returns>True if success, otherwise false</returns>
         /// <remarks>Uses MakeResultsFolder, MoveResultFiles, and CopyResultsFolderToServer</remarks>
-        bool CopyResultsToTransferDirectory();
+        bool CopyResultsToTransferDirectory(string transferFolderPathOverride = "");
 
         /// <summary>
         /// Retrieve results from a remote processing job; storing in the local working directory

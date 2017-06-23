@@ -990,7 +990,7 @@ namespace AnalysisManagerBase
         /// Uses MakeResultsFolder, MoveResultFiles, and CopyResultsFolderToServer
         /// Step tools can override this method if custom steps are required prior to packaging and transferring the results
         /// </remarks>
-        public virtual bool CopyResultsToTransferDirectory()
+        public virtual bool CopyResultsToTransferDirectory(string transferFolderPathOverride = "")
         {
             var success = MakeResultsFolder();
             if (!success)
@@ -1008,7 +1008,16 @@ namespace AnalysisManagerBase
                 return false;
             }
 
-            var copySuccess = CopyResultsFolderToServer();
+            bool copySuccess;
+
+            if (string.IsNullOrWhiteSpace(transferFolderPathOverride))
+            {
+                copySuccess = CopyResultsFolderToServer();
+            }
+            else
+            {
+                copySuccess = CopyResultsFolderToServer(transferFolderPathOverride);
+            }
 
             return copySuccess;
         }

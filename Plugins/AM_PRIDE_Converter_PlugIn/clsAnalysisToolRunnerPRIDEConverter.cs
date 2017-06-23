@@ -332,10 +332,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 DefineFilesToSkipTransfer();
 
-                // Override the TransferFolderPath job parameter with mCacheFolderPath
-                m_jobParams.SetParam("transferFolderPath", mCacheFolderPath);
-
-                var success = CopyResultsToTransferDirectory();
+                var success = CopyResultsToTransferDirectory(mCacheFolderPath);
 
                 return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
 
