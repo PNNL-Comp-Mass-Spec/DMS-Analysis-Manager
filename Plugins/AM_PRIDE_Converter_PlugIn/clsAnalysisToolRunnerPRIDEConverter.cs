@@ -283,10 +283,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 try
                 {
                     // Create the remote Transfer Directory
-                    if (!Directory.Exists(remoteTransferFolder))
-                    {
-                        Directory.CreateDirectory(remoteTransferFolder);
-                    }
+                    objAnalysisResults.CreateFolderWithRetry(remoteTransferFolder, maxRetryCount: 5, retryHoldoffSeconds: 20, increaseHoldoffOnEachRetry: true);
                 }
                 catch (Exception ex)
                 {
