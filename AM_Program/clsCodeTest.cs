@@ -712,6 +712,29 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
+        /// Test copying a large fasta file to a remote host
+        /// </summary>
+        public void TestCopyToRemote()
+        {
+            const short DEBUG_LEVEL = 2;
+
+            var jobParams = InitializeMgrAndJobParams(DEBUG_LEVEL);
+
+            jobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "StepTool", "MSGFPlus");
+            jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetNum", "TestDataset");
+
+            var transferUtility = new clsRemoteTransferUtility(m_mgrParams, jobParams);
+            RegisterEvents(transferUtility);
+
+            var sourceFilePath = @"C:\DMS_Temp_Org\uniref50_2013-02-14.fasta";
+            var remoteDirectoryPath = "/file1/temp/DMSOrgDBs";
+
+            var success = transferUtility.CopyFileToRemote(sourceFilePath, remoteDirectoryPath, useLockFile: true);
+
+            Console.WriteLine("Success: " + success);
+        }
+
+        /// <summary>
         /// Split apart a _dta.txt file
         /// </summary>
         /// <param name="rootFileName"></param>

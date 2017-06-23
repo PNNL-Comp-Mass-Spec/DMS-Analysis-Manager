@@ -128,7 +128,9 @@ namespace AnalysisManagerProg
                         // objTest.TestArchiveFailedResults();
                         // objTest.TestGetToolVersionInfo();
                         // objTest.TestConnectRSA();
-                        objTest.TestStatusLogging();
+                        // objTest.TestStatusLogging();
+
+                        objTest.TestCopyToRemote();
 
                     }
                     catch (Exception ex)
