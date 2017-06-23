@@ -758,7 +758,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     WriteConsoleOutputToFile = true,
                     ConsoleOutputFilePath = consoleOutputFilePath
                 };
-                objBuildSA.ErrorEvent += CmdRunner_ErrorEvent;
+                RegisterEvents(objBuildSA);
 
                 currentTask = "Run BuildSA using " + CmdStr;
 
@@ -1150,55 +1150,44 @@ namespace AnalysisManagerMSGFDBPlugIn
                         "deleting " + fiLockFile.FullName);
                 }
                 DeleteLockFile(fiLockFile);
+                return;
             }
-            else if (fiLockFile.Exists)
+
+            if (!fiLockFile.Exists)
+                return;
+
+            if (debugLevel >= 1)
             {
-                if (intDebugLevel >= 1)
+                OnStatusEvent("Lock file found: " + fiLockFile.FullName +
+                              "; waiting for file to be removed by other manager generating suffix array files");
+            }
+
+            // Lock file found; wait up to maxWaitTimeHours hours
+            var staleFile = false;
+            while (fiLockFile.Exists)
+            {
+                // Sleep for 2 seconds
+                Thread.Sleep(2000);
+
+                if (DateTime.UtcNow.Subtract(fiLockFile.CreationTimeUtc).TotalHours >= maxWaitTimeHours)
                 {
-                    OnStatusEvent("Lock file found: " + fiLockFile.FullName +
-                                  "; waiting for file to be removed by other manager generating suffix array files");
+                    staleFile = true;
+                    break;
                 }
 
-                // Lock file found; wait up to sngMaxWaitTimeHours hours
-                var blnStaleFile = false;
-                while (fiLockFile.Exists)
-                {
-                    // Sleep for 2 seconds
-                    Thread.Sleep(2000);
+                fiLockFile.Refresh();
+            }
 
-                    if (DateTime.UtcNow.Subtract(fiLockFile.CreationTimeUtc).TotalHours >= sngMaxWaitTimeHours)
-                    {
-                        blnStaleFile = true;
-                        break;
-                    }
-
-                    fiLockFile.Refresh();
-                }
-
-                // If the duration time has exceeded sngMaxWaitTimeHours, delete the lock file and try again with this manager
-                if (blnStaleFile)
-                {
-                    var strLogMessage = "Waited over " + sngMaxWaitTimeHours.ToString("0.0") +
-                                        " hour(s) for lock file to be deleted, but it is still present; " + "deleting the file now and continuing: " +
-                                           fiLockFile.FullName;
-                    OnWarningEvent(strLogMessage);
-                    DeleteLockFile(fiLockFile);
-                }
+            // If the duration time has exceeded maxWaitTimeHours, delete the lock file and try again with this manager
+            if (staleFile)
+            {
+                var logMessage = "Waited over " + maxWaitTimeHours.ToString("0.0") +
+                                 " hour(s) for lock file to be deleted, but it is still present; " +
+                                 "deleting the file now and continuing: " + fiLockFile.FullName;
+                OnWarningEvent(logMessage);
+                DeleteLockFile(fiLockFile);
             }
         }
 
-        #region "Event Methods"
-
-        /// <summary>
-        /// Event handler for event CmdRunner.ErrorEvent
-        /// </summary>
-        /// <param name="strMessage"></param>
-        /// <param name="ex"></param>
-        private void CmdRunner_ErrorEvent(string strMessage, Exception ex)
-        {
-            OnErrorEvent(strMessage, ex);
-        }
-
-        #endregion
     }
 }
