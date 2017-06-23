@@ -533,7 +533,7 @@ namespace AnalysisManagerBase
             var failCount = 0;
 
             if (!mParametersValidated)
-                throw new Exception("Call UpdateParameters before calling CopyFilesToRemote");
+                throw new Exception("Call UpdateParameters before calling CopyFilesFromRemote");
 
             try
             {
@@ -1319,7 +1319,7 @@ namespace AnalysisManagerBase
             var matchingFiles = new Dictionary<string, SftpFile>();
 
             if (!mParametersValidated)
-                throw new Exception("Call UpdateParameters before calling CopyFilesToRemote");
+                throw new Exception("Call UpdateParameters before calling GetRemoteFileListing");
 
             try
             {
@@ -1419,7 +1419,7 @@ namespace AnalysisManagerBase
             var filesAndDirectories = new Dictionary<string, SftpFile>();
 
             if (!mParametersValidated)
-                throw new Exception("Call UpdateParameters before calling CopyFilesToRemote");
+                throw new Exception("Call UpdateParameters before calling GetRemoteFilesAndDirectories");
 
             try
             {
