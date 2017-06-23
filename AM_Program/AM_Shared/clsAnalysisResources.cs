@@ -11,6 +11,7 @@ using System.Xml;
 using System.Xml.Linq;
 using MyEMSLReader;
 using ParamFileGenerator.MakeParams;
+using Renci.SshNet.Sftp;
 
 //*********************************************************************************************************
 // Written by Dave Clark for the US Department of Energy
@@ -453,77 +454,83 @@ namespace AnalysisManagerBase
                 return false;
             }
 
-            var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
-            if (string.IsNullOrWhiteSpace(localOrgDbFolder))
+            var localOrgDbFolderPath = m_mgrParams.GetParam("orgdbdir");
+            if (string.IsNullOrWhiteSpace(localOrgDbFolderPath))
             {
                 LogError("Cannot copy the generated FASTA remotely; manager parameter orgdbdir is empty");
                 return false;
             }
 
-            var sourceFile = new FileInfo(Path.Combine(localOrgDbFolder, dbFilename));
+            var localOrgDbFolder = new DirectoryInfo(localOrgDbFolderPath);
 
-            if (!sourceFile.Exists)
+            var sourceFasta = new FileInfo(Path.Combine(localOrgDbFolder.FullName, dbFilename));
+
+            if (!sourceFasta.Exists)
             {
-                LogError("Cannot copy the generated FASTA remotely; file not found: " + sourceFile.FullName);
+                LogError("Cannot copy the generated FASTA remotely; file not found: " + sourceFasta.FullName);
                 return false;
             }
+
+            var hashcheckFiles = localOrgDbFolder.GetFiles(sourceFasta.Name + "*.hashcheck");
+            if (hashcheckFiles.Length <= 0)
+            {
+                LogError("Local hashcheck file not found for " + sourceFasta.FullName + "; cannot copy remotely");
+                return false;
+            }
+
+            var sourceHashcheck = hashcheckFiles.First();
 
             LogDebug("Verifying that the generated fasta file exists on the remote host");
 
             // Check whether the file needs to be copied
             // Skip the copy if it exists and has the same size
-            var matchingFiles = transferUtility.GetRemoteFileListing(transferUtility.RemoteOrgDBPath, sourceFile.Name);
+            // Also require the .hashcheck file to exist and match
+            var fileMatchSpec = Path.GetFileNameWithoutExtension(sourceFasta.Name) + "*.*";
+            var matchingFiles = transferUtility.GetRemoteFileListing(transferUtility.RemoteOrgDBPath, fileMatchSpec);
 
             if (matchingFiles.Count > 0)
             {
-                var remoteOrgDB = matchingFiles.First();
-                if (remoteOrgDB.Value.Length == sourceFile.Length)
+                SftpFile remoteFasta = null;
+                SftpFile remoteHashcheck = null;
+
+                foreach (var remoteFile in matchingFiles)
+                {
+                    var extension = Path.GetExtension(remoteFile.Value.Name);
+                    if (extension == null)
+                        continue;
+
+                    if (string.Equals(extension, ".fasta", StringComparison.OrdinalIgnoreCase))
+                        remoteFasta = remoteFile.Value;
+
+                    if (string.Equals(extension, ".hashcheck", StringComparison.OrdinalIgnoreCase))
+                        remoteHashcheck = remoteFile.Value;
+                }
+
+                var filesMatch = RemoteFastaFilesMatch(sourceFasta, sourceHashcheck, remoteFasta, remoteHashcheck, transferUtility);
+
+                if (filesMatch && remoteFasta != null)
                 {
                     LogDebug(string.Format("Using existing FASTA file {0} on {1}",
-                                           remoteOrgDB.Key, transferUtility.RemoteHostName));
+                                           remoteFasta.FullName, transferUtility.RemoteHostName));
                     return true;
                 }
 
-                // File size mismatch
-                if (remoteOrgDB.Value.Length < sourceFile.Length)
-                {
-                    // Another manager may be copying the file at present
-                    // If the modification time is within the last 15 minutes, wait for the other manager to finish copying the file
-                    var filesMatch = transferUtility.WaitForRemoteFileCopy(sourceFile, remoteOrgDB.Value, out var abortCopy);
-
-                    if (abortCopy)
-                    {
-                        LogError(string.Format("File size mismatch; WaitForRemoteFileCopy reports abortCopy=true for remote file {0}",
-                                               remoteOrgDB.Value.FullName));
-                        return false;
-                    }
-
-                    if (filesMatch)
-                    {
-                        LogDebug(string.Format("Using existing FASTA file {0} on {1}",
-                                               remoteOrgDB.Key, transferUtility.RemoteHostName));
-                    }
-
-                    LogDebug(string.Format("Copying {0} to {1}", sourceFile.Name, transferUtility.RemoteHostName));
-                }
-                else
-                {
-
-                    LogDebug(string.Format("Fasta file size on remote host is different than local file ({0} bytes vs. {1} bytes locally); " +
-                                           "copying {2} to {3}", remoteOrgDB.Value.Length, sourceFile.Length, sourceFile.Name,
-                                           transferUtility.RemoteHostName));
-                }
             }
             else
             {
-                LogDebug(string.Format("Fasta file not found on remote host; copying {0} to {1}", sourceFile.Name, transferUtility.RemoteHostName));
+                LogDebug(string.Format("Fasta file not found on remote host; copying {0} to {1}", sourceFasta.Name, transferUtility.RemoteHostName));
             }
 
-            var success = transferUtility.CopyFileToRemote(sourceFile.FullName, transferUtility.RemoteOrgDBPath, useLockFile: true);
+            var sourceFiles = new List<FileInfo> {
+                sourceFasta,
+                sourceHashcheck
+            };
+
+            var success = transferUtility.CopyFilesToRemote(sourceFiles, transferUtility.RemoteOrgDBPath, useLockFile: true);
             if (success)
                 return true;
 
-            LogError(string.Format("Error copying {0} to {1} on {2}", sourceFile.Name, transferUtility.RemoteOrgDBPath,
+            LogError(string.Format("Error copying {0} to {1} on {2}", sourceFasta.Name, transferUtility.RemoteOrgDBPath,
                                    transferUtility.RemoteHostName));
             return false;
 
@@ -3444,6 +3451,65 @@ namespace AnalysisManagerBase
                 LogError("Error in PurgeFastaFilesUsingSpaceUsedThreshold", ex);
             }
 
+        }
+
+        private bool RemoteFastaFilesMatch(
+            FileInfo sourceFasta, FileInfo sourceHashcheck,
+            SftpFile remoteFasta, SftpFile remoteHashcheck,
+            clsRemoteTransferUtility transferUtility)
+        {
+
+            var remoteHostName = transferUtility.RemoteHostName;
+
+            if (remoteFasta == null)
+            {
+                LogDebug(string.Format("Fasta file not found on remote host; copying {0} to {1}", sourceFasta.Name, remoteHostName));
+                return false;
+            }
+
+            if (remoteHashcheck == null)
+            {
+                LogDebug(string.Format("Fasta .hashckeck file not found on remote host; copying {0} to {1}", sourceFasta.Name, remoteHostName));
+                return false;
+            }
+
+            if (remoteFasta.Length == sourceFasta.Length && remoteHashcheck.Length == sourceHashcheck.Length)
+            {
+                return true;
+            }
+
+            // File size mismatch
+            if (remoteFasta.Length < sourceFasta.Length)
+            {
+                // Another manager may be copying the file at present
+                // If the modification time is within the last 15 minutes, wait for the other manager to finish copying the file
+                var filesMatch = transferUtility.WaitForRemoteFileCopy(sourceFasta, remoteFasta, out var abortCopy);
+
+                if (abortCopy)
+                {
+                    LogError(string.Format("File size mismatch; WaitForRemoteFileCopy reports abortCopy=true for remote file {0}",
+                                           remoteFasta.FullName));
+                    return false;
+                }
+
+                if (filesMatch)
+                {
+                    LogDebug(string.Format("Using existing FASTA file {0} on {1}",
+                                           remoteFasta.FullName, transferUtility.RemoteHostName));
+                    return true;
+                }
+
+                LogDebug(string.Format("Copying {0} to {1}", sourceFasta.Name, transferUtility.RemoteHostName));
+            }
+            else
+            {
+
+                LogDebug(string.Format("Fasta file size on remote host is different than local file ({0} bytes vs. {1} bytes locally); " +
+                                       "copying {2} to {3}", remoteFasta.Length, sourceFasta.Length, sourceFasta.Name,
+                                       transferUtility.RemoteHostName));
+            }
+
+            return false;
         }
 
         /// <summary>
