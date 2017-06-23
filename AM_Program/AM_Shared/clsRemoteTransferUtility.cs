@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Xml.Linq;
 using PRISM;
 using Renci.SshNet;
@@ -11,9 +12,9 @@ using Renci.SshNet.Sftp;
 namespace AnalysisManagerBase
 {
     /// <summary>
-    /// Used to transfer files to/from a remote host
-    /// Use sftp for file listings
-    /// Use scp for file transfers
+    /// Methods for transferring files to/from a remote host
+    /// Uses sftp for file listings
+    /// Uses scp for file transfers
     /// </summary>
     public class clsRemoteTransferUtility : clsEventNotifier
     {
@@ -26,6 +27,8 @@ namespace AnalysisManagerBase
         public const string STEP_PARAM_REMOTE_PROGRESS = "RemoteProgress";
 
         private const bool USE_MANAGER_REMOTE_INFO = true;
+
+        private const string LOCK_FILE_EXTENSION = ".lock";
 
         #endregion
 
@@ -230,6 +233,234 @@ namespace AnalysisManagerBase
             WorkDir = string.Empty;
         }
 
+
+        /// <summary>
+        /// Look for a lock file named dataFileName + ".lock" in directory remoteDirectoryPath
+        /// If found, and if less than maxWaitTimeMinutes old, waits for it to be deleted by another process or to age
+        /// </summary>
+        /// <param name="sftp">Sftp client (to avoid connecting / disconnecting repeatedly)</param>
+        /// <param name="remoteDirectoryPath">Target directory on the remote server (use Linux-style forward slashes)</param>
+        /// <param name="dataFileName">Data file name (without .lock)</param>
+        /// <param name="lockFileWasFound">
+        /// Output: true if a lock file was found and we waited for it to be deleted or age
+        /// </param>
+        /// <param name="lockFileWasAged">
+        /// Output: true if either an aged lock file was found and deleted,
+        /// or if a current lock file was found but we waited more than maxWaitTimeMinutes and it still existed
+        /// </param>
+        /// <param name="maxWaitTimeMinutes">Maximum age of the lock file</param>
+        /// <param name="logIntervalMinutes"></param>
+        /// <remarks>
+        /// Typical steps for using lock files to assure that only one manager is creating a specific file
+        /// 1. Call CheckForRemoteLockFile() to check for a lock file; wait for it to age
+        /// 2. Once CheckForRemoteLockFile() exits, check for the required data file; exit the function if the desired file is found
+        /// 3. If the file was not found, create a new lock file by calling CreateRemoteLockFile()
+        /// 4. Copy the file to the remote server
+        /// 5. Delete the lock file by calling DeleteLockFile()
+        /// </remarks>
+        /// <remarks>This method is similar to CheckForLockFile in clsAnalysisResources but it uses sftp or file lookups and scp for file creation</remarks>
+        private void CheckForRemoteLockFile(
+            SftpClient sftp,
+            string remoteDirectoryPath,
+            string dataFileName,
+            out bool lockFileWasFound,
+            out bool lockFileWasAged,
+            int maxWaitTimeMinutes = 120,
+            int logIntervalMinutes = 5)
+        {
+
+            if (dataFileName.EndsWith(LOCK_FILE_EXTENSION, StringComparison.OrdinalIgnoreCase))
+                throw new ArgumentException("dataFileName may not end in .lock", nameof(dataFileName));
+
+            lockFileWasFound = false;
+            lockFileWasAged = false;
+
+            var waitingForLockFile = false;
+            var dtLockFileCreated = DateTime.UtcNow;
+
+            // Look for a recent .lock file on the remote server
+            var lockFileName = dataFileName + LOCK_FILE_EXTENSION;
+
+            var fiLockFile = FindLockFile(sftp, remoteDirectoryPath, lockFileName);
+            if (fiLockFile != null)
+            {
+                if (DateTime.UtcNow.Subtract(fiLockFile.LastWriteTimeUtc).TotalMinutes < maxWaitTimeMinutes)
+                {
+                    waitingForLockFile = true;
+                    dtLockFileCreated = fiLockFile.LastWriteTimeUtc;
+
+                    var debugMessage = "Lock file found, will wait for it to be deleted or age; " +
+                        fiLockFile.Name + " created " + fiLockFile.LastWriteTime.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT);
+                    clsGlobal.LogDebug(debugMessage);
+                }
+                else
+                {
+                    // Lock file has aged; delete it
+                    fiLockFile.Delete();
+                    lockFileWasAged = true;
+                }
+            }
+
+            if (!waitingForLockFile)
+                return;
+
+            lockFileWasFound = true;
+
+            var dtLastProgressTime = DateTime.UtcNow;
+            if (logIntervalMinutes < 1)
+                logIntervalMinutes = 1;
+
+            // Initially wait 30 seconds before checking for the lock file again
+            // After that, add 30 seconds onto the wait time for every iteration
+            var waitTimeSeconds = 30;
+
+            while (waitingForLockFile)
+            {
+                // Wait for a period of time, the check on the status of the lock file
+                var timeThreshold = DateTime.UtcNow.AddSeconds(waitTimeSeconds);
+                while (timeThreshold > DateTime.UtcNow)
+                {
+                    Thread.Sleep(2000);
+                }
+
+                fiLockFile = FindLockFile(sftp, remoteDirectoryPath, lockFileName);
+
+                if (fiLockFile == null)
+                {
+                    // Lock file no longer exists
+                    waitingForLockFile = false;
+                }
+                else if (DateTime.UtcNow.Subtract(dtLockFileCreated).TotalMinutes > maxWaitTimeMinutes)
+                {
+                    // We have waited too long
+                    waitingForLockFile = false;
+                    lockFileWasAged = true;
+                }
+                else
+                {
+                    if (DateTime.UtcNow.Subtract(dtLastProgressTime).TotalMinutes >= logIntervalMinutes)
+                    {
+                        OnDebugEvent("Waiting for lock file " + fiLockFile.Name);
+                        dtLastProgressTime = DateTime.UtcNow;
+                    }
+                }
+
+                // Increase the wait time by 30 seconds
+                waitTimeSeconds += 30;
+            }
+
+            // Check for the lock file one more time
+            fiLockFile = FindLockFile(sftp, remoteDirectoryPath, lockFileName);
+            if (fiLockFile != null)
+            {
+                // Lock file is over 2 hours old; delete it
+                DeleteLockFile(fiLockFile);
+            }
+        }
+
+        /// <summary>
+        /// Create a new lock file named dataFilePath + ".lock"
+        /// </summary>
+        /// <param name="sftp">Sftp client</param>
+        /// <param name="remoteDirectoryPath">Target directory on the remote server (use Linux-style forward slashes)</param>
+        /// <param name="dataFileName">Data file name (without .lock)</param>
+        /// <returns>Full path to the lock file; empty string if a problem</returns>
+        /// <remarks>An exception will be thrown if the lock file already exists</remarks>
+        private string CreateRemoteLockFile(SftpClient sftp, string remoteDirectoryPath, string dataFileName)
+        {
+
+            var lockFileContents = new[]
+            {
+                "Date: " + DateTime.Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT),
+                "Manager: " + GetManagerName()
+            };
+
+            var lockFileData = new StringBuilder();
+            foreach (var dataLine in lockFileContents)
+            {
+                lockFileData.AppendLine(dataLine);
+            }
+
+            var remoteLockFilePath = clsPathUtils.CombineLinuxPaths(remoteDirectoryPath, dataFileName + LOCK_FILE_EXTENSION);
+
+            OnDebugEvent("  creating lock file at " + remoteLockFilePath);
+
+            using (var swLockFile = sftp.Create(remoteLockFilePath))
+            {
+                var buffer = Encoding.ASCII.GetBytes(lockFileData.ToString());
+                swLockFile.Write(buffer, 0, buffer.Length);
+            }
+
+            // Wait 2 to 5 seconds, then re-open the file to make sure it was created by this manager
+            var oRandom = new Random();
+            Thread.Sleep(oRandom.Next(2, 5) * 1000);
+
+            var lockFileContentsNew = sftp.ReadAllLines(remoteLockFilePath, Encoding.ASCII);
+
+            if (lockFileContentsNew.Length < lockFileContents.Length)
+            {
+                // Remote lock file is shorter than we expected
+                OnWarningEvent("Remote lock file does have the expected content: " + remoteLockFilePath);
+                return string.Empty;
+            }
+
+            for (var i = 0; i < lockFileContentsNew.Length; i++)
+            {
+                if (i >= lockFileContents.Length)
+                {
+                    // Remote lock file has more rows than we expected; that's ok
+                    break;
+                }
+
+                if (string.Equals(lockFileContents[i], lockFileContentsNew[i]))
+                    continue;
+
+                // Lock file content doesn't match the expected value
+                OnWarningEvent("Another manager replaced the lock file that this manager created at " + remoteLockFilePath);
+                return string.Empty;
+            }
+
+            return remoteLockFilePath;
+
+        }
+
+        /// <summary>
+        /// Delete the lock file from the remote host
+        /// </summary>
+        /// <param name="lockFile"></param>
+        /// <remarks>Requires an active sftp session</remarks>
+        private void DeleteLockFile(SftpFile lockFile)
+        {
+            try
+            {
+                lockFile.Delete();
+            }
+            catch (Exception)
+            {
+                // Ignore errors here
+            }
+        }
+
+        /// <summary>
+        /// Delete the lock file from the remote host
+        /// </summary>
+        /// <param name="sftp"></param>
+        /// <param name="remoteDirectoryPath"></param>
+        /// <param name="dataFileName"></param>
+        private void DeleteLockFile(SftpClient sftp, string remoteDirectoryPath, string dataFileName)
+        {
+            try
+            {
+                var lockFileName = dataFileName + LOCK_FILE_EXTENSION;
+                var fiLockFile = FindLockFile(sftp, remoteDirectoryPath, lockFileName);
+                fiLockFile?.Delete();
+            }
+            catch (Exception)
+            {
+                // Ignore errors here
+            }
+        }
+
         /// <summary>
         /// Convert a list of settings to XML
         /// </summary>
@@ -374,9 +605,10 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="sourceFilePath">Source file path</param>
         /// <param name="remoteDirectoryPath">Remote target directory</param>
+        /// <param name="useLockFile">True to use lock files when the destination directory might be accessed via multiple managers simultaneously</param>
         /// <returns>True on success, false if an error</returns>
         /// <remarks>Calls UpdateParameters if necessary; that method will throw an exception if there are missing parameters or configuration issues</remarks>
-        public bool CopyFileToRemote(string sourceFilePath, string remoteDirectoryPath)
+        public bool CopyFileToRemote(string sourceFilePath, string remoteDirectoryPath, bool useLockFile = false)
         {
             try
             {
@@ -389,7 +621,7 @@ namespace AnalysisManagerBase
 
                 var sourceFileNames = new List<string> { sourceFile.Name };
 
-                var success = CopyFilesToRemote(sourceFile.DirectoryName, sourceFileNames, remoteDirectoryPath, USE_MANAGER_REMOTE_INFO);
+                var success = CopyFilesToRemote(sourceFile.DirectoryName, sourceFileNames, remoteDirectoryPath, USE_MANAGER_REMOTE_INFO, useLockFile);
                 return success;
             }
             catch (Exception ex)
@@ -407,13 +639,15 @@ namespace AnalysisManagerBase
         /// <param name="sourceFileNames">Source file names; wildcards are allowed</param>
         /// <param name="remoteDirectoryPath">Remote target directory</param>
         /// <param name="useDefaultManagerRemoteInfo">True to use RemoteInfo defined for the manager; False to use RemoteInfo associated with the job (typically should be true)</param>
+        /// <param name="useLockFiles">True to use lock files when the destination directory might be accessed via multiple managers simultaneously</param>
         /// <returns>True on success, false if an error</returns>
         /// <remarks>Calls UpdateParameters if necessary; that method will throw an exception if there are missing parameters or configuration issues</remarks>
         public bool CopyFilesToRemote(
             string sourceDirectoryPath,
             IEnumerable<string> sourceFileNames,
             string remoteDirectoryPath,
-            bool useDefaultManagerRemoteInfo)
+            bool useDefaultManagerRemoteInfo,
+            bool useLockFiles)
         {
             if (IsParameterUpdateRequired(useDefaultManagerRemoteInfo))
             {
@@ -422,7 +656,7 @@ namespace AnalysisManagerBase
                 UpdateParameters(useDefaultManagerRemoteInfo);
             }
 
-            return CopyFilesToRemote(sourceDirectoryPath, sourceFileNames, remoteDirectoryPath);
+            return CopyFilesToRemote(sourceDirectoryPath, sourceFileNames, remoteDirectoryPath, useLockFiles);
         }
 
         /// <summary>
@@ -431,11 +665,13 @@ namespace AnalysisManagerBase
         /// <param name="sourceDirectoryPath">Source directory</param>
         /// <param name="sourceFileNames">Source file names; wildcards are allowed</param>
         /// <param name="remoteDirectoryPath">Remote target directory</param>
+        /// <param name="useLockFiles">True to use lock files when the destination directory might be accessed via multiple managers simultaneously</param>
         /// <returns>True on success, false if an error</returns>
         public bool CopyFilesToRemote(
             string sourceDirectoryPath,
             IEnumerable<string> sourceFileNames,
-            string remoteDirectoryPath)
+            string remoteDirectoryPath,
+            bool useLockFiles)
         {
             if (string.IsNullOrWhiteSpace(sourceDirectoryPath))
             {
@@ -483,7 +719,7 @@ namespace AnalysisManagerBase
                     }
                 }
 
-                return CopyFilesToRemote(filesToCopy, remoteDirectoryPath);
+                return CopyFilesToRemote(filesToCopy, remoteDirectoryPath, useLockFiles);
 
             }
             catch (Exception ex)
@@ -499,8 +735,9 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="sourceFiles">Source files</param>
         /// <param name="remoteDirectoryPath">Remote target directory</param>
+        /// <param name="useLockFiles">True to use lock files when the destination directory might be accessed via multiple managers simultaneously</param>
         /// <returns>True on success, false if an error</returns>
-        public bool CopyFilesToRemote(IEnumerable<FileInfo> sourceFiles, string remoteDirectoryPath)
+        public bool CopyFilesToRemote(IEnumerable<FileInfo> sourceFiles, string remoteDirectoryPath, bool useLockFiles = false)
         {
             if (!mParametersValidated)
                 throw new Exception("Call UpdateParameters before calling CopyFilesToRemote");
@@ -522,6 +759,18 @@ namespace AnalysisManagerBase
                 else
                     OnDebugEvent(string.Format("Copying {0} files to {1} on {2}", uniqueFiles.Count, remoteDirectoryPath, RemoteHostName));
 
+                SftpClient sftp;
+
+                if (useLockFiles)
+                {
+                    sftp = new SftpClient(RemoteHostName, RemoteHostUser, mPrivateKeyFile);
+                    sftp.Connect();
+                }
+                else
+                {
+                    sftp = null;
+                }
+
                 using (var scp = new ScpClient(RemoteHostName, RemoteHostUser, mPrivateKeyFile))
                 {
                     scp.Connect();
@@ -535,16 +784,63 @@ namespace AnalysisManagerBase
                             continue;
                         }
 
+                        if (useLockFiles)
+                        {
+                            CheckForRemoteLockFile(sftp, remoteDirectoryPath, sourceFile.Name, out var lockFileWasFound, out var lockFileWasAged);
+
+                            if (lockFileWasFound && !lockFileWasAged)
+                            {
+                                // Another manager was copying this file
+                                // If the file length now matches the source file length, assume the file is up-to-date remotely
+                                var matchingFiles = GetRemoteFileListing(remoteDirectoryPath, sourceFile.Name);
+
+                                if (matchingFiles.Count > 0)
+                                {
+                                    var remoteFile = matchingFiles.First().Value;
+                                    if (remoteFile.Length == sourceFile.Length)
+                                    {
+                                        OnStatusEvent(string.Format("Remote file was being copied via locks; " +
+                                                                    "file length is now {0:N0} bytes so assuming up-to-date: {1}",
+                                                                    remoteFile.Length, remoteFile.FullName
+                                                                    ));
+
+                                        success = true;
+                                        continue;
+                                    }
+                                }
+
+                            }
+
+                            var remoteLockFilePath = CreateRemoteLockFile(sftp, remoteDirectoryPath, sourceFile.Name);
+                            if (string.IsNullOrWhiteSpace(remoteLockFilePath))
+                            {
+                                // Problem creating the lock file; abort the copy
+                                OnStatusEvent("Error creating lock file at: " + remoteLockFilePath + "; aborting copy to remote");
+
+                                return false;
+                            }
+                        }
+
                         OnDebugEvent("  Copying " + sourceFile.FullName);
 
                         var targetFilePath = clsPathUtils.CombineLinuxPaths(remoteDirectoryPath, sourceFile.Name);
                         scp.Upload(sourceFile, targetFilePath);
+
+                        if (useLockFiles)
+                        {
+                            DeleteLockFile(sftp, remoteDirectoryPath, sourceFile.Name);
+                        }
 
                         success = true;
                     }
 
                     scp.Disconnect();
 
+                }
+
+                if (useLockFiles)
+                {
+                    sftp.Disconnect();
                 }
 
                 if (success)
@@ -730,6 +1026,24 @@ namespace AnalysisManagerBase
                 OnErrorEvent("Error creating remote directories: " + ex.Message, ex);
                 return false;
             }
+        }
+
+        /// <summary>
+        /// Look for the lock file in the given remote directory
+        /// </summary>
+        /// <param name="sftp">Sftp client</param>
+        /// <param name="remoteDirectoryPath"></param>
+        /// <param name="lockFileName"></param>
+        /// <returns>SftpFile info if found, otherwise null</returns>
+        private SftpFile FindLockFile(SftpClient sftp, string remoteDirectoryPath, string lockFileName)
+        {
+            const bool recurse = false;
+
+            var matchingFiles = new Dictionary<string, SftpFile>();
+
+            GetRemoteFileListing(sftp, new List<string> { remoteDirectoryPath }, lockFileName, recurse, matchingFiles);
+
+            return matchingFiles.Any() ? matchingFiles.First().Value : null;
         }
 
         /// <summary>
@@ -960,6 +1274,13 @@ namespace AnalysisManagerBase
         {
             return string.Format("Job{0}_Step{1}", JobNum, StepNum);
         }
+
+        private string GetManagerName()
+        {
+            var mgrName = MgrParams.GetParam("MgrName", Environment.MachineName);
+            return mgrName;
+        }
+
 
         /// <summary>
         /// Retrieve a listing of files in the remoteDirectoryPath directory on the remote host
@@ -1538,6 +1859,59 @@ namespace AnalysisManagerBase
             mParametersValidated = true;
         }
 
+        /// <summary>
+        /// Wait for another manager to finish copying a file to a remote host
+        /// </summary>
+        /// <param name="sourceFile">Source file</param>
+        /// <param name="remoteFile"></param>
+        /// <param name="abortCopy"></param>
+        /// <returns></returns>
+        public bool WaitForRemoteFileCopy(FileInfo sourceFile, SftpFile remoteFile, out bool abortCopy)
+        {
+            var remoteFilePath = remoteFile.FullName;
+            abortCopy = false;
+
+            while (DateTime.UtcNow.Subtract(remoteFile.LastWriteTimeUtc).TotalMinutes < 15)
+            {
+                OnDebugEvent(string.Format("Waiting for another manager to finish copying the file to the remote host; " +
+                                           "currently {0} bytes for {1} ", remoteFile.Length, remoteFilePath));
+
+                // Wait for 1 minute
+                var sleepTimeStart = DateTime.UtcNow;
+                while (DateTime.UtcNow.Subtract(sleepTimeStart).TotalMinutes < 1)
+                {
+                    Thread.Sleep(2000);
+                }
+
+                // Update the info on the remote file
+                var matchingFiles = GetRemoteFileListing(sourceFile.DirectoryName, sourceFile.Name);
+                if (matchingFiles.Count > 0)
+                {
+                    var newFileInfo = matchingFiles.First().Value;
+
+                    if (newFileInfo.Length == sourceFile.Length)
+                    {
+                        // The files now match
+                        return true;
+                    }
+
+                    if (newFileInfo.Length > sourceFile.Length)
+                    {
+                        // The remote file is larger than the expected value
+                        abortCopy = true;
+                        return false;
+                    }
+
+                }
+                else
+                {
+                    OnDebugEvent(string.Format("File no longer exists on the remote host: {0}", remoteFilePath));
+                    return false;
+                }
+            }
+
+            return false;
+        }
         #endregion
     }
 }

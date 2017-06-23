@@ -439,6 +439,11 @@ namespace AnalysisManagerBase
             m_FileSearch.MyEMSLSearchDisabled = m_MyEMSLSearchDisabled || !myEmslAvailable;
         }
 
+        /// <summary>
+        /// Copy the generated FASTA file to the remote host that will be running this job
+        /// </summary>
+        /// <param name="transferUtility"></param>
+        /// <returns>True if success, false if an error</returns>
         protected bool CopyGeneratedOrgDBToRemote(clsRemoteTransferUtility transferUtility)
         {
             var dbFilename = m_jobParams.GetParam("PeptideSearch", JOB_PARAM_GENERATED_FASTA_NAME);
@@ -479,8 +484,35 @@ namespace AnalysisManagerBase
                     return true;
                 }
 
-                LogDebug(string.Format("Fasta file size on remote host is different than local file ({0} bytes vs. {1} bytes locally); " +
-                                       "copying {2} to {3}", remoteOrgDB.Value.Length, sourceFile.Length, sourceFile.Name, transferUtility.RemoteHostName));
+                // File size mismatch
+                if (remoteOrgDB.Value.Length < sourceFile.Length)
+                {
+                    // Another manager may be copying the file at present
+                    // If the modification time is within the last 15 minutes, wait for the other manager to finish copying the file
+                    var filesMatch = transferUtility.WaitForRemoteFileCopy(sourceFile, remoteOrgDB.Value, out var abortCopy);
+
+                    if (abortCopy)
+                    {
+                        LogError(string.Format("File size mismatch; WaitForRemoteFileCopy reports abortCopy=true for remote file {0}",
+                                               remoteOrgDB.Value.FullName));
+                        return false;
+                    }
+
+                    if (filesMatch)
+                    {
+                        LogDebug(string.Format("Using existing FASTA file {0} on {1}",
+                                               remoteOrgDB.Key, transferUtility.RemoteHostName));
+                    }
+
+                    LogDebug(string.Format("Copying {0} to {1}", sourceFile.Name, transferUtility.RemoteHostName));
+                }
+                else
+                {
+
+                    LogDebug(string.Format("Fasta file size on remote host is different than local file ({0} bytes vs. {1} bytes locally); " +
+                                           "copying {2} to {3}", remoteOrgDB.Value.Length, sourceFile.Length, sourceFile.Name,
+                                           transferUtility.RemoteHostName));
+                }
             }
             else
             {
