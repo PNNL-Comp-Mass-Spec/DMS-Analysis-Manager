@@ -764,71 +764,72 @@ namespace AnalysisManagerBase
             int logIntervalMinutes = 5)
         {
 
+            var waitingForLockFile = false;
+            var dtLockFileCreated = DateTime.UtcNow;
+
+            // Look for a recent .lock file
+            var fiLockFile = new FileInfo(dataFilePath + LOCK_FILE_EXTENSION);
+
+            if (fiLockFile.Exists)
             {
-                var waitingForLockFile = false;
-                var dtLockFileCreated = DateTime.UtcNow;
-
-                // Look for a recent .lock file
-                var fiLockFile = new FileInfo(dataFilePath + LOCK_FILE_EXTENSION);
-
-                if (fiLockFile.Exists)
+                if (DateTime.UtcNow.Subtract(fiLockFile.LastWriteTimeUtc).TotalMinutes < maxWaitTimeMinutes)
                 {
-                    if (DateTime.UtcNow.Subtract(fiLockFile.LastWriteTimeUtc).TotalMinutes < maxWaitTimeMinutes)
-                    {
-                        waitingForLockFile = true;
-                        dtLockFileCreated = fiLockFile.LastWriteTimeUtc;
+                    waitingForLockFile = true;
+                    dtLockFileCreated = fiLockFile.LastWriteTimeUtc;
 
-                        var debugMessage = dataFileDescription + " lock file found; will wait for file to be deleted or age; " +
-                            fiLockFile.Name + " created " + fiLockFile.LastWriteTime.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT);
-                        clsGlobal.LogDebug(debugMessage);
-                    }
-                    else
-                    {
-                        // Lock file has aged; delete it
-                        fiLockFile.Delete();
-                    }
+                    var debugMessage = dataFileDescription +
+                        " lock file found; will wait for file to be deleted or age; " +
+                        fiLockFile.Name + " created " + fiLockFile.LastWriteTime.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT);
+                    clsGlobal.LogDebug(debugMessage);
                 }
-
-                if (waitingForLockFile)
+                else
                 {
-                    var dtLastProgressTime = DateTime.UtcNow;
-                    if (logIntervalMinutes < 1)
-                        logIntervalMinutes = 1;
-
-                    while (waitingForLockFile)
-                    {
-                        // Wait 5 seconds
-                        Thread.Sleep(5000);
-
-                        fiLockFile.Refresh();
-
-                        if (!fiLockFile.Exists)
-                        {
-                            waitingForLockFile = false;
-                        }
-                        else if (DateTime.UtcNow.Subtract(dtLockFileCreated).TotalMinutes > maxWaitTimeMinutes)
-                        {
-                            waitingForLockFile = false;
-                        }
-                        else
-                        {
-                            if (DateTime.UtcNow.Subtract(dtLastProgressTime).TotalMinutes >= logIntervalMinutes)
-                            {
-                                LogDebugMessage("Waiting for lock file " + fiLockFile.Name, statusTools);
-                                dtLastProgressTime = DateTime.UtcNow;
-                            }
-                        }
-                    }
-
-                    fiLockFile.Refresh();
-                    if (fiLockFile.Exists)
-                    {
-                        // Lock file is over 2 hours old; delete it
-                        DeleteLockFile(dataFilePath);
-                    }
+                    // Lock file has aged; delete it
+                    fiLockFile.Delete();
                 }
             }
 
+            if (waitingForLockFile)
+            {
+                var dtLastProgressTime = DateTime.UtcNow;
+                if (logIntervalMinutes < 1)
+                    logIntervalMinutes = 1;
+
+                while (waitingForLockFile)
+                {
+                    // Wait 5 seconds
+                    Thread.Sleep(5000);
+
+                    fiLockFile.Refresh();
+
+                    if (!fiLockFile.Exists)
+                    {
+                        // Lock file no longer exists
+                        waitingForLockFile = false;
+                    }
+                    else if (DateTime.UtcNow.Subtract(dtLockFileCreated).TotalMinutes > maxWaitTimeMinutes)
+                    {
+                        // We have waited too long
+                        waitingForLockFile = false;
+                    }
+                    else
+                    {
+                        if (DateTime.UtcNow.Subtract(dtLastProgressTime).TotalMinutes >= logIntervalMinutes)
+                        {
+                            LogDebugMessage("Waiting for lock file " + fiLockFile.Name, statusTools);
+                            dtLastProgressTime = DateTime.UtcNow;
+                        }
+                    }
+                }
+
+                // Check for the lock file one more time
+                fiLockFile.Refresh();
+                if (fiLockFile.Exists)
+                {
+                    // Lock file is over 2 hours old; delete it
+                    DeleteLockFile(dataFilePath);
+                }
+            }
         }
 
         /// <summary>
@@ -858,7 +859,6 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public static void DeleteLockFile(string dataFilePath)
         {
-            // Delete the lock file
             try
             {
                 var lockFilePath = dataFilePath + LOCK_FILE_EXTENSION;
@@ -874,7 +874,6 @@ namespace AnalysisManagerBase
             {
                 // Ignore errors here
             }
-
         }
 
         /// <summary>
