@@ -41,6 +41,11 @@ namespace AnalysisManagerBase
         /// </summary>
         protected const string SP_NAME_REQUEST_TASK = "RequestStepTaskXML";
 
+        /// <summary>
+        /// XML file with job parameters used when running job remotely
+        /// </summary>
+        public const string OFFLINE_JOB_PARAMS_FILE = "JobParams.xml";
+
         #endregion
 
         #region "Module variables"
@@ -587,7 +592,7 @@ namespace AnalysisManagerBase
             return clsGlobal.JOB_PARAMETERS_FILE_PREFIX + jobNum + ".xml";
         }
 
-        [Obsolete("Use the version that takex an integer")]
+        [Obsolete("Use the version that takes an integer")]
         public static string JobParametersFilename(string jobNum)
         {
             return clsGlobal.JOB_PARAMETERS_FILE_PREFIX + jobNum + ".xml";
@@ -1290,7 +1295,7 @@ namespace AnalysisManagerBase
 
 
                 // Read JobParams.xml and update the job parameters
-                var jobParamsFile = Path.Combine(workDir, "JobParams.xml");
+                var jobParamsFile = Path.Combine(workDir, OFFLINE_JOB_PARAMS_FILE);
                 string jobParamsXML;
 
                 using (var reader = new StreamReader(new FileStream(jobParamsFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))

@@ -4071,7 +4071,7 @@ namespace AnalysisManagerBase
                 // Since xmlText now contains the XML, we can now safely close XWriter
             }
 
-            var jobParamsFile = new FileInfo(Path.Combine(WorkDir, "JobParams.xml"));
+            var jobParamsFile = new FileInfo(Path.Combine(WorkDir, clsAnalysisJob.OFFLINE_JOB_PARAMS_FILE));
             using (var writer = new StreamWriter(new FileStream(jobParamsFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
             {
                 writer.WriteLine(xmlText);
