@@ -3050,6 +3050,10 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     accession = "MS:1000448";
                     description = "LTQ FT";
                     break;
+                case "Lumos":
+                    accession = "MS:1002732";
+                    description = "Orbitrap Fusion Lumos";
+                    break;
                 case "Orbitrap":
                     accession = "MS:1000449";
                     description = "LTQ Orbitrap";
