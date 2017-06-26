@@ -28,8 +28,6 @@ namespace AnalysisManagerBase
 
         private const bool USE_MANAGER_REMOTE_INFO = true;
 
-        private const string LOCK_FILE_EXTENSION = ".lock";
-
         #endregion
 
         #region "Module variables"
@@ -268,7 +266,7 @@ namespace AnalysisManagerBase
             int logIntervalMinutes = 5)
         {
 
-            if (dataFileName.EndsWith(LOCK_FILE_EXTENSION, StringComparison.OrdinalIgnoreCase))
+            if (dataFileName.EndsWith(clsGlobal.LOCK_FILE_EXTENSION, StringComparison.OrdinalIgnoreCase))
                 throw new ArgumentException("dataFileName may not end in .lock", nameof(dataFileName));
 
             lockFileWasFound = false;
@@ -278,7 +276,7 @@ namespace AnalysisManagerBase
             var dtLockFileCreated = DateTime.UtcNow;
 
             // Look for a recent .lock file on the remote server
-            var lockFileName = dataFileName + LOCK_FILE_EXTENSION;
+            var lockFileName = dataFileName + clsGlobal.LOCK_FILE_EXTENSION;
 
             var fiLockFile = FindLockFile(sftp, remoteDirectoryPath, lockFileName);
             if (fiLockFile != null)
@@ -358,13 +356,12 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Create a new lock file named dataFilePath + ".lock"
+        /// Create a new lock file named dataFileName + ".lock" in directory remoteDirectoryPath
         /// </summary>
         /// <param name="sftp">Sftp client</param>
         /// <param name="remoteDirectoryPath">Target directory on the remote server (use Linux-style forward slashes)</param>
         /// <param name="dataFileName">Data file name (without .lock)</param>
         /// <returns>Full path to the lock file; empty string if a problem</returns>
-        /// <remarks>An exception will be thrown if the lock file already exists</remarks>
         private string CreateRemoteLockFile(SftpClient sftp, string remoteDirectoryPath, string dataFileName)
         {
 
@@ -380,14 +377,14 @@ namespace AnalysisManagerBase
                 lockFileData.AppendLine(dataLine);
             }
 
-            var remoteLockFilePath = clsPathUtils.CombineLinuxPaths(remoteDirectoryPath, dataFileName + LOCK_FILE_EXTENSION);
+            var remoteLockFilePath = clsPathUtils.CombineLinuxPaths(remoteDirectoryPath, dataFileName + clsGlobal.LOCK_FILE_EXTENSION);
 
             OnDebugEvent("  creating lock file at " + remoteLockFilePath);
 
-            using (var swLockFile = sftp.Create(remoteLockFilePath))
+            using (var lockFileWriter = sftp.Create(remoteLockFilePath))
             {
                 var buffer = Encoding.ASCII.GetBytes(lockFileData.ToString());
-                swLockFile.Write(buffer, 0, buffer.Length);
+                lockFileWriter.Write(buffer, 0, buffer.Length);
             }
 
             // Wait 2 to 5 seconds, then re-open the file to make sure it was created by this manager
@@ -450,7 +447,7 @@ namespace AnalysisManagerBase
         {
             try
             {
-                var lockFileName = dataFileName + LOCK_FILE_EXTENSION;
+                var lockFileName = dataFileName + clsGlobal.LOCK_FILE_EXTENSION;
                 var fiLockFile = FindLockFile(sftp, remoteDirectoryPath, lockFileName);
                 fiLockFile?.Delete();
             }

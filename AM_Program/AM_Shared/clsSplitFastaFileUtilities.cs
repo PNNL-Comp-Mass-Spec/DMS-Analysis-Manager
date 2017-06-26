@@ -78,7 +78,7 @@ namespace AnalysisManagerBase
 
             StreamWriter lockStream;
 
-            lockFilePath = Path.Combine(fiBaseFastaFile.FullName + ".lock");
+            lockFilePath = Path.Combine(fiBaseFastaFile.FullName + clsGlobal.LOCK_FILE_EXTENSION);
             var lockFi = new FileInfo(lockFilePath);
 
             do

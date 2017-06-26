@@ -35,6 +35,8 @@ namespace AnalysisManagerBase
 
         public const string SERVER_CACHE_HASHCHECK_FILE_SUFFIX = ".hashcheck";
 
+        public const string LOCK_FILE_EXTENSION = ".lock";
+
         #endregion
 
         #region "Enums"
@@ -878,113 +880,113 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Converts an database field value to a string, checking for null values
         /// </summary>
-        /// <param name="InpObj"></param>
+        /// <param name="dbValue">Value from database</param>
         /// <returns></returns>
         /// <remarks></remarks>
-        public static string DbCStr(object InpObj)
+        public static string DbCStr(object dbValue)
         {
             // If input var is DbNull, returns "", otherwise returns String representation of var
-            if (ReferenceEquals(InpObj, DBNull.Value))
+            if (ReferenceEquals(dbValue, DBNull.Value))
             {
                 return string.Empty;
             }
 
-            return Convert.ToString(InpObj);
+            return Convert.ToString(dbValue);
         }
 
         /// <summary>
         /// Converts an database field value to a single, checking for null values
         /// </summary>
-        /// <param name="InpObj"></param>
+        /// <param name="dbValue">Value from database</param>
         /// <returns></returns>
         /// <remarks>An exception will be thrown if the value is not numeric</remarks>
-        public static float DbCSng(object InpObj)
+        public static float DbCSng(object dbValue)
         {
 
             // If input var is DbNull, returns "", otherwise returns String representation of var
-            if (ReferenceEquals(InpObj, DBNull.Value))
+            if (ReferenceEquals(dbValue, DBNull.Value))
             {
                 return (float)0.0;
             }
 
-            return Convert.ToSingle(InpObj);
+            return Convert.ToSingle(dbValue);
 
         }
 
         /// <summary>
         /// Converts an database field value to a double, checking for null values
         /// </summary>
-        /// <param name="InpObj"></param>
+        /// <param name="dbValue">Value from database</param>
         /// <returns></returns>
         /// <remarks>An exception will be thrown if the value is not numeric</remarks>
-        public static double DbCDbl(object InpObj)
+        public static double DbCDbl(object dbValue)
         {
 
             // If input var is DbNull, returns "", otherwise returns String representation of var
-            if (ReferenceEquals(InpObj, DBNull.Value))
+            if (ReferenceEquals(dbValue, DBNull.Value))
             {
                 return 0.0;
             }
 
-            return Convert.ToDouble(InpObj);
+            return Convert.ToDouble(dbValue);
 
         }
 
         /// <summary>
         /// Converts an database field value to an integer (int32), checking for null values
         /// </summary>
-        /// <param name="InpObj"></param>
+        /// <param name="dbValue">Value from database</param>
         /// <returns></returns>
         /// <remarks>An exception will be thrown if the value is not numeric</remarks>
-        public static int DbCInt(object InpObj)
+        public static int DbCInt(object dbValue)
         {
 
             // If input var is DbNull, returns "", otherwise returns String representation of var
-            if (ReferenceEquals(InpObj, DBNull.Value))
+            if (ReferenceEquals(dbValue, DBNull.Value))
             {
                 return 0;
             }
 
-            return Convert.ToInt32(InpObj);
+            return Convert.ToInt32(dbValue);
 
         }
 
         /// <summary>
         /// Converts an database field value to a long integer (int64), checking for null values
         /// </summary>
-        /// <param name="InpObj"></param>
+        /// <param name="dbValue">Value from database</param>
         /// <returns></returns>
         /// <remarks>An exception will be thrown if the value is not numeric</remarks>
-        public static long DbCLng(object InpObj)
+        public static long DbCLng(object dbValue)
         {
 
             // If input var is DbNull, returns "", otherwise returns String representation of var
-            if (ReferenceEquals(InpObj, DBNull.Value))
+            if (ReferenceEquals(dbValue, DBNull.Value))
             {
                 return 0;
             }
 
-            return Convert.ToInt64(InpObj);
+            return Convert.ToInt64(dbValue);
 
         }
 
         /// <summary>
         /// Converts an database field value to a decimal, checking for null values
         /// </summary>
-        /// <param name="InpObj"></param>
+        /// <param name="dbValue">Value from database</param>
         /// <returns></returns>
         /// <remarks>An exception will be thrown if the value is not numeric</remarks>
         [Obsolete("Decimal data types should be avoided")]
-        public static decimal DbCDec(object InpObj)
+        public static decimal DbCDec(object dbValue)
         {
 
             // If input var is DbNull, returns "", otherwise returns String representation of var
-            if (ReferenceEquals(InpObj, DBNull.Value))
+            if (ReferenceEquals(dbValue, DBNull.Value))
             {
                 return 0;
             }
 
-            return Convert.ToDecimal(InpObj);
+            return Convert.ToDecimal(dbValue);
 
         }
 

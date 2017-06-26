@@ -52,7 +52,7 @@ namespace AnalysisManagerBase
                 writer.WriteLine("EvalMsg=" + evalMsg);
             }
 
-            var lockFile = new FileInfo(Path.ChangeExtension(infoFile.FullName, ".lock"));
+            var lockFile = new FileInfo(Path.ChangeExtension(infoFile.FullName, clsGlobal.LOCK_FILE_EXTENSION));
 
             infoFile.Delete();
 

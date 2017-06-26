@@ -1234,7 +1234,7 @@ namespace AnalysisManagerBase
                 var splitChars = new[] { '=' };
                 m_JobId = 0;
                 var stepNum = 0;
-                var workDir = string.Empty;
+                var workDirPath = string.Empty;
                 var staged = string.Empty;
 
                 using (var reader = new StreamReader(new FileStream(infoFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
@@ -1261,7 +1261,7 @@ namespace AnalysisManagerBase
                                 stepNum = int.Parse(value);
                                 break;
                             case "WorkDir":
-                                workDir = value;
+                                workDirPath = value;
                                 break;
                             case "Staged":
                                 staged = value;
@@ -1282,20 +1282,21 @@ namespace AnalysisManagerBase
                     return false;
                 }
 
-                if (string.IsNullOrWhiteSpace(workDir))
+                if (string.IsNullOrWhiteSpace(workDirPath))
                 {
                     clsOfflineProcessing.FinalizeJob(infoFile.FullName, false, 1, "WorkDir missing from .info file");
                     return false;
                 }
 
-                LogMessage(string.Format("Processing offline job {0}, step {1}, WorkDir {2}, staged {3}", m_JobId, stepNum, workDir, staged));
+                LogMessage(string.Format("Processing offline job {0}, step {1}, WorkDir {2}, staged {3}", m_JobId, stepNum, workDirPath, staged));
 
 
                 // Read JobParams.xml and update the job parameters
-                var jobParamsFile = Path.Combine(workDir, OFFLINE_JOB_PARAMS_FILE);
+                var jobParamsFile = new FileInfo(Path.Combine(workDirPath, OFFLINE_JOB_PARAMS_FILE));
+
                 string jobParamsXML;
 
-                using (var reader = new StreamReader(new FileStream(jobParamsFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(jobParamsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     jobParamsXML = reader.ReadToEnd();
                 }

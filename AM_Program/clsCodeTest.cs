@@ -69,9 +69,9 @@ namespace AnalysisManagerProg
                 m_DebugLevel = 2;
 
                 if (clsGlobal.LinuxOS)
-                    m_mgrParams.SetParam("workdir", m_mgrParams.GetParam(clsAnalysisMgrSettings.MGR_PARAM_LOCAL_WORK_DIR_PATH));
+                    m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_WORK_DIR, m_mgrParams.GetParam(clsAnalysisMgrSettings.MGR_PARAM_LOCAL_WORK_DIR_PATH));
                 else
-                    m_mgrParams.SetParam("workdir", @"C:\DMS_WorkDir");
+                    m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_WORK_DIR, @"C:\DMS_WorkDir");
 
                 m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, "Monroe_Test");
                 m_mgrParams.SetParam("debuglevel", m_DebugLevel.ToString());
@@ -253,7 +253,7 @@ namespace AnalysisManagerProg
         {
             var jobParams = new clsAnalysisJob(m_mgrParams, debugLevel);
 
-            m_mgrParams.SetParam("workdir", GetWorkDirPath());
+            m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_WORK_DIR, GetWorkDirPath());
             m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, "Monroe_Test");
             m_mgrParams.SetParam("debuglevel", debugLevel.ToString());
 
@@ -303,7 +303,7 @@ namespace AnalysisManagerProg
             var myEMSLUtilities = new clsMyEMSLUtilities(debugLevel, GetWorkDirPath());
             RegisterEvents(myEMSLUtilities);
 
-            m_mgrParams.SetParam("workdir", GetWorkDirPath());
+            m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_WORK_DIR, GetWorkDirPath());
             m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, "Monroe_Test");
             m_mgrParams.SetParam("debuglevel", debugLevel.ToString());
             m_mgrParams.SetParam("zipprogram", @"C:\PKWARE\PKZIPC\pkzipc.exe");
@@ -321,7 +321,7 @@ namespace AnalysisManagerProg
 
         private string GetWorkDirPath()
         {
-            return m_mgrParams.GetParam("workdir");
+            return m_mgrParams.GetParam(clsAnalysisMgrSettings.MGR_PARAM_WORK_DIR);
         }
 
         /// <summary>
@@ -335,7 +335,7 @@ namespace AnalysisManagerProg
 
             var jobParams = new clsAnalysisJob(m_mgrParams, 0);
 
-            m_mgrParams.SetParam("workdir", @"C:\DMS_WorkDir");
+            m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_WORK_DIR, @"C:\DMS_WorkDir");
             m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_NAME, "Monroe_Test");
             m_mgrParams.SetParam("debuglevel", debugLevel.ToString());
 
@@ -431,7 +431,7 @@ namespace AnalysisManagerProg
                 return false;
             }
 
-            // var workDir = m_mgrParams.GetParam("workdir");
+            // var workDir = m_mgrParams.GetParam(clsAnalysisMgrSettings.MGR_PARAM_WORK_DIR);
             // var postResultsToDB = true;
 
             // Note: add file clsDtaRefLogMassErrorExtractor to this project to use this functionality
@@ -824,7 +824,7 @@ namespace AnalysisManagerProg
 
                 // Uncomment the following if the MSGFDB plugin is associated with the solution
                 //var oTool = new AnalysisManagerMSGFDBPlugIn.clsMSGFDBUtils(
-                //    m_mgrParams, oJobParams, jobNum, m_mgrParams.GetParam("workdir"), debugLevel, msgfPlus);
+                //    m_mgrParams, oJobParams, jobNum, m_mgrParams.GetParam(clsAnalysisMgrSettings.MGR_PARAM_WORK_DIR), debugLevel, msgfPlus);
 
                 //RegisterEvents(oTool);
 

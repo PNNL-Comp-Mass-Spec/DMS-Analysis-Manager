@@ -320,7 +320,7 @@ namespace AnalysisManagerProg
             ShowTrace("Instantiate m_AnalysisTask as new clsAnalysisJob");
             m_AnalysisTask = new clsAnalysisJob(m_MgrSettings, m_DebugLevel);
 
-            m_WorkDirPath = m_MgrSettings.GetParam("workdir");
+            m_WorkDirPath = m_MgrSettings.GetParam(clsAnalysisMgrSettings.MGR_PARAM_WORK_DIR);
 
             // Setup the manager cleanup class
             ShowTrace("Setup the manager cleanup class");

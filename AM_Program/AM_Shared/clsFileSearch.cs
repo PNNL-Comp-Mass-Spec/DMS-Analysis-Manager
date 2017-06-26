@@ -1943,16 +1943,16 @@ namespace AnalysisManagerBase
 
             // Look for the MASIC Results folder
             // If the folder cannot be found, then m_FolderSearch.FindValidFolder will return the folder defined by "DatasetStoragePath"
-            var ScanStatsFilename = DatasetName + clsAnalysisResources.SCAN_STATS_FILE_SUFFIX;
-            var ServerPath = m_FolderSearch.FindValidFolder(DatasetName, "", "SIC*", MAX_ATTEMPTS, logFolderNotFound: false, retrievingInstrumentDataFolder: false);
+                var scanStatsFilename = DatasetName + clsAnalysisResources.SCAN_STATS_FILE_SUFFIX;
+            var serverPath = m_FolderSearch.FindValidFolder(DatasetName, "", "SIC*", MAX_ATTEMPTS, logFolderNotFound: false, retrievingInstrumentDataFolder: false);
 
-            if (string.IsNullOrEmpty(ServerPath))
+            if (string.IsNullOrEmpty(serverPath))
             {
                 OnErrorEvent("Dataset folder path not found in RetrieveScanAndSICStatsFiles");
                 return false;
             }
 
-            if (ServerPath.StartsWith(MYEMSL_PATH_FLAG))
+            if (serverPath.StartsWith(MYEMSL_PATH_FLAG))
             {
                 // Find the newest _ScanStats.txt file in MyEMSL
                 var bestSICFolderName = string.Empty;
@@ -1964,7 +1964,7 @@ namespace AnalysisManagerBase
                         continue;
                     }
 
-                    if (clsGlobal.IsMatch(myEmslFile.FileInfo.Filename, ScanStatsFilename) && myEmslFile.FileInfo.TransactionID > bestScanStatsFileTransactionID)
+                    if (clsGlobal.IsMatch(myEmslFile.FileInfo.Filename, scanStatsFilename) && myEmslFile.FileInfo.TransactionID > bestScanStatsFileTransactionID)
                     {
                         var fiScanStatsFile = new FileInfo(myEmslFile.FileInfo.RelativePathWindows);
 
@@ -1995,7 +1995,7 @@ namespace AnalysisManagerBase
             }
             else
             {
-                var diFolderInfo = new DirectoryInfo(ServerPath);
+                var diFolderInfo = new DirectoryInfo(serverPath);
 
                 if (!diFolderInfo.Exists)
                 {
@@ -2018,7 +2018,7 @@ namespace AnalysisManagerBase
 
                 foreach (var diSubFolder in diSubfolders)
                 {
-                    var fiScanStatsFile = new FileInfo(Path.Combine(diSubFolder.FullName, ScanStatsFilename));
+                    var fiScanStatsFile = new FileInfo(Path.Combine(diSubFolder.FullName, scanStatsFilename));
                     if (fiScanStatsFile.Exists)
                     {
                         if (string.IsNullOrEmpty(newestScanStatsFilePath) || fiScanStatsFile.LastWriteTimeUtc > dtNewestScanStatsFileDate)
@@ -2145,7 +2145,7 @@ namespace AnalysisManagerBase
                 {
                     // Look for and copy the _SICStats.txt file
                     if (!RetrieveSICFileMyEMSL(
-                        DatasetName + "_SICStats.txt",
+                        DatasetName + clsAnalysisResources.SIC_STATS_FILE_SUFFIX,
                         diSICFolder.Name, lstNonCriticalFileSuffixes))
                     {
                         return false;
@@ -2205,7 +2205,7 @@ namespace AnalysisManagerBase
             {
                 // Look for and copy the _SICStats.txt file
                 if (!RetrieveSICFileUNC(
-                    DatasetName + "_SICStats.txt",
+                    DatasetName + clsAnalysisResources.SIC_STATS_FILE_SUFFIX,
                     masicResultsFolderPath,
                     createStoragePathInfoOnly, maxCopyAttempts, lstNonCriticalFileSuffixes))
                 {

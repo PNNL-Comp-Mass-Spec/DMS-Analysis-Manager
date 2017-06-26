@@ -106,6 +106,12 @@ namespace AnalysisManagerProg
         /// </remarks>
         public const string MGR_PARAM_LOCAL_WORK_DIR_PATH = "LocalWorkDirPath";
 
+        /// <summary>
+        /// Working directory for the manager
+        /// </summary>
+        /// <remarks>When running offline jobs, this path will be updted for each job task</remarks>
+        public const string MGR_PARAM_WORK_DIR = "WorkDir";
+
         #endregion
 
         #region "Module variables"
@@ -521,13 +527,13 @@ namespace AnalysisManagerProg
                 SetParam(MGR_PARAM_MGR_ACTIVE, "true");
             }
 
-            if (string.IsNullOrWhiteSpace(GetParam("workdir")))
+            if (string.IsNullOrWhiteSpace(GetParam(MGR_PARAM_WORK_DIR)))
             {
                 // Define the work directory based on the manager name
                 if (workDirPath.Contains("/"))
-                    SetParam("workdir", clsPathUtils.CombineLinuxPaths(workDirPath, ManagerName));
+                    SetParam(MGR_PARAM_WORK_DIR, clsPathUtils.CombineLinuxPaths(workDirPath, ManagerName));
                 else
-                    SetParam("workdir", Path.Combine(workDirPath, ManagerName));
+                    SetParam(MGR_PARAM_WORK_DIR, Path.Combine(workDirPath, ManagerName));
             }
 
             return true;
@@ -872,7 +878,7 @@ namespace AnalysisManagerProg
                     return false;
                 }
 
-                var workDirPath = GetParam("workdir");
+                var workDirPath = GetParam(MGR_PARAM_WORK_DIR);
                 var workDir = new DirectoryInfo(workDirPath);
                 if (workDir.Exists)
                     return true;
