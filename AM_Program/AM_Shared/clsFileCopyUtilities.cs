@@ -315,7 +315,7 @@ namespace AnalysisManagerBase
             int maxCopyAttempts)
         {
 
-            var sourceFilePath = String.Empty;
+            var sourceFilePath = string.Empty;
 
             try
             {
@@ -461,7 +461,7 @@ namespace AnalysisManagerBase
         public bool CreateStoragePathInfoFile(string sourceFilePath, string DestFilePath)
         {
 
-            var infoFilePath = String.Empty;
+            var infoFilePath = string.Empty;
 
             try
             {
