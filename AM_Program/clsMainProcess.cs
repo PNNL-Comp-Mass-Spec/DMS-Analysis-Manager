@@ -568,7 +568,18 @@ namespace AnalysisManagerProg
                             try
                             {
                                 oneTaskStarted = true;
-                                if (DoAnalysisJob())
+                                var defaultManagerWorkDir = string.Copy(m_WorkDirPath);
+
+                                var success = DoAnalysisJob();
+
+                                if (!string.Equals(m_WorkDirPath, defaultManagerWorkDir))
+                                {
+                                    // Restore the work dir path
+                                    m_WorkDirPath = string.Copy(defaultManagerWorkDir);
+                                    m_MgrSettings.SetParam(clsAnalysisMgrSettings.MGR_PARAM_WORK_DIR, m_WorkDirPath);
+                                }
+
+                                if (success)
                                 {
                                     // Task succeeded; reset the sequential job failure counter
                                     criticalMgrErrorCount = 0;
@@ -709,6 +720,13 @@ namespace AnalysisManagerProg
             var runJobsRemotely = m_MgrSettings.GetParam("RunJobsRemotely", false);
             var runningRemoteFlag = m_AnalysisTask.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "RunningRemote", 0);
             var runningRemote = (runningRemoteFlag > 0);
+
+            if (clsGlobal.OfflineMode)
+            {
+                // Update the working directory path to match the current task
+                // This manager setting was updated by SelectOfflineJobInfoFile in clsAnalysisJob
+                m_WorkDirPath = m_MgrSettings.GetParam(clsAnalysisMgrSettings.MGR_PARAM_WORK_DIR);
+            }
 
             ShowTrace("Processing job " + jobNum + ", " + jobToolDescription);
 

@@ -1290,6 +1290,16 @@ namespace AnalysisManagerBase
 
                 LogMessage(string.Format("Processing offline job {0}, step {1}, WorkDir {2}, staged {3}", m_JobId, stepNum, workDirPath, staged));
 
+                // Update the working directory in the manager parameters
+                // If necessary, switch from a Linux-style path to a Windows-style path
+                // (this will be the case when debugging offline jobs on a Windows computer)
+                var workDir = new DirectoryInfo(workDirPath);
+                if (!string.Equals(workDirPath, workDir.FullName))
+                {
+                    workDirPath = workDir.FullName;
+                }
+
+                m_MgrParams.SetParam("WorkDir", workDirPath);
 
                 // Read JobParams.xml and update the job parameters
                 var jobParamsFile = new FileInfo(Path.Combine(workDirPath, OFFLINE_JOB_PARAMS_FILE));
