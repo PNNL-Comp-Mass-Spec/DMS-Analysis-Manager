@@ -4024,14 +4024,14 @@ namespace AnalysisManagerBase
                 var toolName = m_jobParams.GetParam("ToolName", string.Empty);
                 if (string.IsNullOrWhiteSpace(toolName))
                 {
-                    m_message = "Job parameter ToolName is empty";
+                    LogError("Job parameter ToolName is empty");
                     return false;
                 }
 
                 var paramFileType = SetParamfileType(toolName);
                 if (paramFileType == IGenerateFile.ParamFileType.Invalid)
                 {
-                    m_message = "Tool " + toolName + " is not supported by the ParamFileGenerator; update clsAnalysisResources and ParamFileGenerator.dll";
+                    LogError("Tool " + toolName + " is not supported by the ParamFileGenerator; update clsAnalysisResources and ParamFileGenerator.dll");
                     return false;
                 }
 
@@ -4061,7 +4061,18 @@ namespace AnalysisManagerBase
                     return true;
                 }
 
-                LogError(m_message + ": " + ParFileGen.LastError);
+                if (string.IsNullOrWhiteSpace(paramFileGenerator.LastError))
+                {
+                    LogError("Unknown error retrieving the parameter file using the paramFileGenerator");
+                }
+                else
+                {
+                    if (string.IsNullOrWhiteSpace(m_message))
+                        LogError(paramFileGenerator.LastError);
+                    else
+                        LogError(m_message + ": " + paramFileGenerator.LastError);
+                }
+
                 return false;
             }
             catch (Exception ex)
