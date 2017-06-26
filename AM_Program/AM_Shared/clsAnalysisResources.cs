@@ -836,7 +836,7 @@ namespace AnalysisManagerBase
                 if (fiLockFile.Exists)
                 {
                     // Lock file is over 2 hours old; delete it
-                    DeleteLockFile(dataFilePath);
+                    clsGlobal.DeleteLockFile(dataFilePath);
                 }
             }
         }
@@ -859,30 +859,6 @@ namespace AnalysisManagerBase
 
             return lockFilePath;
 
-        }
-
-        /// <summary>
-        /// Delete the lock file for the correspond data file
-        /// </summary>
-        /// <param name="dataFilePath"></param>
-        /// <remarks></remarks>
-        public static void DeleteLockFile(string dataFilePath)
-        {
-            try
-            {
-                var lockFilePath = dataFilePath + LOCK_FILE_EXTENSION;
-
-                var fiLockFile = new FileInfo(lockFilePath);
-                if (fiLockFile.Exists)
-                {
-                    fiLockFile.Delete();
-                }
-
-            }
-            catch (Exception)
-            {
-                // Ignore errors here
-            }
         }
 
         /// <summary>

@@ -226,6 +226,30 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
+        /// Delete the lock file for the corresponding data file
+        /// </summary>
+        /// <param name="dataFilePath"></param>
+        /// <remarks></remarks>
+        public static void DeleteLockFile(string dataFilePath)
+        {
+            try
+            {
+                var lockFilePath = dataFilePath + clsGlobal.LOCK_FILE_EXTENSION;
+
+                var fiLockFile = new FileInfo(lockFilePath);
+                if (fiLockFile.Exists)
+                {
+                    fiLockFile.Delete();
+                }
+
+            }
+            catch (Exception)
+            {
+                // Ignore errors here
+            }
+        }
+
+        /// <summary>
         /// Enable offline mode
         /// </summary>
         /// <param name="runningLinux">Set to True if running Linux</param>
