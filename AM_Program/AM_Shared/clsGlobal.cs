@@ -668,6 +668,48 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
+        /// Compare the original contents of a lock file with new contents
+        /// </summary>
+        /// <param name="lockFilePath">Lock file path (could be Windows or Linux-based; only used for error messages)</param>
+        /// <param name="lockFileContents">Original lock file contents</param>
+        /// <param name="lockFileContentsNew">Current lock file contents</param>
+        /// <param name="errorMessage">Output: error message</param>
+        /// <returns>True if the contents match, otherwise false</returns>
+        public static bool LockFilesMatch(
+            string lockFilePath,
+            IReadOnlyList<string> lockFileContents,
+            IReadOnlyList<string> lockFileContentsNew,
+            out string errorMessage)
+        {
+
+            if (lockFileContentsNew.Count < lockFileContents.Count)
+            {
+                // Remote lock file is shorter than we expected
+                errorMessage = "Lock file does have the expected content: " + lockFilePath;
+                return false;
+            }
+
+            for (var i = 0; i < lockFileContentsNew.Count; i++)
+            {
+                if (i >= lockFileContents.Count)
+                {
+                    // Lock file now has more rows than we expected; that's ok
+                    break;
+                }
+
+                if (string.Equals(lockFileContents[i], lockFileContentsNew[i]))
+                    continue;
+
+                // Lock file content doesn't match the expected value
+                errorMessage = "Another manager replaced the lock file that this manager created at " + lockFilePath;
+                return false;
+            }
+
+            errorMessage = string.Empty;
+            return true;
+        }
+
+        /// <summary>
         /// Parses the headers in headerLine to look for the names specified in headerNames
         /// </summary>
         /// <param name="headerLine"></param>

@@ -393,26 +393,10 @@ namespace AnalysisManagerBase
 
             var lockFileContentsNew = sftp.ReadAllLines(remoteLockFilePath, Encoding.ASCII);
 
-            if (lockFileContentsNew.Length < lockFileContents.Length)
+            if (!clsGlobal.LockFilesMatch(remoteLockFilePath, lockFileContents, lockFileContentsNew, out var errorMessage))
             {
-                // Remote lock file is shorter than we expected
-                OnWarningEvent("Remote lock file does have the expected content: " + remoteLockFilePath);
-                return string.Empty;
-            }
-
-            for (var i = 0; i < lockFileContentsNew.Length; i++)
-            {
-                if (i >= lockFileContents.Length)
-                {
-                    // Remote lock file has more rows than we expected; that's ok
-                    break;
-                }
-
-                if (string.Equals(lockFileContents[i], lockFileContentsNew[i]))
-                    continue;
-
                 // Lock file content doesn't match the expected value
-                OnWarningEvent("Another manager replaced the lock file that this manager created at " + remoteLockFilePath);
+                OnWarningEvent(errorMessage);
                 return string.Empty;
             }
 
