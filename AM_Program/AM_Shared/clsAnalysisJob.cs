@@ -1208,29 +1208,26 @@ namespace AnalysisManagerBase
 
         }
 
-
         /// <summary>
-        /// Try to create a .lock file for a givne candidate .info file
+        /// Try to create a .lock file for a given candidate .info file
         /// </summary>
-        /// <param name="infoFile"></param>
-        /// <returns></returns>
+        /// <param name="infoFile">Info file, for example Job1451055_Step3_20170622_2205.info</param>
+        /// <returns>True if success, false if the file could not be made</returns>
         private bool SelectOfflineJobInfoFile(FileSystemInfo infoFile)
         {
             try
             {
-                var lockFilePath = Path.ChangeExtension(infoFile.FullName, ".lock");
+                // Example name: Job1451055_Step3_20170622_2205.lock
+                var lockFilePath = Path.ChangeExtension(infoFile.FullName, clsGlobal.LOCK_FILE_EXTENSION);
 
                 if (File.Exists(lockFilePath))
                 {
                     // Another process already created the lock file
+                    // Note that DeleteOldLockFiles will eventually delete this .lock file if the other manager crashed
                     return false;
                 }
 
-                using (var lockFile = new StreamWriter(new FileStream(lockFilePath, FileMode.CreateNew, FileAccess.ReadWrite, FileShare.Read)))
-                {
-                    // Successfully created the lock file
-                    lockFile.WriteLine(DateTime.Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
-                }
+                CreateLocalLockFile(lockFilePath);
 
                 // Parse the .info file
 
@@ -1321,6 +1318,58 @@ namespace AnalysisManagerBase
             {
                 LogError("Exception in LockOfflineJobInfoFile", ex);
                 return false;
+            }
+
+        }
+
+
+        /// <summary>
+        /// Create a new lock file at the given path
+        /// </summary>
+        /// <param name="lockFilePath">Full path to the .lock file</param>
+        /// <returns>Full path to the lock file; empty string if a problem</returns>
+        /// <remarks>
+        /// An exception will be thrown if the lock file already exists, or if another manager overwrites the lock file
+        /// This method is similar to CreateRemoteLockFile in clsRemoteTransferUtility
+        /// </remarks>
+        private void CreateLocalLockFile(string lockFilePath)
+        {
+
+            var mgrName = m_MgrParams.GetParam("MgrName", Environment.MachineName);
+
+            var lockFileContents = new List<string>
+            {
+                "Date: " + DateTime.Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT),
+                "Manager: " + mgrName
+            };
+
+            LogDebug("  creating lock file at " + lockFilePath);
+
+            using (var lockFileWriter = new StreamWriter(new FileStream(lockFilePath, FileMode.CreateNew, FileAccess.ReadWrite, FileShare.Read)))
+            {
+                // Successfully created the lock file
+                foreach (var dataLine in lockFileContents)
+                    lockFileWriter.WriteLine(dataLine);
+            }
+
+            // Wait 2 to 5 seconds, then re-open the file to make sure it was created by this manager
+            var oRandom = new Random();
+            Thread.Sleep(oRandom.Next(2, 5) * 1000);
+
+            var lockFileContentsNew = new List<string>();
+
+            using (var reader = new StreamReader(new FileStream(lockFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+            {
+                while (!reader.EndOfStream)
+                {
+                    lockFileContentsNew.Add(reader.ReadLine());
+                }
+            }
+
+            if (!clsGlobal.LockFilesMatch(lockFilePath, lockFileContents, lockFileContentsNew, out var errorMessage))
+            {
+                // Lock file content doesn't match the expected value
+                throw new Exception(errorMessage);
             }
 
         }
