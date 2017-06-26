@@ -1627,6 +1627,9 @@ namespace AnalysisManagerBase
         private bool GetExistingJobParametersFile()
         {
 
+            if (clsGlobal.OfflineMode)
+                return true;
+
             try
             {
                 var stepNum = m_jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step", 1);
@@ -3072,6 +3075,9 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         protected bool ProcessMyEMSLDownloadQueue(string downloadFolderPath, Downloader.DownloadFolderLayout folderLayout)
         {
+            if (clsGlobal.OfflineMode)
+                return true;
+
             var success = m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(downloadFolderPath, folderLayout);
             return success;
         }
@@ -3943,6 +3949,27 @@ namespace AnalysisManagerBase
             {
                 var proteinCollectionInfo = new clsProteinCollectionInfo(m_jobParams);
 
+                if (clsGlobal.OfflineMode)
+                {
+                    var fastaFileName = m_jobParams.GetJobParameter(JOB_PARAM_GENERATED_FASTA_NAME, string.Empty);
+
+                    if (string.IsNullOrWhiteSpace(fastaFileName))
+                    {
+                        LogError(string.Format("Job parameter {0} is undefined", JOB_PARAM_GENERATED_FASTA_NAME));
+                        return false;
+                    }
+
+                    // Confirm that the FASTA file exists
+                    var fastaFile = new FileInfo(Path.Combine(localOrgDBFolder, fastaFileName));
+                    if (!fastaFile.Exists)
+                    {
+                        LogError(string.Format("FASTA file not found: {0}", fastaFile.FullName));
+                        return false;
+                    }
+
+                    return true;
+                }
+
                 double requiredFreeSpaceMB = 0;
 
                 if (proteinCollectionInfo.UsingLegacyFasta)
@@ -3953,8 +3980,6 @@ namespace AnalysisManagerBase
 
                 // Delete old fasta files and suffix array files if getting low on disk space
                 // Do not delete any files related to the current Legacy Fasta file (if defined)
-
-                const int freeSpaceThresholdPercent = 20;
 
                 var legacyFastaFileBaseName = string.Empty;
 
@@ -3994,9 +4019,6 @@ namespace AnalysisManagerBase
                 return false;
             }
 
-            // We got to here OK, so return
-            return true;
-
         }
 
         /// <summary>
@@ -4013,6 +4035,18 @@ namespace AnalysisManagerBase
             try
             {
                 LogMessage("Retrieving parameter file " + paramFileName);
+
+                if (clsGlobal.OfflineMode)
+                {
+                    var paramFile = new FileInfo(Path.Combine(m_WorkingDir, paramFileName));
+                    if (!paramFile.Exists)
+                    {
+                        LogError("Parameter file not found: " + paramFile.FullName);
+                        return false;
+                    }
+
+                    return true;
+                }
 
                 paramFileGenerator = new clsMakeParameterFile
                 {
