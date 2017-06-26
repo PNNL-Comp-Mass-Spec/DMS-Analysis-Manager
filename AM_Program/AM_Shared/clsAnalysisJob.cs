@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Xml;
 using System.Xml.Linq;
 
@@ -1272,19 +1273,19 @@ namespace AnalysisManagerBase
 
                 if (m_JobId == 0)
                 {
-                    clsOfflineProcessing.FinalizeJob(infoFile.FullName, false, 1, "Job missing from .info file");
+                    FinalizeFailedOfflineJob(infoFile, "Job missing from .info file");
                     return false;
                 }
 
                 if (stepNum == 0)
                 {
-                    clsOfflineProcessing.FinalizeJob(infoFile.FullName, false, 1, "Step missing from .info file");
+                    FinalizeFailedOfflineJob(infoFile, "Step missing from .info file");
                     return false;
                 }
 
                 if (string.IsNullOrWhiteSpace(workDirPath))
                 {
-                    clsOfflineProcessing.FinalizeJob(infoFile.FullName, false, 1, "WorkDir missing from .info file");
+                    FinalizeFailedOfflineJob(infoFile, "WorkDir missing from .info file");
                     return false;
                 }
 
@@ -1304,6 +1305,12 @@ namespace AnalysisManagerBase
                 // Read JobParams.xml and update the job parameters
                 var jobParamsFile = new FileInfo(Path.Combine(workDirPath, OFFLINE_JOB_PARAMS_FILE));
 
+                if (!jobParamsFile.Exists)
+                {
+                    FinalizeFailedOfflineJob(infoFile, "JobParams.xml file not found in the working directory: " + jobParamsFile.FullName);
+                    return false;
+                }
+
                 string jobParamsXML;
 
                 using (var reader = new StreamReader(new FileStream(jobParamsFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
@@ -1320,9 +1327,10 @@ namespace AnalysisManagerBase
 
                 return true;
             }
-            catch (IOException)
+            catch (IOException ex)
             {
-                // .lock file created by another process
+                // .lock file was created by another process
+                LogError("Unable to create the lock file (likely already exists)", ex);
                 return false;
             }
             catch (Exception ex)
@@ -1333,6 +1341,11 @@ namespace AnalysisManagerBase
 
         }
 
+        private void FinalizeFailedOfflineJob(FileSystemInfo infoFile, string errorMessage)
+        {
+            LogError(errorMessage);
+            clsOfflineProcessing.FinalizeJob(infoFile.FullName, false, 1, errorMessage);
+        }
 
         /// <summary>
         /// Create a new lock file at the given path
