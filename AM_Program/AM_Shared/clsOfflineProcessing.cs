@@ -13,12 +13,12 @@ namespace AnalysisManagerBase
         /// Update files in the TaskQueue folder, renaming the .info file to .success or .fail and appending the completion code and eval code info
         /// Also removes the .lock file
         /// </summary>
-        /// <param name="infoFilePath"></param>
-        /// <param name="succeeded"></param>
-        /// <param name="compCode"></param>
-        /// <param name="compMsg"></param>
-        /// <param name="evalCode"></param>
-        /// <param name="evalMsg"></param>
+        /// <param name="infoFilePath">Info file path</param>
+        /// <param name="succeeded">True if the job succeeded</param>
+        /// <param name="compCode">Completion code</param>
+        /// <param name="compMsg">Completion message</param>
+        /// <param name="evalCode">Evaluation code</param>
+        /// <param name="evalMsg">Evaluation messge</param>
         public static void FinalizeJob(string infoFilePath, bool succeeded, int compCode, string compMsg, int evalCode = 0, string evalMsg = "")
         {
             var infoFile = new FileInfo(infoFilePath);
@@ -58,7 +58,6 @@ namespace AnalysisManagerBase
 
             if (lockFile.Exists)
                 lockFile.Delete();
-
 
         }
 

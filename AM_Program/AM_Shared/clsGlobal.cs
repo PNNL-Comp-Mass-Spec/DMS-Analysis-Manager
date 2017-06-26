@@ -10,6 +10,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using PRISM;
+using PRISMWin;
 
 //*********************************************************************************************************
 // Written by Dave Clark for the US Department of Energy
@@ -65,7 +66,8 @@ namespace AnalysisManagerBase
         /// <summary>
         /// System process info
         /// </summary>
-        public static SystemProcessInfo ProcessInfo {
+        public static SystemProcessInfo ProcessInfo
+        {
             get
             {
                 if (mSystemProcessInfo == null)
@@ -78,7 +80,7 @@ namespace AnalysisManagerBase
             }
         }
 
-    #endregion
+        #endregion
 
         #region "Module variables"
 
@@ -381,7 +383,8 @@ namespace AnalysisManagerBase
             short retryCount, out DataTable dtResults, int timeoutSeconds)
         {
 
-            var cmd = new SqlCommand(sqlStr) {
+            var cmd = new SqlCommand(sqlStr)
+            {
                 CommandType = CommandType.Text
             };
 
@@ -497,7 +500,7 @@ namespace AnalysisManagerBase
         {
             try
             {
-                var versionChecker = new PRISMWin.clsDotNETVersionChecker();
+                var versionChecker = new clsDotNETVersionChecker();
                 return versionChecker.GetLatestDotNETVersion();
             }
             catch (Exception ex)
@@ -1062,7 +1065,7 @@ namespace AnalysisManagerBase
         private static string ByteArrayToString(byte[] arrInput)
         {
 
-            var  output = new StringBuilder(arrInput.Length);
+            var output = new StringBuilder(arrInput.Length);
 
             for (var i = 0; i <= arrInput.Length - 1; i++)
             {
@@ -1586,7 +1589,7 @@ namespace AnalysisManagerBase
             bool ignoreWhitespace, List<Regex> lineIgnoreRegExSpecs)
         {
 
-            var chWhiteSpaceChars = new List<char>() {'\t', ' '}.ToArray();
+            var chWhiteSpaceChars = new List<char>() { '\t', ' ' }.ToArray();
 
             try
             {
@@ -1987,7 +1990,7 @@ namespace AnalysisManagerBase
             {
                 // Directory path is a remote share; use GetDiskFreeSpaceEx in Kernel32.dll
 
-                if (PRISMWin.clsDiskInfo.GetDiskFreeSpace(
+                if (clsDiskInfo.GetDiskFreeSpace(
                     diDirectory.FullName,
                     out var freeBytesAvailableToUser,
                     out var totalNumberOfBytes,

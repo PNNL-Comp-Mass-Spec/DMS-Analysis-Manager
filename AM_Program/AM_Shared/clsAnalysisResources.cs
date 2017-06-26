@@ -3139,7 +3139,7 @@ namespace AnalysisManagerBase
         /// Legacy fasta file name (without .fasta)
         /// For split fasta jobs, should not include the splitcount and segment number, e.g. should not include _25x_07 or _25x_08
         /// </param>
-        /// <remarks></remarks>
+        /// <remarks>This method only works on Windows, and only processes folders on a local drive, not a network share</remarks>
         protected void PurgeFastaFilesIfLowFreeSpace(string localOrgDbFolder, int freeSpaceThresholdPercent, double requiredFreeSpaceMB, string legacyFastaFileBaseName)
         {
             if (freeSpaceThresholdPercent < 1)
@@ -3178,7 +3178,7 @@ namespace AnalysisManagerBase
                 var localDriveInfo = new DriveInfo(driveLetter);
                 var percentFreeSpaceAtStart = localDriveInfo.AvailableFreeSpace / (double)localDriveInfo.TotalSize * 100;
 
-                if ((percentFreeSpaceAtStart >= freeSpaceThresholdPercent))
+                if (percentFreeSpaceAtStart >= freeSpaceThresholdPercent)
                 {
                     if (m_DebugLevel >= 2)
                     {
