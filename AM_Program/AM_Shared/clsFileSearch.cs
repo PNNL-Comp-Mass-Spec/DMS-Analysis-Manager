@@ -215,6 +215,12 @@ namespace AnalysisManagerBase
 
         }
 
+        private bool FileExistsInWorkDir(string fileName)
+        {
+            var fileInfo = new FileInfo(Path.Combine(m_WorkingDir, fileName));
+            return fileInfo.Exists;
+        }
+
         /// <summary>
         /// Retrieves specified file from storage server, xfer folder, or archive and unzips if necessary
         /// </summary>
@@ -1918,6 +1924,22 @@ namespace AnalysisManagerBase
             long bestScanStatsFileTransactionID = 0;
 
             const int MAX_ATTEMPTS = 1;
+
+
+            var requiredFileSuffixes = new List<string>();
+
+            if (retrieveSICStatsFile) requiredFileSuffixes.Add(clsAnalysisResources.SIC_STATS_FILE_SUFFIX);
+            if (retrieveScanStatsFile) requiredFileSuffixes.Add(clsAnalysisResources.SCAN_STATS_FILE_SUFFIX);
+            if (retrieveScanStatsExFile) requiredFileSuffixes.Add(clsAnalysisResources.SCAN_STATS_EX_FILE_SUFFIX);
+            if (retrieveReporterIonsFile) requiredFileSuffixes.Add(clsAnalysisResources.REPORTERIONS_FILE_SUFFIX);
+
+            var matchCount = requiredFileSuffixes.Count(fileSuffix => FileExistsInWorkDir(DatasetName + fileSuffix));
+
+            if (matchCount == requiredFileSuffixes.Count)
+            {
+                // All required MASIC files are already present in the working directory
+                return true;
+            }
 
             // Look for the MASIC Results folder
             // If the folder cannot be found, then m_FolderSearch.FindValidFolder will return the folder defined by "DatasetStoragePath"
