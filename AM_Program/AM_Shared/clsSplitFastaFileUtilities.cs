@@ -123,7 +123,7 @@ namespace AnalysisManagerBase
 
                     // Try to create the lock file
                     // If another process is still using it, an exception will be thrown
-                    lockStream = new StreamWriter(new FileStream(lockFi.FullName, FileMode.Create, FileAccess.Write, FileShare.ReadWrite));
+                    lockStream = new StreamWriter(new FileStream(lockFi.FullName, FileMode.CreateNew, FileAccess.Write, FileShare.ReadWrite));
 
                     // We have successfully created a lock file,
                     // so we should exit the Do Loop
