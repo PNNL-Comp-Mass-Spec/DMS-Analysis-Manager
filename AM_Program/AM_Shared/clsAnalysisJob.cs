@@ -91,6 +91,8 @@ namespace AnalysisManagerBase
         /// </summary>
         protected Dictionary<string, int> m_DatasetInfoList = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
+        protected FileInfo m_OfflineJobInfoFile;
+
         #endregion
 
         #region "Properties"
@@ -1214,7 +1216,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="infoFile">Info file, for example Job1451055_Step3_20170622_2205.info</param>
         /// <returns>True if success, false if the file could not be made</returns>
-        private bool SelectOfflineJobInfoFile(FileSystemInfo infoFile)
+        private bool SelectOfflineJobInfoFile(FileInfo infoFile)
         {
             try
             {
@@ -1290,6 +1292,8 @@ namespace AnalysisManagerBase
                 }
 
                 LogMessage(string.Format("Processing offline job {0}, step {1}, WorkDir {2}, staged {3}", m_JobId, stepNum, workDirPath, staged));
+
+                m_OfflineJobInfoFile = infoFile;
 
                 // Update the working directory in the manager parameters
                 // If necessary, switch from a Linux-style path to a Windows-style path
@@ -1429,9 +1433,23 @@ namespace AnalysisManagerBase
             else
             {
                 TaskClosed = true;
-                if (!SetAnalysisJobComplete(compCode, compMsg, evalCode, evalMsg))
+                if (clsGlobal.OfflineMode)
                 {
-                    LogError("Error setting job complete in database, job " + m_JobId);
+                    if (m_OfflineJobInfoFile == null)
+                    {
+                        LogError("Cannot finalize offline job; m_OfflineJobInfoFile is null");
+                        return;
+                    }
+
+                    var succeeded = SuccessOrNoData(closeOut);
+                    clsOfflineProcessing.FinalizeJob(m_OfflineJobInfoFile.FullName, succeeded, compCode, compMsg, evalCode, evalMsg);
+                }
+                else
+                {
+                    if (!SetAnalysisJobComplete(compCode, compMsg, evalCode, evalMsg))
+                    {
+                        LogError("Error setting job complete in database, job " + m_JobId);
+                    }
                 }
             }
 
