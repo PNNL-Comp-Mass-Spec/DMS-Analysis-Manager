@@ -273,7 +273,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
 
             // Look for a recent .lock file
 
-            foreach (FileInfo fiFile in diLipidMapsDBFolder.GetFileSystemInfos("*" + clsAnalysisResources.LOCK_FILE_EXTENSION))
+            foreach (var lockFile in diLipidMapsDBFolder.GetFiles("*" + clsGlobal.LOCK_FILE_EXTENSION))
             {
                 if (DateTime.UtcNow.Subtract(fiFile.LastWriteTimeUtc).TotalHours < 2)
                 {
@@ -290,7 +290,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
 
             if (lockFileFound)
             {
-                var dataFilePath = strLockFilePath.Substring(0, strLockFilePath.Length - clsAnalysisResources.LOCK_FILE_EXTENSION.Length);
+                var dataFilePath = strLockFilePath.Substring(0, strLockFilePath.Length - clsGlobal.LOCK_FILE_EXTENSION.Length);
                 clsAnalysisResources.CheckForLockFile(dataFilePath, "LipidMapsDB", m_StatusTools, 120);
 
                 strNewestLipidMapsDBFileName = FindNewestLipidMapsDB(diLipidMapsDBFolder, ref dtLipidMapsDBFileTime);
@@ -429,7 +429,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 swOutFile.WriteLine(strHashCheckNew);
             }
 
-            clsAnalysisResources.DeleteLockFile(newLipidMapsDBFilePath);
+            clsGlobal.DeleteLockFile(newLipidMapsDBFilePath);
 
             return strNewestLipidMapsDBFileName;
         }
