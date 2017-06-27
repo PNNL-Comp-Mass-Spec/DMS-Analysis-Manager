@@ -258,7 +258,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
         /// <param name="strNewestLipidMapsDBFileName">The name of the newest Lipid Maps DB in the Lipid Maps DB folder</param>
         /// <returns>The filename of the latest version of the database</returns>
         /// <remarks>
-        /// If the newly downloaded LipidMaps.txt file has a hash that matches the computed hash for strNewestLipidMapsDBFileName, 
+        /// If the newly downloaded LipidMaps.txt file has a hash that matches the computed hash for strNewestLipidMapsDBFileName,
         /// then we update the time stamp on the HashCheckFile instead of copying the downloaded data back to the server
         /// </remarks>
         private string DownloadNewLipidMapsDB(DirectoryInfo diLipidMapsDBFolder, string strNewestLipidMapsDBFileName)
@@ -275,17 +275,15 @@ namespace AnalysisManagerLipidMapSearchPlugIn
 
             foreach (var lockFile in diLipidMapsDBFolder.GetFiles("*" + clsGlobal.LOCK_FILE_EXTENSION))
             {
-                if (DateTime.UtcNow.Subtract(fiFile.LastWriteTimeUtc).TotalHours < 2)
+                if (DateTime.UtcNow.Subtract(lockFile.LastWriteTimeUtc).TotalHours < 2)
                 {
                     lockFileFound = true;
-                    strLockFilePath = fiFile.FullName;
+                    strLockFilePath = lockFile.FullName;
                     break;
                 }
-                else
-                {
-                    // Lock file has aged; delete it
-                    fiFile.Delete();
-                }
+
+                // Lock file has aged; delete it
+                lockFile.Delete();
             }
 
             if (lockFileFound)
@@ -328,13 +326,11 @@ namespace AnalysisManagerLipidMapSearchPlugIn
             clsAnalysisResources.CreateLockFile(newLipidMapsDBFilePath, "Downloading LipidMaps.txt file via " + m_MachName);
 
             // Call the LipidTools program to obtain the latest database from http://www.lipidmaps.org/
-            string cmdStr = null;
-            var blnSuccess = false;
             var strLipidMapsDBFileLocal = Path.Combine(m_WorkDir, LIPID_MAPS_DB_FILENAME_PREFIX + strTimeStamp + ".txt");
 
             LogMessage("Downloading latest LipidMaps database");
 
-            cmdStr = " -UpdateDBOnly -db " + PossiblyQuotePath(strLipidMapsDBFileLocal);
+            var cmdStr = " -UpdateDBOnly -db " + PossiblyQuotePath(strLipidMapsDBFileLocal);
 
             if (m_DebugLevel >= 1)
             {
@@ -350,7 +346,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
             mCmdRunner.EchoOutputToConsole = true;
             mCmdRunner.WriteConsoleOutputToFile = false;
 
-            blnSuccess = mCmdRunner.RunProgram(mLipidToolsProgLoc, cmdStr, "LipidTools", true);
+            var blnSuccess = mCmdRunner.RunProgram(mLipidToolsProgLoc, cmdStr, "LipidTools", true);
 
             if (!blnSuccess)
             {
@@ -370,8 +366,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
             }
 
             // Compute the MD5 hash value of the newly downloaded file
-            string strHashCheckNew = null;
-            strHashCheckNew = clsGlobal.ComputeFileHashSha1(strLipidMapsDBFileLocal);
+            var strHashCheckNew = clsGlobal.ComputeFileHashSha1(strLipidMapsDBFileLocal);
 
             if (!string.IsNullOrEmpty(strNewestLipidMapsDBFileHash) && strHashCheckNew == strNewestLipidMapsDBFileHash)
             {
@@ -387,6 +382,9 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 {
                     // Rename the newly downloaded file to strNewestLipidMapsDBFileName
                     Thread.Sleep(500);
+                    if (string.IsNullOrWhiteSpace(strNewestLipidMapsDBFileName))
+                        throw new Exception("strNewestLipidMapsDBFileName is null in DownloadNewLipidMapsDB");
+
                     File.Move(strLipidMapsDBFileLocal, Path.Combine(m_WorkDir, strNewestLipidMapsDBFileName));
                 }
             }
@@ -400,8 +398,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
 
                 while (intCopyAttempts <= 2)
                 {
-                    string strLipidMapsDBFileTarget = null;
-                    strLipidMapsDBFileTarget = diLipidMapsDBFolder.FullName + " plus " + strNewestLipidMapsDBFileName;
+                    var strLipidMapsDBFileTarget = diLipidMapsDBFolder.FullName + " plus " + strNewestLipidMapsDBFileName;
 
                     try
                     {
@@ -436,17 +433,16 @@ namespace AnalysisManagerLipidMapSearchPlugIn
 
         private string FindNewestLipidMapsDB(DirectoryInfo diLipidMapsDBFolder, ref DateTime dtLipidMapsDBFileTime)
         {
-            string strNewestLipidMapsDBFileName = null;
-            strNewestLipidMapsDBFileName = string.Empty;
+            var strNewestLipidMapsDBFileName = string.Empty;
 
             dtLipidMapsDBFileTime = DateTime.MinValue;
 
-            foreach (FileInfo fiFile in diLipidMapsDBFolder.GetFileSystemInfos(LIPID_MAPS_DB_FILENAME_PREFIX + "*.txt"))
+            foreach (var dbFile in diLipidMapsDBFolder.GetFiles(LIPID_MAPS_DB_FILENAME_PREFIX + "*.txt"))
             {
-                if (fiFile.LastWriteTimeUtc > dtLipidMapsDBFileTime)
+                if (dbFile.LastWriteTimeUtc > dtLipidMapsDBFileTime)
                 {
-                    dtLipidMapsDBFileTime = fiFile.LastWriteTimeUtc;
-                    strNewestLipidMapsDBFileName = fiFile.Name;
+                    dtLipidMapsDBFileTime = dbFile.LastWriteTimeUtc;
+                    strNewestLipidMapsDBFileName = dbFile.Name;
                 }
             }
 
@@ -475,19 +471,13 @@ namespace AnalysisManagerLipidMapSearchPlugIn
 
         private bool GetLipidMapsDatabase()
         {
-            string strParamFileFolderPath = null;
-
-            string strNewestLipidMapsDBFileName = null;
             var dtLipidMapsDBFileTime = DateTime.MinValue;
-
-            string strSourceFilePath = null;
-            string strTargetFilePath = null;
 
             var blnUpdateDB = false;
 
             try
             {
-                strParamFileFolderPath = m_jobParams.GetJobParameter("ParmFileStoragePath", string.Empty);
+                var strParamFileFolderPath = m_jobParams.GetJobParameter("ParmFileStoragePath", string.Empty);
 
                 if (string.IsNullOrEmpty(strParamFileFolderPath))
                 {
@@ -507,7 +497,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 }
 
                 // Find the newest date-stamped file
-                strNewestLipidMapsDBFileName = FindNewestLipidMapsDB(diLipidMapsDBFolder, ref dtLipidMapsDBFileTime);
+                var strNewestLipidMapsDBFileName = FindNewestLipidMapsDB(diLipidMapsDBFolder, ref dtLipidMapsDBFileTime);
 
                 if (string.IsNullOrEmpty(strNewestLipidMapsDBFileName))
                 {
@@ -550,8 +540,8 @@ namespace AnalysisManagerLipidMapSearchPlugIn
 
                 // File is now up-to-date; copy locally (if not already in the work dir)
                 mLipidMapsDBFilename = string.Copy(strNewestLipidMapsDBFileName);
-                strSourceFilePath = Path.Combine(diLipidMapsDBFolder.FullName, strNewestLipidMapsDBFileName);
-                strTargetFilePath = Path.Combine(m_WorkDir, strNewestLipidMapsDBFileName);
+                var strSourceFilePath = Path.Combine(diLipidMapsDBFolder.FullName, strNewestLipidMapsDBFileName);
+                var strTargetFilePath = Path.Combine(m_WorkDir, strNewestLipidMapsDBFileName);
 
                 if (!File.Exists(strTargetFilePath))
                 {
@@ -573,13 +563,15 @@ namespace AnalysisManagerLipidMapSearchPlugIn
 
         private Dictionary<string, string> GetLipidMapsParameterNames()
         {
-            var dctParamNames = new Dictionary<string, string>(25, StringComparer.OrdinalIgnoreCase);
+            var dctParamNames = new Dictionary<string, string>(25, StringComparer.OrdinalIgnoreCase)
+            {
+                {"AlignmentToleranceNET", "an"},
+                {"AlignmentToleranceMassPPM", "am"},
+                {"DBMatchToleranceMassPPM", "mm"},
+                {"DBMatchToleranceMzPpmCID", "ct"},
+                {"DBMatchToleranceMzPpmHCD", "ht"}
+            };
 
-            dctParamNames.Add("AlignmentToleranceNET", "an");
-            dctParamNames.Add("AlignmentToleranceMassPPM", "am");
-            dctParamNames.Add("DBMatchToleranceMassPPM", "mm");
-            dctParamNames.Add("DBMatchToleranceMzPpmCID", "ct");
-            dctParamNames.Add("DBMatchToleranceMzPpmHCD", "ht");
 
             return dctParamNames;
         }
@@ -605,7 +597,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
         //   Saving QC images...Done.
 
         // ReSharper disable once UseImplicitlyTypedVariableEvident
-        private Regex reSubProgress = new Regex(@"^(\d+) / (\d+)", RegexOptions.Compiled);
+        private readonly Regex reSubProgress = new Regex(@"^(\d+) / (\d+)", RegexOptions.Compiled);
 
         /// <summary>
         /// Parse the LipidTools console output file to track progress
@@ -618,17 +610,19 @@ namespace AnalysisManagerLipidMapSearchPlugIn
             {
                 if (mConsoleOutputProgressMap == null || mConsoleOutputProgressMap.Count == 0)
                 {
-                    mConsoleOutputProgressMap = new Dictionary<string, int>();
+                    mConsoleOutputProgressMap = new Dictionary<string, int>
+                    {
+                        {"Reading local Lipid Maps database", PROGRESS_PCT_LIPID_TOOLS_READING_DATABASE},
+                        {"Reading positive data", PROGRESS_PCT_LIPID_TOOLS_READING_POSITIVE_DATA},
+                        {"Reading negative data", PROGRESS_PCT_LIPID_TOOLS_READING_NEGATIVE_DATA},
+                        {"Finding features (positive)", PROGRESS_PCT_LIPID_TOOLS_FINDING_POSITIVE_FEATURES},
+                        {"Finding features (negative)", PROGRESS_PCT_LIPID_TOOLS_FINDING_NEGATIVE_FEATURES},
+                        {"Aligning features", PROGRESS_PCT_LIPID_TOOLS_ALIGNING_FEATURES},
+                        {"Matching to Lipid Maps database", PROGRESS_PCT_LIPID_TOOLS_MATCHING_TO_DB},
+                        {"Writing results", PROGRESS_PCT_LIPID_TOOLS_WRITING_RESULTS},
+                        {"Writing QC data", PROGRESS_PCT_LIPID_TOOLS_WRITING_QC_DATA}
+                    };
 
-                    mConsoleOutputProgressMap.Add("Reading local Lipid Maps database", PROGRESS_PCT_LIPID_TOOLS_READING_DATABASE);
-                    mConsoleOutputProgressMap.Add("Reading positive data", PROGRESS_PCT_LIPID_TOOLS_READING_POSITIVE_DATA);
-                    mConsoleOutputProgressMap.Add("Reading negative data", PROGRESS_PCT_LIPID_TOOLS_READING_NEGATIVE_DATA);
-                    mConsoleOutputProgressMap.Add("Finding features (positive)", PROGRESS_PCT_LIPID_TOOLS_FINDING_POSITIVE_FEATURES);
-                    mConsoleOutputProgressMap.Add("Finding features (negative)", PROGRESS_PCT_LIPID_TOOLS_FINDING_NEGATIVE_FEATURES);
-                    mConsoleOutputProgressMap.Add("Aligning features", PROGRESS_PCT_LIPID_TOOLS_ALIGNING_FEATURES);
-                    mConsoleOutputProgressMap.Add("Matching to Lipid Maps database", PROGRESS_PCT_LIPID_TOOLS_MATCHING_TO_DB);
-                    mConsoleOutputProgressMap.Add("Writing results", PROGRESS_PCT_LIPID_TOOLS_WRITING_RESULTS);
-                    mConsoleOutputProgressMap.Add("Writing QC data", PROGRESS_PCT_LIPID_TOOLS_WRITING_QC_DATA);
                 }
 
                 if (!File.Exists(strConsoleOutputFilePath))
@@ -646,20 +640,14 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                     LogDebug("Parsing file " + strConsoleOutputFilePath);
                 }
 
-                string strLineIn = null;
                 double dblSubProgressAddon = 0;
-
-                var intSubProgressCount = 0;
-                var intSubProgressCountTotal = 0;
-
-                var intEffectiveProgress = 0;
-                intEffectiveProgress = PROGRESS_PCT_LIPID_TOOLS_STARTING;
+                var intEffectiveProgress = PROGRESS_PCT_LIPID_TOOLS_STARTING;
 
                 using (var srInFile = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     while (!srInFile.EndOfStream)
                     {
-                        strLineIn = srInFile.ReadLine();
+                        var strLineIn = srInFile.ReadLine();
 
                         if (string.IsNullOrWhiteSpace(strLineIn))
                             continue;
@@ -682,9 +670,9 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                             var oMatch = reSubProgress.Match(strLineIn);
                             if (oMatch.Success)
                             {
-                                if (int.TryParse(oMatch.Groups[1].Value, out intSubProgressCount))
+                                if (int.TryParse(oMatch.Groups[1].Value, out var intSubProgressCount))
                                 {
-                                    if (int.TryParse(oMatch.Groups[2].Value, out intSubProgressCountTotal))
+                                    if (int.TryParse(oMatch.Groups[2].Value, out var intSubProgressCountTotal))
                                     {
                                         dblSubProgressAddon = intSubProgressCount / (double)intSubProgressCountTotal;
                                     }
@@ -753,8 +741,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
 
                         if (!strLineIn.StartsWith("#") && strLineIn.Contains("="))
                         {
-                            var intCharIndex = 0;
-                            intCharIndex = strLineIn.IndexOf('=');
+                            var intCharIndex = strLineIn.IndexOf('=');
                             if (intCharIndex > 0)
                             {
                                 strKey = strLineIn.Substring(0, intCharIndex).Trim();
@@ -772,7 +759,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                         if (string.IsNullOrWhiteSpace(strKey))
                             continue;
 
-                        var strArgumentSwitch = string.Empty;
+                        string strArgumentSwitch;
 
                         // Check whether strKey is one of the standard keys defined in dctParamNames
                         if (dctParamNames.TryGetValue(strKey, out strArgumentSwitch))
@@ -785,7 +772,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                         }
                         else if (strKey.ToLower() == "noscangroups")
                         {
-                            var blnValue = false;
+                            bool blnValue;
                             if (bool.TryParse(strValue, out blnValue))
                             {
                                 if (blnValue)
@@ -813,20 +800,20 @@ namespace AnalysisManagerLipidMapSearchPlugIn
 
         private bool PostProcessLipidToolsResults()
         {
-            string strFolderToZip = null;
-
             try
             {
                 // Create the PlotData folder and move the plot data text files into that folder
-                strFolderToZip = Path.Combine(m_WorkDir, "PlotData");
+                var strFolderToZip = Path.Combine(m_WorkDir, "PlotData");
                 Directory.CreateDirectory(strFolderToZip);
 
-                var lstFilesToMove = new List<string>();
-                lstFilesToMove.Add(LIPID_TOOLS_RESULT_FILE_PREFIX + "AlignMassError.txt");
-                lstFilesToMove.Add(LIPID_TOOLS_RESULT_FILE_PREFIX + "AlignNETError.txt");
-                lstFilesToMove.Add(LIPID_TOOLS_RESULT_FILE_PREFIX + "MatchMassError.txt");
-                lstFilesToMove.Add(LIPID_TOOLS_RESULT_FILE_PREFIX + "Tiers.txt");
-                lstFilesToMove.Add(LIPID_TOOLS_RESULT_FILE_PREFIX + "MassErrorComparison.txt");
+                var lstFilesToMove = new List<string>
+                {
+                    LIPID_TOOLS_RESULT_FILE_PREFIX + "AlignMassError.txt",
+                    LIPID_TOOLS_RESULT_FILE_PREFIX + "AlignNETError.txt",
+                    LIPID_TOOLS_RESULT_FILE_PREFIX + "MatchMassError.txt",
+                    LIPID_TOOLS_RESULT_FILE_PREFIX + "Tiers.txt",
+                    LIPID_TOOLS_RESULT_FILE_PREFIX + "MassErrorComparison.txt"
+                };
 
                 Thread.Sleep(500);
 
@@ -884,7 +871,6 @@ namespace AnalysisManagerLipidMapSearchPlugIn
         private bool StoreToolVersionInfo(string strLipidToolsProgLoc)
         {
             var strToolVersionInfo = string.Empty;
-            var blnSuccess = false;
 
             if (m_DebugLevel >= 2)
             {
@@ -897,7 +883,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 try
                 {
                     strToolVersionInfo = "Unknown";
-                    return base.SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>());
+                    return SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>());
                 }
                 catch (Exception ex)
                 {
@@ -907,17 +893,18 @@ namespace AnalysisManagerLipidMapSearchPlugIn
             }
 
             // Lookup the version of the LipidTools application
-            blnSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, ioLipidTools.FullName);
+            var blnSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, ioLipidTools.FullName);
             if (!blnSuccess)
                 return false;
 
             // Store paths to key DLLs in ioToolFiles
-            var ioToolFiles = new List<FileInfo>();
-            ioToolFiles.Add(ioLipidTools);
+            var ioToolFiles = new List<FileInfo> {
+                ioLipidTools
+            };
 
             try
             {
-                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
+                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
             }
             catch (Exception ex)
             {
