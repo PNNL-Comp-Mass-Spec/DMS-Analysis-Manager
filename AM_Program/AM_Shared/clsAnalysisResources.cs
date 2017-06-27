@@ -478,7 +478,7 @@ namespace AnalysisManagerBase
                 return false;
             }
 
-            var sourceHashcheck = hashcheckFiles.First();
+            var sourceHashcheck = (from item in hashcheckFiles orderby item.LastWriteTime descending select item).First();
 
             LogDebug("Verifying that the generated fasta file exists on the remote host");
 
@@ -890,7 +890,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Creates a Fasta file based on Ken's DLL
+        /// Creates a Fasta file using Protein_Exporter.dll
         /// </summary>
         /// <param name="proteinCollectionInfo"></param>
         /// <param name="destFolder">Folder where file will be created</param>
@@ -3967,7 +3967,10 @@ namespace AnalysisManagerBase
                         return false;
                     }
 
-                    return true;
+                    // Validate the FASTA file against the .localhashcheck file (created if missing)
+                    var success = ValidateOfflineFASTA(fastaFile);
+
+                    return success;
                 }
 
                 double requiredFreeSpaceMB = 0;
@@ -4617,6 +4620,77 @@ namespace AnalysisManagerBase
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// Validate a FASTA file residing on an offline system
+        /// Compares the CRC32 hash of the file to the .hashcheck file, creating or updating the .localhashcheck
+        /// Skips the validation if the .localhashcheck file is less than 48 hours old
+        /// </summary>
+        /// <param name="fastaFile"></param>
+        /// <returns>True if valid, false if an error</returns>
+        private bool ValidateOfflineFASTA(FileInfo fastaFile)
+        {
+            try
+            {
+                // Find the hashcheck file for this FASTA file
+
+                if (fastaFile.Directory == null)
+                {
+                    LogError("FASTA validation error: unable to determine the parent directory of " + fastaFile.FullName);
+                    return false;
+                }
+
+                var hashcheckFileSpec = fastaFile.Name + "*" + Protein_Exporter.clsGetFASTAFromDMS.HASHCHECK_SUFFIX;
+                var hashcheckFiles = fastaFile.Directory.GetFiles(hashcheckFileSpec);
+                if (hashcheckFiles.Length == 0)
+                {
+                    LogError("FASTA validation error: hashcheck file not found for " + fastaFile.FullName);
+                    return false;
+                }
+
+                var hashCheckFile = hashcheckFiles.First();
+
+                //
+                var reCRC32 = new Regex(@"\.(?<CRC32>[^.]+)\.hashcheck$");
+
+                var match = reCRC32.Match(hashCheckFile.Name);
+
+                if (!match.Success)
+                {
+                    LogError("FASTA validation error: hashcheck filename not in the expected format, " + hashCheckFile.Name);
+                    return false;
+                }
+
+                var expectedHash = match.Groups["CRC32"].Value;
+                var crc32Hash = string.Copy(expectedHash);
+
+                var fastaTools = new Protein_Exporter.clsGetFASTAFromDMS();
+                RegisterEvents(fastaTools);
+
+                var fastaIsValid = fastaTools.ValidateMatchingHash(
+                    fastaFile.FullName,
+                    ref crc32Hash,
+                    retryHoldoffHours: 48,
+                    forceRegenerateHash: false,
+                    hashcheckExtension: ".localhashcheck");
+
+                if (fastaIsValid)
+                    return true;
+
+                LogError("FASTA validation error: hash validation failed for " + fastaFile.FullName);
+
+                if (!string.Equals(expectedHash, crc32Hash))
+                    LogWarning(string.Format("For {0}, expected hash {1} but actually {2}", fastaFile.Name, expectedHash, crc32Hash));
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                LogError("FASTA validation error: " + ex.Message, ex);
+                return false;
+            }
+
         }
 
         #endregion
