@@ -576,6 +576,13 @@ namespace AnalysisManagerBase
             int maxRowsToReturn = 0)
         {
 
+            if (OfflineMode)
+            {
+                LogError(string.Format("Offline mode enabled; {0} cannot execute query {1}", callingFunction, sqlQuery));
+                lstResults = new List<List<string>>();
+                return false;
+            }
+
             if (retryCount < 1)
                 retryCount = 1;
             if (timeoutSeconds < 5)
