@@ -1639,7 +1639,12 @@ namespace AnalysisManagerBase
         static short GetManagerDebugLevel(string connectionString, string managerName, short currentDebugLevel, int recursionLevel)
         {
 
-            if (recursionLevel > 3)
+            if (clsGlobal.OfflineMode)
+            {
+                return currentDebugLevel;
+            }
+
+            if (recursionLevel > 5)
             {
                 return currentDebugLevel;
             }
