@@ -290,8 +290,9 @@ namespace AnalysisManagerDataImportPlugIn
             }
 
             // Store the path to AnalysisManagerDataImportPlugIn.dll in ioToolFiles
-            var ioToolFiles = new List<FileInfo>();
-            ioToolFiles.Add(new FileInfo(Path.Combine(strAppFolderPath, "AnalysisManagerDataImportPlugIn.dll")));
+            var ioToolFiles = new List<FileInfo> {
+                new FileInfo(Path.Combine(strAppFolderPath, "AnalysisManagerDataImportPlugIn.dll"))
+            };
 
             try
             {

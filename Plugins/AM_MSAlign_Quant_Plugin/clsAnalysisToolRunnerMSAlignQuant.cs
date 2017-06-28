@@ -362,12 +362,14 @@ namespace AnalysisManagerMSAlignQuantPlugIn
             {
                 if (mConsoleOutputProgressMap == null || mConsoleOutputProgressMap.Count == 0)
                 {
-                    mConsoleOutputProgressMap = new Dictionary<string, int>();
+                    mConsoleOutputProgressMap = new Dictionary<string, int>
+                    {
+                        {"Creating extracted ion chromatogram", PROGRESS_TARGETED_WORKFLOWS_CREATING_XIC},
+                        {"Done creating XIC source data", PROGRESS_TARGETED_WORKFLOWS_XIC_CREATED},
+                        {"Peak Loading complete", PROGRESS_TARGETED_WORKFLOWS_PEAKS_LOADED},
+                        {"---- PROCESSING COMPLETE ----", PROGRESS_TARGETED_WORKFLOWS_PROCESSING_COMPLETE}
+                    };
 
-                    mConsoleOutputProgressMap.Add("Creating extracted ion chromatogram", PROGRESS_TARGETED_WORKFLOWS_CREATING_XIC);
-                    mConsoleOutputProgressMap.Add("Done creating XIC source data", PROGRESS_TARGETED_WORKFLOWS_XIC_CREATED);
-                    mConsoleOutputProgressMap.Add("Peak Loading complete", PROGRESS_TARGETED_WORKFLOWS_PEAKS_LOADED);
-                    mConsoleOutputProgressMap.Add("---- PROCESSING COMPLETE ----", PROGRESS_TARGETED_WORKFLOWS_PROCESSING_COMPLETE);
                 }
 
                 if (!File.Exists(strConsoleOutputFilePath))
@@ -522,11 +524,15 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 return false;
 
             // Store paths to key DLLs in ioToolFiles
-            var ioToolFiles = new List<FileInfo>();
-            ioToolFiles.Add(ioTargetedWorkflowsConsole);
+            var ioToolFiles = new List<FileInfo> {
+                ioTargetedWorkflowsConsole
+            };
 
-            ioToolFiles.Add(new FileInfo(Path.Combine(ioTargetedWorkflowsConsole.DirectoryName, "DeconTools.Backend.dll")));
-            ioToolFiles.Add(new FileInfo(Path.Combine(ioTargetedWorkflowsConsole.DirectoryName, "DeconTools.Workflows.dll")));
+            if (ioTargetedWorkflowsConsole.Directory != null)
+            {
+                ioToolFiles.Add(new FileInfo(Path.Combine(ioTargetedWorkflowsConsole.Directory.FullName, "DeconTools.Backend.dll")));
+                ioToolFiles.Add(new FileInfo(Path.Combine(ioTargetedWorkflowsConsole.Directory.FullName, "DeconTools.Workflows.dll")));
+            }
 
             try
             {

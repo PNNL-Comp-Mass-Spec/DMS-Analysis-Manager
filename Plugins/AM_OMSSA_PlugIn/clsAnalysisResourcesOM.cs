@@ -155,12 +155,15 @@ namespace AnalysisManagerOMSSAPlugIn
                 // Convert the _DTA.txt file to a DTA .XML file
                 SourceFilePath = Path.Combine(m_WorkingDir, DatasetName + "_dta.txt");
 
-                var objDtaConverter = new DtaTextConverter.clsDtaTextToDtaXML();
+                var objDtaConverter = new DtaTextConverter.clsDtaTextToDtaXML
+                {
+                    // Make sure this is 0 so that all data in the _dta.txt file is transferred to the DTA .xml file
+                    MaximumIonsPerSpectrum = 0,
+                    ShowMessages = false,
+                    LogMessagesToFile = false
+                };
 
-                // Make sure this is 0 so that all data in the _dta.txt file is transferred to the DTA .xml file
-                objDtaConverter.MaximumIonsPerSpectrum = 0;
-                objDtaConverter.ShowMessages = false;
-                objDtaConverter.LogMessagesToFile = false;
+
 
                 if (m_DebugLevel >= 2)
                 {
@@ -230,8 +233,10 @@ namespace AnalysisManagerOMSSAPlugIn
                 strOutputFilePath = OmssaInput;
 
                 // Open the template XML file
-                var objTemplate = new XmlDocument();
-                objTemplate.PreserveWhitespace = true;
+                var objTemplate = new XmlDocument {
+                    PreserveWhitespace = true
+                };
+
                 try
                 {
                     objTemplate.Load(fiTemplateFile.FullName);
@@ -561,12 +566,14 @@ namespace AnalysisManagerOMSSAPlugIn
                 // Write out the new file
                 try
                 {
-                    var objWriterSettings = new XmlWriterSettings();
-                    objWriterSettings.Indent = true;
-                    objWriterSettings.IndentChars = "  ";
-                    objWriterSettings.NewLineOnAttributes = true;
+                    var objWriterSettings = new XmlWriterSettings
+                    {
+                        Indent = true,
+                        IndentChars = "  ",
+                        NewLineOnAttributes = true
+                    };
 
-                    var objWriter = XmlTextWriter.Create(strOutputFilePath, objWriterSettings);
+                    var objWriter = XmlWriter.Create(strOutputFilePath, objWriterSettings);
 
                     objWriter.WriteRaw(objTemplate.DocumentElement.OuterXml);
                     objWriter.Close();

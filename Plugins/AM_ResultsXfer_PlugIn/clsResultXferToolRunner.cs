@@ -523,9 +523,11 @@ namespace AnalysisManagerResultsXferPlugin
             }
 
             // Store the path to AnalysisManagerProg.exe and AnalysisManagerResultsXferPlugin.dll in ioToolFiles
-            var ioToolFiles = new List<FileInfo>();
-            ioToolFiles.Add(new FileInfo(Path.Combine(strAppFolderPath, "AnalysisManagerProg.exe")));
-            ioToolFiles.Add(new FileInfo(Path.Combine(strAppFolderPath, "AnalysisManagerResultsXferPlugin.dll")));
+            var ioToolFiles = new List<FileInfo>
+            {
+                new FileInfo(Path.Combine(strAppFolderPath, "AnalysisManagerProg.exe")),
+                new FileInfo(Path.Combine(strAppFolderPath, "AnalysisManagerResultsXferPlugin.dll"))
+            };
 
             try
             {

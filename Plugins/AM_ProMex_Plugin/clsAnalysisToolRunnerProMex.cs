@@ -160,17 +160,19 @@ namespace AnalysisManagerProMexPlugIn
 
         protected Dictionary<string, string> GetProMexParameterNames()
         {
-            var dctParamNames = new Dictionary<string, string>(25, StringComparer.OrdinalIgnoreCase);
+            var dctParamNames = new Dictionary<string, string>(25, StringComparer.OrdinalIgnoreCase)
+            {
+                {"MinCharge", "minCharge"},
+                {"MaxCharge", "maxCharge"},
+                {"MinMass", "minMass"},
+                {"MaxMass", "maxMass"},
+                {"Score", "score"},
+                {"Csv", "csv"},
+                {"MaxThreads", "maxThreads"}
+            };
 
-            dctParamNames.Add("MinCharge", "minCharge");
-            dctParamNames.Add("MaxCharge", "maxCharge");
 
-            dctParamNames.Add("MinMass", "minMass");
-            dctParamNames.Add("MaxMass", "maxMass");
 
-            dctParamNames.Add("Score", "score");
-            dctParamNames.Add("Csv", "csv");
-            dctParamNames.Add("MaxThreads", "maxThreads");
 
             return dctParamNames;
         }
@@ -660,11 +662,14 @@ namespace AnalysisManagerProMexPlugIn
                 return false;
 
             // Store paths to key DLLs in ioToolFiles
-            var ioToolFiles = new List<FileInfo>();
-            ioToolFiles.Add(fiProgram);
+            var ioToolFiles = new List<FileInfo> {
+                fiProgram
+            };
 
-            ioToolFiles.Add(new FileInfo(Path.Combine(fiProgram.Directory.FullName, "InformedProteomics.Backend.dll")));
-
+            if (fiProgram.Directory != null)
+            {
+                ioToolFiles.Add(new FileInfo(Path.Combine(fiProgram.Directory.FullName, "InformedProteomics.Backend.dll")));
+            }
             try
             {
                 return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, saveToolVersionTextFile: false);

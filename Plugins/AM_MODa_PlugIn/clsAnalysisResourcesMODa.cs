@@ -98,12 +98,14 @@ namespace AnalysisManagerMODaPlugIn
         {
             try
             {
-                mDTAtoMGF = new DTAtoMGF.clsDTAtoMGF();
-                mDTAtoMGF.Combine2And3PlusCharges = false;
-                mDTAtoMGF.FilterSpectra = false;
-                mDTAtoMGF.MaximumIonsPer100MzInterval = 0;
-                mDTAtoMGF.NoMerge = true;
-                mDTAtoMGF.CreateIndexFile = true;
+                mDTAtoMGF = new DTAtoMGF.clsDTAtoMGF
+                {
+                    Combine2And3PlusCharges = false,
+                    FilterSpectra = false,
+                    MaximumIonsPer100MzInterval = 0,
+                    NoMerge = true,
+                    CreateIndexFile = true
+                };
 
                 // Convert the _dta.txt file for this dataset
                 var fiCDTAFile = new FileInfo(Path.Combine(m_WorkingDir, DatasetName + "_dta.txt"));

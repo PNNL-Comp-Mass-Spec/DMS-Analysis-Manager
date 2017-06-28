@@ -473,10 +473,14 @@ namespace AnalysisManagerPBFGenerator
                 return false;
 
             // Store paths to key DLLs in ioToolFiles
-            var ioToolFiles = new List<FileInfo>();
-            ioToolFiles.Add(fiProgram);
+            var ioToolFiles = new List<FileInfo> {
+                fiProgram
+            };
 
-            ioToolFiles.Add(new FileInfo(Path.Combine(fiProgram.Directory.FullName, "InformedProteomics.Backend.dll")));
+            if (fiProgram.Directory != null)
+            {
+                ioToolFiles.Add(new FileInfo(Path.Combine(fiProgram.Directory.FullName, "InformedProteomics.Backend.dll")));
+            }
 
             try
             {

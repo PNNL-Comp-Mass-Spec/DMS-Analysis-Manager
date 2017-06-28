@@ -232,9 +232,11 @@ namespace AnalysisManagerResultsCleanupPlugin
             }
 
             // Store the path to AnalysisManagerProg.exe and AnalysisManagerResultsCleanupPlugin.dll in ioToolFiles
-            var ioToolFiles = new List<FileInfo>();
-            ioToolFiles.Add(new FileInfo(Path.Combine(strAppFolderPath, "AnalysisManagerProg.exe")));
-            ioToolFiles.Add(new FileInfo(Path.Combine(strAppFolderPath, "AnalysisManagerResultsCleanupPlugin.dll")));
+            var ioToolFiles = new List<FileInfo>
+            {
+                new FileInfo(Path.Combine(strAppFolderPath, "AnalysisManagerProg.exe")),
+                new FileInfo(Path.Combine(strAppFolderPath, "AnalysisManagerResultsCleanupPlugin.dll"))
+            };
 
             try
             {

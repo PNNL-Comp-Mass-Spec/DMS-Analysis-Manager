@@ -454,10 +454,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 diMSAlignWork.CreateSubdirectory("etc");
 
                 // Copy all files in the jar and xsl folders to the target
-                var lstSubfolderNames = new List<string>();
-                lstSubfolderNames.Add("jar");
-                lstSubfolderNames.Add("xsl");
-                lstSubfolderNames.Add("etc");
+                var lstSubfolderNames = new List<string> {"jar", "xsl", "etc"};
 
                 foreach (var strSubFolder in lstSubfolderNames)
                 {
@@ -537,15 +534,17 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             try
             {
                 // Initialize the dictionary that maps parameter names in the parameter file to command line switches
-                var dctParameterMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-                dctParameterMap.Add("activation", "a");
-                dctParameterMap.Add("search", "s");
-                dctParameterMap.Add("protection", "p");
-                dctParameterMap.Add("modification", "m");
-                dctParameterMap.Add("error", "e");
-                dctParameterMap.Add("cutoffType", "t");
-                dctParameterMap.Add("cutoff", "c");
-                dctParameterMap.Add("report", "r");
+                var dctParameterMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                {
+                    {"activation", "a"},
+                    {"search", "s"},
+                    {"protection", "p"},
+                    {"modification", "m"},
+                    {"error", "e"},
+                    {"cutoffType", "t"},
+                    {"cutoff", "c"},
+                    {"report", "r"}
+                };
 
                 // Open the parameter file
                 using (var srInFile = new StreamReader(new FileStream(strParamFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
@@ -956,8 +955,9 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             var strToolVersionInfo = string.Copy(mMSAlignVersion);
 
             // Store paths to key files in ioToolFiles
-            var ioToolFiles = new List<FileInfo>();
-            ioToolFiles.Add(new FileInfo(mMSAlignProgLoc));
+            var ioToolFiles = new List<FileInfo> {
+                new FileInfo(mMSAlignProgLoc)
+            };
 
             try
             {

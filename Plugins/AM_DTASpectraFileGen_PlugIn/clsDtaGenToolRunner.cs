@@ -1024,8 +1024,9 @@ namespace DTASpectraFileGen
             }
 
             // Store strDtaGeneratorAppPath in ioToolFiles
-            var ioToolFiles = new List<FileInfo>();
-            ioToolFiles.Add(fiDtaGenerator);
+            var ioToolFiles = new List<FileInfo> {
+                fiDtaGenerator
+            };
 
             if (eDtaGenerator == eDTAGeneratorConstants.DeconConsole || eDtaGenerator == eDTAGeneratorConstants.DeconMSn)
             {
@@ -1107,8 +1108,9 @@ namespace DTASpectraFileGen
             base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strDtaGeneratorDLLPath);
 
             // Store paths to key files in ioToolFiles
-            var ioToolFiles = new List<FileInfo>();
-            ioToolFiles.Add(new FileInfo(strDtaGeneratorDLLPath));
+            var ioToolFiles = new List<FileInfo> {
+                new FileInfo(strDtaGeneratorDLLPath)
+            };
 
             // Possibly also store the MSConvert version
             if (m_CentroidDTAs)

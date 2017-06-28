@@ -316,9 +316,10 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
             base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, dllPath);
 
             // Store paths to key files in ioToolFiles
-            var ioToolFiles = new List<FileInfo>();
-            ioToolFiles.Add(new FileInfo(strPeakDetectorPath));
-            ioToolFiles.Add(new FileInfo(dllPath));
+            var ioToolFiles = new List<FileInfo> {
+                new FileInfo(strPeakDetectorPath),
+                new FileInfo(dllPath)
+            };
 
             try
             {
