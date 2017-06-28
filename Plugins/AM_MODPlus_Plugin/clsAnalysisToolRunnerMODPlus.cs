@@ -301,6 +301,12 @@ namespace AnalysisManagerMODPlusPlugin
             var reThreadNumber = new Regex(@"_Part(\d+)\.mgf", RegexOptions.Compiled | RegexOptions.IgnoreCase);
             var paramFileList = new Dictionary<int, string>();
 
+            if (fiMasterParamFile.Directory == null)
+            {
+                LogError("Unable to determine the parent directory of parameter file " + fiMasterParamFile.FullName);
+                return paramFileList;
+            }
+
             foreach (var fiMgfFile in mgfFiles)
             {
                 var reMatch = reThreadNumber.Match(fiMgfFile.Name);
@@ -310,8 +316,7 @@ namespace AnalysisManagerMODPlusPlugin
                     return new Dictionary<int, string>();
                 }
 
-                var threadNumber = 0;
-                if (!int.TryParse(reMatch.Groups[1].Value, out threadNumber))
+                if (!int.TryParse(reMatch.Groups[1].Value, out var threadNumber))
                 {
                     LogError("RegEx logic error extracting the thread number from the MGF file name: " + fiMgfFile.Name);
                     return new Dictionary<int, string>();
@@ -324,14 +329,18 @@ namespace AnalysisManagerMODPlusPlugin
                 }
 
                 var nodeList = doc.SelectNodes("/search/dataset");
-                if (nodeList.Count > 0)
+                if (nodeList != null && nodeList.Count > 0)
                 {
-                    nodeList[0].Attributes["local_path"].Value = fiMgfFile.FullName;
-                    nodeList[0].Attributes["format"].Value = "mgf";
+                    var xmlAttributeCollection = nodeList[0].Attributes;
+                    if (xmlAttributeCollection != null)
+                    {
+                        xmlAttributeCollection["local_path"].Value = fiMgfFile.FullName;
+                        xmlAttributeCollection["format"].Value = "mgf";
+                    }
                 }
 
                 var paramFileName = Path.GetFileNameWithoutExtension(fiMasterParamFile.Name) + "_Part" + threadNumber + ".xml";
-                var paramFilePath = Path.Combine(fiMasterParamFile.DirectoryName, paramFileName);
+                var paramFilePath = Path.Combine(fiMasterParamFile.Directory.FullName, paramFileName);
 
                 using (var objXmlWriter = new XmlTextWriter(new FileStream(paramFilePath, FileMode.Create, FileAccess.Write, FileShare.Read), new UTF8Encoding(false)))
                 {
@@ -351,32 +360,62 @@ namespace AnalysisManagerMODPlusPlugin
 
         private void DefineParamfileDatasetAndFasta(XmlDocument doc, string fastaFilePath)
         {
+            var defaultAttributes = new Dictionary<string, string> {
+                { "local_path", "Dataset_PartX.mgf"},
+                { "format", "mgf"}
+            };
+
+
             // Define the path to the dataset file
-            var nodeList = doc.SelectNodes("/search/dataset");
-            if (nodeList.Count > 0)
+            var datasetNodes = doc.SelectNodes("/search/dataset");
+            if (datasetNodes != null && datasetNodes.Count > 0)
             {
                 // This value will get updated to the correct name later in this function
-                nodeList[0].Attributes["local_path"].Value = "Dataset_PartX.mgf";
-                nodeList[0].Attributes["format"].Value = "mgf";
+                var xmlAttributeCollection = datasetNodes[0].Attributes;
+                if (xmlAttributeCollection?["local_path"] == null)
+                {
+                    // Match not found; add it
+                    foreach (var attrib in defaultAttributes)
+                    {
+                        var newAttr = doc.CreateAttribute(attrib.Key);
+                        newAttr.Value = attrib.Value;
+                        var attributeCollection = datasetNodes[0].Attributes;
+                        attributeCollection?.Append(newAttr);
+                    }
+                }
+                else
+                {
+                    xmlAttributeCollection["local_path"].Value = "Dataset_PartX.mgf";
+                    xmlAttributeCollection["format"].Value = "mgf";
+                }
             }
             else
             {
                 // Match not found; add it
-                var attributes = new Dictionary<string, string>();
-                attributes.Add("local_path", "Dataset_PartX.mgf");
-                attributes.Add("format", "mgf");
-                AddXMLElement(doc, "/search/dataset", attributes);
+                AddXMLElement(doc, "/search/dataset", defaultAttributes);
             }
 
             // Define the path to the fasta file
-            nodeList = doc.SelectNodes("/search/database");
-            if (nodeList.Count > 0)
+            var databaseNodes = doc.SelectNodes("/search/database");
+            if (databaseNodes != null && databaseNodes.Count > 0)
             {
-                nodeList[0].Attributes["local_path"].Value = fastaFilePath;
+                var xmlAttributeCollection = databaseNodes[0].Attributes;
+                if (xmlAttributeCollection?["local_path"] == null)
+                {
+                    // Match not found; add it
+                    var newAttr = doc.CreateAttribute("local_path");
+                    newAttr.Value = fastaFilePath;
+                    var attributeCollection = databaseNodes[0].Attributes;
+                    attributeCollection?.Append(newAttr);
+                }
+                else
+                {
+                    xmlAttributeCollection["local_path"].Value = fastaFilePath;
+                }
             }
             else
             {
-                // Match not found; add it
+                // Node not found; add it
                 AddXMLElement(doc, "/search/database", "local_path", fastaFilePath);
             }
         }
@@ -400,50 +439,69 @@ namespace AnalysisManagerMODPlusPlugin
                 instrumentResolutionMsMs = HIGH_RES_FLAG;
             }
 
-            var nodeList = doc.SelectNodes("/search/instrument_resolution");
-            if (nodeList.Count > 0)
+            var instrumentResolutionNodes = doc.SelectNodes("/search/instrument_resolution");
+            if (instrumentResolutionNodes != null && instrumentResolutionNodes.Count > 0)
             {
-                if (nodeList[0].Attributes["msms"].Value == HIGH_RES_FLAG && instrumentResolutionMsMs == "low")
+                var xmlAttributeCollection = instrumentResolutionNodes[0].Attributes;
+                if (xmlAttributeCollection != null && (xmlAttributeCollection["msms"].Value == HIGH_RES_FLAG && instrumentResolutionMsMs == "low"))
                 {
                     // Parameter file lists the resolution as high, but it's actually low
                     // Auto-change it
-                    nodeList[0].Attributes["msms"].Value = instrumentResolutionMsMs;
-                    m_EvalMessage = clsGlobal.AppendToComment(m_EvalMessage, "Auto-switched to low resolution mode for MS/MS data");
-                    LogWarning(m_EvalMessage);
+                    var attributeCollection = instrumentResolutionNodes[0].Attributes;
+                    if (attributeCollection?["msms"] != null)
+                    {
+                        attributeCollection["msms"].Value = instrumentResolutionMsMs;
+                        m_EvalMessage = clsGlobal.AppendToComment(m_EvalMessage, "Auto-switched to low resolution mode for MS/MS data");
+                        LogWarning(m_EvalMessage);
+                    }
+                    else
+                    {
+                        m_EvalMessage = clsGlobal.AppendToComment(
+                            m_EvalMessage, "Unable to auto-switch to low resolution mode for MS/MS data; attribute not found");
+                        LogWarning(m_EvalMessage);
+                    }
                 }
             }
             else
             {
-                // Match not found; add it
-                var attributes = new Dictionary<string, string>();
-                attributes.Add("ms", HIGH_RES_FLAG);
-                attributes.Add("msms", instrumentResolutionMsMs);
+                // Node not found; add it
+                var attributes = new Dictionary<string, string> {
+                    { "ms", HIGH_RES_FLAG}, {"msms", instrumentResolutionMsMs}
+                };
+
                 AddXMLElement(doc, "/search/instrument_resolution", attributes);
             }
 
-            nodeList = doc.SelectNodes("/search/parameters/fragment_ion_tol");
-            if (nodeList.Count > 0)
+            var fragIonTolNodes = doc.SelectNodes("/search/parameters/fragment_ion_tol");
+            if (fragIonTolNodes != null && fragIonTolNodes.Count > 0)
             {
-                if (instrumentResolutionMsMs == LOW_RES_FLAG)
+                if (instrumentResolutionMsMs != LOW_RES_FLAG)
+                    return;
+
+                var xmlAttributeCollection = fragIonTolNodes[0].Attributes;
+
+                if (xmlAttributeCollection?["value"] == null || xmlAttributeCollection["unit"] == null)
                 {
-                    double massTolDa = 0;
-                    if (double.TryParse(nodeList[0].Attributes["value"].Value, out massTolDa))
-                    {
-                        var massUnits = nodeList[0].Attributes["unit"].Value;
+                    LogWarning("The fragment_ion_tol node is missing attributes value and/or unit");
+                    return;
+                }
 
-                        if (massUnits == "ppm")
-                        {
-                            // Convert from ppm to Da
-                            massTolDa = massTolDa * 1000 / 1000000;
-                        }
+                if (!double.TryParse(xmlAttributeCollection["value"].Value, out var massTolDa))
+                    return;
 
-                        if (massTolDa < MIN_FRAG_TOL_LOW_RES)
-                        {
-                            m_EvalMessage = clsGlobal.AppendToComment(m_EvalMessage, "Auto-changed fragment_ion_tol to " + DEFAULT_FRAG_TOL_LOW_RES + " Da since low resolution MS/MS");
-                            nodeList[0].Attributes["value"].Value = DEFAULT_FRAG_TOL_LOW_RES;
-                            nodeList[0].Attributes["unit"].Value = "da";
-                        }
-                    }
+                var massUnits = xmlAttributeCollection["unit"].Value;
+
+                if (massUnits == "ppm")
+                {
+                    // Convert from ppm to Da
+                    massTolDa = massTolDa * 1000 / 1000000;
+                }
+
+                if (massTolDa < MIN_FRAG_TOL_LOW_RES)
+                {
+                    m_EvalMessage = clsGlobal.AppendToComment(m_EvalMessage, "Auto-changed fragment_ion_tol to " + DEFAULT_FRAG_TOL_LOW_RES + " Da since low resolution MS/MS");
+                    xmlAttributeCollection["value"].Value = DEFAULT_FRAG_TOL_LOW_RES;
+                    xmlAttributeCollection["unit"].Value = "da";
                 }
             }
             else
