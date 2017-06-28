@@ -73,20 +73,6 @@ namespace AnalysisManagerMasicPlugin
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                // Deprecated in December 2016
-                //// Examine the size of the .Raw file
-                //var fiInputFile = new System.IO.FileInfo(strInputFilePath);
-                //
-                //if (clsAnalysisToolRunnerMASICFinnigan.NeedToConvertRawToMzXML(fiInputFile))
-                //{
-                //    LogMessage("Generating the ScanStats files from the .Raw file since it is over 2 GB (and MASIC will therefore process a .mzXML file)");
-                //
-                //    if (!GenerateScanStatsFile(deleteRawDataFile: false))
-                //    {
-                //        // Error message should already have been logged and stored in m_message
-                //        return CloseOutType.CLOSEOUT_FAILED;
-                //    }
-                //}
             }
 
             // Add additional extensions to delete after the tool finishes

@@ -318,25 +318,7 @@ namespace AnalysisManagerInSpecTPlugIn
         //    }
         //
         //    return intScanCount;
-
-        /// <summary>
-        /// Run -p threshold value
-        /// </summary>
-        /// <returns>Value as a string or empty string means failure</returns>
-        /// <remarks></remarks>
-        private string getPthresh()
-        {
-            var defPvalThresh = "0.1";
-            var tmpPvalThresh = m_mgrParams.GetParam("InspectPvalueThreshold");
-            if (!string.IsNullOrEmpty(tmpPvalThresh))
-            {
-                return tmpPvalThresh; //return pValueThreshold value in settings file
-            }
-            else
-            {
-                return defPvalThresh; //if not found, return default of 0.1
-            }
-        }
+        // }
 
         private void InitializeInspectSearchLogFileWatcher(string strWorkDir)
         {

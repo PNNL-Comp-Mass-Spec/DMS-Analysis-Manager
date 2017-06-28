@@ -184,32 +184,6 @@ namespace AnalysisManagerExtractionPlugin
 
                 while (mPHRPReader.MoveNext())
                 {
-                    //// This is old code that was in LoadSearchEngineParameters and was called after all PSMs had been cached in memory
-                    //// Since we're no longer pre-caching PSMs in memory, this code block was moved to this function
-                    //// However, I don't think this code is really needed, so I've commented it out
-                    ////
-                    //// Make sure mSearchEngineParams.ModInfo is up-to-date
-                    //if (mPHRPReader.CurrentPSM.ModifiedResidues.Count > 0)
-                    //{
-                    //    foreach (var objResidue in mPHRPReader.CurrentPSM.ModifiedResidues)
-                    //    {
-                    //        // Check whether .ModDefinition is present in objSearchEngineParams.ModInfo
-                    //        var blnMatchFound = false;
-                    //        foreach (var objKnownMod in objSearchEngineParams.ModInfo)
-                    //        {
-                    //            if (objKnownMod == objResidue.ModDefinition)
-                    //            {
-                    //                blnMatchFound = true;
-                    //                break;
-                    //            }
-                    //        }
-                    //
-                    //        if (!blnMatchFound)
-                    //        {
-                    //            objSearchEngineParams.ModInfo.Add(objResidue.ModDefinition);
-                    //        }
-                    //    }
-                    //}
 
                     intPsmCount += 1;
 

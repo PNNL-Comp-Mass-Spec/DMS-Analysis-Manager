@@ -24,17 +24,6 @@ namespace AnalysisManagerMasicPlugin
 
         #endregion
 
-        [Obsolete("No longer necessary")]
-        public static bool NeedToConvertRawToMzXML(FileInfo fiInputFile)
-        {
-            const long TWO_GB = 1024L * 1024 * 1024 * 2;
-
-            if (fiInputFile.Length > TWO_GB)
-                return true;
-
-            return false;
-        }
-
         protected override CloseOutType RunMASIC()
         {
             string strParameterFilePath;
@@ -79,75 +68,9 @@ namespace AnalysisManagerMasicPlugin
                 ValidateParameterFile(strParameterFilePath);
             }
 
-            // Deprecated in December 2016
-            //var strScanStatsFilePath = Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.SCAN_STATS_FILE_SUFFIX);
-            //var strScanStatsExFilePath = Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.SCAN_STATS_EX_FILE_SUFFIX);
-            //
-            //FileInfo fiScanStatsOverrideFile;
-            //FileInfo fiScanStatsExOverrideFile;
-            //
-            //var blnConvertRawToMzXML = NeedToConvertRawToMzXML(fiInputFile);
-            //var eCloseout = CloseOutType.CLOSEOUT_SUCCESS;
-            //
-            //if (blnConvertRawToMzXML)
-            //{
-            //    eCloseout = StartConvertRawToMzXML(fiInputFile, strScanStatsFilePath, strScanStatsExFilePath, out fiScanStatsOverrideFile, out fiScanStatsExOverrideFile, out strInputFilePath)
-            //    if (eCloseout == CloseOutType.CLOSEOUT_SUCCESS)
-            //    {
-            //        return eCloseout;
-            //    }
-            //}
-
-            var eCloseout = base.StartMASICAndWait(strInputFilePath, m_WorkDir, strParameterFilePath);
-
-            // Deprecated in December 2016
-            //if (eCloseout == CloseOutType.CLOSEOUT_SUCCESS && blnConvertRawToMzXML)
-            //{
-            //    eCloseout = ReplaceScanStatsFiles(strScanStatsFilePath, strScanStatsExFilePath, fiScanStatsOverrideFile, fiScanStatsExOverrideFile);
-            //}
+            var eCloseout = StartMASICAndWait(strInputFilePath, m_WorkDir, strParameterFilePath);
 
             return eCloseout;
-        }
-
-        [Obsolete("No longer used")]
-        private CloseOutType ReplaceScanStatsFiles(string strScanStatsFilePath, string strScanStatsExFilePath, FileInfo fiScanStatsOverrideFile, FileInfo fiScanStatsExOverrideFile)
-        {
-            try
-            {
-                // Replace the _ScanStats.txt file created by MASIC with the ScanStats file created in clsAnalysisResourcesMASIC
-                if (File.Exists(strScanStatsFilePath))
-                {
-                    Thread.Sleep(250);
-                    PRISM.clsProgRunner.GarbageCollectNow();
-
-                    File.Delete(strScanStatsFilePath);
-                    Thread.Sleep(250);
-                }
-
-                // Rename the override file to have the correct name
-                fiScanStatsOverrideFile.MoveTo(strScanStatsFilePath);
-
-                if (fiScanStatsExOverrideFile.Exists)
-                {
-                    // Replace the _ScanStatsEx.txt file created by MASIC with the ScanStatsEx file created in clsAnalysisResourcesMASIC
-                    if (File.Exists(strScanStatsExFilePath))
-                    {
-                        File.Delete(strScanStatsExFilePath);
-                        Thread.Sleep(250);
-                    }
-
-                    // Rename the override file to have the correct name
-                    fiScanStatsExOverrideFile.MoveTo(strScanStatsExFilePath);
-                }
-            }
-            catch (Exception ex)
-            {
-                m_message = "Error replacing the ScanStats files created from the mzXML file with the ScanStats files created from the .Raw file";
-                LogError(m_message + " (ReplaceScanStatsFiles): " + ex.Message, ex);
-                return CloseOutType.CLOSEOUT_FAILED;
-            }
-
-            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         /// <summary>
@@ -211,68 +134,6 @@ namespace AnalysisManagerMasicPlugin
                 LogError("Error finding .raw files to delete", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-        }
-
-        [Obsolete("No longer used")]
-        private CloseOutType StartConvertRawToMzXML(FileInfo fiInputFile, string strScanStatsFilePath, string strScanStatsExFilePath,
-            out FileInfo fiScanStatsOverrideFile, out FileInfo fiScanStatsExOverrideFile, out string strInputFilePath)
-        {
-            // .Raw file is over 2 GB in size
-            // Will convert it to mzXML and centroid (so that MASIC will use less memory)
-
-            strInputFilePath = string.Empty;
-
-            try
-            {
-                LogMessage(
-                    ".Raw file is over 2 GB; converting to a centroided .mzXML file");
-
-                // The ScanStats file should have been created by clsAnalysisResourcesMASIC
-                // Rename it now so that we can replace the one created by MASIC with the one created by clsAnalysisResourcesMASIC
-                fiScanStatsOverrideFile = new FileInfo(strScanStatsFilePath);
-                fiScanStatsExOverrideFile = new FileInfo(strScanStatsExFilePath);
-
-                if (!fiScanStatsOverrideFile.Exists)
-                {
-                    m_message = "ScanStats file not found (should have been created by clsAnalysisResourcesMASIC)";
-                    LogError(
-                        m_message + ": " + fiScanStatsOverrideFile.FullName);
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
-
-                var strScanStatsOverrideFilePath = strScanStatsFilePath + ".override";
-                fiScanStatsOverrideFile.MoveTo(strScanStatsOverrideFilePath);
-
-                if (fiScanStatsExOverrideFile.Exists)
-                {
-                    var strScanStatsExOverrideFilePath = strScanStatsExFilePath + ".override";
-                    fiScanStatsExOverrideFile.MoveTo(strScanStatsExOverrideFilePath);
-                }
-
-                var strMzXMLFilePath = ConvertRawToMzXML(fiInputFile);
-
-                if (string.IsNullOrEmpty(strMzXMLFilePath))
-                {
-                    if (string.IsNullOrEmpty(m_message))
-                        m_message = "Empty path returned by ConvertRawToMzXML for " + fiInputFile.FullName;
-                    LogError(m_message);
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
-
-                strInputFilePath = strMzXMLFilePath;
-
-                m_EvalMessage = ".Raw file over 2 GB; converted to a centroided .mzXML file";
-            }
-            catch (Exception ex)
-            {
-                m_message = "Error preparing to convert the Raw file to a MzXML file";
-                LogError(m_message + " (StartConvertRawToMzXML): " + ex.Message, ex);
-                fiScanStatsOverrideFile = null;
-                fiScanStatsExOverrideFile = null;
-                return CloseOutType.CLOSEOUT_FAILED;
-            }
-
-            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         #region "Event Handlers"

@@ -100,15 +100,6 @@ namespace AnalysisManagerOMSSAPlugIn
                 LogError("Error running OMSSA");
             }
 
-            //--------------------------------------------------------------------------------------------
-            //Future section to monitor OMSSA log file for progress determination
-            //--------------------------------------------------------------------------------------------
-            //'Turn off file watcher
-            //m_StatFileWatch.EnableRaisingEvents = False
-            //--------------------------------------------------------------------------------------------
-            //End future section
-            //--------------------------------------------------------------------------------------------
-
             // Stop the job timer
             m_StopTime = DateTime.UtcNow;
 

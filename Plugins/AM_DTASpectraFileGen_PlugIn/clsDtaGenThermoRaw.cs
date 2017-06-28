@@ -233,26 +233,6 @@ namespace DTASpectraFileGen
         /// <returns>Number of scans found</returns>
         protected int GetMaxScan(string rawFilePath)
         {
-            //**************************************************************************************************************************************************************
-            //	Alternate method of determining Max Scan using ICR2LS
-            //**************************************************************************************************************************************************************
-            //      'Uses ICR2LS to get the maximum number of scans in a .raw file
-            //Dim FileHandle As Integer
-            //Dim NumScans As Integer
-            //Dim Dummy As Integer
-
-            //FileHandle = lopen(RawFile, OF_READ)
-            //If FileHandle = 0 Then Return -1 'Bad lopen
-            //NumScans = XnumScans(FileHandle)
-            //Dummy = lclose(FileHandle)
-            //If Dummy <> 0 Then Return -1 'Bad lclose
-
-            //Return NumScans
-
-            //**************************************************************************************************************************************************************
-            //	Alternate method of determining MaxScan using XCalibur OCX.
-            //   Possibly causes .raw file lock.
-            //**************************************************************************************************************************************************************
             var numScans = 0;
 
             var XRawFile = new MSFileReaderLib.MSFileReader_XRawfile();
