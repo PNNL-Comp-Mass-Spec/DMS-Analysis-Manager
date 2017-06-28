@@ -178,7 +178,7 @@ namespace AnalysisManagerProMexPlugIn
         }
 
         private const string REGEX_ProMex_PROGRESS = @"Processing ([0-9.]+)\%";
-        private Regex reCheckProgress = new Regex(REGEX_ProMex_PROGRESS, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private readonly Regex reCheckProgress = new Regex(REGEX_ProMex_PROGRESS, RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
         /// Parse the ProMex console output file to track the search progress
@@ -237,37 +237,34 @@ namespace AnalysisManagerProMexPlugIn
                     {
                         var strLineIn = srInFile.ReadLine();
 
-                        if (!string.IsNullOrWhiteSpace(strLineIn))
+                        if (string.IsNullOrWhiteSpace(strLineIn))
+                            continue;
+
+                        var strLineInLCase = strLineIn.ToLower();
+
+                        if (strLineInLCase.StartsWith("error:") || strLineInLCase.Contains("unhandled exception"))
                         {
-                            var strLineInLCase = strLineIn.ToLower();
-
-                            if (strLineInLCase.StartsWith("error:") || strLineInLCase.Contains("unhandled exception"))
+                            if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                             {
-                                if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
-                                {
-                                    mConsoleOutputErrorMsg = "Error running ProMex:";
-                                }
+                                mConsoleOutputErrorMsg = "Error running ProMex:";
+                            }
 
-                                if (strLineInLCase.StartsWith("error:"))
-                                {
-                                    mConsoleOutputErrorMsg += " " + strLineIn.Substring("error:".Length).Trim();
-                                }
-                                else
-                                {
-                                    mConsoleOutputErrorMsg += " " + strLineIn;
-                                }
-
-                                continue;
+                            if (strLineInLCase.StartsWith("error:"))
+                            {
+                                mConsoleOutputErrorMsg += " " + strLineIn.Substring("error:".Length).Trim();
                             }
                             else
                             {
-                                var oMatch = reCheckProgress.Match(strLineIn);
-                                if (oMatch.Success)
-                                {
-                                    float.TryParse(oMatch.Groups[1].ToString(), out progressComplete);
-                                    continue;
-                                }
+                                mConsoleOutputErrorMsg += " " + strLineIn;
                             }
+
+                            continue;
+                        }
+
+                        var oMatch = reCheckProgress.Match(strLineIn);
+                        if (oMatch.Success)
+                        {
+                            float.TryParse(oMatch.Groups[1].ToString(), out progressComplete);
                         }
                     }
                 }

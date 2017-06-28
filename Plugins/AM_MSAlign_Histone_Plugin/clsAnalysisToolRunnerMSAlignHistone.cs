@@ -523,12 +523,6 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             const string INSTRUMENT_ACTIVATION_TYPE_KEY = "activation";
             const string SEARCH_TYPE_KEY = "search";
 
-            string strLineIn = null;
-
-            var intEqualsIndex = 0;
-            string strKeyName = null;
-            string strValue = null;
-
             strCommandLine = string.Empty;
 
             try
@@ -555,88 +549,88 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                     // Now append the parameters defined in the parameter file
                     while (!srInFile.EndOfStream)
                     {
-                        strLineIn = srInFile.ReadLine();
+                        var strLineIn = srInFile.ReadLine();
 
-                        if (strLineIn.TrimStart().StartsWith("#") || string.IsNullOrWhiteSpace(strLineIn))
+                        if (string.IsNullOrWhiteSpace(strLineIn) || strLineIn.TrimStart().StartsWith("#"))
                         {
                             // Comment line or blank line; skip it
+                            continue;
                         }
-                        else
+
+                        // Look for an equals sign
+                        var intEqualsIndex = strLineIn.IndexOf('=');
+
+                        if (intEqualsIndex > 0)
                         {
-                            // Look for an equals sign
-                            intEqualsIndex = strLineIn.IndexOf('=');
-
-                            if (intEqualsIndex > 0)
+                            // Split the line on the equals sign
+                            var strKeyName = strLineIn.Substring(0, intEqualsIndex).TrimEnd();
+                            string strValue = null;
+                            if (intEqualsIndex < strLineIn.Length - 1)
                             {
-                                // Split the line on the equals sign
-                                strKeyName = strLineIn.Substring(0, intEqualsIndex).TrimEnd();
-                                if (intEqualsIndex < strLineIn.Length - 1)
-                                {
-                                    strValue = strLineIn.Substring(intEqualsIndex + 1).Trim();
-                                }
-                                else
-                                {
-                                    strValue = string.Empty;
-                                }
-
-                                if (strKeyName.ToLower() == INSTRUMENT_ACTIVATION_TYPE_KEY)
-                                {
-                                    // If this is a bruker dataset, then we need to make sure that the value for this entry is not FILE
-                                    // The reason is that the mzXML file created by Bruker's compass program does not include the scantype information (CID, ETD, etc.)
-                                    string strToolName = null;
-                                    strToolName = m_jobParams.GetParam("ToolName");
-
-                                    if (strToolName == "MSAlign_Bruker" || strToolName == "MSAlign_Histone_Bruker")
-                                    {
-                                        if (strValue.ToUpper() == "FILE")
-                                        {
-                                            m_message = "Must specify an explicit scan type for " + strKeyName +
-                                                        " in the MSAlign parameter file (CID, HCD, or ETD)";
-
-                                            LogError(
-                                                m_message +
-                                                "; this is required because Bruker-created mzXML files do not include activationMethod information in the precursorMz tag");
-
-                                            return false;
-                                        }
-                                    }
-                                }
-
-                                if (strKeyName.ToLower() == SEARCH_TYPE_KEY)
-                                {
-                                    if (strValue.ToUpper() == "TARGET+DECOY")
-                                    {
-                                        // Make sure the protein collection is not a Decoy protein collection
-                                        string strProteinOptions = null;
-                                        strProteinOptions = m_jobParams.GetParam("ProteinOptions");
-
-                                        if (strProteinOptions.ToLower().Contains("seq_direction=decoy"))
-                                        {
-                                            m_message =
-                                                "MSAlign parameter file contains searchType=TARGET+DECOY; " +
-                                                "protein options for this analysis job must contain seq_direction=forward, not seq_direction=decoy";
-
-                                            LogError(m_message);
-
-                                            return false;
-                                        }
-                                    }
-                                }
-
-                                var strSwitch = string.Empty;
-                                if (dctParameterMap.TryGetValue(strKeyName, out strSwitch))
-                                {
-                                    strCommandLine += " -" + strSwitch + " " + strValue;
-                                }
-                                else
-                                {
-                                    LogWarning("Ignoring unrecognized MSAlign_Histone parameter: " + strKeyName);
-                                }
+                                strValue = strLineIn.Substring(intEqualsIndex + 1).Trim();
                             }
                             else
                             {
-                                // Unknown line format; skip it
+                                strValue = string.Empty;
                             }
+
+                            if (strKeyName.ToLower() == INSTRUMENT_ACTIVATION_TYPE_KEY)
+                            {
+                                // If this is a bruker dataset, then we need to make sure that the value for this entry is not FILE
+                                // The reason is that the mzXML file created by Bruker's compass program does not include the scantype information (CID, ETD, etc.)
+                                string strToolName = null;
+                                strToolName = m_jobParams.GetParam("ToolName");
+
+                                if (strToolName == "MSAlign_Bruker" || strToolName == "MSAlign_Histone_Bruker")
+                                {
+                                    if (strValue.ToUpper() == "FILE")
+                                    {
+                                        m_message = "Must specify an explicit scan type for " + strKeyName +
+                                                    " in the MSAlign parameter file (CID, HCD, or ETD)";
+
+                                        LogError(
+                                            m_message +
+                                            "; this is required because Bruker-created mzXML files do not include activationMethod information in the precursorMz tag");
+
+                                        return false;
+                                    }
+                                }
+                            }
+
+                            if (strKeyName.ToLower() == SEARCH_TYPE_KEY)
+                            {
+                                if (strValue.ToUpper() == "TARGET+DECOY")
+                                {
+                                    // Make sure the protein collection is not a Decoy protein collection
+                                    string strProteinOptions = null;
+                                    strProteinOptions = m_jobParams.GetParam("ProteinOptions");
+
+                                    if (strProteinOptions.ToLower().Contains("seq_direction=decoy"))
+                                    {
+                                        m_message =
+                                            "MSAlign parameter file contains searchType=TARGET+DECOY; " +
+                                            "protein options for this analysis job must contain seq_direction=forward, not seq_direction=decoy";
+
+                                        LogError(m_message);
+
+                                        return false;
+                                    }
+                                }
+                            }
+
+                            var strSwitch = string.Empty;
+                            if (dctParameterMap.TryGetValue(strKeyName, out strSwitch))
+                            {
+                                strCommandLine += " -" + strSwitch + " " + strValue;
+                            }
+                            else
+                            {
+                                LogWarning("Ignoring unrecognized MSAlign_Histone parameter: " + strKeyName);
+                            }
+                        }
+                        else
+                        {
+                            // Unknown line format; skip it
                         }
                     }
                 }
