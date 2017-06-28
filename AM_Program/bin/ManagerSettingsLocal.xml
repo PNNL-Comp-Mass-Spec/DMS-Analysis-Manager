@@ -11,9 +11,10 @@
     <setting name="ManagerUpdateRequired"><value>false</value></setting>
     <setting name="MaxRepetitions"><value>300</value></setting>
     <setting name="MinimumMemoryUsageLogInterval"><value>1</value></setting>
-    <setting name="MSGFDbProgLoc"><value>/opt/DMS_Programs/MSGFDB</value></setting>
+    <setting name="MSGFPlusProgLoc"><value>/opt/DMS_Programs/MSGFDB</value></setting>
     <setting name="MyEmslAvailable"><value>False</value></setting>
     <setting name="OrgDbDir"><value>/file1/temp/DMSOrgDBs</value></setting>
     <setting name="StatusFileLocation"><value>Status.xml</value></setting>
     <setting name="StepToolsEnabled"><value>Test_MSGFPlus, MSGFPlus</value></setting>
+    <setting name="JavaLoc"><value>/usr/bin/java</value></setting>    
 </settings>

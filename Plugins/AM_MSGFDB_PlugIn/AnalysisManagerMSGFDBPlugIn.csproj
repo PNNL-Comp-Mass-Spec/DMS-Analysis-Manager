@@ -71,7 +71,7 @@
     <Compile Include="clsAnalysisToolRunnerMSGFDB.cs" />
     <Compile Include="clsFastaContaminantUtility.cs" />
     <Compile Include="clsCreateMSGFDBSuffixArrayFiles.cs" />
-    <Compile Include="clsMSGFDBUtils.cs" />
+    <Compile Include="clsMSGFPlusUtils.cs" />
     <Compile Include="clsScanTypeFileCreator.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

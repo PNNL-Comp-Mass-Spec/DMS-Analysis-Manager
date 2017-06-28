@@ -12,7 +12,7 @@ using PRISM;
 
 namespace AnalysisManagerMSGFDBPlugIn
 {
-    public class clsMSGFDBUtils : clsEventNotifier
+    public class MSGFPlusUtils : clsEventNotifier
     {
         #region "Constants"
 
@@ -71,7 +71,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         private readonly string m_WorkDir;
         private readonly short m_DebugLevel;
 
-        private readonly bool mMSGFPlus;
         private string mMSGFPlusVersion;
         private string mErrorMessage = string.Empty;
         private string mConsoleOutputErrorMsg;
@@ -122,11 +121,9 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// </summary>
         /// <param name="oMgrParams"></param>
         /// <param name="oJobParams"></param>
-        /// <param name="jobNum"></param>
         /// <param name="workDir"></param>
         /// <param name="debugLevel"></param>
-        /// <param name="msgfPlus"></param>
-        public clsMSGFDBUtils(IMgrParams oMgrParams, IJobParams oJobParams, int jobNum, string workDir, short debugLevel, bool msgfPlus)
+        public MSGFPlusUtils(IMgrParams oMgrParams, IJobParams oJobParams, string workDir, short debugLevel)
         {
             m_mgrParams = oMgrParams;
             m_jobParams = oJobParams;
@@ -135,7 +132,6 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             m_DebugLevel = debugLevel;
 
-            mMSGFPlus = msgfPlus;
             mMSGFPlusVersion = string.Empty;
             mConsoleOutputErrorMsg = string.Empty;
             mContinuumSpectraSkipped = 0;
@@ -330,7 +326,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Error in clsMSGFDBUtils->AppendConsoleOutputHeader", ex);
+                OnErrorEvent("Error in MSGFPlusUtils->AppendConsoleOutputHeader", ex);
             }
         }
 
@@ -436,7 +432,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 var fiMzidFile = new FileInfo(Path.Combine(m_WorkDir, mzidFileName));
                 if (!fiMzidFile.Exists)
                 {
-                    OnErrorEvent("Error in clsMSGFDBUtils->ConvertMZIDToTSV; Mzid file not found: " + fiMzidFile.FullName);
+                    OnErrorEvent("Error in MSGFPlusUtils->ConvertMZIDToTSV; Mzid file not found: " + fiMzidFile.FullName);
                     return string.Empty;
                 }
 
@@ -506,7 +502,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Error in clsMSGFDBUtils->ConvertMZIDToTSV", ex);
+                OnErrorEvent("Error in MSGFPlusUtils->ConvertMZIDToTSV", ex);
                 return string.Empty;
             }
         }
@@ -535,7 +531,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 var fiMzidFile = new FileInfo(Path.Combine(m_WorkDir, mzidFileName));
                 if (!fiMzidFile.Exists)
                 {
-                    OnErrorEvent("Error in clsMSGFDBUtils->ConvertMZIDToTSV; Mzid file not found: " + fiMzidFile.FullName);
+                    OnErrorEvent("Error in MSGFPlusUtils->ConvertMZIDToTSV; Mzid file not found: " + fiMzidFile.FullName);
                     return string.Empty;
                 }
 
@@ -633,7 +629,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Error in clsMSGFDBUtils->ConvertMZIDToTSV", ex);
+                OnErrorEvent("Error in MSGFPlusUtils->ConvertMZIDToTSV", ex);
                 return string.Empty;
             }
 
@@ -814,7 +810,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     SearchAllProteinsSkipCoverageComputationSteps = true,
                     ShowMessages = false
                 };
-                mPeptideToProteinMapper.ProgressChanged += mPeptideToProteinMapper_ProgressChanged;
+                mPeptideToProteinMapper.ProgressChanged += PeptideToProteinMapper_ProgressChanged;
 
                 if (m_DebugLevel > 2)
                 {
@@ -939,7 +935,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     // Verify that the file matches the .hashcheck value
                     var hashcheckFilePath = fiTrimmedFasta.FullName + clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX;
 
-                    if (clsGlobal.ValidateFileVsHashcheck(fiTrimmedFasta.FullName, hashcheckFilePath, out var hashCheckError))
+                    if (clsGlobal.ValidateFileVsHashcheck(fiTrimmedFasta.FullName, hashcheckFilePath, out var _))
                     {
                         // The trimmed fasta file is valid
                         OnStatusEvent("Using existing trimmed fasta: " + fiTrimmedFasta.Name);
