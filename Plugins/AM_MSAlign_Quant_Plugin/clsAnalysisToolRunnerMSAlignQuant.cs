@@ -49,7 +49,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
         {
             try
             {
-                //Call base class for initial setup
+                // Call base class for initial setup
                 if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -216,13 +216,13 @@ namespace AnalysisManagerMSAlignQuantPlugIn
 
                 m_progress = PROGRESS_PCT_COMPLETE;
 
-                //Stop the job timer
+                // Stop the job timer
                 m_StopTime = DateTime.UtcNow;
 
-                //Add the current job data to the summary file
+                // Add the current job data to the summary file
                 UpdateSummaryFile();
 
-                //Make sure objects are released
+                // Make sure objects are released
                 Thread.Sleep(500);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
@@ -265,11 +265,11 @@ namespace AnalysisManagerMSAlignQuantPlugIn
 
                 // Optionally make a trimmed version of the ResultTable file for testing purposes
 
-                //var strFullResultsPath = Path.Combine(m_WorkDir, strMSAlignResultTableName);
-                //var strTrimmedFilePath = Path.Combine(m_WorkDir, Dataset + "_TrimmedResults.tmp");
+                // var strFullResultsPath = Path.Combine(m_WorkDir, strMSAlignResultTableName);
+                // var strTrimmedFilePath = Path.Combine(m_WorkDir, Dataset + "_TrimmedResults.tmp");
                 //
-                //using (var srFullResults = new StreamReader(new FileStream(strFullResultsPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
-                //using (var swTrimmedResults = new StreamWriter(new FileStream(strTrimmedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                // using (var srFullResults = new StreamReader(new FileStream(strFullResultsPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                // using (var swTrimmedResults = new StreamWriter(new FileStream(strTrimmedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 //{
                 //    var linesRead = 0;
                 //    while (!srFullResults.EndOfStream && linesRead < 30)
@@ -279,12 +279,12 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 //    }
                 //}
                 //
-                //// Replace the original file with the trimmed one
-                //Thread.Sleep(100);
-                //File.Delete(strFullResultsPath);
-                //Thread.Sleep(100);
+                // // Replace the original file with the trimmed one
+                // Thread.Sleep(100);
+                // File.Delete(strFullResultsPath);
+                // Thread.Sleep(100);
                 //
-                //File.Move(strTrimmedFilePath, strFullResultsPath);
+                // File.Move(strTrimmedFilePath, strFullResultsPath);
 
                 var strWorkflowParamFileName = m_jobParams.GetParam("MSAlignQuantParamFile");
                 if (string.IsNullOrEmpty(strWorkflowParamFileName))

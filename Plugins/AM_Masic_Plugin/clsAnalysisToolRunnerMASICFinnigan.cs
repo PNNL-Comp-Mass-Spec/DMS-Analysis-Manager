@@ -8,7 +8,6 @@
 
 using System;
 using System.IO;
-using System.Threading;
 using AnalysisManagerBase;
 
 namespace AnalysisManagerMasicPlugin
@@ -155,11 +154,10 @@ namespace AnalysisManagerMasicPlugin
         /// Converts the .Raw file specified by fiThermoRawFile to a .mzXML file
         /// </summary>
         /// <param name="fiThermoRawFile"></param>
-        /// <returns></returns>
-        /// <remarks></remarks>
+        /// <returns>Path to the newly created .mzXML file</returns>
         protected string ConvertRawToMzXML(FileInfo fiThermoRawFile)
         {
-            var strMSXmlGeneratorAppPath = base.GetMSXmlGeneratorAppPath();
+            var strMSXmlGeneratorAppPath = GetMSXmlGeneratorAppPath();
 
             mMSXmlCreator = new AnalysisManagerMsXmlGenPlugIn.clsMSXMLCreator(strMSXmlGeneratorAppPath, m_WorkDir, m_Dataset, m_DebugLevel, m_jobParams);
             RegisterEvents(mMSXmlCreator);

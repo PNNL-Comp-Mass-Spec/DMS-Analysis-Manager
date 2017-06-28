@@ -121,8 +121,8 @@ namespace AnalysisManagerSequestPlugin
         /// <remarks></remarks>
         protected override CloseOutType MakeOUTFiles()
         {
-            //Creates Sequest .out files from DTA files
-            string CmdStr = null;
+            // Creates Sequest .out files from DTA files
+            string cmdStr = null;
             string[] OutFiles = null;
             string ProgLoc = null;
 
@@ -207,15 +207,15 @@ namespace AnalysisManagerSequestPlugin
                 mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
                 // Define the arguments to pass to the Sequest .Exe
-                CmdStr = " -P" + m_jobParams.GetParam("parmFileName") + " *.dta";
+                cmdStr = " -P" + m_jobParams.GetParam("parmFileName") + " *.dta";
                 if (m_DebugLevel >= 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  " + ProgLoc + " " + CmdStr);
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  " + ProgLoc + " " + cmdStr);
                 }
 
                 // Run Sequest to generate OUT files
                 mLastSequestStartTime = DateTime.UtcNow;
-                blnSuccess = mCmdRunner.RunProgram(ProgLoc, CmdStr, "Seq", true);
+                blnSuccess = mCmdRunner.RunProgram(ProgLoc, cmdStr, "Seq", true);
 
                 mSequestSearchEndTime = DateTime.UtcNow;
 
@@ -364,7 +364,7 @@ namespace AnalysisManagerSequestPlugin
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            //Zip concatenated .out files
+            // Zip concatenated .out files
             if (!ZipConcatOutFile(m_WorkDir, m_JobNum))
             {
                 return CloseOutType.CLOSEOUT_ERROR_ZIPPING_FILE;
@@ -584,29 +584,25 @@ namespace AnalysisManagerSequestPlugin
         /// <remarks>If -1 returned, error message is in module variable m_ErrMsg</remarks>
         protected int GetIntegerFromSeqLogFileString(string InpFileStr, string RegexStr)
         {
-            var RetVal = 0;
-            string TmpStr = null;
-
             try
             {
-                //Find the specified substring in the input file string
-                TmpStr = Regex.Match(InpFileStr, RegexStr, RegexOptions.IgnoreCase | RegexOptions.Multiline).Value;
+                // Find the specified substring in the input file string
+                var TmpStr = Regex.Match(InpFileStr, RegexStr, RegexOptions.IgnoreCase | RegexOptions.Multiline).Value;
 
                 if (string.IsNullOrWhiteSpace(TmpStr))
                 {
                     return 0;
                 }
 
-                //Find the item count in the substring
+                // Find the item count in the substring
+                var RetVal = 0;
                 if (int.TryParse(Regex.Match(TmpStr, @"\d+").Value, out RetVal))
                 {
                     return RetVal;
                 }
-                else
-                {
-                    m_ErrMsg = "Numeric value not found in the matched text";
-                    return -1;
-                }
+
+                m_ErrMsg = "Numeric value not found in the matched text";
+                return -1;
             }
             catch (Exception ex)
             {
@@ -750,18 +746,15 @@ namespace AnalysisManagerSequestPlugin
         /// <remarks>If -1 returned, error message is in module variable m_ErrMsg</remarks>
         protected float GetSingleFromSeqLogFileString(string InpFileStr, string RegexStr)
         {
-            var RetVal = 0.0f;
-            string TmpStr = null;
-
             try
             {
-                //Find the specified substring in the input file string
-                TmpStr = Regex.Match(InpFileStr, RegexStr, RegexOptions.IgnoreCase | RegexOptions.Multiline).Value;
+                // Find the specified substring in the input file string
+                var TmpStr = Regex.Match(InpFileStr, RegexStr, RegexOptions.IgnoreCase | RegexOptions.Multiline).Value;
                 if (string.IsNullOrEmpty(TmpStr))
                     return 0.0f;
 
-                //Find the item count in the substring
-                RetVal = Convert.ToSingle(Regex.Match(TmpStr, "\\d+\\.\\d+").Value);
+                // Find the item count in the substring
+                var RetVal = Convert.ToSingle(Regex.Match(TmpStr, "\\d+\\.\\d+").Value);
                 return RetVal;
             }
             catch (Exception ex)

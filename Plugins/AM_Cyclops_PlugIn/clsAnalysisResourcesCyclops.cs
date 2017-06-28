@@ -86,14 +86,12 @@ namespace AnalysisManager_Cyclops_PlugIn
                 if (m_DebugLevel >= 2)
                     LogMessage("Copying FROM: " + diRemoteRScriptFolder.FullName);
 
-                foreach (var fileSystemInfo in diRemoteRScriptFolder.GetFileSystemInfos("*.R"))
+                foreach (var rFile in diRemoteRScriptFolder.GetFiles("*.R"))
                 {
-                    var diRFile = (FileInfo)fileSystemInfo;
-
                     if (m_DebugLevel >= 3)
-                        LogMessage("Copying " + diRFile.Name + " to " + dirLocalRScriptFolder.FullName);
+                        LogMessage("Copying " + rFile.Name + " to " + dirLocalRScriptFolder.FullName);
 
-                    diRFile.CopyTo(Path.Combine(dirLocalRScriptFolder.FullName, diRFile.Name));
+                    rFile.CopyTo(Path.Combine(dirLocalRScriptFolder.FullName, rFile.Name));
                 }
 
                 var strCyclopsWorkflowDirectory = Path.Combine(strDMSWorkflowsFolderPath, "Cyclops", analysisType);
@@ -103,14 +101,14 @@ namespace AnalysisManager_Cyclops_PlugIn
                 // Now copy the Cyclops workflow file to the working directory
                 if (!CopyFileToWorkDir(strCyclopsWorkflowFileName, strCyclopsWorkflowDirectory, m_WorkingDir))
                 {
-                    //Errors were reported in function call, so just return
+                    // Errors were reported in function call, so just return
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 if (!CopyFileToWorkDir("Results.db3", Path.Combine(dataPackageFolderPath, sourceFolderName), m_WorkingDir))
                 {
                     m_message = "Results.db3 file from " + sourceFolderName + " failed to copy over to working directory";
-                    //Errors were reported in function call, so just return
+                    // Errors were reported in function call, so just return
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 

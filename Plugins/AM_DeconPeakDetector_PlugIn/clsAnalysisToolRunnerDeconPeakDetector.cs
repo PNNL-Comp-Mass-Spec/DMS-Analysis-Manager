@@ -49,7 +49,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
         {
             try
             {
-                //Call base class for initial setup
+                // Call base class for initial setup
                 if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -110,13 +110,13 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
 
                 m_progress = PROGRESS_PCT_COMPLETE;
 
-                //Stop the job timer
+                // Stop the job timer
                 m_StopTime = DateTime.UtcNow;
 
-                //Add the current job data to the summary file
+                // Add the current job data to the summary file
                 UpdateSummaryFile();
 
-                //Make sure objects are released
+                // Make sure objects are released
                 Thread.Sleep(500);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
@@ -216,7 +216,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
 
         private bool RunDeconPeakDetector(string strPeakDetectorProgLoc)
         {
-            string CmdStr = null;
+            string cmdStr = null;
             var blnSuccess = false;
 
             var peakDetectorParamFileName = m_jobParams.GetJobParameter("PeakDetectorParamFile", "");
@@ -239,12 +239,12 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
 
             LogMessage("Running DeconPeakDetector");
 
-            //Set up and execute a program runner to run the Peak Detector
-            CmdStr = m_Dataset + clsAnalysisResources.DOT_RAW_EXTENSION;
-            CmdStr += " /P:" + PossiblyQuotePath(paramFilePath);
-            CmdStr += " /O:" + PossiblyQuotePath(m_WorkDir);
+            // Set up and execute a program runner to run the Peak Detector
+            cmdStr = m_Dataset + clsAnalysisResources.DOT_RAW_EXTENSION;
+            cmdStr += " /P:" + PossiblyQuotePath(paramFilePath);
+            cmdStr += " /O:" + PossiblyQuotePath(m_WorkDir);
 
-            LogDebug(strPeakDetectorProgLoc + " " + CmdStr);
+            LogDebug(strPeakDetectorProgLoc + " " + cmdStr);
 
             mCmdRunner = new clsRunDosProgram(m_WorkDir);
             RegisterEvents(mCmdRunner);
@@ -259,7 +259,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
 
             m_progress = PROGRESS_PCT_STARTING;
 
-            blnSuccess = mCmdRunner.RunProgram(strPeakDetectorProgLoc, CmdStr, "PeakDetector", true);
+            blnSuccess = mCmdRunner.RunProgram(strPeakDetectorProgLoc, cmdStr, "PeakDetector", true);
 
             if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
             {

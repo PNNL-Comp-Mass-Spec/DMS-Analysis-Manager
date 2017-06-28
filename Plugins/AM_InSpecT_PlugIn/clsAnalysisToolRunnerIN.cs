@@ -83,18 +83,12 @@ namespace AnalysisManagerInSpecTPlugIn
         /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
-            string InspectDir = null;
-            string OrgDbDir = null;
 
-            string strBaseFilePath = null;
             var objIndexedDBCreator = new clsCreateInspectIndexedDB();
-
-            string strFileNameAdder = null;
-            string strParallelizedText = null;
 
             try
             {
-                //Call base class for initial setup
+                // Call base class for initial setup
                 if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -105,11 +99,11 @@ namespace AnalysisManagerInSpecTPlugIn
                     LogDebug("clsAnalysisToolRunnerIN.RunTool(): Enter");
                 }
 
-                InspectDir = m_mgrParams.GetParam("inspectdir");
-                OrgDbDir = m_mgrParams.GetParam("orgdbdir");
+                var inspectDir = m_mgrParams.GetParam("inspectdir");
+                var orgDbDir = m_mgrParams.GetParam("orgdbdir");
 
                 // Store the Inspect version info in the database
-                if (!StoreToolVersionInfo(InspectDir))
+                if (!StoreToolVersionInfo(inspectDir))
                 {
                     LogError("Aborting since StoreToolVersionInfo returned false");
                     m_message = "Error determining Inspect version";
@@ -122,36 +116,39 @@ namespace AnalysisManagerInSpecTPlugIn
                 }
 
                 // Index the fasta file to create the .trie file
-                var result = objIndexedDBCreator.CreateIndexedDbFiles(ref m_mgrParams, ref m_jobParams, m_DebugLevel, m_JobNum, InspectDir, OrgDbDir);
+                var result = objIndexedDBCreator.CreateIndexedDbFiles(ref m_mgrParams, ref m_jobParams, m_DebugLevel, m_JobNum, inspectDir, orgDbDir);
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return result;
                 }
 
-                //Determine if this is a parallelized job
+                // Determine if this is a parallelized job
                 m_CloneStepRenum = m_jobParams.GetParam("CloneStepRenumberStart");
                 m_StepNum = m_jobParams.GetParam("Step");
-                strBaseFilePath = Path.Combine(m_WorkDir, m_Dataset);
+                var baseFilePath = Path.Combine(m_WorkDir, m_Dataset);
 
-                //Determine if this is parallelized inspect job
+                string fileNameAdder;
+                string parallelizedText;
+
+                // Determine if this is parallelized inspect job
                 if (string.IsNullOrEmpty(m_CloneStepRenum))
                 {
-                    strFileNameAdder = "";
-                    strParallelizedText = "non-parallelized";
+                    fileNameAdder = "";
+                    parallelizedText = "non-parallelized";
                     m_isParallelInspect = false;
                 }
                 else
                 {
-                    strFileNameAdder = "_" + (Convert.ToInt32(m_StepNum) - Convert.ToInt32(m_CloneStepRenum) + 1);
-                    strParallelizedText = "parallelized";
+                    fileNameAdder = "_" + (Convert.ToInt32(m_StepNum) - Convert.ToInt32(m_CloneStepRenum) + 1);
+                    parallelizedText = "parallelized";
                     m_isParallelInspect = true;
                 }
 
-                mInspectConcatenatedDtaFilePath = strBaseFilePath + strFileNameAdder + "_dta.txt";
-                mInspectResultsFilePath = strBaseFilePath + strFileNameAdder + "_inspect.txt";
-                mInspectErrorFilePath = strBaseFilePath + strFileNameAdder + "_error.txt";
-                mInspectSearchLogFilePath = Path.Combine(m_WorkDir, "InspectSearchLog" + strFileNameAdder + ".txt");
-                mInspectConsoleOutputFilePath = Path.Combine(m_WorkDir, "InspectConsoleOutput" + strFileNameAdder + ".txt");
+                mInspectConcatenatedDtaFilePath = baseFilePath + fileNameAdder + "_dta.txt";
+                mInspectResultsFilePath = baseFilePath + fileNameAdder + "_inspect.txt";
+                mInspectErrorFilePath = baseFilePath + fileNameAdder + "_error.txt";
+                mInspectSearchLogFilePath = Path.Combine(m_WorkDir, "InspectSearchLog" + fileNameAdder + ".txt");
+                mInspectConsoleOutputFilePath = Path.Combine(m_WorkDir, "InspectConsoleOutput" + fileNameAdder + ".txt");
 
                 // Make sure the _DTA.txt file is valid
                 if (!ValidateCDTAFile(mInspectConcatenatedDtaFilePath))
@@ -161,34 +158,33 @@ namespace AnalysisManagerInSpecTPlugIn
 
                 if (m_DebugLevel >= 3)
                 {
-                    LogDebug("Running " + strParallelizedText + " inspect on " + Path.GetFileName(mInspectConcatenatedDtaFilePath));
+                    LogDebug("Running " + parallelizedText + " inspect on " + Path.GetFileName(mInspectConcatenatedDtaFilePath));
                 }
 
-                result = RunInSpecT(InspectDir);
+                result = RunInSpecT(inspectDir);
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return result;
                 }
 
-                //If not a parallelized job, then zip the _Inspect.txt file
+                // If not a parallelized job, then zip the _Inspect.txt file
                 if (!m_isParallelInspect)
                 {
-                    //Zip the output file
-                    var blnSuccess = false;
-                    blnSuccess = base.ZipFile(mInspectResultsFilePath, true);
+                    // Zip the output file
+                    var blnSuccess = ZipFile(mInspectResultsFilePath, true);
                     if (!blnSuccess)
                     {
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
                 }
 
-                //Stop the job timer
+                // Stop the job timer
                 m_StopTime = DateTime.UtcNow;
 
-                //Add the current job data to the summary file
+                // Add the current job data to the summary file
                 UpdateSummaryFile();
 
-                //Make sure objects are released
+                // Make sure objects are released
                 Thread.Sleep(500);
                 clsProgRunner.GarbageCollectNow();
 
@@ -211,29 +207,19 @@ namespace AnalysisManagerInSpecTPlugIn
         /// <remarks></remarks>
         private string BuildInspectInputFile()
         {
-            var result = string.Empty;
-
-            // set up input to reference spectra file, and parameter file
-            string ParamFilename = null;
-            string orgDbDir = null;
-            string fastaFilename = null;
-            string dbFilePath = null;
-            string inputFilename = null;
-            string strInputSpectra = null;
-
-            var blnUseShuffledDB = false;
+            string inputFilename;
 
             try
             {
-                ParamFilename = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"));
-                orgDbDir = m_mgrParams.GetParam("orgdbdir");
-                fastaFilename = m_jobParams.GetParam("PeptideSearch", "generatedFastaName");
+                var paramFilename = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"));
+                var orgDbDir = m_mgrParams.GetParam("orgdbdir");
+                var fastaFilename = m_jobParams.GetParam("PeptideSearch", "generatedFastaName");
                 inputFilename = Path.Combine(m_WorkDir, INSPECT_INPUT_PARAMS_FILENAME);
-                strInputSpectra = string.Empty;
 
-                blnUseShuffledDB = m_jobParams.GetJobParameter("InspectUsesShuffledDB", false);
+                var useShuffledDB = m_jobParams.GetJobParameter("InspectUsesShuffledDB", false);
+                string dbFilePath;
 
-                if (blnUseShuffledDB)
+                if (useShuffledDB)
                 {
                     // Using shuffled version of the .trie file
                     // The Pvalue.py script does much better at computing p-values if a decoy search is performed (i.e. shuffleDB.py is used)
@@ -247,62 +233,47 @@ namespace AnalysisManagerInSpecTPlugIn
 
                 dbFilePath = Path.Combine(orgDbDir, dbFilePath);
 
-                //add extra lines to the parameter files
-                //the parameter file will become the input file for inspect
-                var swInspectInputFile = new StreamWriter((new FileStream(inputFilename, FileMode.Create, FileAccess.Write, FileShare.Read)));
-
-                // Create an instance of StreamReader to read from a file.
-                var srInputBase = new StreamReader((new FileStream(ParamFilename, FileMode.Open, FileAccess.Read, FileShare.Read)));
-
-                string strParamLine = null;
-
-                swInspectInputFile.WriteLine("#Use the following to define the name of the log file created by Inspect (default is InspectSearchLog.txt if not defined)");
-                swInspectInputFile.WriteLine("SearchLogFileName," + mInspectSearchLogFilePath);
-                swInspectInputFile.WriteLine();
-
-                swInspectInputFile.WriteLine("#Spectrum file to search; preferred formats are .mzXML and .mgf");
-
-                //The code below was commented out since we are only supporting dta files.
-                //var mzXMLFilename = Path.Combine(m_WorkDir, Dataset + ".mzXML");
-                //if (m_jobParams.GetJobParameter("UseMzXML", false))
-                //{
-                //    strInputSpectra = mzXMLFilename;
-                //}
-                //else
-                //{
-
-                strInputSpectra = string.Copy(mInspectConcatenatedDtaFilePath);
-                //}
-
-                if (m_DebugLevel >= 3)
+                // Add extra lines to the parameter files
+                // The parameter file will become the input file for inspect
+                using (var swInspectInputFile = new StreamWriter(new FileStream(inputFilename, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    LogDebug("Inspect input spectra: " + strInputSpectra);
-                }
+                    swInspectInputFile.WriteLine(
+                        "#Use the following to define the name of the log file created by Inspect (default is InspectSearchLog.txt if not defined)");
+                    swInspectInputFile.WriteLine("SearchLogFileName," + mInspectSearchLogFilePath);
+                    swInspectInputFile.WriteLine();
 
-                swInspectInputFile.WriteLine("spectra," + strInputSpectra);
-                swInspectInputFile.WriteLine();
+                    swInspectInputFile.WriteLine("#Spectrum file to search; preferred formats are .mzXML and .mgf");
 
-                swInspectInputFile.WriteLine("#Note: The fully qualified database (.trie file) filename");
-                swInspectInputFile.WriteLine("DB," + dbFilePath);
-
-                // Read and display the lines from the file until the end
-                // of the file is reached.
-                do
-                {
-                    strParamLine = srInputBase.ReadLine();
-                    if (strParamLine == null)
+                    if (m_DebugLevel >= 3)
                     {
-                        break;
+                        LogDebug("Inspect input spectra: " + mInspectConcatenatedDtaFilePath);
                     }
-                    swInspectInputFile.WriteLine(strParamLine);
-                } while (!(strParamLine == null));
-                srInputBase.Close();
-                swInspectInputFile.Close();
+
+                    swInspectInputFile.WriteLine("spectra," + mInspectConcatenatedDtaFilePath);
+                    swInspectInputFile.WriteLine();
+
+                    swInspectInputFile.WriteLine("#Note: The fully qualified database (.trie file) filename");
+                    swInspectInputFile.WriteLine("DB," + dbFilePath);
+
+                    // Append the parameter file contents to the Inspect input file
+                    using (var srInputBase = new StreamReader(new FileStream(paramFilename, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                    {
+                        while (!srInputBase.EndOfStream)
+                        {
+                            var strParamLine = srInputBase.ReadLine();
+                            if (strParamLine != null)
+                            {
+                                swInspectInputFile.WriteLine(strParamLine);
+                            }
+                        }
+                    }
+
+                }
 
                 if (m_DebugLevel >= 2)
                 {
-                    LogDebug("Created Inspect input file '" + inputFilename + "' using '" + ParamFilename + "'");
-                    LogDebug("Using DB '" + dbFilePath + "' and input spectra '" + strInputSpectra + "'");
+                    LogDebug("Created Inspect input file '" + inputFilename + "' using '" + paramFilename + "'");
+                    LogDebug("Using DB '" + dbFilePath + "' and input spectra '" + mInspectConcatenatedDtaFilePath + "'");
                 }
             }
             catch (Exception ex)
@@ -316,8 +287,8 @@ namespace AnalysisManagerInSpecTPlugIn
         }
 
         // Unused function
-        //private int ExtractScanCountValueFromMzXML(string strMZXMLFilename)
-        //{
+        // private int ExtractScanCountValueFromMzXML(string strMZXMLFilename)
+        // {
         //    int intScanCount = 0;
         //
         //    try
@@ -347,7 +318,6 @@ namespace AnalysisManagerInSpecTPlugIn
         //    }
         //
         //    return intScanCount;
-        //}
 
         /// <summary>
         /// Run -p threshold value
@@ -389,9 +359,6 @@ namespace AnalysisManagerInSpecTPlugIn
         /// <remarks></remarks>
         protected bool ParseInspectErrorsFile(string errorFilename)
         {
-            string strInputFilePath = null;
-            var strLineIn = string.Empty;
-
             try
             {
                 if (m_DebugLevel > 4)
@@ -399,7 +366,7 @@ namespace AnalysisManagerInSpecTPlugIn
                     LogDebug("clsAnalysisToolRunnerIN.ParseInspectErrorsFile(): Reading " + errorFilename);
                 }
 
-                strInputFilePath = Path.Combine(m_WorkDir, errorFilename);
+                var strInputFilePath = Path.Combine(m_WorkDir, errorFilename);
 
                 if (!File.Exists(strInputFilePath))
                 {
@@ -422,33 +389,30 @@ namespace AnalysisManagerInSpecTPlugIn
                 var htMessages = new Hashtable();
 
                 // Read the contents of strInputFilePath
-                var srInFile = new StreamReader(new FileStream(strInputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read));
-
-                while (!srInFile.EndOfStream)
+                using (var srInFile = new StreamReader(new FileStream(strInputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
-                    strLineIn = srInFile.ReadLine();
-
-                    if (strLineIn == null)
-                        continue;
-
-                    strLineIn = strLineIn.Trim();
-
-                    if (strLineIn.Length > 0)
+                    while (!srInFile.EndOfStream)
                     {
-                        if (!htMessages.Contains(strLineIn))
+                        var strLineIn = srInFile.ReadLine();
+
+                        if (strLineIn == null)
+                            continue;
+
+                        strLineIn = strLineIn.Trim();
+
+                        if (strLineIn.Length > 0)
                         {
-                            htMessages.Add(strLineIn, 1);
-                            LogWarning("Inspect warning/error: " + strLineIn);
+                            if (!htMessages.Contains(strLineIn))
+                            {
+                                htMessages.Add(strLineIn, 1);
+                                LogWarning("Inspect warning/error: " + strLineIn);
+                            }
                         }
                     }
                 }
 
                 Console.WriteLine();
 
-                if ((srInFile != null))
-                {
-                    srInFile.Close();
-                }
             }
             catch (Exception)
             {
@@ -466,8 +430,6 @@ namespace AnalysisManagerInSpecTPlugIn
         /// <remarks></remarks>
         private CloseOutType RunInSpecT(string InspectDir)
         {
-            string CmdStr = null;
-            var ParamFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"));
             var blnSuccess = false;
 
             // Build the Inspect Input Parameters file
@@ -503,10 +465,10 @@ namespace AnalysisManagerInSpecTPlugIn
             LogMessage("Starting Inspect");
 
             // Set up and execute a program runner to run Inspect.exe
-            CmdStr = " -i " + mInspectCustomParamFileName + " -o " + mInspectResultsFilePath + " -e " + mInspectErrorFilePath;
+            var cmdStr = " -i " + mInspectCustomParamFileName + " -o " + mInspectResultsFilePath + " -e " + mInspectErrorFilePath;
             if (m_DebugLevel >= 1)
             {
-                LogDebug(progLoc + " " + CmdStr);
+                LogDebug(progLoc + " " + cmdStr);
             }
 
             mCmdRunner.CreateNoWindow = true;
@@ -516,7 +478,7 @@ namespace AnalysisManagerInSpecTPlugIn
             mCmdRunner.WriteConsoleOutputToFile = true;
             mCmdRunner.ConsoleOutputFilePath = mInspectConsoleOutputFilePath;
 
-            if (!mCmdRunner.RunProgram(progLoc, CmdStr, "Inspect", true))
+            if (!mCmdRunner.RunProgram(progLoc, cmdStr, "Inspect", true))
             {
                 if (mCmdRunner.ExitCode != 0)
                 {
@@ -583,7 +545,7 @@ namespace AnalysisManagerInSpecTPlugIn
             // Parse the _errors.txt file (if it exists) and copy any errors to the analysis manager log
             ParseInspectErrorsFile(mInspectErrorFilePath);
 
-            //even though success is returned, check for the result file
+            // Even though success is returned, check for the result file
             if (File.Exists(mInspectResultsFilePath))
             {
                 blnSuccess = true;
@@ -598,10 +560,8 @@ namespace AnalysisManagerInSpecTPlugIn
             {
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
-            else
-            {
-                return CloseOutType.CLOSEOUT_FAILED;
-            }
+
+            return CloseOutType.CLOSEOUT_FAILED;
         }
 
         private DateTime dtLastStatusUpdate = DateTime.MinValue;
@@ -624,11 +584,6 @@ namespace AnalysisManagerInSpecTPlugIn
 
         private void ParseInspectSearchLogFile(string strSearchLogFilePath)
         {
-            var strLineIn = string.Empty;
-            var strLastEntry = string.Empty;
-            string[] strSplitline = null;
-            string strProgress = null;
-
             try
             {
                 var ioFile = new FileInfo(strSearchLogFilePath);
@@ -636,13 +591,14 @@ namespace AnalysisManagerInSpecTPlugIn
                 {
                     // Search log file has been updated
                     // Open the file and read the contents
+                    string strLastEntry = null;
 
                     using (var srLogFile = new StreamReader(new FileStream(strSearchLogFilePath, FileMode.Open, FileAccess.Read, FileShare.Write)))
                     {
                         // Read to the end of the file
                         while (!srLogFile.EndOfStream)
                         {
-                            strLineIn = srLogFile.ReadLine();
+                            var strLineIn = srLogFile.ReadLine();
 
                             if (!string.IsNullOrEmpty(strLineIn))
                             {
@@ -651,7 +607,7 @@ namespace AnalysisManagerInSpecTPlugIn
                         }
                     }
 
-                    if ((strLastEntry != null) && strLastEntry.Length > 0)
+                    if (!string.IsNullOrEmpty(strLastEntry))
                     {
                         if (m_DebugLevel >= 4)
                         {
@@ -665,7 +621,7 @@ namespace AnalysisManagerInSpecTPlugIn
                         // Cache the log entry
                         mInspectSearchLogMostRecentEntry = string.Copy(strLastEntry);
 
-                        strSplitline = strLastEntry.Split('\t');
+                        var strSplitline = strLastEntry.Split('\t');
 
                         if (strSplitline.Length >= 4)
                         {
@@ -674,7 +630,7 @@ namespace AnalysisManagerInSpecTPlugIn
 
                             // Parse out the % complete from the 4th column
                             // Use .TrimEnd to remove the trailing % sign
-                            strProgress = strSplitline[3].TrimEnd(new char[] { '%' });
+                            var strProgress = strSplitline[3].TrimEnd('%');
                             float.TryParse(strProgress, out m_progress);
                         }
                     }
@@ -700,12 +656,13 @@ namespace AnalysisManagerInSpecTPlugIn
             }
 
             // Store paths to key files in ioToolFiles
-            var ioToolFiles = new List<FileInfo>();
-            ioToolFiles.Add(new FileInfo(Path.Combine(strInspectFolder, INSPECT_EXE_NAME)));
+            var ioToolFiles = new List<FileInfo> {
+                new FileInfo(Path.Combine(strInspectFolder, INSPECT_EXE_NAME))
+            };
 
             try
             {
-                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
+                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
             }
             catch (Exception ex)
             {

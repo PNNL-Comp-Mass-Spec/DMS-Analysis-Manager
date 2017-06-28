@@ -27,15 +27,15 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 return result;
             }
 
-            //Retrieve Fasta file
+            // Retrieve Fasta file
             if (!RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")))
                 return CloseOutType.CLOSEOUT_FAILED;
 
-            //This will eventually be replaced by Ken Auberry dll call to make param file on the fly
+            // This will eventually be replaced by Ken Auberry dll call to make param file on the fly
 
             LogMessage("Getting param file");
 
-            //Retrieve param file
+            // Retrieve param file
             var strParamFileName = m_jobParams.GetParam("ParmFileName");
 
             if (!RetrieveGeneratedParamFile(strParamFileName))
@@ -54,8 +54,8 @@ namespace AnalysisManagerDtaRefineryPlugIn
                     "will assume: " + strDtaRefineryParmFileStoragePath);
             }
 
-            //Retrieve settings files aka default file that will have values overwritten by parameter file values
-            //Stored in same location as parameter file
+            // Retrieve settings files aka default file that will have values overwritten by parameter file values
+            // Stored in same location as parameter file
             if (!FileSearch.RetrieveFile(XTANDEM_DEFAULT_INPUT_FILE, strDtaRefineryParmFileStoragePath))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -93,14 +93,14 @@ namespace AnalysisManagerDtaRefineryPlugIn
             // If the _dta.txt file is over 2 GB in size, then condense it
             if (!ValidateCDTAFileSize(m_WorkingDir, Path.GetFileName(strCDTAPath)))
             {
-                //Errors were reported in function call, so just return
+                // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
             // Retrieve DeconMSn Log file and DeconMSn Profile File
             if (!RetrieveDeconMSnLogFiles())
             {
-                //Errors were reported in function call, so just return
+                // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -122,10 +122,10 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 }
             }
 
-            //Add all the extensions of the files to delete after run
-            m_jobParams.AddResultFileExtensionToSkip("_dta.zip");    //Zipped DTA
-            m_jobParams.AddResultFileExtensionToSkip("_dta.txt");    //Unzipped, concatenated DTA
-            m_jobParams.AddResultFileExtensionToSkip(".dta");        //DTA files
+            // Add all the extensions of the files to delete after run
+            m_jobParams.AddResultFileExtensionToSkip("_dta.zip");    // Zipped DTA
+            m_jobParams.AddResultFileExtensionToSkip("_dta.txt");    // Unzipped, concatenated DTA
+            m_jobParams.AddResultFileExtensionToSkip(".dta");        // DTA files
             m_jobParams.AddResultFileExtensionToSkip(DatasetName + ".xml");
 
             m_jobParams.AddResultFileToSkip(strParamFileName);

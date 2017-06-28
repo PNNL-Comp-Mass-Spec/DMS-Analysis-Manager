@@ -113,15 +113,15 @@ namespace AnalysisManagerProMexPlugIn
 
                 m_progress = PROGRESS_PCT_COMPLETE;
 
-                //Stop the job timer
+                // Stop the job timer
                 m_StopTime = DateTime.UtcNow;
 
-                //Add the current job data to the summary file
+                // Add the current job data to the summary file
                 UpdateSummaryFile();
 
                 mCmdRunner = null;
 
-                //Make sure objects are released
+                // Make sure objects are released
                 Thread.Sleep(500);
                 clsProgRunner.GarbageCollectNow();
 
@@ -443,7 +443,7 @@ namespace AnalysisManagerProMexPlugIn
 
         protected bool StartProMex(string progLoc)
         {
-            string CmdStr = null;
+            string cmdStr = null;
             var blnSuccess = false;
 
             mConsoleOutputErrorMsg = string.Empty;
@@ -483,14 +483,14 @@ namespace AnalysisManagerProMexPlugIn
 
             LogMessage("Running ProMex");
 
-            //Set up and execute a program runner to run ProMex
+            // Set up and execute a program runner to run ProMex
 
-            CmdStr = " -i " + msFilePath;
-            CmdStr += " " + strCmdLineOptions;
+            cmdStr = " -i " + msFilePath;
+            cmdStr += " " + strCmdLineOptions;
 
             if (m_DebugLevel >= 1)
             {
-                LogDebug(progLoc + CmdStr);
+                LogDebug(progLoc + cmdStr);
             }
 
             mCmdRunner = new clsRunDosProgram(m_WorkDir);
@@ -509,7 +509,7 @@ namespace AnalysisManagerProMexPlugIn
 
             // Start the program and wait for it to finish
             // However, while it's running, LoopWaiting will get called via events
-            blnSuccess = mCmdRunner.RunProgram(progLoc, CmdStr, "ProMex", true);
+            blnSuccess = mCmdRunner.RunProgram(progLoc, cmdStr, "ProMex", true);
 
             if (!mCmdRunner.WriteConsoleOutputToFile)
             {

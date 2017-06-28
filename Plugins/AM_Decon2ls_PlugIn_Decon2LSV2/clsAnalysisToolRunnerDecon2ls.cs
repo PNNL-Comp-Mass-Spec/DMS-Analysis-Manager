@@ -724,7 +724,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             m_StopTime = DateTime.UtcNow;
 
             // Make sure objects are released
-            Thread.Sleep(1000);           //1 second delay
+            Thread.Sleep(500);
             PRISM.clsProgRunner.GarbageCollectNow();
 
             if (m_DebugLevel > 3)
@@ -811,7 +811,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
             try
             {
-                string CmdStr;
+                string cmdStr;
 
                 if (eFileType == DeconToolsFileTypeConstants.Undefined)
                 {
@@ -824,16 +824,16 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 // Set up and execute a program runner to run DeconTools
                 if (mDeconConsoleBuild < 4400)
                 {
-                    CmdStr = strInputFilePath + " " + strFileTypeText + " " + strParamFilePath;
+                    cmdStr = strInputFilePath + " " + strFileTypeText + " " + strParamFilePath;
                 }
                 else
                 {
-                    CmdStr = strInputFilePath + " " + strParamFilePath;
+                    cmdStr = strInputFilePath + " " + strParamFilePath;
                 }
 
                 if (m_DebugLevel >= 1)
                 {
-                    LogDebug(ProgLoc + " " + CmdStr);
+                    LogDebug(ProgLoc + " " + cmdStr);
                 }
 
                 mCmdRunner = new clsRunDosProgram(m_WorkDir);
@@ -854,7 +854,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
                 // Start the program and wait for it to finish
                 // However, while it's running, LoopWaiting will get called via events
-                var success = mCmdRunner.RunProgram(ProgLoc, CmdStr, "DeconConsole", true);
+                var success = mCmdRunner.RunProgram(ProgLoc, cmdStr, "DeconConsole", true);
 
                 if (!success)
                 {

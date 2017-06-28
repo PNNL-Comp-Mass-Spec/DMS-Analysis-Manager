@@ -39,10 +39,10 @@ namespace AnalysisManagerDtaRefineryPlugIn
         public override CloseOutType RunTool()
         {
             CloseOutType result;
-            var OrgDBName = m_jobParams.GetParam("PeptideSearch", "generatedFastaName");
-            var LocalOrgDBFolder = m_mgrParams.GetParam("orgdbdir");
+            var orgDBName = m_jobParams.GetParam("PeptideSearch", "generatedFastaName");
+            var localOrgDBFolder = m_mgrParams.GetParam("orgdbdir");
 
-            //Do the base class stuff
+            // Do the base class stuff
             if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -97,7 +97,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             var cmdStr =
                 Path.Combine(m_WorkDir, m_jobParams.GetParam("DTARefineryXMLFile")) + " " +
                 Path.Combine(m_WorkDir, m_Dataset + "_dta.txt") + " " +
-                Path.Combine(LocalOrgDBFolder, OrgDBName);
+                Path.Combine(localOrgDBFolder, orgDBName);
 
             // Create a batch file to run the command
             // Capture the console output (including output to the error stream) via redirection symbols:
@@ -176,14 +176,14 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            //Stop the job timer
+            // Stop the job timer
             m_StopTime = DateTime.UtcNow;
 
-            //Add the current job data to the summary file
+            // Add the current job data to the summary file
             UpdateSummaryFile();
 
-            //Make sure objects are released
-            Thread.Sleep(500);         // 1 second delay
+            // Make sure objects are released
+            Thread.Sleep(500);
             clsProgRunner.GarbageCollectNow();
 
             if (!ValidateDTARefineryLogFile())
@@ -381,18 +381,18 @@ namespace AnalysisManagerDtaRefineryPlugIn
         /// <remarks></remarks>
         private CloseOutType ZipMainOutputFile()
         {
-            //Do we want to zip these output files?  Yes, we keep them all
-            //* _dta_DtaRefineryLog.txt
-            //* _dta_SETTINGS.xml
-            //* _FIXED_dta.txt
-            //* _HIST.png
-            //* _HIST.txt
+            // Do we want to zip these output files?  Yes, we keep them all
+            // * _dta_DtaRefineryLog.txt
+            // * _dta_SETTINGS.xml
+            // * _FIXED_dta.txt
+            // * _HIST.png
+            // * _HIST.txt
             // * scan number: _scanNum.png
             // * m/z: _mz.png
             // * log10 of ion intensity in the ICR/Orbitrap cell: _logTrappedIonInt.png
             // * total ion current in the ICR/Orbitrap cell: _trappedIonsTIC.png
 
-            //Delete the original DTA files
+            // Delete the original DTA files
             try
             {
                 var ioWorkDirectory = new DirectoryInfo(m_WorkDir);

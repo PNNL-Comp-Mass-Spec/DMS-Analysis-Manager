@@ -52,7 +52,7 @@ namespace AnalysisManagerMSDeconvPlugIn
         {
             try
             {
-                //Call base class for initial setup
+                // Call base class for initial setup
                 if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -168,15 +168,15 @@ namespace AnalysisManagerMSDeconvPlugIn
 
                 m_progress = PROGRESS_PCT_COMPLETE;
 
-                //Stop the job timer
+                // Stop the job timer
                 m_StopTime = DateTime.UtcNow;
 
-                //Add the current job data to the summary file
+                // Add the current job data to the summary file
                 UpdateSummaryFile();
 
                 mCmdRunner = null;
 
-                //Make sure objects are released
+                // Make sure objects are released
                 Thread.Sleep(500);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
@@ -436,20 +436,20 @@ namespace AnalysisManagerMSDeconvPlugIn
             if (intJavaMemorySize < 512)
                 intJavaMemorySize = 512;
 
-            //Set up and execute a program runner to run MSDeconv
-            var CmdStr = " -Xmx" + intJavaMemorySize + "M -jar " + mMSDeconvProgLoc;
+            // Set up and execute a program runner to run MSDeconv
+            var cmdStr = " -Xmx" + intJavaMemorySize + "M -jar " + mMSDeconvProgLoc;
 
             // Define the input file and processing options
             // Note that capitalization matters for the extension; it must be .mzXML
-            CmdStr += " " + m_Dataset + clsAnalysisResources.DOT_MZXML_EXTENSION;
-            CmdStr += " -o " + strOutputFormat + " -t centroided";
+            cmdStr += " " + m_Dataset + clsAnalysisResources.DOT_MZXML_EXTENSION;
+            cmdStr += " -o " + strOutputFormat + " -t centroided";
 
             if (blnIncludeMS1Spectra)
             {
-                CmdStr += " -l";
+                cmdStr += " -l";
             }
 
-            LogDebug(JavaProgLoc + " " + CmdStr);
+            LogDebug(JavaProgLoc + " " + cmdStr);
 
             mCmdRunner = new clsRunDosProgram(m_WorkDir);
             RegisterEvents(mCmdRunner);
@@ -464,7 +464,7 @@ namespace AnalysisManagerMSDeconvPlugIn
 
             m_progress = PROGRESS_PCT_STARTING;
 
-            var blnSuccess = mCmdRunner.RunProgram(JavaProgLoc, CmdStr, "MSDeconv", true);
+            var blnSuccess = mCmdRunner.RunProgram(JavaProgLoc, cmdStr, "MSDeconv", true);
 
             if (!mToolVersionWritten)
             {

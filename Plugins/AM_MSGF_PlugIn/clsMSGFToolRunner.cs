@@ -129,7 +129,7 @@ namespace AnalysisManagerMSGFPlugin
         public override CloseOutType RunTool()
         {
 
-            //Call base class for initial setup
+            // Call base class for initial setup
             if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -246,14 +246,14 @@ namespace AnalysisManagerMSGFPlugin
                     }
                 }
 
-                //Stop the job timer
+                // Stop the job timer
                 m_StopTime = DateTime.UtcNow;
 
-                //Add the current job data to the summary file
+                // Add the current job data to the summary file
                 UpdateSummaryFile();
 
-                //Make sure objects are released
-                Thread.Sleep(500);                
+                // Make sure objects are released
+                Thread.Sleep(500);
                 clsProgRunner.GarbageCollectNow();
 
                 if (blnProcessingError)
@@ -281,7 +281,7 @@ namespace AnalysisManagerMSGFPlugin
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            //If we get to here, everything worked so exit happily
+            // If we get to here, everything worked so exit happily
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
@@ -1915,22 +1915,22 @@ namespace AnalysisManagerMSGFPlugin
             m_StatusTools.CurrentOperation = "Running MSGF";
             m_StatusTools.UpdateAndWrite(m_progress);
 
-            var CmdStr = " -Xmx" + intJavaMemorySize + "M ";
+            var cmdStr = " -Xmx" + intJavaMemorySize + "M ";
 
             if (mUsingMSGFDB)
             {
-                CmdStr += "-cp " + PossiblyQuotePath(mMSGFProgLoc) + " ui.MSGF";
+                cmdStr += "-cp " + PossiblyQuotePath(mMSGFProgLoc) + " ui.MSGF";
             }
             else
             {
-                CmdStr += "-jar " + PossiblyQuotePath(mMSGFProgLoc);
+                cmdStr += "-jar " + PossiblyQuotePath(mMSGFProgLoc);
             }
 
-            CmdStr += " -i " + PossiblyQuotePath(strInputFilePath);
+            cmdStr += " -i " + PossiblyQuotePath(strInputFilePath);
             // Input file
-            CmdStr += " -d " + PossiblyQuotePath(m_WorkDir);
+            cmdStr += " -d " + PossiblyQuotePath(m_WorkDir);
             // Folder containing .mzXML, .mzML, or .mgf file
-            CmdStr += " -o " + PossiblyQuotePath(strResultsFilePath);
+            cmdStr += " -o " + PossiblyQuotePath(strResultsFilePath);
             // Output file
 
             // MSGF v6432 and earlier use -m 0 for CID and -m 1 for ETD
@@ -1962,33 +1962,33 @@ namespace AnalysisManagerMSGFPlugin
             if (mUsingMSGFDB && intMSGFDBVersion >= 7097)
             {
                 // Always use -m 0 (assuming we're sending an mzXML file to MSGFDB)
-                CmdStr += " -m 0";
+                cmdStr += " -m 0";
                 // as-written in the input file
             }
             else
             {
                 if (mETDMode)
                 {
-                    CmdStr += " -m 1";
+                    cmdStr += " -m 1";
                     // ETD fragmentation
                 }
                 else
                 {
-                    CmdStr += " -m 0";
+                    cmdStr += " -m 0";
                     // CID fragmentation
                 }
             }
 
-            CmdStr += " -e 1";
+            cmdStr += " -e 1";
             // Enzyme is Trypsin; other supported enzymes are 2: Chymotrypsin, 3: Lys-C, 4: Lys-N, 5: Glu-C, 6: Arg-C, 7: Asp-N, and 8: aLP
-            CmdStr += " -fixMod 0";
+            cmdStr += " -fixMod 0";
             // No fixed mods on cysteine
-            CmdStr += " -x 0";
+            cmdStr += " -x 0";
             // Write out all matches for each spectrum
-            CmdStr += " -p 1";
+            cmdStr += " -p 1";
             // SpecProbThreshold threshold of 1, i.e., do not filter results by the computed SpecProb value
 
-            LogDebug(mJavaProgLoc + " " + CmdStr);
+            LogDebug(mJavaProgLoc + " " + cmdStr);
 
             mMSGFRunner = new clsRunDosProgram(m_WorkDir)
             {
@@ -2001,7 +2001,7 @@ namespace AnalysisManagerMSGFPlugin
             RegisterEvents(mMSGFRunner);
             mMSGFRunner.LoopWaiting += MSGFRunner_LoopWaiting;
 
-            var blnSuccess = mMSGFRunner.RunProgram(mJavaProgLoc, CmdStr, "MSGF", true);
+            var blnSuccess = mMSGFRunner.RunProgram(mJavaProgLoc, cmdStr, "MSGF", true);
 
             if (!mToolVersionWritten)
             {

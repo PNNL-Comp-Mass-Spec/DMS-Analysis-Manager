@@ -35,10 +35,7 @@ namespace AnalysisManagerOMSSAPlugIn
         /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
-            // Set this to success for now
-            var eReturnCode = CloseOutType.CLOSEOUT_SUCCESS;
-
-            //Do the base class stuff
+            // Do the base class stuff
             if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -81,7 +78,7 @@ namespace AnalysisManagerOMSSAPlugIn
 
             var inputFilename = Path.Combine(m_WorkDir, "OMSSA_Input.xml");
 
-            //Set up and execute a program runner to run OMSSA
+            // Set up and execute a program runner to run OMSSA
             var cmdStr = " -pm " + inputFilename;
 
             if (m_DebugLevel >= 1)
@@ -112,7 +109,7 @@ namespace AnalysisManagerOMSSAPlugIn
             //End future section
             //--------------------------------------------------------------------------------------------
 
-            //Stop the job timer
+            // Stop the job timer
             m_StopTime = DateTime.UtcNow;
 
             if (processingSuccess)
@@ -124,16 +121,16 @@ namespace AnalysisManagerOMSSAPlugIn
                 }
             }
 
-            //Add the current job data to the summary file
+            // Add the current job data to the summary file
             UpdateSummaryFile();
 
-            //Make sure objects are released
+            // Make sure objects are released
             Thread.Sleep(500);
             PRISM.clsProgRunner.GarbageCollectNow();
 
             if (processingSuccess)
             {
-                //Zip the output file
+                // Zip the output file
                 var zipSuccess = ZipMainOutputFile();
                 if (!zipSuccess)
                 {
@@ -163,13 +160,9 @@ namespace AnalysisManagerOMSSAPlugIn
         /// <remarks></remarks>
         private bool ZipMainOutputFile()
         {
-            //Zip the output file
-            string strOMSSAResultsFilePath = null;
-            var blnSuccess = false;
+            var strOMSSAResultsFilePath = Path.Combine(m_WorkDir, m_Dataset + "_om.omx");
 
-            strOMSSAResultsFilePath = Path.Combine(m_WorkDir, m_Dataset + "_om.omx");
-
-            blnSuccess = base.ZipFile(strOMSSAResultsFilePath, true);
+            var blnSuccess = ZipFile(strOMSSAResultsFilePath, true);
             return blnSuccess;
         }
 
@@ -186,8 +179,6 @@ namespace AnalysisManagerOMSSAPlugIn
 
         private bool ConvertOMSSA2PepXmlFile()
         {
-            string CmdStr = null;
-            var result = true;
 
             try
             {
@@ -217,13 +208,13 @@ namespace AnalysisManagerOMSSAPlugIn
                 var outputFilename = Path.Combine(m_WorkDir, m_Dataset + "_pepxml.xml");
                 var inputFilename = Path.Combine(m_WorkDir, m_Dataset + "_om_large.omx");
 
-                //Set up and execute a program runner to run Omssa2PepXml.exe
-                //omssa2pepxml.exe -xml -o C:\DMS_WorkDir\QC_Shew_09_02_pt5_a_20May09_Earth_09-04-20_pepxml.xml C:\DMS_WorkDir\QC_Shew_09_02_pt5_a_20May09_Earth_09-04-20_omx_large.omx
-                CmdStr = "-xml -o " + outputFilename + " " + inputFilename;
+                // Set up and execute a program runner to run Omssa2PepXml.exe
+                // omssa2pepxml.exe -xml -o C:\DMS_WorkDir\QC_Shew_09_02_pt5_a_20May09_Earth_09-04-20_pepxml.xml C:\DMS_WorkDir\QC_Shew_09_02_pt5_a_20May09_Earth_09-04-20_omx_large.omx
+                var cmdStr = "-xml -o " + outputFilename + " " + inputFilename;
 
                 if (m_DebugLevel >= 1)
                 {
-                    LogDebug("Starting OMSSA2PepXml: " + progLoc + " " + CmdStr);
+                    LogDebug("Starting OMSSA2PepXml: " + progLoc + " " + cmdStr);
                 }
 
                 cmdRunner.CreateNoWindow = true;
@@ -233,18 +224,20 @@ namespace AnalysisManagerOMSSAPlugIn
                 cmdRunner.WriteConsoleOutputToFile = true;
                 cmdRunner.ConsoleOutputFilePath = Path.Combine(m_WorkDir, Path.GetFileNameWithoutExtension(progLoc) + "_ConsoleOutput.txt");
 
-                if (!cmdRunner.RunProgram(progLoc, CmdStr, "OMSSA2PepXml", true))
+                if (!cmdRunner.RunProgram(progLoc, cmdStr, "OMSSA2PepXml", true))
                 {
                     LogError("Error running OMSSA2PepXml");
                     return false;
                 }
+
+                return true;
             }
             catch (Exception ex)
             {
                 LogError("clsAnalysisToolRunnerOM.ConvertOMSSA2PepXmlFile, exception, " + ex.Message);
+                return false;
             }
 
-            return result;
         }
 
         /// <summary>
@@ -261,13 +254,15 @@ namespace AnalysisManagerOMSSAPlugIn
             }
 
             // Store paths to key files in ioToolFiles
-            var ioToolFiles = new List<FileInfo>();
-            ioToolFiles.Add(new FileInfo(m_mgrParams.GetParam("OMSSAprogloc")));
-            ioToolFiles.Add(new FileInfo(m_mgrParams.GetParam("omssa2pepprogloc")));
+            var ioToolFiles = new List<FileInfo>
+            {
+                new FileInfo(m_mgrParams.GetParam("OMSSAprogloc")),
+                new FileInfo(m_mgrParams.GetParam("omssa2pepprogloc"))
+            };
 
             try
             {
-                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
+                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
             }
             catch (Exception ex)
             {

@@ -29,20 +29,20 @@ namespace AnalysisManagerDtaImportPlugIn
         {
             try
             {
-                //Start the job timer
-                m_StartTime = System.DateTime.UtcNow;
+                // Start the job timer
+                m_StartTime = DateTime.UtcNow;
 
-                var result = CopyManualDTAs();
-               
+                var result = CopyManualDtAs();
+
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return result;
                 }
 
-                //Stop the job timer
-                m_StopTime = System.DateTime.UtcNow;
+                // Stop the job timer
+                m_StopTime = DateTime.UtcNow;
 
-                //Add the current job data to the summary file
+                // Add the current job data to the summary file
                 UpdateSummaryFile();
             }
             catch (Exception ex)
@@ -51,14 +51,15 @@ namespace AnalysisManagerDtaImportPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            return CloseOutType.CLOSEOUT_SUCCESS; //No failures so everything must have succeeded
+            // No failures so everything must have succeeded
+            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        private CloseOutType CopyManualDTAs()
+        private CloseOutType CopyManualDtAs()
         {
-            var SourceFolderNamePath = string.Empty;
-            var TargetFolderNamePath = string.Empty;
-            var CompleteFolderNamePath = string.Empty;
+            string sourceFolderNamePath;
+            string targetFolderNamePath;
+            string completeFolderNamePath;
 
             try
             {
@@ -67,46 +68,44 @@ namespace AnalysisManagerDtaImportPlugIn
                 // This folder must contain subfolders whose name matches the output_folder name assigned to each job
                 // Furthermore, each subfolder must have a file named Dataset_dta.zip
 
-                SourceFolderNamePath = Path.Combine(m_mgrParams.GetParam("DTAFolderLocation"), m_jobParams.GetParam("OutputFolderName"));
-                CompleteFolderNamePath = Path.Combine(m_mgrParams.GetParam("DTAProcessedFolderLocation"), m_jobParams.GetParam("OutputFolderName"));
+                sourceFolderNamePath = Path.Combine(m_mgrParams.GetParam("DTAFolderLocation"), m_jobParams.GetParam("OutputFolderName"));
+                completeFolderNamePath = Path.Combine(m_mgrParams.GetParam("DTAProcessedFolderLocation"), m_jobParams.GetParam("OutputFolderName"));
 
-                //Determine if Dta folder in transfer directory already exists; Make directory if it doesn't exist
-                TargetFolderNamePath = Path.Combine(m_jobParams.GetParam("transferFolderPath"), m_Dataset);
-                if (!Directory.Exists(TargetFolderNamePath))
+                // Determine if Dta folder in transfer directory already exists; Make directory if it doesn't exist
+                targetFolderNamePath = Path.Combine(m_jobParams.GetParam("transferFolderPath"), m_Dataset);
+                if (!Directory.Exists(targetFolderNamePath))
                 {
-                    //Make the DTA folder
+                    // Make the DTA folder
                     try
                     {
-                        Directory.CreateDirectory(TargetFolderNamePath);
+                        Directory.CreateDirectory(targetFolderNamePath);
                     }
                     catch (Exception ex)
                     {
                         LogError(
                             "Error creating results folder in transfer directory",
-                            "Error creating results folder " + TargetFolderNamePath, ex);
+                            "Error creating results folder " + targetFolderNamePath, ex);
                         return CloseOutType.CLOSEOUT_FAILED;
-                        //TODO: Handle errors
                     }
                 }
 
                 // Now append the output folder name to TargetFolderNamePath
-                TargetFolderNamePath = Path.Combine(TargetFolderNamePath, m_jobParams.GetParam("OutputFolderName"));
+                targetFolderNamePath = Path.Combine(targetFolderNamePath, m_jobParams.GetParam("OutputFolderName"));
             }
             catch (Exception ex)
             {
                 LogError("Error creating results folder", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
-                //TODO: Handle errors
             }
 
             try
             {
-                //Copy the DTA folder to the transfer folder
+                // Copy the DTA folder to the transfer folder
                 var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
-                objAnalysisResults.CopyDirectory(SourceFolderNamePath, TargetFolderNamePath, false);
+                objAnalysisResults.CopyDirectory(sourceFolderNamePath, targetFolderNamePath, false);
 
-                //Now move the DTA folder to succeeded folder
-                Directory.Move(SourceFolderNamePath, CompleteFolderNamePath);
+                // Now move the DTA folder to succeeded folder
+                Directory.Move(sourceFolderNamePath, completeFolderNamePath);
 
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
@@ -115,7 +114,7 @@ namespace AnalysisManagerDtaImportPlugIn
 
                 LogError(
                     "Error copying results folder to transfer directory",
-                    "Error copying results folder to " + TargetFolderNamePath, ex);
+                    "Error copying results folder to " + targetFolderNamePath, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }

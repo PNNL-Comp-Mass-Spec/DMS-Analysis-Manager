@@ -88,10 +88,10 @@ namespace AnalysisManagerSequestPlugin
             // Count the number of .Dta files and cache in m_DtaCount
             CalculateNewStatus(blnUpdateDTACount: true);
 
-            //Run Sequest
+            // Run Sequest
             UpdateStatusRunning(m_progress, m_DtaCount);
 
-            //Make the .out files
+            // Make the .out files
             LogMessage("Making OUT files, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
 
             CloseOutType eResult;
@@ -109,7 +109,7 @@ namespace AnalysisManagerSequestPlugin
                 eResult = CloseOutType.CLOSEOUT_FAILED;
             }
 
-            //Stop the job timer
+            // Stop the job timer
             m_StopTime = DateTime.UtcNow;
 
             CloseOutType eReturnCode;
@@ -125,10 +125,10 @@ namespace AnalysisManagerSequestPlugin
                 eReturnCode = eResult;
             }
 
-            //Add the current job data to the summary file
+            // Add the current job data to the summary file
             UpdateSummaryFile();
 
-            //Make sure objects are released
+            // Make sure objects are released
             Thread.Sleep(500);
             clsProgRunner.GarbageCollectNow();
 
@@ -426,63 +426,59 @@ namespace AnalysisManagerSequestPlugin
         /// <remarks></remarks>
         protected virtual CloseOutType MakeOUTFiles()
         {
-            //Creates Sequest .out files from DTA files
-            string CmdStr = null;
-            string[] DtaFiles = null;
-            clsProgRunner[] RunProgs = null;
-            StreamWriter[] Textfiles = null;
-            var NumFiles = 0;
-            var ProcIndx = 0;
-            var StillRunning = false;
+            // Creates Sequest .out files from DTA files
 
-            //12/19/2008 - The number of processors used to be configurable but now this is done with clustering.
-            //This code is left here so we can still debug to make sure everything still works
-            //var NumProcessors = (int)m_mgrParams.GetParam("numberofprocessors");
+            // 12/19/2008 - The number of processors used to be configurable but now this is done with clustering.
+            // This code is left here so we can still debug to make sure everything still works
+            // var NumProcessors = (int)m_mgrParams.GetParam("numberofprocessors");
             var NumProcessors = 1;
 
-            //Get a list of .dta file names
-            DtaFiles = Directory.GetFiles(m_WorkDir, "*.dta");
-            NumFiles = DtaFiles.GetLength(0);
+            // Get a list of .dta file names
+            var DtaFiles = Directory.GetFiles(m_WorkDir, "*.dta");
+            var NumFiles = DtaFiles.GetLength(0);
             if (NumFiles == 0)
             {
                 LogError("No dta files found for Sequest processing");
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            //Set up a program runner and text file for each processor
-            RunProgs = new clsProgRunner[NumProcessors];
-            Textfiles = new StreamWriter[NumProcessors];
-            CmdStr = "-D" + Path.Combine(m_mgrParams.GetParam("orgdbdir"), m_jobParams.GetParam("PeptideSearch", "generatedFastaName")) + " -P" +
+            // Set up a program runner and text file for each processor
+            var RunProgs = new clsProgRunner[NumProcessors];
+            var Textfiles = new StreamWriter[NumProcessors];
+            var cmdStr = "-D" + Path.Combine(m_mgrParams.GetParam("orgdbdir"), m_jobParams.GetParam("PeptideSearch", "generatedFastaName")) + " -P" +
                      m_jobParams.GetParam("parmFileName") + " -R";
 
-            for (ProcIndx = 0; ProcIndx <= NumProcessors - 1; ProcIndx++)
+            for (var ProcIndx = 0; ProcIndx <= NumProcessors - 1; ProcIndx++)
             {
                 var DumStr = Path.Combine(m_WorkDir, "FileList" + ProcIndx + ".txt");
                 m_jobParams.AddResultFileToSkip(DumStr);
 
-                RunProgs[ProcIndx] = new clsProgRunner();
-                RunProgs[ProcIndx].Name = "Seq" + ProcIndx;
-                RunProgs[ProcIndx].CreateNoWindow = Convert.ToBoolean(m_mgrParams.GetParam("createnowindow"));
-                RunProgs[ProcIndx].Program = m_mgrParams.GetParam("seqprogloc");
-                RunProgs[ProcIndx].Arguments = CmdStr + DumStr;
-                RunProgs[ProcIndx].WorkDir = m_WorkDir;
+                RunProgs[ProcIndx] = new clsProgRunner
+                {
+                    Name = "Seq" + ProcIndx,
+                    CreateNoWindow = Convert.ToBoolean(m_mgrParams.GetParam("createnowindow")),
+                    Program = m_mgrParams.GetParam("seqprogloc"),
+                    Arguments = cmdStr + DumStr,
+                    WorkDir = m_WorkDir
+                };
+
                 Textfiles[ProcIndx] = new StreamWriter(DumStr, false);
                 LogDebug(
-                    m_mgrParams.GetParam("seqprogloc") + CmdStr + DumStr);
+                    m_mgrParams.GetParam("seqprogloc") + cmdStr + DumStr);
             }
 
-            //Break up file list into lists for each processor
-            ProcIndx = 0;
-            foreach (var DumStr in DtaFiles)
+            // Break up file list into lists for each processor
+            var dtaFileIndex = 0;
+            foreach (var dtaFile in DtaFiles)
             {
-                Textfiles[ProcIndx].WriteLine(DumStr);
-                ProcIndx += 1;
-                if (ProcIndx > (NumProcessors - 1))
-                    ProcIndx = 0;
+                Textfiles[dtaFileIndex].WriteLine(dtaFile);
+                dtaFileIndex += 1;
+                if (dtaFileIndex > (NumProcessors - 1))
+                    dtaFileIndex = 0;
             }
 
-            //Close all the file lists
-            for (ProcIndx = 0; ProcIndx <= Textfiles.GetUpperBound(0); ProcIndx++)
+            // Close all the file lists
+            for (var ProcIndx = 0; ProcIndx <= Textfiles.GetUpperBound(0); ProcIndx++)
             {
                 if (m_DebugLevel >= 1)
                 {
@@ -499,18 +495,18 @@ namespace AnalysisManagerSequestPlugin
                 }
             }
 
-            //Run all the programs
-            for (ProcIndx = 0; ProcIndx <= RunProgs.GetUpperBound(0); ProcIndx++)
+            // Run all the programs
+            for (var ProcIndx = 0; ProcIndx <= RunProgs.GetUpperBound(0); ProcIndx++)
             {
                 RunProgs[ProcIndx].StartAndMonitorProgram();
                 Thread.Sleep(1000);
             }
 
-            //Wait for completion
+            // Wait for completion
+            var StillRunning = false;
 
             do
             {
-                StillRunning = false;
 
                 // Wait 5 seconds
                 Thread.Sleep(5000);
@@ -518,7 +514,7 @@ namespace AnalysisManagerSequestPlugin
                 CalculateNewStatus();
                 UpdateStatusRunning(m_progress, m_DtaCount);
 
-                for (ProcIndx = 0; ProcIndx <= RunProgs.GetUpperBound(0); ProcIndx++)
+                for (var ProcIndx = 0; ProcIndx <= RunProgs.GetUpperBound(0); ProcIndx++)
                 {
                     if (m_DebugLevel > 4)
                     {
@@ -545,14 +541,12 @@ namespace AnalysisManagerSequestPlugin
                             StillRunning = true;
                             break;
                         }
-                        else
+
+                        if (m_DebugLevel >= 1)
                         {
-                            if (m_DebugLevel >= 1)
-                            {
-                                LogDebug(
-                                    "clsAnalysisToolRunnerSeqBase.MakeOutFiles()_4: RunProgs(" + ProcIndx + ").State = " +
-                                    RunProgs[ProcIndx].State);
-                            }
+                            LogDebug(
+                                "clsAnalysisToolRunnerSeqBase.MakeOutFiles()_4: RunProgs(" + ProcIndx + ").State = " +
+                                RunProgs[ProcIndx].State);
                         }
                     }
                 }
@@ -560,12 +554,12 @@ namespace AnalysisManagerSequestPlugin
                 LogProgress("Sequest");
             } while (StillRunning);
 
-            //Clean up our object references
+            // Clean up our object references
             if (m_DebugLevel >= 1)
             {
                 LogDebug("clsAnalysisToolRunnerSeqBase.MakeOutFiles(), cleaning up runprog object references");
             }
-            for (ProcIndx = 0; ProcIndx <= RunProgs.GetUpperBound(0); ProcIndx++)
+            for (var ProcIndx = 0; ProcIndx <= RunProgs.GetUpperBound(0); ProcIndx++)
             {
                 RunProgs[ProcIndx] = null;
                 if (m_DebugLevel >= 1)
@@ -574,11 +568,11 @@ namespace AnalysisManagerSequestPlugin
                 }
             }
 
-            //Make sure objects are released
+            // Make sure objects are released
             Thread.Sleep(500);
             clsProgRunner.GarbageCollectNow();
 
-            //Verify out file creation
+            // Verify out file creation
             if (m_DebugLevel >= 1)
             {
                 LogDebug("clsAnalysisToolRunnerSeqBase.MakeOutFiles(), verifying out file creation");
@@ -592,26 +586,26 @@ namespace AnalysisManagerSequestPlugin
                 return CloseOutType.CLOSEOUT_NO_OUT_FILES;
             }
 
-            //Add .out extension to list of file extensions to delete
+            // Add .out extension to list of file extensions to delete
             m_jobParams.AddResultFileExtensionToSkip(".out");
 
-            //Package out files into concatenated text files
+            // Package out files into concatenated text files
             if (!ConcatOutFiles(m_WorkDir, m_Dataset, m_JobNum))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            //Try to ensure there are no open objects with file handles
-            Thread.Sleep(500);         // 1 second delay
+            // Try to ensure there are no open objects with file handles
+            Thread.Sleep(500);
             clsProgRunner.GarbageCollectNow();
 
-            //Zip concatenated .out files
+            // Zip concatenated .out files
             if (!ZipConcatOutFile(m_WorkDir, m_JobNum))
             {
                 return CloseOutType.CLOSEOUT_ERROR_ZIPPING_FILE;
             }
 
-            //If we got here, everything worked
+            // If we got here, everything worked
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
@@ -628,8 +622,8 @@ namespace AnalysisManagerSequestPlugin
         {
             var MAX_RETRY_ATTEMPTS = 5;
             var MAX_INTERLOCK_WAIT_TIME_MINUTES = 30;
-            var intRetriesRemaining = 0;
-            var blnSuccess = false;
+            bool blnSuccess;
+
             var oRandom = new Random();
 
             if (m_DebugLevel >= 2)
@@ -637,7 +631,7 @@ namespace AnalysisManagerSequestPlugin
                 LogDebug("Concatenating .out files");
             }
 
-            intRetriesRemaining = MAX_RETRY_ATTEMPTS;
+            var intRetriesRemaining = MAX_RETRY_ATTEMPTS;
 
             do
             {
@@ -667,8 +661,8 @@ namespace AnalysisManagerSequestPlugin
                     }
                 }
 
-                //Make sure objects are released
-                Thread.Sleep(1000);         // 1 second delay
+                // Make sure objects are released
+                Thread.Sleep(500);
                 clsProgRunner.GarbageCollectNow();
 
                 try
@@ -682,7 +676,7 @@ namespace AnalysisManagerSequestPlugin
 
                     using (var swTargetFile = new StreamWriter(new FileStream(mTempConcatenatedOutFilePath, FileMode.Append, FileAccess.Write, FileShare.Read)))
                     {
-                        foreach (FileInfo fiOutFile in diWorkDir.GetFileSystemInfos("*.out"))
+                        foreach (var fiOutFile in diWorkDir.GetFiles("*.out"))
                         {
                             AppendOutFile(fiOutFile, swTargetFile);
                         }
@@ -719,8 +713,7 @@ namespace AnalysisManagerSequestPlugin
                 // Now rename the _out.txt.tmp file to _out.txt
                 var fiConcatenatedOutFile = new FileInfo(mTempConcatenatedOutFilePath);
 
-                string strOutFilePathNew = null;
-                strOutFilePathNew = Path.Combine(m_WorkDir, m_Dataset + "_out.txt");
+                var strOutFilePathNew = Path.Combine(m_WorkDir, m_Dataset + "_out.txt");
 
                 if (File.Exists(strOutFilePathNew))
                 {
@@ -1350,7 +1343,7 @@ namespace AnalysisManagerSequestPlugin
 
             LogMessage("Zipping concatenated output file, job " + m_JobNum + ", step " + m_jobParams.GetParam("Step"));
 
-            //Verify file exists
+            // Verify file exists
             if (!File.Exists(OutFilePath))
             {
                 m_message = "Unable to find concatenated .out file";
@@ -1360,7 +1353,7 @@ namespace AnalysisManagerSequestPlugin
 
             try
             {
-                //Zip the file
+                // Zip the file
                 if (!base.ZipFile(OutFilePath, false))
                 {
                     m_message = "Error zipping concat out file";

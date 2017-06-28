@@ -34,16 +34,16 @@ namespace DTASpectraFileGen
         protected ProcessResults m_Results;
         protected IMgrParams m_MgrParams;
         protected IJobParams m_JobParams;
-        protected short m_DebugLevel = 0;
+        protected short m_DebugLevel;
         protected int m_SpectraFileCount;
         protected IStatusFile m_StatusTools;
 
         protected clsAnalysisToolRunnerBase m_ToolRunner;
 
-        protected bool m_AbortRequested = false;
+        protected bool m_AbortRequested;
 
         // The following is a value between 0 and 100
-        protected float m_Progress = 0;
+        protected float m_Progress;
 
         #endregion
 
@@ -51,54 +51,36 @@ namespace DTASpectraFileGen
 
         public IStatusFile StatusTools
         {
-            set { m_StatusTools = value; }
+            set => m_StatusTools = value;
         }
 
-        public string DtaToolNameLoc
-        {
-            get { return m_DtaToolNameLoc; }
-        }
+        public string DtaToolNameLoc => m_DtaToolNameLoc;
 
-        public string ErrMsg
-        {
-            get { return m_ErrMsg; }
-        }
+        public string ErrMsg => m_ErrMsg;
 
         public IMgrParams MgrParams
         {
-            set { m_MgrParams = value; }
+            set => m_MgrParams = value;
         }
 
         public IJobParams JobParams
         {
-            set { m_JobParams = value; }
+            set => m_JobParams = value;
         }
 
-        public ProcessStatus Status
-        {
-            get { return m_Status; }
-        }
+        public ProcessStatus Status => m_Status;
 
-        public ProcessResults Results
-        {
-            get { return m_Results; }
-        }
+        public ProcessResults Results => m_Results;
 
         public int DebugLevel
         {
-            get { return m_DebugLevel; }
-            set { m_DebugLevel = (short)value; }
+            get => m_DebugLevel;
+            set => m_DebugLevel = (short)value;
         }
 
-        public int SpectraFileCount
-        {
-            get { return m_SpectraFileCount; }
-        }
+        public int SpectraFileCount => m_SpectraFileCount;
 
-        public float Progress
-        {
-            get { return m_Progress; }
-        }
+        public float Progress => m_Progress;
 
         #endregion
 
@@ -147,11 +129,9 @@ namespace DTASpectraFileGen
                 m_ErrMsg = "";
                 return true;
             }
-            else
-            {
-                m_ErrMsg = "Directory " + TestDir + " not found";
-                return false;
-            }
+
+            m_ErrMsg = "Directory " + TestDir + " not found";
+            return false;
         }
 
         protected bool VerifyFileExists(string TestFile)
@@ -162,11 +142,9 @@ namespace DTASpectraFileGen
                 m_ErrMsg = "";
                 return true;
             }
-            else
-            {
-                m_ErrMsg = "File " + TestFile + " not found";
-                return false;
-            }
+
+            m_ErrMsg = "File " + TestFile + " not found";
+            return false;
         }
 
         protected virtual bool InitSetup()
@@ -254,9 +232,9 @@ namespace DTASpectraFileGen
             {
                 var objFolderInfo = new DirectoryInfo(m_WorkDir);
                 var objFiles = objFolderInfo.GetFiles("*.dta");
-                var intDTACount = 0;
+                int intDTACount;
 
-                if (objFiles == null || objFiles.Length <= 0)
+                if (objFiles.Length <= 0)
                 {
                     intDTACount = 0;
                 }

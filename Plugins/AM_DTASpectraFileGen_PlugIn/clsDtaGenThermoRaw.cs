@@ -49,6 +49,7 @@ namespace DTASpectraFileGen
 
         // API constants
         private const short OF_READ = 0x0;
+
         private const short OF_READWRITE = 0x2;
         private const short OF_WRITE = 0x1;
         private const short OF_SHARE_COMPAT = 0x0;
@@ -132,7 +133,7 @@ namespace DTASpectraFileGen
         protected virtual string ConstructDTAToolPath()
         {
             var strDTAGenProgram = m_JobParams.GetJobParameter("DtaGenerator", "");
-            string strDTAToolPath = null;
+            string strDTAToolPath;
 
             if (strDTAGenProgram.ToLower() == EXTRACT_MSN_FILENAME.ToLower())
             {
@@ -157,46 +158,42 @@ namespace DTASpectraFileGen
         /// <remarks></remarks>
         private bool VerifyRawFileExists(string WorkDir, string DSName)
         {
-            string strExtension = null;
+            string dataFileExtension;
 
             // Verifies a the data file exists in specfied directory
             switch (m_RawDataType)
             {
                 case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile:
-                    strExtension = clsAnalysisResources.DOT_RAW_EXTENSION;
+                    dataFileExtension = clsAnalysisResources.DOT_RAW_EXTENSION;
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.mzXML:
-                    strExtension = clsAnalysisResources.DOT_MZXML_EXTENSION;
+                    dataFileExtension = clsAnalysisResources.DOT_MZXML_EXTENSION;
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.mzML:
-                    strExtension = clsAnalysisResources.DOT_MZML_EXTENSION;
+                    dataFileExtension = clsAnalysisResources.DOT_MZML_EXTENSION;
                     break;
                 default:
-                    m_ErrMsg = "Unsupported data type: " + m_RawDataType;
+                    LogError("Unsupported data type: " + m_RawDataType);
                     return false;
             }
 
-            m_JobParams.AddResultFileToSkip(DSName + strExtension);
+            m_JobParams.AddResultFileToSkip(DSName + dataFileExtension);
 
-            if (File.Exists(Path.Combine(WorkDir, DSName + strExtension)))
+            if (File.Exists(Path.Combine(WorkDir, DSName + dataFileExtension)))
             {
                 m_ErrMsg = string.Empty;
                 return true;
             }
-            else
+
+            var mgfFileExtension = clsAnalysisResources.DOT_MGF_EXTENSION;
+            if (File.Exists(Path.Combine(WorkDir, DSName + mgfFileExtension)))
             {
-                strExtension = clsAnalysisResources.DOT_MGF_EXTENSION;
-                if (File.Exists(Path.Combine(WorkDir, DSName + strExtension)))
-                {
-                    m_ErrMsg = string.Empty;
-                    return true;
-                }
-                else
-                {
-                    m_ErrMsg = "Data file " + DSName + strExtension + " not found in working directory";
-                    return false;
-                }
+                m_ErrMsg = string.Empty;
+                return true;
             }
+
+            LogError("Instrument data file not found in working directory for dataset " + DSName);
+            return false;
         }
 
         /// <summary>
@@ -219,11 +216,11 @@ namespace DTASpectraFileGen
 
             // Raw data file exists?
             if (!VerifyRawFileExists(m_WorkDir, m_Dataset))
-                return false;            // Error message handled by VerifyRawFileExists
+                return false; // Error message handled by VerifyRawFileExists
 
             // DTA creation tool exists?
             if (!VerifyFileExists(m_DtaToolNameLoc))
-                return false;            // Error message handled by VerifyFileExists
+                return false; // Error message handled by VerifyFileExists
 
             // If we got to here, there was no problem
             return true;
@@ -232,9 +229,9 @@ namespace DTASpectraFileGen
         /// <summary>
         /// Determines the maximum scan number in the .raw file
         /// </summary>
-        /// <param name="RawFile">Data file name</param>
+        /// <param name="rawFilePath">Data file name</param>
         /// <returns>Number of scans found</returns>
-        protected int GetMaxScan(string RawFile)
+        protected int GetMaxScan(string rawFilePath)
         {
             //**************************************************************************************************************************************************************
             //	Alternate method of determining Max Scan using ICR2LS
@@ -256,21 +253,31 @@ namespace DTASpectraFileGen
             //	Alternate method of determining MaxScan using XCalibur OCX.
             //   Possibly causes .raw file lock.
             //**************************************************************************************************************************************************************
-            var NumScans = 0;
+            var numScans = 0;
 
             var XRawFile = new MSFileReaderLib.MSFileReader_XRawfile();
-            XRawFile.Open(RawFile);
+            XRawFile.Open(rawFilePath);
             XRawFile.SetCurrentController(0, 1);
-            XRawFile.GetNumSpectra(NumScans);
+            XRawFile.GetNumSpectra(numScans);
             // XRawFile.GetFirstSpectrumNumber(StartScan)
             // XRawFile.GetLastSpectrumNumber(StopScan)
             XRawFile.Close();
 
             // Pause and garbage collect to allow release of file lock on .raw file
-            Thread.Sleep(3000);      // 3 second delay
+            Thread.Sleep(1500); // 1.5 second delay
             PRISM.clsProgRunner.GarbageCollectNow();
 
-            return NumScans;
+            return numScans;
+        }
+
+        /// <summary>
+        /// Update m_ErrMsg and raise event OnErrorEvent
+        /// </summary>
+        /// <param name="errorMessage"></param>
+        private void LogError(string errorMessage)
+        {
+            m_ErrMsg = errorMessage;
+            OnErrorEvent(m_ErrMsg);
         }
 
         /// <summary>
@@ -352,32 +359,32 @@ namespace DTASpectraFileGen
 
             // Note: Defaults are used if certain parameters are not present in m_JobParams
 
-            var ScanStart = m_JobParams.GetJobParameter("ScanControl", "ScanStart", 1);
-            var ScanStop = m_JobParams.GetJobParameter("ScanControl", "ScanStop", DEFAULT_SCAN_STOP);
+            var scanStart = m_JobParams.GetJobParameter("ScanControl", "ScanStart", 1);
+            var scanStop = m_JobParams.GetJobParameter("ScanControl", "ScanStop", DEFAULT_SCAN_STOP);
 
             // Note: Set MaxIntermediateScansWhenGrouping to 0 to disable grouping
-            var MaxIntermediateScansWhenGrouping = m_JobParams.GetJobParameter("MaxIntermediateScansWhenGrouping", 1);
+            var maxIntermediateScansWhenGrouping = m_JobParams.GetJobParameter("MaxIntermediateScansWhenGrouping", 1);
 
-            var MWLower = m_JobParams.GetJobParameter("MWControl", "MWStart", "200");
-            var MWUpper = m_JobParams.GetJobParameter("MWControl", "MWStop", "5000");
-            var IonCount = m_JobParams.GetJobParameter("IonCounts", "IonCount", "35");
-            var MassTol = m_JobParams.GetJobParameter("MassTol", "MassTol", "3");
+            var mwLower = m_JobParams.GetJobParameter("MWControl", "MWStart", "200");
+            var mwUpper = m_JobParams.GetJobParameter("MWControl", "MWStop", "5000");
+            var ionCount = m_JobParams.GetJobParameter("IonCounts", "IonCount", "35");
+            var massTol = m_JobParams.GetJobParameter("MassTol", "MassTol", "3");
 
-            var CreateDefaultCharges = m_JobParams.GetJobParameter("Charges", "CreateDefaultCharges", true);
+            var createDefaultCharges = m_JobParams.GetJobParameter("Charges", "CreateDefaultCharges", true);
 
-            var ExplicitChargeStart = (short)m_JobParams.GetJobParameter("Charges", "ExplicitChargeStart", 0);
-            var ExplicitChargeEnd = (short)m_JobParams.GetJobParameter("Charges", "ExplicitChargeEnd", 0);
+            var explicitChargeStart = (short)m_JobParams.GetJobParameter("Charges", "ExplicitChargeStart", 0);
+            var explicitChargeEnd = (short)m_JobParams.GetJobParameter("Charges", "ExplicitChargeEnd", 0);
 
             // Get the maximum number of scans in the file
-            var RawFile = string.Copy(strInstrumentDataFilePath);
+            var rawFilePath = string.Copy(strInstrumentDataFilePath);
             if (Path.GetExtension(strInstrumentDataFilePath).ToLower() != clsAnalysisResources.DOT_RAW_EXTENSION)
             {
-                RawFile = Path.ChangeExtension(RawFile, clsAnalysisResources.DOT_RAW_EXTENSION);
+                rawFilePath = Path.ChangeExtension(rawFilePath, clsAnalysisResources.DOT_RAW_EXTENSION);
             }
 
-            if (File.Exists(RawFile))
+            if (File.Exists(rawFilePath))
             {
-                m_MaxScanInFile = GetMaxScan(RawFile);
+                m_MaxScanInFile = GetMaxScan(rawFilePath);
             }
             else
             {
@@ -388,11 +395,11 @@ namespace DTASpectraFileGen
             {
                 case -1:
                     // Generic error getting number of scans
-                    m_ErrMsg = "Unknown error getting number of scans; Maxscan = " + m_MaxScanInFile;
+                    LogError("Unknown error getting number of scans; Maxscan = " + m_MaxScanInFile);
                     return false;
                 case 0:
                     // Unable to read file; treat this is a warning
-                    m_ErrMsg = "Warning: unable to get maxscan; Maxscan = 0";
+                    LogError("Warning: unable to get maxscan; Maxscan = 0");
                     break;
                 default:
                     if (m_MaxScanInFile > 0)
@@ -401,43 +408,43 @@ namespace DTASpectraFileGen
                         break;
                     }
                     // This should never happen
-                    m_ErrMsg = "Critical error getting number of scans; Maxscan = " + m_MaxScanInFile;
+                    LogError("Critical error getting number of scans; Maxscan = " + m_MaxScanInFile);
                     return false;
             }
 
             // Verify max scan specified is in file
             if (m_MaxScanInFile > 0)
             {
-                if (ScanStart == 1 && ScanStop == 999999 && ScanStop < m_MaxScanInFile)
+                if (scanStart == 1 && scanStop == 999999 && scanStop < m_MaxScanInFile)
                 {
                     // The default scan range for processing all scans has traditionally be 1 to 999999
                     // This scan range is defined for this job's settings file, but this dataset has over 1 million spectra
                     // Assume that the user actually wants to analyze all of the spectra
-                    ScanStop = m_MaxScanInFile;
+                    scanStop = m_MaxScanInFile;
                 }
 
-                if (ScanStop > m_MaxScanInFile)
-                    ScanStop = m_MaxScanInFile;
+                if (scanStop > m_MaxScanInFile)
+                    scanStop = m_MaxScanInFile;
             }
 
             // Determine max number of scans to be performed
-            m_NumScans = ScanStop - ScanStart + 1;
+            m_NumScans = scanStop - scanStart + 1;
 
             // Setup a program runner tool to make the spectra files
             mCmdRunner = new clsRunDosProgram(m_WorkDir);
             mCmdRunner.ErrorEvent += CmdRunner_ErrorEvent;
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
-            var LocCharge = 0;
+            int locCharge;
 
             // Loop through the requested charge states, starting first with the default charges if appropriate
-            if (CreateDefaultCharges)
+            if (createDefaultCharges)
             {
-                LocCharge = 0;
+                locCharge = 0;
             }
             else
             {
-                LocCharge = ExplicitChargeStart;
+                locCharge = explicitChargeStart;
             }
 
             m_RunningExtractMSn = m_DtaToolNameLoc.ToLower().Contains(EXTRACT_MSN_FILENAME.ToLower());
@@ -467,35 +474,35 @@ namespace DTASpectraFileGen
                 mDeconMSnProgressWatcher.EnableRaisingEvents = true;
             }
 
-            while (LocCharge <= ExplicitChargeEnd && !m_AbortRequested)
+            while (locCharge <= explicitChargeEnd && !m_AbortRequested)
             {
-                if (LocCharge == 0 && CreateDefaultCharges || LocCharge > 0)
+                if (locCharge == 0 && createDefaultCharges || locCharge > 0)
                 {
                     // If we are using extract_msn.exe, then need to loop through .dta creation until no more files are created
                     // Limit to chunks of LOOPING_CHUNK_SIZE scans due to limitation of extract_msn.exe
                     // (only used if selected in manager settings, but "UseDTALooping" is typically set to True)
 
-                    var LocScanStart = ScanStart;
+                    var LocScanStart = scanStart;
                     var LocScanStop = 0;
 
                     if (m_RunningExtractMSn && m_MgrParams.GetParam("UseDTALooping", false))
                     {
-                        if (ScanStop > (LocScanStart + LOOPING_CHUNK_SIZE))
+                        if (scanStop > (LocScanStart + LOOPING_CHUNK_SIZE))
                         {
                             LocScanStop = LocScanStart + LOOPING_CHUNK_SIZE;
                         }
                         else
                         {
-                            LocScanStop = ScanStop;
+                            LocScanStop = scanStop;
                         }
                     }
                     else
                     {
-                        LocScanStop = ScanStop;
+                        LocScanStop = scanStop;
                     }
 
                     // Loop until no more .dta files are created or ScanStop is reached
-                    while ((LocScanStart <= ScanStop))
+                    while (LocScanStart <= scanStop)
                     {
                         // Check for abort
                         if (m_AbortRequested)
@@ -505,10 +512,10 @@ namespace DTASpectraFileGen
                         }
 
                         // Set up command
-                        var cmdStr = "-I" + IonCount + " -G1";
-                        if (LocCharge > 0)
+                        var cmdStr = "-I" + ionCount + " -G1";
+                        if (locCharge > 0)
                         {
-                            cmdStr += " -C" + LocCharge;
+                            cmdStr += " -C" + locCharge;
                         }
 
                         cmdStr += " -F" + LocScanStart + " -L" + LocScanStop;
@@ -518,10 +525,10 @@ namespace DTASpectraFileGen
 
                         if (m_RunningExtractMSn)
                         {
-                            cmdStr += " -S" + MaxIntermediateScansWhenGrouping;
+                            cmdStr += " -S" + maxIntermediateScansWhenGrouping;
                         }
 
-                        cmdStr += " -B" + MWLower + " -T" + MWUpper + " -M" + MassTol;
+                        cmdStr += " -B" + mwLower + " -T" + mwUpper + " -M" + massTol;
                         cmdStr += " -D" + m_WorkDir;
 
                         if (!m_RunningExtractMSn)
@@ -562,7 +569,7 @@ namespace DTASpectraFileGen
                             LogDTACreationStats("clsDtaGenThermoRaw.MakeDTAFiles", Path.GetFileNameWithoutExtension(m_DtaToolNameLoc),
                                 "m_RunProgTool.RunProgram returned False");
 
-                            m_ErrMsg = "Error running " + Path.GetFileNameWithoutExtension(m_DtaToolNameLoc);
+                            LogError("Error running " + Path.GetFileNameWithoutExtension(m_DtaToolNameLoc));
                             return false;
                         }
 
@@ -574,27 +581,25 @@ namespace DTASpectraFileGen
                         // Update loopy parameters
                         LocScanStart = LocScanStop + 1;
                         LocScanStop = LocScanStart + LOOPING_CHUNK_SIZE;
-                        if (LocScanStop > ScanStop)
+                        if (LocScanStop > scanStop)
                         {
-                            LocScanStop = ScanStop;
+                            LocScanStop = scanStop;
                         }
                     }
                 }
 
-                if (LocCharge == 0)
+                if (locCharge == 0)
                 {
-                    if (ExplicitChargeStart <= 0 | ExplicitChargeEnd <= 0)
+                    if (explicitChargeStart <= 0 | explicitChargeEnd <= 0)
                     {
                         break;
                     }
-                    else
-                    {
-                        LocCharge = ExplicitChargeStart;
-                    }
+
+                    locCharge = explicitChargeStart;
                 }
                 else
                 {
-                    LocCharge += 1;
+                    locCharge += 1;
                 }
             }
 
@@ -626,16 +631,15 @@ namespace DTASpectraFileGen
                     "m_Status = ProcessStatus.SF_ABORTING");
                 return false;
             }
-            else if (m_Status == ProcessStatus.SF_ERROR)
+
+            if (m_Status == ProcessStatus.SF_ERROR)
             {
                 LogDTACreationStats("clsDtaGenThermoRaw.MakeDTAFiles", Path.GetFileNameWithoutExtension(m_DtaToolNameLoc),
-                    "m_Status = ProcessStatus.SF_ERROR ");
+                                    "m_Status = ProcessStatus.SF_ERROR ");
                 return false;
             }
-            else
-            {
-                return true;
-            }
+
+            return true;
         }
 
         protected virtual void MonitorProgress()
@@ -655,6 +659,8 @@ namespace DTASpectraFileGen
                     while (!swProgress.EndOfStream)
                     {
                         var strLineIn = swProgress.ReadLine();
+                        if (string.IsNullOrWhiteSpace(strLineIn))
+                            continue;
 
                         if (strLineIn.StartsWith("Percent complete"))
                         {
@@ -682,7 +688,7 @@ namespace DTASpectraFileGen
             }
         }
 
-        private Regex reDTAFile = new Regex(@"(\d+)\.\d+\.\d+\.dta$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private readonly Regex reDTAFile = new Regex(@"(\d+)\.\d+\.\d+\.dta$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         private void UpdateDTAProgress(string DTAFileName)
         {
@@ -692,10 +698,9 @@ namespace DTASpectraFileGen
                 var reMatch = reDTAFile.Match(DTAFileName);
                 if (reMatch.Success)
                 {
-                    var intScanNumber = 0;
-                    if (int.TryParse(reMatch.Groups[1].Value, out intScanNumber))
+                    if (int.TryParse(reMatch.Groups[1].Value, out var scanNumber))
                     {
-                        m_Progress = intScanNumber / (float)m_MaxScanInFile * 100f;
+                        m_Progress = scanNumber / (float)m_MaxScanInFile * 100f;
                     }
                 }
             }
@@ -720,7 +725,7 @@ namespace DTASpectraFileGen
 
                 if (FileList.GetLength(0) < 1)
                 {
-                    m_ErrMsg = "No dta files created";
+                    LogError("No dta files created");
                     return false;
                 }
             }
@@ -731,7 +736,7 @@ namespace DTASpectraFileGen
 
                 if (FileList.GetLength(0) == 0)
                 {
-                    m_ErrMsg = "_dta.txt file was not created";
+                    LogError("_dta.txt file was not created");
                     return false;
                 }
             }

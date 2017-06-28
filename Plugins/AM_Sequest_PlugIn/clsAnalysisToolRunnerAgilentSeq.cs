@@ -8,28 +8,27 @@ namespace AnalysisManagerSequestPlugin
     {
         protected CloseOutType DeleteDataFile()
         {
-            //Deletes the data files (.mgf and .cdf) from the working directory
-            string[] FoundFiles = null;
+            // Deletes the data files (.mgf and .cdf) from the working directory
 
             try
             {
-                //Delete the .mgf file
-                FoundFiles = Directory.GetFiles(m_WorkDir, "*.mgf");
-                foreach (var MyFile in FoundFiles)
+                // Delete the .mgf file
+                var mgfFiles = Directory.GetFiles(m_WorkDir, "*.mgf");
+                foreach (var file in mgfFiles)
                 {
-                    DeleteFileWithRetries(MyFile);
+                    DeleteFileWithRetries(file);
                 }
-                //Delete the .cdf file, if present
-                FoundFiles = Directory.GetFiles(m_WorkDir, "*.cdf");
-                foreach (var MyFile in FoundFiles)
+
+                // Delete the .cdf file, if present
+                var cdfFiles = Directory.GetFiles(m_WorkDir, "*.cdf");
+                foreach (var file in cdfFiles)
                 {
-                    DeleteFileWithRetries(MyFile);
+                    DeleteFileWithRetries(file);
                 }
             }
-            catch (Exception Err)
+            catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR,
-                    "Error deleting raw data file(s), job " + m_JobNum + ", step " + m_jobParams.GetParam("Step") + Err.Message);
+                LogError("Error deleting mgf and cdf file(s)", ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
             return CloseOutType.CLOSEOUT_SUCCESS;

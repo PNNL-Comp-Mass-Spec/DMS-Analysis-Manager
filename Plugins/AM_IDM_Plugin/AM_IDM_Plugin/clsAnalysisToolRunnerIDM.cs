@@ -26,7 +26,7 @@ namespace AnalysisManager_IDM_Plugin
             {
                 var skipIDM = false;
 
-                //Do the base class stuff
+                // Do the base class stuff
                 if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -52,7 +52,7 @@ namespace AnalysisManager_IDM_Plugin
                         if (cloneSuccess)
                             skipIDM = true;
 
-                        //success = sqLiteUtils.CopySqliteTable(fiIDMResultsDB.FullName, "t_precursor_interference", Path.Combine(m_WorkDir, "Results.db3"));
+                        // success = sqLiteUtils.CopySqliteTable(fiIDMResultsDB.FullName, "t_precursor_interference", Path.Combine(m_WorkDir, "Results.db3"));
 
                     }
                     catch (Exception ex)
@@ -78,7 +78,7 @@ namespace AnalysisManager_IDM_Plugin
                         LogDebug("clsAnalysisToolRunnerIDM.RunTool(): Enter");
                     }
 
-                    //Change the name of the log file for the local log file to the plug in log filename
+                    // Change the name of the log file for the local log file to the plug in log filename
                     var LogFileName = Path.Combine(m_WorkDir, "IDM_Log");
                     GlobalContext.Properties["LogName"] = LogFileName;
                     clsLogTools.ChangeLogFileName(LogFileName);
@@ -95,14 +95,14 @@ namespace AnalysisManager_IDM_Plugin
 
                         processingSuccess = idm.Run(m_WorkDir, "Results.db3");
 
-                        //Change the name of the log file for the local log file to the plug in log filename
+                        // Change the name of the log file for the local log file to the plug in log filename
                         LogFileName = m_mgrParams.GetParam("logfilename");
                         GlobalContext.Properties["LogName"] = LogFileName;
                         clsLogTools.ChangeLogFileName(LogFileName);
                     }
                     catch (Exception ex)
                     {
-                        //Change the name of the log file for the local log file to the plug in log filename
+                        // Change the name of the log file for the local log file to the plug in log filename
                         LogFileName = m_mgrParams.GetParam("logfilename");
                         GlobalContext.Properties["LogName"] = LogFileName;
                         clsLogTools.ChangeLogFileName(LogFileName);
@@ -112,14 +112,14 @@ namespace AnalysisManager_IDM_Plugin
                     }
                 }
 
-                //Stop the job timer
+                // Stop the job timer
                 m_StopTime = DateTime.UtcNow;
                 m_progress = 100;
 
-                //Add the current job data to the summary file
+                // Add the current job data to the summary file
                 UpdateSummaryFile();
 
-                //Make sure objects are released
+                // Make sure objects are released
                 Thread.Sleep(500);
                 clsProgRunner.GarbageCollectNow();
 

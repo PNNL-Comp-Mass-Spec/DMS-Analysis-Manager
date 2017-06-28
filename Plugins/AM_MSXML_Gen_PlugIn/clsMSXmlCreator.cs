@@ -54,7 +54,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
         public bool ConvertMzMLToMzXML()
         {
             string ProgLoc = null;
-            string CmdStr = null;
+            string cmdStr = null;
 
             string strSourceFilePath = null;
 
@@ -83,16 +83,16 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 OnStatusEvent("Creating the .mzXML file for " + m_Dataset + " using " + Path.GetFileName(strSourceFilePath));
             }
 
-            //Setup a program runner tool to call MSConvert
+            // Setup a program runner tool to call MSConvert
             var oProgRunner = new clsRunDosProgram(m_WorkDir);
             RegisterEvents(oProgRunner);
 
-            //Set up command
-            CmdStr = " " + clsAnalysisToolRunnerBase.PossiblyQuotePath(strSourceFilePath) + " --32 --mzXML -o " + m_WorkDir;
+            // Set up command
+            cmdStr = " " + clsAnalysisToolRunnerBase.PossiblyQuotePath(strSourceFilePath) + " --32 --mzXML -o " + m_WorkDir;
 
             if (m_DebugLevel > 0)
             {
-                OnStatusEvent(ProgLoc + " " + CmdStr);
+                OnStatusEvent(ProgLoc + " " + cmdStr);
             }
 
             oProgRunner.CreateNoWindow = true;
@@ -105,7 +105,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
             var dtStartTimeUTC = DateTime.UtcNow;
 
-            if (!oProgRunner.RunProgram(ProgLoc, CmdStr, "MSConvert", true))
+            if (!oProgRunner.RunProgram(ProgLoc, cmdStr, "MSConvert", true))
             {
                 // .RunProgram returned False
                 m_ErrorMessage = "Error running " + Path.GetFileNameWithoutExtension(ProgLoc) + " to convert the .mzML file to a .mzXML file";

@@ -27,14 +27,14 @@ namespace AnalysisManagerXTandemPlugIn
                 return result;
             }
 
-            //Retrieve Fasta file
+            // Retrieve Fasta file
             if (!RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")))
                 return CloseOutType.CLOSEOUT_FAILED;
 
             // XTandem just copies its parameter file from the central repository
             LogMessage("Getting param file");
 
-            //Retrieve param file
+            // Retrieve param file
             if (!RetrieveGeneratedParamFile(m_jobParams.GetParam("ParmFileName")))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -44,7 +44,7 @@ namespace AnalysisManagerXTandemPlugIn
             // Note that if the file was found in MyEMSL then RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
             if (!FileSearch.RetrieveDtaFiles())
             {
-                //Errors were reported in function call, so just return
+                // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -60,16 +60,16 @@ namespace AnalysisManagerXTandemPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            //Add all the extensions of the files to delete after run
-            m_jobParams.AddResultFileExtensionToSkip("_dta.zip"); //Zipped DTA
-            m_jobParams.AddResultFileExtensionToSkip("_dta.txt"); //Unzipped, concatenated DTA
-            m_jobParams.AddResultFileExtensionToSkip(".dta");  //DTA files
+            // Add all the extensions of the files to delete after run
+            m_jobParams.AddResultFileExtensionToSkip("_dta.zip"); // Zipped DTA
+            m_jobParams.AddResultFileExtensionToSkip("_dta.txt"); // Unzipped, concatenated DTA
+            m_jobParams.AddResultFileExtensionToSkip(".dta");     // DTA files
 
             // If the _dta.txt file is over 2 GB in size, then condense it
 
             if (!ValidateDTATextFileSize(m_WorkingDir, DatasetName + "_dta.txt"))
             {
-                //Errors were reported in function call, so just return
+                // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -97,7 +97,7 @@ namespace AnalysisManagerXTandemPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (!base.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -133,7 +133,7 @@ namespace AnalysisManagerXTandemPlugIn
             var LocalOrgDBFolder = m_mgrParams.GetParam("orgdbdir");
             var OrgFilePath = Path.Combine(LocalOrgDBFolder, OrgDBName);
 
-            //edit base taxonomy file into actual
+            // Edit base taxonomy file into actual
             try
             {
                 // Create an instance of StreamWriter to write to a file.
@@ -157,13 +157,13 @@ namespace AnalysisManagerXTandemPlugIn
                 inputBase.Close();
                 inputFile.Close();
             }
-            catch (Exception E)
+            catch (Exception ex)
             {
                 // Let the user know what went wrong.
-                LogError("clsAnalysisResourcesXT.MakeTaxonomyFile, The file could not be read" + E.Message);
+                LogError("clsAnalysisResourcesXT.MakeTaxonomyFile, The file could not be read" + ex.Message);
             }
 
-            //get rid of base file
+            // Get rid of base file
             File.Delete(Path.Combine(WorkingDir, "taxonomy_base.xml"));
 
             return true;
@@ -182,10 +182,10 @@ namespace AnalysisManagerXTandemPlugIn
             var TaxonomyFilePath = Path.Combine(WorkingDir, "taxonomy.xml");
             var OutputFilePath = Path.Combine(WorkingDir, DatasetName + "_xt.xml");
 
-            //make input file
-            //start by adding the contents of the parameter file.
-            //replace substitution tags in input_base.txt with proper file path references
-            //and add to input file (in proper XML format)
+            // Make input file
+            // Start by adding the contents of the parameter file.
+            // Replace substitution tags in input_base.txt with proper file path references
+            // and add to input file (in proper XML format)
             try
             {
                 // Create an instance of StreamWriter to write to a file.
@@ -226,20 +226,20 @@ namespace AnalysisManagerXTandemPlugIn
                 inputFile.Close();
                 paramFile.Close();
             }
-            catch (Exception E)
+            catch (Exception ex)
             {
                 // Let the user know what went wrong.
-                LogError("clxAnalysisResourcesXT.MakeInputFile, The file could not be read" + E.Message);
+                LogError("clxAnalysisResourcesXT.MakeInputFile, The file could not be read" + ex.Message);
                 result = false;
             }
 
-            //get rid of base file
+            // Get rid of base file
             File.Delete(Path.Combine(WorkingDir, "input_base.txt"));
 
             return result;
         }
 
-        static internal string ConstructModificationDefinitionsFilename(string ParameterFileName)
+        internal static string ConstructModificationDefinitionsFilename(string ParameterFileName)
         {
             return Path.GetFileNameWithoutExtension(ParameterFileName) + MOD_DEFS_FILE_SUFFIX;
         }
@@ -248,16 +248,9 @@ namespace AnalysisManagerXTandemPlugIn
         {
             const int FILE_SIZE_THRESHOLD = int.MaxValue;
 
-            string strInputFilePath = null;
-            string strFilePathOld = null;
-
-            string strMessage = null;
-
-            var blnSuccess = false;
-
             try
             {
-                strInputFilePath = Path.Combine(strWorkDir, strInputFileName);
+                var strInputFilePath = Path.Combine(strWorkDir, strInputFileName);
                 var ioFileInfo = new FileInfo(strInputFilePath);
 
                 if (!ioFileInfo.Exists)
@@ -271,14 +264,14 @@ namespace AnalysisManagerXTandemPlugIn
                 {
                     // Need to condense the file
 
-                    strMessage = ioFileInfo.Name + " is " + (ioFileInfo.Length / 1024.0 / 1024 / 1024).ToString("0.00") +
+                    var strMessage = ioFileInfo.Name + " is " + (ioFileInfo.Length / 1024.0 / 1024 / 1024).ToString("0.00") +
                                  " GB in size; will now condense it by combining data points with consecutive zero-intensity values";
                     LogMessage(strMessage);
 
                     mCDTACondenser = new CondenseCDTAFile.clsCDTAFileCondenser();
                     mCDTACondenser.ProgressChanged += mCDTACondenser_ProgressChanged;
 
-                    blnSuccess = mCDTACondenser.ProcessFile(ioFileInfo.FullName, ioFileInfo.DirectoryName);
+                    var blnSuccess = mCDTACondenser.ProcessFile(ioFileInfo.FullName, ioFileInfo.DirectoryName);
 
                     if (!blnSuccess)
                     {
@@ -286,50 +279,48 @@ namespace AnalysisManagerXTandemPlugIn
                         LogError(m_message);
                         return false;
                     }
-                    else
+
+                    // Wait 500 msec, then check the size of the new _dta.txt file
+                    Thread.Sleep(500);
+
+                    ioFileInfo.Refresh();
+
+                    if (m_DebugLevel >= 1)
                     {
-                        // Wait 500 msec, then check the size of the new _dta.txt file
-                        Thread.Sleep(500);
+                        strMessage = "Condensing complete; size of the new _dta.txt file is " +
+                                     (ioFileInfo.Length / 1024.0 / 1024 / 1024).ToString("0.00") + " GB";
+                        LogMessage(strMessage);
+                    }
 
-                        ioFileInfo.Refresh();
+                    try
+                    {
+                        var strFilePathOld = Path.Combine(strWorkDir, Path.GetFileNameWithoutExtension(ioFileInfo.FullName) + "_Old.txt");
 
-                        if (m_DebugLevel >= 1)
+                        if (m_DebugLevel >= 2)
                         {
-                            strMessage = "Condensing complete; size of the new _dta.txt file is " +
-                                         (ioFileInfo.Length / 1024.0 / 1024 / 1024).ToString("0.00") + " GB";
+                            strMessage = "Now deleting file " + strFilePathOld;
                             LogMessage(strMessage);
                         }
 
-                        try
+                        ioFileInfo = new FileInfo(strFilePathOld);
+                        if (ioFileInfo.Exists)
                         {
-                            strFilePathOld = Path.Combine(strWorkDir, Path.GetFileNameWithoutExtension(ioFileInfo.FullName) + "_Old.txt");
-
-                            if (m_DebugLevel >= 2)
-                            {
-                                strMessage = "Now deleting file " + strFilePathOld;
-                                LogMessage(strMessage);
-                            }
-
-                            ioFileInfo = new FileInfo(strFilePathOld);
-                            if (ioFileInfo.Exists)
-                            {
-                                ioFileInfo.Delete();
-                            }
-                            else
-                            {
-                                strMessage = "Old _DTA.txt file not found:" + ioFileInfo.FullName + "; cannot delete";
-                                LogWarning(strMessage);
-                            }
+                            ioFileInfo.Delete();
                         }
-                        catch (Exception ex)
+                        else
                         {
-                            // Error deleting the file; log it but keep processing
-                            LogError("Exception deleting _dta_old.txt file: " + ex.Message);
+                            strMessage = "Old _DTA.txt file not found:" + ioFileInfo.FullName + "; cannot delete";
+                            LogWarning(strMessage);
                         }
+                    }
+                    catch (Exception ex)
+                    {
+                        // Error deleting the file; log it but keep processing
+                        LogError("Exception deleting _dta_old.txt file: " + ex.Message);
                     }
                 }
 
-                blnSuccess = true;
+                return true;
             }
             catch (Exception ex)
             {
@@ -338,7 +329,6 @@ namespace AnalysisManagerXTandemPlugIn
                 return false;
             }
 
-            return blnSuccess;
         }
 
         private DateTime dtLastUpdateTime;

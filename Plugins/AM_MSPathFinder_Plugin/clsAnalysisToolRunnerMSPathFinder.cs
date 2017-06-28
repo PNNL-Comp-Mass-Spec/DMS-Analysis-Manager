@@ -977,7 +977,7 @@ namespace AnalysisManagerMSPathFinderPlugin
 
             LogMessage("Running MSPathFinder");
 
-            //Set up and execute a program runner to run MSPathFinder
+            // Set up and execute a program runner to run MSPathFinder
 
             var cmdStr = " -s " + pbfFilePath;
             cmdStr += " -feature " + featureFilePath;

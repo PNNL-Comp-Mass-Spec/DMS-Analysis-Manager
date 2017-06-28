@@ -73,7 +73,7 @@ namespace DTASpectraFileGen
         {
             try
             {
-                //Perform the concatenation
+                // Perform the concatenation
                 m_CatTools = new clsConcatenateFiles(m_DataPath, RootFileName) {
                         DeleteSourceFilesWhenConcatenating = blnDeleteSourceFilesWhenConcatenating
                     };
@@ -84,7 +84,7 @@ namespace DTASpectraFileGen
 
                 m_CatInProgress = true;
 
-                //Call the dll based on the concatenation type
+                // Call the dll based on the concatenation type
                 switch (FileType)
                 {
                     case ConcatFileTypes.CONCAT_ALL:
@@ -97,18 +97,18 @@ namespace DTASpectraFileGen
                         m_CatTools.MakeCattedOUTsOnly();
                         break;
                     default:
-                        //Shouldn't ever get here
+                        // Shouldn't ever get here
                         m_ErrMsg = "Invalid concatenation selection: " + FileType;
                         return false;
                 }
 
-                //Loop until the concatenation finishes
+                // Loop until the concatenation finishes
                 while (m_CatInProgress)
                 {
                     Thread.Sleep(1000);
                 }
 
-                //Concatenation must have finished successfully, so exit
+                // Concatenation must have finished successfully, so exit
                 return true;
             }
             catch (Exception ex)

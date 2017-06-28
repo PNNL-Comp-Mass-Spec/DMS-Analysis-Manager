@@ -16,8 +16,8 @@ namespace AnalysisManagerMsXmlGenPlugIn
     public class clsAnalysisToolRunnerMSXMLGen : clsAnalysisToolRunnerBase
     {
         //*********************************************************************************************************
-        //Class for running MS XML generator
-        //Currently used to generate MZXML or MZML files
+        // Class for running MS XML generator
+        // Currently used to generate MZXML or MZML files
         //*********************************************************************************************************
 
         #region "Module Variables"
@@ -43,7 +43,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
         {
             var result = CloseOutType.CLOSEOUT_SUCCESS;
 
-            //Do the base class stuff
+            // Do the base class stuff
             if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -85,10 +85,10 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            //Stop the job timer
+            // Stop the job timer
             m_StopTime = DateTime.UtcNow;
 
-            //Add the current job data to the summary file
+            // Add the current job data to the summary file
             UpdateSummaryFile();
 
             var success = CopyResultsToTransferDirectory();
@@ -550,7 +550,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 var sourcefileBase = Path.GetFileNameWithoutExtension(mzMLFilePath);
 
                 var msConvertRunner = new clsMSXmlGenMSConvert(
-                    m_WorkDir, mMSXmlGeneratorAppPath, 
+                    m_WorkDir, mMSXmlGeneratorAppPath,
                     sourcefileBase, eRawDataType, outputFileType,
                     centroidMS1: false, centroidMS2: false, centroidPeakCountToRetain: 0)
                 {

@@ -42,7 +42,7 @@ namespace DTASpectraFileGen
         {
             m_Status = ProcessStatus.SF_STARTING;
 
-            //Verify necessary files are in specified locations
+            // Verify necessary files are in specified locations
             if (!InitSetup())
             {
                 m_Results = ProcessResults.SF_FAILURE;
@@ -50,7 +50,7 @@ namespace DTASpectraFileGen
                 return m_Status;
             }
 
-            //Make the DTA files (the process runs in a separate thread)
+            // Make the DTA files (the process runs in a separate thread)
             try
             {
                 m_thThread = new Thread(MakeDTAFilesThreaded);
@@ -68,32 +68,30 @@ namespace DTASpectraFileGen
 
         private bool VerifyMGFFileExists(string WorkDir, string DSName)
         {
-            //Verifies a .mgf file exists in specfied directory
+            // Verifies a .mgf file exists in specfied directory
             if (File.Exists(Path.Combine(WorkDir, DSName + clsAnalysisResources.DOT_MGF_EXTENSION)))
             {
                 m_ErrMsg = "";
                 return true;
             }
-            else
-            {
-                m_ErrMsg = "Data file " + DSName + ".mgf not found in working directory";
-                return false;
-            }
+
+            m_ErrMsg = "Data file " + DSName + ".mgf not found in working directory";
+            return false;
         }
 
         protected override bool InitSetup()
         {
-            //Verifies all necessary files exist in the specified locations
+            // Verifies all necessary files exist in the specified locations
 
-            //Do tests specfied in base class
+            // Do tests specfied in base class
             if (!base.InitSetup())
                 return false;
 
-            //MGF data file exists?
+            // MGF data file exists?
             if (!VerifyMGFFileExists(m_WorkDir, m_Dataset))
-                return false;    //Error message handled by VerifyMGFFileExists
+                return false;    // Error message handled by VerifyMGFFileExists
 
-            //If we got to here, there was no problem
+            // If we got to here, there was no problem
             return true;
         }
 
@@ -119,7 +117,7 @@ namespace DTASpectraFileGen
             }
             else
             {
-                //Verify at least one dta file was created
+                // Verify at least one dta file was created
                 if (!VerifyDtaCreation())
                 {
                     m_Results = ProcessResults.SF_NO_FILES_CREATED;
@@ -135,17 +133,15 @@ namespace DTASpectraFileGen
 
         private bool MakeDTAFilesFromMGF()
         {
-            string MGFFile = null;
-
-            //Get the parameters from the various setup files
-            MGFFile = Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_MGF_EXTENSION);
+            // Get the parameters from the various setup files
+            var mgfFilePath = Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_MGF_EXTENSION);
             mScanStart = m_JobParams.GetJobParameter("ScanStart", 0);
             mScanStop = m_JobParams.GetJobParameter("ScanStop", 0);
             mMWLower = m_JobParams.GetJobParameter("MWStart", 0);
             mMWUpper = m_JobParams.GetJobParameter("MWStop", 0);
 
-            //Run the MGF to DTA converter
-            if (!ConvertMGFtoDTA(MGFFile, m_WorkDir))
+            // Run the MGF to DTA converter
+            if (!ConvertMGFtoDTA(mgfFilePath, m_WorkDir))
             {
                 // Note that ConvertMGFtoDTA will have updated m_ErrMsg with the error message
                 m_Results = ProcessResults.SF_FAILURE;
@@ -158,7 +154,7 @@ namespace DTASpectraFileGen
                 m_Status = ProcessStatus.SF_ABORTING;
             }
 
-            //We got this far, everything must have worked
+            // We got this far, everything must have worked
             if (m_Status == ProcessStatus.SF_ABORTING | m_Status == ProcessStatus.SF_ERROR)
             {
                 return false;
@@ -221,7 +217,7 @@ namespace DTASpectraFileGen
 
         private bool VerifyDtaCreation()
         {
-            //Verify that the _DTA.txt file was created and is not empty
+            // Verify that the _DTA.txt file was created and is not empty
             var fiCDTAFile = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + "_DTA.txt"));
 
             if (!fiCDTAFile.Exists)
@@ -229,15 +225,14 @@ namespace DTASpectraFileGen
                 m_ErrMsg = "_DTA.txt file not created";
                 return false;
             }
-            else if (fiCDTAFile.Length == 0)
+
+            if (fiCDTAFile.Length == 0)
             {
                 m_ErrMsg = "_DTA.txt file is empty";
                 return false;
             }
-            else
-            {
-                return true;
-            }
+
+            return true;
         }
 
         private void mMGFtoDTA_ErrorEvent(string strMessage)

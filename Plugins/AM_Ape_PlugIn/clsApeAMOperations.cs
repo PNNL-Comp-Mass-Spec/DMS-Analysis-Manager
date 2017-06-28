@@ -10,17 +10,14 @@ namespace AnalysisManager_Ape_PlugIn
         protected IJobParams m_jobParams;
 
         protected IMgrParams m_mgrParams;
-        
+
         private string mErrorMessage = string.Empty;
 
         #endregion
 
         #region "Properties"
 
-        public string ErrorMessage
-        {
-            get { return mErrorMessage; }
-        }
+        public string ErrorMessage => mErrorMessage;
 
         #endregion
 
@@ -115,7 +112,7 @@ namespace AnalysisManager_Ape_PlugIn
 
                 default:
                     blnSuccess = false;
-                    mErrorMessage = "Ape Operation: " + apeOperation + "not recognized";                    
+                    mErrorMessage = "Ape Operation: " + apeOperation + "not recognized";
                     break;
             }
             return blnSuccess;
@@ -127,17 +124,17 @@ namespace AnalysisManager_Ape_PlugIn
 
             // Update the step tool progress
             // However, Ape routinely reports progress of 0% or 100% at the start and end of certain subtasks, so ignore those values
-            //if (e.percentComplete > 0 && e.percentComplete < 100)
-                //m_progress = PROGRESS_PCT_APE_START + (PROGRESS_PCT_APE_DONE - PROGRESS_PCT_APE_START) * e.percentComplete / 100.0F;
+            // if (e.percentComplete > 0 && e.percentComplete < 100)
+                // m_progress = PROGRESS_PCT_APE_START + (PROGRESS_PCT_APE_DONE - PROGRESS_PCT_APE_START) * e.percentComplete / 100.0F;
 
-            //if (!string.IsNullOrEmpty(e.taskDescription))
-                //m_CurrentApeTask = e.taskDescription;
+            // if (!string.IsNullOrEmpty(e.taskDescription))
+                // m_CurrentApeTask = e.taskDescription;
 
-            //if (System.DateTime.UtcNow.Subtract(m_LastStatusUpdateTime).TotalSeconds >= 10)
-            //{
+            // if (System.DateTime.UtcNow.Subtract(m_LastStatusUpdateTime).TotalSeconds >= 10)
+            // {
             //    m_LastStatusUpdateTime = System.DateTime.UtcNow;
             //    m_StatusTools.UpdateAndWrite(EnumMgrStatus.RUNNING, EnumTaskStatus.RUNNING, EnumTaskStatusDetail.RUNNING_TOOL, m_progress);
-            //}
+            // }
         }
 
         #endregion

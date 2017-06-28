@@ -8,7 +8,7 @@ namespace AnalysisManagerICR2LSPlugIn
 {
     public class clsAnalysisToolRunnerICR : clsAnalysisToolRunnerICRBase
     {
-        //Performs PEK analysis using ICR-2LS on Bruker S-folder MS data
+        // Performs PEK analysis using ICR-2LS on Bruker S-folder MS data
 
         // Example folder layout when processing S-folders
         //
@@ -44,7 +44,7 @@ namespace AnalysisManagerICR2LSPlugIn
 
             try
             {
-                //Start with base class function to get settings information
+                // Start with base class function to get settings information
                 var ResCode = base.RunTool();
                 if (ResCode != CloseOutType.CLOSEOUT_SUCCESS)
                     return ResCode;
@@ -59,22 +59,22 @@ namespace AnalysisManagerICR2LSPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                //Verify a param file has been specified
+                // Verify a param file has been specified
                 currentTask = "Verify param file path";
                 var paramFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"));
 
                 currentTask = "Verify param file path: " + paramFilePath;
                 if (!File.Exists(paramFilePath))
                 {
-                    //Param file wasn't specified, but is required for ICR-2LS analysis
+                    // Param file wasn't specified, but is required for ICR-2LS analysis
                     m_message = "ICR-2LS Param file not found";
                     LogError(m_message + ": " + paramFilePath);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                //Add handling of settings file info here if it becomes necessary in the future
+                // Add handling of settings file info here if it becomes necessary in the future
 
-                //Get scan settings from settings file
+                // Get scan settings from settings file
                 var MinScan = m_jobParams.GetJobParameter("scanstart", 0);
                 var MaxScan = m_jobParams.GetJobParameter("ScanStop", 0);
 
@@ -91,11 +91,11 @@ namespace AnalysisManagerICR2LSPlugIn
                     useAllScans = false;
                 }
 
-                //Assemble the dataset name
+                // Assemble the dataset name
                 var DSNamePath = Path.Combine(m_WorkDir, m_Dataset);
                 var RawDataType = m_jobParams.GetParam("RawDataType");
 
-                //Assemble the output file name and path
+                // Assemble the output file name and path
                 var OutFileNamePath = Path.Combine(m_WorkDir, m_Dataset + ".pek");
 
                 // Determine the location of the ser file (or fid file)
@@ -228,7 +228,7 @@ namespace AnalysisManagerICR2LSPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                //Run the cleanup routine from the base class
+                // Run the cleanup routine from the base class
                 currentTask = "PerfPostAnalysisTasks";
 
                 if (PerfPostAnalysisTasks(true) != CloseOutType.CLOSEOUT_SUCCESS)
@@ -251,7 +251,7 @@ namespace AnalysisManagerICR2LSPlugIn
 
         protected override CloseOutType DeleteDataFile()
         {
-            //Deletes the dataset folder containing s-folders from the working directory
+            // Deletes the dataset folder containing s-folders from the working directory
             var RetryCount = 0;
             var ErrMsg = string.Empty;
 
@@ -259,7 +259,8 @@ namespace AnalysisManagerICR2LSPlugIn
             {
                 try
                 {
-                    Thread.Sleep(5000);             //Allow extra time for ICR2LS to release file locks
+                    // Allow extra time for ICR2LS to release file locks
+                    Thread.Sleep(5000);
                     if (Directory.Exists(Path.Combine(m_WorkDir, m_Dataset)))
                     {
                         Directory.Delete(Path.Combine(m_WorkDir, m_Dataset), true);
@@ -268,7 +269,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 }
                 catch (IOException ex)
                 {
-                    //If problem is locked file, retry
+                    // If problem is locked file, retry
                     if (m_DebugLevel > 0)
                     {
                         LogError("Error deleting data file, attempt #" + RetryCount);
@@ -283,7 +284,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 }
             }
 
-            //If we got to here, then we've exceeded the max retry limit
+            // If we got to here, then we've exceeded the max retry limit
             LogError("Unable to delete raw data file after multiple tries: " + ErrMsg);
             return CloseOutType.CLOSEOUT_FAILED;
         }

@@ -34,7 +34,7 @@ namespace AnalysisManagerDataImportPlugIn
         {
             try
             {
-                //Call base class for initial setup
+                // Call base class for initial setup
                 if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -59,11 +59,11 @@ namespace AnalysisManagerDataImportPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                //Stop the job timer
+                // Stop the job timer
                 m_StopTime = System.DateTime.UtcNow;
 
-                //Make sure objects are released
-                System.Threading.Thread.Sleep(500);         // 1 second delay
+                // Make sure objects are released
+                System.Threading.Thread.Sleep(500);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
                 // Skip two auto-generated files from the Results Folder since they're not necessary to keep

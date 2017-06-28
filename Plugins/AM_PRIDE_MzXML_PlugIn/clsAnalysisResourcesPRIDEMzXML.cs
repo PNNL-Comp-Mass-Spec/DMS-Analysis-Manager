@@ -39,7 +39,7 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
 
             if (!RetrieveAggregateFiles(fileSpecList, DataPackageFileRetrievalModeConstants.Undefined, out dctDataPackageJobs))
             {
-                //Errors were reported in function call, so just return
+                // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 

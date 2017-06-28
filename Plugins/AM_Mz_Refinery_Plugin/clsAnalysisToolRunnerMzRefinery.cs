@@ -259,10 +259,10 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                 m_progress = PROGRESS_PCT_COMPLETE;
 
-                //Stop the job timer
+                // Stop the job timer
                 m_StopTime = DateTime.UtcNow;
 
-                //Add the current job data to the summary file
+                // Add the current job data to the summary file
                 UpdateSummaryFile();
 
                 mCmdRunner = null;
@@ -440,7 +440,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             if (intJavaMemorySize < 512)
                 intJavaMemorySize = 512;
 
-            //Set up and execute a program runner to run MSGF+
+            // Set up and execute a program runner to run MSGF+
             var cmdStr = " -Xmx" + intJavaMemorySize + "M -jar " + msgfplusJarFilePath;
 
             // Define the input file, output file, and fasta file

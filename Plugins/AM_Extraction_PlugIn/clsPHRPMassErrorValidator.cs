@@ -34,10 +34,7 @@ namespace AnalysisManagerExtractionPlugin
         /// <value></value>
         /// <returns></returns>
         /// <remarks></remarks>
-        public double ErrorThresholdPercent
-        {
-            get { return mErrorThresholdPercent; }
-        }
+        public double ErrorThresholdPercent => mErrorThresholdPercent;
 
         public clsPHRPMassErrorValidator(int intDebugLevel)
         {
@@ -183,7 +180,6 @@ namespace AnalysisManagerExtractionPlugin
                 var intPsmCount = 0;
                 var dtLastProgress = System.DateTime.UtcNow;
 
-                string strPeptideDescription = null;
                 var lstLargestMassErrors = new SortedDictionary<double, string>();
 
                 while (mPHRPReader.MoveNext())
@@ -258,8 +254,8 @@ namespace AnalysisManagerExtractionPlugin
                         continue;
                     }
 
-                    strPeptideDescription = "Scan=" + objCurrentPSM.ScanNumberStart + ", charge=" + objCurrentPSM.Charge + ", peptide=" +
-                                            objCurrentPSM.PeptideWithNumericMods;
+                    var strPeptideDescription = "Scan=" + objCurrentPSM.ScanNumberStart + ", charge=" + objCurrentPSM.Charge + ", peptide=" +
+                                                   objCurrentPSM.PeptideWithNumericMods;
                     intErrorCount += 1;
 
                     // Keep track of the 100 largest mass errors

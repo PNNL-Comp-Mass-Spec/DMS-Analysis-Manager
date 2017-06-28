@@ -73,10 +73,10 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            string CmdStr = null;
-            CmdStr = "/M:" + Path.Combine(m_WorkDir, m_jobParams.GetParam("PRIDEMzXMLInputFile"));
-            CmdStr += " /G /O:" + m_WorkDir;
-            CmdStr += " /L:" + Path.Combine(m_WorkDir, "MSDataFileTrimmer_Log.txt");
+            string cmdStr = null;
+            cmdStr = "/M:" + Path.Combine(m_WorkDir, m_jobParams.GetParam("PRIDEMzXMLInputFile"));
+            cmdStr += " /G /O:" + m_WorkDir;
+            cmdStr += " /L:" + Path.Combine(m_WorkDir, "MSDataFileTrimmer_Log.txt");
 
             mCmdRunner.CreateNoWindow = true;
             mCmdRunner.CacheStandardOutput = true;
@@ -85,7 +85,7 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
             mCmdRunner.WriteConsoleOutputToFile = true;
             mCmdRunner.ConsoleOutputFilePath = Path.Combine(m_WorkDir, "MSDataFileTrimmer_ConsoleOutput.txt");
 
-            if (!mCmdRunner.RunProgram(progLoc, CmdStr, "MSDataFileTrimmer", true))
+            if (!mCmdRunner.RunProgram(progLoc, cmdStr, "MSDataFileTrimmer", true))
             {
                 LogError("Error running MSDataFileTrimmer");
 
@@ -102,7 +102,7 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
             // Add the current job data to the summary file
             UpdateSummaryFile();
 
-            //Make sure objects are released
+            // Make sure objects are released
             Thread.Sleep(500);
             PRISM.clsProgRunner.GarbageCollectNow();
 

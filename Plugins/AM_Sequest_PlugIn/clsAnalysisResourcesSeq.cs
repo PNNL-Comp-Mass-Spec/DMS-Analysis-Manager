@@ -407,13 +407,13 @@ namespace AnalysisManagerSequestPlugin
                 }
             }
 
-            //Add all the extensions of the files to delete after run
+            // Add all the extensions of the files to delete after run
             m_jobParams.AddResultFileExtensionToSkip("_dta.zip");    // Zipped DTA
             m_jobParams.AddResultFileExtensionToSkip("_dta.txt");    // Unzipped, concatenated DTA
             m_jobParams.AddResultFileExtensionToSkip(".dta");        // DTA files
             m_jobParams.AddResultFileExtensionToSkip(".tmp");        // Temp files
 
-            //All finished
+            // All finished
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
@@ -433,7 +433,7 @@ namespace AnalysisManagerSequestPlugin
 
             LogMessage("Copying database to nodes: " + Path.GetFileName(OrgDBName));
 
-            //Get the list of nodes from the hosts file
+            // Get the list of nodes from the hosts file
             var Nodes = GetHostList(HostFilePath);
             if (Nodes == null || Nodes.Count == 0)
             {
@@ -543,7 +543,7 @@ namespace AnalysisManagerSequestPlugin
                 }
             }
 
-            //Database file has been distributed, so return happy
+            // Database file has been distributed, so return happy
             return true;
         }
 
@@ -566,14 +566,14 @@ namespace AnalysisManagerSequestPlugin
                 {
                     while (!srHostFile.EndOfStream)
                     {
-                        //Read the line from the file and check to see if it contains a node IP address.
+                        // Read the line from the file and check to see if it contains a node IP address.
                         // If it does, add the IP address to the collection of addresses
                         InpLine = srHostFile.ReadLine();
 
-                        //Verify the line isn't a comment line
+                        // Verify the line isn't a comment line
                         if (!string.IsNullOrWhiteSpace(InpLine) && !InpLine.Contains("#"))
                         {
-                            //Parse the node name and add it to the collection
+                            // Parse the node name and add it to the collection
                             LineFields = InpLine.Split(Separators, StringSplitOptions.RemoveEmptyEntries);
                             if (LineFields.Length >= 1)
                             {
@@ -592,7 +592,7 @@ namespace AnalysisManagerSequestPlugin
                 return null;
             }
 
-            //Return the list of nodes, if any
+            // Return the list of nodes, if any
             return lstNodes;
         }
 
@@ -706,7 +706,7 @@ namespace AnalysisManagerSequestPlugin
             {
                 if (File.Exists(DestFile))
                 {
-                    //File was found on node, compare file size and date (allowing for a 1 hour difference in case of daylight savings)
+                    // File was found on node, compare file size and date (allowing for a 1 hour difference in case of daylight savings)
                     if (VerifyFilesMatchSizeAndDate(OrgDBFilePath, DestFile))
                     {
                         blnFileAlreadyExists = true;
@@ -719,37 +719,36 @@ namespace AnalysisManagerSequestPlugin
                 }
                 else
                 {
-                    //File wasn't on node, we'll have to copy it
+                    // File wasn't on node, we'll have to copy it
                     CopyNeeded = true;
                 }
 
-                //Does the file need to be copied to the node?
+                // Does the file need to be copied to the node?
                 if (CopyNeeded)
                 {
-                    //Copy the file
+                    // Copy the file
                     if (m_DebugLevel > 3)
                     {
                         LogMessage("Copying database file " + DestFile);
                     }
                     File.Copy(OrgDBFilePath, DestFile, true);
-                    //Now everything is in its proper place, so return
+
+                    // Now everything is in its proper place, so return
                     return true;
                 }
-                else
+
+                // File existed and was current, so everybody's happy
+                if (m_DebugLevel >= 3)
                 {
-                    //File existed and was current, so everybody's happy
-                    if (m_DebugLevel >= 3)
-                    {
-                        LogMessage("Database file at " + DestPath + " matches the source file's date and time; will not re-copy");
-                    }
-                    return true;
+                    LogMessage("Database file at " + DestPath + " matches the source file's date and time; will not re-copy");
                 }
+                return true;
             }
-            catch (Exception Err)
+            catch (Exception ex)
             {
-                //Something bad happened
-                LogError("Error copying database file to " + DestFile + ": " + Err.Message);
-                if (Err.Message.Contains("not enough space"))
+                // Something bad happened
+                LogError("Error copying database file to " + DestFile + ": " + ex.Message, ex);
+                if (ex.Message.Contains("not enough space"))
                 {
                     blnNotEnoughFreeSpace = true;
                 }

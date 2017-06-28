@@ -29,14 +29,14 @@ namespace AnalysisManagerMSDeconvPlugIn
 
             LogMessage("Getting mzXML file");
 
-            //var eResult = GetMzXMLFile();
-            //if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
-            //{
+            // var eResult = GetMzXMLFile();
+            // if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+            // {
             //    return eResult;
-            //}
+            // }
 
-            var errorMessage = string.Empty;
-            var fileMissingFromCache = false;
+            string errorMessage;
+            bool fileMissingFromCache;
             const bool unzipFile = true;
 
             var success = FileSearch.RetrieveCachedMzXMLFile(unzipFile, out errorMessage, out fileMissingFromCache);

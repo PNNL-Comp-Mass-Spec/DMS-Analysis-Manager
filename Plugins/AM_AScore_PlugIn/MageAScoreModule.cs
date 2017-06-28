@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -18,7 +17,7 @@ using MessageEventArgs = AScore_DLL.MessageEventArgs;
 namespace AnalysisManager_AScore_PlugIn
 {
     /// <summary>
-    /// This is a Mage module that does AScore processing 
+    /// This is a Mage module that does AScore processing
     /// of results for jobs that are supplied to it via standard tabular input
     /// </summary>
     public class MageAScoreModule : ContentFilter
@@ -104,7 +103,7 @@ namespace AnalysisManager_AScore_PlugIn
                 // extract contents of results file for current job to local file in working directory
                 var currentJob = MakeJobSourceModule(jobFieldNames, vals);
                 ExtractResultsForJob(currentJob, ExtractionParms, ExtractedResultsFileName);
-                
+
                 // copy DTA file for current job to working directory
                 var jobText = vals[jobIdx];
                 int jobNumber;
@@ -119,13 +118,13 @@ namespace AnalysisManager_AScore_PlugIn
                 var datasetName = vals[datasetNameIdx];
                 var datasetType = vals[datasetTypeIdx];
                 var analysisTool = vals[toolIdx];
-                
+
                 var dtaFilePath = CopyDTAResults(datasetName, resultsFolderPath, jobNumber, analysisTool, mConnectionString);
                 if (string.IsNullOrEmpty(dtaFilePath))
                 {
                     return false;
                 }
-                
+
                 string fragtype;
                 if (datasetType.IndexOf("HCD", StringComparison.OrdinalIgnoreCase) > 0)
                     fragtype = "hcd";
@@ -150,10 +149,10 @@ namespace AnalysisManager_AScore_PlugIn
                         fragtype = "cid";
                     }
                 }
-            
+
 
                 // process extracted results file and DTA file with AScore
-                const string ascoreOutputFile = ASCORE_OUTPUT_FILE_NAME_BASE + ".txt"; 
+                const string ascoreOutputFile = ASCORE_OUTPUT_FILE_NAME_BASE + ".txt";
                 var ascoreOutputFilePath = Path.Combine(WorkingDir, ascoreOutputFile);
 
                 var fhtFile = Path.Combine(WorkingDir, ExtractedResultsFileName);
@@ -232,7 +231,7 @@ namespace AnalysisManager_AScore_PlugIn
                     var dbFilePath = Path.Combine(WorkingDir, ResultsDBFileName);
                     clsAScoreMagePipeline.ImportFileToSQLite(fiAScoreFile.FullName, dbFilePath, tableName);
                 }
-                
+
                 dtaManager.Abort();
                 if (File.Exists(ascoreOutputFilePath))
                 {
@@ -242,7 +241,7 @@ namespace AnalysisManager_AScore_PlugIn
                     }
                     catch (Exception ex)
                     {
-                        clsGlobal.LogError("Error deleting file " + Path.GetFileName(ascoreOutputFilePath) + 
+                        clsGlobal.LogError("Error deleting file " + Path.GetFileName(ascoreOutputFilePath) +
                                  " (" + ex.Message + "); may lead to duplicate values in Results.db3", ex);
                     }
 
@@ -293,8 +292,7 @@ namespace AnalysisManager_AScore_PlugIn
             var peFileMetadata = ExtractionPipelines.MakePipelineToExportJobMetadata(new SinkWrapper(fileList), resultsDB);
             peFileMetadata.RunRoot(null);
 
-            // extract contents of files
-            //DestinationType destination = new DestinationType("SQLite_Output", Path.Combine(mWorkingDir, mResultsDBFileName), "t_results");
+            // Extract contents of files
             var destination = new DestinationType("File_Output", WorkingDir, extractedResultsFileName);
             var peFileContents = ExtractionPipelines.MakePipelineToExtractFileContents(new SinkWrapper(fileList), extractionParms, destination);
             peFileContents.RunRoot(null);
@@ -398,7 +396,7 @@ namespace AnalysisManager_AScore_PlugIn
 
         protected string CopyDTAResultsFromServer(DirectoryInfo diResultsFolder, int jobNumber, string toolName, string connectionString)
         {
-            // Check if the dta is in the search tool's directory					
+            // Check if the dta is in the search tool's directory
             string dtaZipSourceFilePath;
 
             var lstFiles = diResultsFolder.GetFiles("*_dta.zip").ToList();
@@ -479,7 +477,7 @@ namespace AnalysisManager_AScore_PlugIn
                 {
                     clsGlobal.LogError("Cannot determine shared results folder; match not found for job " + jobNumber + " and tool " + toolName + " in V_Job_Steps opr V_Job_Steps_History");
                     return string.Empty;
-                    
+
                 }
 
                 var sharedResultsFolder = lstResults.First();
@@ -488,11 +486,11 @@ namespace AnalysisManager_AScore_PlugIn
             }
             catch (Exception ex)
             {
-                clsGlobal.LogError("Error looking up the input folder for job " + jobNumber + " and tool " + toolName + 
+                clsGlobal.LogError("Error looking up the input folder for job " + jobNumber + " and tool " + toolName +
                          " in GetSharedResultFolderName: " + ex.Message, ex);
                 return string.Empty;
             }
-           
+
 
         }
 
@@ -507,10 +505,10 @@ namespace AnalysisManager_AScore_PlugIn
 
                 var folderVals = GetIniValue(oXmlDoc, "StepParameters", "SharedResultsFolders");
                 var folders = folderVals.Split(',').ToList();
-                dtaFolderName = folders.Last(); //this is the default folder if all else fails
+                dtaFolderName = folders.Last(); // this is the default folder if all else fails
                 if (folders.Count > 1)
                 {
-                    folders.RemoveAll(entries => entries.Contains("DTA_Gen"));	//I love lambda expressions
+                    folders.RemoveAll(entries => entries.Contains("DTA_Gen"));
                     if (folders.Count > 0)
                     {
                         dtaFolderName = folders.Last();
@@ -527,7 +525,7 @@ namespace AnalysisManager_AScore_PlugIn
                 clsGlobal.LogError("Unable to determine the DTA directory from JobParameters XML file by looking for job parameter SharedResultsFolders");
                 return string.Empty;
             }
-            
+
             return dtaFolderName.Trim();
         }
 
@@ -541,14 +539,7 @@ namespace AnalysisManager_AScore_PlugIn
         private string GetIniValue(XmlDocument oXmlDoc, string sectionName, string keyName)
         {
             XmlNode N = GetItem(oXmlDoc, sectionName, keyName);
-            if (N != null)
-            {
-                if (N.Attributes != null)
-                {
-                    return (N.Attributes.GetNamedItem("value").Value);
-                }
-            }
-            return null;
+            return N?.Attributes?.GetNamedItem("value").Value;
         }
 
 

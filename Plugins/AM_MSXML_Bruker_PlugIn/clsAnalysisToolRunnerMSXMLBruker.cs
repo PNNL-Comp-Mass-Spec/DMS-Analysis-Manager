@@ -46,10 +46,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
         /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
-            // Set this to success for now
-            var eReturnCode = CloseOutType.CLOSEOUT_SUCCESS;
-
-            //Do the base class stuff
+            // Do the base class stuff
             if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -93,23 +90,21 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
 
                 if (eResult == CloseOutType.CLOSEOUT_NO_DATA)
                 {
-                    eReturnCode = eResult;
                 }
                 else
                 {
-                    eReturnCode = CloseOutType.CLOSEOUT_FAILED;
                 }
             }
             else
             {
                 // Gzip the .mzML or .mzXML file then copy to the server cache
-                eReturnCode = PostProcessMsXmlFile(fiResultsFile);
+                PostProcessMsXmlFile(fiResultsFile);
             }
 
-            //Stop the job timer
+            // Stop the job timer
             m_StopTime = DateTime.UtcNow;
 
-            //Delete the raw data files
+            // Delete the raw data files
             if (m_DebugLevel > 3)
             {
                 LogDebug("clsAnalysisToolRunnerMSXMLBruker.RunTool(), Deleting raw data file");
@@ -131,7 +126,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
                 }
             }
 
-            //Update the job summary file
+            // Update the job summary file
             if (m_DebugLevel > 3)
             {
                 LogDebug("clsAnalysisToolRunnerMSXMLBruker.RunTool(), Updating summary file");

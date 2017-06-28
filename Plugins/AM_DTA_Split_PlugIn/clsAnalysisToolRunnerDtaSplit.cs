@@ -53,7 +53,7 @@ namespace AnalysisManagerDtaSplitPlugIn
         {
             try
             {
-                //Call base class for initial setup
+                // Call base class for initial setup
                 base.RunTool();
 
                 // Store the AnalysisManager version info in the database
@@ -91,7 +91,7 @@ namespace AnalysisManagerDtaSplitPlugIn
                 // Note: blnSplitToEqualScanCounts is no longer used
                 // blnSplitToEqualScanCounts = m_jobParams.GetJobParameter("ClonedStepsHaveEqualNumSpectra", True)
 
-                //Start the job timer
+                // Start the job timer
                 m_StartTime = DateTime.UtcNow;
 
                 var result = SplitCattedDtaFileIntoSegments(strCDTAFile, intSegmentCountToCreate);
@@ -101,10 +101,10 @@ namespace AnalysisManagerDtaSplitPlugIn
                     return result;
                 }
 
-                //Stop the job timer
+                // Stop the job timer
                 m_StopTime = DateTime.UtcNow;
 
-                //Add the current job data to the summary file
+                // Add the current job data to the summary file
                 UpdateSummaryFile();
 
                 UpdateStatusRunning(100, intSegmentCountToCreate);

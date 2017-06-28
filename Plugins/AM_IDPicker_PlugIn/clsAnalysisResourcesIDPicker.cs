@@ -55,7 +55,7 @@ namespace AnalysisManagerIDPickerPlugIn
             var blnMGFInstrumentData = m_jobParams.GetJobParameter("MGFInstrumentData", false);
 
             // Retrieve the PSM result files, PHRP files, and MSGF file
-            if (!GetInputFiles(DatasetName, strParamFileName, ref result))
+            if (!GetInputFiles(DatasetName, strParamFileName, out result))
             {
                 if (result == CloseOutType.CLOSEOUT_SUCCESS)
                     result = CloseOutType.CLOSEOUT_FAILED;
@@ -153,9 +153,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
             var sqlQuery = "SELECT OrganismDBName FROM V_Analysis_Job WHERE (Job = " + m_JobNum + ")";
 
-            var lstResults = new List<string>();
-
-            var success = clsGlobal.GetQueryResultsTopRow(sqlQuery, dmsConnectionString, out lstResults, "LookupLegacyFastaFileName");
+            var success = clsGlobal.GetQueryResultsTopRow(sqlQuery, dmsConnectionString, out var lstResults, "LookupLegacyFastaFileName");
 
             if (!success || lstResults == null || lstResults.Count == 0)
             {
@@ -174,15 +172,13 @@ namespace AnalysisManagerIDPickerPlugIn
         /// <param name="eReturnCode">Return code</param>
         /// <returns>True if success, otherwise false</returns>
         /// <remarks></remarks>
-        private bool GetInputFiles(string strDatasetName, string strSearchEngineParamFileName, ref CloseOutType eReturnCode)
+        private bool GetInputFiles(string strDatasetName, string strSearchEngineParamFileName, out CloseOutType eReturnCode)
         {
             // This tracks the filenames to find.  The Boolean value is True if the file is Required, false if not required
 
-            string strResultType = null;
-
             eReturnCode = CloseOutType.CLOSEOUT_SUCCESS;
 
-            strResultType = m_jobParams.GetParam("ResultType");
+            var strResultType = m_jobParams.GetParam("ResultType");
 
             // Make sure the ResultType is valid
             var eResultType = clsPHRPReader.GetPeptideHitResultType(strResultType);
@@ -218,8 +214,10 @@ namespace AnalysisManagerIDPickerPlugIn
                 // Note that the contents of fileToGet will be updated by FindAndRetrievePHRPDataFile if we're looking for a _msgfplus file but we find a _msgfdb file
                 var success = FileSearch.FindAndRetrievePHRPDataFile(ref fileToGet, synFilePath);
 
+                var toolVersionInfoFile = clsPHRPReader.GetToolVersionInfoFilename(eResultType);
+
                 if (!success && eResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB &&
-                    fileToGet.Contains(Path.GetFileName(clsPHRPReader.GetToolVersionInfoFilename(eResultType))))
+                    toolVersionInfoFile != null && fileToGet.Contains(Path.GetFileName(toolVersionInfoFile)))
                 {
                     var strToolVersionFileLegacy = "Tool_Version_Info_MSGFDB.txt";
                     success = FileSearch.FindAndRetrieveMiscFiles(strToolVersionFileLegacy, false, false);
@@ -235,7 +233,7 @@ namespace AnalysisManagerIDPickerPlugIn
                     // File not found; is it required?
                     if (fileRequired)
                     {
-                        //Errors were reported in function call, so just return
+                        // Errors were reported in function call, so just return
                         eReturnCode = CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                         return false;
                     }
@@ -248,8 +246,7 @@ namespace AnalysisManagerIDPickerPlugIn
                     // Check whether the synopsis file is empty
                     synFilePath = Path.Combine(m_WorkingDir, Path.GetFileName(fileToGet));
 
-                    var strErrorMessage = string.Empty;
-                    if (!ValidateFileHasData(synFilePath, "Synopsis file", out strErrorMessage))
+                    if (!ValidateFileHasData(synFilePath, "Synopsis file", out var strErrorMessage))
                     {
                         // The synopsis file is empty
                         LogWarning(strErrorMessage);
@@ -294,22 +291,20 @@ namespace AnalysisManagerIDPickerPlugIn
                     eReturnCode = CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                     return false;
                 }
-                else
-                {
-                    try
-                    {
-                        fiFile.MoveTo(Path.Combine(m_WorkingDir, item.Value));
-                    }
-                    catch (Exception ex)
-                    {
-                        m_message = "Error renaming file " + item.Key + " to " + item.Value;
-                        LogError(m_message + "; " + ex.Message);
-                        eReturnCode = CloseOutType.CLOSEOUT_FAILED;
-                        return false;
-                    }
 
-                    m_jobParams.AddResultFileToSkip(item.Value);
+                try
+                {
+                    fiFile.MoveTo(Path.Combine(m_WorkingDir, item.Value));
                 }
+                catch (Exception ex)
+                {
+                    m_message = "Error renaming file " + item.Key + " to " + item.Value;
+                    LogError(m_message + "; " + ex.Message);
+                    eReturnCode = CloseOutType.CLOSEOUT_FAILED;
+                    return false;
+                }
+
+                m_jobParams.AddResultFileToSkip(item.Value);
             }
 
             return true;
@@ -323,16 +318,14 @@ namespace AnalysisManagerIDPickerPlugIn
         private bool RetrieveIDPickerParamFile()
         {
             var strIDPickerParamFileName = m_jobParams.GetParam("IDPickerParamFile");
-            string strIDPickerParamFilePath = null;
-            string strParamFileStoragePathKeyName = null;
 
             if (string.IsNullOrEmpty(strIDPickerParamFileName))
             {
                 strIDPickerParamFileName = DEFAULT_IDPICKER_PARAM_FILE_NAME;
             }
 
-            strParamFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "IDPicker";
-            strIDPickerParamFilePath = m_mgrParams.GetParam(strParamFileStoragePathKeyName);
+            var strParamFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "IDPicker";
+            var strIDPickerParamFilePath = m_mgrParams.GetParam(strParamFileStoragePathKeyName);
             if (string.IsNullOrEmpty(strIDPickerParamFilePath))
             {
                 strIDPickerParamFilePath = @"\\gigasax\dms_parameter_Files\IDPicker";
@@ -343,7 +336,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
             if (!CopyFileToWorkDir(strIDPickerParamFileName, strIDPickerParamFilePath, m_WorkingDir))
             {
-                //Errors were reported in function call, so just return
+                // Errors were reported in function call, so just return
                 return false;
             }
 
@@ -369,18 +362,14 @@ namespace AnalysisManagerIDPickerPlugIn
                 {
                     break;
                 }
-                else
+
+                if (m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
                 {
-                    if (m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
-                    {
-                        break;
-                    }
-                    else
-                    {
-                        // Look for the MASIC files on the Samba share
-                        base.DisableMyEMSLSearch();
-                    }
+                    break;
                 }
+
+                // Look for the MASIC files on the Samba share
+                DisableMyEMSLSearch();
             }
 
             return CloseOutType.CLOSEOUT_SUCCESS;

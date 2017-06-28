@@ -93,7 +93,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
         /// <remarks></remarks>
         public bool CreateMSXMLFile()
         {
-            string CmdStr = null;
+            string cmdStr = null;
 
             var intFormatMode = 0;
 
@@ -148,23 +148,23 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             cmdRunner.ErrorEvent += CmdRunner_ErrorEvent;
             cmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
-            //Set up and execute a program runner to run CompassXport executable
+            // Set up and execute a program runner to run CompassXport executable
 
-            CmdStr = " -mode " + intFormatMode + " -a " + strInputFilePath + " -o " + strOutputFilePath;
+            cmdStr = " -mode " + intFormatMode + " -a " + strInputFilePath + " -o " + strOutputFilePath;
 
             if (mCentroidMSXML)
             {
                 // Centroiding is enabled
-                CmdStr += " -raw 0";
+                cmdStr += " -raw 0";
             }
             else
             {
-                CmdStr += " -raw 1";
+                cmdStr += " -raw 1";
             }
 
             if (ProgRunnerStarting != null)
             {
-                ProgRunnerStarting(mCompassXportProgramPath + CmdStr);
+                ProgRunnerStarting(mCompassXportProgramPath + cmdStr);
             }
 
             cmdRunner.CreateNoWindow = true;
@@ -174,7 +174,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             cmdRunner.WriteConsoleOutputToFile = true;
             cmdRunner.ConsoleOutputFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(mCompassXportProgramPath) + "_ConsoleOutput.txt");
 
-            blnSuccess = cmdRunner.RunProgram(mCompassXportProgramPath, CmdStr, Path.GetFileNameWithoutExtension(mCompassXportProgramPath), true);
+            blnSuccess = cmdRunner.RunProgram(mCompassXportProgramPath, cmdStr, Path.GetFileNameWithoutExtension(mCompassXportProgramPath), true);
 
             if (!blnSuccess)
             {

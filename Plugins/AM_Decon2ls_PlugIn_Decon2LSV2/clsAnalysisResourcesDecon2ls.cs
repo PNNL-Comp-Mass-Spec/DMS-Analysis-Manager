@@ -117,7 +117,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     // Look for the XML: <ProcessMSMS></ProcessMSMS>
                     var objNode = objParamFile.SelectSingleNode("//parameters/Miscellaneous/ProcessMSMS");
 
-                    if ((objNode != null) && objNode.HasChildNodes)
+                    if (objNode != null && objNode.HasChildNodes)
                     {
                         // Match found; read the value
                         if (!bool.TryParse(objNode.ChildNodes[0].Value, out processMSMS))
@@ -338,7 +338,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         }
 
         /// <summary>
-        ///Update the parameter file to have ProcessMSMS set to True
+        /// Update the parameter file to have ProcessMSMS set to True
         /// </summary>
         /// <param name="fiParamFile"></param>
         /// <returns></returns>

@@ -36,11 +36,11 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
             transferFolderName = Path.Combine(transferFolderName, m_jobParams.GetParam("OutputFolderName"));
 
-            //Retrieve Fasta file (used by the PeptideToProteinMapper)
+            // Retrieve Fasta file (used by the PeptideToProteinMapper)
             if (!RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")))
                 return CloseOutType.CLOSEOUT_FAILED;
 
-            //Retrieve param file
+            // Retrieve param file
             if (!RetrieveGeneratedParamFile(m_jobParams.GetParam("ParmFileName")))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -49,7 +49,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             // Retrieve the Inspect Input Params file
             if (!FileSearch.RetrieveFile(clsAnalysisToolRunnerInspResultsAssembly.INSPECT_INPUT_PARAMS_FILENAME, transferFolderName))
             {
-                //Errors were reported in function call, so just return
+                // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -100,12 +100,12 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 // Retrieve multi inspect result files
                 if (!RetrieveMultiInspectResultFiles())
                 {
-                    //Errors were reported in function call, so just return
+                    // Errors were reported in function call, so just return
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
             }
 
-            //All finished
+            // All finished
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
@@ -148,7 +148,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
             for (fileNum = 1; fileNum <= numOfResultFiles; fileNum++)
             {
-                //Copy each Inspect result file from the transfer directory
+                // Copy each Inspect result file from the transfer directory
                 InspectResultsFile = DatasetName + "_" + fileNum + "_inspect.txt";
                 dtaFilename = DatasetName + "_" + fileNum + "_dta.txt";
 
@@ -180,15 +180,15 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                     switch (intLogFileIndex)
                     {
                         case 1:
-                            //Copy the Inspect error file from the transfer directory
+                            // Copy the Inspect error file from the transfer directory
                             strFileName = DatasetName + "_" + fileNum + "_error.txt";
                             break;
                         case 2:
-                            //Copy each Inspect search log file from the transfer directory
+                            // Copy each Inspect search log file from the transfer directory
                             strFileName = "InspectSearchLog_" + fileNum + ".txt";
                             break;
                         case 3:
-                            //Copy each Inspect console output file from the transfer directory
+                            // Copy each Inspect console output file from the transfer directory
                             strFileName = "InspectConsoleOutput_" + fileNum + ".txt";
                             break;
                     }

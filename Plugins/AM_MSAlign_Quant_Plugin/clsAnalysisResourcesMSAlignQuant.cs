@@ -49,7 +49,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
             strMSAlignResultsTable = DatasetName + MSALIGN_RESULT_TABLE_SUFFIX;
             if (!FileSearch.FindAndRetrieveMiscFiles(strMSAlignResultsTable, false))
             {
-                //Errors were reported in function call, so just return
+                // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
             m_jobParams.AddResultFileToSkip(strMSAlignResultsTable);
@@ -78,7 +78,9 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                                 LogError("clsDtaGenResources.GetResources: " + m_message);
                                 return CloseOutType.CLOSEOUT_FAILED;
                             }
-                            m_jobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION);  //Raw file
+
+                            // Raw file
+                            m_jobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION);
                         }
                         else if (strRawDataType.ToLower() == RAW_DATA_TYPE_BRUKER_FT_FOLDER)
                         {

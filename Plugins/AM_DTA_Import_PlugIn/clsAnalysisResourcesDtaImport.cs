@@ -35,7 +35,6 @@ namespace AnalysisManagerDtaImportPlugIn
 
         private CloseOutType ValidateDTA()
         {
-            var SourceFolderNamePath = string.Empty;
             try
             {
                 // Note: the DTAFolderLocation is defined in the Manager_Control DB, and is specific for this manager
@@ -43,28 +42,28 @@ namespace AnalysisManagerDtaImportPlugIn
                 // This folder must contain subfolders whose name matches the output_folder name assigned to each job
                 // Furthermore, each subfolder must have a file named Dataset_dta.zip
 
-                SourceFolderNamePath = Path.Combine(m_mgrParams.GetParam("DTAFolderLocation"), m_jobParams.GetParam("OutputFolderName"));
+                var sourceFolderNamePath = Path.Combine(m_mgrParams.GetParam("DTAFolderLocation"), m_jobParams.GetParam("OutputFolderName"));
 
-                //Determine if Dta folder in source directory exists
-                if (!Directory.Exists(SourceFolderNamePath))
+                // Determine if Dta folder in source directory exists
+                if (!Directory.Exists(sourceFolderNamePath))
                 {
                     m_message = "Source Directory for Manually created Dta does not exist";
-                    LogErrorToDatabase(m_message + ": " + SourceFolderNamePath);
+                    LogErrorToDatabase(m_message + ": " + sourceFolderNamePath);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 var zipFileName = DatasetName + "_dta.zip";
-                var fileEntries = Directory.GetFiles(SourceFolderNamePath, zipFileName);
+                var fileEntries = Directory.GetFiles(sourceFolderNamePath, zipFileName);
 
                 // Process the list of files found in the directory.
                 if (fileEntries.Length < 1)
                 {
                     m_message = "DTA zip file was not found in source directory";
-                    LogErrorToDatabase(m_message + ": " + Path.Combine(SourceFolderNamePath, zipFileName));
+                    LogErrorToDatabase(m_message + ": " + Path.Combine(sourceFolderNamePath, zipFileName));
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                //If valid zip file is found, then uzip the contents
+                // If valid zip file is found, then uzip the contents
                 foreach (var fileName in fileEntries)
                 {
                     if (UnzipFileStart(Path.Combine(m_WorkingDir, fileName), m_WorkingDir, "clsAnalysisResourcesDtaImport.ValidateDTA", false))

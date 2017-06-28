@@ -81,12 +81,6 @@ namespace AnalysisManagerIDPickerPlugIn
         /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
-            string OrgDbDir = null;
-            string strFASTAFilePath = null;
-            string strResultType = null;
-            string strSynFilePath = null;
-            var strErrorMessage = string.Empty;
-
             // As of January 21, 2015 we are now always skipping IDPicker (and thus simply creating the .pepXML file)
             var skipIDPicker = ALWAYS_SKIP_IDPICKER;
 
@@ -99,7 +93,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
             try
             {
-                //Call base class for initial setup
+                // Call base class for initial setup
                 if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -125,7 +119,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 }
 
                 // Determine the result type
-                strResultType = m_jobParams.GetParam("ResultType");
+                var strResultType = m_jobParams.GetParam("ResultType");
 
                 var ePHRPResultType = clsPHRPReader.GetPeptideHitResultType(strResultType);
                 if (ePHRPResultType == clsPHRPReader.ePeptideHitResultType.Unknown)
@@ -135,7 +129,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 }
 
                 // Define the path to the synopsis file
-                strSynFilePath = Path.Combine(m_WorkDir, clsPHRPReader.GetPHRPSynopsisFileName(ePHRPResultType, m_Dataset));
+                var strSynFilePath = Path.Combine(m_WorkDir, clsPHRPReader.GetPHRPSynopsisFileName(ePHRPResultType, m_Dataset));
                 if (!File.Exists(strSynFilePath))
                 {
                     var alternateFilePath = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(strSynFilePath, "Dataset_msgfdb.txt");
@@ -145,7 +139,7 @@ namespace AnalysisManagerIDPickerPlugIn
                     }
                 }
 
-                if (!clsAnalysisResources.ValidateFileHasData(strSynFilePath, "Synopsis file", out strErrorMessage))
+                if (!clsAnalysisResources.ValidateFileHasData(strSynFilePath, "Synopsis file", out var strErrorMessage))
                 {
                     // The synopsis file is empty
                     m_message = strErrorMessage;
@@ -153,8 +147,8 @@ namespace AnalysisManagerIDPickerPlugIn
                 }
 
                 // Define the path to the fasta file
-                OrgDbDir = m_mgrParams.GetParam("orgdbdir");
-                strFASTAFilePath = Path.Combine(OrgDbDir, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"));
+                var orgDbDir = m_mgrParams.GetParam("orgdbdir");
+                var strFASTAFilePath = Path.Combine(orgDbDir, m_jobParams.GetParam("PeptideSearch", "generatedFastaName"));
 
                 var fiFastaFile = new FileInfo(strFASTAFilePath);
 
@@ -215,9 +209,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 }
                 else
                 {
-                    var blnCriticalError = false;
-
-                    var idPickerSuccess = RunIDPickerWrapper(ePHRPResultType, strSynFilePath, fiFastaFile.FullName, out var processingError, out blnCriticalError);
+                    var idPickerSuccess = RunIDPickerWrapper(ePHRPResultType, strSynFilePath, fiFastaFile.FullName, out var processingError, out var blnCriticalError);
 
                     if (blnCriticalError)
                     {
@@ -240,13 +232,13 @@ namespace AnalysisManagerIDPickerPlugIn
 
                 m_progress = PROGRESS_PCT_COMPLETE;
 
-                //Stop the job timer
+                // Stop the job timer
                 m_StopTime = DateTime.UtcNow;
 
-                //Add the current job data to the summary file
+                // Add the current job data to the summary file
                 UpdateSummaryFile();
 
-                //Make sure objects are released
+                // Make sure objects are released
                 Thread.Sleep(500);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
@@ -299,7 +291,7 @@ namespace AnalysisManagerIDPickerPlugIn
         private bool RunIDPickerWrapper(clsPHRPReader.ePeptideHitResultType ePHRPResultType, string strSynFilePath, string fastaFilePath,
             out bool blnProcessingError, out bool blnCriticalError)
         {
-            var blnSuccess = false;
+            bool blnSuccess;
             blnProcessingError = false;
             blnCriticalError = false;
 
@@ -308,14 +300,14 @@ namespace AnalysisManagerIDPickerPlugIn
 
             if (ePHRPResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB)
             {
-                // If we run MSGFDB with target/decoy mode and showDecoy=1, then the _syn.txt file will have decoy proteins that start with REV_ or XXX_
+                // If we run MSGF+ with target/decoy mode and showDecoy=1, then the _syn.txt file will have decoy proteins that start with REV_ or XXX_
                 // Check for this
-                blnSuccess = LookForDecoyProteinsInMSGFDBResults(strSynFilePath, ePHRPResultType, ref strDecoyPrefix);
+                blnSuccess = LookForDecoyProteinsInMSGFPlusResults(strSynFilePath, ePHRPResultType, ref strDecoyPrefix);
                 if (!blnSuccess)
                 {
                     if (string.IsNullOrEmpty(m_message))
                     {
-                        m_message = "Error looking for decoy proteins in the MSGFDB synopsis file";
+                        m_message = "Error looking for decoy proteins in the MSGF+ synopsis file";
                     }
                     blnCriticalError = true;
                     return false;
@@ -325,7 +317,7 @@ namespace AnalysisManagerIDPickerPlugIn
             if (string.IsNullOrEmpty(strDecoyPrefix))
             {
                 // Look for decoy proteins in the Fasta file
-                blnSuccess = DetermineDecoyProteinPrefix(fastaFilePath, ref strDecoyPrefix);
+                blnSuccess = DetermineDecoyProteinPrefix(fastaFilePath, out strDecoyPrefix);
                 if (!blnSuccess)
                 {
                     if (string.IsNullOrEmpty(m_message))
@@ -375,10 +367,8 @@ namespace AnalysisManagerIDPickerPlugIn
                 blnProcessingError = true;
                 return false;
             }
-            else
-            {
-                return true;
-            }
+
+            return true;
         }
 
         /// <summary>
@@ -422,11 +412,10 @@ namespace AnalysisManagerIDPickerPlugIn
         /// <remarks></remarks>
         private string AppendArgument(string CmdArgs, string OptionName, string ArgumentName, string ValueIfMissing, bool AppendIfMissing)
         {
-            var strValue = string.Empty;
-            var blnIsMissing = false;
-            var blnAppendParam = false;
+            bool blnIsMissing;
+            bool blnAppendParam;
 
-            if (mIDPickerOptions.TryGetValue(OptionName, out strValue))
+            if (mIDPickerOptions.TryGetValue(OptionName, out var strValue))
             {
                 blnIsMissing = false;
             }
@@ -454,21 +443,17 @@ namespace AnalysisManagerIDPickerPlugIn
             {
                 return CmdArgs + " -" + ArgumentName + " " + PossiblyQuotePath(strValue);
             }
-            else
-            {
-                return CmdArgs;
-            }
+
+            return CmdArgs;
         }
 
         private bool CreateAssembleFile(string strAssembleFilePath)
         {
-            string strDatasetLabel = null;
-
             try
             {
                 // Prepend strExperiment with PNNL/
                 // Also make sure it doesn't contain any spaces
-                strDatasetLabel = "PNNL/" + m_Dataset.Replace(" ", "_");
+                var strDatasetLabel = "PNNL/" + m_Dataset.Replace(" ", "_");
 
                 // Create the Assemble.txt file
                 using (var swOutfile = new StreamWriter(new FileStream(strAssembleFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
@@ -488,9 +473,9 @@ namespace AnalysisManagerIDPickerPlugIn
 
         private void ClearConcurrentBag(ref ConcurrentBag<string> oBag)
         {
-            var item = string.Empty;
             while (!oBag.IsEmpty)
             {
+                string item;
                 oBag.TryTake(out item);
             }
         }
@@ -521,47 +506,41 @@ namespace AnalysisManagerIDPickerPlugIn
 
         private bool CreatePepXMLFile(string strFastaFilePath, string strSynFilePath, clsPHRPReader.ePeptideHitResultType ePHRPResultType)
         {
-            string strParamFileName = null;
-
-            var iHitsPerSpectrum = 0;
-
-            string CmdStr = null;
-
             // PepXML file creation should generally be done in less than 10 minutes
             // However, for huge fasta files, conversion could take several hours
             const int intMaxRuntimeMinutes = 480;
 
-            var blnSuccess = false;
+            bool blnSuccess;
 
             try
             {
-                //Set up and execute a program runner to run PeptideListToXML
-                strParamFileName = m_jobParams.GetParam("ParmFileName");
+                // Set up and execute a program runner to run PeptideListToXML
+                var strParamFileName = m_jobParams.GetParam("ParmFileName");
 
                 mPepXMLFilePath = Path.Combine(m_WorkDir, m_Dataset + ".pepXML");
-                iHitsPerSpectrum = m_jobParams.GetJobParameter("PepXMLHitsPerSpectrum", 3);
+                var iHitsPerSpectrum = m_jobParams.GetJobParameter("PepXMLHitsPerSpectrum", 3);
 
-                CmdStr = PossiblyQuotePath(strSynFilePath) + " /E:" + PossiblyQuotePath(strParamFileName) + " /F:" +
-                         PossiblyQuotePath(strFastaFilePath) + " /H:" + iHitsPerSpectrum;
+                var cmdStr = PossiblyQuotePath(strSynFilePath) + " /E:" + PossiblyQuotePath(strParamFileName) + " /F:" +
+                                PossiblyQuotePath(strFastaFilePath) + " /H:" + iHitsPerSpectrum;
 
                 if (ePHRPResultType == clsPHRPReader.ePeptideHitResultType.MODa | ePHRPResultType == clsPHRPReader.ePeptideHitResultType.MODPlus)
                 {
                     // The SpecProb values listed in the _syn_MSGF.txt file are not true spectral probabilities
                     // Instead, they're just 1 - Probability  (where Probability is a value between 0 and 1 assigned by MODa)
                     // Therefore, don't include them in the PepXML file
-                    CmdStr += " /NoMSGF";
+                    cmdStr += " /NoMSGF";
                 }
 
                 if (m_jobParams.GetJobParameter("PepXMLNoScanStats", false))
                 {
-                    CmdStr += " /NoScanStats";
+                    cmdStr += " /NoScanStats";
                 }
 
                 ClearConcurrentBag(ref mCmdRunnerErrorsToIgnore);
 
                 m_progress = PROGRESS_PCT_IDPicker_CREATING_PEPXML_FILE;
 
-                blnSuccess = RunProgramWork("PeptideListToXML", mPeptideListToXMLExePath, CmdStr, PEPXML_CONSOLE_OUTPUT, false, intMaxRuntimeMinutes);
+                blnSuccess = RunProgramWork("PeptideListToXML", mPeptideListToXMLExePath, cmdStr, PEPXML_CONSOLE_OUTPUT, false, intMaxRuntimeMinutes);
 
                 if (blnSuccess)
                 {
@@ -595,12 +574,8 @@ namespace AnalysisManagerIDPickerPlugIn
         /// <param name="strDecoyPrefix"></param>
         /// <returns>True if success; false if an error</returns>
         /// <remarks></remarks>
-        private bool DetermineDecoyProteinPrefix(string strFastaFilePath, ref string strDecoyPrefix)
+        private bool DetermineDecoyProteinPrefix(string strFastaFilePath, out string strDecoyPrefix)
         {
-            string strProtein = null;
-            string strProteinPrefix = null;
-            var intCount = 0;
-
             strDecoyPrefix = string.Empty;
 
             try
@@ -610,13 +585,15 @@ namespace AnalysisManagerIDPickerPlugIn
                     LogDebug("Looking for decoy proteins in the fasta file");
                 }
 
-                var lstReversedProteinPrefixes = new SortedSet<string>();
+                var lstReversedProteinPrefixes = new SortedSet<string>
+                {
+                    "reversed_",                                   // MTS reversed proteins                 // reversed[_]%'
+                    "scrambled_",                                  // MTS scrambled proteins                // scrambled[_]%'
+                    "xxx.",                                        // Inspect reversed/scrambled proteins   // xxx.%'
+                    MSGFDB_DECOY_PROTEIN_PREFIX.ToLower(),         // MSGFDB reversed proteins              // rev[_]%'
+                    MSGFPLUS_DECOY_PROTEIN_PREFIX.ToLower()        // MSGF+ reversed proteins               // xxx[_]%'
+                };
 
-                lstReversedProteinPrefixes.Add("reversed_");                             // MTS reversed proteins                 //reversed[_]%'
-                lstReversedProteinPrefixes.Add("scrambled_");                            // MTS scrambled proteins                //scrambled[_]%'
-                lstReversedProteinPrefixes.Add("xxx.");                                  // Inspect reversed/scrambled proteins   //xxx.%'
-                lstReversedProteinPrefixes.Add(MSGFDB_DECOY_PROTEIN_PREFIX.ToLower());   // MSGFDB reversed proteins              //rev[_]%'
-                lstReversedProteinPrefixes.Add(MSGFPLUS_DECOY_PROTEIN_PREFIX.ToLower()); // MSGF+ reversed proteins               //xxx[_]%'
 
                 // Note that X!Tandem decoy proteins end with ":reversed"
                 // IDPicker doesn't support decoy protein name suffixes, only prefixes
@@ -633,15 +610,15 @@ namespace AnalysisManagerIDPickerPlugIn
 
                 while (objFastaFileReader.ReadNextProteinEntry())
                 {
-                    strProtein = objFastaFileReader.ProteinName;
+                    var strProtein = objFastaFileReader.ProteinName;
 
                     foreach (var strPrefix in lstReversedProteinPrefixes)
                     {
                         if (strProtein.ToLower().StartsWith(strPrefix.ToLower()))
                         {
-                            strProteinPrefix = strProtein.Substring(0, strPrefix.Length);
+                            var strProteinPrefix = strProtein.Substring(0, strPrefix.Length);
 
-                            if (lstPrefixStats.TryGetValue(strProteinPrefix, out intCount))
+                            if (lstPrefixStats.TryGetValue(strProteinPrefix, out var intCount))
                             {
                                 lstPrefixStats[strProteinPrefix] = intCount + 1;
                             }
@@ -777,18 +754,19 @@ namespace AnalysisManagerIDPickerPlugIn
             return true;
         }
 
-        private bool LookForDecoyProteinsInMSGFDBResults(string strSynFilePath, clsPHRPReader.ePeptideHitResultType eResultType, ref string strDecoyPrefix)
+        private bool LookForDecoyProteinsInMSGFPlusResults(string strSynFilePath, clsPHRPReader.ePeptideHitResultType eResultType, ref string strDecoyPrefix)
         {
             try
             {
                 strDecoyPrefix = string.Empty;
-                var lstPrefixesToCheck = new List<string>();
-                lstPrefixesToCheck.Add(MSGFDB_DECOY_PROTEIN_PREFIX.ToUpper());
-                lstPrefixesToCheck.Add(MSGFPLUS_DECOY_PROTEIN_PREFIX.ToUpper());
+                var lstPrefixesToCheck = new List<string> {
+                    MSGFDB_DECOY_PROTEIN_PREFIX.ToUpper(),
+                    MSGFPLUS_DECOY_PROTEIN_PREFIX.ToUpper()
+                };
 
                 if (m_DebugLevel >= 3)
                 {
-                    LogDebug("Looking for decoy proteins in the MSGFDB synopsis file");
+                    LogDebug("Looking for decoy proteins in the MSGF+ synopsis file");
                 }
 
                 using (var oReader = new clsPHRPReader(strSynFilePath, eResultType, false, false, false))
@@ -820,7 +798,7 @@ namespace AnalysisManagerIDPickerPlugIn
             }
             catch (Exception ex)
             {
-                m_message = "Exception in IDPickerPlugin->LookForDecoyProteinsInMSGFDBResults";
+                m_message = "Exception in IDPickerPlugin->LookForDecoyProteinsInMSGFPlusResults";
                 LogError(m_message, ex);
                 return false;
             }
@@ -831,11 +809,10 @@ namespace AnalysisManagerIDPickerPlugIn
         private CloseOutType MoveFilesIntoIDPickerSubfolder()
         {
             var blnErrorEncountered = false;
-            string ResFolderNamePath = null;
 
             try
             {
-                ResFolderNamePath = Path.Combine(m_WorkDir, m_ResFolderName);
+                var ResFolderNamePath = Path.Combine(m_WorkDir, m_ResFolderName);
 
                 var diSourceFolder = new DirectoryInfo(ResFolderNamePath);
                 var diTargetFolder = diSourceFolder.CreateSubdirectory("IDPicker");
@@ -902,15 +879,12 @@ namespace AnalysisManagerIDPickerPlugIn
 
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-            else
-            {
-                return CloseOutType.CLOSEOUT_SUCCESS;
-            }
+
+            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         private void ParseConsoleOutputFileForErrors(string strConsoleOutputFilePath)
         {
-            string strLineIn = null;
             var blnUnhandledException = false;
             var strExceptionText = string.Empty;
 
@@ -922,7 +896,7 @@ namespace AnalysisManagerIDPickerPlugIn
                     {
                         while (!srInFile.EndOfStream)
                         {
-                            strLineIn = srInFile.ReadLine();
+                            var strLineIn = srInFile.ReadLine();
 
                             if (string.IsNullOrEmpty(strLineIn))
                                 continue;
@@ -972,17 +946,13 @@ namespace AnalysisManagerIDPickerPlugIn
         /// <remarks></remarks>
         private bool RunAssemble()
         {
-            string strAssembleFilePath = null;
-            string progLoc = null;
             const int intMaxRuntimeMinutes = 90;
-
-            var blnSuccess = false;
 
             // Create the Assemble.txt file
             // Since we're only processing one dataset, the file will only have one line
-            strAssembleFilePath = Path.Combine(m_WorkDir, ASSEMBLE_GROUPING_FILENAME);
+            var strAssembleFilePath = Path.Combine(m_WorkDir, ASSEMBLE_GROUPING_FILENAME);
 
-            blnSuccess = CreateAssembleFile(strAssembleFilePath);
+            var blnSuccess = CreateAssembleFile(strAssembleFilePath);
             if (!blnSuccess)
             {
                 if (string.IsNullOrEmpty(m_message))
@@ -998,13 +968,12 @@ namespace AnalysisManagerIDPickerPlugIn
             mCmdRunnerErrorsToIgnore.Add("Could not find the default configuration file");
 
             // Define the path to the .Exe
-            progLoc = Path.Combine(mIDPickerProgramFolder, IDPicker_Assemble);
+            var progLoc = Path.Combine(mIDPickerProgramFolder, IDPicker_Assemble);
 
             // Build the command string, for example:
             //  Assemble.xml -MaxFDR 0.1 -b Assemble.txt
-            string cmdStr = null;
 
-            cmdStr = ASSEMBLE_OUTPUT_FILENAME;
+            var cmdStr = ASSEMBLE_OUTPUT_FILENAME;
             cmdStr = AppendArgument(cmdStr, "AssemblyMaxFDR", "MaxFDR", "0.1");
             cmdStr += " -b Assemble.txt -dump";
 
@@ -1039,15 +1008,12 @@ namespace AnalysisManagerIDPickerPlugIn
         /// </summary>
         /// <param name="strFASTAFilePath"></param>
         /// <param name="strDecoyPrefix"></param>
+        /// <param name="ePHRPResultType"></param>
         /// <returns></returns>
         /// <remarks></remarks>
         private bool RunQonvert(string strFASTAFilePath, string strDecoyPrefix, clsPHRPReader.ePeptideHitResultType ePHRPResultType)
         {
-            string progLoc = null;
-            string CmdStr = null;
             const int intMaxRuntimeMinutes = 90;
-
-            var blnSuccess = false;
 
             // Define the errors that we can ignore
             ClearConcurrentBag(ref mCmdRunnerErrorsToIgnore);
@@ -1055,7 +1021,7 @@ namespace AnalysisManagerIDPickerPlugIn
             mCmdRunnerErrorsToIgnore.Add("could not find the default residue masses file");
 
             // Define the path to the .Exe
-            progLoc = Path.Combine(mIDPickerProgramFolder, IDPicker_Qonvert);
+            var progLoc = Path.Combine(mIDPickerProgramFolder, IDPicker_Qonvert);
 
             // Possibly override some options
             if (ePHRPResultType == clsPHRPReader.ePeptideHitResultType.MODa | ePHRPResultType == clsPHRPReader.ePeptideHitResultType.MODPlus)
@@ -1070,21 +1036,21 @@ namespace AnalysisManagerIDPickerPlugIn
             //   -SearchScoreWeights "msgfspecprob -1" -OptimizeScoreWeights 1
             //   -NormalizedSearchScores msgfspecprob -DecoyPrefix Reversed_
             //   -dump QC_Shew_11_06_pt5_3_13Feb12_Doc_11-12-07.pepXML
-            CmdStr = string.Empty;
+            var cmdStr = string.Empty;
 
-            CmdStr = AppendArgument(CmdStr, "QonvertMaxFDR", "MaxFDR", "0.1");
-            CmdStr += " -ProteinDatabase " + PossiblyQuotePath(strFASTAFilePath);
-            CmdStr = AppendArgument(CmdStr, "SearchScoreWeights", "msgfspecprob -1");
-            CmdStr = AppendArgument(CmdStr, "OptimizeScoreWeights", "1");
-            CmdStr = AppendArgument(CmdStr, "NormalizedSearchScores", "msgfspecprob");
+            cmdStr = AppendArgument(cmdStr, "QonvertMaxFDR", "MaxFDR", "0.1");
+            cmdStr += " -ProteinDatabase " + PossiblyQuotePath(strFASTAFilePath);
+            cmdStr = AppendArgument(cmdStr, "SearchScoreWeights", "msgfspecprob -1");
+            cmdStr = AppendArgument(cmdStr, "OptimizeScoreWeights", "1");
+            cmdStr = AppendArgument(cmdStr, "NormalizedSearchScores", "msgfspecprob");
 
-            CmdStr += " -DecoyPrefix " + PossiblyQuotePath(strDecoyPrefix);
-            CmdStr += " -dump";              // This tells IDPQonvert to display the processing options that the program is using
-            CmdStr += " " + mPepXMLFilePath;
+            cmdStr += " -DecoyPrefix " + PossiblyQuotePath(strDecoyPrefix);
+            cmdStr += " -dump";              // This tells IDPQonvert to display the processing options that the program is using
+            cmdStr += " " + mPepXMLFilePath;
 
             m_progress = PROGRESS_PCT_IDPicker_RUNNING_IDPQonvert;
 
-            blnSuccess = RunProgramWork("IDPQonvert", progLoc, CmdStr, IPD_Qonvert_CONSOLE_OUTPUT, true, intMaxRuntimeMinutes);
+            var blnSuccess = RunProgramWork("IDPQonvert", progLoc, cmdStr, IPD_Qonvert_CONSOLE_OUTPUT, true, intMaxRuntimeMinutes);
 
             mIdpXMLFilePath = Path.Combine(m_WorkDir, m_Dataset + ".idpXML");
 
@@ -1109,13 +1075,9 @@ namespace AnalysisManagerIDPickerPlugIn
         /// <remarks></remarks>
         private bool RunReport()
         {
-            string strOutputFolderName = null;
-            string progLoc = null;
             const int intMaxRuntimeMinutes = 60;
 
-            var blnSuccess = false;
-
-            strOutputFolderName = "IDPicker";
+            var strOutputFolderName = "IDPicker";
 
             // Define the errors that we can ignore
             ClearConcurrentBag(ref mCmdRunnerErrorsToIgnore);
@@ -1123,25 +1085,24 @@ namespace AnalysisManagerIDPickerPlugIn
             mCmdRunnerErrorsToIgnore.Add("Could not find the default configuration file");
 
             // Define the path to the .Exe
-            progLoc = Path.Combine(mIDPickerProgramFolder, IDPicker_Report);
+            var progLoc = Path.Combine(mIDPickerProgramFolder, IDPicker_Report);
 
             // Build the command string, for example:
             //  report Assemble.xml -MaxFDR 0.05 -MinDistinctPeptides 2 -MinAdditionalPeptides 2 -ModsAreDistinctByDefault true -MaxAmbiguousIds 2 -MinSpectraPerProtein 2 -OutputTextReport true
-            string CmdStr = null;
 
-            CmdStr = strOutputFolderName + " " + mIdpAssembleFilePath;
-            CmdStr = AppendArgument(CmdStr, "ReportMaxFDR", "MaxFDR", "0.05");
-            CmdStr = AppendArgument(CmdStr, "MinDistinctPeptides", "2");
-            CmdStr = AppendArgument(CmdStr, "MinAdditionalPeptides", "2");
-            CmdStr = AppendArgument(CmdStr, "ModsAreDistinctByDefault", "true");
-            CmdStr = AppendArgument(CmdStr, "MaxAmbiguousIds", "2");
-            CmdStr = AppendArgument(CmdStr, "MinSpectraPerProtein", "2");
+            var cmdStr = strOutputFolderName + " " + mIdpAssembleFilePath;
+            cmdStr = AppendArgument(cmdStr, "ReportMaxFDR", "MaxFDR", "0.05");
+            cmdStr = AppendArgument(cmdStr, "MinDistinctPeptides", "2");
+            cmdStr = AppendArgument(cmdStr, "MinAdditionalPeptides", "2");
+            cmdStr = AppendArgument(cmdStr, "ModsAreDistinctByDefault", "true");
+            cmdStr = AppendArgument(cmdStr, "MaxAmbiguousIds", "2");
+            cmdStr = AppendArgument(cmdStr, "MinSpectraPerProtein", "2");
 
-            CmdStr += " -OutputTextReport true -dump";
+            cmdStr += " -OutputTextReport true -dump";
 
             m_progress = PROGRESS_PCT_IDPicker_RUNNING_IDPReport;
 
-            blnSuccess = RunProgramWork("IDPReport", progLoc, CmdStr, IPD_Report_CONSOLE_OUTPUT, true, intMaxRuntimeMinutes);
+            var blnSuccess = RunProgramWork("IDPReport", progLoc, cmdStr, IPD_Report_CONSOLE_OUTPUT, true, intMaxRuntimeMinutes);
 
             if (blnSuccess)
             {
@@ -1191,8 +1152,7 @@ namespace AnalysisManagerIDPickerPlugIn
                     mBatchFilesMoved = true;
 
                     // Zip the report folder
-                    string strZippedResultsFilePath = null;
-                    strZippedResultsFilePath = Path.Combine(m_WorkDir, "IDPicker_HTML_Results.zip");
+                    var strZippedResultsFilePath = Path.Combine(m_WorkDir, "IDPicker_HTML_Results.zip");
                     m_IonicZipTools.DebugLevel = m_DebugLevel;
                     blnSuccess = m_IonicZipTools.ZipDirectory(diReportFolder.FullName, strZippedResultsFilePath, true);
 
@@ -1223,22 +1183,22 @@ namespace AnalysisManagerIDPickerPlugIn
         }
 
         /// <summary>
-        ///
+        /// Run IDPicker
         /// </summary>
         /// <param name="strProgramDescription"></param>
         /// <param name="strExePath"></param>
-        /// <param name="CmdStr"></param>
+        /// <param name="cmdStr"></param>
         /// <param name="strConsoleOutputFileName">If empty, then does not create a console output file</param>
+        /// <param name="blnCaptureConsoleOutputViaDosRedirection"></param>
+        /// <param name="intMaxRuntimeMinutes"></param>
         /// <returns></returns>
-        /// <remarks></remarks>
-        private bool RunProgramWork(string strProgramDescription, string strExePath, string CmdStr, string strConsoleOutputFileName,
+        ///  <remarks></remarks>
+        private bool RunProgramWork(string strProgramDescription, string strExePath, string cmdStr, string strConsoleOutputFileName,
             bool blnCaptureConsoleOutputViaDosRedirection, int intMaxRuntimeMinutes)
         {
-            var blnSuccess = false;
-
             if (m_DebugLevel >= 1)
             {
-                LogMessage(strExePath + " " + CmdStr.TrimStart(' '));
+                LogMessage(strExePath + " " + cmdStr.TrimStart(' '));
             }
 
             mCmdRunnerDescription = string.Copy(strProgramDescription);
@@ -1254,19 +1214,19 @@ namespace AnalysisManagerIDPickerPlugIn
             {
                 // Create a batch file to run the command
                 // Capture the console output (including output to the error stream) via redirection symbols:
-                //    strExePath CmdStr > ConsoleOutputFile.txt 2>&1
+                //    strExePath cmdStr > ConsoleOutputFile.txt 2>&1
 
                 var strExePathOriginal = string.Copy(strExePath);
-                var CmdStrOriginal = string.Copy(CmdStr);
+                var CmdStrOriginal = string.Copy(cmdStr);
 
                 strProgramDescription = strProgramDescription.Replace(" ", "_");
 
                 var strBatchFileName = "Run_" + strProgramDescription + ".bat";
                 mFilenamesToAddToReportFolder.Add(strBatchFileName);
 
-                // Update the Exe path to point to the RunProgram batch file; update CmdStr to be empty
+                // Update the Exe path to point to the RunProgram batch file; update cmdStr to be empty
                 strExePath = Path.Combine(m_WorkDir, strBatchFileName);
-                CmdStr = string.Empty;
+                cmdStr = string.Empty;
 
                 if (string.IsNullOrEmpty(strConsoleOutputFileName))
                 {
@@ -1300,7 +1260,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
             var intMaxRuntimeSeconds = intMaxRuntimeMinutes * 60;
 
-            blnSuccess = cmdRunner.RunProgram(strExePath, CmdStr, strProgramDescription, true, intMaxRuntimeSeconds);
+            var blnSuccess = cmdRunner.RunProgram(strExePath, cmdStr, strProgramDescription, true, intMaxRuntimeSeconds);
 
             if (mCmdRunnerErrors.Count == 0 && !string.IsNullOrEmpty(cmdRunner.CachedConsoleError))
             {
@@ -1362,7 +1322,6 @@ namespace AnalysisManagerIDPickerPlugIn
         private bool StoreToolVersionInfo(string strIDPickerProgLoc, bool blnSkipIDPicker)
         {
             var strToolVersionInfo = string.Empty;
-            string strExePath = null;
 
             var blnSuccess = false;
 
@@ -1402,14 +1361,20 @@ namespace AnalysisManagerIDPickerPlugIn
 
                 mIDPickerProgramFolder = ioIDPicker.DirectoryName;
 
+                if (ioIDPicker.Directory == null)
+                {
+                    LogError("Cannot determine the prent directory of " + ioIDPicker.FullName);
+                    return false;
+                }
+
                 // Lookup the version of idpAssemble.exe (which is a .NET app; cannot use idpQonvert.exe since it is a C++ app)
-                strExePath = Path.Combine(ioIDPicker.Directory.FullName, IDPicker_Assemble);
-                blnSuccess = base.StoreToolVersionInfoViaSystemDiagnostics(ref strToolVersionInfo, strExePath);
+                var strExePath = Path.Combine(ioIDPicker.Directory.FullName, IDPicker_Assemble);
+                StoreToolVersionInfoViaSystemDiagnostics(ref strToolVersionInfo, strExePath);
                 ioToolFiles.Add(new FileInfo(strExePath));
 
                 // Lookup the version of idpReport.exe
                 strExePath = Path.Combine(ioIDPicker.Directory.FullName, IDPicker_Report);
-                blnSuccess = base.StoreToolVersionInfoViaSystemDiagnostics(ref strToolVersionInfo, strExePath);
+                StoreToolVersionInfoViaSystemDiagnostics(ref strToolVersionInfo, strExePath);
                 ioToolFiles.Add(new FileInfo(strExePath));
 
                 // Also include idpQonvert.exe in ioToolFiles (version determination does not work)
@@ -1417,13 +1382,13 @@ namespace AnalysisManagerIDPickerPlugIn
                 ioToolFiles.Add(new FileInfo(strExePath));
 
                 // Lookup the version of PeptideListToXML.exe
-                blnSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, mPeptideListToXMLExePath);
+                StoreToolVersionInfoOneFile(ref strToolVersionInfo, mPeptideListToXMLExePath);
                 ioToolFiles.Add(new FileInfo(mPeptideListToXMLExePath));
             }
 
             try
             {
-                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
+                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
             }
             catch (Exception ex)
             {
@@ -1434,13 +1399,11 @@ namespace AnalysisManagerIDPickerPlugIn
 
         private bool ZipPepXMLFile()
         {
-            string strZippedPepXMLFilePath = null;
-
             try
             {
-                strZippedPepXMLFilePath = Path.Combine(m_WorkDir, m_Dataset + "_pepXML.zip");
+                var strZippedPepXMLFilePath = Path.Combine(m_WorkDir, m_Dataset + "_pepXML.zip");
 
-                if (!base.ZipFile(mPepXMLFilePath, false, strZippedPepXMLFilePath))
+                if (!ZipFile(mPepXMLFilePath, false, strZippedPepXMLFilePath))
                 {
                     LogError("Error zipping PepXML file");
                     return false;
@@ -1464,28 +1427,24 @@ namespace AnalysisManagerIDPickerPlugIn
 
         private void CmdRunner_ConsoleErrorEvent(string NewText, Exception ex)
         {
-            if ((mCmdRunnerErrors != null))
+            if (mCmdRunnerErrors == null)
+                return;
+
+            // Split NewText on newline characters
+            var chNewLineChars = new[] { '\r', '\n' };
+
+            var strSplitLine = NewText.Split(chNewLineChars, StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (var strItem in strSplitLine)
             {
-                // Split NewText on newline characters
-                string[] strSplitLine = null;
-                var chNewLineChars = new char[] { '\r', '\n' };
+                var strItem2 = strItem.Trim(chNewLineChars);
 
-                strSplitLine = NewText.Split(chNewLineChars, StringSplitOptions.RemoveEmptyEntries);
-
-                if ((strSplitLine != null))
+                if (!string.IsNullOrEmpty(strItem2))
                 {
-                    foreach (var strItem in strSplitLine)
+                    // Confirm that strItem does not contain any text in mCmdRunnerErrorsToIgnore
+                    if (!IgnoreError(strItem2))
                     {
-                        var strItem2 = strItem.Trim(chNewLineChars);
-
-                        if (!string.IsNullOrEmpty(strItem2))
-                        {
-                            // Confirm that strItem does not contain any text in mCmdRunnerErrorsToIgnore
-                            if (!IgnoreError(strItem2))
-                            {
-                                mCmdRunnerErrors.Add(strItem2);
-                            }
-                        }
+                        mCmdRunnerErrors.Add(strItem2);
                     }
                 }
             }

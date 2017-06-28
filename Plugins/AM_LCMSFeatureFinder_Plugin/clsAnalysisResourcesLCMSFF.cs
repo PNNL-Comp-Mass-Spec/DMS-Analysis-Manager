@@ -35,7 +35,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
             var strFileToGet = DatasetName + SCANS_FILE_SUFFIX;
             if (!FileSearch.FindAndRetrieveMiscFiles(strFileToGet, false))
             {
-                //Errors were reported in function call, so just return
+                // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
@@ -43,7 +43,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
             strFileToGet = DatasetName + ISOS_FILE_SUFFIX;
             if (!FileSearch.FindAndRetrieveMiscFiles(strFileToGet, false))
             {
-                //Errors were reported in function call, so just return
+                // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
             m_jobParams.AddResultFileToSkip(strFileToGet);
@@ -68,7 +68,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
 
             if (!CopyFileToWorkDir(strLCMSFFIniFileName, strFFIniFileStoragePath, m_WorkingDir))
             {
-                //Errors were reported in function call, so just return
+                // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 

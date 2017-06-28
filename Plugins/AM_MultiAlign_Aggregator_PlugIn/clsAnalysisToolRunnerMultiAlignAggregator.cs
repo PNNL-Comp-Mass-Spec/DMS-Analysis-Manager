@@ -21,7 +21,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
                 m_jobParams.SetParam("JobParameters", "DatasetNum", m_jobParams.GetParam("OutputFolderPath"));
 
-                //Do the base class stuff
+                // Do the base class stuff
                 if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -88,14 +88,14 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                     LogError(m_message);
                 }
 
-                //Stop the job timer
+                // Stop the job timer
                 m_StopTime = DateTime.UtcNow;
                 m_progress = PROGRESS_PCT_MULTIALIGN_DONE;
 
-                //Add the current job data to the summary file
+                // Add the current job data to the summary file
                 UpdateSummaryFile();
 
-                //Make sure objects are released
+                // Make sure objects are released
                 Thread.Sleep(500);
                 PRISM.clsProgRunner.GarbageCollectNow();
 

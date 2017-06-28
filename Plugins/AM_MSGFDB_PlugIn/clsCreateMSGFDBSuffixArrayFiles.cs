@@ -745,32 +745,32 @@ namespace AnalysisManagerMSGFDBPlugIn
                     OnStatusEvent("Creating Suffix Array database file: " + dbSarrayFilename);
                 }
 
-                //Set up and execute a program runner to invoke BuildSA (which is in MSGFDB.jar or MSGFPlus.jar)
+                // Set up and execute a program runner to invoke BuildSA (which is in MSGFDB.jar or MSGFPlus.jar)
                 currentTask = "Construct BuildSA command line";
 
-                var CmdStr = " -Xmx" + javaMemorySizeMB + "M -cp " + msgfPlusProgLoc;
+                var cmdStr = " -Xmx" + javaMemorySizeMB + "M -cp " + msgfPlusProgLoc;
 
                 if (msgfPlus)
                 {
-                    CmdStr += " edu.ucsd.msjava.msdbsearch.BuildSA -d " + fiFastaFile.FullName;
+                    cmdStr += " edu.ucsd.msjava.msdbsearch.BuildSA -d " + fiFastaFile.FullName;
                 }
                 else
                 {
-                    CmdStr += " msdbsearch.BuildSA -d " + fiFastaFile.FullName;
+                    cmdStr += " msdbsearch.BuildSA -d " + fiFastaFile.FullName;
                 }
 
                 if (fastaFileIsDecoy)
                 {
-                    CmdStr += " -tda 0";
+                    cmdStr += " -tda 0";
                 }
                 else
                 {
-                    CmdStr += " -tda 2";
+                    cmdStr += " -tda 2";
                 }
 
                 if (debugLevel >= 1)
                 {
-                    OnStatusEvent(javaProgLoc + " " + CmdStr);
+                    OnStatusEvent(javaProgLoc + " " + cmdStr);
                 }
 
                 var consoleOutputFilePath = Path.Combine(logFileDir, "MSGFPlus_BuildSA_ConsoleOutput.txt");
@@ -784,11 +784,11 @@ namespace AnalysisManagerMSGFDBPlugIn
                 };
                 RegisterEvents(objBuildSA);
 
-                currentTask = "Run BuildSA using " + CmdStr;
+                currentTask = "Run BuildSA using " + cmdStr;
 
                 // Run BuildSA and wait for it to exit
                 // This process generally doesn't take that long so we do not track CPU usage
-                success = objBuildSA.RunProgram(javaProgLoc, CmdStr, "BuildSA", true);
+                success = objBuildSA.RunProgram(javaProgLoc, cmdStr, "BuildSA", true);
 
                 if (!success)
                 {
@@ -973,13 +973,13 @@ namespace AnalysisManagerMSGFDBPlugIn
             missingFiles = string.Empty;
 
             // Old suffixes (used prior to August 2011)
-            //lstFilesToFind.Add(".revConcat.fasta")
-            //lstFilesToFind.Add(".seq")
-            //lstFilesToFind.Add(".seqanno")
-            //lstFilesToFind.Add(".revConcat.seq")
-            //lstFilesToFind.Add(".revConcat.seqanno")
-            //lstFilesToFind.Add(".sarray")
-            //lstFilesToFind.Add(".revConcat.sarray")
+            // lstFilesToFind.Add(".revConcat.fasta")
+            // lstFilesToFind.Add(".seq")
+            // lstFilesToFind.Add(".seqanno")
+            // lstFilesToFind.Add(".revConcat.seq")
+            // lstFilesToFind.Add(".revConcat.seqanno")
+            // lstFilesToFind.Add(".sarray")
+            // lstFilesToFind.Add(".revConcat.sarray")
 
             // Suffixes for MSGFDB (effective 8/22/2011) and MSGF+
             lstFilesToFind.Add(".canno");

@@ -163,15 +163,10 @@ namespace AnalysisManagerMODaPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         protected bool StartMODa(string JavaProgLoc)
         {
-            var intJavaMemorySize = 0;
-            string CmdStr = null;
-            var blnSuccess = false;
-
             // We will store the MODa version info in the database after the header block is written to file MODa_ConsoleOutput.txt
 
             mToolVersionWritten = false;
@@ -197,7 +192,7 @@ namespace AnalysisManagerMODaPlugIn
             LogMessage("Running MODa");
 
             // Lookup the amount of memory to reserve for Java; default to 2 GB
-            intJavaMemorySize = m_jobParams.GetJobParameter("MODaJavaMemorySize", 2000);
+            var intJavaMemorySize = m_jobParams.GetJobParameter("MODaJavaMemorySize", 2000);
             if (intJavaMemorySize < 512)
                 intJavaMemorySize = 512;
 
@@ -205,11 +200,11 @@ namespace AnalysisManagerMODaPlugIn
             mMODaResultsFilePath = Path.Combine(m_WorkDir, m_Dataset + MODA_RESULTS_FILE_SUFFIX);
 
             // Set up and execute a program runner to run MODa
-            CmdStr = " -Xmx" + intJavaMemorySize + "M -jar " + mMODaProgLoc;
-            CmdStr += " -i " + paramFilePath;
-            CmdStr += " -o " + mMODaResultsFilePath;
+            var cmdStr = " -Xmx" + intJavaMemorySize + "M -jar " + mMODaProgLoc;
+            cmdStr += " -i " + paramFilePath;
+            cmdStr += " -o " + mMODaResultsFilePath;
 
-            LogDebug(JavaProgLoc + " " + CmdStr);
+            LogDebug(JavaProgLoc + " " + cmdStr);
 
             mCmdRunner = new clsRunDosProgram(m_WorkDir);
             RegisterEvents(mCmdRunner);
@@ -227,7 +222,7 @@ namespace AnalysisManagerMODaPlugIn
 
             // Start the program and wait for it to finish
             // However, while it's running, LoopWaiting will get called via events
-            blnSuccess = mCmdRunner.RunProgram(JavaProgLoc, CmdStr, "MODa", true);
+            var blnSuccess = mCmdRunner.RunProgram(JavaProgLoc, cmdStr, "MODa", true);
 
             if (!mToolVersionWritten)
             {
@@ -297,7 +292,7 @@ namespace AnalysisManagerMODaPlugIn
         // MOD-A | 2/132
         // MOD-A | 3/132
         // Look for lines of the form MOD-A | 6947/13253
-        private Regex reExtractScan = new Regex(REGEX_MODa_PROGRESS, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private readonly Regex reExtractScan = new Regex(REGEX_MODa_PROGRESS, RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
         /// Parse the MODa console output file to determine the MODa version and to track the search progress
@@ -323,10 +318,8 @@ namespace AnalysisManagerMODaPlugIn
                     LogDebug("Parsing file " + strConsoleOutputFilePath);
                 }
 
-                string strLineIn = null;
-                var intLinesRead = 0;
+                int intLinesRead;
 
-                var intValue = 0;
                 var intScansProcessed = 0;
                 var intTotalScans = 0;
                 var strMODaVersionAndDate = string.Empty;
@@ -338,7 +331,7 @@ namespace AnalysisManagerMODaPlugIn
                     intLinesRead = 0;
                     while (!srInFile.EndOfStream)
                     {
-                        strLineIn = srInFile.ReadLine();
+                        var strLineIn = srInFile.ReadLine();
                         intLinesRead += 1;
 
                         if (string.IsNullOrWhiteSpace(strLineIn))
@@ -391,6 +384,7 @@ namespace AnalysisManagerMODaPlugIn
                         var oMatch = reExtractScan.Match(strLineIn);
                         if (oMatch.Success)
                         {
+                            int intValue;
                             if (int.TryParse(oMatch.Groups[1].Value, out intValue))
                             {
                                 intScansProcessed = intValue;
@@ -435,23 +429,22 @@ namespace AnalysisManagerMODaPlugIn
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo()
         {
-            string strToolVersionInfo = null;
-
             if (m_DebugLevel >= 2)
             {
                 LogDebug("Determining tool version info");
             }
 
-            strToolVersionInfo = string.Copy(mMODaVersion);
+            var strToolVersionInfo = string.Copy(mMODaVersion);
 
             // Store paths to key files in ioToolFiles
-            var ioToolFiles = new List<FileInfo>();
-            ioToolFiles.Add(new FileInfo(mMODaProgLoc));
+            var ioToolFiles = new List<FileInfo> {
+                new FileInfo(mMODaProgLoc)
+            };
 
             try
             {
                 // Tool_Version_Info_MODa.txt is required by IDPicker
-                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, saveToolVersionTextFile: true);
+                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, saveToolVersionTextFile: true);
             }
             catch (Exception ex)
             {
@@ -484,25 +477,29 @@ namespace AnalysisManagerMODaPlugIn
                     LogDebug("Trimming console output file at " + strConsoleOutputFilePath);
                 }
 
-                var intScanNumber = 0;
-                var intScanNumberOutputThreshold = 0;
-
                 var fiConsoleOutputFile = new FileInfo(strConsoleOutputFilePath);
                 var fiTrimmedFilePath = new FileInfo(strConsoleOutputFilePath + ".trimmed");
 
                 using (var srInFile = new StreamReader(new FileStream(fiConsoleOutputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 using (var swOutFile = new StreamWriter(new FileStream(fiTrimmedFilePath.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    intScanNumberOutputThreshold = 0;
+                    var intScanNumberOutputThreshold = 0;
                     while (!srInFile.EndOfStream)
                     {
                         var strLineIn = srInFile.ReadLine();
+
+                        if (strLineIn == null)
+                        {
+                            swOutFile.WriteLine();
+                            continue;
+                        }
+
                         var blnKeepLine = true;
 
                         var oMatch = reExtractScan.Match(strLineIn);
                         if (oMatch.Success)
                         {
-                            if (int.TryParse(oMatch.Groups[1].Value, out intScanNumber))
+                            if (int.TryParse(oMatch.Groups[1].Value, out var intScanNumber))
                             {
                                 if (intScanNumber < intScanNumberOutputThreshold)
                                 {
@@ -560,7 +557,7 @@ namespace AnalysisManagerMODaPlugIn
                     {
                         var strLineIn = srInFile.ReadLine();
 
-                        if (strLineIn.TrimStart().StartsWith("#") || string.IsNullOrWhiteSpace(strLineIn))
+                        if (string.IsNullOrWhiteSpace(strLineIn) || strLineIn.TrimStart().StartsWith("#"))
                         {
                             // Comment line or blank line; write it out as-is
                             swOutFile.WriteLine(strLineIn);

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Data.SqlClient;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -12,7 +11,7 @@ using AnalysisManagerMsXmlGenPlugIn;
 namespace AnalysisManager_RepoPkgr_Plugin
 {
     //*********************************************************************************************************
-    //Class for running RepoPkgr
+    // Class for running RepoPkgr
     //*********************************************************************************************************
     public class clsAnalysisToolRunnerRepoPkgr : clsAnalysisToolRunnerBase
     {
@@ -48,7 +47,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
         {
             try
             {
-                //Do the base class stuff
+                // Do the base class stuff
                 var result = base.RunTool();
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
@@ -256,7 +255,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
         /// <summary>
         /// Generate handler that provides pre-packaged Mage pipelines
         /// that do the heavy lifting tasks that get data package items,
-        /// find associated files, and copy them to repo cache folders    
+        /// find associated files, and copy them to repo cache folders
         /// </summary>
         /// <returns>Pipeline handler objet</returns>
         private void SetMagePipelineManager(string outputFolderPath = "")
@@ -336,7 +335,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 // Need to create the .mzXML file
                 if (!dctDatasetRawFilePaths.ContainsKey(datasetName))
                 {
-                    m_message = "Dataset " + datasetName + " not found in job parameter " + 
+                    m_message = "Dataset " + datasetName + " not found in job parameter " +
                         clsAnalysisResources.JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS + "; unable to create the missing .mzXML file";
                     LogError(m_message);
                     return string.Empty;

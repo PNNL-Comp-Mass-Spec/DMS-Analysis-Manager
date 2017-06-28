@@ -13,16 +13,15 @@ namespace AnalysisManager_Ape_PlugIn
 
         #endregion
 
-            #region Constructors 
+            #region Constructors
 
         /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="jobParms"></param>
         /// <param name="mgrParms"></param>
-        /// <param name="monitor"></param>
         public clsApeAMGetImprovResults(IJobParams jobParms, IMgrParams mgrParms) : base(jobParms, mgrParms)
-        {           
+        {
         }
 
         #endregion
@@ -62,7 +61,8 @@ namespace AnalysisManager_Ape_PlugIn
 
             var apeMTSServerName = GetJobParam("ApeMTSServer");
             var apeMTSDatabaseName = GetJobParam("ApeMTSDatabase");
-            //Need these for backward compatibility
+
+            // Need these for backward compatibility
             if (string.IsNullOrEmpty(apeMTSServerName))
             {
                 apeMTSServerName = GetJobParam("ImprovMTSServer");
@@ -72,25 +72,24 @@ namespace AnalysisManager_Ape_PlugIn
                 apeMTSDatabaseName = GetJobParam("ImprovMTSDatabase");
             }
             var apeImprovMinPMTQuality = GetJobParam("ImprovMinPMTQuality");
-            var apeMSGFThreshold = GetJobParam("ImprovMSGFThreshold");
+            // var apeMSGFThreshold = GetJobParam("ImprovMSGFThreshold");
             var apeDatabase = Path.Combine(mWorkingDir, "Results.db3");
 
-            var paramList = new List<string>();
-//            paramList.Add(apeMTSDatabaseName + ";@MTDBName;" + apeMTSDatabaseName + ";False;sqldbtype.varchar;;");
-            paramList.Add(apeImprovMinPMTQuality + ";@MinimumPMTQualityScore;0;False;sqldbtype.real;;");
-            paramList.Add("0.1;@MSGFThreshold;0.1;False;sqldbtype.real;;");
-
-            
-            paramList.Add("1;@ReturnJobInfoTable;1;True;sqldbtype.tinyint;T_Analysis_Description;sqldbtype.tinyint");
-            paramList.Add("1;@ReturnProteinMapTable;1;True;sqldbtype.tinyint;T_Mass_Tag_to_Protein_Map;sqldbtype.tinyint");
-            paramList.Add("1;@ReturnProteinTable;1;True;sqldbtype.tinyint;T_Proteins;sqldbtype.tinyint");
-            paramList.Add("1;@ReturnMTTable;1;True;sqldbtype.tinyint;T_Mass_Tags;sqldbtype.tinyint");
-            paramList.Add("1;@ReturnPeptideTable;1;True;sqldbtype.tinyint;T_Peptides;sqldbtype.tinyint");
-
+            var paramList = new List<string>
+            {
+                //  paramList.Add(apeMTSDatabaseName + ";@MTDBName;" + apeMTSDatabaseName + ";False;sqldbtype.varchar;;");
+                apeImprovMinPMTQuality + ";@MinimumPMTQualityScore;0;False;sqldbtype.real;;",
+                "0.1;@MSGFThreshold;0.1;False;sqldbtype.real;;",
+                "1;@ReturnJobInfoTable;1;True;sqldbtype.tinyint;T_Analysis_Description;sqldbtype.tinyint",
+                "1;@ReturnProteinMapTable;1;True;sqldbtype.tinyint;T_Mass_Tag_to_Protein_Map;sqldbtype.tinyint",
+                "1;@ReturnProteinTable;1;True;sqldbtype.tinyint;T_Proteins;sqldbtype.tinyint",
+                "1;@ReturnMTTable;1;True;sqldbtype.tinyint;T_Mass_Tags;sqldbtype.tinyint",
+                "1;@ReturnPeptideTable;1;True;sqldbtype.tinyint;T_Peptides;sqldbtype.tinyint"
+            };
 
             var dotnetConnString = "Server=" + apeMTSServerName + ";database=" + apeMTSDatabaseName+ ";uid=mtuser;Password=mt4fun";
-            //mCurrentDBConnectionString = "Provider=sqloledb;Data Source=Albert;Initial Catalog=MT_Sea_Sediments_SBI_P590;User ID=mtuser;Password=mt4fun"
-            Ape.SqlServerToSQLite.ProgressChanged += new Ape.SqlServerToSQLite.ProgressChangedEventHandler(OnProgressChanged);
+            // mCurrentDBConnectionString = "Provider=sqloledb;Data Source=Albert;Initial Catalog=MT_Sea_Sediments_SBI_P590;User ID=mtuser;Password=mt4fun"
+            Ape.SqlServerToSQLite.ProgressChanged += OnProgressChanged;
             var jobList = GetJobIDList();
             if (string.IsNullOrEmpty(jobList))
             {
@@ -103,8 +102,8 @@ namespace AnalysisManager_Ape_PlugIn
         }
 
         // Unused function
-        //private string GetExperimentList()
-        //{
+        // private string GetExperimentList()
+        // {
         //    string constr = RequireMgrParam("connectionstring");
         //    string sqlText = "Select Experiment From dbo.V_MAC_Data_Package_Experiments Where Data_Package_ID = " + GetJobParam("DataPackageID");
         //    string expList = string.Empty;
@@ -126,7 +125,7 @@ namespace AnalysisManager_Ape_PlugIn
         //    }
 
         //    return expList;
-        //}
+        // }
 
         private string GetJobIDList()
         {
@@ -176,5 +175,5 @@ namespace AnalysisManager_Ape_PlugIn
         }
 
     }
-    
+
 }

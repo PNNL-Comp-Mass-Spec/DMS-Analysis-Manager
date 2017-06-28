@@ -36,9 +36,9 @@ namespace AnalysisManagerMultiAlignPlugIn
         /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
-            string CmdStr = null;
+            string cmdStr = null;
 
-            //Do the base class stuff
+            // Do the base class stuff
             if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -76,10 +76,10 @@ namespace AnalysisManagerMultiAlignPlugIn
             var MultiAlignDatabaseName = string.Copy(m_Dataset);
 
             // Set up and execute a program runner to run MultiAlign
-            CmdStr = " input.txt " + Path.Combine(m_WorkDir, m_jobParams.GetParam("ParmFileName")) + " " + m_WorkDir + " " + MultiAlignDatabaseName;
+            cmdStr = " input.txt " + Path.Combine(m_WorkDir, m_jobParams.GetParam("ParmFileName")) + " " + m_WorkDir + " " + MultiAlignDatabaseName;
             if (m_DebugLevel >= 1)
             {
-                LogDebug(progLoc + " " + CmdStr);
+                LogDebug(progLoc + " " + cmdStr);
             }
 
             mCmdRunner.CreateNoWindow = true;
@@ -89,7 +89,7 @@ namespace AnalysisManagerMultiAlignPlugIn
             mCmdRunner.WriteConsoleOutputToFile = false;
 
             bool processingSuccess;
-            if (!mCmdRunner.RunProgram(progLoc, CmdStr, "MultiAlign", true))
+            if (!mCmdRunner.RunProgram(progLoc, cmdStr, "MultiAlign", true))
             {
                 m_message = "Error running MultiAlign";
                 LogError(m_message + ", job " + m_JobNum);
@@ -100,14 +100,14 @@ namespace AnalysisManagerMultiAlignPlugIn
                 processingSuccess = true;
             }
 
-            //Stop the job timer
+            // Stop the job timer
             m_StopTime = DateTime.UtcNow;
             m_progress = PROGRESS_PCT_MULTI_ALIGN_DONE;
 
-            //Add the current job data to the summary file
+            // Add the current job data to the summary file
             UpdateSummaryFile();
 
-            //Make sure objects are released
+            // Make sure objects are released
             Thread.Sleep(500);
             PRISM.clsProgRunner.GarbageCollectNow();
 
@@ -120,7 +120,7 @@ namespace AnalysisManagerMultiAlignPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            //Rename the log file so it is consistent with other log files. MultiAlign will add ability to specify log file name
+            // Rename the log file so it is consistent with other log files. MultiAlign will add ability to specify log file name
             RenameLogFile();
 
             var resultsFolderCreated = MakeResultsFolder();
@@ -145,19 +145,20 @@ namespace AnalysisManagerMultiAlignPlugIn
 
         protected CloseOutType RenameLogFile()
         {
-            string[] Files = null;
             var LogExtension = "-log.txt";
             var NewFilename = m_Dataset + LogExtension;
-            //This is what MultiAlign is currently naming the log file
+
+            // This is what MultiAlign is currently naming the log file
             var LogNameFilter = m_Dataset + ".db3-log*.txt";
             try
             {
-                //Get the log file name.  There should only be one log file
-                Files = Directory.GetFiles(m_WorkDir, LogNameFilter);
-                //go through each log file found.  Again, there should only be one log file
+                // Get the log file name.  There should only be one log file
+                var Files = Directory.GetFiles(m_WorkDir, LogNameFilter);
+
+                // Go through each log file found.  Again, there should only be one log file
                 foreach (var TmpFile in Files)
                 {
-                    //Check to see if the log file exists.  If so, only rename one of them
+                    // Check to see if the log file exists.  If so, only rename one of them
                     if (!File.Exists(NewFilename))
                     {
                         File.Move(TmpFile, NewFilename);
@@ -166,7 +167,7 @@ namespace AnalysisManagerMultiAlignPlugIn
             }
             catch (Exception)
             {
-                //Even if the rename failed, go ahead and continue
+                // Even if the rename failed, go ahead and continue
             }
 
             return CloseOutType.CLOSEOUT_SUCCESS;

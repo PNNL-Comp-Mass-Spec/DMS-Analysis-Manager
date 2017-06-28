@@ -87,14 +87,11 @@ namespace AnalysisManagerMSAlignPlugIn
         /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
-            string CmdStr = null;
-            var intJavaMemorySize = 0;
-
             var processingError = false;
 
             try
             {
-                //Call base class for initial setup
+                // Call base class for initial setup
                 if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -124,7 +121,7 @@ namespace AnalysisManagerMSAlignPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var eMSalignVersion = eMSAlignVersionType.Unknown;
+                eMSAlignVersionType eMSalignVersion;
                 if (mMSAlignProgLoc.Contains(Path.DirectorySeparatorChar + "v0.5" + Path.DirectorySeparatorChar))
                 {
                     eMSalignVersion = eMSAlignVersionType.v0pt5;
@@ -169,21 +166,22 @@ namespace AnalysisManagerMSAlignPlugIn
                 LogMessage("Running MSAlign");
 
                 // Lookup the amount of memory to reserve for Java; default to 2 GB
-                intJavaMemorySize = m_jobParams.GetJobParameter("MSAlignJavaMemorySize", 2000);
+                var intJavaMemorySize = m_jobParams.GetJobParameter("MSAlignJavaMemorySize", 2000);
                 if (intJavaMemorySize < 512)
                     intJavaMemorySize = 512;
 
-                //Set up and execute a program runner to run MSAlign
+                // Set up and execute a program runner to run MSAlign
+                string cmdStr;
                 if (eMSalignVersion == eMSAlignVersionType.v0pt5)
                 {
-                    CmdStr = " -Xmx" + intJavaMemorySize + "M -classpath jar\\malign.jar;jar\\* edu.ucsd.msalign.spec.web.Pipeline .\\";
+                    cmdStr = " -Xmx" + intJavaMemorySize + "M -classpath jar\\malign.jar;jar\\* edu.ucsd.msalign.spec.web.Pipeline .\\";
                 }
                 else
                 {
-                    CmdStr = " -Xmx" + intJavaMemorySize + "M -classpath jar\\*; edu.ucsd.msalign.align.console.MsAlignPipeline .\\";
+                    cmdStr = " -Xmx" + intJavaMemorySize + "M -classpath jar\\*; edu.ucsd.msalign.align.console.MsAlignPipeline .\\";
                 }
 
-                LogDebug(JavaProgLoc + " " + CmdStr);
+                LogDebug(JavaProgLoc + " " + cmdStr);
 
                 mCmdRunner = new clsRunDosProgram(mMSAlignWorkFolderPath);
                 RegisterEvents(mCmdRunner);
@@ -208,7 +206,7 @@ namespace AnalysisManagerMSAlignPlugIn
 
                 // Start the program and wait for it to finish
                 // However, while it's running, LoopWaiting will get called via events
-                var processingSuccess = mCmdRunner.RunProgram(JavaProgLoc, CmdStr, "MSAlign", true);
+                var processingSuccess = mCmdRunner.RunProgram(JavaProgLoc, cmdStr, "MSAlign", true);
 
                 if (!mToolVersionWritten)
                 {
@@ -249,8 +247,7 @@ namespace AnalysisManagerMSAlignPlugIn
                         processingError = true;
                     }
 
-                    string strResultTableFilePath = null;
-                    strResultTableFilePath = Path.Combine(m_WorkDir, m_Dataset + RESULT_TABLE_NAME_SUFFIX);
+                    var strResultTableFilePath = Path.Combine(m_WorkDir, m_Dataset + RESULT_TABLE_NAME_SUFFIX);
 
                     if (eMSalignVersion == eMSAlignVersionType.v0pt5)
                     {
@@ -284,15 +281,15 @@ namespace AnalysisManagerMSAlignPlugIn
 
                 m_progress = PROGRESS_PCT_COMPLETE;
 
-                //Stop the job timer
+                // Stop the job timer
                 m_StopTime = DateTime.UtcNow;
 
-                //Add the current job data to the summary file
+                // Add the current job data to the summary file
                 UpdateSummaryFile();
 
                 mCmdRunner = null;
 
-                //Make sure objects are released
+                // Make sure objects are released
                 Thread.Sleep(500);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
@@ -337,18 +334,16 @@ namespace AnalysisManagerMSAlignPlugIn
                     LogMessage("Adding header line to MSAlign_ResultTable.txt file");
                 }
 
-                string strTargetFilePath = null;
-                strTargetFilePath = strSourceFilePath + ".tmp";
+                var strTargetFilePath = strSourceFilePath + ".tmp";
 
                 // Open the input file and
                 // create the output file
                 using (var srInFile = new StreamReader(new FileStream(strSourceFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 using (var swOutFile = new StreamWriter(new FileStream(strTargetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    string strHeaderLine = null;
-                    strHeaderLine = "Prsm_ID\t" + "Spectrum_ID\t" + "Protein_Sequence_ID\t" + "Spectrum_ID\t" + "Scan(s)\t" + "#peaks\t" + "Charge\t" +
-                                    "Precursor_mass\t" + "Protein_name\t" + "Protein_mass\t" + "First_residue\t" + "Last_residue\t" + "Peptide\t" +
-                                    "#unexpected_modifications\t" + "#matched_peaks\t" + "#matched_fragment_ions\t" + "E-value";
+                    var strHeaderLine = "Prsm_ID\t" + "Spectrum_ID\t" + "Protein_Sequence_ID\t" + "Spectrum_ID\t" + "Scan(s)\t" + "#peaks\t" + "Charge\t" +
+                                        "Precursor_mass\t" + "Protein_name\t" + "Protein_mass\t" + "First_residue\t" + "Last_residue\t" + "Peptide\t" +
+                                        "#unexpected_modifications\t" + "#matched_peaks\t" + "#matched_fragment_ions\t" + "E-value";
 
                     swOutFile.WriteLine(strHeaderLine);
 
@@ -379,11 +374,6 @@ namespace AnalysisManagerMSAlignPlugIn
         {
             const int RESIDUES_PER_LINE = 60;
 
-            string strProteinResidues = null;
-
-            var intIndex = 0;
-            var intResidueCount = 0;
-            var intLength = 0;
             var intWarningCount = 0;
 
             try
@@ -402,7 +392,7 @@ namespace AnalysisManagerMSAlignPlugIn
                     while (oReader.ReadNextProteinEntry())
                     {
                         swNewFasta.WriteLine(oReader.ProteinLineStartChar + oReader.HeaderLine);
-                        strProteinResidues = reInvalidResidues.Replace(oReader.ProteinSequence, "-");
+                        var strProteinResidues = reInvalidResidues.Replace(oReader.ProteinSequence, "-");
 
                         if (intWarningCount < 5 && strProteinResidues.GetHashCode() != oReader.ProteinSequence.GetHashCode())
                         {
@@ -410,11 +400,11 @@ namespace AnalysisManagerMSAlignPlugIn
                             intWarningCount += 1;
                         }
 
-                        intIndex = 0;
-                        intResidueCount = strProteinResidues.Length;
+                        var intIndex = 0;
+                        var intResidueCount = strProteinResidues.Length;
                         while (intIndex < strProteinResidues.Length)
                         {
-                            intLength = Math.Min(RESIDUES_PER_LINE, intResidueCount - intIndex);
+                            var intLength = Math.Min(RESIDUES_PER_LINE, intResidueCount - intIndex);
                             swNewFasta.WriteLine(strProteinResidues.Substring(intIndex, intLength));
                             intIndex += RESIDUES_PER_LINE;
                         }
@@ -482,9 +472,10 @@ namespace AnalysisManagerMSAlignPlugIn
                 }
 
                 // Copy all files in the jar and xsl folders to the target
-                var lstSubfolderNames = new List<string>();
-                lstSubfolderNames.Add("jar");
-                lstSubfolderNames.Add("xsl");
+                var lstSubfolderNames = new List<string> {
+                    "jar", "xsl"
+                };
+
                 if (eMSalignVersion != eMSAlignVersionType.v0pt5)
                 {
                     lstSubfolderNames.Add("etc");
@@ -494,8 +485,7 @@ namespace AnalysisManagerMSAlignPlugIn
                 {
                     var strTargetSubfolder = Path.Combine(diMSAlignWork.FullName, strSubFolder);
 
-                    DirectoryInfo[] diSubfolder = null;
-                    diSubfolder = diMSAlignSrc.GetDirectories(strSubFolder);
+                    var diSubfolder = diMSAlignSrc.GetDirectories(strSubFolder);
 
                     if (diSubfolder.Length == 0)
                     {
@@ -539,23 +529,20 @@ namespace AnalysisManagerMSAlignPlugIn
             const string CUTOFF_TYPE_KEY = "cutofftype";
             const string CUTOFF_KEY = "cutoff";
 
-            string strLineIn = null;
-
-            var intEqualsIndex = 0;
-            string strKeyName = null;
-            string strValue = null;
             var blnEValueCutoffType = false;
 
             try
             {
                 // Initialize the dictionary that maps new names to legacy names
                 // Version 0.5 used the legacy names, e.g. it used "threshold" instead of "eValueThreshold"
-                var dctLegacyKeyMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-                dctLegacyKeyMap.Add("errorTolerance", "fragmentTolerance");
-                dctLegacyKeyMap.Add("eValueThreshold", "threshold");
-                dctLegacyKeyMap.Add("shiftNumber", "shifts");
-                dctLegacyKeyMap.Add("cysteineProtection", "protection");
-                dctLegacyKeyMap.Add("activation", "instrument");
+                var dctLegacyKeyMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                {
+                    {"errorTolerance", "fragmentTolerance"},
+                    {"eValueThreshold", "threshold"},
+                    {"shiftNumber", "shifts"},
+                    {"cysteineProtection", "protection"},
+                    {"activation", "instrument"}
+                };
 
                 // Note: Starting with version 0.7, the "eValueThreshold" parameter was replaced with two new parameters:
                 // cutoffType and cutoff
@@ -581,190 +568,187 @@ namespace AnalysisManagerMSAlignPlugIn
 
                     while (!srInFile.EndOfStream)
                     {
-                        strLineIn = srInFile.ReadLine();
+                        var strLineIn = srInFile.ReadLine();
 
-                        if (strLineIn.TrimStart().StartsWith("#") || string.IsNullOrWhiteSpace(strLineIn))
+                        if (string.IsNullOrWhiteSpace(strLineIn) || strLineIn.TrimStart().StartsWith("#"))
                         {
                             // Comment line or blank line; write it out as-is
                             swOutFile.WriteLine(strLineIn);
+                            continue;
                         }
-                        else
+
+                        // Look for an equals sign
+                        var intEqualsIndex = strLineIn.IndexOf('=');
+
+                        if (intEqualsIndex > 0)
                         {
-                            // Look for an equals sign
-                            intEqualsIndex = strLineIn.IndexOf('=');
+                            // Split the line on the equals sign
+                            var strKeyName = strLineIn.Substring(0, intEqualsIndex).TrimEnd();
+                            string strValue;
 
-                            if (intEqualsIndex > 0)
+                            if (intEqualsIndex < strLineIn.Length - 1)
                             {
-                                // Split the line on the equals sign
-                                strKeyName = strLineIn.Substring(0, intEqualsIndex).TrimEnd();
-                                if (intEqualsIndex < strLineIn.Length - 1)
-                                {
-                                    strValue = strLineIn.Substring(intEqualsIndex + 1).Trim();
-                                }
-                                else
-                                {
-                                    strValue = string.Empty;
-                                }
+                                strValue = strLineIn.Substring(intEqualsIndex + 1).Trim();
+                            }
+                            else
+                            {
+                                strValue = string.Empty;
+                            }
 
-                                if (strKeyName.ToLower() == INSTRUMENT_ACTIVATION_TYPE_KEY || strKeyName.ToLower() == INSTRUMENT_TYPE_KEY)
-                                {
-                                    // If this is a bruker dataset, then we need to make sure that the value for this entry is not FILE
-                                    // The reason is that the mzXML file created by Bruker's compass program does not include the scantype information (CID, ETD, etc.)
-                                    string strToolName = null;
-                                    strToolName = m_jobParams.GetParam("ToolName");
+                            if (strKeyName.ToLower() == INSTRUMENT_ACTIVATION_TYPE_KEY || strKeyName.ToLower() == INSTRUMENT_TYPE_KEY)
+                            {
+                                // If this is a bruker dataset, then we need to make sure that the value for this entry is not FILE
+                                // The reason is that the mzXML file created by Bruker's compass program does not include the scantype information (CID, ETD, etc.)
+                                var strToolName = m_jobParams.GetParam("ToolName");
 
-                                    if (strToolName == "MSAlign_Bruker")
+                                if (strToolName == "MSAlign_Bruker")
+                                {
+                                    if (strValue.ToUpper() == "FILE")
                                     {
-                                        if (strValue.ToUpper() == "FILE")
-                                        {
-                                            m_message = "Must specify an explicit scan type for " + strKeyName +
-                                                        " in the MSAlign parameter file (CID, HCD, or ETD)";
+                                        m_message = "Must specify an explicit scan type for " + strKeyName +
+                                                    " in the MSAlign parameter file (CID, HCD, or ETD)";
 
-                                            LogError(m_message + "; this is required because Bruker-created mzXML files do not include activationMethod information in the precursorMz tag");
+                                        LogError(m_message + "; this is required because Bruker-created mzXML files do not include activationMethod information in the precursorMz tag");
 
-                                            return false;
-                                        }
+                                        return false;
                                     }
                                 }
+                            }
 
-                                if (strKeyName.ToLower() == SEARCH_TYPE_KEY)
+                            if (strKeyName.ToLower() == SEARCH_TYPE_KEY)
+                            {
+                                if (strValue.ToUpper() == "TARGET+DECOY")
                                 {
-                                    if (strValue.ToUpper() == "TARGET+DECOY")
+                                    // Make sure the protein collection is not a Decoy protein collection
+                                    var strProteinOptions = m_jobParams.GetParam("ProteinOptions");
+
+                                    if (strProteinOptions.ToLower().Contains("seq_direction=decoy"))
                                     {
-                                        // Make sure the protein collection is not a Decoy protein collection
-                                        string strProteinOptions = null;
-                                        strProteinOptions = m_jobParams.GetParam("ProteinOptions");
+                                        m_message = "MSAlign parameter file contains searchType=TARGET+DECOY; " +
+                                                    "protein options for this analysis job must contain seq_direction=forward, not seq_direction=decoy";
 
-                                        if (strProteinOptions.ToLower().Contains("seq_direction=decoy"))
-                                        {
-                                            m_message = "MSAlign parameter file contains searchType=TARGET+DECOY; " +
-                                                "protein options for this analysis job must contain seq_direction=forward, not seq_direction=decoy";
+                                        LogError(m_message);
 
-                                            LogError(m_message);
-
-                                            return false;
-                                        }
+                                        return false;
                                     }
                                 }
+                            }
 
-                                // Examine the key name to determine what to do
-                                switch (strKeyName.ToLower())
-                                {
-                                    case DB_FILENAME_LEGACY_LOWER:
-                                    case DB_FILENAME_LOWER:
-                                    case SPEC_FILENAME_LOWER:
-                                        break;
-                                    // Skip this line; we defined it above
-                                    case TABLE_OUTPUT_FILENAME_LOWER:
-                                    case DETAIL_OUTPUT_FILENAME_LOWER:
-                                        break;
-                                    // Skip this line; we'll define it later
-                                    default:
+                            // Examine the key name to determine what to do
+                            switch (strKeyName.ToLower())
+                            {
+                                case DB_FILENAME_LEGACY_LOWER:
+                                case DB_FILENAME_LOWER:
+                                case SPEC_FILENAME_LOWER:
+                                    break;
+                                // Skip this line; we defined it above
+                                case TABLE_OUTPUT_FILENAME_LOWER:
+                                case DETAIL_OUTPUT_FILENAME_LOWER:
+                                    break;
+                                // Skip this line; we'll define it later
+                                default:
 
-                                        if (eMSalignVersion == eMSAlignVersionType.v0pt5)
+                                    if (eMSalignVersion == eMSAlignVersionType.v0pt5)
+                                    {
+                                        // Running a legacy version; rename the keys
+
+                                        if (dctLegacyKeyMap.TryGetValue(strKeyName, out var strLegacyKeyName))
                                         {
-                                            // Running a legacy version; rename the keys
-
-                                            var strLegacyKeyName = string.Empty;
-
-                                            if (dctLegacyKeyMap.TryGetValue(strKeyName, out strLegacyKeyName))
+                                            if (strLegacyKeyName == "protection")
                                             {
-                                                if (strLegacyKeyName == "protection")
+                                                // Need to update the value
+                                                switch (strValue.ToUpper())
                                                 {
-                                                    // Need to update the value
-                                                    switch (strValue.ToUpper())
-                                                    {
-                                                        case "C57":
-                                                            strValue = "Carbamidoemetylation";
-                                                            break;
-                                                        case "C58":
-                                                            strValue = "Carboxymethylation";
-                                                            break;
-                                                        default:
-                                                            // Includes "C0"
-                                                            strValue = "None";
-                                                            break;
-                                                    }
+                                                    case "C57":
+                                                        strValue = "Carbamidoemetylation";
+                                                        break;
+                                                    case "C58":
+                                                        strValue = "Carboxymethylation";
+                                                        break;
+                                                    default:
+                                                        // Includes "C0"
+                                                        strValue = "None";
+                                                        break;
                                                 }
-                                                else if (strLegacyKeyName == "instrument")
-                                                {
-                                                    if (strValue == "FILE")
-                                                    {
-                                                        // Legacy mode does not support "FILE"
-                                                        // Auto-switch to CID and log a warning message
-                                                        strValue = "CID";
-                                                        LogWarning(
-                                                            "Using instrument mode 'CID' since v0.5 of MSAlign does not support reading the activation mode from the msalign file");
-                                                    }
-                                                }
-                                                else if (strKeyName.ToLower() == CUTOFF_TYPE_KEY)
-                                                {
-                                                    if (strValue.ToUpper() == "EVALUE")
-                                                    {
-                                                        blnEValueCutoffType = true;
-                                                    }
-                                                }
-                                                else if (strKeyName.ToLower() == CUTOFF_KEY)
-                                                {
-                                                    // v0.5 doesn't support the cutoff parameter
-                                                    // If the parameter file had cutoffType=EVALUE then we're OK; otherwise abort
-                                                    if (blnEValueCutoffType)
-                                                    {
-                                                        strLegacyKeyName = "threshold";
-                                                    }
-                                                    else
-                                                    {
-                                                        m_message = "MSAlign parameter file contains a non-EValue cutoff value; this is not compatible with MSAlign v0.5";
-                                                        LogError(m_message);
-                                                        return false;
-                                                    }
-                                                }
-
-                                                swOutFile.WriteLine(strLegacyKeyName + "=" + strValue);
                                             }
-                                        }
-                                        else
-                                        {
-                                            if (eMSalignVersion >= eMSAlignVersionType.v0pt7 && strKeyName.ToLower() == "eValueThreshold")
+                                            else if (strLegacyKeyName == "instrument")
                                             {
-                                                // v0.7 and up use cutoffType and cutoff instead of eValueThreshold
-                                                swOutFile.WriteLine("cutoffType=EVALUE");
-                                                swOutFile.WriteLine("cutoff=" + strValue);
+                                                if (strValue == "FILE")
+                                                {
+                                                    // Legacy mode does not support "FILE"
+                                                    // Auto-switch to CID and log a warning message
+                                                    strValue = "CID";
+                                                    LogWarning(
+                                                        "Using instrument mode 'CID' since v0.5 of MSAlign does not support reading the activation mode from the msalign file");
+                                                }
                                             }
-                                            else if (eMSalignVersion == eMSAlignVersionType.v0pt6 && strKeyName.ToLower() == CUTOFF_TYPE_KEY)
+                                            else if (strKeyName.ToLower() == CUTOFF_TYPE_KEY)
                                             {
                                                 if (strValue.ToUpper() == "EVALUE")
                                                 {
                                                     blnEValueCutoffType = true;
                                                 }
                                             }
-                                            else if (eMSalignVersion == eMSAlignVersionType.v0pt6 && strKeyName.ToLower() == CUTOFF_KEY)
+                                            else if (strKeyName.ToLower() == CUTOFF_KEY)
                                             {
+                                                // v0.5 doesn't support the cutoff parameter
+                                                // If the parameter file had cutoffType=EVALUE then we're OK; otherwise abort
                                                 if (blnEValueCutoffType)
                                                 {
-                                                    // v0.6 doesn't support the cutoff parameter, just eValueThreshold
-                                                    swOutFile.WriteLine("eValueThreshold=" + strValue);
+                                                    strLegacyKeyName = "threshold";
                                                 }
                                                 else
                                                 {
-                                                    m_message = "MSAlign parameter file contains a non-EValue cutoff value; this is not compatible with MSAlign v0.6";
+                                                    m_message = "MSAlign parameter file contains a non-EValue cutoff value; this is not compatible with MSAlign v0.5";
                                                     LogError(m_message);
                                                     return false;
                                                 }
                                             }
-                                            else
+
+                                            swOutFile.WriteLine(strLegacyKeyName + "=" + strValue);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if (eMSalignVersion >= eMSAlignVersionType.v0pt7 && strKeyName.ToLower() == "eValueThreshold")
+                                        {
+                                            // v0.7 and up use cutoffType and cutoff instead of eValueThreshold
+                                            swOutFile.WriteLine("cutoffType=EVALUE");
+                                            swOutFile.WriteLine("cutoff=" + strValue);
+                                        }
+                                        else if (eMSalignVersion == eMSAlignVersionType.v0pt6 && strKeyName.ToLower() == CUTOFF_TYPE_KEY)
+                                        {
+                                            if (strValue.ToUpper() == "EVALUE")
                                             {
-                                                // Write out as-is
-                                                swOutFile.WriteLine(strLineIn);
+                                                blnEValueCutoffType = true;
                                             }
                                         }
-                                        break;
-                                }
+                                        else if (eMSalignVersion == eMSAlignVersionType.v0pt6 && strKeyName.ToLower() == CUTOFF_KEY)
+                                        {
+                                            if (blnEValueCutoffType)
+                                            {
+                                                // v0.6 doesn't support the cutoff parameter, just eValueThreshold
+                                                swOutFile.WriteLine("eValueThreshold=" + strValue);
+                                            }
+                                            else
+                                            {
+                                                m_message = "MSAlign parameter file contains a non-EValue cutoff value; this is not compatible with MSAlign v0.6";
+                                                LogError(m_message);
+                                                return false;
+                                            }
+                                        }
+                                        else
+                                        {
+                                            // Write out as-is
+                                            swOutFile.WriteLine(strLineIn);
+                                        }
+                                    }
+                                    break;
                             }
-                            else
-                            {
-                                // Unknown line format; skip it
-                            }
+                        }
+                        else
+                        {
+                            // Unknown line format; skip it
                         }
                     }
 
@@ -801,12 +785,10 @@ namespace AnalysisManagerMSAlignPlugIn
 
         protected bool InitializeMSInputFolder(string strMSAlignWorkFolderPath, eMSAlignVersionType eMSalignVersion)
         {
-            string strMSInputFolderPath = null;
-            FileInfo[] fiFiles = null;
 
             try
             {
-                strMSInputFolderPath = Path.Combine(strMSAlignWorkFolderPath, "msinput");
+                var strMSInputFolderPath = Path.Combine(strMSAlignWorkFolderPath, "msinput");
                 var fiSourceFolder = new DirectoryInfo(m_WorkDir);
 
                 // Copy the .Fasta file into the MSInput folder
@@ -837,25 +819,23 @@ namespace AnalysisManagerMSAlignPlugIn
                 }
 
                 // Move the _msdeconv.msalign file to the MSInput folder
-                fiFiles = fiSourceFolder.GetFiles("*" + clsAnalysisResourcesMSAlign.MSDECONV_MSALIGN_FILE_SUFFIX);
+                var fiFiles = fiSourceFolder.GetFiles("*" + clsAnalysisResourcesMSAlign.MSDECONV_MSALIGN_FILE_SUFFIX);
                 if (fiFiles.Length == 0)
                 {
                     LogError("MSAlign file not found in work directory");
                     return false;
                 }
+
+                if (eMSalignVersion == eMSAlignVersionType.v0pt5)
+                {
+                    // Rename the file to input_data when we move it
+                    mInputPropertyValues.SpectrumFileName = "input_data";
+                }
                 else
                 {
-                    if (eMSalignVersion == eMSAlignVersionType.v0pt5)
-                    {
-                        // Rename the file to input_data when we move it
-                        mInputPropertyValues.SpectrumFileName = "input_data";
-                    }
-                    else
-                    {
-                        mInputPropertyValues.SpectrumFileName = string.Copy(fiFiles[0].Name);
-                    }
-                    fiFiles[0].MoveTo(Path.Combine(strMSInputFolderPath, mInputPropertyValues.SpectrumFileName));
+                    mInputPropertyValues.SpectrumFileName = string.Copy(fiFiles[0].Name);
                 }
+                fiFiles[0].MoveTo(Path.Combine(strMSInputFolderPath, mInputPropertyValues.SpectrumFileName));
 
                 var strParamFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"));
 
@@ -879,7 +859,7 @@ namespace AnalysisManagerMSAlignPlugIn
         // Processing spectrum scan 660...         0% finished (0 minutes used).
         // Processing spectrum scan 1329...        1% finished (0 minutes used).
         // Processing spectrum scan 1649...        1% finished (0 minutes used).
-        private Regex reExtractPercentFinished = new Regex(@"(\d+)% finished", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private readonly Regex reExtractPercentFinished = new Regex(@"(\d+)% finished", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
         /// Parse the MSAlign console output file to determine the MSAlign version and to track the search progress
@@ -905,19 +885,16 @@ namespace AnalysisManagerMSAlignPlugIn
                     LogDebug("Parsing file " + strConsoleOutputFilePath);
                 }
 
-                string strLineIn = null;
-                var intLinesRead = 0;
-
                 short intActualProgress = 0;
 
                 mConsoleOutputErrorMsg = string.Empty;
 
                 using (var srInFile = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    intLinesRead = 0;
+                    var intLinesRead = 0;
                     while (!srInFile.EndOfStream)
                     {
-                        strLineIn = srInFile.ReadLine();
+                        var strLineIn = srInFile.ReadLine();
                         intLinesRead += 1;
 
                         if (!string.IsNullOrWhiteSpace(strLineIn))
@@ -1008,7 +985,7 @@ namespace AnalysisManagerMSAlignPlugIn
 
             try
             {
-                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, saveToolVersionTextFile: false);
+                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, saveToolVersionTextFile: false);
             }
             catch (Exception ex)
             {
@@ -1043,31 +1020,30 @@ namespace AnalysisManagerMSAlignPlugIn
                     LogDebug("Trimming console output file at " + strConsoleOutputFilePath);
                 }
 
-                string strLineIn = null;
-                var blnKeepLine = false;
-
-                var intScanNumber = 0;
                 var strMostRecentProgressLine = string.Empty;
                 var strMostRecentProgressLineWritten = string.Empty;
 
-                var intScanNumberOutputThreshold = 0;
-
-                string strTrimmedFilePath = null;
-                strTrimmedFilePath = strConsoleOutputFilePath + ".trimmed";
+                var strTrimmedFilePath = strConsoleOutputFilePath + ".trimmed";
 
                 using (var srInFile = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 using (var swOutFile = new StreamWriter(new FileStream(strTrimmedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    intScanNumberOutputThreshold = 0;
+                    var intScanNumberOutputThreshold = 0;
                     while (!srInFile.EndOfStream)
                     {
-                        strLineIn = srInFile.ReadLine();
-                        blnKeepLine = true;
+                        var strLineIn = srInFile.ReadLine();
+                        if (string.IsNullOrWhiteSpace(strLineIn))
+                        {
+                            swOutFile.WriteLine(strLineIn);
+                            continue;
+                        }
+
+                        var blnKeepLine = true;
 
                         var oMatch = reExtractScan.Match(strLineIn);
                         if (oMatch.Success)
                         {
-                            if (int.TryParse(oMatch.Groups[1].Value, out intScanNumber))
+                            if (int.TryParse(oMatch.Groups[1].Value, out var intScanNumber))
                             {
                                 if (intScanNumber < intScanNumberOutputThreshold)
                                 {
@@ -1085,7 +1061,7 @@ namespace AnalysisManagerMSAlignPlugIn
                         else if (strLineIn.StartsWith("Deconvolution finished"))
                         {
                             // Possibly write out the most recent progress line
-                            if (string.Compare(strMostRecentProgressLine, strMostRecentProgressLineWritten) != 0)
+                            if (string.CompareOrdinal(strMostRecentProgressLine, strMostRecentProgressLineWritten) != 0)
                             {
                                 swOutFile.WriteLine(strMostRecentProgressLine);
                             }
@@ -1189,20 +1165,15 @@ namespace AnalysisManagerMSAlignPlugIn
             {
                 return false;
             }
-            else
-            {
-                return true;
-            }
+
+            return true;
         }
 
         protected bool ValidateResultTableFile(string strSourceFilePath)
         {
-            string strLineIn = null;
-
             try
             {
                 var blnValidFile = false;
-                blnValidFile = false;
 
                 if (!File.Exists(strSourceFilePath))
                 {
@@ -1223,20 +1194,18 @@ namespace AnalysisManagerMSAlignPlugIn
                 {
                     while (!srInFile.EndOfStream)
                     {
-                        strLineIn = srInFile.ReadLine();
+                        var strLineIn = srInFile.ReadLine();
 
                         if (!string.IsNullOrEmpty(strLineIn))
                         {
-                            string[] strSplitLine = null;
-                            strSplitLine = strLineIn.Split('\t');
+                            var strSplitLine = strLineIn.Split('\t');
 
                             if (strSplitLine.Length > 1)
                             {
                                 // Look for an integer in the first or second column
                                 // Version 0.5 and 0.6 had Prsm_ID in the first column
                                 // Version 0.7 moved Prsm_ID to the second column
-                                var intValue = 0;
-                                if (int.TryParse(strSplitLine[1], out intValue) || int.TryParse(strSplitLine[0], out intValue))
+                                if (int.TryParse(strSplitLine[1], out var _) || int.TryParse(strSplitLine[0], out var _))
                                 {
                                     // Integer found; line is valid
                                     blnValidFile = true;
@@ -1264,13 +1233,10 @@ namespace AnalysisManagerMSAlignPlugIn
 
         protected bool ZipMSAlignResultFolder(string strFolderName)
         {
-            string strTargetFilePath = null;
-            string strSourceFolderPath = null;
-
             try
             {
-                strTargetFilePath = Path.Combine(m_WorkDir, m_Dataset + "_MSAlign_Results_" + strFolderName.ToUpper() + ".zip");
-                strSourceFolderPath = Path.Combine(mMSAlignWorkFolderPath, strFolderName);
+                var strTargetFilePath = Path.Combine(m_WorkDir, m_Dataset + "_MSAlign_Results_" + strFolderName.ToUpper() + ".zip");
+                var strSourceFolderPath = Path.Combine(mMSAlignWorkFolderPath, strFolderName);
 
                 // Confirm that the folder has one or more files or subfolders
                 var diSourceFolder = new DirectoryInfo(strSourceFolderPath);

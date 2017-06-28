@@ -48,7 +48,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             var fileToGet = DatasetName + MSDECONV_MSALIGN_FILE_SUFFIX;
             if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, false))
             {
-                //Errors were reported in function call, so just return
+                // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
             m_jobParams.AddResultFileToSkip(fileToGet);

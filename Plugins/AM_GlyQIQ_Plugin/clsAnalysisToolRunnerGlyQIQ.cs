@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using AnalysisManagerBase;
@@ -78,7 +79,7 @@ namespace AnalysisManagerGlyQIQPlugin
         {
             try
             {
-                //Call base class for initial setup
+                // Call base class for initial setup
                 if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -121,13 +122,13 @@ namespace AnalysisManagerGlyQIQPlugin
 
                 m_progress = PROGRESS_PCT_COMPLETE;
 
-                //Stop the job timer
+                // Stop the job timer
                 m_StopTime = DateTime.UtcNow;
 
-                //Add the current job data to the summary file
+                // Add the current job data to the summary file
                 UpdateSummaryFile();
 
-                //Make sure objects are released
+                // Make sure objects are released
                 Thread.Sleep(500);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
@@ -176,8 +177,6 @@ namespace AnalysisManagerGlyQIQPlugin
                     return false;
                 }
 
-                var blnSuccess = true;
-
                 var fiUnfilteredResults = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + "_iqResults_Unfiltered.txt"));
                 var fiFilteredResults = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + "_iqResults.txt"));
 
@@ -195,7 +194,6 @@ namespace AnalysisManagerGlyQIQPlugin
                                 m_message = "Result file not found: " + fiResultFile.Name;
                             }
                             LogError("Result file not found: " + fiResultFile.FullName);
-                            blnSuccess = false;
                             continue;
                         }
 
@@ -217,7 +215,7 @@ namespace AnalysisManagerGlyQIQPlugin
                                 swUnfiltered.WriteLine(lineIn);
 
                                 // Write lines that do not contain "FutureTarget" to the _iqResults.txt file
-                                if (!reFutureTarget.IsMatch(lineIn))
+                                if (string.IsNullOrEmpty(lineIn) || !reFutureTarget.IsMatch(lineIn))
                                 {
                                     swFiltered.WriteLine(lineIn);
                                 }
@@ -232,7 +230,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 ZipFile(fiUnfilteredResults.FullName, true);
 
                 // Parse the filtered results to count the number of identified glycans
-                blnSuccess = ExamineFilteredResults(fiFilteredResults);
+                var blnSuccess = ExamineFilteredResults(fiFilteredResults);
 
                 return blnSuccess;
             }
@@ -270,7 +268,7 @@ namespace AnalysisManagerGlyQIQPlugin
 
                 for (var scan = 1; scan <= scanCount; scan++)
                 {
-                    clsScanInfo scanInfo = null;
+                    clsScanInfo scanInfo;
 
                     if (mThermoFileReader.GetScanInfo(scan, out scanInfo))
                     {
@@ -297,10 +295,8 @@ namespace AnalysisManagerGlyQIQPlugin
                 {
                     return ms2ScanCount;
                 }
-                else
-                {
-                    return ms1ScanCount;
-                }
+
+                return ms1ScanCount;
             }
             catch (Exception ex)
             {
@@ -339,9 +335,12 @@ namespace AnalysisManagerGlyQIQPlugin
                     while (!srResults.EndOfStream)
                     {
                         var lineIn = srResults.ReadLine();
+                        if (string.IsNullOrWhiteSpace(lineIn))
+                            continue;
+
                         var dataColumns = lineIn.Split('\t');
 
-                        if (dataColumns == null || dataColumns.Length < 3)
+                        if (dataColumns.Length < 3)
                         {
                             continue;
                         }
@@ -351,13 +350,13 @@ namespace AnalysisManagerGlyQIQPlugin
 
                         if (!headerSkipped)
                         {
-                            if (string.Compare(compoundCode, "Code", true) != 0)
+                            if (String.Compare(compoundCode, "Code", StringComparison.OrdinalIgnoreCase) != 0)
                             {
                                 m_message = "3rd column in the glycan result file is not Code";
                                 return false;
                             }
 
-                            if (string.Compare(empiricalFormula, "EmpiricalFormula", true) != 0)
+                            if (String.Compare(empiricalFormula, "EmpiricalFormula", StringComparison.OrdinalIgnoreCase) != 0)
                             {
                                 m_message = "3rd column in the glycan result file is not EmpiricalFormula";
                                 return false;
@@ -450,7 +449,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 {
                     var blnMoveFile = false;
 
-                    if (string.Compare(fiFile.Name, iqParamFileName, true) == 0)
+                    if (String.Compare(fiFile.Name, iqParamFileName, StringComparison.OrdinalIgnoreCase) == 0)
                     {
                         blnMoveFile = true;
                     }
@@ -505,16 +504,15 @@ namespace AnalysisManagerGlyQIQPlugin
         {
             const int MAX_RETRY_COUNT = 3;
 
-            var blnSuccess = false;
-
             try
             {
                 // Call stored procedure StoreJobPSMStats in DMS5
 
-                var objCommand = new SqlCommand();
-
-                objCommand.CommandType = CommandType.StoredProcedure;
-                objCommand.CommandText = STORE_JOB_PSM_RESULTS_SP_NAME;
+                var objCommand = new SqlCommand
+                {
+                    CommandType = CommandType.StoredProcedure,
+                    CommandText = STORE_JOB_PSM_RESULTS_SP_NAME
+                };
 
                 objCommand.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int));
                 objCommand.Parameters["@Return"].Direction = ParameterDirection.ReturnValue;
@@ -567,7 +565,7 @@ namespace AnalysisManagerGlyQIQPlugin
 
                 if (mStoredProcedureExecutor == null || !string.IsNullOrWhiteSpace(dmsConnectionStringOverride))
                 {
-                    string strConnectionString = null;
+                    string strConnectionString;
 
                     if (string.IsNullOrWhiteSpace(dmsConnectionStringOverride))
                     {
@@ -589,34 +587,32 @@ namespace AnalysisManagerGlyQIQPlugin
                     mStoredProcedureExecutor.ErrorEvent += m_ExecuteSP_DBErrorEvent;
                 }
 
-                //Execute the SP (retry the call up to 3 times)
-                var ResCode = 0;
-                var strErrorMessage = string.Empty;
-                ResCode = mStoredProcedureExecutor.ExecuteSP(objCommand, MAX_RETRY_COUNT, out strErrorMessage);
+                // Execute the SP (retry the call up to 3 times)
+                var resCode = mStoredProcedureExecutor.ExecuteSP(objCommand, MAX_RETRY_COUNT, out var _);
 
-                if (ResCode == 0)
+                if (resCode == 0)
                 {
-                    blnSuccess = true;
+                    return true;
                 }
-                else
-                {
-                    var msg = "Error storing PSM Results in database";
-                    LogError(msg, msg + ", " + STORE_JOB_PSM_RESULTS_SP_NAME + " returned " + ResCode);
 
-                    blnSuccess = false;
-                }
+                var msg = "Error storing PSM Results in database";
+                LogError(msg, msg + ", " + STORE_JOB_PSM_RESULTS_SP_NAME + " returned " + resCode);
+
+                return false;
             }
             catch (Exception ex)
             {
                 LogError("Exception storing PSM Results in database: " + ex.Message);
-                blnSuccess = false;
+                return false;
             }
 
-            return blnSuccess;
         }
 
         protected void PruneConsoleOutputFiles(FileInfo fiConsoleOutputFile, DirectoryInfo diTargetFolder)
         {
+            if (fiConsoleOutputFile.Directory == null)
+                return;
+
             if (fiConsoleOutputFile.Directory.FullName == diTargetFolder.FullName)
             {
                 throw new Exception("The Source console output file cannot reside in the Target Folder: " + fiConsoleOutputFile.FullName + " vs. " + diTargetFolder.FullName);
@@ -652,21 +648,22 @@ namespace AnalysisManagerGlyQIQPlugin
                     while (!srInFile.EndOfStream)
                     {
                         var strLineIn = srInFile.ReadLine();
+                        if (string.IsNullOrWhiteSpace(strLineIn))
+                        {
+                            swOutfile.WriteLine(strLineIn);
+                            continue;
+                        }
 
                         if (strLineIn.StartsWith("start post run"))
                         {
-                            // Ignore everthing after this point
+                            // Ignore everything after this point
                             break;
                         }
 
-                        foreach (var textToFind in lstLinesToPrune)
-                        {
-                            if (strLineIn.StartsWith(textToFind))
-                            {
-                                // Skip this line
-                                continue;
-                            }
-                        }
+                        var skipLine = lstLinesToPrune.Any(textToFind => strLineIn.StartsWith(textToFind));
+
+                        if (skipLine)
+                            continue;
 
                         if (reNumericLine.IsMatch(strLineIn))
                         {
@@ -691,7 +688,6 @@ namespace AnalysisManagerGlyQIQPlugin
 
         protected bool RunGlyQIQ()
         {
-            var blnSuccess = false;
             var currentTask = "Initializing";
 
             try
@@ -725,7 +721,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 m_progress = PROGRESS_PCT_STARTING;
 
                 mGlyQRunners = new Dictionary<int, clsGlyQIqRunner>();
-                var lstThreads = new List<Thread>();
+                // var lstThreads = new List<Thread>();
 
                 for (var core = 1; core <= mCoreCount; core++)
                 {
@@ -738,10 +734,12 @@ namespace AnalysisManagerGlyQIQPlugin
                     glyQRunner.CmdRunnerWaiting += CmdRunner_LoopWaiting;
                     mGlyQRunners.Add(core, glyQRunner);
 
-                    var newThread = new Thread(new ThreadStart(glyQRunner.StartAnalysis));
-                    newThread.Priority = ThreadPriority.BelowNormal;
+                    var newThread = new Thread(glyQRunner.StartAnalysis) {
+                        Priority = ThreadPriority.BelowNormal
+                    };
+
                     newThread.Start();
-                    lstThreads.Add(newThread);
+                    // lstThreads.Add(newThread);
                 }
 
                 // Wait for all of the threads to exit
@@ -806,7 +804,7 @@ namespace AnalysisManagerGlyQIQPlugin
                     }
                 }
 
-                blnSuccess = true;
+                var blnSuccess = true;
                 var exitCode = 0;
 
                 currentTask = "Looking for console output error messages";
@@ -874,7 +872,6 @@ namespace AnalysisManagerGlyQIQPlugin
         protected bool StoreToolVersionInfo(string strProgLoc)
         {
             var strToolVersionInfo = string.Empty;
-            var blnSuccess = false;
 
             if (m_DebugLevel >= 2)
             {
@@ -887,7 +884,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 try
                 {
                     strToolVersionInfo = "Unknown";
-                    return base.SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>(), saveToolVersionTextFile: false);
+                    return SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>(), saveToolVersionTextFile: false);
                 }
                 catch (Exception ex)
                 {
@@ -901,22 +898,27 @@ namespace AnalysisManagerGlyQIQPlugin
             // One method is to call MyBase.StoreToolVersionInfoOneFile(ref strToolVersionInfo, fiProgram.FullName)
             // Second method is to call StoreToolVersionInfoOneFile64Bit
             // But those both fail; directly call the one that works:
-            blnSuccess = StoreToolVersionInfoViaSystemDiagnostics(ref strToolVersionInfo, fiProgram.FullName);
+            var blnSuccess = StoreToolVersionInfoViaSystemDiagnostics(ref strToolVersionInfo, fiProgram.FullName);
 
             if (!blnSuccess)
                 return false;
 
-            // Store paths to key DLLs in ioToolFiles
-            var ioToolFiles = new List<FileInfo>();
-            ioToolFiles.Add(fiProgram);
+            var ioToolFiles = new List<FileInfo> {
+                fiProgram
+            };
 
-            ioToolFiles.Add(new FileInfo(Path.Combine(fiProgram.Directory.FullName, "IQGlyQ.dll")));
-            ioToolFiles.Add(new FileInfo(Path.Combine(fiProgram.Directory.FullName, "IQ2_x64.dll")));
-            ioToolFiles.Add(new FileInfo(Path.Combine(fiProgram.Directory.FullName, "Run64.dll")));
+            if (fiProgram.Directory != null)
+            {
+                // Store paths to key DLLs in ioToolFiles
+
+                ioToolFiles.Add(new FileInfo(Path.Combine(fiProgram.Directory.FullName, "IQGlyQ.dll")));
+                                ioToolFiles.Add(new FileInfo(Path.Combine(fiProgram.Directory.FullName, "IQ2_x64.dll")));
+                ioToolFiles.Add(new FileInfo(Path.Combine(fiProgram.Directory.FullName, "Run64.dll")));
+            }
 
             try
             {
-                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, saveToolVersionTextFile: false);
+                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, saveToolVersionTextFile: false);
             }
             catch (Exception ex)
             {

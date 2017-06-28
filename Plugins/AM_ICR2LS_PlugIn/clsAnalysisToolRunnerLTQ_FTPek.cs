@@ -14,7 +14,7 @@ namespace AnalysisManagerICR2LSPlugIn
         public override CloseOutType RunTool()
         {
 
-            //Start with base class function to get settings information
+            // Start with base class function to get settings information
             var ResCode = base.RunTool();
             if (ResCode != CloseOutType.CLOSEOUT_SUCCESS)
                 return ResCode;
@@ -28,19 +28,19 @@ namespace AnalysisManagerICR2LSPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            //Verify a param file has been specified
+            // Verify a param file has been specified
             var paramFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"));
             if (!File.Exists(paramFilePath))
             {
-                //Param file wasn't specified, but is required for ICR-2LS analysis
+                // Param file wasn't specified, but is required for ICR-2LS analysis
                 m_message = "ICR-2LS Param file not found";
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + paramFilePath);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            //Add handling of settings file info here if it becomes necessary in the future
+            // Add handling of settings file info here if it becomes necessary in the future
 
-            //Get scan settings from settings file
+            // Get scan settings from settings file
             var MinScan = m_jobParams.GetJobParameter("scanstart", 0);
             var MaxScan = m_jobParams.GetJobParameter("ScanStop", 0);
 
@@ -57,7 +57,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 useAllScans = false;
             }
 
-            //Assemble the data file name and path
+            // Assemble the data file name and path
             var DSNamePath = Path.Combine(m_WorkDir, m_Dataset + ".raw");
             if (!File.Exists(DSNamePath))
             {
@@ -66,7 +66,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            //Assemble the output file name and path
+            // Assemble the output file name and path
             var OutFileNamePath = Path.Combine(m_WorkDir, m_Dataset + ".pek");
 
             var success = base.StartICR2LS(DSNamePath, paramFilePath, OutFileNamePath, ICR2LSProcessingModeConstants.LTQFTPEK, useAllScans, SkipMS2,
@@ -105,7 +105,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            //Run the cleanup routine from the base class
+            // Run the cleanup routine from the base class
             if (PerfPostAnalysisTasks(true) != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 if (string.IsNullOrEmpty(m_message))
@@ -120,12 +120,13 @@ namespace AnalysisManagerICR2LSPlugIn
 
         protected override CloseOutType DeleteDataFile()
         {
-            //Deletes the .raw file from the working directory
+            // Deletes the .raw file from the working directory
 
-            //Delete the .raw file
+            // Delete the .raw file
             try
             {
-                Thread.Sleep(5000);             //Allow extra time for ICR2LS to release file locks
+                // Allow extra time for ICR2LS to release file locks
+                Thread.Sleep(5000);
                 var FoundFiles = Directory.GetFiles(m_WorkDir, "*.raw");
                 foreach (var MyFile in FoundFiles)
                 {

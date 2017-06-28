@@ -157,11 +157,11 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 MultiAlignResultFilename = mJP.RequireJobParam("DatasetNum");
             }
 
-            //Set up and execute a program runner to run MultiAlign
-            var CmdStr = " -files " + MULTIALIGN_INPUT_FILE + " -params " + Path.Combine(mWorkingDir, mParamFilename) + " -path " + mWorkingDir + " -name " + mResultsDBFileName + " -plots";
+            // Set up and execute a program runner to run MultiAlign
+            var cmdStr = " -files " + MULTIALIGN_INPUT_FILE + " -params " + Path.Combine(mWorkingDir, mParamFilename) + " -path " + mWorkingDir + " -name " + mResultsDBFileName + " -plots";
             if (mDebugLevel >= 1)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, sMultiAlignConsolePath + " " + CmdStr);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, sMultiAlignConsolePath + " " + cmdStr);
             }
 
             cmdRunner.CreateNoWindow = true;
@@ -169,7 +169,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             cmdRunner.EchoOutputToConsole = true;
             cmdRunner.WriteConsoleOutputToFile = false;
 
-            if (!cmdRunner.RunProgram(sMultiAlignConsolePath, CmdStr, "MultiAlign", true))
+            if (!cmdRunner.RunProgram(sMultiAlignConsolePath, cmdStr, "MultiAlign", true))
             {
                 if (string.IsNullOrEmpty(mMessage))
                     mMessage = "Error running MultiAlign";
@@ -411,7 +411,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                         }
                     }
 
-                    //Check to see if a mass tag database has been defined and NO alignment dataset has been defined
+                    // Check to see if a mass tag database has been defined and NO alignment dataset has been defined
                     var AmtDb = mJP.GetJobParam("AMTDB");
                     if (!string.IsNullOrEmpty(AmtDb.Trim()))
                     {
@@ -568,10 +568,8 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
             // For certain long-running steps we can compute a more precise version of % complete by keeping track of the number of datasets processed
 
-            //Static reExtractPercentFinished As New System.Text.RegularExpressions.Regex("(\d+)% finished",
-            //   Text.RegularExpressions.RegexOptions.Compiled Or Text.RegularExpressions.RegexOptions.IgnoreCase)
+            // var reExtractPercentFinished = new Regex(@"(\d+)% finished", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-            //Dim oMatch As System.Text.RegularExpressions.Match
             try
             {
                 if (!File.Exists(strLogFilePath))
@@ -751,7 +749,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             #region Properties
 
             public string WorkingDir { get; set; }
-            //public string paramFilename { get; set; }
+            // public string paramFilename { get; set; }
 
             #endregion
 
@@ -845,7 +843,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
             #region Properties
 
-            //public string DBTableName { get; set; }
+            // public string DBTableName { get; set; }
             public string DBFilePath { get; set; }
             public string ImportColumnList { get; set; }
 

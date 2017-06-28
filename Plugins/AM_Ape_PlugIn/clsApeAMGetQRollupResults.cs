@@ -20,9 +20,8 @@ namespace AnalysisManager_Ape_PlugIn
         /// </summary>
         /// <param name="jobParms"></param>
         /// <param name="mgrParms"></param>
-        /// <param name="monitor"></param>
         public clsApeAMGetQRollupResults(IJobParams jobParms, IMgrParams mgrParms) : base(jobParms, mgrParms)
-        {           
+        {
         }
 
         #endregion
@@ -62,7 +61,8 @@ namespace AnalysisManager_Ape_PlugIn
 
             var apeMTSServerName = GetJobParam("ApeMTSServer");
             var apeMTSDatabaseName = GetJobParam("ApeMTSDatabase");
-            //Need these for backward compatibility
+
+            // Need these for backward compatibility
             if (string.IsNullOrEmpty(apeMTSServerName))
             {
                 apeMTSServerName = GetJobParam("QRollupMTSServer");
@@ -74,14 +74,16 @@ namespace AnalysisManager_Ape_PlugIn
 
             var apeDatabase = Path.Combine(mWorkingDir, "Results.db3");
 
-            var paramList = new List<string>();
-            paramList.Add(apeMTSDatabaseName + ";@MTDBName;" + apeMTSDatabaseName + ";False;sqldbtype.varchar;;");
-            paramList.Add("1;@ReturnPeptidesTable;1;True;sqldbtype.tinyint;" + apeMTSDatabaseName + "_Peptides;sqldbtype.tinyint");
-            paramList.Add("1;@ReturnExperimentsTable;1;True;sqldbtype.tinyint;" + apeMTSDatabaseName + "_Experiments;sqldbtype.tinyint");
+            var paramList = new List<string>
+            {
+                apeMTSDatabaseName + ";@MTDBName;" + apeMTSDatabaseName + ";False;sqldbtype.varchar;;",
+                "1;@ReturnPeptidesTable;1;True;sqldbtype.tinyint;" + apeMTSDatabaseName + "_Peptides;sqldbtype.tinyint",
+                "1;@ReturnExperimentsTable;1;True;sqldbtype.tinyint;" + apeMTSDatabaseName + "_Experiments;sqldbtype.tinyint"
+            };
 
             var dotnetConnString = "Server=" + apeMTSServerName + ";database=" + apeMTSDatabaseName + ";uid=mtuser;Password=mt4fun";
 
-            Ape.SqlServerToSQLite.ProgressChanged += new Ape.SqlServerToSQLite.ProgressChangedEventHandler(OnProgressChanged);
+            Ape.SqlServerToSQLite.ProgressChanged += OnProgressChanged;
             var QIDList = GetQIDList();
             if (string.IsNullOrEmpty(QIDList))
             {
@@ -89,7 +91,7 @@ namespace AnalysisManager_Ape_PlugIn
             }
 
             Ape.SqlServerToSQLite.ConvertDatasetToSQLiteFile(paramList, (int)eSqlServerToSqlLiteConversionMode.QRollupResults, dotnetConnString, QIDList, apeDatabase, mHandle);
-            
+
             return blnSuccess;
         }
 
@@ -115,17 +117,17 @@ namespace AnalysisManager_Ape_PlugIn
                              "join V_MTS_PM_Results_List_Report vmts on vmts.Job = vdp.Job " +
                              "WHERE Data_Package_ID = " + dataPackageID + " and Task_Database = '" + apeMTSDatabaseName + "'";
 
-            //Add State if defined MD_State will typically be 2=OK or 5=Superseded
+            // Add State if defined MD_State will typically be 2=OK or 5=Superseded
             if (!string.IsNullOrEmpty(GetJobParam("ApeMDState")))
             {
                 sqlText = sqlText + " and MD_State = " + GetJobParam("ApeMDState");
-            };
+            }
 
-            //Add ini filename if defined
+            // Add ini filename if defined
             if (!string.IsNullOrEmpty(GetJobParam("ApeMDIniFilename")))
             {
                 sqlText = sqlText + " and Ini_File_Name = '" + GetJobParam("ApeMDIniFilename") + "'";
-            };
+            }
 
             var QIDList = string.Empty;
             var intQIDCount = 0;
@@ -161,5 +163,5 @@ namespace AnalysisManager_Ape_PlugIn
         }
 
     }
-    
+
 }

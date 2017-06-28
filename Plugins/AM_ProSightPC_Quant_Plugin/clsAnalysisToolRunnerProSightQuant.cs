@@ -49,7 +49,7 @@ namespace AnalysisManagerProSightQuantPlugIn
 
             try
             {
-                //Call base class for initial setup
+                // Call base class for initial setup
                 if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -217,14 +217,14 @@ namespace AnalysisManagerProSightQuantPlugIn
 
                 m_progress = PROGRESS_PCT_COMPLETE;
 
-                //Stop the job timer
-                m_StopTime = System.DateTime.UtcNow;
+                // Stop the job timer
+                m_StopTime = DateTime.UtcNow;
 
-                //Add the current job data to the summary file
+                // Add the current job data to the summary file
                 UpdateSummaryFile();
 
-                //Make sure objects are released
-                System.Threading.Thread.Sleep(500);         // 1 second delay
+                // Make sure objects are released
+                System.Threading.Thread.Sleep(500);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
                 if (!processingSuccess)
@@ -257,22 +257,20 @@ namespace AnalysisManagerProSightQuantPlugIn
         protected string CreateTargetedQuantParamFile()
         {
             var strTargetedQuantParamFilePath = string.Empty;
-            string strProSightPCResultsFile = null;
-            string strWorkflowParamFileName = null;
 
             try
             {
                 strTargetedQuantParamFilePath = Path.Combine(m_WorkDir, TARGETED_QUANT_XML_FILE_NAME);
-                strProSightPCResultsFile = clsAnalysisResourcesProSightQuant.PROSIGHT_PC_RESULT_FILE;
+                var strProSightPCResultsFile = clsAnalysisResourcesProSightQuant.PROSIGHT_PC_RESULT_FILE;
 
-                strWorkflowParamFileName = m_jobParams.GetParam("ProSightQuantParamFile");
+                var strWorkflowParamFileName = m_jobParams.GetParam("ProSightQuantParamFile");
                 if (string.IsNullOrEmpty(strWorkflowParamFileName))
                 {
-                    m_message = clsAnalysisToolRunnerBase.NotifyMissingParameter(m_jobParams, "ProSightQuantParamFile");
+                    m_message = NotifyMissingParameter(m_jobParams, "ProSightQuantParamFile");
                     return string.Empty;
                 }
 
-                using (var swTargetedQuantXMLFile = new System.Xml.XmlTextWriter(strTargetedQuantParamFilePath, System.Text.Encoding.UTF8))
+                using (var swTargetedQuantXMLFile = new XmlTextWriter(strTargetedQuantParamFilePath, System.Text.Encoding.UTF8))
                 {
                     swTargetedQuantXMLFile.Formatting = Formatting.Indented;
                     swTargetedQuantXMLFile.Indentation = 4;
@@ -328,7 +326,7 @@ namespace AnalysisManagerProSightQuantPlugIn
         //   8/13/2012 2:33:20 PM    Percent complete = 8%   Target 300 of 3917
         //   ...
         //   8/13/2012 1:56:55 PM    ---- PROCESSING COMPLETE ---------------
-        private Regex reSubProgress = new Regex(@"Percent complete = ([0-9.]+)", RegexOptions.Compiled);
+        private readonly Regex reSubProgress = new Regex(@"Percent complete = ([0-9.]+)", RegexOptions.Compiled);
 
         /// <summary>
         /// Parse the TargetedWorkflowsConsole console output file to track progress
@@ -341,12 +339,14 @@ namespace AnalysisManagerProSightQuantPlugIn
             {
                 if (mConsoleOutputProgressMap == null || mConsoleOutputProgressMap.Count == 0)
                 {
-                    mConsoleOutputProgressMap = new Dictionary<string, int>();
+                    mConsoleOutputProgressMap = new Dictionary<string, int>
+                    {
+                        {"Creating extracted ion chromatogram", PROGRESS_TARGETED_WORKFLOWS_CREATING_XIC},
+                        {"Done creating XIC source data", PROGRESS_TARGETED_WORKFLOWS_XIC_CREATED},
+                        {"Peak Loading complete", PROGRESS_TARGETED_WORKFLOWS_PEAKS_LOADED},
+                        {"---- PROCESSING COMPLETE ----", PROGRESS_TARGETED_WORKFLOWS_PROCESSING_COMPLETE}
+                    };
 
-                    mConsoleOutputProgressMap.Add("Creating extracted ion chromatogram", PROGRESS_TARGETED_WORKFLOWS_CREATING_XIC);
-                    mConsoleOutputProgressMap.Add("Done creating XIC source data", PROGRESS_TARGETED_WORKFLOWS_XIC_CREATED);
-                    mConsoleOutputProgressMap.Add("Peak Loading complete", PROGRESS_TARGETED_WORKFLOWS_PEAKS_LOADED);
-                    mConsoleOutputProgressMap.Add("---- PROCESSING COMPLETE ----", PROGRESS_TARGETED_WORKFLOWS_PROCESSING_COMPLETE);
                 }
 
                 if (!File.Exists(strConsoleOutputFilePath))
@@ -467,7 +467,6 @@ namespace AnalysisManagerProSightQuantPlugIn
         protected bool StoreToolVersionInfo(string strTargetedWorkflowsConsoleProgLoc)
         {
             var strToolVersionInfo = string.Empty;
-            var blnSuccess = false;
 
             if (m_DebugLevel >= 2)
             {
@@ -480,7 +479,7 @@ namespace AnalysisManagerProSightQuantPlugIn
                 try
                 {
                     strToolVersionInfo = "Unknown";
-                    return base.SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>());
+                    return SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>());
                 }
                 catch (Exception ex)
                 {
@@ -488,24 +487,31 @@ namespace AnalysisManagerProSightQuantPlugIn
                     return false;
                 }
 
-                return false;
             }
 
             // Lookup the version of the TargetedWorkflowsConsole application
-            blnSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, ioTargetedWorkflowsConsole.FullName);
+            var blnSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, ioTargetedWorkflowsConsole.FullName);
             if (!blnSuccess)
                 return false;
 
-            // Store paths to key DLLs in ioToolFiles
-            var ioToolFiles = new List<FileInfo>();
-            ioToolFiles.Add(ioTargetedWorkflowsConsole);
+            if (string.IsNullOrWhiteSpace(ioTargetedWorkflowsConsole.DirectoryName))
+            {
+                LogError("Cannot determine the parent directory of " + ioTargetedWorkflowsConsole.FullName);
+                return false;
+            }
 
-            ioToolFiles.Add(new FileInfo(Path.Combine(ioTargetedWorkflowsConsole.DirectoryName, "DeconTools.Backend.dll")));
-            ioToolFiles.Add(new FileInfo(Path.Combine(ioTargetedWorkflowsConsole.DirectoryName, "DeconTools.Workflows.dll")));
+            // Store paths to key DLLs in ioToolFiles
+            var ioToolFiles = new List<FileInfo>
+            {
+                ioTargetedWorkflowsConsole,
+                new FileInfo(Path.Combine(ioTargetedWorkflowsConsole.DirectoryName, "DeconTools.Backend.dll")),
+                new FileInfo(Path.Combine(ioTargetedWorkflowsConsole.DirectoryName, "DeconTools.Workflows.dll"))
+            };
+
 
             try
             {
-                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
+                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
             }
             catch (Exception ex)
             {
@@ -514,7 +520,7 @@ namespace AnalysisManagerProSightQuantPlugIn
             }
         }
 
-        public void WriteXMLSetting(System.Xml.XmlTextWriter swOutFile, string strSettingName, string strSettingValue)
+        public void WriteXMLSetting(XmlTextWriter swOutFile, string strSettingName, string strSettingValue)
         {
             swOutFile.WriteStartElement(strSettingName);
             swOutFile.WriteValue(strSettingValue);
@@ -535,9 +541,9 @@ namespace AnalysisManagerProSightQuantPlugIn
         {
             UpdateStatusFile();
 
-            if (System.DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15)
+            if (DateTime.UtcNow.Subtract(dtLastConsoleOutputParse).TotalSeconds >= 15)
             {
-                dtLastConsoleOutputParse = System.DateTime.UtcNow;
+                dtLastConsoleOutputParse = DateTime.UtcNow;
 
                 ParseConsoleOutputFile(Path.Combine(m_WorkDir, TARGETED_WORKFLOWS_CONSOLE_OUTPUT));
 

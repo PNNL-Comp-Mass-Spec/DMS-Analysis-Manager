@@ -50,7 +50,7 @@ namespace AnalysisManagerPBFGenerator
         {
             try
             {
-                //Call base class for initial setup
+                // Call base class for initial setup
                 if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -329,7 +329,7 @@ namespace AnalysisManagerPBFGenerator
 
         protected bool StartPBFFileCreation(string progLoc)
         {
-            string CmdStr = null;
+            string cmdStr = null;
             var blnSuccess = false;
 
             mConsoleOutputErrorMsg = string.Empty;
@@ -361,13 +361,14 @@ namespace AnalysisManagerPBFGenerator
 
             LogMessage("Running PBFGen to create the PBF file");
 
-            //Set up and execute a program runner to run PBFGen
-            CmdStr = " -s " + rawFilePath;
-            // CmdStr += " -o " + m_WorkDir
+            // Set up and execute a program runner to run PBFGen
+            cmdStr = " -s " + rawFilePath;
+
+            // cmdStr += " -o " + m_WorkDir
 
             if (m_DebugLevel >= 1)
             {
-                LogDebug(progLoc + CmdStr);
+                LogDebug(progLoc + cmdStr);
             }
 
             var cmdRunner = new clsRunDosProgram(m_WorkDir);
@@ -383,7 +384,7 @@ namespace AnalysisManagerPBFGenerator
 
             m_progress = PROGRESS_PCT_STARTING;
 
-            blnSuccess = cmdRunner.RunProgram(progLoc, CmdStr, "PbfGen", true);
+            blnSuccess = cmdRunner.RunProgram(progLoc, cmdStr, "PbfGen", true);
 
             if (!cmdRunner.WriteConsoleOutputToFile)
             {

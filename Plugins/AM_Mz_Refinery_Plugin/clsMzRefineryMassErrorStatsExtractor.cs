@@ -208,7 +208,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                 var objAnalysisTask = new clsAnalysisJob(m_mgrParams, m_DebugLevel);
 
-                //Execute the SP (retry the call up to 4 times)
+                // Execute the SP (retry the call up to 4 times)
                 var resCode = objAnalysisTask.DMSProcedureExecutor.ExecuteSP(objCommand, MAX_RETRY_COUNT);
 
                 if (resCode == 0)

@@ -37,13 +37,7 @@ namespace AnalysisManager_AScore_PlugIn
 
         #region Properties
 
-        public string ErrorMessage
-        {
-            get
-            {
-                return mErrorMessage;
-            }
-        }
+        public string ErrorMessage => mErrorMessage;
 
         #endregion
 
@@ -97,7 +91,7 @@ namespace AnalysisManager_AScore_PlugIn
                 var fiFastaFile = new FileInfo(FastaFilePath);
 
                 if (fiFastaFile.Exists)
-                    mFastaFilePath = fiFastaFile.FullName;					
+                    mFastaFilePath = fiFastaFile.FullName;
             }
 
             // Remove the file extension from mParamFilename
@@ -125,7 +119,7 @@ namespace AnalysisManager_AScore_PlugIn
                 return false;
             }
 
-            //not sure how to show that this was a success
+            // Not sure how to show that this was a success
             var ascoreJobsToProcess = GetListOfDataPackageJobsToProcess(dataPackageID, mSearchType);
             ApplyAScoreToJobs(ascoreJobsToProcess);
 
@@ -154,13 +148,13 @@ namespace AnalysisManager_AScore_PlugIn
             if (string.IsNullOrEmpty(strMAParameterFileStoragePath))
             {
                 strMAParameterFileStoragePath = @"\\gigasax\DMS_Parameter_Files\AScore";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, 
-                    "Parameter " + strParamFileStoragePathKeyName + " is not defined " + 
-                    "(obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); " + 
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                    "Parameter " + strParamFileStoragePathKeyName + " is not defined " +
+                    "(obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); " +
                     "will assume: " + strMAParameterFileStoragePath);
             }
 
-            //Find all parameter files that match the base name and copy to working directory
+            // Find all parameter files that match the base name and copy to working directory
             var diParamFileFolder = new DirectoryInfo(strMAParameterFileStoragePath);
 
             // Define the file mask to search for
@@ -211,7 +205,7 @@ namespace AnalysisManager_AScore_PlugIn
         /// make a Mage pipeline that applies AScore processint to each job in job list
         /// </summary>
         /// <param name="jobsToProcess"></param>
-        private void ApplyAScoreToJobs(SimpleSink jobsToProcess)
+        private void ApplyAScoreToJobs(ISinkModule jobsToProcess)
         {
             var connStr = m_mgrParams.RequireMgrParam("ConnectionString");
 
@@ -238,8 +232,8 @@ namespace AnalysisManager_AScore_PlugIn
         // </summary>
         // <param name="reporterIonJobsToProcess"></param>
         // <param name="tableName"></param>
-        //private void ImportReporterIons(SimpleSink reporterIonJobsToProcess, string tableName)
-        //{
+        // private void ImportReporterIons(SimpleSink reporterIonJobsToProcess, string tableName)
+        // {
         //    // get selected list of reporter ion files from list of jobs
         //    const string columnsToIncludeInOutput = "Job, Dataset, Dataset_ID, Tool, Settings_File, Parameter_File, Instrument";
         //    SimpleSink fileList = GetListOfFilesFromFolderList(reporterIonJobsToProcess, "_ReporterIons.txt", columnsToIncludeInOutput);
@@ -254,7 +248,7 @@ namespace AnalysisManager_AScore_PlugIn
 
         //    var pipeline = ProcessingPipeline.Assemble("File_Import", fileList, importer);
         //    pipeline.RunRoot(null);
-        //}
+        // }
 
         /// <summary>
         /// Get a list of items using a database query
@@ -313,7 +307,7 @@ namespace AnalysisManager_AScore_PlugIn
             // build, wire, and run pipeline
             var pipeline = ProcessingPipeline.Assemble("FileListPipeline", folderListSource, fileFilter, sinkObject);
             pipeline.RunRoot(null);
-            
+
             return sinkObject;
         }
 

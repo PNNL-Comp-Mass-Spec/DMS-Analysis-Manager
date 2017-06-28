@@ -1197,7 +1197,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 var decoyPrefixes = clsAnalysisResources.GetDefaultDecoyPrefixes();
                 foreach (var decoyPrefix in decoyPrefixes)
                 {
-                    var fractionDecoy = clsAnalysisResources.GetDecoyFastaCompositionStats(fiFastaFile, decoyPrefix, out var proteinCount);
+                    var fractionDecoy = clsAnalysisResources.GetDecoyFastaCompositionStats(fiFastaFile, decoyPrefix, out var _);
                     if (fractionDecoy >= 0.25)
                     {
                         fastaFileIsDecoy = true;
@@ -2410,7 +2410,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // Count HCD spectra separately since MS-GF+ has a special scoring model for HCD spectra
 
 
-                var success = LoadScanTypeFile(scanTypeFilePath, out var lstLowResMSn, out var lstHighResMSn, out var lstHCDMSn, out var lstOther);
+                var success = LoadScanTypeFile(scanTypeFilePath, out var lstLowResMSn, out var lstHighResMSn, out var lstHCDMSn, out var _);
 
                 if (!success)
                 {
@@ -2513,7 +2513,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 const int retryCount = 2;
 
-                //Get a table to hold the results of the query
+                // Get a table to hold the results of the query
                 var success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), connectionString, "LookupScanTypesForDataset", retryCount, out var dtResults);
 
                 if (!success)
@@ -2523,7 +2523,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return false;
                 }
 
-                //Verify at least one row returned
+                // Verify at least one row returned
                 if (dtResults.Rows.Count < 1)
                 {
                     // No data was returned

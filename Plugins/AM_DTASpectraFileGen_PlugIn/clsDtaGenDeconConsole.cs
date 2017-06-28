@@ -174,7 +174,7 @@ namespace DTASpectraFileGen
 
             if (eRawDataType == clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile)
             {
-                //Get the maximum number of scans in the file
+                // Get the maximum number of scans in the file
                 m_MaxScanInFile = GetMaxScan(RawFilePath);
             }
             else
@@ -182,7 +182,7 @@ namespace DTASpectraFileGen
                 m_MaxScanInFile = DEFAULT_SCAN_STOP;
             }
 
-            //Determine max number of scans to be performed
+            // Determine max number of scans to be performed
             m_NumScans = m_MaxScanInFile;
 
             // Reset the state variables
@@ -202,7 +202,7 @@ namespace DTASpectraFileGen
                 strParamFilePath = Path.Combine(m_WorkDir, strParamFilePath);
             }
 
-            //Set up command
+            // Set up command
             var cmdStr = " " + RawFilePath + " " + strParamFilePath;
 
             if (m_DebugLevel > 0)
@@ -210,7 +210,7 @@ namespace DTASpectraFileGen
                 OnStatusEvent(m_DtaToolNameLoc + " " + cmdStr);
             }
 
-            //Setup a program runner tool to make the spectra files
+            // Setup a program runner tool to make the spectra files
             mCmdRunner = new clsRunDosProgram(m_WorkDir)
             {
                 CreateNoWindow = true,

@@ -57,7 +57,7 @@ namespace AnalysisManagerMODaPlugIn
                     m_message += "; shared results folder is " + sharedResultsFolder;
                 }
 
-                //Errors were reported in function call, so just return
+                // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -69,14 +69,14 @@ namespace AnalysisManagerMODaPlugIn
             // If the _dta.txt file is over 2 GB in size, then condense it
             if (!ValidateCDTAFileSize(m_WorkingDir, DatasetName + "_dta.txt"))
             {
-                //Errors were reported in function call, so just return
+                // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
             // Remove any spectra from the _DTA.txt file with fewer than 3 ions
             if (!ValidateCDTAFileRemoveSparseSpectra(m_WorkingDir, DatasetName + "_dta.txt"))
             {
-                //Errors were reported in function call, so just return
+                // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 

@@ -37,10 +37,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
         /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
-            string CmdStr = null;
-            var blnSuccess = false;
-
-            //Do the base class stuff
+            // Do the base class stuff
             if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -53,8 +50,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
             // Determine the path to the LCMSFeatureFinder folder
-            string progLoc = null;
-            progLoc = base.DetermineProgramLocation("LCMSFeatureFinderProgLoc", "LCMSFeatureFinder.exe");
+            var progLoc = DetermineProgramLocation("LCMSFeatureFinderProgLoc", "LCMSFeatureFinder.exe");
 
             if (string.IsNullOrWhiteSpace(progLoc))
             {
@@ -62,7 +58,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
             }
 
             // Store the FeatureFinder version info in the database
-            blnSuccess = StoreToolVersionInfo(progLoc);
+            var blnSuccess = StoreToolVersionInfo(progLoc);
             if (!blnSuccess)
             {
                 LogError("Aborting since StoreToolVersionInfo returned false");
@@ -71,10 +67,10 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
             }
 
             // Set up and execute a program runner to run the LCMS Feature Finder
-            CmdStr = Path.Combine(m_WorkDir, m_jobParams.GetParam("LCMSFeatureFinderIniFile"));
+            var cmdStr = Path.Combine(m_WorkDir, m_jobParams.GetParam("LCMSFeatureFinderIniFile"));
             if (m_DebugLevel >= 1)
             {
-                LogDebug(progLoc + " " + CmdStr);
+                LogDebug(progLoc + " " + cmdStr);
             }
 
             mCmdRunner.CreateNoWindow = true;
@@ -83,26 +79,22 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
 
             mCmdRunner.WriteConsoleOutputToFile = false;
 
-            if (!mCmdRunner.RunProgram(progLoc, CmdStr, "LCMSFeatureFinder", true))
+            if (!mCmdRunner.RunProgram(progLoc, cmdStr, "LCMSFeatureFinder", true))
             {
                 m_message = "Error running LCMSFeatureFinder";
                 LogError(m_message + ", job " + m_JobNum);
                 blnSuccess = false;
             }
-            else
-            {
-                blnSuccess = true;
-            }
 
-            //Stop the job timer
+            // Stop the job timer
             m_StopTime = DateTime.UtcNow;
             m_progress = PROGRESS_PCT_FEATURE_FINDER_DONE;
 
-            //Add the current job data to the summary file
+            // Add the current job data to the summary file
             UpdateSummaryFile();
 
-            //Make sure objects are released
-            Thread.Sleep(500);         // 1 second delay
+            // Make sure objects are released
+            Thread.Sleep(500);
             clsProgRunner.GarbageCollectNow();
 
             if (!blnSuccess)
@@ -145,7 +137,6 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
         protected bool StoreToolVersionInfo(string strFeatureFinderProgLoc)
         {
             var strToolVersionInfo = string.Empty;
-            var blnSuccess = false;
 
             if (m_DebugLevel >= 2)
             {
@@ -158,7 +149,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
                 try
                 {
                     strToolVersionInfo = "Unknown";
-                    base.SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>(), saveToolVersionTextFile: false);
+                    SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>(), saveToolVersionTextFile: false);
                 }
                 catch (Exception ex)
                 {
@@ -169,30 +160,39 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
                 return false;
             }
 
-            // Lookup the version of the Feature Finder
-            blnSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, ioFeatureFinderInfo.FullName);
-            if (!blnSuccess)
-                return false;
-
-            // Lookup the version of the FeatureFinder Library (in the feature finder folder)
-            var strFeatureFinderDllLoc = Path.Combine(ioFeatureFinderInfo.DirectoryName, "FeatureFinder.dll");
-            blnSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, strFeatureFinderDllLoc);
-            if (!blnSuccess)
-                return false;
-
-            // Lookup the version of the UIMF Library (in the feature finder folder)
-            blnSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, Path.Combine(ioFeatureFinderInfo.DirectoryName, "UIMFLibrary.dll"));
-            if (!blnSuccess)
-                return false;
 
             // Store paths to key DLLs in ioToolFiles
-            var ioToolFiles = new List<FileInfo>();
-            ioToolFiles.Add(new FileInfo(strFeatureFinderProgLoc));
-            ioToolFiles.Add(new FileInfo(strFeatureFinderDllLoc));
+            var ioToolFiles = new List<FileInfo>
+            {
+                new FileInfo(strFeatureFinderProgLoc)
+            };
+
+            // Lookup the version of the Feature Finder
+            var blnSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, ioFeatureFinderInfo.FullName);
+            if (!blnSuccess)
+                return false;
+
+            if (ioFeatureFinderInfo.DirectoryName != null)
+            {
+                // Lookup the version of the FeatureFinder Library (in the feature finder folder)
+                var strFeatureFinderDllLoc = Path.Combine(ioFeatureFinderInfo.DirectoryName, "FeatureFinder.dll");
+
+                ioToolFiles.Add(new FileInfo(strFeatureFinderDllLoc));
+
+                blnSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, strFeatureFinderDllLoc);
+                if (!blnSuccess)
+                    return false;
+
+                // Lookup the version of the UIMF Library (in the feature finder folder)
+                blnSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, Path.Combine(ioFeatureFinderInfo.DirectoryName, "UIMFLibrary.dll"));
+                if (!blnSuccess)
+                    return false;
+
+            }
 
             try
             {
-                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, saveToolVersionTextFile: false);
+                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, saveToolVersionTextFile: false);
             }
             catch (Exception ex)
             {

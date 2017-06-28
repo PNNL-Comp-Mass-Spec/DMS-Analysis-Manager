@@ -60,7 +60,7 @@ namespace AnalysisManagerProSightQuantPlugIn
             strProSightPCResultsFile = PROSIGHT_PC_RESULT_FILE;
             if (!FileSearch.FindAndRetrieveMiscFiles(strProSightPCResultsFile, false))
             {
-                //Errors were reported in function call, so just return
+                // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
             m_jobParams.AddResultFileToSkip(strProSightPCResultsFile);
@@ -75,7 +75,7 @@ namespace AnalysisManagerProSightQuantPlugIn
 
                     if (FileSearch.RetrieveSpectra(strRawDataType))
                     {
-                        if (!base.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+                        if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
                         {
                             return CloseOutType.CLOSEOUT_FAILED;
                         }
@@ -89,7 +89,9 @@ namespace AnalysisManagerProSightQuantPlugIn
                                 LogError("clsDtaGenResources.GetResources: " + m_message);
                                 return CloseOutType.CLOSEOUT_FAILED;
                             }
-                            m_jobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION);  //Raw file
+
+                            // Raw file
+                            m_jobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION);
                         }
                         else if (strRawDataType.ToLower() == RAW_DATA_TYPE_BRUKER_FT_FOLDER)
                         {
@@ -115,7 +117,7 @@ namespace AnalysisManagerProSightQuantPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (!base.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }

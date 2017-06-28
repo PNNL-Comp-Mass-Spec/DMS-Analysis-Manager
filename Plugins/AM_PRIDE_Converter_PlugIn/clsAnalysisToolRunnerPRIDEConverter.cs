@@ -2291,8 +2291,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 // In the future, we might write out customized PTMs here
                 // For now, just copy over whatever is in the template msgf-report.xml file
                 //
-                //objXmlWriter.WriteStartElement("PTMs")
-                //objXmlWriter.WriteFullEndElement()
+                // objXmlWriter.WriteStartElement("PTMs")
+                // objXmlWriter.WriteFullEndElement()
             }
             catch (Exception ex)
             {
@@ -2564,7 +2564,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     // Example official tags are:
                     //  Human proteome project
                     //  Human plasma project
-                    //WritePXHeader(swPXFile, "project_tag", TBD + "Official project tag assigned by the repository", dctTemplateParameters)
+                    // WritePXHeader(swPXFile, "project_tag", TBD + "Official project tag assigned by the repository", dctTemplateParameters)
 
                     if (dctTemplateParameters.ContainsKey("pubmed_id"))
                     {

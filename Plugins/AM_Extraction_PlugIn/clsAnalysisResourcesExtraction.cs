@@ -71,13 +71,13 @@ namespace AnalysisManagerExtractionPlugin
 
             var strResultType = m_jobParams.GetParam("ResultType");
 
-            //Get analysis results files
+            // Get analysis results files
             if (GetInputFiles(strResultType, out var createPepToProtMapFile) != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            //Get misc files
+            // Get misc files
             if (RetrieveMiscFiles(strResultType) != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -186,22 +186,22 @@ namespace AnalysisManagerExtractionPlugin
 
         private CloseOutType GetSequestFiles()
         {
-            //Get the concatenated .out file
+            // Get the concatenated .out file
             if (!FileSearch.RetrieveOutFiles(false))
             {
-                //Errors were reported in function call, so just return
+                // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_NO_OUT_FILES;
             }
 
             // Note that we'll obtain the Sequest parameter file in RetrieveMiscFiles
 
-            //Add all the extensions of the files to delete after run
-            m_jobParams.AddResultFileExtensionToSkip("_dta.zip");    //Zipped DTA
-            m_jobParams.AddResultFileExtensionToSkip("_dta.txt");    //Unzipped, concatenated DTA
-            m_jobParams.AddResultFileExtensionToSkip("_out.zip");    //Zipped OUT
-            m_jobParams.AddResultFileExtensionToSkip("_out.txt");    //Unzipped, concatenated OUT
-            m_jobParams.AddResultFileExtensionToSkip(".dta");        //DTA files
-            m_jobParams.AddResultFileExtensionToSkip(".out");        //DTA files
+            // Add all the extensions of the files to delete after run
+            m_jobParams.AddResultFileExtensionToSkip("_dta.zip");    // Zipped DTA
+            m_jobParams.AddResultFileExtensionToSkip("_dta.txt");    // Unzipped, concatenated DTA
+            m_jobParams.AddResultFileExtensionToSkip("_out.zip");    // Zipped OUT
+            m_jobParams.AddResultFileExtensionToSkip("_out.txt");    // Unzipped, concatenated OUT
+            m_jobParams.AddResultFileExtensionToSkip(".dta");        // DTA files
+            m_jobParams.AddResultFileExtensionToSkip(".out");        // DTA files
 
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
@@ -211,12 +211,12 @@ namespace AnalysisManagerExtractionPlugin
             var fileToGet = DatasetName + "_xt.zip";
             if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, true))
             {
-                //Errors were reported in function call, so just return
+                // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_NO_XT_FILES;
             }
             m_jobParams.AddResultFileToSkip(fileToGet);
 
-            //Manually adding this file to FilesToDelete; we don't want the unzipped .xml file to be copied to the server
+            // Manually adding this file to FilesToDelete; we don't want the unzipped .xml file to be copied to the server
             m_jobParams.AddResultFileToSkip(DatasetName + "_xt.xml");
 
             // Note that we'll obtain the X!Tandem parameter file in RetrieveMiscFiles
@@ -225,7 +225,7 @@ namespace AnalysisManagerExtractionPlugin
             fileToGet = "input.xml";
             if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, false))
             {
-                //Errors were reported in function call, so just return
+                // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
             }
             m_jobParams.AddResultFileToSkip(fileToGet);
@@ -248,7 +248,7 @@ namespace AnalysisManagerExtractionPlugin
             var fileToGet = DatasetName + "_inspect.zip";
             if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, false))
             {
-                //Errors were reported in function call, so just return
+                // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_NO_INSP_FILES;
             }
             m_jobParams.AddResultFileToSkip(fileToGet);
@@ -257,7 +257,7 @@ namespace AnalysisManagerExtractionPlugin
             fileToGet = DatasetName + "_inspect_fht.zip";
             if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, false))
             {
-                //Errors were reported in function call, so just return
+                // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_NO_INSP_FILES;
             }
             m_jobParams.AddResultFileToSkip(fileToGet);
@@ -266,7 +266,7 @@ namespace AnalysisManagerExtractionPlugin
             fileToGet = DatasetName + "_inspect_PepToProtMap.txt";
             if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, false))
             {
-                //Errors were reported in function call
+                // Errors were reported in function call
 
                 // See if IgnorePeptideToProteinMapError=True
                 if (m_jobParams.GetJobParameter("IgnorePeptideToProteinMapError", false))
@@ -296,7 +296,7 @@ namespace AnalysisManagerExtractionPlugin
             var fileToGet = DatasetName + "_moda.zip";
             if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, true))
             {
-                //Errors were reported in function call, so just return
+                // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
             m_jobParams.AddResultFileToSkip(fileToGet);
@@ -319,7 +319,7 @@ namespace AnalysisManagerExtractionPlugin
             var fileToGet = DatasetName + "_modp.zip";
             if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, true))
             {
-                //Errors were reported in function call, so just return
+                // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
             m_jobParams.AddResultFileToSkip(fileToGet);
@@ -509,7 +509,7 @@ namespace AnalysisManagerExtractionPlugin
 
                         if (!FileSearch.FindAndRetrieveMiscFiles(mzidFile, unzip: true, searchArchivedDatasetFolder: true, logFileNotFound: true))
                         {
-                            //Errors were reported in function call, so just return
+                            // Errors were reported in function call, so just return
                             return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                         }
                         m_jobParams.AddResultFileToSkip(mzidFile);
@@ -605,7 +605,7 @@ namespace AnalysisManagerExtractionPlugin
             var fileToGet = DatasetName + "_MSAlign_ResultTable.txt";
             if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, false))
             {
-                //Errors were reported in function call, so just return
+                // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
             m_jobParams.AddResultFileToSkip(fileToGet);
@@ -621,7 +621,7 @@ namespace AnalysisManagerExtractionPlugin
 
             if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, true))
             {
-                //Errors were reported in function call, so just return
+                // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 

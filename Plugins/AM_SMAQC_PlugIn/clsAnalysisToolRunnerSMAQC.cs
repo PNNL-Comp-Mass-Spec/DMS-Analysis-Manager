@@ -49,7 +49,7 @@ namespace AnalysisManagerSMAQCPlugIn
         {
             try
             {
-                //Call base class for initial setup
+                // Call base class for initial setup
                 if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -93,18 +93,18 @@ namespace AnalysisManagerSMAQCPlugIn
 
                 LogMessage("Running SMAQC");
 
-                //Set up and execute a program runner to run SMAQC
-                var CmdStr = PossiblyQuotePath(m_WorkDir);                       // Path to folder containing input files
-                CmdStr += " /O:" + PossiblyQuotePath(resultsFilePath);           // Text file to write the results to
-                CmdStr += " /DB:" + PossiblyQuotePath(m_WorkDir);                // Folder where SQLite DB will be created
-                CmdStr += " /I:" + InstrumentID;                      // Instrument ID
-                CmdStr += " /M:" + PossiblyQuotePath(strParameterFilePath);      // Path to XML file specifying measurements to run
+                // Set up and execute a program runner to run SMAQC
+                var cmdStr = PossiblyQuotePath(m_WorkDir);                       // Path to folder containing input files
+                cmdStr += " /O:" + PossiblyQuotePath(resultsFilePath);           // Text file to write the results to
+                cmdStr += " /DB:" + PossiblyQuotePath(m_WorkDir);                // Folder where SQLite DB will be created
+                cmdStr += " /I:" + InstrumentID;                      // Instrument ID
+                cmdStr += " /M:" + PossiblyQuotePath(strParameterFilePath);      // Path to XML file specifying measurements to run
 
                 m_jobParams.AddResultFileToSkip("SMAQC.s3db");                   // Don't keep the SQLite DB
 
                 if (m_DebugLevel >= 1)
                 {
-                    LogDebug(progLoc + " " + CmdStr);
+                    LogDebug(progLoc + " " + cmdStr);
                 }
 
                 mCmdRunner = new clsRunDosProgram(m_WorkDir)
@@ -123,7 +123,7 @@ namespace AnalysisManagerSMAQCPlugIn
 
                 m_progress = PROGRESS_PCT_SMAQC_STARTING;
 
-                var processingSuccess = mCmdRunner.RunProgram(progLoc, CmdStr, "SMAQC", true);
+                var processingSuccess = mCmdRunner.RunProgram(progLoc, cmdStr, "SMAQC", true);
 
                 if (!mCmdRunner.WriteConsoleOutputToFile)
                 {
@@ -182,8 +182,8 @@ namespace AnalysisManagerSMAQCPlugIn
 
                 // In use from June 2013 through November 12, 2015
                 //
-                //if (processingSuccess)
-                //{
+                // if (processingSuccess)
+                // {
                 //    var blnSuccessLLRC = ComputeLLRC();
 
                 //    if (!blnSuccessLLRC)
@@ -192,7 +192,7 @@ namespace AnalysisManagerSMAQCPlugIn
                 //        if (string.IsNullOrEmpty(m_EvalMessage))
                 //            m_EvalMessage = "Unknown error computing QCDM using LLRC";
                 //    }
-                //}
+                // }
 
                 // Rename the SMAQC log file to remove the datestamp
                 var logFilePath = RenameSMAQCLogFile();
@@ -205,15 +205,14 @@ namespace AnalysisManagerSMAQCPlugIn
 
                 m_progress = PROGRESS_PCT_COMPLETE;
 
-                //Stop the job timer
+                // Stop the job timer
                 m_StopTime = DateTime.UtcNow;
 
-                //Add the current job data to the summary file
+                // Add the current job data to the summary file
                 UpdateSummaryFile();
 
-                //Make sure objects are released
+                // Make sure objects are released
                 Thread.Sleep(500);
-                // 1 second delay
                 PRISM.clsProgRunner.GarbageCollectNow();
 
                 if (!processingSuccess)
@@ -329,7 +328,7 @@ namespace AnalysisManagerSMAQCPlugIn
 
             InstrumentID = 0;
 
-            //Get a table to hold the results of the query
+            // Get a table to hold the results of the query
             while (RetryCount > 0)
             {
                 try
@@ -348,7 +347,6 @@ namespace AnalysisManagerSMAQCPlugIn
                             blnSuccess = true;
                         }
                     }
-                    //Cn
                     break;
                 }
                 catch (Exception ex)
@@ -358,11 +356,13 @@ namespace AnalysisManagerSMAQCPlugIn
                                 ex.Message + "; ConnectionString: " + ConnectionString;
                     m_message += ", RetryCount = " + RetryCount;
                     LogError(m_message);
-                    Thread.Sleep(5000);             //Delay for 5 second before trying again
+
+                    // Delay for 5 second before trying again
+                    Thread.Sleep(5000);
                 }
             }
 
-            //If loop exited due to errors, return false
+            // If loop exited due to errors, return false
             if (RetryCount < 1)
             {
                 m_message = "clsAnalysisToolRunnerSMAQC.LookupInstrumentIDFromDB; Excessive failures obtaining InstrumentID from the database";
@@ -701,7 +701,7 @@ namespace AnalysisManagerSMAQCPlugIn
 
                 var objAnalysisTask = new clsAnalysisJob(m_mgrParams, m_DebugLevel);
 
-                //Execute the SP (retry the call up to 4 times)
+                // Execute the SP (retry the call up to 4 times)
                 var ResCode = objAnalysisTask.DMSProcedureExecutor.ExecuteSP(objCommand, MAX_RETRY_COUNT);
 
                 if (ResCode == 0)
@@ -749,14 +749,12 @@ namespace AnalysisManagerSMAQCPlugIn
                 else
                 {
                     // Convert the results to XML format
-                    string strXMLResults;
-
-                    blnSuccess = ConvertResultsToXML(ref lstResults, out strXMLResults);
+                    blnSuccess = ConvertResultsToXML(ref lstResults, out var xmlResults);
 
                     if (blnSuccess)
                     {
                         // Store the results in the database
-                        blnSuccess = PostSMAQCResultsToDB(strXMLResults);
+                        blnSuccess = PostSMAQCResultsToDB(xmlResults);
                     }
                 }
             }

@@ -102,13 +102,13 @@ namespace AnalysisManagerMasicPlugin
             m_jobParams.AddResultFileExtensionToSkip(DOT_MGF_EXTENSION);
             m_jobParams.AddResultFileExtensionToSkip(DOT_CDF_EXTENSION);
 
-            //Retrieve param file
+            // Retrieve param file
             if (!FileSearch.RetrieveFile(m_jobParams.GetParam("ParmFileName"), m_jobParams.GetParam("ParmFileStoragePath")))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            //All finished
+            // All finished
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 

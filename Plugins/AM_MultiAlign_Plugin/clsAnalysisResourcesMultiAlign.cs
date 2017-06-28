@@ -46,7 +46,7 @@ namespace AnalysisManagerMultiAlignPlugIn
             var fileToGet = DatasetName + strInputFileExtension;
             if (!FileSearch.FindAndRetrieveMiscFiles(fileToGet, false))
             {
-                //Errors were reported in function call, so just return
+                // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -72,11 +72,11 @@ namespace AnalysisManagerMultiAlignPlugIn
 
             if (!CopyFileToWorkDir(multialignParamFileName, multialignParameterFileStoragePath, m_WorkingDir))
             {
-                //Errors were reported in function call, so just return
+                // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (!base.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -86,7 +86,7 @@ namespace AnalysisManagerMultiAlignPlugIn
 
             if (!success)
             {
-                //Errors were reported in function call, so just return
+                // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -115,8 +115,8 @@ namespace AnalysisManagerMultiAlignPlugIn
 
                     swOutFile.WriteLine("Database = " + m_jobParams.GetParam("AMTDB"));
                     swOutFile.WriteLine("Server = " + m_jobParams.GetParam("AMTDBServer"));
-                    //Database = MT_Human_Sarcopenia_MixedLC_P692
-                    //Server = elmer
+                    // Database = MT_Human_Sarcopenia_MixedLC_P692
+                    // Server = elmer
                 }
             }
             catch (Exception ex)

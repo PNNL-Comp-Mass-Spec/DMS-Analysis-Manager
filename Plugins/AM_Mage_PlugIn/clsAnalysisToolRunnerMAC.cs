@@ -27,7 +27,7 @@ namespace AnalysisManager_Mage_PlugIn
         {
             try
             {
-                //Do the base class stuff
+                // Do the base class stuff
                 if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -70,14 +70,14 @@ namespace AnalysisManager_Mage_PlugIn
 
                 }
 
-                //Stop the job timer
+                // Stop the job timer
                 m_StopTime = DateTime.UtcNow;
                 m_progress = ProgressPctMacDone;
 
-                //Add the current job data to the summary file
+                // Add the current job data to the summary file
                 UpdateSummaryFile();
 
-                //Make sure objects are released
+                // Make sure objects are released
                 System.Threading.Thread.Sleep(500);
                 PRISM.clsProgRunner.GarbageCollectNow();
 

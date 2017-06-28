@@ -47,15 +47,15 @@ namespace AnalysisManagerMasicPlugin
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            return base.StartMASICAndWait(strInputFilePath, m_WorkDir, strParameterFilePath);
+            return StartMASICAndWait(strInputFilePath, m_WorkDir, strParameterFilePath);
         }
 
         protected override CloseOutType DeleteDataFile()
         {
-            //Deletes the .cdf and .mgf files from the working directory
+            // Deletes the .cdf and .mgf files from the working directory
             string[] foundFiles;
 
-            //Delete the .cdf file
+            // Delete the .cdf file
             try
             {
                 foundFiles = Directory.GetFiles(m_WorkDir, "*.cdf");
@@ -70,7 +70,7 @@ namespace AnalysisManagerMasicPlugin
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            //Delete the .mgf file
+            // Delete the .mgf file
             try
             {
                 foundFiles = Directory.GetFiles(m_WorkDir, "*.mgf");

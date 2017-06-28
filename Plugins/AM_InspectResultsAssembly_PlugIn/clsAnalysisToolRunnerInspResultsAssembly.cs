@@ -29,7 +29,8 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         private const string ORIGINAL_INSPECT_FILE_SUFFIX = "_inspect.txt";
         private const string FIRST_HITS_INSPECT_FILE_SUFFIX = "_inspect_fht.txt";
         private const string FILTERED_INSPECT_FILE_SUFFIX = "_inspect_filtered.txt";
-        //Used for result file type
+
+        // Used for result file type
         public enum ResultFileType
         {
             INSPECT_RESULT = 0,
@@ -108,7 +109,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                     LogDebug("clsAnalysisToolRunnerInspResultsAssembly.RunTool(): Enter");
                 }
 
-                //Call base class for initial setup
+                // Call base class for initial setup
                 base.RunTool();
 
                 // Store the AnalysisManager version info in the database
@@ -119,7 +120,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                //Determine if this is a parallelized job
+                // Determine if this is a parallelized job
                 var numClonedSteps = m_jobParams.GetParam("NumberOfClonedSteps");
 
                 var processingSuccess = true;
@@ -187,13 +188,13 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 m_progress = 100;
                 UpdateStatusRunning();
 
-                //Stop the job timer
+                // Stop the job timer
                 m_StopTime = DateTime.UtcNow;
 
-                //Add the current job data to the summary file
+                // Add the current job data to the summary file
                 UpdateSummaryFile();
 
-                //Make sure objects are released
+                // Make sure objects are released
                 Thread.Sleep(500);
                 clsProgRunner.GarbageCollectNow();
 
@@ -488,7 +489,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                     }
                 }
 
-                //close the main result file
+                // close the main result file
                 tw.Close();
 
                 return CloseOutType.CLOSEOUT_SUCCESS;
@@ -506,7 +507,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         {
             if (File.Exists(exportFilePath))
             {
-                //post error to log
+                // Post error to log
                 LogError(
                     "clsAnalysisToolRunnerInspResultsAssembly->createNewExportFile: Export file already exists (" + exportFilePath +
                     "); this is unexpected");
@@ -872,7 +873,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
         private CloseOutType RunpValue(string strInspectResultsInputFilePath, string strOutputFilePath, bool blnCreateImageFiles, bool blnTopHitOnly)
         {
-            string CmdStr = null;
+            string cmdStr = null;
 
             var InspectDir = m_mgrParams.GetParam("inspectdir");
             var pvalDistributionFilename = Path.Combine(m_WorkDir, m_Dataset + "_PValueDistribution.txt");
@@ -920,7 +921,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             // Possibly required: Update the PTMods.txt file in InspectDir to contain the modification details, as defined in inspect_input.txt
             UpdatePTModsFile(InspectDir, Path.Combine(m_WorkDir, "inspect_input.txt"));
 
-            //Set up and execute a program runner to run PVALUE_MINLENGTH5_SCRIPT.py
+            // Set up and execute a program runner to run PVALUE_MINLENGTH5_SCRIPT.py
             // Note that PVALUE_MINLENGTH5_SCRIPT.py is nearly identical to PValue.py but it retains peptides with 5 amino acids (default is 7)
             // -r is the input file
             // -w is the output file
@@ -938,34 +939,34 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             // -a means to perform protein selection (sort of like protein prophet, but not very good, according to Sam Payne)
             // -d .trie file to use (only used if -a is enabled)
 
-            CmdStr = " " + pvalueScriptPath + " -r " + strInspectResultsInputFilePath + " -w " + strOutputFilePath + " -s " + pvalDistributionFilename;
+            cmdStr = " " + pvalueScriptPath + " -r " + strInspectResultsInputFilePath + " -w " + strOutputFilePath + " -s " + pvalDistributionFilename;
 
             if (blnCreateImageFiles)
             {
-                CmdStr += " -i";
+                cmdStr += " -i";
             }
 
             if (blnTopHitOnly)
             {
-                CmdStr += " -H -1 -p 1";
+                cmdStr += " -H -1 -p 1";
             }
             else
             {
-                CmdStr += " -p " + pthresh;
+                cmdStr += " -p " + pthresh;
             }
 
             if (blnShuffledDBUsed)
             {
-                CmdStr += " -S 0.5";
+                cmdStr += " -S 0.5";
             }
 
             // The following could be used to enable protein selection
             // That would require that the database file be present, and this can take quite a bit longer
-            //'CmdStr += " -a -d " + dbFilename
+            //'cmdStr += " -a -d " + dbFilename
 
             if (m_DebugLevel >= 1)
             {
-                LogDebug(progLoc + " " + CmdStr);
+                LogDebug(progLoc + " " + cmdStr);
             }
 
             cmdRunner.CreateNoWindow = true;
@@ -975,7 +976,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             cmdRunner.WriteConsoleOutputToFile = true;
             cmdRunner.ConsoleOutputFilePath = Path.Combine(m_WorkDir, "PValue_ConsoleOutput.txt");
 
-            if (!cmdRunner.RunProgram(progLoc, CmdStr, "PValue", false))
+            if (!cmdRunner.RunProgram(progLoc, cmdStr, "PValue", false))
             {
                 // Error running program; the error should have already been logged
             }

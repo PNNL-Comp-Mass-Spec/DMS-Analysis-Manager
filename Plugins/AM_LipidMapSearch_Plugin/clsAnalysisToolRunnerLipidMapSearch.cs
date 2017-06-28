@@ -59,7 +59,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
         {
             try
             {
-                //Call base class for initial setup
+                // Call base class for initial setup
                 if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -109,7 +109,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
 
                 LogMessage("Running LipidTools");
 
-                //Set up and execute a program runner to run LipidTools
+                // Set up and execute a program runner to run LipidTools
                 var cmdStr = " -db " + PossiblyQuotePath(Path.Combine(m_WorkDir, mLipidMapsDBFilename)) + " -NoDBUpdate";
                 cmdStr += " -rp " + PossiblyQuotePath(Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_RAW_EXTENSION));   // Positive-mode .Raw file
 
@@ -210,14 +210,14 @@ namespace AnalysisManagerLipidMapSearchPlugIn
 
                 m_progress = PROGRESS_PCT_COMPLETE;
 
-                //Stop the job timer
+                // Stop the job timer
                 m_StopTime = DateTime.UtcNow;
 
-                //Add the current job data to the summary file
+                // Add the current job data to the summary file
                 UpdateSummaryFile();
 
-                //Make sure objects are released
-                Thread.Sleep(500);         // 1 second delay
+                // Make sure objects are released
+                Thread.Sleep(500);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
                 // Zip up the text files that contain the data behind the plots
@@ -269,8 +269,6 @@ namespace AnalysisManagerLipidMapSearchPlugIn
             var strHashCheckFilePath = string.Empty;
             var strNewestLipidMapsDBFileHash = string.Empty;
 
-            var dtLipidMapsDBFileTime = DateTime.Now;
-
             // Look for a recent .lock file
 
             foreach (var lockFile in diLipidMapsDBFolder.GetFiles("*" + clsGlobal.LOCK_FILE_EXTENSION))
@@ -289,9 +287,9 @@ namespace AnalysisManagerLipidMapSearchPlugIn
             if (lockFileFound)
             {
                 var dataFilePath = strLockFilePath.Substring(0, strLockFilePath.Length - clsGlobal.LOCK_FILE_EXTENSION.Length);
-                clsAnalysisResources.CheckForLockFile(dataFilePath, "LipidMapsDB", m_StatusTools, 120);
+                clsAnalysisResources.CheckForLockFile(dataFilePath, "LipidMapsDB", m_StatusTools);
 
-                strNewestLipidMapsDBFileName = FindNewestLipidMapsDB(diLipidMapsDBFolder, ref dtLipidMapsDBFileTime);
+                strNewestLipidMapsDBFileName = FindNewestLipidMapsDB(diLipidMapsDBFolder, out var dtLipidMapsDBFileTime);
 
                 if (!string.IsNullOrEmpty(strNewestLipidMapsDBFileName))
                 {
@@ -431,7 +429,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
             return strNewestLipidMapsDBFileName;
         }
 
-        private string FindNewestLipidMapsDB(DirectoryInfo diLipidMapsDBFolder, ref DateTime dtLipidMapsDBFileTime)
+        private string FindNewestLipidMapsDB(DirectoryInfo diLipidMapsDBFolder, out DateTime dtLipidMapsDBFileTime)
         {
             var strNewestLipidMapsDBFileName = string.Empty;
 
@@ -471,8 +469,6 @@ namespace AnalysisManagerLipidMapSearchPlugIn
 
         private bool GetLipidMapsDatabase()
         {
-            var dtLipidMapsDBFileTime = DateTime.MinValue;
-
             var blnUpdateDB = false;
 
             try
@@ -497,13 +493,13 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 }
 
                 // Find the newest date-stamped file
-                var strNewestLipidMapsDBFileName = FindNewestLipidMapsDB(diLipidMapsDBFolder, ref dtLipidMapsDBFileTime);
+                var strNewestLipidMapsDBFileName = FindNewestLipidMapsDB(diLipidMapsDBFolder, out var dtLipidMapsDbFileTime);
 
                 if (string.IsNullOrEmpty(strNewestLipidMapsDBFileName))
                 {
                     blnUpdateDB = true;
                 }
-                else if (DateTime.UtcNow.Subtract(dtLipidMapsDBFileTime).TotalDays > LIPID_MAPS_STALE_DB_AGE_DAYS)
+                else if (DateTime.UtcNow.Subtract(dtLipidMapsDbFileTime).TotalDays > LIPID_MAPS_STALE_DB_AGE_DAYS)
                 {
                     blnUpdateDB = true;
                 }
@@ -759,10 +755,8 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                         if (string.IsNullOrWhiteSpace(strKey))
                             continue;
 
-                        string strArgumentSwitch;
-
                         // Check whether strKey is one of the standard keys defined in dctParamNames
-                        if (dctParamNames.TryGetValue(strKey, out strArgumentSwitch))
+                        if (dctParamNames.TryGetValue(strKey, out var strArgumentSwitch))
                         {
                             sbOptions.Append(" -" + strArgumentSwitch + " " + strValue);
                         }
@@ -772,8 +766,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                         }
                         else if (strKey.ToLower() == "noscangroups")
                         {
-                            bool blnValue;
-                            if (bool.TryParse(strValue, out blnValue))
+                            if (bool.TryParse(strValue, out var blnValue))
                             {
                                 if (blnValue)
                                 {

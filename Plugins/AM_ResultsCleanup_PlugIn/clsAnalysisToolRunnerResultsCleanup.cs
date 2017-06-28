@@ -33,7 +33,7 @@ namespace AnalysisManagerResultsCleanupPlugin
         {
             try
             {
-                //Call base class for initial setup
+                // Call base class for initial setup
                 if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -58,7 +58,7 @@ namespace AnalysisManagerResultsCleanupPlugin
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                //Stop the job timer
+                // Stop the job timer
                 m_StopTime = System.DateTime.UtcNow;
             }
             catch (Exception ex)
@@ -68,7 +68,7 @@ namespace AnalysisManagerResultsCleanupPlugin
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            //If we got to here, everything worked, so exit
+            // If we got to here, everything worked, so exit
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 

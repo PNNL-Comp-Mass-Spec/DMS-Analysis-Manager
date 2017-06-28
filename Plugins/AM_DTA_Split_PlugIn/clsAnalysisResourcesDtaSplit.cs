@@ -25,20 +25,20 @@ namespace AnalysisManagerDtaSplitPlugIn
             // Note that if the file was found in MyEMSL then RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
             if (!FileSearch.RetrieveDtaFiles())
             {
-                //Errors were reported in function call, so just return
+                // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (!base.ProcessMyEMSLDownloadQueue(m_WorkingDir, Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, Downloader.DownloadFolderLayout.FlatNoSubfolders))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            //Add all the extensions of the files to delete after run
-            m_jobParams.AddResultFileExtensionToSkip("_dta.zip"); //Zipped DTA
-            m_jobParams.AddResultFileExtensionToSkip("_dta.txt"); //Unzipped, concatenated DTA
+            // Add all the extensions of the files to delete after run
+            m_jobParams.AddResultFileExtensionToSkip("_dta.zip"); // Zipped DTA
+            m_jobParams.AddResultFileExtensionToSkip("_dta.txt"); // Unzipped, concatenated DTA
 
-            //All finished
+            // All finished
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 

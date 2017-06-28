@@ -1,9 +1,5 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Globalization;
 using AnalysisManagerBase;
-using MyEMSLReader;
 
 namespace AnalysisManager_AScore_PlugIn
 {
@@ -18,10 +14,10 @@ namespace AnalysisManager_AScore_PlugIn
             if (result != CloseOutType.CLOSEOUT_SUCCESS) {
                 return result;
             }
-        
+
             // WARNING: AScore accesses the files over the network, retrieving the files using Mage
-            //          If the files have been purged, they may not be accessible 
-            //          (Mage supports retrieving files from Aurora or MyEmsl, 
+            //          If the files have been purged, they may not be accessible
+            //          (Mage supports retrieving files from Aurora or MyEmsl,
             //           but this has not be tested as of July 16, 2014)
             //
             // bool blnSuccess = true;
@@ -36,7 +32,7 @@ namespace AnalysisManager_AScore_PlugIn
 
             if (!RetrieveFastaFile())
             {
-                LogWarning("Unable to retrieve the fasta file; AScore results will not have protein information");		        
+                LogWarning("Unable to retrieve the fasta file; AScore results will not have protein information");
             }
 
             return CloseOutType.CLOSEOUT_SUCCESS;
@@ -60,7 +56,7 @@ namespace AnalysisManager_AScore_PlugIn
                 currentTask = "RetrieveOrgDB to " + localOrgDbFolder;
 
                 var success = RetrieveOrgDB(localOrgDbFolder);
-                
+
                 return success;
 
             }
@@ -76,7 +72,7 @@ namespace AnalysisManager_AScore_PlugIn
 
         ///// <summary>
         ///// run the AScore pipeline(s) listed in "AScoreOperations" parameter
-        ///// </summary>        
+        ///// </summary>
         //protected bool RunAScoreGetResources()
         //{
         //    bool blnSuccess = false;
@@ -107,7 +103,7 @@ namespace AnalysisManager_AScore_PlugIn
         ///// Run a single AScore operation
         ///// </summary>
         ///// <param name="ascoreOperation"></param>
-        ///// <returns></returns>       
+        ///// <returns></returns>
         //private bool RunAScoreOperation(string ascoreOperation)
         //{
         //    bool blnSuccess;
@@ -124,7 +120,7 @@ namespace AnalysisManager_AScore_PlugIn
 
         //    if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, Downloader.DownloadFolderLayout.FlatNoSubfolders))
         //        return false;
-            
+
         //    return blnSuccess;
         //}
 
@@ -143,7 +139,7 @@ namespace AnalysisManager_AScore_PlugIn
 
         //        if (fileSpecTerms.Count <= 2 || fileSpecTerms[2].ToLower() != "copy")
         //        {
-        //            m_jobParams.AddResultFileExtensionToSkip(fileSpecTerms[1]);               					     
+        //            m_jobParams.AddResultFileExtensionToSkip(fileSpecTerms[1]);
         //        }
         //    }
 
@@ -194,10 +190,10 @@ namespace AnalysisManager_AScore_PlugIn
         //protected string GetDatasetID(string DatasetName)
         //{
         //    int DatasetID;
-                
+
         //    if ( m_jobParams.DatasetInfoList.TryGetValue(DatasetName, out DatasetID) )
         //        return DatasetID.ToString(CultureInfo.InvariantCulture);
-            
+
         //    return string.Empty;
         //}
 

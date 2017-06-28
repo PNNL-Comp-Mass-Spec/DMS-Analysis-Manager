@@ -94,7 +94,7 @@ namespace AnalysisManagerICR2LSPlugIn
             if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
                 return CloseOutType.CLOSEOUT_FAILED;
 
-            //Start the job timer
+            // Start the job timer
             m_StartTime = DateTime.UtcNow;
 
             ResetStatusLogTimes();
@@ -428,7 +428,7 @@ namespace AnalysisManagerICR2LSPlugIn
 
         protected virtual CloseOutType PerfPostAnalysisTasks(bool blnCopyResultsToServer)
         {
-            //Stop the job timer
+            // Stop the job timer
             m_StopTime = DateTime.UtcNow;
 
             UpdateSummaryFile();
@@ -712,7 +712,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 mStatusFileWatcher = null;
             }
 
-            //Stop the job timer
+            // Stop the job timer
             m_StopTime = DateTime.UtcNow;
 
             if (!success)
@@ -735,7 +735,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 return false;
             }
 
-            //Verify ICR-2LS exited due to job completion
+            // Verify ICR-2LS exited due to job completion
 
             if (!string.Equals(mICR2LSStatus.ProcessingState, ICR2LS_STATE_FINISHED, StringComparison.InvariantCultureIgnoreCase))
             {
@@ -773,7 +773,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 LogDebug("Processing state Finished; Processed " + mICR2LSStatus.ScansProcessed + " scans");
             }
             return true;
-            
+
         }
 
         /// <summary>

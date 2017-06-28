@@ -68,8 +68,8 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                             if (FileSearch.RetrieveSpectra(strRawDataType))
                             {
+                                // Raw file
                                 m_jobParams.AddResultFileExtensionToSkip(DOT_RAW_EXTENSION);
-                                //Raw file
                             }
                             else
                             {
@@ -127,7 +127,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                             mzMLRefineryParmFileStoragePath);
                     }
 
-                    //Retrieve param file
+                    // Retrieve param file
                     if (!FileSearch.RetrieveFile(mzMLRefParamFile, m_jobParams.GetParam("ParmFileStoragePath")))
                     {
                         return CloseOutType.CLOSEOUT_FAILED;

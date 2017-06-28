@@ -32,11 +32,11 @@ namespace AnalysisManagerExtractionPlugin
 
         #region "Module Variables"
 
-        private readonly int m_DebugLevel = 0;
+        private readonly int m_DebugLevel;
         private readonly IMgrParams m_MgrParams;
         private readonly IJobParams m_JobParams;
 
-        private int m_Progress = 0;
+        private int m_Progress;
         private string m_ErrMsg = string.Empty;
         private string m_PHRPConsoleOutputFilePath;
 
@@ -52,10 +52,8 @@ namespace AnalysisManagerExtractionPlugin
                 {
                     return string.Empty;
                 }
-                else
-                {
-                    return m_ErrMsg;
-                }
+
+                return m_ErrMsg;
             }
         }
 
@@ -103,11 +101,7 @@ namespace AnalysisManagerExtractionPlugin
         public CloseOutType ExtractDataFromResults(string peptideSearchResultsFileName, bool createFirstHitsFile, bool createSynopsisFile,
             string fastaFilePath, string resultType)
         {
-            string ModDefsFileName = null;
             var ParamFileName = m_JobParams.GetParam("ParmFileName");
-
-            string cmdStr = null;
-            var blnSuccess = false;
 
             try
             {
@@ -121,7 +115,7 @@ namespace AnalysisManagerExtractionPlugin
                 }
 
                 // Define the modification definitions file name
-                ModDefsFileName = Path.GetFileNameWithoutExtension(ParamFileName) + clsAnalysisResourcesExtraction.MOD_DEFS_FILE_SUFFIX;
+                var ModDefsFileName = Path.GetFileNameWithoutExtension(ParamFileName) + clsAnalysisResourcesExtraction.MOD_DEFS_FILE_SUFFIX;
 
                 var ioInputFile = new FileInfo(peptideSearchResultsFileName);
                 m_PHRPConsoleOutputFilePath = Path.Combine(ioInputFile.DirectoryName, "PHRPOutput.txt");
@@ -140,9 +134,9 @@ namespace AnalysisManagerExtractionPlugin
                 // Note:
                 //   /SynPvalue is only used when processing Inspect files
                 //   /SynProb is only used for MODa and MODPlus results
-                cmdStr = ioInputFile.FullName + " /O:" + ioInputFile.DirectoryName + " /M:" + ModDefsFileName + " /T:" +
-                         clsAnalysisResourcesExtraction.MASS_CORRECTION_TAGS_FILENAME + " /N:" + ParamFileName + " /SynPvalue:0.2 " +
-                         " /SynProb:0.05 ";
+                var cmdStr = ioInputFile.FullName + " /O:" + ioInputFile.DirectoryName + " /M:" + ModDefsFileName + " /T:" +
+                                clsAnalysisResourcesExtraction.MASS_CORRECTION_TAGS_FILENAME + " /N:" + ParamFileName + " /SynPvalue:0.2 " +
+                                " /SynProb:0.05 ";
 
                 cmdStr += " /L:" + Path.Combine(ioInputFile.DirectoryName, PHRP_LOG_FILE_NAME);
 
@@ -199,7 +193,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 // Abort PHRP if it runs for over 720 minutes (this generally indicates that it's stuck)
                 const int intMaxRuntimeSeconds = 720 * 60;
-                blnSuccess = cmdRunner.RunProgram(progLoc, cmdStr, "PHRP", true, intMaxRuntimeSeconds);
+                var blnSuccess = cmdRunner.RunProgram(progLoc, cmdStr, "PHRP", true, intMaxRuntimeSeconds);
 
                 if (!blnSuccess)
                 {
@@ -244,51 +238,49 @@ namespace AnalysisManagerExtractionPlugin
 
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
+
+                // Make sure the key PHRP result files were created
+                var lstFilesToCheck = new List<string>();
+
+                if (createFirstHitsFile && !createSynopsisFile)
+                {
+                    // We're processing Inspect data, and PHRP simply created the _fht.txt file
+                    // Thus, only look for the first-hits file
+                    lstFilesToCheck.Add("_fht.txt");
+                }
                 else
                 {
-                    // Make sure the key PHRP result files were created
-                    var lstFilesToCheck = new List<string>();
+                    lstFilesToCheck.Add("_ResultToSeqMap.txt");
+                    lstFilesToCheck.Add("_SeqInfo.txt");
+                    lstFilesToCheck.Add("_SeqToProteinMap.txt");
+                    lstFilesToCheck.Add("_ModSummary.txt");
+                    lstFilesToCheck.Add("_ModDetails.txt");
 
-                    if (createFirstHitsFile && !createSynopsisFile)
+                    if (!blnSkipProteinMods)
                     {
-                        // We're processing Inspect data, and PHRP simply created the _fht.txt file
-                        // Thus, only look for the first-hits file
-                        lstFilesToCheck.Add("_fht.txt");
-                    }
-                    else
-                    {
-                        lstFilesToCheck.Add("_ResultToSeqMap.txt");
-                        lstFilesToCheck.Add("_SeqInfo.txt");
-                        lstFilesToCheck.Add("_SeqToProteinMap.txt");
-                        lstFilesToCheck.Add("_ModSummary.txt");
-                        lstFilesToCheck.Add("_ModDetails.txt");
-
-                        if (!blnSkipProteinMods)
+                        if (!string.IsNullOrEmpty(fastaFilePath))
                         {
-                            if (!string.IsNullOrEmpty(fastaFilePath))
-                            {
-                                var strWarningMessage = string.Empty;
+                            var strWarningMessage = string.Empty;
 
-                                if (PeptideHitResultsProcessor.clsPHRPBaseClass.ValidateProteinFastaFile(fastaFilePath, out strWarningMessage))
-                                {
-                                    lstFilesToCheck.Add("_ProteinMods.txt");
-                                }
-                            }
-                            else if (resultType == clsAnalysisResources.RESULT_TYPE_MSGFPLUS)
+                            if (PeptideHitResultsProcessor.clsPHRPBaseClass.ValidateProteinFastaFile(fastaFilePath, out strWarningMessage))
                             {
                                 lstFilesToCheck.Add("_ProteinMods.txt");
                             }
                         }
-                    }
-
-                    foreach (var strFileName in lstFilesToCheck)
-                    {
-                        if (ioInputFile.Directory.GetFiles("*" + strFileName).Length == 0)
+                        else if (resultType == clsAnalysisResources.RESULT_TYPE_MSGFPLUS)
                         {
-                            m_ErrMsg = "PHRP results file not found: " + strFileName;
-                            OnErrorEvent(m_ErrMsg);
-                            return CloseOutType.CLOSEOUT_FAILED;
+                            lstFilesToCheck.Add("_ProteinMods.txt");
                         }
+                    }
+                }
+
+                foreach (var strFileName in lstFilesToCheck)
+                {
+                    if (ioInputFile.Directory.GetFiles("*" + strFileName).Length == 0)
+                    {
+                        m_ErrMsg = "PHRP results file not found: " + strFileName;
+                        OnErrorEvent(m_ErrMsg);
+                        return CloseOutType.CLOSEOUT_FAILED;
                     }
                 }
 
@@ -389,10 +381,7 @@ namespace AnalysisManagerExtractionPlugin
                     if (progressOverall > m_Progress)
                     {
                         m_Progress = (int)progressOverall;
-                        if (ProgressChanged != null)
-                        {
-                            ProgressChanged("Running PHRP", m_Progress);
-                        }
+                        ProgressChanged?.Invoke("Running PHRP", m_Progress);
                     }
                 }
             }
@@ -414,7 +403,7 @@ namespace AnalysisManagerExtractionPlugin
         /// <remarks></remarks>
         private void CmdRunner_LoopWaiting()
         {
-            //Update the status by parsing the PHRP Console Output file every 20 seconds
+            // Update the status by parsing the PHRP Console Output file every 20 seconds
             if (System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 20)
             {
                 dtLastStatusUpdate = System.DateTime.UtcNow;

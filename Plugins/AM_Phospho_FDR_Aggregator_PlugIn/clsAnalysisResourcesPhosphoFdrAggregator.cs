@@ -65,7 +65,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             // Retrieve the files for the jobs in the data package associated with this job
             if (!RetrieveAggregateFiles(fileSpecList, DataPackageFileRetrievalModeConstants.Ascore, out dctDataPackageJobs))
             {
-                //Errors were reported in function call, so just return
+                // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 

@@ -26,7 +26,7 @@ namespace AnalysisManagerOMSSAPlugIn
                 return result;
             }
 
-            //Retrieve Fasta file
+            // Retrieve Fasta file
             if (!RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")))
                 return CloseOutType.CLOSEOUT_FAILED;
 
@@ -35,11 +35,11 @@ namespace AnalysisManagerOMSSAPlugIn
 
             LogMessage("Getting param file");
 
-            //Retrieve param file
+            // Retrieve param file
             if (!FileSearch.RetrieveFile(m_jobParams.GetParam("ParmFileName"), m_jobParams.GetParam("ParmFileStoragePath")))
                 return CloseOutType.CLOSEOUT_FAILED;
 
-            //convert the .fasta file to OMSSA format using formatdb.exe
+            // Convert the .fasta file to OMSSA format using formatdb.exe
             var success = ConvertOMSSAFastaFile();
             if (!success)
             {
@@ -48,8 +48,8 @@ namespace AnalysisManagerOMSSAPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            //Retrieve settings files aka default file that will have values overwritten by parameter file values
-            //Stored in same location as parameter file
+            // Retrieve settings files aka default file that will have values overwritten by parameter file values
+            // Stored in same location as parameter file
             //         m_jobParams.GetParam("SettingsFileName"), _
             if (!FileSearch.RetrieveFile(OMSSA_DEFAULT_INPUT_FILE, m_jobParams.GetParam("ParmFileStoragePath")))
             {
@@ -61,7 +61,7 @@ namespace AnalysisManagerOMSSAPlugIn
             // Note that if the file was found in MyEMSL then RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
             if (!FileSearch.RetrieveDtaFiles())
             {
-                //Errors were reported in function call, so just return
+                // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -73,10 +73,10 @@ namespace AnalysisManagerOMSSAPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            //Add all the extensions of the files to delete after run
-            m_jobParams.AddResultFileExtensionToSkip("_dta.zip");   //Zipped DTA
-            m_jobParams.AddResultFileExtensionToSkip("_dta.txt");   //Unzipped, concatenated DTA
-            m_jobParams.AddResultFileExtensionToSkip(".dta");       //DTA files
+            // Add all the extensions of the files to delete after run
+            m_jobParams.AddResultFileExtensionToSkip("_dta.zip");   // Zipped DTA
+            m_jobParams.AddResultFileExtensionToSkip("_dta.txt");   // Unzipped, concatenated DTA
+            m_jobParams.AddResultFileExtensionToSkip(".dta");       // DTA files
             m_jobParams.AddResultFileExtensionToSkip(DatasetName + ".xml");
 
             // set up run parameter file to reference spectra file, taxonomy file, and analysis parameter file
@@ -121,8 +121,8 @@ namespace AnalysisManagerOMSSAPlugIn
                     return false;
                 }
 
-                //Set up and execute a program runner to run FormatDb.exe
-                //formatdb.exe -i C:\DMS_WorkDir\Shewanella_oneidensis_MR1_Stop-to-Start_2005-10-12.fasta -p T -o T
+                // Set up and execute a program runner to run FormatDb.exe
+                // formatdb.exe -i C:\DMS_WorkDir\Shewanella_oneidensis_MR1_Stop-to-Start_2005-10-12.fasta -p T -o T
                 var cmdStr = "-i" + Path.Combine(LocalOrgDBFolder, OrgDBName) + " -p T -o T";
 
                 if (m_DebugLevel >= 2)
@@ -243,8 +243,10 @@ namespace AnalysisManagerOMSSAPlugIn
                 }
 
                 // Open the file to be merged
-                var objFileToMerge = new XmlDocument();
-                objFileToMerge.PreserveWhitespace = true;
+                var objFileToMerge = new XmlDocument {
+                    PreserveWhitespace = true
+                };
+
                 try
                 {
                     objFileToMerge.Load(fiFileToMerge.FullName);
@@ -405,7 +407,7 @@ namespace AnalysisManagerOMSSAPlugIn
 
                                 // Alternative would be to update the XML using .InnerXML
                                 // However, this would miss any attributes foor this element
-                                //objSelectedNodes.Item(0).InnerXml = objImportedNode.InnerXml
+                                // objSelectedNodes.Item(0).InnerXml = objImportedNode.InnerXml
                             }
                             catch (Exception ex)
                             {
@@ -420,11 +422,11 @@ namespace AnalysisManagerOMSSAPlugIn
                 try
                 {
                     var objFileNameNodes = objTemplate.DocumentElement.SelectNodes(
-                        "/ncbi:MSSearchSettings/ncbi:MSSearchSettings_infiles/ncbi:MSInFile/ncbi:MSInFile_infile", 
+                        "/ncbi:MSSearchSettings/ncbi:MSSearchSettings_infiles/ncbi:MSInFile/ncbi:MSInFile_infile",
                         objNamespaceMgr);
 
                     var objFileTypeNodes = objTemplate.DocumentElement.SelectNodes(
-                        "/ncbi:MSSearchSettings/ncbi:MSSearchSettings_infiles/ncbi:MSInFile/ncbi:MSInFile_infiletype/ncbi:MSSpectrumFileType", 
+                        "/ncbi:MSSearchSettings/ncbi:MSSearchSettings_infiles/ncbi:MSInFile/ncbi:MSInFile_infiletype/ncbi:MSSpectrumFileType",
                         objNamespaceMgr);
 
                     if (objFileNameNodes.Count == 0)
@@ -489,19 +491,19 @@ namespace AnalysisManagerOMSSAPlugIn
                 // Now override the values for MSOutFile_outfile and MSSerialDataFormat
                 try
                 {
-                    //If we ever have to change the value of the MSOutFile_includerequest value
-                    //Dim objFileIncludeRequestNodes As XmlNodeList
-                    //objFileIncludeRequestNodes = objTemplate.DocumentElement.SelectNodes(
-                    //  "/ncbi:MSSearchSettings/ncbi:MSSearchSettings_outfiles/ncbi:MSOutFile/ncbi:MSOutFile_includerequest[@value='false']",
-                    //  objNamespaceMgr)
-                    //objFileIncludeRequestNodes.Item(1).InnerXml = "true"
+                    // If we ever have to change the value of the MSOutFile_includerequest value
+                    // Dim objFileIncludeRequestNodes As XmlNodeList
+                    // objFileIncludeRequestNodes = objTemplate.DocumentElement.SelectNodes(
+                    //   "/ncbi:MSSearchSettings/ncbi:MSSearchSettings_outfiles/ncbi:MSOutFile/ncbi:MSOutFile_includerequest[@value='false']",
+                    //   objNamespaceMgr)
+                    // objFileIncludeRequestNodes.Item(1).InnerXml = "true"
 
                     var objFileNameNodes = objTemplate.DocumentElement.SelectNodes(
-                        "/ncbi:MSSearchSettings/ncbi:MSSearchSettings_outfiles/ncbi:MSOutFile/ncbi:MSOutFile_outfile", 
+                        "/ncbi:MSSearchSettings/ncbi:MSSearchSettings_outfiles/ncbi:MSOutFile/ncbi:MSOutFile_outfile",
                         objNamespaceMgr);
 
                     var objFileTypeNodes = objTemplate.DocumentElement.SelectNodes(
-                        "/ncbi:MSSearchSettings/ncbi:MSSearchSettings_outfiles/ncbi:MSOutFile/ncbi:MSOutFile_outfiletype/ncbi:MSSerialDataFormat", 
+                        "/ncbi:MSSearchSettings/ncbi:MSSearchSettings_outfiles/ncbi:MSOutFile/ncbi:MSOutFile_outfiletype/ncbi:MSSerialDataFormat",
                         objNamespaceMgr);
 
                     if (objFileNameNodes.Count == 0)

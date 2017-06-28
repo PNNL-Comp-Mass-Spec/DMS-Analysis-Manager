@@ -14,12 +14,12 @@ namespace AnalysisManager_Ape_PlugIn
 
        public override CloseOutType RunTool()
        {
-            try 
+            try
             {
 
                 m_jobParams.SetParam("JobParameters", "DatasetNum", m_jobParams.GetParam("OutputFolderPath"));
 
-                //Do the base class stuff
+                // Do the base class stuff
                 if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -39,7 +39,7 @@ namespace AnalysisManager_Ape_PlugIn
 
                 LogMessage(m_CurrentApeTask);
 
-                //Change the name of the log file for the local log file to the plugin log filename
+                // Change the name of the log file for the local log file to the plugin log filename
                 var LogFileName = Path.Combine(m_WorkDir, "Ape_Log");
                 log4net.GlobalContext.Properties["LogName"] = LogFileName;
                 clsLogTools.ChangeLogFileName(LogFileName);
@@ -76,14 +76,14 @@ namespace AnalysisManager_Ape_PlugIn
                     m_message = "Error running Ape";
                 }
 
-                //Stop the job timer
+                // Stop the job timer
                 m_StopTime = DateTime.UtcNow;
                 m_progress = PROGRESS_PCT_APE_DONE;
 
-                //Add the current job data to the summary file
+                // Add the current job data to the summary file
                 UpdateSummaryFile();
 
-                //Make sure objects are released
+                // Make sure objects are released
                 System.Threading.Thread.Sleep(500);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
@@ -112,7 +112,7 @@ namespace AnalysisManager_Ape_PlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
 
             }
-            
+
 
         }
 
@@ -160,12 +160,13 @@ namespace AnalysisManager_Ape_PlugIn
             }
 
             // Store paths to key DLLs
-            var ioToolFiles = new System.Collections.Generic.List<FileInfo>();
-            ioToolFiles.Add(new FileInfo("Ape.dll"));
+            var ioToolFiles = new System.Collections.Generic.List<FileInfo> {
+                new FileInfo("Ape.dll")
+            };
 
             try
             {
-                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
+                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
             }
             catch (Exception ex)
             {
@@ -177,5 +178,5 @@ namespace AnalysisManager_Ape_PlugIn
 
     }
 }
-    
-    
+
+

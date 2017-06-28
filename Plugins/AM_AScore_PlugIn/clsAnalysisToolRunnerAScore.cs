@@ -24,7 +24,7 @@ namespace AnalysisManager_AScore_PlugIn
 
                 m_jobParams.SetParam("JobParameters", "DatasetNum", m_jobParams.GetParam("OutputFolderPath"));
 
-                //Do the base class stuff
+                // Do the base class stuff
                 if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -61,7 +61,7 @@ namespace AnalysisManager_AScore_PlugIn
 
                     LogMessage(m_CurrentAScoreTask);
 
-                    //Change the name of the log file for the local log file to the plugin log filename
+                    // Change the name of the log file for the local log file to the plugin log filename
                     var LogFileName = Path.Combine(m_WorkDir, "Ascore_Log");
                     GlobalContext.Properties["LogName"] = LogFileName;
                     clsLogTools.ChangeLogFileName(LogFileName);
@@ -106,14 +106,14 @@ namespace AnalysisManager_AScore_PlugIn
                     }
                 }
 
-                //Stop the job timer
+                // Stop the job timer
                 m_StopTime = DateTime.UtcNow;
                 m_progress = PROGRESS_PCT_ASCORE_DONE;
 
-                //Add the current job data to the summary file
+                // Add the current job data to the summary file
                 UpdateSummaryFile();
 
-                //Make sure objects are released
+                // Make sure objects are released
                 Thread.Sleep(500);
                 clsProgRunner.GarbageCollectNow();
 

@@ -28,7 +28,7 @@ namespace AnalysisManagerInSpecTPlugIn
             const string PREPDB_SCRIPT = "PrepDB.py";
             const string SHUFFLEDB_SCRIPT = "ShuffleDB_Seed.py";
 
-            string CmdStr = null;
+            string cmdStr = null;
 
             var intRandomNumberSeed = 0;
             var blnShuffleDBPreventRepeats = false;
@@ -108,7 +108,7 @@ namespace AnalysisManagerInSpecTPlugIn
                         durationTime = currentTime - createTime;
                     }
 
-                    //If the duration time has exceeded sngMaxWaitTimeHours, then delete the lock file and try again with this manager
+                    // If the duration time has exceeded sngMaxWaitTimeHours, then delete the lock file and try again with this manager
                     if (durationTime.Hours > sngMaxWaitTimeHours)
                     {
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
@@ -162,7 +162,7 @@ namespace AnalysisManagerInSpecTPlugIn
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating lock file: " + dbLockFilename);
                     }
 
-                    //Create lock file
+                    // Create lock file
                     var bSuccess = false;
                     bSuccess = CreateLockFile(dbLockFilename);
                     if (!bSuccess)
@@ -176,14 +176,14 @@ namespace AnalysisManagerInSpecTPlugIn
                             "Creating indexed database file: " + dbTrieFilenameBeforeShuffle);
                     }
 
-                    //Set up and execute a program runner to run PrepDB.py
-                    CmdStr = " " + PrebDBScriptPath + " FASTA " + strDBFileNameInput;
+                    // Set up and execute a program runner to run PrepDB.py
+                    cmdStr = " " + PrebDBScriptPath + " FASTA " + strDBFileNameInput;
                     if (DebugLevel >= 1)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, pythonProgLoc + " " + CmdStr);
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, pythonProgLoc + " " + cmdStr);
                     }
 
-                    if (!objPrepDB.RunProgram(pythonProgLoc, CmdStr, "PrepDB", true))
+                    if (!objPrepDB.RunProgram(pythonProgLoc, cmdStr, "PrepDB", true))
                     {
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR,
                             "Error running " + PREPDB_SCRIPT + " for " + strDBFileNameInput + " : " + JobNum);
@@ -200,28 +200,28 @@ namespace AnalysisManagerInSpecTPlugIn
 
                     if (blnUseShuffledDB)
                     {
-                        //Set up and execute a program runner to run ShuffleDB_seed.py
+                        // Set up and execute a program runner to run ShuffleDB_seed.py
                         var objShuffleDB = new clsRunDosProgram(InspectDir + Path.DirectorySeparatorChar);
                         objShuffleDB.ErrorEvent += CmdRunner_ErrorEvent;
 
-                        CmdStr = " " + ShuffleDBScriptPath + " -r " + dbTrieFilenameBeforeShuffle + " -w " + dbTrieFilename;
+                        cmdStr = " " + ShuffleDBScriptPath + " -r " + dbTrieFilenameBeforeShuffle + " -w " + dbTrieFilename;
 
                         if (blnShuffleDBPreventRepeats)
                         {
-                            CmdStr += " -p";
+                            cmdStr += " -p";
                         }
 
                         if (intRandomNumberSeed != 0)
                         {
-                            CmdStr += " -d " + intRandomNumberSeed;
+                            cmdStr += " -d " + intRandomNumberSeed;
                         }
 
                         if (DebugLevel >= 1)
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, pythonProgLoc + " " + CmdStr);
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, pythonProgLoc + " " + cmdStr);
                         }
 
-                        if (!objShuffleDB.RunProgram(pythonProgLoc, CmdStr, "ShuffleDB", true))
+                        if (!objShuffleDB.RunProgram(pythonProgLoc, cmdStr, "ShuffleDB", true))
                         {
                             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR,
                                 "Error running " + SHUFFLEDB_SCRIPT + " for " + dbTrieFilenameBeforeShuffle + " : " + JobNum);

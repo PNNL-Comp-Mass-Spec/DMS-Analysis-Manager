@@ -40,10 +40,10 @@ namespace AnalysisManagerSMAQCPlugIn
 
             // In use from June 2013 through November 12, 2015
             // Retrieve the LLRC .RData files
-            //if (RetrieveLLRCFiles())
-            //{
+            // if (RetrieveLLRCFiles())
+            // {
             //    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
-            //}
+            // }
 
             if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
             {
@@ -110,10 +110,10 @@ namespace AnalysisManagerSMAQCPlugIn
                 }
 
                 return FileSearch.RetrieveScanAndSICStatsFiles(
-                    retrieveSICStatsFile: true, 
+                    retrieveSICStatsFile: true,
                     createStoragePathInfoOnly: createStoragePathInfoFile,
-                    retrieveScanStatsFile: true, 
-                    retrieveScanStatsExFile: true, 
+                    retrieveScanStatsFile: true,
+                    retrieveScanStatsExFile: true,
                     retrieveReporterIonsFile: true,
                     lstNonCriticalFileSuffixes: lstNonCriticalFileSuffixes);
             }
@@ -136,12 +136,12 @@ namespace AnalysisManagerSMAQCPlugIn
                     var bestSICFolderPath = Path.Combine(MYEMSL_PATH_FLAG, strMASICResultsFolderName);
 
                     return FileSearch.RetrieveScanAndSICStatsFiles(
-                        bestSICFolderPath, 
+                        bestSICFolderPath,
                         retrieveSICStatsFile: true,
-                        createStoragePathInfoOnly: createStoragePathInfoFile, 
-                        retrieveScanStatsFile: true, 
+                        createStoragePathInfoOnly: createStoragePathInfoFile,
+                        retrieveScanStatsFile: true,
                         retrieveScanStatsExFile: true,
-                        retrieveReporterIonsFile: true, 
+                        retrieveReporterIonsFile: true,
                         lstNonCriticalFileSuffixes: lstNonCriticalFileSuffixes
                     );
                 }
@@ -154,7 +154,7 @@ namespace AnalysisManagerSMAQCPlugIn
                 }
                 else
                 {
-                    //See if the ServerPath folder actually contains a subfolder named strMASICResultsFolderName
+                    // See if the ServerPath folder actually contains a subfolder named strMASICResultsFolderName
                     var diMASICFolderInfo = new DirectoryInfo(Path.Combine(diFolderInfo.FullName, strMASICResultsFolderName));
 
                     if (!diMASICFolderInfo.Exists)
@@ -164,12 +164,12 @@ namespace AnalysisManagerSMAQCPlugIn
                     else
                     {
                         return FileSearch.RetrieveScanAndSICStatsFiles(
-                            diMASICFolderInfo.FullName, 
+                            diMASICFolderInfo.FullName,
                             retrieveSICStatsFile: true,
-                            createStoragePathInfoOnly: createStoragePathInfoFile, 
-                            retrieveScanStatsFile: true, 
+                            createStoragePathInfoOnly: createStoragePathInfoFile,
+                            retrieveScanStatsFile: true,
                             retrieveScanStatsExFile: true,
-                            retrieveReporterIonsFile: true, 
+                            retrieveReporterIonsFile: true,
                             lstNonCriticalFileSuffixes: lstNonCriticalFileSuffixes);
                     }
                 }
@@ -228,7 +228,7 @@ namespace AnalysisManagerSMAQCPlugIn
             var success = FileSearch.FindAndRetrievePHRPDataFile(ref synFileToFind, "", addToResultFileSkipList: true);
             if (!success)
             {
-                //Errors were reported in function call, so just return
+                // Errors were reported in function call, so just return
                 return false;
             }
 
@@ -257,12 +257,12 @@ namespace AnalysisManagerSMAQCPlugIn
                 {
                     fileToGet = phrpFile;
                 }
-            
+
                 success = FileSearch.FindAndRetrieveMiscFiles(fileToGet, unzip: false);
 
                 if (!success)
                 {
-                    //Errors were reported in function call, so just return
+                    // Errors were reported in function call, so just return
                     return false;
                 }
 

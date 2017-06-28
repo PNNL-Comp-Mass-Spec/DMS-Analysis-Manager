@@ -20,9 +20,8 @@ namespace AnalysisManager_Ape_PlugIn
         /// </summary>
         /// <param name="jobParms"></param>
         /// <param name="mgrParms"></param>
-        /// <param name="monitor"></param>
         public clsApeAMGetViperResults(IJobParams jobParms, IMgrParams mgrParms) : base(jobParms, mgrParms)
-        {           
+        {
         }
 
         #endregion
@@ -64,14 +63,16 @@ namespace AnalysisManager_Ape_PlugIn
             var apeMTSDatabaseName = GetJobParam("ApeMTSDatabase");
             var apeDatabase = Path.Combine(mWorkingDir, "Results.db3");
 
-            var paramList = new List<string>();
-            paramList.Add("1;@ReturnMTTable;1;True;sqldbtype.tinyint;T_Mass_Tags;sqldbtype.tinyint");
-            paramList.Add("1;@ReturnProteinTable;1;True;sqldbtype.tinyint;T_Proteins;sqldbtype.tinyint");
-            paramList.Add("1;@ReturnProteinMapTable;1;True;sqldbtype.tinyint;T_Mass_Tag_to_Protein_Map;sqldbtype.tinyint");
+            var paramList = new List<string>
+            {
+                "1;@ReturnMTTable;1;True;sqldbtype.tinyint;T_Mass_Tags;sqldbtype.tinyint",
+                "1;@ReturnProteinTable;1;True;sqldbtype.tinyint;T_Proteins;sqldbtype.tinyint",
+                "1;@ReturnProteinMapTable;1;True;sqldbtype.tinyint;T_Mass_Tag_to_Protein_Map;sqldbtype.tinyint"
+            };
 
             var dotnetConnString = "Server=" + apeMTSServerName + ";database=" + apeMTSDatabaseName + ";uid=mtuser;Password=mt4fun";
 
-            Ape.SqlServerToSQLite.ProgressChanged += new Ape.SqlServerToSQLite.ProgressChangedEventHandler(OnProgressChanged);
+            Ape.SqlServerToSQLite.ProgressChanged += OnProgressChanged;
             var MDIDList = GetMDIDList();
             if (string.IsNullOrEmpty(MDIDList))
             {
@@ -91,7 +92,7 @@ namespace AnalysisManager_Ape_PlugIn
 
             if (string.IsNullOrEmpty(apeMTSDatabaseName))
             {
-                mErrorMessage = "MTS Database not defined via job parameter ApeMTSDatabase"; 
+                mErrorMessage = "MTS Database not defined via job parameter ApeMTSDatabase";
                 return string.Empty;
             }
 
@@ -105,17 +106,17 @@ namespace AnalysisManager_Ape_PlugIn
                              "join V_MTS_PM_Results_List_Report vmts on vmts.Job = vdp.Job " +
                              "WHERE Data_Package_ID = " + dataPackageID + " and Task_Database = '" + apeMTSDatabaseName + "'";
 
-            //Add State if defined MD_State will typically be 2=OK or 5=Superseded
+            // Add State if defined MD_State will typically be 2=OK or 5=Superseded
             if (!string.IsNullOrEmpty(GetJobParam("ApeMDState")))
             {
                 sqlText = sqlText + " and MD_State = " + GetJobParam("ApeMDState");
-            };
+            }
 
-            //Add ini filename if defined
+            // Add ini filename if defined
             if (!string.IsNullOrEmpty(GetJobParam("ApeMDIniFilename")))
             {
                 sqlText = sqlText + " and Ini_File_Name = '" + GetJobParam("ApeMDIniFilename") + "'";
-            };
+            }
 
             var MDIDList = string.Empty;
             var intMDIDCount = 0;

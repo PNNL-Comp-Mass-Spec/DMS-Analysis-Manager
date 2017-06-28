@@ -17,7 +17,7 @@ namespace AnalysisManager_Mage_PlugIn
         /// </summary>
         protected override bool RunMACTool()
         {
-            //Change the name of the log file for the local log file to the plug in log filename
+            // Change the name of the log file for the local log file to the plug in log filename
             var logFileName = Path.Combine(m_WorkDir, "Mage_Log");
             log4net.GlobalContext.Properties["LogName"] = logFileName;
             clsLogTools.ChangeLogFileName(logFileName);
@@ -307,7 +307,7 @@ namespace AnalysisManager_Mage_PlugIn
         protected bool ValidateSqliteDB(string mageOperations, FileInfo fiResultsDB)
         {
 
-            // If the Mage Operations list contains "ExtractFromJobs", then make sure that table "t_results" was created 
+            // If the Mage Operations list contains "ExtractFromJobs", then make sure that table "t_results" was created
             // If it wasn't, then no matching jobs were found and we should fail out this job step
             if (mageOperations.Contains("ExtractFromJobs"))
             {
@@ -323,7 +323,7 @@ namespace AnalysisManager_Mage_PlugIn
             if (analysisType.Contains("iTRAQ"))
                 itraqMode = true;
 
-            // If the Mage Operations list contains "ImportDataPackageFiles", then make sure that table "T_alias" was created 
+            // If the Mage Operations list contains "ImportDataPackageFiles", then make sure that table "T_alias" was created
             // If it wasn't, then we should fail out this job step
             if (itraqMode || mageOperations.Contains("ImportDataPackageFiles"))
             {

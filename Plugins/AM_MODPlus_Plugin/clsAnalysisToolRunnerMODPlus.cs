@@ -97,10 +97,8 @@ namespace AnalysisManagerMODPlusPlugin
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                Dictionary<int, string> paramFileList = null;
-
                 // Run MODPlus (using multiple threads)
-                var processingSuccess = StartMODPlus(javaProgLoc, out paramFileList);
+                var processingSuccess = StartMODPlus(javaProgLoc, out var paramFileList);
 
                 if (processingSuccess)
                 {
@@ -148,7 +146,6 @@ namespace AnalysisManagerMODPlusPlugin
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         /// <summary>
@@ -161,8 +158,9 @@ namespace AnalysisManagerMODPlusPlugin
         /// <remarks></remarks>
         private void AddXMLElement(XmlDocument doc, string xpath, string attributeName, string attributeValue)
         {
-            var attributes = new Dictionary<string, string>();
-            attributes.Add(attributeName, attributeValue);
+            var attributes = new Dictionary<string, string> {
+                { attributeName, attributeValue}
+            };
 
             AddXMLElement(doc, xpath, attributes);
         }
@@ -186,7 +184,7 @@ namespace AnalysisManagerMODPlusPlugin
         /// <param name="fiMgfFile"></param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks></remarks>
-        private bool ConvertMsXmlToMGF(FileInfo fiSpectrumFile, FileInfo fiMgfFile)
+        private bool ConvertMsXmlToMGF(FileSystemInfo fiSpectrumFile, FileSystemInfo fiMgfFile)
         {
             // Set up and execute a program runner to run MSConvert
 
@@ -450,7 +448,7 @@ namespace AnalysisManagerMODPlusPlugin
             }
             else
             {
-                // Match not found; add it
+                // Node not found; add it
                 var attributes = new Dictionary<string, string>();
 
                 if (instrumentResolutionMsMs == HIGH_RES_FLAG)
@@ -533,12 +531,10 @@ namespace AnalysisManagerMODPlusPlugin
             {
                 return node;
             }
-            else
-            {
-                // Rejoin the remainder of the array as an xpath expression and recurse
-                var rest = string.Join("/", partsOfXPath.Skip(1).ToArray());
-                return MakeXPath(doc, node, rest, attributes);
-            }
+
+            // Rejoin the remainder of the array as an xpath expression and recurse
+            var rest = string.Join("/", partsOfXPath.Skip(1).ToArray());
+            return MakeXPath(doc, node, rest, attributes);
         }
 
         private bool PostProcessMODPlusResults(Dictionary<int, string> paramFileList)
@@ -633,8 +629,9 @@ namespace AnalysisManagerMODPlusPlugin
                 if (!diZipFolder.Exists)
                     diZipFolder.Create();
 
-                var filesToMove = new List<FileInfo>();
-                filesToMove.Add(fiCombinedResults);
+                var filesToMove = new List<FileInfo> {
+                    fiCombinedResults
+                };
 
                 var diWorkDir = new DirectoryInfo(m_WorkDir);
                 filesToMove.AddRange(diWorkDir.GetFiles("*ConsoleOutput*.txt"));
@@ -681,16 +678,15 @@ namespace AnalysisManagerMODPlusPlugin
 
         protected void PushReader(SortedList<double, List<clsMODPlusResultsReader>> lstNextAvailableScan, clsMODPlusResultsReader reader)
         {
-            List<clsMODPlusResultsReader> readersForValue = null;
-
-            if (lstNextAvailableScan.TryGetValue(reader.CurrentScanChargeCombo, out readersForValue))
+            if (lstNextAvailableScan.TryGetValue(reader.CurrentScanChargeCombo, out var readersForValue))
             {
                 readersForValue.Add(reader);
             }
             else
             {
-                readersForValue = new List<clsMODPlusResultsReader>();
-                readersForValue.Add(reader);
+                readersForValue = new List<clsMODPlusResultsReader> {
+                    reader
+                };
 
                 lstNextAvailableScan.Add(reader.CurrentScanChargeCombo, readersForValue);
             }
@@ -703,7 +699,7 @@ namespace AnalysisManagerMODPlusPlugin
         /// <param name="threadCount"></param>
         /// <returns>List of newly created .mgf files</returns>
         /// <remarks>Yses a round-robin splitting</remarks>
-        private List<FileInfo> SplitMGFFiles(FileInfo fiMgfFile, int threadCount)
+        private List<FileInfo> SplitMGFFiles(FileSystemInfo fiMgfFile, int threadCount)
         {
             if (m_DebugLevel >= 1)
             {
@@ -861,14 +857,19 @@ namespace AnalysisManagerMODPlusPlugin
 
                     LogDebug(currentTask);
 
-                    var modPlusRunner = new clsMODPlusRunner(m_Dataset, threadNum, m_WorkDir, paramFile.Value, javaProgLoc, mMODPlusProgLoc);
-
-                    modPlusRunner.JavaMemorySizeMB = javaMemorySizeMB;
+                    var modPlusRunner =
+                        new clsMODPlusRunner(m_Dataset, threadNum, m_WorkDir, paramFile.Value, javaProgLoc, mMODPlusProgLoc)
+                        {
+                            JavaMemorySizeMB = javaMemorySizeMB
+                        };
 
                     mMODPlusRunners.Add(threadNum, modPlusRunner);
 
-                    var newThread = new Thread(new ThreadStart(modPlusRunner.StartAnalysis));
-                    newThread.Priority = ThreadPriority.BelowNormal;
+                    var newThread = new Thread(modPlusRunner.StartAnalysis)
+                    {
+                        Priority = ThreadPriority.BelowNormal
+                    };
+
                     newThread.Start();
                     lstThreads.Add(newThread);
                 }
@@ -1054,25 +1055,24 @@ namespace AnalysisManagerMODPlusPlugin
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo(string strProgLoc)
         {
-            string strToolVersionInfo = null;
-
             if (m_DebugLevel >= 2)
             {
                 LogDebug("Determining tool version info");
             }
 
-            strToolVersionInfo = string.Copy(mMODPlusVersion);
+            var strToolVersionInfo = string.Copy(mMODPlusVersion);
 
             // Store paths to key files in ioToolFiles
             var ioToolFiles = new List<FileInfo>();
             var fiMODPlusProg = new FileInfo(mMODPlusProgLoc);
             ioToolFiles.Add(fiMODPlusProg);
 
-            ioToolFiles.Add(new FileInfo(Path.Combine(fiMODPlusProg.DirectoryName, "tda_plus.jar")));
+            if (fiMODPlusProg.Directory != null)
+                ioToolFiles.Add(new FileInfo(Path.Combine(fiMODPlusProg.Directory.FullName, "tda_plus.jar")));
 
             try
             {
-                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, saveToolVersionTextFile: true);
+                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, saveToolVersionTextFile: true);
             }
             catch (Exception ex)
             {
@@ -1087,8 +1087,7 @@ namespace AnalysisManagerMODPlusPlugin
 
         private void MSConvert_CmdRunner_LoopWaiting()
         {
-            var processIDs = new List<int>();
-            processIDs.Add(0);
+            var processIDs = new List<int> { 0 };
 
             // Pass -1 for coreUsageOverall so that mCoreUsageHistory does not get updated
             CmdRunner_LoopWaiting(processIDs, coreUsageOverall: -1, secondsBetweenUpdates: 30);

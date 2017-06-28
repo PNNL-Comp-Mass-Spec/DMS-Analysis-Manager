@@ -26,28 +26,28 @@ namespace AnalysisManagerExtractionPlugin
     {
         #region "Constants"
 
-        protected const float SEQUEST_PROGRESS_EXTRACTION_DONE = 33;
-        protected const float SEQUEST_PROGRESS_PHRP_DONE = 66;
-        protected const float SEQUEST_PROGRESS_PEPPROPHET_DONE = 100;
+        private const float SEQUEST_PROGRESS_EXTRACTION_DONE = 33;
+        private const float SEQUEST_PROGRESS_PHRP_DONE = 66;
+        private const float SEQUEST_PROGRESS_PEPPROPHET_DONE = 100;
 
         public const string INSPECT_UNFILTERED_RESULTS_FILE_SUFFIX = "_inspect_unfiltered.txt";
 
-        protected const string MODa_JAR_NAME = "moda.jar";
-        protected const string MODa_FILTER_JAR_NAME = "anal_moda.jar";
+        private const string MODa_JAR_NAME = "moda.jar";
+        private const string MODa_FILTER_JAR_NAME = "anal_moda.jar";
 
-        protected const string MODPlus_JAR_NAME = "modp_pnnl.jar";
-        protected const string MODPlus_FILTER_JAR_NAME = "tda_plus.jar";
+        private const string MODPlus_JAR_NAME = "modp_pnnl.jar";
+        private const string MODPlus_FILTER_JAR_NAME = "tda_plus.jar";
 
         #endregion
 
         #region "Module variables"
 
-        protected clsPeptideProphetWrapper m_PeptideProphet;
+        private clsPeptideProphetWrapper m_PeptideProphet;
 
         private MSGFPlusUtils mMSGFPlusUtils;
         private bool mMSGFPlusUtilsError;
 
-        protected string mGeneratedFastaFilePath;
+        private string mGeneratedFastaFilePath;
 
         #endregion
 
@@ -65,7 +65,7 @@ namespace AnalysisManagerExtractionPlugin
 
             try
             {
-                //Call base class for initial setup
+                // Call base class for initial setup
                 if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -102,7 +102,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 switch (m_jobParams.GetParam("ResultType"))
                 {
-                    case clsAnalysisResources.RESULT_TYPE_SEQUEST:   //Sequest result type
+                    case clsAnalysisResources.RESULT_TYPE_SEQUEST:   // Sequest result type
                         // Run Ken's Peptide Extractor DLL
                         strCurrentAction = "running peptide extraction for Sequest";
                         eResult = PerformPeptideExtraction();
@@ -173,7 +173,6 @@ namespace AnalysisManagerExtractionPlugin
                         if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
                         {
                             processingSuccess = false;
-                            break;
                         }
 
                         break;
@@ -264,9 +263,10 @@ namespace AnalysisManagerExtractionPlugin
         /// Convert the MODa output file to a tab-delimited text file
         /// </summary>
         /// <param name="strFilteredMODaResultsFilePath">Output parameter: path to the filtered results file</param>
+        /// <param name="keepAllResults"></param>
         /// <returns>The path to the .txt file if successful; empty string if an error</returns>
         /// <remarks></remarks>
-        protected CloseOutType ConvertMODaResultsToTxt(out string strFilteredMODaResultsFilePath, bool keepAllResults)
+        private CloseOutType ConvertMODaResultsToTxt(out string strFilteredMODaResultsFilePath, bool keepAllResults)
         {
             var fdrThreshold = m_jobParams.GetJobParameter("MODaFDRThreshold", 0.05f);
             var decoyPrefix = m_jobParams.GetJobParameter("MODaDecoyPrefix", "Reversed_");
@@ -276,7 +276,7 @@ namespace AnalysisManagerExtractionPlugin
             return ConvertMODaOrMODPlusResultsToTxt(fdrThreshold, decoyPrefix, isModPlus, out strFilteredMODaResultsFilePath, keepAllResults);
         }
 
-        protected CloseOutType ConvertMODPlusResultsToTxt(out string strFilteredMODPlusResultsFilePath, bool keepAllResults)
+        private CloseOutType ConvertMODPlusResultsToTxt(out string strFilteredMODPlusResultsFilePath, bool keepAllResults)
         {
             var fdrThreshold = m_jobParams.GetJobParameter("MODPlusDecoyFilterFDR", 0.05f);
             var decoyPrefix = m_jobParams.GetJobParameter("MODPlusDecoyPrefix", "Reversed_");
@@ -286,7 +286,7 @@ namespace AnalysisManagerExtractionPlugin
             return ConvertMODaOrMODPlusResultsToTxt(fdrThreshold, decoyPrefix, isModPlus, out strFilteredMODPlusResultsFilePath, keepAllResults);
         }
 
-        protected CloseOutType ConvertMODaOrMODPlusResultsToTxt(float fdrThreshold, string decoyPrefixJobParam, bool isModPlus,
+        private CloseOutType ConvertMODaOrMODPlusResultsToTxt(float fdrThreshold, string decoyPrefixJobParam, bool isModPlus,
             out string strFilteredResultsFilePath, bool keepAllResults)
         {
             strFilteredResultsFilePath = string.Empty;
@@ -379,9 +379,9 @@ namespace AnalysisManagerExtractionPlugin
 
                 const int javaMemorySize = 1000;
 
-                // JavaProgLoc will typically be "C:\Program Files\Java\jre8\bin\java.exe"
-                var JavaProgLoc = GetJavaProgLoc();
-                if (string.IsNullOrEmpty(JavaProgLoc))
+                // javaProgLoc will typically be "C:\Program Files\Java\jre8\bin\java.exe"
+                var javaProgLoc = GetJavaProgLoc();
+                if (string.IsNullOrEmpty(javaProgLoc))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -391,7 +391,13 @@ namespace AnalysisManagerExtractionPlugin
 
                 var fiMODx = new FileInfo(modxProgLoc);
 
-                //Set up and execute a program runner to run anal_moda.jar or tda_plus.jar
+                if (string.IsNullOrWhiteSpace(fiMODx.DirectoryName))
+                {
+                    LogError("Cannot determine the parent directory of " + fiMODx.FullName);
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                // Set up and execute a program runner to run anal_moda.jar or tda_plus.jar
                 var cmdStr = " -Xmx" + javaMemorySize + "M -jar " + Path.Combine(fiMODx.DirectoryName, modxFilterJarName);
                 cmdStr += " -i " + resultsFilePath;
 
@@ -412,7 +418,7 @@ namespace AnalysisManagerExtractionPlugin
                 //   -i "E:\DMS_WorkDir3\QC_Shew_13_04_pt1_1_2_45min_14Nov13_Leopard_13-05-21_modp.txt"
                 //   -fdr 0.05 -d Reversed_
 
-                LogDebug(JavaProgLoc + " " + cmdStr);
+                LogDebug(javaProgLoc + " " + cmdStr);
 
                 var progRunner = new clsRunDosProgram(m_WorkDir)
                 {
@@ -424,7 +430,7 @@ namespace AnalysisManagerExtractionPlugin
                 };
                 RegisterEvents(progRunner);
 
-                var blnSuccess = progRunner.RunProgram(JavaProgLoc, cmdStr, toolName + "_Filter", true);
+                var blnSuccess = progRunner.RunProgram(javaProgLoc, cmdStr, toolName + "_Filter", true);
 
                 if (!blnSuccess)
                 {
@@ -470,7 +476,7 @@ namespace AnalysisManagerExtractionPlugin
         /// <param name="suffixToAdd">Suffix to add when parsing files created by Parallel MSGF+</param>
         /// <returns>The path to the .tsv file if successful; empty string if an error</returns>
         /// <remarks></remarks>
-        protected string ConvertMZIDToTSV(string suffixToAdd)
+        private string ConvertMZIDToTSV(string suffixToAdd)
         {
             try
             {
@@ -529,8 +535,16 @@ namespace AnalysisManagerExtractionPlugin
                     if (!string.IsNullOrEmpty(suffixToAdd))
                     {
                         var fiTSVFile = new FileInfo(strTSVFilePath);
-                        var newTSVPath = Path.Combine(fiTSVFile.Directory.FullName,
+
+                        if (string.IsNullOrWhiteSpace(fiTSVFile.DirectoryName))
+                        {
+                            LogError("Cannot determine the parent directory of " + fiTSVFile.FullName);
+                            return string.Empty;
+                        }
+
+                        var newTSVPath = Path.Combine(fiTSVFile.DirectoryName,
                             Path.GetFileNameWithoutExtension(strTSVFilePath) + suffixToAdd + ".tsv");
+
                         fiTSVFile.MoveTo(newTSVPath);
                     }
 
@@ -639,35 +653,38 @@ namespace AnalysisManagerExtractionPlugin
                             while (!srSourceFile.EndOfStream)
                             {
                                 var strLineIn = srSourceFile.ReadLine();
+                                if (string.IsNullOrWhiteSpace(strLineIn))
+                                    continue;
+
                                 linesRead += 1;
                                 totalLinesProcessed += 1;
 
                                 if (linesRead == 1)
                                 {
-                                    if (iteration == 1)
+                                    if (iteration != 1)
+                                        continue;
+
+                                    // Write the header line
+                                    swMergedFile.WriteLine(strLineIn);
+
+                                    const bool IS_CASE_SENSITIVE = false;
+                                    var lstHeaderNames = new List<string>
                                     {
-                                        // Write the header line
-                                        swMergedFile.WriteLine(strLineIn);
+                                        "ScanNum",
+                                        "Charge",
+                                        "Peptide",
+                                        "Protein",
+                                        "SpecEValue"
+                                    };
+                                    dctHeaderMapping = clsGlobal.ParseHeaderLine(strLineIn, lstHeaderNames, IS_CASE_SENSITIVE);
 
-                                        const bool IS_CASE_SENSITIVE = false;
-                                        var lstHeaderNames = new List<string>
+                                    foreach (var headerName in lstHeaderNames)
+                                    {
+                                        if (dctHeaderMapping[headerName] < 0)
                                         {
-                                            "ScanNum",
-                                            "Charge",
-                                            "Peptide",
-                                            "Protein",
-                                            "SpecEValue"
-                                        };
-                                        dctHeaderMapping = clsGlobal.ParseHeaderLine(strLineIn, lstHeaderNames, IS_CASE_SENSITIVE);
-
-                                        foreach (var headerName in lstHeaderNames)
-                                        {
-                                            if (dctHeaderMapping[headerName] < 0)
-                                            {
-                                                LogError("Header " + headerName + " not found in " + Path.GetFileName(sourceFilePath) +
-                                                         "; unable to merge the MSGF+ .tsv files");
-                                                return CloseOutType.CLOSEOUT_FAILED;
-                                            }
+                                            LogError("Header " + headerName + " not found in " + Path.GetFileName(sourceFilePath) +
+                                                     "; unable to merge the MSGF+ .tsv files");
+                                            return CloseOutType.CLOSEOUT_FAILED;
                                         }
                                     }
                                 }
@@ -678,10 +695,8 @@ namespace AnalysisManagerExtractionPlugin
                                     var scanNumber = splitLine[dctHeaderMapping["ScanNum"]];
                                     var chargeState = splitLine[dctHeaderMapping["Charge"]];
 
-                                    int scanNumberValue;
-                                    int chargeStateValue;
-                                    int.TryParse(scanNumber, out scanNumberValue);
-                                    int.TryParse(chargeState, out chargeStateValue);
+                                    int.TryParse(scanNumber, out var scanNumberValue);
+                                    int.TryParse(chargeState, out var chargeStateValue);
 
                                     var scanChargeCombo = scanNumber + "_" + chargeState;
                                     var peptide = splitLine[dctHeaderMapping["Peptide"]];
@@ -786,7 +801,7 @@ namespace AnalysisManagerExtractionPlugin
             }
         }
 
-        private CloseOutType ParallelMSGFPlusMergePepToProtMapFiles(int numberOfClonedSteps, SortedSet<string> lstFilterPassingPeptides)
+        private CloseOutType ParallelMSGFPlusMergePepToProtMapFiles(int numberOfClonedSteps, ICollection<string> lstFilterPassingPeptides)
         {
             try
             {
@@ -822,6 +837,9 @@ namespace AnalysisManagerExtractionPlugin
                             while (!srSourceFile.EndOfStream)
                             {
                                 var strLineIn = srSourceFile.ReadLine();
+                                if (string.IsNullOrWhiteSpace(strLineIn))
+                                    continue;
+
                                 linesRead += 1;
                                 totalLinesProcessed += 1;
 
@@ -907,7 +925,7 @@ namespace AnalysisManagerExtractionPlugin
         {
             var pepExtractTool = new clsPeptideExtractWrapper(m_mgrParams, m_jobParams, ref m_StatusTools);
 
-            //Run the extractor
+            // Run the extractor
             if (m_DebugLevel > 3)
             {
                 LogDebug("clsExtractToolRunner.PerformPeptideExtraction(); Starting peptide extraction");
@@ -919,15 +937,15 @@ namespace AnalysisManagerExtractionPlugin
 
                 if ((eResult != CloseOutType.CLOSEOUT_SUCCESS) && (eResult != CloseOutType.CLOSEOUT_NO_DATA))
                 {
-                    //log error and return result calling routine handles the error appropriately
+                    // Log error and return result calling routine handles the error appropriately
                     LogError("Error encountered during extraction");
                     return eResult;
                 }
 
-                //If there was a _syn.txt file created, but it contains no data, then we want to clean up and exit
+                // If there was a _syn.txt file created, but it contains no data, then we want to clean up and exit
                 if (eResult == CloseOutType.CLOSEOUT_NO_DATA)
                 {
-                    //log error and return result calling routine handles the error appropriately
+                    // Log error and return result calling routine handles the error appropriately
                     LogError("No results above threshold");
                     return eResult;
                 }
@@ -1196,11 +1214,11 @@ namespace AnalysisManagerExtractionPlugin
                 }
 
                 // Could validate that the mass errors are within tolerance
-                //var paramFileName = m_jobParams.GetParam("ParmFileName");
-                //if (!ValidatePHRPResultMassErrors(strSynFilePath, clsPHRPReader.ePeptideHitResultType.MODa, paramFileName))
-                //    return CloseOutType.CLOSEOUT_FAILED;
-                //else
-                //    return CloseOutType.CLOSEOUT_SUCCESS;
+                // var paramFileName = m_jobParams.GetParam("ParmFileName");
+                // if (!ValidatePHRPResultMassErrors(strSynFilePath, clsPHRPReader.ePeptideHitResultType.MODa, paramFileName))
+                //     return CloseOutType.CLOSEOUT_FAILED;
+                // else
+                //     return CloseOutType.CLOSEOUT_SUCCESS;
 
             }
             catch (Exception ex)
@@ -1279,11 +1297,11 @@ namespace AnalysisManagerExtractionPlugin
                 }
 
                 // Could validate that the mass errors are within tolerance
-                //var paramFileName = m_jobParams.GetParam("ParmFileName");
-                //if (!ValidatePHRPResultMassErrors(strSynFilePath, clsPHRPReader.ePeptideHitResultType.MODPlus, paramFileName))
-                //    return CloseOutType.CLOSEOUT_FAILED;
-                //else
-                //    return CloseOutType.CLOSEOUT_SUCCESS;
+                // var paramFileName = m_jobParams.GetParam("ParmFileName");
+                // if (!ValidatePHRPResultMassErrors(strSynFilePath, clsPHRPReader.ePeptideHitResultType.MODPlus, paramFileName))
+                //     return CloseOutType.CLOSEOUT_FAILED;
+                // else
+                //     return CloseOutType.CLOSEOUT_SUCCESS;
 
             }
             catch (Exception ex)
@@ -1726,7 +1744,7 @@ namespace AnalysisManagerExtractionPlugin
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        protected CloseOutType RunPeptideProphet()
+        private CloseOutType RunPeptideProphet()
         {
             const int SYN_FILE_MAX_SIZE_MB = 200;
             const string PEPPROPHET_RESULT_FILE_SUFFIX = "_PepProphet.txt";
@@ -1735,7 +1753,6 @@ namespace AnalysisManagerExtractionPlugin
 
             var eResult = CloseOutType.CLOSEOUT_SUCCESS;
 
-            int intFileIndex;
             bool blnSuccess;
 
             var blnIgnorePeptideProphetErrors = m_jobParams.GetJobParameter("IgnorePeptideProphetErrors", false);
@@ -1766,7 +1783,7 @@ namespace AnalysisManagerExtractionPlugin
 
             var SynFile = Path.Combine(m_WorkDir, m_Dataset + "_syn.txt");
 
-            //Check to see if Syn file exists
+            // Check to see if Syn file exists
             var fiSynFile = new FileInfo(SynFile);
             if (!fiSynFile.Exists)
             {
@@ -1821,7 +1838,7 @@ namespace AnalysisManagerExtractionPlugin
                 }
             }
 
-            //Setup Peptide Prophet and run for each file in strFileList
+            // Setup Peptide Prophet and run for each file in strFileList
             foreach (var splitFile in splitFileList)
             {
                 m_PeptideProphet.InputFile = splitFile;
@@ -1908,7 +1925,7 @@ namespace AnalysisManagerExtractionPlugin
                     // Update strFileList() to have the peptide prophet result file names
                     var strBaseName = Path.Combine(m_PeptideProphet.OutputFolderPath, Path.GetFileNameWithoutExtension(SynFile));
 
-                    for (intFileIndex = 0; intFileIndex <= splitFileList.Count - 1; intFileIndex++)
+                    for (var intFileIndex = 0; intFileIndex <= splitFileList.Count - 1; intFileIndex++)
                     {
                         var splitFile = strBaseName + "_part" + (intFileIndex + 1) + PEPPROPHET_RESULT_FILE_SUFFIX;
 
@@ -1996,10 +2013,10 @@ namespace AnalysisManagerExtractionPlugin
         /// <param name="blnLookForHeaderLine">When true, then looks for a header line by checking if the first column contains a number</param>
         /// <returns>True if success; false if failure</returns>
         /// <remarks></remarks>
-        protected bool InterleaveFiles(List<string> fileList, string strCombinedFilePath, bool blnLookForHeaderLine)
+        private bool InterleaveFiles(IReadOnlyList<string> fileList, string strCombinedFilePath, bool blnLookForHeaderLine)
         {
 
-          
+
             try
             {
                 if (fileList == null || fileList.Count == 0)
@@ -2056,7 +2073,7 @@ namespace AnalysisManagerExtractionPlugin
                             if (intLinesRead[intFileIndex] == 1 && blnLookForHeaderLine && strLineIn.Length > 0)
                             {
                                 // check for a header line
-                                var strSplitLine = strLineIn.Split(new char[] {'\t'}, 2);
+                                var strSplitLine = strLineIn.Split(new[] {'\t'}, 2);
 
                                 double temp;
                                 if (strSplitLine.Length > 0 && !double.TryParse(strSplitLine[0], out temp))
@@ -2122,6 +2139,7 @@ namespace AnalysisManagerExtractionPlugin
                 var fiFileInfo = new FileInfo(strSrcFilePath);
                 if (!fiFileInfo.Exists)
                 {
+                    LogError("File not found: " + fiFileInfo.FullName);
                     return false;
                 }
 
@@ -2130,86 +2148,90 @@ namespace AnalysisManagerExtractionPlugin
                     // File is already less than the limit
                     splitFileList.Add(fiFileInfo.FullName);
 
-                    blnSuccess = true;
+                    return true;
                 }
-                else
+
+                if (string.IsNullOrWhiteSpace(fiFileInfo.DirectoryName))
                 {
-                    // Determine the number of parts to split the file into
-                    var intSplitCount = (int)Math.Ceiling(fiFileInfo.Length / (float)lngMaxSizeBytes);
-
-                    if (intSplitCount < 2)
-                    {
-                        // This code should never be reached; we'll set intSplitCount to 2
-                        intSplitCount = 2;
-                    }
-
-                    // Open the input file
-                    using (var srInFile = new StreamReader(new FileStream(fiFileInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
-                    {
-                        // Create each of the output files
-                        var swOutFiles = new StreamWriter[intSplitCount];
-
-                        var strBaseName = Path.Combine(fiFileInfo.DirectoryName, Path.GetFileNameWithoutExtension(fiFileInfo.Name));
-
-                        for (var intIndex = 0; intIndex <= intSplitCount - 1; intIndex++)
-                        {
-                            splitFileList[intIndex] = strBaseName + "_part" + (intIndex + 1) + Path.GetExtension(fiFileInfo.Name);
-                            swOutFiles[intIndex] =
-                                new StreamWriter(new FileStream(splitFileList[intIndex], FileMode.Create, FileAccess.Write, FileShare.Read));
-                        }
-
-                        var intLinesRead = 0;
-                        var intTargetFileIndex = 0;
-
-                        while (!srInFile.EndOfStream)
-                        {
-                            var strLineIn = srInFile.ReadLine();
-                            intLinesRead += 1;
-
-                            if (strLineIn == null)
-                                continue;
-
-                            var blnProcessLine = true;
-
-                            if (intLinesRead == 1 && blnLookForHeaderLine && strLineIn.Length > 0)
-                            {
-                                // Check for a header line
-                                var strSplitLine = strLineIn.Split(new char[] {'\t'}, 2);
-
-                                double temp;
-                                if (strSplitLine.Length > 0 && !double.TryParse(strSplitLine[0], out temp))
-                                {
-                                    // First column does not contain a number; this must be a header line
-                                    // Write the header to each output file
-                                    for (var intIndex = 0; intIndex <= intSplitCount - 1; intIndex++)
-                                    {
-                                        swOutFiles[intIndex].WriteLine(strLineIn);
-                                    }
-                                    blnProcessLine = false;
-                                }
-                            }
-
-                            if (blnProcessLine)
-                            {
-                                swOutFiles[intTargetFileIndex].WriteLine(strLineIn);
-                                intTargetFileIndex += 1;
-                                if (intTargetFileIndex == intSplitCount)
-                                    intTargetFileIndex = 0;
-                            }
-                        }
-
-
-                        // Close the output files
-                        for (var intIndex = 0; intIndex <= intSplitCount - 1; intIndex++)
-                        {
-                            swOutFiles[intIndex].Flush();
-                            swOutFiles[intIndex].Dispose();
-                        }
-
-                    }
-
-                    blnSuccess = true;
+                    LogError("Cannot determine the parent directory of " + fiFileInfo.FullName);
+                    return false;
                 }
+
+                // Determine the number of parts to split the file into
+                var intSplitCount = (int)Math.Ceiling(fiFileInfo.Length / (float)lngMaxSizeBytes);
+
+                if (intSplitCount < 2)
+                {
+                    // This code should never be reached; we'll set intSplitCount to 2
+                    intSplitCount = 2;
+                }
+
+                // Open the input file
+                using (var srInFile = new StreamReader(new FileStream(fiFileInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                {
+                    // Create each of the output files
+                    var swOutFiles = new StreamWriter[intSplitCount];
+
+                    var strBaseName = Path.Combine(fiFileInfo.DirectoryName, Path.GetFileNameWithoutExtension(fiFileInfo.Name));
+
+                    for (var intIndex = 0; intIndex <= intSplitCount - 1; intIndex++)
+                    {
+                        splitFileList[intIndex] = strBaseName + "_part" + (intIndex + 1) + Path.GetExtension(fiFileInfo.Name);
+                        swOutFiles[intIndex] =
+                            new StreamWriter(new FileStream(splitFileList[intIndex], FileMode.Create, FileAccess.Write, FileShare.Read));
+                    }
+
+                    var intLinesRead = 0;
+                    var intTargetFileIndex = 0;
+
+                    while (!srInFile.EndOfStream)
+                    {
+                        var strLineIn = srInFile.ReadLine();
+                        intLinesRead += 1;
+
+                        if (strLineIn == null)
+                            continue;
+
+                        var blnProcessLine = true;
+
+                        if (intLinesRead == 1 && blnLookForHeaderLine && strLineIn.Length > 0)
+                        {
+                            // Check for a header line
+                            var strSplitLine = strLineIn.Split(new[] {'\t'}, 2);
+
+                            double temp;
+                            if (strSplitLine.Length > 0 && !double.TryParse(strSplitLine[0], out temp))
+                            {
+                                // First column does not contain a number; this must be a header line
+                                // Write the header to each output file
+                                for (var intIndex = 0; intIndex <= intSplitCount - 1; intIndex++)
+                                {
+                                    swOutFiles[intIndex].WriteLine(strLineIn);
+                                }
+                                blnProcessLine = false;
+                            }
+                        }
+
+                        if (blnProcessLine)
+                        {
+                            swOutFiles[intTargetFileIndex].WriteLine(strLineIn);
+                            intTargetFileIndex += 1;
+                            if (intTargetFileIndex == intSplitCount)
+                                intTargetFileIndex = 0;
+                        }
+                    }
+
+
+                    // Close the output files
+                    for (var intIndex = 0; intIndex <= intSplitCount - 1; intIndex++)
+                    {
+                        swOutFiles[intIndex].Flush();
+                        swOutFiles[intIndex].Dispose();
+                    }
+
+                }
+
+                blnSuccess = true;
             }
             catch (Exception ex)
             {
@@ -2224,7 +2246,7 @@ namespace AnalysisManagerExtractionPlugin
         /// Stores the tool version info in the database
         /// </summary>
         /// <remarks></remarks>
-        protected bool StoreToolVersionInfo()
+        private bool StoreToolVersionInfo()
         {
             var strToolVersionInfo = string.Empty;
 
@@ -2259,7 +2281,7 @@ namespace AnalysisManagerExtractionPlugin
 
             if (m_jobParams.GetParam("ResultType") == clsAnalysisResources.RESULT_TYPE_SEQUEST)
             {
-                //Sequest result type
+                // Sequest result type
 
                 // Lookup the version of the PeptideFileExtractor
                 if (!StoreToolVersionInfoForLoadedAssembly(ref strToolVersionInfo, "PeptideFileExtractor"))
@@ -2279,9 +2301,13 @@ namespace AnalysisManagerExtractionPlugin
                     if (!blnSuccess)
                         return false;
 
-                    // Lookup the version of the PeptideProphetLibrary
-                    blnSuccess = StoreToolVersionInfoOneFile32Bit(ref strToolVersionInfo,
-                        Path.Combine(ioPeptideProphetRunner.DirectoryName, "PeptideProphetLibrary.dll"));
+                    if (!string.IsNullOrWhiteSpace(ioPeptideProphetRunner.DirectoryName))
+                    {
+                        // Lookup the version of the PeptideProphetLibrary
+                        var dllPath = Path.Combine(ioPeptideProphetRunner.DirectoryName, "PeptideProphetLibrary.dll");
+                        blnSuccess = StoreToolVersionInfoOneFile32Bit(ref strToolVersionInfo, dllPath);
+                    }
+
                     if (!blnSuccess)
                         return false;
                 }
@@ -2298,7 +2324,7 @@ namespace AnalysisManagerExtractionPlugin
             }
         }
 
-        protected bool ValidatePHRPResultMassErrors(string strInputFilePath, clsPHRPReader.ePeptideHitResultType eResultType,
+        private bool ValidatePHRPResultMassErrors(string strInputFilePath, clsPHRPReader.ePeptideHitResultType eResultType,
             string strSearchEngineParamFileName)
         {
             bool blnSuccess;

@@ -40,25 +40,25 @@ namespace MSMSSpectrumFilterAM
             // Note that if the file was found in MyEMSL then RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
             if (!FileSearch.RetrieveDtaFiles())
             {
-                //Errors were reported in function call, so just return
+                // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
             // Add the _dta.txt file to the list of extensions to delete after the tool finishes
+            // This is the unzipped, concatenated DTA
             m_jobParams.AddResultFileExtensionToSkip(DatasetName + "_dta.txt");
-            //Unzipped, concatenated DTA
+
 
             // Add the _Dta.zip file to the list of files to move to the results folder
             // Note that this .Zip file will contain the filtered _Dta.txt file (not the original _Dta.txt file)
+            // Zipped _dta.txt file
             m_jobParams.AddResultFileToKeep("_dta.zip");
-            //Zipped DTA
 
             // Look at the job parameters
             // If ScanTypeFilter is defined, or MSCollisionModeFilter is defined, or MSLevelFilter is defined, then we need either of the following
             //  a) The _ScanStats.txt file and _ScanStatsEx.txt file from a MASIC job for this dataset
             //       This is essentially a job-depending-on a job
             //  b) The .Raw file
-            //
 
             var strMSLevelFilter = m_jobParams.GetJobParameter("MSLevelFilter", "0");
 
@@ -92,7 +92,7 @@ namespace MSMSSpectrumFilterAM
             {
                 if (m_DebugLevel >= 1)
                 {
-                    LogDebug("GetResources: MSCollisionModeFilter is defined (" + strMSCollisionModeFilter + 
+                    LogDebug("GetResources: MSCollisionModeFilter is defined (" + strMSCollisionModeFilter +
                         " with match type " + strMSCollisionModeMatchType + "); will retrieve or generate the ScanStats files");
                 }
                 blnNeedScanStatsFiles = true;
@@ -178,7 +178,7 @@ namespace MSMSSpectrumFilterAM
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            //All finished
+            // All finished
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
@@ -223,7 +223,7 @@ namespace MSMSSpectrumFilterAM
                     {
                         if (m_DebugLevel >= 1)
                         {
-                            LogMessage("The newest _ScanStats.txt file for this dataset does not contain column " + clsMsMsSpectrumFilter.SCANSTATS_COL_SCAN_TYPE_NAME + 
+                            LogMessage("The newest _ScanStats.txt file for this dataset does not contain column " + clsMsMsSpectrumFilter.SCANSTATS_COL_SCAN_TYPE_NAME +
                                 "; will need to re-generate the file using the .Raw file");
                         }
                         return false;

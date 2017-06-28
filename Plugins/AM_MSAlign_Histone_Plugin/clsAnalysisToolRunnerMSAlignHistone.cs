@@ -18,7 +18,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
     public class clsAnalysisToolRunnerMSAlignHistone : clsAnalysisToolRunnerBase
     {
         //*********************************************************************************************************
-        //Class for running MSAlign Histone analysis
+        // Class for running MSAlign Histone analysis
         //*********************************************************************************************************
 
         #region "Constants and Enums"
@@ -96,7 +96,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
             try
             {
-                //Call base class for initial setup
+                // Call base class for initial setup
                 if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -181,7 +181,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 if (intJavaMemorySize < 512)
                     intJavaMemorySize = 512;
 
-                //Set up and execute a program runner to run MSAlign_Histone
+                // Set up and execute a program runner to run MSAlign_Histone
                 var cmdStr = " -Xmx" + intJavaMemorySize +
                          "M -classpath jar\\*; edu.iupui.msalign.align.histone.pipeline.MsAlignHistonePipelineConsole " + strMSAlignCmdLineOptions;
 
@@ -294,10 +294,10 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                 m_progress = PROGRESS_PCT_COMPLETE;
 
-                //Stop the job timer
+                // Stop the job timer
                 m_StopTime = DateTime.UtcNow;
 
-                //Add the current job data to the summary file
+                // Add the current job data to the summary file
                 UpdateSummaryFile();
 
                 // Make sure objects are released
@@ -479,9 +479,9 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 }
 
                 // Copy the histone ptm XML files
-                var fiSourceFiles = diMSAlignSrc.GetFileSystemInfos("histone*_ptm.xml").ToList();
+                var fiSourceFiles = diMSAlignSrc.GetFiles("histone*_ptm.xml").ToList();
 
-                foreach (FileInfo fiFile in fiSourceFiles)
+                foreach (var fiFile in fiSourceFiles)
                 {
                     fiFile.CopyTo(Path.Combine(diMSAlignWork.FullName, fiFile.Name));
                 }
@@ -775,18 +775,17 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
         protected bool MakeReportFiles(string JavaProgLoc, string strMSAlignCmdLineOptions, int intJavaMemorySize)
         {
-            string CmdStr = null;
-            var blnSuccess = false;
+            bool blnSuccess;
 
             try
             {
                 LogMessage("Creating MSAlign_Histone Report Files");
 
-                //Set up and execute a program runner to run MSAlign_Histone
-                CmdStr = " -Xmx" + intJavaMemorySize + "M -classpath jar\\*; edu.iupui.msalign.align.histone.view.HistoneHtmlConsole " +
-                         strMSAlignCmdLineOptions;
+                // Set up and execute a program runner to run MSAlign_Histone
+                var cmdStr = " -Xmx" + intJavaMemorySize + "M -classpath jar\\*; edu.iupui.msalign.align.histone.view.HistoneHtmlConsole " +
+                                strMSAlignCmdLineOptions;
 
-                LogDebug(JavaProgLoc + " " + CmdStr);
+                LogDebug(JavaProgLoc + " " + cmdStr);
 
                 var cmdRunner = new clsRunDosProgram(mMSAlignWorkFolderPath);
                 RegisterEvents(cmdRunner);
@@ -799,7 +798,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 cmdRunner.WriteConsoleOutputToFile = true;
                 cmdRunner.ConsoleOutputFilePath = Path.Combine(m_WorkDir, MSAlign_Report_CONSOLE_OUTPUT);
 
-                blnSuccess = cmdRunner.RunProgram(JavaProgLoc, CmdStr, "MSAlign_Histone", true);
+                blnSuccess = cmdRunner.RunProgram(JavaProgLoc, cmdStr, "MSAlign_Histone", true);
 
                 if (!blnSuccess)
                 {
@@ -837,7 +836,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
         // Fast filteration finished.
         // Ptm search: Processing spectrum scan 4353...9% finished (0 minutes used).
         // Ptm search: Processing spectrum scan 4354...18% finished (1 minutes used).
-        private Regex reExtractPercentFinished = new Regex("(\\d+)% finished", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private readonly Regex reExtractPercentFinished = new Regex("(\\d+)% finished", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
         /// Parse the MSAlign console output file to determine the MSAlign version and to track the search progress
@@ -1303,13 +1302,10 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
         protected bool ZipMSAlignResultFolder(string strFolderName)
         {
-            string strTargetFilePath = null;
-            string strSourceFolderPath = null;
-
             try
             {
-                strTargetFilePath = Path.Combine(m_WorkDir, m_Dataset + "_MSAlign_Results_" + strFolderName.ToUpper() + ".zip");
-                strSourceFolderPath = Path.Combine(mMSAlignWorkFolderPath, strFolderName);
+                var strTargetFilePath = Path.Combine(m_WorkDir, m_Dataset + "_MSAlign_Results_" + strFolderName.ToUpper() + ".zip");
+                var strSourceFolderPath = Path.Combine(mMSAlignWorkFolderPath, strFolderName);
 
                 // Confirm that the folder has one or more files or subfolders
                 var diSourceFolder = new DirectoryInfo(strSourceFolderPath);

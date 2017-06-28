@@ -29,10 +29,7 @@ namespace AnalysisManagerExtractionPlugin
 
         #region "Module variables"
 
-        private readonly string m_PeptideProphetRunnerLocation = string.Empty;
-        private string m_ErrMsg = string.Empty;
-        private short m_DebugLevel = 1;
-        private string m_InputFile = string.Empty;
+        private readonly string m_PeptideProphetRunnerLocation;
 
         protected clsRunDosProgram mCmdRunner;
 
@@ -44,32 +41,11 @@ namespace AnalysisManagerExtractionPlugin
 
         #region "Properties"
 
-        public short DebugLevel
-        {
-            get { return m_DebugLevel; }
-            set { m_DebugLevel = value; }
-        }
+        public short DebugLevel { get; set; } = 1;
 
-        public string ErrMsg
-        {
-            get
-            {
-                if (m_ErrMsg == null)
-                {
-                    return string.Empty;
-                }
-                else
-                {
-                    return m_ErrMsg;
-                }
-            }
-        }
+        public string ErrMsg { get; private set; } = string.Empty;
 
-        public string InputFile
-        {
-            get { return m_InputFile; }
-            set { m_InputFile = value; }
-        }
+        public string InputFile { get; set; } = string.Empty;
 
         public string Enzyme { get; set; } = string.Empty;
 
@@ -86,28 +62,25 @@ namespace AnalysisManagerExtractionPlugin
 
         public CloseOutType CallPeptideProphet()
         {
-            string CmdStr = null;
-            string strPeptideProphetConsoleOutputFilePath = null;
-
             try
             {
-                m_ErrMsg = string.Empty;
+                ErrMsg = string.Empty;
 
-                var ioInputFile = new FileInfo(m_InputFile);
-                strPeptideProphetConsoleOutputFilePath = Path.Combine(ioInputFile.DirectoryName, "PeptideProphetConsoleOutput.txt");
+                var ioInputFile = new FileInfo(InputFile);
+                var strPeptideProphetConsoleOutputFilePath = Path.Combine(ioInputFile.DirectoryName, "PeptideProphetConsoleOutput.txt");
 
                 // verify that program file exists
                 if (!File.Exists(m_PeptideProphetRunnerLocation))
                 {
-                    m_ErrMsg = "PeptideProphetRunner not found at " + m_PeptideProphetRunnerLocation;
+                    ErrMsg = "PeptideProphetRunner not found at " + m_PeptideProphetRunnerLocation;
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // Set up and execute a program runner to run the Peptide Prophet Runner
-                CmdStr = ioInputFile.FullName + " " + ioInputFile.DirectoryName + " /T:" + MAX_PEPTIDE_PROPHET_RUNTIME_MINUTES;
-                if (m_DebugLevel >= 2)
+                var cmdStr = ioInputFile.FullName + " " + ioInputFile.DirectoryName + " /T:" + MAX_PEPTIDE_PROPHET_RUNTIME_MINUTES;
+                if (DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_PeptideProphetRunnerLocation + " " + CmdStr);
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_PeptideProphetRunnerLocation + " " + cmdStr);
                 }
 
                 mCmdRunner = new clsRunDosProgram(ioInputFile.DirectoryName)
@@ -121,15 +94,15 @@ namespace AnalysisManagerExtractionPlugin
                 mCmdRunner.ErrorEvent += CmdRunner_ErrorEvent;
                 mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
-                if (!mCmdRunner.RunProgram(m_PeptideProphetRunnerLocation, CmdStr, "PeptideProphetRunner", true))
+                if (!mCmdRunner.RunProgram(m_PeptideProphetRunnerLocation, cmdStr, "PeptideProphetRunner", true))
                 {
-                    m_ErrMsg = "Error running PeptideProphetRunner";
+                   ErrMsg = "Error running PeptideProphetRunner";
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 if (mCmdRunner.ExitCode != 0)
                 {
-                    m_ErrMsg = "Peptide prophet runner returned a non-zero error code: " + mCmdRunner.ExitCode;
+                    ErrMsg = "Peptide prophet runner returned a non-zero error code: " + mCmdRunner.ExitCode;
 
                     // Parse the console output file for any lines that contain "Error"
                     // Append them to m_ErrMsg
@@ -143,13 +116,12 @@ namespace AnalysisManagerExtractionPlugin
 
                         while (!srInFile.EndOfStream)
                         {
-                            string strLineIn = null;
-                            strLineIn = srInFile.ReadLine();
+                            var strLineIn = srInFile.ReadLine();
                             if (!string.IsNullOrWhiteSpace(strLineIn))
                             {
                                 if (strLineIn.ToLower().Contains("error"))
                                 {
-                                    m_ErrMsg += "; " + m_ErrMsg;
+                                    ErrMsg += "; " + ErrMsg;
                                     blnErrorMessageFound = true;
                                 }
                             }
@@ -159,30 +131,27 @@ namespace AnalysisManagerExtractionPlugin
 
                     if (!blnErrorMessageFound)
                     {
-                        m_ErrMsg += "; Unknown error message";
+                        ErrMsg += "; Unknown error message";
                     }
 
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (PeptideProphetRunning != null)
-                {
-                    PeptideProphetRunning("Complete", 100);
-                }
+                PeptideProphetRunning?.Invoke("Complete", 100);
 
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
             catch (Exception ex)
             {
-                m_ErrMsg = "Exception while running peptide prophet: " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex);
+                ErrMsg = "Exception while running peptide prophet: " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }
 
         private void CmdRunner_ErrorEvent(string message, Exception ex)
         {
-            m_ErrMsg = message;
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "PeptideProphetRunner: " + m_ErrMsg);
+            ErrMsg = message;
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "PeptideProphetRunner: " + ErrMsg);
         }
 
         private DateTime dtLastStatusUpdate = DateTime.MinValue;
@@ -193,14 +162,11 @@ namespace AnalysisManagerExtractionPlugin
         /// <remarks></remarks>
         private void CmdRunner_LoopWaiting()
         {
-            //Update the status (limit the updates to every 5 seconds)
-            if (System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5)
+            // Update the status (limit the updates to every 5 seconds)
+            if (DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 5)
             {
-                dtLastStatusUpdate = System.DateTime.UtcNow;
-                if (PeptideProphetRunning != null)
-                {
-                    PeptideProphetRunning("Running", 50);
-                }
+                dtLastStatusUpdate = DateTime.UtcNow;
+                PeptideProphetRunning?.Invoke("Running", 50);
             }
         }
 

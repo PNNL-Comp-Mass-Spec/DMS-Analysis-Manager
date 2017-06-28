@@ -115,8 +115,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // Add all the extensions of the files to delete after run
                 // Do not skip all .gz files because the MSGF+ results are compressed using .gz
                 m_jobParams.AddResultFileExtensionToSkip(DOT_MZXML_EXTENSION);
-                m_jobParams.AddResultFileExtensionToSkip("_dta.zip"); //Zipped DTA
-                m_jobParams.AddResultFileExtensionToSkip("_dta.txt"); //Unzipped, concatenated DTA
+                m_jobParams.AddResultFileExtensionToSkip("_dta.zip"); // Zipped DTA
+                m_jobParams.AddResultFileExtensionToSkip("_dta.txt"); // Unzipped, concatenated DTA
                 m_jobParams.AddResultFileExtensionToSkip("temp.tsv"); // MSGFDB creates .txt.temp.tsv files, which we don't need
 
                 m_jobParams.AddResultFileExtensionToSkip(SCAN_STATS_FILE_SUFFIX);
