@@ -29,7 +29,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
         private const string MZIDToTSV_CONSOLE_OUTPUT_FILE = "MzIDToTsv_ConsoleOutput.txt";
 
-        private enum eModDefinitionParts
+        private enum ModDefinitionParts
         {
             EmpiricalFormulaOrMass = 0,
             Residues = 1,
@@ -2683,10 +2683,10 @@ namespace AnalysisManagerMSGFDBPlugIn
             // Check whether this is a phosphorylation mod
             if (!customAminoAcidDef)
             {
-                if (modParts[(int)eModDefinitionParts.Name].ToUpper().StartsWith("PHOSPH") ||
-                    modParts[(int)eModDefinitionParts.EmpiricalFormulaOrMass].ToUpper() == "HO3P")
+                if (modParts[(int)ModDefinitionParts.Name].ToUpper().StartsWith("PHOSPH") ||
+                    modParts[(int)ModDefinitionParts.EmpiricalFormulaOrMass].ToUpper() == "HO3P")
                 {
-                    if (modParts[(int)eModDefinitionParts.Residues].ToUpper().IndexOfAny(new[]
+                    if (modParts[(int)ModDefinitionParts.Residues].ToUpper().IndexOfAny(new[]
                     {
                         'S',
                         'T',
@@ -2847,7 +2847,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
         private DateTime dtLastLogTime = DateTime.MinValue;
 
-        private void mPeptideToProteinMapper_ProgressChanged(string taskDescription, float percentComplete)
+        private void PeptideToProteinMapper_ProgressChanged(string taskDescription, float percentComplete)
         {
             const int MAPPER_PROGRESS_LOG_INTERVAL_SECONDS = 120;
 
