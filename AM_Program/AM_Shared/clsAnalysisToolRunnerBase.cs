@@ -1692,6 +1692,7 @@ namespace AnalysisManagerBase
         {
 
             // JavaLoc will typically be "C:\Program Files\Java\jre8\bin\Java.exe"
+            // Or, on Linux "/usr/bin/java"
             var javaProgLoc = m_mgrParams.GetParam("JavaLoc");
 
             if (string.IsNullOrEmpty(javaProgLoc))
@@ -1700,14 +1701,28 @@ namespace AnalysisManagerBase
                 return string.Empty;
             }
 
-            if (!File.Exists(javaProgLoc))
+            var javaProg = new FileInfo(javaProgLoc);
+
+            if (javaProg.Exists)
+                return javaProgLoc;
+
+            if (!Path.HasExtension(javaProg.Name))
             {
-                LogError("Cannot find Java: " + javaProgLoc);
-                return string.Empty;
+                var altExtensions = new List<string> {".lnk", ".exe"};
+
+                // If the path is /usr/bin/java but we're debugging on a Windows computer,
+                // the true file to use might be a Windows shortcut, for example \usr\bin\java.lnk
+
+                // Try auto-appending .lnk and .exe to see if those files exist
+                foreach (var extension in altExtensions)
+                {
+                    if (File.Exists(javaProgLoc + extension))
+                        return javaProgLoc + extension;
+                }
             }
 
-            return javaProgLoc;
-
+            LogError("Cannot find Java: " + javaProgLoc);
+            return string.Empty;
         }
 
         /// <summary>
