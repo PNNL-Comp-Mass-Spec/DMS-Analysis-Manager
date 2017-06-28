@@ -236,7 +236,7 @@ namespace AnalysisManagerBase
         {
             try
             {
-                var lockFilePath = dataFilePath + clsGlobal.LOCK_FILE_EXTENSION;
+                var lockFilePath = dataFilePath + LOCK_FILE_EXTENSION;
 
                 var fiLockFile = new FileInfo(lockFilePath);
                 if (fiLockFile.Exists)
@@ -1999,8 +1999,8 @@ namespace AnalysisManagerBase
 
                 if (clsDiskInfo.GetDiskFreeSpace(
                     diDirectory.FullName,
-                    out var freeBytesAvailableToUser,
-                    out var totalNumberOfBytes,
+                    out var _,
+                    out var _,
                     out var totalNumberOfFreeBytes))
                 {
                     freeSpaceMB = BytesToMB(totalNumberOfFreeBytes);
