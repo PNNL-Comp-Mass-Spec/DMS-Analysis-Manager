@@ -44,8 +44,8 @@ namespace AnalysisManagerExtractionPlugin
 
         protected clsPeptideProphetWrapper m_PeptideProphet;
 
-        protected clsMSGFDBUtils mMSGFDBUtils;
-        protected bool mMSGFDBUtilsError;
+        private MSGFPlusUtils mMSGFPlusUtils;
+        private bool mMSGFPlusUtilsError;
 
         protected string mGeneratedFastaFilePath;
 
@@ -501,23 +501,23 @@ namespace AnalysisManagerExtractionPlugin
                     return string.Empty;
                 }
 
-                // Initialize mMSGFDBUtils
-                mMSGFDBUtils = new clsMSGFDBUtils(m_mgrParams, m_jobParams, m_JobNum, m_WorkDir, m_DebugLevel, msgfPlus: true);
-                RegisterEvents(mMSGFDBUtils);
+                // Initialize mMSGFPlusUtils
+                mMSGFPlusUtils = new MSGFPlusUtils(m_mgrParams, m_jobParams, m_WorkDir, m_DebugLevel);
+                RegisterEvents(mMSGFPlusUtils);
 
                 // Attach an additional handler for the ErrorEvent
-                // This additional handler sets mMSGFDBUtilsError to true
-                mMSGFDBUtils.ErrorEvent += mMSGFDBUtils_ErrorEvent;
+                // This additional handler sets mMSGFPlusUtilsError to true
+                mMSGFPlusUtils.ErrorEvent += MSGFPlusUtils_ErrorEvent;
 
-                mMSGFDBUtilsError = false;
+                mMSGFPlusUtilsError = false;
 
-                var strTSVFilePath = mMSGFDBUtils.ConvertMZIDToTSV(mzidToTsvConverterProgLoc, m_Dataset, strMZIDFileName);
+                var strTSVFilePath = mMSGFPlusUtils.ConvertMZIDToTSV(mzidToTsvConverterProgLoc, m_Dataset, strMZIDFileName);
 
-                if (mMSGFDBUtilsError)
+                if (mMSGFPlusUtilsError)
                 {
                     if (string.IsNullOrWhiteSpace(m_message))
                     {
-                        LogError("mMSGFDBUtilsError is True after call to ConvertMZIDToTSV");
+                        LogError("mMSGFPlusUtilsError is True after call to ConvertMZIDToTSV");
                     }
                     return string.Empty;
                 }
@@ -539,7 +539,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 if (string.IsNullOrEmpty(m_message))
                 {
-                    LogError("Error calling mMSGFDBUtils.ConvertMZIDToTSV; path not returned");
+                    LogError("Error calling mMSGFPlusUtils.ConvertMZIDToTSV; path not returned");
                 }
             }
             catch (Exception ex)
@@ -560,33 +560,33 @@ namespace AnalysisManagerExtractionPlugin
             LogMessage("Creating the missing _PepToProtMap.txt file");
 
             var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
-            if (mMSGFDBUtils == null)
+            if (mMSGFPlusUtils == null)
             {
-                mMSGFDBUtils = new clsMSGFDBUtils(m_mgrParams, m_jobParams, m_JobNum, m_WorkDir, m_DebugLevel, msgfPlus: true);
-                RegisterEvents(mMSGFDBUtils);
+                mMSGFPlusUtils = new MSGFPlusUtils(m_mgrParams, m_jobParams, m_WorkDir, m_DebugLevel);
+                RegisterEvents(mMSGFPlusUtils);
 
                 // Attach an additional handler for the ErrorEvent
-                // This additional handler sets mMSGFDBUtilsError to true
-                mMSGFDBUtils.ErrorEvent += mMSGFDBUtils_ErrorEvent;
+                // This additional handler sets mMSGFPlusUtilsError to true
+                mMSGFPlusUtils.ErrorEvent += MSGFPlusUtils_ErrorEvent;
             }
 
-            mMSGFDBUtilsError = false;
+            mMSGFPlusUtilsError = false;
 
             // Assume this is true
             var resultsIncludeAutoAddedDecoyPeptides = true;
 
-            var result = mMSGFDBUtils.CreatePeptideToProteinMapping(resultsFileName, resultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder);
+            var result = mMSGFPlusUtils.CreatePeptideToProteinMapping(resultsFileName, resultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder);
 
             if (result != CloseOutType.CLOSEOUT_SUCCESS && result != CloseOutType.CLOSEOUT_NO_DATA)
             {
                 return result;
             }
 
-            if (mMSGFDBUtilsError)
+            if (mMSGFPlusUtilsError)
             {
                 if (string.IsNullOrWhiteSpace(m_message))
                 {
-                    LogError("mMSGFDBUtilsError is True after call to CreatePeptideToProteinMapping");
+                    LogError("mMSGFPlusUtilsError is True after call to CreatePeptideToProteinMapping");
                 }
 
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -2390,9 +2390,9 @@ namespace AnalysisManagerExtractionPlugin
             }
         }
 
-        private void mMSGFDBUtils_ErrorEvent(string errorMsg, Exception ex)
+        private void MSGFPlusUtils_ErrorEvent(string errorMsg, Exception ex)
         {
-            mMSGFDBUtilsError = true;
+            mMSGFPlusUtilsError = true;
         }
 
         /// <summary>

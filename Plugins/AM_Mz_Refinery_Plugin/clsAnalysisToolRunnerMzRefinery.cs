@@ -64,7 +64,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
         private double mMzRefinerSpecEValueThreshold;
 
-        private clsMSGFDBUtils mMSGFDBUtils;
+        private MSGFPlusUtils mMSGFPlusUtils;
 
         private DirectoryInfo mMSXmlCacheFolder;
 
@@ -336,13 +336,12 @@ namespace AnalysisManagerMzRefineryPlugIn
         /// <remarks></remarks>
         private CloseOutType RunMSGFPlus(string javaProgLoc, string msXmlFileExtension, out FileInfo fiMSGFPlusResults)
         {
-            const string strMSGFJarfile = clsMSGFDBUtils.MSGFPLUS_JAR_NAME;
+            const string strMSGFJarfile = MSGFPlusUtils.MSGFPLUS_JAR_NAME;
 
             fiMSGFPlusResults = null;
 
             // Determine the path to MSGF+
-            // The manager parameter is MSGFDbProgLoc because originally the software was named MSGFDB (aka MS-GFDB)
-            mMSGFPlusProgLoc = DetermineProgramLocation("MSGFDbProgLoc", strMSGFJarfile);
+            mMSGFPlusProgLoc = DetermineProgramLocation("MSGFPlusProgLoc", strMSGFJarfile);
 
             if (string.IsNullOrWhiteSpace(mMSGFPlusProgLoc))
             {
@@ -359,11 +358,11 @@ namespace AnalysisManagerMzRefineryPlugIn
             var strScanTypeFilePath = string.Empty;
             var strAssumedScanType = string.Empty;
 
-            // Initialize mMSGFDBUtils
-            mMSGFDBUtils = new clsMSGFDBUtils(m_mgrParams, m_jobParams, m_JobNum, m_WorkDir, m_DebugLevel, msgfPlus: true);
-            RegisterEvents(mMSGFDBUtils);
+            // Initialize mMSGFPlusUtils
+            mMSGFPlusUtils = new MSGFPlusUtils(m_mgrParams, m_jobParams, m_WorkDir, m_DebugLevel);
+            RegisterEvents(mMSGFPlusUtils);
 
-            mMSGFDBUtils.IgnorePreviousErrorEvent += mMSGFDBUtils_IgnorePreviousErrorEvent;
+            mMSGFPlusUtils.IgnorePreviousErrorEvent += MSGFPlusUtils_IgnorePreviousErrorEvent;
 
             // Get the FASTA file and index it if necessary
             // Note: if the fasta file is over 50 MB in size, then only use the first 50 MB
@@ -380,7 +379,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             const int maxFastaFileSizeMB = 50;
 
             // Initialize the fasta file; truncating it if it is over 50 MB in size
-            var result = mMSGFDBUtils.InitializeFastaFile(javaExePath, msgfplusJarFilePath, out fastaFileSizeKB, out fastaFileIsDecoy, out fastaFilePath, strParameterFilePath, maxFastaFileSizeMB);
+            var result = mMSGFPlusUtils.InitializeFastaFile(javaExePath, msgfplusJarFilePath, out fastaFileSizeKB, out fastaFileIsDecoy, out fastaFilePath, strParameterFilePath, maxFastaFileSizeMB);
 
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
@@ -403,7 +402,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 }
             }
 
-            result = mMSGFDBUtils.ParseMSGFPlusParameterFile(
+            result = mMSGFPlusUtils.ParseMSGFPlusParameterFile(
                 fastaFileSizeKB, fastaFileIsDecoy, strAssumedScanType, strScanTypeFilePath,
                 strInstrumentGroup, strParameterFilePath, overrideParams, out strMSGFPlusCmdLineOptions);
 
@@ -464,7 +463,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             success = StartMSGFPlus(javaExePath, "MSGF+", cmdStr);
 
-            if (!success && string.IsNullOrEmpty(mMSGFDBUtils.ConsoleOutputErrorMsg))
+            if (!success && string.IsNullOrEmpty(mMSGFPlusUtils.ConsoleOutputErrorMsg))
             {
                 // Parse the console output file one more time in hopes of finding an error message
                 ParseMSGFPlusConsoleOutputFile(m_WorkDir);
@@ -472,16 +471,16 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             if (!mToolVersionWritten)
             {
-                if (string.IsNullOrWhiteSpace(mMSGFDBUtils.MSGFPlusVersion))
+                if (string.IsNullOrWhiteSpace(mMSGFPlusUtils.MSGFPlusVersion))
                 {
                     ParseMSGFPlusConsoleOutputFile(m_WorkDir);
                 }
                 mToolVersionWritten = StoreToolVersionInfo();
             }
 
-            if (!string.IsNullOrEmpty(mMSGFDBUtils.ConsoleOutputErrorMsg))
+            if (!string.IsNullOrEmpty(mMSGFPlusUtils.ConsoleOutputErrorMsg))
             {
-                LogError(mMSGFDBUtils.ConsoleOutputErrorMsg);
+                LogError(mMSGFPlusUtils.ConsoleOutputErrorMsg);
             }
 
             var blnProcessingError = false;
@@ -535,7 +534,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             if (mMSGFPlusComplete)
             {
-                m_progress = clsMSGFDBUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE;
+                m_progress = MSGFPlusUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE;
                 m_StatusTools.UpdateAndWrite(m_progress);
                 if (m_DebugLevel >= 3)
                 {
@@ -555,7 +554,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            m_jobParams.AddResultFileToSkip(clsMSGFDBUtils.MOD_FILE_NAME);
+            m_jobParams.AddResultFileToSkip(MSGFPlusUtils.MOD_FILE_NAME);
 
             if (blnProcessingError)
             {
@@ -581,9 +580,9 @@ namespace AnalysisManagerMzRefineryPlugIn
             mCmdRunner.EchoOutputToConsole = true;
 
             mCmdRunner.WriteConsoleOutputToFile = true;
-            mCmdRunner.ConsoleOutputFilePath = Path.Combine(m_WorkDir, clsMSGFDBUtils.MSGFPLUS_CONSOLE_OUTPUT_FILE);
+            mCmdRunner.ConsoleOutputFilePath = Path.Combine(m_WorkDir, MSGFPlusUtils.MSGFPLUS_CONSOLE_OUTPUT_FILE);
 
-            m_progress = clsMSGFDBUtils.PROGRESS_PCT_MSGFPLUS_STARTING;
+            m_progress = MSGFPlusUtils.PROGRESS_PCT_MSGFPLUS_STARTING;
 
             mProgRunnerMode = eMzRefinerProgRunnerMode.MSGFPlus;
 
@@ -699,7 +698,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             if (mProgRunnerMode == eMzRefinerProgRunnerMode.MSGFPlus)
             {
                 ParseMSGFPlusConsoleOutputFile(m_WorkDir);
-                if (!mToolVersionWritten && !string.IsNullOrWhiteSpace(mMSGFDBUtils.MSGFPlusVersion))
+                if (!mToolVersionWritten && !string.IsNullOrWhiteSpace(mMSGFPlusUtils.MSGFPlusVersion))
                 {
                     mToolVersionWritten = StoreToolVersionInfo();
                 }
@@ -708,7 +707,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                 LogProgress("MSGF+ for MzRefinery");
 
-                if (m_progress < clsMSGFDBUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE)
+                if (m_progress < MSGFPlusUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE)
                     return;
 
                 if (!mMSGFPlusComplete)
@@ -724,7 +723,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                     // MSGF+ is stuck at 96% complete and has been that way for 5 minutes
                     // Java is likely frozen and thus the process should be aborted
                     var warningMessage = "MSGF+ has been stuck at " +
-                                         clsMSGFDBUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE.ToString("0") + "% complete for 5 minutes; " +
+                                         MSGFPlusUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE.ToString("0") + "% complete for 5 minutes; " +
                                          "aborting since Java appears frozen";
                     LogWarning(warningMessage);
 
@@ -757,9 +756,9 @@ namespace AnalysisManagerMzRefineryPlugIn
         {
             try
             {
-                if ((mMSGFDBUtils != null))
+                if ((mMSGFPlusUtils != null))
                 {
-                    var msgfPlusProgress = mMSGFDBUtils.ParseMSGFPlusConsoleOutputFile(workingDirectory);
+                    var msgfPlusProgress = mMSGFPlusUtils.ParseMSGFPlusConsoleOutputFile(workingDirectory);
                     UpdateProgress(msgfPlusProgress);
                 }
             }
@@ -1120,7 +1119,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             mCmdRunner.WriteConsoleOutputToFile = true;
             mCmdRunner.ConsoleOutputFilePath = Path.Combine(m_WorkDir, MZ_REFINERY_CONSOLE_OUTPUT);
 
-            m_progress = clsMSGFDBUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE;
+            m_progress = MSGFPlusUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE;
 
             mProgRunnerMode = eMzRefinerProgRunnerMode.MzRefiner;
 
@@ -1348,7 +1347,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 LogDebug("Determining tool version info");
             }
 
-            var strToolVersionInfo = string.Copy(mMSGFDBUtils.MSGFPlusVersion);
+            var strToolVersionInfo = string.Copy(mMSGFPlusUtils.MSGFPlusVersion);
 
             // Store paths to key files in ioToolFiles
             var ioToolFiles = new List<FileInfo>
@@ -1397,7 +1396,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             MonitorProgress();
         }
 
-        private void mMSGFDBUtils_IgnorePreviousErrorEvent()
+        private void MSGFPlusUtils_IgnorePreviousErrorEvent()
         {
             m_message = string.Empty;
         }
