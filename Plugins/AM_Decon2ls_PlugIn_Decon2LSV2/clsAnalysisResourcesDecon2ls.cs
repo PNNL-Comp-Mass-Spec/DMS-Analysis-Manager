@@ -152,8 +152,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 return false;
             }
 
-            bool processMSMS;
-            if (!IsMSMSProcessingEnabled(fiParamFile, out processMSMS))
+            if (!IsMSMSProcessingEnabled(fiParamFile, out var processMSMS))
             {
                 return false;
             }
@@ -167,10 +166,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             // Open the instrument data file and determine whether it only contains MS/MS spectra
             // If that is the case, update the parameter file to have ProcessMSMS=True
 
-            int countMS1;
-            int countMSn;
-
-            if (!ExamineDatasetScanTypes(out countMS1, out countMSn))
+            if (!ExamineDatasetScanTypes(out var countMS1, out var countMSn))
             {
                 return false;
             }
@@ -262,8 +258,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
                     for (var scanNumber = rawFileReader.FileInfo.ScanStart; scanNumber <= rawFileReader.FileInfo.ScanEnd; scanNumber++)
                     {
-                        clsScanInfo scanInfo;
-                        if (rawFileReader.GetScanInfo(scanNumber, out scanInfo))
+                        if (rawFileReader.GetScanInfo(scanNumber, out clsScanInfo scanInfo))
                         {
                             if (scanInfo.MSLevel == 1)
                             {

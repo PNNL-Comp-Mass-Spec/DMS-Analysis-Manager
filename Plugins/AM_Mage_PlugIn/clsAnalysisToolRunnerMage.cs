@@ -202,8 +202,7 @@ namespace AnalysisManager_Mage_PlugIn
 
                     foreach (var sampleName in sampleNames)
                     {
-                        byte ionCount;
-                        if (!sampleToIonMapping.TryGetValue(sampleName, out ionCount))
+                        if (!sampleToIonMapping.TryGetValue(sampleName, out var ionCount))
                         {
                             errorMessage = "t_alias table does not have an entry for Sample '" + sampleName + "'; " +
                                            "this Sample name is a dataset factor and must be defined in the t_alias.txt file";
@@ -342,10 +341,7 @@ namespace AnalysisManager_Mage_PlugIn
                     "Ion"
                 };
 
-                string errorMessage;
-                string exceptionDetail;
-
-                if (!TableContainsDataAndColumns(fiResultsDB, "T_alias", lstColumns, out errorMessage, out exceptionDetail))
+                if (!TableContainsDataAndColumns(fiResultsDB, "T_alias", lstColumns, out var errorMessage, out var exceptionDetail))
                 {
                     m_message = "Table T_alias in Results.db3 " + errorMessage +
                                 "; place a valid T_alias.txt file in the the data package's ImportFiles folder; " + exceptionDetail;

@@ -334,8 +334,7 @@ namespace AnalysisManagerExtractionPlugin
 
                     foreach (var decoyPrefix in decoyPrefixes)
                     {
-                        int proteinCount;
-                        var fractionDecoy = clsAnalysisResources.GetDecoyFastaCompositionStats(fiFastaFile, decoyPrefix, out proteinCount);
+                        var fractionDecoy = clsAnalysisResources.GetDecoyFastaCompositionStats(fiFastaFile, decoyPrefix, out var proteinCount);
 
                         if (fractionDecoy * 100 >= MINIMUM_PERCENT_DECOY)
                         {
@@ -719,8 +718,6 @@ namespace AnalysisManagerExtractionPlugin
                                         continue;
                                     }
 
-                                    clsMSGFPlusPSMs hitsForScan;
-
                                     var udtPSM = new clsMSGFPlusPSMs.udtPSMType
                                     {
                                         Peptide = peptide,
@@ -728,7 +725,7 @@ namespace AnalysisManagerExtractionPlugin
                                         DataLine = strLineIn
                                     };
 
-                                    if (dctScanChargeTopHits.TryGetValue(scanChargeCombo, out hitsForScan))
+                                    if (dctScanChargeTopHits.TryGetValue(scanChargeCombo, out var hitsForScan))
                                     {
                                         // Possibly store this value
 
@@ -1420,16 +1417,15 @@ namespace AnalysisManagerExtractionPlugin
                         {
                             currentStep = "Merging Parallel MSGF+ results";
 
-                            // Keys in this dictionary are peptide sequences; values indicate whether the peptide (and its associated proteins) has been written to the merged _PepToProtMap.txt file
-                            SortedSet<string> lstFilterPassingPeptides;
-
                             var numberOfHitsPerScanToKeep = m_jobParams.GetJobParameter("MergeResultsToKeepPerScan", 2);
                             if (numberOfHitsPerScanToKeep < 1)
                                 numberOfHitsPerScanToKeep = 1;
 
                             // Merge the TSV files (keeping the top scoring hit (or hits) for each scan)
+                            // Keys in lstFilterPassingPeptides are peptide sequences; values indicate whether the peptide (and its associated proteins) has been written to the merged _PepToProtMap.txt file
+
                             currentStep = "Merging the TSV files";
-                            eResult = ParallelMSGFPlusMergeTSVFiles(numberOfClonedSteps, numberOfHitsPerScanToKeep, out lstFilterPassingPeptides);
+                            eResult = ParallelMSGFPlusMergeTSVFiles(numberOfClonedSteps, numberOfHitsPerScanToKeep, out var lstFilterPassingPeptides);
 
                             if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
                             {
@@ -2075,8 +2071,7 @@ namespace AnalysisManagerExtractionPlugin
                                 // check for a header line
                                 var strSplitLine = strLineIn.Split(new[] {'\t'}, 2);
 
-                                double temp;
-                                if (strSplitLine.Length > 0 && !double.TryParse(strSplitLine[0], out temp))
+                                if (strSplitLine.Length > 0 && !double.TryParse(strSplitLine[0], out _))
                                 {
                                     // first column does not contain a number; this must be a header line
                                     // write the header to the output file (provided intfileindex=0)
@@ -2199,8 +2194,7 @@ namespace AnalysisManagerExtractionPlugin
                             // Check for a header line
                             var strSplitLine = strLineIn.Split(new[] {'\t'}, 2);
 
-                            double temp;
-                            if (strSplitLine.Length > 0 && !double.TryParse(strSplitLine[0], out temp))
+                            if (strSplitLine.Length > 0 && !double.TryParse(strSplitLine[0], out _))
                             {
                                 // First column does not contain a number; this must be a header line
                                 // Write the header to each output file

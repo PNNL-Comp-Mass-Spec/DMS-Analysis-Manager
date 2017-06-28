@@ -862,20 +862,16 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                     LogDebug("Parsing file " + strConsoleOutputFilePath);
                 }
 
-                string strLineIn = null;
-                var intLinesRead = 0;
-
-                short intProgress;
                 short intActualProgress = 0;
 
                 mConsoleOutputErrorMsg = string.Empty;
 
                 using (var srInFile = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    intLinesRead = 0;
+                    var intLinesRead = 0;
                     while (!srInFile.EndOfStream)
                     {
-                        strLineIn = srInFile.ReadLine();
+                        var strLineIn = srInFile.ReadLine();
                         intLinesRead += 1;
 
                         if (!string.IsNullOrWhiteSpace(strLineIn))
@@ -915,7 +911,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                                     var oMatch = reExtractPercentFinished.Match(strLineIn);
                                     if (oMatch.Success)
                                     {
-                                        if (Int16.TryParse(oMatch.Groups[1].Value, out intProgress))
+                                        if (short.TryParse(oMatch.Groups[1].Value, out var intProgress))
                                         {
                                             intActualProgress = intProgress;
                                         }
@@ -1266,8 +1262,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                                     // The second column has Prsm_ID
 
                                     // Look for an integer in the second column
-                                    var intValue = 0;
-                                    if (int.TryParse(strSplitLine[1], out intValue))
+                                    if (int.TryParse(strSplitLine[1], out _))
                                     {
                                         // Integer found; line is valid
                                         blnValidDataFound = true;

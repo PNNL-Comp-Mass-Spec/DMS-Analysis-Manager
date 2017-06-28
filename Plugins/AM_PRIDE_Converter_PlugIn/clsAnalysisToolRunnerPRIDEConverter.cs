@@ -256,8 +256,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 LogMessage("Running PRIDEConverter");
 
                 // Initialize dctDataPackageDatasets
-                Dictionary<int, clsDataPackageDatasetInfo> dctDataPackageDatasets;
-                if (!LoadDataPackageDatasetInfo(out dctDataPackageDatasets))
+                if (!LoadDataPackageDatasetInfo(out var dctDataPackageDatasets))
                 {
                     var msg = "Error loading data package dataset info";
                     LogError(msg + ": clsAnalysisToolRunnerBase.LoadDataPackageDatasetInfo returned false");
@@ -490,8 +489,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         {
             var fiFile = new FileInfo(strFilePath);
 
-            clsPXFileInfoBase oPXFileInfo;
-            if (mPxMasterFileList.TryGetValue(fiFile.Name, out oPXFileInfo))
+            if (mPxMasterFileList.TryGetValue(fiFile.Name, out var oPXFileInfo))
             {
                 // File already exists
                 return oPXFileInfo.FileID;
@@ -524,16 +522,13 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         {
             var fiFile = new FileInfo(strFilePath);
 
-            clsPXFileInfo oPXFileInfo;
-
-            if (mPxResultFiles.TryGetValue(intFileID, out oPXFileInfo))
+            if (mPxResultFiles.TryGetValue(intFileID, out var oPXFileInfo))
             {
                 // File already defined in the mapping list
                 return true;
             }
 
-            clsPXFileInfoBase oMasterPXFileInfo;
-            if (!mPxMasterFileList.TryGetValue(fiFile.Name, out oMasterPXFileInfo))
+            if (!mPxMasterFileList.TryGetValue(fiFile.Name, out var oMasterPXFileInfo))
             {
                 // File not found in mPxMasterFileList, we cannot add the mapping
                 LogError("File " + fiFile.Name + " not found in mPxMasterFileList; unable to add to mPxResultFiles");
@@ -1133,9 +1128,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             try
             {
-                clsDataPackageJobInfo dataPkgJob;
-
-                if (!mDataPackagePeptideHitJobs.TryGetValue(intJob, out dataPkgJob))
+                if (!mDataPackagePeptideHitJobs.TryGetValue(intJob, out var dataPkgJob))
                 {
                     LogError("Job " + intJob + " not found in mDataPackagePeptideHitJobs; this is unexpected");
                     return string.Empty;
@@ -1210,14 +1203,13 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         var blnValidPSM = true;
                         var blnThresholdChecked = false;
 
-                        double dblMSGFSpecProb;
                         var dblFDR = -1.0;
                         var dblPepFDR = -1.0;
                         var dblPValue = (double)PVALUE_NOTDEFINED;
                         var dblScoreForCurrentMatch = 100.0;
 
                         // Determine MSGFSpecProb; store 10 if we don't find a valid number
-                        if (!double.TryParse(objReader.CurrentPSM.MSGFSpecProb, out dblMSGFSpecProb))
+                        if (!double.TryParse(objReader.CurrentPSM.MSGFSpecProb, out var dblMSGFSpecProb))
                         {
                             dblMSGFSpecProb = MSGF_SPECPROB_NOTDEFINED;
                         }
@@ -1509,12 +1501,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         if (!blnValidPSM)
                             continue;
 
-                        string strPrimarySequence;
-                        string strPrefix;
-                        string strSuffix;
-
                         if (!clsPeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(
-                            objReader.CurrentPSM.Peptide, out strPrimarySequence, out strPrefix, out strSuffix))
+                            objReader.CurrentPSM.Peptide, out var strPrimarySequence, out var strPrefix, out var strSuffix))
                         {
                             strPrefix = string.Empty;
                             strSuffix = string.Empty;
@@ -1631,9 +1619,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     return false;
                 }
 
-                clsDataPackageJobInfo dataPkgJob;
-
-                if (!mDataPackagePeptideHitJobs.TryGetValue(intJob, out dataPkgJob))
+                if (!mDataPackagePeptideHitJobs.TryGetValue(intJob, out var dataPkgJob))
                 {
                     LogError("Job " + intJob + " not found in mDataPackagePeptideHitJobs; unable to continue");
                     return false;
@@ -2792,8 +2778,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         lstFileInfoCols.Add(resultFile.Key.ToString());
 
                         var resultFileName = resultFile.Value;
-                        clsSampleMetadata sampleMetadata;
-                        if (!mMzIdSampleInfo.TryGetValue(resultFile.Value, out sampleMetadata))
+
+                        if (!mMzIdSampleInfo.TryGetValue(resultFile.Value, out var sampleMetadata))
                         {
                             // Result file name may have been customized to include _Job1000000
                             // Check for this, and update resultFileName if required
@@ -3234,8 +3220,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
         private bool LookupDataPackagePeptideHitJobs()
         {
-            Dictionary<int, clsDataPackageJobInfo> dctDataPackageJobs;
-
             if (mDataPackagePeptideHitJobs == null)
             {
                 mDataPackagePeptideHitJobs = new Dictionary<int, clsDataPackageJobInfo>();
@@ -3245,7 +3229,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 mDataPackagePeptideHitJobs.Clear();
             }
 
-            if (!LoadDataPackageJobInfo(out dctDataPackageJobs))
+            if (!LoadDataPackageJobInfo(out var dctDataPackageJobs))
             {
                 var msg = "Error loading data package job info";
                 LogError(msg + ": clsAnalysisToolRunnerBase.LoadDataPackageJobInfo() returned false");
@@ -3265,8 +3249,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 // Populate mDataPackagePeptideHitJobs using the jobs in lstJobsToUse and dctDataPackagePeptideHitJobs
                 foreach (var strJob in lstJobsToUse)
                 {
-                    int intJob;
-                    if (int.TryParse(strJob, out intJob))
+                    if (int.TryParse(strJob, out var intJob))
                     {
                         if (dctDataPackageJobs.TryGetValue(intJob, out var dataPkgJob))
                         {
@@ -3452,8 +3435,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             {
                 m_message = string.Empty;
 
-                List<string> mzIdFilePaths;
-                blnSuccess = UpdateMzIdFiles(kvJobInfo.Value, searchedMzML, out mzIdFilePaths, dctTemplateParameters);
+                blnSuccess = UpdateMzIdFiles(kvJobInfo.Value, searchedMzML, out var mzIdFilePaths, dctTemplateParameters);
 
                 if (!blnSuccess || mzIdFilePaths == null || mzIdFilePaths.Count == 0)
                 {
@@ -3526,8 +3508,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             if (mCreatePrideXMLFiles)
             {
                 // Create the .msgf-report.xml file for this job
-                string strPrideReportXMLFilePath;
-                blnSuccess = CreateMSGFReportFile(intJob, strDataset, udtFilterThresholds, out strPrideReportXMLFilePath);
+
+                blnSuccess = CreateMSGFReportFile(intJob, strDataset, udtFilterThresholds, out var strPrideReportXMLFilePath);
                 if (!blnSuccess)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -4012,8 +3994,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
         private void StoreInstrumentInfo(string instrumentGroup, string instrumentName)
         {
-            List<string> lstInstruments;
-            if (mInstrumentGroupsStored.TryGetValue(instrumentGroup, out lstInstruments))
+            if (mInstrumentGroupsStored.TryGetValue(instrumentGroup, out var lstInstruments))
             {
                 if (!lstInstruments.Contains(instrumentName))
                 {
@@ -4571,8 +4552,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                         objXmlReader.MoveToFirstAttribute();
                                         do
                                         {
-                                            string strAttributeOverride;
-                                            if (lstAttributeOverride.Count > 0 && lstAttributeOverride.TryGetValue(objXmlReader.Name, out strAttributeOverride))
+                                            if (lstAttributeOverride.Count > 0 &&
+                                                lstAttributeOverride.TryGetValue(objXmlReader.Name, out var strAttributeOverride))
                                             {
                                                 objXmlWriter.WriteAttributeString(objXmlReader.Name, strAttributeOverride);
                                                 replaceOriginal = true;
@@ -4771,15 +4752,13 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <param name="intMinimumValueLength"></param>
         /// <remarks></remarks>
         private void WritePXHeader(
-            StreamWriter swPXFile,
+            TextWriter swPXFile,
             string strType,
             string strValue,
             IReadOnlyDictionary<string, string> dctParameters,
             int intMinimumValueLength = 0)
         {
-            string strValueOverride;
-
-            if (dctParameters.TryGetValue(strType, out strValueOverride))
+            if (dctParameters.TryGetValue(strType, out var strValueOverride))
             {
                 strValue = strValueOverride;
             }
@@ -4809,10 +4788,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         {
             foreach (var kvInstrumentGroup in mInstrumentGroupsStored)
             {
-                string accession;
-                string description;
-
-                GetInstrumentAccession(kvInstrumentGroup.Key, out accession, out description);
+                GetInstrumentAccession(kvInstrumentGroup.Key, out var accession, out var description);
 
                 if (kvInstrumentGroup.Value.Contains("TSQ_2") && kvInstrumentGroup.Value.Count == 1)
                 {

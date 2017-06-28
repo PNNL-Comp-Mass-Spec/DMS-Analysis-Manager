@@ -102,15 +102,13 @@ namespace AnalysisManagerMSPathFinderPlugin
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                bool fastaFileIsDecoy;
-                if (!InitializeFastaFile(out fastaFileIsDecoy))
+                if (!InitializeFastaFile(out var fastaFileIsDecoy))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 // Run MSPathFinder
-                bool tdaEnabled;
-                var processingSuccess = StartMSPathFinder(progLoc, fastaFileIsDecoy, out tdaEnabled);
+                var processingSuccess = StartMSPathFinder(progLoc, fastaFileIsDecoy, out var tdaEnabled);
 
                 if (processingSuccess)
                 {
@@ -753,8 +751,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                             }
                             else if (clsGlobal.IsMatch(kvSetting.Key, "NumMods"))
                             {
-                                int intValue;
-                                if (int.TryParse(strValue, out intValue))
+                                if (int.TryParse(strValue, out var intValue))
                                 {
                                     intNumMods = intValue;
                                 }

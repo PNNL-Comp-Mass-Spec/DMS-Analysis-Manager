@@ -540,7 +540,7 @@ namespace AnalysisManagerBase
         {
             return CopyFileToServerCache(
                 cacheFolderPath, subfolderInTarget, sourceFilePath,
-                datasetYearQuarter, purgeOldFilesIfNeeded, out var _);
+                datasetYearQuarter, purgeOldFilesIfNeeded, out _);
 
         }
 

@@ -932,8 +932,7 @@ namespace AnalysisManagerMSAlignPlugIn
                                 var oMatch = reExtractPercentFinished.Match(strLineIn);
                                 if (oMatch.Success)
                                 {
-                                    short intProgress;
-                                    if (short.TryParse(oMatch.Groups[1].Value, out intProgress))
+                                    if (short.TryParse(oMatch.Groups[1].Value, out var intProgress))
                                     {
                                         intActualProgress = intProgress;
                                     }
@@ -1205,7 +1204,7 @@ namespace AnalysisManagerMSAlignPlugIn
                                 // Look for an integer in the first or second column
                                 // Version 0.5 and 0.6 had Prsm_ID in the first column
                                 // Version 0.7 moved Prsm_ID to the second column
-                                if (int.TryParse(strSplitLine[1], out var _) || int.TryParse(strSplitLine[0], out var _))
+                                if (int.TryParse(strSplitLine[1], out _) || int.TryParse(strSplitLine[0], out _))
                                 {
                                     // Integer found; line is valid
                                     blnValidFile = true;

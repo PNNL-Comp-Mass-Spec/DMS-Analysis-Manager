@@ -2190,7 +2190,7 @@ namespace AnalysisManagerBase
         public static string GetSplitFastaFileName(IJobParams jobParams, out string errorMessage)
         {
 
-            return GetSplitFastaFileName(jobParams, out errorMessage, out var _);
+            return GetSplitFastaFileName(jobParams, out errorMessage, out _);
 
         }
 
@@ -2724,7 +2724,7 @@ namespace AnalysisManagerBase
                 string legacyFastaName;
                 if (proteinCollectionInfo.UsingSplitFasta && !RunningDataExtraction)
                 {
-                    legacyFastaName = GetSplitFastaFileName(m_jobParams, out var _);
+                    legacyFastaName = GetSplitFastaFileName(m_jobParams, out _);
                 }
                 else
                 {
@@ -3785,7 +3785,7 @@ namespace AnalysisManagerBase
 
 
                                     var retrieved = m_FileSearch.RetrieveCachedMSXMLFile(DOT_MZML_EXTENSION, false,
-                                        out var errorMessage, out var _);
+                                        out var errorMessage, out _);
 
                                     if (!retrieved)
                                     {
@@ -4540,7 +4540,7 @@ namespace AnalysisManagerBase
                             if (splitLine.Length <= numericDataColIndex)
                                 continue;
 
-                            if (double.TryParse(splitLine[numericDataColIndex], out var _))
+                            if (double.TryParse(splitLine[numericDataColIndex], out _))
                             {
                                 dataFound = true;
                             }

@@ -200,8 +200,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
             m_progress = PROGRESS_PCT_MZID_RESULTS_COPIED;
             m_StatusTools.UpdateAndWrite(m_progress);
 
-            int datasetsProcessed;
-            var success = RetrieveInstrumentData(out datasetsProcessed);
+            var success = RetrieveInstrumentData(out var datasetsProcessed);
             if (!success)
                 return false;
 
@@ -381,8 +380,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                     }
                 }
 
-                string rawDataType;
-                if (!dctDatasetRawDataTypes.TryGetValue(datasetName, out rawDataType))
+                if (!dctDatasetRawDataTypes.TryGetValue(datasetName, out var rawDataType))
                     rawDataType = clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES;
 
                 m_jobParams.AddAdditionalParameter("JobParameters", "RawDataType", rawDataType);
@@ -432,8 +430,8 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 }
 
                 var strMSXmlGeneratorName = Path.GetFileNameWithoutExtension(_MSXmlGeneratorAppPath);
-                string strDatasetYearQuarter;
-                if (!dctDatasetYearQuarter.TryGetValue(datasetName, out strDatasetYearQuarter))
+
+                if (!dctDatasetYearQuarter.TryGetValue(datasetName, out var strDatasetYearQuarter))
                 {
                     strDatasetYearQuarter = string.Empty;
                 }
@@ -485,8 +483,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
                 var instrumentDataFolderPath = Path.Combine(_outputResultsFolderPath, "Instrument_Data");
 
-                string rawDataType;
-                if (!dctDatasetRawDataTypes.TryGetValue(datasetName, out rawDataType))
+                if (!dctDatasetRawDataTypes.TryGetValue(datasetName, out var rawDataType))
                     rawDataType = clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES;
 
                 if (rawDataType != clsAnalysisResources.RAW_DATA_TYPE_DOT_UIMF_FILES && _bIncludeMzXMLFiles)

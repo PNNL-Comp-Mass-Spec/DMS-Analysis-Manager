@@ -106,8 +106,8 @@ namespace AnalysisManager_AScore_PlugIn
 
                 // copy DTA file for current job to working directory
                 var jobText = vals[jobIdx];
-                int jobNumber;
-                if (!int.TryParse(jobText, out jobNumber))
+
+                if (!int.TryParse(jobText, out var jobNumber))
                 {
                     clsGlobal.LogError("Job number is not numeric: " + jobText);
                     return false;
@@ -469,9 +469,7 @@ namespace AnalysisManager_AScore_PlugIn
                 sqlQuery += " SELECT Input_Folder, 2 AS Preference, Saved FROM DMS_Pipeline.dbo.V_Job_Steps_History " + sqlWhere;
                 sqlQuery += " ORDER BY Preference, saved";
 
-                List<string> lstResults;
-
-                var success = clsGlobal.GetQueryResultsTopRow(sqlQuery, connectionString, out lstResults, "GetSharedResultFolderName");
+                var success = clsGlobal.GetQueryResultsTopRow(sqlQuery, connectionString, out var lstResults, "GetSharedResultFolderName");
 
                 if (!success || lstResults.Count == 0)
                 {

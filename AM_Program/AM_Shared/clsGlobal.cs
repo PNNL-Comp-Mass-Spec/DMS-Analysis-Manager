@@ -1999,8 +1999,8 @@ namespace AnalysisManagerBase
 
                 if (clsDiskInfo.GetDiskFreeSpace(
                     diDirectory.FullName,
-                    out var _,
-                    out var _,
+                    out _,
+                    out _,
                     out var totalNumberOfFreeBytes))
                 {
                     freeSpaceMB = BytesToMB(totalNumberOfFreeBytes);

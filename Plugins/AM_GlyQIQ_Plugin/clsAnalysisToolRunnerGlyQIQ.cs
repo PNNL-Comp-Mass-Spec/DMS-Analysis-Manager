@@ -268,9 +268,8 @@ namespace AnalysisManagerGlyQIQPlugin
 
                 for (var scan = 1; scan <= scanCount; scan++)
                 {
-                    clsScanInfo scanInfo;
 
-                    if (mThermoFileReader.GetScanInfo(scan, out scanInfo))
+                    if (mThermoFileReader.GetScanInfo(scan, out clsScanInfo scanInfo))
                     {
                         if (scanInfo.MSLevel > 1)
                         {
@@ -588,7 +587,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 }
 
                 // Execute the SP (retry the call up to 3 times)
-                var resCode = mStoredProcedureExecutor.ExecuteSP(objCommand, MAX_RETRY_COUNT, out var _);
+                var resCode = mStoredProcedureExecutor.ExecuteSP(objCommand, MAX_RETRY_COUNT, out _);
 
                 if (resCode == 0)
                 {

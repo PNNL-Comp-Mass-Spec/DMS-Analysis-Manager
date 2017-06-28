@@ -372,14 +372,13 @@ namespace AnalysisManagerMzRefineryPlugIn
             var javaExePath = string.Copy(javaProgLoc);
             var msgfplusJarFilePath = string.Copy(mMSGFPlusProgLoc);
 
-            string fastaFilePath;
-            float fastaFileSizeKB;
-            bool fastaFileIsDecoy;
-
             const int maxFastaFileSizeMB = 50;
 
             // Initialize the fasta file; truncating it if it is over 50 MB in size
-            var result = mMSGFPlusUtils.InitializeFastaFile(javaExePath, msgfplusJarFilePath, out fastaFileSizeKB, out fastaFileIsDecoy, out fastaFilePath, strParameterFilePath, maxFastaFileSizeMB);
+            var result = mMSGFPlusUtils.InitializeFastaFile(
+                javaExePath, msgfplusJarFilePath,
+                out var fastaFileSizeKB, out var fastaFileIsDecoy, out var fastaFilePath,
+                strParameterFilePath, maxFastaFileSizeMB);
 
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
@@ -389,7 +388,6 @@ namespace AnalysisManagerMzRefineryPlugIn
             var strInstrumentGroup = m_jobParams.GetJobParameter("JobParameters", "InstrumentGroup", string.Empty);
 
             // Read the MSGF+ Parameter File
-            string strMSGFPlusCmdLineOptions;
 
             var overrideParams = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
@@ -404,7 +402,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             result = mMSGFPlusUtils.ParseMSGFPlusParameterFile(
                 fastaFileSizeKB, fastaFileIsDecoy, strAssumedScanType, strScanTypeFilePath,
-                strInstrumentGroup, strParameterFilePath, overrideParams, out strMSGFPlusCmdLineOptions);
+                strInstrumentGroup, strParameterFilePath, overrideParams, out var strMSGFPlusCmdLineOptions);
 
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
@@ -929,8 +927,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                                 reMatch = reGoodDataPoints.Match(strDataLine);
                                 if (reMatch.Success)
                                 {
-                                    int dataPoints;
-                                    if (int.TryParse(reMatch.Groups[1].Value, out dataPoints))
+                                    if (int.TryParse(reMatch.Groups[1].Value, out var dataPoints))
                                     {
                                         mMzRefinerGoodDataPoints = dataPoints;
                                     }
@@ -939,8 +936,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                                 reMatch = reSpecEValueThreshold.Match(strDataLine);
                                 if (reMatch.Success)
                                 {
-                                    double specEValueThreshold;
-                                    if (double.TryParse(reMatch.Groups[1].Value, out specEValueThreshold))
+                                    if (double.TryParse(reMatch.Groups[1].Value, out var specEValueThreshold))
                                     {
                                         mMzRefinerSpecEValueThreshold = specEValueThreshold;
                                     }

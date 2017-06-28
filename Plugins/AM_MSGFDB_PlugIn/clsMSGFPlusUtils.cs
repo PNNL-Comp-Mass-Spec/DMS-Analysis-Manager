@@ -870,7 +870,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     // Verify that the file matches the .hashcheck value
                     var hashcheckFilePath = fiTrimmedFasta.FullName + clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX;
 
-                    if (clsGlobal.ValidateFileVsHashcheck(fiTrimmedFasta.FullName, hashcheckFilePath, out var _))
+                    if (clsGlobal.ValidateFileVsHashcheck(fiTrimmedFasta.FullName, hashcheckFilePath, out _))
                     {
                         // The trimmed fasta file is valid
                         OnStatusEvent("Using existing trimmed fasta: " + fiTrimmedFasta.Name);
@@ -1197,7 +1197,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 var decoyPrefixes = clsAnalysisResources.GetDefaultDecoyPrefixes();
                 foreach (var decoyPrefix in decoyPrefixes)
                 {
-                    var fractionDecoy = clsAnalysisResources.GetDecoyFastaCompositionStats(fiFastaFile, decoyPrefix, out var _);
+                    var fractionDecoy = clsAnalysisResources.GetDecoyFastaCompositionStats(fiFastaFile, decoyPrefix, out _);
                     if (fractionDecoy >= 0.25)
                     {
                         fastaFileIsDecoy = true;
@@ -2410,7 +2410,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // Count HCD spectra separately since MS-GF+ has a special scoring model for HCD spectra
 
 
-                var success = LoadScanTypeFile(scanTypeFilePath, out var lstLowResMSn, out var lstHighResMSn, out var lstHCDMSn, out var _);
+                var success = LoadScanTypeFile(scanTypeFilePath, out var lstLowResMSn, out var lstHighResMSn, out var lstHCDMSn, out _);
 
                 if (!success)
                 {

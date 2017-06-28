@@ -133,11 +133,10 @@ namespace AnalysisManagerMzRefineryPlugIn
                             continue;
 
                         var dataString = strLineIn.Substring(MASS_ERROR_PPM.Length).Trim();
-                        double massError;
 
                         var dataValues = dataString.Split(' ').ToList();
 
-                        if (double.TryParse(dataValues.First(), out massError))
+                        if (double.TryParse(dataValues.First(), out var massError))
                         {
                             udtMassErrorInfo.MassErrorPPM = massError;
                         }

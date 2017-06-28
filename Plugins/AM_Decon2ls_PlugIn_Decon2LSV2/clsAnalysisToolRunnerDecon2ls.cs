@@ -430,8 +430,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         /// <remarks></remarks>
         private bool IsosFileHasData(string isosFilePath, double maxFitValue = 0.15)
         {
-            int dataLineCount;
-            return IsosFileHasData(isosFilePath, out dataLineCount, false, maxFitValue);
+            return IsosFileHasData(isosFilePath, out var dataLineCount, false, maxFitValue);
         }
 
         /// <summary>
@@ -529,7 +528,6 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
-            string errorMessage;
 
             // Do the base class stuff
             if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
@@ -542,7 +540,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 LogDebug("clsAnalysisToolRunnerDecon2ls.RunTool(): Enter");
             }
 
-            mRawDataTypeName = clsAnalysisResources.GetRawDataTypeName(m_jobParams, out errorMessage);
+            mRawDataTypeName = clsAnalysisResources.GetRawDataTypeName(m_jobParams, out var errorMessage);
 
             if (string.IsNullOrWhiteSpace(mRawDataTypeName))
             {
@@ -864,9 +862,8 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
                 // Parse the DeconTools .Log file to see whether it contains message "Finished file processing"
                 var dtFinishTime = DateTime.Now;
-                bool blnFinishedProcessing;
 
-                ParseDeconToolsLogFile(out blnFinishedProcessing, ref dtFinishTime);
+                ParseDeconToolsLogFile(out var blnFinishedProcessing, ref dtFinishTime);
 
                 if (mDeconToolsExceptionThrown)
                 {
@@ -1437,9 +1434,8 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             dtLastLogCheckTime = DateTime.UtcNow;
 
             var dtFinishTime = DateTime.UtcNow;
-            bool blnFinishedProcessing;
 
-            ParseDeconToolsLogFile(out blnFinishedProcessing, ref dtFinishTime);
+            ParseDeconToolsLogFile(out var blnFinishedProcessing, ref dtFinishTime);
 
             UpdateProgRunnerCpuUsage(mCmdRunner, SECONDS_BETWEEN_UPDATE);
 

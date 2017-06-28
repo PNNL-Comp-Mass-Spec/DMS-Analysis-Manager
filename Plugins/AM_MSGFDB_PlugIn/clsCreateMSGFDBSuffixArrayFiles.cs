@@ -730,7 +730,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 var lstExistingFiles = FindExistingSuffixArrayFiles(
                     fastaFileIsDecoy, msgfPlus, outputNameBase, fiFastaFile.DirectoryName,
-                    new List<string>(), out var _, out var _);
+                    new List<string>(), out _, out _);
 
                 foreach (var fiIndexFileToDelete in lstExistingFiles)
                 {

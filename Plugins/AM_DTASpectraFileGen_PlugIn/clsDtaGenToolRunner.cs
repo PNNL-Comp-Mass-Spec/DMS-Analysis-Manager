@@ -188,8 +188,7 @@ namespace DTASpectraFileGen
 
         public static eDTAGeneratorConstants GetDTAGeneratorInfo(IJobParams oJobParams, out string strErrorMessage)
         {
-            bool blnConcatenateDTAs;
-            return GetDTAGeneratorInfo(oJobParams, out blnConcatenateDTAs, out strErrorMessage);
+            return GetDTAGeneratorInfo(oJobParams, out _, out strErrorMessage);
         }
 
         public static eDTAGeneratorConstants GetDTAGeneratorInfo(IJobParams oJobParams, out bool blnConcatenateDTAs, out string strErrorMessage)
@@ -701,9 +700,7 @@ namespace DTASpectraFileGen
 
                 while (true)
                 {
-                    clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType udtFragIonDataHeaderCentroid;
-                    var blnNextSpectrumAvailable = oCDTAReaderFragIonData.ReadNextSpectrum(
-                        out var _, out udtFragIonDataHeaderCentroid);
+                    var blnNextSpectrumAvailable = oCDTAReaderFragIonData.ReadNextSpectrum(out _, out var udtFragIonDataHeaderCentroid);
 
                     if (!blnNextSpectrumAvailable)
                     {
@@ -745,9 +742,7 @@ namespace DTASpectraFileGen
                 var intSpectrumCountSkipped = 0;
                 using (var swCDTAOut = new StreamWriter(new FileStream(strCDTAFileFinal, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType udtParentIonDataHeader;
-
-                    while (oCDTAReaderParentIons.ReadNextSpectrum(out var _, out udtParentIonDataHeader))
+                    while (oCDTAReaderParentIons.ReadNextSpectrum(out _, out var udtParentIonDataHeader))
                     {
                         if (!ScanMatchIsPossible(udtParentIonDataHeader, fragIonDataScanStatus))
                         {
@@ -761,7 +756,7 @@ namespace DTASpectraFileGen
 
                         while (!ScanHeadersMatch(udtParentIonDataHeader, udtFragIonDataHeader))
                         {
-                            blnNextSpectrumAvailable = oCDTAReaderFragIonData.ReadNextSpectrum(out var _, out udtFragIonDataHeader);
+                            blnNextSpectrumAvailable = oCDTAReaderFragIonData.ReadNextSpectrum(out _, out udtFragIonDataHeader);
                             if (!blnNextSpectrumAvailable)
                                 break;
                         }
@@ -785,7 +780,7 @@ namespace DTASpectraFileGen
 
                             while (!ScanHeadersMatch(udtParentIonDataHeader, udtFragIonDataHeader))
                             {
-                                blnNextSpectrumAvailable = oCDTAReaderFragIonData.ReadNextSpectrum(out var _, out udtFragIonDataHeader);
+                                blnNextSpectrumAvailable = oCDTAReaderFragIonData.ReadNextSpectrum(out _, out udtFragIonDataHeader);
                                 if (!blnNextSpectrumAvailable)
                                     break;
                             }
@@ -888,10 +883,9 @@ namespace DTASpectraFileGen
         }
 
         private bool ScanMatchIsPossible(clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType udtParentIonDataHeader,
-            Dictionary<int, SortedSet<int>> fragIonDataScanStatus)
+            IReadOnlyDictionary<int, SortedSet<int>> fragIonDataScanStatus)
         {
-            SortedSet<int> endScanList = null;
-            if (fragIonDataScanStatus.TryGetValue(udtParentIonDataHeader.ScanNumberStart, out endScanList))
+            if (fragIonDataScanStatus.TryGetValue(udtParentIonDataHeader.ScanNumberStart, out var endScanList))
             {
                 if (endScanList.Contains(udtParentIonDataHeader.ScanNumberEnd))
                 {
