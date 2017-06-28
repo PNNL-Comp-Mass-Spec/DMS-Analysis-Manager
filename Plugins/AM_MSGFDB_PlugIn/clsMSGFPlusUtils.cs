@@ -143,134 +143,69 @@ namespace AnalysisManagerMSGFDBPlugIn
         }
 
         /// <summary>
-        /// Update argumentSwitch and argumentValue if using the MS-GFDB syntax yet should be using the MS-GF+ syntax (or vice versa)
+        /// Update argumentSwitch and argumentValue if using the MS-GFDB syntax yet should be using the MS-GF+ syntax
         /// </summary>
-        /// <param name="msgfPlus"></param>
         /// <param name="argumentSwitch"></param>
         /// <param name="argumentValue"></param>
         /// <remarks></remarks>
-        private void AdjustSwitchesForMSGFPlus(bool msgfPlus, ref string argumentSwitch, ref string argumentValue)
+        private void AdjustSwitchesForMSGFPlus(ref string argumentSwitch, ref string argumentValue)
         {
-            int value;
-
-            if (msgfPlus)
+            if (clsGlobal.IsMatch(argumentSwitch, "nnet"))
             {
-                // MS-GF+
-
-                if (clsGlobal.IsMatch(argumentSwitch, "nnet"))
+                // Auto-switch to ntt
+                argumentSwitch = "ntt";
+                if (int.TryParse(argumentValue, out var value))
                 {
-                    // Auto-switch to ntt
-                    argumentSwitch = "ntt";
-                    if (int.TryParse(argumentValue, out value))
+                    switch (value)
                     {
-                        switch (value)
-                        {
-                            case 0:
-                                argumentValue = "2";         // Fully-tryptic
-                                break;
-                            case 1:
-                                argumentValue = "1";         // Partially tryptic
-                                break;
-                            case 2:
-                                argumentValue = "0";         // No-enzyme search
-                                break;
-                            default:
-                                // Assume partially tryptic
-                                argumentValue = "1";
-                                break;
-                        }
+                        case 0:
+                            argumentValue = "2";         // Fully-tryptic
+                            break;
+                        case 1:
+                            argumentValue = "1";         // Partially tryptic
+                            break;
+                        case 2:
+                            argumentValue = "0";         // No-enzyme search
+                            break;
+                        default:
+                            // Assume partially tryptic
+                            argumentValue = "1";
+                            break;
                     }
                 }
-                else if (clsGlobal.IsMatch(argumentSwitch, "c13"))
+            }
+            else if (clsGlobal.IsMatch(argumentSwitch, "c13"))
+            {
+                // Auto-switch to ti
+                argumentSwitch = "ti";
+                if (int.TryParse(argumentValue, out var value))
                 {
-                    // Auto-switch to ti
-                    argumentSwitch = "ti";
-                    if (int.TryParse(argumentValue, out value))
+                    if (value == 0)
                     {
-                        if (value == 0)
-                        {
-                            argumentValue = "0,0";
-                        }
-                        else if (value == 1)
-                        {
-                            argumentValue = "-1,1";
-                        }
-                        else if (value == 2)
-                        {
-                            argumentValue = "-1,2";
-                        }
-                        else
-                        {
-                            argumentValue = "0,1";
-                        }
+                        argumentValue = "0,0";
+                    }
+                    else if (value == 1)
+                    {
+                        argumentValue = "-1,1";
+                    }
+                    else if (value == 2)
+                    {
+                        argumentValue = "-1,2";
                     }
                     else
                     {
                         argumentValue = "0,1";
                     }
                 }
-                else if (clsGlobal.IsMatch(argumentSwitch, "showDecoy"))
+                else
                 {
-                    // Not valid for MS-GF+; skip it
-                    argumentSwitch = string.Empty;
+                    argumentValue = "0,1";
                 }
             }
-            else
+            else if (clsGlobal.IsMatch(argumentSwitch, "showDecoy"))
             {
-                // MS-GFDB
-
-                if (clsGlobal.IsMatch(argumentSwitch, "ntt"))
-                {
-                    // Auto-switch to nnet
-                    argumentSwitch = "nnet";
-                    if (int.TryParse(argumentValue, out value))
-                    {
-                        switch (value)
-                        {
-                            case 2:
-                                argumentValue = "0";         // Fully-tryptic
-                                break;
-                            case 1:
-                                argumentValue = "1";         // Partially tryptic
-                                break;
-                            case 0:
-                                argumentValue = "2";         // No-enzyme search
-                                break;
-                            default:
-                                // Assume partially tryptic
-                                argumentValue = "1";
-                                break;
-                        }
-                    }
-                }
-                else if (clsGlobal.IsMatch(argumentSwitch, "ti"))
-                {
-                    // Auto-switch to c13
-                    // Use the digit after the comma in the "ti" specification
-                    argumentSwitch = "c13";
-                    var charIndex = argumentValue.IndexOf(",", StringComparison.Ordinal);
-                    if (charIndex >= 0)
-                    {
-                        argumentValue = argumentValue.Substring(charIndex + 1);
-                    }
-                    else
-                    {
-                        // Comma not found
-                        if (int.TryParse(argumentValue, out value))
-                        {
-                            argumentValue = value.ToString();
-                        }
-                        else
-                        {
-                            argumentValue = "1";
-                        }
-                    }
-                }
-                else if (clsGlobal.IsMatch(argumentSwitch, "addFeatures"))
-                {
-                    // Not valid for MS-GFDB; skip it
-                    argumentSwitch = string.Empty;
-                }
+                // Not valid for MS-GF+; skip it
+                argumentSwitch = string.Empty;
             }
         }
 
@@ -1079,15 +1014,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return string.Empty;
                 }
 
-                string namePrefix;
-                if (mMSGFPlus)
-                {
-                    namePrefix = "XXX_";
-                }
-                else
-                {
-                    namePrefix = "REV_";
-                }
+                const string NAME_PREFIX = "XXX_";
 
                 using (var writer = new StreamWriter(new FileStream(decoyFastaFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
@@ -1104,7 +1031,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                             WriteProteinSequence(writer, fastaFileReader.ProteinSequence);
 
                             // Write the decoy protein
-                            writer.WriteLine(PROTEIN_LINE_START_CHAR + namePrefix + fastaFileReader.ProteinName + " " +
+                            writer.WriteLine(PROTEIN_LINE_START_CHAR + NAME_PREFIX + fastaFileReader.ProteinName + " " +
                                                           fastaFileReader.ProteinDescription);
                             WriteProteinSequence(writer, ReverseString(fastaFileReader.ProteinSequence));
                         }
@@ -1185,25 +1112,15 @@ namespace AnalysisManagerMSGFDBPlugIn
 
         private string GetSearchEngineName()
         {
-            return GetSearchEngineName(mMSGFPlus);
+            return "MS-GF+";
         }
 
-        public static string GetSearchEngineName(bool msgfPlus)
+        private string GetSettingFromMSGFPlusParamFile(string parameterFilePath, string settingToFind)
         {
-            if (msgfPlus)
-            {
-                return "MS-GF+";
-            }
-
-            return "MS-GFDB";
+            return GetSettingFromMSGFPlusParamFile(parameterFilePath, settingToFind, string.Empty);
         }
 
-        public string GetSettingFromMSGFDbParamFile(string parameterFilePath, string settingToFind)
-        {
-            return GetSettingFromMSGFDbParamFile(parameterFilePath, settingToFind, string.Empty);
-        }
-
-        public string GetSettingFromMSGFDbParamFile(string parameterFilePath, string settingToFind, string valueIfNotFound)
+        private string GetSettingFromMSGFPlusParamFile(string parameterFilePath, string settingToFind, string valueIfNotFound)
         {
             if (!File.Exists(parameterFilePath))
             {
@@ -1298,7 +1215,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             if (!string.IsNullOrEmpty(msgfPlusParameterFilePath))
             {
-                var tdaSetting = GetSettingFromMSGFDbParamFile(msgfPlusParameterFilePath, "TDA");
+                var tdaSetting = GetSettingFromMSGFPlusParamFile(msgfPlusParameterFilePath, "TDA");
 
                 if (!int.TryParse(tdaSetting, out var tdaValue))
                 {
@@ -2074,8 +1991,6 @@ namespace AnalysisManagerMSGFDBPlugIn
             string scanTypeFilePath, string instrumentGroup, string parameterFilePath,
             Dictionary<string, string> overrideParams, out string msgfPlusCmdLineOptions)
         {
-            const int SMALL_FASTA_FILE_THRESHOLD_KB = 20;
-
             var paramFileThreadCount = 0;
 
             var numMods = 0;
@@ -2083,8 +1998,6 @@ namespace AnalysisManagerMSGFDBPlugIn
             var lstDynamicMods = new List<string>();
             var lstCustomAminoAcids = new List<string>();
 
-            var showDecoyParamPresent = false;
-            var showDecoy = false;
             var isTDA = false;
 
             msgfPlusCmdLineOptions = string.Empty;
@@ -2201,7 +2114,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                             var argumentSwitchOriginal = string.Copy(argumentSwitch);
 
-                            AdjustSwitchesForMSGFPlus(mMSGFPlus, ref argumentSwitch, ref valueText);
+                            AdjustSwitchesForMSGFPlus(ref argumentSwitch, ref valueText);
 
                             if (overrideParams.TryGetValue(argumentSwitch, out var valueOverride))
                             {
@@ -2231,12 +2144,10 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                             if (clsGlobal.IsMatch(argumentSwitch, "showDecoy"))
                             {
-                                showDecoyParamPresent = true;
                                 if (int.TryParse(valueText, out value))
                                 {
                                     if (value > 0)
                                     {
-                                        showDecoy = true;
                                     }
                                 }
                             }
@@ -2253,38 +2164,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                         }
                         else if (clsGlobal.IsMatch(kvSetting.Key, "uniformAAProb"))
                         {
-                            if (mMSGFPlus)
-                            {
-                                // Not valid for MS-GF+; skip it
-                            }
-                            else
-                            {
-                                if (string.IsNullOrWhiteSpace(valueText) || clsGlobal.IsMatch(valueText, "auto"))
-                                {
-                                    if (fastaFileSizeKB < SMALL_FASTA_FILE_THRESHOLD_KB)
-                                    {
-                                        sbOptions.Append(" -uniformAAProb 1");
-                                    }
-                                    else
-                                    {
-                                        sbOptions.Append(" -uniformAAProb 0");
-                                    }
-                                }
-                                else
-                                {
-                                    if (int.TryParse(valueText, out value))
-                                    {
-                                        sbOptions.Append(" -uniformAAProb " + value);
-                                    }
-                                    else
-                                    {
-                                        mErrorMessage = "Invalid value for uniformAAProb in MS-GF+ parameter file";
-                                        OnErrorEvent(mErrorMessage + ": " + dataLine);
-                                        srParamFile.Dispose();
-                                        return CloseOutType.CLOSEOUT_FAILED;
-                                    }
-                                }
-                            }
+                            // Not valid for MS-GF+; skip it
                         }
                         else if (clsGlobal.IsMatch(kvSetting.Key, "NumThreads"))
                         {
@@ -2352,23 +2232,10 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (isTDA)
                 {
-                    if (mMSGFPlus)
-                    {
-                        // Parameter file contains TDA=1 and we're running MS-GF+
-                        mResultsIncludeAutoAddedDecoyPeptides = true;
-                    }
-                    else if (showDecoy)
-                    {
-                        // Parameter file contains both TDA=1 and showDecoy=1
-                        mResultsIncludeAutoAddedDecoyPeptides = true;
-                    }
+                    // Parameter file contains TDA=1 and we're running MS-GF+
+                    mResultsIncludeAutoAddedDecoyPeptides = true;
                 }
 
-                if (!showDecoyParamPresent && !mMSGFPlus)
-                {
-                    // Add showDecoy to sbOptions
-                    sbOptions.Append(" -showDecoy 0");
-                }
             }
             catch (Exception ex)
             {
@@ -2492,7 +2359,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             // Auto-add the "addFeatures" switch if not present
             // This is required to post-process the results with Percolator
-            if (mMSGFPlus && msgfPlusCmdLineOptions.IndexOf("-addFeatures", StringComparison.OrdinalIgnoreCase) < 0)
+            if (msgfPlusCmdLineOptions.IndexOf("-addFeatures", StringComparison.OrdinalIgnoreCase) < 0)
             {
                 msgfPlusCmdLineOptions += " -addFeatures 1";
             }
