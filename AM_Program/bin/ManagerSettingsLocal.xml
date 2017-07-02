@@ -16,5 +16,8 @@
     <setting name="OrgDbDir"><value>/file1/temp/DMSOrgDBs</value></setting>
     <setting name="StatusFileLocation"><value>Status.xml</value></setting>
     <setting name="StepToolsEnabled"><value>Test_MSGFPlus, MSGFPlus</value></setting>
-    <setting name="JavaLoc"><value>/usr/bin/java</value></setting>    
+    <setting name="JavaLocLinux"><value>/usr/bin/java</value></setting>    
+    <setting name="JavaLoc"><value>C:\Program Files\Java\jre8\bin\java.exe</value></setting>    
+    <setting name="MonoProgLoc"><value>/usr/local/bin/mono</value></setting>    
+    <setting name="MzidToTsvConverterProgLoc"><value>/opt/DMS_Programs/MzidToTsvConverter</value></setting>        
 </settings>
