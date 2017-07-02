@@ -2848,23 +2848,29 @@ namespace AnalysisManagerProg
                     return false;
                 }
 
-                if (string.IsNullOrEmpty(transferDir))
+                if (!clsGlobal.OfflineMode)
                 {
-                    errorMessage = "Transfer directory for the job is empty; cannot continue";
-
-                    if (DataPackageIdMissing())
+                    if (string.IsNullOrEmpty(transferDir))
                     {
-                        errorMessage += ". Data package ID cannot be 0 for this job type";
+                        errorMessage = "Transfer directory for the job is empty; cannot continue";
+
+                        if (DataPackageIdMissing())
+                        {
+                            errorMessage += ". Data package ID cannot be 0 for this job type";
+                        }
+
+                        LogError(errorMessage);
+                        return false;
                     }
 
-                    LogError(errorMessage);
-                    return false;
-                }
+                    ShowTrace("Validating free space for the transfer directory: " + transferDir);
 
-                // Verify that the remote transfer directory exists and that its drive has sufficient free space
-                if (!ValidateFreeDiskSpaceWork("Transfer directory", transferDir, transferDirMinFreeSpaceGB * 1024, out errorMessage, clsLogTools.LoggerTypes.LogFile))
-                {
-                    return false;
+                    // Verify that the remote transfer directory exists and that its drive has sufficient free space
+                    if (!ValidateFreeDiskSpaceWork("Transfer directory", transferDir, transferDirMinFreeSpaceGB * 1024, out errorMessage,
+                                                   clsLogTools.LoggerTypes.LogFile))
+                    {
+                        return false;
+                    }
                 }
 
                 var orgDbRequired = toolResourcer.GetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired);
@@ -2872,6 +2878,8 @@ namespace AnalysisManagerProg
                 if (orgDbRequired)
                 {
                     // Verify that the local fasta file cache directory has sufficient free space
+
+                    ShowTrace("Validating free space for the Org DB directory: " + orgDbDir);
 
                     if (!ValidateFreeDiskSpaceWork("Organism DB directory", orgDbDir, orgDbDirMinFreeSpaceMB, out errorMessage, clsLogTools.LoggerTypes.LogFile))
                     {
