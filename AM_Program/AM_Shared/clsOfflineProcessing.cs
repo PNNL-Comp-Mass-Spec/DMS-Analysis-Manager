@@ -37,13 +37,34 @@ namespace AnalysisManagerBase
             if (evalMsg == null)
                 evalMsg = string.Empty;
 
+            var settingsToAppend = new SortedSet<string> {
+                "CompCode",
+                "CompMsg",
+                "EvalCode",
+                "EvalMsg"
+            };
+
             using (var reader = new StreamReader(new FileStream(infoFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
             using (var writer = new StreamWriter(new FileStream(targetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
             {
                 while (!reader.EndOfStream)
                 {
                     var dataLine = reader.ReadLine();
-                    writer.WriteLine(dataLine);
+                    if (string.IsNullOrWhiteSpace(dataLine))
+                    {
+                        writer.WriteLine(dataLine);
+                        continue;
+                    }
+
+                    var skipLine = false;
+                    foreach (var setting in settingsToAppend)
+                    {
+                        if (dataLine.StartsWith(setting + "="))
+                            skipLine = true;
+                    }
+
+                    if (!skipLine)
+                        writer.WriteLine(dataLine);
                 }
 
                 writer.WriteLine("CompCode=" + compCode);
