@@ -354,7 +354,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="datasetName">Dataset name (output file will be named DatasetName_msgfdb.tsv)</param>
         /// <param name="mzidFileName">.mzid file name (assumed to be in the work directory)</param>
         /// <returns>TSV file path, or an empty string if an error</returns>
-        /// <remarks></remarks>
         public string ConvertMZIDToTSV(string mzidToTsvConverterProgLoc, string datasetName, string mzidFileName)
         {
             try
@@ -372,20 +371,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
 
                 // Make sure the mzid file ends with XML tag </MzIdentML>
-                var lastLine = string.Empty;
-                using (var reader = new StreamReader(new FileStream(fiMzidFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
-                {
-                    while (!reader.EndOfStream)
-                    {
-                        var dataLine = reader.ReadLine();
-                        if (!string.IsNullOrWhiteSpace(dataLine))
-                        {
-                            lastLine = dataLine;
-                        }
-                    }
-                }
-
-                if (!lastLine.Trim().EndsWith("</MzIdentML>", StringComparison.InvariantCulture))
+                if (!MSGFPlusResultsFileHasClosingTag(fiMzidFile))
                 {
                     OnErrorEvent("The .mzid file created by MS-GF+ does not end with XML tag MzIdentML");
                     return string.Empty;
@@ -393,11 +379,6 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 // Set up and execute a program runner to run MzidToTsvConverter.exe
                 var cmdStr = GetMZIDtoTSVCommandLine(mzidFileName, tsvFileName, m_WorkDir, mzidToTsvConverterProgLoc);
-
-                if (m_DebugLevel >= 1)
-                {
-                    OnStatusEvent(mzidToTsvConverterProgLoc + " " + cmdStr);
-                }
 
                 var objCreateTSV = new clsRunDosProgram(m_WorkDir)
                 {
@@ -442,7 +423,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 try
                 {
-                    // Delete the console output file
+                    // The MzIDToTsv console output file doesn't contain any log messsages we need to save, so delete it
                     File.Delete(objCreateTSV.ConsoleOutputFilePath);
                 }
                 catch (Exception)
@@ -488,20 +469,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
 
                 // Make sure the mzid file ends with XML tag </MzIdentML>
-                var lastLine = string.Empty;
-                using (var reader = new StreamReader(new FileStream(fiMzidFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
-                {
-                    while (!reader.EndOfStream)
-                    {
-                        var dataLine = reader.ReadLine();
-                        if (!string.IsNullOrWhiteSpace(dataLine))
-                        {
-                            lastLine = dataLine;
-                        }
-                    }
-                }
-
-                if (!string.Equals(lastLine.Trim(), "</MzIdentML>", StringComparison.InvariantCulture))
+                if (!MSGFPlusResultsFileHasClosingTag(fiMzidFile))
                 {
                     OnErrorEvent("The .mzid file created by MS-GF+ does not end with XML tag MzIdentML");
                     return string.Empty;
@@ -598,8 +566,11 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <returns></returns>
         public static string GetMZIDtoTSVCommandLine(string mzidFileName, string tsvFileName, string workingDirectory, string mzidToTsvConverterProgLoc)
         {
-            var cmdStr = " -mzid:" + clsAnalysisToolRunnerBase.PossiblyQuotePath(Path.Combine(workingDirectory, mzidFileName)) + " -tsv:" +
-                         clsAnalysisToolRunnerBase.PossiblyQuotePath(Path.Combine(workingDirectory, tsvFileName)) + " -unroll" + " -showDecoy";
+            var cmdStr =
+                " -mzid:" + clsAnalysisToolRunnerBase.PossiblyQuotePath(Path.Combine(workingDirectory, mzidFileName)) +
+                " -tsv:" + clsAnalysisToolRunnerBase.PossiblyQuotePath(Path.Combine(workingDirectory, tsvFileName)) +
+                " -unroll" +
+                " -showDecoy";
 
             return cmdStr;
         }
@@ -1491,11 +1462,32 @@ namespace AnalysisManagerMSGFDBPlugIn
             return false;
         }
 
+        public static bool MSGFPlusResultsFileHasClosingTag(FileSystemInfo fiMzidFile)
+        {
+
+            // Check whether the mzid file ends with XML tag </MzIdentML>
+            var lastLine = string.Empty;
+            using (var reader = new StreamReader(new FileStream(fiMzidFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+            {
+                while (!reader.EndOfStream)
+                {
+                    var dataLine = reader.ReadLine();
+                    if (!string.IsNullOrWhiteSpace(dataLine))
+                    {
+                        lastLine = dataLine;
+                    }
+                }
+            }
+
+            var validClosingTag = lastLine.Trim().EndsWith("</MzIdentML>", StringComparison.InvariantCulture);
+            return validClosingTag;
+        }
+
         /// <summary>
         /// Parse the MSGFPlus console output file to determine the MS-GF+ version and to track the search progress
         /// </summary>
         /// <returns>Percent Complete (value between 0 and 100)</returns>
-        /// <remarks>MSGFPlus version is available via the MSGFDbVersion property</remarks>
+        /// <remarks>MSGFPlus version is available via the MSGFPlusVersion property</remarks>
         public float ParseMSGFPlusConsoleOutputFile()
         {
             return ParseMSGFPlusConsoleOutputFile(m_WorkDir);
@@ -1613,7 +1605,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Parse the MSGFPlus console output file to determine the MS-GF+ version and to track the search progress
         /// </summary>
         /// <returns>Percent Complete (value between 0 and 96)</returns>
-        /// <remarks>MSGFPlus version is available via the MSGFDbVersion property</remarks>
+        /// <remarks>MSGFPlus version is available via the MSGFPlusVersion property</remarks>
         public float ParseMSGFPlusConsoleOutputFile(string workingDirectory)
         {
             var consoleOutputFilePath = "??";
@@ -2028,8 +2020,8 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             var sbOptions = new StringBuilder(500);
 
-            // This will be set to True if the parameter file contains both TDA=1 and showDecoy=1
-            // Alternatively, if running MS-GF+, this is set to true if TDA=1
+            // This will be set to True if the parameter file has TDA=1, meaning MSGF+ will auto-added decoy proteins to its list of candidate proteins
+            // When TDA is 1, the FASTA must only contain normal (forward) protein sequences
             mResultsIncludeAutoAddedDecoyPeptides = false;
 
             try
