@@ -1,4 +1,8 @@
 using System;
+using System.Collections.Generic;
+using System.Data.SQLite;
+using System.Diagnostics.Eventing.Reader;
+using System.IO;
 using System.Threading;
 using PRISM;
 
@@ -330,43 +334,43 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Runs a program and waits for it to exit
         /// </summary>
-        /// <param name="progNameLoc">The path to the program to run</param>
-        /// <param name="cmdLine">The arguments to pass to the program, for example /N=35</param>
+        /// <param name="executablePath">The path to the program to run</param>
+        /// <param name="arguments">The arguments to pass to the program, for example /N=35</param>
         /// <param name="progName">The name of the program to use for the Window title</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>Ignores the result code reported by the program</remarks>
-        public bool RunProgram(string progNameLoc, string cmdLine, string progName)
+        public bool RunProgram(string executablePath, string arguments, string progName)
         {
             const bool useResCode = false;
-            return RunProgram(progNameLoc, cmdLine, progName, useResCode);
+            return RunProgram(executablePath, arguments, progName, useResCode);
         }
 
         /// <summary>
         /// Runs a program and waits for it to exit
         /// </summary>
-        /// <param name="progNameLoc">The path to the program to run</param>
-        /// <param name="cmdLine">The arguments to pass to the program, for example: /N=35</param>
+        /// <param name="executablePath">The path to the program to run</param>
+        /// <param name="arguments">The arguments to pass to the program, for example: /N=35</param>
         /// <param name="progName">The name of the program to use for the Window title</param>
         /// <param name="useResCode">Whether or not to use the result code to determine success or failure of program execution</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>Ignores the result code reported by the program</remarks>
-        public bool RunProgram(string progNameLoc, string cmdLine, string progName, bool useResCode)
+        public bool RunProgram(string executablePath, string arguments, string progName, bool useResCode)
         {
             const int maxRuntimeSeconds = 0;
-            return RunProgram(progNameLoc, cmdLine, progName, useResCode, maxRuntimeSeconds);
+            return RunProgram(executablePath, arguments, progName, useResCode, maxRuntimeSeconds);
         }
 
         /// <summary>
         /// Runs a program and waits for it to exit
         /// </summary>
-        /// <param name="progNameLoc">The path to the program to run</param>
-        /// <param name="cmdLine">The arguments to pass to the program, for example /N=35</param>
+        /// <param name="executablePath">The path to the program to run</param>
+        /// <param name="arguments">The arguments to pass to the program, for example /N=35</param>
         /// <param name="progName">The name of the program to use for the Window title</param>
         /// <param name="useResCode">If true, returns False if the ProgRunner ExitCode is non-zero</param>
         /// <param name="maxRuntimeSeconds">If a positive number, then program execution will be aborted if the runtime exceeds maxRuntimeSeconds</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>maxRuntimeSeconds will be increased to 15 seconds if it is between 1 and 14 seconds</remarks>
-        public bool RunProgram(string progNameLoc, string cmdLine, string progName, bool useResCode, int maxRuntimeSeconds)
+        public bool RunProgram(string executablePath, string arguments, string progName, bool useResCode, int maxRuntimeSeconds)
         {
             // Require a minimum monitoring interval of 250 mseconds
             if (m_MonitorInterval < 250)
@@ -378,15 +382,21 @@ namespace AnalysisManagerBase
             }
             MaxRuntimeSeconds = maxRuntimeSeconds;
 
+            if (executablePath.StartsWith("/") && Path.DirectorySeparatorChar == '\\')
+            {
+                // Log a warning
+                OnWarningEvent("Unix-style path on a Windows machine; program execution may fail: " + executablePath);
+            }
+
             // Re-instantiate m_ProgRunner each time RunProgram is called since it is disposed of later in this function
             // Also necessary to avoid problems caching the console output
             m_ProgRunner = new clsProgRunner
             {
-                Arguments = cmdLine,
+                Arguments = arguments,
                 CreateNoWindow = CreateNoWindow,
                 MonitoringInterval = m_MonitorInterval,
                 Name = progName,
-                Program = progNameLoc,
+                Program = executablePath,
                 Repeat = false,
                 RepeatHoldOffTime = 0,
                 WorkDir = WorkDir,
@@ -468,7 +478,7 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                var msg = "Exception running DOS program " + progNameLoc;
+                var msg = "Exception running external program " + executablePath;
                 OnErrorEvent(msg, ex);
                 m_ProgRunner = null;
                 return false;
@@ -482,7 +492,7 @@ namespace AnalysisManagerBase
             {
                 if (ProgramAborted && m_AbortProgramPostLogEntry || !ProgramAborted)
                 {
-                    var msg = "  ProgRunner.ExitCode = " + ExitCode + " for Program = " + progNameLoc;
+                    var msg = "  ProgRunner.ExitCode = " + ExitCode + " for Program = " + executablePath;
                     OnErrorEvent(msg);
                 }
                 return false;
@@ -492,6 +502,43 @@ namespace AnalysisManagerBase
             {
                 return false;
             }
+
+            return true;
+        }
+
+
+        /// <summary>
+        /// Update the executable path and arguments to run a .NET exe using mono
+        /// </summary>
+        /// <param name="mgrParams">Manager parameters; used to determine the path to mono</param>
+        /// <param name="executablePath">Path to the executable; will be updated to be the path to mono</param>
+        /// <param name="arguments">The arguments to pass to the program, for example /N=35; will be updated to start with the executable</param>
+        /// <returns>True if success, false if a problem</returns>
+        public bool UpdateToUseMono(IMgrParams mgrParams, ref string executablePath, ref string arguments)
+        {
+
+            var monoProgLoc = mgrParams.GetParam("MonoProgLoc", string.Empty);
+            if (string.IsNullOrWhiteSpace(monoProgLoc))
+            {
+                if (!File.Exists("/usr/local/bin/mono"))
+                {
+                    OnErrorEvent("Manager parameter MonoProgLoc not defined; cannot run " + Path.GetFileName(executablePath));
+                    return false;
+                }
+
+                monoProgLoc = "/usr/local/bin/mono";
+                OnWarningEvent("Manager parameter MonoProgLoc not defined, but mono was found at " + monoProgLoc);
+            }
+
+            var monoExecutable = new FileInfo(monoProgLoc);
+            if (!monoExecutable.Exists)
+            {
+                OnErrorEvent(string.Format("Mono not found at {0}; cannot run {1}", monoProgLoc, Path.GetFileName(executablePath)));
+                return false;
+            }
+
+            arguments = clsGlobal.PossiblyQuotePath(executablePath) + " " + arguments;
+            executablePath = monoProgLoc;
 
             return true;
         }

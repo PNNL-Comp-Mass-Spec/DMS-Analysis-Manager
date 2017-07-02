@@ -34,9 +34,15 @@ namespace AnalysisManagerMSGFDBPlugIn
 
         private bool mToolVersionWritten;
 
-        // Path to MSGFPlus.jar
+        /// <summary>
+        /// Path to MSGFPlus.jar
+        /// </summary>
         private string mMSGFPlusProgLoc;
 
+        /// <summary>
+        /// This will be set to True if the parameter file has TDA=1, meaning MSGF+ auto-added decoy proteins to its list of candidate proteins
+        /// When TDA is 1, the FASTA must only contain normal (forward) protein sequences
+        /// </summary>
         private bool mResultsIncludeAutoAddedDecoyPeptides;
 
         private string mWorkingDirectoryInUse;
@@ -247,7 +253,6 @@ namespace AnalysisManagerMSGFDBPlugIn
             mToolVersionWritten = false;
 
             mMSGFPlusComplete = false;
-
 
             var result = DetermineAssumedScanType(out var assumedScanType, out var eInputFileFormat, out var scanTypeFilePath);
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
@@ -833,18 +838,18 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <remarks></remarks>
         private void ParseConsoleOutputFile(string workingDirectory)
         {
-            float sngMSGFBProgress = 0;
+            float msgfPlusProgress = 0;
 
             try
             {
-                if ((mMSGFPlusUtils != null))
+                if (mMSGFPlusUtils != null)
                 {
-                    sngMSGFBProgress = mMSGFPlusUtils.ParseMSGFPlusConsoleOutputFile(workingDirectory);
+                    msgfPlusProgress = mMSGFPlusUtils.ParseMSGFPlusConsoleOutputFile(workingDirectory);
                 }
 
-                if (m_progress < sngMSGFBProgress)
+                if (m_progress < msgfPlusProgress)
                 {
-                    m_progress = sngMSGFBProgress;
+                    m_progress = msgfPlusProgress;
                 }
             }
             catch (Exception ex)
@@ -928,6 +933,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                         {
                             continue;
                         }
+
                         dataLines += 1;
                         if (dataLines > 2)
                             break;

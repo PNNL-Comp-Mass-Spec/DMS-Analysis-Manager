@@ -409,6 +409,23 @@ namespace AnalysisManagerMSGFDBPlugIn
                 };
                 RegisterEvents(objCreateTSV);
 
+                if (clsGlobal.LinuxOS)
+                {
+                    // Need to run MzidToTsvConverter.exe using mono
+                    var updated = objCreateTSV.UpdateToUseMono(m_mgrParams, ref mzidToTsvConverterProgLoc, ref cmdStr);
+                    if (!updated)
+                    {
+                        OnWarningEvent("Unable to run MzidToTsvConverter.exe with mono");
+                        return string.Empty;
+                    }
+
+                }
+
+                if (m_DebugLevel >= 1)
+                {
+                    OnStatusEvent(mzidToTsvConverterProgLoc + " " + cmdStr);
+                }
+
                 // This process is typically quite fast, so we do not track CPU usage
                 var success = objCreateTSV.RunProgram(mzidToTsvConverterProgLoc, cmdStr, "MzIDToTsv", true);
 
@@ -1154,14 +1171,14 @@ namespace AnalysisManagerMSGFDBPlugIn
             return valueIfNotFound;
         }
 
-        public CloseOutType InitializeFastaFile(string javaProgLoc, string msgfDbProgLoc, out float fastaFileSizeKB, out bool fastaFileIsDecoy,
+        public CloseOutType InitializeFastaFile(string javaProgLoc, string msgfPlusProgLoc, out float fastaFileSizeKB, out bool fastaFileIsDecoy,
             out string fastaFilePath, string msgfPlusParameterFilePath)
         {
-            return InitializeFastaFile(javaProgLoc, msgfDbProgLoc, out fastaFileSizeKB, out fastaFileIsDecoy, out fastaFilePath,
+            return InitializeFastaFile(javaProgLoc, msgfPlusProgLoc, out fastaFileSizeKB, out fastaFileIsDecoy, out fastaFilePath,
                                        msgfPlusParameterFilePath, 0);
         }
 
-        public CloseOutType InitializeFastaFile(string javaProgLoc, string msgfDbProgLoc, out float fastaFileSizeKB, out bool fastaFileIsDecoy,
+        public CloseOutType InitializeFastaFile(string javaProgLoc, string msgfPlusProgLoc, out float fastaFileSizeKB, out bool fastaFileIsDecoy,
             out string fastaFilePath, string msgfPlusParameterFilePath, int maxFastaFileSizeMB)
         {
             var oRand = new Random();
@@ -1308,8 +1325,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             {
                 indexIteration += 1;
 
-                // Note that fastaFilePath will get updated by the IndexedDBCreator if we're running Legacy MSGFDB
-                var result = objIndexedDBCreator.CreateSuffixArrayFiles(m_WorkDir, m_DebugLevel, javaProgLoc, msgfDbProgLoc, fastaFilePath,
+                var result = objIndexedDBCreator.CreateSuffixArrayFiles(m_WorkDir, m_DebugLevel, javaProgLoc, msgfPlusProgLoc, fastaFilePath,
                     fastaFileIsDecoy, msgfPlusIndexFilesFolderPath, msgfPlusIndexFilesFolderPathLegacyDB);
 
                 if (result == CloseOutType.CLOSEOUT_SUCCESS)
