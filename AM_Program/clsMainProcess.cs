@@ -77,6 +77,10 @@ namespace AnalysisManagerProg
 
         private string m_MostRecentErrorMessage = string.Empty;
 
+        private int mPluginLoaderErrorCount;
+
+        private string mPluginLoaderStepTool  = string.Empty;
+
         #endregion
 
         #region "Properties"
@@ -346,6 +350,14 @@ namespace AnalysisManagerProg
             ShowTrace("Initialize the Plugin Loader");
 
             m_PluginLoader = new clsPluginLoader(m_SummaryFile, m_MgrFolderPath);
+            RegisterEvents(m_PluginLoader);
+
+            if (TraceMode)
+                m_PluginLoader.TraceMode = true;
+
+            // Use a custom error event handler
+            m_PluginLoader.ErrorEvent -= ErrorEventHandler;
+            m_PluginLoader.ErrorEvent += PluginLoader_ErrorEventHandler;
 
             // Everything worked
             return true;
@@ -2167,32 +2179,6 @@ namespace AnalysisManagerProg
             }
         }
 
-        private void LogPluginLoaderErrors(string pluginType, IReadOnlyCollection<string> errorMessages)
-        {
-            if (errorMessages.Count <= 0)
-            {
-                LogError(string.Format("Unable to load {0}, unknown error", pluginType));
-                return;
-            }
-
-            // Unable to load resource object for StepTool ...
-            LogError(string.Format("Unable to load {0}: {1}", pluginType, errorMessages.First()));
-            if (errorMessages.Count <= 1)
-                return;
-
-            var firstSkipped = false;
-            foreach (var item in errorMessages)
-            {
-                if (!firstSkipped)
-                {
-                    LogDebug("Additional errors:", 10);
-                    firstSkipped = true;
-                    continue;
-                }
-                LogDebug(item, 10);
-            }
-        }
-
         private void PostToEventLog(string ErrMsg)
         {
             const string EVENT_LOG_NAME = "DMSAnalysisManager";
@@ -2311,6 +2297,12 @@ namespace AnalysisManagerProg
                     LogError("Error deleting file: " + fiFile.Name);
                 }
             }
+        }
+
+        private void ResetPluginLoaderErrorCount(string stepToolName)
+        {
+            mPluginLoaderErrorCount = 0;
+            mPluginLoaderStepTool = stepToolName;
         }
 
         private bool RetrieveResources(
@@ -2532,31 +2524,28 @@ namespace AnalysisManagerProg
         private bool SetResourceObject(out IAnalysisResources toolResourcer)
         {
             var stepToolName = m_AnalysisTask.GetParam("StepTool");
+            ResetPluginLoaderErrorCount(stepToolName);
+            ShowTrace("Loading the resourcer for tool " + stepToolName);
 
-            m_PluginLoader.ClearMessageList();
             toolResourcer = m_PluginLoader.GetAnalysisResources(stepToolName.ToLower());
 
             if (toolResourcer == null && stepToolName.StartsWith("Test_", StringComparison.OrdinalIgnoreCase))
             {
-                m_PluginLoader.ClearMessageList();
                 stepToolName = stepToolName.Substring("Test_".Length);
+                ResetPluginLoaderErrorCount(stepToolName);
+                ShowTrace("Loading the resourcer for tool " + stepToolName);
+
                 toolResourcer = m_PluginLoader.GetAnalysisResources(stepToolName.ToLower());
             }
 
             if (toolResourcer == null)
             {
-                LogPluginLoaderErrors("resource object for StepTool " + stepToolName, m_PluginLoader.ErrorMessages);
                 return false;
             }
 
             if (m_DebugLevel > 0)
             {
                 LogMessage("Loaded resourcer for StepTool " + stepToolName);
-                foreach (var item in m_PluginLoader.ErrorMessages)
-                {
-                    LogWarning(item);
-                }
-
             }
 
             try
@@ -2575,31 +2564,28 @@ namespace AnalysisManagerProg
         private bool SetToolRunnerObject(out IToolRunner toolRunner)
         {
             var stepToolName = m_AnalysisTask.GetParam("StepTool");
+            ResetPluginLoaderErrorCount(stepToolName);
+            ShowTrace("Loading the ToolRunner for tool " + stepToolName);
 
-            m_PluginLoader.ClearMessageList();
             toolRunner = m_PluginLoader.GetToolRunner(stepToolName.ToLower());
 
             if (toolRunner == null && stepToolName.StartsWith("Test_", StringComparison.OrdinalIgnoreCase))
             {
-                m_PluginLoader.ClearMessageList();
                 stepToolName = stepToolName.Substring("Test_".Length);
+                ResetPluginLoaderErrorCount(stepToolName);
+                ShowTrace("Loading the ToolRunner for tool " + stepToolName);
+
                 toolRunner = m_PluginLoader.GetToolRunner(stepToolName.ToLower());
             }
 
             if (toolRunner == null)
             {
-                LogPluginLoaderErrors("tool runner for StepTool " + stepToolName, m_PluginLoader.ErrorMessages);
                 return false;
             }
 
             if (m_DebugLevel > 0)
             {
                 LogMessage("Loaded tool runner for StepTool " + m_AnalysisTask.GetCurrentJobToolDescription());
-                foreach (var item in m_PluginLoader.ErrorMessages)
-                {
-                    LogWarning(item);
-                }
-
             }
 
             try
@@ -2852,6 +2838,8 @@ namespace AnalysisManagerProg
                 var orgDbDir = m_MgrSettings.GetParam("orgdbdir");
                 var orgDbDirMinFreeSpaceMB = m_MgrSettings.GetParam("OrgDBDirMinFreeSpaceMB", DEFAULT_ORG_DB_DIR_MIN_FREE_SPACE_MB);
 
+                ShowTrace("Validating free space for the working directory: " + m_WorkDirPath);
+
                 // Verify that the working directory exists and that its drive has sufficient free space
                 if (!ValidateFreeDiskSpaceWork("Working directory", m_WorkDirPath, workingDirMinFreeSpaceMB, out errorMessage, clsLogTools.LoggerTypes.LogDb))
                 {
@@ -3042,6 +3030,39 @@ namespace AnalysisManagerProg
         private void WarningEventHandler(string warningMessage)
         {
             LogWarning(warningMessage);
+        }
+
+        /// <summary>
+        /// Logs the first error while loading a plugin as an error
+        /// Subsequent errors are logged as warnings
+        /// </summary>
+        /// <param name="errorMessage"></param>
+        /// <param name="ex"></param>
+        private void PluginLoader_ErrorEventHandler(string errorMessage, Exception ex)
+        {
+            mPluginLoaderErrorCount++;
+            if (mPluginLoaderErrorCount == 1)
+            {
+                LogError(mPluginLoaderStepTool + " load error: " + errorMessage, ex);
+            }
+            else
+            {
+                string formattedError;
+                if (ex == null || errorMessage.EndsWith(ex.Message, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    formattedError = errorMessage;
+                }
+                else
+                {
+                    if (errorMessage.Contains(ex.Message))
+                        formattedError = errorMessage;
+                    else
+                        formattedError = errorMessage + ": " + ex.Message;
+                }
+
+                LogWarning(formattedError);
+            }
+
         }
 
         private void ProgressUpdateHandler(string progressMessage, float percentComplete)

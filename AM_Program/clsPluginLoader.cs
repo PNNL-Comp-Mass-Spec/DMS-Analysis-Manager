@@ -7,21 +7,20 @@
 //*********************************************************************************************************
 
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Xml;
 using AnalysisManagerBase;
+using PRISM;
 
 namespace AnalysisManagerProg
 {
     /// <summary>
     /// Class for loading analysis manager plugins
     /// </summary>
-    public class clsPluginLoader
+    public class clsPluginLoader : clsEventNotifier
     {
         #region "Member variables"
 
-        private readonly List<string> m_ErrorMessages = new List<string>();
         private readonly string m_MgrFolderPath;
         private string m_pluginConfigFile = "plugin_info.xml";
         private readonly clsSummaryFile m_SummaryFile;
@@ -41,9 +40,9 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
-        /// Exceptions that occur in the call to GetAnalysisResources or GetToolRunner
+        /// When true, show additional trace log messages
         /// </summary>
-        public List<string> ErrorMessages => m_ErrorMessages;
+        public bool TraceMode { get; set; }
 
         #endregion
 
@@ -58,16 +57,6 @@ namespace AnalysisManagerProg
         {
             m_SummaryFile = objSummaryFile;
             m_MgrFolderPath = MgrFolderPath;
-        }
-
-        /// <summary>
-        /// Clears internal list of error messages
-        /// </summary>
-        /// <remarks></remarks>
-        public void ClearMessageList()
-        {
-            // Clears the message list
-            m_ErrorMessages.Clear();
         }
 
 #if PLUGIN_DEBUG_MODE_ENABLED
@@ -165,7 +154,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                m_ErrorMessages.Add("Error in GetPluginInfo:" + ex.Message + "; " + pluginInfo);
+                OnErrorEvent("Error in GetPluginInfo:" + ex.Message + "; " + pluginInfo, ex);
                 return false;
             }
         }
@@ -179,22 +168,56 @@ namespace AnalysisManagerProg
         /// <remarks></remarks>
         private object LoadObject(string className, string assyName)
         {
-            object obj = null;
-            m_ErrorMessages.Clear();
 
             try
             {
-                //Build instance of tool runner subclass from class name and assembly file name.
-                var a = System.Reflection.Assembly.LoadFrom(GetPluginInfoFilePath(assyName));
+                // Build instance of tool runner subclass from class name and assembly file name.
+                var pluginInfoFilePath = GetPluginInfoFilePath(assyName);
+
+                // Make sure the file exists and is capitalized correctly
+                var pluginInfoFile = new FileInfo(pluginInfoFilePath);
+                var expectedName = Path.GetFileName(pluginInfoFilePath);
+
+                if (!pluginInfoFile.Exists)
+                {
+                    var pluginFolder = new DirectoryInfo(m_MgrFolderPath);
+                    var nameUpdated = false;
+                    foreach (var file in pluginFolder.GetFiles("*"))
+                    {
+                        if (!string.Equals(file.Name, expectedName, StringComparison.OrdinalIgnoreCase))
+                            continue;
+
+                        OnDebugEvent("Filename case mismatch; auto-correcting to switch from " +
+                                     expectedName + " to " + file.Name);
+                        pluginInfoFile = file;
+                        nameUpdated = true;
+                        break;
+                    }
+
+                    if (!nameUpdated)
+                    {
+                        OnErrorEvent("Plugin file not found: " + pluginInfoFilePath);
+                        return null;
+                    }
+                }
+
+                if (TraceMode)
+                    OnDebugEvent("Call System.Reflection.Assembly.LoadFrom for assembly " + pluginInfoFile.FullName);
+
+                var a = System.Reflection.Assembly.LoadFrom(pluginInfoFile.FullName);
+
                 var t = a.GetType(className, false, true);
-                obj = Activator.CreateInstance(t);
+
+                var obj = Activator.CreateInstance(t);
+                return obj;
             }
             catch (Exception ex)
             {
                 // Cache exceptions
-                m_ErrorMessages.Add("clsPluginLoader.LoadObject(), exception: " + ex.Message);
+                OnErrorEvent(string.Format("clsPluginLoader.LoadObject(), for class {0}, assembly {1}", className, assyName), ex);
+                return null;
             }
-            return obj;
+
         }
 
         /// <summary>
@@ -228,8 +251,7 @@ namespace AnalysisManagerProg
                     }
                     catch (Exception ex)
                     {
-                        // Cache exceptions
-                        m_ErrorMessages.Add(ex.Message);
+                        OnErrorEvent(string.Format("clsPluginLoader.GetToolRunner(), for class {0}, assembly {1}", className, assyName), ex);
                     }
                 }
             }
@@ -252,14 +274,14 @@ namespace AnalysisManagerProg
             {
 #if PLUGIN_DEBUG_MODE_ENABLED
                 myModule = DebugModeGetAnalysisResources(className);
-                if ((myModule != null))
+                if (myModule != null)
                 {
                     return myModule;
                 }
 #endif
 
                 var obj = LoadObject(className, assyName);
-                if ((obj != null))
+                if (obj != null)
                 {
                     try
                     {
@@ -267,8 +289,7 @@ namespace AnalysisManagerProg
                     }
                     catch (Exception ex)
                     {
-                        // Cache exceptions
-                        m_ErrorMessages.Add(ex.Message);
+                        OnErrorEvent(string.Format("clsPluginLoader.GetAnalysisResources(), for class {0}, assembly {1}", className, assyName), ex);
                     }
                 }
                 m_SummaryFile.Add("Loaded resourcer: " + className + " from " + assyName);
