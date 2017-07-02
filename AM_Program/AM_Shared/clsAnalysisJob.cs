@@ -938,6 +938,11 @@ namespace AnalysisManagerBase
         private RequestTaskResult RequestAnalysisJobFromDB(bool runJobsRemotely)
         {
 
+            if (clsGlobal.OfflineMode)
+            {
+                throw new Exception("RequestAnalysisJobFromDB should not be called when offline mode is enabled");
+            }
+
             var productVersion = clsGlobal.GetAssemblyVersion() ?? "??";
 
             var dotNetVersion = clsGlobal.GetDotNetVersion();
@@ -1060,7 +1065,7 @@ namespace AnalysisManagerBase
 
                 foreach (var stepTool in stepTools)
                 {
-                    var taskQueueFolder = new DirectoryInfo(Path.Combine(taskQueuePathBase, stepTool));
+                    var taskQueueFolder = new DirectoryInfo(Path.Combine(taskQueuePathBase, stepTool.Trim()));
                     if (!taskQueueFolder.Exists)
                     {
                         LogWarning("Task queue folder not found: " + taskQueueFolder.FullName);
@@ -1466,6 +1471,11 @@ namespace AnalysisManagerBase
         /// <remarks>evalCode and EvalMsg not presently used</remarks>
         protected bool SetAnalysisJobComplete(int compCode, string compMsg, int evalCode, string evalMsg)
         {
+
+            if (clsGlobal.OfflineMode)
+            {
+                throw new Exception("SetAnalysisJobComplete should not be called when offline mode is enabled");
+            }
 
             // Setup for execution of the stored procedure
             var cmd = new SqlCommand(SP_NAME_SET_COMPLETE)

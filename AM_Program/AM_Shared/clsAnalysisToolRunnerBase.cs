@@ -992,6 +992,12 @@ namespace AnalysisManagerBase
         /// </remarks>
         public virtual bool CopyResultsToTransferDirectory(string transferFolderPathOverride = "")
         {
+            if (clsGlobal.OfflineMode)
+            {
+                LogDebug("Offline mode is enabled; leaving results in the working directory: " + m_WorkDir);
+                return true;
+            }
+
             var success = MakeResultsFolder();
             if (!success)
             {
@@ -1705,21 +1711,6 @@ namespace AnalysisManagerBase
 
             if (javaProg.Exists)
                 return javaProgLoc;
-
-            if (!Path.HasExtension(javaProg.Name))
-            {
-                var altExtensions = new List<string> {".lnk", ".exe"};
-
-                // If the path is /usr/bin/java but we're debugging on a Windows computer,
-                // the true file to use might be a Windows shortcut, for example \usr\bin\java.lnk
-
-                // Try auto-appending .lnk and .exe to see if those files exist
-                foreach (var extension in altExtensions)
-                {
-                    if (File.Exists(javaProgLoc + extension))
-                        return javaProgLoc + extension;
-                }
-            }
 
             LogError("Cannot find Java: " + javaProgLoc);
             return string.Empty;
@@ -2659,7 +2650,29 @@ namespace AnalysisManagerBase
         /// </remarks>
         public virtual CloseOutType PostProcessRemoteResults()
         {
-            LogDebug("Custom post-processing not required for remote tool " + StepToolName + ", job " + Job);
+            var toolJobDescription = string.Format("remote tool {0}, job {1}", StepToolName, Job);
+
+            var toolVersionInfoFile = new FileInfo(Path.Combine(m_WorkDir, ToolVersionInfoFile));
+            if (!toolVersionInfoFile.Exists)
+            {
+                LogError("ToolVersionInfo file not found for job " + m_JobNum +
+                         "; PostProcessRemoteResults cannot store the tool version in the database", true);
+            }
+            else
+            {
+                using (var reader = new StreamReader(new FileStream(toolVersionInfoFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                {
+                    if (reader.EndOfStream)
+                    {
+                        LogDebug("Storing tool version info in DB for " + toolJobDescription);
+
+                        var toolVersionInfo = reader.ReadLine();
+                        StoreToolVersionInDatabase(toolVersionInfo);
+                    }
+                }
+            }
+
+            LogDebug("Custom post-processing not required for " + StepToolName + ", job " + Job);
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
@@ -3332,30 +3345,11 @@ namespace AnalysisManagerBase
                 SaveToolVersionInfoFile(m_WorkDir, toolVersionInfoCombined);
             }
 
-            // Setup for execution of the stored procedure
-            var cmd = new SqlCommand
-            {
-                CommandType = CommandType.StoredProcedure,
-                CommandText = SP_NAME_SET_TASK_TOOL_VERSION
-            };
-
-            cmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
-            cmd.Parameters.Add(new SqlParameter("@job", SqlDbType.Int)).Value = m_jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job", 0);
-            cmd.Parameters.Add(new SqlParameter("@step", SqlDbType.Int)).Value = m_jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step", 0);
-            cmd.Parameters.Add(new SqlParameter("@ToolVersionInfo", SqlDbType.VarChar, 900)).Value = toolVersionInfoCombined;
-
-            var objAnalysisTask = new clsAnalysisJob(m_mgrParams, m_DebugLevel);
-
-            // Execute the stored procedure (retry the call up to 4 times)
-            var resCode = objAnalysisTask.PipelineDBProcedureExecutor.ExecuteSP(cmd, 4);
-
-            if (resCode == 0)
-            {
+            if (clsGlobal.OfflineMode)
                 return true;
-            }
 
-            LogMessage("Error " + resCode + " storing tool version for current processing step", 0, true);
-            return false;
+            var success = StoreToolVersionInDatabase(toolVersionInfoCombined);
+            return success;
         }
 
         protected bool SortTextFile(string textFilePath, string mergedFilePath, bool hasHeaderLine)
@@ -3402,6 +3396,35 @@ namespace AnalysisManagerBase
                 return false;
             }
 
+        }
+
+        private bool StoreToolVersionInDatabase(string toolVersionInfo)
+        {
+
+            // Setup for execution of the stored procedure
+            var cmd = new SqlCommand
+            {
+                CommandType = CommandType.StoredProcedure,
+                CommandText = SP_NAME_SET_TASK_TOOL_VERSION
+            };
+
+            cmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
+            cmd.Parameters.Add(new SqlParameter("@job", SqlDbType.Int)).Value = m_jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job", 0);
+            cmd.Parameters.Add(new SqlParameter("@step", SqlDbType.Int)).Value = m_jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step", 0);
+            cmd.Parameters.Add(new SqlParameter("@ToolVersionInfo", SqlDbType.VarChar, 900)).Value = toolVersionInfo;
+
+            var objAnalysisTask = new clsAnalysisJob(m_mgrParams, m_DebugLevel);
+
+            // Execute the stored procedure (retry the call up to 4 times)
+            var resCode = objAnalysisTask.PipelineDBProcedureExecutor.ExecuteSP(cmd, 4);
+
+            if (resCode == 0)
+            {
+                return true;
+            }
+
+            LogMessage("Error " + resCode + " storing tool version in database for current processing step", 0, true);
+            return false;
         }
 
         /// <summary>

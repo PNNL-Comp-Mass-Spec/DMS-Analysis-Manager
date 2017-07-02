@@ -376,13 +376,21 @@ namespace AnalysisManagerBase
             m_FileDate = DateTime.Now.ToString("MM-dd-yyyy");
             m_BaseFileName = logFileNameBase;
 
-            // Old layout; deprecated in November 2016
-            // Dim layout = New log4net.Layout.PatternLayout()
-            // Layout.ConversionPattern="%date{MM/dd/yyyy HH:mm:ss}, %message, %level,%newline"
+            log4net.Layout.PatternLayout layout;
+            if (clsGlobal.LinuxOS | System.IO.Path.DirectorySeparatorChar == '/')
+            {
+                layout = new log4net.Layout.PatternLayout {
+                    ConversionPattern = "%date{MM/dd/yyyy HH:mm:ss}, %message, %level,%newline"
+                };
+            }
+            else
+            {
+                layout = new CustomPatternLayout
+                {
+                    ConversionPattern = "%date{MM/dd/yyyy HH:mm:ss}, %message, %level,%newline%stack"
+                };
 
-            var layout = new CustomPatternLayout {
-                ConversionPattern = "%date{MM/dd/yyyy HH:mm:ss}, %message, %level,%newline%stack"
-            };
+            }
 
             layout.ActivateOptions();
 

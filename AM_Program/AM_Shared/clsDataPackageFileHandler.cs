@@ -110,6 +110,10 @@ namespace AnalysisManagerBase
         /// <remarks>Uses the highest job step to determine the input folder, meaning the .mzML.gz file returned will be the one used by MSGF+</remarks>
         private string FindMzMLForJob(string dataset, int job, string stepToolFilter, string workingDir)
         {
+            if (clsGlobal.OfflineMode)
+            {
+                throw new Exception("FindMzMLForJob does not support offline mode");
+            }
 
             try
             {
@@ -150,8 +154,8 @@ namespace AnalysisManagerBase
                             return string.Empty;
                         }
 
-                        OnStatusEvent(string.Format("Unable to determine the input folder for job {0} and step tool {1}; will try again without a step tool filter",
-                            job, stepToolFilter));
+                        OnStatusEvent(string.Format("Unable to determine the input folder for job {0} and step tool {1}; " +
+                                                    "will try again without a step tool filter", job, stepToolFilter));
                         stepToolFilter = string.Empty;
                         stepToolFilterParam.Value = stepToolFilter;
                     }
@@ -540,6 +544,11 @@ namespace AnalysisManagerBase
             var debugLevel = mAnalysisResources.DebugLevel;
             var workingDir = mAnalysisResources.WorkDir;
 
+            if (clsGlobal.OfflineMode)
+            {
+                throw new Exception("RetrieveDataPackagePeptideHitJobPHRPFiles does not support offline mode");
+            }
+
             try
             {
                 var success = mDataPackageInfoLoader.LoadDataPackageDatasetInfo(out dctDataPackageDatasets);
@@ -582,7 +591,6 @@ namespace AnalysisManagerBase
                 OnErrorEvent("Exception calling RetrieveDataPackagePeptideHitJobInfo", ex);
                 return false;
             }
-
 
             try
             {
