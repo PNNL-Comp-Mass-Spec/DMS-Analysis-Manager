@@ -1359,6 +1359,50 @@ namespace AnalysisManagerBase
             return ProcessInfo.GetCoreCount();
         }
 
+        private static double GetFreeDiskSpaceLinux(DirectoryInfo diDirectory)
+        {
+            var diDrive = new DriveInfo(diDirectory.Root.FullName);
+            var freeSpaceMB = BytesToMB(diDrive.TotalFreeSpace);
+            return freeSpaceMB;
+        }
+
+        /// <summary>
+        /// Determine the free disk space on the drive with the given directory
+        /// </summary>
+        /// <param name="diDirectory"></param>
+        /// <returns>Free space, in MB</returns>
+        private static double GetFreeDiskSpaceWindows(DirectoryInfo diDirectory)
+        {
+            double freeSpaceMB;
+
+            if (diDirectory.Root.FullName.StartsWith(@"\\") || !diDirectory.Root.FullName.Contains(":"))
+            {
+                // Directory path is a remote share; use GetDiskFreeSpaceEx in Kernel32.dll
+
+                if (clsDiskInfo.GetDiskFreeSpace(
+                    diDirectory.FullName,
+                    out _,
+                    out _,
+                    out var totalNumberOfFreeBytes))
+                {
+                    freeSpaceMB = BytesToMB(totalNumberOfFreeBytes);
+                }
+                else
+                {
+                    freeSpaceMB = 0;
+                }
+
+            }
+            else
+            {
+                // Directory is a local drive; can query with .NET
+                var diDrive = new DriveInfo(diDirectory.Root.FullName);
+                freeSpaceMB = BytesToMB(diDrive.TotalFreeSpace);
+            }
+
+            return freeSpaceMB;
+        }
+
         /// <summary>
         /// Reports the amount of free memory on this computer (in MB)
         /// </summary>
@@ -1979,8 +2023,6 @@ namespace AnalysisManagerBase
             out string errorMessage)
         {
 
-            double freeSpaceMB;
-
             errorMessage = string.Empty;
 
             var diDirectory = new DirectoryInfo(directoryPath);
@@ -1993,29 +2035,15 @@ namespace AnalysisManagerBase
                 return false;
             }
 
-            if (diDirectory.Root.FullName.StartsWith(@"\\") || !diDirectory.Root.FullName.Contains(":"))
+            double freeSpaceMB;
+
+            if (LinuxOS)
             {
-                // Directory path is a remote share; use GetDiskFreeSpaceEx in Kernel32.dll
-
-                if (clsDiskInfo.GetDiskFreeSpace(
-                    diDirectory.FullName,
-                    out _,
-                    out _,
-                    out var totalNumberOfFreeBytes))
-                {
-                    freeSpaceMB = BytesToMB(totalNumberOfFreeBytes);
-                }
-                else
-                {
-                    freeSpaceMB = 0;
-                }
-
+                freeSpaceMB = GetFreeDiskSpaceLinux(diDirectory);
             }
             else
             {
-                // Directory is a local drive; can query with .NET
-                var diDrive = new DriveInfo(diDirectory.Root.FullName);
-                freeSpaceMB = BytesToMB(diDrive.TotalFreeSpace);
+                freeSpaceMB = GetFreeDiskSpaceWindows(diDirectory);
             }
 
             if (freeSpaceMB < minFreeSpaceMB)

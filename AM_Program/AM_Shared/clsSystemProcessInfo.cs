@@ -33,7 +33,6 @@ namespace AnalysisManagerBase
         public void ClearCachedPerformanceCounterForProcessID(int processId)
         {
             mWindowsProcessStats?.ClearCachedPerformanceCounterForProcessID(processId);
-
         }
 
         public int GetCoreCount()
