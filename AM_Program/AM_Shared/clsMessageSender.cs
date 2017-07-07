@@ -62,7 +62,7 @@ namespace AnalysisManagerBase
                 {
                     // something went wrong trying to send message,
                     // get rid of current set of connection object - they'll never work again anyway
-                    DestroyConnection();                    
+                    DestroyConnection();
                 }
             }
         }
@@ -134,7 +134,7 @@ namespace AnalysisManagerBase
             }
 
             msg += ": " + string.Join("; ", errorList);
-            OnErrorEvent(msg);           
+            OnErrorEvent(msg);
         }
 
         private void DestroyConnection()

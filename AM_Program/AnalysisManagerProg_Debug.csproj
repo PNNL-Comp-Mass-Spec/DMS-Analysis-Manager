@@ -142,15 +142,17 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>xcopy "$(ProjectDir)..\AM_Common\DTAtoMGF.dll" "$(TargetDir)" /D /Y
+    <PostBuildEvent>xcopy "$(ProjectDir)..\AM_Common\DLLVersionInspector*.exe" "$(TargetDir)" /D /Y
+xcopy "$(ProjectDir)..\AM_Common\DTAtoMGF.dll" "$(TargetDir)" /D /Y
+xcopy "$(ProjectDir)..\AM_Common\FileConcatenator.dll" "$(TargetDir)" /y /d  /F
 xcopy "$(ProjectDir)..\AM_Common\MascotGenericFileToDTA.dll" "$(TargetDir)" /D /Y
+xcopy "$(ProjectDir)..\AM_Common\PeptideFileExtractor.dll" "$(TargetDir)" /y /d /F
 xcopy "$(ProjectDir)..\AM_Common\PeptideToProteinMapEngine.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\PHRPReader.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\PNNLOmics.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\ProteinCoverageSummarizer.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\ProteinFileReader.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\ThermoRawFileReader.dll" "$(TargetDir)" /D /Y
-xcopy "$(ProjectDir)..\AM_Common\DLLVersionInspector*.exe" "$(TargetDir)" /D /Y
 
 xcopy "$(TargetDir)AnalysisManagerProg.exe" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)AnalysisManagerProg.pdb" "$(ProjectDir)..\AM_Common\" /D /Y
