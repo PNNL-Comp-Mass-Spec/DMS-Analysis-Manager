@@ -311,7 +311,8 @@ namespace AnalysisManagerProg
 
             if (!hostName.StartsWith("emslmq", StringComparison.InvariantCultureIgnoreCase) &&
                 !hostName.StartsWith("emslpub", StringComparison.InvariantCultureIgnoreCase) &&
-                !hostName.StartsWith("monroe", StringComparison.InvariantCultureIgnoreCase))
+                !hostName.StartsWith("monroe", StringComparison.InvariantCultureIgnoreCase) &&
+                !hostName.StartsWith("WE27676", StringComparison.InvariantCultureIgnoreCase))
             {
                 if (!m_MgrName.StartsWith(hostName, StringComparison.InvariantCultureIgnoreCase))
                 {
