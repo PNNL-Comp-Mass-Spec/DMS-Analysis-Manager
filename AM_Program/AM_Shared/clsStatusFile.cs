@@ -978,6 +978,11 @@ namespace AnalysisManagerBase
             float freeMemoryMB,
             float runTimeHours)
         {
+            // Note that we use this instead of using .ToString("o")
+            // because .NET includes 7 digits of precision for the milliseconds,
+            // and SQL Server only allows 3 digits of precision
+            const string ISO_8601_DATE = "yyyy-MM-ddTHH:mm:ss.fffK";
+
             // Create a new memory stream in which to write the XML
             var objMemoryStream = new MemoryStream();
             using (var xWriter = new XmlTextWriter(objMemoryStream, System.Text.Encoding.UTF8))
@@ -996,8 +1001,11 @@ namespace AnalysisManagerBase
                 xWriter.WriteElementString("MgrName", status.MgrName);
                 xWriter.WriteElementString("RemoteMgrName", status.RemoteMgrName);
                 xWriter.WriteElementString("MgrStatus", status.ConvertMgrStatusToString(status.MgrStatus));
-                xWriter.WriteElementString("LastUpdate", lastUpdate.ToLocalTime().ToString(CultureInfo.InvariantCulture));
-                xWriter.WriteElementString("LastStartTime", status.TaskStartTime.ToLocalTime().ToString(CultureInfo.InvariantCulture));
+
+                // Write out times in the format 2017-07-06T23:23:14.337Z
+                xWriter.WriteElementString("LastUpdate", lastUpdate.ToUniversalTime().ToString(ISO_8601_DATE));
+                xWriter.WriteElementString("LastStartTime", status.TaskStartTime.ToUniversalTime().ToString(ISO_8601_DATE));
+
                 xWriter.WriteElementString("CPUUtilization", cpuUtilization.ToString("##0.0"));
                 xWriter.WriteElementString("FreeMemoryMB", freeMemoryMB.ToString("##0.0"));
                 xWriter.WriteElementString("ProcessID", processId.ToString());
