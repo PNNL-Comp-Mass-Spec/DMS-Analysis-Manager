@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Globalization;
 using log4net;
 using log4net.Appender;
 using log4net.Util.TypeConverters;
@@ -25,13 +26,17 @@ namespace AnalysisManagerBase
         //*********************************************************************************************************
 
         #region "Constants"
+        
         public const string DB_LOGGER_MGR_CONTROL = "MgrControlDbDefinedAppender";
 
         public const string DB_LOGGER_NO_MGR_CONTROL_PARAMS = "DbAppenderBeforeMgrControlParams";
-        #endregion
+
         private const string LOG_FILE_APPENDER = "FileAppender";
 
+        #endregion
+
         #region "Enums"
+
         public enum LogLevels
         {
             DEBUG = 5,
@@ -47,28 +52,28 @@ namespace AnalysisManagerBase
             LogDb,
             LogSystem
         }
+
         #endregion
 
-        #region "Module variables"
+        #region "Class variables"
+
         private static readonly ILog m_FileLogger = LogManager.GetLogger("FileLogger");
         private static readonly ILog m_DbLogger = LogManager.GetLogger("DbLogger");
-
         private static readonly ILog m_SysLogger = LogManager.GetLogger("SysLogger");
+
         private static string m_FileDate = "";
         private static string m_BaseFileName = "";
+        private static string m_MostRecentErrorMessage = string.Empty;
 
         private static FileAppender m_FileAppender;
+
         #endregion
-        private static string m_MostRecentErrorMessage = string.Empty;
 
         #region "Properties"
 
         /// <summary>
         /// File path for the current log file used by the FileAppender
         /// </summary>
-        /// <value></value>
-        /// <returns></returns>
-        /// <remarks></remarks>
         public static string CurrentFileAppenderPath
         {
             get
@@ -77,6 +82,7 @@ namespace AnalysisManagerBase
                 {
                     return string.Empty;
                 }
+
                 return m_FileAppender.File;
             }
         }
@@ -100,7 +106,6 @@ namespace AnalysisManagerBase
         /// <param name="loggerType">Type of logger to use</param>
         /// <param name="logLevel">Level of log reporting</param>
         /// <param name="message">Message to be logged</param>
-        /// <remarks></remarks>
         public static void WriteLog(LoggerTypes loggerType, LogLevels logLevel, string message)
         {
             WriteLogWork(loggerType, logLevel, message, null);
@@ -113,7 +118,6 @@ namespace AnalysisManagerBase
         /// <param name="logLevel">Level of log reporting</param>
         /// <param name="message">Message to be logged</param>
         /// <param name="ex">Exception to be logged</param>
-        /// <remarks></remarks>
         public static void WriteLog(LoggerTypes loggerType, LogLevels logLevel, string message, Exception ex)
         {
             WriteLogWork(loggerType, logLevel, message, ex);
@@ -125,8 +129,7 @@ namespace AnalysisManagerBase
         /// <param name="loggerType">Type of logger to use</param>
         /// <param name="logLevel">Level of log reporting</param>
         /// <param name="message">Message to be logged</param>
-        /// <param name="ex">Exception to be logged; nothing if no exception</param>
-        /// <remarks></remarks>
+        /// <param name="ex">Exception to be logged; null if no exception</param>
         private static void WriteLogWork(LoggerTypes loggerType, LogLevels logLevel, string message, Exception ex)
         {
             ILog myLogger;
@@ -244,7 +247,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Changes the base log file name
         /// </summary>
-        /// <remarks></remarks>
         public static void ChangeLogFileName()
         {
             ChangeLogFileName(m_BaseFileName + "_" + m_FileDate + ".txt");
@@ -267,7 +269,7 @@ namespace AnalysisManagerBase
 
             foreach (var selectedAppender in appendList)
             {
-                // Convert the IAppender var to a FileAppender instance
+                // Convert the IAppender object to a FileAppender instance
                 var AppenderToChange = selectedAppender as FileAppender;
                 if (AppenderToChange == null)
                 {
@@ -285,31 +287,30 @@ namespace AnalysisManagerBase
         /// Gets the specified appender
         /// </summary>
         /// <param name="appenderName">Name of appender to find</param>
-        /// <returns>List(IAppender) objects if found; NOTHING otherwise</returns>
-        /// <remarks></remarks>
+        /// <returns>List(IAppender) objects if found; null otherwise</returns>
         private static IEnumerable<IAppender> FindAppenders(string appenderName)
         {
 
             // Get a list of the current loggers
-            var LoggerList = LogManager.GetCurrentLoggers();
-            if (LoggerList.GetLength(0) < 1)
+            var loggerList = LogManager.GetCurrentLoggers();
+            if (loggerList.GetLength(0) < 1) 
                 return null;
 
             // Create a List of appenders matching the criteria for each logger
-            var RetList = new List<IAppender>();
-            foreach (var testLogger in LoggerList)
+            var retList = new List<IAppender>();
+            foreach (var testLogger in loggerList)
             {
                 foreach (var testAppender in testLogger.Logger.Repository.GetAppenders())
                 {
-                    if (testAppender.Name == appenderName)
-                        RetList.Add(testAppender);
+                    if (testAppender.Name == appenderName) 
+                        retList.Add(testAppender);
                 }
             }
 
             // Return the list of appenders, if any found
-            if (RetList.Count > 0)
+            if (retList.Count > 0)
             {
-                return RetList;
+                return retList;
             }
 
             return null;
@@ -319,7 +320,6 @@ namespace AnalysisManagerBase
         /// Sets the file logging level via an integer value (Overloaded)
         /// </summary>
         /// <param name="logLevel">Integer corresponding to level (1-5, 5 being most verbose)</param>
-        /// <remarks></remarks>
         public static void SetFileLogLevel(int logLevel)
         {
             var logLevelEnumType = typeof(LogLevels);
@@ -332,16 +332,15 @@ namespace AnalysisManagerBase
             }
 
             // Convert input integer into the associated enum
-            var logLevelEnum = (LogLevels)Enum.Parse(logLevelEnumType, logLevel.ToString());
-            SetFileLogLevel(logLevelEnum);
+            var logLevelEnum = (LogLevels)Enum.Parse(logLevelEnumType, logLevel.ToString(CultureInfo.InvariantCulture));
 
+            SetFileLogLevel(logLevelEnum);
         }
 
         /// <summary>
         /// Sets file logging level based on enumeration (Overloaded)
         /// </summary>
         /// <param name="logLevel">LogLevels value defining level (Debug is most verbose)</param>
-        /// <remarks></remarks>
         public static void SetFileLogLevel(LogLevels logLevel)
         {
             var logger = (log4net.Repository.Hierarchy.Logger)m_FileLogger.Logger;
@@ -423,7 +422,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Configures the DB logger
+        /// Configures the database logger
         /// </summary>
         /// <param name="connStr">Database connection string</param>
         /// <param name="moduleName">Module name used by logger</param>
@@ -448,9 +447,9 @@ namespace AnalysisManagerBase
             }
 
             var addFileAppender = true;
-            foreach (var item in curLogger.Appenders)
+            foreach (var appender in curLogger.Appenders)
             {
-                if (ReferenceEquals(item, m_FileAppender))
+                if (ReferenceEquals(appender, m_FileAppender))
                 {
                     addFileAppender = false;
                     break;
@@ -540,14 +539,15 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Creates a layout var for a Db appender parameter
+        /// Creates a layout object for a Db appender parameter
         /// </summary>
         /// <param name="layoutStr">Name of parameter</param>
         /// <returns></returns>
         private static log4net.Layout.IRawLayout CreateLayout(string layoutStr)
         {
             var layoutConvert = new log4net.Layout.RawLayoutConverter();
-            var returnLayout = new log4net.Layout.PatternLayout {
+            var returnLayout = new log4net.Layout.PatternLayout
+            {
                 ConversionPattern = layoutStr
             };
 
