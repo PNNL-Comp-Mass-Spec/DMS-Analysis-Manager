@@ -1,5 +1,18 @@
 Analysis Tool Manager History
 
+July 11, 2017
+	- Add support for pushing jobs to a remote Linux host
+	- Add offline mode option for processing jobs on a Linux host, independent of other servers
+
+April 12, 2017
+	- Update to .NET 4.6.2
+	- Obtain PRISM.dll and PRISMWin.dll from NuGet
+	- Use PRISMWin.dll for core count , core usage, clsDotNETVersionChecker, and GetDiskFreeSpace
+
+February 14, 2017
+	- Converted from VB.NET to C#
+	- Updated to .NET 4.6.1
+
 April 22, 2016
 	- Update to .NET 4.5.1 due to new MSFileInfoScannerInterfaces.dll that is compiled against v4.5.1 and
 	  uses System.Data.SQLite v1.0.97 compiled for .NET 4.5.1
