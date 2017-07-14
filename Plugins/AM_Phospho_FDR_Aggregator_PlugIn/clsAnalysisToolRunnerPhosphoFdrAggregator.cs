@@ -181,7 +181,15 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             try
             {
                 var fiSynFile = new FileInfo(synFilePath);
-                var fiMsgfFile = new FileInfo(Path.Combine(fiSynFile.Directory.FullName, Path.GetFileNameWithoutExtension(fiSynFile.Name) + "_MSGF.txt"));
+                if (fiSynFile.Directory == null)
+                {
+                    LogError("Cannot determine the parent directory of " + fiSynFile.FullName);
+                    return false;
+                }
+
+                var msgfFileName = Path.GetFileNameWithoutExtension(fiSynFile.Name) + "_MSGF.txt";
+
+                var fiMsgfFile = new FileInfo(Path.Combine(fiSynFile.Directory.FullName, msgfFileName));
 
                 if (!fiMsgfFile.Exists)
                 {
@@ -955,6 +963,12 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             mConsoleOutputErrorMsg = string.Empty;
 
             var fiSourceFile = new FileInfo(inputFilePath);
+            if (fiSourceFile.Directory == null)
+            {
+                LogError("Cannot determine the parent directory of " + fiSourceFile.FullName);
+                return false;
+            }
+
             var currentWorkingDir = fiSourceFile.Directory.FullName;
             var updatedInputFileName = Path.GetFileNameWithoutExtension(fiSourceFile.Name) + FILE_SUFFIX_SYN_PLUS_ASCORE;
 
@@ -1094,7 +1108,10 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 fiProgram
             };
 
-            ioToolFiles.Add(new FileInfo(Path.Combine(fiProgram.Directory.FullName, "AScore_DLL.dll")));
+            if (fiProgram.Directory != null)
+            {
+                ioToolFiles.Add(new FileInfo(Path.Combine(fiProgram.Directory.FullName, "AScore_DLL.dll")));
+            }
 
             try
             {
