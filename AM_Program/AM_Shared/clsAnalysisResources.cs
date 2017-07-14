@@ -1996,8 +1996,11 @@ namespace AnalysisManagerBase
             {
                 if (string.IsNullOrEmpty(errorMessage))
                 {
-                    errorMessage = "Cached " + msXmlExtension + " file does not exist; will re-generate it";
+                    errorMessage = "Cached " + msXmlExtension + " file does not exist";
                 }
+
+                if (!errorMessage.Contains("will re-generate"))
+                    errorMessage += "; will re-generate the " + msXmlExtension + " file";
 
                 LogMessage("Warning: " + errorMessage);
                 return CloseOutType.CLOSEOUT_FILE_NOT_IN_CACHE;
@@ -3783,12 +3786,12 @@ namespace AnalysisManagerBase
                                 {
                                     // Look for a mzML.gz file instead
 
-
                                     var retrieved = m_FileSearch.RetrieveCachedMSXMLFile(DOT_MZML_EXTENSION, false,
                                         out var errorMessage, out _);
 
                                     if (!retrieved)
                                     {
+                                        // No _dta.zip and no mzML.gz file; abort processing
                                         if (string.IsNullOrWhiteSpace(errorMessage))
                                         {
                                             errorMessage = "Unknown error looking for the .mzML file for " + dataPkgJob.Value.Dataset + ", job " + dataPkgJob.Key;

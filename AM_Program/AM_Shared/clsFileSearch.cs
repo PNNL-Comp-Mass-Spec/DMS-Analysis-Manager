@@ -1185,11 +1185,12 @@ namespace AnalysisManagerBase
                     var msXmlToolNameVersionFolder = clsAnalysisResources.GetMSXmlToolNameVersionFolder(folderName);
                     msXmlToolNameVersionFolders.Add(msXmlToolNameVersionFolder);
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    errorMessage = "InputFolderName is not in the expected form of ToolName_Version_DatasetID (" + folderName + "); " + "cannot retrieve the " + resultFileExtension + " File";
+                    errorMessage = "InputFolderName is not in the expected form of ToolName_Version_DatasetID (" + folderName + "); " +
+                        "will not try to find the " + resultFileExtension + " file in this folder";
 
-                    OnErrorEvent(errorMessage, ex);
+                    OnDebugEvent(errorMessage);
                 }
             }
 
@@ -1198,8 +1199,6 @@ namespace AnalysisManagerBase
                 if (string.IsNullOrEmpty(errorMessage))
                 {
                     errorMessage = "The input folder and shared results folder(s) were not in the expected form of ToolName_Version_DatasetID";
-
-                    OnErrorEvent(errorMessage);
                 }
                 return false;
             }
@@ -1233,11 +1232,9 @@ namespace AnalysisManagerBase
 
             }
 
-            if (disourceFolder == null)
+            if (disourceFolder == null || !disourceFolder.Exists)
             {
-                errorMessage += "); will re-generate the " + resultFileExtension + " file";
-
-                OnStatusEvent(errorMessage);
+                errorMessage += ")";
                 fileMissingFromCache = true;
                 return false;
             }
@@ -1262,7 +1259,6 @@ namespace AnalysisManagerBase
 
             var hashCheckFilePath = fiSourceFile.FullName + clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX;
 
-            errorMessage = string.Empty;
             if (!clsGlobal.ValidateFileVsHashcheck(fiSourceFile.FullName, hashCheckFilePath, out errorMessage))
             {
                 errorMessage = "Cached " + resultFileExtension + " file does not match the hashcheck file in " + disourceFolder.FullName + "; will re-generate it";
