@@ -238,43 +238,6 @@ namespace AnalysisManagerBase
         /// <param name="sourceFileName">Name of file to copy</param>
         /// <param name="sourceFolderPath">Path to folder where input file is located</param>
         /// <param name="targetFolderPath">Destination directory for file copy</param>
-        /// <returns>TRUE for success; FALSE for failure</returns>
-        /// <remarks></remarks>
-        private bool CopyFileToWorkDirWithRename(
-            string datasetName,
-            string sourceFileName,
-            string sourceFolderPath,
-            string targetFolderPath)
-        {
-            const int maxCopyAttempts = 3;
-            return CopyFileToWorkDirWithRename(datasetName, sourceFileName, sourceFolderPath, targetFolderPath,
-                clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly: false, maxCopyAttempts: maxCopyAttempts);
-        }
-
-        /// <summary>
-        /// Copies specified file from storage server to local working directory
-        /// </summary>
-        /// <param name="datasetName">Dataset name</param>
-        /// <param name="sourceFileName">Name of file to copy</param>
-        /// <param name="sourceFolderPath">Path to folder where input file is located</param>
-        /// <param name="targetFolderPath">Destination directory for file copy</param>
-        /// <param name="logMsgTypeIfNotFound">Type of message to log if the file is not found</param>
-        /// <returns>TRUE for success; FALSE for failure</returns>
-        /// <remarks></remarks>
-        private bool CopyFileToWorkDirWithRename(string datasetName, string sourceFileName, string sourceFolderPath, string targetFolderPath, clsLogTools.LogLevels logMsgTypeIfNotFound)
-        {
-            const int maxCopyAttempts = 3;
-            return CopyFileToWorkDirWithRename(datasetName, sourceFileName, sourceFolderPath, targetFolderPath,
-                logMsgTypeIfNotFound, createStoragePathInfoOnly: false, maxCopyAttempts: maxCopyAttempts);
-        }
-
-        /// <summary>
-        /// Copies specified file from storage server to local working directory
-        /// </summary>
-        /// <param name="datasetName">Dataset name</param>
-        /// <param name="sourceFileName">Name of file to copy</param>
-        /// <param name="sourceFolderPath">Path to folder where input file is located</param>
-        /// <param name="targetFolderPath">Destination directory for file copy</param>
         /// <param name="logMsgTypeIfNotFound">Type of message to log if the file is not found</param>
         /// <param name="maxCopyAttempts">Maximum number of attempts to make when errors are encountered while copying the file</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
@@ -356,12 +319,6 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                if (sourceFilePath == null)
-                    sourceFilePath = sourceFileName;
-
-                if (sourceFilePath == null)
-                    sourceFilePath = "??";
-
                 OnErrorEvent("Exception in CopyFileToWorkDirWithRename for " + sourceFilePath, ex);
             }
 
@@ -441,11 +398,6 @@ namespace AnalysisManagerBase
             }
 
             // If we got to here, there were too many failures
-            if (retryCount < 1)
-            {
-                return false;
-            }
-
             return false;
 
         }

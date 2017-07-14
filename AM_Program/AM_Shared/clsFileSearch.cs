@@ -901,34 +901,6 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Finds the .pbf (PNNL Binary Format) file for this dataset
-        /// </summary>
-        /// <returns>The path to the .pbf file</returns>
-        /// <remarks></remarks>
-        private string FindPBFFile(out string errorMessage)
-        {
-            errorMessage = string.Empty;
-
-            var sourceFileName = DatasetName + clsAnalysisResources.DOT_PBF_EXTENSION;
-            var sourceFolderPath = FindDataFile(sourceFileName);
-
-            if (!string.IsNullOrEmpty(sourceFolderPath))
-            {
-                if (sourceFolderPath.StartsWith(MYEMSL_PATH_FLAG))
-                {
-                    return sourceFolderPath;
-                }
-
-                // Return the path to the .pbf file
-                return Path.Combine(sourceFolderPath, sourceFileName);
-            }
-
-            errorMessage = "Could not find " + sourceFileName + " using FindDataFile";
-            return string.Empty;
-
-        }
-
-        /// <summary>
         /// Split apart coordinates that look like "R00X438Y093" into R, X, and Y
         /// </summary>
         /// <param name="coord"></param>
@@ -1342,19 +1314,6 @@ namespace AnalysisManagerBase
             return true;
 
         }
-
-        /// <summary>
-        /// Retrieves a dataset file for the analysis job in progress; uses the user-supplied extension to match the file
-        /// </summary>
-        /// <param name="fileExtension">File extension to match; must contain a period, for example ".raw"</param>
-        /// <param name="createStoragePathInfoOnly">If true, then create a storage path info file</param>
-        /// <returns>TRUE for success; FALSE for failure</returns>
-        /// <remarks></remarks>
-        private bool RetrieveDatasetFile(string fileExtension, bool createStoragePathInfoOnly)
-        {
-            return RetrieveDatasetFile(fileExtension, createStoragePathInfoOnly, clsFolderSearch.DEFAULT_MAX_RETRY_COUNT);
-        }
-
         /// <summary>
         /// Retrieves a dataset file for the analysis job in progress; uses the user-supplied extension to match the file
         /// </summary>
@@ -1864,20 +1823,6 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="retrieveSICStatsFile">If True, then also copies the _SICStats.txt file in addition to the ScanStats files</param>
         /// <param name="createStoragePathInfoOnly">If true, then creates a storage path info file but doesn't actually copy the files</param>
-        /// <returns>True if the file was found and retrieved, otherwise False</returns>
-        /// <remarks></remarks>
-        private bool RetrieveScanAndSICStatsFiles(bool retrieveSICStatsFile, bool createStoragePathInfoOnly)
-        {
-            return RetrieveScanAndSICStatsFiles(retrieveSICStatsFile,
-                createStoragePathInfoOnly, retrieveScanStatsFile: true, retrieveScanStatsExFile: true);
-        }
-
-        /// <summary>
-        /// Looks for this dataset's MASIC results files
-        /// Looks for the files in any SIC folder that exists for the dataset
-        /// </summary>
-        /// <param name="retrieveSICStatsFile">If True, then also copies the _SICStats.txt file in addition to the ScanStats files</param>
-        /// <param name="createStoragePathInfoOnly">If true, then creates a storage path info file but doesn't actually copy the files</param>
         /// <param name="retrieveScanStatsFile">If True, then retrieves the ScanStats.txt file</param>
         /// <param name="retrieveScanStatsExFile">If True, then retrieves the ScanStatsEx.txt file</param>
         /// <returns>True if the file was found and retrieved, otherwise False</returns>
@@ -2049,35 +1994,6 @@ namespace AnalysisManagerBase
                     lstNonCriticalFileSuffixes: lstNonCriticalFileSuffixes);
             }
 
-        }
-
-        /// <summary>
-        /// Retrieves the MASIC results for this dataset using the specified folder
-        /// </summary>
-        /// <param name="MASICResultsFolderPath">Source folder to copy files from</param>
-        /// <param name="retrieveSICStatsFile">If True, then also copies the _SICStats.txt file in addition to the ScanStats files</param>
-        /// <param name="createStoragePathInfoOnly">If true, then creates a storage path info file but doesn't actually copy the files</param>
-        /// <param name="retrieveScanStatsFile">If True, then retrieves the ScanStats.txt file</param>
-        /// <param name="retrieveScanStatsExFile">If True, then retrieves the ScanStatsEx.txt file</param>
-        /// <returns>True if the file was found and retrieved, otherwise False</returns>
-        /// <remarks></remarks>
-        private bool RetrieveScanAndSICStatsFiles(
-            string MASICResultsFolderPath,
-            bool retrieveSICStatsFile,
-            bool createStoragePathInfoOnly,
-            bool retrieveScanStatsFile,
-            bool retrieveScanStatsExFile)
-        {
-
-            var lstNonCriticalFileSuffixes = new List<string>();
-            const bool RETRIEVE_REPORTERIONS_FILE = false;
-
-            return RetrieveScanAndSICStatsFiles(
-                MASICResultsFolderPath, retrieveSICStatsFile, createStoragePathInfoOnly,
-                retrieveScanStatsFile,
-                retrieveScanStatsExFile,
-                RETRIEVE_REPORTERIONS_FILE,
-                lstNonCriticalFileSuffixes);
         }
 
         /// <summary>

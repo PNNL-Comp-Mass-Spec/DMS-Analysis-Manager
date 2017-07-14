@@ -460,43 +460,6 @@ namespace AnalysisManagerBase
         /// <param name="dsName">Name of the dataset</param>
         /// <param name="fileNameToFind">Name of a file that must exist in the folder; can contain a wildcard, e.g. *.zip</param>
         /// <param name="folderNameToFind">Optional: Name of a folder that must exist in the dataset folder; can contain a wildcard, e.g. SEQ*</param>
-        /// <returns>Path to the most appropriate dataset folder</returns>
-        /// <remarks>Although FileNameToFind and FolderNameToFind could both be empty, you are highly encouraged to filter by either Filename or by FolderName when using FindValidFolder</remarks>
-        private string FindValidFolder(string dsName, string fileNameToFind, string folderNameToFind)
-        {
-
-            return FindValidFolder(dsName, fileNameToFind, folderNameToFind, DEFAULT_MAX_RETRY_COUNT,
-                logFolderNotFound: true, retrievingInstrumentDataFolder: false);
-
-        }
-
-        /// <summary>
-        /// Determines the most appropriate folder to use to obtain dataset files from
-        /// Optionally, can require that a certain file also be present in the folder for it to be deemed valid
-        /// If no folder is deemed valid, returns the path defined by "DatasetStoragePath"
-        /// </summary>
-        /// <param name="dsName">Name of the dataset</param>
-        /// <param name="fileNameToFind">Name of a file that must exist in the folder; can contain a wildcard, e.g. *.zip</param>
-        /// <param name="folderNameToFind">Optional: Name of a folder that must exist in the dataset folder; can contain a wildcard, e.g. SEQ*</param>
-        /// <param name="retrievingInstrumentDataFolder">Set to True when retrieving an instrument data folder</param>
-        /// <returns>Path to the most appropriate dataset folder</returns>
-        /// <remarks>Although FileNameToFind and FolderNameToFind could both be empty, you are highly encouraged to filter by either Filename or by FolderName when using FindValidFolder</remarks>
-        private string FindValidFolder(string dsName, string fileNameToFind, string folderNameToFind, bool retrievingInstrumentDataFolder)
-        {
-
-            return FindValidFolder(dsName, fileNameToFind, folderNameToFind, DEFAULT_MAX_RETRY_COUNT,
-                logFolderNotFound: true, retrievingInstrumentDataFolder: retrievingInstrumentDataFolder);
-
-        }
-
-        /// <summary>
-        /// Determines the most appropriate folder to use to obtain dataset files from
-        /// Optionally, can require that a certain file also be present in the folder for it to be deemed valid
-        /// If no folder is deemed valid, returns the path defined by "DatasetStoragePath"
-        /// </summary>
-        /// <param name="dsName">Name of the dataset</param>
-        /// <param name="fileNameToFind">Name of a file that must exist in the folder; can contain a wildcard, e.g. *.zip</param>
-        /// <param name="folderNameToFind">Optional: Name of a folder that must exist in the dataset folder; can contain a wildcard, e.g. SEQ*</param>
         /// <param name="maxRetryCount">Maximum number of attempts</param>
         /// <returns>Path to the maxRetryCount appropriate dataset folder</returns>
         /// <remarks>Although FileNameToFind and FolderNameToFind could both be empty, you are highly encouraged to filter by either Filename or by FolderName when using FindValidFolder</remarks>
