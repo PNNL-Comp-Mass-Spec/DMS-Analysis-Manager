@@ -2294,7 +2294,7 @@ namespace AnalysisManagerBase
                     {
                         // DeconTools_V2 now supports reading the .D files directly
                         // Call RetrieveDotDFolder() to copy the folder and all subfolders
-                        success = RetrieveDotDFolder(createStoragePathInfoOnly, maxAttempts, skipBAFFiles: true);
+                        success = RetrieveDotDFolder(createStoragePathInfoOnly, skipBAFFiles: true);
                     }
 
                     break;
@@ -2315,7 +2315,7 @@ namespace AnalysisManagerBase
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.MicromassRawFolder:
                     // Micromass QTOF data
-                    success = RetrieveDotRawFolder(createStoragePathInfoOnly, maxAttempts);
+                    success = RetrieveDotRawFolder(createStoragePathInfoOnly);
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.UIMF:
@@ -2348,7 +2348,7 @@ namespace AnalysisManagerBase
                         skipBAFFiles = true;
                     }
 
-                    success = RetrieveDotDFolder(createStoragePathInfoOnly, maxAttempts, skipBAFFiles);
+                    success = RetrieveDotDFolder(createStoragePathInfoOnly, skipBAFFiles);
 
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.BrukerMALDIImaging:
@@ -2380,7 +2380,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks></remarks>
-        private bool RetrieveDotDFolder(bool createStoragePathInfoOnly, int maxAttempts, bool skipBAFFiles)
+        private bool RetrieveDotDFolder(bool createStoragePathInfoOnly, bool skipBAFFiles)
         {
             var fileNamesToSkip = new List<string>();
             if (skipBAFFiles)
@@ -2388,7 +2388,7 @@ namespace AnalysisManagerBase
                 fileNamesToSkip.Add("analysis.baf");
             }
 
-            return RetrieveDotXFolder(clsAnalysisResources.DOT_D_EXTENSION, createStoragePathInfoOnly, maxAttempts, fileNamesToSkip);
+            return RetrieveDotXFolder(clsAnalysisResources.DOT_D_EXTENSION, createStoragePathInfoOnly, fileNamesToSkip);
         }
 
         /// <summary>
@@ -2396,9 +2396,9 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks></remarks>
-        private bool RetrieveDotRawFolder(bool createStoragePathInfoOnly, int maxAttempts)
+        private bool RetrieveDotRawFolder(bool createStoragePathInfoOnly)
         {
-            return RetrieveDotXFolder(clsAnalysisResources.DOT_RAW_EXTENSION, createStoragePathInfoOnly, maxAttempts, new List<string>());
+            return RetrieveDotXFolder(clsAnalysisResources.DOT_RAW_EXTENSION, createStoragePathInfoOnly, new List<string>());
         }
 
         /// <summary>
@@ -2406,14 +2406,12 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="folderExtension">Extension on the folder; for example, ".D"</param>
         /// <param name="createStoragePathInfoOnly"></param>
-        /// <param name="maxAttempts"></param>
         /// <param name="fileNamesToSkip"></param>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks></remarks>
         private bool RetrieveDotXFolder(
             string folderExtension,
             bool createStoragePathInfoOnly,
-            int maxAttempts,
             List<string> fileNamesToSkip)
         {
 
