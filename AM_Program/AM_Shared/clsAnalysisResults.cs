@@ -65,7 +65,7 @@ namespace AnalysisManagerBase
             m_MgrName = m_mgrParams.GetParam("MgrName", "Undefined-Manager");
             m_DebugLevel = (short)(m_mgrParams.GetParam("debuglevel", 1));
 
-            base.InitFileTools(m_MgrName, m_DebugLevel);
+            InitFileTools(m_MgrName, m_DebugLevel);
 
         }
 
@@ -232,7 +232,6 @@ namespace AnalysisManagerBase
         public void CopyFileWithRetry(string srcFilePath, string destFilePath, bool overwrite, int maxRetryCount, int retryHoldoffSeconds, bool increaseHoldoffOnEachRetry)
         {
             var attemptCount = 0;
-            var success = false;
             float actualRetryHoldoffSeconds = retryHoldoffSeconds;
 
             if (actualRetryHoldoffSeconds < 1)
@@ -246,7 +245,7 @@ namespace AnalysisManagerBase
                 throw new IOException("clsAnalysisResults,CopyFileWithRetry: Source file not found for copy operation: " + srcFilePath);
             }
 
-            while (attemptCount <= maxRetryCount && !success)
+            while (attemptCount <= maxRetryCount)
             {
                 attemptCount += 1;
 
@@ -258,13 +257,10 @@ namespace AnalysisManagerBase
                     if (m_FileTools.CopyFileUsingLocks(srcFilePath, destFilePath, m_MgrName, overwrite))
                     {
                         LogCopyStats(startTime, destFilePath);
-                        success = true;
-                    }
-                    else
-                    {
-                        LogError("CopyFileUsingLocks returned false copying " + srcFilePath + " to " + destFilePath);
+                        return;
                     }
 
+                    LogError("CopyFileUsingLocks returned false copying " + srcFilePath + " to " + destFilePath);
                 }
                 catch (Exception ex)
                 {
@@ -275,22 +271,22 @@ namespace AnalysisManagerBase
                         throw new IOException("Tried to overwrite an existing file when overwrite = False: " + destFilePath);
                     }
 
+                    if (attemptCount > maxRetryCount)
+                        break;
+
                     // Wait several seconds before retrying
-                    Thread.Sleep((int)(Math.Floor(actualRetryHoldoffSeconds * 1000)));
+                    Thread.Sleep((int)Math.Floor(actualRetryHoldoffSeconds * 1000));
 
                     PRISM.clsProgRunner.GarbageCollectNow();
                 }
 
-                if (!success && increaseHoldoffOnEachRetry)
+                if (increaseHoldoffOnEachRetry)
                 {
                     actualRetryHoldoffSeconds *= 1.5f;
                 }
             }
 
-            if (!success)
-            {
-                throw new IOException("Excessive failures during file copy");
-            }
+            throw new IOException("Excessive failures during file copy");
 
         }
 
@@ -448,7 +444,6 @@ namespace AnalysisManagerBase
         public void CreateFolderWithRetry(string folderPath, int maxRetryCount, int retryHoldoffSeconds, bool increaseHoldoffOnEachRetry)
         {
             var attemptCount = 0;
-            var success = false;
             float actualRetryHoldoffSeconds = retryHoldoffSeconds;
 
             if (actualRetryHoldoffSeconds < 1)
@@ -461,7 +456,7 @@ namespace AnalysisManagerBase
                 throw new DirectoryNotFoundException("Folder path cannot be empty when calling CreateFolderWithRetry");
             }
 
-            while (attemptCount <= maxRetryCount && !success)
+            while (attemptCount <= maxRetryCount)
             {
                 attemptCount += 1;
 
@@ -470,37 +465,34 @@ namespace AnalysisManagerBase
                     if (Directory.Exists(folderPath))
                     {
                         // If the folder already exists, then there is nothing to do
-                        success = true;
-                    }
-                    else
-                    {
-                        Directory.CreateDirectory(folderPath);
-                        success = true;
+                        return;
                     }
 
+                    Directory.CreateDirectory(folderPath);
+                    return;
                 }
                 catch (Exception ex)
                 {
                     LogError("clsAnalysisResults: error creating folder " + folderPath, ex);
 
+                    if (attemptCount > maxRetryCount)
+                        break;
+
                     // Wait several seconds before retrying
-                    Thread.Sleep((int)(Math.Floor(actualRetryHoldoffSeconds * 1000)));
+                    Thread.Sleep((int)Math.Floor(actualRetryHoldoffSeconds * 1000));
 
                     PRISM.clsProgRunner.GarbageCollectNow();
                 }
 
-                if (!success && increaseHoldoffOnEachRetry)
+                if (increaseHoldoffOnEachRetry)
                 {
                     actualRetryHoldoffSeconds *= 1.5f;
                 }
             }
 
-            if (!success)
+            if (!FolderExistsWithRetry(folderPath, 1, 3))
             {
-                if (!FolderExistsWithRetry(folderPath, 1, 3))
-                {
-                    throw new IOException("Excessive failures during folder creation");
-                }
+                throw new IOException("Excessive failures during folder creation");
             }
 
         }
@@ -591,8 +583,6 @@ namespace AnalysisManagerBase
         {
 
             var attemptCount = 0;
-            var success = false;
-            var folderExists = false;
 
             float actualRetryHoldoffSeconds = retryHoldoffSeconds;
 
@@ -601,40 +591,38 @@ namespace AnalysisManagerBase
             if (maxRetryCount < 1)
                 maxRetryCount = 1;
 
-            while (attemptCount <= maxRetryCount && !success)
+            while (attemptCount <= maxRetryCount)
             {
-                attemptCount += 1;
+                attemptCount++;
 
                 try
                 {
-                    folderExists = Directory.Exists(folderPath);
-                    success = true;
+                    var folderExists = Directory.Exists(folderPath);
+                    return folderExists;
 
                 }
                 catch (Exception ex)
                 {
                     LogError("clsAnalysisResults: error looking for folder " + folderPath, ex);
 
+                    if (attemptCount > maxRetryCount)
+                        break;
+
                     // Wait several seconds before retrying
-                    Thread.Sleep((int)(Math.Floor(actualRetryHoldoffSeconds * 1000)));
+                    Thread.Sleep((int)Math.Floor(actualRetryHoldoffSeconds * 1000));
 
                     PRISM.clsProgRunner.GarbageCollectNow();
                 }
 
-                if (!success && increaseHoldoffOnEachRetry)
+                if (increaseHoldoffOnEachRetry)
                 {
                     actualRetryHoldoffSeconds *= 1.5f;
                 }
 
             }
 
-            if (!success)
-            {
-                // Exception occurred; return False
-                return false;
-            }
-
-            return folderExists;
+            // Exception occurred; return False
+            return false;
 
         }
 

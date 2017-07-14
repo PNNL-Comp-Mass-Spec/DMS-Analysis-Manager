@@ -310,12 +310,9 @@ namespace AnalysisManagerBase
                     }
                     return true;
                 }
-                else
-                {
-                    OnErrorEvent("Error copying file " + sourceFilePath);
-                    return false;
-                }
 
+                OnErrorEvent("Error copying file " + sourceFilePath);
+                return false;
             }
             catch (Exception ex)
             {
@@ -391,6 +388,9 @@ namespace AnalysisManagerBase
                         OnErrorEvent("Tried to overwrite an existing file when Overwrite = False: " + destFilePath);
                         return false;
                     }
+
+                    if (retryCount <= 0)
+                        break;
 
                     // Wait several seconds before retrying
                     Thread.Sleep(RETRY_HOLDOFF_SECONDS * 1000);

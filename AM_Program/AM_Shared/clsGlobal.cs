@@ -478,8 +478,11 @@ namespace AnalysisManagerBase
                         msg += ", Query = " + cmd.CommandText;
                     }
 
-                    Console.WriteLine(msg);
                     LogError(msg);
+
+                    if (retryCount <= 0)
+                        break;
+
                     Thread.Sleep(retryDelaySeconds * 1000);
 
                     retryDelaySeconds *= 2;
@@ -487,7 +490,6 @@ namespace AnalysisManagerBase
                     {
                         retryDelaySeconds = 90;
                     }
-
                 }
             }
 

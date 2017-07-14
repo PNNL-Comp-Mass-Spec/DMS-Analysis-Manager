@@ -26,7 +26,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             foreach (var fileSpec in fileSpecList.ToList())
             {
                 var fileSpecTerms = fileSpec.Split(':').ToList();
-                if (fileSpecTerms.Count <= 2 || !(fileSpecTerms[2].ToLower().Trim() == "copy"))
+                if (fileSpecTerms.Count <= 2 || fileSpecTerms[2].ToLower().Trim() != "copy")
                 {
                     m_jobParams.AddResultFileExtensionToSkip(fileSpecTerms[1]);
                 }
@@ -60,10 +60,8 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
             LogMessage("Retrieving input files");
 
-            Dictionary<int, clsDataPackageJobInfo> dctDataPackageJobs = null;
-
             // Retrieve the files for the jobs in the data package associated with this job
-            if (!RetrieveAggregateFiles(fileSpecList, DataPackageFileRetrievalModeConstants.Ascore, out dctDataPackageJobs))
+            if (!RetrieveAggregateFiles(fileSpecList, DataPackageFileRetrievalModeConstants.Ascore, out var dctDataPackageJobs))
             {
                 // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -146,7 +144,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 // Look in the AScore parameter folder on Gigasax, \\gigasax\DMS_Parameter_Files\AScore
 
                 var paramFileFolder = m_jobParams.GetJobParameter("ParamFileStoragePath", @"\\gigasax\DMS_Parameter_Files\AScore");
-                success = FileSearch.RetrieveFile(paramFileName, paramFileFolder, 2, clsLogTools.LogLevels.ERROR);
+                success = FileSearch.RetrieveFile(paramFileName, paramFileFolder, 2);
             }
 
             if (success)

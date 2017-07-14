@@ -244,7 +244,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public string FindDatasetFile(string FileExtension)
         {
-            return FindDatasetFile(clsFolderSearch.DEFAULT_MAX_RETRY_COUNT, FileExtension);
+            return FindDatasetFile(DEFAULT_MAX_RETRY_COUNT, FileExtension);
         }
 
         /// <summary>
@@ -321,7 +321,7 @@ namespace AnalysisManagerBase
                 DatasetName,
                 fileNameToFind,
                 folderExtensionWildcard,
-                clsFolderSearch.DEFAULT_MAX_RETRY_COUNT,
+                DEFAULT_MAX_RETRY_COUNT,
                 logFolderNotFound: true,
                 retrievingInstrumentDataFolder: true,
                 assumeUnpurged: assumeUnpurged,
@@ -393,7 +393,7 @@ namespace AnalysisManagerBase
             // First Check for the existence of a 0.ser Folder
             var FileNameToFind = string.Empty;
 
-            var DSFolderPath = FindValidFolder(DatasetName, FileNameToFind, clsAnalysisResources.BRUKER_ZERO_SER_FOLDER, clsFolderSearch.DEFAULT_MAX_RETRY_COUNT,
+            var DSFolderPath = FindValidFolder(DatasetName, FileNameToFind, clsAnalysisResources.BRUKER_ZERO_SER_FOLDER, DEFAULT_MAX_RETRY_COUNT,
                 logFolderNotFound: true, retrievingInstrumentDataFolder: true,
                 assumeUnpurged: assumeUnpurged,
                 validFolderFound: out var validFolderFound, folderNotFoundMessage: out var folderNotFoundMessage);
@@ -628,10 +628,8 @@ namespace AnalysisManagerBase
                             bestPath = string.Copy(pathToCheck.Item1);
                             break;
                         }
-                        else
-                        {
-                            fileNotFoundEncountered = true;
-                        }
+
+                        fileNotFoundEncountered = true;
 
                     }
                     catch (Exception ex)

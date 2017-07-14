@@ -97,7 +97,7 @@ namespace AnalysisManagerBase
 
         private float GetCoreUsageByProcessIDLinux(int processID)
         {
-            return mLinuxSystemInfo.GetCoreUsageByProcessID(processID, out var cpuUsageTotal);
+            return mLinuxSystemInfo.GetCoreUsageByProcessID(processID, out _);
         }
 
         private float GetCoreUsageByProcessIDWindows(int processID)

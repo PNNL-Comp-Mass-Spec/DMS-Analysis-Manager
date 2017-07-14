@@ -111,10 +111,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 }
 
                 // Run AScore for each of the jobs in the data package
-                List<string> fileSuffixesToCombine = null;
-                Dictionary<string, double> processingRuntimes = null;
-
-                var processingSuccess = ProcessSynopsisFiles(progLocAScore, out fileSuffixesToCombine, out processingRuntimes);
+                var processingSuccess = ProcessSynopsisFiles(progLocAScore, out var fileSuffixesToCombine, out var processingRuntimes);
 
                 if (fileSuffixesToCombine != null)
                 {
@@ -163,12 +160,11 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 }
 
                 // Override the dataset name and transfer folder path so that the results get copied to the correct location
-                base.RedefineAggregationJobDatasetAndTransferFolder();
+                RedefineAggregationJobDatasetAndTransferFolder();
 
                 var success = CopyResultsToTransferDirectory();
 
                 return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
-
 
             }
             catch (Exception ex)
@@ -177,7 +173,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 LogError(m_message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-           
+
         }
 
         protected bool AddMSGFSpecProbValues(int jobNumber, string synFilePath, string fileTypeTag)
@@ -201,12 +197,15 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
                 // First cache the MSGFSpecProb values using a delimited file reader
 
-                var msgfReader = new DelimitedFileReader();
-                msgfReader.FilePath = fiMsgfFile.FullName;
+                var msgfReader = new DelimitedFileReader {
+                    FilePath = fiMsgfFile.FullName
+                };
 
-                var lookupSink = new KVSink();
-                lookupSink.KeyColumnName = "Result_ID";
-                lookupSink.ValueColumnName = "SpecProb";
+                var lookupSink = new KVSink
+                {
+                    KeyColumnName = "Result_ID",
+                    ValueColumnName = "SpecProb"
+                };
 
                 var cachePipeline = ProcessingPipeline.Assemble("Lookup pipeline", msgfReader, lookupSink);
                 cachePipeline.RunRoot(null);
@@ -273,11 +272,14 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
         protected void CacheFileSuffix(List<string> fileSuffixesToCombine, string datasetName, string fileName)
         {
             var baseName = Path.GetFileNameWithoutExtension(fileName);
-            baseName = baseName.Substring(datasetName.Length);
+            if (string.IsNullOrWhiteSpace(baseName))
+                return;
 
-            if (!fileSuffixesToCombine.Contains(baseName))
+            var nameToAdd = baseName.Substring(datasetName.Length);
+
+            if (!fileSuffixesToCombine.Contains(nameToAdd))
             {
-                fileSuffixesToCombine.Add(baseName);
+                fileSuffixesToCombine.Add(nameToAdd);
             }
         }
 
@@ -309,8 +311,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                             // Parse out the tag from it -- in this case "syn"
                             var fileTypeTag = Path.GetFileNameWithoutExtension(logFile.Name).Substring(ASCORE_CONSOLE_OUTPUT_PREFIX.Length + 1);
 
-                            double runtimeMinutes = 0;
-                            processingRuntimes.TryGetValue(jobNumber + fileTypeTag, out runtimeMinutes);
+                            processingRuntimes.TryGetValue(jobNumber + fileTypeTag, out var runtimeMinutes);
 
                             using (var srInputFile = new StreamReader(new FileStream(logFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
                             {
@@ -370,8 +371,11 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                                 if (srInputFile.EndOfStream)
                                     continue;
 
-                                var dataLine = srInputFile.ReadLine();
-                                var replaceFirstColumnWithJob = dataLine.ToLower().StartsWith("job");
+                                var headerLine = srInputFile.ReadLine();
+                                if (headerLine == null)
+                                    continue;
+
+                                var replaceFirstColumnWithJob = headerLine.ToLower().StartsWith("job");
 
                                 if (firstfileProcessed)
                                 {
@@ -383,12 +387,12 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                                     if (replaceFirstColumnWithJob)
                                     {
                                         // The Job column is already present
-                                        swConcatenatedFile.WriteLine(dataLine);
+                                        swConcatenatedFile.WriteLine(headerLine);
                                     }
                                     else
                                     {
                                         // Add the Job column header
-                                        swConcatenatedFile.WriteLine("Job\t" + dataLine);
+                                        swConcatenatedFile.WriteLine("Job\t" + headerLine);
                                     }
 
                                     firstfileProcessed = true;
@@ -396,26 +400,28 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
                                 while (!srInputFile.EndOfStream)
                                 {
-                                    dataLine = srInputFile.ReadLine();
-                                    if (!string.IsNullOrWhiteSpace(dataLine))
-                                    {
-                                        if (replaceFirstColumnWithJob)
-                                        {
-                                            // Remove the first column from dataLine
-                                            var charIndex = dataLine.IndexOf('\t');
-                                            if (charIndex >= 0)
-                                            {
-                                                dataLine = dataLine.Substring(charIndex + 1);
-                                            }
-                                        }
+                                    var dataLine = srInputFile.ReadLine();
+                                    if (string.IsNullOrWhiteSpace(dataLine))
+                                        continue;
 
-                                        swConcatenatedFile.WriteLine(jobNumber + "\t" + dataLine);
+                                    if (replaceFirstColumnWithJob)
+                                    {
+                                        // Remove the first column from dataLine
+                                        var charIndex = dataLine.IndexOf('\t');
+                                        if (charIndex >= 0)
+                                        {
+                                            swConcatenatedFile.WriteLine(jobNumber + "\t" + dataLine.Substring(charIndex + 1));
+                                        }
+                                        continue;
                                     }
+
+                                    swConcatenatedFile.WriteLine(jobNumber + "\t" + dataLine);
                                 }
+
                             }
                         }    // foreach fiResultFile
                     }    // foreach jobFolder
-                }
+                }   // using swConcatenatedFile
 
                 return true;
             }
@@ -444,7 +450,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
         protected string DetermineAScoreParamFilePath(string settingsFileName)
         {
-            string bestAScoreParamFileName = null;
+            string bestAScoreParamFileName;
 
             var datasetType = DatasetTypeConstants.Unknown;
 
@@ -542,7 +548,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             udtJobMetadata.FirstHitsFilePath = Path.Combine(jobFolder.FullName, fhtfile);
             udtJobMetadata.SynopsisFilePath = Path.Combine(jobFolder.FullName, synFile);
 
-            var success = false;
+            bool success;
 
             if (!File.Exists(udtJobMetadata.FirstHitsFilePath))
             {
@@ -668,9 +674,8 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             foreach (var jobFolder in diWorkingFolder.GetDirectories("Job*"))
             {
                 var jobNumberText = jobFolder.Name.Substring(3);
-                var jobNumber = 0;
 
-                if (int.TryParse(jobNumberText, out jobNumber))
+                if (int.TryParse(jobNumberText, out var jobNumber))
                 {
                     jobFolderList.Add(jobNumber, jobFolder);
                 }
@@ -696,7 +701,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
         // Percent Completion 2%
         // Percent Completion 2%
         private const string REGEX_AScore_PROGRESS = @"Percent Completion (\d+)\%";
-        private Regex reCheckProgress = new Regex(REGEX_AScore_PROGRESS, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private readonly Regex reCheckProgress = new Regex(REGEX_AScore_PROGRESS, RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
         /// Parse the ProMex console output file to track the search progress
@@ -745,14 +750,11 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                                 mConsoleOutputErrorMsg += "; " + strLineIn;
                                 continue;
                             }
-                            else
+
+                            var oMatch = reCheckProgress.Match(strLineIn);
+                            if (oMatch.Success)
                             {
-                                var oMatch = reCheckProgress.Match(strLineIn);
-                                if (oMatch.Success)
-                                {
-                                    int.TryParse(oMatch.Groups[1].ToString(), out ascoreProgress);
-                                    continue;
-                                }
+                                int.TryParse(oMatch.Groups[1].ToString(), out ascoreProgress);
                             }
                         }
                     }
@@ -826,12 +828,11 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                         continue;
                     }
 
-                    var udtJobMetadata = new udtJobMetadataForAScore();
-                    udtJobMetadata.Job = jobFolder.Key;
+                    var udtJobMetadata = new udtJobMetadataForAScore {
+                        Job = jobFolder.Key
+                    };
 
-                    var datasetName = string.Empty;
-
-                    if (!jobToDatasetMap.TryGetValue(udtJobMetadata.Job.ToString(), out datasetName))
+                    if (!jobToDatasetMap.TryGetValue(udtJobMetadata.Job.ToString(), out var datasetName))
                     {
                         m_message = "Job " + udtJobMetadata.Job + " not found in packed job parameter " +
                                     clsAnalysisResources.JOB_PARAM_DICTIONARY_JOB_DATASET_MAP;
@@ -941,8 +942,13 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
         /// <param name="processingRuntimes">Output parameter: AScore Runtime (in minutes) for each job/tag combo</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks></remarks>
-        protected bool RunAscore(string progLoc, udtJobMetadataForAScore udtJobMetadata, string inputFilePath, string ascoreParamFilePath,
-            string fileTypeTag, Dictionary<string, double> processingRuntimes)
+        protected bool RunAscore(
+            string progLoc,
+            udtJobMetadataForAScore udtJobMetadata,
+            string inputFilePath,
+            string ascoreParamFilePath,
+            string fileTypeTag,
+            Dictionary<string, double> processingRuntimes)
         {
             // Set up and execute a program runner to run AScore
 
@@ -1057,7 +1063,6 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
         protected bool StoreToolVersionInfo(string strProgLoc)
         {
             var strToolVersionInfo = string.Empty;
-            var blnSuccess = false;
 
             if (m_DebugLevel >= 2)
             {
@@ -1070,7 +1075,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 try
                 {
                     strToolVersionInfo = "Unknown";
-                    return base.SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>(), saveToolVersionTextFile: false);
+                    return SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>(), saveToolVersionTextFile: false);
                 }
                 catch (Exception ex)
                 {
@@ -1080,19 +1085,20 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
             }
 
             // Lookup the version of the .NET application
-            blnSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, fiProgram.FullName);
+            var blnSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, fiProgram.FullName);
             if (!blnSuccess)
                 return false;
 
             // Store paths to key DLLs in ioToolFiles
-            var ioToolFiles = new List<FileInfo>();
-            ioToolFiles.Add(fiProgram);
+            var ioToolFiles = new List<FileInfo> {
+                fiProgram
+            };
 
             ioToolFiles.Add(new FileInfo(Path.Combine(fiProgram.Directory.FullName, "AScore_DLL.dll")));
 
             try
             {
-                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, saveToolVersionTextFile: false);
+                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, saveToolVersionTextFile: false);
             }
             catch (Exception ex)
             {

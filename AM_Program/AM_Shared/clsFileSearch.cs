@@ -243,7 +243,7 @@ namespace AnalysisManagerBase
         /// <remarks>Logs an error if the file is not found</remarks>
         public bool FindAndRetrieveMiscFiles(string fileName, bool unzip, bool searchArchivedDatasetFolder)
         {
-            return FindAndRetrieveMiscFiles(fileName, unzip, searchArchivedDatasetFolder, out var sourceFolderPath);
+            return FindAndRetrieveMiscFiles(fileName, unzip, searchArchivedDatasetFolder, out _);
         }
 
         /// <summary>
@@ -257,7 +257,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public bool FindAndRetrieveMiscFiles(string fileName, bool unzip, bool searchArchivedDatasetFolder, bool logFileNotFound)
         {
-            return FindAndRetrieveMiscFiles(fileName, unzip, searchArchivedDatasetFolder, out var sourceFolderPath, logFileNotFound);
+            return FindAndRetrieveMiscFiles(fileName, unzip, searchArchivedDatasetFolder, out _, logFileNotFound);
         }
 
         /// <summary>
@@ -1037,7 +1037,7 @@ namespace AnalysisManagerBase
             return m_IonicZipTools.GUnzipFile(gzipFilePath);
         }
 
-        private void NotifyInvalidParentDirectory(FileInfo fiSourceFile)
+        private void NotifyInvalidParentDirectory(FileSystemInfo fiSourceFile)
         {
             OnErrorEvent("Unable to determine the parent directory of " + fiSourceFile.FullName);
         }
@@ -1136,6 +1136,7 @@ namespace AnalysisManagerBase
             {
                 if (sharedResultFolder.Trim().Length == 0)
                     continue;
+
                 if (!foldersToSearch.Contains(sharedResultFolder))
                 {
                     foldersToSearch.Add(sharedResultFolder);
@@ -1314,6 +1315,7 @@ namespace AnalysisManagerBase
             return true;
 
         }
+
         /// <summary>
         /// Retrieves a dataset file for the analysis job in progress; uses the user-supplied extension to match the file
         /// </summary>
@@ -1455,7 +1457,7 @@ namespace AnalysisManagerBase
             try
             {
                 Thread.Sleep(125);
-                PRISM.clsProgRunner.GarbageCollectNow();
+                clsProgRunner.GarbageCollectNow();
 
                 File.Delete(targetZipFilePath);
             }
@@ -1651,7 +1653,7 @@ namespace AnalysisManagerBase
         /// <param name="createStoragePathInfoOnly"></param>
         /// <returns>True if the hash of the file matches the expected hash, otherwise false</returns>
         /// <remarks>If createStoragePathInfoOnly is true and the source file matches the target file, the hash is not recomputed</remarks>
-        private bool RetrieveMzXMLFileVerifyHash(FileInfo fiSourceFile, string hashCheckFilePath, bool createStoragePathInfoOnly)
+        private bool RetrieveMzXMLFileVerifyHash(FileSystemInfo fiSourceFile, string hashCheckFilePath, bool createStoragePathInfoOnly)
         {
 
             string targetFilePath;
@@ -2917,7 +2919,7 @@ namespace AnalysisManagerBase
                 }
 
                 Thread.Sleep(125);
-                PRISM.clsProgRunner.GarbageCollectNow();
+                clsProgRunner.GarbageCollectNow();
 
                 // Delete all s*.zip files in working directory
                 foreach (var zipFilePath in zipFiles)
@@ -3056,7 +3058,7 @@ namespace AnalysisManagerBase
                 {
                     unzipperName = Path.GetFileName(externalUnzipperFilePath);
 
-                    var UnZipper = new PRISM.ZipTools(outFolderPath, externalUnzipperFilePath);
+                    var UnZipper = new ZipTools(outFolderPath, externalUnzipperFilePath);
 
                     var dtStartTime = DateTime.UtcNow;
                     var success = UnZipper.UnzipFile("", zipFilePath, outFolderPath);

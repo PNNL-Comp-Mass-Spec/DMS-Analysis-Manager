@@ -49,7 +49,7 @@ namespace AnalysisManagerProg
         {
             // Returns 0 if no error, error code if an error
 
-            var objParseCommandLine = new PRISM.clsParseCommandLine();
+            var objParseCommandLine = new clsParseCommandLine();
 
             mCodeTestMode = false;
             mTraceMode = false;
@@ -138,7 +138,7 @@ namespace AnalysisManagerProg
                         clsGlobal.LogError("clsCodeTest exception", ex);
                     }
 
-                    PRISM.clsParseCommandLine.PauseAtConsole(1500);
+                    clsParseCommandLine.PauseAtConsole(1500);
                     return 0;
                 }
 
@@ -154,7 +154,7 @@ namespace AnalysisManagerProg
                         TraceMode = mTraceMode
                     };
                     objTest.DisplayDllVersions(mDisplayDllPath);
-                    PRISM.clsParseCommandLine.PauseAtConsole();
+                    clsParseCommandLine.PauseAtConsole();
                     return 0;
                 }
 
@@ -243,7 +243,7 @@ namespace AnalysisManagerProg
             return Assembly.GetExecutingAssembly().GetName().Version + " (" + programDate + ")";
         }
 
-        private static bool SetOptionsUsingCommandLineParameters(PRISM.clsParseCommandLine objParseCommandLine)
+        private static bool SetOptionsUsingCommandLineParameters(clsParseCommandLine objParseCommandLine)
         {
             // Returns True if no problems; otherwise, returns false
 
@@ -405,7 +405,7 @@ namespace AnalysisManagerProg
                                   "You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0");
                 Console.WriteLine();
 
-                PRISM.clsParseCommandLine.PauseAtConsole(1500);
+                clsParseCommandLine.PauseAtConsole(1500);
             }
             catch (Exception ex)
             {
