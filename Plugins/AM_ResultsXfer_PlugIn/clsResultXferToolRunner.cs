@@ -374,7 +374,7 @@ namespace AnalysisManagerResultsXferPlugin
 
             if (!Directory.Exists(folderToMove))
             {
-                LogError("Results transfer failed, directory" + folderToMove + " not found");
+                LogError("Results transfer failed, directory " + folderToMove + " not found");
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
