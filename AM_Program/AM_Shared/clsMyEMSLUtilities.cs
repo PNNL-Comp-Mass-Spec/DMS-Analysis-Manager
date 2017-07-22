@@ -85,10 +85,10 @@ namespace AnalysisManagerBase
         public clsMyEMSLUtilities(int debugLevel, string workingDir)
         {
             m_MyEMSLDatasetListInfo = new DatasetListInfo();
-            m_MyEMSLDatasetListInfo.DebugEvent += OnDebugEvent;
-            m_MyEMSLDatasetListInfo.StatusEvent += OnStatusEvent;
-            m_MyEMSLDatasetListInfo.ErrorEvent += OnErrorEvent;
-            m_MyEMSLDatasetListInfo.WarningEvent += OnWarningEvent;
+            RegisterEvents(m_MyEMSLDatasetListInfo);
+
+            // Use a custom progress update handler
+            m_MyEMSLDatasetListInfo.ProgressUpdate -= OnProgressUpdate;
             m_MyEMSLDatasetListInfo.ProgressUpdate += m_MyEMSLDatasetListInfo_ProgressEvent;
 
             m_MyEMSLDatasetListInfo.FileDownloadedEvent += m_MyEMSLDatasetListInfo_FileDownloadedEvent;
