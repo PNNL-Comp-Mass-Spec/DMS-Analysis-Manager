@@ -542,6 +542,8 @@ namespace AnalysisManagerProg
                     ShowTrace("Requesting a new task from DMS_Pipeline");
 
                     // Re-initialize these utilities for each analysis job
+                    // Note that when RetrieveResources is called, the MyEMSL certificate file (svc-dms.pfx) will be verified to exist
+                    // (via GetSharedResources calling CertificateFileExists)
                     m_MyEMSLUtilities = new clsMyEMSLUtilities(m_DebugLevel, m_WorkDirPath);
                     RegisterEvents(m_MyEMSLUtilities);
 

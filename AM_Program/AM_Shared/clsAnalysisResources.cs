@@ -637,6 +637,16 @@ namespace AnalysisManagerBase
         /// <returns>True if success, false if an error</returns>
         protected CloseOutType GetSharedResources()
         {
+            var myEmslAvailable = m_mgrParams.GetParam("MyEmslAvailable", true);
+
+            if (!m_MyEMSLSearchDisabled && myEmslAvailable)
+            {
+                if (!MyEMSLUtilities.CertificateFileExists(out var errorMessage))
+                {
+                    LogError(errorMessage);
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+            }
 
             var success = GetExistingJobParametersFile();
 
