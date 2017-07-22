@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Xml;
@@ -81,6 +80,7 @@ namespace AnalysisManagerBase
 
         /// <summary>
         /// When true, status messages are being sent directly to the broker database
+        /// using stored procedure UpdateManagerAndTaskStatus
         /// </summary>
         public bool LogToBrokerQueue { get; private set; }
 
@@ -283,7 +283,6 @@ namespace AnalysisManagerBase
             TaskStatusDetail = EnumTaskStatusDetail.NO_TASK;
             TaskStartTime = DateTime.UtcNow;
 
-            Dataset = string.Empty;
             WorkDirPath = string.Empty;
 
             CurrentOperation = string.Empty;
@@ -331,7 +330,10 @@ namespace AnalysisManagerBase
         /// <param name="logStatusToBrokerDB"></param>
         /// <param name="brokerDBConnectionString"></param>
         /// <param name="brokerDBStatusUpdateIntervalMinutes"></param>
-        /// <remarks></remarks>
+        /// <remarks>
+        /// When logStatusToBrokerDB is true, status messages are sent directly to the broker database
+        /// using stored procedure UpdateManagerAndTaskStatus
+        /// </remarks>
         public void ConfigureBrokerDBLogging(bool logStatusToBrokerDB, string brokerDBConnectionString, float brokerDBStatusUpdateIntervalMinutes)
         {
             if (clsGlobal.OfflineMode)
@@ -429,7 +431,7 @@ namespace AnalysisManagerBase
             ProgRunnerProcessID = 0;
             ProgRunnerCoreUsage = 0;
 
-            // Only clear the recent job info if the variable is Nothing
+            // Only clear the recent job info if the variable is null
             if (MostRecentJobInfo == null)
             {
                 MostRecentJobInfo = string.Empty;
@@ -849,7 +851,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Writes the status file
         /// </summary>
-        /// <remarks></remarks>
         public void WriteStatusFile()
         {
             WriteStatusFile(false);
@@ -938,7 +939,6 @@ namespace AnalysisManagerBase
 
             string xmlText;
 
-            // Set up the XML writer
             try
             {
                 xmlText = GenerateStatusXML(status, lastUpdate, processId, cpuUtilization, freeMemoryMB, runTimeHours);
@@ -1082,12 +1082,12 @@ namespace AnalysisManagerBase
                 xWriter.Flush();
 
                 // Now use a StreamReader to copy the XML text to a string variable
-                objMemoryStream.Seek(0, SeekOrigin.Begin);
-                var srMemoryStreamReader = new StreamReader(objMemoryStream);
+                memStream.Seek(0, SeekOrigin.Begin);
+                var srMemoryStreamReader = new StreamReader(memStream);
                 var xmlText = srMemoryStreamReader.ReadToEnd();
 
                 srMemoryStreamReader.Close();
-                objMemoryStream.Close();
+                memStream.Close();
 
                 return xmlText;
             }
@@ -1227,9 +1227,9 @@ namespace AnalysisManagerBase
 
         /// <summary>
         /// Updates status file
+        /// (Overload to update when completion percentage is the only change)
         /// </summary>
         /// <param name="percentComplete">Job completion percentage (value between 0 and 100)</param>
-        /// <remarks></remarks>
         public void UpdateAndWrite(float percentComplete)
         {
             Progress = percentComplete;
@@ -1312,7 +1312,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Sets status file to show mahager idle
+        /// Sets status file to show manager idle
         /// </summary>
         /// <remarks></remarks>
         public void UpdateIdle()
@@ -1479,9 +1479,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         private float GetRunTime()
         {
-
             return (float)DateTime.UtcNow.Subtract(TaskStartTime).TotalHours;
-
         }
 
         public void DisposeMessageQueue()

@@ -115,6 +115,11 @@ namespace AnalysisManagerBase
         EnumTaskStatus TaskStatus { get; set; }
 
         /// <summary>
+        /// Task start time (UTC-based)
+        /// </summary>
+        DateTime TaskStartTime { get; set; }
+
+        /// <summary>
         /// Progress (value between 0 and 100)
         /// </summary>
         float Progress { get; set; }
