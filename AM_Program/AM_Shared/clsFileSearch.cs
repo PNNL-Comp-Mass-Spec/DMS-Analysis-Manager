@@ -1333,7 +1333,7 @@ namespace AnalysisManagerBase
                 return false;
             }
 
-            if ((DatasetFilePath.StartsWith(MYEMSL_PATH_FLAG)))
+            if (DatasetFilePath.StartsWith(MYEMSL_PATH_FLAG))
             {
                 // Queue this file for download
                 m_MyEMSLUtilities.AddFileToDownloadQueue(m_MyEMSLUtilities.RecentlyFoundMyEMSLFiles.First().FileInfo);

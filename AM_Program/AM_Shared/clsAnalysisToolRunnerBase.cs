@@ -241,7 +241,6 @@ namespace AnalysisManagerBase
             m_Dataset = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetNum");
 
             m_MyEMSLUtilities = myEMSLUtilities ?? new clsMyEMSLUtilities(m_DebugLevel, m_WorkDir);
-
             RegisterEvents(m_MyEMSLUtilities);
 
             m_DebugLevel = (short)(m_mgrParams.GetParam("debuglevel", 1));

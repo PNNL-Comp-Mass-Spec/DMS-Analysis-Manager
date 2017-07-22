@@ -2741,11 +2741,11 @@ namespace AnalysisManagerProg
             Console.WriteLine("Flag file exists");
         }
 
-        private void UpdateStatusIdle(string ManagerIdleMessage)
+        private void UpdateStatusIdle(string managerIdleMessage)
         {
             ShowTrace("Manager is idle");
             var recentErrorMessages = DetermineRecentErrorMessages(5, ref m_MostRecentJobInfo);
-            m_StatusTools.UpdateIdle(ManagerIdleMessage, recentErrorMessages, m_MostRecentJobInfo, true);
+            m_StatusTools.UpdateIdle(managerIdleMessage, recentErrorMessages, m_MostRecentJobInfo, true);
         }
 
         private void UpdateStatusToolLoggingSettings(clsStatusFile objStatusFile)

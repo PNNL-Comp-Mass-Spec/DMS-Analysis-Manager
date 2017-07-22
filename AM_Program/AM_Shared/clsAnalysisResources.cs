@@ -404,7 +404,6 @@ namespace AnalysisManagerBase
             InitFileTools(m_MgrName, m_DebugLevel);
 
             m_MyEMSLUtilities = myEMSLUtilities ?? new clsMyEMSLUtilities(m_DebugLevel, m_WorkingDir);
-
             RegisterEvents(m_MyEMSLUtilities);
 
             m_FileCopyUtilities = new clsFileCopyUtilities(m_FileTools, m_MyEMSLUtilities, m_MgrName, m_DebugLevel);
