@@ -983,9 +983,11 @@ namespace AnalysisManagerBase
             // and SQL Server only allows 3 digits of precision
             const string ISO_8601_DATE = "yyyy-MM-ddTHH:mm:ss.fffK";
 
+            const string LOCAL_TIME_FORMAT = "yyyy-MM-dd hh:mm:ss tt";
+
             // Create a new memory stream in which to write the XML
-            var objMemoryStream = new MemoryStream();
-            using (var xWriter = new XmlTextWriter(objMemoryStream, System.Text.Encoding.UTF8))
+            var memStream = new MemoryStream();
+            using (var xWriter = new XmlTextWriter(memStream, System.Text.Encoding.UTF8))
             {
                 xWriter.Formatting = Formatting.Indented;
                 xWriter.Indentation = 2;
@@ -1002,8 +1004,12 @@ namespace AnalysisManagerBase
                 xWriter.WriteElementString("RemoteMgrName", status.RemoteMgrName);
                 xWriter.WriteElementString("MgrStatus", status.ConvertMgrStatusToString(status.MgrStatus));
 
+                xWriter.WriteComment("Local status log time: " + lastUpdate.ToLocalTime().ToString(LOCAL_TIME_FORMAT));
+                xWriter.WriteComment("Local last start time: " + status.TaskStartTime.ToLocalTime().ToString(LOCAL_TIME_FORMAT));
+
                 // Write out times in the format 2017-07-06T23:23:14.337Z
                 xWriter.WriteElementString("LastUpdate", lastUpdate.ToUniversalTime().ToString(ISO_8601_DATE));
+
                 xWriter.WriteElementString("LastStartTime", status.TaskStartTime.ToUniversalTime().ToString(ISO_8601_DATE));
 
                 xWriter.WriteElementString("CPUUtilization", cpuUtilization.ToString("##0.0"));
