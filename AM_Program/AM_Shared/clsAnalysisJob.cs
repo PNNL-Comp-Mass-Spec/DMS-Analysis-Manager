@@ -10,6 +10,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Xml;
 using System.Xml.Linq;
+using PRISM;
 
 //*********************************************************************************************************
 // Written by Dave Clark for the US Department of Energy
@@ -1020,11 +1021,11 @@ namespace AnalysisManagerBase
                         // No jobs found
                         taskResult = RequestTaskResult.NoTaskFound;
                         break;
-                    case RET_VAL_EXCESSIVE_RETRIES:
+                    case clsExecuteDatabaseSP.RET_VAL_EXCESSIVE_RETRIES:
                         // Too many retries
                         taskResult = RequestTaskResult.TooManyRetries;
                         break;
-                    case RET_VAL_DEADLOCK:
+                    case clsExecuteDatabaseSP.RET_VAL_DEADLOCK:
                         // Transaction was deadlocked on lock resources with another process and has been chosen as the deadlock victim
                         taskResult = RequestTaskResult.Deadlock;
                         break;

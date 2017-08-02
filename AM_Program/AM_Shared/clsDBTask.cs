@@ -38,12 +38,6 @@ namespace AnalysisManagerBase
 
         public const int RET_VAL_OK = 0;
 
-        // Timeout expired
-        public const int RET_VAL_EXCESSIVE_RETRIES = -5;
-
-        // Transaction (Process ID 143) was deadlocked on lock resources with another process and has been chosen as the deadlock victim
-        public const int RET_VAL_DEADLOCK = -4;
-
         public const int RET_VAL_TASK_NOT_AVAILABLE = 53000;
 
         public const int DEFAULT_SP_RETRY_COUNT = 3;
