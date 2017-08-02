@@ -62,7 +62,7 @@ namespace AnalysisManagerBase
 
             m_mgrParams = mgrParams;
             m_jobParams = jobParams;
-            m_MgrName = m_mgrParams.GetParam("MgrName", "Undefined-Manager");
+            m_MgrName = m_mgrParams.GetParam("MgrName", Environment.MachineName + "_Undefined-Manager");
             m_DebugLevel = (short)(m_mgrParams.GetParam("debuglevel", 1));
 
             InitFileTools(m_MgrName, m_DebugLevel);
@@ -384,7 +384,7 @@ namespace AnalysisManagerBase
             {
                 swInfoFile.WriteLine("Date" + '\t' + DateTime.Now);
                 swInfoFile.WriteLine("ResultsFolderName" + '\t' + resultsFolderName);
-                swInfoFile.WriteLine("Manager" + '\t' + m_mgrParams.GetParam("MgrName"));
+                swInfoFile.WriteLine("Manager" + '\t' + m_mgrParams.GetParam("MgrName", Environment.MachineName + "_Undefined-Manager"));
 
                 if ((m_jobParams != null))
                 {

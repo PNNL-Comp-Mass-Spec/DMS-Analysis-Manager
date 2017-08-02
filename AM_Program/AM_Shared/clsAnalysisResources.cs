@@ -389,7 +389,7 @@ namespace AnalysisManagerBase
 
             m_DebugLevel = (short)m_mgrParams.GetParam("debuglevel", 1);
             m_FastaToolsCnStr = m_mgrParams.GetParam("fastacnstring");
-            m_MgrName = m_mgrParams.GetParam("MgrName", "Undefined-Manager");
+            m_MgrName = m_mgrParams.GetParam("MgrName", Environment.MachineName + "_Undefined-Manager");
 
             m_WorkingDir = m_mgrParams.GetParam("workdir");
 

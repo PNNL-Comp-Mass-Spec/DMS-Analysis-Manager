@@ -234,7 +234,7 @@ namespace AnalysisManagerBase
             m_jobParams = jobParams;
             m_StatusTools = statusTools;
             m_WorkDir = m_mgrParams.GetParam("workdir");
-            m_MachName = m_mgrParams.GetParam("MgrName");
+            m_MachName = m_mgrParams.GetParam("MgrName", Environment.MachineName + "_Undefined-Manager");
 
             m_JobNum = m_jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job", 0);
 
@@ -1618,7 +1618,7 @@ namespace AnalysisManagerBase
 
                 // Data Source=proteinseqs;Initial Catalog=manager_control
                 var connectionString = objMgrParams.GetParam("MgrCnfgDbConnectStr");
-                var managerName = objMgrParams.GetParam("MgrName");
+                var managerName = objMgrParams.GetParam("MgrName", Environment.MachineName + "_Undefined-Manager");
 
                 var newDebugLevel = GetManagerDebugLevel(connectionString, managerName, debugLevel, 0);
 
