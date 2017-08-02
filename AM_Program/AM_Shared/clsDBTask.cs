@@ -95,6 +95,9 @@ namespace AnalysisManagerBase
             set => m_DebugLevel = value;
         }
 
+        /// <summary>
+        /// Manager name
+        /// </summary>
         public string ManagerName { get; }
 
         #endregion
