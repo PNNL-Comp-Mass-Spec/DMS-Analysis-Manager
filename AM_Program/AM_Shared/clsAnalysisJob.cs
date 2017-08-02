@@ -37,6 +37,8 @@ namespace AnalysisManagerBase
 
         protected const string SP_NAME_SET_COMPLETE = "SetStepTaskComplete";
 
+        private const string SP_NAME_REPORT_IDLE = "ReportManagerIdle";
+
         /// <summary>
         /// "RequestStepTask"
         /// </summary>
@@ -922,6 +924,12 @@ namespace AnalysisManagerBase
                 case RequestTaskResult.TaskFound:
                     m_TaskWasAssigned = true;
                     break;
+                case RequestTaskResult.TooManyRetries:
+                case RequestTaskResult.Deadlock:
+                    // Make sure the database didn't actually assign a job to this manager
+                    ReportManagerIdle();
+                    m_TaskWasAssigned = false;
+                    break;
                 default:
                     m_TaskWasAssigned = false;
                     break;
@@ -1461,9 +1469,43 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
+        /// Call stored procedure ReportManagerIdle to make sure that
+        /// the database didn't actually assign a job to this manager
+        /// </summary>
+        private void ReportManagerIdle()
+        {
+            if (clsGlobal.OfflineMode)
+            {
+                LogWarning("ReportManagerIdle should not be called when offline mode is enabled");
+                return;
+            }
+
+            // Setup for execution of the stored procedure
+            var cmd = new SqlCommand(SP_NAME_REPORT_IDLE)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
+            cmd.Parameters.Add(new SqlParameter("@managerName", SqlDbType.VarChar, 128)).Value = ManagerName;
+            cmd.Parameters.Add(new SqlParameter("@infoOnly", SqlDbType.TinyInt)).Value = 0;
+            cmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
+
+            // Execute the Stored Procedure (retry the call up to 3 times)
+            var returnCode = PipelineDBProcedureExecutor.ExecuteSP(cmd, 3);
+
+            if (returnCode == 0)
+            {
+                return;
+            }
+
+            LogError("Error " + returnCode + " calling " + cmd.CommandText);
+        }
+
+        /// <summary>
         /// Communicates with database to perform job closeOut
         /// </summary>
-        /// <param name="compCode">Integer version of ITaskParams specifying closeOut type (enum CloseOutType)</param>
+        /// <param name="compCode">Integer version of enum CloseOutType specifying the completion code</param>
         /// <param name="compMsg">Comment to insert in database</param>
         /// <param name="evalCode">Integer results evaluation code</param>
         /// <param name="evalMsg">Message describing evaluation results</param>

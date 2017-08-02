@@ -649,7 +649,7 @@ namespace AnalysisManagerProg
                             successiveDeadLockCount += 1;
                             if (successiveDeadLockCount >= 3)
                             {
-                                var msg = "Deadlock encountered " + successiveDeadLockCount.ToString() + " times in a row when requesting a new task; exiting";
+                                var msg = "Deadlock encountered " + successiveDeadLockCount + " times in a row when requesting a new task; exiting";
                                 LogWarning(msg);
                                 requestJobs = false;
                             }
