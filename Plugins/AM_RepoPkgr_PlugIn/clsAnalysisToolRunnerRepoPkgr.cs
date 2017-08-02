@@ -509,7 +509,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                     if (fiTargetFile.Exists && fiTargetFile.Length == fiMzXmlFileSource.Length)
                         LogDebug("Skipping .mzXML file since already present in the target folder: " + fiTargetFile.FullName);
                     else
-                        m_FileTools.CopyFileUsingLocks(mzXmlFilePathLocal, fiTargetFile.FullName, m_MachName);
+                        m_FileTools.CopyFileUsingLocks(mzXmlFilePathLocal, fiTargetFile.FullName, true);
 
                     // Delete the local .mzXml file
                     DeleteFileIgnoreErrors(mzXmlFilePathLocal);
@@ -548,7 +548,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                         if (fiTargetFile.Exists && fiTargetFile.Length == fiDatasetFile.Length)
                             LogDebug("Skipping instrument file since already present in the target folder: " + fiTargetFile.FullName);
                         else
-                            m_FileTools.CopyFileUsingLocks(strDatasetFilePathSource, fiTargetFile.FullName, m_MachName);
+                            m_FileTools.CopyFileUsingLocks(strDatasetFilePathSource, fiTargetFile.FullName, true);
                     }
 
                     if (!string.IsNullOrEmpty(strDatasetFilePathLocal))

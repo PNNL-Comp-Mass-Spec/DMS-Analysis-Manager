@@ -254,7 +254,7 @@ namespace AnalysisManagerBase
                     ResetTimestampForQueueWaitTimeLogging();
                     var startTime = DateTime.UtcNow;
 
-                    if (m_FileTools.CopyFileUsingLocks(srcFilePath, destFilePath, m_MgrName, overwrite))
+                    if (m_FileTools.CopyFileUsingLocks(srcFilePath, destFilePath, overwrite))
                     {
                         LogCopyStats(startTime, destFilePath);
                         return;

@@ -363,7 +363,7 @@ namespace AnalysisManagerBase
                     OnResetTimestampForQueueWaitTime();
                     var startTime = DateTime.UtcNow;
 
-                    if (m_FileTools.CopyFileUsingLocks(srcFilePath, destFilePath, m_MgrName, overwrite))
+                    if (m_FileTools.CopyFileUsingLocks(srcFilePath, destFilePath, overwrite))
                     {
                         OnCopyWithLocksComplete(startTime, destFilePath);
                         return true;
