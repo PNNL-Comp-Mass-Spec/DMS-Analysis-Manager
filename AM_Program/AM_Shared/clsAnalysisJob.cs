@@ -976,7 +976,7 @@ namespace AnalysisManagerBase
                 var cmd = new SqlCommand(SP_NAME_REQUEST_TASK) { CommandType = CommandType.StoredProcedure };
 
                 cmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
-                cmd.Parameters.Add(new SqlParameter("@processorName", SqlDbType.VarChar, 128)).Value = m_MgrParams.GetParam("MgrName");
+                cmd.Parameters.Add(new SqlParameter("@processorName", SqlDbType.VarChar, 128)).Value = ManagerName;
                 cmd.Parameters.Add(new SqlParameter("@jobNumber", SqlDbType.Int)).Direction = ParameterDirection.Output;
                 cmd.Parameters.Add(new SqlParameter("@parameters", SqlDbType.VarChar, 8000)).Direction = ParameterDirection.Output;
                 cmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
@@ -1376,12 +1376,10 @@ namespace AnalysisManagerBase
         private void CreateLocalLockFile(string lockFilePath)
         {
 
-            var mgrName = m_MgrParams.GetParam("MgrName", Environment.MachineName);
-
             var lockFileContents = new List<string>
             {
                 "Date: " + DateTime.Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT),
-                "Manager: " + mgrName
+                "Manager: " + ManagerName
             };
 
             LogDebug("  creating lock file at " + lockFilePath);

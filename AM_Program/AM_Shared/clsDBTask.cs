@@ -100,6 +100,9 @@ namespace AnalysisManagerBase
             get => m_DebugLevel;
             set => m_DebugLevel = value;
         }
+
+        public string ManagerName { get; }
+
         #endregion
 
         #region "Methods"
@@ -113,6 +116,8 @@ namespace AnalysisManagerBase
         protected clsDBTask(IMgrParams mgrParams, short debugLvl)
         {
             m_MgrParams = mgrParams;
+
+            ManagerName = m_MgrParams.GetParam("MgrName", Environment.MachineName + "_Undefined-Manager");
 
             // Gigasax.DMS5
             m_ConnStr = m_MgrParams.GetParam("ConnectionString");
