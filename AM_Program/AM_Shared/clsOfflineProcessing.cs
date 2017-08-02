@@ -12,7 +12,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="infoFilePath">Info file path</param>
         /// <param name="succeeded">True if the job succeeded</param>
-        /// <param name="compCode">Completion code</param>
+        /// <param name="compCode">Integer version of enum CloseOutType specifying the completion code</param>
         /// <param name="compMsg">Completion message</param>
         /// <param name="evalCode">Evaluation code</param>
         /// <param name="evalMsg">Evaluation messge</param>

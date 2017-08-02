@@ -511,8 +511,6 @@ namespace AnalysisManagerBase
                 LogError(msg, ex);
                 return msg;
             }
-
-
         }
 
         /// <summary>
