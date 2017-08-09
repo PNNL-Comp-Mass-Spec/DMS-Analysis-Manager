@@ -113,6 +113,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerMetaboliteDe
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AM_Shared", "..\AM_Program\AM_Shared\AM_Shared.csproj", "{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerUIMFtoMassHunterPlugin", "AM_UIMFtoMassHunter_Plugin\AnalysisManagerUIMFtoMassHunterPlugin.csproj", "{43A57577-6207-4FB7-92EE-C4E1B9BED1E3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -337,6 +339,10 @@ Global
 		{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{43A57577-6207-4FB7-92EE-C4E1B9BED1E3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{43A57577-6207-4FB7-92EE-C4E1B9BED1E3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{43A57577-6207-4FB7-92EE-C4E1B9BED1E3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{43A57577-6207-4FB7-92EE-C4E1B9BED1E3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

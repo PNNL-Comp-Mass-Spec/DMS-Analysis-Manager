@@ -1,0 +1,102 @@
+﻿/*****************************************************************
+** Written by Matthew Monroe for the US Department of Energy    **
+** Pacific Northwest National Laboratory, Richland, WA          **
+** Created 08/08/2017                                           **
+**                                                              **
+*****************************************************************/
+
+using System;
+using AnalysisManagerBase;
+
+namespace AnalysisManagerUIMFtoMassHunterPlugin
+{
+    public class clsAnalysisResourcesUIMFtoMassHunter : clsAnalysisResources
+    {
+
+        public override CloseOutType GetResources()
+        {
+
+            var currentTask = "Initializing";
+
+            try
+            {
+                currentTask = "Retrieve shared resources";
+
+                // Retrieve shared resources (likely none for this tool)
+                var result = GetSharedResources();
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    return result;
+                }
+
+                /*
+                 * Future, if needed
+
+                // Retrieve the parameter file
+                currentTask = "Retrieve the parameter file";
+                var paramFileName = m_jobParams.GetParam("ParmFileName");
+                var paramFileStoragePath = m_jobParams.GetParam("ParmFileStoragePath");
+
+                var success = FileSearch.RetrieveFile(paramFileName, paramFileStoragePath);
+                if (!success)
+                {
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                 *
+                 */
+
+                // Retrieve the .UIMF file
+                var rawDataType = m_jobParams.GetParam("rawDataType");
+                var toolName = m_jobParams.GetParam("ToolName");
+
+                switch (rawDataType.ToLower())
+                {
+                    case RAW_DATA_TYPE_DOT_UIMF_FILES:
+                        // Valid dataset type
+                        break;
+                    default:
+                        LogError("Dataset type not supported: " + rawDataType);
+                        return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                if (!FileSearch.RetrieveSpectra(rawDataType))
+                {
+                    LogDebug("clsAnalysisResourcesMASIC.GetResources: Error occurred retrieving spectra.");
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+                {
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                if (rawDataType.ToLower() == RAW_DATA_TYPE_DOT_UIMF_FILES)
+                {
+                    // Valid dataset type
+                    var uimfFileName = DatasetName + ".uimf";
+                    var inputFilePath = ResolveStoragePath(m_WorkingDir, uimfFileName);
+
+                    if (string.IsNullOrWhiteSpace(inputFilePath))
+                    {
+                        // Unable to resolve the file path
+                        LogError("Could not find " + inputFilePath + " or " + inputFilePath + STORAGE_PATH_INFO_FILE_SUFFIX +
+                                 " in the working folder; unable to run the UIMFtoMassHunter converter");
+                        return CloseOutType.CLOSEOUT_FAILED;
+                    }
+                }
+
+                return CloseOutType.CLOSEOUT_SUCCESS;
+
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception in GetResources; task = " + currentTask, ex);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+        }
+
+
+    }
+}
