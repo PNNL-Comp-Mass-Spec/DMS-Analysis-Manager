@@ -441,56 +441,16 @@ namespace AnalysisManagerPBFGenerator
         /// Stores the tool version info in the database
         /// </summary>
         /// <remarks></remarks>
-        protected bool StoreToolVersionInfo(string strProgLoc)
+        protected bool StoreToolVersionInfo(string progLoc)
         {
-            var strToolVersionInfo = string.Empty;
-            var blnSuccess = false;
-
-            if (m_DebugLevel >= 2)
+            var additionalDLLs = new List<string>
             {
-                LogDebug("Determining tool version info");
-            }
-
-            var fiProgram = new FileInfo(strProgLoc);
-            if (!fiProgram.Exists)
-            {
-                try
-                {
-                    strToolVersionInfo = "Unknown";
-                    return base.SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>(), false);
-                }
-                catch (Exception ex)
-                {
-                    LogError("Exception calling SetStepTaskToolVersion", ex);
-                    return false;
-                }
-
-            }
-
-            // Lookup the version of the .NET application
-            blnSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, fiProgram.FullName);
-            if (!blnSuccess)
-                return false;
-
-            // Store paths to key DLLs in ioToolFiles
-            var ioToolFiles = new List<FileInfo> {
-                fiProgram
+                "InformedProteomics.Backend.dll"
             };
 
-            if (fiProgram.Directory != null)
-            {
-                ioToolFiles.Add(new FileInfo(Path.Combine(fiProgram.Directory.FullName, "InformedProteomics.Backend.dll")));
-            }
+            var success = StoreDotNETToolVersionInfo(progLoc, additionalDLLs);
 
-            try
-            {
-                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, false);
-            }
-            catch (Exception ex)
-            {
-                LogError("Exception calling SetStepTaskToolVersion", ex);
-                return false;
-            }
+            return success;
         }
 
         #endregion

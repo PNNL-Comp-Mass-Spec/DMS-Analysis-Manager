@@ -1013,33 +1013,35 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             }
 
             // Store version information for the PeptideToProteinMapEngine and its associated DLLs
-            blnSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, Path.Combine(strAppFolderPath, "PeptideToProteinMapEngine.dll"));
+            var blnSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, Path.Combine(strAppFolderPath, "PeptideToProteinMapEngine.dll"));
             if (!blnSuccess)
                 return false;
 
-            blnSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, Path.Combine(strAppFolderPath, "ProteinFileReader.dll"));
+            blnSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, Path.Combine(strAppFolderPath, "ProteinFileReader.dll"));
             if (!blnSuccess)
                 return false;
 
-            blnSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, Path.Combine(strAppFolderPath, "System.Data.SQLite.dll"));
+            blnSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, Path.Combine(strAppFolderPath, "System.Data.SQLite.dll"));
             if (!blnSuccess)
                 return false;
 
-            blnSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, Path.Combine(strAppFolderPath, "ProteinCoverageSummarizer.dll"));
+            blnSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, Path.Combine(strAppFolderPath, "ProteinCoverageSummarizer.dll"));
             if (!blnSuccess)
                 return false;
 
             // Store the path to important DLLs in ioToolFiles
-            var ioToolFiles = new List<FileInfo>();
-            ioToolFiles.Add(new FileInfo(Path.Combine(strAppFolderPath, "AnalysisManagerInspResultsAssemblyPlugIn.dll")));
-            ioToolFiles.Add(new FileInfo(Path.Combine(strAppFolderPath, "PeptideToProteinMapEngine.dll")));
-            ioToolFiles.Add(new FileInfo(Path.Combine(strAppFolderPath, "ProteinFileReader.dll")));
             // Skip System.Data.SQLite.dll; we don't need to track the file date
-            ioToolFiles.Add(new FileInfo(Path.Combine(strAppFolderPath, "ProteinCoverageSummarizer.dll")));
+            var ioToolFiles = new List<FileInfo>
+            {
+                new FileInfo(Path.Combine(strAppFolderPath, "AnalysisManagerInspResultsAssemblyPlugIn.dll")),
+                new FileInfo(Path.Combine(strAppFolderPath, "PeptideToProteinMapEngine.dll")),
+                new FileInfo(Path.Combine(strAppFolderPath, "ProteinFileReader.dll")),
+                new FileInfo(Path.Combine(strAppFolderPath, "ProteinCoverageSummarizer.dll"))
+            };
 
             try
             {
-                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
+                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
             }
             catch (Exception ex)
             {

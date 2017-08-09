@@ -693,23 +693,23 @@ namespace AnalysisManagerQCARTPlugin
         /// Stores the tool version info in the database
         /// </summary>
         /// <remarks></remarks>
-        private bool StoreToolVersionInfo(string strProgLoc)
+        private bool StoreToolVersionInfo(string rProgLoc)
         {
 
-            var strToolVersionInfo = string.Empty;
+            var toolVersionInfo = string.Empty;
 
             if (m_DebugLevel >= 2)
             {
                 LogDebug("Determining tool version info");
             }
 
-            var fiProgram = new FileInfo(strProgLoc);
+            var fiProgram = new FileInfo(rProgLoc);
             if (!fiProgram.Exists)
             {
                 try
                 {
-                    strToolVersionInfo = "Unknown";
-                    return base.SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>(), saveToolVersionTextFile: false);
+                    toolVersionInfo = "Unknown";
+                    return SetStepTaskToolVersion(toolVersionInfo, new List<FileInfo>(), saveToolVersionTextFile: false);
                 }
                 catch (Exception ex)
                 {
@@ -719,8 +719,7 @@ namespace AnalysisManagerQCARTPlugin
 
             }
 
-            // Lookup the version of the .NET program
-            StoreToolVersionInfoViaSystemDiagnostics(ref strToolVersionInfo, fiProgram.FullName);
+            StoreToolVersionInfoViaSystemDiagnostics(ref toolVersionInfo, fiProgram.FullName);
 
             // Store paths to key DLLs in ioToolFiles
             var ioToolFiles = new List<FileInfo>
@@ -730,7 +729,7 @@ namespace AnalysisManagerQCARTPlugin
 
             try
             {
-                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, saveToolVersionTextFile: false);
+                return SetStepTaskToolVersion(toolVersionInfo, ioToolFiles, saveToolVersionTextFile: false);
             }
             catch (Exception ex)
             {

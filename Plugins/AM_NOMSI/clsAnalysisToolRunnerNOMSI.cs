@@ -608,51 +608,11 @@ namespace AnalysisManagerNOMSIPlugin
         /// Stores the tool version info in the database
         /// </summary>
         /// <remarks></remarks>
-        protected bool StoreToolVersionInfo(string strProgLoc)
+        protected bool StoreToolVersionInfo(string progLoc)
         {
+            var success = StoreDotNETToolVersionInfo(progLoc);
 
-            var strToolVersionInfo = string.Empty;
-
-            if (m_DebugLevel >= 2)
-            {
-                LogDebug("Determining tool version info");
-            }
-
-            var fiProgram = new FileInfo(strProgLoc);
-            if (!fiProgram.Exists)
-            {
-                try
-                {
-                    strToolVersionInfo = "Unknown";
-                    return base.SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>(), saveToolVersionTextFile: false);
-                }
-                catch (Exception ex)
-                {
-                    LogError("Exception calling SetStepTaskToolVersion", ex);
-                    return false;
-                }
-
-            }
-
-            // Lookup the version of the .NET program
-            StoreToolVersionInfoOneFile(ref strToolVersionInfo, fiProgram.FullName);
-
-            // Store paths to key DLLs in ioToolFiles
-            var ioToolFiles = new List<FileInfo>
-            {
-                fiProgram
-            };
-
-            try
-            {
-                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, saveToolVersionTextFile: false);
-            }
-            catch (Exception ex)
-            {
-                LogError("Exception calling SetStepTaskToolVersion", ex);
-                return false;
-            }
-
+            return success;
         }
 
         private bool UpdateParameterFile(string paramFilePath, string targetsFileName)

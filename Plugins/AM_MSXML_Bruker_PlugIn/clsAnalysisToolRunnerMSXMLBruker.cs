@@ -315,6 +315,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             var ioToolFiles = new List<FileInfo>();
 
             var msXmlGenerator = m_jobParams.GetParam("MSXMLGenerator");
+
             // Typically CompassXport.exe
             if (string.Equals(msXmlGenerator, COMPASS_XPORT, StringComparison.OrdinalIgnoreCase))
             {
@@ -354,7 +355,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
 
             try
             {
-                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
+                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
             }
             catch (Exception ex)
             {

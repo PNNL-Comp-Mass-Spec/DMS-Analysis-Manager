@@ -502,8 +502,8 @@ namespace AnalysisManagerResultsXferPlugin
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo()
         {
-            var strToolVersionInfo = string.Empty;
-            var strAppFolderPath = clsGlobal.GetAppFolderPath();
+            var toolVersionInfo = string.Empty;
+            var appFolderPath = clsGlobal.GetAppFolderPath();
 
             if (m_DebugLevel >= 2)
             {
@@ -511,13 +511,13 @@ namespace AnalysisManagerResultsXferPlugin
             }
 
             // Lookup the version of the Analysis Manager
-            if (!StoreToolVersionInfoForLoadedAssembly(ref strToolVersionInfo, "AnalysisManagerProg"))
+            if (!StoreToolVersionInfoForLoadedAssembly(ref toolVersionInfo, "AnalysisManagerProg"))
             {
                 return false;
             }
 
             // Lookup the version of AnalysisManagerResultsXferPlugin
-            if (!StoreToolVersionInfoForLoadedAssembly(ref strToolVersionInfo, "AnalysisManagerResultsXferPlugin"))
+            if (!StoreToolVersionInfoForLoadedAssembly(ref toolVersionInfo, "AnalysisManagerResultsXferPlugin"))
             {
                 return false;
             }
@@ -525,13 +525,13 @@ namespace AnalysisManagerResultsXferPlugin
             // Store the path to AnalysisManagerProg.exe and AnalysisManagerResultsXferPlugin.dll in ioToolFiles
             var ioToolFiles = new List<FileInfo>
             {
-                new FileInfo(Path.Combine(strAppFolderPath, "AnalysisManagerProg.exe")),
-                new FileInfo(Path.Combine(strAppFolderPath, "AnalysisManagerResultsXferPlugin.dll"))
+                new FileInfo(Path.Combine(appFolderPath, "AnalysisManagerProg.exe")),
+                new FileInfo(Path.Combine(appFolderPath, "AnalysisManagerResultsXferPlugin.dll"))
             };
 
             try
             {
-                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, false);
+                return SetStepTaskToolVersion(toolVersionInfo, ioToolFiles, false);
             }
             catch (Exception ex)
             {

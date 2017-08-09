@@ -248,7 +248,7 @@ namespace AnalysisManagerProSightQuantPlugIn
             }
 
         }
-        
+
         /// <summary>
         /// Creates the targeted quant params XML file
         /// </summary>
@@ -464,60 +464,17 @@ namespace AnalysisManagerProSightQuantPlugIn
         /// Stores the tool version info in the database
         /// </summary>
         /// <remarks></remarks>
-        protected bool StoreToolVersionInfo(string strTargetedWorkflowsConsoleProgLoc)
+        protected bool StoreToolVersionInfo(string targetedWorkflowsConsoleProgLoc)
         {
-            var strToolVersionInfo = string.Empty;
-
-            if (m_DebugLevel >= 2)
+            var additionalDLLs = new List<string>
             {
-                LogDebug("Determining tool version info");
-            }
-
-            var ioTargetedWorkflowsConsole = new FileInfo(strTargetedWorkflowsConsoleProgLoc);
-            if (!ioTargetedWorkflowsConsole.Exists)
-            {
-                try
-                {
-                    strToolVersionInfo = "Unknown";
-                    return SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>());
-                }
-                catch (Exception ex)
-                {
-                    LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
-                    return false;
-                }
-
-            }
-
-            // Lookup the version of the TargetedWorkflowsConsole application
-            var blnSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, ioTargetedWorkflowsConsole.FullName);
-            if (!blnSuccess)
-                return false;
-
-            if (string.IsNullOrWhiteSpace(ioTargetedWorkflowsConsole.DirectoryName))
-            {
-                LogError("Cannot determine the parent directory of " + ioTargetedWorkflowsConsole.FullName);
-                return false;
-            }
-
-            // Store paths to key DLLs in ioToolFiles
-            var ioToolFiles = new List<FileInfo>
-            {
-                ioTargetedWorkflowsConsole,
-                new FileInfo(Path.Combine(ioTargetedWorkflowsConsole.DirectoryName, "DeconTools.Backend.dll")),
-                new FileInfo(Path.Combine(ioTargetedWorkflowsConsole.DirectoryName, "DeconTools.Workflows.dll"))
+                "DeconTools.Backend.dll",
+                "DeconTools.Workflows.dll"
             };
 
+            var success = StoreDotNETToolVersionInfo(targetedWorkflowsConsoleProgLoc, additionalDLLs);
 
-            try
-            {
-                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
-            }
-            catch (Exception ex)
-            {
-                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
-                return false;
-            }
+            return success;
         }
 
         public void WriteXMLSetting(XmlTextWriter swOutFile, string strSettingName, string strSettingValue)

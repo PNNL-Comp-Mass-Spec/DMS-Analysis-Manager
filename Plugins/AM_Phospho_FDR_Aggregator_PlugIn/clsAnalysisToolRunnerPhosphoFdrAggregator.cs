@@ -1074,54 +1074,16 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
         /// Stores the tool version info in the database
         /// </summary>
         /// <remarks></remarks>
-        protected bool StoreToolVersionInfo(string strProgLoc)
+        protected bool StoreToolVersionInfo(string progLoc)
         {
-            var strToolVersionInfo = string.Empty;
-
-            if (m_DebugLevel >= 2)
+            var additionalDLLs = new List<string>
             {
-                LogDebug("Determining tool version info");
-            }
-
-            var fiProgram = new FileInfo(strProgLoc);
-            if (!fiProgram.Exists)
-            {
-                try
-                {
-                    strToolVersionInfo = "Unknown";
-                    return SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>(), saveToolVersionTextFile: false);
-                }
-                catch (Exception ex)
-                {
-                    LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
-                    return false;
-                }
-            }
-
-            // Lookup the version of the .NET application
-            var blnSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, fiProgram.FullName);
-            if (!blnSuccess)
-                return false;
-
-            // Store paths to key DLLs in ioToolFiles
-            var ioToolFiles = new List<FileInfo> {
-                fiProgram
+                "AScore_DLL.dll"
             };
 
-            if (fiProgram.Directory != null)
-            {
-                ioToolFiles.Add(new FileInfo(Path.Combine(fiProgram.Directory.FullName, "AScore_DLL.dll")));
-            }
+            var success = StoreDotNETToolVersionInfo(progLoc, additionalDLLs);
 
-            try
-            {
-                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, saveToolVersionTextFile: false);
-            }
-            catch (Exception ex)
-            {
-                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
-                return false;
-            }
+            return success;
         }
 
         private DateTime dtLastConsoleOutputParse = DateTime.MinValue;

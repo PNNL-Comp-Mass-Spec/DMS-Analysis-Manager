@@ -119,7 +119,7 @@ namespace AnalysisManagerDtaSplitPlugIn
                 m_message = "Error in DtaSplitPlugin->RunTool: " + ex.Message;
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-            
+
         }
 
         /// <summary>
@@ -411,34 +411,10 @@ namespace AnalysisManagerDtaSplitPlugIn
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo()
         {
-            var strToolVersionInfo = string.Empty;
+            var cyclopsDll = Path.Combine(clsGlobal.GetAppFolderPath(), "AnalysisManagerDtaSplitPlugIn.dll");
+            var success = StoreDotNETToolVersionInfo(cyclopsDll);
 
-            if (m_DebugLevel >= 2)
-            {
-                LogDebug("Determining tool version info");
-            }
-
-            // Lookup the version of the AnalysisManagerDtaSplitPlugIn
-            if (!StoreToolVersionInfoForLoadedAssembly(ref strToolVersionInfo, "AnalysisManagerDtaSplitPlugIn"))
-            {
-                return false;
-            }
-
-            // Store the path to AnalysisManagerDtaSplitPlugIn.dll in ioToolFiles
-            var ioToolFiles = new List<FileInfo>
-            {
-                new FileInfo(Path.Combine(clsGlobal.GetAppFolderPath(), "AnalysisManagerDtaSplitPlugIn.dll"))
-            };
-
-            try
-            {
-                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
-            }
-            catch (Exception ex)
-            {
-                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message, ex);
-                return false;
-            }
+            return success;
         }
 
         #endregion

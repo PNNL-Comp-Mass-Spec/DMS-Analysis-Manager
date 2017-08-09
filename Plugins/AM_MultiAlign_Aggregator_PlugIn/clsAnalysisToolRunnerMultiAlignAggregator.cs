@@ -210,7 +210,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 try
                 {
                     strToolVersionInfo = "Unknown";
-                    base.SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>());
+                    SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>());
                 }
                 catch (Exception ex)
                 {

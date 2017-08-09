@@ -249,48 +249,12 @@ namespace AnalysisManager_AScore_PlugIn
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo()
         {
-            var strAppFolderPath = clsGlobal.GetAppFolderPath();
+            var cyclopsDll = Path.Combine(clsGlobal.GetAppFolderPath(), "AScore_DLL.dll");
+            var success = StoreDotNETToolVersionInfo(cyclopsDll);
 
-            var fiIDMdll = new FileInfo(Path.Combine(strAppFolderPath, "AScore_DLL.dll"));
-
-            return StoreToolVersionInfoDLL(fiIDMdll.FullName);
+            return success;
         }
 
-
-        /// <summary>
-        /// Stores the tool version info in the database
-        /// </summary>
-        /// <remarks></remarks>
-        protected bool StoreToolVersionInfoDLL(string strAScoreDLLPath)
-        {
-
-            var strToolVersionInfo = string.Empty;
-
-            if (m_DebugLevel >= 2)
-            {
-                LogDebug("Determining tool version info");
-            }
-
-            // Lookup the version of the DLL
-            StoreToolVersionInfoOneFile(ref strToolVersionInfo, strAScoreDLLPath);
-
-            // Store paths to key files in ioToolFiles
-            var ioToolFiles = new List<FileInfo>
-            {
-                new FileInfo(strAScoreDLLPath)
-            };
-
-            try
-            {
-                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
-            }
-            catch (Exception ex)
-            {
-                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message, ex);
-                return false;
-            }
-
-        }
 
     }
 }

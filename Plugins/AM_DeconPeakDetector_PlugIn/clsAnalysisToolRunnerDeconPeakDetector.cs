@@ -296,40 +296,16 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
         /// Stores the tool version info in the database
         /// </summary>
         /// <remarks></remarks>
-        private bool StoreToolVersionInfo(string strPeakDetectorPath)
+        private bool StoreToolVersionInfo(string progLoc)
         {
-            var strToolVersionInfo = string.Empty;
-
-            if (m_DebugLevel >= 2)
+            var additionalDLLs = new List<string>
             {
-                LogDebug("Determining tool version info");
-            }
-
-            // Lookup the version of the DeconConsole application
-            var fiPeakDetector = new FileInfo(strPeakDetectorPath);
-
-            var blnSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, fiPeakDetector.FullName);
-            if (!blnSuccess)
-                return false;
-
-            var dllPath = Path.Combine(fiPeakDetector.Directory.FullName, "SimplePeakDetectorEngine.dll");
-            base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, dllPath);
-
-            // Store paths to key files in ioToolFiles
-            var ioToolFiles = new List<FileInfo> {
-                new FileInfo(strPeakDetectorPath),
-                new FileInfo(dllPath)
+                "SimplePeakDetectorEngine.dll"
             };
 
-            try
-            {
-                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, saveToolVersionTextFile: false);
-            }
-            catch (Exception ex)
-            {
-                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message, ex);
-                return false;
-            }
+            var success = StoreDotNETToolVersionInfo(progLoc, additionalDLLs);
+
+            return success;
         }
 
         #endregion

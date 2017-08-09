@@ -782,7 +782,8 @@ namespace AnalysisManagerICR2LSPlugIn
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo()
         {
-            var strToolVersionInfo = string.Empty;
+
+            var toolVersionInfo = string.Empty;
 
             if (m_DebugLevel >= 2)
             {
@@ -804,7 +805,7 @@ namespace AnalysisManagerICR2LSPlugIn
 
             try
             {
-                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
+                return SetStepTaskToolVersion(toolVersionInfo, ioToolFiles);
             }
             catch (Exception ex)
             {

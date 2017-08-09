@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using AnalysisManagerBase;
@@ -151,7 +150,7 @@ namespace AnalysisManager_IDM_Plugin
 
         }
 
-        protected void InterfenceDetectorProgressHandler(InterferenceDetector id, ProgressInfo e)
+        private void InterfenceDetectorProgressHandler(InterferenceDetector id, ProgressInfo e)
         {
 
             m_progress = e.Value;
@@ -164,44 +163,13 @@ namespace AnalysisManager_IDM_Plugin
         /// Stores the tool version info in the database
         /// </summary>
         /// <remarks></remarks>
-        protected bool StoreToolVersionInfo()
+        private bool StoreToolVersionInfo()
         {
-            var strAppFolderPath = clsGlobal.GetAppFolderPath();
+            var fiIDMdll = Path.Combine(clsGlobal.GetAppFolderPath(), "InterDetect.dll");
 
-            var fiIDMdll = new FileInfo(Path.Combine(strAppFolderPath, "InterDetect.dll"));
+            var success = StoreDotNETToolVersionInfo(fiIDMdll);
 
-            return StoreToolVersionInfoDLL(fiIDMdll.FullName);
-        }
-
-        protected bool StoreToolVersionInfoDLL(string strIDMdllPath)
-        {
-
-            var strToolVersionInfo = string.Empty;
-
-            if (m_DebugLevel >= 2)
-            {
-                LogDebug("Determining tool version info");
-            }
-
-            // Lookup the version of the DLL
-            StoreToolVersionInfoOneFile(ref strToolVersionInfo, strIDMdllPath);
-
-            // Store paths to key files in ioToolFiles
-            var ioToolFiles = new List<FileInfo>
-            {
-                new FileInfo(strIDMdllPath)
-            };
-
-            try
-            {
-                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
-            }
-            catch (Exception ex)
-            {
-                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
-                return false;
-            }
-
+            return success;
         }
 
         #endregion

@@ -495,54 +495,15 @@ namespace AnalysisManagerMSAlignQuantPlugIn
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo(string strTargetedWorkflowsConsoleProgLoc)
         {
-            var strToolVersionInfo = string.Empty;
-            var blnSuccess = false;
-
-            if (m_DebugLevel >= 2)
+            var additionalDLLs = new List<string>
             {
-                LogDebug("Determining tool version info");
-            }
-
-            var ioTargetedWorkflowsConsole = new FileInfo(strTargetedWorkflowsConsoleProgLoc);
-            if (!ioTargetedWorkflowsConsole.Exists)
-            {
-                try
-                {
-                    strToolVersionInfo = "Unknown";
-                    return base.SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>());
-                }
-                catch (Exception ex)
-                {
-                    LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
-                    return false;
-                }
-            }
-
-            // Lookup the version of the TargetedWorkflowsConsole application
-            blnSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, ioTargetedWorkflowsConsole.FullName);
-            if (!blnSuccess)
-                return false;
-
-            // Store paths to key DLLs in ioToolFiles
-            var ioToolFiles = new List<FileInfo> {
-                ioTargetedWorkflowsConsole
+                "DeconTools.Backend.dll",
+                "DeconTools.Workflows.dll"
             };
 
-            if (ioTargetedWorkflowsConsole.Directory != null)
-            {
-                ioToolFiles.Add(new FileInfo(Path.Combine(ioTargetedWorkflowsConsole.Directory.FullName, "DeconTools.Backend.dll")));
-                ioToolFiles.Add(new FileInfo(Path.Combine(ioTargetedWorkflowsConsole.Directory.FullName, "DeconTools.Workflows.dll")));
-            }
+            var success = StoreDotNETToolVersionInfo(strTargetedWorkflowsConsoleProgLoc, additionalDLLs);
 
-            try
-            {
-                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
-            }
-            catch (Exception ex)
-            {
-                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
-                return false;
-            }
+            return success;
         }
 
         public void WriteXMLSetting(XmlTextWriter swOutFile, string strSettingName, string strSettingValue)

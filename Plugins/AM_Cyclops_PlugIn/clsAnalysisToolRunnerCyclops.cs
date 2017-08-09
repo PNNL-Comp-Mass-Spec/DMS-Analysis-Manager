@@ -258,44 +258,10 @@ namespace AnalysisManager_Cyclops_PlugIn
         /// <remarks></remarks>
         private bool StoreToolVersionInfo()
         {
+            var cyclopsDll = Path.Combine(clsGlobal.GetAppFolderPath(), "Cyclops.dll");
+            var success = StoreDotNETToolVersionInfo(cyclopsDll);
 
-            var strToolVersionInfo = string.Empty;
-
-            if (m_DebugLevel >= 2)
-            {
-                LogDebug("Determining tool version info");
-            }
-
-            try
-            {
-                var oAssemblyName = System.Reflection.Assembly.Load("Cyclops").GetName();
-
-                var strNameAndVersion = oAssemblyName.Name + ", Version=" + oAssemblyName.Version;
-                strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion);
-            }
-            catch (Exception ex)
-            {
-                LogError("Exception determining Assembly info for Cyclops: " + ex.Message, ex);
-                return false;
-            }
-
-            // Store paths to key DLLs
-            var ioToolFiles = new List<FileInfo>
-            {
-                new FileInfo(Path.Combine(clsGlobal.GetAppFolderPath(), "Cyclops.dll"))
-            };
-
-            try
-            {
-                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, false);
-            }
-            catch (Exception ex)
-            {
-                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message, ex);
-                return false;
-            }
-
-
+            return success;
         }
 
         private void cyclops_ErrorEvent(object sender, MessageEventArgs e)

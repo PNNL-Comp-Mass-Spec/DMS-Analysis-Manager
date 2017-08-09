@@ -140,24 +140,13 @@ namespace AnalysisManager_Ape_PlugIn
         protected bool StoreToolVersionInfo()
         {
 
-            var strToolVersionInfo = string.Empty;
+            var toolVersionInfo = string.Empty;
 
             if (m_DebugLevel >= 2) {
                 LogDebug("Determining tool version info");
             }
 
-            try
-            {
-                var oAssemblyName = System.Reflection.Assembly.Load("Ape").GetName();
-
-                var strNameAndVersion = oAssemblyName.Name + ", Version=" + oAssemblyName.Version;
-                strToolVersionInfo = clsGlobal.AppendToComment(strToolVersionInfo, strNameAndVersion);
-            }
-            catch (Exception ex)
-            {
-                LogError("Exception determining Assembly info for Ape: " + ex.Message, ex);
-                return false;
-            }
+            StoreToolVersionInfoForLoadedAssembly(ref toolVersionInfo, "Ape");
 
             // Store paths to key DLLs
             var ioToolFiles = new System.Collections.Generic.List<FileInfo> {
@@ -166,7 +155,7 @@ namespace AnalysisManager_Ape_PlugIn
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
+                return SetStepTaskToolVersion(toolVersionInfo, ioToolFiles);
             }
             catch (Exception ex)
             {

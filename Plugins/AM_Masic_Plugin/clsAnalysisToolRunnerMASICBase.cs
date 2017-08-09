@@ -402,35 +402,12 @@ namespace AnalysisManagerMasicPlugin
         /// Stores the tool version info in the database
         /// </summary>
         /// <remarks></remarks>
-        protected bool StoreToolVersionInfo()
+        private bool StoreToolVersionInfo()
         {
-            var strToolVersionInfo = string.Empty;
-            var strMASICExePath = m_mgrParams.GetParam("masicprogloc");
+            var masicExecutablePath = m_mgrParams.GetParam("masicprogloc");
+            var success = StoreDotNETToolVersionInfo(masicExecutablePath);
 
-            if (m_DebugLevel >= 2)
-            {
-                LogDebug("Determining tool version info");
-            }
-
-            // Lookup the version of MASIC
-            var blnSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, strMASICExePath);
-            if (!blnSuccess)
-                return false;
-
-            // Store path to MASIC.exe in ioToolFiles
-            var ioToolFiles = new List<FileInfo> {
-                new FileInfo(strMASICExePath)
-            };
-
-            try
-            {
-                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
-            }
-            catch (Exception ex)
-            {
-                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message, ex);
-                return false;
-            }
+            return success;
         }
 
         /// <summary>

@@ -868,62 +868,19 @@ namespace AnalysisManagerGlyQIQPlugin
         /// Stores the tool version info in the database
         /// </summary>
         /// <remarks></remarks>
-        protected bool StoreToolVersionInfo(string strProgLoc)
+        protected bool StoreToolVersionInfo(string progLoc)
         {
-            var strToolVersionInfo = string.Empty;
 
-            if (m_DebugLevel >= 2)
+            var additionalDLLs = new List<string>
             {
-                LogDebug("Determining tool version info");
-            }
-
-            var fiProgram = new FileInfo(strProgLoc);
-            if (!fiProgram.Exists)
-            {
-                try
-                {
-                    strToolVersionInfo = "Unknown";
-                    return SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>(), saveToolVersionTextFile: false);
-                }
-                catch (Exception ex)
-                {
-                    LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
-                    return false;
-                }
-            }
-
-            // Lookup the version of the .NET application
-
-            // One method is to call MyBase.StoreToolVersionInfoOneFile(ref strToolVersionInfo, fiProgram.FullName)
-            // Second method is to call StoreToolVersionInfoOneFile64Bit
-            // But those both fail; directly call the one that works:
-            var blnSuccess = StoreToolVersionInfoViaSystemDiagnostics(ref strToolVersionInfo, fiProgram.FullName);
-
-            if (!blnSuccess)
-                return false;
-
-            var ioToolFiles = new List<FileInfo> {
-                fiProgram
+                "IQGlyQ.dll",
+                "IQ2_x64.dll",
+                "Run64.dll"
             };
 
-            if (fiProgram.Directory != null)
-            {
-                // Store paths to key DLLs in ioToolFiles
+            var success = StoreDotNETToolVersionInfo(progLoc, additionalDLLs);
 
-                ioToolFiles.Add(new FileInfo(Path.Combine(fiProgram.Directory.FullName, "IQGlyQ.dll")));
-                                ioToolFiles.Add(new FileInfo(Path.Combine(fiProgram.Directory.FullName, "IQ2_x64.dll")));
-                ioToolFiles.Add(new FileInfo(Path.Combine(fiProgram.Directory.FullName, "Run64.dll")));
-            }
-
-            try
-            {
-                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, saveToolVersionTextFile: false);
-            }
-            catch (Exception ex)
-            {
-                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
-                return false;
-            }
+            return success;
         }
 
         #endregion

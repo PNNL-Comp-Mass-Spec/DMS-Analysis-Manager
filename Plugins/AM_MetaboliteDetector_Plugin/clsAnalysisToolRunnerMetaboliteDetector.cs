@@ -336,7 +336,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                 try
                 {
                     strToolVersionInfo = "Unknown";
-                    return base.SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>(), saveToolVersionTextFile: false);
+                    return SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>(), saveToolVersionTextFile: false);
                 }
                 catch (Exception ex)
                 {

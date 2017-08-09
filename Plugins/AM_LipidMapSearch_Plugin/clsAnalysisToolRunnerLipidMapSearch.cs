@@ -861,49 +861,11 @@ namespace AnalysisManagerLipidMapSearchPlugIn
         /// Stores the tool version info in the database
         /// </summary>
         /// <remarks></remarks>
-        private bool StoreToolVersionInfo(string strLipidToolsProgLoc)
+        private bool StoreToolVersionInfo(string progLoc)
         {
-            var strToolVersionInfo = string.Empty;
+            var success = StoreDotNETToolVersionInfo(progLoc);
 
-            if (m_DebugLevel >= 2)
-            {
-                LogDebug("Determining tool version info");
-            }
-
-            var ioLipidTools = new FileInfo(strLipidToolsProgLoc);
-            if (!ioLipidTools.Exists)
-            {
-                try
-                {
-                    strToolVersionInfo = "Unknown";
-                    return SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>());
-                }
-                catch (Exception ex)
-                {
-                    LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
-                    return false;
-                }
-            }
-
-            // Lookup the version of the LipidTools application
-            var blnSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, ioLipidTools.FullName);
-            if (!blnSuccess)
-                return false;
-
-            // Store paths to key DLLs in ioToolFiles
-            var ioToolFiles = new List<FileInfo> {
-                ioLipidTools
-            };
-
-            try
-            {
-                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
-            }
-            catch (Exception ex)
-            {
-                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
-                return false;
-            }
+            return success;
         }
 
         #endregion

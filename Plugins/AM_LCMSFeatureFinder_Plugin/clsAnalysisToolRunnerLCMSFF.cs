@@ -134,7 +134,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
         /// Stores the tool version info in the database
         /// </summary>
         /// <remarks></remarks>
-        protected bool StoreToolVersionInfo(string strFeatureFinderProgLoc)
+        protected bool StoreToolVersionInfo(string featureFinderProgLoc)
         {
             var strToolVersionInfo = string.Empty;
 
@@ -143,7 +143,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
                 LogDebug("Determining tool version info");
             }
 
-            var ioFeatureFinderInfo = new FileInfo(strFeatureFinderProgLoc);
+            var ioFeatureFinderInfo = new FileInfo(featureFinderProgLoc);
             if (!ioFeatureFinderInfo.Exists)
             {
                 try
@@ -164,7 +164,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
             // Store paths to key DLLs in ioToolFiles
             var ioToolFiles = new List<FileInfo>
             {
-                new FileInfo(strFeatureFinderProgLoc)
+                new FileInfo(featureFinderProgLoc)
             };
 
             // Lookup the version of the Feature Finder

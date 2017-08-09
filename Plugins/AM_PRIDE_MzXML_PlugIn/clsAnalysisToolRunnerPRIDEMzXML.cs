@@ -128,26 +128,10 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
         /// <remarks></remarks>
         protected bool StoreToolVersionInfo()
         {
-            var strToolVersionInfo = string.Empty;
+            var progLoc = m_mgrParams.GetParam("MSDataFileTrimmerprogloc");
+            var success = StoreDotNETToolVersionInfo(progLoc);
 
-            if (m_DebugLevel >= 2)
-            {
-                LogDebug("Determining tool version info");
-            }
-
-            // Store paths to key files in ioToolFiles
-            var ioToolFiles = new List<FileInfo>();
-            ioToolFiles.Add(new FileInfo(m_mgrParams.GetParam("MSDataFileTrimmerprogloc")));
-
-            try
-            {
-                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
-            }
-            catch (Exception ex)
-            {
-                LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
-                return false;
-            }
+            return success;
         }
 
         /// <summary>

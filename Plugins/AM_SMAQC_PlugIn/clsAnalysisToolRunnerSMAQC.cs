@@ -808,57 +808,17 @@ namespace AnalysisManagerSMAQCPlugIn
         /// Stores the tool version info in the database
         /// </summary>
         /// <remarks></remarks>
-        private bool StoreToolVersionInfo(string strSMAQCProgLoc)
+        private bool StoreToolVersionInfo(string progLoc)
         {
-            var strToolVersionInfo = string.Empty;
-
-            if (m_DebugLevel >= 2)
-            {
-                LogDebug("Determining tool version info");
-            }
-
-            var ioSMAQC = new FileInfo(strSMAQCProgLoc);
-            if (!ioSMAQC.Exists)
-            {
-                try
-                {
-                    strToolVersionInfo = "Unknown";
-                    return SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>());
-                }
-                catch (Exception ex)
-                {
-                    LogError("Exception calling SetStepTaskToolVersion", ex);
-                    return false;
-                }
-            }
-
-            // Lookup the version of the SMAQC application
-            var blnSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, ioSMAQC.FullName);
-            if (!blnSuccess)
-                return false;
-
+            var additionalDLLs = new List<string>();
             if (LLRC_ENABLED)
             {
-                // Lookup the version of LLRC
-                blnSuccess = base.StoreToolVersionInfoForLoadedAssembly(ref strToolVersionInfo, "LLRC");
-                if (!blnSuccess)
-                    return false;
+                additionalDLLs.Add("LLRC.dll");
             }
 
-            // Store paths to key DLLs in ioToolFiles
-            var ioToolFiles = new List<FileInfo> {
-                ioSMAQC
-            };
+            var success = StoreDotNETToolVersionInfo(progLoc, additionalDLLs);
 
-            try
-            {
-                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles);
-            }
-            catch (Exception ex)
-            {
-                LogError("Exception calling SetStepTaskToolVersion", ex);
-                return false;
-            }
+            return success;
         }
 
         #endregion

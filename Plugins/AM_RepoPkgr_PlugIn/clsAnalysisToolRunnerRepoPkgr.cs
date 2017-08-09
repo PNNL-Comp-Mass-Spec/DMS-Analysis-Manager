@@ -700,16 +700,13 @@ namespace AnalysisManager_RepoPkgr_Plugin
         {
             var strToolVersionInfo = string.Empty;
 
-            // Store paths to key files in ioToolFiles
-            var ioToolFiles = new List<FileInfo>();
-
-            // Lookup the version of the AnalysisManagerPrideConverter plugin
+            // Lookup the version of the AnalysisManagerRepoPkgr plugin
             if (!StoreToolVersionInfoForLoadedAssembly(ref strToolVersionInfo, "AnalysisManager_RepoPkgr_Plugin", includeRevision: false))
                 return false;
 
             try
             {
-                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, saveToolVersionTextFile: false);
+                return SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>(), saveToolVersionTextFile: false);
             }
             catch (Exception ex)
             {

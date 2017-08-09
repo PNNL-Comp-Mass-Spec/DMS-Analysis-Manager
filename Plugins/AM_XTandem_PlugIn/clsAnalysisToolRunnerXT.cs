@@ -220,7 +220,7 @@ namespace AnalysisManagerXTandemPlugIn
 
             try
             {
-                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, saveToolVersionTextFile: true);
+                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, saveToolVersionTextFile: true);
             }
             catch (Exception ex)
             {
