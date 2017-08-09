@@ -3397,6 +3397,97 @@ namespace AnalysisManagerBase
 
         }
 
+        /// <summary>
+        /// Stores the tool version info in the database
+        /// </summary>
+        /// <param name="progLoc">Path to the primary .exe or .DLL</param>
+        /// <returns>True if success, false if an error</returns>
+        /// <remarks>This method is appropriate for plugins that call a .NET executable</remarks>
+        public bool StoreDotNETToolVersionInfo(string progLoc)
+        {
+            return StoreDotNETToolVersionInfo(progLoc, new List<string>());
+        }
+
+        /// <summary>
+        /// Stores the tool version info in the database
+        /// </summary>
+        /// <param name="progLoc">Path to the primary .exe or .DLL</param>
+        /// <param name="additionalDlls">Additional .NET DLLs to examine (either simply names or full paths)</param>
+        /// <returns>True if success, false if an error</returns>
+        /// <remarks>This method is appropriate for plugins that call a .NET executable</remarks>
+        protected bool StoreDotNETToolVersionInfo(string progLoc, List<string> additionalDlls)
+        {
+
+            var toolVersionInfo = string.Empty;
+
+            if (m_DebugLevel >= 2)
+            {
+                LogDebug("Determining tool version info");
+            }
+
+            var fiProgram = new FileInfo(progLoc);
+            if (!fiProgram.Exists)
+            {
+                try
+                {
+                    return SetStepTaskToolVersion("Unknown", new List<FileInfo>(), saveToolVersionTextFile: false);
+                }
+                catch (Exception ex)
+                {
+                    LogError("Exception calling SetStepTaskToolVersion", ex);
+                    return false;
+                }
+
+            }
+
+            // Lookup the version of the .NET program
+            StoreToolVersionInfoViaSystemDiagnostics(ref toolVersionInfo, fiProgram.FullName);
+
+            // Store the path to the .exe or .dll in ioToolFiles
+            var ioToolFiles = new List<FileInfo>
+            {
+                fiProgram
+            };
+
+            if (additionalDlls != null)
+            {
+                // Add paths to key DLLs
+                foreach (var dllNameOrPath in additionalDlls)
+                {
+                    if (Path.IsPathRooted(dllNameOrPath) || dllNameOrPath.Contains(Path.DirectorySeparatorChar))
+                    {
+                        // Absolute or relative path; use as it
+                        ioToolFiles.Add(new FileInfo(dllNameOrPath));
+                        continue;
+                    }
+
+                    // Assume simply a filename
+                    if (fiProgram.Directory == null)
+                    {
+                        // Unable to determine the directory path for fiProgram; this shouldn't happen
+                        ioToolFiles.Add(new FileInfo(dllNameOrPath));
+                    }
+                    else
+                    {
+                        // Add it as a relative path to fiProgram
+                        ioToolFiles.Add(new FileInfo(Path.Combine(fiProgram.Directory.FullName, dllNameOrPath)));
+                    }
+                }
+            }
+
+            try
+            {
+                var success = SetStepTaskToolVersion(toolVersionInfo, ioToolFiles, saveToolVersionTextFile: false);
+                return success;
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception calling SetStepTaskToolVersion", ex);
+                return false;
+            }
+
+        }
+
         private bool StoreToolVersionInDatabase(string toolVersionInfo)
         {
 
