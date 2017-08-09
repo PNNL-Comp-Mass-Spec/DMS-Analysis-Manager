@@ -1445,7 +1445,15 @@ namespace AnalysisManagerBase
             // Check whether the settings file specifies that a specific version of the step tool be used
             var stepToolVersion = m_jobParams.GetParam(StepToolName + "_Version");
 
-            return DetermineProgramLocation(StepToolName, progLocManagerParamName, exeName, stepToolVersion, m_mgrParams, out m_message);
+            var progLoc = DetermineProgramLocation(StepToolName, progLocManagerParamName, exeName, stepToolVersion, m_mgrParams, out var errorMessage);
+
+            if (string.IsNullOrEmpty(errorMessage))
+            {
+                // The error has already been logged, but we need to update m_message
+                m_message = errorMessage;
+            }
+
+            return progLoc;
 
         }
 
