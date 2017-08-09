@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManager_Cyclops_PlugIn", "AnalysisManager_Cyclops_PlugIn.csproj", "{CA155567-FD6E-4FB2-9223-AA544FDF6CB1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManager_Cyclops_PlugIn", "AnalysisManagerCyclopsPlugIn.csproj", "{CA155567-FD6E-4FB2-9223-AA544FDF6CB1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

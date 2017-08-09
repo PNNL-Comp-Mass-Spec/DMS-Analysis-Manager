@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManager_AScore_PlugIn", "AnalysisManager_AScore_PlugIn.csproj", "{867C284C-E17D-4E01-8E8F-0C6557CDDBD7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManager_AScore_PlugIn", "AnalysisManagerAScorePlugIn.csproj", "{867C284C-E17D-4E01-8E8F-0C6557CDDBD7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
