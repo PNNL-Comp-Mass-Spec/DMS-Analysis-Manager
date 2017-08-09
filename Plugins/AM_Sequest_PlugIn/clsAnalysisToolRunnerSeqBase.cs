@@ -36,9 +36,9 @@ namespace AnalysisManagerSequestPlugin
 
         #region "Member variables"
 
-        protected int mDtaCountAddon = 0;
+        protected int mDtaCountAddon;
 
-        protected int mTotalOutFileCount = 0;
+        protected int mTotalOutFileCount;
         protected string mTempConcatenatedOutFilePath = string.Empty;
         protected SortedSet<string> mOutFileNamesAppended = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
 
@@ -179,11 +179,6 @@ namespace AnalysisManagerSequestPlugin
             const string hdrLeft = "=================================== " + "\"";
             const string hdrRight = "\"" + " ==================================";
 
-            string cleanedFileName = null;
-            string strLineIn = null;
-
-            float sngOutFileSearchTimeSeconds = 0;
-
             if (!fiSourceOutFile.Exists)
             {
                 Console.WriteLine("Warning, out file not found: " + fiSourceOutFile.FullName);
@@ -199,6 +194,7 @@ namespace AnalysisManagerSequestPlugin
                 {
                     var reMatch = m_OutFileNameRegEx.Match(fiSourceOutFile.Name);
 
+                    string cleanedFileName;
                     if (reMatch.Success)
                     {
                         cleanedFileName = reMatch.Groups["rootname"].Value + "." + Convert.ToInt32(reMatch.Groups["startscan"].Value) + "." +
@@ -215,12 +211,16 @@ namespace AnalysisManagerSequestPlugin
 
                     while (!srSrcFile.EndOfStream)
                     {
-                        strLineIn = srSrcFile.ReadLine();
+                        var strLineIn = srSrcFile.ReadLine();
                         swTargetFile.WriteLine(strLineIn);
+
+                        if (string.IsNullOrWhiteSpace(strLineIn))
+                            continue;
 
                         reMatch = m_OutFileSearchTimeRegEx.Match(strLineIn);
                         if (reMatch.Success)
                         {
+                            float sngOutFileSearchTimeSeconds;
                             if (float.TryParse(reMatch.Groups["time"].Value, out sngOutFileSearchTimeSeconds))
                             {
                                 if (mRecentOutFileSearchTimes.Count >= MAX_OUT_FILE_SEARCH_TIMES_TO_TRACK)
@@ -248,8 +248,7 @@ namespace AnalysisManagerSequestPlugin
                 mTotalOutFileCount += 1;
             }
 
-            string strDtaFilePath = null;
-            strDtaFilePath = Path.ChangeExtension(fiSourceOutFile.FullName, "dta");
+            var strDtaFilePath = Path.ChangeExtension(fiSourceOutFile.FullName, "dta");
 
             try
             {
@@ -284,8 +283,6 @@ namespace AnalysisManagerSequestPlugin
         /// <param name="blnUpdateDTACount">Set to True to update m_DtaCount</param>
         protected void CalculateNewStatus(bool blnUpdateDTACount)
         {
-            var OutFileCount = 0;
-
             if (blnUpdateDTACount)
             {
                 // Get DTA count
@@ -293,12 +290,12 @@ namespace AnalysisManagerSequestPlugin
             }
 
             // Get OUT file count
-            OutFileCount = GetOUTFileCountRemaining() + mTotalOutFileCount;
+            var outFileCount = GetOUTFileCountRemaining() + mTotalOutFileCount;
 
             // Calculate % complete (value between 0 and 100)
             if (m_DtaCount > 0)
             {
-                m_progress = 100f * (OutFileCount / (float)m_DtaCount);
+                m_progress = 100f * (outFileCount / (float)m_DtaCount);
             }
             else
             {
@@ -308,9 +305,6 @@ namespace AnalysisManagerSequestPlugin
 
         protected bool CheckForExistingConcatenatedOutFile()
         {
-            string strConcatenatedTempFilePath = null;
-            SortedSet<string> lstDTAsToSkip;
-
             try
             {
                 mDtaCountAddon = 0;
@@ -319,8 +313,9 @@ namespace AnalysisManagerSequestPlugin
                 mTempConcatenatedOutFilePath = string.Empty;
                 mOutFileNamesAppended.Clear();
 
-                strConcatenatedTempFilePath = Path.Combine(m_WorkDir, m_Dataset + CONCATENATED_OUT_TEMP_FILE);
+                var strConcatenatedTempFilePath = Path.Combine(m_WorkDir, m_Dataset + CONCATENATED_OUT_TEMP_FILE);
 
+                SortedSet<string> lstDTAsToSkip;
                 if (File.Exists(strConcatenatedTempFilePath))
                 {
                     // Parse the _out.txt.tmp to determine the .out files that it contains
@@ -336,9 +331,9 @@ namespace AnalysisManagerSequestPlugin
                 }
 
                 // Now split the DTA file, skipping DTAs corresponding to .Out files that were copied over
-                var FileSplitter = new clsSplitCattedFiles();
-                var blnSuccess = false;
-                blnSuccess = FileSplitter.SplitCattedDTAsOnly(m_Dataset, m_WorkDir, lstDTAsToSkip);
+                var fileSplitter = new clsSplitCattedFiles();
+
+                var blnSuccess = fileSplitter.SplitCattedDTAsOnly(m_Dataset, m_WorkDir, lstDTAsToSkip);
 
                 if (!blnSuccess)
                 {
@@ -366,8 +361,6 @@ namespace AnalysisManagerSequestPlugin
 
         protected SortedSet<string> ConstructDTASkipList(string strConcatenatedTempFilePath)
         {
-            string strLineIn = null;
-
             var lstDTAsToSkip = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
 
             try
@@ -378,7 +371,9 @@ namespace AnalysisManagerSequestPlugin
                 {
                     while (!srInFile.EndOfStream)
                     {
-                        strLineIn = srInFile.ReadLine();
+                        var strLineIn = srInFile.ReadLine();
+                        if (string.IsNullOrWhiteSpace(strLineIn))
+                            continue;
 
                         var objFileSepMatch = reFileSeparator.Match(strLineIn);
 
@@ -636,7 +631,6 @@ namespace AnalysisManagerSequestPlugin
             do
             {
                 var dtInterlockWaitStartTime = DateTime.UtcNow;
-                var dtInterlockWaitLastLogtime = DateTime.UtcNow;
 
                 while (Interlocked.Read(ref mOutFileHandlerInUse) > 0)
                 {
@@ -651,7 +645,8 @@ namespace AnalysisManagerSequestPlugin
                             " minutes for mOutFileHandlerInUse to be zero; aborting");
                         return false;
                     }
-                    else if (DateTime.UtcNow.Subtract(dtInterlockWaitStartTime).TotalSeconds >= 30)
+
+                    if (DateTime.UtcNow.Subtract(dtInterlockWaitStartTime).TotalSeconds >= 30)
                     {
                         dtInterlockWaitStartTime = DateTime.UtcNow;
                         if (m_DebugLevel >= 1)
@@ -761,28 +756,26 @@ namespace AnalysisManagerSequestPlugin
             {
                 if (!string.IsNullOrEmpty(strOutFilePath))
                 {
-                    string strLineIn = null;
-
                     using (var srOutFile = new StreamReader(new FileStream(strOutFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                     {
                         while (!srOutFile.EndOfStream)
                         {
-                            strLineIn = srOutFile.ReadLine();
-                            if (!string.IsNullOrEmpty(strLineIn))
+                            var strLineIn = srOutFile.ReadLine();
+                            if (string.IsNullOrEmpty(strLineIn))
+                                continue;
+
+                            strLineIn = strLineIn.Trim();
+                            if (!strLineIn.ToLower().StartsWith("TurboSEQUEST".ToLower()))
+                                continue;
+
+                            strToolVersionInfo = strLineIn;
+
+                            if (m_DebugLevel >= 2)
                             {
-                                strLineIn = strLineIn.Trim();
-                                if (strLineIn.ToLower().StartsWith("TurboSEQUEST".ToLower()))
-                                {
-                                    strToolVersionInfo = strLineIn;
-
-                                    if (m_DebugLevel >= 2)
-                                    {
-                                        LogDebug("Sequest Version: " + strToolVersionInfo);
-                                    }
-
-                                    break;
-                                }
+                                LogDebug("Sequest Version: " + strToolVersionInfo);
                             }
+
+                            break;
                         }
                     }
                 }
@@ -822,9 +815,6 @@ namespace AnalysisManagerSequestPlugin
         /// <remarks></remarks>
         protected bool ValidateDTAFiles()
         {
-            FileInfo[] ioFiles = null;
-
-            string strLineIn = null;
             var blnDataFound = false;
             var intFilesChecked = 0;
 
@@ -832,7 +822,7 @@ namespace AnalysisManagerSequestPlugin
             {
                 var diWorkDir = new DirectoryInfo(m_WorkDir);
 
-                ioFiles = diWorkDir.GetFiles("*.dta", SearchOption.TopDirectoryOnly);
+                var ioFiles = diWorkDir.GetFiles("*.dta", SearchOption.TopDirectoryOnly);
 
                 if (ioFiles.Length == 0)
                 {
@@ -840,43 +830,41 @@ namespace AnalysisManagerSequestPlugin
                     LogError(m_message);
                     return false;
                 }
-                else
-                {
-                    foreach (var ioFile in ioFiles)
-                    {
-                        using (var srReader = new StreamReader(new FileStream(ioFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
-                        {
-                            while (!srReader.EndOfStream)
-                            {
-                                strLineIn = srReader.ReadLine();
 
-                                if (!string.IsNullOrWhiteSpace(strLineIn))
-                                {
-                                    blnDataFound = true;
-                                    break;
-                                }
+                foreach (var ioFile in ioFiles)
+                {
+                    using (var srReader = new StreamReader(new FileStream(ioFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                    {
+                        while (!srReader.EndOfStream)
+                        {
+                            var strLineIn = srReader.ReadLine();
+
+                            if (!string.IsNullOrWhiteSpace(strLineIn))
+                            {
+                                blnDataFound = true;
+                                break;
                             }
                         }
-
-                        intFilesChecked += 1;
-
-                        if (blnDataFound)
-                            break;
                     }
 
-                    if (!blnDataFound)
+                    intFilesChecked += 1;
+
+                    if (blnDataFound)
+                        break;
+                }
+
+                if (!blnDataFound)
+                {
+                    if (intFilesChecked == 1)
                     {
-                        if (intFilesChecked == 1)
-                        {
-                            m_message = "One .DTA file is present, but it is empty";
-                        }
-                        else
-                        {
-                            m_message = ioFiles.Length + " .DTA files are present, but each is empty";
-                        }
-                        LogError(m_message);
-                        return false;
+                        m_message = "One .DTA file is present, but it is empty";
                     }
+                    else
+                    {
+                        m_message = ioFiles.Length + " .DTA files are present, but each is empty";
+                    }
+                    LogError(m_message);
+                    return false;
                 }
             }
             catch (Exception ex)
@@ -886,7 +874,7 @@ namespace AnalysisManagerSequestPlugin
                 return false;
             }
 
-            return blnDataFound;
+            return true;
         }
 
         /// <summary>
@@ -918,26 +906,12 @@ namespace AnalysisManagerSequestPlugin
             const int ERROR_CODE_D = 16;
             const int ERROR_CODE_E = 32;
 
-            string strLineIn = null;
-            string strHostName = null;
-
-            var intValue = 0;
-
             var blnShowDetailedRates = false;
 
-            var intHostCount = 0;
-            var intNodeCountStarted = 0;
-            var intNodeCountActive = 0;
-            var intDTACount = 0;
-
-            var intNodeCountExpected = 0;
-
-            string strProcessingMsg = null;
+            string strProcessingMsg;
 
             try
             {
-                blnShowDetailedRates = false;
-
                 if (!File.Exists(strLogFilePath))
                 {
                     strProcessingMsg = "Sequest.log file not found; cannot verify the sequest node count";
@@ -954,10 +928,10 @@ namespace AnalysisManagerSequestPlugin
                 var reSpawnedSlaveProcesses = new Regex(@"Spawned (\d+) slave processes", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
                 var reSearchedDTAFile = new Regex(@"Searched dta file .+ on (.+)", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
 
-                intHostCount = 0;            // Value for reStartingTask
-                intNodeCountStarted = 0;     // Value for reWaitingForReadyMsg
-                intNodeCountActive = 0;      // Value for reSpawnedSlaveProcesses
-                intDTACount = 0;
+                var intHostCount = 0;
+                var intNodeCountStarted = 0;
+                var intNodeCountActive = 0;
+                var intDTACount = 0;
 
                 // Note: This value is obtained when the manager params are grabbed from the Manager Control DB
                 // Use this query to view/update expected node counts'
@@ -965,7 +939,7 @@ namespace AnalysisManagerSequestPlugin
                 //  FROM T_ParamValue AS PV INNER JOIN T_Mgrs AS M ON PV.MgrID = M.M_ID
                 //  WHERE (PV.TypeID = 122)
 
-                intNodeCountExpected = m_mgrParams.GetParam("SequestNodeCountExpected", 0);
+                var intNodeCountExpected = m_mgrParams.GetParam("SequestNodeCountExpected", 0);
 
                 // This dictionary tracks the number of DTAs processed by each node
                 // Initialize the dictionary that will track the number of spectra processed by each host
@@ -985,94 +959,88 @@ namespace AnalysisManagerSequestPlugin
                     // Read each line from the input file
                     while (!srLogFile.EndOfStream)
                     {
-                        strLineIn = srLogFile.ReadLine();
+                        var strLineIn = srLogFile.ReadLine();
 
-                        if (!string.IsNullOrWhiteSpace(strLineIn))
+                        if (string.IsNullOrWhiteSpace(strLineIn))
+                            continue;
+
+                        // See if the line matches one of the expected RegEx values
+                        var reMatch = reStartingTask.Match(strLineIn);
+                        if (reMatch.Success)
                         {
-                            // See if the line matches one of the expected RegEx values
-                            var reMatch = reStartingTask.Match(strLineIn);
-                            if ((reMatch != null) && reMatch.Success)
+                            if (!int.TryParse(reMatch.Groups[1].Value, out intHostCount))
                             {
-                                if (!int.TryParse(reMatch.Groups[1].Value, out intHostCount))
-                                {
-                                    strProcessingMsg = "Unable to parse out the Host Count from the 'Starting the SEQUEST task ...' entry in the Sequest.log file";
-                                    if (blnLogToConsole)
-                                        Console.WriteLine(strProcessingMsg);
-                                    LogWarning(strProcessingMsg);
-                                }
+                                strProcessingMsg = "Unable to parse out the Host Count from the 'Starting the SEQUEST task ...' entry in the Sequest.log file";
+                                if (blnLogToConsole)
+                                    Console.WriteLine(strProcessingMsg);
+                                LogWarning(strProcessingMsg);
+                            }
+                            continue;
+                        }
+
+                        reMatch = reWaitingForReadyMsg.Match(strLineIn);
+                        if (reMatch.Success)
+                        {
+                            if (!int.TryParse(reMatch.Groups[1].Value, out intNodeCountStarted))
+                            {
+                                strProcessingMsg = "Unable to parse out the Node Count from the 'Waiting for ready messages ...' entry in the Sequest.log file";
+                                if (blnLogToConsole)
+                                    Console.WriteLine(strProcessingMsg);
+                                LogWarning(strProcessingMsg);
+                            }
+                            continue;
+                        }
+
+                        reMatch = reReceivedReadyMsg.Match(strLineIn);
+                        string strHostName;
+                        int intValue;
+                        if (reMatch.Success)
+                        {
+                            strHostName = reMatch.Groups[1].Value;
+
+                            if (dctHostNodeCount.TryGetValue(strHostName, out intValue))
+                            {
+                                dctHostNodeCount[strHostName] = intValue + 1;
                             }
                             else
                             {
-                                reMatch = reWaitingForReadyMsg.Match(strLineIn);
-                                if ((reMatch != null) && reMatch.Success)
-                                {
-                                    if (!int.TryParse(reMatch.Groups[1].Value, out intNodeCountStarted))
-                                    {
-                                        strProcessingMsg = "Unable to parse out the Node Count from the 'Waiting for ready messages ...' entry in the Sequest.log file";
-                                        if (blnLogToConsole)
-                                            Console.WriteLine(strProcessingMsg);
-                                        LogWarning(strProcessingMsg);
-                                    }
-                                }
-                                else
-                                {
-                                    reMatch = reReceivedReadyMsg.Match(strLineIn);
-                                    if ((reMatch != null) && reMatch.Success)
-                                    {
-                                        strHostName = reMatch.Groups[1].Value;
-
-                                        if (dctHostNodeCount.TryGetValue(strHostName, out intValue))
-                                        {
-                                            dctHostNodeCount[strHostName] = intValue + 1;
-                                        }
-                                        else
-                                        {
-                                            dctHostNodeCount.Add(strHostName, 1);
-                                        }
-                                    }
-                                    else
-                                    {
-                                        reMatch = reSpawnedSlaveProcesses.Match(strLineIn);
-                                        if ((reMatch != null) && reMatch.Success)
-                                        {
-                                            if (!int.TryParse(reMatch.Groups[1].Value, out intNodeCountActive))
-                                            {
-                                                strProcessingMsg = "Unable to parse out the Active Node Count from the 'Spawned xx slave processes ...' entry in the Sequest.log file";
-                                                if (blnLogToConsole)
-                                                    Console.WriteLine(strProcessingMsg);
-                                                LogWarning(strProcessingMsg);
-                                            }
-                                        }
-                                        else
-                                        {
-                                            reMatch = reSearchedDTAFile.Match(strLineIn);
-                                            if ((reMatch != null) && reMatch.Success)
-                                            {
-                                                strHostName = reMatch.Groups[1].Value;
-
-                                                if ((strHostName != null))
-                                                {
-                                                    if (dctHostCounts.TryGetValue(strHostName, out intValue))
-                                                    {
-                                                        dctHostCounts[strHostName] = intValue + 1;
-                                                    }
-                                                    else
-                                                    {
-                                                        dctHostCounts.Add(strHostName, 1);
-                                                    }
-
-                                                    intDTACount += 1;
-                                                }
-                                            }
-                                            else
-                                            {
-                                                // Ignore this line
-                                            }
-                                        }
-                                    }
-                                }
+                                dctHostNodeCount.Add(strHostName, 1);
                             }
+                            continue;
                         }
+
+                        reMatch = reSpawnedSlaveProcesses.Match(strLineIn);
+                        if (reMatch.Success)
+                        {
+                            if (!int.TryParse(reMatch.Groups[1].Value, out intNodeCountActive))
+                            {
+                                strProcessingMsg = "Unable to parse out the Active Node Count from the 'Spawned xx slave processes ...' entry in the Sequest.log file";
+                                if (blnLogToConsole)
+                                    Console.WriteLine(strProcessingMsg);
+                                LogWarning(strProcessingMsg);
+                            }
+                            continue;
+                        }
+
+                        reMatch = reSearchedDTAFile.Match(strLineIn);
+                        if (!reMatch.Success)
+                            continue;
+
+                        strHostName = reMatch.Groups[1].Value;
+
+                        if (string.IsNullOrWhiteSpace(strHostName))
+                            continue;
+
+                        if (dctHostCounts.TryGetValue(strHostName, out intValue))
+                        {
+                            dctHostCounts[strHostName] = intValue + 1;
+                        }
+                        else
+                        {
+                            dctHostCounts.Add(strHostName, 1);
+                        }
+
+                        intDTACount += 1;
                     }
                 }
 
@@ -1145,17 +1113,11 @@ namespace AnalysisManagerSequestPlugin
                     const float LOW_THRESHOLD_MULTIPLIER = 0.25f;
                     const float HIGH_THRESHOLD_MULTIPLIER = 4;
 
-                    var intNodeCountThisHost = 0;
+                    int intNodeCountThisHost;
 
-                    float sngProcessingRate = 0;
-                    float sngProcessingRateMedian = 0;
-
-                    float sngThresholdRate = 0;
-                    var intWarningCount = 0;
-
+                    float sngProcessingRate;
                     foreach (var objItem in dctHostCounts)
                     {
-                        intNodeCountThisHost = 0;
                         dctHostNodeCount.TryGetValue(objItem.Key, out intNodeCountThisHost);
                         if (intNodeCountThisHost < 1)
                             intNodeCountThisHost = 1;
@@ -1166,15 +1128,15 @@ namespace AnalysisManagerSequestPlugin
 
                     // Determine the median number of spectra processed (ignoring the head nodes)
                     var lstRatesFiltered = (from item in dctHostProcessingRate where !item.Key.ToLower().Contains("seqcluster") select item.Value).ToList();
-                    sngProcessingRateMedian = ComputeMedian(lstRatesFiltered);
+                    var sngProcessingRateMedian = ComputeMedian(lstRatesFiltered);
 
                     // Only show warnings if sngProcessingRateMedian is at least 10; otherwise, we don't have enough sampling statistics
 
                     if (sngProcessingRateMedian >= 10)
                     {
                         // Count the number of hosts that had a processing rate fewer than LOW_THRESHOLD_MULTIPLIER times the the median value
-                        intWarningCount = 0;
-                        sngThresholdRate = (float)(LOW_THRESHOLD_MULTIPLIER * sngProcessingRateMedian);
+                        var intWarningCount = 0;
+                        var sngThresholdRate = LOW_THRESHOLD_MULTIPLIER * sngProcessingRateMedian;
 
                         foreach (var objItem in dctHostProcessingRate)
                         {
@@ -1201,7 +1163,7 @@ namespace AnalysisManagerSequestPlugin
                         // Count the number of nodes that had a processing rate more than HIGH_THRESHOLD_MULTIPLIER times the median value
                         // When comparing hosts, have to scale by the number of active nodes on each host
                         intWarningCount = 0;
-                        sngThresholdRate = (float)(HIGH_THRESHOLD_MULTIPLIER * sngProcessingRateMedian);
+                        sngThresholdRate = HIGH_THRESHOLD_MULTIPLIER * sngProcessingRateMedian;
 
                         foreach (var objItem in dctHostProcessingRate)
                         {
@@ -1234,12 +1196,10 @@ namespace AnalysisManagerSequestPlugin
 
                         foreach (var objItem in qHosts)
                         {
-                            intNodeCountThisHost = 0;
                             dctHostNodeCount.TryGetValue(objItem.Key, out intNodeCountThisHost);
                             if (intNodeCountThisHost < 1)
                                 intNodeCountThisHost = 1;
 
-                            sngProcessingRate = 0;
                             dctHostProcessingRate.TryGetValue(objItem.Key, out sngProcessingRate);
 
                             strProcessingMsg = "Host " + objItem.Key + " processed " + objItem.Value + " DTA" + CheckForPlurality(objItem.Value) +
@@ -1293,40 +1253,34 @@ namespace AnalysisManagerSequestPlugin
             {
                 return string.Empty;
             }
-            else
-            {
-                return "s";
-            }
+
+            return "s";
         }
 
         protected float ComputeMedian(List<float> lstValues)
         {
-            var intMidpoint = 0;
             var lstSortedValues = (from item in lstValues orderby item select item).ToList();
 
             if (lstSortedValues.Count == 0)
             {
                 return 0;
             }
-            else if (lstSortedValues.Count == 1)
+
+            if (lstSortedValues.Count == 1)
             {
                 return lstSortedValues[0];
             }
-            else
-            {
-                intMidpoint = (int)Math.Floor(lstSortedValues.Count / 2f);
 
-                if (lstSortedValues.Count % 2 == 0)
-                {
-                    // Even number of values; return the average of the values around the midpoint
-                    return (lstSortedValues[intMidpoint] + lstSortedValues[intMidpoint - 1]) / 2f;
-                }
-                else
-                {
-                    // Odd number of values
-                    return lstSortedValues[intMidpoint];
-                }
+            var intMidpoint = (int)Math.Floor(lstSortedValues.Count / 2f);
+
+            if (lstSortedValues.Count % 2 == 0)
+            {
+                // Even number of values; return the average of the values around the midpoint
+                return (lstSortedValues[intMidpoint] + lstSortedValues[intMidpoint - 1]) / 2f;
             }
+
+            // Odd number of values
+            return lstSortedValues[intMidpoint];
         }
 
         /// <summary>
@@ -1354,7 +1308,7 @@ namespace AnalysisManagerSequestPlugin
             try
             {
                 // Zip the file
-                if (!base.ZipFile(OutFilePath, false))
+                if (!ZipFile(OutFilePath, false))
                 {
                     m_message = "Error zipping concat out file";
                     var Msg = m_message + ", job " + m_JobNum + ", step " + m_jobParams.GetParam("Step");

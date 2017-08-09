@@ -100,7 +100,8 @@ namespace AnalysisManagerXTandemPlugIn
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-            else if (!File.Exists(progLoc))
+
+            if (!File.Exists(progLoc))
             {
                 m_message = "Cannot find XTandem program file";
                 LogError(m_message + ": " + progLoc);
@@ -215,8 +216,9 @@ namespace AnalysisManagerXTandemPlugIn
             var strToolVersionInfo = string.Copy(mXTandemVersion);
 
             // Store paths to key files in ioToolFiles
-            var ioToolFiles = new List<FileInfo>();
-            ioToolFiles.Add(new FileInfo(m_mgrParams.GetParam("xtprogloc")));
+            var ioToolFiles = new List<FileInfo> {
+                new FileInfo(m_mgrParams.GetParam("xtprogloc"))
+            };
 
             try
             {
@@ -240,13 +242,11 @@ namespace AnalysisManagerXTandemPlugIn
                 // strXTandemStepToolVersion will be similar to "v2011.12.1.1"
                 // Insert the specific version just before \bin\ in progLoc
 
-                var intInsertIndex = 0;
-                intInsertIndex = progLoc.ToLower().IndexOf("\\bin\\", StringComparison.Ordinal);
+                var intInsertIndex = progLoc.ToLower().IndexOf("\\bin\\", StringComparison.Ordinal);
 
                 if (intInsertIndex > 0)
                 {
-                    string strNewProgLoc = null;
-                    strNewProgLoc = Path.Combine(progLoc.Substring(0, intInsertIndex), strXTandemStepToolVersion);
+                    var strNewProgLoc = Path.Combine(progLoc.Substring(0, intInsertIndex), strXTandemStepToolVersion);
                     strNewProgLoc = Path.Combine(strNewProgLoc, progLoc.Substring(intInsertIndex + 1));
                     progLoc = string.Copy(strNewProgLoc);
                 }
@@ -379,16 +379,16 @@ namespace AnalysisManagerXTandemPlugIn
         /// <remarks></remarks>
         private CloseOutType ZipMainOutputFile()
         {
-            string[] FileList = null;
-            string TmpFilePath = null;
-
             try
             {
-                FileList = Directory.GetFiles(m_WorkDir, "*_xt.xml");
-                foreach (var TmpFile in FileList)
+                var fileList = Directory.GetFiles(m_WorkDir, "*_xt.xml");
+                foreach (var file in fileList)
                 {
-                    TmpFilePath = Path.Combine(m_WorkDir, Path.GetFileName(TmpFile));
-                    if (!base.ZipFile(TmpFilePath, true))
+                    if (file == null)
+                        continue;
+
+                    var filePath = Path.Combine(m_WorkDir, Path.GetFileName(file));
+                    if (!ZipFile(filePath, true))
                     {
                         LogError("Error zipping output files");
                         return CloseOutType.CLOSEOUT_FAILED;
@@ -404,16 +404,16 @@ namespace AnalysisManagerXTandemPlugIn
             // Make sure the XML output files have been deleted (the call to MyBase.ZipFile() above should have done this)
             try
             {
-                FileList = Directory.GetFiles(m_WorkDir, "*_xt.xml");
-                foreach (var TmpFile in FileList)
+                var fileList = Directory.GetFiles(m_WorkDir, "*_xt.xml");
+                foreach (var file in fileList)
                 {
-                    File.SetAttributes(TmpFile, File.GetAttributes(TmpFile) & (~FileAttributes.ReadOnly));
-                    File.Delete(TmpFile);
+                    File.SetAttributes(file, File.GetAttributes(file) & (~FileAttributes.ReadOnly));
+                    File.Delete(file);
                 }
             }
-            catch (Exception Err)
+            catch (Exception ex)
             {
-                LogError("clsAnalysisToolRunnerXT.ZipMainOutputFile, Error deleting _xt.xml file, job " + m_JobNum + Err.Message);
+                LogError("clsAnalysisToolRunnerXT.ZipMainOutputFile, Error deleting _xt.xml file, job " + m_JobNum + ex.Message);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 

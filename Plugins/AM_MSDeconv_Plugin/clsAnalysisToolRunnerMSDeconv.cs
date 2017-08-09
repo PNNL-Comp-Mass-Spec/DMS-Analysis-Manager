@@ -94,7 +94,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                 }
 
                 var strOutputFormat = m_jobParams.GetParam("MSDeconvOutputFormat");
-                var resultsFileName = "unknown";
+                string resultsFileName;
 
                 if (string.IsNullOrEmpty(strOutputFormat))
                 {
@@ -224,7 +224,7 @@ namespace AnalysisManagerMSDeconvPlugIn
         // Processing spectrum Scan_4...           0% finished.
         // Deconvolution finished.
         // Result is in Syne_LI_CID_09092011_msdeconv.msalign
-        private Regex reExtractPercentFinished = new Regex(@"(\d+)% finished", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private readonly Regex reExtractPercentFinished = new Regex(@"(\d+)% finished", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
         /// Parse the MSDeconv console output file to determine the MSDeconv version and to track the search progress
@@ -250,19 +250,16 @@ namespace AnalysisManagerMSDeconvPlugIn
                     LogDebug("Parsing file " + strConsoleOutputFilePath);
                 }
 
-                string strLineIn = null;
-                var intLinesRead = 0;
-
                 short intActualProgress = 0;
 
                 mConsoleOutputErrorMsg = string.Empty;
 
                 using (var srInFile = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    intLinesRead = 0;
+                    var intLinesRead = 0;
                     while (!srInFile.EndOfStream)
                     {
-                        strLineIn = srInFile.ReadLine();
+                        var strLineIn = srInFile.ReadLine();
                         intLinesRead += 1;
 
                         if (!string.IsNullOrWhiteSpace(strLineIn))
@@ -354,10 +351,9 @@ namespace AnalysisManagerMSDeconvPlugIn
                 // Read the spectra and examine the scan gaps
 
                 var lstScanGaps = new List<int>();
-                clsSpectrumInfo objSpectrumInfo = null;
                 var lastScanNumber = 0;
 
-                while (reader.ReadNextSpectrum(out objSpectrumInfo))
+                while (reader.ReadNextSpectrum(out var objSpectrumInfo))
                 {
                     if (lastScanNumber > 0)
                     {
@@ -498,8 +494,9 @@ namespace AnalysisManagerMSDeconvPlugIn
             var strToolVersionInfo = string.Copy(mMSDeconvVersion);
 
             // Store paths to key files in ioToolFiles
-            var ioToolFiles = new List<FileInfo>();
-            ioToolFiles.Add(new FileInfo(mMSDeconvProgLoc));
+            var ioToolFiles = new List<FileInfo> {
+                new FileInfo(mMSDeconvProgLoc)
+            };
 
             try
             {
@@ -512,7 +509,7 @@ namespace AnalysisManagerMSDeconvPlugIn
             }
         }
 
-        private Regex reExtractScan = new Regex(@"Processing spectrum Scan_(\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private readonly Regex reExtractScan = new Regex(@"Processing spectrum Scan_(\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
         /// Reads the console output file and removes the majority of the percent finished messages
@@ -538,31 +535,31 @@ namespace AnalysisManagerMSDeconvPlugIn
                     LogDebug("Trimming console output file at " + strConsoleOutputFilePath);
                 }
 
-                string strLineIn = null;
-                var blnKeepLine = false;
-
-                var intScanNumber = 0;
                 var strMostRecentProgressLine = string.Empty;
                 var strMostRecentProgressLineWritten = string.Empty;
 
-                var intScanNumberOutputThreshold = 0;
-
-                string strTrimmedFilePath = null;
-                strTrimmedFilePath = strConsoleOutputFilePath + ".trimmed";
+                var strTrimmedFilePath = strConsoleOutputFilePath + ".trimmed";
 
                 using (var srInFile = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 using (var swOutFile = new StreamWriter(new FileStream(strTrimmedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    intScanNumberOutputThreshold = 0;
+                    var intScanNumberOutputThreshold = 0;
                     while (!srInFile.EndOfStream)
                     {
-                        strLineIn = srInFile.ReadLine();
-                        blnKeepLine = true;
+                        var strLineIn = srInFile.ReadLine();
+
+                        if (string.IsNullOrWhiteSpace(strLineIn))
+                        {
+                            swOutFile.WriteLine(strLineIn);
+                            continue;
+                        }
+
+                        var blnKeepLine = true;
 
                         var oMatch = reExtractScan.Match(strLineIn);
                         if (oMatch.Success)
                         {
-                            if (int.TryParse(oMatch.Groups[1].Value, out intScanNumber))
+                            if (int.TryParse(oMatch.Groups[1].Value, out var intScanNumber))
                             {
                                 if (intScanNumber < intScanNumberOutputThreshold)
                                 {
@@ -580,7 +577,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                         else if (strLineIn.StartsWith("Deconvolution finished"))
                         {
                             // Possibly write out the most recent progress line
-                            if (string.Compare(strMostRecentProgressLine, strMostRecentProgressLineWritten) != 0)
+                            if (!clsGlobal.IsMatch(strMostRecentProgressLine, strMostRecentProgressLineWritten))
                             {
                                 swOutFile.WriteLine(strMostRecentProgressLine);
                             }

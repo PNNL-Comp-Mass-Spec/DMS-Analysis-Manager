@@ -332,11 +332,6 @@ namespace AnalysisManagerMSAlignHistonePlugIn
         {
             const int RESIDUES_PER_LINE = 60;
 
-            string strProteinResidues = null;
-
-            var intIndex = 0;
-            var intResidueCount = 0;
-            var intLength = 0;
             var intWarningCount = 0;
 
             try
@@ -355,7 +350,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                     while (oReader.ReadNextProteinEntry())
                     {
                         swNewFasta.WriteLine(oReader.ProteinLineStartChar + oReader.HeaderLine);
-                        strProteinResidues = reInvalidResidues.Replace(oReader.ProteinSequence, "-");
+                        var strProteinResidues = reInvalidResidues.Replace(oReader.ProteinSequence, "-");
 
                         if (intWarningCount < 5 && strProteinResidues.GetHashCode() != oReader.ProteinSequence.GetHashCode())
                         {
@@ -363,11 +358,11 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                             intWarningCount += 1;
                         }
 
-                        intIndex = 0;
-                        intResidueCount = strProteinResidues.Length;
+                        var intIndex = 0;
+                        var intResidueCount = strProteinResidues.Length;
                         while (intIndex < strProteinResidues.Length)
                         {
-                            intLength = Math.Min(RESIDUES_PER_LINE, intResidueCount - intIndex);
+                            var intLength = Math.Min(RESIDUES_PER_LINE, intResidueCount - intIndex);
                             swNewFasta.WriteLine(strProteinResidues.Substring(intIndex, intLength));
                             intIndex += RESIDUES_PER_LINE;
                         }
@@ -460,8 +455,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 {
                     var strTargetSubfolder = Path.Combine(diMSAlignWork.FullName, strSubFolder);
 
-                    DirectoryInfo[] diSubfolder = null;
-                    diSubfolder = diMSAlignSrc.GetDirectories(strSubFolder);
+                    var diSubfolder = diMSAlignSrc.GetDirectories(strSubFolder);
 
                     if (diSubfolder.Length == 0)
                     {
@@ -560,78 +554,75 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                         // Look for an equals sign
                         var intEqualsIndex = strLineIn.IndexOf('=');
 
-                        if (intEqualsIndex > 0)
+                        if (intEqualsIndex <= 0)
                         {
-                            // Split the line on the equals sign
-                            var strKeyName = strLineIn.Substring(0, intEqualsIndex).TrimEnd();
-                            string strValue = null;
-                            if (intEqualsIndex < strLineIn.Length - 1)
-                            {
-                                strValue = strLineIn.Substring(intEqualsIndex + 1).Trim();
-                            }
-                            else
-                            {
-                                strValue = string.Empty;
-                            }
+                            // Unknown line format; skip it
+                            continue;
+                        }
 
-                            if (strKeyName.ToLower() == INSTRUMENT_ACTIVATION_TYPE_KEY)
-                            {
-                                // If this is a bruker dataset, then we need to make sure that the value for this entry is not FILE
-                                // The reason is that the mzXML file created by Bruker's compass program does not include the scantype information (CID, ETD, etc.)
-                                string strToolName = null;
-                                strToolName = m_jobParams.GetParam("ToolName");
-
-                                if (strToolName == "MSAlign_Bruker" || strToolName == "MSAlign_Histone_Bruker")
-                                {
-                                    if (strValue.ToUpper() == "FILE")
-                                    {
-                                        m_message = "Must specify an explicit scan type for " + strKeyName +
-                                                    " in the MSAlign parameter file (CID, HCD, or ETD)";
-
-                                        LogError(
-                                            m_message +
-                                            "; this is required because Bruker-created mzXML files do not include activationMethod information in the precursorMz tag");
-
-                                        return false;
-                                    }
-                                }
-                            }
-
-                            if (strKeyName.ToLower() == SEARCH_TYPE_KEY)
-                            {
-                                if (strValue.ToUpper() == "TARGET+DECOY")
-                                {
-                                    // Make sure the protein collection is not a Decoy protein collection
-                                    string strProteinOptions = null;
-                                    strProteinOptions = m_jobParams.GetParam("ProteinOptions");
-
-                                    if (strProteinOptions.ToLower().Contains("seq_direction=decoy"))
-                                    {
-                                        m_message =
-                                            "MSAlign parameter file contains searchType=TARGET+DECOY; " +
-                                            "protein options for this analysis job must contain seq_direction=forward, not seq_direction=decoy";
-
-                                        LogError(m_message);
-
-                                        return false;
-                                    }
-                                }
-                            }
-
-                            var strSwitch = string.Empty;
-                            if (dctParameterMap.TryGetValue(strKeyName, out strSwitch))
-                            {
-                                strCommandLine += " -" + strSwitch + " " + strValue;
-                            }
-                            else
-                            {
-                                LogWarning("Ignoring unrecognized MSAlign_Histone parameter: " + strKeyName);
-                            }
+                        // Split the line on the equals sign
+                        var strKeyName = strLineIn.Substring(0, intEqualsIndex).TrimEnd();
+                        string strValue;
+                        if (intEqualsIndex < strLineIn.Length - 1)
+                        {
+                            strValue = strLineIn.Substring(intEqualsIndex + 1).Trim();
                         }
                         else
                         {
-                            // Unknown line format; skip it
+                            strValue = string.Empty;
                         }
+
+                        if (strKeyName.ToLower() == INSTRUMENT_ACTIVATION_TYPE_KEY)
+                        {
+                            // If this is a bruker dataset, then we need to make sure that the value for this entry is not FILE
+                            // The reason is that the mzXML file created by Bruker's compass program does not include the scantype information (CID, ETD, etc.)
+                            var strToolName = m_jobParams.GetParam("ToolName");
+
+                            if (strToolName == "MSAlign_Bruker" || strToolName == "MSAlign_Histone_Bruker")
+                            {
+                                if (strValue.ToUpper() == "FILE")
+                                {
+                                    m_message = "Must specify an explicit scan type for " + strKeyName +
+                                                " in the MSAlign parameter file (CID, HCD, or ETD)";
+
+                                    LogError(
+                                        m_message +
+                                        "; this is required because Bruker-created mzXML files do not include activationMethod information in the precursorMz tag");
+
+                                    return false;
+                                }
+                            }
+                        }
+
+                        if (strKeyName.ToLower() == SEARCH_TYPE_KEY)
+                        {
+                            if (strValue.ToUpper() == "TARGET+DECOY")
+                            {
+                                // Make sure the protein collection is not a Decoy protein collection
+                                var strProteinOptions = m_jobParams.GetParam("ProteinOptions");
+
+                                if (strProteinOptions.ToLower().Contains("seq_direction=decoy"))
+                                {
+                                    m_message =
+                                        "MSAlign parameter file contains searchType=TARGET+DECOY; " +
+                                        "protein options for this analysis job must contain seq_direction=forward, not seq_direction=decoy";
+
+                                    LogError(m_message);
+
+                                    return false;
+                                }
+                            }
+                        }
+
+                        if (dctParameterMap.TryGetValue(strKeyName, out var strSwitch))
+                        {
+                            strCommandLine += " -" + strSwitch + " " + strValue;
+                        }
+                        else
+                        {
+                            LogWarning("Ignoring unrecognized MSAlign_Histone parameter: " + strKeyName);
+                        }
+
                     }
                 }
             }
@@ -643,54 +634,6 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             }
 
             return true;
-        }
-
-        protected bool FilesMatch(string strFilePath1, string strFilePath2)
-        {
-            var blnFilesMatch = false;
-            try
-            {
-                var fiFile1 = new FileInfo(strFilePath1);
-                var fiFile2 = new FileInfo(strFilePath2);
-
-                if (fiFile1.Exists && fiFile2.Exists)
-                {
-                    if (fiFile1.Length == fiFile2.Length)
-                    {
-                        blnFilesMatch = true;
-
-                        using (var srInfile1 = new StreamReader(new FileStream(fiFile1.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                        )
-                        using (var srInfile2 = new StreamReader(new FileStream(fiFile2.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                        )
-                        {
-                            while (!srInfile1.EndOfStream)
-                            {
-                                if (srInfile2.EndOfStream)
-                                {
-                                    blnFilesMatch = false;
-                                    break;
-                                }
-                                else
-                                {
-                                    if (srInfile1.ReadLine() != srInfile2.ReadLine())
-                                    {
-                                        blnFilesMatch = false;
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                LogError("Exception in FilesMatch", ex);
-                blnFilesMatch = false;
-            }
-
-            return blnFilesMatch;
         }
 
         protected Dictionary<string, string> GetExpectedMSAlignResultFiles(string strDatasetName)
@@ -964,119 +907,8 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             }
         }
 
-        private Regex reExtractScan = new Regex("Processing spectrum scan (\\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
-        /// <summary>
-        /// Reads the console output file and removes the majority of the percent finished messages
-        /// </summary>
-        /// <param name="strConsoleOutputFilePath"></param>
-        /// <remarks></remarks>
-        [Obsolete("Unused")]
-
-        private void TrimConsoleOutputFile(string strConsoleOutputFilePath)
-        {
-            try
-            {
-                if (!File.Exists(strConsoleOutputFilePath))
-                {
-                    if (m_DebugLevel >= 4)
-                    {
-                        LogDebug("Console output file not found: " + strConsoleOutputFilePath);
-                    }
-
-                    return;
-                }
-
-                if (m_DebugLevel >= 4)
-                {
-                    LogDebug("Trimming console output file at " + strConsoleOutputFilePath);
-                }
-
-                string strLineIn = null;
-                var blnKeepLine = false;
-
-                var intScanNumber = 0;
-                var strMostRecentProgressLine = string.Empty;
-                var strMostRecentProgressLineWritten = string.Empty;
-
-                var intScanNumberOutputThreshold = 0;
-
-                string strTrimmedFilePath = null;
-                strTrimmedFilePath = strConsoleOutputFilePath + ".trimmed";
-
-                using (var srInFile = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
-                using (var swOutFile = new StreamWriter(new FileStream(strTrimmedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
-                {
-                    intScanNumberOutputThreshold = 0;
-                    while (!srInFile.EndOfStream)
-                    {
-                        strLineIn = srInFile.ReadLine();
-                        blnKeepLine = true;
-
-                        var oMatch = reExtractScan.Match(strLineIn);
-                        if (oMatch.Success)
-                        {
-                            if (int.TryParse(oMatch.Groups[1].Value, out intScanNumber))
-                            {
-                                if (intScanNumber < intScanNumberOutputThreshold)
-                                {
-                                    blnKeepLine = false;
-                                }
-                                else
-                                {
-                                    // Write out this line and bump up intScanNumberOutputThreshold by 100
-                                    intScanNumberOutputThreshold += 100;
-                                    strMostRecentProgressLineWritten = string.Copy(strLineIn);
-                                }
-                            }
-                            strMostRecentProgressLine = string.Copy(strLineIn);
-                        }
-                        else if (strLineIn.StartsWith("Deconvolution finished"))
-                        {
-                            // Possibly write out the most recent progress line
-                            if (string.Compare(strMostRecentProgressLine, strMostRecentProgressLineWritten) != 0)
-                            {
-                                swOutFile.WriteLine(strMostRecentProgressLine);
-                            }
-                        }
-
-                        if (blnKeepLine)
-                        {
-                            swOutFile.WriteLine(strLineIn);
-                        }
-                    }
-                }
-
-                // Wait 500 msec, then swap the files
-                Thread.Sleep(500);
-
-                try
-                {
-                    File.Delete(strConsoleOutputFilePath);
-                    File.Move(strTrimmedFilePath, strConsoleOutputFilePath);
-                }
-                catch (Exception ex)
-                {
-                    if (m_DebugLevel >= 1)
-                    {
-                        LogError("Error replacing original console output file (" + strConsoleOutputFilePath + ") with trimmed version", ex);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                // Ignore errors here
-                if (m_DebugLevel >= 2)
-                {
-                    LogError("Error trimming console output file (" + strConsoleOutputFilePath + ")", ex);
-                }
-            }
-        }
-
         protected bool MoveMSAlignResultFiles()
         {
-            var processingError = false;
-
             var strEValueResultFilePath = string.Empty;
             var strFinalResultFilePath = string.Empty;
 
@@ -1103,8 +935,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                         }
                         else
                         {
-                            string strTargetFilePath = null;
-                            strTargetFilePath = Path.Combine(m_WorkDir, kvItem.Value);
+                            var strTargetFilePath = Path.Combine(m_WorkDir, kvItem.Value);
 
                             fiSearchResultFile.CopyTo(strTargetFilePath, true);
 
@@ -1128,7 +959,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                 if (!string.IsNullOrEmpty(strEValueResultFilePath) && !string.IsNullOrEmpty(strFinalResultFilePath))
                 {
-                    if (FilesMatch(strEValueResultFilePath, strFinalResultFilePath))
+                    if (clsGlobal.FilesMatch(strEValueResultFilePath, strFinalResultFilePath))
                     {
                         m_jobParams.AddResultFileToSkip(Path.GetFileName(strEValueResultFilePath));
                     }
@@ -1140,14 +971,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 return false;
             }
 
-            if (processingError)
-            {
-                return false;
-            }
-            else
-            {
-                return true;
-            }
+            return true;
         }
 
         protected bool ValidateResultFiles()
@@ -1184,30 +1008,17 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 return false;
             }
 
-            if (processingError)
-            {
-                return false;
-            }
-            else
-            {
-                return true;
-            }
+            return !processingError;
         }
 
         protected bool ValidateResultTableFile(eMSAlignVersionType eMSalignVersion, string strSourceFilePath)
         {
-            string strOutputFilePath = null;
-
-            string strLineIn = null;
-            var blnValidDataFound = false;
-            var intLinesRead = 0;
-
             try
             {
-                blnValidDataFound = false;
-                intLinesRead = 0;
+                var blnValidDataFound = false;
+                var intLinesRead = 0;
 
-                strOutputFilePath = Path.Combine(m_WorkDir, m_Dataset + RESULT_TABLE_NAME_SUFFIX);
+                var strOutputFilePath = Path.Combine(m_WorkDir, m_Dataset + RESULT_TABLE_NAME_SUFFIX);
 
                 if (!File.Exists(strSourceFilePath))
                 {
@@ -1234,7 +1045,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 {
                     while (!srInFile.EndOfStream)
                     {
-                        strLineIn = srInFile.ReadLine();
+                        var strLineIn = srInFile.ReadLine();
                         intLinesRead += 1;
 
                         if (!string.IsNullOrEmpty(strLineIn))
@@ -1247,8 +1058,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                             if (!blnValidDataFound)
                             {
-                                string[] strSplitLine = null;
-                                strSplitLine = strLineIn.Split('\t');
+                                var strSplitLine = strLineIn.Split('\t');
 
                                 if (strSplitLine.Length > 1)
                                 {
@@ -1274,11 +1084,9 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                     LogError("MSAlign OUTPUT_TABLE file is empty");
                     return false;
                 }
-                else
-                {
-                    // Don't keep the original output table; only the new file we just created
-                    m_jobParams.AddResultFileToSkip(Path.GetFileName(strSourceFilePath));
-                }
+
+                // Don't keep the original output table; only the new file we just created
+                m_jobParams.AddResultFileToSkip(Path.GetFileName(strSourceFilePath));
             }
             catch (Exception ex)
             {
