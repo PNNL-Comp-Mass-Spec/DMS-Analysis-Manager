@@ -2959,12 +2959,12 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Extracts the contents of the Version= line in a Tool Version Info file
         /// </summary>
-        /// <param name="strDLLFilePath"></param>
+        /// <param name="dllFilePath"></param>
         /// <param name="versionInfoFilePath"></param>
         /// <param name="version"></param>
         /// <returns></returns>
         /// <remarks></remarks>
-        protected bool ReadVersionInfoFile(string strDLLFilePath, string versionInfoFilePath, out string version)
+        protected bool ReadVersionInfoFile(string dllFilePath, string versionInfoFilePath, out string version)
         {
 
             version = string.Empty;
@@ -3018,7 +3018,7 @@ namespace AnalysisManagerBase
                                 version = string.Copy(value);
                                 if (string.IsNullOrWhiteSpace(version))
                                 {
-                                    LogMessage("Empty version line in Version Info file for " + Path.GetFileName(strDLLFilePath), 0, true);
+                                    LogMessage("Empty version line in Version Info file for " + Path.GetFileName(dllFilePath), 0, true);
                                     success = false;
                                 }
                                 else
@@ -3027,7 +3027,7 @@ namespace AnalysisManagerBase
                                 }
                                 break;
                             case "error":
-                                LogMessage("Error reported by DLLVersionInspector for " + Path.GetFileName(strDLLFilePath) + ": " + value, 0, true);
+                                LogMessage("Error reported by DLLVersionInspector for " + Path.GetFileName(dllFilePath) + ": " + value, 0, true);
                                 success = false;
                                 break;
                                 // default:
@@ -3041,7 +3041,7 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                LogError("Error reading Version Info File for " + Path.GetFileName(strDLLFilePath), ex);
+                LogError("Error reading Version Info File for " + Path.GetFileName(dllFilePath), ex);
             }
 
             return success;
@@ -3572,21 +3572,21 @@ namespace AnalysisManagerBase
         /// If reflection fails, then uses System.Diagnostics.FileVersionInfo
         /// </summary>
         /// <param name="toolVersionInfo">Version info string to append the version info to</param>
-        /// <param name="strDLLFilePath">Path to the DLL</param>
+        /// <param name="dllFilePath">Path to the DLL</param>
         /// <returns>True if success; false if an error</returns>
         /// <remarks></remarks>
-        public bool StoreToolVersionInfoOneFile(ref string toolVersionInfo, string strDLLFilePath)
+        public bool StoreToolVersionInfoOneFile(ref string toolVersionInfo, string dllFilePath)
         {
 
             bool success;
 
             try
             {
-                var ioFileInfo = new FileInfo(strDLLFilePath);
+                var ioFileInfo = new FileInfo(dllFilePath);
 
                 if (!ioFileInfo.Exists)
                 {
-                    LogMessage("Warning: File not found by StoreToolVersionInfoOneFile: " + strDLLFilePath);
+                    LogMessage("Warning: File not found by StoreToolVersionInfoOneFile: " + dllFilePath);
                     return false;
 
                 }
@@ -3607,10 +3607,10 @@ namespace AnalysisManagerBase
                 // Instead try StoreToolVersionInfoOneFile32Bit or StoreToolVersionInfoOneFile64Bit
 
                 // Use this when compiled as AnyCPU
-                success = StoreToolVersionInfoOneFile32Bit(ref toolVersionInfo, strDLLFilePath);
+                success = StoreToolVersionInfoOneFile32Bit(ref toolVersionInfo, dllFilePath);
 
                 // Use this when compiled as 32-bit
-                // success = StoreToolVersionInfoOneFile64Bit(toolVersionInfo, strDLLFilePath)
+                // success = StoreToolVersionInfoOneFile64Bit(toolVersionInfo, dllFilePath)
 
             }
             catch (Exception ex)
@@ -3619,13 +3619,13 @@ namespace AnalysisManagerBase
                 //  <startup useLegacyV2RuntimeActivationPolicy="true">
                 //    <supportedRuntime version="v4.0" />
                 //  </startup>
-                LogError("Exception determining Assembly info for " + Path.GetFileName(strDLLFilePath), ex);
+                LogError("Exception determining Assembly info for " + Path.GetFileName(dllFilePath), ex);
                 success = false;
             }
 
             if (!success)
             {
-                success = StoreToolVersionInfoViaSystemDiagnostics(ref toolVersionInfo, strDLLFilePath);
+                success = StoreToolVersionInfoViaSystemDiagnostics(ref toolVersionInfo, dllFilePath);
             }
 
             return success;
@@ -3636,24 +3636,24 @@ namespace AnalysisManagerBase
         /// Determines the version info for a .NET DLL using System.Diagnostics.FileVersionInfo
         /// </summary>
         /// <param name="toolVersionInfo">Version info string to append the version info to</param>
-        /// <param name="strDLLFilePath">Path to the DLL</param>
+        /// <param name="dllFilePath">Path to the DLL</param>
         /// <returns>True if success; false if an error</returns>
         /// <remarks></remarks>
-        protected bool StoreToolVersionInfoViaSystemDiagnostics(ref string toolVersionInfo, string strDLLFilePath)
+        protected bool StoreToolVersionInfoViaSystemDiagnostics(ref string toolVersionInfo, string dllFilePath)
         {
 
             try
             {
-                var ioFileInfo = new FileInfo(strDLLFilePath);
+                var ioFileInfo = new FileInfo(dllFilePath);
 
                 if (!ioFileInfo.Exists)
                 {
                     m_message = "File not found by StoreToolVersionInfoViaSystemDiagnostics";
-                    LogMessage(m_message + ": " + strDLLFilePath);
+                    LogMessage(m_message + ": " + dllFilePath);
                     return false;
                 }
 
-                var oFileVersionInfo = FileVersionInfo.GetVersionInfo(strDLLFilePath);
+                var oFileVersionInfo = FileVersionInfo.GetVersionInfo(dllFilePath);
 
                 var name = oFileVersionInfo.FileDescription;
                 if (string.IsNullOrEmpty(name))
@@ -3690,7 +3690,7 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                LogError("Exception determining File Version for " + Path.GetFileName(strDLLFilePath), ex);
+                LogError("Exception determining File Version for " + Path.GetFileName(dllFilePath), ex);
                 return false;
             }
 
@@ -3700,47 +3700,47 @@ namespace AnalysisManagerBase
         /// Uses the DLLVersionInspector to determine the version of a 32-bit .NET DLL or .Exe
         /// </summary>
         /// <param name="toolVersionInfo"></param>
-        /// <param name="strDLLFilePath"></param>
+        /// <param name="dllFilePath"></param>
         /// <returns>True if success; false if an error</returns>
         /// <remarks></remarks>
-        protected bool StoreToolVersionInfoOneFile32Bit(ref string toolVersionInfo, string strDLLFilePath)
+        protected bool StoreToolVersionInfoOneFile32Bit(ref string toolVersionInfo, string dllFilePath)
         {
-            return StoreToolVersionInfoOneFileUseExe(ref toolVersionInfo, strDLLFilePath, "DLLVersionInspector_x86.exe");
+            return StoreToolVersionInfoOneFileUseExe(ref toolVersionInfo, dllFilePath, "DLLVersionInspector_x86.exe");
         }
 
         /// <summary>
         /// Uses the DLLVersionInspector to determine the version of a 64-bit .NET DLL or .Exe
         /// </summary>
         /// <param name="toolVersionInfo"></param>
-        /// <param name="strDLLFilePath"></param>
+        /// <param name="dllFilePath"></param>
         /// <returns>True if success; false if an error</returns>
         /// <remarks></remarks>
-        protected bool StoreToolVersionInfoOneFile64Bit(ref string toolVersionInfo, string strDLLFilePath)
+        protected bool StoreToolVersionInfoOneFile64Bit(ref string toolVersionInfo, string dllFilePath)
         {
-            return StoreToolVersionInfoOneFileUseExe(ref toolVersionInfo, strDLLFilePath, "DLLVersionInspector_x64.exe");
+            return StoreToolVersionInfoOneFileUseExe(ref toolVersionInfo, dllFilePath, "DLLVersionInspector_x64.exe");
         }
 
         /// <summary>
         /// Uses the specified DLLVersionInspector to determine the version of a .NET DLL or .Exe
         /// </summary>
         /// <param name="toolVersionInfo"></param>
-        /// <param name="strDLLFilePath"></param>
+        /// <param name="dllFilePath"></param>
         /// <param name="versionInspectorExeName">DLLVersionInspector_x86.exe or DLLVersionInspector_x64.exe</param>
         /// <returns>True if success; false if an error</returns>
         /// <remarks></remarks>
-        protected bool StoreToolVersionInfoOneFileUseExe(ref string toolVersionInfo, string strDLLFilePath, string versionInspectorExeName)
+        protected bool StoreToolVersionInfoOneFileUseExe(ref string toolVersionInfo, string dllFilePath, string versionInspectorExeName)
         {
 
             try
             {
                 var appPath = Path.Combine(clsGlobal.GetAppFolderPath(), versionInspectorExeName);
 
-                var ioFileInfo = new FileInfo(strDLLFilePath);
+                var ioFileInfo = new FileInfo(dllFilePath);
 
                 if (!ioFileInfo.Exists)
                 {
                     m_message = "File not found by StoreToolVersionInfoOneFileUseExe";
-                    LogMessage(m_message + ": " + strDLLFilePath, 0, true);
+                    LogMessage(m_message + ": " + dllFilePath, 0, true);
                     return false;
                 }
 
@@ -3783,7 +3783,7 @@ namespace AnalysisManagerBase
 
                 Thread.Sleep(100);
 
-                success = ReadVersionInfoFile(strDLLFilePath, versionInfoFilePath, out var version);
+                success = ReadVersionInfoFile(dllFilePath, versionInfoFilePath, out var version);
 
                 // Delete the version info file
                 try
@@ -3811,7 +3811,7 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                var msg = "Exception determining Version info for " + Path.GetFileName(strDLLFilePath);
+                var msg = "Exception determining Version info for " + Path.GetFileName(dllFilePath);
                 LogError(msg, msg + " using " + versionInspectorExeName, ex);
             }
 
