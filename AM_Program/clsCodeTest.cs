@@ -960,20 +960,8 @@ namespace AnalysisManagerProg
         /// </summary>
         public void TestGetToolVersionInfo()
         {
-            string dllFile;
-            string dllFile64Bit;
-
-            if (clsGlobal.LinuxOS)
-            {
-                dllFile = "AM_Shared.dll";
-                dllFile64Bit = "PeptideToProteinMapEngine.dll";
-            }
-            else
-            {
-                dllFile = "AM_Shared.dll";
-                dllFile64Bit = @"C:\Windows\System32\wer.dll";
-            }
-
+            var dllFile = "AM_Shared.dll";
+            var dllFile64Bit = "PeptideToProteinMapEngine.dll";
 
             var objToolRunner = GetCodeTestToolRunner(out var jobParams, out var myEMSLUtilities);
 
