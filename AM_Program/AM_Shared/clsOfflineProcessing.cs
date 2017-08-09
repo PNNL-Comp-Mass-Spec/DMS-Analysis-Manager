@@ -56,7 +56,7 @@ namespace AnalysisManagerBase
                     var skipLine = false;
                     foreach (var setting in settingsToAppend)
                     {
-                        if (dataLine.StartsWith(setting + "="))
+                        if (dataLine.StartsWith(setting + "=", StringComparison.OrdinalIgnoreCase))
                             skipLine = true;
                     }
 

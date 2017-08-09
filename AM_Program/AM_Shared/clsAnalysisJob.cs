@@ -75,7 +75,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <remarks>
         /// Comparison checks if the end of the fileName matches any entry ResultFileExtensionsToSkip:
-        /// If TmpFileNameLcase.EndsWith(ext.ToLower()) Then OkToMove = False
+        /// If (tmpFileNameLcase.EndsWith(ext, StringComparison.OrdinalIgnoreCase)) Then OkToMove = False
         /// </remarks>
         protected SortedSet<string> m_ResultFileExtensionsToSkip = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
 
@@ -959,7 +959,7 @@ namespace AnalysisManagerBase
             string managerVersion;
             if (!string.IsNullOrEmpty(dotNetVersion))
             {
-                if (!dotNetVersion.StartsWith("v", StringComparison.InvariantCultureIgnoreCase))
+                if (!dotNetVersion.StartsWith("v", StringComparison.OrdinalIgnoreCase))
                     dotNetVersion = "v" + dotNetVersion;
 
                 managerVersion = productVersion + "; .NET " + dotNetVersion;

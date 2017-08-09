@@ -309,12 +309,12 @@ namespace AnalysisManagerProg
 
             // Make sure that the manager name matches the machine name (with a few exceptions)
 
-            if (!hostName.StartsWith("emslmq", StringComparison.InvariantCultureIgnoreCase) &&
-                !hostName.StartsWith("emslpub", StringComparison.InvariantCultureIgnoreCase) &&
-                !hostName.StartsWith("monroe", StringComparison.InvariantCultureIgnoreCase) &&
-                !hostName.StartsWith("WE27676", StringComparison.InvariantCultureIgnoreCase))
+            if (!hostName.StartsWith("emslmq", StringComparison.OrdinalIgnoreCase) &&
+                !hostName.StartsWith("emslpub", StringComparison.OrdinalIgnoreCase) &&
+                !hostName.StartsWith("monroe", StringComparison.OrdinalIgnoreCase) &&
+                !hostName.StartsWith("WE27676", StringComparison.OrdinalIgnoreCase))
             {
-                if (!m_MgrName.StartsWith(hostName, StringComparison.InvariantCultureIgnoreCase))
+                if (!m_MgrName.StartsWith(hostName, StringComparison.OrdinalIgnoreCase))
                 {
                     LogError("Manager name does not match the host name: " + m_MgrName + " vs. " + hostName + "; update AnalysisManagerProg.exe.config");
                     return false;
@@ -1243,7 +1243,7 @@ namespace AnalysisManagerProg
             "RepoPkgr"
         };
 
-            var dataPkgRequired = multiJobStepTools.Any(multiJobTool => string.Equals(stepToolName, multiJobTool, StringComparison.InvariantCultureIgnoreCase));
+            var dataPkgRequired = multiJobStepTools.Any(multiJobTool => string.Equals(stepToolName, multiJobTool, StringComparison.OrdinalIgnoreCase));
 
             if (dataPkgRequired)
             {
@@ -3059,7 +3059,7 @@ namespace AnalysisManagerProg
             else
             {
                 string formattedError;
-                if (ex == null || errorMessage.EndsWith(ex.Message, StringComparison.InvariantCultureIgnoreCase))
+                if (ex == null || errorMessage.EndsWith(ex.Message, StringComparison.OrdinalIgnoreCase))
                 {
                     formattedError = errorMessage;
                 }

@@ -224,7 +224,7 @@ namespace AnalysisManagerProg
         {
             int holdoffMilliseconds;
 
-            if (Environment.MachineName.StartsWith("monroe", StringComparison.InvariantCultureIgnoreCase) && holdoffSeconds > 1)
+            if (Environment.MachineName.StartsWith("monroe", StringComparison.OrdinalIgnoreCase) && holdoffSeconds > 1)
                 holdoffSeconds = 1;
 
             try

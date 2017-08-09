@@ -2967,7 +2967,7 @@ namespace AnalysisManagerBase
             {
                 foreach (var suffix in lstNonCriticalFileSuffixes)
                 {
-                    if (fileName.EndsWith(suffix, StringComparison.InvariantCultureIgnoreCase))
+                    if (fileName.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
                     {
                         // It's OK that this file is missing
                         return true;
@@ -3024,7 +3024,7 @@ namespace AnalysisManagerBase
 
                 var useExternalUnzipper = false;
 
-                if (zipFilePath.EndsWith(clsAnalysisResources.DOT_GZ_EXTENSION, StringComparison.InvariantCultureIgnoreCase))
+                if (zipFilePath.EndsWith(clsAnalysisResources.DOT_GZ_EXTENSION, StringComparison.OrdinalIgnoreCase))
                 {
                     // This is a gzipped file
                     // Use Ionic.Zip

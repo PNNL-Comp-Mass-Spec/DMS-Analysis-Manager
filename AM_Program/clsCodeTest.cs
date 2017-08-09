@@ -138,7 +138,8 @@ namespace AnalysisManagerProg
                             var frameworkAttribute = (TargetFrameworkAttribute)customAttributes.First();
                             frameworkVersion = frameworkAttribute.FrameworkDisplayName;
                         }
-                        else if (fileVersion.StartsWith("v1.") || fileVersion.StartsWith("v2."))
+                        else if (fileVersion.StartsWith("v1.", StringComparison.OrdinalIgnoreCase) ||
+                                 fileVersion.StartsWith("v2.", StringComparison.OrdinalIgnoreCase))
                         {
                             frameworkVersion = string.Empty;
                         }
@@ -1541,12 +1542,12 @@ namespace AnalysisManagerProg
                 {
                     foreach (var fiFile in fiFolder.GetFiles("*." + extension))
                     {
-                        if (!fiFile.Name.StartsWith(datasetName, StringComparison.InvariantCultureIgnoreCase))
+                        if (!fiFile.Name.StartsWith(datasetName, StringComparison.OrdinalIgnoreCase))
                             continue;
 
                         var desiredName = datasetName + "_" + DateTime.Now.ToString("M_d_yyyy") + "." + extension;
 
-                        if (!string.Equals(fiFile.Name, desiredName, StringComparison.InvariantCultureIgnoreCase))
+                        if (!string.Equals(fiFile.Name, desiredName, StringComparison.OrdinalIgnoreCase))
                         {
                             try
                             {

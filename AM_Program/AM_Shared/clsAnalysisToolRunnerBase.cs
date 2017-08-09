@@ -2104,7 +2104,7 @@ namespace AnalysisManagerBase
 
             int coreCount;
 
-            if (threadCountText.StartsWith("all", StringComparison.InvariantCultureIgnoreCase))
+            if (threadCountText.StartsWith("all", StringComparison.OrdinalIgnoreCase))
             {
                 coreCount = coresOnMachine;
             }
@@ -2410,7 +2410,7 @@ namespace AnalysisManagerBase
                         // Note that entries in m_ResultFileExtensionsToSkip can be extensions, or can even be partial file names, e.g. _peaks.txt
                         foreach (var ext in m_jobParams.ResultFileExtensionsToSkip)
                         {
-                            if (tmpFileNameLcase.EndsWith(ext, StringComparison.InvariantCultureIgnoreCase))
+                            if (tmpFileNameLcase.EndsWith(ext, StringComparison.OrdinalIgnoreCase))
                             {
                                 okToMove = false;
                                 break;
@@ -2685,9 +2685,9 @@ namespace AnalysisManagerBase
 
         public void PurgeOldServerCacheFilesTest(string cacheFolderPath, int spaceUsageThresholdGB)
         {
-            if (cacheFolderPath.StartsWith(@"\\proto", StringComparison.InvariantCultureIgnoreCase))
+            if (cacheFolderPath.StartsWith(@"\\proto", StringComparison.OrdinalIgnoreCase))
             {
-                if (!string.Equals(cacheFolderPath, @"\\proto-2\past\PurgeTest", StringComparison.InvariantCultureIgnoreCase))
+                if (!string.Equals(cacheFolderPath, @"\\proto-2\past\PurgeTest", StringComparison.OrdinalIgnoreCase))
                 {
                     Console.WriteLine(@"This function cannot be used with a \\Proto-x\ server");
                     return;
@@ -2722,7 +2722,7 @@ namespace AnalysisManagerBase
                     throw new ArgumentOutOfRangeException(nameof(cacheFolderPath), "Cache folder path cannot be empty");
                 }
 
-                if (cacheFolderPath.StartsWith(@"\\proto-", StringComparison.InvariantCultureIgnoreCase))
+                if (cacheFolderPath.StartsWith(@"\\proto-", StringComparison.OrdinalIgnoreCase))
                 {
                     if (spaceUsageThresholdGB < 1000)
                         spaceUsageThresholdGB = 1000;
@@ -2781,7 +2781,7 @@ namespace AnalysisManagerBase
 
                     foreach (var fiItem in diCacheFolder.GetFiles("*.hashcheck", SearchOption.AllDirectories))
                     {
-                        if (!fiItem.FullName.EndsWith(clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX, StringComparison.InvariantCultureIgnoreCase))
+                        if (!fiItem.FullName.EndsWith(clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX, StringComparison.OrdinalIgnoreCase))
                             continue;
 
                         var dataFilePath = fiItem.FullName.Substring(0, fiItem.FullName.Length - clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX.Length);

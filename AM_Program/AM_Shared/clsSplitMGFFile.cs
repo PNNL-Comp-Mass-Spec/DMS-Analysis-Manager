@@ -231,9 +231,7 @@ namespace AnalysisManagerBase
                 {
                     bytesRead += dataLine.Length;
 
-                    var datalineUCase = dataLine.ToUpper();
-
-                    if (datalineUCase.StartsWith("BEGIN IONS"))
+                    if (dataLine.StartsWith("BEGIN IONS", StringComparison.OrdinalIgnoreCase))
                     {
                         if (spectrumFound)
                         {
@@ -246,7 +244,7 @@ namespace AnalysisManagerBase
                         }
                         spectrumFound = true;
                     }
-                    else if (datalineUCase.StartsWith("TITLE"))
+                    else if (dataLine.StartsWith("TITLE", StringComparison.OrdinalIgnoreCase))
                     {
                         // Parse out the scan number
                         var reMatch = mExtractScan.Match(dataLine);
@@ -261,7 +259,7 @@ namespace AnalysisManagerBase
                         spectrumData.Add(dataLine);
                     }
 
-                    if (datalineUCase.StartsWith("END IONS"))
+                    if (dataLine.StartsWith("END IONS", StringComparison.OrdinalIgnoreCase))
                     {
                         return spectrumData;
                     }

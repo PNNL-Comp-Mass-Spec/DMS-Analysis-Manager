@@ -693,12 +693,7 @@ namespace AnalysisManagerBase
                 return true;
             }
 
-            if (string.Compare(text1, text2, StringComparison.OrdinalIgnoreCase) == 0)
-            {
-                return true;
-            }
-
-            return false;
+            return string.Compare(text1, text2, StringComparison.OrdinalIgnoreCase) == 0;
         }
 
         /// <summary>
@@ -1455,7 +1450,7 @@ namespace AnalysisManagerBase
         public static void LogError(string errorMessage, Exception ex = null)
         {
             string formattedError;
-            if (ex == null || errorMessage.EndsWith(ex.Message, StringComparison.InvariantCultureIgnoreCase))
+            if (ex == null || errorMessage.EndsWith(ex.Message, StringComparison.OrdinalIgnoreCase))
             {
                 formattedError = errorMessage;
             }
@@ -1560,7 +1555,7 @@ namespace AnalysisManagerBase
         public static string ReplaceIgnoreCase(string textToSearch, string textToFind, string replacementText)
         {
 
-            var charIndex = textToSearch.IndexOf(textToFind, StringComparison.InvariantCultureIgnoreCase);
+            var charIndex = textToSearch.IndexOf(textToFind, StringComparison.OrdinalIgnoreCase);
 
             if (charIndex < 0)
             {

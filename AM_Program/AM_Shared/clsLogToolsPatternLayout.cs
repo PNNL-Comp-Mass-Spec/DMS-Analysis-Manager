@@ -191,7 +191,7 @@ namespace AnalysisManagerBase
                         if (filePath != null)
                         {
                             string trimmedFilePath;
-                            if (filePath.StartsWith(basePath, StringComparison.InvariantCultureIgnoreCase))
+                            if (filePath.StartsWith(basePath, StringComparison.OrdinalIgnoreCase))
                             {
                                 if (filePath.Substring(basePath.Length).StartsWith(Path.DirectorySeparatorChar.ToString()) || 
                                     filePath.Substring(basePath.Length).StartsWith(Path.AltDirectorySeparatorChar.ToString()))
@@ -320,7 +320,7 @@ namespace AnalysisManagerBase
                 var charsToCompare = Math.Min(basePath.Length, basePathCompare.Length);
                 var i = 0;
 
-                if (string.Equals(basePath.Substring(0, charsToCompare), basePathCompare.Substring(0, charsToCompare), StringComparison.InvariantCultureIgnoreCase))
+                if (string.Equals(basePath.Substring(0, charsToCompare), basePathCompare.Substring(0, charsToCompare), StringComparison.OrdinalIgnoreCase))
                 {
                     // The path portions are equal; no need for character-by-character comparison
                     i = charsToCompare;

@@ -1112,7 +1112,7 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                if (ex.Message.StartsWith("Legacy fasta file not found:"))
+                if (ex.Message.StartsWith("Legacy fasta file not found:", StringComparison.OrdinalIgnoreCase))
                 {
                     var rePathMatcher = new Regex(@"not found: (?<SourceFolder>.+)\\");
                     var reMatch = rePathMatcher.Match(ex.Message);
@@ -3107,7 +3107,7 @@ namespace AnalysisManagerBase
 
             var baseName = Path.GetFileNameWithoutExtension(fiFileToPurge.Name);
 
-            if (!string.IsNullOrWhiteSpace(legacyFastaFileBaseName) && baseName.StartsWith(legacyFastaFileBaseName, StringComparison.InvariantCultureIgnoreCase))
+            if (!string.IsNullOrWhiteSpace(legacyFastaFileBaseName) && baseName.StartsWith(legacyFastaFileBaseName, StringComparison.OrdinalIgnoreCase))
             {
                 // The current job needs this file; do not delete it
                 return 0;
@@ -3353,7 +3353,7 @@ namespace AnalysisManagerBase
                             continue;
                         }
 
-                        if (string.Equals(lineParts[0], "MaxSizeGB", StringComparison.InvariantCultureIgnoreCase))
+                        if (string.Equals(lineParts[0], "MaxSizeGB", StringComparison.OrdinalIgnoreCase))
                         {
                             if (!int.TryParse(lineParts[1], out maxSizeGB))
                             {
@@ -3667,7 +3667,7 @@ namespace AnalysisManagerBase
                     foreach (var fileSpec in fileSpecList)
                     {
                         var fileSpecTerms = fileSpec.Trim().Split(':').ToList();
-                        if (dataPkgJob.Value.Tool.StartsWith(fileSpecTerms[0].Trim(), StringComparison.InvariantCultureIgnoreCase))
+                        if (dataPkgJob.Value.Tool.StartsWith(fileSpecTerms[0].Trim(), StringComparison.OrdinalIgnoreCase))
                         {
                             fileSpecListCurrent = fileSpecList;
                             break;
@@ -3680,7 +3680,7 @@ namespace AnalysisManagerBase
                         {
                             case DataPackageFileRetrievalModeConstants.Ascore:
 
-                                if (dataPkgJob.Value.Tool.StartsWith("msgf", StringComparison.InvariantCultureIgnoreCase))
+                                if (dataPkgJob.Value.Tool.StartsWith("msgf", StringComparison.OrdinalIgnoreCase))
                                 {
                                     // MSGF+
                                     fileSpecListCurrent = new List<string> {
@@ -3691,7 +3691,7 @@ namespace AnalysisManagerBase
 
                                 }
 
-                                if (dataPkgJob.Value.Tool.StartsWith("sequest", StringComparison.InvariantCultureIgnoreCase))
+                                if (dataPkgJob.Value.Tool.StartsWith("sequest", StringComparison.OrdinalIgnoreCase))
                                 {
                                     // Sequest
                                     fileSpecListCurrent = new List<string> {
@@ -3703,7 +3703,7 @@ namespace AnalysisManagerBase
 
                                 }
 
-                                if (dataPkgJob.Value.Tool.StartsWith("xtandem", StringComparison.InvariantCultureIgnoreCase))
+                                if (dataPkgJob.Value.Tool.StartsWith("xtandem", StringComparison.OrdinalIgnoreCase))
                                 {
                                     // XTandem
                                     fileSpecListCurrent = new List<string> {
@@ -3739,7 +3739,7 @@ namespace AnalysisManagerBase
 
                         try
                         {
-                            if (!dataPkgJob.Value.Tool.StartsWith(fileSpecTerms[0].Trim(), StringComparison.InvariantCultureIgnoreCase))
+                            if (!dataPkgJob.Value.Tool.StartsWith(fileSpecTerms[0].Trim(), StringComparison.OrdinalIgnoreCase))
                             {
                                 continue;
                             }
@@ -3749,8 +3749,8 @@ namespace AnalysisManagerBase
                             if (!diTargetFolder.Exists)
                                 diTargetFolder.Create();
 
-                            if (sourceFileName.EndsWith("_dta.zip", StringComparison.InvariantCultureIgnoreCase) &&
-                                dataPkgJob.Value.Tool.EndsWith("_mzml", StringComparison.InvariantCultureIgnoreCase))
+                            if (sourceFileName.EndsWith("_dta.zip", StringComparison.OrdinalIgnoreCase) &&
+                                dataPkgJob.Value.Tool.EndsWith("_mzml", StringComparison.OrdinalIgnoreCase))
                             {
                                 // This is a .mzML job; it is not going to have a _dta.zip file
                                 // Setting sourceFolderPath to an empty string so that GetMzMLFile will get called below
@@ -3791,7 +3791,7 @@ namespace AnalysisManagerBase
 
                             if (string.IsNullOrEmpty(sourceFolderPath))
                             {
-                                if (sourceFileName.EndsWith("_dta.zip", StringComparison.InvariantCultureIgnoreCase))
+                                if (sourceFileName.EndsWith("_dta.zip", StringComparison.OrdinalIgnoreCase))
                                 {
                                     // Look for a mzML.gz file instead
 
@@ -3842,7 +3842,7 @@ namespace AnalysisManagerBase
                                 return false;
                             }
 
-                            if (sourceFileName.EndsWith("_dta.zip", StringComparison.InvariantCultureIgnoreCase))
+                            if (sourceFileName.EndsWith("_dta.zip", StringComparison.OrdinalIgnoreCase))
                             {
                                 m_jobParams.AddAdditionalParameter("DataPackageMetadata", spectraFileKey, sourceFileName);
                             }

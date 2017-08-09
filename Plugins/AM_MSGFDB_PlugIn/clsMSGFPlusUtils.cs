@@ -1225,7 +1225,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                             OnStatusEvent("Processing large FASTA file with forward-only search; auto switching to -tda 0");
                         }
                     }
-                    else if (msgfPlusParameterFilePath.ToLower().EndsWith("_NoDecoy.txt".ToLower()))
+                    else if (msgfPlusParameterFilePath.EndsWith("_NoDecoy.txt", StringComparison.OrdinalIgnoreCase))
                     {
                         // Parameter file ends in _NoDecoy.txt and TDA = 0, thus we're performing a forward-only search
                         // Auto-change fastaFileIsDecoy to True to prevent the reverse indices from being created
@@ -1479,7 +1479,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
             }
 
-            var validClosingTag = lastLine.Trim().EndsWith("</MzIdentML>", StringComparison.InvariantCulture);
+            var validClosingTag = lastLine.Trim().EndsWith("</MzIdentML>", StringComparison.OrdinalIgnoreCase);
             return validClosingTag;
         }
 
@@ -1664,7 +1664,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                             // Originally the first line was the MS-GF+ version
                             // Starting in November 2016, the first line is the command line and the second line is a separator (series of dashes)
                             // The third line is the MS-GF+ version
-                            if (string.IsNullOrWhiteSpace(mMSGFPlusVersion) && (dataLine.StartsWith("MS-GF+ Release")))
+                            if (string.IsNullOrWhiteSpace(mMSGFPlusVersion) && dataLine.StartsWith("MS-GF+ Release", StringComparison.OrdinalIgnoreCase))
                             {
                                 if (m_DebugLevel >= 2 && string.IsNullOrWhiteSpace(mMSGFPlusVersion))
                                 {
@@ -1691,7 +1691,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                         // Look for warning messages
                         // Additionally, update progress if the line starts with one of the expected phrases
-                        if (dataLine.StartsWith("Ignoring spectrum"))
+                        if (dataLine.StartsWith("Ignoring spectrum", StringComparison.OrdinalIgnoreCase))
                         {
                             // Spectra are typically ignored either because they have too few ions, or because the data is not centroided
                             if (dataLine.IndexOf("spectrum is not centroided", StringComparison.OrdinalIgnoreCase) > 0)
@@ -1699,21 +1699,21 @@ namespace AnalysisManagerMSGFDBPlugIn
                                 mContinuumSpectraSkipped += 1;
                             }
                         }
-                        else if (dataLine.StartsWith("Loading database files"))
+                        else if (dataLine.StartsWith("Loading database files", StringComparison.OrdinalIgnoreCase))
                         {
                             if (sngEffectiveProgress < PROGRESS_PCT_MSGFPLUS_LOADING_DATABASE)
                             {
                                 sngEffectiveProgress = PROGRESS_PCT_MSGFPLUS_LOADING_DATABASE;
                             }
                         }
-                        else if (dataLine.StartsWith("Reading spectra"))
+                        else if (dataLine.StartsWith("Reading spectra", StringComparison.OrdinalIgnoreCase))
                         {
                             if (sngEffectiveProgress < PROGRESS_PCT_MSGFPLUS_READING_SPECTRA)
                             {
                                 sngEffectiveProgress = PROGRESS_PCT_MSGFPLUS_READING_SPECTRA;
                             }
                         }
-                        else if (dataLine.StartsWith("Using"))
+                        else if (dataLine.StartsWith("Using", StringComparison.OrdinalIgnoreCase))
                         {
                             // Extract out the thread or task count
                             var oThreadMatch = reExtractThreadCount.Match(dataLine);
@@ -1728,7 +1728,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                                 }
                             }
                         }
-                        else if (dataLine.StartsWith("Splitting"))
+                        else if (dataLine.StartsWith("Splitting", StringComparison.OrdinalIgnoreCase))
                         {
                             var oTaskMatch = reExtractTaskCount.Match(dataLine);
 
@@ -1737,7 +1737,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                                 int.TryParse(oTaskMatch.Groups["TaskCount"].Value, out totalTasks);
                             }
                         }
-                        else if (dataLine.StartsWith("Spectrum"))
+                        else if (dataLine.StartsWith("Spectrum", StringComparison.OrdinalIgnoreCase))
                         {
                             // Extract out the number of spectra that MS-GF+ will actually search
 
@@ -1748,14 +1748,16 @@ namespace AnalysisManagerMSGFDBPlugIn
                                 int.TryParse(oMatch.Groups["SpectrumCount"].Value, out mSpectraSearched);
                             }
                         }
-                        else if (dataLine.StartsWith("Computing EFDRs") || dataLine.StartsWith("Computing q-values"))
+                        else if (dataLine.StartsWith("Computing EFDRs", StringComparison.OrdinalIgnoreCase) ||
+                                 dataLine.StartsWith("Computing q-values", StringComparison.OrdinalIgnoreCase))
                         {
                             if (sngEffectiveProgress < PROGRESS_PCT_MSGFPLUS_COMPUTING_FDRS)
                             {
                                 sngEffectiveProgress = PROGRESS_PCT_MSGFPLUS_COMPUTING_FDRS;
                             }
                         }
-                        else if (dataLine.StartsWith("MS-GF+ complete") || dataLine.StartsWith("MS-GF+ complete"))
+                        else if (dataLine.StartsWith("MS-GF+ complete", StringComparison.OrdinalIgnoreCase) ||
+                                 dataLine.StartsWith("MS-GF+ complete", StringComparison.OrdinalIgnoreCase))
                         {
                             if (sngEffectiveProgress < PROGRESS_PCT_MSGFPLUS_COMPLETE)
                             {
@@ -2267,7 +2269,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             // If running on a Proto storage server (e.g. Proto-4, Proto-5, or Proto-11),
             // we will limit the number of cores used to 75% of the total core count
-            var limitCoreUsage = Dns.GetHostName().ToLower().StartsWith("proto-");
+            var limitCoreUsage = Dns.GetHostName().StartsWith("proto-", StringComparison.OrdinalIgnoreCase);
 
             if (paramFileThreadCount <= 0 || limitCoreUsage)
             {
@@ -2688,21 +2690,21 @@ namespace AnalysisManagerMSGFDBPlugIn
                 modClean += "     " + comment;
             }
 
+            if (customAminoAcidDef)
+                return true;
+
             // Check whether this is a phosphorylation mod
-            if (!customAminoAcidDef)
+            if (modParts[(int)ModDefinitionParts.Name].StartsWith("PHOSPH", StringComparison.OrdinalIgnoreCase) ||
+                modParts[(int)ModDefinitionParts.EmpiricalFormulaOrMass].StartsWith("HO3P", StringComparison.OrdinalIgnoreCase))
             {
-                if (modParts[(int)ModDefinitionParts.Name].ToUpper().StartsWith("PHOSPH") ||
-                    modParts[(int)ModDefinitionParts.EmpiricalFormulaOrMass].ToUpper() == "HO3P")
+                if (modParts[(int)ModDefinitionParts.Residues].ToUpper().IndexOfAny(new[]
                 {
-                    if (modParts[(int)ModDefinitionParts.Residues].ToUpper().IndexOfAny(new[]
-                    {
-                        'S',
-                        'T',
-                        'Y'
-                    }) >= 0)
-                    {
-                        mPhosphorylationSearch = true;
-                    }
+                    'S',
+                    'T',
+                    'Y'
+                }) >= 0)
+                {
+                    mPhosphorylationSearch = true;
                 }
             }
 

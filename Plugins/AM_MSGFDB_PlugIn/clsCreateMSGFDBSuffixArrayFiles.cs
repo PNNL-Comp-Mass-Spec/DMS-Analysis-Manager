@@ -1039,7 +1039,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             var fiJarFile = new FileInfo(MSGFDBJarFilePath);
 
-            if (string.Compare(fiJarFile.Name, MSGFDB_JAR_NAME, StringComparison.InvariantCultureIgnoreCase) == 0)
+            if (string.Compare(fiJarFile.Name, MSGFDB_JAR_NAME, StringComparison.OrdinalIgnoreCase) == 0)
             {
                 // Not MSGF+
                 return false;
@@ -1070,7 +1070,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     while (!srReader.EndOfStream)
                     {
                         var dataLine = srReader.ReadLine();
-                        if (dataLine != null && dataLine.StartsWith("Error"))
+                        if (dataLine != null && dataLine.StartsWith("Error", StringComparison.OrdinalIgnoreCase))
                         {
                             OnErrorEvent("BuildSA reports: " + dataLine);
                             if (dataLine.Contains("too many redundant proteins"))

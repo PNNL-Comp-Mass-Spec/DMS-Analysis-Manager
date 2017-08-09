@@ -195,7 +195,7 @@ namespace AnalysisManagerBase
                     foreach (var udtArchivedFile in mAnalysisResources.MyEMSLUtilities.RecentlyFoundMyEMSLFiles)
                     {
                         var fiArchivedFile = new FileInfo(udtArchivedFile.FileInfo.RelativePathWindows);
-                        if (fiArchivedFile.Name.EndsWith("_CacheInfo.txt", StringComparison.InvariantCultureIgnoreCase))
+                        if (fiArchivedFile.Name.EndsWith("_CacheInfo.txt", StringComparison.OrdinalIgnoreCase))
                         {
                             mAnalysisResources.MyEMSLUtilities.AddFileToDownloadQueue(udtArchivedFile.FileInfo);
                             cacheInfoFileName = udtArchivedFile.FileInfo.Filename;
@@ -383,7 +383,7 @@ namespace AnalysisManagerBase
                 bool deleteLocalFile;
                 var searchedUsedMzML = false;
 
-                if (mzidFile.Name.EndsWith(".zip", StringComparison.InvariantCultureIgnoreCase))
+                if (mzidFile.Name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
                 {
                     if (!ionicZipTools.UnzipFile(mzidFile.FullName))
                     {
@@ -395,7 +395,7 @@ namespace AnalysisManagerBase
                     deleteLocalFile = true;
 
                 }
-                else if (mzidFile.Name.EndsWith(".gz", StringComparison.InvariantCultureIgnoreCase))
+                else if (mzidFile.Name.EndsWith(".gz", StringComparison.OrdinalIgnoreCase))
                 {
                     if (!ionicZipTools.GUnzipFile(mzidFile.FullName))
                     {
@@ -437,8 +437,8 @@ namespace AnalysisManagerBase
                                         const string DOT_MZML = clsAnalysisResources.DOT_MZML_EXTENSION;
                                         const string DOT_MZML_GZ = clsAnalysisResources.DOT_MZML_EXTENSION + clsAnalysisResources.DOT_GZ_EXTENSION;
 
-                                        if (spectraDataFileName.EndsWith(DOT_MZML, StringComparison.InvariantCultureIgnoreCase) ||
-                                            spectraDataFileName.EndsWith(DOT_MZML_GZ, StringComparison.InvariantCultureIgnoreCase))
+                                        if (spectraDataFileName.EndsWith(DOT_MZML, StringComparison.OrdinalIgnoreCase) ||
+                                            spectraDataFileName.EndsWith(DOT_MZML_GZ, StringComparison.OrdinalIgnoreCase))
                                         {
                                             searchedUsedMzML = true;
                                         }
@@ -769,8 +769,8 @@ namespace AnalysisManagerBase
                                     if (eLogMsgTypeIfNotFound != clsLogTools.LogLevels.DEBUG)
                                     {
                                         var warningMessage = "Required PHRP file not found: " + sourceFilename;
-                                        if (sourceFilename.EndsWith("_msgfplus.zip", StringComparison.InvariantCultureIgnoreCase) ||
-                                            sourceFilename.EndsWith("_msgfplus.mzid.gz", StringComparison.InvariantCultureIgnoreCase))
+                                        if (sourceFilename.EndsWith("_msgfplus.zip", StringComparison.OrdinalIgnoreCase) ||
+                                            sourceFilename.EndsWith("_msgfplus.mzid.gz", StringComparison.OrdinalIgnoreCase))
                                         {
                                             warningMessage += "; Confirm job used MSGF+ and not MSGFDB";
                                         }
@@ -878,7 +878,7 @@ namespace AnalysisManagerBase
                             if (searchUsedmzML)
                             {
                                 var stepToolFilter = string.Empty;
-                                if (dataPkgJob.Tool.StartsWith("msgfplus", StringComparison.InvariantCultureIgnoreCase))
+                                if (dataPkgJob.Tool.StartsWith("msgfplus", StringComparison.OrdinalIgnoreCase))
                                 {
                                     stepToolFilter = "MSGFPlus";
                                 }
@@ -1312,7 +1312,7 @@ namespace AnalysisManagerBase
                             // .mzXML or .mzML file found and copied locally
                             string msXmlFileExtension;
 
-                            if (mzXMLFilePath.EndsWith(clsAnalysisResources.DOT_GZ_EXTENSION, StringComparison.InvariantCultureIgnoreCase))
+                            if (mzXMLFilePath.EndsWith(clsAnalysisResources.DOT_GZ_EXTENSION, StringComparison.OrdinalIgnoreCase))
                             {
                                 msXmlFileExtension = Path.GetExtension(mzXMLFilePath.Substring(0, mzXMLFilePath.Length - clsAnalysisResources.DOT_GZ_EXTENSION.Length));
                             }

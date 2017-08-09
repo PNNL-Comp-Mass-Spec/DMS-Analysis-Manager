@@ -58,8 +58,8 @@ namespace AnalysisManagerMasicPlugin
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (string.Compare(rawDataType, RAW_DATA_TYPE_DOT_RAW_FILES, StringComparison.OrdinalIgnoreCase) == 0 &&
-                toolName.ToLower().StartsWith("MASIC_Finnigan".ToLower()))
+            if (clsGlobal.IsMatch(rawDataType, RAW_DATA_TYPE_DOT_RAW_FILES) &&
+                toolName.StartsWith("MASIC_Finnigan", StringComparison.OrdinalIgnoreCase))
             {
                 var strRawFileName = DatasetName + ".raw";
                 var strInputFilePath = ResolveStoragePath(m_WorkingDir, strRawFileName);
