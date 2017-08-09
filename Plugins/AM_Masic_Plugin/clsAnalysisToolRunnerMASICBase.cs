@@ -7,7 +7,6 @@
 //*********************************************************************************************************
 
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Xml;
@@ -23,21 +22,22 @@ namespace AnalysisManagerMasicPlugin
     {
         #region "Module variables"
 
-        protected const string SICS_XML_FILE_SUFFIX = "_SICs.xml";
+        private const string SICS_XML_FILE_SUFFIX = "_SICs.xml";
 
         // Job running status variable
-        protected bool m_JobRunning;
+        private bool m_JobRunning;
 
         protected string m_ErrorMessage = string.Empty;
-        protected string m_ProcessStep = string.Empty;
-        protected string m_MASICStatusFileName = string.Empty;
-        protected string m_MASICLogFileName = string.Empty;
+
+        private string m_ProcessStep = string.Empty;
+        private string m_MASICStatusFileName = string.Empty;
+        private string m_MASICLogFileName = string.Empty;
 
         #endregion
 
         #region "Methods"
 
-        protected void ExtractErrorsFromMASICLogFile(string strLogFilePath)
+        private void ExtractErrorsFromMASICLogFile(string strLogFilePath)
         {
             // Read the most recent MASIC_Log file and look for any lines with the text "Error"
 
@@ -452,7 +452,7 @@ namespace AnalysisManagerMasicPlugin
             return true;
         }
 
-        protected bool WaitForJobToFinish(PRISM.clsProgRunner objMasicProgRunner)
+        private bool WaitForJobToFinish(PRISM.clsProgRunner objMasicProgRunner)
         {
             const int MAX_RUNTIME_HOURS = 24;
             const int SECONDS_BETWEEN_UPDATE = 30;

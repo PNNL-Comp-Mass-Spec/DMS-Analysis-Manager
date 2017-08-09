@@ -20,7 +20,7 @@ namespace AnalysisManagerMasicPlugin
     {
         #region "Module Variables"
 
-        protected AnalysisManagerMsXmlGenPlugIn.clsMSXMLCreator mMSXmlCreator;
+        private AnalysisManagerMsXmlGenPlugIn.clsMSXMLCreator mMSXmlCreator;
 
         #endregion
 
@@ -78,7 +78,7 @@ namespace AnalysisManagerMasicPlugin
         /// </summary>
         /// <param name="fiThermoRawFile"></param>
         /// <returns>Path to the newly created .mzXML file</returns>
-        protected string ConvertRawToMzXML(FileInfo fiThermoRawFile)
+        private string ConvertRawToMzXML(FileInfo fiThermoRawFile)
         {
             var strMSXmlGeneratorAppPath = GetMSXmlGeneratorAppPath();
 
