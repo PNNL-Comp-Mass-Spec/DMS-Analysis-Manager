@@ -533,8 +533,9 @@ namespace AnalysisManagerProg
                     {
                         if (WindowsUpdatesArePending())
                         {
-                            // Do not request a job between 12 am and 6 am on Thursday in the week with the second Tuesday of the month
-                            // Do not request a job between 2 am and 4 am or between 9 am and 11 am on Sunday in the week with the second Tuesday of the month
+                            // Check whether the computer is likely to install the monthly Windows Updates within the next few hours
+                            // Do not request a task between 12 am and 6 am on Thursday in the week with the third Tuesday of the month
+                            // Do not request a task between 2 am and 4 am or between 9 am and 11 am on Sunday following the week with the third Tuesday of the month
                             break;
                         }
                     }

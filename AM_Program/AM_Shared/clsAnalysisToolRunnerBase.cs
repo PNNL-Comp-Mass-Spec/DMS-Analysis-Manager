@@ -1438,7 +1438,7 @@ namespace AnalysisManagerBase
         /// <param name="progLocManagerParamName">The name of the manager parameter that defines the path to the folder with the exe, e.g. LCMSFeatureFinderProgLoc</param>
         /// <param name="exeName">The name of the exe file, e.g. LCMSFeatureFinder.exe</param>
         /// <returns>The path to the program, or an empty string if there is a problem</returns>
-        /// <remarks></remarks>
+        /// <remarks>If the program is not found, m_message will be updated with the error message</remarks>
         protected string DetermineProgramLocation(string progLocManagerParamName, string exeName)
         {
 

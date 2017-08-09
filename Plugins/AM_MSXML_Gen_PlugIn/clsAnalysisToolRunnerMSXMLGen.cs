@@ -625,8 +625,8 @@ namespace AnalysisManagerMsXmlGenPlugIn
             var ioToolFiles = new List<FileInfo>();
 
             // Determine the path to the XML Generator
-            var msXmlGenerator = m_jobParams.GetParam("MSXMLGenerator");
             // ReAdW.exe or MSConvert.exe
+            var msXmlGenerator = m_jobParams.GetParam("MSXMLGenerator");
 
             mMSXmlGeneratorAppPath = string.Empty;
             if (msXmlGenerator.ToLower().Contains("readw"))
