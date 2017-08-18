@@ -28,11 +28,11 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             mFileMappings = new List<int>();
         }
 
-        public void AddFileMapping(int intPXFileID)
+        public void AddFileMapping(int pxFileID)
         {
-            if (!mFileMappings.Contains(intPXFileID))
+            if (!mFileMappings.Contains(pxFileID))
             {
-                mFileMappings.Add(intPXFileID);
+                mFileMappings.Add(pxFileID);
             }
         }
     }

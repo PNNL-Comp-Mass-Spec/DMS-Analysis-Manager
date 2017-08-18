@@ -273,16 +273,16 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 // Monitor the FileDownloaded event in this class
                 m_MyEMSLUtilities.FileDownloaded += m_MyEMSLDatasetListInfo_FileDownloadedEvent;
 
-                // The objAnalysisResults object is used to copy files to/from this computer
-                var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
+                // The analysisResults object is used to copy files to/from this computer
+                var analysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
 
                 // Assure that the remote transfer folder exists
-                var remoteTransferFolder = CreateRemoteTransferFolder(objAnalysisResults, mCacheFolderPath);
+                var remoteTransferFolder = CreateRemoteTransferFolder(analysisResults, mCacheFolderPath);
 
                 try
                 {
                     // Create the remote Transfer Directory
-                    objAnalysisResults.CreateFolderWithRetry(remoteTransferFolder, maxRetryCount: 5, retryHoldoffSeconds: 20, increaseHoldoffOnEachRetry: true);
+                    analysisResults.CreateFolderWithRetry(remoteTransferFolder, maxRetryCount: 5, retryHoldoffSeconds: 20, increaseHoldoffOnEachRetry: true);
                 }
                 catch (Exception ex)
                 {
@@ -294,15 +294,15 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 // Read the PX_Submission_Template.px file
                 var dctTemplateParameters = ReadTemplatePXSubmissionFile();
 
-                var jobFailureCount = ProcessJobs(objAnalysisResults, remoteTransferFolder, dctTemplateParameters, dctDataPackageDatasets);
+                var jobFailureCount = ProcessJobs(analysisResults, remoteTransferFolder, dctTemplateParameters, dctDataPackageDatasets);
 
                 // Create the PX Submission file
-                var blnSuccess = CreatePXSubmissionFile(dctTemplateParameters);
+                var success = CreatePXSubmissionFile(dctTemplateParameters);
 
                 m_progress = PROGRESS_PCT_COMPLETE;
                 m_StatusTools.UpdateAndWrite(m_progress);
 
-                if (blnSuccess)
+                if (success)
                 {
                     if (m_DebugLevel >= 3)
                     {
@@ -320,7 +320,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 Thread.Sleep(500);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
-                if (!blnSuccess || jobFailureCount > 0)
+                if (!success || jobFailureCount > 0)
                 {
                     // Something went wrong
                     // In order to help diagnose things, we will move whatever files were created into the result folder,
@@ -331,9 +331,9 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 DefineFilesToSkipTransfer();
 
-                var success = CopyResultsToTransferDirectory(mCacheFolderPath);
+                var copySuccess = CopyResultsToTransferDirectory(mCacheFolderPath);
 
-                return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
+                return copySuccess ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
 
 
             }
@@ -345,7 +345,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
         }
 
-        private int ProcessJobs(clsAnalysisResults objAnalysisResults, string remoteTransferFolder,
+        private int ProcessJobs(clsAnalysisResults analysisResults, string remoteTransferFolder,
             IReadOnlyDictionary<string, string> dctTemplateParameters, Dictionary<int, clsDataPackageDatasetInfo> dctDataPackageDatasets)
         {
             var jobsProcessed = 0;
@@ -365,7 +365,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 var assumeInstrumentDataUnpurged = m_jobParams.GetJobParameter("AssumeInstrumentDataUnpurged", true);
 
-                const bool blnContinueOnError = true;
+                const bool continueOnError = true;
                 const int maxErrorCount = 10;
                 var dtLastLogTime = DateTime.UtcNow;
 
@@ -382,13 +382,13 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     Console.WriteLine();
                     LogDebug((jobsProcessed + 1) + ": " + m_StatusTools.CurrentOperation, 10);
 
-                    var result = ProcessJob(kvJobInfo, udtFilterThresholds, objAnalysisResults, remoteTransferFolder, dctDatasetRawFilePaths,
+                    var result = ProcessJob(kvJobInfo, udtFilterThresholds, analysisResults, remoteTransferFolder, dctDatasetRawFilePaths,
                         dctTemplateParameters, assumeInstrumentDataUnpurged);
 
                     if (result != CloseOutType.CLOSEOUT_SUCCESS)
                     {
                         jobFailureCount += 1;
-                        if (!blnContinueOnError || jobFailureCount > maxErrorCount)
+                        if (!continueOnError || jobFailureCount > maxErrorCount)
                             break;
                     }
 
@@ -409,7 +409,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     }
                 }
 
-                TransferPreviousDatasetFiles(objAnalysisResults, remoteTransferFolder);
+                TransferPreviousDatasetFiles(analysisResults, remoteTransferFolder);
 
                 // Look for datasets associated with the data package that have no PeptideHit jobs
                 // Create fake PeptideHit jobs in the .px file to alert the user of the missing jobs
@@ -462,13 +462,13 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             StoreInstrumentInfo(kvDatasetInfo.Value);
 
             var udtDatasetInfo = kvDatasetInfo.Value;
-            var strDatasetRawFilePath = Path.Combine(udtDatasetInfo.ServerStoragePath, udtDatasetInfo.Dataset + ".raw");
+            var datasetRawFilePath = Path.Combine(udtDatasetInfo.ServerStoragePath, udtDatasetInfo.Dataset + ".raw");
 
             var dataPkgJob = clsAnalysisResources.GetPseudoDataPackageJobInfo(udtDatasetInfo);
 
-            var rawFileID = AddPxFileToMasterList(strDatasetRawFilePath, dataPkgJob);
+            var rawFileID = AddPxFileToMasterList(datasetRawFilePath, dataPkgJob);
 
-            AddPxResultFile(rawFileID, clsPXFileInfoBase.ePXFileType.Raw, strDatasetRawFilePath, dataPkgJob);
+            AddPxResultFile(rawFileID, clsPXFileInfoBase.ePXFileType.Raw, datasetRawFilePath, dataPkgJob);
         }
 
         private void AddNEWTInfo(int newtID, string newtName)
@@ -485,9 +485,9 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
         }
 
-        private int AddPxFileToMasterList(string strFilePath, clsDataPackageJobInfo dataPkgJob)
+        private int AddPxFileToMasterList(string filePath, clsDataPackageJobInfo dataPkgJob)
         {
-            var fiFile = new FileInfo(strFilePath);
+            var fiFile = new FileInfo(filePath);
 
             if (mPxMasterFileList.TryGetValue(fiFile.Name, out var oPXFileInfo))
             {
@@ -495,9 +495,9 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 return oPXFileInfo.FileID;
             }
 
-            var strFilename = CheckFilenameCase(fiFile, dataPkgJob.Dataset);
+            var filename = CheckFilenameCase(fiFile, dataPkgJob.Dataset);
 
-            oPXFileInfo = new clsPXFileInfoBase(strFilename, dataPkgJob) {
+            oPXFileInfo = new clsPXFileInfoBase(filename, dataPkgJob) {
                 FileID = mPxMasterFileList.Count + 1
             };
 
@@ -518,11 +518,11 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             return oPXFileInfo.FileID;
         }
 
-        private bool AddPxResultFile(int intFileID, clsPXFileInfoBase.ePXFileType eFileType, string strFilePath, clsDataPackageJobInfo dataPkgJob)
+        private bool AddPxResultFile(int fileId, clsPXFileInfoBase.ePXFileType eFileType, string filePath, clsDataPackageJobInfo dataPkgJob)
         {
-            var fiFile = new FileInfo(strFilePath);
+            var fiFile = new FileInfo(filePath);
 
-            if (mPxResultFiles.TryGetValue(intFileID, out var oPXFileInfo))
+            if (mPxResultFiles.TryGetValue(fileId, out var oPXFileInfo))
             {
                 // File already defined in the mapping list
                 return true;
@@ -535,36 +535,36 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 return false;
             }
 
-            if (oMasterPXFileInfo.FileID != intFileID)
+            if (oMasterPXFileInfo.FileID != fileId)
             {
                 var msg = "FileID mismatch for " + fiFile.Name;
-                LogError(msg + ":  mPxMasterFileList.FileID = " + oMasterPXFileInfo.FileID + " vs. FileID " + intFileID + " passed into AddPxFileToMapping");
+                LogError(msg + ":  mPxMasterFileList.FileID = " + oMasterPXFileInfo.FileID + " vs. FileID " + fileId + " passed into AddPxFileToMapping");
                 m_message = msg;
                 return false;
             }
 
-            var strFilename = CheckFilenameCase(fiFile, dataPkgJob.Dataset);
+            var filename = CheckFilenameCase(fiFile, dataPkgJob.Dataset);
 
-            oPXFileInfo = new clsPXFileInfo(strFilename, dataPkgJob);
+            oPXFileInfo = new clsPXFileInfo(filename, dataPkgJob);
             oPXFileInfo.Update(oMasterPXFileInfo);
             oPXFileInfo.PXFileType = eFileType;
 
-            mPxResultFiles.Add(intFileID, oPXFileInfo);
+            mPxResultFiles.Add(fileId, oPXFileInfo);
 
             return true;
         }
 
         /// <summary>
-        /// Adds strValue to lstList only if the value is not yet present in the list
+        /// Adds value to listToUpdate only if the value is not yet present in the list
         /// </summary>
-        /// <param name="lstList"></param>
-        /// <param name="strValue"></param>
+        /// <param name="listToUpdate"></param>
+        /// <param name="value"></param>
         /// <remarks></remarks>
-        private void AddToListIfNew(ICollection<string> lstList, string strValue)
+        private void AddToListIfNew(ICollection<string> listToUpdate, string value)
         {
-            if (!lstList.Contains(strValue))
+            if (!listToUpdate.Contains(value))
             {
-                lstList.Add(strValue);
+                listToUpdate.Add(value);
             }
         }
 
@@ -574,32 +574,32 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             // Add the files to be submitted to ProteomeXchange to the master file list
             // In addition, append new mappings to the ProteomeXchange mapping list
 
-            var intPrideXMLFileID = 0;
+            var prideXMLFileId = 0;
             if (!string.IsNullOrEmpty(resultFiles.PrideXmlFilePath))
             {
                 AddToListIfNew(mPreviousDatasetFilesToCopy, resultFiles.PrideXmlFilePath);
 
-                intPrideXMLFileID = AddPxFileToMasterList(resultFiles.PrideXmlFilePath, dataPkgJob);
-                if (!AddPxResultFile(intPrideXMLFileID, clsPXFileInfoBase.ePXFileType.Result, resultFiles.PrideXmlFilePath, dataPkgJob))
+                prideXMLFileId = AddPxFileToMasterList(resultFiles.PrideXmlFilePath, dataPkgJob);
+                if (!AddPxResultFile(prideXMLFileId, clsPXFileInfoBase.ePXFileType.Result, resultFiles.PrideXmlFilePath, dataPkgJob))
                 {
                     return false;
                 }
             }
 
             var rawFileID = 0;
-            if (dctDatasetRawFilePaths.TryGetValue(dataPkgJob.Dataset, out var strDatasetRawFilePath))
+            if (dctDatasetRawFilePaths.TryGetValue(dataPkgJob.Dataset, out var datasetRawFilePath))
             {
-                if (!string.IsNullOrEmpty(strDatasetRawFilePath))
+                if (!string.IsNullOrEmpty(datasetRawFilePath))
                 {
-                    rawFileID = AddPxFileToMasterList(strDatasetRawFilePath, dataPkgJob);
-                    if (!AddPxResultFile(rawFileID, clsPXFileInfoBase.ePXFileType.Raw, strDatasetRawFilePath, dataPkgJob))
+                    rawFileID = AddPxFileToMasterList(datasetRawFilePath, dataPkgJob);
+                    if (!AddPxResultFile(rawFileID, clsPXFileInfoBase.ePXFileType.Raw, datasetRawFilePath, dataPkgJob))
                     {
                         return false;
                     }
 
-                    if (intPrideXMLFileID > 0)
+                    if (prideXMLFileId > 0)
                     {
-                        if (!DefinePxFileMapping(intPrideXMLFileID, rawFileID))
+                        if (!DefinePxFileMapping(prideXMLFileId, rawFileID))
                         {
                             return false;
                         }
@@ -607,24 +607,24 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 }
             }
 
-            var intPeakfileID = 0;
+            var peakFileId = 0;
             if (!string.IsNullOrEmpty(resultFiles.MGFFilePath))
             {
                 AddToListIfNew(mPreviousDatasetFilesToCopy, resultFiles.MGFFilePath);
 
-                intPeakfileID = AddPxFileToMasterList(resultFiles.MGFFilePath, dataPkgJob);
-                if (!AddPxResultFile(intPeakfileID, clsPXFileInfoBase.ePXFileType.Peak, resultFiles.MGFFilePath, dataPkgJob))
+                peakFileId = AddPxFileToMasterList(resultFiles.MGFFilePath, dataPkgJob);
+                if (!AddPxResultFile(peakFileId, clsPXFileInfoBase.ePXFileType.Peak, resultFiles.MGFFilePath, dataPkgJob))
                 {
                     return false;
                 }
 
-                if (intPrideXMLFileID == 0)
+                if (prideXMLFileId == 0)
                 {
                     // Pride XML file was not created
                     if (rawFileID > 0 && resultFiles.MzIDFilePaths.Count == 0)
                     {
                         // Only associate Peak files with .Raw files if we do not have a .mzid.gz file
-                        if (!DefinePxFileMapping(intPeakfileID, rawFileID))
+                        if (!DefinePxFileMapping(peakFileId, rawFileID))
                         {
                             return false;
                         }
@@ -633,7 +633,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 else
                 {
                     // Pride XML file was created
-                    if (!DefinePxFileMapping(intPrideXMLFileID, intPeakfileID))
+                    if (!DefinePxFileMapping(prideXMLFileId, peakFileId))
                     {
                         return false;
                     }
@@ -642,16 +642,16 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             foreach (var mzIdResultFile in resultFiles.MzIDFilePaths)
             {
-                var success = AddMzidOrPepXmlFileToPX(dataPkgJob, mzIdResultFile, clsPXFileInfoBase.ePXFileType.ResultMzId, intPrideXMLFileID,
-                    rawFileID, intPeakfileID);
+                var success = AddMzidOrPepXmlFileToPX(dataPkgJob, mzIdResultFile, clsPXFileInfoBase.ePXFileType.ResultMzId, prideXMLFileId,
+                    rawFileID, peakFileId);
                 if (!success)
                     return false;
             }
 
             if (!string.IsNullOrWhiteSpace(resultFiles.PepXMLFile))
             {
-                var success = AddMzidOrPepXmlFileToPX(dataPkgJob, resultFiles.PepXMLFile, clsPXFileInfoBase.ePXFileType.Search, intPrideXMLFileID,
-                    rawFileID, intPeakfileID);
+                var success = AddMzidOrPepXmlFileToPX(dataPkgJob, resultFiles.PepXMLFile, clsPXFileInfoBase.ePXFileType.Search, prideXMLFileId,
+                    rawFileID, peakFileId);
                 if (!success)
                     return false;
             }
@@ -660,7 +660,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         }
 
         private bool AddMzidOrPepXmlFileToPX(clsDataPackageJobInfo dataPkgJob, string resultFilePath, clsPXFileInfoBase.ePXFileType ePxFileType,
-            int intPrideXMLFileID, int rawFileID, int intPeakfileID)
+            int prideXMLFileId, int rawFileID, int peakFileId)
         {
             AddToListIfNew(mPreviousDatasetFilesToCopy, resultFilePath);
 
@@ -670,12 +670,12 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 return false;
             }
 
-            if (intPrideXMLFileID == 0)
+            if (prideXMLFileId == 0)
             {
                 // Pride XML file was not created
-                if (intPeakfileID > 0)
+                if (peakFileId > 0)
                 {
-                    if (!DefinePxFileMapping(dataFileID, intPeakfileID))
+                    if (!DefinePxFileMapping(dataFileID, peakFileId))
                     {
                         return false;
                     }
@@ -692,7 +692,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             else
             {
                 // Pride XML file was created
-                if (!DefinePxFileMapping(intPrideXMLFileID, dataFileID))
+                if (!DefinePxFileMapping(prideXMLFileId, dataFileID))
                 {
                     return false;
                 }
@@ -701,79 +701,79 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             return true;
         }
 
-        private string CheckFilenameCase(FileInfo fiFile, string strDataset)
+        private string CheckFilenameCase(FileInfo fiFile, string dataset)
         {
-            var strFilename = fiFile.Name;
+            var filename = fiFile.Name;
 
             if (!string.IsNullOrEmpty(fiFile.Extension))
             {
-                var strFileBaseName = Path.GetFileNameWithoutExtension(fiFile.Name);
+                var fileBaseName = Path.GetFileNameWithoutExtension(fiFile.Name);
 
-                if (strFileBaseName.ToLower().StartsWith(strDataset.ToLower()))
+                if (fileBaseName.ToLower().StartsWith(dataset.ToLower()))
                 {
-                    if (!strFileBaseName.StartsWith(strDataset))
+                    if (!fileBaseName.StartsWith(dataset))
                     {
                         // Case-mismatch; fix it
-                        if (strFileBaseName.Length == strDataset.Length)
+                        if (fileBaseName.Length == dataset.Length)
                         {
-                            strFileBaseName = strDataset;
+                            fileBaseName = dataset;
                         }
                         else
                         {
-                            strFileBaseName = strDataset + strFileBaseName.Substring(strDataset.Length);
+                            fileBaseName = dataset + fileBaseName.Substring(dataset.Length);
                         }
                     }
                 }
 
-                if ((fiFile.Extension.Equals(DOT_MZML, StringComparison.InvariantCultureIgnoreCase)))
+                if (fiFile.Extension.Equals(DOT_MZML, StringComparison.OrdinalIgnoreCase))
                 {
-                    strFilename = strFileBaseName + DOT_MZML;
+                    filename = fileBaseName + DOT_MZML;
                 }
-                else if ((fiFile.Extension.Equals(DOT_MZML_GZ, StringComparison.InvariantCultureIgnoreCase)))
+                else if (fiFile.Extension.Equals(DOT_MZML_GZ, StringComparison.OrdinalIgnoreCase))
                 {
-                    strFilename = strFileBaseName + DOT_MZML_GZ;
+                    filename = fileBaseName + DOT_MZML_GZ;
                 }
                 else
                 {
-                    strFilename = strFileBaseName + fiFile.Extension.ToLower();
+                    filename = fileBaseName + fiFile.Extension.ToLower();
                 }
             }
 
-            return strFilename;
+            return filename;
         }
 
-        private double ComputeApproximatePValue(double dblMSGFSpecProb)
+        private double ComputeApproximatePValue(double msgfSpecProb)
         {
-            double dblSpecProb = 0;
-            var dblPValueEstimate = dblMSGFSpecProb;
+            double specProb = 0;
+            var pValueEstimate = msgfSpecProb;
 
             try
             {
                 // Estimate Log10(PValue) using 10^(Log10(SpecProb) x 0.9988 + 6.43)
                 // This was determined using Job 893431 for dataset QC_Shew_12_02_0pt25_Frac-08_7Nov12_Tiger_12-09-36
                 //
-                dblPValueEstimate = Math.Log10(dblSpecProb) * 0.9988 + 6.43;
-                dblPValueEstimate = Math.Pow(10, dblPValueEstimate);
+                pValueEstimate = Math.Log10(specProb) * 0.9988 + 6.43;
+                pValueEstimate = Math.Pow(10, pValueEstimate);
             }
             catch (Exception)
             {
                 // Ignore errors here
-                // We will simply return strMSGFSpecProb
+                // We will simply return the PValue estimate
             }
 
-            return dblPValueEstimate;
+            return pValueEstimate;
         }
 
         /// <summary>
         /// Convert the _dta.txt file to a .mgf file
         /// </summary>
         /// <param name="dataPkgJob"></param>
-        /// <param name="strMGFFilePath">Output parameter: path of the newly created .mgf file</param>
+        /// <param name="mgfFilePath">Output parameter: path of the newly created .mgf file</param>
         /// <returns></returns>
         /// <remarks></remarks>
-        private bool ConvertCDTAToMGF(clsDataPackageJobInfo dataPkgJob, out string strMGFFilePath)
+        private bool ConvertCDTAToMGF(clsDataPackageJobInfo dataPkgJob, out string mgfFilePath)
         {
-            strMGFFilePath = string.Empty;
+            mgfFilePath = string.Empty;
 
             try
             {
@@ -798,7 +798,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 }
 
                 // Compute the MD5 hash for this _dta.txt file
-                var strMD5Hash = clsGlobal.ComputeFileHashMD5(fiCDTAFile.FullName);
+                var md5Hash = clsGlobal.ComputeFileHashMD5(fiCDTAFile.FullName);
 
                 // Make sure this is either a new _dta.txt file or identical to a previous one
                 // Abort processing if the job list contains multiple jobs for the same dataset but those jobs used different _dta.txt files
@@ -823,11 +823,11 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         return false;
                     }
 
-                    if (strMD5Hash != existingFileInfo.MD5Hash)
+                    if (md5Hash != existingFileInfo.MD5Hash)
                     {
                         var msg = "Dataset " + dataPkgJob.Dataset +
                                   " has multiple jobs in this data package, and those jobs used different _dta.txt files; this is not supported";
-                        LogError(msg + ": MD5 hash mismatch of " + strMD5Hash + " for job " + dataPkgJob.Job + " vs. " + existingFileInfo.MD5Hash +
+                        LogError(msg + ": MD5 hash mismatch of " + md5Hash + " for job " + dataPkgJob.Job + " vs. " + existingFileInfo.MD5Hash +
                                  " for job " + existingFileInfo.JobInfo.Job);
                         m_message = msg;
                         return false;
@@ -837,14 +837,14 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     return true;
                 }
 
-                var strFilename = CheckFilenameCase(fiCDTAFile, dataPkgJob.Dataset);
+                var filename = CheckFilenameCase(fiCDTAFile, dataPkgJob.Dataset);
 
-                var oFileInfo = new clsPXFileInfoBase(strFilename, dataPkgJob)
+                var oFileInfo = new clsPXFileInfoBase(filename, dataPkgJob)
                 {
                     // File ID doesn't matter; just use 0
                     FileID = 0,
                     Length = fiCDTAFile.Length,
-                    MD5Hash = strMD5Hash
+                    MD5Hash = md5Hash
                 };
 
                 mCDTAFileStats.Add(fiCDTAFile.Name, oFileInfo);
@@ -881,7 +881,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     return false;
                 }
 
-                strMGFFilePath = fiNewMGFFile.FullName;
+                mgfFilePath = fiNewMGFFile.FullName;
             }
             catch (Exception ex)
             {
@@ -912,9 +912,9 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <remarks></remarks>
         private int CountResultFilesByType(clsPXFileInfoBase.ePXFileType eFileType)
         {
-            var intCount = (from item in mPxResultFiles where item.Value.PXFileType == eFileType select item).Count();
+            var fileCount = (from item in mPxResultFiles where item.Value.PXFileType == eFileType select item).Count();
 
-            return intCount;
+            return fileCount;
         }
 
         /// <summary>
@@ -924,13 +924,13 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// </summary>
         /// <returns>True if the file exists or was created</returns>
         /// <remarks></remarks>
-        private bool CreateMzXMLFileIfMissing(string strDataset, clsAnalysisResults objAnalysisResults,
+        private bool CreateMzXMLFileIfMissing(string dataset, clsAnalysisResults analysisResults,
             IReadOnlyDictionary<string, string> dctDatasetRawFilePaths)
         {
             try
             {
                 // Look in m_WorkDir for the .mzXML file for this dataset
-                var fiMzXmlFilePathLocal = new FileInfo(Path.Combine(m_WorkDir, strDataset + clsAnalysisResources.DOT_MZXML_EXTENSION));
+                var fiMzXmlFilePathLocal = new FileInfo(Path.Combine(m_WorkDir, dataset + clsAnalysisResources.DOT_MZXML_EXTENSION));
 
                 if (fiMzXmlFilePathLocal.Exists)
                 {
@@ -943,16 +943,16 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 // .mzXML file not found
                 // Look for a StoragePathInfo file
-                var strMzXmlStoragePathFile = fiMzXmlFilePathLocal.FullName + clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX;
+                var mzXmlStoragePathFile = fiMzXmlFilePathLocal.FullName + clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX;
 
-                string strDestPath;
-                bool blnSuccess;
-                if (File.Exists(strMzXmlStoragePathFile))
+                string destPath;
+                bool success;
+                if (File.Exists(mzXmlStoragePathFile))
                 {
-                    blnSuccess = RetrieveStoragePathInfoTargetFile(strMzXmlStoragePathFile, objAnalysisResults, out strDestPath);
-                    if (blnSuccess)
+                    success = RetrieveStoragePathInfoTargetFile(mzXmlStoragePathFile, analysisResults, out destPath);
+                    if (success)
                     {
-                        AddToListIfNew(mPreviousDatasetFilesToDelete, strDestPath);
+                        AddToListIfNew(mPreviousDatasetFilesToDelete, destPath);
                         return true;
                     }
                 }
@@ -962,9 +962,9 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 var dctDatasetYearQuarter =
                     ExtractPackedJobParameterDictionary(clsAnalysisResourcesPRIDEConverter.JOB_PARAM_DICTIONARY_DATASET_STORAGE_YEAR_QUARTER);
 
-                if (!dctDatasetRawFilePaths.ContainsKey(strDataset))
+                if (!dctDatasetRawFilePaths.ContainsKey(dataset))
                 {
-                    LogError("Dataset " + strDataset + " not found in job parameter " +
+                    LogError("Dataset " + dataset + " not found in job parameter " +
                         clsAnalysisResources.JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS +
                         "; unable to create the missing .mzXML file");
                     return false;
@@ -977,81 +977,81 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 RegisterEvents(mMSXmlCreator);
                 mMSXmlCreator.LoopWaiting += mMSXmlCreator_LoopWaiting;
 
-                mMSXmlCreator.UpdateDatasetName(strDataset);
+                mMSXmlCreator.UpdateDatasetName(dataset);
 
                 // Make sure the dataset file is present in the working directory
                 // Copy it locally if necessary
 
-                var strDatasetFilePathRemote = dctDatasetRawFilePaths[strDataset];
-                if (string.IsNullOrWhiteSpace(strDatasetFilePathRemote))
+                var datasetFilePathRemote = dctDatasetRawFilePaths[dataset];
+                if (string.IsNullOrWhiteSpace(datasetFilePathRemote))
                 {
-                    LogError("Dataset " + strDataset + " has an empty value for the instrument file path in " +
+                    LogError("Dataset " + dataset + " has an empty value for the instrument file path in " +
                         clsAnalysisResources.JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS +
                         "; unable to create the missing .mzXML file");
                     return false;
                 }
-                var blnDatasetFileIsAFolder = Directory.Exists(strDatasetFilePathRemote);
+                var datasetFileIsAFolder = Directory.Exists(datasetFilePathRemote);
 
-                var strDatasetFilePathLocal = Path.Combine(m_WorkDir, Path.GetFileName(strDatasetFilePathRemote));
+                var datasetFilePathLocal = Path.Combine(m_WorkDir, Path.GetFileName(datasetFilePathRemote));
 
-                if (blnDatasetFileIsAFolder)
+                if (datasetFileIsAFolder)
                 {
                     // Confirm that the dataset folder exists in the working directory
 
-                    if (!Directory.Exists(strDatasetFilePathLocal))
+                    if (!Directory.Exists(datasetFilePathLocal))
                     {
                         // Directory not found; look for a storage path info file
-                        if (File.Exists(strDatasetFilePathLocal + clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX))
+                        if (File.Exists(datasetFilePathLocal + clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX))
                         {
-                            RetrieveStoragePathInfoTargetFile(strDatasetFilePathLocal + clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX,
-                                objAnalysisResults, IsFolder: true, strDestPath: out strDestPath);
+                            RetrieveStoragePathInfoTargetFile(datasetFilePathLocal + clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX,
+                                analysisResults, IsFolder: true, destPath: out destPath);
                         }
                         else
                         {
                             // Copy the dataset folder locally
-                            objAnalysisResults.CopyDirectory(strDatasetFilePathRemote, strDatasetFilePathLocal, overwrite: true);
+                            analysisResults.CopyDirectory(datasetFilePathRemote, datasetFilePathLocal, overwrite: true);
                         }
                     }
                 }
                 else
                 {
                     // Confirm that the dataset file exists in the working directory
-                    if (!File.Exists(strDatasetFilePathLocal))
+                    if (!File.Exists(datasetFilePathLocal))
                     {
                         // File not found; Look for a storage path info file
-                        if (File.Exists(strDatasetFilePathLocal + clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX))
+                        if (File.Exists(datasetFilePathLocal + clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX))
                         {
-                            RetrieveStoragePathInfoTargetFile(strDatasetFilePathLocal + clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX,
-                                objAnalysisResults, out strDestPath);
-                            AddToListIfNew(mPreviousDatasetFilesToDelete, strDestPath);
+                            RetrieveStoragePathInfoTargetFile(datasetFilePathLocal + clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX,
+                                analysisResults, out destPath);
+                            AddToListIfNew(mPreviousDatasetFilesToDelete, destPath);
                         }
                         else
                         {
                             // Copy the dataset file locally
-                            objAnalysisResults.CopyFileWithRetry(strDatasetFilePathRemote, strDatasetFilePathLocal, overwrite: true);
-                            AddToListIfNew(mPreviousDatasetFilesToDelete, strDatasetFilePathLocal);
+                            analysisResults.CopyFileWithRetry(datasetFilePathRemote, datasetFilePathLocal, overwrite: true);
+                            AddToListIfNew(mPreviousDatasetFilesToDelete, datasetFilePathLocal);
                         }
                     }
-                    m_jobParams.AddResultFileToSkip(Path.GetFileName(strDatasetFilePathLocal));
+                    m_jobParams.AddResultFileToSkip(Path.GetFileName(datasetFilePathLocal));
                 }
 
-                blnSuccess = mMSXmlCreator.CreateMZXMLFile();
+                success = mMSXmlCreator.CreateMZXMLFile();
 
-                if (!blnSuccess && string.IsNullOrEmpty(m_message))
+                if (!success && string.IsNullOrEmpty(m_message))
                 {
                     m_message = mMSXmlCreator.ErrorMessage;
                     if (string.IsNullOrEmpty(m_message))
                     {
-                        m_message = "Unknown error creating the mzXML file for dataset " + strDataset;
+                        m_message = "Unknown error creating the mzXML file for dataset " + dataset;
                     }
-                    else if (!m_message.Contains(strDataset))
+                    else if (!m_message.Contains(dataset))
                     {
-                        m_message += "; dataset " + strDataset;
+                        m_message += "; dataset " + dataset;
                     }
                     LogError(m_message);
                 }
 
-                if (!blnSuccess)
+                if (!success)
                     return false;
 
                 fiMzXmlFilePathLocal.Refresh();
@@ -1061,19 +1061,19 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 }
                 else
                 {
-                    LogError("MSXmlCreator did not create the .mzXML file for dataset " + strDataset);
+                    LogError("MSXmlCreator did not create the .mzXML file for dataset " + dataset);
                     return false;
                 }
 
                 // Copy the .mzXML file to the cache
 
-                var strMSXmlGeneratorName = Path.GetFileNameWithoutExtension(mMSXmlGeneratorAppPath);
-                if (!dctDatasetYearQuarter.TryGetValue(strDataset, out var strDatasetYearQuarter))
+                var msXmlGeneratorName = Path.GetFileNameWithoutExtension(mMSXmlGeneratorAppPath);
+                if (!dctDatasetYearQuarter.TryGetValue(dataset, out var datasetYearQuarter))
                 {
-                    strDatasetYearQuarter = string.Empty;
+                    datasetYearQuarter = string.Empty;
                 }
 
-                CopyMzXMLFileToServerCache(fiMzXmlFilePathLocal.FullName, strDatasetYearQuarter, strMSXmlGeneratorName, purgeOldFilesIfNeeded: true);
+                CopyMzXMLFileToServerCache(fiMzXmlFilePathLocal.FullName, datasetYearQuarter, msXmlGeneratorName, purgeOldFilesIfNeeded: true);
 
                 m_jobParams.AddResultFileToSkip(Path.GetFileName(fiMzXmlFilePathLocal.FullName + clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX));
 
@@ -1082,20 +1082,20 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 try
                 {
-                    if (blnDatasetFileIsAFolder)
+                    if (datasetFileIsAFolder)
                     {
                         // Delete the local dataset folder
-                        if (Directory.Exists(strDatasetFilePathLocal))
+                        if (Directory.Exists(datasetFilePathLocal))
                         {
-                            Directory.Delete(strDatasetFilePathLocal, true);
+                            Directory.Delete(datasetFilePathLocal, true);
                         }
                     }
                     else
                     {
                         // Delete the local dataset file
-                        if (File.Exists(strDatasetFilePathLocal))
+                        if (File.Exists(datasetFilePathLocal))
                         {
-                            File.Delete(strDatasetFilePathLocal);
+                            File.Delete(datasetFilePathLocal);
                         }
                     }
                 }
@@ -1114,29 +1114,29 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
         }
 
-        private string CreatePseudoMSGFFileUsingPHRPReader(int intJob, string strDataset, udtFilterThresholdsType udtFilterThresholds,
-            IDictionary<string, List<udtPseudoMSGFDataType>> lstPseudoMSGFData)
+        private string CreatePseudoMSGFFileUsingPHRPReader(int job, string dataset, udtFilterThresholdsType udtFilterThresholds,
+            IDictionary<string, List<udtPseudoMSGFDataType>> pseudoMSGFData)
         {
             const int MSGF_SPECPROB_NOTDEFINED = 10;
             const int PVALUE_NOTDEFINED = 10;
 
-            string strPseudoMsgfFilePath;
+            string pseudoMsgfFilePath;
 
-            var blnFDRValuesArePresent = false;
-            var blnPepFDRValuesArePresent = false;
-            var blnMSGFValuesArePresent = false;
+            var fdrValuesArePresent = false;
+            var pepFDRValuesArePresent = false;
+            var msgfValuesArePresent = false;
 
             try
             {
-                if (!mDataPackagePeptideHitJobs.TryGetValue(intJob, out var dataPkgJob))
+                if (!mDataPackagePeptideHitJobs.TryGetValue(job, out var dataPkgJob))
                 {
-                    LogError("Job " + intJob + " not found in mDataPackagePeptideHitJobs; this is unexpected");
+                    LogError("Job " + job + " not found in mDataPackagePeptideHitJobs; this is unexpected");
                     return string.Empty;
                 }
 
-                if (lstPseudoMSGFData.Count > 0)
+                if (pseudoMSGFData.Count > 0)
                 {
-                    lstPseudoMSGFData.Clear();
+                    pseudoMSGFData.Clear();
                 }
 
                 // The .MSGF file can only contain one match for each scan number
@@ -1149,168 +1149,168 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 var dctBestMatchByScan = new Dictionary<int, KeyValuePair<double, string>>();
                 var dctBestMatchByScanScoreValues = new Dictionary<int, udtPseudoMSGFDataType>();
 
-                var strMzXMLFilename = strDataset + ".mzXML";
+                var mzXMLFilename = dataset + ".mzXML";
 
                 // Determine the correct capitalization for the mzXML file
                 var diWorkdir = new DirectoryInfo(m_WorkDir);
-                var fiFiles = diWorkdir.GetFiles(strMzXMLFilename);
+                var fiFiles = diWorkdir.GetFiles(mzXMLFilename);
 
                 if (fiFiles.Length > 0)
                 {
-                    strMzXMLFilename = fiFiles[0].Name;
+                    mzXMLFilename = fiFiles[0].Name;
                 }
                 // else
                     // mzXML file not found; don't worry about this right now (it's possible that CreateMSGFReportFilesOnly = True)
 
-                var strSynopsisFileName = clsPHRPReader.GetPHRPSynopsisFileName(dataPkgJob.PeptideHitResultType, dataPkgJob.Dataset);
+                var synopsisFileName = clsPHRPReader.GetPHRPSynopsisFileName(dataPkgJob.PeptideHitResultType, dataPkgJob.Dataset);
 
-                var strSynopsisFilePath = Path.Combine(m_WorkDir, strSynopsisFileName);
+                var synopsisFilePath = Path.Combine(m_WorkDir, synopsisFileName);
 
-                if (!File.Exists(strSynopsisFilePath))
+                if (!File.Exists(synopsisFilePath))
                 {
-                    var strSynopsisFilePathAlt = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(strSynopsisFilePath, "Dataset_msgfdb.txt");
-                    if (File.Exists(strSynopsisFilePathAlt))
+                    var synopsisFilePathAlt = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(synopsisFilePath, "Dataset_msgfdb.txt");
+                    if (File.Exists(synopsisFilePathAlt))
                     {
-                        strSynopsisFilePath = strSynopsisFilePathAlt;
+                        synopsisFilePath = synopsisFilePathAlt;
                     }
                 }
 
                 // Check whether PHRP files with a prefix of "Job12345_" exist
                 // This prefix is added by RetrieveDataPackagePeptideHitJobPHRPFiles if multiple peptide_hit jobs are included for the same dataset
-                var strSynopsisFilePathWithJob = Path.Combine(m_WorkDir, "Job" + dataPkgJob.Job + "_" + strSynopsisFileName);
+                var synopsisFilePathWithJob = Path.Combine(m_WorkDir, "Job" + dataPkgJob.Job + "_" + synopsisFileName);
 
-                if (File.Exists(strSynopsisFilePathWithJob))
+                if (File.Exists(synopsisFilePathWithJob))
                 {
-                    strSynopsisFilePath = string.Copy(strSynopsisFilePathWithJob);
+                    synopsisFilePath = string.Copy(synopsisFilePathWithJob);
                 }
-                else if (!File.Exists(strSynopsisFilePath))
+                else if (!File.Exists(synopsisFilePath))
                 {
-                    var strSynopsisFilePathAlt = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(strSynopsisFilePathWithJob, "Dataset_msgfdb.txt");
-                    if (File.Exists(strSynopsisFilePathAlt))
+                    var synopsisFilePathAlt = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(synopsisFilePathWithJob, "Dataset_msgfdb.txt");
+                    if (File.Exists(synopsisFilePathAlt))
                     {
-                        strSynopsisFilePath = strSynopsisFilePathAlt;
+                        synopsisFilePath = synopsisFilePathAlt;
                     }
                 }
 
-                using (var objReader = new clsPHRPReader(strSynopsisFilePath, dataPkgJob.PeptideHitResultType, true, true))
+                using (var reader = new clsPHRPReader(synopsisFilePath, dataPkgJob.PeptideHitResultType, true, true))
                 {
-                    objReader.SkipDuplicatePSMs = false;
+                    reader.SkipDuplicatePSMs = false;
 
                     // Read the data, filtering on either PepFDR or FDR if defined, or MSGF_SpecProb if PepFDR and/or FDR are not available
 
-                    while (objReader.MoveNext())
+                    while (reader.MoveNext())
                     {
-                        var blnValidPSM = true;
-                        var blnThresholdChecked = false;
+                        var validPSM = true;
+                        var thresholdChecked = false;
 
-                        var dblFDR = -1.0;
-                        var dblPepFDR = -1.0;
-                        var dblPValue = (double)PVALUE_NOTDEFINED;
-                        var dblScoreForCurrentMatch = 100.0;
+                        var fdr = -1.0;
+                        var pepFDR = -1.0;
+                        var pValue = (double)PVALUE_NOTDEFINED;
+                        var scoreForCurrentMatch = 100.0;
 
                         // Determine MSGFSpecProb; store 10 if we don't find a valid number
-                        if (!double.TryParse(objReader.CurrentPSM.MSGFSpecProb, out var dblMSGFSpecProb))
+                        if (!double.TryParse(reader.CurrentPSM.MSGFSpecProb, out var msgfSpecProb))
                         {
-                            dblMSGFSpecProb = MSGF_SPECPROB_NOTDEFINED;
+                            msgfSpecProb = MSGF_SPECPROB_NOTDEFINED;
                         }
 
                         switch (dataPkgJob.PeptideHitResultType)
                         {
                             case clsPHRPReader.ePeptideHitResultType.Sequest:
-                                if (dblMSGFSpecProb < MSGF_SPECPROB_NOTDEFINED)
+                                if (msgfSpecProb < MSGF_SPECPROB_NOTDEFINED)
                                 {
-                                    dblPValue = ComputeApproximatePValue(dblMSGFSpecProb);
-                                    dblScoreForCurrentMatch = dblMSGFSpecProb;
-                                    blnMSGFValuesArePresent = true;
+                                    pValue = ComputeApproximatePValue(msgfSpecProb);
+                                    scoreForCurrentMatch = msgfSpecProb;
+                                    msgfValuesArePresent = true;
                                 }
                                 else
                                 {
-                                    if (blnMSGFValuesArePresent)
+                                    if (msgfValuesArePresent)
                                     {
                                         // Skip this result; it had a score value too low to be processed with MSGF
-                                        dblPValue = 1;
-                                        blnValidPSM = false;
+                                        pValue = 1;
+                                        validPSM = false;
                                     }
                                     else
                                     {
-                                        dblPValue = 0.025;
+                                        pValue = 0.025;
                                         // Note: storing 1000-XCorr so that lower values will be considered higher confidence
-                                        dblScoreForCurrentMatch = 1000 - (objReader.CurrentPSM.GetScoreDbl(clsPHRPParserSequest.DATA_COLUMN_XCorr, 1));
+                                        scoreForCurrentMatch = 1000 - (reader.CurrentPSM.GetScoreDbl(clsPHRPParserSequest.DATA_COLUMN_XCorr, 1));
                                     }
                                 }
 
                                 break;
                             case clsPHRPReader.ePeptideHitResultType.XTandem:
-                                if (dblMSGFSpecProb < MSGF_SPECPROB_NOTDEFINED)
+                                if (msgfSpecProb < MSGF_SPECPROB_NOTDEFINED)
                                 {
-                                    dblPValue = ComputeApproximatePValue(dblMSGFSpecProb);
-                                    dblScoreForCurrentMatch = dblMSGFSpecProb;
-                                    blnMSGFValuesArePresent = true;
+                                    pValue = ComputeApproximatePValue(msgfSpecProb);
+                                    scoreForCurrentMatch = msgfSpecProb;
+                                    msgfValuesArePresent = true;
                                 }
                                 else
                                 {
-                                    if (blnMSGFValuesArePresent)
+                                    if (msgfValuesArePresent)
                                     {
                                         // Skip this result; it had a score value too low to be processed with MSGF
-                                        dblPValue = 1;
-                                        blnValidPSM = false;
+                                        pValue = 1;
+                                        validPSM = false;
                                     }
                                     else
                                     {
-                                        dblPValue = 0.025;
-                                        dblScoreForCurrentMatch = 1000 + objReader.CurrentPSM.GetScoreDbl(clsPHRPParserXTandem.DATA_COLUMN_Peptide_Expectation_Value_LogE, 1);
+                                        pValue = 0.025;
+                                        scoreForCurrentMatch = 1000 + reader.CurrentPSM.GetScoreDbl(clsPHRPParserXTandem.DATA_COLUMN_Peptide_Expectation_Value_LogE, 1);
                                     }
                                 }
 
                                 break;
                             case clsPHRPReader.ePeptideHitResultType.Inspect:
-                                dblPValue = objReader.CurrentPSM.GetScoreDbl(clsPHRPParserInspect.DATA_COLUMN_PValue, PVALUE_NOTDEFINED);
+                                pValue = reader.CurrentPSM.GetScoreDbl(clsPHRPParserInspect.DATA_COLUMN_PValue, PVALUE_NOTDEFINED);
 
-                                if (dblMSGFSpecProb < MSGF_SPECPROB_NOTDEFINED)
+                                if (msgfSpecProb < MSGF_SPECPROB_NOTDEFINED)
                                 {
-                                    dblScoreForCurrentMatch = dblMSGFSpecProb;
+                                    scoreForCurrentMatch = msgfSpecProb;
                                 }
                                 else
                                 {
-                                    if (blnMSGFValuesArePresent)
+                                    if (msgfValuesArePresent)
                                     {
                                         // Skip this result; it had a score value too low to be processed with MSGF
-                                        dblPValue = 1;
-                                        blnValidPSM = false;
+                                        pValue = 1;
+                                        validPSM = false;
                                     }
                                     else
                                     {
                                         // Note: storing 1000-TotalPRMScore so that lower values will be considered higher confidence
-                                        dblScoreForCurrentMatch = 1000 - (objReader.CurrentPSM.GetScoreDbl(clsPHRPParserInspect.DATA_COLUMN_TotalPRMScore, 1));
+                                        scoreForCurrentMatch = 1000 - (reader.CurrentPSM.GetScoreDbl(clsPHRPParserInspect.DATA_COLUMN_TotalPRMScore, 1));
                                     }
                                 }
 
                                 break;
                             case clsPHRPReader.ePeptideHitResultType.MSGFDB:
-                                dblFDR = objReader.CurrentPSM.GetScoreDbl(clsPHRPParserMSGFDB.DATA_COLUMN_FDR, -1);
-                                if (dblFDR > -1)
+                                fdr = reader.CurrentPSM.GetScoreDbl(clsPHRPParserMSGFDB.DATA_COLUMN_FDR, -1);
+                                if (fdr > -1)
                                 {
-                                    blnFDRValuesArePresent = true;
+                                    fdrValuesArePresent = true;
                                 }
 
-                                dblPepFDR = objReader.CurrentPSM.GetScoreDbl(clsPHRPParserMSGFDB.DATA_COLUMN_PepFDR, -1);
-                                if (dblPepFDR > -1)
+                                pepFDR = reader.CurrentPSM.GetScoreDbl(clsPHRPParserMSGFDB.DATA_COLUMN_PepFDR, -1);
+                                if (pepFDR > -1)
                                 {
-                                    blnPepFDRValuesArePresent = true;
+                                    pepFDRValuesArePresent = true;
                                 }
 
-                                dblPValue = objReader.CurrentPSM.GetScoreDbl(clsPHRPParserMSGFDB.DATA_COLUMN_PValue, PVALUE_NOTDEFINED);
-                                dblScoreForCurrentMatch = dblMSGFSpecProb;
+                                pValue = reader.CurrentPSM.GetScoreDbl(clsPHRPParserMSGFDB.DATA_COLUMN_PValue, PVALUE_NOTDEFINED);
+                                scoreForCurrentMatch = msgfSpecProb;
                                 break;
                         }
 
                         if (udtFilterThresholds.UseMSGFSpecProb)
                         {
-                            if (dblMSGFSpecProb > udtFilterThresholds.MSGFSpecProbThreshold)
+                            if (msgfSpecProb > udtFilterThresholds.MSGFSpecProbThreshold)
                             {
-                                blnValidPSM = false;
+                                validPSM = false;
                             }
-                            blnThresholdChecked = true;
+                            thresholdChecked = true;
 
                             if (!mFilterThresholdsUsed.UseMSGFSpecProb)
                             {
@@ -1319,14 +1319,14 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                             }
                         }
 
-                        if (blnPepFDRValuesArePresent && udtFilterThresholds.UsePepFDRThreshold)
+                        if (pepFDRValuesArePresent && udtFilterThresholds.UsePepFDRThreshold)
                         {
                             // Typically only MSGFDB results will have PepFDR values
-                            if (dblPepFDR > udtFilterThresholds.PepFDRThreshold)
+                            if (pepFDR > udtFilterThresholds.PepFDRThreshold)
                             {
-                                blnValidPSM = false;
+                                validPSM = false;
                             }
-                            blnThresholdChecked = true;
+                            thresholdChecked = true;
 
                             if (!mFilterThresholdsUsed.UsePepFDRThreshold)
                             {
@@ -1335,14 +1335,14 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                             }
                         }
 
-                        if (blnFDRValuesArePresent && udtFilterThresholds.UseFDRThreshold)
+                        if (fdrValuesArePresent && udtFilterThresholds.UseFDRThreshold)
                         {
                             // Typically only MSGFDB results will have FDR values
-                            if (dblFDR > udtFilterThresholds.FDRThreshold)
+                            if (fdr > udtFilterThresholds.FDRThreshold)
                             {
-                                blnValidPSM = false;
+                                validPSM = false;
                             }
-                            blnThresholdChecked = true;
+                            thresholdChecked = true;
 
                             if (!mFilterThresholdsUsed.UseFDRThreshold)
                             {
@@ -1351,14 +1351,14 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                             }
                         }
 
-                        if (blnValidPSM && !blnThresholdChecked)
+                        if (validPSM && !thresholdChecked)
                         {
                             // Switch to filtering on MSGFSpecProbThreshold instead of on FDR or PepFDR
-                            if (dblMSGFSpecProb < MSGF_SPECPROB_NOTDEFINED && udtFilterThresholds.MSGFSpecProbThreshold < 0.0001)
+                            if (msgfSpecProb < MSGF_SPECPROB_NOTDEFINED && udtFilterThresholds.MSGFSpecProbThreshold < 0.0001)
                             {
-                                if (dblMSGFSpecProb > udtFilterThresholds.MSGFSpecProbThreshold)
+                                if (msgfSpecProb > udtFilterThresholds.MSGFSpecProbThreshold)
                                 {
-                                    blnValidPSM = false;
+                                    validPSM = false;
                                 }
 
                                 if (!mFilterThresholdsUsed.UseMSGFSpecProb)
@@ -1369,185 +1369,185 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                             }
                         }
 
-                        if (blnValidPSM)
+                        if (validPSM)
                         {
                             // Filter on P-value
-                            if (dblPValue >= udtFilterThresholds.PValueThreshold)
+                            if (pValue >= udtFilterThresholds.PValueThreshold)
                             {
-                                blnValidPSM = false;
+                                validPSM = false;
                             }
                         }
 
-                        if (blnValidPSM)
+                        if (validPSM)
                         {
                             // Determine the protein index in mCachedProteins
 
 
-                            if (!mCachedProteins.TryGetValue(objReader.CurrentPSM.ProteinFirst, out var kvIndexAndSequence))
+                            if (!mCachedProteins.TryGetValue(reader.CurrentPSM.ProteinFirst, out var kvIndexAndSequence))
                             {
                                 // Protein not found in mCachedProteins
                                 // If the search engine is MSGFDB and the protein name starts with REV_ or XXX_ then skip this protein since it's a decoy result
                                 // Otherwise, add the protein to mCachedProteins and mCachedProteinPSMCounts, though we won't know its sequence
 
-                                var strProteinUCase = objReader.CurrentPSM.ProteinFirst.ToUpper();
+                                var proteinUCase = reader.CurrentPSM.ProteinFirst.ToUpper();
 
                                 if (dataPkgJob.PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB)
                                 {
-                                    if (strProteinUCase.StartsWith("REV_") || strProteinUCase.StartsWith("XXX_"))
+                                    if (proteinUCase.StartsWith("REV_") || proteinUCase.StartsWith("XXX_"))
                                     {
-                                        blnValidPSM = false;
+                                        validPSM = false;
                                     }
                                 }
                                 else
                                 {
-                                    if (strProteinUCase.StartsWith("REVERSED_") || strProteinUCase.StartsWith("SCRAMBLED_") ||
-                                        strProteinUCase.StartsWith("XXX."))
+                                    if (proteinUCase.StartsWith("REVERSED_") || proteinUCase.StartsWith("SCRAMBLED_") ||
+                                        proteinUCase.StartsWith("XXX."))
                                     {
-                                        blnValidPSM = false;
+                                        validPSM = false;
                                     }
                                 }
 
-                                if (blnValidPSM)
+                                if (validPSM)
                                 {
                                     kvIndexAndSequence = new KeyValuePair<int, string>(mCachedProteins.Count, string.Empty);
                                     mCachedProteinPSMCounts.Add(kvIndexAndSequence.Key, 0);
-                                    mCachedProteins.Add(objReader.CurrentPSM.ProteinFirst, kvIndexAndSequence);
+                                    mCachedProteins.Add(reader.CurrentPSM.ProteinFirst, kvIndexAndSequence);
                                 }
                             }
                         }
 
-                        if (!blnValidPSM)
+                        if (!validPSM)
                             continue;
 
                         // These fields are used to hold different scores depending on the search engine
-                        var strTotalPRMScore = "0";
-                        var strPValue = "0";
-                        var strDeltaScore = "0";
-                        var strDeltaScoreOther = "0";
+                        var totalPRMScore = "0";
+                        var pValueFormatted = "0";
+                        var deltaScore = "0";
+                        var deltaScoreOther = "0";
 
                         switch (dataPkgJob.PeptideHitResultType)
                         {
                             case clsPHRPReader.ePeptideHitResultType.Sequest:
-                                strTotalPRMScore = objReader.CurrentPSM.GetScore(clsPHRPParserSequest.DATA_COLUMN_Sp);
-                                strPValue = dblPValue.ToString("0.00");
-                                strDeltaScore = objReader.CurrentPSM.GetScore(clsPHRPParserSequest.DATA_COLUMN_DelCn);
-                                strDeltaScoreOther = objReader.CurrentPSM.GetScore(clsPHRPParserSequest.DATA_COLUMN_DelCn2);
+                                totalPRMScore = reader.CurrentPSM.GetScore(clsPHRPParserSequest.DATA_COLUMN_Sp);
+                                pValueFormatted = pValue.ToString("0.00");
+                                deltaScore = reader.CurrentPSM.GetScore(clsPHRPParserSequest.DATA_COLUMN_DelCn);
+                                deltaScoreOther = reader.CurrentPSM.GetScore(clsPHRPParserSequest.DATA_COLUMN_DelCn2);
 
                                 break;
                             case clsPHRPReader.ePeptideHitResultType.XTandem:
-                                strTotalPRMScore = objReader.CurrentPSM.GetScore(clsPHRPParserXTandem.DATA_COLUMN_Peptide_Hyperscore);
-                                strPValue = dblPValue.ToString("0.00");
-                                strDeltaScore = objReader.CurrentPSM.GetScore(clsPHRPParserXTandem.DATA_COLUMN_DeltaCn2);
+                                totalPRMScore = reader.CurrentPSM.GetScore(clsPHRPParserXTandem.DATA_COLUMN_Peptide_Hyperscore);
+                                pValueFormatted = pValue.ToString("0.00");
+                                deltaScore = reader.CurrentPSM.GetScore(clsPHRPParserXTandem.DATA_COLUMN_DeltaCn2);
 
                                 break;
                             case clsPHRPReader.ePeptideHitResultType.Inspect:
-                                strTotalPRMScore = objReader.CurrentPSM.GetScore(clsPHRPParserInspect.DATA_COLUMN_TotalPRMScore);
-                                strPValue = objReader.CurrentPSM.GetScore(clsPHRPParserInspect.DATA_COLUMN_PValue);
-                                strDeltaScore = objReader.CurrentPSM.GetScore(clsPHRPParserInspect.DATA_COLUMN_DeltaScore);
-                                strDeltaScoreOther = objReader.CurrentPSM.GetScore(clsPHRPParserInspect.DATA_COLUMN_DeltaScoreOther);
+                                totalPRMScore = reader.CurrentPSM.GetScore(clsPHRPParserInspect.DATA_COLUMN_TotalPRMScore);
+                                pValueFormatted = reader.CurrentPSM.GetScore(clsPHRPParserInspect.DATA_COLUMN_PValue);
+                                deltaScore = reader.CurrentPSM.GetScore(clsPHRPParserInspect.DATA_COLUMN_DeltaScore);
+                                deltaScoreOther = reader.CurrentPSM.GetScore(clsPHRPParserInspect.DATA_COLUMN_DeltaScoreOther);
 
                                 break;
                             case clsPHRPReader.ePeptideHitResultType.MSGFDB:
-                                strTotalPRMScore = objReader.CurrentPSM.GetScore(clsPHRPParserMSGFDB.DATA_COLUMN_DeNovoScore);
-                                strPValue = objReader.CurrentPSM.GetScore(clsPHRPParserMSGFDB.DATA_COLUMN_PValue);
+                                totalPRMScore = reader.CurrentPSM.GetScore(clsPHRPParserMSGFDB.DATA_COLUMN_DeNovoScore);
+                                pValueFormatted = reader.CurrentPSM.GetScore(clsPHRPParserMSGFDB.DATA_COLUMN_PValue);
 
                                 break;
                         }
 
                         // Construct the text that we would write to the pseudo MSGF file
-                        var strMSGFText =
-                            strMzXMLFilename + "\t" +
-                            objReader.CurrentPSM.ScanNumber + "\t" +
-                            objReader.CurrentPSM.Peptide + "\t" +
-                            objReader.CurrentPSM.ProteinFirst + "\t" +
-                            objReader.CurrentPSM.Charge + "\t" +
-                            objReader.CurrentPSM.MSGFSpecProb + "\t" +
-                            objReader.CurrentPSM.PeptideCleanSequence.Length + "\t" +
-                            strTotalPRMScore + "\t" + "0\t" + "0\t" + "0\t" + "0\t" +
-                            objReader.CurrentPSM.NumTrypticTerminii + "\t" +
-                            strPValue + "\t" + "0\t" +
-                            strDeltaScore + "\t" +
-                            strDeltaScoreOther + "\t" +
-                            objReader.CurrentPSM.ResultID + "\t" + "0\t" + "0\t" +
-                            objReader.CurrentPSM.MSGFSpecProb;
+                        var msgfText =
+                            mzXMLFilename + "\t" +
+                            reader.CurrentPSM.ScanNumber + "\t" +
+                            reader.CurrentPSM.Peptide + "\t" +
+                            reader.CurrentPSM.ProteinFirst + "\t" +
+                            reader.CurrentPSM.Charge + "\t" +
+                            reader.CurrentPSM.MSGFSpecProb + "\t" +
+                            reader.CurrentPSM.PeptideCleanSequence.Length + "\t" +
+                            totalPRMScore + "\t" + "0\t" + "0\t" + "0\t" + "0\t" +
+                            reader.CurrentPSM.NumTrypticTerminii + "\t" +
+                            pValueFormatted + "\t" + "0\t" +
+                            deltaScore + "\t" +
+                            deltaScoreOther + "\t" +
+                            reader.CurrentPSM.ResultID + "\t" + "0\t" + "0\t" +
+                            reader.CurrentPSM.MSGFSpecProb;
 
                         // Add or update dctBestMatchByScan and dctBestMatchByScanScoreValues
-                        bool blnNewScanNumber;
+                        bool newScanNumber;
 
-                        if (dctBestMatchByScan.TryGetValue(objReader.CurrentPSM.ScanNumber, out var kvBestMatchForScan))
+                        if (dctBestMatchByScan.TryGetValue(reader.CurrentPSM.ScanNumber, out var kvBestMatchForScan))
                         {
-                            if (dblScoreForCurrentMatch >= kvBestMatchForScan.Key)
+                            if (scoreForCurrentMatch >= kvBestMatchForScan.Key)
                             {
                                 // Skip this result since it has a lower score than the match already stored in dctBestMatchByScan
-                                blnValidPSM = false;
+                                validPSM = false;
                             }
                             else
                             {
                                 // Update dctBestMatchByScan
-                                dctBestMatchByScan[objReader.CurrentPSM.ScanNumber] = new KeyValuePair<double, string>(dblScoreForCurrentMatch, strMSGFText);
-                                blnValidPSM = true;
+                                dctBestMatchByScan[reader.CurrentPSM.ScanNumber] = new KeyValuePair<double, string>(scoreForCurrentMatch, msgfText);
+                                validPSM = true;
                             }
-                            blnNewScanNumber = false;
+                            newScanNumber = false;
                         }
                         else
                         {
                             // Scan not yet present in dctBestMatchByScan; add it
-                            kvBestMatchForScan = new KeyValuePair<double, string>(dblScoreForCurrentMatch, strMSGFText);
-                            dctBestMatchByScan.Add(objReader.CurrentPSM.ScanNumber, kvBestMatchForScan);
-                            blnValidPSM = true;
-                            blnNewScanNumber = true;
+                            kvBestMatchForScan = new KeyValuePair<double, string>(scoreForCurrentMatch, msgfText);
+                            dctBestMatchByScan.Add(reader.CurrentPSM.ScanNumber, kvBestMatchForScan);
+                            validPSM = true;
+                            newScanNumber = true;
                         }
 
-                        if (!blnValidPSM)
+                        if (!validPSM)
                             continue;
 
                         if (!clsPeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(
-                            objReader.CurrentPSM.Peptide, out var strPrimarySequence, out var strPrefix, out var strSuffix))
+                            reader.CurrentPSM.Peptide, out _, out var prefix, out var suffix))
                         {
-                            strPrefix = string.Empty;
-                            strSuffix = string.Empty;
+                            prefix = string.Empty;
+                            suffix = string.Empty;
                         }
 
                         var udtPseudoMSGFData = new udtPseudoMSGFDataType
                         {
-                            ResultID = objReader.CurrentPSM.ResultID,
-                            Peptide = string.Copy(objReader.CurrentPSM.Peptide),
-                            CleanSequence = string.Copy(objReader.CurrentPSM.PeptideCleanSequence),
-                            PrefixResidue = string.Copy(strPrefix),
-                            SuffixResidue = string.Copy(strSuffix),
-                            ScanNumber = objReader.CurrentPSM.ScanNumber,
-                            ChargeState = objReader.CurrentPSM.Charge,
-                            PValue = string.Copy(strPValue),
-                            MQScore = string.Copy(objReader.CurrentPSM.MSGFSpecProb),
-                            TotalPRMScore = string.Copy(strTotalPRMScore),
-                            NTT = objReader.CurrentPSM.NumTrypticTerminii,
-                            MSGFSpecProb = string.Copy(objReader.CurrentPSM.MSGFSpecProb),
-                            DeltaScore = string.Copy(strDeltaScore),
-                            DeltaScoreOther = string.Copy(strDeltaScoreOther),
-                            Protein = objReader.CurrentPSM.ProteinFirst
+                            ResultID = reader.CurrentPSM.ResultID,
+                            Peptide = string.Copy(reader.CurrentPSM.Peptide),
+                            CleanSequence = string.Copy(reader.CurrentPSM.PeptideCleanSequence),
+                            PrefixResidue = string.Copy(prefix),
+                            SuffixResidue = string.Copy(suffix),
+                            ScanNumber = reader.CurrentPSM.ScanNumber,
+                            ChargeState = reader.CurrentPSM.Charge,
+                            PValue = string.Copy(pValueFormatted),
+                            MQScore = string.Copy(reader.CurrentPSM.MSGFSpecProb),
+                            TotalPRMScore = string.Copy(totalPRMScore),
+                            NTT = reader.CurrentPSM.NumTrypticTerminii,
+                            MSGFSpecProb = string.Copy(reader.CurrentPSM.MSGFSpecProb),
+                            DeltaScore = string.Copy(deltaScore),
+                            DeltaScoreOther = string.Copy(deltaScoreOther),
+                            Protein = reader.CurrentPSM.ProteinFirst
                         };
 
-                        if (blnNewScanNumber)
+                        if (newScanNumber)
                         {
-                            dctBestMatchByScanScoreValues.Add(objReader.CurrentPSM.ScanNumber, udtPseudoMSGFData);
+                            dctBestMatchByScanScoreValues.Add(reader.CurrentPSM.ScanNumber, udtPseudoMSGFData);
                         }
                         else
                         {
-                            dctBestMatchByScanScoreValues[objReader.CurrentPSM.ScanNumber] = udtPseudoMSGFData;
+                            dctBestMatchByScanScoreValues[reader.CurrentPSM.ScanNumber] = udtPseudoMSGFData;
                         }
                     }
                 }
 
-                if (JobFileRenameRequired(intJob))
+                if (JobFileRenameRequired(job))
                 {
-                    strPseudoMsgfFilePath = Path.Combine(m_WorkDir, dataPkgJob.Dataset + "_Job" + dataPkgJob.Job + FILE_EXTENSION_PSEUDO_MSGF);
+                    pseudoMsgfFilePath = Path.Combine(m_WorkDir, dataPkgJob.Dataset + "_Job" + dataPkgJob.Job + FILE_EXTENSION_PSEUDO_MSGF);
                 }
                 else
                 {
-                    strPseudoMsgfFilePath = Path.Combine(m_WorkDir, dataPkgJob.Dataset + FILE_EXTENSION_PSEUDO_MSGF);
+                    pseudoMsgfFilePath = Path.Combine(m_WorkDir, dataPkgJob.Dataset + FILE_EXTENSION_PSEUDO_MSGF);
                 }
 
-                using (var swMSGFFile = new StreamWriter(new FileStream(strPseudoMsgfFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var swMSGFFile = new StreamWriter(new FileStream(pseudoMsgfFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
                     // Write the header line
                     swMSGFFile.WriteLine("#SpectrumFile\t" + "Scan#\t" + "Annotation\t" + "Protein\t" + "Charge\t" + "MQScore\t" + "Length\t" +
@@ -1562,20 +1562,20 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     }
                 }
 
-                // Store the filter-passing matches in lstPseudoMSGFData
+                // Store the filter-passing matches in pseudoMSGFData
 
                 foreach (var kvItem in dctBestMatchByScanScoreValues)
                 {
-                    if (lstPseudoMSGFData.TryGetValue(kvItem.Value.Protein, out var lstMatchesForProtein))
+                    if (pseudoMSGFData.TryGetValue(kvItem.Value.Protein, out var matchesForProtein))
                     {
-                        lstMatchesForProtein.Add(kvItem.Value);
+                        matchesForProtein.Add(kvItem.Value);
                     }
                     else
                     {
-                        lstMatchesForProtein = new List<udtPseudoMSGFDataType> {
+                        matchesForProtein = new List<udtPseudoMSGFDataType> {
                             kvItem.Value
                         };
-                        lstPseudoMSGFData.Add(kvItem.Value.Protein, lstMatchesForProtein);
+                        pseudoMSGFData.Add(kvItem.Value.Protein, matchesForProtein);
                     }
                 }
             }
@@ -1585,85 +1585,85 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 return string.Empty;
             }
 
-            return strPseudoMsgfFilePath;
+            return pseudoMsgfFilePath;
         }
 
         /// <summary>
         /// Create the .msgf-report.xml file
         /// </summary>
-        /// <param name="intJob"></param>
-        /// <param name="strDataset"></param>
+        /// <param name="job"></param>
+        /// <param name="dataset"></param>
         /// <param name="udtFilterThresholds"></param>
-        /// <param name="strPrideReportXMLFilePath">Output parameter: the full path of the newly created .msgf-report.xml file</param>
+        /// <param name="prideReportXMLFilePath">Output parameter: the full path of the newly created .msgf-report.xml file</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks></remarks>
-        private bool CreateMSGFReportFile(int intJob, string strDataset, udtFilterThresholdsType udtFilterThresholds,
-            out string strPrideReportXMLFilePath)
+        private bool CreateMSGFReportFile(int job, string dataset, udtFilterThresholdsType udtFilterThresholds,
+            out string prideReportXMLFilePath)
         {
-            var strLocalOrgDBFolder = m_mgrParams.GetParam("orgdbdir");
+            var localOrgDBFolder = m_mgrParams.GetParam("orgdbdir");
 
-            var lstPseudoMSGFData = new Dictionary<string, List<udtPseudoMSGFDataType>>();
+            var pseudoMSGFData = new Dictionary<string, List<udtPseudoMSGFDataType>>();
 
-            strPrideReportXMLFilePath = string.Empty;
+            prideReportXMLFilePath = string.Empty;
 
             try
             {
-                var strTemplateFileName = clsAnalysisResourcesPRIDEConverter.GetMSGFReportTemplateFilename(m_jobParams, WarnIfJobParamMissing: false);
+                var templateFileName = clsAnalysisResourcesPRIDEConverter.GetMSGFReportTemplateFilename(m_jobParams, WarnIfJobParamMissing: false);
 
-                var strOrgDBNameGenerated = m_jobParams.GetJobParameter("PeptideSearch",
-                                                                           clsAnalysisResourcesPRIDEConverter.GetGeneratedFastaParamNameForJob(intJob), string.Empty);
-                if (string.IsNullOrEmpty(strOrgDBNameGenerated))
+                var orgDBNameGenerated = m_jobParams.GetJobParameter("PeptideSearch",
+                                                                           clsAnalysisResourcesPRIDEConverter.GetGeneratedFastaParamNameForJob(job), string.Empty);
+                if (string.IsNullOrEmpty(orgDBNameGenerated))
                 {
-                    LogError("Job parameter " + clsAnalysisResourcesPRIDEConverter.GetGeneratedFastaParamNameForJob(intJob) +
+                    LogError("Job parameter " + clsAnalysisResourcesPRIDEConverter.GetGeneratedFastaParamNameForJob(job) +
                              " was not found in CreateMSGFReportFile; unable to continue");
                     return false;
                 }
 
-                if (!mDataPackagePeptideHitJobs.TryGetValue(intJob, out var dataPkgJob))
+                if (!mDataPackagePeptideHitJobs.TryGetValue(job, out var dataPkgJob))
                 {
-                    LogError("Job " + intJob + " not found in mDataPackagePeptideHitJobs; unable to continue");
+                    LogError("Job " + job + " not found in mDataPackagePeptideHitJobs; unable to continue");
                     return false;
                 }
 
-                string strProteinCollectionListOrFasta;
+                string proteinCollectionListOrFasta;
                 if (!string.IsNullOrEmpty(dataPkgJob.ProteinCollectionList) && dataPkgJob.ProteinCollectionList != "na")
                 {
-                    strProteinCollectionListOrFasta = dataPkgJob.ProteinCollectionList;
+                    proteinCollectionListOrFasta = dataPkgJob.ProteinCollectionList;
                 }
                 else
                 {
-                    strProteinCollectionListOrFasta = dataPkgJob.LegacyFastaFileName;
+                    proteinCollectionListOrFasta = dataPkgJob.LegacyFastaFileName;
                 }
 
-                if (mCachedOrgDBName != strOrgDBNameGenerated)
+                if (mCachedOrgDBName != orgDBNameGenerated)
                 {
                     // Need to read the proteins from the fasta file
 
                     mCachedProteins.Clear();
                     mCachedProteinPSMCounts.Clear();
 
-                    var strFastaFilePath = Path.Combine(strLocalOrgDBFolder, strOrgDBNameGenerated);
-                    var objFastaFileReader = new ProteinFileReader.FastaFileReader();
+                    var fastaFilePath = Path.Combine(localOrgDBFolder, orgDBNameGenerated);
+                    var fastaFileReader = new ProteinFileReader.FastaFileReader();
 
-                    if (!objFastaFileReader.OpenFile(strFastaFilePath))
+                    if (!fastaFileReader.OpenFile(fastaFilePath))
                     {
-                        var msg = "Error opening fasta file " + strOrgDBNameGenerated + "; objFastaFileReader.OpenFile() returned false";
-                        LogError(msg + "; see " + strLocalOrgDBFolder);
+                        var msg = "Error opening fasta file " + orgDBNameGenerated + "; fastaFileReader.OpenFile() returned false";
+                        LogError(msg + "; see " + localOrgDBFolder);
                         m_message = msg;
                         return false;
                     }
 
-                    LogDebug("Reading proteins from " + strFastaFilePath, 10);
+                    LogDebug("Reading proteins from " + fastaFilePath, 10);
 
-                    while (objFastaFileReader.ReadNextProteinEntry())
+                    while (fastaFileReader.ReadNextProteinEntry())
                     {
-                        if (!mCachedProteins.ContainsKey(objFastaFileReader.ProteinName))
+                        if (!mCachedProteins.ContainsKey(fastaFileReader.ProteinName))
                         {
-                            var kvIndexAndSequence = new KeyValuePair<int, string>(mCachedProteins.Count, objFastaFileReader.ProteinSequence);
+                            var kvIndexAndSequence = new KeyValuePair<int, string>(mCachedProteins.Count, fastaFileReader.ProteinSequence);
 
                             try
                             {
-                                mCachedProteins.Add(objFastaFileReader.ProteinName, kvIndexAndSequence);
+                                mCachedProteins.Add(fastaFileReader.ProteinName, kvIndexAndSequence);
                             }
                             catch (Exception ex)
                             {
@@ -1680,44 +1680,44 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                             }
                         }
                     }
-                    objFastaFileReader.CloseFile();
+                    fastaFileReader.CloseFile();
 
-                    mCachedOrgDBName = string.Copy(strOrgDBNameGenerated);
+                    mCachedOrgDBName = string.Copy(orgDBNameGenerated);
                 }
                 else
                 {
                     // Reset the counts in mCachedProteinPSMCounts
-                    for (var intIndex = 0; intIndex <= mCachedProteinPSMCounts.Count; intIndex++)
+                    for (var i = 0; i <= mCachedProteinPSMCounts.Count; i++)
                     {
-                        mCachedProteinPSMCounts[intIndex] = 0;
+                        mCachedProteinPSMCounts[i] = 0;
                     }
                 }
 
-                lstPseudoMSGFData.Clear();
+                pseudoMSGFData.Clear();
 
-                var strPseudoMsgfFilePath = CreatePseudoMSGFFileUsingPHRPReader(intJob, strDataset, udtFilterThresholds, lstPseudoMSGFData);
+                var pseudoMsgfFilePath = CreatePseudoMSGFFileUsingPHRPReader(job, dataset, udtFilterThresholds, pseudoMSGFData);
 
-                if (string.IsNullOrEmpty(strPseudoMsgfFilePath))
+                if (string.IsNullOrEmpty(pseudoMsgfFilePath))
                 {
                     if (string.IsNullOrEmpty(m_message))
                     {
-                        LogError("Pseudo Msgf file not created for job " + intJob + ", dataset " + strDataset);
+                        LogError("Pseudo Msgf file not created for job " + job + ", dataset " + dataset);
                     }
                     return false;
                 }
 
-                AddToListIfNew(mPreviousDatasetFilesToDelete, strPseudoMsgfFilePath);
+                AddToListIfNew(mPreviousDatasetFilesToDelete, pseudoMsgfFilePath);
 
                 if (!mCreateMSGFReportFilesOnly)
                 {
-                    strPrideReportXMLFilePath = CreateMSGFReportXMLFile(strTemplateFileName, dataPkgJob, strPseudoMsgfFilePath, lstPseudoMSGFData,
-                        strOrgDBNameGenerated, strProteinCollectionListOrFasta, udtFilterThresholds);
+                    prideReportXMLFilePath = CreateMSGFReportXMLFile(templateFileName, dataPkgJob, pseudoMsgfFilePath, pseudoMSGFData,
+                        orgDBNameGenerated, proteinCollectionListOrFasta, udtFilterThresholds);
 
-                    if (string.IsNullOrEmpty(strPrideReportXMLFilePath))
+                    if (string.IsNullOrEmpty(prideReportXMLFilePath))
                     {
                         if (string.IsNullOrEmpty(m_message))
                         {
-                            LogError("Pride report XML file not created for job " + intJob + ", dataset " + strDataset);
+                            LogError("Pride report XML file not created for job " + job + ", dataset " + dataset);
                         }
                         return false;
                     }
@@ -1727,34 +1727,34 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
             catch (Exception ex)
             {
-                LogError("Exception in CreateMSGFReportFile for job " + intJob + ", dataset " + strDataset, ex);
+                LogError("Exception in CreateMSGFReportFile for job " + job + ", dataset " + dataset, ex);
                 return false;
             }
 
 
         }
 
-        private string CreateMSGFReportXMLFile(string strTemplateFileName, clsDataPackageJobInfo dataPkgJob, string strPseudoMsgfFilePath,
-            IReadOnlyDictionary<string, List<udtPseudoMSGFDataType>> lstPseudoMSGFData, string strOrgDBNameGenerated,
-            string strProteinCollectionListOrFasta, udtFilterThresholdsType udtFilterThresholds)
+        private string CreateMSGFReportXMLFile(string templateFileName, clsDataPackageJobInfo dataPkgJob, string pseudoMsgfFilePath,
+            IReadOnlyDictionary<string, List<udtPseudoMSGFDataType>> pseudoMSGFData, string orgDBNameGenerated,
+            string proteinCollectionListOrFasta, udtFilterThresholdsType udtFilterThresholds)
         {
-            string strPrideReportXMLFilePath;
+            string prideReportXMLFilePath;
 
-            var blnInsideMzDataDescription = false;
-            var blnInstrumentDetailsAutoDefined = false;
+            var insideMzDataDescription = false;
+            var instrumentDetailsAutoDefined = false;
 
-            var lstAttributeOverride = new Dictionary<string, string>();
+            var attributeOverride = new Dictionary<string, string>();
 
             var eFileLocation = eMSGFReportXMLFileLocation.Header;
-            var lstRecentElements = new Queue<string>();
+            var recentElements = new Queue<string>();
 
             try
             {
-                var lstElementCloseDepths = new Stack<int>();
+                var elementCloseDepths = new Stack<int>();
 
-                // Open strTemplateFileName and parse it to create a new XML file
+                // Open templateFileName and parse it to create a new XML file
                 // Use a forward-only XML reader, copying some elements verbatim and customizing others
-                // When we reach <Identifications>, we write out the data that was cached from strPseudoMsgfFilePath
+                // When we reach <Identifications>, we write out the data that was cached from pseudoMsgfFilePath
                 //    Must write out data by protein
 
                 // Next, append the protein sequences in mCachedProteinPSMCounts to the <Fasta></Fasta> section
@@ -1764,75 +1764,75 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 // <DatabaseMappings>
                 // <ConfigurationOptions>
 
-                strPrideReportXMLFilePath = strPseudoMsgfFilePath + "-report.xml";
+                prideReportXMLFilePath = pseudoMsgfFilePath + "-report.xml";
 
-                using (var objXmlWriter = new XmlTextWriter(
-                    new FileStream(strPrideReportXMLFilePath, FileMode.Create, FileAccess.Write, FileShare.Read),
+                using (var writer = new XmlTextWriter(
+                    new FileStream(prideReportXMLFilePath, FileMode.Create, FileAccess.Write, FileShare.Read),
                     new UTF8Encoding(false)))
-                using (var objXmlReader = new XmlTextReader(
-                    new FileStream(Path.Combine(m_WorkDir, strTemplateFileName), FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using (var xmlReader = new XmlTextReader(
+                    new FileStream(Path.Combine(m_WorkDir, templateFileName), FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
-                    objXmlWriter.Formatting = Formatting.Indented;
-                    objXmlWriter.Indentation = 4;
+                    writer.Formatting = Formatting.Indented;
+                    writer.Indentation = 4;
 
-                    objXmlWriter.WriteStartDocument();
+                    writer.WriteStartDocument();
 
-                    while (objXmlReader.Read())
+                    while (xmlReader.Read())
                     {
-                        switch (objXmlReader.NodeType)
+                        switch (xmlReader.NodeType)
                         {
                             case XmlNodeType.Whitespace:
                                 break;
                             // Skip whitespace since the writer should be auto-formatting things
-                            // objXmlWriter.WriteWhitespace(objXmlReader.Value)
+                            // writer.WriteWhitespace(xmlReader.Value)
 
                             case XmlNodeType.Comment:
-                                objXmlWriter.WriteComment(objXmlReader.Value);
+                                writer.WriteComment(xmlReader.Value);
 
                                 break;
                             case XmlNodeType.Element:
                                 // Start element
 
-                                if (lstRecentElements.Count > 10)
-                                    lstRecentElements.Dequeue();
-                                lstRecentElements.Enqueue("Element " + objXmlReader.Name);
+                                if (recentElements.Count > 10)
+                                    recentElements.Dequeue();
+                                recentElements.Enqueue("Element " + xmlReader.Name);
 
-                                while (lstElementCloseDepths.Count > 0 && lstElementCloseDepths.Peek() > objXmlReader.Depth)
+                                while (elementCloseDepths.Count > 0 && elementCloseDepths.Peek() > xmlReader.Depth)
                                 {
-                                    lstElementCloseDepths.Pop();
+                                    elementCloseDepths.Pop();
 
-                                    objXmlWriter.WriteEndElement();
+                                    writer.WriteEndElement();
                                 }
 
-                                eFileLocation = UpdateMSGFReportXMLFileLocation(eFileLocation, objXmlReader.Name, blnInsideMzDataDescription);
+                                eFileLocation = UpdateMSGFReportXMLFileLocation(eFileLocation, xmlReader.Name, insideMzDataDescription);
 
-                                var blnSkipNode = false;
-                                lstAttributeOverride.Clear();
+                                var skipNode = false;
+                                attributeOverride.Clear();
 
-                                switch (objXmlReader.Name)
+                                switch (xmlReader.Name)
                                 {
                                     case "sourceFilePath":
-                                        // Update this element's value to contain strPseudoMsgfFilePath
-                                        objXmlWriter.WriteElementString("sourceFilePath", strPseudoMsgfFilePath);
-                                        blnSkipNode = true;
+                                        // Update this element's value to contain pseudoMsgfFilePath
+                                        writer.WriteElementString("sourceFilePath", pseudoMsgfFilePath);
+                                        skipNode = true;
 
                                         break;
                                     case "timeCreated":
                                         // Write out the current date/time in this format: 2012-11-06T16:04:44Z
-                                        objXmlWriter.WriteElementString("timeCreated", DateTime.Now.ToUniversalTime().ToString("s") + "Z");
-                                        blnSkipNode = true;
+                                        writer.WriteElementString("timeCreated", DateTime.Now.ToUniversalTime().ToString("s") + "Z");
+                                        skipNode = true;
 
                                         break;
                                     case "MzDataDescription":
-                                        blnInsideMzDataDescription = true;
+                                        insideMzDataDescription = true;
 
                                         break;
                                     case "sampleName":
                                         if (eFileLocation == eMSGFReportXMLFileLocation.MzDataAdmin)
                                         {
                                             // Write out the current job's Experiment Name
-                                            objXmlWriter.WriteElementString("sampleName", dataPkgJob.Experiment);
-                                            blnSkipNode = true;
+                                            writer.WriteElementString("sampleName", dataPkgJob.Experiment);
+                                            skipNode = true;
                                         }
 
                                         break;
@@ -1840,52 +1840,52 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                         if (eFileLocation == eMSGFReportXMLFileLocation.MzDataAdmin)
                                         {
                                             // Override the comment attribute for this node
-                                            string strCommentOverride;
+                                            string commentOverride;
 
                                             if (!string.IsNullOrWhiteSpace(dataPkgJob.Experiment_Reason))
                                             {
-                                                strCommentOverride = dataPkgJob.Experiment_Reason.TrimEnd();
+                                                commentOverride = dataPkgJob.Experiment_Reason.TrimEnd();
 
                                                 if (!string.IsNullOrWhiteSpace(dataPkgJob.Experiment_Comment))
                                                 {
-                                                    if (strCommentOverride.EndsWith("."))
+                                                    if (commentOverride.EndsWith("."))
                                                     {
-                                                        strCommentOverride += " " + dataPkgJob.Experiment_Comment;
+                                                        commentOverride += " " + dataPkgJob.Experiment_Comment;
                                                     }
                                                     else
                                                     {
-                                                        strCommentOverride += ". " + dataPkgJob.Experiment_Comment;
+                                                        commentOverride += ". " + dataPkgJob.Experiment_Comment;
                                                     }
                                                 }
                                             }
                                             else
                                             {
-                                                strCommentOverride = dataPkgJob.Experiment_Comment;
+                                                commentOverride = dataPkgJob.Experiment_Comment;
                                             }
 
-                                            lstAttributeOverride.Add("comment", strCommentOverride);
+                                            attributeOverride.Add("comment", commentOverride);
                                         }
 
                                         break;
                                     case "sourceFile":
                                         if (eFileLocation == eMSGFReportXMLFileLocation.MzDataAdmin)
                                         {
-                                            objXmlWriter.WriteStartElement("sourceFile");
+                                            writer.WriteStartElement("sourceFile");
 
-                                            objXmlWriter.WriteElementString("nameOfFile", Path.GetFileName(strPseudoMsgfFilePath));
-                                            objXmlWriter.WriteElementString("pathToFile", strPseudoMsgfFilePath);
-                                            objXmlWriter.WriteElementString("fileType", "MSGF file");
+                                            writer.WriteElementString("nameOfFile", Path.GetFileName(pseudoMsgfFilePath));
+                                            writer.WriteElementString("pathToFile", pseudoMsgfFilePath);
+                                            writer.WriteElementString("fileType", "MSGF file");
 
-                                            objXmlWriter.WriteEndElement();  // sourceFile
-                                            blnSkipNode = true;
+                                            writer.WriteEndElement();  // sourceFile
+                                            skipNode = true;
                                         }
 
                                         break;
                                     case "software":
                                         if (eFileLocation == eMSGFReportXMLFileLocation.MzDataDataProcessing)
                                         {
-                                            CreateMSGFReportXmlFileWriteSoftwareVersion(objXmlReader, objXmlWriter, dataPkgJob.PeptideHitResultType);
-                                            blnSkipNode = true;
+                                            CreateMSGFReportXmlFileWriteSoftwareVersion(xmlReader, writer, dataPkgJob.PeptideHitResultType);
+                                            skipNode = true;
                                         }
 
                                         break;
@@ -1893,19 +1893,19 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                         if (eFileLocation == eMSGFReportXMLFileLocation.MzDataInstrument)
                                         {
                                             // Write out the actual instrument name
-                                            objXmlWriter.WriteElementString("instrumentName", dataPkgJob.Instrument);
-                                            blnSkipNode = true;
+                                            writer.WriteElementString("instrumentName", dataPkgJob.Instrument);
+                                            skipNode = true;
 
-                                            blnInstrumentDetailsAutoDefined = WriteXMLInstrumentInfo(objXmlWriter, dataPkgJob.InstrumentGroup);
+                                            instrumentDetailsAutoDefined = WriteXMLInstrumentInfo(writer, dataPkgJob.InstrumentGroup);
                                         }
 
                                         break;
                                     case "source":
                                     case "analyzerList":
                                     case "detector":
-                                        if (eFileLocation == eMSGFReportXMLFileLocation.MzDataInstrument && blnInstrumentDetailsAutoDefined)
+                                        if (eFileLocation == eMSGFReportXMLFileLocation.MzDataInstrument && instrumentDetailsAutoDefined)
                                         {
-                                            blnSkipNode = true;
+                                            skipNode = true;
                                         }
 
                                         break;
@@ -1914,217 +1914,217 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                         {
                                             // Override the cvParam if it has Accession PRIDE:0000175
 
-                                            objXmlWriter.WriteStartElement("cvParam");
+                                            writer.WriteStartElement("cvParam");
 
-                                            if (objXmlReader.HasAttributes)
+                                            if (xmlReader.HasAttributes)
                                             {
-                                                var strValueOverride = string.Empty;
-                                                objXmlReader.MoveToFirstAttribute();
+                                                var valueOverride = string.Empty;
+                                                xmlReader.MoveToFirstAttribute();
                                                 do
                                                 {
-                                                    if (objXmlReader.Name == "accession" && objXmlReader.Value == "PRIDE:0000175")
+                                                    if (xmlReader.Name == "accession" && xmlReader.Value == "PRIDE:0000175")
                                                     {
-                                                        strValueOverride = "DMS PRIDE_Converter " +
+                                                        valueOverride = "DMS PRIDE_Converter " +
                                                             System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
                                                     }
 
-                                                    if (objXmlReader.Name == "value" && strValueOverride.Length > 0)
+                                                    if (xmlReader.Name == "value" && valueOverride.Length > 0)
                                                     {
-                                                        objXmlWriter.WriteAttributeString(objXmlReader.Name, strValueOverride);
+                                                        writer.WriteAttributeString(xmlReader.Name, valueOverride);
                                                     }
                                                     else
                                                     {
-                                                        objXmlWriter.WriteAttributeString(objXmlReader.Name, objXmlReader.Value);
+                                                        writer.WriteAttributeString(xmlReader.Name, xmlReader.Value);
                                                     }
-                                                } while (objXmlReader.MoveToNextAttribute());
+                                                } while (xmlReader.MoveToNextAttribute());
                                             }
 
-                                            objXmlWriter.WriteEndElement();  // cvParam
-                                            blnSkipNode = true;
+                                            writer.WriteEndElement();  // cvParam
+                                            skipNode = true;
                                         }
 
                                         break;
                                     case "Identifications":
-                                        if (!CreateMSGFReportXMLFileWriteIDs(objXmlWriter, lstPseudoMSGFData, strOrgDBNameGenerated))
+                                        if (!CreateMSGFReportXMLFileWriteIDs(writer, pseudoMSGFData, orgDBNameGenerated))
                                         {
                                             LogError("CreateMSGFReportXMLFileWriteIDs returned false; aborting");
                                             return string.Empty;
                                         }
 
-                                        if (!CreateMSGFReportXMLFileWriteProteins(objXmlWriter, strOrgDBNameGenerated))
+                                        if (!CreateMSGFReportXMLFileWriteProteins(writer, orgDBNameGenerated))
                                         {
                                             LogError("CreateMSGFReportXMLFileWriteProteins returned false; aborting");
                                             return string.Empty;
                                         }
 
-                                        blnSkipNode = true;
+                                        skipNode = true;
 
                                         break;
                                     case "Fasta":
                                         // This section is written out by CreateMSGFReportXMLFileWriteIDs
-                                        blnSkipNode = true;
+                                        skipNode = true;
 
                                         break;
                                     case "PTMs":
                                         // In the future, we might write out customized PTMs in CreateMSGFReportXMLFileWriteProteins
                                         // For now, just copy over whatever is in the template msgf-report.xml file
                                         //
-                                        blnSkipNode = false;
+                                        skipNode = false;
 
                                         break;
                                     case "DatabaseMappings":
 
-                                        objXmlWriter.WriteStartElement("DatabaseMappings");
-                                        objXmlWriter.WriteStartElement("DatabaseMapping");
+                                        writer.WriteStartElement("DatabaseMappings");
+                                        writer.WriteStartElement("DatabaseMapping");
 
-                                        objXmlWriter.WriteElementString("SearchEngineDatabaseName", strOrgDBNameGenerated);
-                                        objXmlWriter.WriteElementString("SearchEngineDatabaseVersion", "Unknown");
+                                        writer.WriteElementString("SearchEngineDatabaseName", orgDBNameGenerated);
+                                        writer.WriteElementString("SearchEngineDatabaseVersion", "Unknown");
 
-                                        objXmlWriter.WriteElementString("CuratedDatabaseName", strProteinCollectionListOrFasta);
-                                        objXmlWriter.WriteElementString("CuratedDatabaseVersion", "1");
+                                        writer.WriteElementString("CuratedDatabaseName", proteinCollectionListOrFasta);
+                                        writer.WriteElementString("CuratedDatabaseVersion", "1");
 
-                                        objXmlWriter.WriteEndElement();      // DatabaseMapping
-                                        objXmlWriter.WriteEndElement();      // DatabaseMappings
+                                        writer.WriteEndElement();      // DatabaseMapping
+                                        writer.WriteEndElement();      // DatabaseMappings
 
-                                        blnSkipNode = true;
+                                        skipNode = true;
 
                                         break;
                                     case "ConfigurationOptions":
-                                        objXmlWriter.WriteStartElement("ConfigurationOptions");
+                                        writer.WriteStartElement("ConfigurationOptions");
 
-                                        WriteConfigurationOption(objXmlWriter, "search_engine", "MSGF");
-                                        WriteConfigurationOption(objXmlWriter, "peptide_threshold", udtFilterThresholds.PValueThreshold.ToString("0.00"));
-                                        WriteConfigurationOption(objXmlWriter, "add_carbamidomethylation", "false");
+                                        WriteConfigurationOption(writer, "search_engine", "MSGF");
+                                        WriteConfigurationOption(writer, "peptide_threshold", udtFilterThresholds.PValueThreshold.ToString("0.00"));
+                                        WriteConfigurationOption(writer, "add_carbamidomethylation", "false");
 
-                                        objXmlWriter.WriteEndElement();      // ConfigurationOptions
+                                        writer.WriteEndElement();      // ConfigurationOptions
 
-                                        blnSkipNode = true;
+                                        skipNode = true;
 
                                         break;
                                 }
 
-                                if (blnSkipNode)
+                                if (skipNode)
                                 {
-                                    if (objXmlReader.NodeType != XmlNodeType.EndElement)
+                                    if (xmlReader.NodeType != XmlNodeType.EndElement)
                                     {
                                         // Skip this element (and any children nodes enclosed in this elemnt)
-                                        // Likely should not do this when objXmlReader.NodeType is XmlNodeType.EndElement
-                                        objXmlReader.Skip();
+                                        // Likely should not do this when xmlReader.NodeType is XmlNodeType.EndElement
+                                        xmlReader.Skip();
                                     }
                                 }
                                 else
                                 {
                                     // Copy this element from the source file to the target file
 
-                                    objXmlWriter.WriteStartElement(objXmlReader.Name);
+                                    writer.WriteStartElement(xmlReader.Name);
 
-                                    if (objXmlReader.HasAttributes)
+                                    if (xmlReader.HasAttributes)
                                     {
-                                        objXmlReader.MoveToFirstAttribute();
+                                        xmlReader.MoveToFirstAttribute();
                                         do
                                         {
-                                            if (lstAttributeOverride.Count > 0 && lstAttributeOverride.TryGetValue(objXmlReader.Name, out var strAttributeOverride))
+                                            if (attributeOverride.Count > 0 && attributeOverride.TryGetValue(xmlReader.Name, out var overrideValue))
                                             {
-                                                objXmlWriter.WriteAttributeString(objXmlReader.Name, strAttributeOverride);
+                                                writer.WriteAttributeString(xmlReader.Name, overrideValue);
                                             }
                                             else
                                             {
-                                                objXmlWriter.WriteAttributeString(objXmlReader.Name, objXmlReader.Value);
+                                                writer.WriteAttributeString(xmlReader.Name, xmlReader.Value);
                                             }
-                                        } while (objXmlReader.MoveToNextAttribute());
+                                        } while (xmlReader.MoveToNextAttribute());
 
-                                        lstElementCloseDepths.Push(objXmlReader.Depth);
+                                        elementCloseDepths.Push(xmlReader.Depth);
                                     }
-                                    else if (objXmlReader.IsEmptyElement)
+                                    else if (xmlReader.IsEmptyElement)
                                     {
-                                        objXmlWriter.WriteEndElement();
+                                        writer.WriteEndElement();
                                     }
                                 }
 
                                 break;
                             case XmlNodeType.EndElement:
 
-                                if (lstRecentElements.Count > 10)
-                                    lstRecentElements.Dequeue();
-                                lstRecentElements.Enqueue("EndElement " + objXmlReader.Name);
+                                if (recentElements.Count > 10)
+                                    recentElements.Dequeue();
+                                recentElements.Enqueue("EndElement " + xmlReader.Name);
 
-                                while (lstElementCloseDepths.Count > 0 && lstElementCloseDepths.Peek() > objXmlReader.Depth + 1)
+                                while (elementCloseDepths.Count > 0 && elementCloseDepths.Peek() > xmlReader.Depth + 1)
                                 {
-                                    lstElementCloseDepths.Pop();
-                                    objXmlWriter.WriteEndElement();
+                                    elementCloseDepths.Pop();
+                                    writer.WriteEndElement();
                                 }
 
-                                objXmlWriter.WriteEndElement();
+                                writer.WriteEndElement();
 
-                                if (objXmlReader.Name == "MzDataDescription")
+                                if (xmlReader.Name == "MzDataDescription")
                                 {
-                                    blnInsideMzDataDescription = false;
+                                    insideMzDataDescription = false;
                                 }
 
-                                while (lstElementCloseDepths.Count > 0 && lstElementCloseDepths.Peek() > objXmlReader.Depth)
+                                while (elementCloseDepths.Count > 0 && elementCloseDepths.Peek() > xmlReader.Depth)
                                 {
-                                    lstElementCloseDepths.Pop();
+                                    elementCloseDepths.Pop();
                                 }
 
                                 break;
                             case XmlNodeType.Text:
 
-                                if (!string.IsNullOrEmpty(objXmlReader.Value))
+                                if (!string.IsNullOrEmpty(xmlReader.Value))
                                 {
-                                    if (lstRecentElements.Count > 10)
-                                        lstRecentElements.Dequeue();
-                                    if (objXmlReader.Value.Length > 10)
+                                    if (recentElements.Count > 10)
+                                        recentElements.Dequeue();
+                                    if (xmlReader.Value.Length > 10)
                                     {
-                                        lstRecentElements.Enqueue(objXmlReader.Value.Substring(0, 10));
+                                        recentElements.Enqueue(xmlReader.Value.Substring(0, 10));
                                     }
                                     else
                                     {
-                                        lstRecentElements.Enqueue(objXmlReader.Value);
+                                        recentElements.Enqueue(xmlReader.Value);
                                     }
                                 }
 
-                                objXmlWriter.WriteString(objXmlReader.Value);
+                                writer.WriteString(xmlReader.Value);
 
                                 break;
                         }
                     }
 
-                    objXmlWriter.WriteEndDocument();
+                    writer.WriteEndDocument();
                 }
             }
             catch (Exception ex)
             {
                 LogError("Exception in CreateMSGFReportXMLFile", ex);
 
-                var strRecentElements = string.Empty;
-                foreach (var strItem in lstRecentElements)
+                var recentElementNames = string.Empty;
+                foreach (var item in recentElements)
                 {
-                    if (string.IsNullOrEmpty(strRecentElements))
+                    if (string.IsNullOrEmpty(recentElementNames))
                     {
-                        strRecentElements = string.Copy(strItem);
+                        recentElementNames = string.Copy(item);
                     }
                     else
                     {
-                        strRecentElements += "; " + strItem;
+                        recentElementNames += "; " + item;
                     }
                 }
 
-                LogDebug(strRecentElements);
+                LogDebug(recentElementNames);
 
                 return string.Empty;
             }
 
-            return strPrideReportXMLFilePath;
+            return prideReportXMLFilePath;
         }
 
-        private bool CreateMSGFReportXMLFileWriteIDs(XmlTextWriter objXmlWriter,
-            IReadOnlyDictionary<string, List<udtPseudoMSGFDataType>> lstPseudoMSGFData, string strOrgDBNameGenerated)
+        private bool CreateMSGFReportXMLFileWriteIDs(XmlTextWriter writer,
+            IReadOnlyDictionary<string, List<udtPseudoMSGFDataType>> pseudoMSGFData, string orgDBNameGenerated)
         {
             try
             {
-                objXmlWriter.WriteStartElement("Identifications");
+                writer.WriteStartElement("Identifications");
 
-                foreach (var kvProteinEntry in lstPseudoMSGFData)
+                foreach (var kvProteinEntry in pseudoMSGFData)
                 {
 
                     if (!mCachedProteins.TryGetValue(kvProteinEntry.Key, out var kvIndexAndSequence))
@@ -2141,33 +2141,33 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         mCachedProteinPSMCounts[kvIndexAndSequence.Key] = kvProteinEntry.Value.Count;
                     }
 
-                    objXmlWriter.WriteStartElement("Identification");
+                    writer.WriteStartElement("Identification");
 
                     // Protein name
-                    objXmlWriter.WriteElementString("Accession", kvProteinEntry.Key);
+                    writer.WriteElementString("Accession", kvProteinEntry.Key);
 
                     // Cleaned-up version of the Protein name; for example, for ref|NP_035862.2 we would put "NP_035862" here
-                    // objXmlWriter.WriteElementString("CuratedAccession", kvProteinEntry.Key);
+                    // writer.WriteElementString("CuratedAccession", kvProteinEntry.Key);
 
                     // Protein name
-                    objXmlWriter.WriteElementString("UniqueIdentifier", kvProteinEntry.Key);
+                    writer.WriteElementString("UniqueIdentifier", kvProteinEntry.Key);
 
                     // Accession version would be determined when curating the "Accession" name.  For example, for ref|NP_035862.2 we would put "2" here
-                    // objXmlWriter.WriteElementString("AccessionVersion", "1");
-                    objXmlWriter.WriteElementString("Database", strOrgDBNameGenerated);
+                    // writer.WriteElementString("AccessionVersion", "1");
+                    writer.WriteElementString("Database", orgDBNameGenerated);
 
-                    objXmlWriter.WriteElementString("DatabaseVersion", "Unknown");
+                    writer.WriteElementString("DatabaseVersion", "Unknown");
 
                     // Write out each PSM for this protein
                     foreach (var udtPeptide in kvProteinEntry.Value)
                     {
-                        objXmlWriter.WriteStartElement("Peptide");
+                        writer.WriteStartElement("Peptide");
 
-                        objXmlWriter.WriteElementString("Sequence", udtPeptide.CleanSequence);
-                        objXmlWriter.WriteElementString("CuratedSequence", string.Empty);
-                        objXmlWriter.WriteElementString("Start", "0");
-                        objXmlWriter.WriteElementString("End", "0");
-                        objXmlWriter.WriteElementString("SpectrumReference", udtPeptide.ScanNumber.ToString());
+                        writer.WriteElementString("Sequence", udtPeptide.CleanSequence);
+                        writer.WriteElementString("CuratedSequence", string.Empty);
+                        writer.WriteElementString("Start", "0");
+                        writer.WriteElementString("End", "0");
+                        writer.WriteElementString("SpectrumReference", udtPeptide.ScanNumber.ToString());
 
                         // Could write out details of dynamic mods
                         //    Would need to update DMS to include the PSI-Compatible mod names, descriptions, and masses.
@@ -2184,54 +2184,54 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         //     </additional>
                         // </ModificationItem>
 
-                        objXmlWriter.WriteElementString("isSpecific", "false");
+                        writer.WriteElementString("isSpecific", "false");
 
                         // I wanted to record ResultID here, but we instead have to record Scan Number; otherwise PRIDE Converter Crashes
-                        objXmlWriter.WriteElementString("UniqueIdentifier", udtPeptide.ScanNumber.ToString());
+                        writer.WriteElementString("UniqueIdentifier", udtPeptide.ScanNumber.ToString());
 
-                        objXmlWriter.WriteStartElement("additional");
+                        writer.WriteStartElement("additional");
 
-                        WriteCVParam(objXmlWriter, "PRIDE", "PRIDE:0000065", "Upstream flanking sequence", udtPeptide.PrefixResidue);
-                        WriteCVParam(objXmlWriter, "PRIDE", "PRIDE:0000066", "Downstream flanking sequence", udtPeptide.SuffixResidue);
+                        WriteCVParam(writer, "PRIDE", "PRIDE:0000065", "Upstream flanking sequence", udtPeptide.PrefixResidue);
+                        WriteCVParam(writer, "PRIDE", "PRIDE:0000066", "Downstream flanking sequence", udtPeptide.SuffixResidue);
 
-                        WriteCVParam(objXmlWriter, "MS", "MS:1000041", "charge state", udtPeptide.ChargeState.ToString());
-                        WriteCVParam(objXmlWriter, "MS", "MS:1000042", "peak intensity", "0.0");
-                        WriteCVParam(objXmlWriter, "MS", "MS:1001870", "p-value for peptides", udtPeptide.PValue);
+                        WriteCVParam(writer, "MS", "MS:1000041", "charge state", udtPeptide.ChargeState.ToString());
+                        WriteCVParam(writer, "MS", "MS:1000042", "peak intensity", "0.0");
+                        WriteCVParam(writer, "MS", "MS:1001870", "p-value for peptides", udtPeptide.PValue);
 
-                        WriteUserParam(objXmlWriter, "MQScore", udtPeptide.MQScore);
-                        WriteUserParam(objXmlWriter, "TotalPRMScore", udtPeptide.TotalPRMScore);
+                        WriteUserParam(writer, "MQScore", udtPeptide.MQScore);
+                        WriteUserParam(writer, "TotalPRMScore", udtPeptide.TotalPRMScore);
 
-                        // WriteUserParam(objXmlWriter, "MedianPRMScore", "0.0")
-                        // WriteUserParam(objXmlWriter, "FractionY", "0.0")
-                        // WriteUserParam(objXmlWriter, "FractionB", "0.0")
+                        // WriteUserParam(writer, "MedianPRMScore", "0.0")
+                        // WriteUserParam(writer, "FractionY", "0.0")
+                        // WriteUserParam(writer, "FractionB", "0.0")
 
-                        WriteUserParam(objXmlWriter, "NTT", udtPeptide.NTT.ToString());
+                        WriteUserParam(writer, "NTT", udtPeptide.NTT.ToString());
 
-                        // WriteUserParam(objXmlWriter, "F-Score", "0.0")
+                        // WriteUserParam(writer, "F-Score", "0.0")
 
-                        WriteUserParam(objXmlWriter, "DeltaScore", udtPeptide.DeltaScore);
-                        WriteUserParam(objXmlWriter, "DeltaScoreOther", udtPeptide.DeltaScoreOther);
-                        WriteUserParam(objXmlWriter, "SpecProb", udtPeptide.MSGFSpecProb);
+                        WriteUserParam(writer, "DeltaScore", udtPeptide.DeltaScore);
+                        WriteUserParam(writer, "DeltaScoreOther", udtPeptide.DeltaScoreOther);
+                        WriteUserParam(writer, "SpecProb", udtPeptide.MSGFSpecProb);
 
-                        objXmlWriter.WriteEndElement();      // additional
+                        writer.WriteEndElement();      // additional
 
-                        objXmlWriter.WriteEndElement();      // Peptide
+                        writer.WriteEndElement();      // Peptide
                     }
 
                     // Protein level-scores
-                    objXmlWriter.WriteElementString("Score", "0.0");
-                    objXmlWriter.WriteElementString("Threshold", "0.0");
-                    objXmlWriter.WriteElementString("SearchEngine", "MSGF");
+                    writer.WriteElementString("Score", "0.0");
+                    writer.WriteElementString("Threshold", "0.0");
+                    writer.WriteElementString("SearchEngine", "MSGF");
 
-                    objXmlWriter.WriteStartElement("additional");
-                    objXmlWriter.WriteEndElement();
+                    writer.WriteStartElement("additional");
+                    writer.WriteEndElement();
 
-                    objXmlWriter.WriteElementString("FastaSequenceReference", kvIndexAndSequence.Key.ToString());
+                    writer.WriteElementString("FastaSequenceReference", kvIndexAndSequence.Key.ToString());
 
-                    objXmlWriter.WriteEndElement();      // Identification
+                    writer.WriteEndElement();      // Identification
                 }
 
-                objXmlWriter.WriteEndElement();          // Identifications
+                writer.WriteEndElement();          // Identifications
             }
             catch (Exception ex)
             {
@@ -2242,13 +2242,13 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             return true;
         }
 
-        private bool CreateMSGFReportXMLFileWriteProteins(XmlWriter objXmlWriter, string strOrgDBNameGenerated)
+        private bool CreateMSGFReportXMLFileWriteProteins(XmlWriter writer, string orgDBNameGenerated)
         {
             try
             {
-                objXmlWriter.WriteStartElement("Fasta");
-                objXmlWriter.WriteAttributeString("sourceDb", strOrgDBNameGenerated);
-                objXmlWriter.WriteAttributeString("sourceDbVersion", "Unknown");
+                writer.WriteStartElement("Fasta");
+                writer.WriteAttributeString("sourceDb", orgDBNameGenerated);
+                writer.WriteAttributeString("sourceDbVersion", "Unknown");
 
                 // Step through mCachedProteins
                 // For each entry, the key is the protein name
@@ -2256,29 +2256,29 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 foreach (var kvEntry in mCachedProteins)
                 {
-                    var strProteinName = string.Copy(kvEntry.Key);
-                    var intProteinIndex = kvEntry.Value.Key;
+                    var proteinName = string.Copy(kvEntry.Key);
+                    var proteinIndex = kvEntry.Value.Key;
 
                     // Only write out this protein if it had 1 or more PSMs
-                    if (!mCachedProteinPSMCounts.TryGetValue(intProteinIndex, out var psmCount) || psmCount <= 0)
+                    if (!mCachedProteinPSMCounts.TryGetValue(proteinIndex, out var psmCount) || psmCount <= 0)
                         continue;
 
-                    objXmlWriter.WriteStartElement("Sequence");
-                    objXmlWriter.WriteAttributeString("id", intProteinIndex.ToString());
-                    objXmlWriter.WriteAttributeString("accession", strProteinName);
+                    writer.WriteStartElement("Sequence");
+                    writer.WriteAttributeString("id", proteinIndex.ToString());
+                    writer.WriteAttributeString("accession", proteinName);
 
-                    objXmlWriter.WriteValue(kvEntry.Value.Value);
+                    writer.WriteValue(kvEntry.Value.Value);
 
-                    objXmlWriter.WriteEndElement();          // Sequence
+                    writer.WriteEndElement();          // Sequence
                 }
 
-                objXmlWriter.WriteEndElement();          // Fasta
+                writer.WriteEndElement();          // Fasta
 
                 // In the future, we might write out customized PTMs here
                 // For now, just copy over whatever is in the template msgf-report.xml file
                 //
-                // objXmlWriter.WriteStartElement("PTMs")
-                // objXmlWriter.WriteFullEndElement()
+                // writer.WriteStartElement("PTMs")
+                // writer.WriteFullEndElement()
             }
             catch (Exception ex)
             {
@@ -2289,36 +2289,36 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             return true;
         }
 
-        private void CreateMSGFReportXmlFileWriteSoftwareVersion(XmlReader objXmlReader, XmlWriter objXmlWriter,
+        private void CreateMSGFReportXmlFileWriteSoftwareVersion(XmlReader xmlReader, XmlWriter writer,
             clsPHRPReader.ePeptideHitResultType PeptideHitResultType)
         {
-            var strToolName = string.Empty;
-            var strToolVersion = string.Empty;
-            var strToolComments = string.Empty;
-            var intNodeDepth = objXmlReader.Depth;
+            var toolName = string.Empty;
+            var toolVersion = string.Empty;
+            var toolComments = string.Empty;
+            var nodeDepth = xmlReader.Depth;
 
             // Read the name, version, and comments elements under software
-            while (objXmlReader.Read())
+            while (xmlReader.Read())
             {
                 var error = false;
-                switch (objXmlReader.NodeType)
+                switch (xmlReader.NodeType)
                 {
                     case XmlNodeType.Element:
-                        switch (objXmlReader.Name)
+                        switch (xmlReader.Name)
                         {
                             case "name":
-                                strToolName = objXmlReader.ReadElementContentAsString();
+                                toolName = xmlReader.ReadElementContentAsString();
                                 break;
                             case "version":
-                                strToolVersion = objXmlReader.ReadElementContentAsString();
+                                toolVersion = xmlReader.ReadElementContentAsString();
                                 break;
                             case "comments":
-                                strToolComments = objXmlReader.ReadElementContentAsString();
+                                toolComments = xmlReader.ReadElementContentAsString();
                                 break;
                         }
                         break;
                     case XmlNodeType.EndElement:
-                        if (objXmlReader.Depth <= intNodeDepth)
+                        if (xmlReader.Depth <= nodeDepth)
                         {
                             error = true;
                         }
@@ -2330,81 +2330,81 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 }
             }
 
-            if (string.IsNullOrEmpty(strToolName))
+            if (string.IsNullOrEmpty(toolName))
             {
-                strToolName = PeptideHitResultType.ToString();
-                strToolVersion = string.Empty;
-                strToolComments = string.Empty;
+                toolName = PeptideHitResultType.ToString();
+                toolVersion = string.Empty;
+                toolComments = string.Empty;
             }
             else
             {
-                if (PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB && strToolName.ToUpper().StartsWith("MSGF"))
+                if (PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB && toolName.ToUpper().StartsWith("MSGF"))
                 {
                     // Tool Version in the template file is likely correct; use it
                 }
-                else if (PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.Sequest && strToolName.ToUpper().StartsWith("SEQUEST"))
+                else if (PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.Sequest && toolName.ToUpper().StartsWith("SEQUEST"))
                 {
                     // Tool Version in the template file is likely correct; use it
                 }
-                else if (PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.XTandem && strToolName.ToUpper().Contains("TANDEM"))
+                else if (PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.XTandem && toolName.ToUpper().Contains("TANDEM"))
                 {
                     // Tool Version in the template file is likely correct; use it
                 }
                 else
                 {
                     // Tool Version is likely not known
-                    strToolName = PeptideHitResultType.ToString();
-                    strToolVersion = string.Empty;
-                    strToolComments = string.Empty;
+                    toolName = PeptideHitResultType.ToString();
+                    toolVersion = string.Empty;
+                    toolComments = string.Empty;
                 }
             }
 
-            objXmlWriter.WriteStartElement("software");
+            writer.WriteStartElement("software");
 
-            objXmlWriter.WriteElementString("name", strToolName);
-            objXmlWriter.WriteElementString("version", strToolVersion);
-            objXmlWriter.WriteElementString("comments", strToolComments);
+            writer.WriteElementString("name", toolName);
+            writer.WriteElementString("version", toolVersion);
+            writer.WriteElementString("comments", toolComments);
 
-            objXmlWriter.WriteEndElement();  // software
+            writer.WriteEndElement();  // software
         }
 
         /// <summary>
         /// Create the .msgf-pride.xml file using the .msgf-report.xml file
         /// </summary>
-        /// <param name="intJob"></param>
-        /// <param name="strDataset"></param>
-        /// <param name="strPrideReportXMLFilePath"></param>
-        /// <param name="strPrideXmlFilePath">Output parameter: the full path of the newly created .msgf-pride.xml file</param>
+        /// <param name="job"></param>
+        /// <param name="dataset"></param>
+        /// <param name="prideReportXMLFilePath"></param>
+        /// <param name="prideXmlFilePath">Output parameter: the full path of the newly created .msgf-pride.xml file</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks></remarks>
-        private bool CreatePrideXMLFile(int intJob, string strDataset, string strPrideReportXMLFilePath, out string strPrideXmlFilePath)
+        private bool CreatePrideXMLFile(int job, string dataset, string prideReportXMLFilePath, out string prideXmlFilePath)
         {
 
-            strPrideXmlFilePath = string.Empty;
+            prideXmlFilePath = string.Empty;
 
             try
             {
-                var xmlFileName = Path.GetFileName(strPrideReportXMLFilePath);
+                var xmlFileName = Path.GetFileName(prideReportXMLFilePath);
                 if (xmlFileName == null)
                 {
-                    LogError("Exception in CreatePrideXMLFile for job " + intJob + "; unable to determine the file name in " + strPrideReportXMLFilePath);
+                    LogError("Exception in CreatePrideXMLFile for job " + job + "; unable to determine the file name in " + prideReportXMLFilePath);
                     return false;
                 }
 
-                var strBaseFileName = xmlFileName.Replace(FILE_EXTENSION_MSGF_REPORT_XML, string.Empty);
-                var strMsgfResultsFilePath = Path.Combine(m_WorkDir, strBaseFileName + FILE_EXTENSION_PSEUDO_MSGF);
-                var strMzXMLFilePath = Path.Combine(m_WorkDir, strDataset + clsAnalysisResources.DOT_MZXML_EXTENSION);
-                strPrideReportXMLFilePath = Path.Combine(m_WorkDir, strBaseFileName + FILE_EXTENSION_MSGF_REPORT_XML);
+                var baseFileName = xmlFileName.Replace(FILE_EXTENSION_MSGF_REPORT_XML, string.Empty);
+                var msgfResultsFilePath = Path.Combine(m_WorkDir, baseFileName + FILE_EXTENSION_PSEUDO_MSGF);
+                var mzXMLFilePath = Path.Combine(m_WorkDir, dataset + clsAnalysisResources.DOT_MZXML_EXTENSION);
+                prideReportXMLFilePath = Path.Combine(m_WorkDir, baseFileName + FILE_EXTENSION_MSGF_REPORT_XML);
 
-                var strCurrentTask = "Running PRIDE Converter for job " + intJob + ", " + strDataset;
+                var currentTask = "Running PRIDE Converter for job " + job + ", " + dataset;
                 if (m_DebugLevel >= 1)
                 {
-                    LogMessage(strCurrentTask);
+                    LogMessage(currentTask);
                 }
 
-                var blnSuccess = RunPrideConverter(intJob, strDataset, strMsgfResultsFilePath, strMzXMLFilePath, strPrideReportXMLFilePath);
+                var success = RunPrideConverter(job, dataset, msgfResultsFilePath, mzXMLFilePath, prideReportXMLFilePath);
 
-                if (!blnSuccess)
+                if (!success)
                 {
                     if (string.IsNullOrEmpty(m_message))
                     {
@@ -2414,10 +2414,10 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 else
                 {
                     // Make sure the result file was created
-                    strPrideXmlFilePath = Path.Combine(m_WorkDir, strBaseFileName + FILE_EXTENSION_MSGF_PRIDE_XML);
-                    if (!File.Exists(strPrideXmlFilePath))
+                    prideXmlFilePath = Path.Combine(m_WorkDir, baseFileName + FILE_EXTENSION_MSGF_PRIDE_XML);
+                    if (!File.Exists(prideXmlFilePath))
                     {
-                        LogError("Pride XML file not created for job " + intJob + ": " + strPrideXmlFilePath);
+                        LogError("Pride XML file not created for job " + job + ": " + prideXmlFilePath);
                         return false;
                     }
                 }
@@ -2426,7 +2426,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
             catch (Exception ex)
             {
-                LogError("Exception in CreatePrideXMLFile for job " + intJob, ex);
+                LogError("Exception in CreatePrideXMLFile for job " + job, ex);
                 return false;
             }
 
@@ -2436,101 +2436,101 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         {
             const string TBD = "******* UPDATE ****** ";
 
-            var strFilterText = string.Empty;
+            var filterText = string.Empty;
 
             try
             {
-                var strPXFilePath = Path.Combine(m_WorkDir, "PX_Submission_" + DateTime.Now.ToString("yyyy-MM-dd_HH-mm") + ".px");
+                var pXFilePath = Path.Combine(m_WorkDir, "PX_Submission_" + DateTime.Now.ToString("yyyy-MM-dd_HH-mm") + ".px");
 
-                var intPrideXmlFilesCreated = CountResultFilesByType(clsPXFileInfoBase.ePXFileType.Result);
-                var intRawFilesStored = CountResultFilesByType(clsPXFileInfoBase.ePXFileType.Raw);
-                var intPeakFilesStored = CountResultFilesByType(clsPXFileInfoBase.ePXFileType.Peak);
-                var intMzIDFilesStored = CountResultFilesByType(clsPXFileInfoBase.ePXFileType.ResultMzId);
+                var prideXmlFilesCreated = CountResultFilesByType(clsPXFileInfoBase.ePXFileType.Result);
+                var rawFilesStored = CountResultFilesByType(clsPXFileInfoBase.ePXFileType.Raw);
+                var peakFilesStored = CountResultFilesByType(clsPXFileInfoBase.ePXFileType.Peak);
+                var mzIDFilesStored = CountResultFilesByType(clsPXFileInfoBase.ePXFileType.ResultMzId);
 
                 if (m_DebugLevel >= 1)
                 {
-                    LogMessage("Creating PXSubmission file: " + strPXFilePath);
-                    LogDebug(" Result stats: " + intPrideXmlFilesCreated + " Result (.msgf-pride.xml) files");
-                    LogDebug(" Result stats: " + intRawFilesStored + " Raw files");
-                    LogDebug(" Result stats: " + intPeakFilesStored + " Peak (.mgf) files");
-                    LogDebug(" Result stats: " + intMzIDFilesStored + " Search (.mzid.gz) files");
+                    LogMessage("Creating PXSubmission file: " + pXFilePath);
+                    LogDebug(" Result stats: " + prideXmlFilesCreated + " Result (.msgf-pride.xml) files");
+                    LogDebug(" Result stats: " + rawFilesStored + " Raw files");
+                    LogDebug(" Result stats: " + peakFilesStored + " Peak (.mgf) files");
+                    LogDebug(" Result stats: " + mzIDFilesStored + " Search (.mzid.gz) files");
                 }
 
-                string strSubmissionType;
-                if (intMzIDFilesStored == 0 && intPrideXmlFilesCreated == 0)
+                string submissionType;
+                if (mzIDFilesStored == 0 && prideXmlFilesCreated == 0)
                 {
-                    strSubmissionType = PARTIAL_SUBMISSION;
-                    LogMessage("Did not create any Pride XML result files; submission type is " + strSubmissionType);
+                    submissionType = PARTIAL_SUBMISSION;
+                    LogMessage("Did not create any Pride XML result files; submission type is " + submissionType);
                 }
-                else if (intPrideXmlFilesCreated > 0 && intMzIDFilesStored > intPrideXmlFilesCreated)
+                else if (prideXmlFilesCreated > 0 && mzIDFilesStored > prideXmlFilesCreated)
                 {
-                    strSubmissionType = PARTIAL_SUBMISSION;
-                    LogMessage("Stored more Search (.mzid.gz) files than Pride XML result files; submission type is " + strSubmissionType);
+                    submissionType = PARTIAL_SUBMISSION;
+                    LogMessage("Stored more Search (.mzid.gz) files than Pride XML result files; submission type is " + submissionType);
                 }
-                else if (intPrideXmlFilesCreated > 0 && intRawFilesStored > intPrideXmlFilesCreated)
+                else if (prideXmlFilesCreated > 0 && rawFilesStored > prideXmlFilesCreated)
                 {
-                    strSubmissionType = PARTIAL_SUBMISSION;
-                    LogMessage("Stored more Raw files than Pride XML result files; submission type is " + strSubmissionType);
+                    submissionType = PARTIAL_SUBMISSION;
+                    LogMessage("Stored more Raw files than Pride XML result files; submission type is " + submissionType);
                 }
-                else if (intMzIDFilesStored == 0)
+                else if (mzIDFilesStored == 0)
                 {
-                    strSubmissionType = PARTIAL_SUBMISSION;
-                    LogMessage("Did not have any .mzid.gz files and did not create any Pride XML result files; submission type is " + strSubmissionType);
+                    submissionType = PARTIAL_SUBMISSION;
+                    LogMessage("Did not have any .mzid.gz files and did not create any Pride XML result files; submission type is " + submissionType);
                 }
                 else
                 {
-                    strSubmissionType = COMPLETE_SUBMISSION;
+                    submissionType = COMPLETE_SUBMISSION;
 
                     if (mFilterThresholdsUsed.UseFDRThreshold || mFilterThresholdsUsed.UsePepFDRThreshold || mFilterThresholdsUsed.UseMSGFSpecProb)
                     {
-                        const string strFilterTextBase = "msgf-pride.xml files are filtered on ";
-                        strFilterText = string.Empty;
+                        const string filterTextBase = "msgf-pride.xml files are filtered on ";
+                        filterText = string.Empty;
 
                         if (mFilterThresholdsUsed.UseFDRThreshold)
                         {
-                            if (string.IsNullOrEmpty(strFilterText))
+                            if (string.IsNullOrEmpty(filterText))
                             {
-                                strFilterText = strFilterTextBase;
+                                filterText = filterTextBase;
                             }
                             else
                             {
-                                strFilterText += " and ";
+                                filterText += " and ";
                             }
 
-                            strFilterText += (mFilterThresholdsUsed.FDRThreshold * 100).ToString("0.0") + "% FDR at the PSM level";
+                            filterText += (mFilterThresholdsUsed.FDRThreshold * 100).ToString("0.0") + "% FDR at the PSM level";
                         }
 
                         if (mFilterThresholdsUsed.UsePepFDRThreshold)
                         {
-                            if (string.IsNullOrEmpty(strFilterText))
+                            if (string.IsNullOrEmpty(filterText))
                             {
-                                strFilterText = strFilterTextBase;
+                                filterText = filterTextBase;
                             }
                             else
                             {
-                                strFilterText += " and ";
+                                filterText += " and ";
                             }
 
-                            strFilterText += (mFilterThresholdsUsed.PepFDRThreshold * 100).ToString("0.0") + "% FDR at the peptide level";
+                            filterText += (mFilterThresholdsUsed.PepFDRThreshold * 100).ToString("0.0") + "% FDR at the peptide level";
                         }
 
                         if (mFilterThresholdsUsed.UseMSGFSpecProb)
                         {
-                            if (string.IsNullOrEmpty(strFilterText))
+                            if (string.IsNullOrEmpty(filterText))
                             {
-                                strFilterText = strFilterTextBase;
+                                filterText = filterTextBase;
                             }
                             else
                             {
-                                strFilterText += " and ";
+                                filterText += " and ";
                             }
 
-                            strFilterText += "MSGF Spectral Probability <= " + mFilterThresholdsUsed.MSGFSpecProbThreshold.ToString("0.0E+00");
+                            filterText += "MSGF Spectral Probability <= " + mFilterThresholdsUsed.MSGFSpecProbThreshold.ToString("0.0E+00");
                         }
                     }
                 }
 
-                using (var swPXFile = new StreamWriter(new FileStream(strPXFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var swPXFile = new StreamWriter(new FileStream(pXFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
                     WritePXHeader(swPXFile, "submitter_name", "Matthew Monroe", dctTemplateParameters);
                     WritePXHeader(swPXFile, "submitter_email", "matthew.monroe@pnnl.gov", dctTemplateParameters);
@@ -2588,37 +2588,37 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     {
                         "MTD",
                         "submission_type",
-                        strSubmissionType
+                        submissionType
                     });
 
-                    if (strSubmissionType == COMPLETE_SUBMISSION)
+                    if (submissionType == COMPLETE_SUBMISSION)
                     {
                         // Note that the comment field has been deprecated in v2.x of the px file
                         // However, we don't have a good alternative place to put this comment, so we'll include it anyway
-                        if (!string.IsNullOrWhiteSpace(strFilterText))
+                        if (!string.IsNullOrWhiteSpace(filterText))
                         {
-                            WritePXHeader(swPXFile, "comment", strFilterText);
+                            WritePXHeader(swPXFile, "comment", filterText);
                         }
                     }
                     else
                     {
-                        var strComment = "Data produced by the DMS Processing pipeline using ";
+                        var comment = "Data produced by the DMS Processing pipeline using ";
                         if (mSearchToolsUsed.Count == 1)
                         {
-                            strComment += "search tool " + mSearchToolsUsed.First();
+                            comment += "search tool " + mSearchToolsUsed.First();
                         }
                         else if (mSearchToolsUsed.Count == 2)
                         {
-                            strComment += "search tools " + mSearchToolsUsed.First() + " and " + mSearchToolsUsed.Last();
+                            comment += "search tools " + mSearchToolsUsed.First() + " and " + mSearchToolsUsed.Last();
                         }
                         else if (mSearchToolsUsed.Count > 2)
                         {
-                            strComment += "search tools " + string.Join(", ", (
+                            comment += "search tools " + string.Join(", ", (
                                 from item in mSearchToolsUsed where item != mSearchToolsUsed.Last() orderby item select item).ToList());
-                            strComment += ", and " + mSearchToolsUsed.Last();
+                            comment += ", and " + mSearchToolsUsed.Last();
                         }
 
-                        WritePXHeader(swPXFile, "reason_for_partial", strComment);
+                        WritePXHeader(swPXFile, "reason_for_partial", comment);
                     }
 
                     var mouseOrHuman = false;
@@ -2703,42 +2703,42 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         "file_mapping"
                     });
 
-                    var lstFileInfoCols = new List<string>();
+                    var fileInfoCols = new List<string>();
 
                     // Keys in this dictionary are fileIDs, values are file names
-                    var lstResultFileIDs = new Dictionary<int, string>();
+                    var resultFileIDs = new Dictionary<int, string>();
 
                     // Append the files and mapping information to the ProteomeXchange PX file
                     foreach (var item in mPxResultFiles)
                     {
-                        lstFileInfoCols.Clear();
+                        fileInfoCols.Clear();
 
-                        lstFileInfoCols.Add("FME");
+                        fileInfoCols.Add("FME");
 
                         // file_id
-                        lstFileInfoCols.Add(item.Key.ToString());
+                        fileInfoCols.Add(item.Key.ToString());
                         var fileTypeName = PXFileTypeName(item.Value.PXFileType);
 
                         // file_type; allowed values are result, raw, peak, search, quantification, gel, other
-                        lstFileInfoCols.Add(fileTypeName);
+                        fileInfoCols.Add(fileTypeName);
 
                         // file_path
-                        lstFileInfoCols.Add(Path.Combine(@"D:\Upload", m_ResFolderName, item.Value.Filename));
+                        fileInfoCols.Add(Path.Combine(@"D:\Upload", m_ResFolderName, item.Value.Filename));
 
-                        var lstFileMappings = new List<string>();
+                        var fileMappings = new List<string>();
                         foreach (var mapID in item.Value.FileMappings)
                         {
                             // file_mapping
-                            lstFileMappings.Add(mapID.ToString());
+                            fileMappings.Add(mapID.ToString());
                         }
 
-                        lstFileInfoCols.Add(string.Join(",", lstFileMappings));
+                        fileInfoCols.Add(string.Join(",", fileMappings));
 
-                        WritePXLine(swPXFile, lstFileInfoCols);
+                        WritePXLine(swPXFile, fileInfoCols);
 
                         if (fileTypeName == "RESULT")
                         {
-                            lstResultFileIDs.Add(item.Key, item.Value.Filename);
+                            resultFileIDs.Add(item.Key, item.Value.Filename);
                         }
                     }
 
@@ -2768,14 +2768,14 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     WritePXLine(swPXFile, columnNames);
 
                     // Add the SME lines below the SMH line
-                    foreach (var resultFile in lstResultFileIDs)
+                    foreach (var resultFile in resultFileIDs)
                     {
-                        lstFileInfoCols.Clear();
+                        fileInfoCols.Clear();
 
-                        lstFileInfoCols.Add("SME");
+                        fileInfoCols.Add("SME");
 
                         // file_id
-                        lstFileInfoCols.Add(resultFile.Key.ToString());
+                        fileInfoCols.Add(resultFile.Key.ToString());
 
                         var resultFileName = resultFile.Value;
 
@@ -2795,54 +2795,54 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                         if (mMzIdSampleInfo.TryGetValue(resultFileName, out sampleMetadata))
                         {
-                            lstFileInfoCols.Add(sampleMetadata.Species);
-                            lstFileInfoCols.Add(sampleMetadata.Tissue);
+                            fileInfoCols.Add(sampleMetadata.Species);
+                            fileInfoCols.Add(sampleMetadata.Tissue);
 
                             if (smhIncludesCellType)
                             {
-                                lstFileInfoCols.Add(sampleMetadata.CellType);
+                                fileInfoCols.Add(sampleMetadata.CellType);
                             }
                             else
                             {
-                                lstFileInfoCols.Add(string.Empty);
+                                fileInfoCols.Add(string.Empty);
                             }
 
                             if (smhIncludesDisease)
                             {
-                                lstFileInfoCols.Add(sampleMetadata.Disease);
+                                fileInfoCols.Add(sampleMetadata.Disease);
                             }
                             else
                             {
-                                lstFileInfoCols.Add(string.Empty);
+                                fileInfoCols.Add(string.Empty);
                             }
 
-                            var strMods = string.Empty;
+                            var mods = string.Empty;
                             foreach (var modEntry in sampleMetadata.Modifications)
                             {
-                                if (strMods.Length > 0)
-                                    strMods += ", ";
-                                strMods += GetCVString(modEntry.Value);
+                                if (mods.Length > 0)
+                                    mods += ", ";
+                                mods += GetCVString(modEntry.Value);
                             }
 
                             // modification
-                            lstFileInfoCols.Add(strMods);
+                            fileInfoCols.Add(mods);
 
                             GetInstrumentAccession(sampleMetadata.InstrumentGroup, out var instrumentAccession, out var instrumentDescription);
 
-                            var strInstrumentCV = GetInstrumentCv(instrumentAccession, instrumentDescription);
+                            var instrumentCV = GetInstrumentCv(instrumentAccession, instrumentDescription);
 
-                            lstFileInfoCols.Add(strInstrumentCV);
+                            fileInfoCols.Add(instrumentCV);
 
-                            lstFileInfoCols.Add(GetValueOrDefault("quantification)", dctTemplateParameters, sampleMetadata.Quantification));
+                            fileInfoCols.Add(GetValueOrDefault("quantification)", dctTemplateParameters, sampleMetadata.Quantification));
 
-                            lstFileInfoCols.Add(sampleMetadata.ExperimentalFactor);
+                            fileInfoCols.Add(sampleMetadata.ExperimentalFactor);
                         }
                         else
                         {
                             LogWarning(" Sample Metadata not found for " + resultFile.Value);
                         }
 
-                        WritePXLine(swPXFile, lstFileInfoCols);
+                        WritePXLine(swPXFile, fileInfoCols);
                     }
                 }
             }
@@ -2897,16 +2897,16 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             return true;
         }
 
-        private bool DefinePxFileMapping(int intFileID, int intParentFileID)
+        private bool DefinePxFileMapping(int fileID, int parentFileID)
         {
 
-            if (!mPxResultFiles.TryGetValue(intFileID, out var oPXFileInfo))
+            if (!mPxResultFiles.TryGetValue(fileID, out var oPXFileInfo))
             {
-                LogError("FileID " + intFileID + " not found in mPxResultFiles; unable to add parent file");
+                LogError("FileID " + fileID + " not found in mPxResultFiles; unable to add parent file");
                 return false;
             }
 
-            oPXFileInfo.AddFileMapping(intParentFileID);
+            oPXFileInfo.AddFileMapping(parentFileID);
 
             return true;
         }
@@ -2944,18 +2944,18 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
         private string GetInstrumentCv(string accession, string description)
         {
-            string strInstrumentCV;
+            string instrumentCV;
 
             if (string.IsNullOrEmpty(accession))
             {
-                strInstrumentCV = GetCVString("MS", "MS:1000031", "instrument model", "CUSTOM UNKNOWN MASS SPEC");
+                instrumentCV = GetCVString("MS", "MS:1000031", "instrument model", "CUSTOM UNKNOWN MASS SPEC");
             }
             else
             {
-                strInstrumentCV = GetCVString("MS", accession, description, "");
+                instrumentCV = GetCVString("MS", accession, description, "");
             }
 
-            return strInstrumentCV;
+            return instrumentCV;
         }
 
         private string GetNEWTCv(int newtID, string newtName)
@@ -3065,9 +3065,9 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
         }
 
-        private string GetPrideConverterVersion(string strPrideConverterProgLoc)
+        private string GetPrideConverterVersion(string prideConverterProgLoc)
         {
-            var strPRIDEConverterVersion = "unknown";
+            var prideConverterVersion = "unknown";
 
             mCmdRunner = new clsRunDosProgram(m_WorkDir);
             RegisterEvents(mCmdRunner);
@@ -3075,9 +3075,9 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             m_StatusTools.CurrentOperation = "Determining PrideConverter Version";
             m_StatusTools.UpdateAndWrite(m_progress);
-            var strVersionFilePath = Path.Combine(m_WorkDir, "PRIDEConverter_Version.txt");
+            var versionFilePath = Path.Combine(m_WorkDir, "PRIDEConverter_Version.txt");
 
-            var cmdStr = "-jar " + PossiblyQuotePath(strPrideConverterProgLoc);
+            var cmdStr = "-jar " + PossiblyQuotePath(prideConverterProgLoc);
 
             cmdStr += " -converter -version";
 
@@ -3091,10 +3091,10 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             mCmdRunner.EchoOutputToConsole = false;
 
             mCmdRunner.WriteConsoleOutputToFile = true;
-            mCmdRunner.ConsoleOutputFilePath = strVersionFilePath;
+            mCmdRunner.ConsoleOutputFilePath = versionFilePath;
             mCmdRunner.WorkDir = m_WorkDir;
 
-            var blnSuccess = mCmdRunner.RunProgram(mJavaProgLoc, cmdStr, "PrideConverter", true);
+            var success = mCmdRunner.RunProgram(mJavaProgLoc, cmdStr, "PrideConverter", true);
 
             // Assure that the console output file has been parsed
             ParseConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath);
@@ -3104,13 +3104,13 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 LogError(mConsoleOutputErrorMsg);
             }
 
-            if (!blnSuccess)
+            if (!success)
             {
                 LogError("Error running PrideConverter to determine its version");
             }
             else
             {
-                var fiVersionFile = new FileInfo(strVersionFilePath);
+                var fiVersionFile = new FileInfo(versionFilePath);
 
                 if (fiVersionFile.Exists)
                 {
@@ -3119,20 +3119,20 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     {
                         if (!srVersionFile.EndOfStream)
                         {
-                            strPRIDEConverterVersion = srVersionFile.ReadLine();
+                            prideConverterVersion = srVersionFile.ReadLine();
                         }
                     }
                 }
             }
 
-            return strPRIDEConverterVersion;
+            return prideConverterVersion;
         }
 
-        private string GetValueOrDefault(string strType, IReadOnlyDictionary<string, string> dctParameters, string defaultValue)
+        private string GetValueOrDefault(string type, IReadOnlyDictionary<string, string> dctParameters, string defaultValue)
         {
-            if (dctParameters.TryGetValue(strType, out var strValueOverride))
+            if (dctParameters.TryGetValue(type, out var valueOverride))
             {
-                return strValueOverride;
+                return valueOverride;
             }
 
             return defaultValue;
@@ -3203,19 +3203,19 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <summary>
         /// Returns True if the there are multiple jobs in mDataPackagePeptideHitJobs for the dataset for the specified job
         /// </summary>
-        /// <param name="intJob"></param>
+        /// <param name="job"></param>
         /// <returns>True if this job's dataset has multiple jobs in mDataPackagePeptideHitJobs, otherwise False</returns>
         /// <remarks></remarks>
-        private bool JobFileRenameRequired(int intJob)
+        private bool JobFileRenameRequired(int job)
         {
-            if (!mDataPackagePeptideHitJobs.TryGetValue(intJob, out var dataPkgJob))
+            if (!mDataPackagePeptideHitJobs.TryGetValue(job, out var dataPkgJob))
                 return false;
 
-            var strDataset = dataPkgJob.Dataset;
+            var dataset = dataPkgJob.Dataset;
 
-            var intJobsForDataset = (from item in mDataPackagePeptideHitJobs where item.Value.Dataset == strDataset select item).ToList().Count;
+            var jobsForDataset = (from item in mDataPackagePeptideHitJobs where item.Value.Dataset == dataset select item).ToList().Count;
 
-            return intJobsForDataset > 1;
+            return jobsForDataset > 1;
         }
 
         private bool LookupDataPackagePeptideHitJobs()
@@ -3237,23 +3237,23 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 return false;
             }
 
-            var lstJobsToUse = ExtractPackedJobParameterList(clsAnalysisResourcesPRIDEConverter.JOB_PARAM_DATA_PACKAGE_PEPTIDE_HIT_JOBS);
+            var jobsToUse = ExtractPackedJobParameterList(clsAnalysisResourcesPRIDEConverter.JOB_PARAM_DATA_PACKAGE_PEPTIDE_HIT_JOBS);
 
-            if (lstJobsToUse.Count == 0)
+            if (jobsToUse.Count == 0)
             {
                 LogWarning("Packed job parameter " + clsAnalysisResourcesPRIDEConverter.JOB_PARAM_DATA_PACKAGE_PEPTIDE_HIT_JOBS +
                            " is empty; no jobs to process");
             }
             else
             {
-                // Populate mDataPackagePeptideHitJobs using the jobs in lstJobsToUse and dctDataPackagePeptideHitJobs
-                foreach (var strJob in lstJobsToUse)
+                // Populate mDataPackagePeptideHitJobs using the jobs in jobsToUse and dctDataPackagePeptideHitJobs
+                foreach (var job in jobsToUse)
                 {
-                    if (int.TryParse(strJob, out var intJob))
+                    if (int.TryParse(job, out var jobNumber))
                     {
-                        if (dctDataPackageJobs.TryGetValue(intJob, out var dataPkgJob))
+                        if (dctDataPackageJobs.TryGetValue(jobNumber, out var dataPkgJob))
                         {
-                            mDataPackagePeptideHitJobs.Add(intJob, dataPkgJob);
+                            mDataPackagePeptideHitJobs.Add(jobNumber, dataPkgJob);
                         }
                     }
                 }
@@ -3265,9 +3265,9 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <summary>
         /// Parse the PRIDEConverter console output file to determine the PRIDE Version
         /// </summary>
-        /// <param name="strConsoleOutputFilePath"></param>
+        /// <param name="consoleOutputFilePath"></param>
         /// <remarks></remarks>
-        private void ParseConsoleOutputFile(string strConsoleOutputFilePath)
+        private void ParseConsoleOutputFile(string consoleOutputFilePath)
         {
             // Example Console output:
             //
@@ -3291,11 +3291,11 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             try
             {
-                if (!File.Exists(strConsoleOutputFilePath))
+                if (!File.Exists(consoleOutputFilePath))
                 {
                     if (m_DebugLevel >= 4)
                     {
-                        LogDebug("Console output file not found: " + strConsoleOutputFilePath);
+                        LogDebug("Console output file not found: " + consoleOutputFilePath);
                     }
 
                     return;
@@ -3303,28 +3303,28 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 if (m_DebugLevel >= 4)
                 {
-                    LogDebug("Parsing file " + strConsoleOutputFilePath);
+                    LogDebug("Parsing file " + consoleOutputFilePath);
                 }
 
                 mConsoleOutputErrorMsg = string.Empty;
 
-                using (var srInFile = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var srInFile = new StreamReader(new FileStream(consoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     mConsoleOutputErrorMsg = string.Empty;
 
                     while (!srInFile.EndOfStream)
                     {
-                        var strLineIn = srInFile.ReadLine();
+                        var lineIn = srInFile.ReadLine();
 
-                        if (!string.IsNullOrWhiteSpace(strLineIn))
+                        if (!string.IsNullOrWhiteSpace(lineIn))
                         {
-                            if (strLineIn.ToLower().Contains(" error "))
+                            if (lineIn.ToLower().Contains(" error "))
                             {
                                 if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
                                 {
                                     mConsoleOutputErrorMsg = "Error running Pride Converter:";
                                 }
-                                mConsoleOutputErrorMsg += "; " + strLineIn;
+                                mConsoleOutputErrorMsg += "; " + lineIn;
                             }
                         }
                     }
@@ -3335,33 +3335,33 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    LogError("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    LogError("Error parsing console output file (" + consoleOutputFilePath + "): " + ex.Message);
                 }
             }
         }
 
         private CloseOutType ProcessJob(KeyValuePair<int, clsDataPackageJobInfo> kvJobInfo, udtFilterThresholdsType udtFilterThresholds,
-            clsAnalysisResults objAnalysisResults, string remoteTransferFolder, IReadOnlyDictionary<string, string> dctDatasetRawFilePaths,
+            clsAnalysisResults analysisResults, string remoteTransferFolder, IReadOnlyDictionary<string, string> dctDatasetRawFilePaths,
             IReadOnlyDictionary<string, string> dctTemplateParameters, bool assumeInstrumentDataUnpurged)
         {
-            bool blnSuccess;
+            bool success;
             var resultFiles = new clsResultFileContainer();
 
-            var intJob = kvJobInfo.Value.Job;
-            var strDataset = kvJobInfo.Value.Dataset;
+            var job = kvJobInfo.Value.Job;
+            var dataset = kvJobInfo.Value.Dataset;
 
-            if (mPreviousDatasetName != strDataset)
+            if (mPreviousDatasetName != dataset)
             {
-                TransferPreviousDatasetFiles(objAnalysisResults, remoteTransferFolder);
+                TransferPreviousDatasetFiles(analysisResults, remoteTransferFolder);
 
                 // Retrieve the dataset files for this dataset
-                mPreviousDatasetName = strDataset;
+                mPreviousDatasetName = dataset;
 
                 if (mCreatePrideXMLFiles && !mCreateMSGFReportFilesOnly)
                 {
                     // Create the .mzXML files if it is missing
-                    blnSuccess = CreateMzXMLFileIfMissing(strDataset, objAnalysisResults, dctDatasetRawFilePaths);
-                    if (!blnSuccess)
+                    success = CreateMzXMLFileIfMissing(dataset, analysisResults, dctDatasetRawFilePaths);
+                    if (!success)
                     {
                         return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                     }
@@ -3380,8 +3380,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             // Retrieve the PHRP files, MSGF+ results, and _dta.txt or .mzML.gz file for this job
             var filesCopied = new List<string>();
 
-            blnSuccess = RetrievePHRPFiles(intJob, strDataset, objAnalysisResults, remoteTransferFolder, filesCopied);
-            if (!blnSuccess)
+            success = RetrievePHRPFiles(job, dataset, analysisResults, remoteTransferFolder, filesCopied);
+            if (!success)
             {
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
@@ -3389,8 +3389,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             var searchedMzML = false;
             foreach (var copiedFile in filesCopied)
             {
-                if (copiedFile.EndsWith(DOT_MZML, StringComparison.InvariantCultureIgnoreCase) ||
-                    copiedFile.EndsWith(DOT_MZML_GZ, StringComparison.InvariantCultureIgnoreCase))
+                if (copiedFile.EndsWith(DOT_MZML, StringComparison.OrdinalIgnoreCase) ||
+                    copiedFile.EndsWith(DOT_MZML_GZ, StringComparison.OrdinalIgnoreCase))
                 {
                     searchedMzML = true;
                     break;
@@ -3401,9 +3401,9 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             if (mCreateMGFFiles && !searchedMzML)
             {
                 // Convert the _dta.txt file to .mgf files
-                blnSuccess = ConvertCDTAToMGF(kvJobInfo.Value, out var mgfPath);
+                success = ConvertCDTAToMGF(kvJobInfo.Value, out var mgfPath);
                 resultFiles.MGFFilePath = mgfPath;
-                if (!blnSuccess)
+                if (!success)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -3413,11 +3413,11 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 // Store the path to the _dta.txt or .mzML.gz file
                 if (searchedMzML)
                 {
-                    resultFiles.MGFFilePath = Path.Combine(m_WorkDir, strDataset + DOT_MZML_GZ);
+                    resultFiles.MGFFilePath = Path.Combine(m_WorkDir, dataset + DOT_MZML_GZ);
                 }
                 else
                 {
-                    resultFiles.MGFFilePath = Path.Combine(m_WorkDir, strDataset + "_dta.txt");
+                    resultFiles.MGFFilePath = Path.Combine(m_WorkDir, dataset + "_dta.txt");
                 }
 
                 if (!assumeInstrumentDataUnpurged && !searchedMzML && !File.Exists(resultFiles.MGFFilePath))
@@ -3435,13 +3435,13 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             {
                 m_message = string.Empty;
 
-                blnSuccess = UpdateMzIdFiles(kvJobInfo.Value, searchedMzML, out var mzIdFilePaths, dctTemplateParameters);
+                success = UpdateMzIdFiles(kvJobInfo.Value, searchedMzML, out var mzIdFilePaths, dctTemplateParameters);
 
-                if (!blnSuccess || mzIdFilePaths == null || mzIdFilePaths.Count == 0)
+                if (!success || mzIdFilePaths == null || mzIdFilePaths.Count == 0)
                 {
                     if (string.IsNullOrEmpty(m_message))
                     {
-                        LogError("UpdateMzIdFiles returned false for job " + intJob + ", dataset " + strDataset);
+                        LogError("UpdateMzIdFiles returned false for job " + job + ", dataset " + dataset);
                     }
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -3477,7 +3477,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 {
                     // Make sure it is capitalized correctly, then gzip it
 
-                    if (!string.Equals(pepXMLFile.Name, pepXmlFilename, StringComparison.InvariantCulture))
+                    if (!string.Equals(pepXMLFile.Name, pepXmlFilename, StringComparison.Ordinal))
                     {
                         pepXMLFile.MoveTo(pepXMLFile.FullName + ".tmp");
                         Thread.Sleep(50);
@@ -3510,29 +3510,29 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             {
                 // Create the .msgf-report.xml file for this job
 
-                blnSuccess = CreateMSGFReportFile(intJob, strDataset, udtFilterThresholds, out var strPrideReportXMLFilePath);
-                if (!blnSuccess)
+                success = CreateMSGFReportFile(job, dataset, udtFilterThresholds, out var prideReportXMLFilePath);
+                if (!success)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                AddToListIfNew(mPreviousDatasetFilesToDelete, strPrideReportXMLFilePath);
+                AddToListIfNew(mPreviousDatasetFilesToDelete, prideReportXMLFilePath);
 
                 if (!mCreateMSGFReportFilesOnly)
                 {
                     // Create the .msgf-Pride.xml file for this job
-                    blnSuccess = CreatePrideXMLFile(intJob, strDataset, strPrideReportXMLFilePath, out var prideXmlPath);
+                    success = CreatePrideXMLFile(job, dataset, prideReportXMLFilePath, out var prideXmlPath);
                     resultFiles.PrideXmlFilePath = prideXmlPath;
-                    if (!blnSuccess)
+                    if (!success)
                     {
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
                 }
             }
 
-            blnSuccess = AppendToPXFileInfo(kvJobInfo.Value, dctDatasetRawFilePaths, resultFiles);
+            success = AppendToPXFileInfo(kvJobInfo.Value, dctDatasetRawFilePaths, resultFiles);
 
-            if (blnSuccess)
+            if (success)
             {
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
@@ -3586,32 +3586,32 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             try
             {
-                var strTemplateFileName = clsAnalysisResourcesPRIDEConverter.GetPXSubmissionTemplateFilename(m_jobParams, WarnIfJobParamMissing: false);
-                var strTemplateFilePath = Path.Combine(m_WorkDir, strTemplateFileName);
+                var templateFileName = clsAnalysisResourcesPRIDEConverter.GetPXSubmissionTemplateFilename(m_jobParams, WarnIfJobParamMissing: false);
+                var templateFilePath = Path.Combine(m_WorkDir, templateFileName);
 
-                if (!File.Exists(strTemplateFilePath))
+                if (!File.Exists(templateFilePath))
                 {
                     return dctParameters;
                 }
 
-                using (var srTemplateFile = new StreamReader(new FileStream(strTemplateFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using (var srTemplateFile = new StreamReader(new FileStream(templateFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
                     while (!srTemplateFile.EndOfStream)
                     {
-                        var strLineIn = srTemplateFile.ReadLine();
+                        var lineIn = srTemplateFile.ReadLine();
 
-                        if (string.IsNullOrEmpty(strLineIn))
+                        if (string.IsNullOrEmpty(lineIn))
                             continue;
 
-                        if (!strLineIn.StartsWith("MTD"))
+                        if (!lineIn.StartsWith("MTD"))
                             continue;
 
-                        var lstColumns = strLineIn.Split(new[] { '\t' }, 3).ToList();
+                        var columns = lineIn.Split(new[] { '\t' }, 3).ToList();
 
-                        if (lstColumns.Count < 3 || string.IsNullOrEmpty(lstColumns[1]))
+                        if (columns.Count < 3 || string.IsNullOrEmpty(columns[1]))
                             continue;
 
-                        var keyName = lstColumns[1];
+                        var keyName = columns[1];
 
                         // Automatically rename parameters updated from v1.x to v2.x of the .px file format
                         if (dctKeyNameOverrides.TryGetValue(keyName, out var keyNameNew))
@@ -3621,7 +3621,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                         if (!string.Equals(keyName, OBSOLETE_FIELD_FLAG) && !dctParameters.ContainsKey(keyName))
                         {
-                            dctParameters.Add(keyName, lstColumns[2]);
+                            dctParameters.Add(keyName, columns[2]);
                         }
                     }
                 }
@@ -3635,67 +3635,67 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             return dctParameters;
         }
 
-        private clsSampleMetadata.udtCvParamInfoType ReadWriteCvParam(XmlTextReader objXmlReader, XmlTextWriter objXmlWriter,
-            Stack<int> lstElementCloseDepths)
+        private clsSampleMetadata.udtCvParamInfoType ReadWriteCvParam(XmlReader xmlReader, XmlWriter writer,
+            Stack<int> elementCloseDepths)
         {
             var udtCvParam = new clsSampleMetadata.udtCvParamInfoType();
             udtCvParam.Clear();
 
-            objXmlWriter.WriteStartElement(objXmlReader.Name);
+            writer.WriteStartElement(xmlReader.Name);
 
-            if (objXmlReader.HasAttributes)
+            if (xmlReader.HasAttributes)
             {
-                objXmlReader.MoveToFirstAttribute();
+                xmlReader.MoveToFirstAttribute();
                 do
                 {
-                    objXmlWriter.WriteAttributeString(objXmlReader.Name, objXmlReader.Value);
+                    writer.WriteAttributeString(xmlReader.Name, xmlReader.Value);
 
-                    switch (objXmlReader.Name)
+                    switch (xmlReader.Name)
                     {
                         case "accession":
-                            udtCvParam.Accession = objXmlReader.Value;
+                            udtCvParam.Accession = xmlReader.Value;
                             break;
                         case "cvRef":
-                            udtCvParam.CvRef = objXmlReader.Value;
+                            udtCvParam.CvRef = xmlReader.Value;
                             break;
                         case "name":
-                            udtCvParam.Name = objXmlReader.Value;
+                            udtCvParam.Name = xmlReader.Value;
                             break;
                         case "value":
-                            udtCvParam.Value = objXmlReader.Value;
+                            udtCvParam.Value = xmlReader.Value;
                             break;
                         case "unitCvRef":
-                            udtCvParam.unitCvRef = objXmlReader.Value;
+                            udtCvParam.unitCvRef = xmlReader.Value;
                             break;
                         case "unitName":
-                            udtCvParam.unitName = objXmlReader.Value;
+                            udtCvParam.unitName = xmlReader.Value;
                             break;
                         case "unitAccession":
-                            udtCvParam.unitAccession = objXmlReader.Value;
+                            udtCvParam.unitAccession = xmlReader.Value;
                             break;
                     }
-                } while (objXmlReader.MoveToNextAttribute());
+                } while (xmlReader.MoveToNextAttribute());
 
-                lstElementCloseDepths.Push(objXmlReader.Depth);
+                elementCloseDepths.Push(xmlReader.Depth);
             }
-            else if (objXmlReader.IsEmptyElement)
+            else if (xmlReader.IsEmptyElement)
             {
-                objXmlWriter.WriteEndElement();
+                writer.WriteEndElement();
             }
 
             return udtCvParam;
         }
 
-        private bool RetrievePHRPFiles(int intJob, string strDataset, clsAnalysisResults objAnalysisResults, string remoteTransferFolder,
+        private bool RetrievePHRPFiles(int job, string dataset, clsAnalysisResults analysisResults, string remoteTransferFolder,
             ICollection<string> filesCopied)
         {
-            var lstFilesToCopy = new List<string>();
+            var filesToCopy = new List<string>();
 
             try
             {
-                var strJobInfoFilePath = clsDataPackageFileHandler.GetJobInfoFilePath(intJob, m_WorkDir);
+                var jobInfoFilePath = clsDataPackageFileHandler.GetJobInfoFilePath(job, m_WorkDir);
 
-                if (!File.Exists(strJobInfoFilePath))
+                if (!File.Exists(jobInfoFilePath))
                 {
                     // Assume all of the files already exist
                     return true;
@@ -3703,11 +3703,11 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 // Read the contents of the JobInfo file
                 // It will be empty if no PHRP files are required
-                using (var srInFile = new StreamReader(new FileStream(strJobInfoFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using (var srInFile = new StreamReader(new FileStream(jobInfoFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
                     while (!srInFile.EndOfStream)
                     {
-                        lstFilesToCopy.Add(srInFile.ReadLine());
+                        filesToCopy.Add(srInFile.ReadLine());
                     }
                 }
 
@@ -3717,12 +3717,12 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 // If the same dataset has multiple jobs then we might overwrite existing files;
                 //   that's OK since results files that we care about will have been auto-renamed based on the call to JobFileRenameRequired
 
-                foreach (var sourceFilePath in lstFilesToCopy)
+                foreach (var sourceFilePath in filesToCopy)
                 {
                     if (sourceFilePath.StartsWith(clsAnalysisResources.MYEMSL_PATH_FLAG))
                     {
                         // Make sure the myEMSLUtilities object knows about this dataset
-                        m_MyEMSLUtilities.AddDataset(strDataset);
+                        m_MyEMSLUtilities.AddDataset(dataset);
                         DatasetInfoBase.ExtractMyEMSLFileID(sourceFilePath, out var cleanFilePath);
 
                         var fiSourceFileClean = new FileInfo(cleanFilePath);
@@ -3741,7 +3741,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     if (!fiSourceFile.Exists)
                     {
                         fileCountNotFound += 1;
-                        LogError(string.Format("File not found for job {0}: {1}", intJob, sourceFilePath));
+                        LogError(string.Format("File not found for job {0}: {1}", job, sourceFilePath));
                         continue;
                     }
 
@@ -3750,8 +3750,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     var fiLocalFile = new FileInfo(targetFilePath);
                     var alreadyCopiedToTransferDirectory = false;
 
-                    if (fiSourceFile.Name.EndsWith(DOT_MZML, StringComparison.InvariantCultureIgnoreCase) ||
-                        fiSourceFile.Name.EndsWith(DOT_MZML_GZ, StringComparison.InvariantCultureIgnoreCase))
+                    if (fiSourceFile.Name.EndsWith(DOT_MZML, StringComparison.OrdinalIgnoreCase) ||
+                        fiSourceFile.Name.EndsWith(DOT_MZML_GZ, StringComparison.OrdinalIgnoreCase))
                     {
                         // mzML files can be large
                         // If the file already exists in the transfer directory and the sizes match, do not recopy
@@ -3775,7 +3775,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     else
                     {
                         // Retrieve the file, allowing for up to 3 attempts (uses CopyFileUsingLocks)
-                        objAnalysisResults.CopyFileWithRetry(fiSourceFile.FullName, fiLocalFile.FullName, true);
+                        analysisResults.CopyFileWithRetry(fiSourceFile.FullName, fiLocalFile.FullName, true);
 
                         if (!fiLocalFile.Exists)
                         {
@@ -3785,22 +3785,22 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                         filesCopied.Add(fiSourceFile.Name);
 
-                        var blnUnzipped = false;
+                        var unzipped = false;
 
                         if (fiLocalFile.Extension.ToLower() == ".zip")
                         {
                             // Decompress the .zip file
                             m_IonicZipTools.UnzipFile(fiLocalFile.FullName, m_WorkDir);
-                            blnUnzipped = true;
+                            unzipped = true;
                         }
                         else if (fiLocalFile.Extension.ToLower() == clsAnalysisResources.DOT_GZ_EXTENSION.ToLower())
                         {
                             // Decompress the .gz file
                             m_IonicZipTools.GUnzipFile(fiLocalFile.FullName, m_WorkDir);
-                            blnUnzipped = true;
+                            unzipped = true;
                         }
 
-                        if (blnUnzipped)
+                        if (unzipped)
                         {
                             foreach (var kvUnzippedFile in m_IonicZipTools.MostRecentUnzippedFiles)
                             {
@@ -3842,54 +3842,54 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
         }
 
-        private bool RetrieveStoragePathInfoTargetFile(string strStoragePathInfoFilePath, clsAnalysisResults objAnalysisResults,
-            out string strDestPath)
+        private bool RetrieveStoragePathInfoTargetFile(string storagePathInfoFilePath, clsAnalysisResults analysisResults,
+            out string destPath)
         {
-            return RetrieveStoragePathInfoTargetFile(strStoragePathInfoFilePath, objAnalysisResults, IsFolder: false, strDestPath: out strDestPath);
+            return RetrieveStoragePathInfoTargetFile(storagePathInfoFilePath, analysisResults, IsFolder: false, destPath: out destPath);
         }
 
-        private bool RetrieveStoragePathInfoTargetFile(string strStoragePathInfoFilePath, clsAnalysisResults objAnalysisResults, bool IsFolder,
-            out string strDestPath)
+        private bool RetrieveStoragePathInfoTargetFile(string storagePathInfoFilePath, clsAnalysisResults analysisResults, bool IsFolder,
+            out string destPath)
         {
-            var strSourceFilePath = string.Empty;
+            var sourceFilePath = string.Empty;
 
-            strDestPath = string.Empty;
+            destPath = string.Empty;
 
             try
             {
-                if (!File.Exists(strStoragePathInfoFilePath))
+                if (!File.Exists(storagePathInfoFilePath))
                 {
                     var msg = "StoragePathInfo file not found";
-                    LogError(msg + ": " + strStoragePathInfoFilePath);
+                    LogError(msg + ": " + storagePathInfoFilePath);
                     m_message = msg;
                     return false;
                 }
 
-                using (var srInfoFile = new StreamReader(new FileStream(strStoragePathInfoFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var srInfoFile = new StreamReader(new FileStream(storagePathInfoFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     if (!srInfoFile.EndOfStream)
                     {
-                        strSourceFilePath = srInfoFile.ReadLine();
+                        sourceFilePath = srInfoFile.ReadLine();
                     }
                 }
 
-                if (string.IsNullOrEmpty(strSourceFilePath))
+                if (string.IsNullOrEmpty(sourceFilePath))
                 {
                     var msg = "StoragePathInfo file was empty";
-                    LogError(msg + ": " + strStoragePathInfoFilePath);
+                    LogError(msg + ": " + storagePathInfoFilePath);
                     m_message = msg;
                     return false;
                 }
 
-                strDestPath = Path.Combine(m_WorkDir, Path.GetFileName(strSourceFilePath));
+                destPath = Path.Combine(m_WorkDir, Path.GetFileName(sourceFilePath));
 
                 if (IsFolder)
                 {
-                    objAnalysisResults.CopyDirectory(strSourceFilePath, strDestPath, overwrite: true);
+                    analysisResults.CopyDirectory(sourceFilePath, destPath, overwrite: true);
                 }
                 else
                 {
-                    objAnalysisResults.CopyFileWithRetry(strSourceFilePath, strDestPath, overwrite: true);
+                    analysisResults.CopyFileWithRetry(sourceFilePath, destPath, overwrite: true);
                 }
             }
             catch (Exception ex)
@@ -3901,23 +3901,23 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             return true;
         }
 
-        private bool RunPrideConverter(int intJob, string strDataset, string strMsgfResultsFilePath, string strMzXMLFilePath, string strPrideReportFilePath)
+        private bool RunPrideConverter(int job, string dataset, string msgfResultsFilePath, string mzXMLFilePath, string prideReportFilePath)
         {
-            if (string.IsNullOrEmpty(strMsgfResultsFilePath))
+            if (string.IsNullOrEmpty(msgfResultsFilePath))
             {
-                LogError("strMsgfResultsFilePath has not been defined; unable to continue");
+                LogError("msgfResultsFilePath has not been defined; unable to continue");
                 return false;
             }
 
-            if (string.IsNullOrEmpty(strMzXMLFilePath))
+            if (string.IsNullOrEmpty(mzXMLFilePath))
             {
-                LogError("strMzXMLFilePath has not been defined; unable to continue");
+                LogError("mzXMLFilePath has not been defined; unable to continue");
                 return false;
             }
 
-            if (string.IsNullOrEmpty(strPrideReportFilePath))
+            if (string.IsNullOrEmpty(prideReportFilePath))
             {
-                LogError("strPrideReportFilePath has not been defined; unable to continue");
+                LogError("prideReportFilePath has not been defined; unable to continue");
                 return false;
             }
 
@@ -3927,7 +3927,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             if (m_DebugLevel >= 1)
             {
-                LogMessage("Running PrideConverter on " + Path.GetFileName(strMsgfResultsFilePath));
+                LogMessage("Running PrideConverter on " + Path.GetFileName(msgfResultsFilePath));
             }
 
             m_StatusTools.CurrentOperation = "Running PrideConverter";
@@ -3936,13 +3936,13 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             var cmdStr = "-jar " + PossiblyQuotePath(mPrideConverterProgLoc);
 
             // QC_Shew_12_02_Run-03_18Jul12_Roc_12-04-08.msgf
-            cmdStr += " -converter -mode convert -engine msgf -sourcefile " + PossiblyQuotePath(strMsgfResultsFilePath);
+            cmdStr += " -converter -mode convert -engine msgf -sourcefile " + PossiblyQuotePath(msgfResultsFilePath);
 
             // QC_Shew_12_02_Run-03_18Jul12_Roc_12-04-08.mzXML
-            cmdStr += " -spectrafile " + PossiblyQuotePath(strMzXMLFilePath);
+            cmdStr += " -spectrafile " + PossiblyQuotePath(mzXMLFilePath);
 
             // QC_Shew_12_02_Run-03_18Jul12_Roc_12-04-08.msgf-report.xml
-            cmdStr += " -reportfile " + PossiblyQuotePath(strPrideReportFilePath);
+            cmdStr += " -reportfile " + PossiblyQuotePath(prideReportFilePath);
 
             cmdStr += " -reportOnlyIdentifiedSpectra";
             cmdStr += " -debug";
@@ -3957,7 +3957,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             mCmdRunner.ConsoleOutputFilePath = Path.Combine(m_WorkDir, PRIDEConverter_CONSOLE_OUTPUT);
             mCmdRunner.WorkDir = m_WorkDir;
 
-            var blnSuccess = mCmdRunner.RunProgram(mJavaProgLoc, cmdStr, "PrideConverter", true);
+            var success = mCmdRunner.RunProgram(mJavaProgLoc, cmdStr, "PrideConverter", true);
 
             // Assure that the console output file has been parsed
             ParseConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath);
@@ -3975,12 +3975,12 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 }
             }
 
-            if (!blnSuccess)
+            if (!success)
             {
-                LogError("Error running PrideConverter, dataset " + strDataset + ", job " + intJob);
+                LogError("Error running PrideConverter, dataset " + dataset + ", job " + job);
             }
 
-            return blnSuccess;
+            return success;
         }
 
         private void StoreInstrumentInfo(clsDataPackageDatasetInfo datasetInfo)
@@ -3995,23 +3995,23 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
         private void StoreInstrumentInfo(string instrumentGroup, string instrumentName)
         {
-            if (mInstrumentGroupsStored.TryGetValue(instrumentGroup, out var lstInstruments))
+            if (mInstrumentGroupsStored.TryGetValue(instrumentGroup, out var instruments))
             {
-                if (!lstInstruments.Contains(instrumentName))
+                if (!instruments.Contains(instrumentName))
                 {
-                    lstInstruments.Add(instrumentName);
+                    instruments.Add(instrumentName);
                 }
             }
             else
             {
-                lstInstruments = new List<string> { instrumentName };
-                mInstrumentGroupsStored.Add(instrumentGroup, lstInstruments);
+                instruments = new List<string> { instrumentName };
+                mInstrumentGroupsStored.Add(instrumentGroup, instruments);
             }
         }
 
-        private void StoreMzIdSampleInfo(string strMzIdFilePath, clsSampleMetadata sampleMetadata)
+        private void StoreMzIdSampleInfo(string mzIdFilePath, clsSampleMetadata sampleMetadata)
         {
-            var fiFile = new FileInfo(strMzIdFilePath);
+            var fiFile = new FileInfo(mzIdFilePath);
 
             if (!mMzIdSampleInfo.ContainsKey(fiFile.Name))
             {
@@ -4022,12 +4022,12 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <summary>
         /// Stores the tool version info in the database
         /// </summary>
-        /// <param name="strPrideConverterProgLoc"></param>
+        /// <param name="prideConverterProgLoc"></param>
         /// <returns></returns>
         /// <remarks></remarks>
-        private bool StoreToolVersionInfo(string strPrideConverterProgLoc)
+        private bool StoreToolVersionInfo(string prideConverterProgLoc)
         {
-            var strToolVersionInfo = string.Empty;
+            var toolVersionInfo = string.Empty;
 
             if (m_DebugLevel >= 2)
             {
@@ -4039,13 +4039,13 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             if (mCreatePrideXMLFiles)
             {
-                var fiPrideConverter = new FileInfo(strPrideConverterProgLoc);
+                var fiPrideConverter = new FileInfo(prideConverterProgLoc);
                 if (!fiPrideConverter.Exists)
                 {
                     try
                     {
-                        strToolVersionInfo = "Unknown";
-                        return SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>());
+                        toolVersionInfo = "Unknown";
+                        return SetStepTaskToolVersion(toolVersionInfo, new List<FileInfo>());
                     }
                     catch (Exception ex)
                     {
@@ -4056,14 +4056,14 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 }
 
                 // Run the PRIDE Converter using the -version switch to determine its version
-                strToolVersionInfo = GetPrideConverterVersion(fiPrideConverter.FullName);
+                toolVersionInfo = GetPrideConverterVersion(fiPrideConverter.FullName);
 
                 ioToolFiles.Add(fiPrideConverter);
             }
             else
             {
                 // Lookup the version of the AnalysisManagerPrideConverter plugin
-                if (!StoreToolVersionInfoForLoadedAssembly(ref strToolVersionInfo, "AnalysisManagerPRIDEConverterPlugIn", includeRevision: false))
+                if (!StoreToolVersionInfoForLoadedAssembly(ref toolVersionInfo, "AnalysisManagerPRIDEConverterPlugIn", includeRevision: false))
                 {
                     return false;
                 }
@@ -4073,7 +4073,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, saveToolVersionTextFile: false);
+                return SetStepTaskToolVersion(toolVersionInfo, ioToolFiles, saveToolVersionTextFile: false);
             }
             catch (Exception ex)
             {
@@ -4082,37 +4082,37 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
         }
 
-        private void TransferPreviousDatasetFiles(clsAnalysisResults objAnalysisResults, string remoteTransferFolder)
+        private void TransferPreviousDatasetFiles(clsAnalysisResults analysisResults, string remoteTransferFolder)
         {
             // Delete the dataset files for the previous dataset
-            var lstFilesToRetry = new List<string>();
+            var filesToRetry = new List<string>();
 
             if (mPreviousDatasetFilesToCopy.Count > 0)
             {
-                lstFilesToRetry.Clear();
+                filesToRetry.Clear();
 
                 try
                 {
                     // Copy the files we want to keep to the remote Transfer Directory
-                    foreach (var strSrcFilePath in mPreviousDatasetFilesToCopy)
+                    foreach (var srcFilePath in mPreviousDatasetFilesToCopy)
                     {
-                        if (string.IsNullOrWhiteSpace(strSrcFilePath))
+                        if (string.IsNullOrWhiteSpace(srcFilePath))
                             continue;
 
-                        var strTargetFilePath = Path.Combine(remoteTransferFolder, Path.GetFileName(strSrcFilePath));
+                        var targetFilePath = Path.Combine(remoteTransferFolder, Path.GetFileName(srcFilePath));
 
-                        if (!File.Exists(strSrcFilePath))
+                        if (!File.Exists(srcFilePath))
                             continue;
 
                         try
                         {
-                            objAnalysisResults.CopyFileWithRetry(strSrcFilePath, strTargetFilePath, true);
-                            AddToListIfNew(mPreviousDatasetFilesToDelete, strSrcFilePath);
+                            analysisResults.CopyFileWithRetry(srcFilePath, targetFilePath, true);
+                            AddToListIfNew(mPreviousDatasetFilesToDelete, srcFilePath);
                         }
                         catch (Exception ex)
                         {
                             LogError("Exception copying file to transfer directory", ex);
-                            lstFilesToRetry.Add(strSrcFilePath);
+                            filesToRetry.Add(srcFilePath);
                         }
                     }
                 }
@@ -4120,16 +4120,16 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 {
                     // Folder creation error
                     LogError("Exception copying files to " + remoteTransferFolder, ex);
-                    lstFilesToRetry.AddRange(mPreviousDatasetFilesToCopy);
+                    filesToRetry.AddRange(mPreviousDatasetFilesToCopy);
                 }
 
                 mPreviousDatasetFilesToCopy.Clear();
 
-                if (lstFilesToRetry.Count > 0)
+                if (filesToRetry.Count > 0)
                 {
-                    mPreviousDatasetFilesToCopy.AddRange(lstFilesToRetry);
+                    mPreviousDatasetFilesToCopy.AddRange(filesToRetry);
 
-                    foreach (var item in lstFilesToRetry)
+                    foreach (var item in filesToRetry)
                     {
                         if (mPreviousDatasetFilesToDelete.Contains(item, StringComparer.OrdinalIgnoreCase))
                         {
@@ -4141,7 +4141,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             if (mPreviousDatasetFilesToDelete.Count > 0)
             {
-                lstFilesToRetry.Clear();
+                filesToRetry.Clear();
 
                 foreach (var item in mPreviousDatasetFilesToDelete)
                 {
@@ -4154,22 +4154,22 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     }
                     catch (Exception)
                     {
-                        lstFilesToRetry.Add(item);
+                        filesToRetry.Add(item);
                     }
                 }
 
                 mPreviousDatasetFilesToDelete.Clear();
 
-                if (lstFilesToRetry.Count > 0)
+                if (filesToRetry.Count > 0)
                 {
-                    mPreviousDatasetFilesToDelete.AddRange(lstFilesToRetry);
+                    mPreviousDatasetFilesToDelete.AddRange(filesToRetry);
                 }
             }
         }
 
-        private eMSGFReportXMLFileLocation UpdateMSGFReportXMLFileLocation(eMSGFReportXMLFileLocation eFileLocation, string strElementName, bool blnInsideMzDataDescription)
+        private eMSGFReportXMLFileLocation UpdateMSGFReportXMLFileLocation(eMSGFReportXMLFileLocation eFileLocation, string elementName, bool insideMzDataDescription)
         {
-            switch (strElementName)
+            switch (elementName)
             {
                 case "SearchResultIdentifier":
                     eFileLocation = eMSGFReportXMLFileLocation.SearchResultIdentifier;
@@ -4181,19 +4181,19 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     eFileLocation = eMSGFReportXMLFileLocation.Protocol;
                     break;
                 case "admin":
-                    if (blnInsideMzDataDescription)
+                    if (insideMzDataDescription)
                     {
                         eFileLocation = eMSGFReportXMLFileLocation.MzDataAdmin;
                     }
                     break;
                 case "instrument":
-                    if (blnInsideMzDataDescription)
+                    if (insideMzDataDescription)
                     {
                         eFileLocation = eMSGFReportXMLFileLocation.MzDataInstrument;
                     }
                     break;
                 case "dataProcessing":
-                    if (blnInsideMzDataDescription)
+                    if (insideMzDataDescription)
                     {
                         eFileLocation = eMSGFReportXMLFileLocation.MzDataDataProcessing;
                     }
@@ -4275,16 +4275,16 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 // For split FASTA files each job step should have a custom .FASTA file, but we're ignoring that fact for now
 
                 var success = false;
-                string strMzIDFilePath;
+                string mzIDFilePath;
 
                 if (dataPkgJob.NumberOfClonedSteps > 0)
                 {
                     for (var splitFastaResultID = 1; splitFastaResultID <= dataPkgJob.NumberOfClonedSteps; splitFastaResultID++)
                     {
-                        success = UpdateMzIdFile(dataPkgJob.Job, dataPkgJob.Dataset, searchedMzML, splitFastaResultID, sampleMetadata, out strMzIDFilePath);
+                        success = UpdateMzIdFile(dataPkgJob.Job, dataPkgJob.Dataset, searchedMzML, splitFastaResultID, sampleMetadata, out mzIDFilePath);
                         if (success)
                         {
-                            mzIdFilePaths.Add(strMzIDFilePath);
+                            mzIdFilePaths.Add(mzIDFilePath);
                         }
                         else
                         {
@@ -4294,10 +4294,10 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 }
                 else
                 {
-                    success = UpdateMzIdFile(dataPkgJob.Job, dataPkgJob.Dataset, searchedMzML, 0, sampleMetadata, out strMzIDFilePath);
+                    success = UpdateMzIdFile(dataPkgJob.Job, dataPkgJob.Dataset, searchedMzML, 0, sampleMetadata, out mzIDFilePath);
                     if (success)
                     {
-                        mzIdFilePaths.Add(strMzIDFilePath);
+                        mzIdFilePaths.Add(mzIDFilePath);
                     }
                 }
 
@@ -4330,20 +4330,20 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <param name="searchedMzML">True if analysis job used a .mzML file (though we track .mzml.gz files with this class)</param>
         /// <param name="splitFastaResultID">For SplitFasta jobs, the part number being processed; 0 for non-SplitFasta jobs</param>
         /// <param name="sampleMetadata">Sample Metadata</param>
-        /// <param name="strMzIDFilePath">Output parameter: path to the .mzid file being processed</param>
+        /// <param name="mzIDFilePath">Output parameter: path to the .mzid file being processed</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks></remarks>
-        private bool UpdateMzIdFile(int dataPkgJob, string dataPkgDataset, bool searchedMzML, int splitFastaResultID, clsSampleMetadata sampleMetadata, out string strMzIDFilePath)
+        private bool UpdateMzIdFile(int dataPkgJob, string dataPkgDataset, bool searchedMzML, int splitFastaResultID, clsSampleMetadata sampleMetadata, out string mzIDFilePath)
         {
             var readModAccession = false;
             var readingSpecificityRules = false;
 
-            var lstAttributeOverride = new Dictionary<string, string>();
+            var attributeOverride = new Dictionary<string, string>();
 
-            var lstElementCloseDepths = new Stack<int>();
+            var elementCloseDepths = new Stack<int>();
 
             var eFileLocation = eMzIDXMLFileLocation.Header;
-            var lstRecentElements = new Queue<string>();
+            var recentElements = new Queue<string>();
 
             try
             {
@@ -4355,79 +4355,79 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 }
 
                 // First look for a job-specific version of the .mzid file
-                var strSourceFileName = "Job" + dataPkgJob + "_" + dataPkgDataset + "_msgfplus" + filePartText + ".mzid";
-                strMzIDFilePath = Path.Combine(m_WorkDir, strSourceFileName);
+                var sourceFileName = "Job" + dataPkgJob + "_" + dataPkgDataset + "_msgfplus" + filePartText + ".mzid";
+                mzIDFilePath = Path.Combine(m_WorkDir, sourceFileName);
 
-                if (!File.Exists(strMzIDFilePath))
+                if (!File.Exists(mzIDFilePath))
                 {
                     // Job-specific version not found
                     // Look for one that simply starts with the dataset name
-                    strSourceFileName = dataPkgDataset + "_msgfplus" + filePartText + ".mzid";
-                    strMzIDFilePath = Path.Combine(m_WorkDir, strSourceFileName);
+                    sourceFileName = dataPkgDataset + "_msgfplus" + filePartText + ".mzid";
+                    mzIDFilePath = Path.Combine(m_WorkDir, sourceFileName);
 
-                    if (!File.Exists(strMzIDFilePath))
+                    if (!File.Exists(mzIDFilePath))
                     {
-                        LogError("MzID file not found for job " + dataPkgJob + ": " + strSourceFileName);
+                        LogError("MzID file not found for job " + dataPkgJob + ": " + sourceFileName);
                         return false;
                     }
                 }
 
-                AddToListIfNew(mPreviousDatasetFilesToDelete, strMzIDFilePath);
-                AddToListIfNew(mPreviousDatasetFilesToDelete, strMzIDFilePath + DOT_GZ);
+                AddToListIfNew(mPreviousDatasetFilesToDelete, mzIDFilePath);
+                AddToListIfNew(mPreviousDatasetFilesToDelete, mzIDFilePath + DOT_GZ);
 
-                var strUpdatedFilePathTemp = strMzIDFilePath + ".tmp";
+                var updatedFilePathTemp = mzIDFilePath + ".tmp";
                 var replaceOriginal = false;
 
                 // Important: instantiate the XmlTextWriter using an instance of the UTF8Encoding class where the byte order mark (BOM) is not emitted
                 // The ProteomeXchange import pipeline breaks if the .mzid files have the BOM at the start of the file
                 // Note that the following Using command will not work if the .mzid file has an encoding string of <?xml version="1.0" encoding="Cp1252"?>
-                // using (var objXmlReader = new XmlTextReader(new FileStream(strMzIDFilePath, FileMode.Open, FileAccess.Read)))
+                // using (var xmlReader = new XmlTextReader(new FileStream(mzIDFilePath, FileMode.Open, FileAccess.Read)))
                 // Thus, we instead first instantiate a streamreader using explicit encodings
                 // Then instantiate the XmlTextReader
-                using (var objXmlWriter = new XmlTextWriter(new FileStream(strUpdatedFilePathTemp, FileMode.Create, FileAccess.Write, FileShare.Read), new UTF8Encoding(false)))
-                using (var srSourceFile = new StreamReader(new FileStream(strMzIDFilePath, FileMode.Open, FileAccess.Read, FileShare.Read), Encoding.GetEncoding("ISO-8859-1")))
-                using (var objXmlReader = new XmlTextReader(srSourceFile))
+                using (var writer = new XmlTextWriter(new FileStream(updatedFilePathTemp, FileMode.Create, FileAccess.Write, FileShare.Read), new UTF8Encoding(false)))
+                using (var srSourceFile = new StreamReader(new FileStream(mzIDFilePath, FileMode.Open, FileAccess.Read, FileShare.Read), Encoding.GetEncoding("ISO-8859-1")))
+                using (var xmlReader = new XmlTextReader(srSourceFile))
                 {
-                    objXmlWriter.Formatting = Formatting.Indented;
-                    objXmlWriter.Indentation = 2;
+                    writer.Formatting = Formatting.Indented;
+                    writer.Indentation = 2;
 
-                    objXmlWriter.WriteStartDocument();
+                    writer.WriteStartDocument();
 
-                    while (objXmlReader.Read())
+                    while (xmlReader.Read())
                     {
-                        switch (objXmlReader.NodeType)
+                        switch (xmlReader.NodeType)
                         {
                             case XmlNodeType.Whitespace:
                                 break;
                             // Skip whitespace since the writer should be auto-formatting things
-                            // objXmlWriter.WriteWhitespace(objXmlReader.Value)
+                            // writer.WriteWhitespace(xmlReader.Value)
 
                             case XmlNodeType.Comment:
-                                objXmlWriter.WriteComment(objXmlReader.Value);
+                                writer.WriteComment(xmlReader.Value);
 
                                 break;
                             case XmlNodeType.Element:
                                 // Start element
 
-                                if (lstRecentElements.Count > 10)
-                                    lstRecentElements.Dequeue();
-                                lstRecentElements.Enqueue("Element " + objXmlReader.Name);
+                                if (recentElements.Count > 10)
+                                    recentElements.Dequeue();
+                                recentElements.Enqueue("Element " + xmlReader.Name);
 
-                                while (lstElementCloseDepths.Count > 0 && lstElementCloseDepths.Peek() > objXmlReader.Depth)
+                                while (elementCloseDepths.Count > 0 && elementCloseDepths.Peek() > xmlReader.Depth)
                                 {
-                                    lstElementCloseDepths.Pop();
+                                    elementCloseDepths.Pop();
 
-                                    objXmlWriter.WriteEndElement();
+                                    writer.WriteEndElement();
                                 }
 
-                                eFileLocation = UpdateMZidXMLFileLocation(eFileLocation, objXmlReader.Name);
+                                eFileLocation = UpdateMZidXMLFileLocation(eFileLocation, xmlReader.Name);
 
                                 var nodeWritten = false;
                                 var skipNode = false;
 
-                                lstAttributeOverride.Clear();
+                                attributeOverride.Clear();
 
-                                switch (objXmlReader.Name)
+                                switch (xmlReader.Name)
                                 {
                                     case "SpectraData":
                                         if (searchedMzML)
@@ -4439,19 +4439,19 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                         else
                                         {
                                             // Override the location and name attributes for this node
-                                            string strSpectraDataFilename;
+                                            string spectraDataFilename;
 
                                             if (mCreateMGFFiles)
                                             {
-                                                strSpectraDataFilename = dataPkgDataset + ".mgf";
+                                                spectraDataFilename = dataPkgDataset + ".mgf";
                                             }
                                             else
                                             {
-                                                strSpectraDataFilename = dataPkgDataset + "_dta.txt";
+                                                spectraDataFilename = dataPkgDataset + "_dta.txt";
                                             }
 
-                                            lstAttributeOverride.Add("location", "C:\\DMS_WorkDir\\" + strSpectraDataFilename);
-                                            lstAttributeOverride.Add("name", strSpectraDataFilename);
+                                            attributeOverride.Add("location", "C:\\DMS_WorkDir\\" + spectraDataFilename);
+                                            attributeOverride.Add("name", spectraDataFilename);
                                         }
 
                                         break;
@@ -4466,29 +4466,29 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                             // For .mgf files,     use <cvParam accession="MS:1001062" cvRef="PSI-MS" name="Mascot MGF file"/>
                                             // For _dta.txt files, use <cvParam accession="MS:1001369" cvRef="PSI-MS" name="text file"/>
 
-                                            string strAccession;
-                                            string strFormatName;
+                                            string accession;
+                                            string formatName;
 
                                             if (mCreateMGFFiles)
                                             {
-                                                strAccession = "MS:1001062";
-                                                strFormatName = "Mascot MGF file";
+                                                accession = "MS:1001062";
+                                                formatName = "Mascot MGF file";
                                             }
                                             else
                                             {
-                                                strAccession = "MS:1001369";
-                                                strFormatName = "text file";
+                                                accession = "MS:1001369";
+                                                formatName = "text file";
                                             }
 
-                                            objXmlWriter.WriteStartElement("FileFormat");
-                                            objXmlWriter.WriteStartElement("cvParam");
+                                            writer.WriteStartElement("FileFormat");
+                                            writer.WriteStartElement("cvParam");
 
-                                            objXmlWriter.WriteAttributeString("accession", strAccession);
-                                            objXmlWriter.WriteAttributeString("cvRef", "PSI-MS");
-                                            objXmlWriter.WriteAttributeString("name", strFormatName);
+                                            writer.WriteAttributeString("accession", accession);
+                                            writer.WriteAttributeString("cvRef", "PSI-MS");
+                                            writer.WriteAttributeString("name", formatName);
 
-                                            objXmlWriter.WriteEndElement();  // cvParam
-                                            objXmlWriter.WriteEndElement();  // FileFormat
+                                            writer.WriteEndElement();  // cvParam
+                                            writer.WriteEndElement();  // FileFormat
 
                                             skipNode = true;
                                         }
@@ -4512,7 +4512,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                     case "cvParam":
                                         if (readModAccession && !readingSpecificityRules)
                                         {
-                                            var udtModInfo = ReadWriteCvParam(objXmlReader, objXmlWriter, lstElementCloseDepths);
+                                            var udtModInfo = ReadWriteCvParam(xmlReader, writer, elementCloseDepths);
 
                                             if (!string.IsNullOrEmpty(udtModInfo.Accession))
                                             {
@@ -4534,11 +4534,11 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                                 if (skipNode)
                                 {
-                                    if (objXmlReader.NodeType != XmlNodeType.EndElement)
+                                    if (xmlReader.NodeType != XmlNodeType.EndElement)
                                     {
                                         // Skip this element (and any children nodes enclosed in this elemnt)
-                                        // Likely should not do this when objXmlReader.NodeType is XmlNodeType.EndElement
-                                        objXmlReader.Skip();
+                                        // Likely should not do this when xmlReader.NodeType is XmlNodeType.EndElement
+                                        xmlReader.Skip();
                                     }
                                     replaceOriginal = true;
                                 }
@@ -4546,59 +4546,59 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                 {
                                     // Copy this element from the source file to the target file
 
-                                    objXmlWriter.WriteStartElement(objXmlReader.Name);
+                                    writer.WriteStartElement(xmlReader.Name);
 
-                                    if (objXmlReader.HasAttributes)
+                                    if (xmlReader.HasAttributes)
                                     {
-                                        objXmlReader.MoveToFirstAttribute();
+                                        xmlReader.MoveToFirstAttribute();
                                         do
                                         {
-                                            if (lstAttributeOverride.Count > 0 &&
-                                                lstAttributeOverride.TryGetValue(objXmlReader.Name, out var strAttributeOverride))
+                                            if (attributeOverride.Count > 0 &&
+                                                attributeOverride.TryGetValue(xmlReader.Name, out var overrideValue))
                                             {
-                                                objXmlWriter.WriteAttributeString(objXmlReader.Name, strAttributeOverride);
+                                                writer.WriteAttributeString(xmlReader.Name, overrideValue);
                                                 replaceOriginal = true;
                                             }
                                             else
                                             {
-                                                objXmlWriter.WriteAttributeString(objXmlReader.Name, objXmlReader.Value);
+                                                writer.WriteAttributeString(xmlReader.Name, xmlReader.Value);
                                             }
-                                        } while (objXmlReader.MoveToNextAttribute());
+                                        } while (xmlReader.MoveToNextAttribute());
 
-                                        lstElementCloseDepths.Push(objXmlReader.Depth);
+                                        elementCloseDepths.Push(xmlReader.Depth);
                                     }
-                                    else if (objXmlReader.IsEmptyElement)
+                                    else if (xmlReader.IsEmptyElement)
                                     {
-                                        objXmlWriter.WriteEndElement();
+                                        writer.WriteEndElement();
                                     }
                                 }
 
                                 break;
                             case XmlNodeType.EndElement:
 
-                                if (lstRecentElements.Count > 10)
-                                    lstRecentElements.Dequeue();
-                                lstRecentElements.Enqueue("EndElement " + objXmlReader.Name);
+                                if (recentElements.Count > 10)
+                                    recentElements.Dequeue();
+                                recentElements.Enqueue("EndElement " + xmlReader.Name);
 
-                                while (lstElementCloseDepths.Count > 0 && lstElementCloseDepths.Peek() > objXmlReader.Depth + 1)
+                                while (elementCloseDepths.Count > 0 && elementCloseDepths.Peek() > xmlReader.Depth + 1)
                                 {
-                                    lstElementCloseDepths.Pop();
-                                    objXmlWriter.WriteEndElement();
+                                    elementCloseDepths.Pop();
+                                    writer.WriteEndElement();
                                 }
 
-                                objXmlWriter.WriteEndElement();
+                                writer.WriteEndElement();
 
-                                while (lstElementCloseDepths.Count > 0 && lstElementCloseDepths.Peek() > objXmlReader.Depth)
+                                while (elementCloseDepths.Count > 0 && elementCloseDepths.Peek() > xmlReader.Depth)
                                 {
-                                    lstElementCloseDepths.Pop();
+                                    elementCloseDepths.Pop();
                                 }
 
-                                if (objXmlReader.Name == "SearchModification")
+                                if (xmlReader.Name == "SearchModification")
                                 {
                                     readModAccession = false;
                                 }
 
-                                if (objXmlReader.Name == "SpecificityRules")
+                                if (xmlReader.Name == "SpecificityRules")
                                 {
                                     readingSpecificityRules = false;
                                 }
@@ -4606,31 +4606,31 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                 break;
                             case XmlNodeType.Text:
 
-                                if (!string.IsNullOrEmpty(objXmlReader.Value))
+                                if (!string.IsNullOrEmpty(xmlReader.Value))
                                 {
-                                    if (lstRecentElements.Count > 10)
-                                        lstRecentElements.Dequeue();
-                                    if (objXmlReader.Value.Length > 10)
+                                    if (recentElements.Count > 10)
+                                        recentElements.Dequeue();
+                                    if (xmlReader.Value.Length > 10)
                                     {
-                                        lstRecentElements.Enqueue(objXmlReader.Value.Substring(0, 10));
+                                        recentElements.Enqueue(xmlReader.Value.Substring(0, 10));
                                     }
                                     else
                                     {
-                                        lstRecentElements.Enqueue(objXmlReader.Value);
+                                        recentElements.Enqueue(xmlReader.Value);
                                     }
                                 }
 
-                                objXmlWriter.WriteString(objXmlReader.Value);
+                                writer.WriteString(xmlReader.Value);
 
                                 break;
                         }
                     }
 
-                    objXmlWriter.WriteEndDocument();
+                    writer.WriteEndDocument();
                 }
 
                 // Must append .gz to the .mzid file name to allow for successful lookups in function CreatePXSubmissionFile
-                StoreMzIdSampleInfo(strMzIDFilePath + DOT_GZ, sampleMetadata);
+                StoreMzIdSampleInfo(mzIDFilePath + DOT_GZ, sampleMetadata);
 
                 Thread.Sleep(250);
                 PRISM.clsProgRunner.GarbageCollectNow();
@@ -4638,25 +4638,25 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 if (!replaceOriginal)
                 {
                     // Nothing was changed; delete the .tmp file
-                    File.Delete(strUpdatedFilePathTemp);
+                    File.Delete(updatedFilePathTemp);
                     return true;
                 }
 
                 try
                 {
                     // Replace the original .mzid file with the updated one
-                    File.Delete(strMzIDFilePath);
+                    File.Delete(mzIDFilePath);
 
                     if (JobFileRenameRequired(dataPkgJob))
                     {
-                        strMzIDFilePath = Path.Combine(m_WorkDir, dataPkgDataset + "_Job" + dataPkgJob + "_msgfplus.mzid");
+                        mzIDFilePath = Path.Combine(m_WorkDir, dataPkgDataset + "_Job" + dataPkgJob + "_msgfplus.mzid");
                     }
                     else
                     {
-                        strMzIDFilePath = Path.Combine(m_WorkDir, dataPkgDataset + "_msgfplus.mzid");
+                        mzIDFilePath = Path.Combine(m_WorkDir, dataPkgDataset + "_msgfplus.mzid");
                     }
 
-                    File.Move(strUpdatedFilePathTemp, strMzIDFilePath);
+                    File.Move(updatedFilePathTemp, mzIDFilePath);
                 }
                 catch (Exception ex)
                 {
@@ -4670,29 +4670,29 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             {
                 LogError("Exception in UpdateMzIdFile for job " + dataPkgJob + ", dataset " + dataPkgDataset, ex);
 
-                var strRecentElements = string.Empty;
-                foreach (var strItem in lstRecentElements)
+                var recentElementNames = string.Empty;
+                foreach (var item in recentElements)
                 {
-                    if (string.IsNullOrEmpty(strRecentElements))
+                    if (string.IsNullOrEmpty(recentElementNames))
                     {
-                        strRecentElements = string.Copy(strItem);
+                        recentElementNames = string.Copy(item);
                     }
                     else
                     {
-                        strRecentElements += "; " + strItem;
+                        recentElementNames += "; " + item;
                     }
                 }
 
-                LogDebug(strRecentElements);
+                LogDebug(recentElementNames);
 
-                strMzIDFilePath = string.Empty;
+                mzIDFilePath = string.Empty;
                 return false;
             }
         }
 
-        private eMzIDXMLFileLocation UpdateMZidXMLFileLocation(eMzIDXMLFileLocation eFileLocation, string strElementName)
+        private eMzIDXMLFileLocation UpdateMZidXMLFileLocation(eMzIDXMLFileLocation eFileLocation, string elementName)
         {
-            switch (strElementName)
+            switch (elementName)
             {
                 case "SequenceCollection":
                     eFileLocation = eMzIDXMLFileLocation.SequenceCollection;
@@ -4723,65 +4723,65 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             return eFileLocation;
         }
 
-        private void WriteConfigurationOption(XmlTextWriter objXmlWriter, string KeyName, string Value)
+        private void WriteConfigurationOption(XmlWriter writer, string KeyName, string Value)
         {
-            objXmlWriter.WriteStartElement("Option");
-            objXmlWriter.WriteElementString("Key", KeyName);
-            objXmlWriter.WriteElementString("Value", Value);
-            objXmlWriter.WriteEndElement();
+            writer.WriteStartElement("Option");
+            writer.WriteElementString("Key", KeyName);
+            writer.WriteElementString("Value", Value);
+            writer.WriteEndElement();
         }
 
         /// <summary>
         /// Append a new header line to the .px file
         /// </summary>
         /// <param name="swPXFile"></param>
-        /// <param name="strType"></param>
-        /// <param name="strValue"></param>
+        /// <param name="type"></param>
+        /// <param name="value"></param>
         /// <remarks></remarks>
-        private void WritePXHeader(StreamWriter swPXFile, string strType, string strValue)
+        private void WritePXHeader(TextWriter swPXFile, string type, string value)
         {
-            WritePXHeader(swPXFile, strType, strValue, new Dictionary<string, string>());
+            WritePXHeader(swPXFile, type, value, new Dictionary<string, string>());
         }
 
         /// <summary>
         /// Append a new header line to the .px file
         /// </summary>
         /// <param name="swPXFile"></param>
-        /// <param name="strType"></param>
-        /// <param name="strValue"></param>
+        /// <param name="type"></param>
+        /// <param name="value"></param>
         /// <param name="dctParameters"></param>
-        /// <param name="intMinimumValueLength"></param>
+        /// <param name="minimumValueLength"></param>
         /// <remarks></remarks>
         private void WritePXHeader(
             TextWriter swPXFile,
-            string strType,
-            string strValue,
+            string type,
+            string value,
             IReadOnlyDictionary<string, string> dctParameters,
-            int intMinimumValueLength = 0)
+            int minimumValueLength = 0)
         {
-            if (dctParameters.TryGetValue(strType, out var strValueOverride))
+            if (dctParameters.TryGetValue(type, out var valueOverride))
             {
-                strValue = strValueOverride;
+                value = valueOverride;
             }
 
-            if (intMinimumValueLength > 0)
+            if (minimumValueLength > 0)
             {
-                if (string.IsNullOrEmpty(strValue))
+                if (string.IsNullOrEmpty(value))
                 {
-                    strValue = "**** Value must be at least " + intMinimumValueLength + " characters long **** ";
+                    value = "**** Value must be at least " + minimumValueLength + " characters long **** ";
                 }
 
-                while (strValue.Length < intMinimumValueLength)
+                while (value.Length < minimumValueLength)
                 {
-                    strValue += "__";
+                    value += "__";
                 }
             }
 
             WritePXLine(swPXFile, new List<string>
             {
                 "MTD",
-                strType,
-                strValue
+                type,
+                value
             });
         }
 
@@ -4798,16 +4798,16 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     description = "TSQ Quantum Ultra";
                 }
 
-                var strInstrumentCV = GetInstrumentCv(accession, description);
-                WritePXHeader(swPXFile, "instrument", strInstrumentCV);
+                var instrumentCV = GetInstrumentCv(accession, description);
+                WritePXHeader(swPXFile, "instrument", instrumentCV);
             }
         }
 
-        private void WritePXLine(TextWriter swPXFile, IReadOnlyCollection<string> lstItems)
+        private void WritePXLine(TextWriter swPXFile, IReadOnlyCollection<string> items)
         {
-            if (lstItems.Count > 0)
+            if (items.Count > 0)
             {
-                swPXFile.WriteLine(string.Join("\t", lstItems));
+                swPXFile.WriteLine(string.Join("\t", items));
             }
         }
 
@@ -4831,37 +4831,37 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
         }
 
-        private void WriteUserParam(XmlTextWriter objXmlWriter, string Name, string Value)
+        private void WriteUserParam(XmlWriter writer, string name, string value)
         {
-            objXmlWriter.WriteStartElement("userParam");
-            objXmlWriter.WriteAttributeString("name", Name);
-            objXmlWriter.WriteAttributeString("value", Value);
-            objXmlWriter.WriteEndElement();
+            writer.WriteStartElement("userParam");
+            writer.WriteAttributeString("name", name);
+            writer.WriteAttributeString("value", value);
+            writer.WriteEndElement();
         }
 
-        private void WriteCVParam(XmlTextWriter objXmlWriter, string CVLabel, string Accession, string Name, string Value)
+        private void WriteCVParam(XmlWriter writer, string cvLabel, string accession, string name, string value)
         {
-            objXmlWriter.WriteStartElement("cvParam");
-            objXmlWriter.WriteAttributeString("cvLabel", CVLabel);
-            objXmlWriter.WriteAttributeString("accession", Accession);
-            objXmlWriter.WriteAttributeString("name", Name);
-            objXmlWriter.WriteAttributeString("value", Value);
-            objXmlWriter.WriteEndElement();
+            writer.WriteStartElement("cvParam");
+            writer.WriteAttributeString("cvLabel", cvLabel);
+            writer.WriteAttributeString("accession", accession);
+            writer.WriteAttributeString("name", name);
+            writer.WriteAttributeString("value", value);
+            writer.WriteEndElement();
         }
 
-        private bool WriteXMLInstrumentInfo(XmlTextWriter oWriter, string strInstrumentGroup)
+        private bool WriteXMLInstrumentInfo(XmlTextWriter oWriter, string instrumentGroup)
         {
-            var blnInstrumentDetailsAutoDefined = false;
+            var instrumentDetailsAutoDefined = false;
 
-            var blnIsLCQ = false;
-            var blnIsLTQ = false;
+            var isLCQ = false;
+            var isLTQ = false;
 
-            switch (strInstrumentGroup)
+            switch (instrumentGroup)
             {
                 case "Orbitrap":
                 case "VelosOrbi":
                 case "QExactive":
-                    blnInstrumentDetailsAutoDefined = true;
+                    instrumentDetailsAutoDefined = true;
 
                     WriteXMLInstrumentInfoESI(oWriter, "positive");
 
@@ -4877,16 +4877,16 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                     break;
                 case "LCQ":
-                    blnIsLCQ = true;
+                    isLCQ = true;
                     break;
                 case "LTQ":
                 case "LTQ-ETD":
                 case "LTQ-Prep":
                 case "VelosPro":
-                    blnIsLTQ = true;
+                    isLTQ = true;
                     break;
                 case "LTQ-FT":
-                    blnInstrumentDetailsAutoDefined = true;
+                    instrumentDetailsAutoDefined = true;
 
                     WriteXMLInstrumentInfoESI(oWriter, "positive");
 
@@ -4902,7 +4902,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                     break;
                 case "Exactive":
-                    blnInstrumentDetailsAutoDefined = true;
+                    instrumentDetailsAutoDefined = true;
 
                     WriteXMLInstrumentInfoESI(oWriter, "positive");
 
@@ -4917,27 +4917,27 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                     break;
                 default:
-                    if (strInstrumentGroup.StartsWith("LTQ"))
+                    if (instrumentGroup.StartsWith("LTQ"))
                     {
-                        blnIsLTQ = true;
+                        isLTQ = true;
                     }
-                    else if (strInstrumentGroup.StartsWith("LCQ"))
+                    else if (instrumentGroup.StartsWith("LCQ"))
                     {
-                        blnIsLCQ = true;
+                        isLCQ = true;
                     }
                     break;
             }
 
-            if (blnIsLTQ | blnIsLCQ)
+            if (isLTQ | isLCQ)
             {
-                blnInstrumentDetailsAutoDefined = true;
+                instrumentDetailsAutoDefined = true;
 
                 WriteXMLInstrumentInfoESI(oWriter, "positive");
 
                 oWriter.WriteStartElement("analyzerList");
                 oWriter.WriteAttributeString("count", "1");
 
-                if (blnIsLCQ)
+                if (isLCQ)
                 {
                     WriteXMLInstrumentInfoAnalyzer(oWriter, "MS", "MS:1000082", "quadrupole ion trap");
                 }
@@ -4951,31 +4951,31 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 WriteXMLInstrumentInfoDetector(oWriter, "MS", "MS:1000347", "dynode");
             }
 
-            return blnInstrumentDetailsAutoDefined;
+            return instrumentDetailsAutoDefined;
         }
 
-        private void WriteXMLInstrumentInfoAnalyzer(XmlTextWriter oWriter, string strNamespace, string strAccession, string strDescription)
+        private void WriteXMLInstrumentInfoAnalyzer(XmlTextWriter oWriter, string cvLabel, string accession, string description)
         {
             oWriter.WriteStartElement("analyzer");
-            WriteCVParam(oWriter, strNamespace, strAccession, strDescription, string.Empty);
+            WriteCVParam(oWriter, cvLabel, accession, description, string.Empty);
             oWriter.WriteEndElement();
         }
 
-        private void WriteXMLInstrumentInfoDetector(XmlTextWriter oWriter, string strNamespace, string strAccession, string strDescription)
+        private void WriteXMLInstrumentInfoDetector(XmlTextWriter oWriter, string cvLabel, string accession, string description)
         {
             oWriter.WriteStartElement("detector");
-            WriteCVParam(oWriter, strNamespace, strAccession, strDescription, string.Empty);
+            WriteCVParam(oWriter, cvLabel, accession, description, string.Empty);
             oWriter.WriteEndElement();
         }
 
-        private void WriteXMLInstrumentInfoESI(XmlTextWriter oWriter, string strPolarity)
+        private void WriteXMLInstrumentInfoESI(XmlTextWriter oWriter, string polarity)
         {
-            if (string.IsNullOrEmpty(strPolarity))
-                strPolarity = "positive";
+            if (string.IsNullOrEmpty(polarity))
+                polarity = "positive";
 
             oWriter.WriteStartElement("source");
             WriteCVParam(oWriter, "MS", "MS:1000073", "electrospray ionization", string.Empty);
-            WriteCVParam(oWriter, "MS", "MS:1000037", "polarity", strPolarity);
+            WriteCVParam(oWriter, "MS", "MS:1000037", "polarity", polarity);
             oWriter.WriteEndElement();
         }
 
@@ -5001,7 +5001,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
         }
 
-        private void mDTAtoMGF_ErrorEvent(string strMessage)
+        private void mDTAtoMGF_ErrorEvent(string message)
         {
             LogError("Error from DTAtoMGF converter: " + mDTAtoMGF.GetErrorMessage());
         }
