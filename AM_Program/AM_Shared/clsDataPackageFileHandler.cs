@@ -54,6 +54,7 @@ namespace AnalysisManagerBase
             /// </summary>
             /// <remarks></remarks>
             public bool RetrievePepXMLFiles;
+
             /// <summary>
             /// Set to True to obtain the _syn.txt file and related PHRP files
             /// </summary>
@@ -686,7 +687,8 @@ namespace AnalysisManagerBase
 
                         }
 
-                        if (udtOptions.RetrievePepXMLFiles && dataPkgJob.PeptideHitResultType != clsPHRPReader.ePeptideHitResultType.Unknown)
+                        if (udtOptions.RetrievePepXMLFiles && dataPkgJob.PeptideHitResultType != clsPHRPReader.ePeptideHitResultType.Unknown ||
+                            dataPkgJob.PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.Sequest)
                         {
                             // Retrieve .pepXML files, which are stored as _pepXML.zip files
                             zippedPepXmlFile = datasetName + "_pepXML.zip";
@@ -719,7 +721,6 @@ namespace AnalysisManagerBase
                         // Otherwise, the file has been copied locally and it has local file paths
                         // Note that files might need to be renamed; that's tracked via lstPendingFileRenames
                         var lstFoundFiles = new List<string>();
-
 
                         bool fileCopied;
                         foreach (var sourceFile in lstFilesToGet)

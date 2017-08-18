@@ -3468,7 +3468,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 }
             }
 
-            if (mIncludePepXMLFiles && kvJobInfo.Value.PeptideHitResultType != clsPHRPReader.ePeptideHitResultType.Unknown)
+            if (mIncludePepXMLFiles && kvJobInfo.Value.PeptideHitResultType != clsPHRPReader.ePeptideHitResultType.Unknown ||
+                kvJobInfo.Value.PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.Sequest)
             {
                 var pepXmlFilename = kvJobInfo.Value.Dataset + ".pepXML";
                 var pepXMLFile = new FileInfo(Path.Combine(m_WorkDir, pepXmlFilename));
