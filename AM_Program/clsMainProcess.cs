@@ -1152,17 +1152,13 @@ namespace AnalysisManagerProg
             {
                 if (string.IsNullOrEmpty(SourceName))
                 {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("Error creating the Windows Event Log: SourceName cannot be blank");
-                    Console.ResetColor();
+                    ConsoleMsgUtils.ShowError("Error creating the Windows Event Log: SourceName cannot be blank");
                     return false;
                 }
 
                 if (string.IsNullOrEmpty(LogName))
                 {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("Error creating the Windows Event Log: LogName cannot be blank");
-                    Console.ResetColor();
+                    ConsoleMsgUtils.ShowError("Error creating the Windows Event Log: LogName cannot be blank");
                     return false;
                 }
 
@@ -1186,9 +1182,7 @@ namespace AnalysisManagerProg
                 }
                 catch (Exception ex)
                 {
-                    Console.ForegroundColor = ConsoleColor.Yellow;
-                    Console.WriteLine("Warning: unable to update the maximum log size to 1024 KB: \n  " + ex.Message);
-                    Console.ResetColor();
+                    ConsoleMsgUtils.ShowWarning("Warning: unable to update the maximum log size to 1024 KB: \n  " + ex.Message);
                 }
 
                 try
@@ -1197,16 +1191,13 @@ namespace AnalysisManagerProg
                 }
                 catch (Exception ex)
                 {
-                    Console.ForegroundColor = ConsoleColor.Yellow;
-                    Console.WriteLine("Warning: unable to update the overflow policy to keep events for 90 days and overwrite as needed: \n  " + ex.Message);
-                    Console.ResetColor();
+                    ConsoleMsgUtils.ShowWarning("Warning: unable to update the overflow policy to keep events for 90 days " +
+                                                "and overwrite as needed: \n  " + ex.Message);
                 }
             }
             catch (Exception ex)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Exception creating the Windows Event Log named '" + LogName + "' for source '" + SourceName + "': " + ex.Message);
-                Console.ResetColor();
+                ConsoleMsgUtils.ShowError("Exception creating the Windows Event Log named '" + logName + "' for source '" + sourceName + "'", ex);
                 return false;
             }
 
@@ -2618,9 +2609,7 @@ namespace AnalysisManagerProg
         /// <param name="message"></param>
         public static void ShowTraceMessage(string message)
         {
-            clsGlobal.EnableConsoleTraceColor();
-            Console.WriteLine(DateTime.Now.ToString("hh:mm:ss.fff tt") + ": " + message);
-            Console.ResetColor();
+            ConsoleMsgUtils.ShowDebug(DateTime.Now.ToString("hh:mm:ss.fff tt") + ": " + message);
         }
 
         /// <summary>

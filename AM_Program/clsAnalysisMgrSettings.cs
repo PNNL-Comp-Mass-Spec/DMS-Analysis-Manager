@@ -234,7 +234,7 @@ namespace AnalysisManagerProg
             {
                 ShowTraceMessage("Initialized clsAnalysisMgrSettings");
 
-                clsGlobal.EnableConsoleTraceColor();
+                Console.ForegroundColor = ConsoleMsgUtils.DebugFontColor;
                 foreach (var key in (from item in mParamDictionary.Keys orderby item select item))
                 {
                     var value = mParamDictionary[key];
@@ -833,9 +833,7 @@ namespace AnalysisManagerProg
 
         private static void ShowTraceMessage(string message)
         {
-            clsGlobal.EnableConsoleTraceColor();
-            Console.WriteLine(DateTime.Now.ToString("hh:mm:ss.fff tt") + ": " + message);
-            Console.ResetColor();
+            ConsoleMsgUtils.ShowDebug(DateTime.Now.ToString("hh:mm:ss.fff tt") + ": " + message);
         }
 
         /// <summary>

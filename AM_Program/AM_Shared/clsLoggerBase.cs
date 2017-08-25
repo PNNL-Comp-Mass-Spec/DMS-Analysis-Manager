@@ -1,5 +1,6 @@
 ﻿
 using System;
+using PRISM;
 
 namespace AnalysisManagerBase
 {
@@ -38,9 +39,7 @@ namespace AnalysisManagerBase
         /// <remarks>The error is shown in red in the console</remarks>
         protected virtual void LogError(string errorMessage, bool logToDb = false)
         {
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine(errorMessage);
-            Console.ResetColor();
+            ConsoleMsgUtils.ShowError(errorMessage, false);
 
             clsLogTools.LoggerTypes loggerType;
             if (logToDb && !clsGlobal.OfflineMode)

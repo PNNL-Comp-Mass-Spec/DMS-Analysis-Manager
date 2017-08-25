@@ -78,7 +78,7 @@ namespace MSGFResultsSummarizerExe
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Error occurred in modMain->Main: \n" + ex.Message);
+                ConsoleMsgUtils.ShowError("Error occurred in modMain->Main", ex);
                 return -1;
             }
 
@@ -295,7 +295,7 @@ namespace MSGFResultsSummarizerExe
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Exception in SummarizeMSGFResults: " + ex.Message);
+                ConsoleMsgUtils.ShowError("Exception in SummarizeMSGFResults", ex);
             }
 
             return blnSuccess;
@@ -378,7 +378,7 @@ namespace MSGFResultsSummarizerExe
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Error parsing the command line parameters: \n" + ex.Message);
+                ConsoleMsgUtils.ShowError("Error parsing the command line parameters", ex);
             }
 
             return true;
@@ -386,18 +386,7 @@ namespace MSGFResultsSummarizerExe
 
         private static void ShowErrorMessage(string message, Exception ex = null)
         {
-            const string strSeparator = "------------------------------------------------------------------------------";
-
-            Console.WriteLine();
-            Console.WriteLine(strSeparator);
-            Console.WriteLine(message);
-            if (ex != null)
-            {
-                Console.WriteLine(PRISM.clsStackTraceFormatter.GetExceptionStackTraceMultiLine(ex));
-            }
-
-            Console.WriteLine(strSeparator);
-            Console.WriteLine();
+            ConsoleMsgUtils.ShowError(message, ex);
         }
 
         private static void ShowProgramHelp()
@@ -442,7 +431,7 @@ namespace MSGFResultsSummarizerExe
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Error displaying the program syntax: " + ex.Message);
+                ConsoleMsgUtils.ShowError("Error displaying the program syntax", ex);
             }
         }
 

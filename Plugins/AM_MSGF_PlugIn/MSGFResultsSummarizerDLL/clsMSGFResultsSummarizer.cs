@@ -1634,9 +1634,7 @@ namespace MSGFResultsSummarizer
                 OnDebugEvent(message);
             else
             {
-                Console.ForegroundColor = ConsoleColor.DarkGray;
-                Console.WriteLine("  " + message);
-                Console.ResetColor();
+                ConsoleMsgUtils.ShowDebug(message);
             }
         }
 

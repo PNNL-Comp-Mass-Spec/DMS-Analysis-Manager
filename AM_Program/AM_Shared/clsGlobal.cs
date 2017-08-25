@@ -1259,37 +1259,13 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Set the console color to DarkGray if LinuxOS is false or Blue if it is true
-        /// </summary>
-        /// <remarks>To revert to the default, use Console.ResetColor();</remarks>
-        public static void EnableConsoleTraceColor()
-        {
-            if (LinuxOS)
-                Console.ForegroundColor = ConsoleColor.Blue;
-            else
-                Console.ForegroundColor = ConsoleColor.DarkGray;
-        }
-
-        /// <summary>
         /// Notify the user at console that an error occurred while writing to a log file or posting a log message to the database
         /// </summary>
         /// <param name="logMessage"></param>
         /// <param name="ex"></param>
         public static void ErrorWritingToLog(string logMessage, Exception ex)
         {
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("Error logging errors");
-
-            Console.ForegroundColor = ConsoleColor.DarkMagenta;
-            Console.WriteLine("  " + logMessage);
-
-            if (ex != null)
-            {
-                Console.ForegroundColor = ConsoleColor.Cyan;
-                Console.WriteLine(GetExceptionStackTrace(ex, true));
-            }
-
-            Console.ResetColor();
+            ConsoleMsgUtils.ShowError("Error logging errors; log message: " + logMessage, ex);
         }
 
         /// <summary>
@@ -1422,10 +1398,7 @@ namespace AnalysisManagerBase
         /// <remarks>The message is shown in dark grey in the console.</remarks>
         public static void LogDebug(string statusMessage, bool writeToLog = true)
         {
-            EnableConsoleTraceColor();
-
-            Console.WriteLine("  " + statusMessage);
-            Console.ResetColor();
+            ConsoleMsgUtils.ShowDebug(statusMessage);
 
             if (!writeToLog)
                 return;
@@ -1449,28 +1422,7 @@ namespace AnalysisManagerBase
         /// <remarks>The error is shown in red in the console.  The exception stack trace is shown in cyan</remarks>
         public static void LogError(string errorMessage, Exception ex = null)
         {
-            string formattedError;
-            if (ex == null || errorMessage.EndsWith(ex.Message, StringComparison.OrdinalIgnoreCase))
-            {
-                formattedError = errorMessage;
-            }
-            else
-            {
-                if (errorMessage.Contains(ex.Message))
-                    formattedError = errorMessage;
-                else
-                    formattedError = errorMessage + ": " + ex.Message;
-            }
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine(formattedError);
-
-            if (ex != null)
-            {
-                Console.ForegroundColor = ConsoleColor.Cyan;
-                Console.WriteLine(GetExceptionStackTrace(ex, true));
-            }
-
-            Console.ResetColor();
+            var formattedError = ConsoleMsgUtils.ShowError(errorMessage, ex);
 
             try
             {
@@ -1493,9 +1445,7 @@ namespace AnalysisManagerBase
         {
             if (isError)
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine(statusMessage);
-                Console.ResetColor();
+                ConsoleMsgUtils.ShowError(statusMessage, false);
             }
             else
             {
@@ -1529,9 +1479,7 @@ namespace AnalysisManagerBase
         /// <param name="warningMessage">Warning message</param>
         public static void LogWarning(string warningMessage)
         {
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine(warningMessage);
-            Console.ResetColor();
+            ConsoleMsgUtils.ShowWarning(warningMessage);
 
             try
             {
