@@ -1146,39 +1146,39 @@ namespace AnalysisManagerProg
             }
         }
 
-        private static bool CreateAnalysisManagerEventLog(string SourceName, string LogName)
+        private static bool CreateAnalysisManagerEventLog(string sourceName, string logName)
         {
             try
             {
-                if (string.IsNullOrEmpty(SourceName))
+                if (string.IsNullOrEmpty(sourceName))
                 {
                     ConsoleMsgUtils.ShowError("Error creating the Windows Event Log: SourceName cannot be blank");
                     return false;
                 }
 
-                if (string.IsNullOrEmpty(LogName))
+                if (string.IsNullOrEmpty(logName))
                 {
                     ConsoleMsgUtils.ShowError("Error creating the Windows Event Log: LogName cannot be blank");
                     return false;
                 }
 
-                if (!EventLog.SourceExists(SourceName))
+                if (!EventLog.SourceExists(sourceName))
                 {
-                    clsGlobal.LogDebug("Creating Windows Event Log " + LogName + " for source " + SourceName, false);
-                    var SourceData = new EventSourceCreationData(SourceName, LogName);
-                    EventLog.CreateEventSource(SourceData);
+                    clsGlobal.LogDebug("Creating Windows Event Log " + logName + " for source " + sourceName, false);
+                    var sourceData = new EventSourceCreationData(sourceName, logName);
+                    EventLog.CreateEventSource(sourceData);
                 }
 
                 // Create custom event logging object and update it's configuration
-                var ELog = new EventLog
+                var eventLog = new EventLog
                 {
-                    Log = LogName,
-                    Source = SourceName
+                    Log = logName,
+                    Source = sourceName
                 };
 
                 try
                 {
-                    ELog.MaximumKilobytes = 1024;
+                    eventLog.MaximumKilobytes = 1024;
                 }
                 catch (Exception ex)
                 {
@@ -1187,7 +1187,7 @@ namespace AnalysisManagerProg
 
                 try
                 {
-                    ELog.ModifyOverflowPolicy(OverflowAction.OverwriteAsNeeded, 90);
+                    eventLog.ModifyOverflowPolicy(OverflowAction.OverwriteAsNeeded, 90);
                 }
                 catch (Exception ex)
                 {
