@@ -9,10 +9,7 @@
         /// </summary>
         /// <returns></returns>
         /// <remarks>Overridden in clsPSMInfo because it tracks specific PSMObservations</remarks>
-        public virtual int ObsCount
-        {
-            get { return mObsCount; }
-        }
+        public virtual int ObsCount => mObsCount;
 
         /// <summary>
         /// True if the C-terminus of the peptide is Lysine

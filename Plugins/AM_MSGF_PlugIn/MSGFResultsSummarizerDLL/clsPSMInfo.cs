@@ -13,10 +13,7 @@ namespace MSGFResultsSummarizer
 
         private readonly List<PSMObservation> mObservations;
 
-        public override int ObsCount
-        {
-            get { return mObservations.Count; }
-        }
+        public override int ObsCount => mObservations.Count;
 
         /// <summary>
         /// True if this is a phosphopeptide
@@ -36,10 +33,7 @@ namespace MSGFResultsSummarizer
         /// <summary>
         /// Details for each PSM that maps to this class
         /// </summary>
-        public List<PSMObservation> Observations
-        {
-            get { return mObservations; }
-        }
+        public List<PSMObservation> Observations => mObservations;
 
         public double BestMSGF
         {

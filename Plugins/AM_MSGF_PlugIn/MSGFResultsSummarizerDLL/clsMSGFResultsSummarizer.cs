@@ -113,16 +113,6 @@ namespace MSGFResultsSummarizer
         private string mErrorMessage = string.Empty;
         private readonly short mDebugLevel;
 
-        private double mFDRThreshold = DEFAULT_FDR_THRESHOLD;
-        private double mMSGFThreshold = DEFAULT_MSGF_THRESHOLD;
-        private double mEValueThreshold = DEFAULT_EVALUE_THRESHOLD;
-
-        private bool mDatasetScanStatsLookupError;
-        private bool mPostJobPSMResultsToDB;
-
-        private bool mSaveResultsToTextFile = true;
-        private string mOutputFolderPath = string.Empty;
-
         private int mSpectraSearched;
 
         /// <summary>
@@ -132,16 +122,9 @@ namespace MSGFResultsSummarizer
         /// <remarks></remarks>
         private double mPercentMSnScansNoPSM;
 
-        /// <summary>
-        /// Maximum number of scans separating two MS2 spectra with search results
-        /// </summary>
-        /// <remarks></remarks>
-        private int mMaximumScanGapAdjacentMSn;
-
         private udtPSMStatsType mMSGFBasedCounts;
         private udtPSMStatsType mFDRBasedCounts;
 
-        private readonly clsPHRPReader.ePeptideHitResultType mResultType;
         private readonly string mDatasetName;
         private readonly int mJob;
         private readonly string mWorkDir;
@@ -175,7 +158,7 @@ namespace MSGFResultsSummarizer
         /// <remarks>When this is false, we cannot compute MaximumScanGapAdjacentMSn or PercentMSnScansNoPSM</remarks>
         public bool ContactDatabase { get; set; }
 
-        public bool DatasetScanStatsLookupError => mDatasetScanStatsLookupError;
+        public bool DatasetScanStatsLookupError { get; private set; }
 
         public string ErrorMessage
         {
@@ -189,25 +172,16 @@ namespace MSGFResultsSummarizer
             }
         }
 
-        public double EValueThreshold
-        {
-            get { return mEValueThreshold; }
-            set { mEValueThreshold = value; }
-        }
+        public double EValueThreshold { get; set; } = DEFAULT_EVALUE_THRESHOLD;
 
-        public double FDRThreshold
-        {
-            get { return mFDRThreshold; }
-            set { mFDRThreshold = value; }
-        }
+        public double FDRThreshold { get; set; } = DEFAULT_FDR_THRESHOLD;
 
-        public int MaximumScanGapAdjacentMSn => mMaximumScanGapAdjacentMSn;
+        /// <summary>
+        /// Maximum number of scans separating two MS2 spectra with search results
+        /// </summary>
+        public int MaximumScanGapAdjacentMSn { get; private set; }
 
-        public double MSGFThreshold
-        {
-            get { return mMSGFThreshold; }
-            set { mMSGFThreshold = value; }
-        }
+        public double MSGFThreshold { get; set; } = DEFAULT_MSGF_THRESHOLD;
 
         public string MSGFSynopsisFileName
         {
@@ -221,23 +195,15 @@ namespace MSGFResultsSummarizer
             }
         }
 
-        public string OutputFolderPath
-        {
-            get { return mOutputFolderPath; }
-            set { mOutputFolderPath = value; }
-        }
+        public string OutputFolderPath { get; set; } = string.Empty;
 
         public double PercentMSnScansNoPSM => mPercentMSnScansNoPSM;
 
-        public bool PostJobPSMResultsToDB
-        {
-            get { return mPostJobPSMResultsToDB; }
-            set { mPostJobPSMResultsToDB = value; }
-        }
+        public bool PostJobPSMResultsToDB { get; set; }
 
-        public clsPHRPReader.ePeptideHitResultType ResultType => mResultType;
+        public clsPHRPReader.ePeptideHitResultType ResultType { get; }
 
-        public string ResultTypeName => mResultType.ToString();
+        public string ResultTypeName => ResultType.ToString();
 
         public int SpectraSearched => mSpectraSearched;
 
@@ -245,11 +211,7 @@ namespace MSGFResultsSummarizer
 
         public int TotalPSMsMSGF => mMSGFBasedCounts.TotalPSMs;
 
-        public bool SaveResultsToTextFile
-        {
-            get { return mSaveResultsToTextFile; }
-            set { mSaveResultsToTextFile = value; }
-        }
+        public bool SaveResultsToTextFile { get; set; } = true;
 
         public int UniquePeptideCountFDR => mFDRBasedCounts.UniquePeptideCount;
 
@@ -317,14 +279,14 @@ namespace MSGFResultsSummarizer
         /// <param name="debugLevel">Debug Level</param>
         /// <remarks></remarks>
         public clsMSGFResultsSummarizer(
-            clsPHRPReader.ePeptideHitResultType eResultType, 
-            string strDatasetName, 
-            int intJob, 
-            string strSourceFolderPath, 
+            clsPHRPReader.ePeptideHitResultType eResultType,
+            string strDatasetName,
+            int intJob,
+            string strSourceFolderPath,
             string strConnectionString,
             short debugLevel)
         {
-            mResultType = eResultType;
+            ResultType = eResultType;
             mDatasetName = strDatasetName;
             mJob = intJob;
             mWorkDir = strSourceFolderPath;
@@ -382,7 +344,7 @@ namespace MSGFResultsSummarizer
                 mSpectraSearched = lstUniqueSpectra.Count;
 
                 // Set these to defaults for now
-                mMaximumScanGapAdjacentMSn = 0;
+                MaximumScanGapAdjacentMSn = 0;
                 mPercentMSnScansNoPSM = 100;
 
                 if (!ContactDatabase)
@@ -414,19 +376,19 @@ namespace MSGFResultsSummarizer
             var success = LookupScanStats(out totalSpectra, out totalMSnSpectra);
             if (!success || totalSpectra <= 0)
             {
-                mDatasetScanStatsLookupError = true;
+                DatasetScanStatsLookupError = true;
                 return;
             }
 
-            mMaximumScanGapAdjacentMSn = 0;
+            MaximumScanGapAdjacentMSn = 0;
 
             for (var i = 1; i <= scanList.Count - 1; i++)
             {
                 var scanGap = scanList[i] - scanList[i - 1];
 
-                if (scanGap > mMaximumScanGapAdjacentMSn)
+                if (scanGap > MaximumScanGapAdjacentMSn)
                 {
-                    mMaximumScanGapAdjacentMSn = scanGap;
+                    MaximumScanGapAdjacentMSn = scanGap;
                 }
             }
 
@@ -445,9 +407,9 @@ namespace MSGFResultsSummarizer
                 // Compare the last scan number seen to the total number of scans
                 var scanGap = totalSpectra - scanList[scanList.Count - 1] - 1;
 
-                if (scanGap > mMaximumScanGapAdjacentMSn)
+                if (scanGap > MaximumScanGapAdjacentMSn)
                 {
-                    mMaximumScanGapAdjacentMSn = scanGap;
+                    MaximumScanGapAdjacentMSn = scanGap;
                 }
             }
         }
@@ -571,15 +533,15 @@ namespace MSGFResultsSummarizer
 
             if (blnUsingMSGFOrEValueFilter)
             {
-                if (mResultType == clsPHRPReader.ePeptideHitResultType.MSAlign)
+                if (ResultType == clsPHRPReader.ePeptideHitResultType.MSAlign)
                 {
                     // Filter on EValue
-                    blnSuccess = FilterPSMsByEValue(mEValueThreshold, lstNormalizedPSMs, lstFilteredPSMs);
+                    blnSuccess = FilterPSMsByEValue(EValueThreshold, lstNormalizedPSMs, lstFilteredPSMs);
                 }
-                else if (mMSGFThreshold < 1)
+                else if (MSGFThreshold < 1)
                 {
                     // Filter on MSGF (though for MSPathFinder we're using SpecEValue)
-                    blnSuccess = FilterPSMsByMSGF(mMSGFThreshold, lstNormalizedPSMs, lstFilteredPSMs);
+                    blnSuccess = FilterPSMsByMSGF(MSGFThreshold, lstNormalizedPSMs, lstFilteredPSMs);
                 }
                 else
                 {
@@ -606,7 +568,7 @@ namespace MSGFResultsSummarizer
                 blnSuccess = true;
             }
 
-            if (!blnUsingMSGFOrEValueFilter && mFDRThreshold < 1)
+            if (!blnUsingMSGFOrEValueFilter && FDRThreshold < 1)
             {
                 // Filter on FDR (we'll compute the FDR using Reverse Proteins, if necessary)
                 ReportDebugMessage("Call FilterPSMsByFDR", 3);
@@ -619,7 +581,7 @@ namespace MSGFResultsSummarizer
                 {
                     foreach (var observation in entry.Value.Observations)
                     {
-                        if (observation.FDR > mFDRThreshold)
+                        if (observation.FDR > FDRThreshold)
                         {
                             observation.PassesFilter = false;
                         }
@@ -768,7 +730,7 @@ namespace MSGFResultsSummarizer
 
             foreach (var kvEntry in lstResultIDtoFDRMap)
             {
-                if (kvEntry.Value > mFDRThreshold)
+                if (kvEntry.Value > FDRThreshold)
                 {
                     lstPSMs.Remove(kvEntry.Key);
                 }
@@ -945,16 +907,16 @@ namespace MSGFResultsSummarizer
                 objCommand.Parameters.Add(new SqlParameter("@Job", SqlDbType.Int)).Value = intJob;
 
                 objCommand.Parameters.Add(new SqlParameter("@MSGFThreshold", SqlDbType.Float));
-                if (mResultType == clsPHRPReader.ePeptideHitResultType.MSAlign)
+                if (ResultType == clsPHRPReader.ePeptideHitResultType.MSAlign)
                 {
-                    objCommand.Parameters["@MSGFThreshold"].Value = mEValueThreshold;
+                    objCommand.Parameters["@MSGFThreshold"].Value = EValueThreshold;
                 }
                 else
                 {
-                    objCommand.Parameters["@MSGFThreshold"].Value = mMSGFThreshold;
+                    objCommand.Parameters["@MSGFThreshold"].Value = MSGFThreshold;
                 }
 
-                objCommand.Parameters.Add(new SqlParameter("@FDRThreshold", SqlDbType.Float)).Value = mFDRThreshold;
+                objCommand.Parameters.Add(new SqlParameter("@FDRThreshold", SqlDbType.Float)).Value = FDRThreshold;
                 objCommand.Parameters.Add(new SqlParameter("@SpectraSearched", SqlDbType.Int)).Value = mSpectraSearched;
                 objCommand.Parameters.Add(new SqlParameter("@TotalPSMs", SqlDbType.Int)).Value = mMSGFBasedCounts.TotalPSMs;
                 objCommand.Parameters.Add(new SqlParameter("@UniquePeptides", SqlDbType.Int)).Value = mMSGFBasedCounts.UniquePeptideCount;
@@ -964,7 +926,7 @@ namespace MSGFResultsSummarizer
                 objCommand.Parameters.Add(new SqlParameter("@UniqueProteinsFDRFilter", SqlDbType.Int)).Value = mFDRBasedCounts.UniqueProteinCount;
 
                 objCommand.Parameters.Add(new SqlParameter("@MSGFThresholdIsEValue", SqlDbType.TinyInt));
-                if (mResultType == clsPHRPReader.ePeptideHitResultType.MSAlign)
+                if (ResultType == clsPHRPReader.ePeptideHitResultType.MSAlign)
                 {
                     objCommand.Parameters["@MSGFThresholdIsEValue"].Value = 1;
                 }
@@ -974,7 +936,7 @@ namespace MSGFResultsSummarizer
                 }
 
                 objCommand.Parameters.Add(new SqlParameter("@PercentMSnScansNoPSM", SqlDbType.Real)).Value = mPercentMSnScansNoPSM;
-                objCommand.Parameters.Add(new SqlParameter("@MaximumScanGapAdjacentMSn", SqlDbType.Int)).Value = mMaximumScanGapAdjacentMSn;
+                objCommand.Parameters.Add(new SqlParameter("@MaximumScanGapAdjacentMSn", SqlDbType.Int)).Value = MaximumScanGapAdjacentMSn;
                 objCommand.Parameters.Add(new SqlParameter("@UniquePhosphopeptideCountFDR", SqlDbType.Int)).Value = mFDRBasedCounts.UniquePhosphopeptideCount;
                 objCommand.Parameters.Add(new SqlParameter("@UniquePhosphopeptidesCTermK", SqlDbType.Int)).Value = mFDRBasedCounts.UniquePhosphopeptidesCTermK;
                 objCommand.Parameters.Add(new SqlParameter("@UniquePhosphopeptidesCTermR", SqlDbType.Int)).Value = mFDRBasedCounts.UniquePhosphopeptidesCTermR;
@@ -1019,7 +981,7 @@ namespace MSGFResultsSummarizer
         public bool ProcessMSGFResults()
         {
 
-            mDatasetScanStatsLookupError = false;
+            DatasetScanStatsLookupError = false;
 
             try
             {
@@ -1032,14 +994,14 @@ namespace MSGFResultsSummarizer
                 // Define the file paths
                 //
                 // We use the First-hits file to determine the number of MS/MS spectra that were searched (unique combo of charge and scan number)
-                var strPHRPFirstHitsFileName = clsPHRPReader.GetPHRPFirstHitsFileName(mResultType, mDatasetName);
+                var strPHRPFirstHitsFileName = clsPHRPReader.GetPHRPFirstHitsFileName(ResultType, mDatasetName);
 
                 // We use the Synopsis file to count the number of peptides and proteins observed
-                var strPHRPSynopsisFileName = clsPHRPReader.GetPHRPSynopsisFileName(mResultType, mDatasetName);
+                var strPHRPSynopsisFileName = clsPHRPReader.GetPHRPSynopsisFileName(ResultType, mDatasetName);
 
-                if (mResultType == clsPHRPReader.ePeptideHitResultType.XTandem || mResultType == clsPHRPReader.ePeptideHitResultType.MSAlign ||
-                    mResultType == clsPHRPReader.ePeptideHitResultType.MODa || mResultType == clsPHRPReader.ePeptideHitResultType.MODPlus ||
-                    mResultType == clsPHRPReader.ePeptideHitResultType.MSPathFinder)
+                if (ResultType == clsPHRPReader.ePeptideHitResultType.XTandem || ResultType == clsPHRPReader.ePeptideHitResultType.MSAlign ||
+                    ResultType == clsPHRPReader.ePeptideHitResultType.MODa || ResultType == clsPHRPReader.ePeptideHitResultType.MODPlus ||
+                    ResultType == clsPHRPReader.ePeptideHitResultType.MSPathFinder)
                 {
                     // These tools do not have first-hits files; use the Synopsis file instead to determine scan counts
                     strPHRPFirstHitsFileName = strPHRPSynopsisFileName;
@@ -1113,13 +1075,13 @@ namespace MSGFResultsSummarizer
                 if (!(success || successViaFDR))
                     return false;
 
-                if (mSaveResultsToTextFile)
+                if (SaveResultsToTextFile)
                 {
                     // Note: Continue processing even if this step fails
                     SaveResultsToFile();
                 }
 
-                if (!mPostJobPSMResultsToDB)
+                if (!PostJobPSMResultsToDB)
                     return true;
 
                 if (ContactDatabase)
@@ -1181,8 +1143,8 @@ namespace MSGFResultsSummarizer
 
             try
             {
-                if (mResultType == clsPHRPReader.ePeptideHitResultType.MODa || mResultType == clsPHRPReader.ePeptideHitResultType.MODPlus ||
-                    mResultType == clsPHRPReader.ePeptideHitResultType.MSPathFinder)
+                if (ResultType == clsPHRPReader.ePeptideHitResultType.MODa || ResultType == clsPHRPReader.ePeptideHitResultType.MODPlus ||
+                    ResultType == clsPHRPReader.ePeptideHitResultType.MSPathFinder)
                 {
                     blnLoadMSGFResults = false;
                 }
@@ -1196,7 +1158,7 @@ namespace MSGFResultsSummarizer
 
                 // Load the result to sequence mapping, sequence IDs, and protein information
                 // This also loads the mod description, which we use to determine if a peptide is a phosphopeptide
-                var objSeqMapReader = new clsPHRPSeqMapReader(mDatasetName, mWorkDir, mResultType);
+                var objSeqMapReader = new clsPHRPSeqMapReader(mDatasetName, mWorkDir, ResultType);
 
                 var sequenceInfoAvailable = false;
 
@@ -1260,7 +1222,7 @@ namespace MSGFResultsSummarizer
 
                         var blnValid = false;
 
-                        if (mResultType == clsPHRPReader.ePeptideHitResultType.MSAlign)
+                        if (ResultType == clsPHRPReader.ePeptideHitResultType.MSAlign)
                         {
                             // Use the EValue reported by MSAlign
 
@@ -1270,12 +1232,12 @@ namespace MSGFResultsSummarizer
                                 blnValid = double.TryParse(strEValue, out dblEValue);
                             }
                         }
-                        else if (mResultType == clsPHRPReader.ePeptideHitResultType.MODa | mResultType == clsPHRPReader.ePeptideHitResultType.MODPlus)
+                        else if (ResultType == clsPHRPReader.ePeptideHitResultType.MODa | ResultType == clsPHRPReader.ePeptideHitResultType.MODPlus)
                         {
                             // MODa / MODPlus results don't have spectral probability, but they do have FDR
                             blnValid = true;
                         }
-                        else if (mResultType == clsPHRPReader.ePeptideHitResultType.MSPathFinder)
+                        else if (ResultType == clsPHRPReader.ePeptideHitResultType.MSPathFinder)
                         {
                             // Use SpecEValue in place of SpecProb
                             blnValid = true;
@@ -1313,7 +1275,7 @@ namespace MSGFResultsSummarizer
                         var psmEValue = dblEValue;
                         double psmFDR;
 
-                        if (mResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB | mResultType == clsPHRPReader.ePeptideHitResultType.MSAlign)
+                        if (ResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB | ResultType == clsPHRPReader.ePeptideHitResultType.MSAlign)
                         {
                             psmFDR = objPSM.GetScoreDbl(clsPHRPParserMSGFDB.DATA_COLUMN_FDR, clsPSMInfo.UNKNOWN_FDR);
                             if (psmFDR < 0)
@@ -1321,15 +1283,15 @@ namespace MSGFResultsSummarizer
                                 psmFDR = objPSM.GetScoreDbl(clsPHRPParserMSGFDB.DATA_COLUMN_EFDR, clsPSMInfo.UNKNOWN_FDR);
                             }
                         }
-                        else if (mResultType == clsPHRPReader.ePeptideHitResultType.MODa)
+                        else if (ResultType == clsPHRPReader.ePeptideHitResultType.MODa)
                         {
                             psmFDR = objPSM.GetScoreDbl(clsPHRPParserMODa.DATA_COLUMN_QValue, clsPSMInfo.UNKNOWN_FDR);
                         }
-                        else if (mResultType == clsPHRPReader.ePeptideHitResultType.MODPlus)
+                        else if (ResultType == clsPHRPReader.ePeptideHitResultType.MODPlus)
                         {
                             psmFDR = objPSM.GetScoreDbl(clsPHRPParserMODPlus.DATA_COLUMN_QValue, clsPSMInfo.UNKNOWN_FDR);
                         }
-                        else if (mResultType == clsPHRPReader.ePeptideHitResultType.MSPathFinder)
+                        else if (ResultType == clsPHRPReader.ePeptideHitResultType.MSPathFinder)
                         {
                             psmFDR = objPSM.GetScoreDbl(clsPHRPParserMSPathFinder.DATA_COLUMN_QValue, clsPSMInfo.UNKNOWN_FDR);
                         }
@@ -1644,9 +1606,9 @@ namespace MSGFResultsSummarizer
 
             try
             {
-                if (!string.IsNullOrEmpty(mOutputFolderPath))
+                if (!string.IsNullOrEmpty(OutputFolderPath))
                 {
-                    strOutputFilePath = mOutputFolderPath;
+                    strOutputFilePath = OutputFolderPath;
                 }
                 else
                 {
@@ -1671,8 +1633,8 @@ namespace MSGFResultsSummarizer
                         "Unique_Proteins_FDR_Filtered");
 
                     // Stats
-                    swOutFile.WriteLine(mDatasetName + "\t" + mJob + "\t" + mMSGFThreshold.ToString("0.00E+00") + "\t" +
-                                        mFDRThreshold.ToString("0.000") + "\t" + mSpectraSearched + "\t" + mMSGFBasedCounts.TotalPSMs + "\t" +
+                    swOutFile.WriteLine(mDatasetName + "\t" + mJob + "\t" + MSGFThreshold.ToString("0.00E+00") + "\t" +
+                                        FDRThreshold.ToString("0.000") + "\t" + mSpectraSearched + "\t" + mMSGFBasedCounts.TotalPSMs + "\t" +
                                         mMSGFBasedCounts.UniquePeptideCount + "\t" + mMSGFBasedCounts.UniqueProteinCount + "\t" +
                                         mFDRBasedCounts.TotalPSMs + "\t" + mFDRBasedCounts.UniquePeptideCount + "\t" +
                                         mFDRBasedCounts.UniqueProteinCount);
@@ -1807,8 +1769,8 @@ namespace MSGFResultsSummarizer
         }
 
         private udtPSMStatsType TabulatePSMStats(
-            IDictionary<int, clsUniqueSeqInfo> lstUniqueSequences, 
-            IDictionary<string, int> lstUniqueProteins, 
+            IDictionary<int, clsUniqueSeqInfo> lstUniqueSequences,
+            IDictionary<string, int> lstUniqueProteins,
             IDictionary<int, clsUniqueSeqInfo> lstUniquePhosphopeptides)
         {
             var psmStats = new udtPSMStatsType
