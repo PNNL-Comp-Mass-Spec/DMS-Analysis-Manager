@@ -70,40 +70,20 @@
     <Reference Include="PHRPReader">
       <HintPath>..\..\AM_Common\PHRPReader.dll</HintPath>
     </Reference>
-    <Reference Include="PRISM, Version=2.4.4.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\CachedLibs\PRISM.dll</HintPath>
-    </Reference>
-    <Reference Include="PRISMWin, Version=1.0.1.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\CachedLibs\PRISMWin.dll</HintPath>
-    </Reference>
     <Reference Include="Protein_Exporter">
       <HintPath>..\..\AM_Common\Protein_Exporter.dll</HintPath>
-    </Reference>
-    <Reference Include="Renci.SshNet, Version=2016.0.0.0, Culture=neutral, PublicKeyToken=1cee9f8bde3db106, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\CachedLibs\Renci.SshNet.dll</HintPath>
     </Reference>
     <Reference Include="SpectraTypeClassifier">
       <HintPath>..\..\AM_Common\SpectraTypeClassifier.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Data.SQLite, Version=1.0.97.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\CachedLibs\System.Data.SQLite.dll</HintPath>
-    </Reference>
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
-    <Reference Include="UIMFLibrary, Version=3.3.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\CachedLibs\UIMFLibrary.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="clsAnalysisJob.cs" />
@@ -132,6 +112,7 @@
     <Compile Include="clsMessageQueueLogger.cs" />
     <Compile Include="clsMessageSender.cs" />
     <Compile Include="clsMyEMSLUtilities.cs" />
+    <Compile Include="clsOfflineProcessing.cs" />
     <Compile Include="clsProteinCollectionInfo.cs" />
     <Compile Include="clsProteowizardTools.cs" />
     <Compile Include="clsRemoteMonitor.cs" />
@@ -158,6 +139,29 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="clsSystemMemoryInfo.cs" />
     <Compile Include="clsFileSearch.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="PRISM-Library">
+      <Version>2.4.20</Version>
+    </PackageReference>
+    <PackageReference Include="PRISMWin-Library">
+      <Version>1.0.2</Version>
+    </PackageReference>
+    <PackageReference Include="PRISM-Library">
+      <Version>2.4.20</Version>
+    </PackageReference>
+    <PackageReference Include="PRISMWin-Library">
+      <Version>1.0.2</Version>
+    </PackageReference>
+    <PackageReference Include="SSH.NET">
+      <Version>2016.0.0</Version>
+    </PackageReference>
+    <PackageReference Include="System.Data.SQLite.Core">
+      <Version>1.0.97</Version>
+    </PackageReference>
+    <PackageReference Include="UIMFLibrary">
+      <Version>1.0.9</Version>
+    </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

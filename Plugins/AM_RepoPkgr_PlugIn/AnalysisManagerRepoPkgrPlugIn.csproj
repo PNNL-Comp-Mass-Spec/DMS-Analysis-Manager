@@ -58,9 +58,6 @@
     <Reference Include="PHRPReader">
       <HintPath>..\..\AM_Common\PHRPReader.dll</HintPath>
     </Reference>
-    <Reference Include="PRISM">
-      <HintPath>..\..\AM_Common\PRISM.dll</HintPath>
-    </Reference>
     <Reference Include="ProteinFileReader">
       <HintPath>..\..\AM_Common\ProteinFileReader.dll</HintPath>
     </Reference>
@@ -83,6 +80,11 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="QueryDefinitions.cs" />
     <Compile Include="FileUtils.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="PRISM-Library">
+      <Version>2.4.20</Version>
+    </PackageReference>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\AM_MSXML_Gen_PlugIn\AnalysisManagerMSXMLGenPlugIn.csproj">

@@ -38,12 +38,6 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\AM_Common\AM_Shared.dll</HintPath>
     </Reference>
-    <Reference Include="PRISM">
-      <HintPath>..\..\..\AM_Common\PRISM.dll</HintPath>
-    </Reference>
-    <Reference Include="PRISMWin">
-      <HintPath>..\..\..\AM_Common\PRISMWin.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -61,6 +55,14 @@
       <Project>{44e81b35-ba39-47ad-9b67-fbafc925caca}</Project>
       <Name>AnalysisManagerMSGFDBPlugIn</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="PRISM-Library">
+      <Version>2.4.20</Version>
+    </PackageReference>
+    <PackageReference Include="PRISMWin-Library">
+      <Version>1.0.2</Version>
+    </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

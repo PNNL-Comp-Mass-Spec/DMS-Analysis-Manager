@@ -54,7 +54,7 @@
       <Version>3.7.1</Version>
     </PackageReference>
     <PackageReference Include="PRISM-Library">
-      <Version>1.0.17</Version>
+      <Version>2.4.20</Version>
     </PackageReference>
   </ItemGroup>
   <Import Project="$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets" Condition="Exists('$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets')" />

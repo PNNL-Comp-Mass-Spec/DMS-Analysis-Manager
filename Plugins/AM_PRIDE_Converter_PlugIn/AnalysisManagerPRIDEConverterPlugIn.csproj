@@ -43,9 +43,6 @@
     <Reference Include="PHRPReader">
       <HintPath>..\..\AM_Common\PHRPReader.dll</HintPath>
     </Reference>
-    <Reference Include="PRISM">
-      <HintPath>..\..\AM_Common\PRISM.dll</HintPath>
-    </Reference>
     <Reference Include="ProteinFileReader">
       <HintPath>..\..\AM_Common\ProteinFileReader.dll</HintPath>
     </Reference>
@@ -72,6 +69,11 @@
       <Project>{02d682e5-f70f-4c46-bac8-1c18920fff22}</Project>
       <Name>AnalysisManagerMSXMLGenPlugIn</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="PRISM-Library">
+      <Version>2.4.20</Version>
+    </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
