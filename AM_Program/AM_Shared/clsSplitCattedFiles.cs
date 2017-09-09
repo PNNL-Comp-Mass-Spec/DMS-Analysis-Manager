@@ -296,52 +296,5 @@ namespace AnalysisManagerBase
             m_ResultsFileCount = outFileCount;
         }
 
-        /// <summary>
-        /// This function reads the input file one byte at a time, looking for the first occurence of Chr(10) or Chr(13) (aka vbCR or VBLF)
-        /// When found, the next byte is examined
-        /// If the next byte is also Chr(10) or Chr(13), then the line terminator is assumed to be 2 bytes; if not found, then it is assumed to be one byte
-        /// </summary>
-        /// <param name="fi"></param>
-        /// <returns>1 if a one-byte line terminator; 2 if a two-byte line terminator</returns>
-        /// <remarks></remarks>
-        private int LineEndCharacterCount(FileInfo fi)
-        {
-
-            if (!fi.Exists)
-            {
-                // File not found; return 1
-                return 1;
-            }
-
-            using (var reader = new StreamReader(new FileStream(fi.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
-            {
-                while (!reader.EndOfStream)
-                {
-                    var testcode = reader.Read();
-
-                    if (!(testcode == 10 || testcode == 13))
-                        continue;
-
-                    if (reader.EndOfStream)
-                        break;
-
-                    var testcode2 = reader.Read();
-                    if (testcode2 == 10 || testcode2 == 13)
-                    {
-                        // Line terminator is 2 bytes
-                        return 2;
-                    }
-
-                    // Line terminator is 1 byte
-                    return 1;
-                }
-
-            }
-
-            // File has no CR or LF; return 1
-            return 1;
-
-        }
-
     }
 }
