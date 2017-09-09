@@ -780,7 +780,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
                 if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
                 {
-                    // Check for no data first. If no data, then exit but still copy results to server
+                    // Check for no data first. If no data, exit but still copy results to server
                     if (eResult == CloseOutType.CLOSEOUT_NO_DATA)
                     {
                         return eResult;
@@ -1481,7 +1481,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 return;
 
             // The Decon2LS Log File reports that the task is complete
-            // If it finished over MAX_LOGFINISHED_WAITTIME_SECONDS seconds ago, then send an abort to the CmdRunner
+            // If it finished over MAX_LOGFINISHED_WAITTIME_SECONDS seconds ago, send an abort to the CmdRunner
 
             if (DateTime.Now.Subtract(dtFinishTime).TotalSeconds >= MAX_LOGFINISHED_WAITTIME_SECONDS)
             {

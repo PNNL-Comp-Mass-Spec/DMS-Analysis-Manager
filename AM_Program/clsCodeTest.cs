@@ -559,7 +559,7 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
-        /// Archive a Sequest parameter ifle by copying to \\gigasax\dms_parameter_Files\Sequest
+        /// Archive a Sequest parameter file by copying to \\gigasax\dms_parameter_Files\Sequest
         /// </summary>
         public void TestArchiveFileStart()
         {

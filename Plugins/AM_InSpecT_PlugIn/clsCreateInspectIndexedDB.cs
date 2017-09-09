@@ -108,7 +108,7 @@ namespace AnalysisManagerInSpecTPlugIn
                         durationTime = currentTime - createTime;
                     }
 
-                    // If the duration time has exceeded sngMaxWaitTimeHours, then delete the lock file and try again with this manager
+                    // If the duration time has exceeded sngMaxWaitTimeHours, delete the lock file and try again with this manager
                     if (durationTime.Hours > sngMaxWaitTimeHours)
                     {
                         clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,

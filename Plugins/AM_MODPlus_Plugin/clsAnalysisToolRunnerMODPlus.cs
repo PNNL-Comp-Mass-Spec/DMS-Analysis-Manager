@@ -602,7 +602,7 @@ namespace AnalysisManagerMODPlusPlugin
             try
             {
                 // Keys in this list are scan numbers with charge state encoded as Charge / 100
-                // For example, if scan 1000 and charge 2, then the key will be 1000.02
+                // For example, if scan 1000 and charge 2, the key will be 1000.02
                 // Values are a list of readers that have that given ScanPlusCharge combo
                 var lstNextAvailableScan = new SortedList<double, List<clsMODPlusResultsReader>>();
 

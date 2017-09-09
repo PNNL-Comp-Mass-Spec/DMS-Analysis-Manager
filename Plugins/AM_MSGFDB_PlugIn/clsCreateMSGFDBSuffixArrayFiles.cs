@@ -438,7 +438,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 WaitForExistingLockfile(fiLockFile, debugLevel, maxWaitTimeHours);
 
                 // Validate that all of the expected files exist
-                // If any are missing, then need to repeat the call to "BuildSA"
+                // If any are missing, need to repeat the call to "BuildSA"
                 var reindexingRequired = false;
 
                 currentTask = "Validating that expected files exist";
@@ -465,7 +465,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 else
                 {
                     // Open the FastaFileName.canno file and read the first two lines
-                    // If there is a number on the first line but the second line starts with the letter A, then this file was created with the legacy MSGFDB
+                    // If there is a number on the first line but the second line starts with the letter A, this file was created with the legacy MSGFDB
                     var fiCAnnoFile = new FileInfo(Path.Combine(fiFastaFile.DirectoryName, outputNameBase + ".canno"));
                     if (fiCAnnoFile.Exists)
                     {
@@ -599,7 +599,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     if (remoteLockFileCreated)
                     {
                         // Lock file successfully created
-                        // If this manager ended up waiting while another manager was indexing the files, then we should once again try to copy the files locally
+                        // If this manager ended up waiting while another manager was indexing the files, we should once again try to copy the files locally
 
                         const bool CHECK_FOR_LOCK_FILE_B = false;
                         eResult = CopyExistingIndexFilesFromRemote(fiFastaFile, usingLegacyFasta, remoteIndexFolderPath, CHECK_FOR_LOCK_FILE_B,

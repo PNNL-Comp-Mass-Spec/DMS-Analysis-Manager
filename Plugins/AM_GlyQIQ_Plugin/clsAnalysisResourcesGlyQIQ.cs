@@ -451,7 +451,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 if ((diSourceFolder.FullName.ToLower().StartsWith(diTransferFolder.FullName.ToLower())))
                 {
                     // The Peaks.txt file is in the transfer folder
-                    // If the analysis finishes successfully, then we can delete the file from the transfer folder
+                    // If the analysis finishes successfully, we can delete the file from the transfer folder
                     m_jobParams.AddServerFileToDelete(Path.Combine(sourceFolderPath, fileToFind));
                 }
 

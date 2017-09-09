@@ -66,7 +66,7 @@ namespace AnalysisManagerMODaPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            // If the _dta.txt file is over 2 GB in size, then condense it
+            // If the _dta.txt file is over 2 GB in size, condense it
             if (!ValidateCDTAFileSize(m_WorkingDir, DatasetName + "_dta.txt"))
             {
                 // Errors were reported in function call, so just return

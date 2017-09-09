@@ -28,7 +28,12 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         #region "Module Variables"
 
         private const string PRIDEConverter_CONSOLE_OUTPUT = "PRIDEConverter_ConsoleOutput.txt";
+
+        /// <summary>
+        /// Percent complete to report when the tool starts
+        /// </summary>
         public const float PROGRESS_PCT_TOOL_RUNNER_STARTING = 20;
+
         private const float PROGRESS_PCT_SAVING_RESULTS = 95;
         private const float PROGRESS_PCT_COMPLETE = 99;
 
@@ -892,6 +897,9 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             return true;
         }
 
+        /// <summary>
+        /// Copy failed results to the archive folder
+        /// </summary>
         public override void CopyFailedResultsToArchiveFolder()
         {
 
@@ -1140,7 +1148,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 }
 
                 // The .MSGF file can only contain one match for each scan number
-                // If it includes multiple matches, then PRIDE Converter crashes when reading the .mzXML file
+                // If it includes multiple matches, PRIDE Converter crashes when reading the .mzXML file
                 // Furthermore, the .msgf-report.xml file cannot have extra entries that are not in the .msgf file
                 // Thus, only keep the best-scoring match for each spectrum
                 //
@@ -1160,7 +1168,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     mzXMLFilename = fiFiles[0].Name;
                 }
                 // else
-                    // mzXML file not found; don't worry about this right now (it's possible that CreateMSGFReportFilesOnly = True)
+                // mzXML file not found; don't worry about this right now (it's possible that CreateMSGFReportFilesOnly = True)
 
                 var synopsisFileName = clsPHRPReader.GetPHRPSynopsisFileName(dataPkgJob.PeptideHitResultType, dataPkgJob.Dataset);
 
@@ -2686,7 +2694,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     // Could write additional terms here
                     // WritePXHeader(swPXFile, "additional", GetCVString("", "", "Patient", "Colorectal cancer patient 1"), dctTemplateParameters)
 
-                    // If this is a re-submission or re-analysis, then use these:
+                    // If this is a re-submission or re-analysis, use these:
                     // WritePXHeader(swPXFile, "resubmission_px", "PXD00001", dctTemplateParameters)
                     // WritePXHeader(swPXFile, "reanalysis_px", "PXD00001", dctTemplateParameters)
 

@@ -6,24 +6,70 @@ using AnalysisManagerBase;
 
 namespace AnalysisManagerPRIDEConverterPlugIn
 {
+    /// <summary>
+    /// Class for retrieving files to be submitted to ProteomeXchange
+    /// </summary>
+    /// <remarks>Named PRIDEConverter due us previously pushing data to PRIDE</remarks>
     public class clsAnalysisResourcesPRIDEConverter : clsAnalysisResources
     {
+        /// <summary>
+        /// Packed parameter DatasetsMissingMzXMLFiles
+        /// </summary>
         public const string JOB_PARAM_DATASETS_MISSING_MZXML_FILES = "PackedParam_DatasetsMissingMzXMLFiles";
+
+        /// <summary>
+        /// Packed parameter DataPackagePeptideHitJobs
+        /// </summary>
         public const string JOB_PARAM_DATA_PACKAGE_PEPTIDE_HIT_JOBS = "PackedParam_DataPackagePeptideHitJobs";
+
+        /// <summary>
+        /// Packed parameter DatasetStorage_YearQuarter
+        /// </summary>
         public const string JOB_PARAM_DICTIONARY_DATASET_STORAGE_YEAR_QUARTER = "PackedParam_DatasetStorage_YearQuarter";
 
+        /// <summary>
+        /// Job parameter for MSGF report template file
+        /// </summary>
         public const string JOB_PARAM_MSGF_REPORT_TEMPLATE_FILENAME = "MSGFReportFileTemplate";
+
+        /// <summary>
+        /// Job parameter for PX submission template file
+        /// </summary>
         public const string JOB_PARAM_PX_SUBMISSION_TEMPLATE_FILENAME = "PXSubmissionTemplate";
 
+        /// <summary>
+        /// Default MSGF report template filename
+        /// </summary>
         public const string DEFAULT_MSGF_REPORT_TEMPLATE_FILENAME = "Template.msgf-report.xml";
+
+        /// <summary>
+        /// MSGF report file suffix
+        /// </summary>
         public const string MSGF_REPORT_FILE_SUFFIX = "msgf-report.xml";
 
+        /// <summary>
+        /// Default PX submission template filename
+        /// </summary>
         public const string DEFAULT_PX_SUBMISSION_TEMPLATE_FILENAME = "PX_Submission_Template.px";
+
+        /// <summary>
+        /// PX submission file suffix
+        /// </summary>
         public const string PX_SUBMISSION_FILE_SUFFIX = ".px";
 
+        /// <summary>
+        /// Cache folder path
+        /// </summary>
+        /// <remarks>Named PeptideAtlas because we previously pushed data to PeptideAtlas</remarks>
+        public const string DEFAULT_CACHE_FOLDER_PATH = @"\\protoapps\PeptideAtlas_Staging";
+
+        /// <summary>
+        /// Retrieve shared resources, including the JobParameters file from the previous job step
+        /// </summary>
+        /// <returns></returns>
         public override CloseOutType GetResources()
         {
-            // Retrieve shared resources, including the JobParameters file from the previous job step
+
             var result = GetSharedResources();
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
@@ -170,11 +216,22 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
         }
 
+        /// <summary>
+        /// Generated FASTA parameter name
+        /// </summary>
+        /// <param name="Job"></param>
+        /// <returns></returns>
         public static string GetGeneratedFastaParamNameForJob(int Job)
         {
             return "Job" + Job + "_GeneratedFasta";
         }
 
+        /// <summary>
+        /// MSGF report template filename
+        /// </summary>
+        /// <param name="JobParams"></param>
+        /// <param name="WarnIfJobParamMissing"></param>
+        /// <returns></returns>
         public static string GetMSGFReportTemplateFilename(IJobParams JobParams, bool WarnIfJobParamMissing)
         {
             var strTemplateFileName = JobParams.GetJobParameter(JOB_PARAM_MSGF_REPORT_TEMPLATE_FILENAME, string.Empty);
@@ -192,6 +249,12 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             return strTemplateFileName;
         }
 
+        /// <summary>
+        /// PX submission template filename
+        /// </summary>
+        /// <param name="JobParams"></param>
+        /// <param name="WarnIfJobParamMissing"></param>
+        /// <returns></returns>
         public static string GetPXSubmissionTemplateFilename(IJobParams JobParams, bool WarnIfJobParamMissing)
         {
             var strTemplateFileName = JobParams.GetJobParameter(JOB_PARAM_PX_SUBMISSION_TEMPLATE_FILENAME, string.Empty);

@@ -140,7 +140,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                 else
                 {
                     // Make sure the output file was created and is not zero-bytes
-                    // If the input .mzXML file only has MS spectra and no MS/MS spectra, then the output file will be empty
+                    // If the input .mzXML file only has MS spectra and no MS/MS spectra, the output file will be empty
                     var ioResultsFile = new FileInfo(Path.Combine(m_WorkDir, resultsFileName));
                     if (!ioResultsFile.Exists)
                     {

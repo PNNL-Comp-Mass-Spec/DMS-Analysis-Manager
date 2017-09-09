@@ -177,7 +177,7 @@ namespace AnalysisManagerBase
 
         /// <summary>
         /// Tries to delete the first file whose path is defined in filesToDelete
-        /// If deletion succeeds, then removes the file from the queue
+        /// If deletion succeeds, removes the file from the queue
         /// </summary>
         /// <param name="filesToDelete">Queue of files to delete (full file paths)</param>
         /// <param name="fileToQueueForDeletion">Optional: new file to add to the queue; blank to do nothing</param>
@@ -197,7 +197,7 @@ namespace AnalysisManagerBase
 
                     File.Delete(fileToDelete);
 
-                    // If we get here, then the delete succeeded, so we can dequeue the file
+                    // If we get here, the delete succeeded, so we can dequeue the file
                     filesToDelete.Dequeue();
 
                 }
@@ -440,7 +440,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="fileToFind">Name of the file to search for</param>
         /// <returns>Path to the directory containing the file if the file was found; empty string if not found found</returns>
-        /// <remarks>If the file is found in MyEMSL, then the directory path returned will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
+        /// <remarks>If the file is found in MyEMSL, the directory path returned will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
         public string FindDataFile(string fileToFind)
         {
             return FindDataFile(fileToFind, searchArchivedDatasetFolder: true);
@@ -452,7 +452,7 @@ namespace AnalysisManagerBase
         /// <param name="fileToFind">Name of the file to search for</param>
         /// <param name="searchArchivedDatasetFolder">TRUE if the EMSL archive (Aurora) should also be searched</param>
         /// <returns>Path to the directory containing the file if the file was found; empty string if not found found</returns>
-        /// <remarks>If the file is found in MyEMSL, then the directory path returned will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
+        /// <remarks>If the file is found in MyEMSL, the directory path returned will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
         private string FindDataFile(string fileToFind, bool searchArchivedDatasetFolder)
         {
             return FindDataFile(fileToFind, searchArchivedDatasetFolder, logFileNotFound: true);
@@ -468,7 +468,7 @@ namespace AnalysisManagerBase
         /// </param>
         /// <param name="logFileNotFound">True if an error should be logged when a file is not found</param>
         /// <returns>Path to the directory containing the file if the file was found; empty string if not found found</returns>
-        /// <remarks>If the file is found in MyEMSL, then the directory path returned will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
+        /// <remarks>If the file is found in MyEMSL, the directory path returned will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
         public string FindDataFile(string fileToFind, bool searchArchivedDatasetFolder, bool logFileNotFound)
         {
 
@@ -729,7 +729,7 @@ namespace AnalysisManagerBase
                 var msXmlFoldername = MSXmlFoldernameBase + version + "_" + DatasetID;
 
                 // Look for the MSXmlFolder
-                // If the folder cannot be found, then m_FolderSearch.FindValidFolder will return the folder defined by "DatasetStoragePath"
+                // If the folder cannot be found, m_FolderSearch.FindValidFolder will return the folder defined by "DatasetStoragePath"
                 var ServerPath = m_FolderSearch.FindValidFolder(DatasetName, "", msXmlFoldername, MAX_ATTEMPTS, false, retrievingInstrumentDataFolder: false);
 
                 if (string.IsNullOrEmpty(ServerPath))
@@ -783,7 +783,7 @@ namespace AnalysisManagerBase
 
             }
 
-            // If we get here, then no match was found
+            // If we get here, no match was found
             return string.Empty;
 
         }
@@ -955,7 +955,7 @@ namespace AnalysisManagerBase
 
         /// <summary>
         /// Looks for job parameters BrukerMALDI_Imaging_startSectionX and BrukerMALDI_Imaging_endSectionX
-        /// If defined, then populates startSectionX and endSectionX with the Start and End X values to filter on
+        /// If defined, populates startSectionX and endSectionX with the Start and End X values to filter on
         /// </summary>
         /// <param name="jobParams"></param>
         /// <param name="startSectionX"></param>
@@ -1320,7 +1320,7 @@ namespace AnalysisManagerBase
         /// Retrieves a dataset file for the analysis job in progress; uses the user-supplied extension to match the file
         /// </summary>
         /// <param name="fileExtension">File extension to match; must contain a period, for example ".raw"</param>
-        /// <param name="createStoragePathInfoOnly">If true, then create a storage path info file</param>
+        /// <param name="createStoragePathInfoOnly">If true, create a storage path info file</param>
         /// <param name="maxAttempts">Maximum number of attempts</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks></remarks>
@@ -1787,7 +1787,7 @@ namespace AnalysisManagerBase
         /// Looks for this dataset's ScanStats files (previously created by MASIC)
         /// Looks for the files in any SIC folder that exists for the dataset
         /// </summary>
-        /// <param name="createStoragePathInfoOnly">If true, then creates a storage path info file but doesn't actually copy the files</param>
+        /// <param name="createStoragePathInfoOnly">If true, creates a storage path info file but doesn't actually copy the files</param>
         /// <returns>True if the file was found and retrieved, otherwise False</returns>
         /// <remarks></remarks>
         public bool RetrieveScanStatsFiles(bool createStoragePathInfoOnly)
@@ -1806,8 +1806,8 @@ namespace AnalysisManagerBase
         /// Looks for the files in any SIC folder that exists for the dataset
         /// </summary>
         /// <param name="createStoragePathInfoOnly"></param>
-        /// <param name="retrieveScanStatsFile">If True, then retrieves the ScanStats.txt file</param>
-        /// <param name="retrieveScanStatsExFile">If True, then retrieves the ScanStatsEx.txt file</param>
+        /// <param name="retrieveScanStatsFile">If True, retrieves the ScanStats.txt file</param>
+        /// <param name="retrieveScanStatsExFile">If True, retrieves the ScanStatsEx.txt file</param>
         /// <returns>True if the file was found and retrieved, otherwise False</returns>
         /// <remarks></remarks>
         public bool RetrieveScanStatsFiles(bool createStoragePathInfoOnly, bool retrieveScanStatsFile, bool retrieveScanStatsExFile)
@@ -1823,10 +1823,10 @@ namespace AnalysisManagerBase
         /// Looks for this dataset's MASIC results files
         /// Looks for the files in any SIC folder that exists for the dataset
         /// </summary>
-        /// <param name="retrieveSICStatsFile">If True, then also copies the _SICStats.txt file in addition to the ScanStats files</param>
-        /// <param name="createStoragePathInfoOnly">If true, then creates a storage path info file but doesn't actually copy the files</param>
-        /// <param name="retrieveScanStatsFile">If True, then retrieves the ScanStats.txt file</param>
-        /// <param name="retrieveScanStatsExFile">If True, then retrieves the ScanStatsEx.txt file</param>
+        /// <param name="retrieveSICStatsFile">If True, also copies the _SICStats.txt file in addition to the ScanStats files</param>
+        /// <param name="createStoragePathInfoOnly">If true, creates a storage path info file but doesn't actually copy the files</param>
+        /// <param name="retrieveScanStatsFile">If True, retrieves the ScanStats.txt file</param>
+        /// <param name="retrieveScanStatsExFile">If True, retrieves the ScanStatsEx.txt file</param>
         /// <returns>True if the file was found and retrieved, otherwise False</returns>
         /// <remarks></remarks>
         public bool RetrieveScanAndSICStatsFiles(
@@ -1885,7 +1885,7 @@ namespace AnalysisManagerBase
             }
 
             // Look for the MASIC Results folder
-            // If the folder cannot be found, then m_FolderSearch.FindValidFolder will return the folder defined by "DatasetStoragePath"
+            // If the folder cannot be found, m_FolderSearch.FindValidFolder will return the folder defined by "DatasetStoragePath"
                 var scanStatsFilename = DatasetName + clsAnalysisResources.SCAN_STATS_FILE_SUFFIX;
             var serverPath = m_FolderSearch.FindValidFolder(DatasetName, "", "SIC*", MAX_ATTEMPTS, logFolderNotFound: false, retrievingInstrumentDataFolder: false);
 
@@ -2572,7 +2572,7 @@ namespace AnalysisManagerBase
             var applySectionFilter = GetBrukerImagingSectionFilter(m_jobParams, out var startSectionX, out var endSectionX);
 
             // Look for the dataset folder; it must contain .Zip files with names like 0_R00X442.zip
-            // If a matching folder isn't found, then ServerPath will contain the folder path defined by Job Param "DatasetStoragePath"
+            // If a matching folder isn't found, ServerPath will contain the folder path defined by Job Param "DatasetStoragePath"
             var serverPath = m_FolderSearch.FindValidFolder(DatasetName, ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK, RetrievingInstrumentDataFolder: true);
 
             try
@@ -2658,7 +2658,7 @@ namespace AnalysisManagerBase
                         continue;
 
                     // Open up the zip file over the network and get a listing of all of the files
-                    // If they already exist in the cached data folder, then there is no need to continue
+                    // If they already exist in the cached data folder, there is no need to continue
 
                     // Set this to false for now
                     unzipFile = false;
@@ -2685,7 +2685,7 @@ namespace AnalysisManagerBase
 
 
                     // Unzip the file to the Chameleon cached data folder
-                    // If unzipOverNetwork=True, then we want to copy the file locally first
+                    // If unzipOverNetwork=True, we want to copy the file locally first
 
                     string zipFilePathToExtract;
                     if (unzipOverNetwork)
@@ -2810,7 +2810,7 @@ namespace AnalysisManagerBase
             try
             {
                 // First Check for the existence of a 0.ser Folder
-                // If 0.ser folder exists, then either store the path to the 0.ser folder in a StoragePathInfo file, or copy the 0.ser folder to the working directory
+                // If 0.ser folder exists, either store the path to the 0.ser folder in a StoragePathInfo file, or copy the 0.ser folder to the working directory
                 var DSFolderPath = m_FolderSearch.FindValidFolder(DatasetName, fileNameToFind: "", folderNameToFind:
                     clsAnalysisResources.BRUKER_ZERO_SER_FOLDER, maxRetryCount: maxAttempts, logFolderNotFound: true, retrievingInstrumentDataFolder: true);
 
@@ -2988,7 +2988,7 @@ namespace AnalysisManagerBase
         /// <param name="zipFilePath">File to unzip</param>
         /// <param name="outFolderPath">Target directory for the extracted files</param>
         /// <param name="callingFunctionName">Calling function name (used for debugging purposes)</param>
-        /// <param name="forceExternalZipProgramUse">If True, then force use of PKZipC.exe</param>
+        /// <param name="forceExternalZipProgramUse">If True, force use of PKZipC.exe</param>
         /// <returns>True if success, otherwise false</returns>
         /// <remarks></remarks>
         public bool UnzipFileStart(string zipFilePath, string outFolderPath, string callingFunctionName, bool forceExternalZipProgramUse)
@@ -3034,7 +3034,7 @@ namespace AnalysisManagerBase
                 }
 
                 // Use the external zipper if the file size is over IONIC_ZIP_MAX_FILESIZE_MB or if ForceExternalZipProgramUse = True
-                // However, if the .Exe file for the external zipper is not found, then fall back to use Ionic.Zip
+                // However, if the .Exe file for the external zipper is not found, fall back to use Ionic.Zip
                 if (forceExternalZipProgramUse || fileSizeMB >= IONIC_ZIP_MAX_FILESIZE_MB)
                 {
                     if (externalUnzipperFilePath.Length > 0 && externalUnzipperFilePath.ToLower() != "na")

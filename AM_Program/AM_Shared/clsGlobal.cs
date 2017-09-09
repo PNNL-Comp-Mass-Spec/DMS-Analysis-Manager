@@ -859,7 +859,7 @@ namespace AnalysisManagerBase
 
         /// <summary>
         /// Copies file SourceFilePath to folder TargetFolder, renaming it to TargetFileName.
-        /// However, if file TargetFileName already exists, then that file will first be backed up
+        /// However, if file TargetFileName already exists, that file will first be backed up
         /// Furthermore, up to VersionCountToKeep old versions of the file will be kept
         /// </summary>
         /// <param name="SourceFilePath"></param>
@@ -1202,7 +1202,7 @@ namespace AnalysisManagerBase
         /// The file will be created in the same folder as the data file, and will contain size, modification_date_utc, and hash
         /// </summary>
         /// <param name="dataFilePath"></param>
-        /// <param name="computeMD5Hash">If True, then computes the MD5 hash</param>
+        /// <param name="computeMD5Hash">If True, computes the MD5 hash</param>
         /// <returns>The full path to the .hashcheck file; empty string if a problem</returns>
         /// <remarks></remarks>
         public static string CreateHashcheckFile(string dataFilePath, bool computeMD5Hash)
@@ -1531,11 +1531,11 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Compares two files line-by-line.  If comparisonStartLine is > 0, then ignores differences up until the given line number.  If
+        /// Compares two files line-by-line.  If comparisonStartLine is > 0, ignores differences up until the given line number.  If
         /// </summary>
         /// <param name="filePath1">First file</param>
         /// <param name="filePath2">Second file</param>
-        /// <param name="ignoreWhitespace">If true, then removes white space from the beginning and end of each line before compaing</param>
+        /// <param name="ignoreWhitespace">If true, removes white space from the beginning and end of each line before compaing</param>
         /// <returns></returns>
         /// <remarks></remarks>
         public static bool TextFilesMatch(string filePath1, string filePath2, bool ignoreWhitespace)
@@ -1550,13 +1550,13 @@ namespace AnalysisManagerBase
 
 
         /// <summary>
-        /// Compares two files line-by-line.  If comparisonStartLine is > 0, then ignores differences up until the given line number.  If
+        /// Compares two files line-by-line.  If comparisonStartLine is > 0, ignores differences up until the given line number.  If
         /// </summary>
         /// <param name="filePath1">First file</param>
         /// <param name="filePath2">Second file</param>
-        /// <param name="comparisonStartLine">Line at which to start the comparison; if 0 or 1, then compares all lines</param>
-        /// <param name="comparisonEndLine">Line at which to end the comparison; if 0, then compares all the way to the end</param>
-        /// <param name="ignoreWhitespace">If true, then removes white space from the beginning and end of each line before compaing</param>
+        /// <param name="comparisonStartLine">Line at which to start the comparison; if 0 or 1, compares all lines</param>
+        /// <param name="comparisonEndLine">Line at which to end the comparison; if 0, compares all the way to the end</param>
+        /// <param name="ignoreWhitespace">If true, removes white space from the beginning and end of each line before compaing</param>
         /// <returns></returns>
         /// <remarks></remarks>
         public static bool TextFilesMatch(string filePath1, string filePath2, int comparisonStartLine, int comparisonEndLine, bool ignoreWhitespace)
@@ -1567,13 +1567,13 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Compares two files line-by-line.  If comparisonStartLine is > 0, then ignores differences up until the given line number.
+        /// Compares two files line-by-line.  If comparisonStartLine is > 0, ignores differences up until the given line number.
         /// </summary>
         /// <param name="filePath1">First file</param>
         /// <param name="filePath2">Second file</param>
-        /// <param name="comparisonStartLine">Line at which to start the comparison; if 0 or 1, then compares all lines</param>
-        /// <param name="comparisonEndLine">Line at which to end the comparison; if 0, then compares all the way to the end</param>
-        /// <param name="ignoreWhitespace">If true, then removes white space from the beginning and end of each line before compaing</param>
+        /// <param name="comparisonStartLine">Line at which to start the comparison; if 0 or 1, compares all lines</param>
+        /// <param name="comparisonEndLine">Line at which to end the comparison; if 0, compares all the way to the end</param>
+        /// <param name="ignoreWhitespace">If true, removes white space from the beginning and end of each line before compaing</param>
         /// <param name="lineIgnoreRegExSpecs">List of RegEx match specs that indicate lines to ignore</param>
         /// <returns></returns>
         /// <remarks></remarks>
@@ -1649,7 +1649,7 @@ namespace AnalysisManagerBase
                             }
 
                             // Ignoring whitespace
-                            // If file1 only has blank lines from here on out, then the files match; otherwise, they don't
+                            // If file1 only has blank lines from here on out, the files match; otherwise, they don't
                             // See if the remaining lines are blank
                             do
                             {
@@ -1690,7 +1690,7 @@ namespace AnalysisManagerBase
                         }
 
                         // Ignoring whitespace
-                        // If file2 only has blank lines from here on out, then the files match; otherwise, they don't
+                        // If file2 only has blank lines from here on out, the files match; otherwise, they don't
                         // See if the remaining lines are blank
                         do
                         {
@@ -1827,7 +1827,7 @@ namespace AnalysisManagerBase
         /// <param name="dataFilePath">Data file to check.</param>
         /// <param name="hashFilePath">Hashcheck file for the given data file (auto-defined if blank)</param>
         /// <param name="errorMessage"></param>
-        /// <param name="checkDate">If True, then compares UTC modification time; times must agree within 2 seconds</param>
+        /// <param name="checkDate">If True, compares UTC modification time; times must agree within 2 seconds</param>
         /// <param name="computeHash"></param>
         /// <returns>True if the hashcheck file exists and the actual file matches the expected values; false if a mismatch or a problem</returns>
         /// <remarks>The .hashcheck file has the same name as the data file, but with ".hashcheck" appended</remarks>
@@ -1846,7 +1846,7 @@ namespace AnalysisManagerBase
         /// <param name="dataFilePath">Data file to check.</param>
         /// <param name="hashFilePath">Hashcheck file for the given data file (auto-defined if blank)</param>
         /// <param name="errorMessage"></param>
-        /// <param name="checkDate">If True, then compares UTC modification time; times must agree within 2 seconds</param>
+        /// <param name="checkDate">If True, compares UTC modification time; times must agree within 2 seconds</param>
         /// <param name="computeHash"></param>
         /// <param name="checkSize"></param>
         /// <returns>True if the hashcheck file exists and the actual file matches the expected values; false if a mismatch or a problem</returns>
@@ -2048,5 +2048,6 @@ namespace AnalysisManagerBase
         }
 
         #endregion
+
     }
 }

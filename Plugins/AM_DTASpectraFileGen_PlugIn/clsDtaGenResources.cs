@@ -96,7 +96,7 @@ namespace DTASpectraFileGen
                 if (blnCentroidDTAs)
                 {
                     // Look for a DTA_Gen_1_26_ folder for this dataset
-                    // If it exists, and if we can find a valid _dta.zip file, then use that file instead of re-running DeconMSn (since DeconMSn can take some time to run)
+                    // If it exists, and if we can find a valid _dta.zip file, use that file instead of re-running DeconMSn (since DeconMSn can take some time to run)
 
                     var datasetID = m_jobParams.GetJobParameter("DatasetID", 0);
                     var folderNameToFind = "DTA_Gen_1_26_" + datasetID;

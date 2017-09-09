@@ -380,7 +380,10 @@ namespace AnalysisManagerBase
         /// <param name="name">Key name for parameter</param>
         /// <param name="valueIfMissing">Value if missing</param>
         /// <returns>Value for specified parameter; valueIfMissing if not found</returns>
-        /// <remarks>If the value associated with the parameter is found, yet is not True or False, then an exception will be occur; the calling procedure must handle this exception</remarks>
+        /// <remarks>
+        /// If the value associated with the parameter is found, yet is not True or False, an exception will be occur;
+        /// the calling procedure must handle this exception
+        /// </remarks>
         public bool GetJobParameter(string name, bool valueIfMissing)
         {
 
@@ -724,7 +727,7 @@ namespace AnalysisManagerBase
         /// <param name="section">Section Name</param>
         /// <param name="paramName">Parameter Name</param>
         /// <param name="paramValue">Output: parameter value</param>
-        /// <param name="searchAllSectionsIfNotFound">If True, then searches other sections for the parameter if not found in the specified section</param>
+        /// <param name="searchAllSectionsIfNotFound">If True, searches other sections for the parameter if not found in the specified section</param>
         /// <returns>True if success, False if not found</returns>
         /// <remarks></remarks>
         public bool TryGetParam(string section, string paramName, out string paramValue, bool searchAllSectionsIfNotFound)

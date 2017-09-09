@@ -636,7 +636,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             try
             {
-                // Validate that the input file has at least one entry; if not, then no point in continuing
+                // Validate that the input file has at least one entry; if not, no point in continuing
                 int linesRead;
 
                 var inputFile = new FileInfo(inputFilePath);
@@ -2412,9 +2412,9 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // Instrument ID is not obvious from the instrument group
                 // Examine the scan types in scanTypeFilePath
 
-                // If low res MS1,  then Instrument Group is typically LCQ, LTQ, LTQ-ETD, LTQ-Prep, VelosPro
+                // If low res MS1,  Instrument Group is typically LCQ, LTQ, LTQ-ETD, LTQ-Prep, VelosPro
 
-                // If high res MS2, then Instrument Group is typically VelosOrbi, or LTQ_FT
+                // If high res MS2, Instrument Group is typically VelosOrbi, or LTQ_FT
 
                 // Count the number of High res CID or ETD spectra
                 // Count HCD spectra separately since MS-GF+ has a special scoring model for HCD spectra

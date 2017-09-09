@@ -133,7 +133,7 @@ namespace MSMSSpectrumFilterAM
                 var fiFilteredCDTA = new FileInfo(strFilteredCDTA);
                 var fiOriginalCDTA = new FileInfo(strOriginalCDTA);
 
-                // If the file sizes do not agree within 10 bytes, then the files likely do not match (unless we have a unicode; non-unicode issue, which shouldn't be the case)
+                // If the file sizes do not agree within 10 bytes, the files likely do not match (unless we have a unicode; non-unicode issue, which shouldn't be the case)
                 if (Math.Abs(fiFilteredCDTA.Length - fiOriginalCDTA.Length) > 10)
                 {
                     if (m_DebugLevel >= 2)
@@ -185,7 +185,7 @@ namespace MSMSSpectrumFilterAM
                     {
                         intFilteredCDTASpectra += 1;
 
-                        // If the parent ions differ or the MS/MS spectral data differs, then the files do not match
+                        // If the parent ions differ or the MS/MS spectral data differs, the files do not match
 
                         if (udtSpectrumHeaderInfoOrig.SpectrumTitle != udtSpectrumHeaderInfoFilt.SpectrumTitle)
                         {
@@ -236,7 +236,7 @@ namespace MSMSSpectrumFilterAM
                     return false;
                 }
 
-                // If we get here, then the files match
+                // If we get here, the files match
                 return true;
             }
             catch (Exception ex)
@@ -477,7 +477,7 @@ namespace MSMSSpectrumFilterAM
                         }
 
                         // Compare the new _dta.txt file to the _dta.txt.bak file
-                        // If they have the same data, then do not keep the new _dta.txt file
+                        // If they have the same data, do not keep the new _dta.txt file
 
                         blnFilesMatch = CDTAFilesMatch(strBakFilePath, strInputFilePath);
 

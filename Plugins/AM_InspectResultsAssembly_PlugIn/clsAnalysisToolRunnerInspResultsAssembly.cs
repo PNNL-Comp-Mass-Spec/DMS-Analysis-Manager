@@ -39,7 +39,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             INSPECT_CONSOLE = 3
         }
 
-        // Note: if you add/remove any steps, then update PERCENT_COMPLETE_LEVEL_COUNT and update the population of mPercentCompleteStartLevels()
+        // Note: if you add/remove any steps, update PERCENT_COMPLETE_LEVEL_COUNT and update the population of mPercentCompleteStartLevels()
         public enum eInspectResultsProcessingSteps
         {
             Starting = 0,
@@ -524,7 +524,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
             try
             {
-                // Validate that the input file has at least one entry; if not, then no point in continuing
+                // Validate that the input file has at least one entry; if not, no point in continuing
 
                 var srInFile = new StreamReader(new FileStream(strInputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read));
 

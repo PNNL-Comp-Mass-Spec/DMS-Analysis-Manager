@@ -372,7 +372,7 @@ namespace AnalysisManagerMSGFPlugin
         /// Creates the input file for MSGF
         /// Will contain filter passing peptides from the synopsis file, plus all peptides
         /// in the first-hits file that are not filter passing in the synopsis file
-        /// If the synopsis file does not exist, then simply processes the first-hits file
+        /// If the synopsis file does not exist, simply processes the first-hits file
         /// </summary>
         /// <returns></returns>
         /// <remarks></remarks>
@@ -653,7 +653,7 @@ namespace AnalysisManagerMSGFPlugin
 
                     if (blnPassesFilters)
                     {
-                        // If this line is a duplicate of the previous line, then skip it
+                        // If this line is a duplicate of the previous line, skip it
                         // This happens in Sequest _syn.txt files where the line is repeated for all protein matches
 
                         if (intScanNumberPrevious == objPSM.ScanNumber &&
@@ -727,7 +727,7 @@ namespace AnalysisManagerMSGFPlugin
                 }
 
                 // The title column holds the original peptide sequence
-                // If a peptide doesn't have any mods, then the Title column and the Annotation column will be identical
+                // If a peptide doesn't have any mods, the Title column and the Annotation column will be identical
 
                 // Columns are: #SpectrumFile  Title  Scan#  Annotation  Charge  Protein_First  Result_ID  Data_Source  Collision_Mode
                 swMSGFInputFile.WriteLine(

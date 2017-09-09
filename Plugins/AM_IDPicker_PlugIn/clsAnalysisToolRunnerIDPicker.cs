@@ -170,7 +170,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 }
 
                 // Store the version of IDPicker and PeptideListToXML in the database
-                // Alternatively, if skipIDPicker is true, then just store the version of PeptideListToXML
+                // Alternatively, if skipIDPicker is true, just store the version of PeptideListToXML
 
                 // This function updates mPeptideListToXMLExePath and mIDPickerProgramFolder
                 if (!StoreToolVersionInfo(progLocQonvert, skipIDPicker))
@@ -246,7 +246,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 {
                     // Something went wrong
                     // In order to help diagnose things, we will move whatever files were created into the result folder,
-                    //  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
+                    //  archive it using CopyFailedResultsToArchiveFolder, return CloseOutType.CLOSEOUT_FAILED
 
                     m_jobParams.RemoveResultFileToSkip(ASSEMBLE_GROUPING_FILENAME);
                     m_jobParams.RemoveResultFileToSkip(ASSEMBLE_OUTPUT_FILENAME);
@@ -300,7 +300,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
             if (ePHRPResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB)
             {
-                // If we run MSGF+ with target/decoy mode and showDecoy=1, then the _syn.txt file will have decoy proteins that start with REV_ or XXX_
+                // If we run MSGF+ with target/decoy mode and showDecoy=1, the _syn.txt file will have decoy proteins that start with REV_ or XXX_
                 // Check for this
                 blnSuccess = LookForDecoyProteinsInMSGFPlusResults(strSynFilePath, ePHRPResultType, ref strDecoyPrefix);
                 if (!blnSuccess)
@@ -407,7 +407,7 @@ namespace AnalysisManagerIDPickerPlugIn
         /// <param name="OptionName">Key name to lookup in mIDPickerOptions</param>
         /// <param name="ArgumentName">Argument Name</param>
         /// <param name="ValueIfMissing">Value to append if not defined in mIDPickerOptions</param>
-        /// <param name="AppendIfMissing">If True, then append the argument using ValueIfMissing if not found in mIDPickerOptions; if false, and not found, then does not append the argument</param>
+        /// <param name="AppendIfMissing">If True, append the argument using ValueIfMissing if not found in mIDPickerOptions; if false, and not found, does not append the argument</param>
         /// <returns>The new argument list</returns>
         /// <remarks></remarks>
         private string AppendArgument(string CmdArgs, string OptionName, string ArgumentName, string ValueIfMissing, bool AppendIfMissing)
@@ -1188,7 +1188,7 @@ namespace AnalysisManagerIDPickerPlugIn
         /// <param name="strProgramDescription"></param>
         /// <param name="strExePath"></param>
         /// <param name="cmdStr"></param>
-        /// <param name="strConsoleOutputFileName">If empty, then does not create a console output file</param>
+        /// <param name="strConsoleOutputFileName">If empty, does not create a console output file</param>
         /// <param name="blnCaptureConsoleOutputViaDosRedirection"></param>
         /// <param name="intMaxRuntimeMinutes"></param>
         /// <returns></returns>

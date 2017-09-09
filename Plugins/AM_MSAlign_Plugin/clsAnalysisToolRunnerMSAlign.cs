@@ -597,7 +597,7 @@ namespace AnalysisManagerMSAlignPlugIn
 
                             if (strKeyName.ToLower() == INSTRUMENT_ACTIVATION_TYPE_KEY || strKeyName.ToLower() == INSTRUMENT_TYPE_KEY)
                             {
-                                // If this is a bruker dataset, then we need to make sure that the value for this entry is not FILE
+                                // If this is a bruker dataset, we need to make sure that the value for this entry is not FILE
                                 // The reason is that the mzXML file created by Bruker's compass program does not include the scantype information (CID, ETD, etc.)
                                 var strToolName = m_jobParams.GetParam("ToolName");
 

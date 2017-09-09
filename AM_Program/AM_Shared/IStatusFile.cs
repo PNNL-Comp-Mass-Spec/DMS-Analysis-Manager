@@ -360,7 +360,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Writes the status file
         /// </summary>
-        /// <param name="forceLogToBrokerDB">If true, then will force m_BrokerDBLogger to report the manager status to the database</param>
+        /// <param name="forceLogToBrokerDB">If true, will force m_BrokerDBLogger to report the manager status to the database</param>
         /// <remarks></remarks>
         void WriteStatusFile(bool forceLogToBrokerDB);
 

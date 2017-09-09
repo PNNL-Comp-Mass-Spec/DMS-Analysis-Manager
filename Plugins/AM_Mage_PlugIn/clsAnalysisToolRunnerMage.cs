@@ -306,8 +306,8 @@ namespace AnalysisManager_Mage_PlugIn
         protected bool ValidateSqliteDB(string mageOperations, FileInfo fiResultsDB)
         {
 
-            // If the Mage Operations list contains "ExtractFromJobs", then make sure that table "t_results" was created
-            // If it wasn't, then no matching jobs were found and we should fail out this job step
+            // If the Mage Operations list contains "ExtractFromJobs", make sure that table "t_results" was created
+            // If it wasn't, no matching jobs were found and we should fail out this job step
             if (mageOperations.Contains("ExtractFromJobs"))
             {
                 if (!TableExists(fiResultsDB, "t_results"))
@@ -322,8 +322,8 @@ namespace AnalysisManager_Mage_PlugIn
             if (analysisType.Contains("iTRAQ"))
                 itraqMode = true;
 
-            // If the Mage Operations list contains "ImportDataPackageFiles", then make sure that table "T_alias" was created
-            // If it wasn't, then we should fail out this job step
+            // If the Mage Operations list contains "ImportDataPackageFiles", make sure that table "T_alias" was created
+            // If it wasn't, we should fail out this job step
             if (itraqMode || mageOperations.Contains("ImportDataPackageFiles"))
             {
                 if (!TableExists(fiResultsDB, "T_alias"))

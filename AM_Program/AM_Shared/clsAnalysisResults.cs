@@ -464,10 +464,11 @@ namespace AnalysisManagerBase
                 {
                     if (Directory.Exists(folderPath))
                     {
-                        // If the folder already exists, then there is nothing to do
+                        // If the folder already exists, there is nothing to do
                         return;
                     }
 
+                    // Note that .NET will automatically create any missing parent directories
                     Directory.CreateDirectory(folderPath);
                     return;
                 }

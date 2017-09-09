@@ -55,7 +55,7 @@ namespace MSMSSpectrumFilterAM
             m_jobParams.AddResultFileToKeep("_dta.zip");
 
             // Look at the job parameters
-            // If ScanTypeFilter is defined, or MSCollisionModeFilter is defined, or MSLevelFilter is defined, then we need either of the following
+            // If ScanTypeFilter is defined, or MSCollisionModeFilter is defined, or MSLevelFilter is defined, we need either of the following
             //  a) The _ScanStats.txt file and _ScanStatsEx.txt file from a MASIC job for this dataset
             //       This is essentially a job-depending-on a job
             //  b) The .Raw file
@@ -101,7 +101,7 @@ namespace MSMSSpectrumFilterAM
             if (blnNeedScanStatsFiles)
             {
                 // Find and copy the ScanStats files from an existing job rather than copying over the .Raw file
-                // However, if the _ScanStats.txt file does not have column ScanTypeName, then we will need the .raw file
+                // However, if the _ScanStats.txt file does not have column ScanTypeName, we will need the .raw file
 
                 var blnIsFolder = false;
                 string strDatasetFileOrFolderPath = null;

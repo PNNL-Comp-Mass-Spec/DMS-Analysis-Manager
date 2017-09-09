@@ -14,7 +14,7 @@ namespace AnalysisManagerBase
         /// <param name="sourceDBPath">Source database path</param>
         /// <param name="targetDBPath">Target database path</param>
         /// <returns>True if success, false if a problem</returns>
-        /// <remarks>If the target database already exists, then missing tables (and data) will be appended to the file</remarks>
+        /// <remarks>If the target database already exists, missing tables (and data) will be appended to the file</remarks>
         public bool CloneDB(string sourceDBPath, string targetDBPath)
         {
             const bool appendToExistingDB = true;
@@ -27,7 +27,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="sourceDBPath">Source database path</param>
         /// <param name="targetDBPath">Target database path</param>
-        /// <param name="appendToExistingDB">Behavior when the target DB exists; if True, then missing tables will be appended to the database; if False, then the target DB will be deleted</param>
+        /// <param name="appendToExistingDB">Behavior when the target DB exists; if True, missing tables will be appended to the database; if False, the target DB will be deleted</param>
         /// <returns>True if success, false if a problem</returns>
         public bool CloneDB(string sourceDBPath, string targetDBPath, bool appendToExistingDB)
         {
@@ -40,7 +40,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="sourceDBPath">Source database path</param>
         /// <param name="targetDBPath">Target database path</param>
-        /// <param name="appendToExistingDB">Behavior when the target DB exists; if True, then missing tables will be appended to the database; if False, then the target DB will be deleted</param>
+        /// <param name="appendToExistingDB">Behavior when the target DB exists; if True, missing tables will be appended to the database; if False, the target DB will be deleted</param>
         /// <param name="tablesToSkip">A list of table names (e.g. Frame_Scans) that should not be copied.</param>
         /// <returns>True if success, false if a problem</returns>
         public bool CloneDB(string sourceDBPath, string targetDBPath, bool appendToExistingDB, List<string> tablesToSkip)

@@ -161,11 +161,11 @@ namespace AnalysisManagerBase
         /// Replaces the original file with a new CDTA file if newCDTAFileHasUpdates=True; deletes the new CDTA file if newCDTAFileHasUpdates=false
         /// </summary>
         /// <param name="newCDTAFileHasUpdates">True if the new CDTA file has updated info</param>
-        /// <param name="replaceSourceFile">If True, then replaces the source file with and updated file</param>
+        /// <param name="replaceSourceFile">If True, replaces the source file with and updated file</param>
         /// <param name="deleteSourceFileIfUpdated">
         /// Only valid if replaceSourceFile=True;
-        /// If True, then the source file is deleted if an updated version is created.
-        /// If false, then the source file is renamed to .old if an updated version is created.
+        /// If True, the source file is deleted if an updated version is created.
+        /// If false, the source file is renamed to .old if an updated version is created.
         /// </param>
         /// <param name="fiOriginalFile">File handle to the original CDTA file</param>
         /// <param name="fiUpdatedFile">File handle to the new CDTA file</param>
@@ -232,11 +232,11 @@ namespace AnalysisManagerBase
         /// Makes sure the specified _DTA.txt file has scan=x and cs=y tags in the parent ion line
         /// </summary>
         /// <param name="sourceFilePath">Input _DTA.txt file to parse</param>
-        /// <param name="replaceSourceFile">If True, then replaces the source file with and updated file</param>
+        /// <param name="replaceSourceFile">If True, replaces the source file with and updated file</param>
         /// <param name="deleteSourceFileIfUpdated">
         /// Only valid if replaceSourceFile=True;
-        /// If True, then the source file is deleted if an updated version is created.
-        /// If false, then the source file is renamed to .old if an updated version is created.
+        /// If True, the source file is deleted if an updated version is created.
+        /// If false, the source file is renamed to .old if an updated version is created.
         /// </param>
         /// <param name="outputFilePath">
         /// Output file path to use for the updated file; required if replaceSourceFile=False; ignored if replaceSourceFile=True

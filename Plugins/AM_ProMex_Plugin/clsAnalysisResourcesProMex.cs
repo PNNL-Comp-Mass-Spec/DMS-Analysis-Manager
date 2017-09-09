@@ -44,7 +44,7 @@ namespace AnalysisManagerProMexPlugIn
 
             string paramFileName = null;
 
-            // If this is a ProMex script, then the ProMex parameter file name is tracked as the job's parameter file
+            // If this is a ProMex script, the ProMex parameter file name is tracked as the job's parameter file
             // Otherwise, for MSPathFinder scripts, the ProMex parameter file is defined in the Job's settings file, and is thus accessible as job parameter ProMexParamFile
 
             var toolName = m_jobParams.GetParam("ToolName");

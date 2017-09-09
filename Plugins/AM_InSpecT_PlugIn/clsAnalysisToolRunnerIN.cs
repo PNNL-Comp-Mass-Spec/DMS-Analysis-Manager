@@ -167,7 +167,7 @@ namespace AnalysisManagerInSpecTPlugIn
                     return result;
                 }
 
-                // If not a parallelized job, then zip the _Inspect.txt file
+                // If not a parallelized job, zip the _Inspect.txt file
                 if (!m_isParallelInspect)
                 {
                     // Zip the output file

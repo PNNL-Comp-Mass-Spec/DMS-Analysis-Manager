@@ -1167,7 +1167,7 @@ namespace AnalysisManagerBase
             try
             {
                 // Write out the XML text to a file
-                // If the file is in use by another process, then the writing will fail
+                // If the file is in use by another process, the writing will fail
                 using (var writer = new StreamWriter(new FileStream(statusFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
                     writer.WriteLine(xmlText);

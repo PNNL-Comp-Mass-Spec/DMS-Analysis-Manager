@@ -107,7 +107,7 @@ namespace AnalysisManagerBase
         /// <param name="targetFolderPath">Destination directory for file copy</param>
         /// <param name="logMsgTypeIfNotFound">Type of message to log if the file is not found</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
-        /// <remarks>If the file was found in MyEMSL, then sourceFolderPath will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
+        /// <remarks>If the file was found in MyEMSL, sourceFolderPath will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
         public bool CopyFileToWorkDir(string sourceFileName, string sourceFolderPath, string targetFolderPath, clsLogTools.LogLevels logMsgTypeIfNotFound)
         {
 
@@ -126,7 +126,7 @@ namespace AnalysisManagerBase
         /// <param name="logMsgTypeIfNotFound">Type of message to log if the file is not found</param>
         /// <param name="maxCopyAttempts">Maximum number of attempts to make when errors are encountered while copying the file</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
-        /// <remarks>If the file was found in MyEMSL, then sourceFolderPath will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
+        /// <remarks>If the file was found in MyEMSL, sourceFolderPath will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
         public bool CopyFileToWorkDir(
             string sourceFileName,
             string sourceFolderPath,
@@ -174,7 +174,7 @@ namespace AnalysisManagerBase
         /// <param name="createStoragePathInfoOnly">TRUE if a storage path info file should be created instead of copying the file</param>
         /// <param name="maxCopyAttempts">Maximum number of attempts to make when errors are encountered while copying the file</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
-        /// <remarks>If the file was found in MyEMSL, then sourceFolderPath will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
+        /// <remarks>If the file was found in MyEMSL, sourceFolderPath will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
         public bool CopyFileToWorkDir(
             string sourceFileName,
             string sourceFolderPath,

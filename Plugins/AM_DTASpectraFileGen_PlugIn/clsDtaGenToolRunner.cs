@@ -440,7 +440,7 @@ namespace DTASpectraFileGen
                 if (blnUsingExistingResults)
                 {
                     // Confirm that the existing DeconMSn results are valid
-                    // If they are, then we don't need to re-run DeconMSn
+                    // If they are, we don't need to re-run DeconMSn
 
                     if (ValidateDeconMSnResults())
                     {

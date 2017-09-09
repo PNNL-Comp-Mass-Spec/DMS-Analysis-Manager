@@ -106,7 +106,7 @@ namespace AnalysisManagerExtractionPlugin
                         // Run Ken's Peptide Extractor DLL
                         strCurrentAction = "running peptide extraction for Sequest";
                         eResult = PerformPeptideExtraction();
-                        // Check for no data first. If no data, then exit but still copy results to server
+                        // Check for no data first. If no data, exit but still copy results to server
                         if (eResult == CloseOutType.CLOSEOUT_NO_DATA)
                         {
                             break;
@@ -939,7 +939,7 @@ namespace AnalysisManagerExtractionPlugin
                     return eResult;
                 }
 
-                // If there was a _syn.txt file created, but it contains no data, then we want to clean up and exit
+                // If there was a _syn.txt file created, but it contains no data, we want to clean up and exit
                 if (eResult == CloseOutType.CLOSEOUT_NO_DATA)
                 {
                     // Log error and return result calling routine handles the error appropriately
@@ -1790,7 +1790,7 @@ namespace AnalysisManagerExtractionPlugin
             List<string> splitFileList;
 
             // Check the size of the Syn file
-            // If it is too large, then we will need to break it up into multiple parts, process each part separately, and then combine the results
+            // If it is too large, we will need to break it up into multiple parts, process each part separately, and then combine the results
             var sngParentSynFileSizeMB = (float)(fiSynFile.Length / 1024.0 / 1024.0);
             if (sngParentSynFileSizeMB <= SYN_FILE_MAX_SIZE_MB)
             {
@@ -2006,7 +2006,7 @@ namespace AnalysisManagerExtractionPlugin
         /// </summary>
         /// <param name="fileList">Files to combine</param>
         /// <param name="strCombinedFilePath">File to create</param>
-        /// <param name="blnLookForHeaderLine">When true, then looks for a header line by checking if the first column contains a number</param>
+        /// <param name="blnLookForHeaderLine">When true, looks for a header line by checking if the first column contains a number</param>
         /// <returns>True if success; false if failure</returns>
         /// <remarks></remarks>
         private bool InterleaveFiles(IReadOnlyList<string> fileList, string strCombinedFilePath, bool blnLookForHeaderLine)
@@ -2116,11 +2116,11 @@ namespace AnalysisManagerExtractionPlugin
         /// <summary>
         /// Reads strSrcFilePath line-by-line and splits into multiple files such that none of the output
         /// files has length greater than lngMaxSizeBytes. Can also check for a header line on the first line;
-        /// if a header line is found, then all of the split files will be assigned the same header line
+        /// if a header line is found, all of the split files will be assigned the same header line
         /// </summary>
         /// <param name="strSrcFilePath">FilePath to parse</param>
         /// <param name="lngMaxSizeBytes">Maximum size of each file</param>
-        /// <param name="blnLookForHeaderLine">When true, then looks for a header line by checking if the first column contains a number</param>
+        /// <param name="blnLookForHeaderLine">When true, looks for a header line by checking if the first column contains a number</param>
         /// <param name="splitFileList">Output array listing the full paths to the split files that were created</param>
         /// <returns>True if success, false if failure</returns>
         /// <remarks></remarks>

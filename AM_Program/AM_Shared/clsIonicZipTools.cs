@@ -160,7 +160,6 @@ namespace AnalysisManagerBase
             return GUnzipFile(GZipFilePath, TargetDirectory, Ionic.Zip.ExtractExistingFileAction.OverwriteSilently);
         }
 
-
         /// <summary>
         /// Unzip GZipFilePath into the specified target directory, applying the specified file filter
         /// </summary>
@@ -272,7 +271,7 @@ namespace AnalysisManagerBase
         /// Stores SourceFilePath in a zip file with the same name, but with extension .gz appended to the name (e.g. Dataset.mzid.gz)
         /// </summary>
         /// <param name="SourceFilePath">Full path to the file to be zipped</param>
-        /// <param name="DeleteSourceAfterZip">If True, then will delete the source file after zipping it</param>
+        /// <param name="DeleteSourceAfterZip">If True, will delete the source file after zipping it</param>
         /// <returns>True if success; false if an error</returns>
         public bool GZipFile(string SourceFilePath, bool DeleteSourceAfterZip)
         {
@@ -285,7 +284,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="SourceFilePath">Full path to the file to be zipped</param>
         /// <param name="TargetFolderPath">Target directory to create the .gz file</param>
-        /// <param name="DeleteSourceAfterZip">If True, then will delete the source file after zipping it</param>
+        /// <param name="DeleteSourceAfterZip">If True, will delete the source file after zipping it</param>
         /// <returns>True if success; false if an error</returns>
         /// <remarks>Preferably uses the external gzip.exe software, since that software properly stores the original filename and date in the .gz file</remarks>
         public bool GZipFile(string SourceFilePath, string TargetFolderPath, bool DeleteSourceAfterZip)
@@ -358,7 +357,7 @@ namespace AnalysisManagerBase
         /// <returns></returns>
         /// <remarks>
         /// The .gz file will initially be created in the same folder as the original file.
-        /// If GZipFilePath points to a different folder, then the file will be moved to that new location.
+        /// If GZipFilePath points to a different folder, the file will be moved to that new location.
         /// </remarks>
         private bool GZipUsingExe(FileInfo fiFile, string GZipFilePath, FileInfo fiGZip)
         {
@@ -705,7 +704,7 @@ namespace AnalysisManagerBase
 
         /// <summary>
         /// Verifies that the zip file exists and is not corrupt
-        /// If the file size is less than 4 GB, then also performs a full CRC check of the data
+        /// If the file size is less than 4 GB, also performs a full CRC check of the data
         /// </summary>
         /// <param name="zipFilePath">Zip file to check</param>
         /// <returns>True if a valid zip file, otherwise false</returns>
@@ -716,7 +715,7 @@ namespace AnalysisManagerBase
 
         /// <summary>
         /// Verifies that the zip file exists.
-        /// If the file size is less than crcCheckThresholdGB, then also performs a full CRC check of the data
+        /// If the file size is less than crcCheckThresholdGB, also performs a full CRC check of the data
         /// </summary>
         /// <param name="zipFilePath">Zip file to check</param>
         /// <param name="crcCheckThresholdGB">Threshold (in GB) below which a full CRC check should be performed</param>
@@ -829,7 +828,7 @@ namespace AnalysisManagerBase
         /// Stores SourceFilePath in a zip file with the same name, but extension .zip
         /// </summary>
         /// <param name="sourceFilePath">Full path to the file to be zipped</param>
-        /// <param name="deleteSourceAfterZip">If True, then will delete the source file after zipping it</param>
+        /// <param name="deleteSourceAfterZip">If True, will delete the source file after zipping it</param>
         /// <returns>True if success; false if an error</returns>
         public bool ZipFile(string sourceFilePath, bool deleteSourceAfterZip)
         {
@@ -844,7 +843,7 @@ namespace AnalysisManagerBase
         /// Stores SourceFilePath in a zip file named ZipFilePath
         /// </summary>
         /// <param name="SourceFilePath">Full path to the file to be zipped</param>
-        /// <param name="DeleteSourceAfterZip">If True, then will delete the source file after zipping it</param>
+        /// <param name="DeleteSourceAfterZip">If True, will delete the source file after zipping it</param>
         /// <param name="ZipFilePath">Full path to the .zip file to be created.  Existing files will be overwritten</param>
         /// <returns>True if success; false if an error</returns>
         public bool ZipFile(string SourceFilePath, bool DeleteSourceAfterZip, string ZipFilePath)
@@ -942,7 +941,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="SourceDirectoryPath">Full path to the directory to be zipped</param>
         /// <param name="ZipFilePath">Full path to the .zip file to be created.  Existing files will be overwritten</param>
-        /// <param name="Recurse">If True, then recurse through all subfolders</param>
+        /// <param name="Recurse">If True, recurse through all subfolders</param>
         /// <param name="FileFilter">Filter to apply when zipping</param>
         /// <returns>True if success; false if an error</returns>
         public bool ZipDirectory(string SourceDirectoryPath, string ZipFilePath, bool Recurse, string FileFilter)

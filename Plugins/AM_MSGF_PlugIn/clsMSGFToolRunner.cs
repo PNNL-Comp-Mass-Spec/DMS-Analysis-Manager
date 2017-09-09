@@ -230,7 +230,7 @@ namespace AnalysisManagerMSGFPlugin
                         // Post-process the MSGF output file to create two new MSGF result files, one for the synopsis file and one for the first-hits file
                         // Will also make sure that all of the peptides have numeric SpecProb values
                         // For peptides where MSGF reported an error, the MSGF SpecProb will be set to 1
-                        // If the Instrument Data was a .MGF file, then we need to update the scan numbers using mMSGFInputCreator.GetScanByMGFSpectrumIndex()
+                        // If the Instrument Data was a .MGF file, we need to update the scan numbers using mMSGFInputCreator.GetScanByMGFSpectrumIndex()
 
                         // Sleep for 1 second to give the MSGF results file a chance to finalize
                         Thread.Sleep(1000);
@@ -439,7 +439,7 @@ namespace AnalysisManagerMSGFPlugin
 
         /// <summary>
         /// Examines the Sequest param file to determine if ETD mode is enabled
-        /// If it is, then sets mETDMode to True
+        /// If it is, sets mETDMode to True
         /// </summary>
         /// <param name="strSearchToolParamFilePath">Sequest parameter file to read</param>
         /// <returns>True if success; false if an error</returns>
@@ -466,7 +466,7 @@ namespace AnalysisManagerMSGFPlugin
                         if (!string.IsNullOrEmpty(strLineIn) && strLineIn.StartsWith(SEQUEST_ION_SERIES_TAG))
                         {
                             // This is the ion_series line
-                            // If ETD mode is enabled, then c and z ions will have a 1 in this series of numbers:
+                            // If ETD mode is enabled, c and z ions will have a 1 in this series of numbers:
                             // ion_series = 0 1 1 0.0 0.0 1.0 0.0 0.0 0.0 0.0 0.0 1.0
                             //
                             // The key to parsing this data is:
@@ -538,7 +538,7 @@ namespace AnalysisManagerMSGFPlugin
 
         /// <summary>
         /// Examines the X!Tandem param file to determine if ETD mode is enabled
-        /// If it is, then sets mETDMode to True
+        /// If it is, sets mETDMode to True
         /// </summary>
         /// <param name="strSearchToolParamFilePath">X!Tandem XML parameter file to read</param>
         /// <returns>True if success; false if an error</returns>
@@ -1389,7 +1389,7 @@ namespace AnalysisManagerMSGFPlugin
             if (eResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB)
             {
                 // Input file may contain a mix of scan types (CID, ETD, and/or HCD)
-                // If this is the case, then need to call MSGF twice: first for the CID and HCD spectra, then again for the ETD spectra
+                // If this is the case, call MSGF twice: first for the CID and HCD spectra, then again for the ETD spectra
                 blnSuccess = RunMSGFonMSGFDB(intMSGFInputFileLineCount, strMSGFInputFilePath, strMSGFResultsFilePath);
             }
             else
@@ -1898,7 +1898,7 @@ namespace AnalysisManagerMSGFPlugin
                 File.Delete(strResultsFilePath);
             }
 
-            // If an MSGF analysis crashes with an "out-of-memory" error, then we need to reserve more memory for Java
+            // If an MSGF analysis crashes with an "out-of-memory" error, we need to reserve more memory for Java
             // Customize this on a per-job basis using the MSGFJavaMemorySize setting in the settings file
             // (job 611216 succeeded with a value of 5000)
             var intJavaMemorySize = m_jobParams.GetJobParameter("MSGFJavaMemorySize", 2000);

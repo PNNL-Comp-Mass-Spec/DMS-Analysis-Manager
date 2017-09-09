@@ -522,13 +522,13 @@ namespace AnalysisManagerBase
         /// <param name="sourceFilePath">Path to the data file</param>
         /// <param name="datasetYearQuarter">
         /// Dataset year quarter text (optional)
-        /// Example value is 2013_2; if this this parameter is blank, then will auto-determine using Job Parameter DatasetStoragePath
+        /// Example value is 2013_2; if this this parameter is blank, will auto-determine using Job Parameter DatasetStoragePath
         /// </param>
         /// <param name="purgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 20 TB</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>
         /// Determines the Year_Quarter folder named using the DatasetStoragePath or DatasetArchivePath job parameter
-        /// If those parameters are not defined, then copies the file anyway
+        /// If those parameters are not defined, copies the file anyway
         /// </remarks>
         protected bool CopyFileToServerCache(
             string cacheFolderPath,
@@ -552,14 +552,14 @@ namespace AnalysisManagerBase
         /// <param name="sourceFilePath">Path to the data file</param>
         /// <param name="datasetYearQuarter">
         /// Dataset year quarter text (optional)
-        /// Eexample value is 2013_2; if this this parameter is blank, then will auto-determine using Job Parameter DatasetStoragePath
+        /// Eexample value is 2013_2; if this this parameter is blank, will auto-determine using Job Parameter DatasetStoragePath
         /// </param>
         /// <param name="purgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 20 TB</param>
         /// <param name="remoteCacheFilePath">Output parameter: the target file path (determined by this function)</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>
         /// Determines the Year_Quarter folder named using the DatasetStoragePath or DatasetArchivePath job parameter
-        /// If those parameters are not defined, then copies the file anyway
+        /// If those parameters are not defined, copies the file anyway
         /// </remarks>
         protected bool CopyFileToServerCache(
             string cacheFolderPath,
@@ -675,7 +675,7 @@ namespace AnalysisManagerBase
         /// Copies the .mzXML file to the generic MSXML_Cache folder, e.g. \\proto-6\MSXML_Cache\MSConvert
         /// </summary>
         /// <param name="sourceFilePath"></param>
-        /// <param name="datasetYearQuarter">Dataset year quarter text, e.g. 2013_2;  if this this parameter is blank, then will auto-determine using Job Parameter DatasetStoragePath</param>
+        /// <param name="datasetYearQuarter">Dataset year quarter text, e.g. 2013_2; if this this parameter is blank, will auto-determine using Job Parameter DatasetStoragePath</param>
         /// <param name="msXmlGeneratorName">Name of the MzXML generator, e.g. MSConvert</param>
         /// <param name="purgeOldFilesIfNeeded">Set to True to automatically purge old files if the space usage is over 20 TB</param>
         /// <returns>True if success; false if an error</returns>
@@ -873,7 +873,7 @@ namespace AnalysisManagerBase
 
                     // Examine the files in the results folder to see if any of the files already exist in the transfer folder
                     // If they do, compare the file modification dates and post a warning if a file will be overwritten (because the file on the local computer is newer)
-                    // However, if file sizes differ, then replace the file
+                    // However, if file sizes differ, replace the file
 
                     var objSourceFolderInfo = new DirectoryInfo(sourceFolderPath);
                     foreach (var objSourceFile in objSourceFolderInfo.GetFiles())
@@ -1236,7 +1236,7 @@ namespace AnalysisManagerBase
                 }
             }
 
-            // If we got to here, then we've exceeded the max retry limit
+            // If we got to here, we've exceeded the max retry limit
             throw new AMFileNotDeletedAfterRetryException(fileNamePath, errType, "Unable to delete or move file after multiple retries");
 
         }
@@ -1591,7 +1591,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="updateIntervalSeconds">
         /// The minimum number of seconds between updates
-        /// If fewer than updateIntervalSeconds seconds have elapsed since the last call to this function, then no update will occur
+        /// If fewer than updateIntervalSeconds seconds have elapsed since the last call to this function, no update will occur
         /// </param>
         /// <returns></returns>
         /// <remarks></remarks>
@@ -1994,7 +1994,7 @@ namespace AnalysisManagerBase
         /// Gzips sourceFilePath, creating a new file in the same folder, but with extension .gz appended to the name (e.g. Dataset.mzid.gz)
         /// </summary>
         /// <param name="sourceFilePath">Full path to the file to be zipped</param>
-        /// <param name="deleteSourceAfterZip">If True, then will delete the file after zipping it</param>
+        /// <param name="deleteSourceAfterZip">If True, will delete the file after zipping it</param>
         /// <returns>True if success; false if an error</returns>
         public bool GZipFile(string sourceFilePath, bool deleteSourceAfterZip)
         {
@@ -2017,7 +2017,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="sourceFilePath">Full path to the file to be zipped</param>
         /// <param name="targetDirectoryPath">Output folder for the unzipped file</param>
-        /// <param name="deleteSourceAfterZip">If True, then will delete the file after zipping it</param>
+        /// <param name="deleteSourceAfterZip">If True, will delete the file after zipping it</param>
         /// <returns>True if success; false if an error</returns>
         public bool GZipFile(string sourceFilePath, string targetDirectoryPath, bool deleteSourceAfterZip)
         {
@@ -2051,7 +2051,7 @@ namespace AnalysisManagerBase
         /// GZip the given file
         /// </summary>
         /// <param name="fiResultFile"></param>
-        /// <param name="deleteSourceAfterZip">If True, then will delete the file after zipping it</param>
+        /// <param name="deleteSourceAfterZip">If True, will delete the file after zipping it</param>
         /// <returns>Fileinfo object of the new .gz file or null if an error</returns>
         public FileInfo GZipFile(FileInfo fiResultFile, bool deleteSourceAfterZip)
         {
@@ -2474,7 +2474,7 @@ namespace AnalysisManagerBase
                             }
 
                             // Only log the first 10 times files of a given extension are rejected
-                            //  However, if a file was rejected due to invalid characters in the name, then we don't track that rejection with dctRejectStats
+                            //  However, if a file was rejected due to invalid characters in the name, we don't track that rejection with dctRejectStats
                             if (dctRejectStats[fileExtension] <= REJECT_LOGGING_THRESHOLD)
                             {
                                 LogDebug(" MoveResultFiles: Rejected file:  " + tmpFileName);
@@ -2485,7 +2485,7 @@ namespace AnalysisManagerBase
                     if (!okToMove)
                         continue;
 
-                    // If valid file name, then move file to results folder
+                    // If valid file name, move file to results folder
                     if (m_DebugLevel >= LOG_LEVEL_REPORT_ACCEPT_OR_REJECT)
                     {
                         var fileExtension = Path.GetExtension(tmpFileName);
@@ -2522,7 +2522,7 @@ namespace AnalysisManagerBase
                                 // Attempt to copy the file instead of moving the file
                                 File.Copy(tmpFileName, targetFilePath, true);
 
-                                // If we get here, then the copy succeeded;
+                                // If we get here, the copy succeeded;
                                 // The original file (in the work folder) will get deleted when the work folder is "cleaned" after the job finishes
                             }
 
@@ -2706,7 +2706,7 @@ namespace AnalysisManagerBase
 
         /// <summary>
         /// Determines the space usage of data files in the cache folder, e.g. at \\proto-11\MSXML_Cache
-        /// If usage is over spaceUsageThresholdGB, then deletes the oldest files until usage falls below spaceUsageThresholdGB
+        /// If usage is over spaceUsageThresholdGB, deletes the oldest files until usage falls below spaceUsageThresholdGB
         /// </summary>
         /// <param name="cacheFolderPath">Path to the file cache</param>
         /// <param name="spaceUsageThresholdGB">Maximum space usage, in GB (cannot be less than 1000 on Proto-x servers; 10 otherwise)</param>
@@ -3304,7 +3304,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="toolVersionInfo">Version info (maximum length is 900 characters)</param>
         /// <param name="ioToolFiles">FileSystemInfo list of program files related to the step tool</param>
-        /// <param name="saveToolVersionTextFile">if true, then creates a text file with the tool version information</param>
+        /// <param name="saveToolVersionTextFile">If true, creates a text file with the tool version information</param>
         /// <returns>True for success, False for failure</returns>
         /// <remarks>This procedure should be called once the version (or versions) of the tools associated with the current step have been determined</remarks>
         protected bool SetStepTaskToolVersion(string toolVersionInfo, IEnumerable<FileInfo> ioToolFiles, bool saveToolVersionTextFile)
@@ -3577,7 +3577,7 @@ namespace AnalysisManagerBase
 
         /// <summary>
         /// Determines the version info for a .NET DLL using reflection
-        /// If reflection fails, then uses System.Diagnostics.FileVersionInfo
+        /// If reflection fails, uses System.Diagnostics.FileVersionInfo
         /// </summary>
         /// <param name="toolVersionInfo">Version info string to append the version info to</param>
         /// <param name="dllFilePath">Path to the DLL</param>
@@ -3623,7 +3623,7 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                // If you get an exception regarding .NET 4.0 not being able to read a .NET 1.0 runtime, then add these lines to the end of file AnalysisManagerProg.exe.config
+                // If you get an exception regarding .NET 4.0 not being able to read a .NET 1.0 runtime, add these lines to the end of file AnalysisManagerProg.exe.config
                 //  <startup useLegacyV2RuntimeActivationPolicy="true">
                 //    <supportedRuntime version="v4.0" />
                 //  </startup>
@@ -3844,7 +3844,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="sourceFolderPath"></param>
         /// <param name="targetDirectoryPath"></param>
-        /// <param name="copySubfolders">If true, then recursively copies subfolders</param>
+        /// <param name="copySubfolders">If true, recursively copies subfolders</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks></remarks>
         protected bool SynchronizeFolders(string sourceFolderPath, string targetDirectoryPath, bool copySubfolders)
@@ -3938,7 +3938,7 @@ namespace AnalysisManagerBase
         /// <param name="lstFileNameFilterSpec">One or more filename filters for including files; can use * as a wildcard; when blank then processes all files</param>
         /// <param name="lstFileNameExclusionSpec">One or more filename filters for excluding files; can use * as a wildcard</param>
         /// <param name="maxRetryCount">Will retry failed copies up to maxRetryCount times; use 0 for no retries</param>
-        /// <param name="copySubfolders">If true, then recursively copies subfolders</param>
+        /// <param name="copySubfolders">If true, recursively copies subfolders</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks></remarks>
         protected bool SynchronizeFolders(
@@ -4471,7 +4471,7 @@ namespace AnalysisManagerBase
 
         /// <summary>
         /// Verifies that the zip file exists.
-        /// If the file size is less than crcCheckThresholdGB, then also performs a full CRC check of the data
+        /// If the file size is less than crcCheckThresholdGB, also performs a full CRC check of the data
         /// </summary>
         /// <param name="zipFilePath">Zip file to check</param>
         /// <param name="crcCheckThresholdGB">Threshold (in GB) below which a full CRC check should be performed</param>
@@ -4491,7 +4491,7 @@ namespace AnalysisManagerBase
         /// Stores sourceFilePath in a zip file with the same name, but extension .zip
         /// </summary>
         /// <param name="sourceFilePath">Full path to the file to be zipped</param>
-        /// <param name="deleteSourceAfterZip">If True, then will delete the file after zipping it</param>
+        /// <param name="deleteSourceAfterZip">If True, will delete the file after zipping it</param>
         /// <returns>True if success; false if an error</returns>
         public bool ZipFile(string sourceFilePath, bool deleteSourceAfterZip)
         {
@@ -4570,7 +4570,7 @@ namespace AnalysisManagerBase
         /// Stores sourceFilePath in a zip file named zipFilePath
         /// </summary>
         /// <param name="sourceFilePath">Full path to the file to be zipped</param>
-        /// <param name="deleteSourceAfterZip">If True, then will delete the file after zipping it</param>
+        /// <param name="deleteSourceAfterZip">If True, will delete the file after zipping it</param>
         /// <param name="zipFilePath">Full path to the .zip file to be created.  Existing files will be overwritten</param>
         /// <returns>True if success; false if an error</returns>
         public bool ZipFile(string sourceFilePath, bool deleteSourceAfterZip, string zipFilePath)

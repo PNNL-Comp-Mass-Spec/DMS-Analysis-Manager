@@ -2,6 +2,9 @@
 
 namespace AnalysisManagerPRIDEConverterPlugIn
 {
+    /// <summary>
+    /// Tracks information about a result file
+    /// </summary>
     public class clsResultFileContainer
     {
         /// <summary>
@@ -28,6 +31,9 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <remarks></remarks>
         public string PepXMLFile { get; set; }
 
+        /// <summary>
+        /// PRIDE XML file path
+        /// </summary>
         public string PrideXmlFilePath { get; set; }
 
         /// <summary>

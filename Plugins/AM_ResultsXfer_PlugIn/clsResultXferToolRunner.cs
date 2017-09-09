@@ -104,9 +104,9 @@ namespace AnalysisManagerResultsXferPlugin
 
         protected void DeleteTransferFolderIfEmpty()
         {
-            // If there are no more folders or files in the dataset folder in the xfer directory, then delete the folder
+            // If there are no more folders or files in the dataset folder in the xfer directory, delete the folder
             // Note that another manager might be simultaneously examining this folder to see if it's empty
-            // If that manager deletes this folder first, then an exception could occur in this manager
+            // If that manager deletes this folder first, an exception could occur in this manager
             // Thus, we will log any exceptions that occur, but we won't treat them as a job failure
 
             try

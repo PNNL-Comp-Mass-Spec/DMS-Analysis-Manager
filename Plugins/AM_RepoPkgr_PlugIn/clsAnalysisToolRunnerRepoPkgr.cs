@@ -718,10 +718,10 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
         /// <summary>
         /// Examines orgDbName to see if it is of the form ID_003878_0C3354F8.fasta
-        /// If it is, then queries the protein sequences database for the names of the protein collections used to generate the file
+        /// If it is, queries the protein sequences database for the names of the protein collections used to generate the file
         /// </summary>
         /// <param name="orgDbName"></param>
-        /// <returns>If three or fewer protein collections, then returns an updated filename based on the protein collection names.  Otherwise, simply returns orgDbName</returns>
+        /// <returns>If three or fewer protein collections, returns an updated filename based on the protein collection names.  Otherwise, simply returns orgDbName</returns>
         private string UpdateOrgDBNameIfRequired(string orgDbName)
         {
             var reArchiveFileId = new Regex(@"ID_([0-9]+)_[A-Z0-9]+\.fasta", RegexOptions.Compiled);

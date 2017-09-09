@@ -29,7 +29,7 @@ namespace AnalysisManagerExtractionPlugin
 
         /// <summary>
         /// Value between 0 and 100
-        /// If more than this percent of the data has a mass error larger than the threshold, then ValidatePHRPResultMassErrors returns false
+        /// If more than this percent of the data has a mass error larger than the threshold, ValidatePHRPResultMassErrors returns false
         /// </summary>
         /// <value></value>
         /// <returns></returns>

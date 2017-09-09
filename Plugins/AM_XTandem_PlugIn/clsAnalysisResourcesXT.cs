@@ -65,7 +65,7 @@ namespace AnalysisManagerXTandemPlugIn
             m_jobParams.AddResultFileExtensionToSkip("_dta.txt"); // Unzipped, concatenated DTA
             m_jobParams.AddResultFileExtensionToSkip(".dta");     // DTA files
 
-            // If the _dta.txt file is over 2 GB in size, then condense it
+            // If the _dta.txt file is over 2 GB in size, condense it
 
             if (!ValidateDTATextFileSize(m_WorkingDir, DatasetName + "_dta.txt"))
             {

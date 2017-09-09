@@ -94,7 +94,7 @@ namespace AnalysisManagerMODaPlugIn
                 if (processingSuccess)
                 {
                     // Look for the MODa results file
-                    // If it exists, then zip it
+                    // If it exists, zip it
                     var fiResultsFile = new FileInfo(mMODaResultsFilePath);
 
                     if (fiResultsFile.Exists)

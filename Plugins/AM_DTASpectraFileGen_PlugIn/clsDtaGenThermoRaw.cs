@@ -458,7 +458,7 @@ namespace DTASpectraFileGen
             {
                 if (locCharge == 0 && createDefaultCharges || locCharge > 0)
                 {
-                    // If we are using extract_msn.exe, then need to loop through .dta creation until no more files are created
+                    // If we are using extract_msn.exe, need to loop through .dta creation until no more files are created
                     // Limit to chunks of LOOPING_CHUNK_SIZE scans due to limitation of extract_msn.exe
                     // (only used if selected in manager settings, but "UseDTALooping" is typically set to True)
 
@@ -524,7 +524,8 @@ namespace DTASpectraFileGen
 
                         if (m_RunningExtractMSn)
                         {
-                            // If running Extract_MSn, then cannot cache the standard output; clsProgRunner sometimes freezes on certain datasets (e.g. QC_Shew_10_05_pt5_1_24Jun10_Earth_10-05-10)
+                            // If running Extract_MSn, cannot cache the standard output
+                            // clsProgRunner sometimes freezes on certain datasets (e.g. QC_Shew_10_05_pt5_1_24Jun10_Earth_10-05-10)
                             mCmdRunner.CreateNoWindow = false;
                             mCmdRunner.CacheStandardOutput = false;
                             mCmdRunner.EchoOutputToConsole = false;

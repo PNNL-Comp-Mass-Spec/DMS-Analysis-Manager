@@ -477,13 +477,13 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Lookup the Peptide Hit jobs associated with the current job
+        /// Lookup the Peptide Hit jobs associated with the data package
         /// </summary>
         /// <param name="connectionString">Connection string to the DMS_Pipeline database</param>
         /// <param name="dataPackageID">Data package ID</param>
         /// <param name="errorMsg">Output: error message</param>
         /// <returns>Peptide Hit Jobs (e.g. MSGF+ or Sequest)</returns>
-        /// <remarks></remarks>
+        /// <remarks>Alternatively use the overloaded version that includes lstAdditionalJobs</remarks>
         public static List<clsDataPackageJobInfo> RetrieveDataPackagePeptideHitJobInfo(
             string connectionString,
             int dataPackageID,
@@ -495,14 +495,14 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Lookup the Peptide Hit jobs associated with the current job
+        /// Lookup the Peptide Hit jobs associated with the data package; non-peptide hit jobs are returned via lstAdditionalJobs
         /// </summary>
         /// <param name="connectionString">Connection string to the DMS_Pipeline database</param>
         /// <param name="dataPackageID">Data package ID</param>
         /// <param name="lstAdditionalJobs">Output: Non Peptide Hit jobs (e.g. DeconTools or MASIC)</param>
         /// <param name="errorMsg">Output: error message</param>
         /// <returns>Peptide Hit Jobs (e.g. MSGF+ or Sequest)</returns>
-        /// <remarks></remarks>
+        /// <remarks>This method updates property NumberOfClonedSteps for the analysis jobs</remarks>
         public static List<clsDataPackageJobInfo> RetrieveDataPackagePeptideHitJobInfo(
             string connectionString,
             int dataPackageID,
@@ -510,11 +510,11 @@ namespace AnalysisManagerBase
             out string errorMsg)
         {
 
-            // This list tracks the info for the Peptide Hit jobs (e.g. MSGF+ or Sequest) associated with this aggregation job's data package
+            // This list tracks the info for the Peptide Hit jobs (e.g. MSGF+ or Sequest) associated with the data package
             var lstDataPackagePeptideHitJobs = new List<clsDataPackageJobInfo>();
             errorMsg = string.Empty;
 
-            // This list tracks the info for the non Peptide Hit jobs (e.g. DeconTools or MASIC) associated with this aggregation job's data package
+            // This list tracks the info for the non Peptide Hit jobs (e.g. DeconTools or MASIC) associated with the data package
             lstAdditionalJobs = new List<clsDataPackageJobInfo>();
 
             // This dictionary will track the jobs associated with this aggregation job's data package

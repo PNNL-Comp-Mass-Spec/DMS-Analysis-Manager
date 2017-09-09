@@ -300,7 +300,7 @@ namespace DTASpectraFileGen
             if (blnFinishedProcessing)
             {
                 // The DeconConsole Log File reports that the task is complete
-                // If it finished over MAX_LOGFINISHED_WAITTIME_SECONDS seconds ago, then send an abort to the CmdRunner
+                // If it finished over MAX_LOGFINISHED_WAITTIME_SECONDS seconds ago, send an abort to the CmdRunner
 
                 if (DateTime.Now.Subtract(dtFinishTime).TotalSeconds >= MAX_LOGFINISHED_WAITTIME_SECONDS)
                 {

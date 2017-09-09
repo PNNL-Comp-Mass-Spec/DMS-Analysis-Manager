@@ -365,7 +365,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             mMSGFPlusUtils.IgnorePreviousErrorEvent += MSGFPlusUtils_IgnorePreviousErrorEvent;
 
             // Get the FASTA file and index it if necessary
-            // Note: if the fasta file is over 50 MB in size, then only use the first 50 MB
+            // Note: if the fasta file is over 50 MB in size, only use the first 50 MB
 
             // Passing in the path to the parameter file so we can look for TDA=0 when using large .Fasta files
             var strParameterFilePath = Path.Combine(m_WorkDir, m_jobParams.GetJobParameter("MzRefParamFile", string.Empty));
@@ -431,7 +431,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             LogMessage("Running MSGF+");
 
-            // If an MSGF+ analysis crashes with an "out-of-memory" error, then we need to reserve more memory for Java
+            // If an MSGF+ analysis crashes with an "out-of-memory" error, we need to reserve more memory for Java
             // The amount of memory required depends on both the fasta file size and the size of the input .mzML file, since data from all spectra are cached in memory
             // Customize this on a per-job basis using the MSGFDBJavaMemorySize setting in the settings file
             var intJavaMemorySize = m_jobParams.GetJobParameter("MzRefMSGFPlusJavaMemorySize", 1500);
@@ -1089,7 +1089,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             // The reason that we prepend "1e-10" with a dash is to indicate a range of "-infinity to 1e-10"
             cmdStr += " thresholdValue=-1e-10";
 
-            // If there are not 500 matches with 1e-10, then the threshold value is multiplied by the thresholdStep value
+            // If there are not 500 matches with 1e-10, the threshold value is multiplied by the thresholdStep value
             // This process is continued at most maxSteps times
             // Thus, using 10 and 2 means the thresholds that will be considered are 1e-10, 1e-9, and 1e-8
             cmdStr += " thresholdStep=10";

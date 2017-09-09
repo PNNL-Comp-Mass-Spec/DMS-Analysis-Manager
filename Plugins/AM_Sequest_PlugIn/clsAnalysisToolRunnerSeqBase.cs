@@ -606,7 +606,7 @@ namespace AnalysisManagerSequestPlugin
 
         /// <summary>
         /// Concatenates any .out files that still remain in the the working directory
-        /// If running on the Sequest Cluster, then the majority of the files should have already been appended to _out.txt.tmp
+        /// If running on the Sequest Cluster, the majority of the files should have already been appended to _out.txt.tmp
         /// </summary>
         /// <param name="WorkDir">Working directory</param>
         /// <param name="DSName">Dataset name</param>
@@ -730,7 +730,7 @@ namespace AnalysisManagerSequestPlugin
 
         /// <summary>
         /// Stores the Sequest tool version info in the database
-        /// If strOutFilePath is defined, then looks up the specific Sequest version using the given .Out file
+        /// If strOutFilePath is defined, looks up the specific Sequest version using the given .Out file
         /// Also records the file date of the Sequest Program .exe
         /// </summary>
         /// <param name="strOutFilePath"></param>
@@ -895,7 +895,7 @@ namespace AnalysisManagerSequestPlugin
         /// Counts the number of DTA files analyzed by each process
         /// </summary>
         /// <param name="strLogFilePath">Path to the sequest.log file to parse</param>
-        /// <param name="blnLogToConsole">If true, then displays the various status messages at the console</param>
+        /// <param name="blnLogToConsole">If true, displays the various status messages at the console</param>
         /// <remarks></remarks>
         /// <returns>True if file found and information successfully parsed from it (regardless of the validity of the information); False if file not found or error parsing information</returns>
         protected bool ValidateSequestNodeCount(string strLogFilePath, bool blnLogToConsole)

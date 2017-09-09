@@ -120,7 +120,7 @@ namespace AnalysisManagerBase
         /// Can retrieve using the CachedConsoleOutput readonly property
         /// Will also fire event ConsoleOutputEvent as new text is written to the console
         /// </summary>
-        /// <remarks>If this is true, then no window will be shown, even if CreateNoWindow=False</remarks>
+        /// <remarks>If this is true, no window will be shown, even if CreateNoWindow=False</remarks>
         public bool CacheStandardOutput { get; set; } = false;
 
         /// <summary>
@@ -131,7 +131,7 @@ namespace AnalysisManagerBase
 
         /// <summary>
         /// File path to which the console output will be written if WriteConsoleOutputToFile is true
-        /// If blank, then file path will be auto-defined in the WorkDir  when program execution starts
+        /// If blank, file path will be auto-defined in the WorkDir  when program execution starts
         /// </summary>
         /// <value></value>
         /// <returns></returns>
@@ -243,7 +243,7 @@ namespace AnalysisManagerBase
         /// When true then will write the standard output to a file in real-time
         /// Will also fire event ConsoleOutputEvent as new text is written to the console
         /// Define the path to the file using property ConsoleOutputFilePath; if not defined, the file
-        /// will be created in the WorkDir (though, if WorkDir is blank, then will be created in the folder with the Program we're running)
+        /// will be created in the WorkDir (though, if WorkDir is blank, will be created in the folder with the Program we're running)
         /// </summary>
         /// <remarks>
         /// Defaults to false
@@ -367,7 +367,7 @@ namespace AnalysisManagerBase
         /// <param name="arguments">The arguments to pass to the program, for example /N=35</param>
         /// <param name="progName">The name of the program to use for the Window title</param>
         /// <param name="useResCode">If true, returns False if the ProgRunner ExitCode is non-zero</param>
-        /// <param name="maxRuntimeSeconds">If a positive number, then program execution will be aborted if the runtime exceeds maxRuntimeSeconds</param>
+        /// <param name="maxRuntimeSeconds">If a positive number, program execution will be aborted if the runtime exceeds maxRuntimeSeconds</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks>maxRuntimeSeconds will be increased to 15 seconds if it is between 1 and 14 seconds</remarks>
         public bool RunProgram(string executablePath, string arguments, string progName, bool useResCode, int maxRuntimeSeconds)

@@ -224,7 +224,7 @@ namespace AnalysisManagerBase
             const string ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK = "*R*X*.zip";
 
             // Look for the dataset folder; it must contain .Zip files with names like 0_R00X442.zip
-            // If a matching folder isn't found, then ServerPath will contain the folder path defined by Job Param "DatasetStoragePath"
+            // If a matching folder isn't found, ServerPath will contain the folder path defined by Job Param "DatasetStoragePath"
 
             var DSFolderPath = FindValidFolder(DatasetName, ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK,
                                                   RetrievingInstrumentDataFolder: true, assumeUnpurged: assumeUnpurged);
@@ -480,7 +480,7 @@ namespace AnalysisManagerBase
         /// <param name="fileNameToFind">Optional: Name of a file that must exist in the dataset folder; can contain a wildcard, e.g. *.zip</param>
         /// <param name="folderNameToFind">Optional: Name of a subfolder that must exist in the dataset folder; can contain a wildcard, e.g. SEQ*</param>
         /// <param name="maxRetryCount">Maximum number of attempts</param>
-        /// <param name="logFolderNotFound">If true, then log a warning if the folder is not found</param>
+        /// <param name="logFolderNotFound">If true, log a warning if the folder is not found</param>
         /// <param name="retrievingInstrumentDataFolder">Set to True when retrieving an instrument data folder</param>
         /// <returns>Path to the most appropriate dataset folder</returns>
         /// <remarks>The path returned will be "\\MyEMSL" if the best folder is in MyEMSL</remarks>
@@ -505,7 +505,7 @@ namespace AnalysisManagerBase
         /// <param name="fileNameToFind">Optional: Name of a file that must exist in the dataset folder; can contain a wildcard, e.g. *.zip</param>
         /// <param name="folderNameToFind">Optional: Name of a subfolder that must exist in the dataset folder; can contain a wildcard, e.g. SEQ*</param>
         /// <param name="maxAttempts">Maximum number of attempts</param>
-        /// <param name="logFolderNotFound">If true, then log a warning if the folder is not found</param>
+        /// <param name="logFolderNotFound">If true, log a warning if the folder is not found</param>
         /// <param name="retrievingInstrumentDataFolder">Set to True when retrieving an instrument data folder</param>
         /// <param name="assumeUnpurged">When true, this function returns the path to the dataset folder on the storage server</param>
         /// <param name="validFolderFound">Output parameter: True if a valid folder is ultimately found, otherwise false</param>
@@ -698,7 +698,7 @@ namespace AnalysisManagerBase
         /// <param name="dataset">Dataset name</param>
         /// <param name="fileNameToFind">Optional: Name of a file that must exist in the dataset folder; can contain a wildcard, e.g. *.zip</param>
         /// <param name="subFolderName">Optional: Name of a subfolder that must exist in the dataset folder; can contain a wildcard, e.g. SEQ*</param>
-        /// <param name="logFolderNotFound">If true, then log a warning if the folder is not found</param>
+        /// <param name="logFolderNotFound">If true, log a warning if the folder is not found</param>
         /// <param name="recurse">True to look for fileNameToFind in all subfolders of a dataset; false to only look in the primary dataset folder</param>
         /// <returns>Path to the most appropriate dataset folder</returns>
         /// <remarks>FileNameToFind is a file in the dataset folder; it is NOT a file in FolderNameToFind</remarks>
@@ -723,7 +723,7 @@ namespace AnalysisManagerBase
             else
             {
                 // First look for the subfolder
-                // If there are multiple matching subfolders, then choose the newest one
+                // If there are multiple matching subfolders, choose the newest one
                 // The entries in matchingMyEMSLFiles will be folder entries where the "Filename" field is the folder name while the "SubDirPath" field is any parent folders above the found folder
                 matchingMyEMSLFiles = m_MyEMSLUtilities.FindFiles(fileNameToFind, subFolderName, dataset, recurse);
             }
@@ -758,7 +758,7 @@ namespace AnalysisManagerBase
         /// <param name="fileNameToFind">Optional: Name of a file that must exist in the dataset folder; can contain a wildcard, e.g. *.zip</param>
         /// <param name="folderNameToFind">Optional: Name of a subfolder that must exist in the dataset folder; can contain a wildcard, e.g. SEQ*</param>
         /// <param name="maxAttempts">Maximum number of attempts</param>
-        /// <param name="logFolderNotFound">If true, then log a warning if the folder is not found</param>
+        /// <param name="logFolderNotFound">If true, log a warning if the folder is not found</param>
         /// <returns>Path to the most appropriate dataset folder</returns>
         /// <remarks>FileNameToFind is a file in the dataset folder; it is NOT a file in FolderNameToFind</remarks>
         private bool FindValidFolderUNC(string pathToCheck, string fileNameToFind, string folderNameToFind, int maxAttempts, bool logFolderNotFound)
@@ -866,9 +866,9 @@ namespace AnalysisManagerBase
         /// Test for folder existence with a retry loop in case of temporary glitch
         /// </summary>
         /// <param name="folderName">Folder name to look for</param>
-        /// <param name="retryHoldoffSeconds">Time, in seconds, to wait between retrying; if 0, then will default to 5 seconds; maximum value is 600 seconds</param>
+        /// <param name="retryHoldoffSeconds">Time, in seconds, to wait between retrying; if 0, will default to 5 seconds; maximum value is 600 seconds</param>
         /// <param name="maxAttempts">Maximum number of attempts</param>
-        /// <param name="logFolderNotFound">If true, then log a warning if the folder is not found</param>
+        /// <param name="logFolderNotFound">If true, log a warning if the folder is not found</param>
         /// <returns></returns>
         /// <remarks></remarks>
         private bool FolderExistsWithRetry(string folderName, int retryHoldoffSeconds, int maxAttempts, bool logFolderNotFound)

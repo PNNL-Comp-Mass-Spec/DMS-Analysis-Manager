@@ -118,7 +118,7 @@ namespace AnalysisManagerQCARTPlugin
                 }
 
                 // Look for an existing QC-ART baseline results file for the given set of datasets
-                // If one is not found, we need to obtain the necessary files for the 
+                // If one is not found, we need to obtain the necessary files for the
                 // baseline datasets so that the QC-ART tool can compute a new baseline
 
                 currentTask = "Get existing baseline results";
@@ -144,13 +144,12 @@ namespace AnalysisManagerQCARTPlugin
                     DatasetName
                 };
 
-                // Also need to obtain the QC Metric values for the baseline datasets 
+                // Also need to obtain the QC Metric values for the baseline datasets
                 // (regardless of whether we're using an existing baseline file)
                 foreach (var datasetName in baselineDatasets.Keys.Except(datasetNamesToRetrieveMetrics))
                 {
                     datasetNamesToRetrieveMetrics.Add(datasetName);
                 }
-               
 
                 // Cache the current dataset and job info
                 var currentDatasetAndJobInfo = GetCurrentDatasetAndJobInfo();
@@ -374,13 +373,13 @@ namespace AnalysisManagerQCARTPlugin
 
                 if (datasetParseErrors.Count == 0)
                     return true;
-               
+
                 // Error parsing out the SCX fraction number from one or more datasets
                 var errorMessage = "Could not determine SCX fraction number";
                 LogErrorForOneOrMoreDatasets(errorMessage, datasetParseErrors, "CreateBaselineDatasetInfoFile");
 
                 return false;
-                
+
             }
             catch (Exception ex)
             {
@@ -484,9 +483,7 @@ namespace AnalysisManagerQCARTPlugin
                 var baselineMetadataFileName = Path.GetFileName(baselineMetadataFilePath);
 
                 m_jobParams.AddAdditionalParameter("JobParameters", JOB_PARAMETER_QCART_BASELINE_RESULTS_CACHE_FOLDER, diProjectFolder.FullName);
-
                 m_jobParams.AddAdditionalParameter("JobParameters", JOB_PARAMETER_QCART_BASELINE_METADATA_FILENAME, baselineMetadataFileName);
-
 
                 currentTask = "Looking for a QCART baseline metadata lock file";
 

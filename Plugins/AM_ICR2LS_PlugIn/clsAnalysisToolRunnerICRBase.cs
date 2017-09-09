@@ -302,7 +302,7 @@ namespace AnalysisManagerICR2LSPlugIn
                                     if (int.TryParse(strValue, out var intResult))
                                     {
                                         // Old: The ScansProcessed value reported by ICR-2LS is actually the scan number of the most recently processed scan
-                                        // If we use /F to start with a scan other than 1, then this ScansProcessed value does not reflect reality
+                                        // If we use /F to start with a scan other than 1, this ScansProcessed value does not reflect reality
                                         // To correct for this, subtract out mMinScanOffset
                                         // intScansProcessed = intResult - mMinScanOffset
 

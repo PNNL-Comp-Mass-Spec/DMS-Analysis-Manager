@@ -505,7 +505,7 @@ namespace MSGFResultsSummarizer
         /// <summary>
         /// Either filter by MSGF or filter by FDR, then update the stats
         /// </summary>
-        /// <param name="blnUsingMSGFOrEValueFilter">When true, then filter by MSGF or EValue, otherwise filter by FDR</param>
+        /// <param name="blnUsingMSGFOrEValueFilter">When true, filter by MSGF or EValue, otherwise filter by FDR</param>
         /// <param name="lstNormalizedPSMs">PSM results (keys are NormalizedSeqID, values are the protein and scan info for each normalized sequence)</param>
         /// <param name="lstSeqToProteinMap">Sequence to Protein map information (empty if the _resultToSeqMap file was not found)</param>
         /// <param name="lstSeqInfo">Sequence information (empty if the _resultToSeqMap file was not found)</param>
@@ -637,7 +637,7 @@ namespace MSGFResultsSummarizer
                 // Alternative FDR formula is:  FDR = 2 * #Reverse / (#Forward + #Reverse)
                 // But, since MSGF+ uses "#Reverse / #Forward" we'll use that here too
                 //
-                // If no reverse hits are present or if none of the data has MSGF values, then we'll clear lstPSMs and update mErrorMessage
+                // If no reverse hits are present or if none of the data has MSGF values, we'll clear lstPSMs and update mErrorMessage
 
                 // Populate a list with the MSGF values and ResultIDs so that we can step through the data and compute the FDR for each entry
                 var lstMSGFtoResultIDMap = new List<KeyValuePair<double, int>>();
@@ -1037,7 +1037,7 @@ namespace MSGFResultsSummarizer
                 //
                 // The values contain mapped protein name, FDR, and MSGF SpecProb, and the scans that the normalized peptide was observed in
                 // We'll deal with multiple proteins for each peptide later when we parse the _ResultToSeqMap.txt and _SeqToProteinMap.txt files
-                // If those files are not found, then we'll simply use the protein information stored in lstPSMs
+                // If those files are not found, we'll simply use the protein information stored in lstPSMs
                 var lstNormalizedPSMs = new Dictionary<int, clsPSMInfo>();
 
                 SortedList<int, int> lstResultToSeqMap;
@@ -1200,7 +1200,7 @@ namespace MSGFResultsSummarizer
                 //  PEPTIDES with # at index 2 and * at index 3
                 //  PEPTIDES with # at index 0 and * at index 7
                 //
-                // If sequenceInfoAvailable is True, then instead of using mod symbols we use ModNames from the Mod_Description column in the _SeqInfo.txt file
+                // If sequenceInfoAvailable is True, instead of using mod symbols we use ModNames from the Mod_Description column in the _SeqInfo.txt file
                 //   For example, VGVEASEETPQT with Phosph at index 5
                 //
                 // The SeqID value tracked by udtNormalizedPeptideType is the SeqID of the first sequence to get normalized to the given entry

@@ -367,7 +367,7 @@ namespace AnalysisManagerSequestPlugin
             ArchiveSequestParamFile();
 
             // Look for an existing _out.txt.tmp file in the transfer folder on the storage server
-            // If one exists, and if the parameter file and settings file associated with the file match the ones in the work folder, then copy it locally
+            // If one exists, and if the parameter file and settings file associated with the file match the ones in the work folder, copy it locally
             var eExistingOutFileResult = CheckForExistingConcatenatedOutFile();
 
             if (eExistingOutFileResult == CloseOutType.CLOSEOUT_FAILED)
@@ -388,7 +388,7 @@ namespace AnalysisManagerSequestPlugin
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            // If running on a cluster, then distribute the database file across the nodes
+            // If running on a cluster, distribute the database file across the nodes
             // We do this after we have successfully retrieved the DTA files and unzipped them
             if (m_mgrParams.GetParam("cluster", true))
             {

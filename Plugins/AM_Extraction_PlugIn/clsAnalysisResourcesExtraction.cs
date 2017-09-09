@@ -745,7 +745,7 @@ namespace AnalysisManagerExtractionPlugin
                 var logModFilesFileNotFound = (ResultType == RESULT_TYPE_MSALIGN);
 
                 // Check whether the newly generated ModDefs file matches the existing one
-                // If it doesn't match, or if the existing one is missing, then we need to keep the file
+                // If it doesn't match, or if the existing one is missing, we need to keep the file
                 // Otherwise, we can skip it
                 var remoteModDefsFolder = FileSearch.FindDataFile(ModDefsFilename, searchArchivedDatasetFolder: false, logFileNotFound: logModFilesFileNotFound);
                 if (string.IsNullOrEmpty(remoteModDefsFolder))

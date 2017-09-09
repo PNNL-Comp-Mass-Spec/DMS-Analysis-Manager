@@ -140,7 +140,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 }
 
                 // Look for parameter CentroidPeakCountToRetain in the MSXMLGenerator section
-                // If the value is -1, then will retain all data points
+                // If the value is -1, will retain all data points
                 var centroidPeakCountToRetain = m_jobParams.GetJobParameter("MSXMLGenerator", "CentroidPeakCountToRetain", 0);
 
                 if (centroidPeakCountToRetain == 0)

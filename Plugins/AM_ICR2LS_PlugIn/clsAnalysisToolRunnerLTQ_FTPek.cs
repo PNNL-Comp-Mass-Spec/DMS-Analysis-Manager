@@ -84,7 +84,7 @@ namespace AnalysisManagerICR2LSPlugIn
             {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running ICR-2LS on file " + DSNamePath);
 
-                // If a .PEK file exists, then call PerfPostAnalysisTasks() to move the .Pek file into the results folder, which we'll then archive in the Failed Results folder
+                // If a .PEK file exists, call PerfPostAnalysisTasks() to move the .Pek file into the results folder, which we'll then archive in the Failed Results folder
                 if (VerifyPEKFileExists(m_WorkDir, m_Dataset))
                 {
                     m_message = "ICR-2LS returned false (see .PEK file in Failed results folder)";

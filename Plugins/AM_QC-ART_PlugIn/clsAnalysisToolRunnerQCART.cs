@@ -68,7 +68,6 @@ namespace AnalysisManagerQCARTPlugin
                 // mLastConsoleOutputParse = DateTime.UtcNow;
                 // mLastProgressWriteTime = DateTime.UtcNow;
 
-
                 // Determine the path to R
                 var rProgLocFromRegistry = GetRPathFromWindowsRegistry();
                 if (string.IsNullOrEmpty(rProgLocFromRegistry))
@@ -174,7 +173,6 @@ namespace AnalysisManagerQCARTPlugin
             writer.WriteValue(value);
             writer.WriteEndElement();
         }
-
 
         /// <summary>
         /// Converts the QCDM to xml to be used by database
@@ -600,7 +598,6 @@ namespace AnalysisManagerQCARTPlugin
             return false;
         }
 
-
         /*
          * Not used by this plugin
          *
@@ -644,7 +641,6 @@ namespace AnalysisManagerQCARTPlugin
                 // Gigasax.DMS5
                 var connectionString = m_mgrParams.GetParam("connectionstring");
                 var datasetID = m_jobParams.GetJobParameter("JobParameters", "DatasetID", 0);
-
 
                 // Call stored procedure StoreQCARTResults
                 // Retry up to 3 times

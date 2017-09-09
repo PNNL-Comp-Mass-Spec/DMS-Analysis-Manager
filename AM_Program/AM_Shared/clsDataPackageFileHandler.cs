@@ -34,7 +34,7 @@ namespace AnalysisManagerBase
             /// <summary>
             /// Set to true to obtain the mzXML file for the dataset associated with this job
             /// </summary>
-            /// <remarks>If the .mzXML file does not exist, then retrieves the instrument data file (e.g. Thermo .raw file)</remarks>
+            /// <remarks>If the .mzXML file does not exist, retrieves the instrument data file (e.g. Thermo .raw file)</remarks>
             public bool RetrieveMzXMLFile;
 
             /// <summary>
@@ -1237,7 +1237,7 @@ namespace AnalysisManagerBase
         /// </param>
         /// <param name="udtOptions">File retrieval options</param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks>If udtOptions.CreateJobPathFiles is True, then will create StoragePathInfo files for the .mzXML or .Raw files</remarks>
+        /// <remarks>If udtOptions.CreateJobPathFiles is True, will create StoragePathInfo files for the .mzXML or .Raw files</remarks>
         public bool RetrieveDataPackageMzXMLFiles(Dictionary<clsDataPackageJobInfo, KeyValuePair<string, string>> dctInstrumentDataToRetrieve, udtDataPackageRetrievalOptionsType udtOptions)
         {
 

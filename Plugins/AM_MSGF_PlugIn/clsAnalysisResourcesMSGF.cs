@@ -297,7 +297,7 @@ namespace AnalysisManagerMSGFPlugin
 
                     if (synFileSizeBytes == 0)
                     {
-                        // If the synopsis file is 0-bytes, then the _ModSummary.txt file won't exist; that's OK
+                        // If the synopsis file is 0-bytes, the _ModSummary.txt file won't exist; that's OK
                         var strTargetFile = Path.Combine(m_WorkingDir, fileToGet);
 
                         var strModDefsFile = Path.GetFileNameWithoutExtension(m_jobParams.GetParam("ParmFileName")) + PHRP_MOD_DEFS_SUFFIX;
@@ -331,7 +331,7 @@ namespace AnalysisManagerMSGFPlugin
                 {
                     if (synFileSizeBytes == 0)
                     {
-                        // If the synopsis file is 0-bytes, then the _ResultToSeqMap.txt file won't exist
+                        // If the synopsis file is 0-bytes, the _ResultToSeqMap.txt file won't exist
                         // That's OK; we'll create an empty file with just a header line
                         if (!CreateEmptyResultToSeqMapFile(fileToGet))
                         {
@@ -353,7 +353,7 @@ namespace AnalysisManagerMSGFPlugin
                 {
                     if (synFileSizeBytes == 0)
                     {
-                        // If the synopsis file is 0-bytes, then the _SeqToProteinMap.txt file won't exist
+                        // If the synopsis file is 0-bytes, the _SeqToProteinMap.txt file won't exist
                         // That's OK; we'll create an empty file with just a header line
                         if (!CreateEmptySeqToProteinMapFile(fileToGet))
                         {

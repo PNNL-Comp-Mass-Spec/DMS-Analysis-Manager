@@ -63,7 +63,7 @@ namespace AnalysisManagerDtaImportPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                // If valid zip file is found, then uzip the contents
+                // If valid zip file is found, uzip the contents
                 foreach (var fileName in fileEntries)
                 {
                     if (UnzipFileStart(Path.Combine(m_WorkingDir, fileName), m_WorkingDir, "clsAnalysisResourcesDtaImport.ValidateDTA", false))

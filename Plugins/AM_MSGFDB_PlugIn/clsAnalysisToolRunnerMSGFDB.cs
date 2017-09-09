@@ -120,7 +120,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
 
                 // Look for the .mzid file
-                // If it exists, then call PostProcessMSGFPlusResults even if processingError is true
+                // If it exists, call PostProcessMSGFPlusResults even if processingError is true
 
                 fiMSGFPlusResults.Refresh();
                 if (fiMSGFPlusResults.Exists)

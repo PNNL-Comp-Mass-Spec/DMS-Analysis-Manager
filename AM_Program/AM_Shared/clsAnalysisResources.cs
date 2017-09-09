@@ -891,7 +891,7 @@ namespace AnalysisManagerBase
         /// <param name="targetFolderPath">Destination directory for file copy</param>
         /// <param name="logMsgTypeIfNotFound">Type of message to log if the file is not found</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
-        /// <remarks>If the file was found in MyEMSL, then sourceFolderPath will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
+        /// <remarks>If the file was found in MyEMSL, sourceFolderPath will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
         public bool CopyFileToWorkDir(string sourceFileName, string sourceFolderPath, string targetFolderPath, clsLogTools.LogLevels logMsgTypeIfNotFound)
         {
 
@@ -1248,7 +1248,7 @@ namespace AnalysisManagerBase
         /// <param name="fileNameToFind">Optional: Name of a file that must exist in the dataset folder; can contain a wildcard, e.g. *.zip</param>
         /// <param name="folderNameToFind">Optional: Name of a subfolder that must exist in the dataset folder; can contain a wildcard, e.g. SEQ*</param>
         /// <param name="maxAttempts">Maximum number of attempts</param>
-        /// <param name="logFolderNotFound">If true, then log a warning if the folder is not found</param>
+        /// <param name="logFolderNotFound">If true, log a warning if the folder is not found</param>
         /// <param name="retrievingInstrumentDataFolder">Set to True when retrieving an instrument data folder</param>
         /// <param name="validFolderFound">Output parameter: True if a valid folder is ultimately found, otherwise false</param>
         /// <param name="assumeUnpurged">When true, this function returns the path to the dataset folder on the storage server</param>
@@ -2531,8 +2531,10 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="dctDataPackageJobs"></param>
         /// <returns>True if a data package is defined and it has analysis jobs associated with it</returns>
-        /// <remarks></remarks>
-        protected bool LoadDataPackageJobInfo(out Dictionary<int, clsDataPackageJobInfo> dctDataPackageJobs)
+        /// <remarks>
+        /// Property NumberOfClonedSteps is not updated for the analysis jobs returned by this method
+        /// In contrast, RetrieveDataPackagePeptideHitJobInfo does update NumberOfClonedSteps
+        /// </remarks>
         {
 
             // Gigasax.DMS_Pipeline
@@ -3554,9 +3556,9 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Looks for the STORAGE_PATH_INFO_FILE_SUFFIX file in the working folder
         /// If present, looks for a file named _StoragePathInfo.txt; if that file is found, opens the file and reads the path
-        /// If the file named _StoragePathInfo.txt isn't found, then looks for a ser file in the specified folder
+        /// If the file named _StoragePathInfo.txt isn't found, looks for a ser file in the specified folder
         /// If found, returns the path to the ser file
-        /// If not found, then looks for a 0.ser folder in the specified folder
+        /// If not found, looks for a 0.ser folder in the specified folder
         /// If found, returns the path to the 0.ser folder
         /// Otherwise, returns an empty string
         /// </summary>
@@ -3633,6 +3635,8 @@ namespace AnalysisManagerBase
 
             try
             {
+                // Note that LoadDataPackageJobInfo does not update NumberOfClonedSteps in dctDataPackageJobs
+                // RetrieveAggregateFiles does not support split-fasta jobs, so it does not need NumberOfClonedSteps and thus no need to call RetrieveDataPackagePeptideHitJobInfo
                 if (!LoadDataPackageJobInfo(out dctDataPackageJobs))
                 {
                     m_message = "Error looking up datasets and jobs using LoadDataPackageJobInfo";
@@ -4321,7 +4325,7 @@ namespace AnalysisManagerBase
         /// <param name="zipFilePath">File to unzip</param>
         /// <param name="outFolderPath">Target directory for the extracted files</param>
         /// <param name="callingFunctionName">Calling function name (used for debugging purposes)</param>
-        /// <param name="forceExternalZipProgramUse">If True, then force use of PKZipC.exe</param>
+        /// <param name="forceExternalZipProgramUse">If True, force use of PKZipC.exe</param>
         /// <returns>True if success, otherwise false</returns>
         /// <remarks></remarks>
         public bool UnzipFileStart(string zipFilePath, string outFolderPath, string callingFunctionName, bool forceExternalZipProgramUse)
@@ -4371,11 +4375,11 @@ namespace AnalysisManagerBase
         /// Makes sure the specified _DTA.txt file has scan=x and cs=y tags in the parent ion line
         /// </summary>
         /// <param name="sourceFilePath">Input _DTA.txt file to parse</param>
-        /// <param name="replaceSourceFile">If True, then replaces the source file with and updated file</param>
+        /// <param name="replaceSourceFile">If True, replaces the source file with and updated file</param>
         /// <param name="deleteSourceFileIfUpdated">
         /// Only valid if replaceSourceFile=True;
-        /// If True, then the source file is deleted if an updated version is created.
-        /// If false, then the source file is renamed to .old if an updated version is created.
+        /// If True, the source file is deleted if an updated version is created.
+        /// If false, the source file is renamed to .old if an updated version is created.
         /// </param>
         /// <param name="outputFilePath">
         /// Output file path to use for the updated file; required if replaceSourceFile=False; ignored if replaceSourceFile=True
@@ -4580,7 +4584,7 @@ namespace AnalysisManagerBase
         /// Validates that sufficient free memory is available to run Java
         /// </summary>
         /// <param name="memorySizeJobParamName">Name of the job parameter that defines the amount of memory (in MB) that must be available on the system</param>
-        /// <param name="logFreeMemoryOnSuccess">If True, then post a log entry if sufficient memory is, in fact, available</param>
+        /// <param name="logFreeMemoryOnSuccess">If True, post a log entry if sufficient memory is, in fact, available</param>
         /// <returns>True if sufficient free memory; false if not enough free memory</returns>
         /// <remarks>Typical names for javaMemorySizeJobParamName are MSGFJavaMemorySize, MSGFDBJavaMemorySize, and MSDeconvJavaMemorySize.
         /// These parameters are loaded from DMS Settings Files (table T_Settings_Files in DMS5, copied to table T_Job_Parameters in DMS_Pipeline)

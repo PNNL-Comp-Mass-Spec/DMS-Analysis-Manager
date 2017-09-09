@@ -207,7 +207,7 @@ namespace AnalysisManagerICR2LSPlugIn
 
                 if (!success)
                 {
-                    // If a .PEK file exists, then call PerfPostAnalysisTasks() to move the .Pek file into the results folder, which we'll then archive in the Failed Results folder
+                    // If a .PEK file exists, call PerfPostAnalysisTasks() to move the .Pek file into the results folder, which we'll then archive in the Failed Results folder
                     currentTask = "VerifyPEKFileExists";
                     if (VerifyPEKFileExists(m_WorkDir, m_Dataset))
                     {
@@ -284,7 +284,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 }
             }
 
-            // If we got to here, then we've exceeded the max retry limit
+            // If we got to here, we've exceeded the max retry limit
             LogError("Unable to delete raw data file after multiple tries: " + ErrMsg);
             return CloseOutType.CLOSEOUT_FAILED;
         }
