@@ -121,19 +121,19 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                         // Parse out the values
 
-                        if (TryGetValueInt(dataColumns, scanNumberColIndex, out var scanNumber))
+                        if (clsGlobal.TryGetValueInt(dataColumns, scanNumberColIndex, out var scanNumber))
                         {
                             var strCollisionMode = string.Empty;
                             var storeData = false;
 
-                            if (TryGetValueStr(dataColumns, collisionModeColIndex, out strCollisionMode))
+                            if (clsGlobal.TryGetValue(dataColumns, collisionModeColIndex, out strCollisionMode))
                             {
                                 storeData = true;
                             }
                             else
                             {
                                 var filterText = string.Empty;
-                                if (TryGetValueStr(dataColumns, scanFilterColIndex, out filterText))
+                                if (clsGlobal.TryGetValue(dataColumns, scanFilterColIndex, out filterText))
                                 {
                                     filterText = dataColumns[scanFilterColIndex];
 
@@ -272,10 +272,10 @@ namespace AnalysisManagerMSGFDBPlugIn
                                 scanStatsExLoaded = true;
                             }
 
-                            if (!TryGetValueInt(dataColumns, scanNumberColIndex, out var scanNumber))
+                            if (!clsGlobal.TryGetValueInt(dataColumns, scanNumberColIndex, out var scanNumber))
                                 continue;
 
-                            if (!TryGetValueInt(dataColumns, scanTypeColIndex, out var scanType))
+                            if (!clsGlobal.TryGetValueInt(dataColumns, scanTypeColIndex, out var scanType))
                                 continue;
 
                             var scanTypeName = string.Empty;
@@ -285,10 +285,10 @@ namespace AnalysisManagerMSGFDBPlugIn
                             }
                             else if (scanTypeNameColIndex >= 0)
                             {
-                                TryGetValueStr(dataColumns, scanTypeNameColIndex, out scanTypeName);
+                                clsGlobal.TryGetValue(dataColumns, scanTypeNameColIndex, out scanTypeName);
                             }
 
-                            TryGetValueSng(dataColumns, scanTimeColIndex, out var scanTime);
+                            clsGlobal.TryGetValueFloat(dataColumns, scanTimeColIndex, out var scanTime);
 
                             swOutFile.WriteLine(scanNumber + "\t" + scanTypeName + "\t" + scanType + "\t" + scanTime.ToString("0.0000"));
 
@@ -312,75 +312,10 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// </summary>
         /// <param name="dataColumns"></param>
         /// <returns></returns>
-        private bool FirstColumnIsInteger(string[] dataColumns)
+        private bool FirstColumnIsInteger(IReadOnlyList<string> dataColumns)
         {
             return int.TryParse(dataColumns[0], out var dataValue);
         }
 
-        /// <summary>
-        /// Tries to convert the text at index colIndex of strData to an integer
-        /// </summary>
-        /// <param name="dataColumns"></param>
-        /// <param name="colIndex"></param>
-        /// <param name="intValue"></param>
-        /// <returns>True if success; false if colIndex is less than 0, colIndex is out of range for dataColumns(), or the text cannot be converted to an integer</returns>
-        /// <remarks></remarks>
-        private bool TryGetValueInt(string[] dataColumns, int colIndex, out int intValue)
-        {
-            if (colIndex >= 0 && colIndex < dataColumns.Length)
-            {
-                if (int.TryParse(dataColumns[colIndex], out intValue))
-                {
-                    return true;
-                }
-            }
-
-            intValue = 0;
-            return false;
-        }
-
-        /// <summary>
-        /// Tries to convert the text at index colIndex of strData to a float
-        /// </summary>
-        /// <param name="dataColumns"></param>
-        /// <param name="colIndex"></param>
-        /// <param name="sngValue"></param>
-        /// <returns>True if success; false if colIndex is less than 0, colIndex is out of range for dataColumns(), or the text cannot be converted to an integer</returns>
-        /// <remarks></remarks>
-        private bool TryGetValueSng(string[] dataColumns, int colIndex, out float sngValue)
-        {
-            if (colIndex >= 0 && colIndex < dataColumns.Length)
-            {
-                if (float.TryParse(dataColumns[colIndex], out sngValue))
-                {
-                    return true;
-                }
-            }
-
-            sngValue = 0;
-            return false;
-        }
-
-        /// <summary>
-        /// Tries to retrieve the string value at index colIndex in dataColumns()
-        /// </summary>
-        /// <param name="dataColumns"></param>
-        /// <param name="colIndex"></param>
-        /// <param name="strValue"></param>
-        /// <returns>True if success; false if colIndex is less than 0 or colIndex is out of range for dataColumns()</returns>
-        /// <remarks></remarks>
-        private bool TryGetValueStr(string[] dataColumns, int colIndex, out string strValue)
-        {
-            if (colIndex >= 0 && colIndex < dataColumns.Length)
-            {
-                strValue = dataColumns[colIndex];
-                if (string.IsNullOrEmpty(strValue))
-                    strValue = string.Empty;
-                return true;
-            }
-
-            strValue = string.Empty;
-            return false;
-        }
     }
 }

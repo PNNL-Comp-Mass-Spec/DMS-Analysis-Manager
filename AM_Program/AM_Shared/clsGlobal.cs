@@ -791,6 +791,73 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
+        /// Tries to retrieve the string value at index colIndex in dataColumns()
+        /// </summary>
+        /// <param name="dataColumns"></param>
+        /// <param name="colIndex"></param>
+        /// <param name="value"></param>
+        /// <returns>True if success; false if colIndex is less than 0 or colIndex is out of range for dataColumns()</returns>
+        /// <remarks></remarks>
+        public static bool TryGetValue(string[] dataColumns, int colIndex, out string value)
+        {
+            if (colIndex >= 0 && colIndex < dataColumns.Length)
+            {
+                value = dataColumns[colIndex];
+                if (string.IsNullOrEmpty(value))
+                    value = string.Empty;
+                return true;
+            }
+
+            value = string.Empty;
+            return false;
+        }
+
+
+        /// <summary>
+        /// Tries to convert the text at index colIndex of dataColumns to an integer
+        /// </summary>
+        /// <param name="dataColumns"></param>
+        /// <param name="colIndex"></param>
+        /// <param name="value"></param>
+        /// <returns>True if success; false if colIndex is less than 0, colIndex is out of range for dataColumns(), or the text cannot be converted to an integer</returns>
+        /// <remarks></remarks>
+        public static bool TryGetValueInt(string[] dataColumns, int colIndex, out int value)
+        {
+            if (colIndex >= 0 && colIndex < dataColumns.Length)
+            {
+                if (int.TryParse(dataColumns[colIndex], out value))
+                {
+                    return true;
+                }
+            }
+
+            value = 0;
+            return false;
+        }
+
+        /// <summary>
+        /// Tries to convert the text at index colIndex of dataColumns to a float
+        /// </summary>
+        /// <param name="dataColumns"></param>
+        /// <param name="colIndex"></param>
+        /// <param name="value"></param>
+        /// <returns>True if success; false if colIndex is less than 0, colIndex is out of range for dataColumns(), or the text cannot be converted to a float</returns>
+        /// <remarks></remarks>
+        public static bool TryGetValueFloat(string[] dataColumns, int colIndex, out float value)
+        {
+            if (colIndex >= 0 && colIndex < dataColumns.Length)
+            {
+                if (float.TryParse(dataColumns[colIndex], out value))
+                {
+                    return true;
+                }
+            }
+
+            value = 0;
+            return false;
+        }
+
+        /// <summary>
         /// Converts a string value to a boolean equivalent
         /// </summary>
         /// <param name="value"></param>
