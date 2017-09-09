@@ -21,33 +21,33 @@ namespace AnalysisManagerMasicPlugin
 
         protected override CloseOutType RunMASIC()
         {
-            string strParameterFilePath;
+            string parameterFilePath;
 
-            var strParameterFileName = m_jobParams.GetParam("parmFileName");
+            var parameterFileName = m_jobParams.GetParam("parmFileName");
 
-            if (strParameterFileName != null && strParameterFileName.Trim().ToLower() != "na")
+            if (parameterFileName != null && parameterFileName.Trim().ToLower() != "na")
             {
-                strParameterFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"));
+                parameterFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"));
             }
             else
             {
-                strParameterFilePath = string.Empty;
+                parameterFilePath = string.Empty;
             }
 
             // Determine the path to the .Raw file
-            var strMgfFileName = m_Dataset + ".mgf";
-            var strInputFilePath = clsAnalysisResources.ResolveStoragePath(m_WorkDir, strMgfFileName);
+            var mgfFileName = m_Dataset + ".mgf";
+            var inputFilePath = clsAnalysisResources.ResolveStoragePath(m_WorkDir, mgfFileName);
 
-            if (string.IsNullOrEmpty(strInputFilePath))
+            if (string.IsNullOrEmpty(inputFilePath))
             {
                 // Unable to resolve the file path
-                m_ErrorMessage = "Could not find " + strMgfFileName + " or " + strMgfFileName + clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX +
+                m_ErrorMessage = "Could not find " + mgfFileName + " or " + mgfFileName + clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX +
                                  " in the working folder; unable to run MASIC";
                 LogError(m_ErrorMessage);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            return StartMASICAndWait(strInputFilePath, m_WorkDir, strParameterFilePath);
+            return StartMASICAndWait(inputFilePath, m_WorkDir, parameterFilePath);
         }
 
         protected override CloseOutType DeleteDataFile()

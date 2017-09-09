@@ -26,34 +26,34 @@ namespace AnalysisManagerMasicPlugin
 
         protected override CloseOutType RunMASIC()
         {
-            string strParameterFilePath;
+            string parameterFilePath;
 
-            var strParameterFileName = m_jobParams.GetParam("parmFileName");
+            var parameterFileName = m_jobParams.GetParam("parmFileName");
 
-            if (strParameterFileName != null && strParameterFileName.Trim().ToLower() != "na")
+            if (parameterFileName != null && parameterFileName.Trim().ToLower() != "na")
             {
-                strParameterFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"));
+                parameterFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"));
             }
             else
             {
-                strParameterFilePath = string.Empty;
+                parameterFilePath = string.Empty;
             }
 
             // Determine the path to the .Raw file
-            var strRawFileName = m_Dataset + ".raw";
-            var strInputFilePath = clsAnalysisResources.ResolveStoragePath(m_WorkDir, strRawFileName);
+            var rawFileName = m_Dataset + ".raw";
+            var inputFilePath = clsAnalysisResources.ResolveStoragePath(m_WorkDir, rawFileName);
 
-            if (string.IsNullOrWhiteSpace(strInputFilePath))
+            if (string.IsNullOrWhiteSpace(inputFilePath))
             {
                 // Unable to resolve the file path
-                m_ErrorMessage = "Could not find " + strRawFileName + " or " + strRawFileName + clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX +
+                m_ErrorMessage = "Could not find " + rawFileName + " or " + rawFileName + clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX +
                                  " in the working folder; unable to run MASIC";
                 LogError(m_ErrorMessage);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
             // Examine the size of the .Raw file
-            var fiInputFile = new FileInfo(strInputFilePath);
+            var fiInputFile = new FileInfo(inputFilePath);
             if (!fiInputFile.Exists)
             {
                 // Unable to resolve the file path
@@ -62,13 +62,13 @@ namespace AnalysisManagerMasicPlugin
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (!string.IsNullOrEmpty(strParameterFilePath))
+            if (!string.IsNullOrEmpty(parameterFilePath))
             {
                 // Make sure the parameter file has IncludeHeaders defined and set to True
-                ValidateParameterFile(strParameterFilePath);
+                ValidateParameterFile(parameterFilePath);
             }
 
-            var eCloseout = StartMASICAndWait(strInputFilePath, m_WorkDir, strParameterFilePath);
+            var eCloseout = StartMASICAndWait(inputFilePath, m_WorkDir, parameterFilePath);
 
             return eCloseout;
         }
@@ -80,9 +80,9 @@ namespace AnalysisManagerMasicPlugin
         /// <returns>Path to the newly created .mzXML file</returns>
         private string ConvertRawToMzXML(FileInfo fiThermoRawFile)
         {
-            var strMSXmlGeneratorAppPath = GetMSXmlGeneratorAppPath();
+            var msXmlGeneratorAppPath = GetMSXmlGeneratorAppPath();
 
-            mMSXmlCreator = new AnalysisManagerMsXmlGenPlugIn.clsMSXMLCreator(strMSXmlGeneratorAppPath, m_WorkDir, m_Dataset, m_DebugLevel, m_jobParams);
+            mMSXmlCreator = new AnalysisManagerMsXmlGenPlugIn.clsMSXMLCreator(msXmlGeneratorAppPath, m_WorkDir, m_Dataset, m_DebugLevel, m_jobParams);
             RegisterEvents(mMSXmlCreator);
             mMSXmlCreator.LoopWaiting += mMSXmlCreator_LoopWaiting;
 
@@ -104,14 +104,14 @@ namespace AnalysisManagerMasicPlugin
             if (!blnSuccess)
                 return string.Empty;
 
-            var strMzXMLFilePath = Path.ChangeExtension(fiThermoRawFile.FullName, "mzXML");
-            if (!File.Exists(strMzXMLFilePath))
+            var mzXMLFilePath = Path.ChangeExtension(fiThermoRawFile.FullName, "mzXML");
+            if (!File.Exists(mzXMLFilePath))
             {
                 m_message = "MSXmlCreator did not create the .mzXML file";
                 return string.Empty;
             }
 
-            return strMzXMLFilePath;
+            return mzXMLFilePath;
         }
 
         /// <summary>

@@ -11,6 +11,7 @@ using System.IO;
 using System.Threading;
 using System.Xml;
 using AnalysisManagerBase;
+using PRISM;
 
 namespace AnalysisManagerMasicPlugin
 {
@@ -31,70 +32,38 @@ namespace AnalysisManagerMasicPlugin
 
         private string m_ProcessStep = string.Empty;
         private string m_MASICStatusFileName = string.Empty;
-        private string m_MASICLogFileName = string.Empty;
 
         #endregion
 
         #region "Methods"
 
-        private void ExtractErrorsFromMASICLogFile(string strLogFilePath)
+        private void ExtractErrorsFromMASICLogFile(FileSystemInfo logFile)
         {
             // Read the most recent MASIC_Log file and look for any lines with the text "Error"
 
             try
             {
-                // Fix the case of the MASIC LogFile
-                var ioFileInfo = new FileInfo(strLogFilePath);
-
-                var strLogFileNameCorrectCase = Path.GetFileName(strLogFilePath);
-
-                if (m_DebugLevel >= 1)
-                {
-                    LogDebug("Checking capitalization of the the MASIC Log File: should be " + strLogFileNameCorrectCase +
-                             "; is currently " + ioFileInfo.Name);
-                }
-
-                if (ioFileInfo.Name != strLogFileNameCorrectCase && ioFileInfo.DirectoryName != null)
-                {
-                    // Need to fix the case
-                    if (m_DebugLevel >= 1)
-                    {
-                        LogDebug("Fixing capitalization of the MASIC Log File: " + strLogFileNameCorrectCase + " instead of " + ioFileInfo.Name);
-                    }
-                    ioFileInfo.MoveTo(Path.Combine(ioFileInfo.DirectoryName, strLogFileNameCorrectCase));
-                }
-            }
-            catch (Exception ex)
-            {
-                // Ignore errors here
-                LogError("Error fixing capitalization of the MASIC Log File at " + strLogFilePath + ": " + ex.Message, ex);
-            }
-
-            try
-            {
-                if (string.IsNullOrEmpty(strLogFilePath))
-                {
+                if (!logFile.Exists)
                     return;
-                }
 
-                using (var srInFile = new StreamReader(new FileStream(strLogFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var srInFile = new StreamReader(new FileStream(logFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     var intErrorCount = 0;
                     while (!srInFile.EndOfStream)
                     {
-                        var strLineIn = srInFile.ReadLine();
+                        var lineIn = srInFile.ReadLine();
 
-                        if (string.IsNullOrEmpty(strLineIn))
+                        if (string.IsNullOrEmpty(lineIn))
                             continue;
 
-                        if (strLineIn.ToLower().Contains("error"))
+                        if (lineIn.ToLower().Contains("error"))
                         {
                             if (intErrorCount == 0)
                             {
                                 LogError("Errors found in the MASIC Log File");
                             }
 
-                            LogWarning(" ... " + strLineIn);
+                            LogWarning(" ... " + lineIn);
 
                             intErrorCount += 1;
                         }
@@ -104,7 +73,7 @@ namespace AnalysisManagerMasicPlugin
             }
             catch (Exception ex)
             {
-                LogError("Error reading MASIC Log File at '" + strLogFilePath + "'; " + ex.Message, ex);
+                LogError("Error reading MASIC Log File at '" + logFile.FullName + "'; " + ex.Message, ex);
             }
         }
 
@@ -147,7 +116,7 @@ namespace AnalysisManagerMasicPlugin
             UpdateStatusFile();
 
             // Run the cleanup routine from the base class
-            var ePostProcessingResult = PerfPostAnalysisTasks("SIC");
+            var ePostProcessingResult = PerfPostAnalysisTasks();
             if (ePostProcessingResult != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -165,11 +134,11 @@ namespace AnalysisManagerMasicPlugin
 
         }
 
-        protected CloseOutType StartMASICAndWait(string strInputFilePath, string strOutputFolderPath, string strParameterFilePath)
+        protected CloseOutType StartMASICAndWait(string inputFilePath, string outputFolderPath, string parameterFilePath)
         {
             // Note that this function is normally called by RunMasic() in the subclass
 
-            var strMASICExePath = string.Empty;
+            var masicExePath = string.Empty;
 
             m_ErrorMessage = string.Empty;
             m_ProcessStep = "NewTask";
@@ -186,29 +155,22 @@ namespace AnalysisManagerMasicPlugin
             // Make sure the MASIC.Exe file exists
             try
             {
-                strMASICExePath = m_mgrParams.GetParam("masicprogloc");
-                if (!File.Exists(strMASICExePath))
+                masicExePath = m_mgrParams.GetParam("masicprogloc");
+                if (!File.Exists(masicExePath))
                 {
-                    LogError("clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); MASIC not found at: " + strMASICExePath);
+                    LogError("clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); MASIC not found at: " + masicExePath);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
             }
             catch (Exception ex)
             {
-                LogError("clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); Error looking for MASIC .Exe at " + strMASICExePath, ex);
+                LogError("clsAnalysisToolRunnerMASICBase.StartMASICAndWait(); Error looking for MASIC .Exe at " + masicExePath, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
             // Call MASIC using the Program Runner class
 
-            // Define the parameters to send to Masic.exe
-            var cmdStr = "/I:" + strInputFilePath + " /O:" + strOutputFolderPath + " /P:" + strParameterFilePath + " /Q /SF:" + m_MASICStatusFileName;
-
-            if (m_DebugLevel >= 2)
-            {
-                // Create a MASIC Log File
-                cmdStr += " /L";
-                m_MASICLogFileName = "MASIC_Log_Job" + m_JobNum + ".txt";
+            var logFile = new FileInfo(Path.Combine(m_WorkDir, "MASIC_Log_Job" + m_JobNum + ".txt"));
 
                 cmdStr += ":" + Path.Combine(m_WorkDir, m_MASICLogFileName);
             }
@@ -219,17 +181,17 @@ namespace AnalysisManagerMasicPlugin
 
             if (m_DebugLevel >= 1)
             {
-                LogDebug(strMASICExePath + " " + cmdStr);
+                LogDebug(masicExePath + cmdStr);
             }
 
-            var objMasicProgRunner = new PRISM.clsProgRunner
+            var objMasicProgRunner = new clsProgRunner
             {
                 CreateNoWindow = true,
                 CacheStandardOutput = false,
                 EchoOutputToConsole = true,
                 WriteConsoleOutputToFile = false,
                 Name = "MASIC",
-                Program = strMASICExePath,
+                Program = masicExePath,
                 Arguments = cmdStr,
                 WorkDir = m_WorkDir
             };
@@ -243,14 +205,13 @@ namespace AnalysisManagerMasicPlugin
 
             Thread.Sleep(3000);                // Delay for 3 seconds to make sure program exits
 
-            if (!string.IsNullOrEmpty(m_MASICLogFileName))
-            {
-                // Read the most recent MASIC_Log file and look for any lines with the text "Error"
-                ExtractErrorsFromMASICLogFile(Path.Combine(m_WorkDir, m_MASICLogFileName));
-            }
 
             // Verify MASIC exited due to job completion
-            if (!blnSuccess)
+            if (blnSuccess)
+            {
+                m_jobParams.AddResultFileToSkip(logFile.Name);
+            }
+            else
             {
                 if (m_DebugLevel > 1)
                 {
@@ -284,25 +245,23 @@ namespace AnalysisManagerMasicPlugin
 
         protected abstract CloseOutType DeleteDataFile();
 
-        protected virtual void CalculateNewStatus(string strMasicProgLoc)
+        protected virtual void CalculateNewStatus(string masicProgLoc)
         {
             // Calculates status information for progress file
             // Does this by reading the MasicStatus.xml file
 
-            var strProgress = string.Empty;
+            var progress = string.Empty;
 
             try
             {
-                var masicExe = new FileInfo(strMasicProgLoc);
-                if (masicExe.DirectoryName == null)
+                var masicExe = new FileInfo(masicProgLoc);
+
+                var statusFile = new FileInfo(Path.Combine(masicExe.DirectoryName, m_MASICStatusFileName));
+
+                if (!statusFile.Exists)
                     return;
 
-                var strPath = Path.Combine(masicExe.DirectoryName, m_MASICStatusFileName);
-
-                if (!File.Exists(strPath))
-                    return;
-
-                using (var fsInFile = new FileStream(strPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                using (var fsInFile = new FileStream(statusFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                 {
                     using (var objXmlReader = new XmlTextReader(fsInFile))
                     {
@@ -326,7 +285,7 @@ namespace AnalysisManagerMasicPlugin
                                     if (!objXmlReader.IsEmptyElement)
                                     {
                                         if (objXmlReader.Read())
-                                            strProgress = objXmlReader.Value;
+                                            progress = objXmlReader.Value;
                                     }
                                     break;
                                 case "Error":
@@ -342,12 +301,12 @@ namespace AnalysisManagerMasicPlugin
                 }
 
 
-                if (string.IsNullOrEmpty(strProgress))
+                if (string.IsNullOrEmpty(progress))
                     return;
 
                 try
                 {
-                    m_progress = float.Parse(strProgress);
+                    m_progress = float.Parse(progress);
                 }
                 catch (Exception)
                 {
@@ -360,16 +319,16 @@ namespace AnalysisManagerMasicPlugin
             }
         }
 
-        protected virtual CloseOutType PerfPostAnalysisTasks(string ResType)
+        protected virtual CloseOutType PerfPostAnalysisTasks()
         {
             // Stop the job timer
             m_StopTime = DateTime.UtcNow;
 
             // Get rid of raw data file
-            var StepResult = DeleteDataFile();
-            if (StepResult != CloseOutType.CLOSEOUT_SUCCESS)
+            var stepResult = DeleteDataFile();
+            if (stepResult != CloseOutType.CLOSEOUT_SUCCESS)
             {
-                return StepResult;
+                return stepResult;
             }
 
             // Zip the _SICs.XML file (if it exists; it won't if SkipSICProcessing = True in the parameter file)
@@ -413,34 +372,33 @@ namespace AnalysisManagerMasicPlugin
         /// <summary>
         /// Validate that required options are defined in the MASIC parameter file
         /// </summary>
-        /// <param name="strParameterFilePath"></param>
+        /// <param name="parameterFilePath"></param>
         /// <remarks></remarks>
-        protected bool ValidateParameterFile(string strParameterFilePath)
+        protected bool ValidateParameterFile(string parameterFilePath)
         {
-            if (string.IsNullOrWhiteSpace(strParameterFilePath))
+            if (string.IsNullOrWhiteSpace(parameterFilePath))
             {
                 LogWarning("The MASIC Parameter File path is empty; nothing to validate");
                 return true;
             }
 
-            var objSettingsFile = new PRISM.XmlSettingsFileAccessor();
+            var objSettingsFile = new XmlSettingsFileAccessor();
 
-            if (!objSettingsFile.LoadSettings(strParameterFilePath))
+            if (!objSettingsFile.LoadSettings(parameterFilePath))
             {
-                LogError("Error loading parameter file " + strParameterFilePath);
+                LogError("Error loading parameter file " + parameterFilePath);
                 return false;
             }
 
             if (!objSettingsFile.SectionPresent("MasicExportOptions"))
             {
-                LogWarning("MasicExportOptions section not found in " + strParameterFilePath);
+                LogWarning("MasicExportOptions section not found in " + parameterFilePath);
                 objSettingsFile.SetParam("MasicExportOptions", "IncludeHeaders", "True");
                 objSettingsFile.SaveSettings();
                 return true;
             }
 
-            bool bad;
-            var includeHeaders = objSettingsFile.GetParam("MasicExportOptions", "IncludeHeaders", false, out bad);
+            var includeHeaders = objSettingsFile.GetParam("MasicExportOptions", "IncludeHeaders", false, out _);
 
             if (!includeHeaders)
             {
@@ -452,7 +410,7 @@ namespace AnalysisManagerMasicPlugin
             return true;
         }
 
-        private bool WaitForJobToFinish(PRISM.clsProgRunner objMasicProgRunner)
+        private bool WaitForJobToFinish(clsProgRunner objMasicProgRunner)
         {
             const int MAX_RUNTIME_HOURS = 24;
             const int SECONDS_BETWEEN_UPDATE = 30;
@@ -475,7 +433,7 @@ namespace AnalysisManagerMasicPlugin
                 }
                 dtLastUpdate = DateTime.UtcNow;
 
-                if (objMasicProgRunner.State == PRISM.clsProgRunner.States.NotMonitoring)
+                if (objMasicProgRunner.State == clsProgRunner.States.NotMonitoring)
                 {
                     m_JobRunning = false;
                 }

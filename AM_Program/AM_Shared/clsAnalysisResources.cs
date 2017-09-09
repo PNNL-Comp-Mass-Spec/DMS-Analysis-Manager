@@ -2035,7 +2035,8 @@ namespace AnalysisManagerBase
         {
 
             // Store the negative of the dataset ID as the job number
-            var jobInfo = new clsDataPackageJobInfo(-udtDatasetInfo.DatasetID, udtDatasetInfo.Dataset)
+            var pseudoJob = -udtDatasetInfo.DatasetID;
+            var jobInfo = new clsDataPackageJobInfo(pseudoJob, udtDatasetInfo.Dataset)
             {
                 DatasetID = udtDatasetInfo.DatasetID,
                 Instrument = udtDatasetInfo.Instrument,
@@ -2687,7 +2688,7 @@ namespace AnalysisManagerBase
             sqlStr.Append("FROM V_Analysis_Job_Export_DataPkg ");
             sqlStr.Append("WHERE Job = " + jobNumber);
 
-            jobInfo = new clsDataPackageJobInfo(0, string.Empty);
+            var genericJobInfo = new clsDataPackageJobInfo(0, string.Empty);
 
             // Gigasax.DMS5
             var dmsConnectionString = m_mgrParams.GetParam("connectionstring");

@@ -61,13 +61,13 @@ namespace AnalysisManagerMasicPlugin
             if (clsGlobal.IsMatch(rawDataType, RAW_DATA_TYPE_DOT_RAW_FILES) &&
                 toolName.StartsWith("MASIC_Finnigan", StringComparison.OrdinalIgnoreCase))
             {
-                var strRawFileName = DatasetName + ".raw";
-                var strInputFilePath = ResolveStoragePath(m_WorkingDir, strRawFileName);
+                var rawFileName = DatasetName + ".raw";
+                var inputFilePath = ResolveStoragePath(m_WorkingDir, rawFileName);
 
-                if (string.IsNullOrWhiteSpace(strInputFilePath))
+                if (string.IsNullOrWhiteSpace(inputFilePath))
                 {
                     // Unable to resolve the file path
-                    m_message = "Could not find " + strRawFileName + " or " + strRawFileName + STORAGE_PATH_INFO_FILE_SUFFIX +
+                    m_message = "Could not find " + rawFileName + " or " + rawFileName + STORAGE_PATH_INFO_FILE_SUFFIX +
                                 " in the working folder; unable to run MASIC";
                     LogError(m_message);
                     return CloseOutType.CLOSEOUT_FAILED;

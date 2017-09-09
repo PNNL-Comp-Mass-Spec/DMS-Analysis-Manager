@@ -122,12 +122,8 @@ namespace AnalysisManagerSequestPlugin
         protected override CloseOutType MakeOUTFiles()
         {
             // Creates Sequest .out files from DTA files
-            string cmdStr = null;
-            string[] OutFiles = null;
-            string ProgLoc = null;
 
-            var intDTACountRemaining = 0;
-            var blnSuccess = false;
+            int intDTACountRemaining;
             var blnProcessingError = false;
 
             mOutFileCandidates.Clear();
@@ -162,7 +158,7 @@ namespace AnalysisManagerSequestPlugin
             mOutFileWatcher.EndInit();
             mOutFileWatcher.EnableRaisingEvents = true;
 
-            ProgLoc = m_mgrParams.GetParam("seqprogloc");
+            var ProgLoc = m_mgrParams.GetParam("seqprogloc");
             if (!File.Exists(ProgLoc))
             {
                 m_message = "Sequest .Exe not found";
@@ -207,7 +203,7 @@ namespace AnalysisManagerSequestPlugin
                 mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
                 // Define the arguments to pass to the Sequest .Exe
-                cmdStr = " -P" + m_jobParams.GetParam("parmFileName") + " *.dta";
+                var cmdStr = " -P" + m_jobParams.GetParam("parmFileName") + " *.dta";
                 if (m_DebugLevel >= 1)
                 {
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "  " + ProgLoc + " " + cmdStr);
@@ -215,7 +211,7 @@ namespace AnalysisManagerSequestPlugin
 
                 // Run Sequest to generate OUT files
                 mLastSequestStartTime = DateTime.UtcNow;
-                blnSuccess = mCmdRunner.RunProgram(ProgLoc, cmdStr, "Seq", true);
+                var blnSuccess = mCmdRunner.RunProgram(ProgLoc, cmdStr, "Seq", true);
 
                 mSequestSearchEndTime = DateTime.UtcNow;
 
@@ -258,9 +254,8 @@ namespace AnalysisManagerSequestPlugin
                     }
                     else
                     {
-                        // No .DTAs remain; if we have as many .out files as the original source .dta files, then treat this as success, otherwise as a failure
-                        var intOutFileCount = 0;
-                        intOutFileCount = GetOUTFileCountRemaining() + mTotalOutFileCount;
+                        // No .DTAs remain; if we have as many .out files as the original source .dta files, treat this as success, otherwise as a failure
+                        var intOutFileCount = GetOUTFileCountRemaining() + mTotalOutFileCount;
 
                         if (intOutFileCount == m_DtaCount)
                         {
@@ -307,7 +302,7 @@ namespace AnalysisManagerSequestPlugin
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... Verifying out file creation");
             }
 
-            OutFiles = Directory.GetFiles(m_WorkDir, "*.out");
+            var OutFiles = Directory.GetFiles(m_WorkDir, "*.out");
             if (m_DebugLevel >= 1)
             {
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
@@ -539,13 +534,10 @@ namespace AnalysisManagerSequestPlugin
 
         protected bool CopyFileToTransferFolder(string strSourceFileName, string strTargetFileName, bool blnAddToListOfServerFilesToDelete)
         {
-            string strSourceFilePath = null;
-            string strTargetFilePath = null;
-
             try
             {
-                strSourceFilePath = Path.Combine(m_WorkDir, strSourceFileName);
-                strTargetFilePath = Path.Combine(mTransferFolderPath, strTargetFileName);
+                var strSourceFilePath = Path.Combine(m_WorkDir, strSourceFileName);
+                var strTargetFilePath = Path.Combine(mTransferFolderPath, strTargetFileName);
 
                 if (File.Exists(strSourceFilePath))
                 {
@@ -595,10 +587,9 @@ namespace AnalysisManagerSequestPlugin
                 }
 
                 // Find the item count in the substring
-                var RetVal = 0;
-                if (int.TryParse(Regex.Match(TmpStr, @"\d+").Value, out RetVal))
+                if (int.TryParse(Regex.Match(TmpStr, @"\d+").Value, out var retVal))
                 {
-                    return RetVal;
+                    return retVal;
                 }
 
                 m_ErrMsg = "Numeric value not found in the matched text";
@@ -613,9 +604,6 @@ namespace AnalysisManagerSequestPlugin
 
         protected bool GetNodeNamesFromSequestLog(string strLogFilePath)
         {
-            string strLineIn = null;
-            string strHostName = null;
-
             var blnFoundSpawned = false;
 
             try
@@ -640,7 +628,7 @@ namespace AnalysisManagerSequestPlugin
                     // Read each line from the input file
                     while (!srLogFile.EndOfStream)
                     {
-                        strLineIn = srLogFile.ReadLine();
+                        var strLineIn = srLogFile.ReadLine();
 
                         if (!string.IsNullOrWhiteSpace(strLineIn))
                         {
@@ -648,16 +636,14 @@ namespace AnalysisManagerSequestPlugin
                             //    9.  received ready messsage from p6(c0002)
 
                             var reMatch = reReceivedReadyMsg.Match(strLineIn);
-                            if ((reMatch != null) && reMatch.Success)
+                            if (reMatch.Success)
                             {
-                                strHostName = reMatch.Groups[1].Value;
-
                                 mSequestNodesSpawned += 1;
                             }
                             else
                             {
                                 reMatch = reSpawnedSlaveProcesses.Match(strLineIn);
-                                if ((reMatch != null) && reMatch.Success)
+                                if (reMatch.Success)
                                 {
                                     blnFoundSpawned = true;
                                 }
@@ -674,15 +660,12 @@ namespace AnalysisManagerSequestPlugin
                             " ... found " + mSequestNodesSpawned + " nodes in the sequest.log file");
                     }
 
-                    var intNodeCountMinimum = 0;
-                    var intNodeCountExpected = 0;
-
-                    intNodeCountExpected = m_mgrParams.GetParam("SequestNodeCountExpected", 0);
-                    intNodeCountMinimum = (int)Math.Floor(0.85 * intNodeCountExpected);
+                    var intNodeCountExpected = m_mgrParams.GetParam("SequestNodeCountExpected", 0);
+                    var intNodeCountMinimum = (int)Math.Floor(0.85 * intNodeCountExpected);
 
                     if (mSequestNodesSpawned < intNodeCountMinimum)
                     {
-                        // If fewer than intNodeCountMinimum .DTA files are present in the work directory, then the node count spawned will be small
+                        // If fewer than intNodeCountMinimum .DTA files are present in the work directory, the node count spawned will be small
                         // Thus, need to count the number of DTAs
                         var intDTACountRemaining = GetDTAFileCountRemaining();
 
@@ -690,10 +673,9 @@ namespace AnalysisManagerSequestPlugin
                         {
                             mNodeCountSpawnErrorOccurences += 1;
 
-                            string strMessage = null;
-                            strMessage = "Not enough nodes were spawned (Threshold = " + intNodeCountMinimum + " nodes): " + mSequestNodesSpawned +
-                                         " spawned vs. " + intNodeCountExpected + " expected; mNodeCountSpawnErrorOccurences=" +
-                                         mNodeCountSpawnErrorOccurences;
+                            var strMessage = "Not enough nodes were spawned (Threshold = " + intNodeCountMinimum + " nodes): " + mSequestNodesSpawned +
+                                             " spawned vs. " + intNodeCountExpected + " expected; " +
+                                             "mNodeCountSpawnErrorOccurences=" + mNodeCountSpawnErrorOccurences;
                             clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMessage);
 
                             mResetPVM = true;
@@ -708,22 +690,20 @@ namespace AnalysisManagerSequestPlugin
 
                     return true;
                 }
-                else
+
+                if (m_DebugLevel >= 1)
                 {
-                    if (m_DebugLevel >= 1)
-                    {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                            " ... Did not find 'Spawned xx slave processes' in the sequest.log file; node names not yet determined");
-                    }
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                         " ... Did not find 'Spawned xx slave processes' in the sequest.log file; node names not yet determined");
+                }
 
-                    if (DateTime.UtcNow.Subtract(mLastSequestStartTime).TotalMinutes > 15)
-                    {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                            " ... Over 15 minutes have elapsed since sequest.exe was called; aborting since node names could not be determined");
+                if (DateTime.UtcNow.Subtract(mLastSequestStartTime).TotalMinutes > 15)
+                {
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                         " ... Over 15 minutes have elapsed since sequest.exe was called; aborting since node names could not be determined");
 
-                        mNodeCountSpawnErrorOccurences += 1;
-                        mResetPVM = true;
-                    }
+                    mNodeCountSpawnErrorOccurences += 1;
+                    mResetPVM = true;
                 }
             }
             catch (Exception ex)
@@ -766,15 +746,14 @@ namespace AnalysisManagerSequestPlugin
 
         protected float ComputeMedianProcessingTime()
         {
-            float[] sngOutFileProcessingTimes = null;
-            var intMidPoint = 0;
+            int intMidPoint;
 
             if (mRecentOutFileSearchTimes.Count < 1)
                 return 0;
 
             // Determine the median out file processing time
             // Note that search times in mRecentOutFileSearchTimes are in seconds
-            sngOutFileProcessingTimes = new float[mRecentOutFileSearchTimes.Count];
+            var sngOutFileProcessingTimes = new float[mRecentOutFileSearchTimes.Count];
 
             mRecentOutFileSearchTimes.CopyTo(sngOutFileProcessingTimes, 0);
 
@@ -879,13 +858,11 @@ namespace AnalysisManagerSequestPlugin
 
         protected bool ProcessCandidateOutFiles(bool blnProcessAllRemainingFiles)
         {
-            string strSourceFileName = null;
-            var blnSuccess = false;
-            var blnAppendSuccess = false;
+            bool blnAppendSuccess;
 
             var intItemsProcessed = 0;
 
-            // Examine mOutFileHandlerInUse; if greater then zero, then exit the sub
+            // Examine mOutFileHandlerInUse; if greater then zero, exit the sub
             if (Interlocked.Read(ref mOutFileHandlerInUse) > 0)
             {
                 return false;
@@ -974,6 +951,8 @@ namespace AnalysisManagerSequestPlugin
 
                     if (blnProcessAllRemainingFiles || DateTime.UtcNow.Subtract(mLastTempFileCopyTime).TotalSeconds >= TEMP_FILE_COPY_INTERVAL_SECONDS)
                     {
+                        string strSourceFileName;
+                        bool blnSuccess;
                         if (!mTempJobParamsCopied)
                         {
                             strSourceFileName = "JobParameters_" + m_JobNum + ".xml";
@@ -1060,14 +1039,12 @@ namespace AnalysisManagerSequestPlugin
                 {
                     break;
                 }
-                else
+
+                intMaxPVMResetAttempts -= 1;
+                if (intMaxPVMResetAttempts > 0)
                 {
-                    intMaxPVMResetAttempts -= 1;
-                    if (intMaxPVMResetAttempts > 0)
-                    {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
-                            " ... Error resetting PVM; will try " + intMaxPVMResetAttempts + " more time" + CheckForPlurality(intMaxPVMResetAttempts));
-                    }
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                                         " ... Error resetting PVM; will try " + intMaxPVMResetAttempts + " more time" + CheckForPlurality(intMaxPVMResetAttempts));
                 }
             }
 
@@ -1082,14 +1059,10 @@ namespace AnalysisManagerSequestPlugin
 
         protected bool ResetPVM()
         {
-            string PVMProgFolder = null;     // Folder with PVM
-            string ExePath = null;           // Full path to PVM exe
-
-            var blnSuccess = false;
-
             try
             {
-                PVMProgFolder = m_mgrParams.GetParam("PVMProgLoc");
+                // Folder with PVM
+                var PVMProgFolder = m_mgrParams.GetParam("PVMProgLoc");
                 if (string.IsNullOrWhiteSpace(PVMProgFolder))
                 {
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
@@ -1097,7 +1070,8 @@ namespace AnalysisManagerSequestPlugin
                     return false;
                 }
 
-                ExePath = Path.Combine(PVMProgFolder, "pvm.exe");
+                // Full path to PVM exe
+                var ExePath = Path.Combine(PVMProgFolder, "pvm.exe");
                 if (!File.Exists(ExePath))
                 {
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "PVM not found: " + ExePath);
@@ -1106,7 +1080,7 @@ namespace AnalysisManagerSequestPlugin
 
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, " ... Resetting PVM");
 
-                blnSuccess = ResetPVMHalt(PVMProgFolder);
+                var blnSuccess = ResetPVMHalt(PVMProgFolder);
                 if (!blnSuccess)
                 {
                     return false;
@@ -1144,12 +1118,9 @@ namespace AnalysisManagerSequestPlugin
 
         protected bool ResetPVMHalt(string PVMProgFolder)
         {
-            string strBatchFilePath = null;
-            var blnSuccess = false;
-
             try
             {
-                strBatchFilePath = Path.Combine(PVMProgFolder, "HaltPVM.bat");
+                var strBatchFilePath = Path.Combine(PVMProgFolder, "HaltPVM.bat");
                 if (!File.Exists(strBatchFilePath))
                 {
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Batch file not found: " + strBatchFilePath);
@@ -1169,7 +1140,7 @@ namespace AnalysisManagerSequestPlugin
                 }
 
                 var intMaxRuntimeSeconds = 90;
-                blnSuccess = m_UtilityRunner.RunProgram(strBatchFilePath, "", strTaskName, false, intMaxRuntimeSeconds);
+                var blnSuccess = m_UtilityRunner.RunProgram(strBatchFilePath, "", strTaskName, false, intMaxRuntimeSeconds);
 
                 if (!blnSuccess)
                 {
@@ -1192,12 +1163,9 @@ namespace AnalysisManagerSequestPlugin
 
         protected bool ResetPVMWipeTemp(string PVMProgFolder)
         {
-            string strBatchFilePath = null;
-            var blnSuccess = false;
-
             try
             {
-                strBatchFilePath = Path.Combine(PVMProgFolder, "wipe_temp.bat");
+                var strBatchFilePath = Path.Combine(PVMProgFolder, "wipe_temp.bat");
                 if (!File.Exists(strBatchFilePath))
                 {
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Batch file not found: " + strBatchFilePath);
@@ -1217,7 +1185,7 @@ namespace AnalysisManagerSequestPlugin
                 }
 
                 var intMaxRuntimeSeconds = 120;
-                blnSuccess = m_UtilityRunner.RunProgram(strBatchFilePath, "", strTaskName, true, intMaxRuntimeSeconds);
+                var blnSuccess = m_UtilityRunner.RunProgram(strBatchFilePath, "", strTaskName, true, intMaxRuntimeSeconds);
 
                 if (!blnSuccess)
                 {
@@ -1240,9 +1208,6 @@ namespace AnalysisManagerSequestPlugin
 
         protected bool ResetPVMStartPVM(string PVMProgFolder)
         {
-            string strBatchFilePath = null;
-            var blnSuccess = false;
-
             try
             {
                 // StartPVM.bat should have a line like this:
@@ -1253,7 +1218,7 @@ namespace AnalysisManagerSequestPlugin
                 // QuitNow.txt should have this line:
                 // quit
 
-                strBatchFilePath = Path.Combine(PVMProgFolder, "StartPVM.bat");
+                var strBatchFilePath = Path.Combine(PVMProgFolder, "StartPVM.bat");
                 if (!File.Exists(strBatchFilePath))
                 {
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Batch file not found: " + strBatchFilePath);
@@ -1273,7 +1238,7 @@ namespace AnalysisManagerSequestPlugin
                 }
 
                 var intMaxRuntimeSeconds = 120;
-                blnSuccess = m_UtilityRunner.RunProgram(strBatchFilePath, "", strTaskName, true, intMaxRuntimeSeconds);
+                var blnSuccess = m_UtilityRunner.RunProgram(strBatchFilePath, "", strTaskName, true, intMaxRuntimeSeconds);
 
                 if (!blnSuccess)
                 {
@@ -1296,12 +1261,9 @@ namespace AnalysisManagerSequestPlugin
 
         protected bool ResetPVMAddNodes(string PVMProgFolder)
         {
-            string strBatchFilePath = null;
-            var blnSuccess = false;
-
             try
             {
-                strBatchFilePath = Path.Combine(PVMProgFolder, "AddHosts.bat");
+                var strBatchFilePath = Path.Combine(PVMProgFolder, "AddHosts.bat");
                 if (!File.Exists(strBatchFilePath))
                 {
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Batch file not found: " + strBatchFilePath);
@@ -1321,7 +1283,7 @@ namespace AnalysisManagerSequestPlugin
                 }
 
                 var intMaxRuntimeSeconds = 120;
-                blnSuccess = m_UtilityRunner.RunProgram(strBatchFilePath, "", strTaskName, true, intMaxRuntimeSeconds);
+                var blnSuccess = m_UtilityRunner.RunProgram(strBatchFilePath, "", strTaskName, true, intMaxRuntimeSeconds);
 
                 if (!blnSuccess)
                 {
@@ -1361,13 +1323,6 @@ namespace AnalysisManagerSequestPlugin
 
         protected void UpdateSequestNodeProcessingStatsOneFile(string SeqLogFilePath)
         {
-            var NumNodeMachines = 0;
-            var NumSlaveProcesses = 0;
-            double TotalSearchTimeSeconds = 0;
-            var SearchedFileCount = 0;
-
-            var intDTAsSearched = 0;
-
             // Verify sequest.log file exists
             if (!File.Exists(SeqLogFilePath))
             {
@@ -1381,8 +1336,7 @@ namespace AnalysisManagerSequestPlugin
 
             // Read the sequest.log file
             var sbContents = new StringBuilder();
-            string strLineIn = null;
-            intDTAsSearched = 0;
+            var intDTAsSearched = 0;
 
             try
             {
@@ -1390,9 +1344,9 @@ namespace AnalysisManagerSequestPlugin
                 {
                     while (!srInFile.EndOfStream)
                     {
-                        strLineIn = srInFile.ReadLine();
+                        var strLineIn = srInFile.ReadLine();
 
-                        if (strLineIn.StartsWith("Searched dta file"))
+                        if (strLineIn != null && strLineIn.StartsWith("Searched dta file"))
                         {
                             intDTAsSearched += 1;
                         }
@@ -1411,7 +1365,7 @@ namespace AnalysisManagerSequestPlugin
             var strFileContents = sbContents.ToString();
 
             // Node machine count
-            NumNodeMachines = GetIntegerFromSeqLogFileString(strFileContents, "starting the sequest task on\\s+\\d+\\s+node");
+            var NumNodeMachines = GetIntegerFromSeqLogFileString(strFileContents, "starting the sequest task on\\s+\\d+\\s+node");
             if (NumNodeMachines == 0)
             {
                 var Msg = "UpdateNodeStats: node machine count line not found";
@@ -1429,7 +1383,7 @@ namespace AnalysisManagerSequestPlugin
             }
 
             // Sequest process count
-            NumSlaveProcesses = GetIntegerFromSeqLogFileString(strFileContents, "Spawned\\s+\\d+\\s+slave processes");
+            var NumSlaveProcesses = GetIntegerFromSeqLogFileString(strFileContents, "Spawned\\s+\\d+\\s+slave processes");
             if (NumSlaveProcesses == 0)
             {
                 var Msg = "UpdateNodeStats: slave process count line not found";
@@ -1447,7 +1401,7 @@ namespace AnalysisManagerSequestPlugin
             }
 
             // Total search time
-            TotalSearchTimeSeconds = GetIntegerFromSeqLogFileString(strFileContents, "Total search time:\\s+\\d+");
+            double TotalSearchTimeSeconds = GetIntegerFromSeqLogFileString(strFileContents, "Total search time:\\s+\\d+");
             if (TotalSearchTimeSeconds <= 0)
             {
                 // Total search time line not found (or error)
@@ -1458,7 +1412,7 @@ namespace AnalysisManagerSequestPlugin
             mSequestNodeProcessingStats.TotalSearchTimeSeconds += TotalSearchTimeSeconds;
 
             // Searched file count
-            SearchedFileCount = GetIntegerFromSeqLogFileString(strFileContents, "secs for\\s+\\d+\\s+files");
+            var SearchedFileCount = GetIntegerFromSeqLogFileString(strFileContents, "secs for\\s+\\d+\\s+files");
             if (SearchedFileCount <= 0)
             {
                 // Searched file count line not found (or error)
@@ -1489,8 +1443,7 @@ namespace AnalysisManagerSequestPlugin
                 {
                     // Parse the Sequest.Log file to determine the names of the spawned nodes
 
-                    string strLogFilePath = null;
-                    strLogFilePath = Path.Combine(m_WorkDir, "sequest.log");
+                    var strLogFilePath = Path.Combine(m_WorkDir, "sequest.log");
 
                     mSequestLogNodesFound = GetNodeNamesFromSequestLog(strLogFilePath);
 
@@ -1556,6 +1509,8 @@ namespace AnalysisManagerSequestPlugin
                     while (!srInFile.EndOfStream)
                     {
                         var strLineIn = srInFile.ReadLine();
+                        if (string.IsNullOrWhiteSpace(strLineIn))
+                            continue;
 
                         // Check whether line looks like:
                         //    p6    c0007     6/c,f sequest27_slave
@@ -1600,16 +1555,15 @@ namespace AnalysisManagerSequestPlugin
                 }
 
                 // Define the minimum node count as 50% of the number of nodes spawned
-                var intActiveNodeCountMinimum = 0;
-                intActiveNodeCountMinimum = (int)Math.Floor(0.5 * mSequestNodesSpawned);
+                var intActiveNodeCountMinimum = (int)Math.Floor(0.5 * mSequestNodesSpawned);
 
                 if (intNodeCountActive < intActiveNodeCountMinimum && !mIgnoreNodeCountActiveErrors)
                 {
                     mNodeCountActiveErrorOccurences += 1;
-                    string strMessage = null;
-                    strMessage = "Too many nodes are inactive (Threshold = " + intActiveNodeCountMinimum + " nodes): " + intNodeCountActive +
-                                 " active vs. " + mSequestNodesSpawned + " total nodes at start; mNodeCountActiveErrorOccurences=" +
-                                 mNodeCountActiveErrorOccurences;
+                    var strMessage = "Too many nodes are inactive (Threshold = " + intActiveNodeCountMinimum + " nodes): " + intNodeCountActive +
+                                     " active vs. " + mSequestNodesSpawned + " total nodes at start; " +
+                                     "mNodeCountActiveErrorOccurences=" + mNodeCountActiveErrorOccurences;
+
                     clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, strMessage);
                     mResetPVM = true;
                 }
