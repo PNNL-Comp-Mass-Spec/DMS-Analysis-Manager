@@ -130,5 +130,13 @@ namespace AnalysisManagerBase
             RawDataType = "";
         }
 
+        /// <summary>
+        /// Return job number and dataset name
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            return Job + ": " + Dataset;
+        }
     }
 }
