@@ -115,6 +115,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <remarks></remarks>
         public clsSampleMetadata()
         {
+            Modifications = new Dictionary<string, udtCvParamInfoType>(StringComparer.OrdinalIgnoreCase);
             Clear();
         }
 
@@ -127,7 +128,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             Tissue = string.Empty;
             CellType = string.Empty;
             Disease = string.Empty;
-            Modifications = new Dictionary<string, udtCvParamInfoType>(StringComparer.OrdinalIgnoreCase);
+            Modifications.Clear();
             InstrumentGroup = string.Empty;
             Quantification = string.Empty;
             ExperimentalFactor = string.Empty;
