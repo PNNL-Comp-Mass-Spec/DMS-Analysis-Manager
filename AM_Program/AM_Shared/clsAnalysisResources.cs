@@ -2536,6 +2536,7 @@ namespace AnalysisManagerBase
         /// Property NumberOfClonedSteps is not updated for the analysis jobs returned by this method
         /// In contrast, RetrieveDataPackagePeptideHitJobInfo does update NumberOfClonedSteps
         /// </remarks>
+        private bool LoadDataPackageJobInfo(out Dictionary<int, clsDataPackageJobInfo> dctDataPackageJobs)
         {
 
             // Gigasax.DMS_Pipeline
@@ -2549,103 +2550,7 @@ namespace AnalysisManagerBase
                 return false;
             }
 
-            return LoadDataPackageJobInfo(connectionString, dataPackageID, out dctDataPackageJobs);
-        }
-
-        /// <summary>
-        /// Looks up job information for a data package
-        /// </summary>
-        /// <param name="ConnectionString">Database connection string (DMS_Pipeline DB, aka the broker DB)</param>
-        /// <param name="DataPackageID">Data Package ID</param>
-        /// <param name="dctDataPackageJobs">Jobs associated with the given data package</param>
-        /// <returns>True if a data package is defined and it has analysis jobs associated with it</returns>
-        /// <remarks></remarks>
-        public static bool LoadDataPackageJobInfo(string ConnectionString, int DataPackageID, out Dictionary<int, clsDataPackageJobInfo> dctDataPackageJobs)
-        {
-
-            const short RETRY_COUNT = 3;
-
-            dctDataPackageJobs = new Dictionary<int, clsDataPackageJobInfo>();
-
-            var sqlStr = new System.Text.StringBuilder();
-
-            // Note that this queries view V_DMS_Data_Package_Aggregation_Jobs in the DMS_Pipeline database
-            // That view references   view V_DMS_Data_Package_Aggregation_Jobs in the DMS_Data_Package database
-            // The two views have the same name, but some columns differ
-
-            sqlStr.Append(" SELECT Job, Dataset, DatasetID, Instrument, InstrumentGroup, ");
-            sqlStr.Append("        Experiment, Experiment_Reason, Experiment_Comment, Organism, Experiment_NEWT_ID, Experiment_NEWT_Name, ");
-            sqlStr.Append("        Tool, ResultType, SettingsFileName, ParameterFileName, ");
-            sqlStr.Append("        OrganismDBName, ProteinCollectionList, ProteinOptions,");
-            sqlStr.Append("        ServerStoragePath, ArchiveStoragePath, ResultsFolder, DatasetFolder, SharedResultsFolder, RawDataType");
-            sqlStr.Append(" FROM V_DMS_Data_Package_Aggregation_Jobs");
-            sqlStr.Append(" WHERE Data_Package_ID = " + DataPackageID);
-            sqlStr.Append(" ORDER BY Dataset, Tool");
-
-
-            // Get a table to hold the results of the query
-            var success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), ConnectionString, "LoadDataPackageJobInfo", RETRY_COUNT, out var resultSet);
-
-            if (!success)
-            {
-                var errorMessage = "LoadDataPackageJobInfo; Excessive failures attempting to retrieve data package job info from database";
-                clsGlobal.LogError(errorMessage);
-                resultSet.Dispose();
-                return false;
-            }
-
-            // Verify at least one row returned
-            if (resultSet.Rows.Count < 1)
-            {
-                // No data was returned
-                string warningMessage;
-
-                // If the data package exists and has datasets associated with it, then Log this as a warning but return true
-                // Otherwise, log an error and return false
-
-                sqlStr.Clear();
-                sqlStr.Append(" SELECT Count(*) AS Datasets");
-                sqlStr.Append(" FROM S_V_DMS_Data_Package_Aggregation_Datasets");
-                sqlStr.Append(" WHERE Data_Package_ID = " + DataPackageID);
-
-                // Get a table to hold the results of the query
-                success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), ConnectionString, "LoadDataPackageJobInfo", RETRY_COUNT, out resultSet);
-                if (success && resultSet.Rows.Count > 0)
-                {
-                    foreach (DataRow curRow in resultSet.Rows)
-                    {
-                        var datasetCount = clsGlobal.DbCInt(curRow[0]);
-
-                        if (datasetCount > 0)
-                        {
-                            warningMessage = "LoadDataPackageJobInfo; No jobs were found for data package " + DataPackageID + ", but it does have " + datasetCount + " dataset";
-                            if (datasetCount > 1)
-                                warningMessage += "s";
-                            clsGlobal.LogWarning(warningMessage);
-                            return true;
-                        }
-                    }
-                }
-
-                warningMessage = "LoadDataPackageJobInfo; No jobs were found for data package " + DataPackageID;
-                clsGlobal.LogWarning(warningMessage);
-                return false;
-            }
-
-            foreach (DataRow curRow in resultSet.Rows)
-            {
-                var dataPkgJob = ParseDataPackageJobInfoRow(curRow);
-
-                if (!dctDataPackageJobs.ContainsKey(dataPkgJob.Job))
-                {
-                    dctDataPackageJobs.Add(dataPkgJob.Job, dataPkgJob);
-                }
-            }
-
-            resultSet.Dispose();
-
-            return true;
-
+            return clsDataPackageInfoLoader.LoadDataPackageJobInfo(connectionString, dataPackageID, out dctDataPackageJobs);
         }
 
         // ReSharper disable once MemberCanBePrivate.Global
