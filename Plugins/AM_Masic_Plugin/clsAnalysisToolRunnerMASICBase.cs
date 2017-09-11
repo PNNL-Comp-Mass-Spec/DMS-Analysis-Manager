@@ -172,12 +172,13 @@ namespace AnalysisManagerMasicPlugin
 
             var logFile = new FileInfo(Path.Combine(m_WorkDir, "MASIC_Log_Job" + m_JobNum + ".txt"));
 
-                cmdStr += ":" + Path.Combine(m_WorkDir, m_MASICLogFileName);
-            }
-            else
-            {
-                m_MASICLogFileName = string.Empty;
-            }
+            // Define the parameters to send to Masic.exe
+            var cmdStr =
+                " /I:" + inputFilePath +
+                " /O:" + outputFolderPath +
+                " /P:" + parameterFilePath +
+                " /Q /SF:" + m_MASICStatusFileName +
+                " /L:" + clsPathUtils.PossiblyQuotePath(logFile.FullName);
 
             if (m_DebugLevel >= 1)
             {
@@ -205,6 +206,8 @@ namespace AnalysisManagerMasicPlugin
 
             Thread.Sleep(3000);                // Delay for 3 seconds to make sure program exits
 
+            // Read the most recent MASIC_Log file and look for any lines with the text "Error"
+            ExtractErrorsFromMASICLogFile(logFile);
 
             // Verify MASIC exited due to job completion
             if (blnSuccess)
