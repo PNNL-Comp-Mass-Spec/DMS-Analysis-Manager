@@ -2178,12 +2178,15 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Looks up job information for the data package associated with this analysis job
+        /// Lookup the Peptide Hit jobs associated with this analysis job; non-peptide hit jobs are returned via lstAdditionalJobs
         /// </summary>
-        /// <param name="dctDataPackageJobs"></param>
-        /// <returns>True if a data package is defined and it has analysis jobs associated with it</returns>
-        /// <remarks></remarks>
-        protected bool LoadDataPackageJobInfo(out Dictionary<int, clsDataPackageJobInfo> dctDataPackageJobs)
+        /// <param name="lstAdditionalJobs">Output: Non Peptide Hit jobs (e.g. DeconTools or MASIC)</param>
+        /// <param name="errorMsg">Output: error message</param>
+        /// <returns>Peptide Hit Jobs (e.g. MSGF+ or Sequest)</returns>
+        /// <remarks>This method updates property NumberOfClonedSteps for the analysis jobs</remarks>
+        protected List<clsDataPackageJobInfo> RetrieveDataPackagePeptideHitJobInfo(
+            out List<clsDataPackageJobInfo> lstAdditionalJobs,
+            out string errorMsg)
         {
 
             // Gigasax.DMS_Pipeline
@@ -2193,11 +2196,13 @@ namespace AnalysisManagerBase
 
             if (dataPackageID < 0)
             {
-                dctDataPackageJobs = new Dictionary<int, clsDataPackageJobInfo>();
-                return false;
+                errorMsg = "Job parameter DataPackageID not defined";
+                lstAdditionalJobs = new List<clsDataPackageJobInfo>();
+                return new List<clsDataPackageJobInfo>();
             }
 
-            return clsAnalysisResources.LoadDataPackageJobInfo(connectionString, dataPackageID, out dctDataPackageJobs);
+            return clsDataPackageInfoLoader.RetrieveDataPackagePeptideHitJobInfo(
+                connectionString, dataPackageID, out lstAdditionalJobs, out errorMsg);
         }
 
         /// <summary>
