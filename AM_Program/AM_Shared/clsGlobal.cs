@@ -192,6 +192,23 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
+        /// Assure that the directory exists; attempt to create it if missing
+        /// </summary>
+        /// <param name="directoryPath"></param>
+        /// <returns>DirectoryInfo object</returns>
+        public static DirectoryInfo CreateDirectoryIfMissing(string directoryPath)
+        {
+            var targetDirectory = new DirectoryInfo(directoryPath);
+            if (!targetDirectory.Exists)
+            {
+                // Note that .NET will automatically create any missing parent directories
+                targetDirectory.Create();
+            }
+
+            return targetDirectory;
+        }
+
+        /// <summary>
         /// Decrypts password
         /// </summary>
         /// <param name="enPwd">Encoded password</param>
@@ -746,7 +763,7 @@ namespace AnalysisManagerBase
         /// <param name="isCaseSensitive"></param>
         /// <returns>Dictionary with the header names and 0-based column index</returns>
         /// <remarks>Header names not found in headerLine will have an index of -1</remarks>
-        public static Dictionary<string, int> ParseHeaderLine(string headerLine, List<string> headerNames, bool isCaseSensitive)
+        public static Dictionary<string, int> ParseHeaderLine(string headerLine, List<string> headerNames, bool isCaseSensitive = false)
         {
             var dctHeaderMapping = new Dictionary<string, int>();
 
