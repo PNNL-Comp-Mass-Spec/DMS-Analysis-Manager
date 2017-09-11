@@ -7,12 +7,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
     /// </summary>
     public class clsPXFileInfoBase
     {
-        #region "Module Variables"
-
-        protected string mFileName;
-        protected clsDataPackageJobInfo mJobInfo;
-
-        #endregion
 
         #region "Structures and Enums"
 
@@ -75,15 +69,15 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
         #region "Properties"
 
-        public string Filename => mFileName;
         /// <summary>
         /// Filename
         /// </summary>
+        public string Filename { get; private set; }
 
-        public clsDataPackageJobInfo JobInfo => mJobInfo;
         /// <summary>
         /// Job Info
         /// </summary>
+        public clsDataPackageJobInfo JobInfo { get; private set; }
 
         #endregion
 
@@ -94,8 +88,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <param name="dataPkgJob"></param>
         public clsPXFileInfoBase(string fileName, clsDataPackageJobInfo dataPkgJob)
         {
-            mFileName = fileName;
-            mJobInfo = dataPkgJob;
+            Filename = fileName;
+            JobInfo = dataPkgJob;
         }
 
         /// <summary>
@@ -104,8 +98,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <param name="oSource"></param>
         public void Update(clsPXFileInfoBase oSource)
         {
-            mFileName = oSource.mFileName;
-            mJobInfo = oSource.mJobInfo;
+            Filename = oSource.Filename;
+            JobInfo = oSource.JobInfo;
             FileID = oSource.FileID;
             Length = oSource.Length;
             MD5Hash = oSource.MD5Hash;
@@ -117,7 +111,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <returns></returns>
         public override string ToString()
         {
-            return "Job " + mJobInfo.Job + ": " + mFileName;
+            return "Job " + JobInfo.Job + ": " + Filename;
         }
     }
 }
