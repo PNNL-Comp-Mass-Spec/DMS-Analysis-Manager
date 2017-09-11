@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using AnalysisManagerBase;
@@ -20,7 +21,7 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
             foreach (var fileSpec in fileSpecList.ToList())
             {
                 var fileSpecTerms = fileSpec.Split(':').ToList();
-                if (fileSpecTerms.Count <= 2 || !(fileSpecTerms[2].ToLower() == "copy"))
+                if (fileSpecTerms.Count <= 2 || !string.Equals(fileSpecTerms[2].ToLower(), "copy", StringComparison.OrdinalIgnoreCase))
                 {
                     m_jobParams.AddResultFileExtensionToSkip(fileSpecTerms[1]);
                 }
@@ -35,9 +36,7 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
 
             LogMessage("Retrieving input files");
 
-            Dictionary<int, clsDataPackageJobInfo> dctDataPackageJobs = null;
-
-            if (!RetrieveAggregateFiles(fileSpecList, DataPackageFileRetrievalModeConstants.Undefined, out dctDataPackageJobs))
+            if (!RetrieveAggregateFiles(fileSpecList, DataPackageFileRetrievalModeConstants.Undefined, out _))
             {
                 // Errors were reported in function call, so just return
                 return CloseOutType.CLOSEOUT_FAILED;

@@ -53,10 +53,8 @@ namespace AnalysisManager_Mage_PlugIn
 
             var connectionString = m_mgrParams.GetParam("brokerconnectionstring");
 
-            List<clsDataPackageJobInfo> lstAdditionalJobs;
-            string errorMsg;
-
-            var peptideHitJobs = clsDataPackageInfoLoader.RetrieveDataPackagePeptideHitJobInfo(connectionString, dataPackageID, out lstAdditionalJobs, out errorMsg);
+            var peptideHitJobs = clsDataPackageInfoLoader.RetrieveDataPackagePeptideHitJobInfo(
+                connectionString, dataPackageID, out var lstAdditionalJobs, out var errorMsg);
 
             if (!string.IsNullOrEmpty(errorMsg))
             {
