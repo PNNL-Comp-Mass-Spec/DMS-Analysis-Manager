@@ -11,8 +11,7 @@
     <RootNamespace>MSGFPlusIndexFileCopier</RootNamespace>
     <AssemblyName>MSGFPlusIndexFileCopier</AssemblyName>
     <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
-    <TargetFrameworkProfile>
-    </TargetFrameworkProfile>
+    <TargetFrameworkProfile></TargetFrameworkProfile>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
@@ -58,7 +57,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="PRISM-Library">
-      <Version>2.4.20</Version>
+      <Version>2.4.31</Version>
     </PackageReference>
     <PackageReference Include="PRISMWin-Library">
       <Version>1.0.2</Version>
