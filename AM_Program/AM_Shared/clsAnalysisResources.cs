@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.SqlClient;
 using PHRPReader;
 using System.IO;
 using System.Linq;
@@ -2606,6 +2607,7 @@ namespace AnalysisManagerBase
                 var errorMessage = "LookupJobInfo; Excessive failures attempting to retrieve data package job info from database";
                 LogMessage(errorMessage, 0, true);
                 resultSet.Dispose();
+                jobInfo = genericJobInfo;
                 return false;
             }
 
@@ -2614,6 +2616,7 @@ namespace AnalysisManagerBase
             {
                 // No data was returned
                 LogError("Job " + jobNumber + " not found in view V_Analysis_Job_Export_DataPkg");
+                jobInfo = genericJobInfo;
                 return false;
             }
 
@@ -2853,6 +2856,8 @@ namespace AnalysisManagerBase
 
             m_jobParams.AddAdditionalParameter(jobParamsSection, "Instrument", dataPkgJob.Instrument);
             m_jobParams.AddAdditionalParameter(jobParamsSection, "InstrumentGroup", dataPkgJob.InstrumentGroup);
+
+            m_jobParams.AddAdditionalParameter(jobParamsSection, "NumberOfClonedSteps", dataPkgJob.NumberOfClonedSteps.ToString());
 
             m_jobParams.AddAdditionalParameter(jobParamsSection, "ToolName", dataPkgJob.Tool);
             m_jobParams.AddAdditionalParameter(jobParamsSection, "ResultType", dataPkgJob.ResultType);
@@ -3533,7 +3538,9 @@ namespace AnalysisManagerBase
         /// This function is used by plugins PhosphoFDRAggregator and PRIDEMzXML
         /// However, PrideMzXML is dormant as of September 2013
         /// </remarks>
-        protected bool RetrieveAggregateFiles(List<string> fileSpecList, DataPackageFileRetrievalModeConstants fileRetrievalMode,
+        protected bool RetrieveAggregateFiles(
+            List<string> fileSpecList,
+            DataPackageFileRetrievalModeConstants fileRetrievalMode,
             out Dictionary<int, clsDataPackageJobInfo> dctDataPackageJobs)
         {
 
