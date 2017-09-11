@@ -115,30 +115,20 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Looks up dataset information for the data package associated with this analysis job
+        /// Looks up job information for the given data package
         /// </summary>
-        /// <param name="dctDataPackageJobs"></param>
-        /// <returns>True if a data package is defined and it has analysis jobs associated with it</returns>
-        /// <remarks></remarks>
-        protected bool LoadDataPackageJobInfo(out Dictionary<int, clsDataPackageJobInfo> dctDataPackageJobs)
-        {
-            if (mDataPackageID < 0)
-            {
-                dctDataPackageJobs = new Dictionary<int, clsDataPackageJobInfo>();
-                return false;
-            }
-            return LoadDataPackageJobInfo(mBrokerDbConnectionString, mDataPackageID, out dctDataPackageJobs);
-        }
-
-        /// <summary>
-        /// Looks up job information for a data package
-        /// </summary>
-        /// <param name="ConnectionString">Database connection string (DMS_Pipeline DB, aka the broker DB)</param>
-        /// <param name="DataPackageID">Data Package ID</param>
+        /// <param name="connectionString">Database connection string (DMS_Pipeline DB, aka the broker DB)</param>
+        /// <param name="dataPackageID">Data Package ID</param>
         /// <param name="dctDataPackageJobs">Jobs associated with the given data package</param>
         /// <returns>True if a data package is defined and it has analysis jobs associated with it</returns>
-        /// <remarks></remarks>
-        public static bool LoadDataPackageJobInfo(string ConnectionString, int DataPackageID, out Dictionary<int, clsDataPackageJobInfo> dctDataPackageJobs)
+        /// <remarks>
+        /// Property NumberOfClonedSteps is not updated for the analysis jobs returned by this method
+        /// In contrast, RetrieveDataPackagePeptideHitJobInfo does update NumberOfClonedSteps
+        /// </remarks>
+        public static bool LoadDataPackageJobInfo(
+            string connectionString,
+            int dataPackageID,
+            out Dictionary<int, clsDataPackageJobInfo> dctDataPackageJobs)
         {
 
             // Obtains the job information for a data package
@@ -158,12 +148,12 @@ namespace AnalysisManagerBase
             sqlStr.Append("        OrganismDBName, ProteinCollectionList, ProteinOptions,");
             sqlStr.Append("        ServerStoragePath, ArchiveStoragePath, ResultsFolder, DatasetFolder, SharedResultsFolder, RawDataType");
             sqlStr.Append(" FROM V_DMS_Data_Package_Aggregation_Jobs");
-            sqlStr.Append(" WHERE Data_Package_ID = " + DataPackageID);
+            sqlStr.Append(" WHERE Data_Package_ID = " + dataPackageID);
             sqlStr.Append(" ORDER BY Dataset, Tool");
 
 
             // Get a table to hold the results of the query
-            var success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), ConnectionString, "LoadDataPackageJobInfo", RETRY_COUNT, out var resultSet);
+            var success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), connectionString, "LoadDataPackageJobInfo", RETRY_COUNT, out var resultSet);
 
             if (!success)
             {
@@ -179,16 +169,16 @@ namespace AnalysisManagerBase
                 // No data was returned
                 string warningMessage;
 
-                // If the data package exists and has datasets associated with it, then Log this as a warning but return true
+                // If the data package exists and has datasets associated with it, Log this as a warning but return true
                 // Otherwise, log an error and return false
 
                 sqlStr.Clear();
                 sqlStr.Append(" SELECT Count(*) AS Datasets");
                 sqlStr.Append(" FROM S_V_DMS_Data_Package_Aggregation_Datasets");
-                sqlStr.Append(" WHERE Data_Package_ID = " + DataPackageID);
+                sqlStr.Append(" WHERE Data_Package_ID = " + dataPackageID);
 
                 // Get a table to hold the results of the query
-                success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), ConnectionString, "LoadDataPackageJobInfo", RETRY_COUNT, out resultSet);
+                success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), connectionString, "LoadDataPackageJobInfo", RETRY_COUNT, out resultSet);
                 if (success && resultSet.Rows.Count > 0)
                 {
                     foreach (DataRow curRow in resultSet.Rows)
@@ -197,16 +187,20 @@ namespace AnalysisManagerBase
 
                         if (datasetCount > 0)
                         {
-                            warningMessage = "LoadDataPackageJobInfo; No jobs were found for data package " + DataPackageID + ", but it does have " + datasetCount + " dataset";
+                            warningMessage = "LoadDataPackageJobInfo; " +
+                                             "No jobs were found for data package " + dataPackageID +
+                                             ", but it does have " + datasetCount + " dataset";
+
                             if (datasetCount > 1)
                                 warningMessage += "s";
+
                             clsGlobal.LogWarning(warningMessage);
                             return true;
                         }
                     }
                 }
 
-                warningMessage = "LoadDataPackageJobInfo; No jobs were found for data package " + DataPackageID;
+                warningMessage = "LoadDataPackageJobInfo; No jobs were found for data package " + dataPackageID;
                 clsGlobal.LogError(warningMessage);
                 return false;
             }
@@ -438,18 +432,6 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Lookup the Peptide Hit jobs associated with the current job
         /// </summary>
-        /// <returns>Peptide Hit Jobs (e.g. MSGF+ or Sequest)</returns>
-        /// <remarks></remarks>
-        protected List<clsDataPackageJobInfo> RetrieveDataPackagePeptideHitJobInfo()
-        {
-
-            return RetrieveDataPackagePeptideHitJobInfo(out var lstAdditionalJobs);
-
-        }
-
-        /// <summary>
-        /// Lookup the Peptide Hit jobs associated with the current job
-        /// </summary>
         /// <param name="lstAdditionalJobs">Non Peptide Hit jobs (e.g. DeconTools or MASIC)</param>
         /// <returns>Peptide Hit Jobs (e.g. MSGF+ or Sequest)</returns>
         /// <remarks></remarks>
@@ -489,9 +471,7 @@ namespace AnalysisManagerBase
             int dataPackageID,
             out string errorMsg)
         {
-
-            return RetrieveDataPackagePeptideHitJobInfo(connectionString, dataPackageID, out var lstAdditionalJobs, out errorMsg);
-
+            return RetrieveDataPackagePeptideHitJobInfo(connectionString, dataPackageID, out _, out errorMsg);
         }
 
         /// <summary>

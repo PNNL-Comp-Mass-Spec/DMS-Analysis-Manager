@@ -150,7 +150,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             public void Clear()
             {
-                PValueThreshold = (float) DEFAULT_PVALUE_THRESHOLD;
+                PValueThreshold = (float)DEFAULT_PVALUE_THRESHOLD;
                 UseFDRThreshold = false;
                 UsePepFDRThreshold = false;
                 UseMSGFSpecProb = true;
@@ -256,7 +256,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 mConsoleOutputErrorMsg = string.Empty;
 
-                mCacheFolderPath = m_jobParams.GetJobParameter("CacheFolderPath", @"\\protoapps\PeptideAtlas_Staging");
+                mCacheFolderPath = m_jobParams.GetJobParameter("CacheFolderPath", clsAnalysisResourcesPRIDEConverter.DEFAULT_CACHE_FOLDER_PATH);
 
                 LogMessage("Running PRIDEConverter");
 
@@ -502,7 +502,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             var filename = CheckFilenameCase(fiFile, dataPkgJob.Dataset);
 
-            oPXFileInfo = new clsPXFileInfoBase(filename, dataPkgJob) {
+            oPXFileInfo = new clsPXFileInfoBase(filename, dataPkgJob)
+            {
                 FileID = mPxMasterFileList.Count + 1
             };
 
@@ -2930,6 +2931,23 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             return false;
         }
 
+        private bool FileExistsInTransferFolder(string remoteTransferFolder, string filePath, string optionalSuffix = "")
+        {
+            var fileName = Path.GetFileName(filePath);
+            if (fileName == null)
+                return false;
+
+            if (File.Exists(Path.Combine(remoteTransferFolder, fileName)))
+                return true;
+
+            if (string.IsNullOrWhiteSpace(optionalSuffix))
+            {
+                return false;
+            }
+
+            return File.Exists(Path.Combine(remoteTransferFolder, fileName + optionalSuffix));
+        }
+
         private string GetCVString(clsSampleMetadata.udtCvParamInfoType cvParamInfo)
         {
             return GetCVString(cvParamInfo.CvRef, cvParamInfo.Accession, cvParamInfo.Name, cvParamInfo.Value);
@@ -3237,11 +3255,15 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 mDataPackagePeptideHitJobs.Clear();
             }
 
-            if (!LoadDataPackageJobInfo(out var dctDataPackageJobs))
+            var lstDataPackagePeptideHitJobs = RetrieveDataPackagePeptideHitJobInfo(out var lstAdditionalJobs, out var errorMsg);
+            if (lstDataPackagePeptideHitJobs.Count == 0)
             {
                 var msg = "Error loading data package job info";
-                LogError(msg + ": clsAnalysisToolRunnerBase.LoadDataPackageJobInfo() returned false");
-                m_message = msg;
+                if (string.IsNullOrEmpty(errorMsg))
+                    LogError(msg + ": RetrieveDataPackagePeptideHitJobInfo returned no jobs");
+                else
+                    LogError(msg + ": " + errorMsg);
+
                 return false;
             }
 
@@ -3254,15 +3276,28 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
             else
             {
-                // Populate mDataPackagePeptideHitJobs using the jobs in jobsToUse and dctDataPackagePeptideHitJobs
+                var dctDataPackageJobs = new Dictionary<int, clsDataPackageJobInfo>();
+                foreach (var item in lstDataPackagePeptideHitJobs)
+                {
+                    if (!dctDataPackageJobs.ContainsKey(item.Job))
+                        dctDataPackageJobs.Add(item.Job, item);
+                }
+
+                foreach (var item in lstAdditionalJobs)
+                {
+                    if (!dctDataPackageJobs.ContainsKey(item.Job))
+                        dctDataPackageJobs.Add(item.Job, item);
+                }
+
+                // Populate mDataPackagePeptideHitJobs using the jobs in jobsToUse
                 foreach (var job in jobsToUse)
                 {
-                    if (int.TryParse(job, out var jobNumber))
+                    if (!int.TryParse(job, out var jobNumber))
+                        continue;
+
+                    if (dctDataPackageJobs.TryGetValue(jobNumber, out var dataPkgJob))
                     {
-                        if (dctDataPackageJobs.TryGetValue(jobNumber, out var dataPkgJob))
-                        {
-                            mDataPackagePeptideHitJobs.Add(jobNumber, dataPkgJob);
-                        }
+                        mDataPackagePeptideHitJobs.Add(jobNumber, dataPkgJob);
                     }
                 }
             }
@@ -3348,9 +3383,14 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
         }
 
-        private CloseOutType ProcessJob(KeyValuePair<int, clsDataPackageJobInfo> kvJobInfo, udtFilterThresholdsType udtFilterThresholds,
-            clsAnalysisResults analysisResults, string remoteTransferFolder, IReadOnlyDictionary<string, string> dctDatasetRawFilePaths,
-            IReadOnlyDictionary<string, string> dctTemplateParameters, bool assumeInstrumentDataUnpurged)
+        private CloseOutType ProcessJob(
+            KeyValuePair<int, clsDataPackageJobInfo> kvJobInfo,
+            udtFilterThresholdsType udtFilterThresholds,
+            clsAnalysisResults analysisResults,
+            string remoteTransferFolder,
+            IReadOnlyDictionary<string, string> dctDatasetRawFilePaths,
+            IReadOnlyDictionary<string, string> dctTemplateParameters,
+            bool assumeInstrumentDataUnpurged)
         {
             bool success;
             var resultFiles = new clsResultFileContainer();
@@ -3408,13 +3448,19 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             resultFiles.MGFFilePath = string.Empty;
             if (mCreateMGFFiles && !searchedMzML)
             {
-                // Convert the _dta.txt file to .mgf files
-                success = ConvertCDTAToMGF(kvJobInfo.Value, out var mgfPath);
-                resultFiles.MGFFilePath = mgfPath;
-                if (!success)
+                // Check whether the .mgf file already exists on the target server
+                if (!FileExistsInTransferFolder(remoteTransferFolder, dataset + ".mgf"))
                 {
-                    return CloseOutType.CLOSEOUT_FAILED;
+                    // Convert the _dta.txt file to .mgf files
+                    success = ConvertCDTAToMGF(kvJobInfo.Value, out var mgfPath);
+                    resultFiles.MGFFilePath = mgfPath;
+                    if (!success)
+                    {
+                        return CloseOutType.CLOSEOUT_FAILED;
+                    }
+
                 }
+
             }
             else
             {
@@ -3443,7 +3489,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             {
                 m_message = string.Empty;
 
-                success = UpdateMzIdFiles(kvJobInfo.Value, searchedMzML, out var mzIdFilePaths, dctTemplateParameters);
+                success = UpdateMzIdFiles(remoteTransferFolder, kvJobInfo.Value, searchedMzML, out var mzIdFilePaths, out var mzIdExistsRemotely, dctTemplateParameters);
 
                 if (!success || mzIdFilePaths == null || mzIdFilePaths.Count == 0)
                 {
@@ -3460,19 +3506,26 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 {
                     var mzidFile = new FileInfo(mzidFilePath);
 
-                    // Note that the original file will be auto-deleted after the .gz file is created
-                    var gzippedMZidFile = GZipFile(mzidFile);
-
-                    if (gzippedMZidFile == null)
+                    if (!mzidFile.Exists && mzIdExistsRemotely)
                     {
-                        if (string.IsNullOrEmpty(m_message))
-                        {
-                            LogError("GZipFile returned false for " + mzidFilePath);
-                        }
-                        return CloseOutType.CLOSEOUT_FAILED;
+                        resultFiles.MzIDFilePaths.Add(mzidFile + DOT_GZ);
                     }
+                    else
+                    {
+                        // Note that the original file will be auto-deleted after the .gz file is created
+                        var gzippedMZidFile = GZipFile(mzidFile);
 
-                    resultFiles.MzIDFilePaths.Add(gzippedMZidFile.FullName);
+                        if (gzippedMZidFile == null)
+                        {
+                            if (string.IsNullOrEmpty(m_message))
+                            {
+                                LogError("GZipFile returned false for " + mzidFilePath);
+                            }
+                            return CloseOutType.CLOSEOUT_FAILED;
+                        }
+
+                        resultFiles.MzIDFilePaths.Add(gzippedMZidFile.FullName);
+                    }
                 }
             }
 
@@ -3719,10 +3772,41 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     }
                 }
 
+                // If filesToCopy only has a _dta.txt file and a .mzid.gz file, check the transfer folder for a .mgf file and a .mzid.gz file
+                // If the .mgf and .mzid.gz file already exist; skip processing this job
+                if (filesToCopy.Count == 2)
+                {
+                    var cdtaFile = false;
+                    var mzidFileName = string.Empty;
+
+                    foreach (var sourceFilePath in filesToCopy)
+                    {
+                        if (sourceFilePath.EndsWith("_dta.zip", StringComparison.OrdinalIgnoreCase))
+                            cdtaFile = true;
+                        else if (sourceFilePath.EndsWith(".mzid.gz", StringComparison.OrdinalIgnoreCase))
+                            mzidFileName = Path.GetFileName(sourceFilePath);
+                    }
+
+                    if (cdtaFile && !string.IsNullOrWhiteSpace(mzidFileName))
+                    {
+                        if (FileExistsInTransferFolder(remoteTransferFolder, dataset + ".mgf") &&
+                            FileExistsInTransferFolder(remoteTransferFolder, mzidFileName))
+                        {
+                            LogDebug(string.Format("Skipping job {0} since the .mgf and .mzid.gz file already exist at {1}", job, remoteTransferFolder));
+
+                            foreach (var sourceFilePath in filesToCopy)
+                            {
+                                filesCopied.Add(Path.GetFileName(sourceFilePath));
+                            }
+                            return true;
+                        }
+                    }
+                }
+
                 var fileCountNotFound = 0;
 
                 // Retrieve the files
-                // If the same dataset has multiple jobs then we might overwrite existing files;
+                // If the same dataset has multiple jobs, we might overwrite existing files;
                 //   that's OK since results files that we care about will have been auto-renamed based on the call to JobFileRenameRequired
 
                 foreach (var sourceFilePath in filesToCopy)
@@ -3734,8 +3818,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         DatasetInfoBase.ExtractMyEMSLFileID(sourceFilePath, out var cleanFilePath);
 
                         var fiSourceFileClean = new FileInfo(cleanFilePath);
-                        var unzipRequired = (fiSourceFileClean.Extension.ToLower() == ".zip" ||
-                                             fiSourceFileClean.Extension.ToLower() == clsAnalysisResources.DOT_GZ_EXTENSION.ToLower());
+                        var unzipRequired = (string.Equals(fiSourceFileClean.Extension, ".zip", StringComparison.OrdinalIgnoreCase) ||
+                                             string.Equals(fiSourceFileClean.Extension, clsAnalysisResources.DOT_GZ_EXTENSION, StringComparison.OrdinalIgnoreCase));
 
                         m_MyEMSLUtilities.AddFileToDownloadQueue(sourceFilePath, unzipRequired);
 
@@ -3795,13 +3879,13 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                         var unzipped = false;
 
-                        if (fiLocalFile.Extension.ToLower() == ".zip")
+                        if (string.Equals(fiLocalFile.Extension, ".zip", StringComparison.OrdinalIgnoreCase))
                         {
                             // Decompress the .zip file
                             m_IonicZipTools.UnzipFile(fiLocalFile.FullName, m_WorkDir);
                             unzipped = true;
                         }
-                        else if (fiLocalFile.Extension.ToLower() == clsAnalysisResources.DOT_GZ_EXTENSION.ToLower())
+                        else if (string.Equals(fiLocalFile.Extension, clsAnalysisResources.DOT_GZ_EXTENSION, StringComparison.OrdinalIgnoreCase))
                         {
                             // Decompress the .gz file
                             m_IonicZipTools.GUnzipFile(fiLocalFile.FullName, m_WorkDir);
@@ -3841,6 +3925,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 if (fileCountNotFound == 0)
                     return true;
+
                 return false;
             }
             catch (Exception ex)
@@ -4230,13 +4315,20 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// Update the .mzid file for the given job and dataset to have the correct Accession value for FileFormat
         /// Also update attributes location and name for element SpectraData if we converted _dta.txt files to .mgf files
         /// </summary>
+        /// <param name="remoteTransferFolder">Remote transfer folder</param>
         /// <param name="dataPkgJob">Data package job info</param>
         /// <param name="searchedMzML">True if analysis job used a .mzML file (though we track .mzml.gz files with this class)</param>
         /// <param name="mzIdFilePaths">Output parameter: path to the .mzid file for this job (will be multiple files if a SplitFasta search was performed)</param>
+        /// <param name="mzIdExistsRemotely">Output parameter: true if the .mzid.gz file already exists in the remote transfer folder</param>
         /// <param name="dctTemplateParameters"></param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks></remarks>
-        private bool UpdateMzIdFiles(clsDataPackageJobInfo dataPkgJob, bool searchedMzML, out List<string> mzIdFilePaths,
+        private bool UpdateMzIdFiles(
+            string remoteTransferFolder,
+            clsDataPackageJobInfo dataPkgJob,
+            bool searchedMzML,
+            out List<string> mzIdFilePaths,
+            out bool mzIdExistsRemotely,
             IReadOnlyDictionary<string, string> dctTemplateParameters)
         {
             var sampleMetadata = new clsSampleMetadata();
@@ -4287,9 +4379,23 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 if (dataPkgJob.NumberOfClonedSteps > 0)
                 {
+                    mzIdExistsRemotely = false;
+
                     for (var splitFastaResultID = 1; splitFastaResultID <= dataPkgJob.NumberOfClonedSteps; splitFastaResultID++)
                     {
-                        success = UpdateMzIdFile(dataPkgJob.Job, dataPkgJob.Dataset, searchedMzML, splitFastaResultID, sampleMetadata, out mzIDFilePath);
+                        success = UpdateMzIdFile(
+                            remoteTransferFolder,
+                            dataPkgJob.Job,
+                            dataPkgJob.Dataset,
+                            searchedMzML,
+                            splitFastaResultID,
+                            sampleMetadata,
+                            out mzIDFilePath,
+                            out var splitMzIdExistsRemotely);
+
+                        if (splitMzIdExistsRemotely)
+                            mzIdExistsRemotely = true;
+
                         if (success)
                         {
                             mzIdFilePaths.Add(mzIDFilePath);
@@ -4302,7 +4408,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 }
                 else
                 {
-                    success = UpdateMzIdFile(dataPkgJob.Job, dataPkgJob.Dataset, searchedMzML, 0, sampleMetadata, out mzIDFilePath);
+                    success = UpdateMzIdFile(remoteTransferFolder, dataPkgJob.Job, dataPkgJob.Dataset, searchedMzML, 0, sampleMetadata, out mzIDFilePath, out mzIdExistsRemotely);
                     if (success)
                     {
                         mzIdFilePaths.Add(mzIDFilePath);
@@ -4324,7 +4430,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             {
                 LogError("Exception in UpdateMzIdFiles for job " + dataPkgJob.Job + ", dataset " + dataPkgJob.Dataset, ex);
                 mzIdFilePaths = new List<string>();
-
+                mzIdExistsRemotely = false;
                 return false;
             }
         }
@@ -4333,15 +4439,24 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// Update a single .mzid file to have the correct Accession value for FileFormat
         /// Also update attributes location and name for element SpectraData if we converted _dta.txt files to .mgf files
         /// </summary>
+        /// <param name="remoteTransferFolder">Remote transfer folder</param>
         /// <param name="dataPkgJob">Data package job</param>
         /// <param name="dataPkgDataset">Data package dataset</param>
         /// <param name="searchedMzML">True if analysis job used a .mzML file (though we track .mzml.gz files with this class)</param>
         /// <param name="splitFastaResultID">For SplitFasta jobs, the part number being processed; 0 for non-SplitFasta jobs</param>
         /// <param name="sampleMetadata">Sample Metadata</param>
-        /// <param name="mzIDFilePath">Output parameter: path to the .mzid file being processed</param>
+        /// <param name="mzIDFilePath">Output parameter: path to the .mzid file being processed (does not end in .gz)</param>
+        /// <param name="mzIdExistsRemotely">Output parameter: true if the .mzid.gz file already exists in the remote transfer folder</param>
         /// <returns>True if success, false if an error</returns>
-        /// <remarks></remarks>
-        private bool UpdateMzIdFile(int dataPkgJob, string dataPkgDataset, bool searchedMzML, int splitFastaResultID, clsSampleMetadata sampleMetadata, out string mzIDFilePath)
+        private bool UpdateMzIdFile(
+            string remoteTransferFolder,
+            int dataPkgJob,
+            string dataPkgDataset,
+            bool searchedMzML,
+            int splitFastaResultID,
+            clsSampleMetadata sampleMetadata,
+            out string mzIDFilePath,
+            out bool mzIdExistsRemotely)
         {
             var readModAccession = false;
             var readingSpecificityRules = false;
@@ -4368,14 +4483,38 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 if (!File.Exists(mzIDFilePath))
                 {
-                    // Job-specific version not found
+                    // Job-specific version not found locally
+                    // If the file already exists in the remote transfer folder, assume that it is up-to-date
+                    if (FileExistsInTransferFolder(remoteTransferFolder, mzIDFilePath, DOT_GZ))
+                    {
+                        LogDebug("Skip updating the .mzid file since already in the tranfer folder");
+                        mzIdExistsRemotely = true;
+
+                        // Must append .gz to the .mzid file name to allow for successful lookups in function CreatePXSubmissionFile
+                        StoreMzIdSampleInfo(mzIDFilePath + DOT_GZ, sampleMetadata);
+
+                        return true;
+                    }
+
                     // Look for one that simply starts with the dataset name
                     sourceFileName = dataPkgDataset + "_msgfplus" + filePartText + ".mzid";
                     mzIDFilePath = Path.Combine(m_WorkDir, sourceFileName);
 
                     if (!File.Exists(mzIDFilePath))
                     {
+                        if (FileExistsInTransferFolder(remoteTransferFolder, mzIDFilePath, DOT_GZ))
+                        {
+                            LogDebug("Skip updating the .mzid file since already in the tranfer folder");
+                            mzIdExistsRemotely = true;
+
+                                                    // Must append .gz to the .mzid file name to allow for successful lookups in function CreatePXSubmissionFile
+                        StoreMzIdSampleInfo(mzIDFilePath + DOT_GZ, sampleMetadata);
+
+                            return true;
+                        }
+
                         LogError("MzID file not found for job " + dataPkgJob + ": " + sourceFileName);
+                        mzIdExistsRemotely = false;
                         return false;
                     }
                 }
@@ -4643,6 +4782,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 Thread.Sleep(250);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
+                mzIdExistsRemotely = false;
                 if (!replaceOriginal)
                 {
                     // Nothing was changed; delete the .tmp file
@@ -4657,11 +4797,11 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                     if (JobFileRenameRequired(dataPkgJob))
                     {
-                        mzIDFilePath = Path.Combine(m_WorkDir, dataPkgDataset + "_Job" + dataPkgJob + "_msgfplus.mzid");
+                        mzIDFilePath = Path.Combine(m_WorkDir, dataPkgDataset + "_Job" + dataPkgJob + "_msgfplus" + filePartText + ".mzid");
                     }
                     else
                     {
-                        mzIDFilePath = Path.Combine(m_WorkDir, dataPkgDataset + "_msgfplus.mzid");
+                        mzIDFilePath = Path.Combine(m_WorkDir, dataPkgDataset + "_msgfplus" + filePartText + ".mzid");
                     }
 
                     File.Move(updatedFilePathTemp, mzIDFilePath);
@@ -4694,6 +4834,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 LogDebug(recentElementNames);
 
                 mzIDFilePath = string.Empty;
+                mzIdExistsRemotely = false;
                 return false;
             }
         }

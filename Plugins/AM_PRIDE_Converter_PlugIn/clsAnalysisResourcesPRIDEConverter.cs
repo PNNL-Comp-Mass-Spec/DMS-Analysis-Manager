@@ -76,14 +76,24 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 return result;
             }
 
-            List<clsDataPackageJobInfo> lstDataPackagePeptideHitJobs;
-
             var blnCreatePrideXMLFiles = m_jobParams.GetJobParameter("CreatePrideXMLFiles", false);
+
+            var cacheFolderPath = m_jobParams.GetJobParameter("CacheFolderPath", DEFAULT_CACHE_FOLDER_PATH);
+
+            var resultsFolderName = m_jobParams.GetParam("OutputFolderName");
+            if (string.IsNullOrWhiteSpace(resultsFolderName))
+            {
+                LogError("Job parameter OutputFolderName is empty");
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            var remoteTransferFolderPath = Path.Combine(cacheFolderPath, resultsFolderName);
 
             // Check whether we are only creating the .msgf files
             var blnCreateMSGFReportFilesOnly = m_jobParams.GetJobParameter("CreateMSGFReportFilesOnly", false);
             var udtOptions = new clsDataPackageFileHandler.udtDataPackageRetrievalOptionsType {
-                CreateJobPathFiles = true
+                CreateJobPathFiles = true,
+                RemoteTransferFolderPath = remoteTransferFolderPath
             };
 
             if (blnCreatePrideXMLFiles && !blnCreateMSGFReportFilesOnly)
@@ -141,8 +151,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             // Possibly also obtain the .mzXML file or .Raw file for each dataset
             // The .mzXML file is required if we are creating Pride XML files (which were required for a "complete" submission
             //   prior to May 2013; we now submit .mzid.gz files, .mgf files, and instrument binary files and thus don't need the .mzXML file.
-            //   However, if the MSGF+ search used searched a .mzML file and not a _dta.txt file, then we _do_ need the .mzid file)
-            if (!RetrieveDataPackagePeptideHitJobPHRPFiles(udtOptions, out lstDataPackagePeptideHitJobs, 0,
+            //   However, if the MSGF+ search used searched a .mzML file and not a _dta.txt file, we _do_ need the .mzid file)
+            if (!RetrieveDataPackagePeptideHitJobPHRPFiles(udtOptions, out var lstDataPackagePeptideHitJobs, 0,
                     clsAnalysisToolRunnerPRIDEConverter.PROGRESS_PCT_TOOL_RUNNER_STARTING))
             {
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -177,7 +187,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// </summary>
         /// <param name="lstDataPackagePeptideHitJobs"></param>
         /// <remarks></remarks>
-        protected void FindMissingMzXmlFiles(IEnumerable<clsDataPackageJobInfo> lstDataPackagePeptideHitJobs)
+        private void FindMissingMzXmlFiles(IEnumerable<clsDataPackageJobInfo> lstDataPackagePeptideHitJobs)
         {
             var lstDatasets = new SortedSet<string>();
             var lstDatasetYearQuarter = new SortedSet<string>();
@@ -272,7 +282,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             return strTemplateFileName;
         }
 
-        protected bool RetrieveFastaFiles(IEnumerable<clsDataPackageJobInfo> lstDataPackagePeptideHitJobs)
+        private bool RetrieveFastaFiles(IEnumerable<clsDataPackageJobInfo> lstDataPackagePeptideHitJobs)
         {
             var strLocalOrgDBFolder = m_mgrParams.GetParam("orgdbdir");
 
@@ -353,7 +363,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             return true;
         }
 
-        protected bool RetrieveMSGFReportTemplateFile()
+        private bool RetrieveMSGFReportTemplateFile()
         {
             // Retrieve the template .msgf-pride.xml file
             // Although there is a default in the PRIDE_Converter parameter file folder, it should ideally be customized and placed in the data package folder
@@ -428,7 +438,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             return true;
         }
 
-        protected bool RetrievePXSubmissionTemplateFile()
+        private bool RetrievePXSubmissionTemplateFile()
         {
             // Retrieve the template PX Submission file
             // Although there is a default in the PRIDE_Converter parameter file folder, it should ideally be customized and placed in the data package folder
@@ -527,7 +537,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// </summary>
         /// <param name="lstDataPackagePeptideHitJobs"></param>
         /// <remarks></remarks>
-        protected void StoreDataPackageJobs(IEnumerable<clsDataPackageJobInfo> lstDataPackagePeptideHitJobs)
+        private void StoreDataPackageJobs(IEnumerable<clsDataPackageJobInfo> lstDataPackagePeptideHitJobs)
         {
             var lstDataPackageJobs = new List<string>();
 

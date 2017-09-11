@@ -19,9 +19,13 @@ namespace AnalysisManagerBase
         public const string JOB_INFO_FILE_PREFIX = "JobInfoFile_Job";
 
         private const string SP_NAME_GET_JOB_STEP_INPUT_FOLDER = "GetJobStepInputFolder";
+
+        private const string DATA_PKG_JOB_METADATA_FILE = "DataPkgJobMetadata.txt";
+
         #endregion
 
         #region "Structures"
+
         public struct udtDataPackageRetrievalOptionsType
         {
             /// <summary>
@@ -60,15 +64,29 @@ namespace AnalysisManagerBase
             /// </summary>
             /// <remarks></remarks>
             public bool RetrievePHRPFiles;
+
             /// <summary>
             /// When True, assume that the instrument file (e.g. .raw file) exists in the dataset storage folder
             /// and do not search in MyEMSL or in the archive for the file
             /// </summary>
             /// <remarks>Even if the instrument file has been purged from the storage folder, still report "success" when searching for the instrument file</remarks>
             public bool AssumeInstrumentDataUnpurged;
-        }
-        #endregion
 
+            /// <summary>
+            /// Remote transfer folder path; used to save DataPkgJobMetadata.txt
+            /// </summary>
+            public string RemoteTransferFolderPath;
+        }
+
+        private struct udtDataPackageJobMetadata
+        {
+            /// <summary>
+            /// True if MSGF+ searched a .mzML file; if false, likely searched a _dta.txt file
+            /// </summary>
+            public bool SearchUsedmzML;
+        }
+
+        #endregion
 
         #region "Module variables"
 
@@ -171,11 +189,10 @@ namespace AnalysisManagerBase
                 // Look for a CacheInfo.txt file in the matched input folder
                 // Note that FindValidFolder will search both the dataset folder and in folder inputFolderName below the dataset folder
 
-
                 var datasetFolderPath = mAnalysisResources.FindValidFolder(
                     dataset, "*_CacheInfo.txt", folderNameToFind: inputFolderName, maxAttempts: 1,
                     logFolderNotFound: false, retrievingInstrumentDataFolder: false, assumeUnpurged: false,
-                    validFolderFound: out var validFolderFound, folderNotFoundMessage: out var folderNotFoundMessage);
+                    validFolderFound: out var validFolderFound, folderNotFoundMessage: out _);
 
                 if (!validFolderFound)
                 {
@@ -478,6 +495,473 @@ namespace AnalysisManagerBase
 
         }
 
+        /// <summary>
+        /// Process a single data package peptide hit job
+        /// </summary>
+        /// <param name="udtOptions">File retrieval options</param>
+        /// <param name="cachedJobMetadata"></param>
+        /// <param name="ionicZipTools"></param>
+        /// <param name="workingDir"></param>
+        /// <param name="dataPkgJob">Data package job</param>
+        /// <returns></returns>
+        private bool ProcessOnePeptideHitJob(
+            udtDataPackageRetrievalOptionsType udtOptions,
+            IDictionary<int, udtDataPackageJobMetadata> cachedJobMetadata,
+            clsIonicZipTools ionicZipTools,
+            string workingDir,
+            clsDataPackageJobInfo dataPkgJob)
+        {
+
+            try
+            {
+                // Keys in this list are filenames; values are True if the file is required and False if not required
+                var lstFilesToGet = new SortedList<string, bool>();
+                string localFolderPath;
+
+                // These two variables track filenames that should be decompressed if they were copied locally
+                var zipFileCandidates = new List<string>();
+                var gzipFileCandidates = new List<string>();
+
+                // This tracks the _pepXML.zip filename, which will be unzipped if it was found
+                var zippedPepXmlFile = string.Empty;
+
+                bool prefixRequired;
+
+                var synopsisFileName = clsPHRPReader.GetPHRPSynopsisFileName(dataPkgJob.PeptideHitResultType, dataPkgJob.Dataset);
+                var synopsisMSGFFileName = clsPHRPReader.GetMSGFFileName(synopsisFileName);
+
+                if (udtOptions.RetrievePHRPFiles)
+                {
+                    lstFilesToGet.Add(synopsisFileName, true);
+
+                    lstFilesToGet.Add(clsPHRPReader.GetPHRPResultToSeqMapFileName(dataPkgJob.PeptideHitResultType, dataPkgJob.Dataset), true);
+                    lstFilesToGet.Add(clsPHRPReader.GetPHRPSeqInfoFileName(dataPkgJob.PeptideHitResultType, dataPkgJob.Dataset), true);
+                    lstFilesToGet.Add(clsPHRPReader.GetPHRPSeqToProteinMapFileName(dataPkgJob.PeptideHitResultType, dataPkgJob.Dataset), true);
+                    lstFilesToGet.Add(clsPHRPReader.GetPHRPModSummaryFileName(dataPkgJob.PeptideHitResultType, dataPkgJob.Dataset), true);
+
+                    lstFilesToGet.Add(synopsisMSGFFileName, false);
+                }
+
+                // Names of mzid result files that we should look for
+                // Examples include:
+                //  DatasetName_msgfplus.mzid.gz
+                //  DatasetName_msgfplus_Part5.mzid.gz
+                //  DatasetName_msgfplus.zip
+                var candidateMzIdFiles = new SortedSet<string>(StringComparer.InvariantCultureIgnoreCase);
+
+                var datasetName = dataPkgJob.Dataset;
+
+                if (udtOptions.RetrieveMZidFiles && dataPkgJob.PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB)
+                {
+                    // Retrieve MSGF+ .mzID files
+                    // They will either be stored as .zip files or as .gz files
+
+                    if (dataPkgJob.NumberOfClonedSteps > 0)
+                    {
+                        for (var splitFastaResultID = 1; splitFastaResultID <= dataPkgJob.NumberOfClonedSteps; splitFastaResultID++)
+                        {
+                            GetMzIdFilesToFind(datasetName, splitFastaResultID, zipFileCandidates, gzipFileCandidates);
+                        }
+                    }
+                    else
+                    {
+                        GetMzIdFilesToFind(datasetName, 0, zipFileCandidates, gzipFileCandidates);
+                    }
+
+                    foreach (var candidateFile in zipFileCandidates.Union(gzipFileCandidates))
+                    {
+                        candidateMzIdFiles.Add(candidateFile);
+                        lstFilesToGet.Add(candidateFile, false);
+                    }
+
+                }
+
+                if (udtOptions.RetrievePepXMLFiles && dataPkgJob.PeptideHitResultType != clsPHRPReader.ePeptideHitResultType.Unknown ||
+                    dataPkgJob.PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.Sequest)
+                {
+                    // Retrieve .pepXML files, which are stored as _pepXML.zip files
+                    zippedPepXmlFile = datasetName + "_pepXML.zip";
+                    lstFilesToGet.Add(zippedPepXmlFile, false);
+                }
+
+                // Check whether a synopsis file by this name has already been copied locally
+                // If it has, we have multiple jobs for the same dataset with the same analysis tool, and we'll thus need to add a prefix to each filename
+                if (!udtOptions.CreateJobPathFiles && File.Exists(Path.Combine(workingDir, synopsisFileName)))
+                {
+                    prefixRequired = true;
+
+                    localFolderPath = Path.Combine(workingDir, "FileRename");
+                    if (!Directory.Exists(localFolderPath))
+                    {
+                        Directory.CreateDirectory(localFolderPath);
+                    }
+
+                }
+                else
+                {
+                    prefixRequired = false;
+                    localFolderPath = string.Copy(workingDir);
+                }
+
+                // lstFoundFiles tracks files that have been found
+                // If udtOptions.CreateJobPathFiles is true, it has the remote file paths
+                // Otherwise, the file has been copied locally and it has local file paths
+                // Note that files might need to be renamed; that's tracked via lstPendingFileRenames
+
+                var processSuccess = ProcessPeptideHitJobFiles(
+                    udtOptions,
+                    localFolderPath,
+                    prefixRequired,
+                    lstFilesToGet,
+                    out var lstFoundFiles,
+                    out var lstPendingFileRenames);
+
+                if (!processSuccess)
+                {
+                    return false;
+                }
+
+                var myEmslSuccess = mAnalysisResources.ProcessMyEMSLDownloadQueue();
+                if (!myEmslSuccess)
+                {
+                    return false;
+                }
+
+                // Now perform any required file renames
+                foreach (var fileToRename in lstPendingFileRenames)
+                {
+                    if (RenameDuplicatePHRPFile(localFolderPath, fileToRename, workingDir,
+                                                "Job" + dataPkgJob.Job + "_", dataPkgJob.Job,
+                                                out var newFilePath))
+                    {
+                        // Rename succeeded
+                        lstFoundFiles.Remove(Path.Combine(localFolderPath, fileToRename));
+                        lstFoundFiles.Add(newFilePath);
+                    }
+                    else
+                    {
+                        // Rename failed
+                        return false;
+                    }
+                }
+
+                if (udtOptions.RetrieveDTAFiles)
+                {
+                    var success = FindAndProcessPeakDataFile(
+                        udtOptions,
+                        candidateMzIdFiles,
+                        cachedJobMetadata,
+                        ionicZipTools,
+                        dataPkgJob,
+                        workingDir,
+                        localFolderPath,
+                        lstFoundFiles);
+
+                    if (!success)
+                        return false;
+
+                }
+
+                if (udtOptions.CreateJobPathFiles)
+                {
+                    var jobInfoFilePath = GetJobInfoFilePath(dataPkgJob.Job);
+                    using (var swJobInfoFile = new StreamWriter(new FileStream(jobInfoFilePath, FileMode.Append, FileAccess.Write, FileShare.Read)))
+                    {
+                        foreach (var filePath in lstFoundFiles)
+                        {
+                            swJobInfoFile.WriteLine(filePath);
+                        }
+                    }
+                }
+                else
+                {
+                    var unzipSuccess = UnzipFiles(
+                        ionicZipTools, workingDir, prefixRequired, dataPkgJob,
+                        lstFoundFiles, zipFileCandidates, gzipFileCandidates,
+                        zippedPepXmlFile);
+
+                    if (!unzipSuccess)
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
+
+            }
+            catch (Exception ex)
+            {
+                OnErrorEvent("Error in ProcessOnePeptideHitJob", ex);
+                return false;
+            }
+        }
+
+
+        /// <summary>
+        /// Process files found for a single peptide hit job (as tracked by lstFilesToGet)
+        /// </summary>
+        /// <param name="udtOptions">File retrieval options</param>
+        /// <param name="localFolderPath"></param>
+        /// <param name="prefixRequired"></param>
+        /// <param name="lstFilesToGet">Keys in this list are filenames; values are True if the file is required and False if not required</param>
+        /// <param name="lstFoundFiles"></param>
+        /// <param name="lstPendingFileRenames"></param>
+        /// <returns></returns>
+        private bool ProcessPeptideHitJobFiles(
+            udtDataPackageRetrievalOptionsType udtOptions,
+            string localFolderPath,
+            bool prefixRequired,
+            SortedList<string, bool> lstFilesToGet,
+            out List<string> lstFoundFiles,
+            out List<string> lstPendingFileRenames)
+        {
+            var sourceFilename = "??";
+            var sourceFolderPath = string.Empty;
+
+            lstFoundFiles = new List<string>();
+            lstPendingFileRenames = new List<string>();
+
+            try
+            {
+                foreach (var sourceFile in lstFilesToGet)
+                {
+                    sourceFilename = sourceFile.Key;
+                    var fileRequired = sourceFile.Value;
+
+                    // Typically only use FindDataFile() for the first file in lstFilesToGet; we will assume the other files are in that folder
+                    // However, if the file resides in MyEMSL, we need to call FindDataFile for every new file because FindDataFile will append the MyEMSL File ID for each file
+                    if (string.IsNullOrEmpty(sourceFolderPath) || sourceFolderPath.StartsWith(clsAnalysisResources.MYEMSL_PATH_FLAG))
+                    {
+                        sourceFolderPath = mAnalysisResources.FileSearch.FindDataFile(sourceFilename);
+
+                        if (string.IsNullOrEmpty(sourceFolderPath))
+                        {
+                            var alternateFileName = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(sourceFilename, "Dataset_msgfdb.txt");
+                            sourceFolderPath = mAnalysisResources.FileSearch.FindDataFile(alternateFileName);
+                        }
+                    }
+
+                    clsLogTools.LogLevels eLogMsgTypeIfNotFound;
+
+                    if (!fileRequired)
+                    {
+                        // It's OK if this file doesn't exist, we'll just log a debug message
+                        eLogMsgTypeIfNotFound = clsLogTools.LogLevels.DEBUG;
+                    }
+                    else
+                    {
+                        // This file must exist; log an error if it's not found
+                        eLogMsgTypeIfNotFound = clsLogTools.LogLevels.ERROR;
+                    }
+
+                    if (udtOptions.CreateJobPathFiles && !sourceFolderPath.StartsWith(clsAnalysisResources.MYEMSL_PATH_FLAG))
+                    {
+                        var sourceFilePath = Path.Combine(sourceFolderPath, sourceFilename);
+                        var alternateFileNamelternateFileName = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(sourceFilePath, "Dataset_msgfdb.txt");
+
+                        if (File.Exists(sourceFilePath))
+                        {
+                            lstFoundFiles.Add(sourceFilePath);
+                        }
+                        else if (File.Exists(alternateFileNamelternateFileName))
+                        {
+                            lstFoundFiles.Add(alternateFileNamelternateFileName);
+                        }
+                        else
+                        {
+                            if (eLogMsgTypeIfNotFound != clsLogTools.LogLevels.DEBUG)
+                            {
+                                var warningMessage = "Required PHRP file not found: " + sourceFilename;
+                                if (sourceFilename.EndsWith("_msgfplus.zip", StringComparison.OrdinalIgnoreCase) ||
+                                    sourceFilename.EndsWith("_msgfplus.mzid.gz", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    warningMessage += "; Confirm job used MSGF+ and not MSGFDB";
+                                }
+                                mAnalysisResources.UpdateStatusMessage(warningMessage);
+                                OnWarningEvent("Required PHRP file not found: " + sourceFilePath);
+                                mAnalysisResources.RestoreCachedDataAndJobInfo();
+                                return false;
+                            }
+                        }
+
+                    }
+                    else
+                    {
+                        // Note for files in MyEMSL, this call will simply add the file to the download queue; use ProcessMyEMSLDownloadQueue() to retrieve the file
+                        var fileCopied = mAnalysisResources.CopyFileToWorkDir(sourceFilename, sourceFolderPath, localFolderPath, eLogMsgTypeIfNotFound);
+
+                        if (!fileCopied)
+                        {
+                            var alternateFileName = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(sourceFilename, "Dataset_msgfdb.txt");
+                            fileCopied = mAnalysisResources.CopyFileToWorkDir(alternateFileName, sourceFolderPath, localFolderPath, eLogMsgTypeIfNotFound);
+                            if (fileCopied)
+                            {
+                                sourceFilename = alternateFileName;
+                            }
+                        }
+
+
+                        if (!fileCopied)
+                        {
+                            if (eLogMsgTypeIfNotFound != clsLogTools.LogLevels.DEBUG)
+                            {
+                                OnErrorEvent("CopyFileToWorkDir returned False for " + sourceFilename + " using folder " + sourceFolderPath);
+                                mAnalysisResources.RestoreCachedDataAndJobInfo();
+                                return false;
+                            }
+
+                        }
+                        else
+                        {
+                            OnStatusEvent("Copied " + sourceFilename + " from folder " + sourceFolderPath);
+                            lstFoundFiles.Add(Path.Combine(localFolderPath, sourceFilename));
+
+                            if (prefixRequired)
+                            {
+                                lstPendingFileRenames.Add(sourceFilename);
+                            }
+                            else
+                            {
+                                mAnalysisResources.AddResultFileToSkip(sourceFilename);
+                            }
+                        }
+                    }
+
+                }
+
+                return true;
+
+            }
+            catch (Exception ex)
+            {
+                OnErrorEvent("ProcessPeptideHitJobFiles; Exception processing file " + sourceFilename + " in folder " + sourceFolderPath, ex);
+                return false;
+            }
+
+        }
+
+        private bool FindAndProcessPeakDataFile(
+            udtDataPackageRetrievalOptionsType udtOptions,
+            ICollection<string> candidateMzIdFiles,
+            IDictionary<int, udtDataPackageJobMetadata> cachedJobMetadata,
+            clsIonicZipTools ionicZipTools,
+            clsDataPackageJobInfo dataPkgJob,
+            string workingDir,
+            string localFolderPath,
+            ICollection<string> lstFoundFiles)
+        {
+            // Find the _dta.txt or .mzML.gz file that was used for a MSGF+ search
+
+            var mzIDFileToInspect = string.Empty;
+
+            // Need to examine the .mzid file to determine which file was used for the search
+            foreach (var foundFile in lstFoundFiles)
+            {
+                if (candidateMzIdFiles.Contains(Path.GetFileName(foundFile)))
+                {
+                    mzIDFileToInspect = foundFile;
+                    break;
+                }
+            }
+
+            var searchUsedmzML = false;
+            if (!string.IsNullOrEmpty(mzIDFileToInspect))
+            {
+                if (cachedJobMetadata.TryGetValue(dataPkgJob.Job, out var jobMetadata))
+                {
+                    searchUsedmzML = jobMetadata.SearchUsedmzML;
+                }
+                else
+                {
+                    // Example the .mzid file to determine whether a .mzML file was used
+                    // This will involve decompressing if it's a gzip file, then examining the XML to look for the SpectraData element
+                    searchUsedmzML = MSGFPlusSearchUsedMzML(mzIDFileToInspect, ionicZipTools);
+
+                    var newMetadata = new udtDataPackageJobMetadata
+                    {
+                        SearchUsedmzML = searchUsedmzML
+                    };
+
+                    cachedJobMetadata.Add(dataPkgJob.Job, newMetadata);
+                }
+            }
+
+            if (searchUsedmzML)
+            {
+                var stepToolFilter = string.Empty;
+                if (dataPkgJob.Tool.StartsWith("msgfplus", StringComparison.OrdinalIgnoreCase))
+                {
+                    stepToolFilter = "MSGFPlus";
+                }
+
+                var mzMLFilePathRemote = FindMzMLForJob(dataPkgJob.Dataset, dataPkgJob.Job, stepToolFilter, workingDir);
+
+                if (string.IsNullOrEmpty(mzMLFilePathRemote))
+                    return true;
+
+                if (udtOptions.CreateJobPathFiles && !mzMLFilePathRemote.StartsWith(clsAnalysisResources.MYEMSL_PATH_FLAG))
+                {
+                    if (!lstFoundFiles.Contains(mzMLFilePathRemote))
+                    {
+                        lstFoundFiles.Add(mzMLFilePathRemote);
+                    }
+                }
+                else
+                {
+                    // Note for files in MyEMSL, this call will simply add the file to the download queue
+                    // Use ProcessMyEMSLDownloadQueue() to retrieve the file
+                    var sourceMzMLFile = new FileInfo(mzMLFilePathRemote);
+                    var targetMzMLFile = new FileInfo(Path.Combine(localFolderPath, sourceMzMLFile.Name));
+
+                    // Only copy the .mzML.gz file if it does not yet exist locally
+                    if (targetMzMLFile.Exists)
+                        return true;
+
+                    var eLogMsgTypeIfNotFound = clsLogTools.LogLevels.ERROR;
+
+                    var fileCopied = mAnalysisResources.CopyFileToWorkDir(sourceMzMLFile.Name, sourceMzMLFile.DirectoryName, localFolderPath, eLogMsgTypeIfNotFound);
+
+                    if (fileCopied)
+                    {
+                        OnStatusEvent("Copied " + sourceMzMLFile.Name + " from folder " + sourceMzMLFile.DirectoryName);
+                        lstFoundFiles.Add(Path.Combine(localFolderPath, sourceMzMLFile.Name));
+
+                    }
+                }
+            }
+            else
+            {
+                // Find the CDTA file
+
+                if (udtOptions.CreateJobPathFiles)
+                {
+                    var sourceConcatenatedDTAFilePath = mAnalysisResources.FileSearch.FindCDTAFile(out var errorMessage);
+
+                    if (string.IsNullOrEmpty(sourceConcatenatedDTAFilePath))
+                    {
+                        OnErrorEvent(errorMessage);
+                        return false;
+                    }
+
+                    lstFoundFiles.Add(sourceConcatenatedDTAFilePath);
+                }
+                else
+                {
+                    if (!mAnalysisResources.FileSearch.RetrieveDtaFiles())
+                    {
+                        // Errors were reported in function call, so just return
+                        return false;
+                    }
+
+                    // The retrieved file is probably named Dataset_dta.zip
+                    // We'll add it to lstFoundFiles, but the exact name is not critical
+                    lstFoundFiles.Add(Path.Combine(workingDir, dataPkgJob.Dataset + "_dta.zip"));
+                }
+            }
+
+            return true;
+        }
+
         private bool RenameDuplicatePHRPFile(
             string sourceFolderPath,
             string sourceFilename,
@@ -524,9 +1008,6 @@ namespace AnalysisManagerBase
             float progressPercentAtStart,
             float progressPercentAtFinish)
         {
-
-            var sourceFolderPath = "??";
-            var sourceFilename = "??";
 
             // Keys in this dictionary are DatasetID, values are a command of the form "Copy \\Server\Share\Folder\Dataset.raw Dataset.raw"
             // Note that we're explicitly defining the target filename to make sure the case of the letters matches the dataset name's case
@@ -604,8 +1085,24 @@ namespace AnalysisManagerBase
                 // Cache the current dataset and job info
                 mAnalysisResources.CacheCurrentDataAndJobInfo();
 
-                var jobsProcessed = 0;
+                // Look for a DataPkgJobMetadata.txt file
+                var dataPkgJobMetadataFile = new FileInfo(Path.Combine(udtOptions.RemoteTransferFolderPath, DATA_PKG_JOB_METADATA_FILE));
 
+                Dictionary<int, udtDataPackageJobMetadata> cachedJobMetadata;
+                int cachedMetadataCountAtStart;
+
+                if (!string.IsNullOrWhiteSpace(udtOptions.RemoteTransferFolderPath) && dataPkgJobMetadataFile.Exists)
+                {
+                    cachedJobMetadata = LoadCachedDataPkgJobMetadata(dataPkgJobMetadataFile);
+                    cachedMetadataCountAtStart = cachedJobMetadata.Count;
+                }
+                else
+                {
+                    cachedJobMetadata = new Dictionary<int, udtDataPackageJobMetadata>();
+                    cachedMetadataCountAtStart = 0;
+                }
+
+                var jobsProcessed = 0;
 
                 foreach (var dataPkgJob in lstDataPackagePeptideHitJobs)
                 {
@@ -616,7 +1113,11 @@ namespace AnalysisManagerBase
                         return false;
                     }
 
-                    var datasetName = mAnalysisResources.DatasetName;
+                    if (!string.Equals(dataPkgJob.Dataset, mAnalysisResources.DatasetName))
+                    {
+                        OnWarningEvent(string.Format(
+                            "Dataset name mismatch: {0} vs. {1}", dataPkgJob.Dataset, mAnalysisResources.DatasetName));
+                    }
 
                     if (dataPkgJob.PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.Unknown)
                     {
@@ -625,417 +1126,12 @@ namespace AnalysisManagerBase
                     }
                     else
                     {
-                        // Keys in this list are filenames; values are True if the file is required and False if not required
-                        var lstFilesToGet = new SortedList<string, bool>();
-                        string localFolderPath;
-                        var lstPendingFileRenames = new List<string>();
-                        clsLogTools.LogLevels eLogMsgTypeIfNotFound;
+                        var success = ProcessOnePeptideHitJob(udtOptions, cachedJobMetadata, ionicZipTools, workingDir, dataPkgJob);
 
-                        // These two variables track filenames that should be decompressed if they were copied locally
-                        var zipFileCandidates = new List<string>();
-                        var gzipFileCandidates = new List<string>();
-
-                        // This tracks the _pepXML.zip filename, which will be unzipped if it was found
-                        var zippedPepXmlFile = string.Empty;
-
-                        bool prefixRequired;
-
-                        var synopsisFileName = clsPHRPReader.GetPHRPSynopsisFileName(dataPkgJob.PeptideHitResultType, dataPkgJob.Dataset);
-                        var synopsisMSGFFileName = clsPHRPReader.GetMSGFFileName(synopsisFileName);
-
-                        if (udtOptions.RetrievePHRPFiles)
-                        {
-                            lstFilesToGet.Add(synopsisFileName, true);
-
-                            lstFilesToGet.Add(clsPHRPReader.GetPHRPResultToSeqMapFileName(dataPkgJob.PeptideHitResultType, dataPkgJob.Dataset), true);
-                            lstFilesToGet.Add(clsPHRPReader.GetPHRPSeqInfoFileName(dataPkgJob.PeptideHitResultType, dataPkgJob.Dataset), true);
-                            lstFilesToGet.Add(clsPHRPReader.GetPHRPSeqToProteinMapFileName(dataPkgJob.PeptideHitResultType, dataPkgJob.Dataset), true);
-                            lstFilesToGet.Add(clsPHRPReader.GetPHRPModSummaryFileName(dataPkgJob.PeptideHitResultType, dataPkgJob.Dataset), true);
-
-                            lstFilesToGet.Add(synopsisMSGFFileName, false);
-                        }
-
-                        // Names of mzid result files that we should look for
-                        // Examples include:
-                        //  DatasetName_msgfplus.mzid.gz
-                        //  DatasetName_msgfplus_Part5.mzid.gz
-                        //  DatasetName_msgfplus.zip
-                        var candidateMzIdFiles = new SortedSet<string>(StringComparer.InvariantCultureIgnoreCase);
-
-                        if (udtOptions.RetrieveMZidFiles && dataPkgJob.PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB)
-                        {
-                            // Retrieve MSGF+ .mzID files
-                            // They will either be stored as .zip files or as .gz files
-
-                            if (dataPkgJob.NumberOfClonedSteps > 0)
-                            {
-                                for (var splitFastaResultID = 1; splitFastaResultID <= dataPkgJob.NumberOfClonedSteps; splitFastaResultID++)
-                                {
-                                    GetMzIdFilesToFind(datasetName, splitFastaResultID, zipFileCandidates, gzipFileCandidates);
-                                }
-                            }
-                            else
-                            {
-                                GetMzIdFilesToFind(datasetName, 0, zipFileCandidates, gzipFileCandidates);
-                            }
-
-                            foreach (var candidateFile in zipFileCandidates.Union(gzipFileCandidates))
-                            {
-                                candidateMzIdFiles.Add(candidateFile);
-                                lstFilesToGet.Add(candidateFile, false);
-                            }
-
-                        }
-
-                        if (udtOptions.RetrievePepXMLFiles && dataPkgJob.PeptideHitResultType != clsPHRPReader.ePeptideHitResultType.Unknown ||
-                            dataPkgJob.PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.Sequest)
-                        {
-                            // Retrieve .pepXML files, which are stored as _pepXML.zip files
-                            zippedPepXmlFile = datasetName + "_pepXML.zip";
-                            lstFilesToGet.Add(zippedPepXmlFile, false);
-                        }
-
-                        sourceFolderPath = string.Empty;
-
-                        // Check whether a synopsis file by this name has already been copied locally
-                        // If it has, then we have multiple jobs for the same dataset with the same analysis tool, and we'll thus need to add a prefix to each filename
-                        if (!udtOptions.CreateJobPathFiles && File.Exists(Path.Combine(workingDir, synopsisFileName)))
-                        {
-                            prefixRequired = true;
-
-                            localFolderPath = Path.Combine(workingDir, "FileRename");
-                            if (!Directory.Exists(localFolderPath))
-                            {
-                                Directory.CreateDirectory(localFolderPath);
-                            }
-
-                        }
-                        else
-                        {
-                            prefixRequired = false;
-                            localFolderPath = string.Copy(workingDir);
-                        }
-
-                        // This list tracks files that have been found
-                        // If udtOptions.CreateJobPathFiles is true, it has the remote file paths
-                        // Otherwise, the file has been copied locally and it has local file paths
-                        // Note that files might need to be renamed; that's tracked via lstPendingFileRenames
-                        var lstFoundFiles = new List<string>();
-
-                        bool fileCopied;
-                        foreach (var sourceFile in lstFilesToGet)
-                        {
-                            sourceFilename = sourceFile.Key;
-                            var fileRequired = sourceFile.Value;
-
-                            // Typically only use FindDataFile() for the first file in lstFilesToGet; we will assume the other files are in that folder
-                            // However, if the file resides in MyEMSL then we need to call FindDataFile for every new file because FindDataFile will append the MyEMSL File ID for each file
-                            if (string.IsNullOrEmpty(sourceFolderPath) || sourceFolderPath.StartsWith(clsAnalysisResources.MYEMSL_PATH_FLAG))
-                            {
-                                sourceFolderPath = mAnalysisResources.FileSearch.FindDataFile(sourceFilename);
-
-                                if (string.IsNullOrEmpty(sourceFolderPath))
-                                {
-                                    var alternateFileName = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(sourceFilename, "Dataset_msgfdb.txt");
-                                    sourceFolderPath = mAnalysisResources.FileSearch.FindDataFile(alternateFileName);
-                                }
-                            }
-
-                            if (!fileRequired)
-                            {
-                                // It's OK if this file doesn't exist, we'll just log a debug message
-                                eLogMsgTypeIfNotFound = clsLogTools.LogLevels.DEBUG;
-                            }
-                            else
-                            {
-                                // This file must exist; log an error if it's not found
-                                eLogMsgTypeIfNotFound = clsLogTools.LogLevels.ERROR;
-                            }
-
-                            if (udtOptions.CreateJobPathFiles && !sourceFolderPath.StartsWith(clsAnalysisResources.MYEMSL_PATH_FLAG))
-                            {
-                                var sourceFilePath = Path.Combine(sourceFolderPath, sourceFilename);
-                                var alternateFileNamelternateFileName = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(sourceFilePath, "Dataset_msgfdb.txt");
-
-                                if (File.Exists(sourceFilePath))
-                                {
-                                    lstFoundFiles.Add(sourceFilePath);
-                                }
-                                else if (File.Exists(alternateFileNamelternateFileName))
-                                {
-                                    lstFoundFiles.Add(alternateFileNamelternateFileName);
-                                }
-                                else
-                                {
-                                    if (eLogMsgTypeIfNotFound != clsLogTools.LogLevels.DEBUG)
-                                    {
-                                        var warningMessage = "Required PHRP file not found: " + sourceFilename;
-                                        if (sourceFilename.EndsWith("_msgfplus.zip", StringComparison.OrdinalIgnoreCase) ||
-                                            sourceFilename.EndsWith("_msgfplus.mzid.gz", StringComparison.OrdinalIgnoreCase))
-                                        {
-                                            warningMessage += "; Confirm job used MSGF+ and not MSGFDB";
-                                        }
-                                        mAnalysisResources.UpdateStatusMessage(warningMessage);
-                                        OnWarningEvent("Required PHRP file not found: " + sourceFilePath);
-                                        mAnalysisResources.RestoreCachedDataAndJobInfo();
-                                        return false;
-                                    }
-                                }
-
-                            }
-                            else
-                            {
-                                // Note for files in MyEMSL, this call will simply add the file to the download queue; use ProcessMyEMSLDownloadQueue() to retrieve the file
-                                fileCopied = mAnalysisResources.CopyFileToWorkDir(sourceFilename, sourceFolderPath, localFolderPath, eLogMsgTypeIfNotFound);
-
-                                if (!fileCopied)
-                                {
-                                    var alternateFileName = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(sourceFilename, "Dataset_msgfdb.txt");
-                                    fileCopied = mAnalysisResources.CopyFileToWorkDir(alternateFileName, sourceFolderPath, localFolderPath, eLogMsgTypeIfNotFound);
-                                    if (fileCopied)
-                                    {
-                                        sourceFilename = alternateFileName;
-                                    }
-                                }
-
-
-                                if (!fileCopied)
-                                {
-                                    if (eLogMsgTypeIfNotFound != clsLogTools.LogLevels.DEBUG)
-                                    {
-                                        OnErrorEvent("CopyFileToWorkDir returned False for " + sourceFilename + " using folder " + sourceFolderPath);
-                                        mAnalysisResources.RestoreCachedDataAndJobInfo();
-                                        return false;
-                                    }
-
-                                }
-                                else
-                                {
-                                    OnStatusEvent("Copied " + sourceFilename + " from folder " + sourceFolderPath);
-                                    lstFoundFiles.Add(Path.Combine(localFolderPath, sourceFilename));
-
-                                    if (prefixRequired)
-                                    {
-                                        lstPendingFileRenames.Add(sourceFilename);
-                                    }
-                                    else
-                                    {
-                                        mAnalysisResources.AddResultFileToSkip(sourceFilename);
-                                    }
-                                }
-                            }
-
-                        }
-                        // in lstFilesToGet
-
-                        var success = mAnalysisResources.ProcessMyEMSLDownloadQueue();
                         if (!success)
                         {
                             mAnalysisResources.RestoreCachedDataAndJobInfo();
                             return false;
-                        }
-
-                        // Now perform any required file renames
-                        foreach (var fileToRename in lstPendingFileRenames)
-                        {
-                            if (RenameDuplicatePHRPFile(localFolderPath, fileToRename, workingDir,
-                                "Job" + dataPkgJob.Job + "_", dataPkgJob.Job,
-                                out var newFilePath))
-                            {
-                                // Rename succeeded
-                                lstFoundFiles.Remove(Path.Combine(localFolderPath, fileToRename));
-                                lstFoundFiles.Add(newFilePath);
-                            }
-                            else
-                            {
-                                // Rename failed
-                                mAnalysisResources.RestoreCachedDataAndJobInfo();
-                                return false;
-                            }
-                        }
-
-                        if (udtOptions.RetrieveDTAFiles)
-                        {
-                            // Find the _dta.txt or .mzML.gz file that was used for a MSGF+ search
-
-                            var mzIDFileToInspect = string.Empty;
-
-                            // Need to examine the .mzid file to determine which file was used for the search
-                            foreach (var foundFile in lstFoundFiles)
-                            {
-                                if (candidateMzIdFiles.Contains(Path.GetFileName(foundFile)))
-                                {
-                                    mzIDFileToInspect = foundFile;
-                                    break;
-                                }
-                            }
-
-                            var searchUsedmzML = false;
-                            if (!string.IsNullOrEmpty(mzIDFileToInspect))
-                            {
-                                searchUsedmzML = MSGFPlusSearchUsedMzML(mzIDFileToInspect, ionicZipTools);
-                            }
-
-                            if (searchUsedmzML)
-                            {
-                                var stepToolFilter = string.Empty;
-                                if (dataPkgJob.Tool.StartsWith("msgfplus", StringComparison.OrdinalIgnoreCase))
-                                {
-                                    stepToolFilter = "MSGFPlus";
-                                }
-
-                                var mzMLFilePathRemote = FindMzMLForJob(dataPkgJob.Dataset, dataPkgJob.Job, stepToolFilter, workingDir);
-
-                                if (!string.IsNullOrEmpty(mzMLFilePathRemote))
-                                {
-                                    if (udtOptions.CreateJobPathFiles && !mzMLFilePathRemote.StartsWith(clsAnalysisResources.MYEMSL_PATH_FLAG))
-                                    {
-                                        if (!lstFoundFiles.Contains(mzMLFilePathRemote))
-                                        {
-                                            lstFoundFiles.Add(mzMLFilePathRemote);
-                                        }
-                                    }
-                                    else
-                                    {
-                                        // Note for files in MyEMSL, this call will simply add the file to the download queue
-                                        // Use ProcessMyEMSLDownloadQueue() to retrieve the file
-                                        var sourceMzMLFile = new FileInfo(mzMLFilePathRemote);
-                                        var targetMzMLFile = new FileInfo(Path.Combine(localFolderPath, sourceMzMLFile.Name));
-
-                                        // Only copy the .mzML.gz file if it does not yet exist locally
-                                        if (!targetMzMLFile.Exists)
-                                        {
-                                            eLogMsgTypeIfNotFound = clsLogTools.LogLevels.ERROR;
-
-                                            fileCopied = mAnalysisResources.CopyFileToWorkDir(sourceMzMLFile.Name, sourceMzMLFile.DirectoryName, localFolderPath, eLogMsgTypeIfNotFound);
-
-                                            if (fileCopied)
-                                            {
-                                                OnStatusEvent("Copied " + sourceMzMLFile.Name + " from folder " + sourceMzMLFile.DirectoryName);
-                                                lstFoundFiles.Add(Path.Combine(localFolderPath, sourceMzMLFile.Name));
-
-                                            }
-                                        }
-
-                                    }
-                                }
-
-                            }
-                            else
-                            {
-                                // Find the CDTA file
-
-                                if (udtOptions.CreateJobPathFiles)
-                                {
-                                    var sourceConcatenatedDTAFilePath = mAnalysisResources.FileSearch.FindCDTAFile(out var errorMessage);
-
-                                    if (string.IsNullOrEmpty(sourceConcatenatedDTAFilePath))
-                                    {
-                                        OnErrorEvent(errorMessage);
-                                        mAnalysisResources.RestoreCachedDataAndJobInfo();
-                                        return false;
-                                    }
-
-                                    lstFoundFiles.Add(sourceConcatenatedDTAFilePath);
-                                }
-                                else
-                                {
-                                    if (!mAnalysisResources.FileSearch.RetrieveDtaFiles())
-                                    {
-                                        // Errors were reported in function call, so just return
-                                        mAnalysisResources.RestoreCachedDataAndJobInfo();
-                                        return false;
-                                    }
-
-                                    // The retrieved file is probably named Dataset_dta.zip
-                                    // We'll add it to lstFoundFiles, but the exact name is not critical
-                                    lstFoundFiles.Add(Path.Combine(workingDir, datasetName + "_dta.zip"));
-                                }
-                            }
-
-                        }
-
-                        if (udtOptions.CreateJobPathFiles)
-                        {
-                            var jobInfoFilePath = GetJobInfoFilePath(dataPkgJob.Job);
-                            using (var swJobInfoFile = new StreamWriter(new FileStream(jobInfoFilePath, FileMode.Append, FileAccess.Write, FileShare.Read)))
-                            {
-                                foreach (var filePath in lstFoundFiles)
-                                {
-                                    swJobInfoFile.WriteLine(filePath);
-                                }
-                            }
-                        }
-                        else
-                        {
-                            // Unzip any mzid files that were found
-
-                            if (zipFileCandidates.Count > 0 || gzipFileCandidates.Count > 0)
-                            {
-                                var unzippedFilePath = string.Empty;
-
-                                foreach (var gzipCandidate in gzipFileCandidates)
-                                {
-                                    var fiFileToUnzip = new FileInfo(Path.Combine(workingDir, gzipCandidate));
-                                    if (fiFileToUnzip.Exists)
-                                    {
-                                        ionicZipTools.GUnzipFile(fiFileToUnzip.FullName);
-                                        unzippedFilePath = MostRecentUnzippedFile(ionicZipTools);
-                                        break;
-                                    }
-                                }
-
-                                if (string.IsNullOrEmpty(unzippedFilePath))
-                                {
-                                    foreach (var zipCandidate in zipFileCandidates)
-                                    {
-                                        var fiFileToUnzip = new FileInfo(Path.Combine(workingDir, zipCandidate));
-                                        if (fiFileToUnzip.Exists)
-                                        {
-                                            ionicZipTools.UnzipFile(fiFileToUnzip.FullName);
-                                            unzippedFilePath = MostRecentUnzippedFile(ionicZipTools);
-                                            break;
-                                        }
-                                    }
-                                }
-
-                                if (string.IsNullOrEmpty(unzippedFilePath))
-                                {
-                                    OnErrorEvent("Could not find either the _msgfplus.zip file or the _msgfplus.mzid.gz file for dataset");
-                                    mAnalysisResources.RestoreCachedDataAndJobInfo();
-                                    return false;
-                                }
-
-                                if (prefixRequired)
-                                {
-                                    if (RenameDuplicatePHRPFile(
-                                        workingDir, datasetName + "_msgfplus.mzid",
-                                        workingDir, "Job" + dataPkgJob.Job + "_",
-                                        dataPkgJob.Job,
-                                        out unzippedFilePath))
-                                    {
-                                    }
-                                    else
-                                    {
-                                        mAnalysisResources.RestoreCachedDataAndJobInfo();
-                                        return false;
-                                    }
-                                }
-
-                                lstFoundFiles.Add(unzippedFilePath);
-
-                            }
-
-                            if (!string.IsNullOrWhiteSpace(zippedPepXmlFile))
-                            {
-                                // Unzip _pepXML.zip if it exists
-                                var fiFileToUnzip = new FileInfo(Path.Combine(workingDir, zippedPepXmlFile));
-                                if (fiFileToUnzip.Exists)
-                                {
-                                    ionicZipTools.UnzipFile(fiFileToUnzip.FullName);
-                                    lstFoundFiles.Add(MostRecentUnzippedFile(ionicZipTools));
-                                }
-                            }
                         }
 
                     }
@@ -1058,8 +1154,7 @@ namespace AnalysisManagerBase
                     OnProgressUpdate("RetrieveDataPackagePeptideHitJobPHRPFiles (PeptideHit Jobs)", sngProgress);
 
 
-                }
-                // dataPkgJob in lstDataPackagePeptideHitJobs
+                } // dataPkgJob in lstDataPackagePeptideHitJobs
 
                 // Now process the additional jobs to retrieve the instrument data for each one
 
@@ -1083,30 +1178,34 @@ namespace AnalysisManagerBase
                     OnProgressUpdate("RetrieveDataPackagePeptideHitJobPHRPFiles (Additional Jobs)", sngProgress);
 
 
-                }
-                // in lstAdditionalJobs
+                } // in lstAdditionalJobs
 
                 // Look for any datasets that are associated with this data package yet have no jobs
                 foreach (var datasetItem in dctDataPackageDatasets)
                 {
-                    if (!dctRawFileRetrievalCommands.ContainsKey(datasetItem.Key))
+                    if (dctRawFileRetrievalCommands.ContainsKey(datasetItem.Key))
+                        continue;
+
+                    var dataPkgJob = clsAnalysisResources.GetPseudoDataPackageJobInfo(datasetItem.Value);
+                    dataPkgJob.ResultsFolderName = "Undefined_Folder";
+
+                    if (!mAnalysisResources.OverrideCurrentDatasetAndJobInfo(dataPkgJob))
                     {
-                        var dataPkgJob = clsAnalysisResources.GetPseudoDataPackageJobInfo(datasetItem.Value);
-                        dataPkgJob.ResultsFolderName = "Undefined_Folder";
-
-                        if (!mAnalysisResources.OverrideCurrentDatasetAndJobInfo(dataPkgJob))
-                        {
-                            // Error message has already been logged
-                            mAnalysisResources.RestoreCachedDataAndJobInfo();
-                            return false;
-                        }
-
-                        if (!RetrieveDataPackageInstrumentFile(dataPkgJob, udtOptions, dctRawFileRetrievalCommands, dctInstrumentDataToRetrieve, dctDatasetRawFilePaths))
-                        {
-                            mAnalysisResources.RestoreCachedDataAndJobInfo();
-                            return false;
-                        }
+                        // Error message has already been logged
+                        mAnalysisResources.RestoreCachedDataAndJobInfo();
+                        return false;
                     }
+
+                    if (!RetrieveDataPackageInstrumentFile(dataPkgJob, udtOptions, dctRawFileRetrievalCommands, dctInstrumentDataToRetrieve, dctDatasetRawFilePaths))
+                    {
+                        mAnalysisResources.RestoreCachedDataAndJobInfo();
+                        return false;
+                    }
+                }
+
+                if (cachedJobMetadata.Count > 0 && cachedJobMetadata.Count != cachedMetadataCountAtStart)
+                {
+                    SaveCachedDataPkgJobMetadata(dataPkgJobMetadataFile, cachedJobMetadata);
                 }
 
                 // Restore the dataset and job info for this aggregation job
@@ -1142,33 +1241,30 @@ namespace AnalysisManagerBase
                     var success = RetrieveDataPackageMzXMLFiles(dctInstrumentDataToRetrieve, udtOptions);
                     return success;
                 }
-                else
-                {
-                    return true;
-                }
 
+                return true;
             }
             catch (Exception ex)
             {
-                OnErrorEvent("RetrieveDataPackagePeptideHitJobPHRPFiles; Exception during copy of file: " + sourceFilename + " from folder " + sourceFolderPath, ex);
+                OnErrorEvent("Error in RetrieveDataPackagePeptideHitJobPHRPFiles", ex);
                 return false;
             }
 
         }
 
-
         /// <summary>
         /// Look for the .mzXML and/or .raw file
         /// </summary>
-        /// <param name="dataPkgJob"></param>
-        /// <param name="udtOptions"></param>
+        /// <param name="dataPkgJob">Data package job info</param>
+        /// <param name="udtOptions">File retrieval options</param>
         /// <param name="dctRawFileRetrievalCommands">Commands to copy .raw files to the local computer (to be placed in a batch file)</param>
         /// <param name="dctInstrumentDataToRetrieve">Instrument files that need to be copied locally so that an mzXML file can be made</param>
         /// <param name="dctDatasetRawFilePaths">Mapping of dataset name to the remote location of the .raw file</param>
         /// <returns></returns>
         /// <remarks></remarks>
         private bool RetrieveDataPackageInstrumentFile(
-            clsDataPackageJobInfo dataPkgJob, udtDataPackageRetrievalOptionsType udtOptions,
+            clsDataPackageJobInfo dataPkgJob,
+            udtDataPackageRetrievalOptionsType udtOptions,
             IDictionary<int, string> dctRawFileRetrievalCommands,
             IDictionary<clsDataPackageJobInfo,
             KeyValuePair<string, string>> dctInstrumentDataToRetrieve,
@@ -1378,6 +1474,187 @@ namespace AnalysisManagerBase
 
             return success;
 
+        }
+
+        private Dictionary<int, udtDataPackageJobMetadata> LoadCachedDataPkgJobMetadata(
+            FileSystemInfo dataPkgJobMetadataFile)
+        {
+            var cachedJobMetadata = new Dictionary<int, udtDataPackageJobMetadata>();
+
+            try
+            {
+                if (!dataPkgJobMetadataFile.Exists)
+                    return cachedJobMetadata;
+
+                using (var reader = new StreamReader(
+                    new FileStream(dataPkgJobMetadataFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                {
+
+                    var headersParsed = false;
+                    var jobColIndex = 0;
+                    var mzMlUsedColIndex = 0;
+
+                    while (!reader.EndOfStream)
+                    {
+                        var dataline = reader.ReadLine();
+                        if (string.IsNullOrWhiteSpace(dataline))
+                            continue;
+
+                        var dataList = dataline.Split('\t');
+
+                        if (!headersParsed)
+                        {
+                            var requiredColumns = new List<string> {"Job", "SearchUsedmzML"};
+
+                            var dctHeaderMapping = clsGlobal.ParseHeaderLine(dataline, requiredColumns);
+
+                            foreach (var column in requiredColumns)
+                            {
+                                if (dctHeaderMapping[column] >= 0) continue;
+                                OnWarningEvent(string.Format("{0} column not found in {1}", column, dataPkgJobMetadataFile.FullName));
+                                return cachedJobMetadata;
+                            }
+
+                            jobColIndex = dctHeaderMapping["Job"];
+                            mzMlUsedColIndex = dctHeaderMapping["SearchUsedmzML"];
+
+                            headersParsed = true;
+
+                            continue;
+                        }
+
+                        if (!clsGlobal.TryGetValueInt(dataList, jobColIndex, out var job))
+                            continue;
+
+                        if (!clsGlobal.TryGetValue(dataList, mzMlUsedColIndex, out var searchUsedmzML))
+                            continue;
+
+                        var jobMetadata = new udtDataPackageJobMetadata
+                        {
+                            SearchUsedmzML = bool.Parse(searchUsedmzML)
+                        };
+
+                        cachedJobMetadata.Add(job, jobMetadata);
+                    }
+
+                }
+            }
+            catch (Exception ex)
+            {
+                OnErrorEvent("Error in LoadCachedDataPkgJobMetadata", ex);
+            }
+
+            return cachedJobMetadata;
+        }
+
+        private void SaveCachedDataPkgJobMetadata(
+            FileInfo dataPkgJobMetadataFile,
+            Dictionary<int, udtDataPackageJobMetadata> cachedJobMetadata)
+        {
+            try
+            {
+                clsGlobal.CreateDirectoryIfMissing(dataPkgJobMetadataFile.DirectoryName);
+
+                using (var writer = new StreamWriter(
+                    new FileStream(dataPkgJobMetadataFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                {
+                    // Write the header line
+                    writer.WriteLine(string.Join("\t",
+                        new List<string> { "Job", "SearchUsedmzML" }));
+
+                    foreach (var item in cachedJobMetadata)
+                    {
+                        writer.WriteLine(string.Join("\t",
+                            new List<string> { item.Key.ToString(), item.Value.SearchUsedmzML.ToString() }));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                OnErrorEvent("Error in SaveCachedDataPkgJobMetadata", ex);
+            }
+        }
+
+        private bool UnzipFiles(
+            clsIonicZipTools ionicZipTools,
+            string workingDir,
+            bool prefixRequired,
+            clsDataPackageJobInfo dataPkgJob,
+            ICollection<string> lstFoundFiles,
+            ICollection<string> zipFileCandidates,
+            ICollection<string> gzipFileCandidates,
+            string zippedPepXmlFile)
+        {
+            // Unzip any mzid files that were found
+
+            if (zipFileCandidates.Count > 0 || gzipFileCandidates.Count > 0)
+            {
+                var unzippedFilePath = string.Empty;
+
+                foreach (var gzipCandidate in gzipFileCandidates)
+                {
+                    var fiFileToUnzip = new FileInfo(Path.Combine(workingDir, gzipCandidate));
+                    if (fiFileToUnzip.Exists)
+                    {
+                        ionicZipTools.GUnzipFile(fiFileToUnzip.FullName);
+                        unzippedFilePath = MostRecentUnzippedFile(ionicZipTools);
+                        break;
+                    }
+                }
+
+                if (string.IsNullOrEmpty(unzippedFilePath))
+                {
+                    foreach (var zipCandidate in zipFileCandidates)
+                    {
+                        var fiFileToUnzip = new FileInfo(Path.Combine(workingDir, zipCandidate));
+                        if (fiFileToUnzip.Exists)
+                        {
+                            ionicZipTools.UnzipFile(fiFileToUnzip.FullName);
+                            unzippedFilePath = MostRecentUnzippedFile(ionicZipTools);
+                            break;
+                        }
+                    }
+                }
+
+                if (string.IsNullOrEmpty(unzippedFilePath))
+                {
+                    OnErrorEvent("Could not find either the _msgfplus.zip file or the _msgfplus.mzid.gz file for dataset");
+                    mAnalysisResources.RestoreCachedDataAndJobInfo();
+                    return false;
+                }
+
+                if (prefixRequired)
+                {
+                    if (RenameDuplicatePHRPFile(
+                        workingDir, dataPkgJob.Dataset + "_msgfplus.mzid",
+                        workingDir, "Job" + dataPkgJob.Job + "_",
+                        dataPkgJob.Job,
+                        out unzippedFilePath))
+                    {
+                    }
+                    else
+                    {
+                        mAnalysisResources.RestoreCachedDataAndJobInfo();
+                        return false;
+                    }
+                }
+
+                lstFoundFiles.Add(unzippedFilePath);
+
+            }
+
+            if (!string.IsNullOrWhiteSpace(zippedPepXmlFile))
+            {
+                // Unzip _pepXML.zip if it exists
+                var fiFileToUnzip = new FileInfo(Path.Combine(workingDir, zippedPepXmlFile));
+                if (fiFileToUnzip.Exists)
+                {
+                    ionicZipTools.UnzipFile(fiFileToUnzip.FullName);
+                    lstFoundFiles.Add(MostRecentUnzippedFile(ionicZipTools));
+                }
+            }
+
+            return true;
         }
 
         #region "Event Handlers"
