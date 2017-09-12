@@ -1231,15 +1231,15 @@ namespace AnalysisManagerBase
                     return true;
 
                 }
-                catch (UnauthorizedAccessException Err1)
+                catch (UnauthorizedAccessException ex1)
                 {
                     // File may be read-only. Clear read-only flag and try again
                     if (debugLevel > 0)
                     {
-                        clsGlobal.LogDebug("File " + fileNamePath + " exception ERR1: " + Err1.Message);
-                        if ((Err1.InnerException != null))
+                        clsGlobal.LogDebug("File " + fileNamePath + " exception ERR1: " + ex1.Message);
+                        if (ex1.InnerException != null)
                         {
-                            clsGlobal.LogDebug("Inner exception: " + Err1.InnerException.Message);
+                            clsGlobal.LogDebug("Inner exception: " + ex1.InnerException.Message);
                         }
                         clsGlobal.LogDebug("File " + fileNamePath + " may be read-only, attribute reset attempt #" + retryCount);
                     }
@@ -1248,15 +1248,15 @@ namespace AnalysisManagerBase
                     retryCount += 1;
 
                 }
-                catch (IOException Err2)
+                catch (IOException ex2)
                 {
                     // If problem is locked file, attempt to fix lock and retry
                     if (debugLevel > 0)
                     {
-                        clsGlobal.LogDebug("File " + fileNamePath + " exception ERR2: " + Err2.Message);
-                        if ((Err2.InnerException != null))
+                        clsGlobal.LogDebug("File " + fileNamePath + " exception ERR2: " + ex2.Message);
+                        if (ex2.InnerException != null)
                         {
-                            clsGlobal.LogDebug("Inner exception: " + Err2.InnerException.Message);
+                            clsGlobal.LogDebug("Inner exception: " + ex2.InnerException.Message);
                         }
                         clsGlobal.LogDebug("Error deleting file " + fileNamePath + ", attempt #" + retryCount);
                     }
@@ -1270,11 +1270,11 @@ namespace AnalysisManagerBase
                     retryCount += 1;
 
                 }
-                catch (Exception Err3)
+                catch (Exception ex3)
                 {
-                    var msg = "Error deleting file, exception ERR3 " + fileNamePath + Err3.Message;
+                    var msg = "Error deleting file, exception ERR3 " + fileNamePath + ex3.Message;
                     clsGlobal.LogError(msg);
-                    throw new AMFileNotDeletedException(fileNamePath, Err3.Message);
+                    throw new AMFileNotDeletedException(fileNamePath, ex3.Message);
                 }
             }
 
@@ -3199,6 +3199,7 @@ namespace AnalysisManagerBase
                 Thread.Sleep(250);
                 fiUpdatedFile.MoveTo(finalFilePath);
 
+                return true;
             }
             catch (Exception ex)
             {
@@ -3209,8 +3210,6 @@ namespace AnalysisManagerBase
 
                 return false;
             }
-
-            return true;
 
         }
 
@@ -3447,43 +3446,50 @@ namespace AnalysisManagerBase
             return success;
         }
 
-        protected bool SortTextFile(string textFilePath, string mergedFilePath, bool hasHeaderLine)
+        /// <summary>
+        /// Sort a text file
+        /// </summary>
+        /// <param name="textFilePath">File to sort</param>
+        /// <param name="sortedFilePath">File to write the sorted data to</param>
+        /// <param name="hasHeaderLine">True if the source file has a header line</param>
+        /// <returns></returns>
+        protected bool SortTextFile(string textFilePath, string sortedFilePath, bool hasHeaderLine)
         {
             try
             {
-                var sortUtility = new FlexibleFileSortUtility.TextFileSorter();
-
                 mLastSortUtilityProgress = DateTime.UtcNow;
                 mSortUtilityErrorMessage = string.Empty;
 
-                sortUtility.WorkingDirectoryPath = m_WorkDir;
-                sortUtility.HasHeaderLine = hasHeaderLine;
-                sortUtility.ColumnDelimiter = "\t";
-                sortUtility.MaxFileSizeMBForInMemorySort = FlexibleFileSortUtility.TextFileSorter.DEFAULT_IN_MEMORY_SORT_MAX_FILE_SIZE_MB;
-                sortUtility.ChunkSizeMB = FlexibleFileSortUtility.TextFileSorter.DEFAULT_CHUNK_SIZE_MB;
+                var sortUtility = new FlexibleFileSortUtility.TextFileSorter
+                {
+                    WorkingDirectoryPath = m_WorkDir,
+                    HasHeaderLine = hasHeaderLine,
+                    ColumnDelimiter = "\t",
+                    MaxFileSizeMBForInMemorySort = FlexibleFileSortUtility.TextFileSorter.DEFAULT_IN_MEMORY_SORT_MAX_FILE_SIZE_MB,
+                    ChunkSizeMB = FlexibleFileSortUtility.TextFileSorter.DEFAULT_CHUNK_SIZE_MB
+                };
+
 
                 sortUtility.ProgressChanged += mSortUtility_ProgressChanged;
                 sortUtility.ErrorEvent += mSortUtility_ErrorEvent;
                 sortUtility.WarningEvent += mSortUtility_WarningEvent;
                 sortUtility.MessageEvent += mSortUtility_MessageEvent;
 
-                var success = sortUtility.SortFile(textFilePath, mergedFilePath);
+                var success = sortUtility.SortFile(textFilePath, sortedFilePath);
 
-                if (!success)
+                if (success)
+                    return true;
+
+                if (string.IsNullOrWhiteSpace(mSortUtilityErrorMessage))
                 {
-                    if (string.IsNullOrWhiteSpace(mSortUtilityErrorMessage))
-                    {
-                        m_message = "Unknown error sorting " + Path.GetFileName(textFilePath);
-                    }
-                    else
-                    {
-                        m_message = mSortUtilityErrorMessage;
-                    }
-                    return false;
+                    m_message = "Unknown error sorting " + Path.GetFileName(textFilePath);
+                }
+                else
+                {
+                    m_message = mSortUtilityErrorMessage;
                 }
 
-                return true;
-
+                return false;
             }
             catch (Exception ex)
             {

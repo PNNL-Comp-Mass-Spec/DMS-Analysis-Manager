@@ -38,7 +38,6 @@ namespace AnalysisManagerBase
         /// </summary>
         private readonly IMgrParams m_mgrParams;
 
-        private readonly string m_MgrName;
         #endregion
 
         #region "Properties"
@@ -62,10 +61,10 @@ namespace AnalysisManagerBase
 
             m_mgrParams = mgrParams;
             m_jobParams = jobParams;
-            m_MgrName = m_mgrParams.GetParam("MgrName", Environment.MachineName + "_Undefined-Manager");
-            m_DebugLevel = (short)(m_mgrParams.GetParam("debuglevel", 1));
+            var mgrName = m_mgrParams.GetParam("MgrName", Environment.MachineName + "_Undefined-Manager");
+            m_DebugLevel = (short)m_mgrParams.GetParam("debuglevel", 1);
 
-            InitFileTools(m_MgrName, m_DebugLevel);
+            InitFileTools(mgrName, m_DebugLevel);
 
         }
 
