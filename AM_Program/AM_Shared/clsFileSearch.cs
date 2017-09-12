@@ -2602,7 +2602,7 @@ namespace AnalysisManagerBase
 
                         // Determine the R, X, and Y coordinates for this .Zip file
 
-                        if (GetBrukerImagingFileCoords(zipFilePathRemote, reRegExRXY, reRegExRX, out var coordR, out var coordX, out var coordY))
+                        if (GetBrukerImagingFileCoords(zipFilePathRemote, reRegExRXY, reRegExRX, out _, out var coordX, out _))
                         {
                             // Compare to startSectionX and endSectionX
                             if (coordX >= startSectionX && coordX <= endSectionX)

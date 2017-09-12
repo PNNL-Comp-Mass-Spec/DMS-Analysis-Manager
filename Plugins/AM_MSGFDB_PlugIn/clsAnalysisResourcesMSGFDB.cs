@@ -399,7 +399,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (lstColumnIndicesToCheck.Count == 0)
                 {
-                    if (float.TryParse(headerColumns[0], out var sngValue) || float.TryParse(headerColumns[1], out sngValue))
+                    if (float.TryParse(headerColumns[0], out var _) || float.TryParse(headerColumns[1], out _))
                     {
                         // This file does not have a header line
                         if (headerColumns.Count >= 11)
@@ -492,7 +492,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return true;
                 }
 
-                if (!float.TryParse(lstColumns[0], out var sngValue) && !float.TryParse(lstColumns[1], out sngValue))
+                if (!float.TryParse(lstColumns[0], out var _) && !float.TryParse(lstColumns[1], out _))
                     return false;
 
                 // This file does not have a header line

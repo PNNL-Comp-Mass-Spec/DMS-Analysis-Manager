@@ -86,8 +86,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
-            string strRawDataType = null;
-            strRawDataType = m_jobParams.GetParam("RawDataType");
+            var strRawDataType = m_jobParams.GetParam("RawDataType");
 
             if (strRawDataType.ToLower() == RAW_DATA_TYPE_DOT_UIMF_FILES)
             {
@@ -102,18 +101,16 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
                     LogDebug("clsAnalysisResourcesDecon2ls.GetResources: Error occurred retrieving spectra.");
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
-                else
+
+                if (m_DebugLevel >= 1)
                 {
-                    if (m_DebugLevel >= 1)
-                    {
-                        LogDebug("Retrieved .UIMF file");
-                    }
+                    LogDebug("Retrieved .UIMF file");
                 }
 
                 m_jobParams.AddResultFileExtensionToSkip(DOT_UIMF_EXTENSION);
             }
 
-            if (!base.ProcessMyEMSLDownloadQueue(m_WorkingDir, Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, Downloader.DownloadFolderLayout.FlatNoSubfolders))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -139,12 +136,11 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
 
         private string GetValue(string strLine)
         {
-            var intEqualsIndex = 0;
             var strValue = string.Empty;
 
             if (!string.IsNullOrEmpty(strLine))
             {
-                intEqualsIndex = strLine.IndexOf('=');
+                var intEqualsIndex = strLine.IndexOf('=');
                 if (intEqualsIndex > 0 && intEqualsIndex < strLine.Length - 1)
                 {
                     strValue = strLine.Substring(intEqualsIndex + 1);
@@ -168,9 +164,6 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
             var TargetFilePath = Path.Combine(m_WorkingDir, strLCMSFFIniFileName + "_new");
             var IsosFilePath = Path.Combine(m_WorkingDir, DatasetName + ISOS_FILE_SUFFIX);
 
-            string strLineIn = null;
-            string strLineInLCase = null;
-
             var blnInputFileDefined = false;
             var blnOutputDirectoryDefined = false;
 
@@ -188,12 +181,12 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
                         {
                             while (!srInFile.EndOfStream)
                             {
-                                strLineIn = srInFile.ReadLine();
+                                var strLineIn = srInFile.ReadLine();
 
                                 if (strLineIn == null)
                                     continue;
 
-                                strLineInLCase = strLineIn.ToLower().Trim();
+                                var strLineInLCase = strLineIn.ToLower().Trim();
 
                                 if (strLineInLCase.StartsWith(INPUT_FILENAME_KEY.ToLower()))
                                 {
@@ -226,12 +219,10 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
                                             result = false;
                                             break;
                                         }
-                                        else
-                                        {
-                                            // Copy the file locally
-                                            var strTargetFilePath = Path.Combine(m_WorkingDir, fiFileInfo.Name);
-                                            fiFileInfo.CopyTo(strTargetFilePath);
-                                        }
+
+                                        // Copy the file locally
+                                        var strTargetFilePath = Path.Combine(m_WorkingDir, fiFileInfo.Name);
+                                        fiFileInfo.CopyTo(strTargetFilePath);
                                     }
                                 }
 

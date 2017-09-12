@@ -70,26 +70,26 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <remarks>Nothing is appended if proteinName is not found in mProteins</remarks>
         public void WriteProteinToFasta(StreamWriter fastaWriter, string proteinName)
         {
-            if (mProteins.TryGetValue(proteinName, out var kvDetails))
+            if (!mProteins.TryGetValue(proteinName, out var kvDetails))
+                return;
+
+            fastaWriter.WriteLine(">" + proteinName + " " + kvDetails.Key);
+
+            var proteinResidues = kvDetails.Value;
+            var startIndex = 0;
+
+            while (startIndex < proteinResidues.Length)
             {
-                fastaWriter.WriteLine(">" + proteinName + " " + kvDetails.Key);
-
-                var proteinResidues = kvDetails.Value;
-                var startIndex = 0;
-
-                while (startIndex < proteinResidues.Length)
+                if (startIndex + 60 < proteinResidues.Length)
                 {
-                    if (startIndex + 60 < proteinResidues.Length)
-                    {
-                        fastaWriter.WriteLine(proteinResidues.Substring(startIndex, 60));
-                    }
-                    else
-                    {
-                        fastaWriter.WriteLine(proteinResidues.Substring(startIndex));
-                    }
-
-                    startIndex += 60;
+                    fastaWriter.WriteLine(proteinResidues.Substring(startIndex, 60));
                 }
+                else
+                {
+                    fastaWriter.WriteLine(proteinResidues.Substring(startIndex));
+                }
+
+                startIndex += 60;
             }
         }
     }
