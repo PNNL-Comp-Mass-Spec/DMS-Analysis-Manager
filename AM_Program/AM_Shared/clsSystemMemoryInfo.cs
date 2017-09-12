@@ -16,7 +16,7 @@ namespace AnalysisManagerBase
 
         private DateTime mLastDebugInfoTime;
 
-        private readonly PRISM.clsLinuxSystemInfo mLinuxSystemInfo;
+        private readonly clsLinuxSystemInfo mLinuxSystemInfo;
 
         /// <summary>
         /// Constructor
@@ -27,7 +27,7 @@ namespace AnalysisManagerBase
 
             mLastDebugInfoTime = DateTime.UtcNow.AddMinutes(-1);
 
-            mLinuxSystemInfo = new PRISM.clsLinuxSystemInfo(LIMIT_LOGGING_BY_TIME_OF_DAY);
+            mLinuxSystemInfo = new clsLinuxSystemInfo(LIMIT_LOGGING_BY_TIME_OF_DAY);
         }
 
         /// <summary>
@@ -116,27 +116,37 @@ namespace AnalysisManagerBase
                 // running under VMWare on PIC (machine name will be Pub-1000, Pub-1001, etc.)
                 // Try using SystemMemoryLookup instead
 
-                try
-                {
-                    var memInfo = new SystemMemoryLookup();
-                    var memData = memInfo.MemoryStatus;
-
-                    var freeMemoryMB = (float)(memData.ullAvailPhys / 1024.0 / 1024.0);
-
-                    if (showDebugInfo)
-                        OnDebugEvent("Available memory from VB: " + freeMemoryMB + " MB");
-
-                    return freeMemoryMB;
-                }
-                catch (Exception ex2)
-                {
-                    if (showDebugInfo)
-                        ConditionalLogError("Error in SystemMemoryUsage using SystemMemoryLookup", ex2);
-
-                    return -1;
-                }
+                return GetGlobalMemoryStatusWindows(showDebugInfo);
             }
 
+        }
+
+        /// <summary>
+        /// Get global memory usage on Windows using GlobalMemoryStatusEx in kernel32.dll
+        /// </summary>
+        /// <param name="showDebugInfo"></param>
+        /// <returns></returns>
+        public float GetGlobalMemoryStatusWindows(bool showDebugInfo)
+        {
+            try
+            {
+                var memInfo = new SystemMemoryLookup();
+                var memData = memInfo.MemoryStatus;
+
+                var freeMemoryMB = (float)(memData.ullAvailPhys / 1024.0 / 1024.0);
+
+                if (showDebugInfo)
+                    OnDebugEvent("Available memory from VB: " + freeMemoryMB + " MB");
+
+                return freeMemoryMB;
+            }
+            catch (Exception ex2)
+            {
+                if (showDebugInfo)
+                    ConditionalLogError("Error in SystemMemoryUsage using SystemMemoryLookup", ex2);
+
+                return -1;
+            }
         }
 
         private void ConditionalLogError(string message, Exception ex = null)
@@ -162,17 +172,6 @@ namespace AnalysisManagerBase
             /// Memory status
             /// </summary>
             public readonly MemoryStatusEx MemoryStatus;
-            private const int MemoryTightConst = 80;
-
-            public bool isMemoryTight()
-            {
-                if (MemoryLoad > MemoryTightConst)
-                    return true;
-                else
-                    return false;
-            }
-
-            private uint MemoryLoad { get; }
 
             /// <summary>
             /// Constructor
@@ -180,10 +179,10 @@ namespace AnalysisManagerBase
             public SystemMemoryLookup()
             {
                 MemoryStatus = new MemoryStatusEx();
+
                 if (GlobalMemoryStatusEx(MemoryStatus))
                 {
-                    MemoryLoad = MemoryStatus.dwMemoryLoad;
-                    // etc.. Repeat for other structure members
+                    // Memory status updated
                 }
                 else
                 {

@@ -1566,8 +1566,16 @@ namespace AnalysisManagerProg
             var sngFreeMemoryMB = clsGlobal.GetFreeMemoryMB();
 
             Console.WriteLine();
-            Console.WriteLine("Available memory (MB) = " + sngFreeMemoryMB.ToString("0.0"));
+            Console.WriteLine("Available memory (MB) = {0:F1}", sngFreeMemoryMB);
 
+            if (clsGlobal.LinuxOS)
+                return;
+
+            var systemMemoryInfo = new SystemMemoryInfo();
+            var freeMemoryMBAlt = systemMemoryInfo.GetGlobalMemoryStatusWindows(true);
+
+            Console.WriteLine();
+            Console.WriteLine("Available memory (MB) = {0:F1} (from kernel32.dll)", freeMemoryMBAlt);
         }
 
         /// <summary>
