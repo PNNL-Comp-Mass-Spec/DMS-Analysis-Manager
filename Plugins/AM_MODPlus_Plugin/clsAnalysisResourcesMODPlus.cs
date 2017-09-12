@@ -11,17 +11,28 @@ using AnalysisManagerBase;
 
 namespace AnalysisManagerMODPlusPlugin
 {
+
+    /// <summary>
+    /// Retrieve resources for the MODPlus plugin
+    /// </summary>
     public class clsAnalysisResourcesMODPlus : clsAnalysisResources
     {
         internal const string MOD_PLUS_RUNTIME_PARAM_FASTA_FILE_IS_DECOY = "###_MODPlus_Runtime_Param_FastaFileIsDecoy_###";
         internal const int MINIMUM_PERCENT_DECOY = 25;
 
+        /// <summary>
+        /// Initialize options
+        /// </summary>
         public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsMyEMSLUtilities myEMSLUtilities)
         {
             base.Setup(stepToolName, mgrParams, jobParams, statusTools, myEMSLUtilities);
             SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, true);
         }
 
+        /// <summary>
+        /// Retrieve required files
+        /// </summary>
+        /// <returns>Closeout code</returns>
         public override CloseOutType GetResources()
         {
             var currentTask = "Initializing";

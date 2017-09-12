@@ -3,12 +3,13 @@ using AnalysisManagerBase;
 
 namespace AnalysisManagerMasicPlugin
 {
+    /// <summary>
+    /// Retrieve resources for the MASIC plugin
+    /// </summary>
     public class clsAnalysisResourcesMASIC : clsAnalysisResources
     {
-        #region "Methods"
-
         /// <summary>
-        /// Retrieves files necessary for performance of Sequest analysis
+        /// Retrieves files necessary for MASIC
         /// </summary>
         /// <returns>CloseOutType indicating success or failure</returns>
         /// <remarks></remarks>
@@ -98,6 +99,5 @@ namespace AnalysisManagerMasicPlugin
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        #endregion
     }
 }

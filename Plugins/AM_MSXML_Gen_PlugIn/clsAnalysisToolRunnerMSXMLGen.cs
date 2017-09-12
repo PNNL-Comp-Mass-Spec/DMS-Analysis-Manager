@@ -13,12 +13,11 @@ using AnalysisManagerBase;
 
 namespace AnalysisManagerMsXmlGenPlugIn
 {
+    /// <summary>
+    /// Class for running MS XML generator to generate mzXML or .mzML files
+    /// </summary>
     public class clsAnalysisToolRunnerMSXMLGen : clsAnalysisToolRunnerBase
     {
-        //*********************************************************************************************************
-        // Class for running MS XML generator
-        // Currently used to generate MZXML or MZML files
-        //*********************************************************************************************************
 
         #region "Module Variables"
 
@@ -38,7 +37,6 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// Runs ReAdW or MSConvert
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
             var result = CloseOutType.CLOSEOUT_SUCCESS;

@@ -57,7 +57,6 @@ namespace AnalysisManagerExtractionPlugin
         /// Runs the data extraction tool(s)
         /// </summary>
         /// <returns>CloseOutType representing success or failure</returns>
-        /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
 

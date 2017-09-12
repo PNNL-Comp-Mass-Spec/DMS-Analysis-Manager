@@ -3,15 +3,15 @@ using AnalysisManagerBase;
 
 namespace AnalysisManagerMsXmlGenPlugIn
 {
+    /// <summary>
+    /// Retrieve resources for the MSXMLGen plugin
+    /// </summary>
     public class clsAnalysisResourcesMSXMLGen : clsAnalysisResources
     {
-        #region "Methods"
-
         /// <summary>
         /// Retrieves files necessary for creating the .mzXML file
         /// </summary>
         /// <returns>CloseOutType indicating success or failure</returns>
-        /// <remarks></remarks>
         public override CloseOutType GetResources()
         {
             var currentTask = "Initializing";
@@ -145,6 +145,5 @@ namespace AnalysisManagerMsXmlGenPlugIn
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        #endregion
     }
 }

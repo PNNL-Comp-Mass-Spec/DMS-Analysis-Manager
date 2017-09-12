@@ -20,10 +20,29 @@ namespace AnalysisManagerBase
     /// </summary>
     public enum EnumMgrStatus : short
     {
+        /// <summary>
+        /// Stopped
+        /// </summary>
         STOPPED,
+
+        /// <summary>
+        /// Stopped
+        /// </summary>
         STOPPED_ERROR,
+
+        /// <summary>
+        /// Running
+        /// </summary>
         RUNNING,
+
+        /// <summary>
+        /// Disabled
+        /// </summary>
         DISABLED_LOCAL,
+
+        /// <summary>
+        /// Disabled
+        /// </summary>
         DISABLED_MC
     }
 
@@ -32,11 +51,34 @@ namespace AnalysisManagerBase
     /// </summary>
     public enum EnumTaskStatus : short
     {
+        /// <summary>
+        /// Stopped
+        /// </summary>
         STOPPED,
+
+        /// <summary>
+        /// Requesting
+        /// </summary>
         REQUESTING,
+
+        /// <summary>
+        /// Running
+        /// </summary>
         RUNNING,
+
+        /// <summary>
+        /// Closing
+        /// </summary>
         CLOSING,
+
+        /// <summary>
+        /// Failed
+        /// </summary>
         FAILED,
+
+        /// <summary>
+        /// No
+        /// </summary>
         NO_TASK
     }
 
@@ -45,13 +87,37 @@ namespace AnalysisManagerBase
     /// </summary>
     public enum EnumTaskStatusDetail : short
     {
+        /// <summary>
+        /// Retrieving resources
+        /// </summary>
         RETRIEVING_RESOURCES,
+
+        /// <summary>
+        /// Running tool
+        /// </summary>
         RUNNING_TOOL,
+
+        /// <summary>
+        /// Packaging results
+        /// </summary>
         PACKAGING_RESULTS,
+
+        /// <summary>
+        /// Delivering results
+        /// </summary>
         DELIVERING_RESULTS,
+
+        /// <summary>
+        /// Closing
+        /// </summary>
         CLOSING,
+
+        /// <summary>
+        /// No task
+        /// </summary>
         NO_TASK
     }
+
     #endregion
 
     /// <summary>

@@ -3,6 +3,10 @@ using System.Collections.Generic;
 
 namespace AnalysisManagerBase
 {
+    /// <summary>
+    /// System process info
+    /// </summary>
+    /// <remarks>Supports both Linux and Windows</remarks>
     public class SystemProcessInfo : PRISM.clsEventNotifier
     {
         private readonly PRISM.clsLinuxSystemInfo mLinuxSystemInfo;
@@ -35,6 +39,10 @@ namespace AnalysisManagerBase
             mWindowsProcessStats?.ClearCachedPerformanceCounterForProcessID(processId);
         }
 
+        /// <summary>
+        /// Report the number of cores
+        /// </summary>
+        /// <returns></returns>
         public int GetCoreCount()
         {
             if (clsGlobal.LinuxOS)
@@ -58,6 +66,12 @@ namespace AnalysisManagerBase
             return mWindowsProcessStats.GetCoreCount();
         }
 
+        /// <summary>
+        /// Determine the core usage for a given process (by name)
+        /// </summary>
+        /// <param name="processName">Process name</param>
+        /// <param name="processIDs">Output: process IDs associated with the process</param>
+        /// <returns></returns>
         public float GetCoreUsageByProcessName(string processName, out List<int> processIDs)
         {
             if (clsGlobal.LinuxOS)
@@ -85,6 +99,11 @@ namespace AnalysisManagerBase
             return mWindowsProcessStats.GetCoreUsageByProcessName(processName, out processIDs);
         }
 
+        /// <summary>
+        /// Determine the core usage for a given process (by ID)
+        /// </summary>
+        /// <param name="processID"></param>
+        /// <returns></returns>
         public float GetCoreUsageByProcessID(int processID)
         {
             if (clsGlobal.LinuxOS)

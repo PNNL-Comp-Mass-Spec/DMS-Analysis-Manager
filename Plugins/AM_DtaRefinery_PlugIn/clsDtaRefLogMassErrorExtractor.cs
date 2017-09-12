@@ -31,6 +31,13 @@ namespace AnalysisManagerDtaRefineryPlugIn
             public double MassErrorPPMRefined;          // Parent Ion Mass Error, after refinement
         }
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="mgrParams"></param>
+        /// <param name="strWorkDir"></param>
+        /// <param name="intDebugLevel"></param>
+        /// <param name="blnPostResultsToDB"></param>
         public clsDtaRefLogMassErrorExtractor(IMgrParams mgrParams, string strWorkDir, short intDebugLevel, bool blnPostResultsToDB)
         {
             m_mgrParams = mgrParams;
@@ -67,11 +74,26 @@ namespace AnalysisManagerDtaRefineryPlugIn
             return sbXml.ToString();
         }
 
+        /// <summary>
+        /// Parse the DTA Refinery log file
+        /// </summary>
+        /// <param name="strDatasetName"></param>
+        /// <param name="intDatasetID"></param>
+        /// <param name="intPSMJob"></param>
+        /// <returns></returns>
         public bool ParseDTARefineryLogFile(string strDatasetName, int intDatasetID, int intPSMJob)
         {
             return ParseDTARefineryLogFile(strDatasetName, intDatasetID, intPSMJob, m_WorkDir);
         }
 
+        /// <summary>
+        /// Parse the DTA Refinery log file
+        /// </summary>
+        /// <param name="strDatasetName"></param>
+        /// <param name="intDatasetID"></param>
+        /// <param name="intPSMJob"></param>
+        /// <param name="strWorkDirPath"></param>
+        /// <returns></returns>
         public bool ParseDTARefineryLogFile(string strDatasetName, int intDatasetID, int intPSMJob, string strWorkDirPath)
         {
             var blnOriginalDistributionSection = false;
@@ -123,8 +145,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
                         if (reMatch.Success)
                         {
-                            double dblMassError;
-                            if (double.TryParse(reMatch.Groups[1].Value, out dblMassError))
+                            if (double.TryParse(reMatch.Groups[1].Value, out var dblMassError))
                             {
                                 if (blnOriginalDistributionSection)
                                 {

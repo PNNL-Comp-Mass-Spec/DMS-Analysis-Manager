@@ -125,7 +125,6 @@ namespace AnalysisManagerMSGFPlugin
         /// Runs MSGF
         /// </summary>
         /// <returns>CloseOutType representing success or failure</returns>
-        /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
 

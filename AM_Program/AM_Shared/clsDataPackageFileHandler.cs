@@ -11,11 +11,18 @@ using PRISM;
 
 namespace AnalysisManagerBase
 {
+
+    /// <summary>
+    /// Data package file handler
+    /// </summary>
     public class clsDataPackageFileHandler : clsEventNotifier
     {
 
         #region "Constants"
 
+        /// <summary>
+        /// Job info file prefix
+        /// </summary>
         public const string JOB_INFO_FILE_PREFIX = "JobInfoFile_Job";
 
         private const string SP_NAME_GET_JOB_STEP_INPUT_FOLDER = "GetJobStepInputFolder";
@@ -26,6 +33,9 @@ namespace AnalysisManagerBase
 
         #region "Structures"
 
+        /// <summary>
+        /// Data package retrieval options
+        /// </summary>
         public struct udtDataPackageRetrievalOptionsType
         {
             /// <summary>
@@ -356,6 +366,12 @@ namespace AnalysisManagerBase
             return GetJobInfoFilePath(job, mAnalysisResources.WorkDir);
         }
 
+        /// <summary>
+        /// Construct the path to the JobInfo file for the given job
+        /// </summary>
+        /// <param name="job"></param>
+        /// <param name="workDirPath"></param>
+        /// <returns></returns>
         public static string GetJobInfoFilePath(int job, string workDirPath)
         {
             return Path.Combine(workDirPath, JOB_INFO_FILE_PREFIX + job + ".txt");
@@ -1575,6 +1591,18 @@ namespace AnalysisManagerBase
             }
         }
 
+        /// <summary>
+        /// Unzip any mzid files that were found
+        /// </summary>
+        /// <param name="ionicZipTools"></param>
+        /// <param name="workingDir"></param>
+        /// <param name="prefixRequired"></param>
+        /// <param name="dataPkgJob"></param>
+        /// <param name="lstFoundFiles"></param>
+        /// <param name="zipFileCandidates"></param>
+        /// <param name="gzipFileCandidates"></param>
+        /// <param name="zippedPepXmlFile"></param>
+        /// <returns></returns>
         private bool UnzipFiles(
             clsIonicZipTools ionicZipTools,
             string workingDir,
@@ -1585,7 +1613,6 @@ namespace AnalysisManagerBase
             ICollection<string> gzipFileCandidates,
             string zippedPepXmlFile)
         {
-            // Unzip any mzid files that were found
 
             if (zipFileCandidates.Count > 0 || gzipFileCandidates.Count > 0)
             {

@@ -9,7 +9,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
     /// <summary>
     /// Class for retrieving files to be submitted to ProteomeXchange
     /// </summary>
-    /// <remarks>Named PRIDEConverter due us previously pushing data to PRIDE</remarks>
+    /// <remarks>Named PRIDEConverter due to us previously pushing data to PRIDE</remarks>
     public class clsAnalysisResourcesPRIDEConverter : clsAnalysisResources
     {
         /// <summary>
@@ -64,9 +64,9 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         public const string DEFAULT_CACHE_FOLDER_PATH = @"\\protoapps\PeptideAtlas_Staging";
 
         /// <summary>
-        /// Retrieve shared resources, including the JobParameters file from the previous job step
+        /// Retrieve required files
         /// </summary>
-        /// <returns></returns>
+        /// <returns>Closeout code</returns>
         public override CloseOutType GetResources()
         {
 

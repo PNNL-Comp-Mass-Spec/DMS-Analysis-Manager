@@ -27,12 +27,34 @@ namespace AnalysisManagerBase
 
         #region "Enums"
 
+        /// <summary>
+        /// Remote job status
+        /// </summary>
         public enum EnumRemoteJobStatus
         {
+            /// <summary>
+            /// Undefined
+            /// </summary>
             Undefined = 0,
+
+            /// <summary>
+            /// Unstarted
+            /// </summary>
             Unstarted = 1,
+
+            /// <summary>
+            /// Running
+            /// </summary>
             Running = 2,
+
+            /// <summary>
+            /// Success
+            /// </summary>
             Success = 3,
+
+            /// <summary>
+            /// Failed
+            /// </summary>
             Failed = 4
         }
 
@@ -40,6 +62,9 @@ namespace AnalysisManagerBase
 
         #region "Properties"
 
+        /// <summary>
+        /// Debug level
+        /// </summary>
         public int DebugLevel { get; }
 
         /// <summary>
@@ -50,14 +75,23 @@ namespace AnalysisManagerBase
 
         private IJobParams JobParams { get; }
 
+        /// <summary>
+        /// Remote processing progress
+        /// </summary>
         public float RemoteProgress { get; private set; }
 
+        /// <summary>
+        /// Transfer utility
+        /// </summary>
         public clsRemoteTransferUtility TransferUtility { get; }
 
         private IToolRunner ToolRunner { get; }
 
         private clsStatusFile StatusTools { get; }
 
+        /// <summary>
+        /// Working directory
+        /// </summary>
         public string WorkDir { get; }
 
         /// <summary>
@@ -717,17 +751,38 @@ namespace AnalysisManagerBase
 
         #region "Events"
 
+        /// <summary>
+        /// Delegate for StaleJobStatusFileEvent and StaleLockFileEvent
+        /// </summary>
+        /// <param name="fileName"></param>
+        /// <param name="ageHours"></param>
         public delegate void StaleFileEventHandler(string fileName, int ageHours);
 
+        /// <summary>
+        /// Stale job status file event handler
+        /// </summary>
         public event StaleFileEventHandler StaleJobStatusFileEvent;
 
+        /// <summary>
+        /// Stale lock file event handler
+        /// </summary>
         public event StaleFileEventHandler StaleLockFileEvent;
 
+        /// <summary>
+        /// Raise an event indicating that the .jobstatus file is stale (modified over 24 hours ago)
+        /// </summary>
+        /// <param name="fileName"></param>
+        /// <param name="ageHours"></param>
         private void OnStaleJobStatusFileEvent(string fileName, int ageHours)
         {
             StaleJobStatusFileEvent?.Invoke(fileName, ageHours);
         }
 
+        /// <summary>
+        /// Raise an event indicating that the lock file is stale (modified over 24 hours ago)
+        /// </summary>
+        /// <param name="fileName"></param>
+        /// <param name="ageHours"></param>
         private void OnStaleLockFileEvent(string fileName, int ageHours)
         {
             StaleLockFileEvent?.Invoke(fileName, ageHours);

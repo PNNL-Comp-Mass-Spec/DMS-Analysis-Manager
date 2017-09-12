@@ -17,28 +17,71 @@ using AnalysisManagerBase;
 
 namespace AnalysisManagerQCARTPlugin
 {
+
+    /// <summary>
+    /// Retrieve resources for the QC-ART plugin
+    /// </summary>
     public class clsAnalysisResourcesQCART : clsAnalysisResources
     {
+        /// <summary>
+        /// Job parameter tracking the dataset names and jobs to process
+        /// </summary>
         public const string JOB_PARAMETER_QCART_BASELINE_DATASET_NAMES_AND_JOBS = "QC-ART_Baseline_Dataset_NamesAndJobs";
 
+        /// <summary>
+        /// Job parameter tracking the baseline results cache folder
+        /// </summary>
         public const string JOB_PARAMETER_QCART_BASELINE_RESULTS_CACHE_FOLDER = "QC-ART_Baseline_Results_Cache_Folder_Path";
 
+        /// <summary>
+        /// Job parameter tracking the baseline results metadata filename
+        /// </summary>
         public const string JOB_PARAMETER_QCART_BASELINE_METADATA_FILENAME = "QC-ART_Baseline_Metadata_File_Name";
+
+        /// <summary>
+        /// Job parameter tracking the baseline metadata lock file
+        /// </summary>
         public const string JOB_PARAMETER_QCART_BASELINE_METADATA_LOCKFILE = "QC-ART_Baseline_Metadata_LockFilePath";
 
         // Existing baseline results data file name
+        /// <summary>
+        /// Job parameter tracking the baseline results filename
+        /// </summary>
         public const string JOB_PARAMETER_QCART_BASELINE_RESULTS_FILENAME = "QC-ART_Baseline_Results_File_Name";
 
+        /// <summary>
+        /// Job parameter tracking the QC-ART project name
+        /// </summary>
         public const string JOB_PARAMETER_QCART_PROJECT_NAME = "QC-ART_Project_Name";
 
+        /// <summary>
+        /// SMAQC data file name
+        /// </summary>
         public const string SMAQC_DATA_FILE_NAME = "SMAQC_Data.csv";
+
+        /// <summary>
+        /// Reporter ions file suffix
+        /// </summary>
         public const string REPORTER_IONS_FILE_SUFFIX = "_ReporterIons.txt";
 
+        /// <summary>
+        /// QC-ART processing script name
+        /// </summary>
         public const string QCART_PROCESSING_SCRIPT_NAME = "QC-ART_Processing_Script.R";
+
+        /// <summary>
+        /// QC-ART results file suffix
+        /// </summary>
         public const string QCART_RESULTS_FILE_SUFFIX = "_QC-ART.txt";
 
+        /// <summary>
+        /// New baseline datasets metadata file
+        /// </summary>
         public const string NEW_BASELINE_DATASETS_METADATA_FILE = "NewBaselineDatasets_Metadata.csv";
 
+        /// <summary>
+        /// New baseline datasets cache file
+        /// </summary>
         public const string NEW_BASELINE_DATASETS_CACHE_FILE = "NewBaselineDatasets_Data_Cache.csv";
 
         private string mProjectName;
@@ -53,6 +96,10 @@ namespace AnalysisManagerQCARTPlugin
             mTargetDatasetFraction = 0;
         }
 
+        /// <summary>
+        /// Retrieve required files
+        /// </summary>
+        /// <returns>Closeout code</returns>
         public override CloseOutType GetResources()
         {
 
@@ -517,7 +564,13 @@ namespace AnalysisManagerQCARTPlugin
 
         }
 
-        public static string GetBaselineMetadataFilePath(string outputFolderPath, string baselineMetadataKey)
+        /// <summary>
+        /// Construct the baseline metadata file path
+        /// </summary>
+        /// <param name="outputFolderPath"></param>
+        /// <param name="baselineMetadataKey"></param>
+        /// <returns></returns>
+        private static string GetBaselineMetadataFilePath(string outputFolderPath, string baselineMetadataKey)
         {
             var baselineMetadataFileName = "QCART_Cache_" + baselineMetadataKey + ".xml";
             var baselineMetadataPath = Path.Combine(outputFolderPath, baselineMetadataFileName);

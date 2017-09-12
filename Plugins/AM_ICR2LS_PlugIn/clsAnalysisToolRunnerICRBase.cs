@@ -7,20 +7,23 @@ using AnalysisManagerBase;
 
 namespace AnalysisManagerICR2LSPlugIn
 {
+    /// <summary>
+    /// Base class for running ICR-2LS
+    /// </summary>
     public abstract class clsAnalysisToolRunnerICRBase : clsAnalysisToolRunnerBase
     {
-        public const string ICR2LS_STATE_UNKNOWN = "unknown";                        // "Unknown"
-        public const string ICR2LS_STATE_IDLE = "idle";                              // "Idle"
-        public const string ICR2LS_STATE_PROCESSING = "processing";                  // "Processing"
-        public const string ICR2LS_STATE_KILLED = "killed";                          // "Killed"
-        public const string ICR2LS_STATE_ERROR = "error";                            // "Error"
-        public const string ICR2LS_STATE_FINISHED = "finished";                      // "Finished"
-        public const string ICR2LS_STATE_GENERATING = "generating";                  // "Generating"
-        public const string ICR2LS_STATE_TICGENERATION = "ticgeneration";            // "TICGeneration"
-        public const string ICR2LS_STATE_LCQTICGENERATION = "lcqticgeneration";      // "LCQTICGeneration"
-        public const string ICR2LS_STATE_QTOFPEKGENERATION = "qtofpekgeneration";    // "QTOFPEKGeneration"
-        public const string ICR2LS_STATE_MMTOFPEKGENERATION = "mmtofpekgeneration";  // "MMTOFPEKGeneration"
-        public const string ICR2LS_STATE_LTQFTPEKGENERATION = "ltqftpekgeneration";  // "LTQFTPEKGeneration"
+        protected const string ICR2LS_STATE_UNKNOWN = "unknown";
+        protected const string ICR2LS_STATE_IDLE = "idle";
+        protected const string ICR2LS_STATE_PROCESSING = "processing";
+        protected const string ICR2LS_STATE_KILLED = "killed";
+        protected const string ICR2LS_STATE_ERROR = "error";
+        protected const string ICR2LS_STATE_FINISHED = "finished";
+        protected const string ICR2LS_STATE_GENERATING = "generating";
+        protected const string ICR2LS_STATE_TICGENERATION = "ticgeneration";
+        protected const string ICR2LS_STATE_LCQTICGENERATION = "lcqticgeneration";
+        protected const string ICR2LS_STATE_QTOFPEKGENERATION = "qtofpekgeneration";
+        protected const string ICR2LS_STATE_MMTOFPEKGENERATION = "mmtofpekgeneration";
+        protected const string ICR2LS_STATE_LTQFTPEKGENERATION = "ltqftpekgeneration";
 
         public const string PEK_TEMP_FILE = ".pek.tmp";
 
@@ -40,21 +43,17 @@ namespace AnalysisManagerICR2LSPlugIn
 
         private struct udtICR2LSStatusType
         {
-            public DateTime StatusDate;
             public int ScansProcessed;
             public float PercentComplete;
             public string ProcessingState;              // Typical values: Processing, Finished, etc.
             public string ProcessingStatus;             // Typical values: LTQFTPEKGENERATION, GENERATING
-            public string ErrorMessage;
 
             public void Initialize()
             {
-                StatusDate = DateTime.Now;
                 ScansProcessed = 0;
                 PercentComplete = 0;
                 ProcessingState = ICR2LS_STATE_UNKNOWN;
                 ProcessingStatus = string.Empty;
-                ErrorMessage = string.Empty;
             }
         }
 
@@ -88,6 +87,10 @@ namespace AnalysisManagerICR2LSPlugIn
             mICR2LSStatus.Initialize();
         }
 
+        /// <summary>
+        /// Primary entry point for running this tool
+        /// </summary>
+        /// <returns>CloseOutType enum representing completion status</returns>
         public override CloseOutType RunTool()
         {
             // Get the settings file info via the base class
@@ -333,7 +336,6 @@ namespace AnalysisManagerICR2LSPlugIn
 
                                     break;
                                 case "errormessage":
-                                    mICR2LSStatus.ErrorMessage = string.Copy(strValue);
 
                                     break;
                                 default:
@@ -347,9 +349,8 @@ namespace AnalysisManagerICR2LSPlugIn
                     if (strStatusDate.Length > 0 && strStatusTime.Length > 0)
                     {
                         strStatusDate += " " + strStatusTime;
-                        if (!DateTime.TryParse(strStatusDate, out mICR2LSStatus.StatusDate))
+                        if (!DateTime.TryParse(strStatusDate, out _))
                         {
-                            mICR2LSStatus.StatusDate = DateTime.Now;
                         }
                     }
 
@@ -539,12 +540,6 @@ namespace AnalysisManagerICR2LSPlugIn
             var scanToResumeAfter = 0;
 
             mPEKResultsFile = new FileInfo(resultsFileNamePath);
-
-            if (mPEKResultsFile.Directory == null)
-            {
-                LogError("Unable to determine the parent directory of " + resultsFileNamePath);
-                return false;
-            }
 
             var pekTempFilePath = Path.Combine(mPEKResultsFile.Directory.FullName,
                 Path.GetFileNameWithoutExtension(mPEKResultsFile.Name) + PEK_TEMP_FILE);

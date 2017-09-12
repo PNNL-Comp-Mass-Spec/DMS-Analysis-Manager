@@ -4,6 +4,9 @@ using System;
 
 namespace AnalysisManager_Ape_PlugIn
 {
+    /// <summary>
+    /// Class for running Ape
+    /// </summary>
    public class clsAnalysisToolRunnerApe : clsAnalysisToolRunnerBase
    {
        protected const float PROGRESS_PCT_APE_START = 1;
@@ -12,6 +15,10 @@ namespace AnalysisManager_Ape_PlugIn
        protected string m_CurrentApeTask = string.Empty;
        protected DateTime m_LastStatusUpdateTime;
 
+        /// <summary>
+        /// Primary entry point for running this tool
+        /// </summary>
+        /// <returns>CloseOutType enum representing completion status</returns>
        public override CloseOutType RunTool()
        {
             try

@@ -21,7 +21,6 @@ namespace AnalysisManagerMSPathFinderPlugin
     /// <summary>
     /// Class for running MSPathFinder analysis of top down data
     /// </summary>
-    /// <remarks></remarks>
     public class clsAnalysisToolRunnerMSPathFinder : clsAnalysisToolRunnerBase
     {
 
@@ -69,7 +68,6 @@ namespace AnalysisManagerMSPathFinderPlugin
         /// Runs MSPathFinder
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
 
@@ -184,6 +182,9 @@ namespace AnalysisManagerMSPathFinderPlugin
 
         }
 
+        /// <summary>
+        /// Copy failed results from the working directory to the DMS_FailedResults directory on the local computer
+        /// </summary>
         public override void CopyFailedResultsToArchiveFolder()
         {
             m_jobParams.AddResultFileToSkip(Dataset + ".mzXML");

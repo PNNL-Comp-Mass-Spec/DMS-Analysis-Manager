@@ -5,9 +5,16 @@ using System.Linq;
 namespace AnalysisManager_Mage_PlugIn
 {
 
-    // ReSharper disable once UnusedMember.Global
+    /// <summary>
+    /// Retrieve resources for the Mage plugin
+    /// </summary>
     public class clsAnalysisResourcesMage : clsAnalysisResourcesMAC
     {
+
+        /// <summary>
+        /// Retrieve required files
+        /// </summary>
+        /// <returns>Closeout code</returns>
         public override CloseOutType GetResources()
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step

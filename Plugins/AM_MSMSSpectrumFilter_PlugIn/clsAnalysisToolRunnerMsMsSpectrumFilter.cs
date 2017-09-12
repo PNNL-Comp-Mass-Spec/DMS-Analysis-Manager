@@ -20,6 +20,9 @@ using MSMSSpectrumFilter;
 
 namespace MSMSSpectrumFilterAM
 {
+    /// <summary>
+    /// Class for running the MSMS Spectrum Filter
+    /// </summary>
     public class clsAnalysisToolRunnerMsMsSpectrumFilter : clsAnalysisToolRunnerBase
     {
         private const int MAX_RUNTIME_HOURS = 5;
@@ -45,6 +48,10 @@ namespace MSMSSpectrumFilterAM
             m_MsMsSpectrumFilter.ProgressComplete += m_MsMsSpectrumFilter_ProgressComplete;
         }
 
+        /// <summary>
+        /// Primary entry point for running this tool
+        /// </summary>
+        /// <returns>CloseOutType enum representing completion status</returns>
         public override CloseOutType RunTool()
         {
             CloseOutType result;
@@ -816,7 +823,7 @@ namespace MSMSSpectrumFilterAM
         /// <summary>
         /// Zips concatenated DTA file to reduce size
         /// </summary>
-        /// <returns>CloseoutType enum indicating success or failure</returns>
+        /// <returns>CloseOutType enum indicating success or failure</returns>
         /// <remarks></remarks>
         protected virtual CloseOutType ZipConcDtaFile()
         {

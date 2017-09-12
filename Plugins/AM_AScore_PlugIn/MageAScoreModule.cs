@@ -1,9 +1,7 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
-using System.Xml;
 using AnalysisManagerBase;
 using AScore_DLL;
 using AScore_DLL.Managers;
@@ -30,20 +28,20 @@ namespace AnalysisManager_AScore_PlugIn
 
         #region Member Variables
 
-        protected string mConnectionString;
+        private readonly string mConnectionString;
 
-        protected string[] jobFieldNames;
+        private string[] jobFieldNames;
 
         // indexes to look up values for some key job fields
-        protected int jobIdx;
-        protected int toolIdx;
-        protected int paramFileIdx;
-        protected int resultsFldrIdx;
-        protected int datasetNameIdx;
-        protected int datasetTypeIdx;
-        protected int settingsFileIdx;
+        private int jobIdx;
+        private int toolIdx;
+        private int paramFileIdx;
+        private int resultsFldrIdx;
+        private int datasetNameIdx;
+        private int datasetTypeIdx;
+        private int settingsFileIdx;
 
-        protected clsIonicZipTools mIonicZipTools;
+        private clsIonicZipTools mIonicZipTools;
 
         #endregion
 
@@ -78,7 +76,9 @@ namespace AnalysisManager_AScore_PlugIn
 
         #region Overrides of Mage ContentFilter
 
-        // set up internal references
+        /// <summary>
+        /// Set up internal references
+        /// </summary>
         protected override void ColumnDefsFinished()
         {
             // get array of column names
@@ -94,7 +94,11 @@ namespace AnalysisManager_AScore_PlugIn
             settingsFileIdx = InputColumnPos["Settings_File"];
         }
 
-        // process the job described by the fields in the input vals object
+        /// <summary>
+        /// Process the job described by the fields in the input vals object
+        /// </summary>
+        /// <param name="vals"></param>
+        /// <returns></returns>
         protected override bool CheckFilter(ref string[] vals)
         {
 
@@ -355,7 +359,7 @@ namespace AnalysisManager_AScore_PlugIn
             return unzippedDtaResultsFilePath;
         }
 
-        protected string CopyDtaResultsFromMyEMSL(string datasetName, DirectoryInfo diResultsFolder, int jobNumber, string toolName, string connectionString)
+        private string CopyDtaResultsFromMyEMSL(string datasetName, FileSystemInfo diResultsFolder, int jobNumber, string toolName, string connectionString)
         {
             clsAScoreMagePipeline.mMyEMSLDatasetInfo.AddDataset(datasetName);
             var lstArchiveFiles = clsAScoreMagePipeline.mMyEMSLDatasetInfo.FindFiles("*_dta.zip", diResultsFolder.Name, datasetName);
@@ -393,8 +397,7 @@ namespace AnalysisManager_AScore_PlugIn
             return dtaZipPathLocal;
         }
 
-
-        protected string CopyDTAResultsFromServer(DirectoryInfo diResultsFolder, int jobNumber, string toolName, string connectionString)
+        private string CopyDTAResultsFromServer(DirectoryInfo diResultsFolder, int jobNumber, string toolName, string connectionString)
         {
             // Check if the dta is in the search tool's directory
             string dtaZipSourceFilePath;

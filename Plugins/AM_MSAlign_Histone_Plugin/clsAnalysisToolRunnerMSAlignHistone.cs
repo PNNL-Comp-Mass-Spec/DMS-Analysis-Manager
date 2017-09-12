@@ -15,6 +15,9 @@ using AnalysisManagerBase;
 
 namespace AnalysisManagerMSAlignHistonePlugIn
 {
+    /// <summary>
+    /// Class for running MSAlign Histone
+    /// </summary>
     public class clsAnalysisToolRunnerMSAlignHistone : clsAnalysisToolRunnerBase
     {
         //*********************************************************************************************************
@@ -90,7 +93,6 @@ namespace AnalysisManagerMSAlignHistonePlugIn
         /// Runs MSAlign tool
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
 
@@ -381,6 +383,9 @@ namespace AnalysisManagerMSAlignHistonePlugIn
             return true;
         }
 
+        /// <summary>
+        /// Copy failed results from the working directory to the DMS_FailedResults directory on the local computer
+        /// </summary>
         public override void CopyFailedResultsToArchiveFolder()
         {
 

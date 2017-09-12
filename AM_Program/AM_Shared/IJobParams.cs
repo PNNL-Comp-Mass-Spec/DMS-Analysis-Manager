@@ -18,24 +18,95 @@ namespace AnalysisManagerBase
     /// <remarks></remarks>
     public enum CloseOutType
     {
+
+        /// <summary>
+        /// Success
+        /// </summary>
         CLOSEOUT_SUCCESS = 0,
+
+        /// <summary>
+        /// Failed
+        /// </summary>
         CLOSEOUT_FAILED = 1,
+
+        /// <summary>
+        /// No DTA files
+        /// </summary>
         CLOSEOUT_NO_DTA_FILES = 2,
+
+        /// <summary>
+        /// No out files
+        /// </summary>
         CLOSEOUT_NO_OUT_FILES = 3,
+
+        /// <summary>
+        /// No ann files
+        /// </summary>
         CLOSEOUT_NO_ANN_FILES = 5,
+
+        /// <summary>
+        /// No fasta file
+        /// </summary>
         CLOSEOUT_NO_FAS_FILES = 6,
+
+        /// <summary>
+        /// No parmater file
+        /// </summary>
         CLOSEOUT_NO_PARAM_FILE = 7,
+
+        /// <summary>
+        /// No settings file
+        /// </summary>
         CLOSEOUT_NO_SETTINGS_FILE = 8,
+
+        /// <summary>
+        /// No ModDefs.txt file
+        /// </summary>
         CLOSEOUT_NO_MODDEFS_FILE = 9,
-        CLOSEOUT_NO_MASSCORRTAG_FILE = 10,
+
+        /// <summary>
+        /// No X!Tandem files
+        /// </summary>
         CLOSEOUT_NO_XT_FILES = 12,
+
+        /// <summary>
+        /// No inspect files
+        /// </summary>
         CLOSEOUT_NO_INSP_FILES = 13,
+
+        /// <summary>
+        /// File not found
+        /// </summary>
         CLOSEOUT_FILE_NOT_FOUND = 14,
+
+        /// <summary>
+        /// Error zipping a file
+        /// </summary>
         CLOSEOUT_ERROR_ZIPPING_FILE = 15,
+
+        /// <summary>
+        /// File not found in cache
+        /// </summary>
         CLOSEOUT_FILE_NOT_IN_CACHE = 16,
+
+        /// <summary>
+        /// Unable to use MZ Refinery
+        /// </summary>
         CLOSEOUT_UNABLE_TO_USE_MZ_REFINERY = 17,
+
+        /// <summary>
+        /// No data (no results)
+        /// </summary>
         CLOSEOUT_NO_DATA = 20,
+
+        /// <summary>
+        /// Job is running remote
+        /// </summary>
         CLOSEOUT_RUNNING_REMOTE = 25,
+
+        /// <summary>
+        /// Job failed while running remote
+        /// </summary>
         CLOSEOUT_FAILED_REMOTE = 26
     }
 
@@ -51,11 +122,29 @@ namespace AnalysisManagerBase
 
         #region "Properties"
 
+        /// <summary>
+        /// Dataset info list
+        /// </summary>
         Dictionary<string, int> DatasetInfoList { get; }
+
+        /// <summary>
+        /// Result files to keep
+        /// </summary>
         SortedSet<string> ResultFilesToKeep { get; }
+
+        /// <summary>
+        /// Result files to skip
+        /// </summary>
         SortedSet<string> ResultFilesToSkip { get; }
+
+        /// <summary>
+        /// Result file extensions to keep
+        /// </summary>
         SortedSet<string> ResultFileExtensionsToSkip { get; }
 
+        /// <summary>
+        /// Server files to delete
+        /// </summary>
         SortedSet<string> ServerFilesToDelete { get; }
 
         /// <summary>
@@ -187,7 +276,7 @@ namespace AnalysisManagerBase
         /// Gets a job parameter with the given name (in any parameter section)
         /// </summary>
         /// <param name="name">Key name for parameter</param>
-        /// <param name="valueIfMissing"></param>
+        /// <param name="valueIfMissing">Value to return if the parameter is not found (bool)</param>
         /// <returns>Value for specified parameter; valueIfMissing if not found</returns>
         /// <remarks>
         /// If the value associated with the parameter is found, yet is not True or False, an exception will be occur;
@@ -195,28 +284,72 @@ namespace AnalysisManagerBase
         /// </remarks>
         bool GetJobParameter(string name, bool valueIfMissing);
 
+        /// <summary>
+        /// Gets a job parameter with the given name (in any parameter section)
+        /// </summary>
+        /// <param name="name">Key name for parameter</param>
+        /// <param name="valueIfMissing">Value to return if the parameter is not found (string)</param>
+        /// <returns>Value for specified parameter; valueIfMissing if not found</returns>
         string GetJobParameter(string name, string valueIfMissing);
 
+        /// <summary>
+        /// Gets a job parameter with the given name (in any parameter section)
+        /// </summary>
+        /// <param name="name">Key name for parameter</param>
+        /// <param name="valueIfMissing">Value to return if the parameter is not found (int)</param>
+        /// <returns>Value for specified parameter; valueIfMissing if not found</returns>
         int GetJobParameter(string name, int valueIfMissing);
 
+        /// <summary>
+        /// Gets a job parameter with the given name (in any parameter section)
+        /// </summary>
+        /// <param name="name">Key name for parameter</param>
+        /// <param name="valueIfMissing">Value to return if the parameter is not found (short)</param>
+        /// <returns>Value for specified parameter; valueIfMissing if not found</returns>
         short GetJobParameter(string name, short valueIfMissing);
 
+        /// <summary>
+        /// Gets a job parameter with the given name (in any parameter section)
+        /// </summary>
+        /// <param name="name">Key name for parameter</param>
+        /// <param name="valueIfMissing">Value to return if the parameter is not found (float)</param>
+        /// <returns>Value for specified parameter; valueIfMissing if not found</returns>
         float GetJobParameter(string name, float valueIfMissing);
-
 
         /// <summary>
         /// Gets a job parameter with the given name, preferentially using the specified parameter section
         /// </summary>
         /// <param name="section">Section name for parameter</param>
         /// <param name="name">Key name for parameter</param>
-        /// <param name="valueIfMissing">Value to return if the parameter is not found</param>
+        /// <param name="valueIfMissing">Value to return if the parameter is not found (bool)</param>
         /// <returns>Value for specified parameter; valueIfMissing if not found</returns>
         bool GetJobParameter(string section, string name, bool valueIfMissing);
 
+        /// <summary>
+        /// Gets a job parameter with the given name, preferentially using the specified parameter section
+        /// </summary>
+        /// <param name="section">Section name for parameter</param>
+        /// <param name="name">Key name for parameter</param>
+        /// <param name="valueIfMissing">Value to return if the parameter is not found (string)</param>
+        /// <returns>Value for specified parameter; valueIfMissing if not found</returns>
         string GetJobParameter(string section, string name, string valueIfMissing);
 
+        /// <summary>
+        /// Gets a job parameter with the given name, preferentially using the specified parameter section
+        /// </summary>
+        /// <param name="section">Section name for parameter</param>
+        /// <param name="name">Key name for parameter</param>
+        /// <param name="valueIfMissing">Value to return if the parameter is not found (int)</param>
+        /// <returns>Value for specified parameter; valueIfMissing if not found</returns>
         int GetJobParameter(string section, string name, int valueIfMissing);
 
+        /// <summary>
+        /// Gets a job parameter with the given name, preferentially using the specified parameter section
+        /// </summary>
+        /// <param name="section">Section name for parameter</param>
+        /// <param name="name">Key name for parameter</param>
+        /// <param name="valueIfMissing">Value to return if the parameter is not found (float)</param>
+        /// <returns>Value for specified parameter; valueIfMissing if not found</returns>
         float GetJobParameter(string section, string name, float valueIfMissing);
 
         /// <summary>

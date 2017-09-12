@@ -22,7 +22,12 @@ namespace AnalysisManagerBase
 
         #region "Methods"
 
-        public void GetLoadedAssemblyInfo(ref clsSummaryFile objSummaryFile)
+        /// <summary>
+        /// Call objSummaryFile.Add for each loaded assembly
+        /// </summary>
+        /// <param name="objSummaryFile"></param>
+        [Obsolete("Unused")]
+        private void GetLoadedAssemblyInfo(clsSummaryFile objSummaryFile)
         {
             var currentDomain = AppDomain.CurrentDomain;
 
@@ -37,6 +42,10 @@ namespace AnalysisManagerBase
             }
         }
 
+        /// <summary>
+        /// Call objSummaryFile.Add for each DLL in the application directory
+        /// </summary>
+        /// <param name="objSummaryFile"></param>
         public void GetComponentFileVersionInfo(clsSummaryFile objSummaryFile)
         {
             // Create a reference to the current directory.

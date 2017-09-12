@@ -3,7 +3,7 @@ using System.IO;
 using System.Xml;
 
 //*********************************************************************************************************
-// Written by Matt Monroe for the US Department of Energy 
+// Written by Matt Monroe for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2008, Battelle Memorial Institute
 // Created 09/23/2008
@@ -18,16 +18,23 @@ namespace AnalysisManagerBase
     public class clsFormattedXMLWriter
     {
 
-        #region "Module variables"
-        #endregion
-        string m_ErrMsg;
-
         #region "Properties"
-        public string ErrMsg => m_ErrMsg;
+
+        /// <summary>
+        /// Error message
+        /// </summary>
+        public string ErrMsg { get; private set; }
 
         #endregion
 
         #region "Methods"
+
+        /// <summary>
+        /// Write XML to disk
+        /// </summary>
+        /// <param name="strXMLText"></param>
+        /// <param name="outputFilePath"></param>
+        /// <returns></returns>
         public bool WriteXMLToFile(string strXMLText, string outputFilePath)
         {
 
@@ -36,7 +43,7 @@ namespace AnalysisManagerBase
 
             var success = false;
 
-            m_ErrMsg = "";
+            ErrMsg = "";
 
             try
             {
@@ -47,7 +54,7 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                m_ErrMsg = "Error parsing the source XML text: " + ex.Message;
+                ErrMsg = "Error parsing the source XML text: " + ex.Message;
                 return false;
             }
 
@@ -64,7 +71,7 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                m_ErrMsg = "Error opening the output file (" + outputFilePath + ") in WriteXMLToFile: " + ex.Message;
+                ErrMsg = "Error opening the output file (" + outputFilePath + ") in WriteXMLToFile: " + ex.Message;
                 return false;
             }
 
@@ -79,7 +86,7 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                m_ErrMsg = "Error in WritePepXMLFile: " + ex.Message;
+                ErrMsg = "Error in WritePepXMLFile: " + ex.Message;
                 swOutfile.Close();
             }
 

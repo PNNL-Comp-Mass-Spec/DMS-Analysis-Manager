@@ -15,7 +15,6 @@ namespace AnalysisManagerDtaImportPlugIn
     /// <summary>
     /// Class for running DTA Importer
     /// </summary>
-    /// <remarks></remarks>
     public class clsAnalysisToolRunnerDtaImport : clsAnalysisToolRunnerBase
     {
         #region "Methods"
@@ -24,7 +23,6 @@ namespace AnalysisManagerDtaImportPlugIn
         /// Runs DTA Import tool
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
             try

@@ -3,10 +3,15 @@ using AnalysisManagerBase;
 
 namespace AnalysisManager_Ape_PlugIn
 {
+    /// <summary>
+    /// Retrieve resources for the Ape plugin
+    /// </summary>
     public class clsAnalysisResourcesApe : clsAnalysisResources
     {
-        public static string AppFilePath = "";
-
+        /// <summary>
+        /// Retrieve required files
+        /// </summary>
+        /// <returns>Closeout code</returns>
         public override CloseOutType GetResources()
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step

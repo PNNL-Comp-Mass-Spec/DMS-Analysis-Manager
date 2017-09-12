@@ -3,12 +3,27 @@ using AnalysisManagerBase;
 
 namespace AnalysisManagerProSightQuantPlugIn
 {
+
+    /// <summary>
+    /// Retrieve resources for the ProSight Quant plugin
+    /// </summary>
     public class clsAnalysisResourcesProSightQuant : clsAnalysisResources
     {
+
+        /// <summary>
+        /// ProSight PC results file name
+        /// </summary>
         public const string PROSIGHT_PC_RESULT_FILE = "ProSightPC_Results.xls";
 
+        /// <summary>
+        /// Used to track whether this tool is disabled
+        /// </summary>
         public const bool TOOL_DISABLED = true;
 
+        /// <summary>
+        /// Retrieve required files
+        /// </summary>
+        /// <returns>Closeout code</returns>
         public override CloseOutType GetResources()
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step

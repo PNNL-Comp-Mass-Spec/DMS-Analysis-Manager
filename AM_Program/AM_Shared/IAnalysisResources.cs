@@ -16,7 +16,12 @@ namespace AnalysisManagerBase
     {
 
         #region "Properties"
+
+        /// <summary>
+        /// Status message
+        /// </summary>
         string Message { get; }
+
         #endregion
 
         #region "Methods"

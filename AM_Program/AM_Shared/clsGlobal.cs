@@ -22,29 +22,51 @@ using PRISMWin;
 
 namespace AnalysisManagerBase
 {
+    /// <summary>
+    /// Globally useful methods
+    /// </summary>
     public static class clsGlobal
     {
 
         #region "Constants"
 
-        public const bool LOG_LOCAL_ONLY = true;
-        public const bool LOG_DATABASE = false;
-
+        /// <summary>
+        /// Job parameters file prefix
+        /// </summary>
         public const string JOB_PARAMETERS_FILE_PREFIX = "JobParameters_";
 
+        /// <summary>
+        /// Step tool param file storage path file prefix
+        /// </summary>
         public const string STEPTOOL_PARAMFILESTORAGEPATH_PREFIX = "StepTool_ParamFileStoragePath_";
 
+        /// <summary>
+        /// Server cache hashcheck file suffix
+        /// </summary>
         public const string SERVER_CACHE_HASHCHECK_FILE_SUFFIX = ".hashcheck";
 
+        /// <summary>
+        /// Lock file suffix
+        /// </summary>
         public const string LOCK_FILE_EXTENSION = ".lock";
 
         #endregion
 
         #region "Enums"
 
+        /// <summary>
+        /// Analysis resource true/false options
+        /// </summary>
         public enum eAnalysisResourceOptions
         {
+            /// <summary>
+            /// If true, a FASTA file or protein collection is required
+            /// </summary>
             OrgDbRequired = 0,
+
+            /// <summary>
+            /// If true, MyEMSL search is disabled
+            /// </summary>
             MyEMSLSearchDisabled = 1
         }
 
@@ -515,6 +537,10 @@ namespace AnalysisManagerBase
 
         }
 
+        /// <summary>
+        /// Determine the version of .NET that is running
+        /// </summary>
+        /// <returns></returns>
         public static string GetDotNetVersion()
         {
             try
@@ -1503,14 +1529,17 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="errorMessage">Error message (do not include ex.message)</param>
         /// <param name="ex">Exception to log (allowed to be nothing)</param>
+        /// <param name="logToDatabase">When true, log to the database (and to the file)</param>
         /// <remarks>The error is shown in red in the console.  The exception stack trace is shown in cyan</remarks>
-        public static void LogError(string errorMessage, Exception ex = null)
+        public static void LogError(string errorMessage, Exception ex = null, bool logToDatabase = false)
         {
             var formattedError = ConsoleMsgUtils.ShowError(errorMessage, ex);
 
             try
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, formattedError, ex);
+                var logType = logToDatabase ? clsLogTools.LoggerTypes.LogDb : clsLogTools.LoggerTypes.LogFile;
+
+                clsLogTools.WriteLog(logType, clsLogTools.LogLevels.ERROR, formattedError, ex);
             }
             catch (Exception ex2)
             {
@@ -2042,12 +2071,36 @@ namespace AnalysisManagerBase
 
         }
 
+        /// <summary>
+        /// Check the free space on the drive with the given directory
+        /// </summary>
+        [Obsolete("Use the version with argument logToDatabase")]
         public static bool ValidateFreeDiskSpace(
             string directoryDescription,
             string directoryPath,
             int minFreeSpaceMB,
             clsLogTools.LoggerTypes eLogLocationIfNotFound,
             out string errorMessage)
+        {
+            var logToDatabase = eLogLocationIfNotFound == clsLogTools.LoggerTypes.LogDb;
+            return ValidateFreeDiskSpace(directoryDescription, directoryPath, minFreeSpaceMB, out errorMessage, logToDatabase);
+        }
+
+        /// <summary>
+        /// Check the free space on the drive with the given directory
+        /// </summary>
+        /// <param name="directoryDescription"></param>
+        /// <param name="directoryPath"></param>
+        /// <param name="minFreeSpaceMB"></param>
+        /// <param name="logToDatabase"></param>
+        /// <param name="errorMessage">Output: error message</param>
+        /// <returns>True if the drive has sufficient free space, otherwise false</returns>
+        public static bool ValidateFreeDiskSpace(
+            string directoryDescription,
+            string directoryPath,
+            int minFreeSpaceMB,
+            out string errorMessage,
+            bool logToDatabase = false)
         {
 
             errorMessage = string.Empty;
@@ -2057,8 +2110,7 @@ namespace AnalysisManagerBase
             {
                 // Example error message: Organism DB directory not found: G:\DMS_Temp_Org
                 errorMessage = directoryDescription + " not found: " + directoryPath;
-                Console.WriteLine(errorMessage);
-                LogError(errorMessage);
+                LogError(errorMessage, null, logToDatabase);
                 return false;
             }
 

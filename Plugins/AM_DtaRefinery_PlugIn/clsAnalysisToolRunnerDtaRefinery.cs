@@ -35,7 +35,6 @@ namespace AnalysisManagerDtaRefineryPlugIn
         /// Runs DTA_Refinery tool
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
             CloseOutType result;
@@ -224,6 +223,9 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
         }
 
+        /// <summary>
+        /// Copy failed results from the working directory to the DMS_FailedResults directory on the local computer
+        /// </summary>
         public override void CopyFailedResultsToArchiveFolder()
         {
             m_jobParams.AddResultFileToSkip(Dataset + "_dta.zip");

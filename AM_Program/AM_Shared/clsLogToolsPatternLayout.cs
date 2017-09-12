@@ -20,13 +20,16 @@ namespace AnalysisManagerBase
     /// </remarks>
     public class CustomPatternLayout : PatternLayout
     {
+        /// <summary>
+        /// Constructor
+        /// </summary>
         public CustomPatternLayout()
         {
             AddConverter("stack", typeof(StackTraceConverter));
         }
     }
 
-    internal class StackTraceConverter : PatternLayoutConverter
+    internal sealed class StackTraceConverter : PatternLayoutConverter
     {
 
         private static readonly Assembly _assembly = typeof(PatternLayoutConverter).Assembly;
@@ -43,7 +46,7 @@ namespace AnalysisManagerBase
         /// </summary>
         public StackTraceConverter()
         {
-            base.IgnoresException = false;
+            IgnoresException = false;
             StackTraceIncludesFilenames = true;
             StackTraceIncludesMethodArgs = false;
         }
@@ -112,7 +115,9 @@ namespace AnalysisManagerBase
                     writer.Write("   at ");
 
                     // if there is a type (non global method) print it
-                    writer.Write(t.FullName.Replace('+', '.'));
+                    if (t.FullName != null)
+                        writer.Write(t.FullName.Replace('+', '.'));
+
                     writer.Write(".");
                     writer.Write(mb.Name);
 
@@ -158,11 +163,7 @@ namespace AnalysisManagerBase
                                 fFirstParam = false;
                             }
 
-                            var typeName = "<UnknownType>";
-                            if (pi[j].ParameterType != null)
-                            {
-                                typeName = pi[j].ParameterType.Name;
-                            }
+                            var typeName = pi[j].ParameterType.Name;
                             writer.Write(typeName + " " + pi[j].Name);
                         }
                         writer.Write(")");
@@ -175,7 +176,7 @@ namespace AnalysisManagerBase
                         string filePath = null;
 
                         // Getting the filename from a StackFrame is a privileged operation
-                        // We won't want to disclose full path names to arbitrarily untrusted code.  
+                        // We won't want to disclose full path names to arbitrarily untrusted code.
                         // Rather than just omit this we could probably trim to just the filename so it's still mostly useful
                         try
                         {
@@ -183,7 +184,7 @@ namespace AnalysisManagerBase
                         }
                         catch (SecurityException)
                         {
-                            // If the demand for displaying filenames fails, it won't succeed later in the loop.  
+                            // If the demand for displaying filenames fails, it won't succeed later in the loop.
                             // Avoid repeated exceptions by not trying again.
                             displayFilenames = false;
                         }
@@ -193,7 +194,7 @@ namespace AnalysisManagerBase
                             string trimmedFilePath;
                             if (filePath.StartsWith(basePath, StringComparison.OrdinalIgnoreCase))
                             {
-                                if (filePath.Substring(basePath.Length).StartsWith(Path.DirectorySeparatorChar.ToString()) || 
+                                if (filePath.Substring(basePath.Length).StartsWith(Path.DirectorySeparatorChar.ToString()) ||
                                     filePath.Substring(basePath.Length).StartsWith(Path.AltDirectorySeparatorChar.ToString()))
                                 {
                                     trimmedFilePath = filePath.Substring(basePath.Length + 1);
@@ -266,7 +267,7 @@ namespace AnalysisManagerBase
                     continue;
                 }
 
-                if ((sf.GetILOffset() != -1))
+                if (sf.GetILOffset() != -1)
                 {
                     // If we don't have a PDB or PDB-reading is disabled for the module, the file name will be null
                     string filePath;
@@ -277,7 +278,7 @@ namespace AnalysisManagerBase
                     }
                     catch (SecurityException)
                     {
-                        // If the demand for displaying filenames fails, it won't succeed later in the loop.  
+                        // If the demand for displaying filenames fails, it won't succeed later in the loop.
                         // Abort looking up filenames for methods in the call stack
                         break;
                     }
@@ -300,9 +301,6 @@ namespace AnalysisManagerBase
 
             var sourceFileFirst = new FileInfo(stackTraceFiles.First());
 
-            if (sourceFileFirst.Directory == null)
-                return string.Empty;
-
             var basePath = sourceFileFirst.Directory.FullName;
 
             if (stackTraceFiles.Count == 1)
@@ -313,8 +311,6 @@ namespace AnalysisManagerBase
             foreach (var filePath in stackTraceFiles)
             {
                 var sourceFile = new FileInfo(filePath);
-                if (sourceFile.Directory == null)
-                    continue;
 
                 var basePathCompare = sourceFile.Directory.FullName;
                 var charsToCompare = Math.Min(basePath.Length, basePathCompare.Length);
@@ -350,5 +346,5 @@ namespace AnalysisManagerBase
 
         }
     }
-    
+
 }

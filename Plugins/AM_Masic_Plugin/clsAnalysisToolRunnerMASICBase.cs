@@ -16,9 +16,8 @@ using PRISM;
 namespace AnalysisManagerMasicPlugin
 {
     /// <summary>
-    /// Base class for performing MASIC analysis
+    /// Class for performing MASIC analysis
     /// </summary>
-    /// <remarks></remarks>
     public abstract class clsAnalysisToolRunnerMASICBase : clsAnalysisToolRunnerBase
     {
         #region "Module variables"
@@ -77,6 +76,10 @@ namespace AnalysisManagerMasicPlugin
             }
         }
 
+        /// <summary>
+        /// Primary entry point for running this tool
+        /// </summary>
+        /// <returns>CloseOutType enum representing completion status</returns>
         public override CloseOutType RunTool()
         {
             // Call base class for initial setup

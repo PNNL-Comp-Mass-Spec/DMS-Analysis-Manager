@@ -1,5 +1,5 @@
 //*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy 
+// Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2006, Battelle Memorial Institute
 // Created 06/07/2006
@@ -40,7 +40,7 @@ namespace AnalysisManagerBase
         /// Spectra filter did not alter any spectra
         /// </summary>
         SF_NO_SPECTRA_ALTERED = -4
-        
+
     }
 
     /// <summary>
@@ -76,19 +76,45 @@ namespace AnalysisManagerBase
     #endregion
 
     #region "Structures"
-    
+
     /// <summary>
     /// Initialization parameters for classes that implement ISpectraFilter
     /// </summary>
     public struct SpectraFilterParams
     {
+        /// <summary>
+        /// Source folder path
+        /// </summary>
         public string SourceFolderPath;
+
+        /// <summary>
+        /// Output folder path
+        /// </summary>
         public string OutputFolderPath;
-        //' Unused: public Specialized.StringDictionary MiscParams;
+
+        /// <summary>
+        /// Debug level
+        /// </summary>
         public int DebugLevel;
+
+        /// <summary>
+        /// Logging class
+        /// </summary>
         public PRISM.ILogger Logger;
+
+        /// <summary>
+        /// Manager parameters
+        /// </summary>
         public IMgrParams MgrParams;
+
+        /// <summary>
+        /// Job parameters
+        /// </summary>
         public IJobParams JobParams;
+
+        /// <summary>
+        /// Status tools
+        /// </summary>
         public IStatusFile StatusTools;
     }
     #endregion
@@ -141,7 +167,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <returns></returns>
         ProcessStatus Abort();
-        
+
         #endregion
 
     }

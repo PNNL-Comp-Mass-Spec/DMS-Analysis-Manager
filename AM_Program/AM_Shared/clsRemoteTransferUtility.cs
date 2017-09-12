@@ -20,10 +20,19 @@ namespace AnalysisManagerBase
     {
         #region "Constants"
 
+        /// <summary>
+        /// Step parameter RemoteInfo
+        /// </summary>
         public const string STEP_PARAM_REMOTE_INFO = "RemoteInfo";
 
+        /// <summary>
+        /// Step parameter RemoteTimestamp
+        /// </summary>
         public const string STEP_PARAM_REMOTE_TIMESTAMP = "RemoteTimestamp";
 
+        /// <summary>
+        /// Step parameter RemoteProgress
+        /// </summary>
         public const string STEP_PARAM_REMOTE_PROGRESS = "RemoteProgress";
 
         private const bool USE_MANAGER_REMOTE_INFO = true;
@@ -47,6 +56,9 @@ namespace AnalysisManagerBase
         /// </summary>
         public string DatasetName { get; private set; }
 
+        /// <summary>
+        /// Debug level
+        /// </summary>
         public int DebugLevel { get; private set; }
 
         /// <summary>
@@ -1146,6 +1158,9 @@ namespace AnalysisManagerBase
             return remoteTimestamp;
         }
 
+        /// <summary>
+        /// Delete a remote working directory
+        /// </summary>
         public void DeleteRemoteWorkDir()
         {
 

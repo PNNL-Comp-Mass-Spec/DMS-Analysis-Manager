@@ -4,6 +4,9 @@ using PRISM;
 
 namespace AnalysisManagerBase
 {
+    /// <summary>
+    /// Methods to be inherited by classes that use clsLogTools
+    /// </summary>
     public abstract class clsLoggerBase
     {
 

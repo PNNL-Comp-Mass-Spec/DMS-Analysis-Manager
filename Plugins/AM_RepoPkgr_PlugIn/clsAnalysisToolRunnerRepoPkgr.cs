@@ -10,9 +10,9 @@ using AnalysisManagerMsXmlGenPlugIn;
 
 namespace AnalysisManager_RepoPkgr_Plugin
 {
-    //*********************************************************************************************************
-    // Class for running RepoPkgr
-    //*********************************************************************************************************
+    /// <summary>
+    /// Class for running the RepoPkgr
+    /// </summary>
     public class clsAnalysisToolRunnerRepoPkgr : clsAnalysisToolRunnerBase
     {
         #region Constants
@@ -43,6 +43,10 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
         #region Main Logic
 
+        /// <summary>
+        /// Primary entry point for running this tool
+        /// </summary>
+        /// <returns>CloseOutType enum representing completion status</returns>
         public override CloseOutType RunTool()
         {
             try

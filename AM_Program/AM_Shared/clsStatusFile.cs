@@ -32,6 +32,9 @@ namespace AnalysisManagerBase
 
         #region "Module variables"
 
+        /// <summary>
+        /// Filename that indicates that processing needs to be aborted
+        /// </summary>
         public const string ABORT_PROCESSING_NOW_FILENAME = "AbortProcessingNow.txt";
 
         /// <summary>
@@ -197,6 +200,9 @@ namespace AnalysisManagerBase
         /// </summary>
         public int JobStep { get; set; }
 
+        /// <summary>
+        /// Working directory path
+        /// </summary>
         public string WorkDirPath { get; set; }
 
         /// <summary>
@@ -214,6 +220,9 @@ namespace AnalysisManagerBase
         /// </summary>
         public string MostRecentJobInfo { get; set; }
 
+        /// <summary>
+        /// Recent error messages
+        /// </summary>
         public List<string> RecentErrorMessages
         {
             get
@@ -1482,11 +1491,13 @@ namespace AnalysisManagerBase
             return (float)DateTime.UtcNow.Subtract(TaskStartTime).TotalHours;
         }
 
+        /// <summary>
+        /// Dispose the message queue objects now
+        /// </summary>
         public void DisposeMessageQueue()
         {
             m_QueueLogger?.Dispose();
             m_MessageSender?.Dispose();
-
         }
 
         #endregion

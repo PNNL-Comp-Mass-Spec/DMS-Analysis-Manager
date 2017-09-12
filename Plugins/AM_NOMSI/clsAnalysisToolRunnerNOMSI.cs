@@ -16,6 +16,10 @@ using AnalysisManagerBase;
 
 namespace AnalysisManagerNOMSIPlugin
 {
+
+    /// <summary>
+    /// Class for running NOMSI
+    /// </summary>
     public class clsAnalysisToolRunnerNOMSI : clsAnalysisToolRunnerBase
     {
         #region "Constants and Enums"
@@ -48,7 +52,6 @@ namespace AnalysisManagerNOMSIPlugin
         /// Processes data using NOMSI
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
             try
@@ -175,6 +178,9 @@ namespace AnalysisManagerNOMSIPlugin
 
         }
 
+        /// <summary>
+        /// Copy failed results from the working directory to the DMS_FailedResults directory on the local computer
+        /// </summary>
         public override void CopyFailedResultsToArchiveFolder()
         {
 

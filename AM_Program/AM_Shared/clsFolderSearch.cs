@@ -21,6 +21,9 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public const int DEFAULT_MAX_RETRY_COUNT = 3;
 
+        /// <summary>
+        /// Default number of seconds to wait between trying to find a folder
+        /// </summary>
         protected const int DEFAULT_FOLDER_EXISTS_RETRY_HOLDOFF_SECONDS = 5;
 
         private const string MYEMSL_PATH_FLAG = clsMyEMSLUtilities.MYEMSL_PATH_FLAG;
@@ -43,8 +46,14 @@ namespace AnalysisManagerBase
 
         #region "Properties"
 
+        /// <summary>
+        /// Dataset name
+        /// </summary>
         public string DatasetName { get; set; }
 
+        /// <summary>
+        /// True if MyEMSL search is disabled
+        /// </summary>
         public bool MyEMSLSearchDisabled { get; set; }
 
         #endregion

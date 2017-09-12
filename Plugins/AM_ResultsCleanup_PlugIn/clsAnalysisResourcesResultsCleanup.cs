@@ -9,6 +9,10 @@ using AnalysisManagerBase;
 
 namespace AnalysisManagerResultsCleanupPlugin
 {
+
+    /// <summary>
+    /// Retrieve resources for the Results Cleanup plugin
+    /// </summary>
     public class clsAnalysisResourcesResultsCleanup : clsAnalysisResources
     {
         #region "Methods"

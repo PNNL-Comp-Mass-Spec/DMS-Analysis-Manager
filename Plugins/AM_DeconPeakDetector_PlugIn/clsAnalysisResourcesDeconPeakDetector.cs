@@ -10,8 +10,17 @@ using AnalysisManagerBase;
 
 namespace AnalysisManagerDeconPeakDetectorPlugIn
 {
+
+    /// <summary>
+    /// Retrieve resources for the Decon Peak Detector plugin
+    /// </summary>
     public class clsAnalysisResourcesDeconPeakDetector : clsAnalysisResources
     {
+
+        /// <summary>
+        /// Retrieve required files
+        /// </summary>
+        /// <returns>Closeout code</returns>
         public override CloseOutType GetResources()
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step

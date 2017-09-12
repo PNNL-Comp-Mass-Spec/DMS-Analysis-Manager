@@ -14,11 +14,14 @@ using AnalysisManagerBase;
 
 namespace AnalysisManagerResultsCleanupPlugin
 {
+    /// <summary>
+    /// Class for running Results Cleanup
+    /// </summary>
     public class clsAnalysisToolRunnerResultsCleanup : clsAnalysisToolRunnerBase
     {
         #region "Constants"
 
-        protected const string RESULTS_DB3_FILE = "Results.db3";
+        private const string RESULTS_DB3_FILE = "Results.db3";
 
         #endregion
 
@@ -28,7 +31,6 @@ namespace AnalysisManagerResultsCleanupPlugin
         /// Runs ResultsCleanup tool
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
             try
@@ -59,7 +61,7 @@ namespace AnalysisManagerResultsCleanupPlugin
                 }
 
                 // Stop the job timer
-                m_StopTime = System.DateTime.UtcNow;
+                m_StopTime = DateTime.UtcNow;
             }
             catch (Exception ex)
             {
@@ -72,16 +74,14 @@ namespace AnalysisManagerResultsCleanupPlugin
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        protected CloseOutType PerformResultsCleanup()
+        private CloseOutType PerformResultsCleanup()
         {
-            string strTransferDirectoryPath = null;
-            string strResultsFolderName = null;
-            var eResult = CloseOutType.CLOSEOUT_SUCCESS;
+            CloseOutType eResult;
 
             try
             {
-                strTransferDirectoryPath = m_jobParams.GetJobParameter("JobParameters", "transferFolderPath", string.Empty);
-                strResultsFolderName = m_jobParams.GetJobParameter("JobParameters", "InputFolderName", string.Empty);
+                var strTransferDirectoryPath = m_jobParams.GetJobParameter("JobParameters", "transferFolderPath", string.Empty);
+                var strResultsFolderName = m_jobParams.GetJobParameter("JobParameters", "InputFolderName", string.Empty);
 
                 if (string.IsNullOrWhiteSpace(strTransferDirectoryPath))
                 {
@@ -89,7 +89,8 @@ namespace AnalysisManagerResultsCleanupPlugin
                     LogError(m_message);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
-                else if (string.IsNullOrWhiteSpace(strResultsFolderName))
+
+                if (string.IsNullOrWhiteSpace(strResultsFolderName))
                 {
                     m_message = "InputFolderName not defined";
                     LogError(m_message);
@@ -118,10 +119,9 @@ namespace AnalysisManagerResultsCleanupPlugin
             return eResult;
         }
 
-        protected CloseOutType RemoveOldResultsDb3Files(DirectoryInfo diResultsFolder)
+        private CloseOutType RemoveOldResultsDb3Files(DirectoryInfo diResultsFolder)
         {
             var intStepFolderCount = 0;
-            var intStepNumber = 0;
 
             try
             {
@@ -137,7 +137,7 @@ namespace AnalysisManagerResultsCleanupPlugin
                     // Parse out the step number
                     var reMatch = reStepNumber.Match(diSubfolder.Name);
 
-                    if (reMatch.Success && int.TryParse(reMatch.Groups[1].Value, out intStepNumber))
+                    if (reMatch.Success && int.TryParse(reMatch.Groups[1].Value, out var intStepNumber))
                     {
                         if (!dctResultsFiles.ContainsKey(intStepNumber))
                         {
@@ -240,7 +240,7 @@ namespace AnalysisManagerResultsCleanupPlugin
 
             try
             {
-                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, saveToolVersionTextFile: false);
+                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, saveToolVersionTextFile: false);
             }
             catch (Exception ex)
             {

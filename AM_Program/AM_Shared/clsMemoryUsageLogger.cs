@@ -13,6 +13,9 @@ using PRISM;
 
 namespace AnalysisManagerBase
 {
+    /// <summary>
+    /// Memory usage logger
+    /// </summary>
     public class clsMemoryUsageLogger : clsEventNotifier
     {
 
@@ -133,7 +136,11 @@ namespace AnalysisManagerBase
             }
         }
 
-        public string GetMemoryUsageHeader()
+        /// <summary>
+        /// Memory usage header
+        /// </summary>
+        /// <returns></returns>
+        private string GetMemoryUsageHeader()
         {
             return
                 "Date" + COL_SEP +
@@ -144,7 +151,11 @@ namespace AnalysisManagerBase
                 "PoolNonpaged_MB";
         }
 
-        public string GetMemoryUsageSummary()
+        /// <summary>
+        /// Summarize memory usage
+        /// </summary>
+        /// <returns></returns>
+        private string GetMemoryUsageSummary()
         {
             if (!m_PerfCountersIntitialized)
             {

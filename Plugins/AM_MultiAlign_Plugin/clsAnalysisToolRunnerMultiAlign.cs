@@ -33,7 +33,6 @@ namespace AnalysisManagerMultiAlignPlugIn
         /// Runs MultiAlign tool
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
             string cmdStr = null;
@@ -173,6 +172,9 @@ namespace AnalysisManagerMultiAlignPlugIn
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
+        /// <summary>
+        /// Copy failed results from the working directory to the DMS_FailedResults directory on the local computer
+        /// </summary>
         public override void CopyFailedResultsToArchiveFolder()
         {
             m_jobParams.AddResultFileExtensionToSkip(".UIMF");

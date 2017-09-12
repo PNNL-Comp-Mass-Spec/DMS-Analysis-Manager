@@ -6,59 +6,59 @@ using ThermoRawFileReader;
 
 namespace AnalysisManagerMSGFDBPlugIn
 {
+    /// <summary>
+    /// ScanType file creator
+    /// </summary>
     public class clsScanTypeFileCreator
     {
-        private string mErrorMessage;
-        private string mExceptionDetails;
-
         private Dictionary<int, string> mScanTypeMap;
-
-        private readonly string mWorkDir;
-        private readonly string mDatasetName;
-        private string mScanTypeFilePath;
-        private int mValidScanTypeLineCount;
 
         #region "Properties"
 
-        public string DatasetName
-        {
-            get { return mDatasetName; }
-        }
+        /// <summary>
+        /// Dataset name
+        /// </summary>
+        public string DatasetName { get; }
 
-        public string ErrorMessage
-        {
-            get { return mErrorMessage; }
-        }
+        /// <summary>
+        /// Error message
+        /// </summary>
+        public string ErrorMessage { get; private set; }
 
-        public string ExceptionDetails
-        {
-            get { return mExceptionDetails; }
-        }
+        /// <summary>
+        /// Exception details
+        /// </summary>
+        public string ExceptionDetails { get; private set; }
 
-        public string ScanTypeFilePath
-        {
-            get { return mScanTypeFilePath; }
-        }
+        /// <summary>
+        /// Scan type file path
+        /// </summary>
+        public string ScanTypeFilePath { get; private set; }
 
-        public int ValidScanTypeLineCount
-        {
-            get { return mValidScanTypeLineCount; }
-        }
+        /// <summary>
+        /// Number of valid scantype lines
+        /// </summary>
+        public int ValidScanTypeLineCount { get; private set; }
 
-        public string WorkDir
-        {
-            get { return mWorkDir; }
-        }
+        /// <summary>
+        /// Working directory
+        /// </summary>
+        public string WorkDir { get; }
 
         #endregion
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="strWorkDirectoryPath"></param>
+        /// <param name="strDatasetName"></param>
         public clsScanTypeFileCreator(string strWorkDirectoryPath, string strDatasetName)
         {
-            mWorkDir = strWorkDirectoryPath;
-            mDatasetName = strDatasetName;
-            mErrorMessage = string.Empty;
-            mExceptionDetails = string.Empty;
-            mScanTypeFilePath = string.Empty;
+            WorkDir = strWorkDirectoryPath;
+            DatasetName = strDatasetName;
+            ErrorMessage = string.Empty;
+            ExceptionDetails = string.Empty;
+            ScanTypeFilePath = string.Empty;
         }
 
         private bool CacheScanTypeUsingScanStatsEx(string strScanStatsExFilePath)
@@ -76,7 +76,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (!File.Exists(strScanStatsExFilePath))
                 {
-                    mErrorMessage = "_ScanStatsEx.txt file not found: " + strScanStatsExFilePath;
+                    ErrorMessage = "_ScanStatsEx.txt file not found: " + strScanStatsExFilePath;
                     return false;
                 }
 
@@ -123,17 +123,15 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                         if (clsGlobal.TryGetValueInt(dataColumns, scanNumberColIndex, out var scanNumber))
                         {
-                            var strCollisionMode = string.Empty;
                             var storeData = false;
 
-                            if (clsGlobal.TryGetValue(dataColumns, collisionModeColIndex, out strCollisionMode))
+                            if (clsGlobal.TryGetValue(dataColumns, collisionModeColIndex, out var strCollisionMode))
                             {
                                 storeData = true;
                             }
                             else
                             {
-                                var filterText = string.Empty;
-                                if (clsGlobal.TryGetValue(dataColumns, scanFilterColIndex, out filterText))
+                                if (clsGlobal.TryGetValue(dataColumns, scanFilterColIndex, out var filterText))
                                 {
                                     filterText = dataColumns[scanFilterColIndex];
 
@@ -166,29 +164,33 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
             catch (Exception ex)
             {
-                mErrorMessage = "Exception in CacheScanTypeUsingScanStatsEx: " + ex.GetType().Name;
-                mExceptionDetails = ex.Message;
+                ErrorMessage = "Exception in CacheScanTypeUsingScanStatsEx: " + ex.GetType().Name;
+                ExceptionDetails = ex.Message;
                 return false;
             }
 
             return true;
         }
 
+        /// <summary>
+        /// create the ScanType file using the MASIC ScanStats file
+        /// </summary>
+        /// <returns></returns>
         public bool CreateScanTypeFile()
         {
             try
             {
-                mErrorMessage = string.Empty;
-                mExceptionDetails = string.Empty;
+                ErrorMessage = string.Empty;
+                ExceptionDetails = string.Empty;
 
-                mValidScanTypeLineCount = 0;
+                ValidScanTypeLineCount = 0;
 
-                var strScanStatsFilePath = Path.Combine(mWorkDir, mDatasetName + "_ScanStats.txt");
-                var strScanStatsExFilePath = Path.Combine(mWorkDir, mDatasetName + "_ScanStatsEx.txt");
+                var strScanStatsFilePath = Path.Combine(WorkDir, DatasetName + "_ScanStats.txt");
+                var strScanStatsExFilePath = Path.Combine(WorkDir, DatasetName + "_ScanStatsEx.txt");
 
                 if (!File.Exists(strScanStatsFilePath))
                 {
-                    mErrorMessage = "_ScanStats.txt file not found: " + strScanStatsFilePath;
+                    ErrorMessage = "_ScanStats.txt file not found: " + strScanStatsFilePath;
                     return false;
                 }
 
@@ -197,10 +199,10 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // Open the input file
                 using (var srScanStatsFile = new StreamReader(new FileStream(strScanStatsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    mScanTypeFilePath = Path.Combine(mWorkDir, mDatasetName + "_ScanType.txt");
+                    ScanTypeFilePath = Path.Combine(WorkDir, DatasetName + "_ScanType.txt");
 
                     // Create the scan type output file
-                    using (var swOutFile = new StreamWriter(new FileStream(mScanTypeFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                    using (var swOutFile = new StreamWriter(new FileStream(ScanTypeFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                     {
                         swOutFile.WriteLine("ScanNumber\t" + "ScanTypeName\t" + "ScanType\t" + "ScanTime");
 
@@ -292,15 +294,15 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                             swOutFile.WriteLine(scanNumber + "\t" + scanTypeName + "\t" + scanType + "\t" + scanTime.ToString("0.0000"));
 
-                            mValidScanTypeLineCount += 1;
+                            ValidScanTypeLineCount += 1;
                         }
                     }
                 }
             }
             catch (Exception ex)
             {
-                mErrorMessage = "Exception in CreateScanTypeFile: " + ex.GetType().Name;
-                mExceptionDetails = ex.Message;
+                ErrorMessage = "Exception in CreateScanTypeFile: " + ex.GetType().Name;
+                ExceptionDetails = ex.Message;
                 return false;
             }
 
@@ -314,7 +316,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <returns></returns>
         private bool FirstColumnIsInteger(IReadOnlyList<string> dataColumns)
         {
-            return int.TryParse(dataColumns[0], out var dataValue);
+            return int.TryParse(dataColumns[0], out var _);
         }
 
     }

@@ -12,19 +12,56 @@ using PRISM;
 
 namespace AnalysisManagerMSGFDBPlugIn
 {
+    /// <summary>
+    /// MSGF+ Utilities
+    /// </summary>
     public class MSGFPlusUtils : clsEventNotifier
     {
         #region "Constants"
 
+        /// <summary>
+        /// Progress value for MSGF+ starting
+        /// </summary>
         public const float PROGRESS_PCT_MSGFPLUS_STARTING = 1;
+
+        /// <summary>
+        /// Progress value for MSGF+ loading the FASTA file
+        /// </summary>
         public const float PROGRESS_PCT_MSGFPLUS_LOADING_DATABASE = 2;
+
+        /// <summary>
+        /// Progress value for MSGF+ reading the spectra file
+        /// </summary>
         public const float PROGRESS_PCT_MSGFPLUS_READING_SPECTRA = 3;
+
+        /// <summary>
+        /// Progress value for MSGF+ spawning worker threads
+        /// </summary>
         public const float PROGRESS_PCT_MSGFPLUS_THREADS_SPAWNED = 4;
+
+        /// <summary>
+        /// Progress value for MSGF+ computing FDRs
+        /// </summary>
         public const float PROGRESS_PCT_MSGFPLUS_COMPUTING_FDRS = 95;
+
+        /// <summary>
+        /// Progress value for MSGF+ having completed
+        /// </summary>
         public const float PROGRESS_PCT_MSGFPLUS_COMPLETE = 96;
+
+        /// <summary>
+        /// Progress value for conversion of the .mzid file to .tsv
+        /// </summary>
         public const float PROGRESS_PCT_MSGFPLUS_CONVERT_MZID_TO_TSV = 97;
+
+        /// <summary>
+        /// Progress value for mapping peptides to proteins
+        /// </summary>
         public const float PROGRESS_PCT_MSGFPLUS_MAPPING_PEPTIDES_TO_PROTEINS = 98;
 
+        /// <summary>
+        /// Progress value for all processing beingcompleted
+        /// </summary>
         public const float PROGRESS_PCT_COMPLETE = 99;
 
         private const string MZIDToTSV_CONSOLE_OUTPUT_FILE = "MzIDToTsv_ConsoleOutput.txt";
@@ -43,22 +80,39 @@ namespace AnalysisManagerMSGFDBPlugIn
         private const string MSGFPLUS_OPTION_FRAGMENTATION_METHOD = "FragmentationMethodID";
         private const string MSGFPLUS_OPTION_INSTRUMENT_ID = "InstrumentID";
 
+        /// <summary>
+        /// MSGF+ TSV file suffix
+        /// </summary>
         public const string MSGFPLUS_TSV_SUFFIX = "_msgfplus.tsv";
 
-        // Obsolete setting: Old MS-GFDB program
-        // public const string MSGFDB_JAR_NAME = "MSGFDB.jar";
-
+        /// <summary>
+        /// MSGF+ jar file name
+        /// </summary>
+        /// <remarks>Previously MSGFDB.jar</remarks>
         public const string MSGFPLUS_JAR_NAME = "MSGFPlus.jar";
+
+        /// <summary>
+        /// MSGF+ console output file anme
+        /// </summary>
         public const string MSGFPLUS_CONSOLE_OUTPUT_FILE = "MSGFPlus_ConsoleOutput.txt";
 
+        /// <summary>
+        /// MSGF+ mods file name
+        /// </summary>
         public const string MOD_FILE_NAME = "MSGFPlus_Mods.txt";
 
         #endregion
 
         #region "Events"
 
+        /// <summary>
+        /// Even raised when a peptide to protein mapping error has been ignored
+        /// </summary>
         public event IgnorePreviousErrorEventEventHandler IgnorePreviousErrorEvent;
 
+        /// <summary>
+        /// Delegate for IgnorePreviousErrorEvent
+        /// </summary>
         public delegate void IgnorePreviousErrorEventEventHandler();
 
         #endregion
@@ -92,24 +146,54 @@ namespace AnalysisManagerMSGFDBPlugIn
 
         #region "Properties"
 
+        /// <summary>
+        /// Number of skipped continuum spectra
+        /// </summary>
         public int ContinuumSpectraSkipped => mContinuumSpectraSkipped;
 
+        /// <summary>
+        /// Console output error message
+        /// </summary>
         public string ConsoleOutputErrorMsg => mConsoleOutputErrorMsg;
 
+        /// <summary>
+        /// Error message
+        /// </summary>
         public string ErrorMessage => mErrorMessage;
 
+        /// <summary>
+        /// MSGF+ version
+        /// </summary>
         public string MSGFPlusVersion => mMSGFPlusVersion;
 
+        /// <summary>
+        /// True if searching for phosphorylated S, T, or Y
+        /// </summary>
         public bool PhosphorylationSearch => mPhosphorylationSearch;
 
+        /// <summary>
+        /// True if the results include auto-added decoy peptides
+        /// </summary>
         public bool ResultsIncludeAutoAddedDecoyPeptides => mResultsIncludeAutoAddedDecoyPeptides;
 
+        /// <summary>
+        /// Number of spectra searched
+        /// </summary>
         public int SpectraSearched => mSpectraSearched;
 
+        /// <summary>
+        /// Actual thread count in use
+        /// </summary>
         public int ThreadCountActual => mThreadCountActual;
 
+        /// <summary>
+        /// Number of processing tasks to be run by MSGF+
+        /// </summary>
         public int TaskCountTotal => mTaskCountTotal;
 
+        /// <summary>
+        /// Number of completed processing tasks
+        /// </summary>
         public int TaskCountCompleted => mTaskCountCompleted;
 
         #endregion
@@ -575,6 +659,15 @@ namespace AnalysisManagerMSGFDBPlugIn
             return cmdStr;
         }
 
+        /// <summary>
+        /// Obtain the MzidToTsv command line arguments
+        /// </summary>
+        /// <param name="mzidFileName"></param>
+        /// <param name="tsvFileName"></param>
+        /// <param name="workingDirectory"></param>
+        /// <param name="msgfDbProgLoc"></param>
+        /// <param name="javaMemorySizeMB"></param>
+        /// <returns></returns>
         [Obsolete("Use GetMZIDtoTSVCommandLine for MzidToTsvConverter.exe")]
         public static string GetMZIDtoTSVCommandLine(string mzidFileName, string tsvFileName, string workingDirectory, string msgfDbProgLoc, int javaMemorySizeMB)
         {
@@ -593,23 +686,42 @@ namespace AnalysisManagerMSGFDBPlugIn
             return cmdStr;
         }
 
-        public CloseOutType CreatePeptideToProteinMapping(string ResultsFileName,
+        /// <summary>
+        /// Create the peptide to protein map file
+        /// </summary>
+        /// <param name="resultsFileName"></param>
+        /// <param name="ePeptideInputFileFormat"></param>
+        /// <returns></returns>
+        public CloseOutType CreatePeptideToProteinMapping(string resultsFileName,
             PeptideToProteinMapEngine.clsPeptideToProteinMapEngine.ePeptideInputFileFormatConstants ePeptideInputFileFormat)
         {
             const bool resultsIncludeAutoAddedDecoyPeptides = false;
             var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
-            return CreatePeptideToProteinMapping(ResultsFileName, resultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder, ePeptideInputFileFormat);
+            return CreatePeptideToProteinMapping(resultsFileName, resultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder, ePeptideInputFileFormat);
         }
 
-        public CloseOutType CreatePeptideToProteinMapping(string ResultsFileName, bool resultsIncludeAutoAddedDecoyPeptides)
+        /// <summary>
+        /// Create the peptide to protein mapping file
+        /// </summary>
+        /// <param name="resultsFileName"></param>
+        /// <param name="resultsIncludeAutoAddedDecoyPeptides"></param>
+        /// <returns></returns>
+        public CloseOutType CreatePeptideToProteinMapping(string resultsFileName, bool resultsIncludeAutoAddedDecoyPeptides)
         {
             var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
-            return CreatePeptideToProteinMapping(ResultsFileName, resultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder);
+            return CreatePeptideToProteinMapping(resultsFileName, resultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder);
         }
 
-        public CloseOutType CreatePeptideToProteinMapping(string ResultsFileName, bool resultsIncludeAutoAddedDecoyPeptides, string localOrgDbFolder)
+        /// <summary>
+        /// Create the peptide to protein mapping file
+        /// </summary>
+        /// <param name="resultsFileName"></param>
+        /// <param name="resultsIncludeAutoAddedDecoyPeptides"></param>
+        /// <param name="localOrgDbFolder"></param>
+        /// <returns></returns>
+        public CloseOutType CreatePeptideToProteinMapping(string resultsFileName, bool resultsIncludeAutoAddedDecoyPeptides, string localOrgDbFolder)
         {
-            return CreatePeptideToProteinMapping(ResultsFileName, resultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder,
+            return CreatePeptideToProteinMapping(resultsFileName, resultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder,
                 PeptideToProteinMapEngine.clsPeptideToProteinMapEngine.ePeptideInputFileFormatConstants.MSGFDBResultsFile);
         }
 
@@ -941,6 +1053,10 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
         }
 
+        /// <summary>
+        /// Delete a file in the working directory
+        /// </summary>
+        /// <param name="filename"></param>
         public void DeleteFileInWorkDir(string filename)
         {
             try
@@ -1142,6 +1258,16 @@ namespace AnalysisManagerMSGFDBPlugIn
             return valueIfNotFound;
         }
 
+        /// <summary>
+        /// Initialize the FASTA file
+        /// </summary>
+        /// <param name="javaProgLoc"></param>
+        /// <param name="msgfPlusProgLoc"></param>
+        /// <param name="fastaFileSizeKB"></param>
+        /// <param name="fastaFileIsDecoy"></param>
+        /// <param name="fastaFilePath"></param>
+        /// <param name="msgfPlusParameterFilePath"></param>
+        /// <returns></returns>
         public CloseOutType InitializeFastaFile(string javaProgLoc, string msgfPlusProgLoc, out float fastaFileSizeKB, out bool fastaFileIsDecoy,
             out string fastaFilePath, string msgfPlusParameterFilePath)
         {
@@ -1149,6 +1275,17 @@ namespace AnalysisManagerMSGFDBPlugIn
                                        msgfPlusParameterFilePath, 0);
         }
 
+        /// <summary>
+        /// Initialize the FASTA file
+        /// </summary>
+        /// <param name="javaProgLoc"></param>
+        /// <param name="msgfPlusProgLoc"></param>
+        /// <param name="fastaFileSizeKB"></param>
+        /// <param name="fastaFileIsDecoy"></param>
+        /// <param name="fastaFilePath"></param>
+        /// <param name="msgfPlusParameterFilePath"></param>
+        /// <param name="maxFastaFileSizeMB"></param>
+        /// <returns></returns>
         public CloseOutType InitializeFastaFile(string javaProgLoc, string msgfPlusProgLoc, out float fastaFileSizeKB, out bool fastaFileIsDecoy,
             out string fastaFilePath, string msgfPlusParameterFilePath, int maxFastaFileSizeMB)
         {
@@ -1462,6 +1599,11 @@ namespace AnalysisManagerMSGFDBPlugIn
             return false;
         }
 
+        /// <summary>
+        /// Verify that the MSGF+ .mzid file ends with XML tag MzIdentML
+        /// </summary>
+        /// <param name="fiMzidFile"></param>
+        /// <returns></returns>
         public static bool MSGFPlusResultsFileHasClosingTag(FileSystemInfo fiMzidFile)
         {
 
@@ -2718,6 +2860,12 @@ namespace AnalysisManagerMSGFDBPlugIn
             return new string(chReversed);
         }
 
+        /// <summary>
+        /// Previously returned true if legacy MSGFDB should have been used
+        /// Now always returns false
+        /// </summary>
+        /// <param name="jobParams"></param>
+        /// <returns></returns>
         public static bool UseLegacyMSGFDB(IJobParams jobParams)
         {
             return false;

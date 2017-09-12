@@ -6,18 +6,28 @@ using MyEMSLReader;
 
 namespace AnalysisManagerDtaRefineryPlugIn
 {
+    /// <summary>
+    /// Retrieve resources for the DTA Refinery plugin
+    /// </summary>
     public class clsAnalysisResourcesDtaRefinery : clsAnalysisResources
     {
         internal const string XTANDEM_DEFAULT_INPUT_FILE = "xtandem_default_input.xml";
         internal const string XTANDEM_TAXONOMY_LIST_FILE = "xtandem_taxonomy_list.xml";
         internal const string DTA_REFINERY_INPUT_FILE = "DtaRefinery_input.xml";
 
+        /// <summary>
+        /// Initialize options
+        /// </summary>
         public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsMyEMSLUtilities myEMSLUtilities)
         {
             base.Setup(stepToolName, mgrParams, jobParams, statusTools, myEMSLUtilities);
             SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, true);
         }
 
+        /// <summary>
+        /// Retrieve required files
+        /// </summary>
+        /// <returns>Closeout code</returns>
         public override CloseOutType GetResources()
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step

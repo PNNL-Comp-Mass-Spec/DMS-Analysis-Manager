@@ -11,10 +11,17 @@ using PRISM;
 
 namespace AnalysisManagerBase
 {
+    /// <summary>
+    /// FASTA file utilities
+    /// </summary>
     public class clsSplitFastaFileUtilities : clsEventNotifier
     {
 
+        /// <summary>
+        /// LockFile name
+        /// </summary>
         public const string LOCK_FILE_PROGRESS_TEXT = "Lockfile";
+
         private const string SP_NAME_UPDATE_ORGANISM_DB_FILE = "AddUpdateOrganismDBFile";
 
         private const string SP_NAME_REFRESH_CACHED_ORG_DB_INFO = "RefreshCachedOrganismDBInfo";
@@ -31,14 +38,23 @@ namespace AnalysisManagerBase
         private bool mWaitingForLockFile;
         private clsFastaFileSplitter mSplitter;
 
+        /// <summary>
+        /// Most recent error message
+        /// </summary>
         public string ErrorMessage => mErrorMessage;
 
+        /// <summary>
+        /// MSGF+ index files folder path
+        /// </summary>
         public string MSGFPlusIndexFilesFolderPathLegacyDB
         {
             get => mMSGFPlusIndexFilesFolderPathLegacyDB;
             set => mMSGFPlusIndexFilesFolderPathLegacyDB = value;
         }
 
+        /// <summary>
+        /// True if waiting for a lock file
+        /// </summary>
         public bool WaitingForLockFile => mWaitingForLockFile;
 
         /// <summary>
@@ -70,7 +86,7 @@ namespace AnalysisManagerBase
         /// <param name="lockFilePath">Output parameter: path to the newly created lock file</param>
         /// <returns>Lock file handle</returns>
         /// <remarks></remarks>
-        private StreamWriter CreateLockStream(FileInfo fiBaseFastaFile, out string lockFilePath)
+        private StreamWriter CreateLockStream(FileSystemInfo fiBaseFastaFile, out string lockFilePath)
         {
 
             var startTime = DateTime.UtcNow;
@@ -168,7 +184,7 @@ namespace AnalysisManagerBase
         }
 
 
-        private void DeleteLockStream(string lockFilePath, StreamWriter lockStream)
+        private void DeleteLockStream(string lockFilePath, TextWriter lockStream)
         {
             try
             {
@@ -446,7 +462,7 @@ namespace AnalysisManagerBase
             {
 
                 currentTask = "GetLegacyFastaFilePath for splitFastaName";
-                var fastaFilePath = GetLegacyFastaFilePath(splitFastaName, out var organismName);
+                var fastaFilePath = GetLegacyFastaFilePath(splitFastaName, out var _);
 
                 if (!string.IsNullOrWhiteSpace(fastaFilePath))
                 {
@@ -492,7 +508,7 @@ namespace AnalysisManagerBase
                 // It's possible another process created the .Fasta file while this process was waiting for the other process's lock file to disappear
 
                 currentTask = "GetLegacyFastaFilePath for splitFastaName (2nd time)";
-                fastaFilePath = GetLegacyFastaFilePath(splitFastaName, out organismName);
+                fastaFilePath = GetLegacyFastaFilePath(splitFastaName, out _);
                 if (!string.IsNullOrWhiteSpace(fastaFilePath))
                 {
                     // The file now exists
@@ -624,9 +640,21 @@ namespace AnalysisManagerBase
 
         #region "Events and Event Handlers"
 
+        /// <summary>
+        /// Event raised when splitting starts
+        /// </summary>
         public event SplittingBaseFastafileEventHandler SplittingBaseFastafile;
+
+        /// <summary>
+        /// Delegate for SplittingBaseFastafile
+        /// </summary>
+        /// <param name="baseFastaFileName"></param>
+        /// <param name="numSplitParts"></param>
         public delegate void SplittingBaseFastafileEventHandler(string baseFastaFileName, int numSplitParts);
 
+        /// <summary>
+        /// Raise event SplittingBaseFastafile
+        /// </summary>
         private void OnSplittingBaseFastafile(string baseFastaFileName, int numSplitParts)
         {
             SplittingBaseFastafile?.Invoke(baseFastaFileName, numSplitParts);

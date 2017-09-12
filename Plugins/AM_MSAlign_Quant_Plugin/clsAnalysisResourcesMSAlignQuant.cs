@@ -3,10 +3,22 @@ using AnalysisManagerBase;
 
 namespace AnalysisManagerMSAlignQuantPlugIn
 {
+
+    /// <summary>
+    /// Retrieve resources for the MSAlign Quant plugin
+    /// </summary>
     public class clsAnalysisResourcesMSAlignQuant : clsAnalysisResources
     {
+
+        /// <summary>
+        /// MSAlign results table suffix
+        /// </summary>
         public const string MSALIGN_RESULT_TABLE_SUFFIX = "_MSAlign_ResultTable.txt";
 
+        /// <summary>
+        /// Retrieve required files
+        /// </summary>
+        /// <returns>Closeout code</returns>
         public override CloseOutType GetResources()
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step

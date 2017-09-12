@@ -18,17 +18,23 @@ using log4net.Util.TypeConverters;
 [assembly: log4net.Config.XmlConfigurator(ConfigFile = "Logging.config", Watch = true)]
 namespace AnalysisManagerBase
 {
+    /// <summary>
+    /// Class for handling logging via Log4Net
+    /// </summary>
     public class clsLogTools
     {
 
-        //*********************************************************************************************************
-        // Class for handling logging via Log4Net
-        //*********************************************************************************************************
 
         #region "Constants"
-        
+
+        /// <summary>
+        /// Name of the manager control database logger
+        /// </summary>
         public const string DB_LOGGER_MGR_CONTROL = "MgrControlDbDefinedAppender";
 
+        /// <summary>
+        /// Name of the logger before manager control parameters have been loaded
+        /// </summary>
         public const string DB_LOGGER_NO_MGR_CONTROL_PARAMS = "DbAppenderBeforeMgrControlParams";
 
         private const string LOG_FILE_APPENDER = "FileAppender";
@@ -37,19 +43,55 @@ namespace AnalysisManagerBase
 
         #region "Enums"
 
+        /// <summary>
+        /// Log levels
+        /// </summary>
         public enum LogLevels
         {
+            /// <summary>
+            /// Debug message
+            /// </summary>
             DEBUG = 5,
+
+            /// <summary>
+            /// Informational message
+            /// </summary>
             INFO = 4,
+
+            /// <summary>
+            /// Warning message
+            /// </summary>
             WARN = 3,
+
+            /// <summary>
+            /// Error message
+            /// </summary>
             ERROR = 2,
+
+            /// <summary>
+            /// Fatal error message
+            /// </summary>
             FATAL = 1
         }
 
+        /// <summary>
+        /// Log types
+        /// </summary>
         public enum LoggerTypes
         {
+            /// <summary>
+            /// Log to a log file
+            /// </summary>
             LogFile,
+
+            /// <summary>
+            /// Log to the database and to the log file
+            /// </summary>
             LogDb,
+
+            /// <summary>
+            /// Log to the system event log and to the log file
+            /// </summary>
             LogSystem
         }
 
@@ -94,6 +136,9 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public static bool FileLogDebugEnabled => m_FileLogger.IsDebugEnabled;
 
+        /// <summary>
+        /// Most recent error message
+        /// </summary>
         public static string MostRecentErrorMessage => m_MostRecentErrorMessage;
 
         #endregion
@@ -270,16 +315,15 @@ namespace AnalysisManagerBase
             foreach (var selectedAppender in appendList)
             {
                 // Convert the IAppender object to a FileAppender instance
-                var AppenderToChange = selectedAppender as FileAppender;
-                if (AppenderToChange == null)
+                if (!(selectedAppender is FileAppender appenderToChange))
                 {
                     WriteLog(LoggerTypes.LogSystem, LogLevels.ERROR, "Unable to convert appender");
                     return;
                 }
 
                 // Change the file name and activate change
-                AppenderToChange.File = fileName;
-                AppenderToChange.ActivateOptions();
+                appenderToChange.File = fileName;
+                appenderToChange.ActivateOptions();
             }
         }
 
@@ -293,7 +337,7 @@ namespace AnalysisManagerBase
 
             // Get a list of the current loggers
             var loggerList = LogManager.GetCurrentLoggers();
-            if (loggerList.GetLength(0) < 1) 
+            if (loggerList.GetLength(0) < 1)
                 return null;
 
             // Create a List of appenders matching the criteria for each logger
@@ -302,7 +346,7 @@ namespace AnalysisManagerBase
             {
                 foreach (var testAppender in testLogger.Logger.Repository.GetAppenders())
                 {
-                    if (testAppender.Name == appenderName) 
+                    if (testAppender.Name == appenderName)
                         retList.Add(testAppender);
                 }
             }
@@ -378,7 +422,8 @@ namespace AnalysisManagerBase
             log4net.Layout.PatternLayout layout;
             if (clsGlobal.LinuxOS | System.IO.Path.DirectorySeparatorChar == '/')
             {
-                layout = new log4net.Layout.PatternLayout {
+                layout = new log4net.Layout.PatternLayout
+                {
                     ConversionPattern = "%date{MM/dd/yyyy HH:mm:ss}, %message, %level,%newline"
                 };
             }

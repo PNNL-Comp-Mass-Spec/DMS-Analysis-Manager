@@ -5,9 +5,14 @@ using PRISM;
 
 namespace AnalysisManagerBase
 {
+    /// <summary>
+    /// Proteowizard tools
+    /// </summary>
     public class clsProteowizardTools : clsEventNotifier
     {
-
+        /// <summary>
+        /// Debug level
+        /// </summary>
         protected int mDebugLevel;
 
         /// <summary>
@@ -19,7 +24,26 @@ namespace AnalysisManagerBase
             mDebugLevel = debugLevel;
         }
 
+        /// <summary>
+        /// Register ProteoWizard
+        /// </summary>
+        /// <returns></returns>
         public bool RegisterProteoWizard()
+        {
+            if (clsGlobal.LinuxOS)
+            {
+                OnWarningEvent("Skipping call to RegisterProteoWizard since running on Linux");
+                return true;
+            }
+
+            return RegisterProteoWizardWindows();
+        }
+
+        /// <summary>
+        /// Register ProteoWizard
+        /// </summary>
+        /// <returns></returns>
+        private bool RegisterProteoWizardWindows()
         {
             var valueMissing = false;
 

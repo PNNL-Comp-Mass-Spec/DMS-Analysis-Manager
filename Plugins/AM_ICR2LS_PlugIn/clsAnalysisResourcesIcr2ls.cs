@@ -4,10 +4,16 @@ using AnalysisManagerBase;
 
 namespace AnalysisManagerICR2LSPlugIn
 {
+    /// <summary>
+    /// Retrieve resources for the ICR-2LS plugin
+    /// </summary>
     public class clsAnalysisResourcesIcr2ls : clsAnalysisResources
     {
-        #region "Methods"
 
+        /// <summary>
+        /// Retrieve required files
+        /// </summary>
+        /// <returns>Closeout code</returns>
         public override CloseOutType GetResources()
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step
@@ -279,6 +285,5 @@ namespace AnalysisManagerICR2LSPlugIn
             }
         }
 
-        #endregion
     }
 }

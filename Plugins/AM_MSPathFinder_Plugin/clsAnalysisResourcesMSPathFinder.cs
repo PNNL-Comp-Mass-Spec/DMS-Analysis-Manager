@@ -13,14 +13,26 @@ using AnalysisManagerBase;
 
 namespace AnalysisManagerMSPathFinderPlugin
 {
+
+    /// <summary>
+    /// Retrieve resources for the MSPathFinder plugin
+    /// </summary>
     public class clsAnalysisResourcesMSPathFinder : clsAnalysisResources
     {
+
+        /// <summary>
+        /// Initialize options
+        /// </summary>
         public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsMyEMSLUtilities myEMSLUtilities)
         {
             base.Setup(stepToolName, mgrParams, jobParams, statusTools, myEMSLUtilities);
             SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, true);
         }
 
+        /// <summary>
+        /// Retrieve required files
+        /// </summary>
+        /// <returns>Closeout code</returns>
         public override CloseOutType GetResources()
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step

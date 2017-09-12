@@ -11,9 +11,11 @@ using AnalysisManagerBase;
 
 namespace AnalysisManagerResultsXferPlugin
 {
+    /// <summary>
+    /// Retrieve resources for the Results transfer plugin
+    /// </summary>
     public class clsAnalysisResourcesResultXfer : clsAnalysisResources
     {
-        #region "Methods"
 
         /// <summary>
         /// Obtains resources necessary for performing analysis results transfer
@@ -32,6 +34,5 @@ namespace AnalysisManagerResultsXferPlugin
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        #endregion
     }
 }

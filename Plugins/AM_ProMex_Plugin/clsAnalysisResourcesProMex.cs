@@ -10,14 +10,25 @@ using AnalysisManagerBase;
 
 namespace AnalysisManagerProMexPlugIn
 {
+    /// <summary>
+    /// Retrieve resources for the ProMex plugin
+    /// </summary>
     public class clsAnalysisResourcesProMex : clsAnalysisResources
     {
+
+        /// <summary>
+        /// Initialize options
+        /// </summary>
         public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsMyEMSLUtilities myEMSLUtilities)
         {
             base.Setup(stepToolName, mgrParams, jobParams, statusTools, myEMSLUtilities);
             SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, true);
         }
 
+        /// <summary>
+        /// Retrieve required files
+        /// </summary>
+        /// <returns>Closeout code</returns>
         public override CloseOutType GetResources()
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step
@@ -29,11 +40,9 @@ namespace AnalysisManagerProMexPlugIn
 
             // Get the ProMex parameter file
 
-            string paramFileStoragePathKeyName = null;
-            string proMexParmFileStoragePath = null;
-            paramFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "ProMex";
+            var paramFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "ProMex";
 
-            proMexParmFileStoragePath = m_mgrParams.GetParam(paramFileStoragePathKeyName);
+            var proMexParmFileStoragePath = m_mgrParams.GetParam(paramFileStoragePathKeyName);
             if (string.IsNullOrEmpty(proMexParmFileStoragePath))
             {
                 proMexParmFileStoragePath = @"C:\DMS_Programs\ProMex";

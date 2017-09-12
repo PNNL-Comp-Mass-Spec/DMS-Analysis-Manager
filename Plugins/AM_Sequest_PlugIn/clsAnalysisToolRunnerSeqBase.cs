@@ -61,7 +61,6 @@ namespace AnalysisManagerSequestPlugin
         /// Runs the analysis tool
         /// </summary>
         /// <returns>CloseOutType value indicating success or failure</returns>
-        /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
 
@@ -393,6 +392,9 @@ namespace AnalysisManagerSequestPlugin
             return lstDTAsToSkip;
         }
 
+        /// <summary>
+        /// Copy failed results from the working directory to the DMS_FailedResults directory on the local computer
+        /// </summary>
         public override void CopyFailedResultsToArchiveFolder()
         {
             m_jobParams.AddResultFileToSkip(m_Dataset + "_dta.zip");

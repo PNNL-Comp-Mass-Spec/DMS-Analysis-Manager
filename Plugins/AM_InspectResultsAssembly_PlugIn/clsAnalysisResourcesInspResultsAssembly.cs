@@ -4,10 +4,15 @@ using AnalysisManagerBase;
 
 namespace AnalysisManagerInspResultsAssemblyPlugIn
 {
+    /// <summary>
+    /// Retrieve resources for the Inspect Results Assembly plugin
+    /// </summary>
     public class clsAnalysisResourcesInspResultsAssembly : clsAnalysisResources
     {
-        #region "Methods"
 
+        /// <summary>
+        /// Initialize options
+        /// </summary>
         public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsMyEMSLUtilities myEMSLUtilities)
         {
             base.Setup(stepToolName, mgrParams, jobParams, statusTools, myEMSLUtilities);
@@ -18,7 +23,6 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         /// Retrieves files necessary for performance of Sequest analysis
         /// </summary>
         /// <returns>CloseOutType indicating success or failure</returns>
-        /// <remarks></remarks>
         public override CloseOutType GetResources()
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step
@@ -222,6 +226,5 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             return true;
         }
 
-        #endregion
     }
 }

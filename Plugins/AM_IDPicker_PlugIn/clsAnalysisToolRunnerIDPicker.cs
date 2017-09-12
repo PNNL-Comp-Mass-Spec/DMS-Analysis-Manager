@@ -16,6 +16,9 @@ namespace AnalysisManagerIDPickerPlugIn
     {
         #region "Module Variables"
 
+        /// <summary>
+        /// If True, always skip IDPicker
+        /// </summary>
         public const bool ALWAYS_SKIP_IDPICKER = true;
 
         private const string PEPXML_CONSOLE_OUTPUT = "PepXML_ConsoleOutput.txt";

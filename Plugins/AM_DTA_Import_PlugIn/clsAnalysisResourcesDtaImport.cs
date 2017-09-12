@@ -4,15 +4,16 @@ using AnalysisManagerBase;
 
 namespace AnalysisManagerDtaImportPlugIn
 {
+    /// <summary>
+    /// Retrieve resources for the DTA Import plugin
+    /// </summary>
     public class clsAnalysisResourcesDtaImport : clsAnalysisResources
     {
-        #region "Methods"
 
         /// <summary>
-        /// Retrieves files necessary for performance of Sequest analysis
+        /// Retrieve required files
         /// </summary>
-        /// <returns>CloseOutType indicating success or failure</returns>
-        /// <remarks></remarks>
+        /// <returns>Closeout code</returns>
         public override CloseOutType GetResources()
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step
@@ -97,6 +98,5 @@ namespace AnalysisManagerDtaImportPlugIn
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        #endregion
     }
 }

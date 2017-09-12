@@ -15,36 +15,37 @@ using AnalysisManagerBase;
 
 namespace AnalysisManagerBrukerDAExportPlugin
 {
+    /// <summary>
+    /// Class for running DA Export
+    /// </summary>
     public class clsAnalysisToolRunnerBrukerDAExport : clsAnalysisToolRunnerBase
     {
         #region "Constants and Enums"
 
-        protected const float PROGRESS_PCT_STARTING = 5;
-        protected const float PROGRESS_PCT_COMPLETE = 99;
+        private const float PROGRESS_PCT_STARTING = 5;
+        private const float PROGRESS_PCT_COMPLETE = 99;
 
-        protected const string DATAEXPORT_CONSOLE_OUTPUT = "SpectraExport_ConsoleOutput.txt";
+        private const string DATAEXPORT_CONSOLE_OUTPUT = "SpectraExport_ConsoleOutput.txt";
 
         #endregion
 
         #region "Module Variables"
 
-        protected string mConsoleOutputErrorMsg;
+        private string mConsoleOutputErrorMsg;
 
-        protected bool mMaxRuntimeReached;
+        private bool mMaxRuntimeReached;
 
-        protected DateTime mLastConsoleOutputParse;
-        protected DateTime mLastProgressWriteTime;
+        private DateTime mLastConsoleOutputParse;
+        private DateTime mLastProgressWriteTime;
 
         #endregion
 
         #region "Methods"
 
-
         /// <summary>
         /// Exports spectra using Bruker Data Analysis
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
             try

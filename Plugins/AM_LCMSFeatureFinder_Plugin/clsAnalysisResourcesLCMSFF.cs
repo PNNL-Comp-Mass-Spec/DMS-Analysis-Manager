@@ -14,11 +14,25 @@ using PRISM;
 
 namespace AnalysisManagerLCMSFeatureFinderPlugIn
 {
+    /// <summary>
+    /// Retrieve resources for the LCMS Feature Finder plugin
+    /// </summary>
     public class clsAnalysisResourcesLCMSFF : clsAnalysisResources
     {
+        /// <summary>
+        /// DeconTools _scans.csv file suffix
+        /// </summary>
         public const string SCANS_FILE_SUFFIX = "_scans.csv";
+
+        /// <summary>
+        /// DeconTools _isos.csv file suffix
+        /// </summary>
         public const string ISOS_FILE_SUFFIX = "_isos.csv";
 
+        /// <summary>
+        /// Retrieve required files
+        /// </summary>
+        /// <returns>Closeout code</returns>
         public override CloseOutType GetResources()
         {
             LogMessage("Getting required files");
@@ -123,7 +137,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        protected string GetValue(string strLine)
+        private string GetValue(string strLine)
         {
             var intEqualsIndex = 0;
             var strValue = string.Empty;
@@ -140,7 +154,7 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
             return strValue;
         }
 
-        protected bool UpdateFeatureFinderIniFile(string strLCMSFFIniFileName)
+        private bool UpdateFeatureFinderIniFile(string strLCMSFFIniFileName)
         {
             const string INPUT_FILENAME_KEY = "InputFileName";
             const string OUTPUT_DIRECTORY_KEY = "OutputDirectory";

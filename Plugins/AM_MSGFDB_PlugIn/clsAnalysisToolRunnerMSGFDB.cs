@@ -62,7 +62,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Runs MSGF+ tool (aka MS-GF+)
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
             try
@@ -678,6 +677,9 @@ namespace AnalysisManagerMSGFDBPlugIn
 
         }
 
+        /// <summary>
+        /// Copy failed results to thelocal archive folder
+        /// </summary>
         public override void CopyFailedResultsToArchiveFolder()
         {
             // Try to save whatever files are in the work directory (however, delete any spectral data files)

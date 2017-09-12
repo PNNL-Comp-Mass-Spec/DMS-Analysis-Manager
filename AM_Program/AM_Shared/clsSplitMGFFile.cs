@@ -12,16 +12,35 @@ namespace AnalysisManagerBase
     /// <remarks></remarks>
     public class clsSplitMGFFile : clsEventNotifier
     {
-
+        /// <summary>
+        /// Output file info
+        /// </summary>
         protected struct udtOutputFileType
         {
+            /// <summary>
+            /// Output file object
+            /// </summary>
             public FileInfo OutputFile;
+
+            /// <summary>
+            /// Number of spectra written
+            /// </summary>
             public int SpectraWritten;
+
+            /// <summary>
+            /// Writer
+            /// </summary>
             public StreamWriter Writer;
+
+            /// <summary>
+            /// Part number
+            /// </summary>
             public int PartNumber;
         }
 
-
+        /// <summary>
+        /// Scan number matcher
+        /// </summary>
         protected readonly Regex mExtractScan;
 
         /// <summary>
@@ -84,7 +103,7 @@ namespace AnalysisManagerBase
 
                 var scanMapFile = Path.GetFileNameWithoutExtension(fiMgfFile.Name) + "_mgfScanMap.txt";
 
-                var scanMapFilePath = fiMgfFile.DirectoryName == null ? scanMapFile : Path.Combine(fiMgfFile.DirectoryName, scanMapFile);
+                var scanMapFilePath = Path.Combine(fiMgfFile.DirectoryName, scanMapFile);
 
                 var lstSplitMgfFiles = new List<FileInfo>();
 
@@ -107,7 +126,7 @@ namespace AnalysisManagerBase
                             {
                                 var msgFileName = Path.GetFileNameWithoutExtension(fiMgfFile.Name) + fileSuffix + partNum + ".mgf";
 
-                                var outputFilePath = fiMgfFile.DirectoryName == null ? msgFileName : Path.Combine(fiMgfFile.DirectoryName, msgFileName);
+                                var outputFilePath = Path.Combine(fiMgfFile.DirectoryName, msgFileName);
 
                                 var nextWriter = new udtOutputFileType
                                 {

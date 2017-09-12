@@ -9,6 +9,9 @@ using AnalysisManagerBase;
 
 namespace AnalysisManagerMsXmlBrukerPlugIn
 {
+    /// <summary>
+    /// Retrieve resources for the MSXml Bruker plugin
+    /// </summary>
     public class clsAnalysisResourcesMSXMLBruker : clsAnalysisResources
     {
         #region "Methods"
@@ -17,7 +20,6 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
         /// Retrieves files necessary for creating the .mzXML file
         /// </summary>
         /// <returns>CloseOutType indicating success or failure</returns>
-        /// <remarks></remarks>
         public override CloseOutType GetResources()
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step

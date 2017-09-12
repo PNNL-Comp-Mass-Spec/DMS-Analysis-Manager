@@ -4,6 +4,9 @@ using System.IO;
 
 namespace AnalysisManagerBase
 {
+    /// <summary>
+    /// Utilitize for offline job processing
+    /// </summary>
     public class clsOfflineProcessing
     {
         /// <summary>

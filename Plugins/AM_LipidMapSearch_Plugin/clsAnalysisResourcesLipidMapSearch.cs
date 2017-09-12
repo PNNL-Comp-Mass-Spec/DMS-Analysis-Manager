@@ -5,10 +5,22 @@ using MyEMSLReader;
 
 namespace AnalysisManagerLipidMapSearchPlugIn
 {
+
+    /// <summary>
+    /// Retrieve resources for the Lipid Map Search plugin
+    /// </summary>
     public class clsAnalysisResourcesLipidMapSearch : clsAnalysisResources
     {
+
+        /// <summary>
+        /// DeconTools peaks file suffix
+        /// </summary>
         public const string DECONTOOLS_PEAKS_FILE_SUFFIX = "_peaks.txt";
 
+        /// <summary>
+        /// Retrieve required files
+        /// </summary>
+        /// <returns>Closeout code</returns>
         public override CloseOutType GetResources()
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step

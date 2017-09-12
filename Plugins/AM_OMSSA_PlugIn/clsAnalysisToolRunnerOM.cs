@@ -32,7 +32,6 @@ namespace AnalysisManagerOMSSAPlugIn
         /// Runs OMSSA tool
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
             // Do the base class stuff

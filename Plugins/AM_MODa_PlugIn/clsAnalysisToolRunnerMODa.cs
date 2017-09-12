@@ -53,7 +53,6 @@ namespace AnalysisManagerMODaPlugIn
         /// Runs MODa tool
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
             try
@@ -264,6 +263,9 @@ namespace AnalysisManagerMODaPlugIn
             return true;
         }
 
+        /// <summary>
+        /// Copy failed results from the working directory to the DMS_FailedResults directory on the local computer
+        /// </summary>
         public override void CopyFailedResultsToArchiveFolder()
         {
             m_jobParams.AddResultFileToSkip(Dataset + ".mzXML");

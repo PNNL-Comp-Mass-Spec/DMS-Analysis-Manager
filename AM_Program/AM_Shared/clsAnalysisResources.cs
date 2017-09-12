@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
 using PHRPReader;
 using System.IO;
 using System.Linq;
@@ -31,6 +30,9 @@ namespace AnalysisManagerBase
 
         #region "Constants"
 
+        /// <summary>
+        /// MyEMSL path flag
+        /// </summary>
         public const string MYEMSL_PATH_FLAG = clsMyEMSLUtilities.MYEMSL_PATH_FLAG;
 
         // Note: All of the RAW_DATA_TYPE constants need to be all lowercase
@@ -75,50 +77,135 @@ namespace AnalysisManagerBase
         /// </summary>
         public const string RAW_DATA_TYPE_DOT_MZML_FILES = "dot_mzml_files";
 
-        // 12T datasets acquired prior to 7/16/2010 use a Bruker data station and have an analysis.baf file, 0.ser folder, and a XMASS_Method.m subfolder with file apexAcquisition.method
-        // Datasets will have an instrument name of 12T_FTICR and raw_data_type of "zipped_s_folders"
-
-        // 12T datasets acquired after 9/1/2010 use the Agilent data station, and thus have a .D folder
-        // Datasets will have an instrument name of 12T_FTICR_B and raw_data_type of "bruker_ft"
-        // 15T datasets also have raw_data_type "bruker_ft"
-        // Inside the .D folder is the analysis.baf file; there is also .m subfolder that has a apexAcquisition.method file
+        /// <summary>
+        /// Bruker_FT folder data
+        /// </summary>
+        /// <remarks>
+        /// 12T datasets acquired prior to 7/16/2010 use a Bruker data station and have an analysis.baf file, 0.ser folder, and a XMASS_Method.m subfolder with file apexAcquisition.method
+        /// - Datasets will have an instrument name of 12T_FTICR and raw_data_type of "zipped_s_folders"
+        /// 12T datasets acquired after 9/1/2010 use the Agilent data station, and thus have a .D folder
+        /// - Datasets will have an instrument name of 12T_FTICR_B and raw_data_type of "bruker_ft"
+        /// 15T datasets also have raw_data_type "bruker_ft"
+        /// - Inside the .D folder is the analysis.baf file; there is also .m subfolder that has a apexAcquisition.method file
+        /// </remarks>
         public const string RAW_DATA_TYPE_BRUKER_FT_FOLDER = "bruker_ft";
 
-        // The following is used by BrukerTOF_01 (e.g. Bruker TOF_TOF)
-        // Folder has a .EMF file and a single sub-folder that has an acqu file and fid file
+        /// <summary>
+        /// Bruker MALDI spot data
+        /// </summary>
+        /// <remarks>
+        /// The following is used by BrukerTOF_01 (e.g. Bruker TOF_TOF)
+        /// Folder has a .EMF file and a single sub-folder that has an acqu file and fid file
+        /// </remarks>
         public const string RAW_DATA_TYPE_BRUKER_MALDI_SPOT = "bruker_maldi_spot";
 
-        // The following is used by instruments 9T_FTICR_Imaging and BrukerTOF_Imaging_01
-        // Series of zipped subfolders, with names like 0_R00X329.zip; subfolders inside the .Zip files have fid files
+        /// <summary>
+        /// Bruker MALID imaging data
+        /// </summary>
+        /// <remarks>
+        /// The following is used by instruments 9T_FTICR_Imaging and BrukerTOF_Imaging_01
+        /// Series of zipped subfolders, with names like 0_R00X329.zip; subfolders inside the .Zip files have fid files
+        /// </remarks>
         public const string RAW_DATA_TYPE_BRUKER_MALDI_IMAGING = "bruker_maldi_imaging";
 
-        // The following is used by instrument Maxis_01
-        // Inside the .D folder is the analysis.baf file; there is also .m subfolder that has a microTOFQMaxAcquisition.method file; there is not a ser or fid file
+        /// <summary>
+        /// Bruker TOF baf data
+        /// </summary>
+        /// <remarks>
+        /// The following is used by instrument Maxis_01
+        /// Inside the .D folder is the analysis.baf file; there is also .m subfolder that has a microTOFQMaxAcquisition.method file; there is not a ser or fid file
+        /// </remarks>
         public const string RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER = "bruker_tof_baf";
+
+        /// <summary>
+        /// Result type for SEQUEST
+        /// </summary>
         public const string RESULT_TYPE_SEQUEST = "Peptide_Hit";
+
+        /// <summary>
+        /// Result type for X!Tandem
+        /// </summary>
         public const string RESULT_TYPE_XTANDEM = "XT_Peptide_Hit";
+
+        /// <summary>
+        /// Result type for Inpect
+        /// </summary>
         public const string RESULT_TYPE_INSPECT = "IN_Peptide_Hit";
 
-        // Used for MSGFDB and MSGF+
+        /// <summary>
+        /// Result type for MSGF+
+        /// (and previously MSGFDB)
+        /// </summary>
         public const string RESULT_TYPE_MSGFPLUS = "MSG_Peptide_Hit";
+
+        /// <summary>
+        /// Result type for MSAlign
+        /// </summary>
         public const string RESULT_TYPE_MSALIGN = "MSA_Peptide_Hit";
+
+        /// <summary>
+        /// Result type for MODa
+        /// </summary>
         public const string RESULT_TYPE_MODA = "MODa_Peptide_Hit";
+
+        /// <summary>
+        /// Result type for ModPlus
+        /// </summary>
         public const string RESULT_TYPE_MODPLUS = "MODPlus_Peptide_Hit";
 
+        /// <summary>
+        /// Result type for MSPathfinder
+        /// </summary>
         public const string RESULT_TYPE_MSPATHFINDER = "MSP_Peptide_Hit";
+
+        /// <summary>
+        /// QStar .wiff file
+        /// </summary>
         public const string DOT_WIFF_EXTENSION = ".wiff";
+
+        /// <summary>
+        /// .d file (or .d folder)
+        /// </summary>
         public const string DOT_D_EXTENSION = ".d";
+
+        /// <summary>
+        /// .raw file (or .raw folder)
+        /// </summary>
         public const string DOT_RAW_EXTENSION = ".raw";
 
+        /// <summary>
+        /// .uimf file
+        /// </summary>
         public const string DOT_UIMF_EXTENSION = ".uimf";
+
+        /// <summary>
+        /// .gz file
+        /// </summary>
         public const string DOT_GZ_EXTENSION = ".gz";
+
+        /// <summary>
+        /// .mzXML file
+        /// </summary>
         public const string DOT_MZXML_EXTENSION = ".mzXML";
 
+        /// <summary>
+        /// .mzML file
+        /// </summary>
         public const string DOT_MZML_EXTENSION = ".mzML";
+
+        /// <summary>
+        /// .mgf file
+        /// </summary>
         public const string DOT_MGF_EXTENSION = ".mgf";
 
+        /// <summary>
+        /// .cdf file
+        /// </summary>
         public const string DOT_CDF_EXTENSION = ".cdf";
 
+        /// <summary>
+        /// .pbf file
+        /// </summary>
         public const string DOT_PBF_EXTENSION = ".pbf";
 
         /// <summary>
@@ -127,35 +214,89 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public const string DOT_MS1FT_EXTENSION = ".ms1ft";
 
+        /// <summary>
+        /// Storage path info file suffix
+        /// </summary>
         public const string STORAGE_PATH_INFO_FILE_SUFFIX = clsFileCopyUtilities.STORAGE_PATH_INFO_FILE_SUFFIX;
+
+        /// <summary>
+        /// Scan stats file suffix
+        /// </summary>
         public const string SCAN_STATS_FILE_SUFFIX = "_ScanStats.txt";
 
+        /// <summary>
+        /// Scan stats ex file suffix
+        /// </summary>
         public const string SCAN_STATS_EX_FILE_SUFFIX = "_ScanStatsEx.txt";
 
+        /// <summary>
+        /// SIC stats file suffix
+        /// </summary>
         public const string SIC_STATS_FILE_SUFFIX = "_SICStats.txt";
 
+        /// <summary>
+        /// ReporterIons file suffix
+        /// </summary>
         public const string REPORTERIONS_FILE_SUFFIX = "_ReporterIons.txt";
 
+        /// <summary>
+        /// Data package SpectraFile suffix
+        /// </summary>
         public const string DATA_PACKAGE_SPECTRA_FILE_SUFFIX = "_SpectraFile";
+
+        /// <summary>
+        /// Bruker 0.ser folder
+        /// </summary>
         public const string BRUKER_ZERO_SER_FOLDER = "0.ser";
+
+        /// <summary>
+        /// Bruker ser file name
+        /// </summary>
         public const string BRUKER_SER_FILE = "ser";
 
+        /// <summary>
+        /// Bruerk fid file name
+        /// </summary>
         public const string BRUKER_FID_FILE = "fid";
 
+        /// <summary>
+        /// Packed job parameter DatasetFilePaths
+        /// </summary>
         public const string JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS = "PackedParam_DatasetFilePaths";
 
-        // This is used by clsAnalysisResourcesRepoPkgr
+        /// <summary>
+        /// Packed job parameter DatasetRawDataTypes
+        /// </summary>
+        /// <remarks>This is used by clsAnalysisResourcesRepoPkgr</remarks>
         public const string JOB_PARAM_DICTIONARY_DATASET_RAW_DATA_TYPES = "PackedParam_DatasetRawDataTypes";
 
-        // These are used by clsAnalysisResourcesPhosphoFdrAggregator
+        /// <summary>
+        /// Packed job parameter JobDatasetMap
+        /// </summary>
+        /// <remarks>This is used by clsAnalysisResourcesPhosphoFdrAggregator</remarks>
         public const string JOB_PARAM_DICTIONARY_JOB_DATASET_MAP = "PackedParam_JobDatasetMap";
+
+        /// <summary>
+        /// Packed job parameter JobSettingsFileMap
+        /// </summary>
+        /// <remarks>This is used by clsAnalysisResourcesPhosphoFdrAggregator</remarks>
         public const string JOB_PARAM_DICTIONARY_JOB_SETTINGS_FILE_MAP = "PackedParam_JobSettingsFileMap";
 
+        /// <summary>
+        /// Packed job parameter KobToolNameMap
+        /// </summary>
+        /// <remarks>This is used by clsAnalysisResourcesPhosphoFdrAggregator</remarks>
         public const string JOB_PARAM_DICTIONARY_JOB_TOOL_MAP = "PackedParam_JobToolNameMap";
 
+        /// <summary>
+        /// Job parameter to track the auto-generated FASTA file name
+        /// </summary>
         public const string JOB_PARAM_GENERATED_FASTA_NAME = "generatedFastaName";
 
-        // This constant is used by clsAnalysisToolRunnerMSGFDB, clsAnalysisResourcesMSGFDB, and clsAnalysisResourcesDtaRefinery
+        /// <summary>
+        /// Warning message that spectra are not centroided
+        /// </summary>
+        /// <remarks>This constant is used by clsAnalysisToolRunnerMSGFDB, clsAnalysisResourcesMSGFDB, and clsAnalysisResourcesDtaRefinery</remarks>
         public const string SPECTRA_ARE_NOT_CENTROIDED = "None of the spectra are centroided; unable to process";
 
         /// <summary>
@@ -163,26 +304,70 @@ namespace AnalysisManagerBase
         /// </summary>
         public enum eRawDataTypeConstants
         {
+            /// <summary>
+            /// Unknown data type
+            /// </summary>
             Unknown = 0,
+
+            /// <summary>
+            /// Thermo .raw file
+            /// </summary>
             ThermoRawFile = 1,
+
+            /// <summary>
+            /// IMS .UIMF file
+            /// </summary>
             UIMF = 2,
+
+            /// <summary>
+            /// mzXML file
+            /// </summary>
             mzXML = 3,
+
+            /// <summary>
+            /// mzML file
+            /// </summary>
             mzML = 4,
+
+            /// <summary>
+            /// Agilent ion trap data, Agilent TOF data
+            /// </summary>
             AgilentDFolder = 5,
-            // Agilent ion trap data, Agilent TOF data
+
+            /// <summary>
+            /// QStar .wiff file
+            /// </summary>
             AgilentQStarWiffFile = 6,
+
+            /// <summary>
+            ///  Micromass QTOF data
+            /// </summary>
             MicromassRawFolder = 7,
-            // Micromass QTOF data
+
+            /// <summary>
+            /// FTICR data, including instrument 3T_FTICR, 7T_FTICR, 9T_FTICR, 11T_FTICR, 11T_FTICR_B, and 12T_FTICR
+            /// </summary>
             ZippedSFolders = 8,
-            // FTICR data, including instrument 3T_FTICR, 7T_FTICR, 9T_FTICR, 11T_FTICR, 11T_FTICR_B, and 12T_FTICR
+
+            /// <summary>
+            /// .D folder is the analysis.baf file; there is also .m subfolder that has a apexAcquisition.method file
+            /// </summary>
             BrukerFTFolder = 9,
-            // .D folder is the analysis.baf file; there is also .m subfolder that has a apexAcquisition.method file
+
+            /// <summary>
+            /// has a .EMF file and a single sub-folder that has an acqu file and fid file
+            /// </summary>
             BrukerMALDISpot = 10,
-            // has a .EMF file and a single sub-folder that has an acqu file and fid file
+
+            /// <summary>
+            /// Series of zipped subfolders, with names like 0_R00X329.zip; subfolders inside the .Zip files have fid files
+            /// </summary>
             BrukerMALDIImaging = 11,
-            // Series of zipped subfolders, with names like 0_R00X329.zip; subfolders inside the .Zip files have fid files
+
+            /// <summary>
+            /// Used by Maxis01; Inside the .D folder is the analysis.baf file; there is also .m subfolder that has a microTOFQMaxAcquisition.method file; there is not a ser or fid file
+            /// </summary>
             BrukerTOFBaf = 12
-            // Used by Maxis01; Inside the .D folder is the analysis.baf file; there is also .m subfolder that has a microTOFQMaxAcquisition.method file; there is not a ser or fid file
         }
 
         /// <summary>
@@ -190,25 +375,57 @@ namespace AnalysisManagerBase
         /// </summary>
         public enum MSXMLOutputTypeConstants
         {
+            /// <summary>
+            /// mzXML
+            /// </summary>
             mzXML = 0,
+
+            /// <summary>
+            /// mzML
+            /// </summary>
             mzML = 1
         }
 
         /// <summary>
-        /// Used by Phospho_FDR_Aggregator, Pride_MzXML, and AScore plugins
+        /// Data package file retrieval mode
         /// </summary>
+        /// <remarks>Used by Phospho_FDR_Aggregator, Pride_MzXML, and AScore plugins</remarks>
         public enum DataPackageFileRetrievalModeConstants
         {
+            /// <summary>
+            /// unDefined
+            /// </summary>
             Undefined = 0,
+
+            /// <summary>
+            /// AScore
+            /// </summary>
             Ascore = 1
         }
 
         #endregion
 
         #region "Module variables"
+
+        /// <summary>
+        /// Job parameters
+        /// </summary>
         protected IJobParams m_jobParams;
+
+
+        /// <summary>
+        /// Manager parameters
+        /// </summary>
         protected IMgrParams m_mgrParams;
+
+        /// <summary>
+        /// Working directory
+        /// </summary>
         protected string m_WorkingDir;
+
+        /// <summary>
+        /// Job number
+        /// </summary>
         protected int m_JobNum;
 
         /// <summary>
@@ -221,18 +438,45 @@ namespace AnalysisManagerBase
         /// </remarks>
         private string m_DatasetName;
 
+        /// <summary>
+        /// Manager name
+        /// </summary>
         protected string m_MgrName;
 
+        /// <summary>
+        ///Protein database connection string
+        /// </summary>
         protected string m_FastaToolsCnStr = "";
 
+        /// <summary>
+        /// FASTA file name generated by m_FastaTools
+        /// </summary>
         protected string m_FastaFileName = "";
+
+        /// <summary>
+        /// FASTA file generation tools
+        /// </summary>
         protected Protein_Exporter.clsGetFASTAFromDMS m_FastaTools;
 
+        /// <summary>
+        /// CDTA utilities
+        /// </summary>
         protected readonly clsCDTAUtilities m_CDTAUtilities;
 
+        /// <summary>
+        /// FASTA file splitter utility
+        /// </summary>
         protected clsSplitFastaFileUtilities m_SplitFastaFileUtility;
+
+        /// <summary>
+        /// Last time FASTA splitting progress was reported
+        /// </summary>
         protected DateTime m_SplitFastaLastUpdateTime;
 
+        /// <summary>
+        /// FASTA splitting percent complete
+        /// </summary>
+        /// <remarks>Value between 0 and 100</remarks>
         protected float m_SplitFastaLastPercentComplete;
 
         private DateTime m_LastCDTAUtilitiesUpdateTime;
@@ -240,6 +484,9 @@ namespace AnalysisManagerBase
         private DateTime m_FastaToolsLastLogTime;
         private double m_FastaToolFractionDoneSaved = -1;
 
+        /// <summary>
+        /// MyEMSL utilities
+        /// </summary>
         protected clsMyEMSLUtilities m_MyEMSLUtilities;
 
         private Dictionary<clsGlobal.eAnalysisResourceOptions, bool> m_ResourceOptions;
@@ -353,8 +600,8 @@ namespace AnalysisManagerBase
         #endregion
 
         #region "Methods"
-        /// <summary>
 
+        /// <summary>
         /// Constructor
         /// </summary>
         /// <remarks></remarks>
@@ -407,7 +654,7 @@ namespace AnalysisManagerBase
             m_MyEMSLUtilities = myEMSLUtilities ?? new clsMyEMSLUtilities(m_DebugLevel, m_WorkingDir);
             RegisterEvents(m_MyEMSLUtilities);
 
-            m_FileCopyUtilities = new clsFileCopyUtilities(m_FileTools, m_MyEMSLUtilities, m_MgrName, m_DebugLevel);
+            m_FileCopyUtilities = new clsFileCopyUtilities(m_FileTools, m_MyEMSLUtilities, m_DebugLevel);
             RegisterEvents(m_FileCopyUtilities);
 
             m_FileCopyUtilities.ResetTimestampForQueueWaitTime += FileCopyUtilities_ResetTimestampForQueueWaitTime;
@@ -1234,6 +1481,9 @@ namespace AnalysisManagerBase
             return date2;
         }
 
+        /// <summary>
+        /// Method to disable MyEMSL search
+        /// </summary>
         protected void DisableMyEMSLSearch()
         {
             m_MyEMSLUtilities.ClearDownloadQueue();
@@ -1394,6 +1644,10 @@ namespace AnalysisManagerBase
 
         }
 
+        /// <summary>
+        /// Return the current dataset and job info
+        /// </summary>
+        /// <returns></returns>
         protected clsDataPackageJobInfo GetCurrentDatasetAndJobInfo()
         {
             const string jobParamsSection = clsAnalysisJob.JOB_PARAMETERS_SECTION;
@@ -1929,6 +2183,10 @@ namespace AnalysisManagerBase
 
         }
 
+        /// <summary>
+        /// Retrieve the .mzML file for this dataset
+        /// </summary>
+        /// <returns>Closeout code</returns>
         protected CloseOutType GetMzMLFile()
         {
 
@@ -1946,12 +2204,16 @@ namespace AnalysisManagerBase
 
         }
 
+        /// <summary>
+        /// Retrieve the .mzXML file for this dataset
+        /// </summary>
+        /// <returns>Closeout code</returns>
+        /// <remarks>
+        /// Do not use RetrieveMZXmlFile since that function looks for any valid MSXML_Gen folder for this dataset
+        /// Instead, use FindAndRetrieveMiscFiles
+        /// </remarks>
         protected CloseOutType GetMzXMLFile()
         {
-
-            // Retrieve the .mzXML file for this dataset
-            // Do not use RetrieveMZXmlFile since that function looks for any valid MSXML_Gen folder for this dataset
-            // Instead, use FindAndRetrieveMiscFiles
 
             LogMessage("Getting mzXML file");
 
@@ -1983,6 +2245,10 @@ namespace AnalysisManagerBase
 
         }
 
+        /// <summary>
+        /// Retrieve the .pbf file for this dataset
+        /// </summary>
+        /// <returns></returns>
         protected CloseOutType GetPBFFile()
         {
 
@@ -1999,6 +2265,13 @@ namespace AnalysisManagerBase
 
         }
 
+        /// <summary>
+        /// Log an error message when a .mzXML or .mzML file could not be found
+        /// </summary>
+        /// <param name="fileMissingFromCache"></param>
+        /// <param name="errorMessage"></param>
+        /// <param name="msXmlExtension"></param>
+        /// <returns></returns>
         protected CloseOutType HandleMsXmlRetrieveFailure(bool fileMissingFromCache, string errorMessage, string msXmlExtension)
         {
 
@@ -2171,6 +2444,10 @@ namespace AnalysisManagerBase
             }
         }
 
+        /// <summary>
+        /// Determine the RawDatatype name for this job
+        /// </summary>
+        /// <returns></returns>
         protected string GetRawDataTypeName()
         {
 
@@ -2554,12 +2831,20 @@ namespace AnalysisManagerBase
             return clsDataPackageInfoLoader.LoadDataPackageJobInfo(connectionString, dataPackageID, out dctDataPackageJobs);
         }
 
-        // ReSharper disable once MemberCanBePrivate.Global
+        /// <summary>
+        /// Log a debug message
+        /// </summary>
+        /// <param name="debugMessage"></param>
         protected void LogDebugMessage(string debugMessage)
         {
             clsGlobal.LogDebug(debugMessage);
         }
 
+        /// <summary>
+        /// Log a debug message
+        /// </summary>
+        /// <param name="debugMessage"></param>
+        /// <param name="statusTools"></param>
         protected static void LogDebugMessage(string debugMessage, IStatusFile statusTools)
         {
             clsGlobal.LogDebug(debugMessage);
@@ -3239,13 +3524,6 @@ namespace AnalysisManagerBase
             try
             {
                 var diOrgDbFolder = fiMaxDirSize.Directory;
-                if (diOrgDbFolder == null)
-                {
-                    LogErrorToDatabase("Cannot purge fasta files to manage drive space usage; " +
-                                       "unable to determine the parent directory of " +
-                                       fiMaxDirSize.FullName + " on " + System.Net.Dns.GetHostName());
-                    return;
-                }
 
                 var errorSuffix = "; cannot manage drive space usage: " + diOrgDbFolder.FullName;
                 var maxSizeGB = 0;
@@ -4564,12 +4842,6 @@ namespace AnalysisManagerBase
             {
                 // Find the hashcheck file for this FASTA file
 
-                if (fastaFile.Directory == null)
-                {
-                    LogError("FASTA validation error: unable to determine the parent directory of " + fastaFile.FullName);
-                    return false;
-                }
-
                 var hashcheckFileSpec = fastaFile.Name + "*" + Protein_Exporter.clsGetFASTAFromDMS.HASHCHECK_SUFFIX;
                 var hashcheckFiles = fastaFile.Directory.GetFiles(hashcheckFileSpec);
                 if (hashcheckFiles.Length == 0)
@@ -4674,6 +4946,11 @@ namespace AnalysisManagerBase
             LogError(errorMessage, ex);
         }
 
+        /// <summary>
+        /// Progress update
+        /// </summary>
+        /// <param name="progressMessage">Progress message</param>
+        /// <param name="percentComplete">Value between 0 and 100</param>
         private void m_SplitFastaFileUtility_ProgressUpdate(string progressMessage, float percentComplete)
         {
 

@@ -5,18 +5,28 @@ using AnalysisManagerBase;
 
 namespace AnalysisManagerOMSSAPlugIn
 {
+    /// <summary>
+    /// Retrieve resources for the OMSSA plugin
+    /// </summary>
     public class clsAnalysisResourcesOM : clsAnalysisResources
     {
         internal const string OMSSA_DEFAULT_INPUT_FILE = "OMSSA_default_input.xml";
         internal const string OMSSA_INPUT_FILE = "OMSSA_input.xml";
         protected clsRunDosProgram mCmdRunner;
 
+        /// <summary>
+        /// Initialize options
+        /// </summary>
         public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsMyEMSLUtilities myEMSLUtilities)
         {
             base.Setup(stepToolName, mgrParams, jobParams, statusTools, myEMSLUtilities);
             SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, true);
         }
 
+        /// <summary>
+        /// Retrieve required files
+        /// </summary>
+        /// <returns>Closeout code</returns>
         public override CloseOutType GetResources()
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step

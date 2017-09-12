@@ -8,35 +8,36 @@ using PRISM;
 
 namespace AnalysisManagerBase
 {
+    /// <summary>
+    /// Ionic Zip Tools
+    /// </summary>
     public class clsIonicZipTools : clsEventNotifier
     {
 
+        /// <summary>
+        /// Ionic zip name (used for logging)
+        /// </summary>
         public const string IONIC_ZIP_NAME = "IonicZip (DotNetZip)";
-        private int m_DebugLevel;
 
         private readonly string m_WorkDir;
 
-        private string m_MostRecentZipFilePath = string.Empty;
-
-        /// <summary>
-        /// This variable tracks the files most recently unzipped
-        /// Keys in the KeyValuePairs are filenames while values are relative paths (in case the .zip file has folders)
-        /// </summary>
-        private readonly List<KeyValuePair<string, string>> m_MostRecentUnzippedFiles = new List<KeyValuePair<string, string>>();
-
-        private string m_Message = string.Empty;
-
         #region "Properties"
 
-        public int DebugLevel
-        {
-            get => m_DebugLevel;
-            set => m_DebugLevel = value;
-        }
+        /// <summary>
+        /// Debug level
+        /// </summary>
+        public int DebugLevel { get; set; }
 
-        public string Message => m_Message;
+        /// <summary>
+        /// Status message
+        /// </summary>
+        /// <remarks>Tracks the most recent status, warning, or error message</remarks>
+        public string Message { get; private set; } = string.Empty;
 
-        public string MostRecentZipFilePath => m_MostRecentZipFilePath;
+        /// <summary>
+        /// Path to the zip file created most recently
+        /// </summary>
+        public string MostRecentZipFilePath { get; private set; } = string.Empty;
 
         /// <summary>
         /// Returns the files most recently unzipped
@@ -45,7 +46,7 @@ namespace AnalysisManagerBase
         /// <value></value>
         /// <returns></returns>
         /// <remarks></remarks>
-        public List<KeyValuePair<string, string>> MostRecentUnzippedFiles => m_MostRecentUnzippedFiles;
+        public List<KeyValuePair<string, string>> MostRecentUnzippedFiles { get; } = new List<KeyValuePair<string, string>>();
 
         #endregion
 
@@ -56,7 +57,7 @@ namespace AnalysisManagerBase
         /// <param name="workDir"></param>
         public clsIonicZipTools(int debugLevel, string workDir)
         {
-            m_DebugLevel = debugLevel;
+            DebugLevel = debugLevel;
             m_WorkDir = workDir;
         }
 

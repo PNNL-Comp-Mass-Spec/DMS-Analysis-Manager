@@ -6,6 +6,9 @@ using PRISM;
 namespace AnalysisManagerBase
 {
 
+    /// <summary>
+    /// Analysis manager base class
+    /// </summary>
     public abstract class clsAnalysisMgrBase : clsLoggerBase
     {
 
@@ -13,8 +16,14 @@ namespace AnalysisManagerBase
 
         private DateTime m_LockQueueWaitTimeStart = DateTime.UtcNow;
 
+        /// <summary>
+        /// File tools
+        /// </summary>
         protected clsFileTools m_FileTools;
 
+        /// <summary>
+        /// Status message
+        /// </summary>
         protected string m_message;
 
         private readonly string m_derivedClassName;
@@ -66,6 +75,11 @@ namespace AnalysisManagerBase
             return false;
         }
 
+        /// <summary>
+        /// Initialize m_FileTools
+        /// </summary>
+        /// <param name="mgrName"></param>
+        /// <param name="debugLevel"></param>
         protected void InitFileTools(string mgrName, short debugLevel)
         {
             ResetTimestampForQueueWaitTimeLogging();
@@ -204,6 +218,9 @@ namespace AnalysisManagerBase
             }
         }
 
+        /// <summary>
+        /// Reset the timestamp for logging that we are waiting for a lock file queue to decrease
+        /// </summary>
         protected void ResetTimestampForQueueWaitTimeLogging()
         {
             m_LastLockQueueWaitTimeLog = DateTime.UtcNow;
@@ -253,6 +270,11 @@ namespace AnalysisManagerBase
 
         #region "clsEventNotifier events"
 
+        /// <summary>
+        /// Register event handlers
+        /// </summary>
+        /// <param name="oProcessingClass"></param>
+        /// <param name="writeDebugEventsToLog"></param>
         protected void RegisterEvents(clsEventNotifier oProcessingClass, bool writeDebugEventsToLog = true)
         {
             if (writeDebugEventsToLog)
@@ -295,6 +317,11 @@ namespace AnalysisManagerBase
             LogWarning(warningMessage);
         }
 
+        /// <summary>
+        /// Update progress and re-write the analysis status file
+        /// </summary>
+        /// <param name="progressMessage"></param>
+        /// <param name="percentComplete"></param>
         protected void ProgressUpdateHandler(string progressMessage, float percentComplete)
         {
             m_StatusTools.CurrentOperation = progressMessage;

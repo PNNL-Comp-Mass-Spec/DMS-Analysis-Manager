@@ -1,7 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Data.SQLite;
-using System.Diagnostics.Eventing.Reader;
 using System.IO;
 using System.Threading;
 using PRISM;
@@ -45,6 +42,9 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public event LoopWaitingEventHandler LoopWaiting;
 
+        /// <summary>
+        /// Delegate for LoopWaitingEventHandler
+        /// </summary>
         public delegate void LoopWaitingEventHandler();
 
         /// <summary>
@@ -53,6 +53,10 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public event ConsoleOutputEventEventHandler ConsoleOutputEvent;
 
+        /// <summary>
+        /// Delegate for ConsoleOutputEventEventHandler
+        /// </summary>
+        /// <param name="newText"></param>
         public delegate void ConsoleOutputEventEventHandler(string newText);
 
         /// <summary>
@@ -61,6 +65,9 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public event TimeoutEventHandler Timeout;
 
+        /// <summary>
+        /// Delegate for TimeoutEventHandler
+        /// </summary>
         public delegate void TimeoutEventHandler();
 
         #endregion

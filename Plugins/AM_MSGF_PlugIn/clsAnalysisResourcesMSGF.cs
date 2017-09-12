@@ -16,12 +16,15 @@ using System.IO;
 namespace AnalysisManagerMSGFPlugin
 {
     /// <summary>
-    /// Manages retrieval of all files needed by MSGF
+    /// Retrieve resources for the MSGF plugin
     /// </summary>
     public class clsAnalysisResourcesMSGF : clsAnalysisResources
     {
         #region "Constants"
 
+        /// <summary>
+        /// ModDefs file suffix
+        /// </summary>
         public const string PHRP_MOD_DEFS_SUFFIX = "_ModDefs.txt";
 
         #endregion
@@ -39,7 +42,6 @@ namespace AnalysisManagerMSGFPlugin
         /// Gets all files needed by MSGF
         /// </summary>
         /// <returns>CloseOutType specifying results</returns>
-        /// <remarks></remarks>
         public override CloseOutType GetResources()
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step

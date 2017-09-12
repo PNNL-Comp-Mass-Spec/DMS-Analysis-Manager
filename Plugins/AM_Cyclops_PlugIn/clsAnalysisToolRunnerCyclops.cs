@@ -7,6 +7,9 @@ using Cyclops;
 
 namespace AnalysisManager_Cyclops_PlugIn
 {
+    /// <summary>
+    /// Class for running Cyclops
+    /// </summary>
     public class clsAnalysisToolRunnerCyclops : clsAnalysisToolRunnerBase
     {
 
@@ -17,6 +20,10 @@ namespace AnalysisManager_Cyclops_PlugIn
 
         private StreamWriter mCyclopsLogWriter;
 
+        /// <summary>
+        /// Primary entry point for running this tool
+        /// </summary>
+        /// <returns>CloseOutType enum representing completion status</returns>
         public override CloseOutType RunTool()
         {
 

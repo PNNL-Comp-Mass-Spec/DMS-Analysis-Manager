@@ -8,6 +8,9 @@ using log4net;
 
 namespace AnalysisManager_IDP_PlugIn
 {
+    /// <summary>
+    /// Class for running IDP
+    /// </summary>
     public class clsAnalysisToolRunnerIDP : clsAnalysisToolRunnerBase
     {
         protected const float PROGRESS_PCT_IDP_START = 5;

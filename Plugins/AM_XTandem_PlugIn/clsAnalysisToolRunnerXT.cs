@@ -19,7 +19,6 @@ namespace AnalysisManagerXTandemPlugIn
     /// <summary>
     /// Class for running XTandem analysis
     /// </summary>
-    /// <remarks></remarks>
     public class clsAnalysisToolRunnerXT : clsAnalysisToolRunnerBase
     {
         #region "Module Variables"
@@ -52,7 +51,6 @@ namespace AnalysisManagerXTandemPlugIn
         /// Runs XTandem tool
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
             // Do the base class stuff
@@ -194,6 +192,9 @@ namespace AnalysisManagerXTandemPlugIn
             return noResults ? CloseOutType.CLOSEOUT_NO_DATA : CloseOutType.CLOSEOUT_SUCCESS;
         }
 
+        /// <summary>
+        /// Copy failed results from the working directory to the DMS_FailedResults directory on the local computer
+        /// </summary>
         public override void CopyFailedResultsToArchiveFolder()
         {
             m_jobParams.AddResultFileToSkip(Dataset + "_dta.zip");

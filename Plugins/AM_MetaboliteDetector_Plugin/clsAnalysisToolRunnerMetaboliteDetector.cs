@@ -13,6 +13,10 @@ using AnalysisManagerBase;
 
 namespace AnalysisManagerMetaboliteDetectorPlugin
 {
+
+    /// <summary>
+    /// Class for running the Metabolite Detector
+    /// </summary>
     public class clsAnalysisToolRunnerMetaboliteDetector : clsAnalysisToolRunnerBase
     {
         #region "Constants and Enums"
@@ -44,7 +48,6 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
         /// Processes data usingthe Metabolite Detector
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
             try

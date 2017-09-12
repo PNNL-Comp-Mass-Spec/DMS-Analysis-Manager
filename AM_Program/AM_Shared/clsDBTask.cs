@@ -24,22 +24,55 @@ namespace AnalysisManagerBase
     {
 
         #region "Enums"
+
+        /// <summary>
+        /// Tracks the outcome of requesting a new task
+        /// </summary>
         public enum RequestTaskResult
         {
+            /// <summary>
+            /// Task found
+            /// </summary>
             TaskFound = 0,
+
+            /// <summary>
+            /// No task found
+            /// </summary>
             NoTaskFound = 1,
+
+            /// <summary>
+            /// Error requesting a task
+            /// </summary>
             ResultError = 2,
+
+            /// <summary>
+            /// Too many retries
+            /// </summary>
             TooManyRetries = 3,
+
+            /// <summary>
+            /// Deadlock
+            /// </summary>
             Deadlock = 4
         }
+
         #endregion
 
         #region "Constants"
 
+        /// <summary>
+        /// Return value for success
+        /// </summary>
         public const int RET_VAL_OK = 0;
 
+        /// <summary>
+        /// Return value when a task is not available
+        /// </summary>
         public const int RET_VAL_TASK_NOT_AVAILABLE = 53000;
 
+        /// <summary>
+        /// Default times to retry calling the stored procedure
+        /// </summary>
         public const int DEFAULT_SP_RETRY_COUNT = 3;
 
         #endregion
@@ -50,8 +83,17 @@ namespace AnalysisManagerBase
         /// Manager parameters
         /// </summary>
         protected IMgrParams m_MgrParams;
+
+        /// <summary>
+        /// Connection string
+        /// </summary>
+        /// <remarks>Typically DMS5 on Gigasax</remarks>
         protected string m_ConnStr;
 
+        /// <summary>
+        /// Broker connection string
+        /// </summary>
+        /// <remarks>Typically DMS_Pipeline on Gigasax</remarks>
         protected string m_BrokerConnStr;
 
         /// <summary>
@@ -59,17 +101,38 @@ namespace AnalysisManagerBase
         /// </summary>
         protected bool m_TaskWasAssigned = false;
 
-        protected string m_Xml_Text;
+        /// <summary>
+        /// DMS stored procedure executor
+        /// </summary>
         public readonly PRISM.clsExecuteDatabaseSP DMSProcedureExecutor;
 
+        /// <summary>
+        /// Pipeline database stored procedure executor
+        /// </summary>
         public readonly PRISM.clsExecuteDatabaseSP PipelineDBProcedureExecutor;
+
         #endregion
 
         #region "Structures"
+
+        /// <summary>
+        /// Job parameter container
+        /// </summary>
         public struct udtParameterInfoType
         {
+            /// <summary>
+            /// Section name
+            /// </summary>
             public string Section;
+
+            /// <summary>
+            /// Parameter name
+            /// </summary>
             public string ParamName;
+
+            /// <summary>
+            /// Parameter value
+            /// </summary>
             public string Value;
         }
         #endregion
@@ -163,10 +226,15 @@ namespace AnalysisManagerBase
         /// <param name="closeOut"></param>
         /// <param name="compMsg"></param>
         /// <param name="evalCode">Evaluation code (0 if no special evaulation message)</param>
-        /// <param name="evalMsg">Evaluation message ("" if no special message)</param>
+        /// <param name="evalMsg">Evaluation message (empty string if no special message)</param>
         /// <remarks></remarks>
         public abstract void CloseTask(CloseOutType closeOut, string compMsg, int evalCode, string evalMsg);
 
+        /// <summary>
+        /// Populate the parameters dictionary using parameters stored as XML
+        /// </summary>
+        /// <param name="jobParamsXML"></param>
+        /// <returns></returns>
         protected IEnumerable<udtParameterInfoType> FillParamDictXml(string jobParamsXML)
         {
 

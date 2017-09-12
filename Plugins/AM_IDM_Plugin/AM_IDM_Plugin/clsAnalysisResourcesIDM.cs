@@ -5,13 +5,16 @@ using AnalysisManagerBase;
 
 namespace AnalysisManager_IDM_Plugin
 {
+    /// <summary>
+    /// Retrieve resources for the IDM plugin
+    /// </summary>
     public class clsAnalysisResourcesIDM : clsAnalysisResources
     {
-        #region Members
-        public static string AppFilePath = "";
-        #endregion
 
-        #region Methods
+        /// <summary>
+        /// Retrieve required files
+        /// </summary>
+        /// <returns>Closeout code</returns>
         public override CloseOutType GetResources()
         {
 
@@ -59,6 +62,6 @@ namespace AnalysisManager_IDM_Plugin
 
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
-        #endregion
+
     }
 }

@@ -9,16 +9,30 @@ using AnalysisManagerBase;
 
 namespace AnalysisManagerMSAlignPlugIn
 {
+    /// <summary>
+    /// Retrieve resources for the MSAlign plugin
+    /// </summary>
     public class clsAnalysisResourcesMSAlign : clsAnalysisResources
     {
+
+        /// <summary>
+        /// MSDeconv .msalign file suffix
+        /// </summary>
         public const string MSDECONV_MSALIGN_FILE_SUFFIX = "_msdeconv.msalign";
 
+        /// <summary>
+        /// Initialize options
+        /// </summary>
         public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsMyEMSLUtilities myEMSLUtilities)
         {
             base.Setup(stepToolName, mgrParams, jobParams, statusTools, myEMSLUtilities);
             SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, true);
         }
 
+        /// <summary>
+        /// Retrieve required files
+        /// </summary>
+        /// <returns>Closeout code</returns>
         public override CloseOutType GetResources()
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step

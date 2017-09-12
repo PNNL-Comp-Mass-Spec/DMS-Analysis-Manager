@@ -4,6 +4,10 @@ using System.IO;
 
 namespace AnalysisManager_IDP_PlugIn
 {
+
+    /// <summary>
+    /// Retrieve resources for the IDP plugin
+    /// </summary>
     public class clsAnalysisResourcesIDP : clsAnalysisResources
     {
         public static string AppFilePath = "";

@@ -1,12 +1,19 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using AnalysisManagerBase;
 
 namespace AnalysisManagerPRIDEMzXMLPlugIn
 {
+    /// <summary>
+    /// Retrieve resources for the PRIDE MzXML plugin
+    /// </summary>
     public class clsAnalysisResourcesPRIDEMzXML : clsAnalysisResources
     {
+
+        /// <summary>
+        /// Retrieve required files
+        /// </summary>
+        /// <returns>Closeout code</returns>
         public override CloseOutType GetResources()
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step

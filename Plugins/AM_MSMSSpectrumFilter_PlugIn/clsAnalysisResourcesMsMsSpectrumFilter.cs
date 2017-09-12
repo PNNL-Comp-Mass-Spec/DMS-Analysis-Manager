@@ -8,8 +8,6 @@
 // Started January 20, 2009
 
 using System;
-using System.Collections.Generic;
-
 using System.IO;
 using System.Linq;
 using AnalysisManagerBase;
@@ -18,6 +16,9 @@ using MyEMSLReader;
 
 namespace MSMSSpectrumFilterAM
 {
+    /// <summary>
+    /// Retrieve resources for the MsMs Spectrum Filter plugin
+    /// </summary>
     public class clsAnalysisResourcesMsMsSpectrumFilter : clsAnalysisResources
     {
         #region "Methods"
@@ -26,7 +27,6 @@ namespace MSMSSpectrumFilterAM
         /// Retrieves files necessary for performance of Sequest analysis
         /// </summary>
         /// <returns>CloseOutType indicating success or failure</returns>
-        /// <remarks></remarks>
         public override CloseOutType GetResources()
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step

@@ -20,7 +20,10 @@ namespace AnalysisManagerBase
 
         #region "Properties"
 
-        public string FileName { get; }
+        /// <summary>
+        /// Path to the file that was not found
+        /// </summary>
+        public string FilePath { get; }
 
         #endregion
 
@@ -29,12 +32,12 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="FileName">Name of file being processed when exception occurred</param>
-        /// <param name="Message">Message to be returned in exception</param>
+        /// <param name="filePath">Path of file not found</param>
+        /// <param name="errorMessage">Exception message</param>
         /// <remarks></remarks>
-        public AMFileNotFoundException(string FileName, string Message) : base(Message)
+        public AMFileNotFoundException(string filePath, string errorMessage) : base(errorMessage)
         {
-            this.FileName = FileName;
+            FilePath = filePath;
 
         }
 
@@ -50,7 +53,10 @@ namespace AnalysisManagerBase
 
         #region "Properties"
 
-        public string FolderName { get; }
+        /// <summary>
+        /// Path to the folder that was not found
+        /// </summary>
+        public string FolderPath { get; }
 
         #endregion
 
@@ -59,12 +65,12 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="FolderName">Name of unfound folder</param>
-        /// <param name="Message">Message for exception to return</param>
+        /// <param name="folderPath">Path of folder not found</param>
+        /// <param name="errorMessage">Exception message</param>
         /// <remarks></remarks>
-        public AMFolderNotFoundException(string FolderName, string Message) : base(Message)
+        public AMFolderNotFoundException(string folderPath, string errorMessage) : base(errorMessage)
         {
-            this.FolderName = FolderName;
+            FolderPath = folderPath;
 
         }
         #endregion
@@ -78,17 +84,35 @@ namespace AnalysisManagerBase
     {
 
         #region "Enums"
+
+        /// <summary>
+        /// Enum for reason that file could not be deleted
+        /// </summary>
         public enum RetryExceptionType
         {
+            /// <summary>
+            /// I/O exception
+            /// </summary>
             IO_Exception,
+
+            /// <summary>
+            /// Unauthorized access exception
+            /// </summary>
             Unauthorized_Access_Exception
         }
+
         #endregion
 
         #region "Properties"
 
-        public string FileName { get; }
+        /// <summary>
+        /// Path to the file that could not be deleted
+        /// </summary>
+        public string FilePath { get; }
 
+        /// <summary>
+        /// Reason that file could not be deleted
+        /// </summary>
         public RetryExceptionType ExcType { get; }
 
         #endregion
@@ -98,13 +122,13 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="FileName">Name of file causing exception</param>
+        /// <param name="filePath">Path of file that could not be deleted</param>
         /// <param name="ExceptionType">Exception type</param>
-        /// <param name="Message">Message to be returned by exception</param>
+        /// <param name="errorMessage">Exception message</param>
         /// <remarks></remarks>
-        public AMFileNotDeletedAfterRetryException(string FileName, RetryExceptionType ExceptionType, string Message) : base(Message)
+        public AMFileNotDeletedAfterRetryException(string filePath, RetryExceptionType ExceptionType, string errorMessage) : base(errorMessage)
         {
-            this.FileName = FileName;
+            FilePath = filePath;
             ExcType = ExceptionType;
 
         }
@@ -120,7 +144,10 @@ namespace AnalysisManagerBase
 
         #region "Properties"
 
-        public string FileName { get; }
+        /// <summary>
+        /// Path to the file that could not be deleted
+        /// </summary>
+        public string FilePath { get; }
 
         #endregion
 
@@ -129,12 +156,12 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="FileName">Name of file causing exception</param>
-        /// <param name="Message">Message to be returned by exception</param>
+        /// <param name="filePath">Path of file that could not be deleted</param>
+        /// <param name="errorMessage">Exception message</param>
         /// <remarks></remarks>
-        public AMFileNotDeletedException(string FileName, string Message) : base(Message)
+        public AMFileNotDeletedException(string filePath, string errorMessage) : base(errorMessage)
         {
-            this.FileName = FileName;
+            FilePath = filePath;
 
         }
         #endregion

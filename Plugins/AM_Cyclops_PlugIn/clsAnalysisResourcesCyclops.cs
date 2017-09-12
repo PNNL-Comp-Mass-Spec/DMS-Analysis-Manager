@@ -4,11 +4,17 @@ using System.IO;
 
 namespace AnalysisManager_Cyclops_PlugIn
 {
+
+    /// <summary>
+    /// Retrieve resources for the Cyclops plugin
+    /// </summary>
     public class clsAnalysisResourcesCyclops : clsAnalysisResources
     {
 
-        public static string AppFilePath = "";
-
+        /// <summary>
+        /// Retrieve required files
+        /// </summary>
+        /// <returns>Closeout code</returns>
         public override CloseOutType GetResources()
         {
 

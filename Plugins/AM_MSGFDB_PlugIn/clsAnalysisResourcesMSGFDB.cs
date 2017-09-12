@@ -13,8 +13,15 @@ using AnalysisManagerBase;
 
 namespace AnalysisManagerMSGFDBPlugIn
 {
+    /// <summary>
+    /// Retrieve resources for the MSGFDB (aka MSGF+) plugin
+    /// </summary>
     public class clsAnalysisResourcesMSGFDB : clsAnalysisResources
     {
+
+        /// <summary>
+        /// Initialize options
+        /// </summary>
         public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsMyEMSLUtilities myEMSLUtilities)
         {
             base.Setup(stepToolName, mgrParams, jobParams, statusTools, myEMSLUtilities);
@@ -25,7 +32,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Retrieves files necessary for running MSGF+
         /// </summary>
         /// <returns>CloseOutType indicating success or failure</returns>
-        /// <remarks></remarks>
         public override CloseOutType GetResources()
         {
             var currentTask = "Initializing";
@@ -346,6 +352,11 @@ namespace AnalysisManagerMSGFDBPlugIn
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
+        /// <summary>
+        /// Check whether the ScanStats file has detailed scan type info
+        /// </summary>
+        /// <param name="scanStatsFilePath"></param>
+        /// <returns></returns>
         public static bool ValidateScanStatsFileHasDetailedScanTypes(string scanStatsFilePath)
         {
             var lstColumnNameWithScanType = new List<string>

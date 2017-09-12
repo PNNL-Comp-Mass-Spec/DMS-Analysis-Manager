@@ -5,10 +5,16 @@ using System.IO;
 
 namespace AnalysisManagerMzRefineryPlugIn
 {
+
+    /// <summary>
+    /// Retrieve resources for the MzRefinery plugin
+    /// </summary>
     public class clsAnalysisResourcesMzRefinery : clsAnalysisResources
     {
-        #region "Methods"
 
+        /// <summary>
+        /// Initialize options
+        /// </summary>
         public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsMyEMSLUtilities myEMSLUtilities)
         {
             base.Setup(stepToolName, mgrParams, jobParams, statusTools, myEMSLUtilities);
@@ -173,6 +179,5 @@ namespace AnalysisManagerMzRefineryPlugIn
             return true;
         }
 
-        #endregion
     }
 }

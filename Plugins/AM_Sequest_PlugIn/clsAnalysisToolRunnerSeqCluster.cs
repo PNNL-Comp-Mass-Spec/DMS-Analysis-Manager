@@ -27,17 +27,17 @@ namespace AnalysisManagerSequestPlugin
     {
         #region "Constants"
 
-        protected const int TEMP_FILE_COPY_INTERVAL_SECONDS = 300;
-        protected const int OUT_FILE_APPEND_INTERVAL_SECONDS = 30;
-        protected const int OUT_FILE_APPEND_HOLDOFF_SECONDS = 30;
-        protected const int STALE_NODE_THRESHOLD_MINUTES = 5;
-        protected const int MAX_NODE_RESPAWN_ATTEMPTS = 6;
+        private const int TEMP_FILE_COPY_INTERVAL_SECONDS = 300;
+        private const int OUT_FILE_APPEND_INTERVAL_SECONDS = 30;
+        private const int OUT_FILE_APPEND_HOLDOFF_SECONDS = 30;
+        private const int STALE_NODE_THRESHOLD_MINUTES = 5;
+        private const int MAX_NODE_RESPAWN_ATTEMPTS = 6;
 
         #endregion
 
         #region "Structures"
 
-        protected struct udtSequestNodeProcessingStats
+        private struct udtSequestNodeProcessingStats
         {
             public int NumNodeMachines;
             public int NumSlaveProcesses;
@@ -59,55 +59,59 @@ namespace AnalysisManagerSequestPlugin
 
         #region "Module Variables"
 
-        protected FileSystemWatcher mOutFileWatcher;
-        protected System.Timers.Timer mOutFileAppenderTimer;
+        private FileSystemWatcher mOutFileWatcher;
+        private System.Timers.Timer mOutFileAppenderTimer;
 
-        // The following holds the file names of out files that have been created
-        // Every OUT_FILE_APPEND_INTERVAL_SECONDS, will look for candidates older than OUT_FILE_APPEND_HOLDOFF_SECONDS
-        // For each, will append the data to the _out.txt.tmp file, delete the corresponding DTA file, and remove from mOutFileCandidates
-        protected Queue<KeyValuePair<string, DateTime>> mOutFileCandidates = new Queue<KeyValuePair<string, DateTime>>();
+        /// <summary>
+        /// This tracks the names of out files that have been created
+        /// </summary>
+        /// <remarks>
+        /// Every OUT_FILE_APPEND_INTERVAL_SECONDS, this plugin looks for candidates older than OUT_FILE_APPEND_HOLDOFF_SECONDS
+        /// For each, it appends the data to the _out.txt.tmp file, deletes the corresponding DTA file, and removes it from mOutFileCandidates
+        /// </remarks>
+        private readonly Queue<KeyValuePair<string, DateTime>> mOutFileCandidates = new Queue<KeyValuePair<string, DateTime>>();
 
-        protected Dictionary<string, DateTime> mOutFileCandidateInfo = new Dictionary<string, DateTime>();
-        protected DateTime mLastOutFileStoreTime;
-        protected bool mSequestAppearsStalled;
-        protected bool mAbortSinceSequestIsStalled;
+        private readonly Dictionary<string, DateTime> mOutFileCandidateInfo = new Dictionary<string, DateTime>();
+        private DateTime mLastOutFileStoreTime;
+        private bool mSequestAppearsStalled;
+        private bool mAbortSinceSequestIsStalled;
 
-        protected bool mSequestVersionInfoStored;
+        private bool mSequestVersionInfoStored;
 
-        protected bool mTempJobParamsCopied;
-        protected DateTime mLastTempFileCopyTime;
-        protected string mTransferFolderPath;
+        private bool mTempJobParamsCopied;
+        private DateTime mLastTempFileCopyTime;
+        private string mTransferFolderPath;
 
-        protected DateTime mLastOutFileCountTime = DateTime.UtcNow;
-        protected DateTime mLastActiveNodeQueryTime = DateTime.UtcNow;
+        private DateTime mLastOutFileCountTime = DateTime.UtcNow;
+        private DateTime mLastActiveNodeQueryTime = DateTime.UtcNow;
 
-        protected DateTime mLastActiveNodeLogTime;
+        private DateTime mLastActiveNodeLogTime;
 
-        protected bool mResetPVM;
-        protected int mNodeCountSpawnErrorOccurences;
-        protected int mNodeCountActiveErrorOccurences;
-        protected DateTime mLastSequestStartTime;
+        private bool mResetPVM;
+        private int mNodeCountSpawnErrorOccurences;
+        private int mNodeCountActiveErrorOccurences;
+        private DateTime mLastSequestStartTime;
 
-        protected clsRunDosProgram mCmdRunner;
-        protected clsRunDosProgram m_UtilityRunner;
+        private clsRunDosProgram mCmdRunner;
+        private clsRunDosProgram m_UtilityRunner;
 
-        protected string mUtilityRunnerTaskName = string.Empty;
+        private string mUtilityRunnerTaskName = string.Empty;
 
-        protected string m_ErrMsg = "";
+        private string m_ErrMsg = "";
 
         // This dictionary tracks the most recent time each node was observed via PVM command "ps -a"
-        protected Dictionary<string, DateTime> mSequestNodes = new Dictionary<string, DateTime>();
+        private readonly Dictionary<string, DateTime> mSequestNodes = new Dictionary<string, DateTime>();
 
-        protected bool mSequestLogNodesFound;
-        protected int mSequestNodesSpawned;
-        protected bool mIgnoreNodeCountActiveErrors;
+        private bool mSequestLogNodesFound;
+        private int mSequestNodesSpawned;
+        private bool mIgnoreNodeCountActiveErrors;
 
-        protected udtSequestNodeProcessingStats mSequestNodeProcessingStats;
+        private udtSequestNodeProcessingStats mSequestNodeProcessingStats;
 
-        protected DateTime mSequestSearchStartTime;
-        protected DateTime mSequestSearchEndTime;
+        private DateTime mSequestSearchStartTime;
+        private DateTime mSequestSearchEndTime;
 
-        protected Regex m_ActiveNodeRegEx = new Regex(@"\s+(?<node>[a-z0-9-.]+\s+[a-z0-9]+)\s+.+sequest.+slave.*",
+        private readonly Regex m_ActiveNodeRegEx = new Regex(@"\s+(?<node>[a-z0-9-.]+\s+[a-z0-9]+)\s+.+sequest.+slave.*",
             RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
         #endregion
@@ -378,7 +382,7 @@ namespace AnalysisManagerSequestPlugin
         /// Provides a wait loop while Sequest is running
         /// </summary>
         /// <remarks></remarks>
-        protected void CmdRunner_LoopWaiting()
+        private void CmdRunner_LoopWaiting()
         {
             // Compute the progress by comparing the number of .Out files to the number of .Dta files
             // (only count the files every 15 seconds)
@@ -427,7 +431,7 @@ namespace AnalysisManagerSequestPlugin
         /// Reads sequest.log file after Sequest finishes and adds cluster statistics info to summary file
         /// </summary>
         /// <remarks></remarks>
-        protected void AddClusterStatsToSummaryFile()
+        private void AddClusterStatsToSummaryFile()
         {
             // Write the statistics to the summary file
             m_SummaryFile.Add(Environment.NewLine + "Cluster node count: ".PadRight(24) + mSequestNodeProcessingStats.NumNodeMachines);
@@ -437,7 +441,7 @@ namespace AnalysisManagerSequestPlugin
             m_SummaryFile.Add("Average search time: ".PadRight(24) + mSequestNodeProcessingStats.AvgSearchTime.ToString("##0.000") + " secs/spectrum");
         }
 
-        protected void CacheNewOutFiles()
+        private void CacheNewOutFiles()
         {
             try
             {
@@ -454,7 +458,7 @@ namespace AnalysisManagerSequestPlugin
             }
         }
 
-        protected void CheckForStalledSequest()
+        private void CheckForStalledSequest()
         {
             const int SEQUEST_STALLED_WAIT_TIME_MINUTES = 30;
 
@@ -532,7 +536,7 @@ namespace AnalysisManagerSequestPlugin
             }
         }
 
-        protected bool CopyFileToTransferFolder(string strSourceFileName, string strTargetFileName, bool blnAddToListOfServerFilesToDelete)
+        private bool CopyFileToTransferFolder(string strSourceFileName, string strTargetFileName, bool blnAddToListOfServerFilesToDelete)
         {
             try
             {
@@ -574,7 +578,7 @@ namespace AnalysisManagerSequestPlugin
         /// <param name="RegexStr">Regular expresion match string to uniquely identify the line containing the count of interest</param>
         /// <returns>Count from desired line in sequest.log file if successful; 0 if count not found; -1 for error</returns>
         /// <remarks>If -1 returned, error message is in module variable m_ErrMsg</remarks>
-        protected int GetIntegerFromSeqLogFileString(string InpFileStr, string RegexStr)
+        private int GetIntegerFromSeqLogFileString(string InpFileStr, string RegexStr)
         {
             try
             {
@@ -602,7 +606,7 @@ namespace AnalysisManagerSequestPlugin
             }
         }
 
-        protected bool GetNodeNamesFromSequestLog(string strLogFilePath)
+        private bool GetNodeNamesFromSequestLog(string strLogFilePath)
         {
             var blnFoundSpawned = false;
 
@@ -724,7 +728,7 @@ namespace AnalysisManagerSequestPlugin
         /// <param name="RegexStr">Regular expresion match string to uniquely identify the line containing the count of interest</param>
         /// <returns>Count from desired line in sequest.log file if successful; 0 if count not found; -1 for error</returns>
         /// <remarks>If -1 returned, error message is in module variable m_ErrMsg</remarks>
-        protected float GetSingleFromSeqLogFileString(string InpFileStr, string RegexStr)
+        private float GetSingleFromSeqLogFileString(string InpFileStr, string RegexStr)
         {
             try
             {
@@ -744,7 +748,7 @@ namespace AnalysisManagerSequestPlugin
             }
         }
 
-        protected float ComputeMedianProcessingTime()
+        private float ComputeMedianProcessingTime()
         {
             int intMidPoint;
 
@@ -775,7 +779,7 @@ namespace AnalysisManagerSequestPlugin
         /// </summary>
         /// <param name="OutFileName"></param>
         /// <remarks></remarks>
-        protected void HandleOutFileChange(string OutFileName)
+        private void HandleOutFileChange(string OutFileName)
         {
             try
             {
@@ -814,12 +818,12 @@ namespace AnalysisManagerSequestPlugin
             }
         }
 
-        protected bool InitializeUtilityRunner(string strTaskName, string strWorkDir)
+        private bool InitializeUtilityRunner(string strTaskName, string strWorkDir)
         {
             return InitializeUtilityRunner(strTaskName, strWorkDir, intMonitoringIntervalMsec: 1000);
         }
 
-        protected bool InitializeUtilityRunner(string strTaskName, string strWorkDir, int intMonitoringIntervalMsec)
+        private bool InitializeUtilityRunner(string strTaskName, string strWorkDir, int intMonitoringIntervalMsec)
         {
             try
             {
@@ -856,7 +860,7 @@ namespace AnalysisManagerSequestPlugin
             return true;
         }
 
-        protected bool ProcessCandidateOutFiles(bool blnProcessAllRemainingFiles)
+        private bool ProcessCandidateOutFiles(bool blnProcessAllRemainingFiles)
         {
             bool blnAppendSuccess;
 
@@ -1001,7 +1005,7 @@ namespace AnalysisManagerSequestPlugin
             return blnAppendSuccess;
         }
 
-        protected void RenameSequestLogFile()
+        private void RenameSequestLogFile()
         {
             var strNewName = "??";
 
@@ -1025,7 +1029,7 @@ namespace AnalysisManagerSequestPlugin
             }
         }
 
-        protected bool ResetPVMWithRetry(int intMaxPVMResetAttempts)
+        private bool ResetPVMWithRetry(int intMaxPVMResetAttempts)
         {
             var blnSuccess = false;
 
@@ -1057,7 +1061,7 @@ namespace AnalysisManagerSequestPlugin
             return blnSuccess;
         }
 
-        protected bool ResetPVM()
+        private bool ResetPVM()
         {
             try
             {
@@ -1116,7 +1120,7 @@ namespace AnalysisManagerSequestPlugin
             return true;
         }
 
-        protected bool ResetPVMHalt(string PVMProgFolder)
+        private bool ResetPVMHalt(string PVMProgFolder)
         {
             try
             {
@@ -1161,7 +1165,7 @@ namespace AnalysisManagerSequestPlugin
             return true;
         }
 
-        protected bool ResetPVMWipeTemp(string PVMProgFolder)
+        private bool ResetPVMWipeTemp(string PVMProgFolder)
         {
             try
             {
@@ -1206,7 +1210,7 @@ namespace AnalysisManagerSequestPlugin
             return true;
         }
 
-        protected bool ResetPVMStartPVM(string PVMProgFolder)
+        private bool ResetPVMStartPVM(string PVMProgFolder)
         {
             try
             {
@@ -1259,7 +1263,7 @@ namespace AnalysisManagerSequestPlugin
             return true;
         }
 
-        protected bool ResetPVMAddNodes(string PVMProgFolder)
+        private bool ResetPVMAddNodes(string PVMProgFolder)
         {
             try
             {
@@ -1304,7 +1308,7 @@ namespace AnalysisManagerSequestPlugin
             return true;
         }
 
-        protected void UpdateSequestNodeProcessingStats(bool blnProcessAllSequestLogFiles)
+        private void UpdateSequestNodeProcessingStats(bool blnProcessAllSequestLogFiles)
         {
             if (blnProcessAllSequestLogFiles)
             {
@@ -1321,7 +1325,7 @@ namespace AnalysisManagerSequestPlugin
             }
         }
 
-        protected void UpdateSequestNodeProcessingStatsOneFile(string SeqLogFilePath)
+        private void UpdateSequestNodeProcessingStatsOneFile(string SeqLogFilePath)
         {
             // Verify sequest.log file exists
             if (!File.Exists(SeqLogFilePath))
@@ -1435,7 +1439,7 @@ namespace AnalysisManagerSequestPlugin
         /// Sets mResetPVM to True if fewer than 50% of the nodes are creating .Out files
         /// </summary>
         /// <remarks></remarks>
-        protected void ValidateProcessorsAreActive()
+        private void ValidateProcessorsAreActive()
         {
             try
             {
@@ -1581,17 +1585,17 @@ namespace AnalysisManagerSequestPlugin
             }
         }
 
-        protected void mOutFileWatcher_Created(object sender, FileSystemEventArgs e)
+        private void mOutFileWatcher_Created(object sender, FileSystemEventArgs e)
         {
             HandleOutFileChange(e.Name);
         }
 
-        protected void mOutFileWatcher_Changed(object sender, FileSystemEventArgs e)
+        private void mOutFileWatcher_Changed(object sender, FileSystemEventArgs e)
         {
             HandleOutFileChange(e.Name);
         }
 
-        protected void mOutFileAppenderTime_Elapsed(object sender, ElapsedEventArgs e)
+        private void mOutFileAppenderTime_Elapsed(object sender, ElapsedEventArgs e)
         {
             ProcessCandidateOutFiles(false);
             CheckForStalledSequest();

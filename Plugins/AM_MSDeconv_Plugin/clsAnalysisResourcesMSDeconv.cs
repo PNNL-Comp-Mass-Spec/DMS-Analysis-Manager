@@ -9,8 +9,16 @@ using AnalysisManagerBase;
 
 namespace AnalysisManagerMSDeconvPlugIn
 {
+    /// <summary>
+    /// Retrieve resources for the MSDeconv plugin
+    /// </summary>
     public class clsAnalysisResourcesMSDeconv : clsAnalysisResources
     {
+
+        /// <summary>
+        /// Retrieve required files
+        /// </summary>
+        /// <returns>Closeout code</returns>
         public override CloseOutType GetResources()
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step

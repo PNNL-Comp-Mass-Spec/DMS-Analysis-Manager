@@ -13,16 +13,40 @@ using AnalysisManagerBase;
 
 namespace AnalysisManagerGlyQIQPlugin
 {
+
+    /// <summary>
+    /// Retrieve resources for the GlyQ-IQ plugin
+    /// </summary>
     public class clsAnalysisResourcesGlyQIQ : clsAnalysisResources
     {
+        /// <summary>
+        /// Locks folder name
+        /// </summary>
         protected const string LOCKS_FOLDER_NAME = "LocksFolder";
 
+        /// <summary>
+        /// Job parameter tracking GlyQ-IQ core count usage
+        /// </summary>
         public const string JOB_PARAM_ACTUAL_CORE_COUNT = "GlyQ_IQ_ActualCoreCount";
 
+        /// <summary>
+        /// Executor parameters file
+        /// </summary>
         public const string EXECUTOR_PARAMETERS_FILE = "ExecutorParametersSK.xml";
+
+        /// <summary>
+        /// Start Program batch file prefix
+        /// </summary>
         public const string START_PROGRAM_BATCH_FILE_PREFIX = "StartProgram_Core";
+
+        /// <summary>
+        /// GlyQ-IQ parameter file prefix
+        /// </summary>
         public const string GLYQIQ_PARAMS_FILE_PREFIX = "GlyQIQ_Params_";
 
+        /// <summary>
+        /// Alignment parameterse file
+        /// </summary>
         public const string ALIGNMENT_PARAMETERS_FILENAME = "AlignmentParameters.xml";
 
         protected struct udtGlyQIQParams
@@ -35,12 +59,12 @@ namespace AnalysisManagerGlyQIQPlugin
             public string IQParamFileName;
         }
 
-        #region "Classwide variables"
-
         private udtGlyQIQParams mGlyQIQParams;
 
-        #endregion
-
+        /// <summary>
+        /// Retrieve required files
+        /// </summary>
+        /// <returns>Closeout code</returns>
         public override CloseOutType GetResources()
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step

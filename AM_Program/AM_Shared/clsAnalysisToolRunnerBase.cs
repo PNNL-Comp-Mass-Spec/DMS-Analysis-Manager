@@ -27,7 +27,14 @@ namespace AnalysisManagerBase
 
         #region "Constants"
 
+        /// <summary>
+        /// Stored procedure name for stoing the step tool version
+        /// </summary>
         protected const string SP_NAME_SET_TASK_TOOL_VERSION = "SetStepTaskToolVersion";
+
+        /// <summary>
+        /// Default date/time format
+        /// </summary>
         public const string DATE_TIME_FORMAT = "yyyy-MM-dd hh:mm:ss tt";
 
         /// <summary>
@@ -107,10 +114,13 @@ namespace AnalysisManagerBase
         protected string m_Dataset;
 
         /// <summary>
-        /// Elapsed time information
+        /// Analysis start time
         /// </summary>
         protected DateTime m_StartTime;
 
+        /// <summary>
+        /// Analysis end time
+        /// </summary>
         protected DateTime m_StopTime;
 
         /// <summary>
@@ -123,24 +133,44 @@ namespace AnalysisManagerBase
         /// </summary>
         protected string m_FileVersion;
 
+        /// <summary>
+        /// DLL file date
+        /// </summary>
         protected string m_FileDate;
 
+        /// <summary>
+        /// Ionic zip tools
+        /// </summary>
         protected clsIonicZipTools m_IonicZipTools;
 
+        /// <summary>
+        /// Set to true if we need to abort processing as soon as possible
+        /// </summary>
         protected bool m_NeedToAbortProcessing;
 
+        /// <summary>
+        /// Analysis job summary file
+        /// </summary>
         protected clsSummaryFile m_SummaryFile;
 
+        /// <summary>
+        /// MyEMSL Utilities
+        /// </summary>
         protected clsMyEMSLUtilities m_MyEMSLUtilities;
+
         private DateTime m_LastProgressWriteTime = DateTime.UtcNow;
 
         private DateTime m_LastProgressConsoleTime = DateTime.UtcNow;
 
         private DateTime m_LastStatusFileUpdate = DateTime.UtcNow;
+
         private DateTime mLastSortUtilityProgress;
 
         private string mSortUtilityErrorMessage;
 
+        /// <summary>
+        /// Program runner start time
+        /// </summary>
         protected DateTime mProgRunnerStartTime;
 
         private DateTime mLastCachedServerFilesPurgeCheck = DateTime.UtcNow.AddMinutes(-CACHED_SERVER_FILES_PURGE_INTERVAL * 2);
@@ -157,6 +187,9 @@ namespace AnalysisManagerBase
 
         #region "Properties"
 
+        /// <summary>
+        /// Dataset name
+        /// </summary>
         public string Dataset => m_Dataset;
 
         /// <summary>
@@ -169,6 +202,9 @@ namespace AnalysisManagerBase
         /// </summary>
         public string EvalMessage => m_EvalMessage;
 
+        /// <summary>
+        /// Job number
+        /// </summary>
         public int Job => m_JobNum;
 
         /// <summary>
@@ -192,8 +228,14 @@ namespace AnalysisManagerBase
         /// <remarks>This is a value between 0 and 100</remarks>
         public float Progress => m_progress;
 
+        /// <summary>
+        /// Step tool name
+        /// </summary>
         public string StepToolName { get; private set; }
 
+        /// <summary>
+        /// Tool version info file
+        /// </summary>
         public string ToolVersionInfoFile => "Tool_Version_Info_" + StepToolName + ".txt";
 
         #endregion
@@ -1241,6 +1283,11 @@ namespace AnalysisManagerBase
 
         }
 
+        /// <summary>
+        /// Delete any instrument data files in the working directory
+        /// </summary>
+        /// <returns>True if success, false if an error</returns>
+        /// <remarks>Files to delete are determined via Job Parameter RawDataType</remarks>
         protected bool DeleteRawDataFiles()
         {
             var rawDataType = m_jobParams.GetParam("RawDataType");
@@ -1248,6 +1295,11 @@ namespace AnalysisManagerBase
             return DeleteRawDataFiles(rawDataType);
         }
 
+        /// <summary>
+        /// Delete any instrument data files in the working directory
+        /// </summary>
+        /// <param name="rawDataType">Raw data type string</param>
+        /// <returns>True if success, false if an error</returns>
         protected bool DeleteRawDataFiles(string rawDataType)
         {
             var eRawDataType = clsAnalysisResources.GetRawDataType(rawDataType);
@@ -1255,6 +1307,11 @@ namespace AnalysisManagerBase
             return DeleteRawDataFiles(eRawDataType);
         }
 
+        /// <summary>
+        /// Delete any instrument data files in the working directory
+        /// </summary>
+        /// <param name="eRawDataType">Raw data type enum</param>
+        /// <returns>True if success, false if an error</returns>
         protected bool DeleteRawDataFiles(clsAnalysisResources.eRawDataTypeConstants eRawDataType)
         {
 
@@ -1416,6 +1473,10 @@ namespace AnalysisManagerBase
 
         }
 
+        /// <summary>
+        /// Delete the file if it exists; logging an error if the deletion fails
+        /// </summary>
+        /// <param name="filePath"></param>
         protected void DeleteTemporaryfile(string filePath)
         {
             try
@@ -2603,6 +2664,12 @@ namespace AnalysisManagerBase
             return true;
         }
 
+        /// <summary>
+        /// Notify the user that the settings file is missing a required parameter
+        /// </summary>
+        /// <param name="oJobParams"></param>
+        /// <param name="parameterName"></param>
+        /// <returns></returns>
         public static string NotifyMissingParameter(IJobParams oJobParams, string parameterName)
         {
 
@@ -2688,6 +2755,10 @@ namespace AnalysisManagerBase
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
+        /// <summary>
+        /// Purge old server cache files
+        /// </summary>
+        /// <param name="cacheFolderPath"></param>
         public void PurgeOldServerCacheFiles(string cacheFolderPath)
         {
             // Value prior to December 2014: 3 TB
@@ -2696,6 +2767,11 @@ namespace AnalysisManagerBase
             PurgeOldServerCacheFiles(cacheFolderPath, spaceUsageThresholdGB);
         }
 
+        /// <summary>
+        /// Test method for PurgeOldServerCacheFiles
+        /// </summary>
+        /// <param name="cacheFolderPath"></param>
+        /// <param name="spaceUsageThresholdGB"></param>
         public void PurgeOldServerCacheFilesTest(string cacheFolderPath, int spaceUsageThresholdGB)
         {
             if (cacheFolderPath.StartsWith(@"\\proto", StringComparison.OrdinalIgnoreCase))
@@ -3103,6 +3179,13 @@ namespace AnalysisManagerBase
 
         }
 
+        /// <summary>
+        /// Replace an updated file
+        /// </summary>
+        /// <param name="fiOrginalFile"></param>
+        /// <param name="fiUpdatedFile"></param>
+        /// <returns>True if success, false if an error</returns>
+        /// <remarks>First deletes the target file, then renames the original file to the updated file name</remarks>
         protected bool ReplaceUpdatedFile(FileInfo fiOrginalFile, FileInfo fiUpdatedFile)
         {
 
@@ -4430,6 +4513,11 @@ namespace AnalysisManagerBase
             return ValidateCDTAFile(strDTAFilePath);
         }
 
+        /// <summary>
+        /// Validate that a _dta.txt file is not empty
+        /// </summary>
+        /// <param name="strDTAFilePath"></param>
+        /// <returns></returns>
         protected bool ValidateCDTAFile(string strDTAFilePath)
         {
             var dataFound = false;
@@ -4594,6 +4682,13 @@ namespace AnalysisManagerBase
 
         }
 
+        /// <summary>
+        /// Zip a file
+        /// </summary>
+        /// <param name="fiResultsFile"></param>
+        /// <param name="fileDescription"></param>
+        /// <returns>True if success, false if an error</returns>
+        /// <remarks>The original file is not deleted, but the name is added to ResultFilesToSkip in m_jobParams</remarks>
         protected bool ZipOutputFile(FileInfo fiResultsFile, string fileDescription)
         {
 

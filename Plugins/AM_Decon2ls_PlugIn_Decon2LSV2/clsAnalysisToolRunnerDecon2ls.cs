@@ -9,13 +9,15 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading;
 using AnalysisManagerBase;
 
 namespace AnalysisManagerDecon2lsV2PlugIn
 {
+    /// <summary>
+    /// Class for running DeconTools
+    /// </summary>
     public class clsAnalysisToolRunnerDecon2ls : clsAnalysisToolRunnerBase
     {
         #region "Constants"
@@ -92,13 +94,6 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         #endregion
 
         #region "Methods"
-
-        /// <summary>
-        /// Constructor
-        /// </summary>
-        public clsAnalysisToolRunnerDecon2ls()
-        {
-        }
 
         /// <summary>
         /// Validate the result files
@@ -525,7 +520,6 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         /// Runs the Decon2LS analysis tool. The actual tool version details (deconvolute or TIC) will be handled by a subclass
         /// </summary>
         /// <returns></returns>
-        /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
 

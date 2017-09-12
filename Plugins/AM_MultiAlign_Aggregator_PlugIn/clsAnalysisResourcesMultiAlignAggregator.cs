@@ -1,12 +1,18 @@
-﻿using System;
-using AnalysisManagerBase;
+﻿using AnalysisManagerBase;
 
 namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 {
+    /// <summary>
+    /// Retrieve resources for the MultiAlign Aggregator plugin
+    /// </summary>
 	public class clsAnalysisResourcesMultiAlignAggregator : clsAnalysisResources
 	{
 
-		public override AnalysisManagerBase.CloseOutType GetResources()
+        /// <summary>
+        /// Retrieve required files
+        /// </summary>
+        /// <returns>Closeout code</returns>
+		public override CloseOutType GetResources()
 		{
 			var SearchType = m_jobParams.GetParam("MultiAlignSearchType");
 

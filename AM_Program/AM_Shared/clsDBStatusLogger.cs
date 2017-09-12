@@ -13,15 +13,28 @@ using System.Data.SqlClient;
 
 namespace AnalysisManagerBase
 {
+
+    /// <summary>
+    /// Status logger
+    /// </summary>
     public class clsDBStatusLogger
     {
 
         #region "Structures"
 
+        /// <summary>
+        /// Status info
+        /// </summary>
         public struct udtStatusInfoType
         {
+            /// <summary>
+            /// Manager name
+            /// </summary>
             public string MgrName;
 
+            /// <summary>
+            /// Manager status
+            /// </summary>
             public EnumMgrStatus MgrStatus;
 
             /// <summary>
@@ -29,6 +42,9 @@ namespace AnalysisManagerBase
             /// </summary>
             public DateTime LastUpdate;
 
+            /// <summary>
+            /// Last start time (UTC-based)
+            /// </summary>
             public DateTime LastStartTime;
 
             /// <summary>
@@ -60,30 +76,93 @@ namespace AnalysisManagerBase
             /// </summary>
             /// <remarks></remarks>
             public float ProgRunnerCoreUsage;
+
+            /// <summary>
+            /// Most recent error message
+            /// </summary>
             public string MostRecentErrorMessage;
+
+            /// <summary>
+            /// Current task
+            /// </summary>
             public udtTaskInfoType Task;
         }
 
+        /// <summary>
+        /// Task info
+        /// </summary>
         public struct udtTaskInfoType
         {
+            /// <summary>
+            /// Analysis tool name
+            /// </summary>
             public string Tool;
+
+            /// <summary>
+            /// Task status
+            /// </summary>
             public EnumTaskStatus Status;
-            // Task duration, in hours
+
+            /// <summary>
+            /// Task duration, in hours
+            /// </summary>
             public float DurationHours;
-            // Percent complete, value between 0 and 100
+
+            /// <summary>
+            /// Percent complete, value between 0 and 100
+            /// </summary>
             public float Progress;
+
+            /// <summary>
+            /// Current operation
+            /// </summary>
             public string CurrentOperation;
+
+            /// <summary>
+            /// Task details
+            /// </summary>
             public udtTaskDetailsType TaskDetails;
         }
 
+        /// <summary>
+        /// Task details
+        /// </summary>
         public struct udtTaskDetailsType
         {
+            /// <summary>
+            /// Task status detail
+            /// </summary>
             public EnumTaskStatusDetail Status;
+
+            /// <summary>
+            /// Job number
+            /// </summary>
             public int Job;
+
+            /// <summary>
+            /// Job step
+            /// </summary>
             public int JobStep;
+
+            /// <summary>
+            /// Dataset name
+            /// </summary>
             public string Dataset;
+
+            /// <summary>
+            /// Most recent log message
+            /// </summary>
             public string MostRecentLogMessage;
+
+            /// <summary>
+            /// Most recent job info
+            /// </summary>
             public string MostRecentJobInfo;
+
+            /// <summary>
+            /// Number of spectra in the instrument data file
+            /// </summary>
+            /// <remarks>Only used by certain tools (e.g. SEQUEST, X!Tandem, and Inspect)</remarks>
             public int SpectrumCount;
         }
 
@@ -97,13 +176,10 @@ namespace AnalysisManagerBase
         /// <remarks>This stored procedure is valid, but the primary way that we track status is when WriteStatusFile calls LogStatusToMessageQueue</remarks>
         private const string SP_NAME_UPDATE_MANAGER_STATUS = "UpdateManagerAndTaskStatus";
 
-        private readonly string m_DBConnectionString;
-
         /// <summary>
         /// The minimum interval between updating the manager status in the database
         /// </summary>
         private float m_DBStatusUpdateIntervalMinutes;
-
 
         private DateTime m_LastWriteTime;
 
@@ -111,8 +187,14 @@ namespace AnalysisManagerBase
 
         #region "Properties"
 
-        public string DBConnectionString => m_DBConnectionString;
+        /// <summary>
+        /// Database connection string
+        /// </summary>
+        public string DBConnectionString { get; }
 
+        /// <summary>
+        /// Status update interval, in minutes
+        /// </summary>
         public float DBStatusUpdateIntervalMinutes
         {
             get => m_DBStatusUpdateIntervalMinutes;
@@ -130,14 +212,15 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="strDBConnectionString">Database connection string</param>
+        /// <param name="dbConnectionString">Database connection string</param>
         /// <param name="sngDBStatusUpdateIntervalMinutes">Minimum interval between updating the manager status in the database</param>
         /// <remarks></remarks>
-        public clsDBStatusLogger(string strDBConnectionString, float sngDBStatusUpdateIntervalMinutes)
+        public clsDBStatusLogger(string dbConnectionString, float sngDBStatusUpdateIntervalMinutes)
         {
-            if (strDBConnectionString == null)
-                strDBConnectionString = string.Empty;
-            m_DBConnectionString = strDBConnectionString;
+            if (dbConnectionString == null)
+                dbConnectionString = string.Empty;
+
+            DBConnectionString = dbConnectionString;
             m_DBStatusUpdateIntervalMinutes = sngDBStatusUpdateIntervalMinutes;
             m_LastWriteTime = DateTime.MinValue;
         }
@@ -153,7 +236,7 @@ namespace AnalysisManagerBase
 
             try
             {
-                if (string.IsNullOrEmpty(m_DBConnectionString))
+                if (string.IsNullOrEmpty(DBConnectionString))
                 {
                     // Connection string not defined; unable to continue
                     return;
@@ -167,7 +250,7 @@ namespace AnalysisManagerBase
                 m_LastWriteTime = DateTime.UtcNow;
 
 
-                var myConnection = new SqlConnection(m_DBConnectionString);
+                var myConnection = new SqlConnection(DBConnectionString);
                 myConnection.Open();
 
                 // Set up the command object prior to SP execution

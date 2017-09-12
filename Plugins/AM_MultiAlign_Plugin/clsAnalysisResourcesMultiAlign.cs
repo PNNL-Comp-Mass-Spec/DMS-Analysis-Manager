@@ -11,8 +11,16 @@ using AnalysisManagerBase;
 
 namespace AnalysisManagerMultiAlignPlugIn
 {
+    /// <summary>
+    /// Retrieve resources for the MultiAlign plugin
+    /// </summary>
     public class clsAnalysisResourcesMultiAlign : clsAnalysisResources
     {
+
+        /// <summary>
+        /// Retrieve required files
+        /// </summary>
+        /// <returns>Closeout code</returns>
         public override CloseOutType GetResources()
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step

@@ -6,7 +6,6 @@
 //*********************************************************************************************************
 
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using AnalysisManagerBase;
@@ -20,11 +19,9 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
     {
         #region "Module Variables"
 
-        protected const float PROGRESS_PCT_PRIDEMZXML_RUNNING = 5;
-        protected const float PROGRESS_PCT_START = 95;
-        protected const float PROGRESS_PCT_COMPLETE = 99;
+        private const float PROGRESS_PCT_PRIDEMZXML_RUNNING = 5;
 
-        protected clsRunDosProgram mCmdRunner;
+        private clsRunDosProgram mCmdRunner;
 
         #endregion
 
@@ -34,7 +31,6 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
         /// Runs MSDataFileTrimmer tool
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
             // Do the base class stuff
@@ -73,10 +69,10 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            string cmdStr = null;
-            cmdStr = "/M:" + Path.Combine(m_WorkDir, m_jobParams.GetParam("PRIDEMzXMLInputFile"));
-            cmdStr += " /G /O:" + m_WorkDir;
-            cmdStr += " /L:" + Path.Combine(m_WorkDir, "MSDataFileTrimmer_Log.txt");
+            var cmdStr =
+                " /M:" + Path.Combine(m_WorkDir, m_jobParams.GetParam("PRIDEMzXMLInputFile")) +
+                " /G /O:" + m_WorkDir +
+                " /L:" + Path.Combine(m_WorkDir, "MSDataFileTrimmer_Log.txt");
 
             mCmdRunner.CreateNoWindow = true;
             mCmdRunner.CacheStandardOutput = true;

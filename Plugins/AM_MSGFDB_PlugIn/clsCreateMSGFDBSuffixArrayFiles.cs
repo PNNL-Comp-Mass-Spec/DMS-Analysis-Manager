@@ -17,6 +17,9 @@ using PRISM;
 
 namespace AnalysisManagerMSGFDBPlugIn
 {
+    /// <summary>
+    /// Create MSGF+ suffix array files
+    /// </summary>
     public class clsCreateMSGFDBSuffixArrayFiles : clsEventNotifier
     {
         #region "Constants"
@@ -35,6 +38,9 @@ namespace AnalysisManagerMSGFDBPlugIn
 
         #endregion
 
+        /// <summary>
+        /// Error message
+        /// </summary>
         public string ErrorMessage => mErrorMessage;
 
         /// <summary>
@@ -1033,11 +1039,16 @@ namespace AnalysisManagerMSGFDBPlugIn
             return mgrName;
         }
 
-        public bool IsMSGFPlus(string MSGFDBJarFilePath)
+        /// <summary>
+        /// Check whether jarFilePath matches MSGFDB.jar
+        /// </summary>
+        /// <param name="jarFilePath"></param>
+        /// <returns></returns>
+        public bool IsMSGFPlus(string jarFilePath)
         {
             const string MSGFDB_JAR_NAME = "MSGFDB.jar";
 
-            var fiJarFile = new FileInfo(MSGFDBJarFilePath);
+            var fiJarFile = new FileInfo(jarFilePath);
 
             if (string.Compare(fiJarFile.Name, MSGFDB_JAR_NAME, StringComparison.OrdinalIgnoreCase) == 0)
             {

@@ -1,13 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using PRISM;
 
 namespace AnalysisManagerBase
 {
+    /// <summary>
+    /// System memory info
+    /// </summary>
+    /// <remarks>Supports both Linux and Windows</remarks>
     public class SystemMemoryInfo : clsEventNotifier
     {
 
@@ -152,9 +153,14 @@ namespace AnalysisManagerBase
 
         }
 
+        /// <summary>
+        /// From http://pinvoke.net/default.aspx/kernel32/GlobalMemoryStatusEx.html
+        /// </summary>
         private class SystemMemoryLookup
         {
-            // http://pinvoke.net/default.aspx/kernel32/GlobalMemoryStatusEx.html
+            /// <summary>
+            /// Memory status
+            /// </summary>
             public readonly MemoryStatusEx MemoryStatus;
             private const int MemoryTightConst = 80;
 
@@ -188,19 +194,59 @@ namespace AnalysisManagerBase
             [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
             public class MemoryStatusEx
             {
-                public uint dwLength;
+                // ReSharper disable once NotAccessedField.Local
+                private uint dwLength;
+
+#pragma warning disable 169
+#pragma warning disable 649
+
+
+                /// <summary>
+                /// Percent of memory in use (integer)
+                /// </summary>
                 public uint dwMemoryLoad;
+
+                /// <summary>
+                /// Total physical memory (in KB)
+                /// </summary>
                 public ulong ullTotalPhys;
+
+                /// <summary>
+                /// Free physical memory (in KB)
+                /// </summary>
                 public ulong ullAvailPhys;
+
+                /// <summary>
+                /// Page file size (in KB)
+                /// </summary>
                 public ulong ullTotalPageFile;
+
+                /// <summary>
+                /// Free page file space (in KB)
+                /// </summary>
                 public ulong ullAvailPageFile;
+
+                /// <summary>
+                /// Total virtual memory (in KB)
+                /// </summary>
                 public ulong ullTotalVirtual;
+
+                /// <summary>
+                /// Free virtual memoyr (in KB)
+                /// </summary>
                 public ulong ullAvailVirtual;
+
+                /// <summary>
+                /// Free extended memory (in KB)
+                /// </summary>
                 public ulong ullAvailExtendedVirtual;
+
+#pragma warning restore 649
+#pragma warning restore 169
 
                 public MemoryStatusEx()
                 {
-                    this.dwLength = (uint)Marshal.SizeOf(typeof(MemoryStatusEx));
+                    dwLength = (uint)Marshal.SizeOf(typeof(MemoryStatusEx));
                 }
             }
 

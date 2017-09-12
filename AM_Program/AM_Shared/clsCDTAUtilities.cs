@@ -7,6 +7,9 @@ using PRISM;
 namespace AnalysisManagerBase
 {
 
+    /// <summary>
+    /// DTA utilities
+    /// </summary>
     public class clsCDTAUtilities : clsEventNotifier
     {
 

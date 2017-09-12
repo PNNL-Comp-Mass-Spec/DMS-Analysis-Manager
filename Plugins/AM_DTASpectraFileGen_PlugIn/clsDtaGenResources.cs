@@ -18,14 +18,16 @@ namespace DTASpectraFileGen
     /// <remarks></remarks>
     public class clsDtaGenResources : clsAnalysisResources
     {
-        #region "Constants"
 
+        /// <summary>
+        /// Text used to track that existing DeconMSn results are being used
+        /// </summary>
         public const string USING_EXISTING_DECONMSN_RESULTS = "Using_existing_DeconMSn_Results";
 
-        #endregion
-
-        #region "Methods"
-
+        /// <summary>
+        /// Retrieve required files
+        /// </summary>
+        /// <returns>Closeout code</returns>
         public override CloseOutType GetResources()
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step
@@ -203,6 +205,5 @@ namespace DTASpectraFileGen
             return true;
         }
 
-        #endregion
     }
 }

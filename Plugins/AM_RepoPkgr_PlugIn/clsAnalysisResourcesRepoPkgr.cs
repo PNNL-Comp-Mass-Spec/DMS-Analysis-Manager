@@ -6,12 +6,26 @@ using AnalysisManagerBase;
 
 namespace AnalysisManager_RepoPkgr_Plugin
 {
+    /// <summary>
+    /// Retrieve resources for the Repo Packager plugin
+    /// </summary>
     public class clsAnalysisResourcesRepoPkgr : clsAnalysisResources
     {
         #region Constants
 
+        /// <summary>
+        /// Packed job parameter tracking the FASTA files used by the dataset
+        /// </summary>
         public const string FASTA_FILES_FOR_DATA_PACKAGE = "FastaFilesForDataPackage";
+
+        /// <summary>
+        /// Packed job parameter for datasets missing MzXML files
+        /// </summary>
         public const string JOB_PARAM_DATASETS_MISSING_MZXML_FILES = "PackedParam_DatasetsMissingMzXMLFiles";
+
+        /// <summary>
+        /// Packed job parameter for YearQuarter
+        /// </summary>
         public const string JOB_PARAM_DICTIONARY_DATASET_STORAGE_YEAR_QUARTER = "PackedParam_DatasetStorage_YearQuarter";
 
         #endregion
@@ -21,7 +35,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
         /// <summary>
         /// Do any resource-gathering tasks here
         /// </summary>
-        /// <returns></returns>
+        /// <returns>Closeout code</returns>
         public override CloseOutType GetResources()
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step

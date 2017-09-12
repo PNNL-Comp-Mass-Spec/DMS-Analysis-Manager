@@ -10,9 +10,16 @@ using AnalysisManagerBase;
 
 namespace AnalysisManagerUIMFtoMassHunterPlugin
 {
+    /// <summary>
+    /// Retrieve resources for the UIMF to MassHunter plugin
+    /// </summary>
     public class clsAnalysisResourcesUIMFtoMassHunter : clsAnalysisResources
     {
 
+        /// <summary>
+        /// Retrieve required files
+        /// </summary>
+        /// <returns>Closeout code</returns>
         public override CloseOutType GetResources()
         {
 

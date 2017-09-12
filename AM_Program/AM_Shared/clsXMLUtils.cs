@@ -5,9 +5,19 @@ using System.Xml.Linq;
 
 namespace AnalysisManagerBase
 {
+    /// <summary>
+    /// XML Utilities
+    /// </summary>
     public static class clsXMLUtils
     {
 
+        /// <summary>
+        /// Extract the string value inside an XML element
+        /// </summary>
+        /// <param name="elementList"></param>
+        /// <param name="elementName"></param>
+        /// <param name="valueIfMissing"></param>
+        /// <returns>String value, or valueIfMissing if a parse error</returns>
         public static string GetXmlValue(IEnumerable<XElement> elementList, string elementName, string valueIfMissing = "")
         {
             var elements = elementList.Elements(elementName).ToList();
@@ -22,6 +32,13 @@ namespace AnalysisManagerBase
 
         }
 
+        /// <summary>
+        /// Extract a date value inside an XML element
+        /// </summary>
+        /// <param name="elementList"></param>
+        /// <param name="elementName"></param>
+        /// <param name="valueIfMissing"></param>
+        /// <returns>Date, or valueIfMissing if a parse error</returns>
         public static DateTime GetXmlValue(IEnumerable<XElement> elementList, string elementName, DateTime valueIfMissing)
         {
             var valueText = GetXmlValue(elementList, elementName);
@@ -39,6 +56,13 @@ namespace AnalysisManagerBase
             return valueIfMissing;
         }
 
+        /// <summary>
+        /// Extract an integer value inside an XML element
+        /// </summary>
+        /// <param name="elementList"></param>
+        /// <param name="elementName"></param>
+        /// <param name="valueIfMissing"></param>
+        /// <returns>Value, or valueIfMissing if a parse error</returns>
         public static int GetXmlValue(IEnumerable<XElement> elementList, string elementName, int valueIfMissing)
         {
             var valueText = GetXmlValue(elementList, elementName);
@@ -56,6 +80,13 @@ namespace AnalysisManagerBase
             return valueIfMissing;
         }
 
+        /// <summary>
+        /// Extract a float value inside an XML element
+        /// </summary>
+        /// <param name="elementList"></param>
+        /// <param name="elementName"></param>
+        /// <param name="valueIfMissing"></param>
+        /// <returns>Value, or valueIfMissing if a parse error</returns>
         public static float GetXmlValue(IEnumerable<XElement> elementList, string elementName, float valueIfMissing)
         {
             var valueText = GetXmlValue(elementList, elementName);

@@ -8,6 +8,10 @@ using PRISM;
 
 namespace AnalysisManager_IDM_Plugin
 {
+
+    /// <summary>
+    /// Class for running the IDM utility
+    /// </summary>
     class clsAnalysisToolRunnerIDM : clsAnalysisToolRunnerBase
     {
         #region "Constants"
@@ -19,6 +23,11 @@ namespace AnalysisManager_IDM_Plugin
         #endregion
 
         #region Methods
+
+        /// <summary>
+        /// Primary entry point for running this tool
+        /// </summary>
+        /// <returns>CloseOutType enum representing completion status</returns>
         public override CloseOutType RunTool()
         {
             try

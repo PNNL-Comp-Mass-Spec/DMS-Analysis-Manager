@@ -12,16 +12,26 @@ using AnalysisManagerBase;
 
 namespace AnalysisManagerMODaPlugIn
 {
+    /// <summary>
+    /// Retrieve resources for the MODa plugin
+    /// </summary>
     public class clsAnalysisResourcesMODa : clsAnalysisResources
     {
         protected DTAtoMGF.clsDTAtoMGF mDTAtoMGF;
 
+        /// <summary>
+        /// Initialize options
+        /// </summary>
         public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsMyEMSLUtilities myEMSLUtilities)
         {
             base.Setup(stepToolName, mgrParams, jobParams, statusTools, myEMSLUtilities);
             SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, true);
         }
 
+        /// <summary>
+        /// Retrieve required files
+        /// </summary>
+        /// <returns>Closeout code</returns>
         public override CloseOutType GetResources()
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step

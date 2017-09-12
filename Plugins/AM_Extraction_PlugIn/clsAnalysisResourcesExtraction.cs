@@ -21,24 +21,25 @@ namespace AnalysisManagerExtractionPlugin
     /// <remarks></remarks>
     public class clsAnalysisResourcesExtraction : clsAnalysisResources
     {
-        #region "Constants"
 
+        /// <summary>
+        /// ModDefs file suffix
+        /// </summary>
         public const string MOD_DEFS_FILE_SUFFIX = "_ModDefs.txt";
+
+        /// <summary>
+        /// Mass Correction Tags filename
+        /// </summary>
         public const string MASS_CORRECTION_TAGS_FILENAME = "Mass_Correction_Tags.txt";
-
-        #endregion
-
-        #region "Module variables"
 
         protected bool mRetrieveOrganismDB;
 
         // Keys are the original file name, values are the new name
         protected Dictionary<string, string> m_PendingFileRenames;
 
-        #endregion
-
-        #region "Methods"
-
+        /// <summary>
+        /// Initialize options
+        /// </summary>
         public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsMyEMSLUtilities myEMSLUtilities)
         {
             base.Setup(stepToolName, mgrParams, jobParams, statusTools, myEMSLUtilities);
@@ -830,6 +831,5 @@ namespace AnalysisManagerExtractionPlugin
             return blnSuccess;
         }
 
-        #endregion
     }
 }

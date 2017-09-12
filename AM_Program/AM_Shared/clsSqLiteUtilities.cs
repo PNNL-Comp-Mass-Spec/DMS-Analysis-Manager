@@ -5,6 +5,9 @@ using System.IO;
 
 namespace AnalysisManagerBase
 {
+    /// <summary>
+    /// SQLite utilities
+    /// </summary>
     public class clsSqLiteUtilities
     {
 
@@ -197,6 +200,13 @@ namespace AnalysisManagerBase
             return true;
         }
 
+        /// <summary>
+        /// Copy a SQLite table from one file to another
+        /// </summary>
+        /// <param name="sourceDBPath"></param>
+        /// <param name="tableName"></param>
+        /// <param name="targetDBPath"></param>
+        /// <returns></returns>
         public bool CopySqliteTable(string sourceDBPath, string tableName, string targetDBPath)
         {
 
@@ -221,7 +231,7 @@ namespace AnalysisManagerBase
                     var tableCreateSql = result.ToString();
 
                     // Look for any indices on this table
-                    var dctIndexInfo = GetDBObjects(cnSourceDB, "index", out var dctIndexToTableMap, tableName);
+                    var dctIndexInfo = GetDBObjects(cnSourceDB, "index", out var _, tableName);
 
                     // Connect to the target database
                     using (var cnTarget = new SQLiteConnection("Data Source = " + targetDBPath))
@@ -278,7 +288,7 @@ namespace AnalysisManagerBase
         private Dictionary<string, string> GetDBObjects(SQLiteConnection cnDatabase, string objectType)
         {
             var tableName = string.Empty;
-            return GetDBObjects(cnDatabase, objectType, out var dctIndexToTableMap, tableName);
+            return GetDBObjects(cnDatabase, objectType, out var _, tableName);
         }
 
         private Dictionary<string, string> GetDBObjects(SQLiteConnection cnDatabase, string objectType, out Dictionary<string, string> dctIndexToTableMap)
@@ -296,9 +306,9 @@ namespace AnalysisManagerBase
         /// <param name="tableNameFilter">Optional table name to filter on (useful when looking for indices that refer to a given table)</param>
         /// <returns>Dictionary where Keys are the object names and Values are the Sql to create that object</returns>
         private Dictionary<string, string> GetDBObjects(
-            SQLiteConnection cnDatabase, string 
-            objectType, 
-            out Dictionary<string, string> dctIndexToTableMap, 
+            SQLiteConnection cnDatabase, string
+            objectType,
+            out Dictionary<string, string> dctIndexToTableMap,
             string tableNameFilter)
         {
 

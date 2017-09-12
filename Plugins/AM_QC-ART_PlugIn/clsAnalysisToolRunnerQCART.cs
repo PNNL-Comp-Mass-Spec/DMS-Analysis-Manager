@@ -17,6 +17,9 @@ using PRISM;
 
 namespace AnalysisManagerQCARTPlugin
 {
+    /// <summary>
+    /// Class for running QC-ART
+    /// </summary>
     public class clsAnalysisToolRunnerQCART : clsAnalysisToolRunnerBase
     {
         #region "Constants and Enums"
@@ -46,7 +49,6 @@ namespace AnalysisManagerQCARTPlugin
         /// Processes data using QC-ART
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
             try

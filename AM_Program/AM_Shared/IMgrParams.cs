@@ -16,8 +16,14 @@ namespace AnalysisManagerBase
     {
         #region "Properties"
 
+        /// <summary>
+        /// Error message
+        /// </summary>
         string ErrMsg { get; }
 
+        /// <summary>
+        /// Manager name
+        /// </summary>
         string ManagerName { get; }
 
         #endregion

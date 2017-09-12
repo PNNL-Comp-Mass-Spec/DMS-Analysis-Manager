@@ -10,6 +10,9 @@ using PRISM;
 
 namespace AnalysisManagerBase
 {
+    /// <summary>
+    /// File search methods
+    /// </summary>
     public class clsFileSearch : clsEventNotifier
     {
         #region "Constants"
@@ -60,8 +63,14 @@ namespace AnalysisManagerBase
 
         #region "Properties"
 
+        /// <summary>
+        /// Dataset name
+        /// </summary>
         public string DatasetName { get; set; }
 
+        /// <summary>
+        /// True if MyEMSL search is disabled
+        /// </summary>
         public bool MyEMSLSearchDisabled { get; set; }
 
         #endregion

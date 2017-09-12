@@ -19,7 +19,6 @@ namespace AnalysisManagerInSpecTPlugIn
     /// <summary>
     /// Class for running InSpecT analysis
     /// </summary>
-    /// <remarks></remarks>
     public class clsAnalysisToolRunnerIN : clsAnalysisToolRunnerBase
     {
         #region "Structures"

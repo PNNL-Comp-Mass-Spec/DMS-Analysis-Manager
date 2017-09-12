@@ -4,6 +4,9 @@ using System.Linq;
 
 namespace AnalysisManagerMSGFDBPlugIn
 {
+    /// <summary>
+    /// Utility for adding required contaminant proteins to FASTA files
+    /// </summary>
     public class clsFastaContaminantUtility
     {
         /// <summary>
@@ -12,6 +15,9 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <remarks></remarks>
         private Dictionary<string, KeyValuePair<string, string>> mProteins;
 
+        /// <summary>
+        /// Protein names
+        /// </summary>
         public List<string> ProteinNames
         {
             get
@@ -56,6 +62,12 @@ namespace AnalysisManagerMSGFDBPlugIn
             mProteins.Add(proteinName, new KeyValuePair<string, string>(proteinDescription, proteinSequence));
         }
 
+        /// <summary>
+        /// Append a protein to a FASTA file
+        /// </summary>
+        /// <param name="fastaWriter"></param>
+        /// <param name="proteinName"></param>
+        /// <remarks>Nothing is appended if proteinName is not found in mProteins</remarks>
         public void WriteProteinToFasta(StreamWriter fastaWriter, string proteinName)
         {
             if (mProteins.TryGetValue(proteinName, out var kvDetails))

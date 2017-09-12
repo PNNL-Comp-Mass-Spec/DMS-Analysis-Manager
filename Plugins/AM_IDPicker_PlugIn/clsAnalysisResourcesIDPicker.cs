@@ -7,22 +7,41 @@ using PHRPReader;
 
 namespace AnalysisManagerIDPickerPlugIn
 {
+    /// <summary>
+    /// Retrieve resources for the IDPicker plugin
+    /// </summary>
     public class clsAnalysisResourcesIDPicker : clsAnalysisResources
     {
+        /// <summary>
+        /// ID Picker parameter file name
+        /// </summary>
         public const string IDPICKER_PARAM_FILENAME_LOCAL = "IDPickerParamFileLocal";
+
+        /// <summary>
+        /// Default IDPicker parameter file name
+        /// </summary>
         public const string DEFAULT_IDPICKER_PARAM_FILE_NAME = "IDPicker_Defaults.txt";
 
         private bool mSynopsisFileIsEmpty;
 
-        // This dictionary holds any filenames that we need to rename after copying locally
+        /// <summary>
+        /// This dictionary holds any filenames that we need to rename after copying locally
+        /// </summary>
         private Dictionary<string, string> mInputFileRenames;
 
+        /// <summary>
+        /// Initialize options
+        /// </summary>
         public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsMyEMSLUtilities myEMSLUtilities)
         {
             base.Setup(stepToolName, mgrParams, jobParams, statusTools, myEMSLUtilities);
             SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, true);
         }
 
+        /// <summary>
+        /// Retrieve required files
+        /// </summary>
+        /// <returns>Closeout code</returns>
         public override CloseOutType GetResources()
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step

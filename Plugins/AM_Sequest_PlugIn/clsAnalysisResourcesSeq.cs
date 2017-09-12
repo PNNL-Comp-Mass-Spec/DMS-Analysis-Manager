@@ -24,8 +24,10 @@ namespace AnalysisManagerSequestPlugin
     /// </summary>
     public class clsAnalysisResourcesSeq : clsAnalysisResources
     {
-        #region "Methods"
 
+        /// <summary>
+        /// Initialize options
+        /// </summary>
         public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsMyEMSLUtilities myEMSLUtilities)
         {
             base.Setup(stepToolName, mgrParams, jobParams, statusTools, myEMSLUtilities);
@@ -342,7 +344,6 @@ namespace AnalysisManagerSequestPlugin
         /// Retrieves files necessary for performance of Sequest analysis
         /// </summary>
         /// <returns>CloseOutType indicating success or failure</returns>
-        /// <remarks></remarks>
         public override CloseOutType GetResources()
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step
@@ -756,6 +757,5 @@ namespace AnalysisManagerSequestPlugin
             }
         }
 
-        #endregion
     }
 }

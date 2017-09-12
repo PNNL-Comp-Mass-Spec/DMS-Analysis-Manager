@@ -5,19 +5,35 @@ using PRISM;
 
 namespace AnalysisManagerBase
 {
+    /// <summary>
+    /// Scan stats generator
+    /// </summary>
     public class clsScanStatsGenerator : clsEventNotifier
     {
+        /// <summary>
+        /// Debug level
+        /// </summary>
+        private readonly int mDebugLevel;
 
-        protected int mDebugLevel;
-        protected string mErrorMessage;
+        /// <summary>
+        /// MSFileInfoScanner DLL path
+        /// </summary>
+        private readonly string mMSFileInfoScannerDLLPath;
 
-        protected string mMSFileInfoScannerDLLPath;
+        /// <summary>
+        /// MS File Info Scanner
+        /// </summary>
         private MSFileInfoScannerInterfaces.iMSFileInfoScanner mMSFileInfoScanner;
 
-        protected int mMSFileInfoScannerErrorCount;
-        public string ErrorMessage => mErrorMessage;
+        /// <summary>
+        /// Most recent error message
+        /// </summary>
+        public string ErrorMessage { get; private set; }
 
-        public int MSFileInfoScannerErrorCount => mMSFileInfoScannerErrorCount;
+        /// <summary>
+        /// Number of errors reported by MSFileInfoScanner
+        /// </summary>
+        public int MSFileInfoScannerErrorCount { get; private set; }
 
         /// <summary>
         /// When ScanStart is > 0, will start processing at the specified scan number
@@ -40,7 +56,7 @@ namespace AnalysisManagerBase
             mMSFileInfoScannerDLLPath = msFileInfoScannerDLLPath;
             mDebugLevel = debugLevel;
 
-            mErrorMessage = string.Empty;
+            ErrorMessage = string.Empty;
             ScanStart = 0;
             ScanEnd = 0;
         }
@@ -70,11 +86,13 @@ namespace AnalysisManagerBase
 
             try
             {
-                mMSFileInfoScannerErrorCount = 0;
+                MSFileInfoScannerErrorCount = 0;
 
                 // Initialize the MSFileScanner class
                 mMSFileInfoScanner = LoadMSFileInfoScanner(mMSFileInfoScannerDLLPath);
                 RegisterEvents(mMSFileInfoScanner);
+
+                mMSFileInfoScanner.ErrorEvent += MSFileInfoScanner_ErrorEvent;
 
                 mMSFileInfoScanner.CheckFileIntegrity = false;
                 mMSFileInfoScanner.CreateDatasetInfoFile = false;
@@ -97,25 +115,25 @@ namespace AnalysisManagerBase
                 if (success)
                     return true;
 
-                mErrorMessage = "Error generating ScanStats file using " + inputFilePath;
+                ErrorMessage = "Error generating ScanStats file using " + inputFilePath;
                 var msgAddnl = mMSFileInfoScanner.GetErrorMessage();
 
                 if (!string.IsNullOrEmpty(msgAddnl))
                 {
-                    mErrorMessage = mErrorMessage + ": " + msgAddnl;
+                    ErrorMessage = ErrorMessage + ": " + msgAddnl;
                 }
                 return false;
 
             }
             catch (Exception ex)
             {
-                mErrorMessage = "Exception in GenerateScanStatsFile: " + ex.Message;
+                ErrorMessage = "Exception in GenerateScanStatsFile: " + ex.Message;
                 return false;
             }
 
         }
 
-        protected MSFileInfoScannerInterfaces.iMSFileInfoScanner LoadMSFileInfoScanner(string strMSFileInfoScannerDLLPath)
+        private MSFileInfoScannerInterfaces.iMSFileInfoScanner LoadMSFileInfoScanner(string strMSFileInfoScannerDLLPath)
         {
             const string MsDataFileReaderClass = "MSFileInfoScanner.clsMSFileInfoScanner";
 
@@ -151,7 +169,7 @@ namespace AnalysisManagerBase
             return objMSFileInfoScanner;
         }
 
-        protected object LoadObject(string className, string strDLLFilePath)
+        private object LoadObject(string className, string strDLLFilePath)
         {
             try
             {
@@ -168,21 +186,12 @@ namespace AnalysisManagerBase
             }
         }
 
-        protected void mMSFileInfoScanner_ErrorEvent(string message)
+        private void MSFileInfoScanner_ErrorEvent(string message, Exception ex)
         {
-            mMSFileInfoScannerErrorCount += 1;
-            var msg = "MSFileInfoScanner error: " + message;
-            OnErrorEvent(msg);
+            ErrorMessage = message;
+            MSFileInfoScannerErrorCount += 1;
         }
 
-        protected void mMSFileInfoScanner_MessageEvent(string message)
-        {
-            if (mDebugLevel >= 3)
-            {
-                OnStatusEvent(" ... " + message);
-            }
-        }
-
-    }   
+    }
 
 }

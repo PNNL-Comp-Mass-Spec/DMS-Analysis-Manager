@@ -6,6 +6,9 @@ using System.Threading;
 
 namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 {
+    /// <summary>
+    /// Class for running the MultiAlign Aggregator
+    /// </summary>
     public class clsAnalysisToolRunnerMultiAlignAggregator : clsAnalysisToolRunnerBase
     {
         protected const float PROGRESS_PCT_MULTIALIGN_START = 1;
@@ -14,6 +17,10 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         protected string m_CurrentMultiAlignTask = string.Empty;
         protected DateTime m_LastStatusUpdateTime;
 
+        /// <summary>
+        /// Primary entry point for running this tool
+        /// </summary>
+        /// <returns>CloseOutType enum representing completion status</returns>
         public override CloseOutType RunTool()
         {
             try

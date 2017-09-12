@@ -6,8 +6,16 @@ using AnalysisManagerBase;
 
 namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 {
+    /// <summary>
+    /// Retrieve resources for the Phospho FDR Aggregator plugin
+    /// </summary>
     public class clsAnalysisResourcesPhosphoFdrAggregator : clsAnalysisResources
     {
+
+        /// <summary>
+        /// Retrieve required files
+        /// </summary>
+        /// <returns>Closeout code</returns>
         public override CloseOutType GetResources()
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step

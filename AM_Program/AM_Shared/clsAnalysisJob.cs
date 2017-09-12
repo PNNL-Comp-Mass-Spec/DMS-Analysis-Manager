@@ -32,10 +32,19 @@ namespace AnalysisManagerBase
 
         #region "Constants"
 
+        /// <summary>
+        /// Job parameters section
+        /// </summary>
         public const string JOB_PARAMETERS_SECTION = "JobParameters";
 
+        /// <summary>
+        /// Step parameters section
+        /// </summary>
         public const string STEP_PARAMETERS_SECTION = "StepParameters";
 
+        /// <summary>
+        /// Stored procedure to call once the analysis finishes
+        /// </summary>
         protected const string SP_NAME_SET_COMPLETE = "SetStepTaskComplete";
 
         private const string SP_NAME_REPORT_IDLE = "ReportManagerIdle";
@@ -94,6 +103,9 @@ namespace AnalysisManagerBase
         /// </summary>
         protected Dictionary<string, int> m_DatasetInfoList = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
+        /// <summary>
+        /// Offline job info file
+        /// </summary>
         protected FileInfo m_OfflineJobInfoFile;
 
         #endregion
@@ -596,11 +608,19 @@ namespace AnalysisManagerBase
             return string.Empty;
         }
 
+        /// <summary>
+        /// Job parameters file
+        /// </summary>
+        /// <param name="jobNum"></param>
+        /// <returns></returns>
         public static string JobParametersFilename(int jobNum)
         {
             return clsGlobal.JOB_PARAMETERS_FILE_PREFIX + jobNum + ".xml";
         }
 
+        /// <summary>
+        /// Job parameters file
+        /// </summary>
         [Obsolete("Use the version that takes an integer")]
         public static string JobParametersFilename(string jobNum)
         {
@@ -1020,18 +1040,22 @@ namespace AnalysisManagerBase
                         SaveJobParameters(m_MgrParams.GetParam("WorkDir"), jobParamsXML, m_JobId);
                         taskResult = RequestTaskResult.TaskFound;
                         break;
+
                     case RET_VAL_TASK_NOT_AVAILABLE:
                         // No jobs found
                         taskResult = RequestTaskResult.NoTaskFound;
                         break;
+
                     case clsExecuteDatabaseSP.RET_VAL_EXCESSIVE_RETRIES:
                         // Too many retries
                         taskResult = RequestTaskResult.TooManyRetries;
                         break;
+
                     case clsExecuteDatabaseSP.RET_VAL_DEADLOCK:
                         // Transaction was deadlocked on lock resources with another process and has been chosen as the deadlock victim
                         taskResult = RequestTaskResult.Deadlock;
                         break;
+
                     default:
                         // There was an SP error
                         LogError("clsAnalysisJob.RequestAnalysisJob(), SP execution error " + retVal + "; " +

@@ -40,6 +40,12 @@ namespace AnalysisManagerBase
 
         }
 
+        /// <summary>
+        /// Call SplitCattedDTAsOnly and SplitCattedOutsOnly for the given dataset
+        /// </summary>
+        /// <param name="datasetName"></param>
+        /// <param name="resultsFolderPath"></param>
+        /// <returns></returns>
         public bool SplitCattedDTAsAndOuts(string datasetName, string resultsFolderPath)
         {
             var success1 = SplitCattedDTAsOnly(datasetName, resultsFolderPath);
@@ -48,11 +54,24 @@ namespace AnalysisManagerBase
             return success1 && success2;
         }
 
+        /// <summary>
+        /// Split a _dta.txt file into individual .dta files
+        /// </summary>
+        /// <param name="datasetName"></param>
+        /// <param name="resultsFolderPath"></param>
+        /// <returns></returns>
         public bool SplitCattedDTAsOnly(string datasetName, string resultsFolderPath)
         {
             return SplitCattedDTAsOnly(datasetName, resultsFolderPath, new SortedSet<string>());
         }
 
+        /// <summary>
+        /// Split a _dta.txt file into individual .dta files
+        /// </summary>
+        /// <param name="datasetName"></param>
+        /// <param name="resultsFolderPath"></param>
+        /// <param name="lstFilesToSkip">Files to skip</param>
+        /// <returns></returns>
         public bool SplitCattedDTAsOnly(string datasetName, string resultsFolderPath, List<string> lstFilesToSkip)
         {
 
@@ -66,6 +85,13 @@ namespace AnalysisManagerBase
             return SplitCattedDTAsOnly(datasetName, resultsFolderPath, lstFilesToSkipSortedSet);
         }
 
+        /// <summary>
+        /// Split a _dta.txt file into individual .dta files
+        /// </summary>
+        /// <param name="datasetName"></param>
+        /// <param name="resultsFolderPath"></param>
+        /// <param name="lstFilesToSkip">Files to skip</param>
+        /// <returns></returns>
         public bool SplitCattedDTAsOnly(string datasetName, string resultsFolderPath, SortedSet<string> lstFilesToSkip)
         {
             var fullPath = Path.Combine(resultsFolderPath, datasetName + "_dta.txt");
@@ -82,11 +108,24 @@ namespace AnalysisManagerBase
             return false;
         }
 
+        /// <summary>
+        /// Split an _out.txt file into individual .out files
+        /// </summary>
+        /// <param name="datasetName"></param>
+        /// <param name="resultsFolderPath"></param>
+        /// <returns></returns>
         public bool SplitCattedOutsOnly(string datasetName, string resultsFolderPath)
         {
             return SplitCattedOutsOnly(datasetName, resultsFolderPath, new SortedSet<string>());
         }
 
+        /// <summary>
+        /// Split an _out.txt file into individual .out files
+        /// </summary>
+        /// <param name="datasetName"></param>
+        /// <param name="resultsFolderPath"></param>
+        /// <param name="lstFilesToSkip">Files to skip</param>
+        /// <returns></returns>
         public bool SplitCattedOutsOnly(string datasetName, string resultsFolderPath, List<string> lstFilesToSkip)
         {
 
@@ -100,6 +139,13 @@ namespace AnalysisManagerBase
             return SplitCattedOutsOnly(datasetName, resultsFolderPath, lstFilesToSkipSortedSet);
         }
 
+        /// <summary>
+        /// Split an _out.txt file into individual .out files
+        /// </summary>
+        /// <param name="datasetName"></param>
+        /// <param name="resultsFolderPath"></param>
+        /// <param name="lstFilesToSkip">Files to skip</param>
+        /// <returns></returns>
         public bool SplitCattedOutsOnly(string datasetName, string resultsFolderPath, SortedSet<string> lstFilesToSkip)
         {
             var fullPath = Path.Combine(resultsFolderPath, datasetName + "_out.txt");

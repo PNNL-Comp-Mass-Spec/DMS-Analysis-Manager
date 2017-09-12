@@ -21,10 +21,10 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
     {
         #region "Module Variables"
 
-        protected const float PROGRESS_PCT_FEATURE_FINDER_RUNNING = 5;
-        protected const float PROGRESS_PCT_FEATURE_FINDER_DONE = 95;
+        private const float PROGRESS_PCT_FEATURE_FINDER_RUNNING = 5;
+        private const float PROGRESS_PCT_FEATURE_FINDER_DONE = 95;
 
-        protected clsRunDosProgram mCmdRunner;
+        private clsRunDosProgram mCmdRunner;
 
         #endregion
 
@@ -34,7 +34,6 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
         /// Runs LCMS Feature Finder tool
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
             // Do the base class stuff
@@ -111,6 +110,9 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
 
         }
 
+        /// <summary>
+        /// Copy failed results from the working directory to the DMS_FailedResults directory on the local computer
+        /// </summary>
         public override void CopyFailedResultsToArchiveFolder()
         {
             m_jobParams.AddResultFileToSkip(Dataset + ".UIMF");

@@ -11,7 +11,9 @@ using System.Collections.Generic;
 
 namespace AnalysisManagerBase
 {
-
+    /// <summary>
+    /// Tool runner interface
+    /// </summary>
     public interface IToolRunner
     {
 

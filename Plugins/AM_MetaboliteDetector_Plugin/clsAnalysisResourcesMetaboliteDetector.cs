@@ -17,16 +17,17 @@ using AnalysisManagerBase;
 
 namespace AnalysisManagerMetaboliteDetectorPlugin
 {
+
+    /// <summary>
+    /// Retrieve resources for the Metabolite Detector plugin
+    /// </summary>
     public class clsAnalysisResourcesMetaboliteDetector : clsAnalysisResources
     {
+        
         /// <summary>
-        /// Constructor
+        /// Retrieve required files
         /// </summary>
-        public clsAnalysisResourcesMetaboliteDetector()
-        {
-           
-        }
-
+        /// <returns>Closeout code</returns>
         public override CloseOutType GetResources()
         {
 

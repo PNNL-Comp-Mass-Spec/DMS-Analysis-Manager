@@ -20,9 +20,9 @@ namespace AnalysisManager_Mage_PlugIn
         #endregion
 
         /// <summary>
-        /// Run the MAC tool and disposition the results
+        /// Primary entry point for running MAC tool
         /// </summary>
-        /// <returns></returns>
+        /// <returns>CloseOutType enum representing completion status</returns>
         public override CloseOutType RunTool()
         {
             try

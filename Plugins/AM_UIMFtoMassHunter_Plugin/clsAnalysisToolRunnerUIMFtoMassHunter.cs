@@ -13,6 +13,9 @@ using AnalysisManagerBase;
 
 namespace AnalysisManagerUIMFtoMassHunterPlugin
 {
+    /// <summary>
+    /// Class for running the UIMF to MassHunter converter
+    /// </summary>
     public class clsAnalysisToolRunnerUIMFtoMassHunter : clsAnalysisToolRunnerBase
     {
         #region "Constants and Enums"
@@ -42,7 +45,6 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
         /// Converts .UIMF files to Agilent .D folders
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
             try

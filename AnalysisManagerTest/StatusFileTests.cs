@@ -6,9 +6,18 @@ using PRISM;
 
 namespace AnalysisManagerTest
 {
+    /// <summary>
+    /// Status file tests
+    /// </summary>
     [TestFixture]
     public class StatusFileTests
     {
+        /// <summary>
+        /// Test writing the status file
+        /// </summary>
+        /// <param name="statusFileName"></param>
+        /// <param name="offlineMode"></param>
+        /// <param name="linuxOS"></param>
         [Test]
         [TestCase("StatusTest.xml", false, false)]
         [TestCase("StatusTestOffline.xml", true, false)]

@@ -9,8 +9,15 @@ using UIMFLibrary;
 
 namespace AnalysisManagerDecon2lsV2PlugIn
 {
+    /// <summary>
+    /// Retrieve resources for the Decon2LS plugin
+    /// </summary>
     public class clsAnalysisResourcesDecon2ls : clsAnalysisResources
     {
+
+        /// <summary>
+        /// Job parameter to track that MS/MS processing has been auto-enabled
+        /// </summary>
         public const string JOB_PARAM_PROCESSMSMS_AUTO_ENABLED = "DeconTools_ProcessMsMs_Auto_Enabled";
 
         #region "Methods"
@@ -19,7 +26,6 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         /// Retrieves files necessary for performance of Decon2ls analysis
         /// </summary>
         /// <returns>CloseOutType indicating success or failure</returns>
-        /// <remarks></remarks>
         public override CloseOutType GetResources()
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step

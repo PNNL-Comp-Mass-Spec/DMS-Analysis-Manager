@@ -11,8 +11,17 @@ using AnalysisManagerBase;
 
 namespace AnalysisManagerNOMSIPlugin
 {
+
+    /// <summary>
+    /// Retrieve resources for the NOMSI plugin
+    /// </summary>
     public class clsAnalysisResourcesNOMSI : clsAnalysisResources
     {
+
+        /// <summary>
+        /// Retrieve required files
+        /// </summary>
+        /// <returns>Closeout code</returns>
         public override CloseOutType GetResources()
         {
 

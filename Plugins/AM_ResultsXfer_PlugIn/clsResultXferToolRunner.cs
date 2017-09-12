@@ -28,7 +28,6 @@ namespace AnalysisManagerResultsXferPlugin
         /// Runs the results transfer tool
         /// </summary>
         /// <returns>CloseOutType indicating success or failure</returns>
-        /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
             try
@@ -73,7 +72,7 @@ namespace AnalysisManagerResultsXferPlugin
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        protected bool ChangeFolderPathsToLocal(string serverName, ref string transferFolderPath, ref string datasetStoragePath)
+        private bool ChangeFolderPathsToLocal(string serverName, ref string transferFolderPath, ref string datasetStoragePath)
         {
             var connectionString = m_mgrParams.GetParam("connectionstring");
 
@@ -83,10 +82,8 @@ namespace AnalysisManagerResultsXferPlugin
                 m_message = "Unable to determine the local drive letter for " + Path.Combine(@"\\" + serverName, datasetStoragePath);
                 return false;
             }
-            else
-            {
-                datasetStoragePath = datasetStorageVolServer;
-            }
+
+            datasetStoragePath = datasetStorageVolServer;
 
             var transferVolServer = LookupLocalPath(serverName, transferFolderPath, "results_transfer", connectionString);
             if (string.IsNullOrWhiteSpace(transferVolServer))
@@ -94,15 +91,13 @@ namespace AnalysisManagerResultsXferPlugin
                 m_message = "Unable to determine the local drive letter for " + Path.Combine(@"\\" + serverName, transferFolderPath);
                 return false;
             }
-            else
-            {
-                transferFolderPath = transferVolServer;
-            }
+
+            transferFolderPath = transferVolServer;
 
             return true;
         }
 
-        protected void DeleteTransferFolderIfEmpty()
+        private void DeleteTransferFolderIfEmpty()
         {
             // If there are no more folders or files in the dataset folder in the xfer directory, delete the folder
             // Note that another manager might be simultaneously examining this folder to see if it's empty
@@ -163,7 +158,7 @@ namespace AnalysisManagerResultsXferPlugin
             return machineName;
         }
 
-        protected string LookupLocalPath(string serverName, string uncFolderPath, string folderFunction, string connectionString)
+        private string LookupLocalPath(string serverName, string uncFolderPath, string folderFunction, string connectionString)
         {
             const short retryCount = 3;
             string strMsg;
@@ -235,13 +230,13 @@ namespace AnalysisManagerResultsXferPlugin
         /// </summary>
         /// <param name="sourceFolderpath"></param>
         /// <param name="targetFolderPath"></param>
+        /// <param name="overwriteExisting"></param>
         /// <returns></returns>
         /// <remarks></remarks>
         protected bool MoveFilesLocally(string sourceFolderpath, string targetFolderPath, bool overwriteExisting)
         {
             var success = true;
             var errorCount = 0;
-            var errorMessage = string.Empty;
 
             try
             {

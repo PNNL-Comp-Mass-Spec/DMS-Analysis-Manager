@@ -9,13 +9,22 @@ using AnalysisManagerBase;
 
 namespace AnalysisManagerDataImportPlugIn
 {
+    /// <summary>
+    /// Retrieve resources for the Data Import plugin
+    /// </summary>
     public class clsAnalysisResourcesDataImport : clsAnalysisResources
     {
+
+        /// <summary>
+        /// Retrieve required files
+        /// </summary>
+        /// <returns>Closeout code</returns>
         public override CloseOutType GetResources()
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step
             var result = GetSharedResources();
             return result;
         }
+        
     }
 }

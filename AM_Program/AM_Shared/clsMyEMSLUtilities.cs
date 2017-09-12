@@ -8,9 +8,15 @@ using PRISM;
 
 namespace AnalysisManagerBase
 {
+    /// <summary>
+    /// MyEMSL Utilities
+    /// </summary>
     public class clsMyEMSLUtilities : clsEventNotifier
     {
 
+        /// <summary>
+        /// MyEMSL path flag
+        /// </summary>
         public const string MYEMSL_PATH_FLAG = @"\\MyEMSL";
 
         private readonly clsIonicZipTools m_IonicZipTools;
@@ -27,6 +33,10 @@ namespace AnalysisManagerBase
         private readonly List<KeyValuePair<string, string>> m_MostRecentUnzippedFiles;
 
         #region "Events"
+
+        /// <summary>
+        /// File downloaded event
+        /// </summary>
         public event FileDownloadedEventHandler FileDownloaded;
 
         #endregion

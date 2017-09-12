@@ -19,7 +19,6 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
     /// <summary>
     /// Class for running Inspect Results Assembler
     /// </summary>
-    /// <remarks></remarks>
     public class clsAnalysisToolRunnerInspResultsAssembly : clsAnalysisToolRunnerBase
     {
         #region "Constants and Enums"
@@ -95,7 +94,6 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         /// Runs InSpecT tool
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
             var filteredResultsAreEmpty = false;

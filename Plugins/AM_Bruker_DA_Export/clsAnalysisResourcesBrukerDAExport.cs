@@ -13,9 +13,17 @@ using AnalysisManagerBase;
 
 namespace AnalysisManagerBrukerDAExportPlugin
 {
+
+    /// <summary>
+    /// Retrieve resources for the Bruker DA Export plugin
+    /// </summary>
     public class clsAnalysisResourcesBrukerDAExport : clsAnalysisResources
     {
 
+        /// <summary>
+        /// Retrieve required files
+        /// </summary>
+        /// <returns>Closeout code</returns>
         public override CloseOutType GetResources()
         {
 

@@ -54,8 +54,7 @@ namespace DTASpectraFileGen
         /// <summary>
         /// Runs the analysis tool
         /// </summary>
-        /// <returns>CloseoutType enum indicating success or failure</returns>
-        /// <remarks>This method is used to meet the interface requirement</remarks>
+        /// <returns>CloseOutType enum indicating success or failure</returns>
         public override CloseOutType RunTool()
         {
             // Do the stuff in the base class
@@ -106,7 +105,7 @@ namespace DTASpectraFileGen
         /// <summary>
         /// Creates DTA files and filters if necessary
         /// </summary>
-        /// <returns>CloseoutType enum indicating success or failure</returns>
+        /// <returns>CloseOutType enum indicating success or failure</returns>
         /// <remarks></remarks>
         public CloseOutType CreateMSMSSpectra()
         {
@@ -280,7 +279,7 @@ namespace DTASpectraFileGen
         /// <summary>
         /// Detailed method for running a tool
         /// </summary>
-        /// <returns>CloseoutType enum indicating success or failure</returns>
+        /// <returns>CloseOutType enum indicating success or failure</returns>
         /// <remarks></remarks>
         [Obsolete("This method is unused")]
         public CloseOutType DispositionResults()
@@ -364,7 +363,7 @@ namespace DTASpectraFileGen
         /// <summary>
         /// Creates DTA files
         /// </summary>
-        /// <returns>CloseoutType enum indicating success or failure</returns>
+        /// <returns>CloseOutType enum indicating success or failure</returns>
         /// <remarks></remarks>
         public CloseOutType MakeSpectraFiles()
         {
@@ -580,7 +579,7 @@ namespace DTASpectraFileGen
         /// <summary>
         /// Concatenates DTA files into a single test file
         /// </summary>
-        /// <returns>CloseoutType enum indicating success or failure</returns>
+        /// <returns>CloseOutType enum indicating success or failure</returns>
         /// <remarks></remarks>
         private CloseOutType ConcatSpectraFiles()
         {
@@ -612,6 +611,9 @@ namespace DTASpectraFileGen
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
+        /// <summary>
+        /// Copy failed results from the working directory to the DMS_FailedResults directory on the local computer
+        /// </summary>
         public override void CopyFailedResultsToArchiveFolder()
         {
             m_jobParams.AddResultFileToSkip(Dataset + "_dta.zip");
@@ -634,7 +636,7 @@ namespace DTASpectraFileGen
         /// <summary>
         /// Deletes .raw files from working directory
         /// </summary>
-        /// <returns>CloseoutType enum indicating success or failure</returns>
+        /// <returns>CloseOutType enum indicating success or failure</returns>
         /// <remarks>Overridden for other types of input files</remarks>
         private CloseOutType DeleteDataFile()
         {
@@ -1183,7 +1185,7 @@ namespace DTASpectraFileGen
         /// <summary>
         /// Zips concatenated DTA file to reduce size
         /// </summary>
-        /// <returns>CloseoutType enum indicating success or failure</returns>
+        /// <returns>CloseOutType enum indicating success or failure</returns>
         /// <remarks></remarks>
         private CloseOutType ZipConcDtaFile()
         {

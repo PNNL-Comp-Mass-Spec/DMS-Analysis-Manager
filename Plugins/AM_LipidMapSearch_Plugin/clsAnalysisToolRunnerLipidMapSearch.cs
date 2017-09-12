@@ -54,7 +54,6 @@ namespace AnalysisManagerLipidMapSearchPlugIn
         /// Runs LipidMapSearch tool
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
             try

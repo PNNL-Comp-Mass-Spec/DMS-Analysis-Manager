@@ -3,9 +3,16 @@ using AnalysisManagerBase;
 
 namespace AnalysisManager_AScore_PlugIn
 {
+    /// <summary>
+    /// Retrieve resources for the AScore plugin
+    /// </summary>
     public class clsAnalysisResourcesAScore : clsAnalysisResources
     {
 
+        /// <summary>
+        /// Retrieve required files
+        /// </summary>
+        /// <returns>Closeout code</returns>
         public override CloseOutType GetResources()
         {
 

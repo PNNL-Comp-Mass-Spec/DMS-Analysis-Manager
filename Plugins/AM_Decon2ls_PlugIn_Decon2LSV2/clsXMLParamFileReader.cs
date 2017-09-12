@@ -1,9 +1,7 @@
-﻿
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace AnalysisManagerBase
+namespace AnalysisManagerDecon2lsV2PlugIn
 {
 
     /// <summary>
@@ -13,12 +11,19 @@ namespace AnalysisManagerBase
     public class clsXMLParamFileReader
     {
 
-        protected string mParamFilePath;
+        /// <summary>
+        /// Sections and parameters
+        /// </summary>
+        private readonly Dictionary<string, Dictionary<string, string>> mSections;
 
-        protected Dictionary<string, Dictionary<string, string>> mSections;
+        /// <summary>
+        /// Parameter file path
+        /// </summary>
+        public string ParamFilePath { get; }
 
-        public string ParamFilePath => mParamFilePath;
-
+        /// <summary>
+        /// Count of the number of parameters across all sections
+        /// </summary>
         public int ParameterCount
         {
             get
@@ -34,27 +39,34 @@ namespace AnalysisManagerBase
             }
         }
 
+        /// <summary>
+        /// Number of sections
+        /// </summary>
         public int SectionCount => mSections.Count;
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="paramFilePath"></param>
         public clsXMLParamFileReader(string paramFilePath)
         {
-            mParamFilePath = paramFilePath;
+            ParamFilePath = paramFilePath;
 
             if (!System.IO.File.Exists(paramFilePath))
             {
                 throw new System.IO.FileNotFoundException(paramFilePath);
             }
 
-            mSections = CacheXMLParamFile(mParamFilePath);
+            mSections = CacheXMLParamFile(paramFilePath);
         }
 
         /// <summary>
-        /// Parse an XML parameter file with the hierarchy of Section, ParamName, ParamValue 
+        /// Parse an XML parameter file with the hierarchy of Section, ParamName, ParamValue
         /// </summary>
         /// <param name="paramFilePath"></param>
         /// <returns>Dictionary object where keys are section names and values are dictionary objects of key/value pairs</returns>
         /// <remarks></remarks>
-        protected Dictionary<string, Dictionary<string, string>> CacheXMLParamFile(string paramFilePath)
+        private Dictionary<string, Dictionary<string, string>> CacheXMLParamFile(string paramFilePath)
         {
 
             var dctSections = new Dictionary<string, Dictionary<string, string>>();
@@ -78,7 +90,7 @@ namespace AnalysisManagerBase
         /// <param name="parameters">XML parameters to examine</param>
         /// <param name="dctParameters">Dictionary object where keys are section names and values are dictionary objects of key/value pairs</param>
         /// <remarks></remarks>
-        protected void CacheXMLParseSection(IEnumerable<System.Xml.Linq.XElement> parameters,
+        private void CacheXMLParseSection(IEnumerable<System.Xml.Linq.XElement> parameters,
                                             ref Dictionary<string, Dictionary<string, string>> dctParameters)
         {
             foreach (var parameter in parameters)
@@ -116,6 +128,12 @@ namespace AnalysisManagerBase
 
         }
 
+        /// <summary>
+        /// Retrieve a parameter
+        /// </summary>
+        /// <param name="parameterName"></param>
+        /// <param name="valueIfMissing"></param>
+        /// <returns></returns>
         public bool GetParameter(string parameterName, bool valueIfMissing)
         {
 
@@ -133,6 +151,12 @@ namespace AnalysisManagerBase
 
         }
 
+        /// <summary>
+        /// Retrieve a parameter
+        /// </summary>
+        /// <param name="parameterName"></param>
+        /// <param name="valueIfMissing"></param>
+        /// <returns></returns>
         public string GetParameter(string parameterName, string valueIfMissing)
         {
 
@@ -150,6 +174,13 @@ namespace AnalysisManagerBase
 
         }
 
+        /// <summary>
+        /// Retrieve a parameter from the specified section
+        /// </summary>
+        /// <param name="sectionName"></param>
+        /// <param name="parameterName"></param>
+        /// <param name="valueIfMissing"></param>
+        /// <returns></returns>
         public string GetParameterBySection(string sectionName, string parameterName, string valueIfMissing)
         {
 

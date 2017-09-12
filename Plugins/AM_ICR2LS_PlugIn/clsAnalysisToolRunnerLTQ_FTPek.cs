@@ -11,6 +11,11 @@ namespace AnalysisManagerICR2LSPlugIn
     /// <remarks></remarks>
     public class clsAnalysisToolRunnerLTQ_FTPek : clsAnalysisToolRunnerICRBase
     {
+
+        /// <summary>
+        /// Primary entry point for running this tool
+        /// </summary>
+        /// <returns>CloseOutType enum representing completion status</returns>
         public override CloseOutType RunTool()
         {
 

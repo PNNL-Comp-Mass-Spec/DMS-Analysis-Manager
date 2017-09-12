@@ -1,6 +1,6 @@
 
 //*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy 
+// Written by Dave Clark for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2006, Battelle Memorial Institute
 // Created 06/07/2006
@@ -16,11 +16,34 @@ namespace AnalysisManagerBase
     /// </summary>
     public struct SpectraFileProcessorParams
     {
+        /// <summary>
+        /// Debug level
+        /// </summary>
         public int DebugLevel;
+
+        /// <summary>
+        /// Manager parameters
+        /// </summary>
         public IMgrParams MgrParams;
+
+        /// <summary>
+        /// Job parameters
+        /// </summary>
         public IJobParams JobParams;
+
+        /// <summary>
+        /// Status tools
+        /// </summary>
         public IStatusFile StatusTools;
+
+        /// <summary>
+        /// Working directory
+        /// </summary>
         public string WorkDir;
+
+        /// <summary>
+        /// Dataset name
+        /// </summary>
         public string DatasetName;
     }
     #endregion
@@ -37,7 +60,7 @@ namespace AnalysisManagerBase
         /// Allows calling program to get current status
         /// </summary>
         ProcessStatus Status { get; }
-        
+
         /// <summary>
         /// Allows calling program to determine if DTA creation succeeded
         /// </summary>
@@ -76,7 +99,7 @@ namespace AnalysisManagerBase
 
         /// <summary>
         /// Job-specific parameters
-        /// </summary>     
+        /// </summary>
         IJobParams JobParams { set; }
 
         /// <summary>
@@ -106,7 +129,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <returns></returns>
         ProcessStatus Abort();
-   
+
         #endregion
 
     }

@@ -18,7 +18,6 @@ namespace AnalysisManagerMzRefineryPlugIn
     /// <summary>
     /// Class for running Mz Refinery to recalibrate m/z values in a .mzXML or .mzML file
     /// </summary>
-    /// <remarks></remarks>
     public class clsAnalysisToolRunnerMzRefinery : clsAnalysisToolRunnerBase
     {
         #region "Constants and Enums"
@@ -77,7 +76,6 @@ namespace AnalysisManagerMzRefineryPlugIn
         /// Runs MSGF+ then runs MSConvert with the MzRefiner filter
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
-        /// <remarks></remarks>
         public override CloseOutType RunTool()
         {
             try

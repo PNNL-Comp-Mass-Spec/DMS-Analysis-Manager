@@ -11,6 +11,10 @@ using AnalysisManagerBase;
 
 namespace AnalysisManagerPBFGenerator
 {
+
+    /// <summary>
+    /// Retrieve resources for the PBF Generator plugin
+    /// </summary>
     public class clsAnalysisResourcesPBFGenerator : clsAnalysisResources
     {
         public override AnalysisManagerBase.CloseOutType GetResources()

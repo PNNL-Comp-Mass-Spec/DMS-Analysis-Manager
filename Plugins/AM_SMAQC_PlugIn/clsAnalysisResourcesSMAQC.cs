@@ -6,8 +6,17 @@ using PHRPReader;
 
 namespace AnalysisManagerSMAQCPlugIn
 {
+
+    /// <summary>
+    /// Retrieve resources for the SMAQC plugin
+    /// </summary>
     public class clsAnalysisResourcesSMAQC : clsAnalysisResources
     {
+
+        /// <summary>
+        /// Retrieve required files
+        /// </summary>
+        /// <returns>Closeout code</returns>
         public override CloseOutType GetResources()
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step

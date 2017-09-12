@@ -3,20 +3,25 @@ using System.Threading;
 using AnalysisManagerBase;
 using System;
 using log4net;
-using System.Collections.Generic;
 using Mage;
 using PRISM;
 
 namespace AnalysisManager_AScore_PlugIn
 {
+    /// <summary>
+    /// Class for running ASCore
+    /// </summary>
     public class clsAnalysisToolRunnerAScore : clsAnalysisToolRunnerBase
     {
-        protected const float PROGRESS_PCT_ASCORE_START = 1;
-        protected const float PROGRESS_PCT_ASCORE_DONE = 99;
+        private const float PROGRESS_PCT_ASCORE_START = 1;
+        private const float PROGRESS_PCT_ASCORE_DONE = 99;
 
-        protected string m_CurrentAScoreTask = string.Empty;
-        protected DateTime m_LastStatusUpdateTime;
+        private string m_CurrentAScoreTask = string.Empty;
 
+        /// <summary>
+        /// Primary entry point for running this tool
+        /// </summary>
+        /// <returns>CloseOutType enum representing completion status</returns>
         public override CloseOutType RunTool()
         {
             try
@@ -55,7 +60,6 @@ namespace AnalysisManager_AScore_PlugIn
                 {
 
                     m_CurrentAScoreTask = "Running AScore";
-                    m_LastStatusUpdateTime = DateTime.UtcNow;
                     m_StatusTools.UpdateAndWrite(EnumMgrStatus.RUNNING, EnumTaskStatus.RUNNING,
                                                  EnumTaskStatusDetail.RUNNING_TOOL, m_progress);
 
@@ -147,7 +151,7 @@ namespace AnalysisManager_AScore_PlugIn
 
         }
 
-        protected bool ExportAScoreResults()
+        private bool ExportAScoreResults()
         {
             try
             {
@@ -177,7 +181,7 @@ namespace AnalysisManager_AScore_PlugIn
 
         }
 
-        protected void ExportTable(FileInfo sqlLiteDB, string tableName, FileInfo targetFile)
+        private void ExportTable(FileInfo sqlLiteDB, string tableName, FileInfo targetFile)
         {
             var reader = new SQLiteReader
             {
@@ -202,7 +206,7 @@ namespace AnalysisManager_AScore_PlugIn
         /// <summary>
         /// Run the AScore pipeline(s) listed in "AScoreOperations" parameter
         /// </summary>
-        protected bool RunAScore()
+        private bool RunAScore()
         {
             // run the appropriate Mage pipeline(s) according to operations list parameter
             var ascoreMage = new clsAScoreMagePipeline(m_jobParams, m_mgrParams, m_IonicZipTools);
@@ -247,7 +251,7 @@ namespace AnalysisManager_AScore_PlugIn
         /// Stores the tool version info in the database
         /// </summary>
         /// <remarks></remarks>
-        protected bool StoreToolVersionInfo()
+        private bool StoreToolVersionInfo()
         {
             var cyclopsDll = Path.Combine(clsGlobal.GetAppFolderPath(), "AScore_DLL.dll");
             var success = StoreDotNETToolVersionInfo(cyclopsDll);

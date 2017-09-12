@@ -8,26 +8,34 @@ using PHRPReader;
 
 namespace AnalysisManagerBase
 {
+    /// <summary>
+    /// Data package info loader
+    /// </summary>
     public class clsDataPackageInfoLoader : clsLoggerBase
     {
 
-        /// <summary>
-        /// Typically Gigasax.DMS_Pipeline
-        /// </summary>
-        private readonly string mBrokerDbConnectionString;
-
-        private readonly int mDataPackageID;
-
         private static DateTime mLastJobParameterFromHistoryLookup = DateTime.UtcNow;
 
-        public string ConnectionString => mBrokerDbConnectionString;
+        /// <summary>
+        /// Database connection string
+        /// </summary>
+        /// <remarks>Typically Gigasax.DMS_Pipeline</remarks>
+        public string ConnectionString { get; }
 
-        public int DataPackageID => mDataPackageID;
+        /// <summary>
+        /// Data package ID
+        /// </summary>
+        public int DataPackageID { get; }
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="brokerDbConnectionString"></param>
+        /// <param name="dataPackageID"></param>
         public clsDataPackageInfoLoader(string brokerDbConnectionString, int dataPackageID)
         {
-            mBrokerDbConnectionString = brokerDbConnectionString;
-            mDataPackageID = dataPackageID;
+            ConnectionString = brokerDbConnectionString;
+            DataPackageID = dataPackageID;
         }
 
         /// <summary>
@@ -38,13 +46,13 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public bool LoadDataPackageDatasetInfo(out Dictionary<int, clsDataPackageDatasetInfo> dctDataPackageDatasets)
         {
-            if (mDataPackageID < 0)
+            if (DataPackageID < 0)
             {
                 dctDataPackageDatasets = new Dictionary<int, clsDataPackageDatasetInfo>();
                 return false;
             }
 
-            return LoadDataPackageDatasetInfo(mBrokerDbConnectionString, mDataPackageID, out dctDataPackageDatasets);
+            return LoadDataPackageDatasetInfo(ConnectionString, DataPackageID, out dctDataPackageDatasets);
         }
 
         /// <summary>
@@ -439,16 +447,16 @@ namespace AnalysisManagerBase
         {
 
             // Gigasax.DMS_Pipeline
-            var connectionString = mBrokerDbConnectionString;
+            var connectionString = ConnectionString;
 
-            if (mDataPackageID < 0)
+            if (DataPackageID < 0)
             {
                 LogError("DataPackageID is not defined for this analysis job");
                 lstAdditionalJobs = new List<clsDataPackageJobInfo>();
                 return new List<clsDataPackageJobInfo>();
             }
 
-            var lstDataPackagePeptideHitJobs = RetrieveDataPackagePeptideHitJobInfo(connectionString, mDataPackageID, out lstAdditionalJobs, out var errorMsg);
+            var lstDataPackagePeptideHitJobs = RetrieveDataPackagePeptideHitJobInfo(connectionString, DataPackageID, out lstAdditionalJobs, out var errorMsg);
 
             if (!string.IsNullOrWhiteSpace(errorMsg))
             {

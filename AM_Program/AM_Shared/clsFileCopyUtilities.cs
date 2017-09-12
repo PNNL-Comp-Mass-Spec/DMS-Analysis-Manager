@@ -18,6 +18,9 @@ namespace AnalysisManagerBase
 
         private const string MYEMSL_PATH_FLAG = clsMyEMSLUtilities.MYEMSL_PATH_FLAG;
 
+        /// <summary>
+        /// Storage path info file suffix
+        /// </summary>
         public const string STORAGE_PATH_INFO_FILE_SUFFIX = "_StoragePathInfo.txt";
 
         #endregion
@@ -25,7 +28,7 @@ namespace AnalysisManagerBase
         #region "Module variables"
 
         private readonly int m_DebugLevel;
-        private readonly string m_MgrName;
+
         private readonly clsMyEMSLUtilities m_MyEMSLUtilities;
 
         private readonly clsFileTools m_FileTools;
@@ -38,10 +41,26 @@ namespace AnalysisManagerBase
 
         #region "Events"
 
+        /// <summary>
+        /// Event raised to instruct the parent class to call ResetTimestampForQueueWaitTimeLogging
+        /// </summary>
         public event ResetTimestampForQueueWaitTimeHandler ResetTimestampForQueueWaitTime;
+
+        /// <summary>
+        /// Delegate for ResetTimestampForQueueWaitTime
+        /// </summary>
         public delegate void ResetTimestampForQueueWaitTimeHandler();
 
+        /// <summary>
+        /// Event raised when CopyWithLocks finishes
+        /// </summary>
         public event CopyWithLocksCompleteHandler CopyWithLocksComplete;
+
+        /// <summary>
+        /// Delegate for CopyWithLocksComplete
+        /// </summary>
+        /// <param name="startTimeUtc"></param>
+        /// <param name="destFilePath"></param>
         public delegate void CopyWithLocksCompleteHandler(DateTime startTimeUtc, string destFilePath);
 
         #endregion
@@ -53,17 +72,14 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="prismFileTools"></param>
         /// <param name="myEmslUtilities"></param>
-        /// <param name="mgrName"></param>
         /// <param name="debugLevel"></param>
         public clsFileCopyUtilities(
             clsFileTools prismFileTools,
             clsMyEMSLUtilities myEmslUtilities,
-            string mgrName,
             short debugLevel)
         {
             m_FileTools = prismFileTools;
             m_MyEMSLUtilities = myEmslUtilities;
-            m_MgrName = mgrName;
             m_DebugLevel = debugLevel;
         }
 
