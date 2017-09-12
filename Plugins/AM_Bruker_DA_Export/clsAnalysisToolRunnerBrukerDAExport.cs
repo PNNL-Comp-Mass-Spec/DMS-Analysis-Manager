@@ -337,7 +337,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
 
         }
 
-        protected string FindDataAnalysisProgram()
+        private string FindDataAnalysisProgram()
         {
             try
             {
@@ -574,7 +574,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 try
                 {
                     strToolVersionInfo = "Unknown";
-                    return base.SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>(), saveToolVersionTextFile: false);
+                    return SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>(), saveToolVersionTextFile: false);
                 }
                 catch (Exception ex)
                 {
@@ -590,17 +590,14 @@ namespace AnalysisManagerBrukerDAExportPlugin
             // Store paths to key DLLs in ioToolFiles
             var ioToolFiles = new List<FileInfo>
             {
-                fiProgram
+                fiProgram,
+                new FileInfo(Path.Combine(fiProgram.Directory.FullName, "AnalysisCore.dll"))
             };
 
-            if (fiProgram.Directory != null)
-            {
-                ioToolFiles.Add(new FileInfo(Path.Combine(fiProgram.Directory.FullName, "AnalysisCore.dll")));
-            }
 
             try
             {
-                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, saveToolVersionTextFile: false);
+                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, saveToolVersionTextFile: false);
             }
             catch (Exception ex)
             {

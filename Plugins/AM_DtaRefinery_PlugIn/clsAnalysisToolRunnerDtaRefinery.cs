@@ -298,15 +298,8 @@ namespace AnalysisManagerDtaRefineryPlugIn
             {
                 ioToolFiles.Add(ioDtaRefineryFileInfo);
 
-                if (ioDtaRefineryFileInfo.DirectoryName == null)
-                {
-                    LogError("Unable to determine the parent directory of " + ioDtaRefineryFileInfo.FullName);
-                }
-                else
-                {
-                    var strXTandemModuleLoc = Path.Combine(ioDtaRefineryFileInfo.DirectoryName, @"aux_xtandem_module\tandem_5digit_precision.exe");
-                    ioToolFiles.Add(new FileInfo(strXTandemModuleLoc));
-                }
+                var strXTandemModuleLoc = Path.Combine(ioDtaRefineryFileInfo.DirectoryName, @"aux_xtandem_module\tandem_5digit_precision.exe");
+                ioToolFiles.Add(new FileInfo(strXTandemModuleLoc));
             }
             else
             {

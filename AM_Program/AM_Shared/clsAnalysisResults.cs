@@ -512,11 +512,6 @@ namespace AnalysisManagerBase
                 try
                 {
                     var oldResultsFolderName = Path.GetFileNameWithoutExtension(fiFileInfo.Name).Substring(FAILED_RESULTS_FOLDER_INFO_TEXT.Length);
-                    if (fiFileInfo.DirectoryName == null)
-                    {
-                        LogWarning("Unable to determine the parent directory of " + fiFileInfo.FullName);
-                        continue;
-                    }
 
                     var diOldResultsFolder = new DirectoryInfo(Path.Combine(fiFileInfo.DirectoryName, oldResultsFolderName));
 

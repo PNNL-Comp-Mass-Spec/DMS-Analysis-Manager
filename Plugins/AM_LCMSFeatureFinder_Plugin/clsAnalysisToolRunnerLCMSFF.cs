@@ -174,23 +174,19 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
             if (!blnSuccess)
                 return false;
 
-            if (ioFeatureFinderInfo.DirectoryName != null)
-            {
-                // Lookup the version of the FeatureFinder Library (in the feature finder folder)
-                var strFeatureFinderDllLoc = Path.Combine(ioFeatureFinderInfo.DirectoryName, "FeatureFinder.dll");
+            // Lookup the version of the FeatureFinder Library (in the feature finder folder)
+            var strFeatureFinderDllLoc = Path.Combine(ioFeatureFinderInfo.DirectoryName, "FeatureFinder.dll");
 
-                ioToolFiles.Add(new FileInfo(strFeatureFinderDllLoc));
+            ioToolFiles.Add(new FileInfo(strFeatureFinderDllLoc));
 
-                blnSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, strFeatureFinderDllLoc);
-                if (!blnSuccess)
-                    return false;
+            blnSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, strFeatureFinderDllLoc);
+            if (!blnSuccess)
+                return false;
 
-                // Lookup the version of the UIMF Library (in the feature finder folder)
-                blnSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, Path.Combine(ioFeatureFinderInfo.DirectoryName, "UIMFLibrary.dll"));
-                if (!blnSuccess)
-                    return false;
-
-            }
+            // Lookup the version of the UIMF Library (in the feature finder folder)
+            blnSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, Path.Combine(ioFeatureFinderInfo.DirectoryName, "UIMFLibrary.dll"));
+            if (!blnSuccess)
+                return false;
 
             try
             {

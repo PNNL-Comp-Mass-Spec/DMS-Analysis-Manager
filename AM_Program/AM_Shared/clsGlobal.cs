@@ -335,15 +335,9 @@ namespace AnalysisManagerBase
 
             var objAssembly = Assembly.GetEntryAssembly();
 
-            if (objAssembly.Location == null)
-            {
-                mAppFolderPath = string.Empty;
-            }
-            else
-            {
-                var fiAssemblyFile = new FileInfo(objAssembly.Location);
-                mAppFolderPath = fiAssemblyFile.DirectoryName;
-            }
+            var fiAssemblyFile = new FileInfo(objAssembly.Location);
+            mAppFolderPath = fiAssemblyFile.DirectoryName;
+
             return mAppFolderPath;
 
         }

@@ -689,12 +689,6 @@ namespace AnalysisManagerBase
 
                 remoteCacheFilePath = fiTargetFile.FullName;
 
-                if (fiTargetFile.DirectoryName == null)
-                {
-                    LogError("DirectoryName is null for the target directory; cannot copy the file to the remote cache");
-                    return false;
-                }
-
                 // Copy over the .Hashcheck file
                 m_FileTools.CopyFile(hashcheckFilePath, Path.Combine(fiTargetFile.DirectoryName, Path.GetFileName(hashcheckFilePath)), true);
 
@@ -971,8 +965,6 @@ namespace AnalysisManagerBase
             foreach (var fileToCopy in resultFiles)
             {
                 var sourceFileName = Path.GetFileName(fileToCopy);
-                if (sourceFileName == null)
-                    continue;
 
                 var targetPath = Path.Combine(targetDirectoryPath, sourceFileName);
 
@@ -3035,12 +3027,7 @@ namespace AnalysisManagerBase
 
             m_Dataset = diTransferFolder.Name;
 
-            if (diTransferFolder.Parent == null)
-            {
-                throw new DirectoryNotFoundException("Unable to determine the parent folder of " + diTransferFolder.FullName);
-            }
-
-            transferFolderPath = diTransferFolder.Parent.FullName;
+            transferFolderPath = diTransferFolder.Parent?.FullName ?? throw new DirectoryNotFoundException("Unable to determine the parent folder of " + diTransferFolder.FullName);
             m_jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "transferFolderPath", transferFolderPath);
 
         }
@@ -3564,16 +3551,8 @@ namespace AnalysisManagerBase
                     }
 
                     // Assume simply a filename
-                    if (fiProgram.Directory == null)
-                    {
-                        // Unable to determine the directory path for fiProgram; this shouldn't happen
-                        ioToolFiles.Add(new FileInfo(dllNameOrPath));
-                    }
-                    else
-                    {
-                        // Add it as a relative path to fiProgram
-                        ioToolFiles.Add(new FileInfo(Path.Combine(fiProgram.Directory.FullName, dllNameOrPath)));
-                    }
+                    // Add it as a relative path to fiProgram
+                    ioToolFiles.Add(new FileInfo(Path.Combine(fiProgram.Directory.FullName, dllNameOrPath)));
                 }
             }
 

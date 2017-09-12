@@ -71,12 +71,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
-                if (fiFastaFile.Directory == null)
-                {
-                    OnErrorEvent("Unable to determine the parent directory of " + fiFastaFile.FullName);
-                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
-                }
-
                 if (checkForLockFile)
                 {
                     // Look for an existing lock file on the remote server
@@ -305,12 +299,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                     fiFastaFile = new FileInfo(remoteFastaPath);
                 }
 
-                if (fiFastaFile.Directory == null)
-                {
-                    errorMessage = "Local FASTA file directory not found: " + fiFastaFile.FullName;
-                    return false;
-                }
-
                 var filesToCopy = new Dictionary<string, long>();
 
                 var lstFileInfo = new List<string>();
@@ -428,13 +416,6 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 //  Look for existing suffix array files
                 var outputNameBase = Path.GetFileNameWithoutExtension(fiFastaFile.Name);
-
-                if (fiFastaFile.Directory == null || fiFastaFile.DirectoryName == null)
-                {
-                    mErrorMessage = "Cannot determine the parent directory of " + fiFastaFile.FullName;
-                    OnErrorEvent(mErrorMessage);
-                    return CloseOutType.CLOSEOUT_FAILED;
-                }
 
                 var fiLockFile = new FileInfo(Path.Combine(fiFastaFile.DirectoryName, outputNameBase + "_csarr.lock"));
                 var dbSarrayFilename = Path.Combine(fiFastaFile.DirectoryName, outputNameBase + ".csarr");
