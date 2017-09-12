@@ -22,7 +22,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <NoWarn>1591</NoWarn>
-    <DocumentationFile>bin\Debug\AnalysisManagerDtaImportPlugIn.XML</DocumentationFile>
+    <DocumentationFile>bin\Debug\AnalysisManagerDtaImportPlugIn.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -32,7 +32,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <NoWarn>1591</NoWarn>
-    <DocumentationFile>bin\Release\AnalysisManagerDtaImportPlugIn.XML</DocumentationFile>
+    <DocumentationFile>bin\Release\AnalysisManagerDtaImportPlugIn.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="AM_Shared">

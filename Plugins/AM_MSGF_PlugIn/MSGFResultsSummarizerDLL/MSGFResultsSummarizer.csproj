@@ -22,7 +22,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <NoWarn>1591</NoWarn>
-    <DocumentationFile>bin\Debug\MSGFResultsSummarizer.XML</DocumentationFile>
+    <DocumentationFile>bin\Debug\MSGFResultsSummarizer.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -32,7 +32,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <NoWarn>1591</NoWarn>
-    <DocumentationFile>bin\Release\MSGFResultsSummarizer.XML</DocumentationFile>
+    <DocumentationFile>bin\Release\MSGFResultsSummarizer.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="PHRPReader">

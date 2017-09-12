@@ -22,7 +22,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <NoWarn>1591</NoWarn>
-    <DocumentationFile>bin\Debug\AnalysisManagerMSGFPlugin.XML</DocumentationFile>
+    <DocumentationFile>bin\Debug\AnalysisManagerMSGFPlugin.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -32,7 +32,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <NoWarn>1591</NoWarn>
-    <DocumentationFile>bin\Release\AnalysisManagerMSGFPlugin.XML</DocumentationFile>
+    <DocumentationFile>bin\Release\AnalysisManagerMSGFPlugin.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="AM_Shared">
@@ -46,9 +46,6 @@
     </Reference>
     <Reference Include="PHRPReader">
       <HintPath>..\..\AM_Common\PHRPReader.dll</HintPath>
-    </Reference>
-    <Reference Include="PRISM">
-      <HintPath>..\..\AM_Common\PRISM.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
