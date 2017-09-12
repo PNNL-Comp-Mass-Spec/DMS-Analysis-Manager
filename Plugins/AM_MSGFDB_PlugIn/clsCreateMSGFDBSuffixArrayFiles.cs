@@ -24,7 +24,6 @@ namespace AnalysisManagerMSGFDBPlugIn
     {
         #region "Constants"
 
-        public const string LEGACY_MSGFDB_SUBDIRECTORY_NAME = "Legacy_MSGFDB";
         private const string MSGF_PLUS_INDEX_FILE_INFO_SUFFIX = ".MSGFPlusIndexFileInfo";
 
         #endregion
@@ -174,8 +173,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 var minFreeSpaceMB = (int)(fileSizeTotalBytes / 1024.0 / 1024.0 + DEFAULT_ORG_DB_DIR_MIN_FREE_SPACE_MB);
 
                 diskFreeSpaceBelowThreshold =
-                    !clsGlobal.ValidateFreeDiskSpace("Organism DB directory", fiFastaFile.Directory.FullName, minFreeSpaceMB,
-                                                     clsLogTools.LoggerTypes.LogFile, out mErrorMessage);
+                    !clsGlobal.ValidateFreeDiskSpace("Organism DB directory", fiFastaFile.Directory.FullName, minFreeSpaceMB, out mErrorMessage);
 
                 if (diskFreeSpaceBelowThreshold)
                 {

@@ -2815,7 +2815,7 @@ namespace AnalysisManagerProg
                         datasetStoragePath = diDatasetStoragePath.FullName;
                     }
 
-                    if (!ValidateFreeDiskSpaceWork("Dataset directory", datasetStoragePath, datasetStorageMinFreeSpaceGB * 1024, out errorMessage, clsLogTools.LoggerTypes.LogFile))
+                    if (!ValidateFreeDiskSpaceWork("Dataset directory", datasetStoragePath, datasetStorageMinFreeSpaceGB * 1024, out errorMessage))
                     {
                         return false;
                     }
@@ -2834,7 +2834,7 @@ namespace AnalysisManagerProg
                 ShowTrace("Validating free space for the working directory: " + m_WorkDirPath);
 
                 // Verify that the working directory exists and that its drive has sufficient free space
-                if (!ValidateFreeDiskSpaceWork("Working directory", m_WorkDirPath, workingDirMinFreeSpaceMB, out errorMessage, clsLogTools.LoggerTypes.LogDb))
+                if (!ValidateFreeDiskSpaceWork("Working directory", m_WorkDirPath, workingDirMinFreeSpaceMB, out errorMessage, true))
                 {
                     LogError("Disabling manager since working directory problem");
                     DisableManagerLocally();
@@ -2859,8 +2859,7 @@ namespace AnalysisManagerProg
                     ShowTrace("Validating free space for the transfer directory: " + transferDir);
 
                     // Verify that the remote transfer directory exists and that its drive has sufficient free space
-                    if (!ValidateFreeDiskSpaceWork("Transfer directory", transferDir, transferDirMinFreeSpaceGB * 1024, out errorMessage,
-                                                   clsLogTools.LoggerTypes.LogFile))
+                    if (!ValidateFreeDiskSpaceWork("Transfer directory", transferDir, transferDirMinFreeSpaceGB * 1024, out errorMessage))
                     {
                         return false;
                     }
@@ -2874,7 +2873,7 @@ namespace AnalysisManagerProg
 
                     ShowTrace("Validating free space for the Org DB directory: " + orgDbDir);
 
-                    if (!ValidateFreeDiskSpaceWork("Organism DB directory", orgDbDir, orgDbDirMinFreeSpaceMB, out errorMessage, clsLogTools.LoggerTypes.LogFile))
+                    if (!ValidateFreeDiskSpaceWork("Organism DB directory", orgDbDir, orgDbDirMinFreeSpaceMB, out errorMessage))
                     {
                         DisableManagerLocally();
                         return false;
@@ -2890,9 +2889,14 @@ namespace AnalysisManagerProg
             return true;
         }
 
-        private bool ValidateFreeDiskSpaceWork(string directoryDescription, string directoryPath, int minFreeSpaceMB, out string errorMessage, clsLogTools.LoggerTypes eLogLocationIfNotFound)
+        private bool ValidateFreeDiskSpaceWork(
+            string directoryDescription,
+            string directoryPath,
+            int minFreeSpaceMB,
+            out string errorMessage,
+            bool logToDatabase = false)
         {
-            return clsGlobal.ValidateFreeDiskSpace(directoryDescription, directoryPath, minFreeSpaceMB, eLogLocationIfNotFound, out errorMessage);
+            return clsGlobal.ValidateFreeDiskSpace(directoryDescription, directoryPath, minFreeSpaceMB, out errorMessage, logToDatabase);
         }
 
         private bool VerifyWorkDir()
