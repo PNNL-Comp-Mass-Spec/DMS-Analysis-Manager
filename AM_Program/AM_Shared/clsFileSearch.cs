@@ -1046,6 +1046,11 @@ namespace AnalysisManagerBase
             return m_IonicZipTools.GUnzipFile(gzipFilePath);
         }
 
+        private void NotifyInvalidParentDirectory(FileSystemInfo fiSourceFile)
+        {
+            OnErrorEvent("Unable to determine the parent directory of " + fiSourceFile.FullName);
+        }
+
         /// <summary>
         /// Retrieve the dataset's cached .mzML file from the MsXML Cache
         /// </summary>
@@ -1243,6 +1248,12 @@ namespace AnalysisManagerBase
                 return false;
             }
 
+            if (fiSourceFile.Directory == null)
+            {
+                NotifyInvalidParentDirectory(fiSourceFile);
+                return false;
+            }
+
             if (!m_FileCopyUtilities.CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName, m_WorkingDir, clsLogTools.LogLevels.ERROR))
             {
                 errorMessage = "Error copying " + fiSourceFile.Name;
@@ -1402,6 +1413,12 @@ namespace AnalysisManagerBase
                 {
                     var fiSourceFile = new FileInfo(sourceFilePath);
 
+                    if (fiSourceFile.Directory == null)
+                    {
+                        NotifyInvalidParentDirectory(fiSourceFile);
+                        return false;
+                    }
+
                     // Copy the file locally
                     if (!m_FileCopyUtilities.CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName, m_WorkingDir, clsLogTools.LogLevels.ERROR))
                     {
@@ -1541,6 +1558,12 @@ namespace AnalysisManagerBase
             if (!getCdfAlso)
                 return true;
 
+            if (fiMGFFile.Directory == null)
+            {
+                NotifyInvalidParentDirectory(fiMGFFile);
+                return false;
+            }
+
             foreach (var fiCDFFile in fiMGFFile.Directory.GetFiles("*" + clsAnalysisResources.DOT_CDF_EXTENSION))
             {
                 // Copy the .cdf file that was found
@@ -1604,6 +1627,12 @@ namespace AnalysisManagerBase
 
             if (fiSourceFile.Exists)
             {
+                if (fiSourceFile.Directory == null)
+                {
+                    NotifyInvalidParentDirectory(fiSourceFile);
+                    return false;
+                }
+
                 if (m_FileCopyUtilities.CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName, m_WorkingDir,
                     clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly))
                 {
@@ -1891,7 +1920,13 @@ namespace AnalysisManagerBase
                     {
                         var fiScanStatsFile = new FileInfo(myEmslFile.FileInfo.RelativePathWindows);
 
-                        bestSICFolderName = fiScanStatsFile.Directory.Name;
+                        if (fiScanStatsFile.Directory == null)
+                        {
+                            NotifyInvalidParentDirectory(fiScanStatsFile);
+                            return false;
+                        }
+                        bestSICFolderName
+                            = fiScanStatsFile.Directory.Name;
                         bestScanStatsFileTransactionID = myEmslFile.FileInfo.TransactionID;
                     }
                 }
@@ -1953,6 +1988,12 @@ namespace AnalysisManagerBase
                 }
 
                 var fiSourceFile = new FileInfo(newestScanStatsFilePath);
+
+                if (fiSourceFile.Directory == null)
+                {
+                    NotifyInvalidParentDirectory(fiSourceFile);
+                    return false;
+                }
 
                 var bestSICFolderPath = fiSourceFile.Directory.FullName;
 
@@ -2167,6 +2208,12 @@ namespace AnalysisManagerBase
             else
             {
                 logMsgTypeIfNotFound = clsLogTools.LogLevels.ERROR;
+            }
+
+            if (fiSourceFile.Directory == null)
+            {
+                NotifyInvalidParentDirectory(fiSourceFile);
+                return false;
             }
 
             var success = m_FileCopyUtilities.CopyFileToWorkDir(

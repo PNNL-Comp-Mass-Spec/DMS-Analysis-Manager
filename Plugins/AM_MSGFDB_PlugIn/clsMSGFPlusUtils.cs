@@ -954,6 +954,13 @@ namespace AnalysisManagerMSGFDBPlugIn
             {
                 var fiFastaFile = new FileInfo(fastaFilePath);
 
+                if (fiFastaFile.DirectoryName == null)
+                {
+                    mErrorMessage = "Unable to determine the parent directory of " + fastaFilePath;
+                    OnErrorEvent(mErrorMessage);
+                    return string.Empty;
+                }
+
                 var fiTrimmedFasta = new FileInfo(Path.Combine(
                     fiFastaFile.DirectoryName,
                     Path.GetFileNameWithoutExtension(fiFastaFile.Name) + "_Trim" + maxFastaFileSizeMB + "MB.fasta"));

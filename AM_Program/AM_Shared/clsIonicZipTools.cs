@@ -101,6 +101,9 @@ namespace AnalysisManagerBase
         {
             var fiFile = new FileInfo(sourceFilePath);
 
+            if (fiFile.DirectoryName == null)
+                return Path.GetFileNameWithoutExtension(fiFile.Name) + ".zip";
+
             return Path.Combine(fiFile.DirectoryName, Path.GetFileNameWithoutExtension(fiFile.Name) + ".zip");
         }
 
