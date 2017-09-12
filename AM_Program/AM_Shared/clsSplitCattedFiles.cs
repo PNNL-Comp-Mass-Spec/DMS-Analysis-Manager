@@ -166,16 +166,6 @@ namespace AnalysisManagerBase
         /// Split a concatenated _DTA.txt or _Out.txt file into individual .dta or .out files
         /// </summary>
         /// <param name="filePath">Source _DTA.txt or _Out.txt file</param>
-        /// <remarks></remarks>
-        private bool SplitCattedFile(string filePath)
-        {
-            return SplitCattedFile(filePath, new SortedSet<string>());
-        }
-
-        /// <summary>
-        /// Split a concatenated _DTA.txt or _Out.txt file into individual .dta or .out files
-        /// </summary>
-        /// <param name="filePath">Source _DTA.txt or _Out.txt file</param>
         /// <param name="lstFilesToSkip">Files to skip (full .dta or .out file name)</param>
         /// <remarks></remarks>
         private bool SplitCattedFile(string filePath, SortedSet<string> lstFilesToSkip)

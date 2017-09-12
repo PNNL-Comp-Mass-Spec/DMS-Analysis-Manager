@@ -61,37 +61,6 @@ namespace AnalysisManagerBase
             m_WorkDir = workDir;
         }
 
-        [Obsolete("Unused")]
-        private void DeleteFolder(DirectoryInfo diFolder)
-        {
-
-            try
-            {
-                if (m_DebugLevel >= 3)
-                {
-                    OnStatusEvent("Deleting folder: " + diFolder.FullName);
-                }
-
-                diFolder.Refresh();
-
-                if (diFolder.Exists)
-                {
-                    // Now delete the source file
-                    diFolder.Delete(true);
-                }
-
-                // Wait 100 msec
-                Thread.Sleep(100);
-
-            }
-            catch (Exception ex)
-            {
-                // Log this as an error, but don't treat this as fatal
-                LogError("Error deleting " + diFolder.FullName, ex);
-            }
-
-        }
-
         private void DeleteFile(FileSystemInfo fiFile)
         {
 
