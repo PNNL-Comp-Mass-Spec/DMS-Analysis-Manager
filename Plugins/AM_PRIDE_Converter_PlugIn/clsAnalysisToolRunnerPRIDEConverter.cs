@@ -3771,33 +3771,41 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     }
                 }
 
-                // If filesToCopy only has a _dta.txt file and a .mzid.gz file, check the transfer folder for a .mgf file and a .mzid.gz file
+                // If filesToCopy only has a _dta.txt file and one or more .mzid.gz files, check the transfer folder for a .mgf file and a .mzid.gz file
                 // If the .mgf and .mzid.gz file already exist; skip processing this job
-                if (filesToCopy.Count == 2)
+                if (filesToCopy.Count >= 2)
                 {
                     var cdtaFile = false;
-                    var mzidFileName = string.Empty;
+                    var mzidFiles = new List<string>();
+                    var otherFiles = new List<string>();
 
                     foreach (var sourceFilePath in filesToCopy)
                     {
                         if (sourceFilePath.EndsWith("_dta.zip", StringComparison.OrdinalIgnoreCase))
                             cdtaFile = true;
                         else if (sourceFilePath.EndsWith(".mzid.gz", StringComparison.OrdinalIgnoreCase))
-                            mzidFileName = Path.GetFileName(sourceFilePath);
+                            mzidFiles.Add(Path.GetFileName(sourceFilePath));
+                        else
+                            otherFiles.Add(Path.GetFileName(sourceFilePath));
                     }
 
-                    if (cdtaFile && !string.IsNullOrWhiteSpace(mzidFileName))
+                    if (otherFiles.Count == 0 && cdtaFile && mzidFiles.Count > 0)
                     {
-                        if (FileExistsInTransferFolder(remoteTransferFolder, dataset + ".mgf") &&
-                            FileExistsInTransferFolder(remoteTransferFolder, mzidFileName))
+                        if (FileExistsInTransferFolder(remoteTransferFolder, dataset + ".mgf"))
                         {
-                            LogDebug(string.Format("Skipping job {0} since the .mgf and .mzid.gz file already exist at {1}", job, remoteTransferFolder));
+                            var allowSkip = mzidFiles.All(remoteMzIdFile => FileExistsInTransferFolder(remoteTransferFolder, remoteMzIdFile));
 
-                            foreach (var sourceFilePath in filesToCopy)
+                            if (allowSkip)
                             {
-                                filesCopied.Add(Path.GetFileName(sourceFilePath));
+                                LogDebug(string.Format("Skipping job {0} since the .mgf and .mzid.gz file already exist at {1}", job,
+                                                       remoteTransferFolder));
+
+                                foreach (var sourceFilePath in filesToCopy)
+                                {
+                                    filesCopied.Add(Path.GetFileName(sourceFilePath));
+                                }
+                                return true;
                             }
-                            return true;
                         }
                     }
                 }
