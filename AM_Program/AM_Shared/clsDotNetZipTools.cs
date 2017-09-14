@@ -9,14 +9,19 @@ using PRISM;
 namespace AnalysisManagerBase
 {
     /// <summary>
-    /// Ionic Zip Tools
+    /// DotNet Zip Tools (aka Ionic Zip Tools)
     /// </summary>
-    public class clsIonicZipTools : clsEventNotifier
+    public class clsDotNetZipTools : clsEventNotifier
     {
+        /// <summary>
+        /// DotNetZip name (used for logging)
+        /// </summary>
+        public const string DOTNET_ZIP_NAME = "DotNetZip";
 
         /// <summary>
         /// Ionic zip name (used for logging)
         /// </summary>
+        [Obsolete("Use DOTNET_ZIP_NAME")]
         public const string IONIC_ZIP_NAME = "IonicZip (DotNetZip)";
 
         private readonly string m_WorkDir;
@@ -55,7 +60,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="debugLevel"></param>
         /// <param name="workDir"></param>
-        public clsIonicZipTools(int debugLevel, string workDir)
+        public clsDotNetZipTools(int debugLevel, string workDir)
         {
             DebugLevel = debugLevel;
             m_WorkDir = workDir;
@@ -298,7 +303,7 @@ namespace AnalysisManagerBase
             }
             else
             {
-                success = GZipUsingIonicZip(fiFile, gzipFilePath);
+                success = GZipUsingDotNetZip(fiFile, gzipFilePath);
             }
 
             if (!success)
@@ -415,19 +420,19 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Compress the file using IonicZip
+        /// Compress the file using DotNetZip
         /// </summary>
         /// <param name="fiFile"></param>
         /// <param name="gzipFilePath"></param>
         /// <returns></returns>
-        /// <remarks>IonicZip creates a valid .gz file, but it does not include the header information (filename and timestamp of the original file)</remarks>
-        private bool GZipUsingIonicZip(FileInfo fiFile, string gzipFilePath)
+        /// <remarks>DotNetZip creates a valid .gz file, but it does not include the header information (filename and timestamp of the original file)</remarks>
+        private bool GZipUsingDotNetZip(FileInfo fiFile, string gzipFilePath)
         {
             try
             {
                 if (DebugLevel >= 3)
                 {
-                    OnStatusEvent("Creating .gz file using IonicZip: " + gzipFilePath);
+                    OnStatusEvent("Creating .gz file using " + DOTNET_ZIP_NAME + ": " + gzipFilePath);
                 }
 
                 var dtStartTime = DateTime.UtcNow;
@@ -457,7 +462,7 @@ namespace AnalysisManagerBase
 
                 if (!fiGZippedFile.Exists)
                 {
-                    LogError("IonicZip did not create a .gz file: " + gzipFilePath);
+                    LogError(DOTNET_ZIP_NAME + " did not create a .gz file: " + gzipFilePath);
                     return false;
                 }
 
@@ -500,7 +505,7 @@ namespace AnalysisManagerBase
             DateTime dtStartTime,
             DateTime dtEndTime,
             bool fileWasZipped,
-            string zipProgramName = IONIC_ZIP_NAME)
+            string zipProgramName = DOTNET_ZIP_NAME)
         {
 
             long totalSizeBytes = 0;
@@ -849,7 +854,7 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                LogError("Error deleting target .zip file prior to zipping file " + sourceFilePath + " using IonicZip", ex);
+                LogError("Error deleting target .zip file prior to zipping file " + sourceFilePath + " using " + DOTNET_ZIP_NAME, ex);
                 return false;
             }
 
@@ -958,7 +963,7 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                LogError("Error deleting target .zip file prior to zipping folder " + sourceDirectoryPath + " using IonicZip", ex);
+                LogError("Error deleting target .zip file prior to zipping folder " + sourceDirectoryPath + " using " + DOTNET_ZIP_NAME, ex);
                 return false;
             }
 

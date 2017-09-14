@@ -3889,19 +3889,19 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         if (string.Equals(fiLocalFile.Extension, ".zip", StringComparison.OrdinalIgnoreCase))
                         {
                             // Decompress the .zip file
-                            m_IonicZipTools.UnzipFile(fiLocalFile.FullName, m_WorkDir);
+                            m_DotNetZipTools.UnzipFile(fiLocalFile.FullName, m_WorkDir);
                             unzipped = true;
                         }
                         else if (string.Equals(fiLocalFile.Extension, clsAnalysisResources.DOT_GZ_EXTENSION, StringComparison.OrdinalIgnoreCase))
                         {
                             // Decompress the .gz file
-                            m_IonicZipTools.GUnzipFile(fiLocalFile.FullName, m_WorkDir);
+                            m_DotNetZipTools.GUnzipFile(fiLocalFile.FullName, m_WorkDir);
                             unzipped = true;
                         }
 
                         if (unzipped)
                         {
-                            foreach (var kvUnzippedFile in m_IonicZipTools.MostRecentUnzippedFiles)
+                            foreach (var kvUnzippedFile in m_DotNetZipTools.MostRecentUnzippedFiles)
                             {
                                 filesCopied.Add(kvUnzippedFile.Key);
                                 AddToListIfNew(mPreviousDatasetFilesToDelete, kvUnzippedFile.Value);

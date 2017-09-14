@@ -356,7 +356,7 @@ namespace AnalysisManagerNOMSIPlugin
                 filesMatched += MoveWorkDirFiles(diZipWork, "distribution*.txt");
 
                 if (filesMatched > 0)
-                    m_IonicZipTools.ZipDirectory(diZipWork.FullName, Path.Combine(m_WorkDir, "Distributions.zip"));
+                    m_DotNetZipTools.ZipDirectory(diZipWork.FullName, Path.Combine(m_WorkDir, "Distributions.zip"));
             }
             else
             {
@@ -369,7 +369,7 @@ namespace AnalysisManagerNOMSIPlugin
                 filesMatched += MoveWorkDirFiles(diZipWork, "NOMSI_ConsoleOutput_scan*.txt");
 
                 if (filesMatched > 0)
-                    m_IonicZipTools.ZipDirectory(diZipWork.FullName, Path.Combine(m_WorkDir, COMPRESSED_NOMSI_RESULTS_BASE + scanNumber + ".zip"));
+                    m_DotNetZipTools.ZipDirectory(diZipWork.FullName, Path.Combine(m_WorkDir, COMPRESSED_NOMSI_RESULTS_BASE + scanNumber + ".zip"));
             }
         }
 

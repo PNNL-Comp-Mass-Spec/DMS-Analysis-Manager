@@ -55,7 +55,7 @@ namespace AnalysisManager_RepoPkgr_PlugIn
             const int debugLevel = 1;
 
             //  make zipper to work on workDir
-            var ionicZipTools = new AnalysisManagerBase.clsIonicZipTools(debugLevel, workDir);
+            var dotNetZipTools = new AnalysisManagerBase.clsDotNetZipTools(debugLevel, workDir);
 
             // get file handler object to access the targetDir
             var diTargetDir = new DirectoryInfo(targetDir);
@@ -79,7 +79,7 @@ namespace AnalysisManager_RepoPkgr_PlugIn
                 tarFi.CopyTo(Path.Combine(workDir, tarFi.Name));
 
                 // unzip it and delete zip
-                ionicZipTools.UnzipFile(Path.Combine(workDir, tarFi.Name));
+                dotNetZipTools.UnzipFile(Path.Combine(workDir, tarFi.Name));
 
                 // find the unzipped mzid file
                 var mzFiles = diWorkDir.GetFiles("*.mzid");
@@ -89,7 +89,7 @@ namespace AnalysisManager_RepoPkgr_PlugIn
                 }
 
                 // gzip the mzid file
-                ionicZipTools.GZipFile(mzFiles[0].FullName, true);
+                dotNetZipTools.GZipFile(mzFiles[0].FullName, true);
 
                 // get gzip file
                 var gzFiles = diWorkDir.GetFiles("*mzid.gz");

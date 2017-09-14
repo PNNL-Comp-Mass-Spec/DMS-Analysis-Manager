@@ -95,12 +95,12 @@
     <Compile Include="clsDataPackageJobInfo.cs" />
     <Compile Include="clsDBStatusLogger.cs" />
     <Compile Include="clsDBTask.cs" />
+    <Compile Include="clsDotNetZipTools.cs" />
     <Compile Include="clsEmergencyLog.cs" />
     <Compile Include="clsFileCopyUtilities.cs" />
     <Compile Include="clsFolderSearch.cs" />
     <Compile Include="clsFormattedXMLWriter.cs" />
     <Compile Include="clsGlobal.cs" />
-    <Compile Include="clsIonicZipTools.cs" />
     <Compile Include="clsLoggerBase.cs" />
     <Compile Include="clsLogTools.cs" />
     <Compile Include="clsLogToolsPatternLayout.cs" />

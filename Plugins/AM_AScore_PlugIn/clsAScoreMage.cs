@@ -26,7 +26,7 @@ namespace AnalysisManager_AScore_PlugIn
         protected string mFastaFilePath = string.Empty;
         protected string mErrorMessage = string.Empty;
 
-        protected clsIonicZipTools mIonicZipTools;
+        protected clsDotNetZipTools mDotNetZipTools;
 
         public static DatasetListInfo mMyEMSLDatasetInfo;
 
@@ -40,9 +40,9 @@ namespace AnalysisManager_AScore_PlugIn
 
         #region Constructors
 
-        public clsAScoreMagePipeline(IJobParams jobParms, IMgrParams mgrParms, clsIonicZipTools ionicZipTools)
+        public clsAScoreMagePipeline(IJobParams jobParms, IMgrParams mgrParms, clsDotNetZipTools dotNetZipTools)
         {
-            Initialize(jobParms, mgrParms, ionicZipTools);
+            Initialize(jobParms, mgrParms, dotNetZipTools);
 
             if (mMyEMSLDatasetInfo == null)
             {
@@ -61,8 +61,8 @@ namespace AnalysisManager_AScore_PlugIn
         /// </summary>
         /// <param name="jobParms"></param>
         /// <param name="mgrParms"></param>
-        /// <param name="ionicZipTools"></param>
-        private void Initialize(IJobParams jobParms, IMgrParams mgrParms, clsIonicZipTools ionicZipTools)
+        /// <param name="dotNetZipTools"></param>
+        private void Initialize(IJobParams jobParms, IMgrParams mgrParms, clsDotNetZipTools dotNetZipTools)
         {
             m_jobParams = new JobParameters(jobParms);
             m_mgrParams = new ManagerParameters(mgrParms);
@@ -94,7 +94,7 @@ namespace AnalysisManager_AScore_PlugIn
             // Remove the file extension from mParamFilename
             mParamFilename = Path.GetFileNameWithoutExtension(mParamFilename);
 
-            mIonicZipTools = ionicZipTools;
+            mDotNetZipTools = dotNetZipTools;
         }
 
         #endregion
@@ -217,7 +217,7 @@ namespace AnalysisManager_AScore_PlugIn
 
             ascoreModule.FastaFilePath = mFastaFilePath;
 
-            ascoreModule.Initialize(mIonicZipTools);
+            ascoreModule.Initialize(mDotNetZipTools);
 
             var pipeline = ProcessingPipeline.Assemble("Process", jobsToProcess, ascoreModule);
             pipeline.RunRoot(null);

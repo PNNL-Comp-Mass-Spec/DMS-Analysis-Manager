@@ -531,7 +531,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                     file.MoveTo(Path.Combine(diSubDir.FullName, file.Name));
                 }
 
-                var success = m_IonicZipTools.ZipDirectory(diSubDir.FullName, Path.Combine(m_WorkDir, m_Dataset + "_scans.zip"));
+                var success = m_DotNetZipTools.ZipDirectory(diSubDir.FullName, Path.Combine(m_WorkDir, m_Dataset + "_scans.zip"));
                 if (!success)
                 {
                     if (string.IsNullOrWhiteSpace(m_message))

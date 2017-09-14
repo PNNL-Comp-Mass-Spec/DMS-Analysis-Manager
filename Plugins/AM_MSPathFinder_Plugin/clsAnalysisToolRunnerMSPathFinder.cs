@@ -916,16 +916,16 @@ namespace AnalysisManagerMSPathFinderPlugin
 
             try
             {
-                m_IonicZipTools.DebugLevel = m_DebugLevel;
+                m_DotNetZipTools.DebugLevel = m_DebugLevel;
 
                 var resultsZipFilePath = Path.Combine(m_WorkDir, m_Dataset + "_IcTsv.zip");
-                var blnSuccess = m_IonicZipTools.ZipDirectory(compressDirPath, resultsZipFilePath);
+                var blnSuccess = m_DotNetZipTools.ZipDirectory(compressDirPath, resultsZipFilePath);
 
                 if (!blnSuccess)
                 {
                     if (string.IsNullOrEmpty(m_message))
                     {
-                        m_message = m_IonicZipTools.Message;
+                        m_message = m_DotNetZipTools.Message;
                         if (string.IsNullOrEmpty(m_message))
                         {
                             m_message = "Unknown error zipping the MSPathFinder results";

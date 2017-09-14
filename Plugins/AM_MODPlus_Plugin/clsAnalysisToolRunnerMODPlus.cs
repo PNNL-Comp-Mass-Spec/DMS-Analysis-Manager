@@ -709,7 +709,7 @@ namespace AnalysisManagerMODPlusPlugin
                 }
 
                 var zippedResultsFilePath = Path.Combine(m_WorkDir, Path.GetFileNameWithoutExtension(fiCombinedResults.Name) + ".zip");
-                var blnSuccess = m_IonicZipTools.ZipDirectory(diZipFolder.FullName, zippedResultsFilePath);
+                var blnSuccess = m_DotNetZipTools.ZipDirectory(diZipFolder.FullName, zippedResultsFilePath);
 
                 if (blnSuccess)
                 {

@@ -381,13 +381,13 @@ namespace AnalysisManagerBase
         /// Return the full path to the most recently unzipped file (.zip or .gz)
         /// Returns an empty string if no recent unzipped files
         /// </summary>
-        /// <param name="ionicZipTools"></param>
+        /// <param name="dotNetTools"></param>
         /// <returns></returns>
-        private string MostRecentUnzippedFile(clsIonicZipTools ionicZipTools)
+        private string MostRecentUnzippedFile(clsDotNetZipTools dotNetTools)
         {
-            if (ionicZipTools.MostRecentUnzippedFiles.Count > 0)
+            if (dotNetTools.MostRecentUnzippedFiles.Count > 0)
             {
-                return ionicZipTools.MostRecentUnzippedFiles.First().Value;
+                return dotNetTools.MostRecentUnzippedFiles.First().Value;
             }
 
             return string.Empty;
@@ -399,9 +399,9 @@ namespace AnalysisManagerBase
         /// Otherwise, return false
         /// </summary>
         /// <param name="mzIdFileToInspect"></param>
-        /// <param name="ionicZipTools"></param>
+        /// <param name="dotNetTools"></param>
         /// <returns></returns>
-        private bool MSGFPlusSearchUsedMzML(string mzIdFileToInspect, clsIonicZipTools ionicZipTools)
+        private bool MSGFPlusSearchUsedMzML(string mzIdFileToInspect, clsDotNetZipTools dotNetTools)
         {
 
             try
@@ -419,25 +419,25 @@ namespace AnalysisManagerBase
 
                 if (mzidFile.Name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
                 {
-                    if (!ionicZipTools.UnzipFile(mzidFile.FullName))
+                    if (!dotNetTools.UnzipFile(mzidFile.FullName))
                     {
                         OnErrorEvent("Error unzipping " + mzidFile.FullName);
                         return false;
                     }
 
-                    mzidFilePathLocal = MostRecentUnzippedFile(ionicZipTools);
+                    mzidFilePathLocal = MostRecentUnzippedFile(dotNetTools);
                     deleteLocalFile = true;
 
                 }
                 else if (mzidFile.Name.EndsWith(".gz", StringComparison.OrdinalIgnoreCase))
                 {
-                    if (!ionicZipTools.GUnzipFile(mzidFile.FullName))
+                    if (!dotNetTools.GUnzipFile(mzidFile.FullName))
                     {
                         OnErrorEvent("Error unzipping " + mzidFile.FullName);
                         return false;
                     }
 
-                    mzidFilePathLocal = MostRecentUnzippedFile(ionicZipTools);
+                    mzidFilePathLocal = MostRecentUnzippedFile(dotNetTools);
                     deleteLocalFile = true;
                 }
                 else
@@ -516,14 +516,14 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="udtOptions">File retrieval options</param>
         /// <param name="cachedJobMetadata"></param>
-        /// <param name="ionicZipTools"></param>
+        /// <param name="dotNetTools"></param>
         /// <param name="workingDir"></param>
         /// <param name="dataPkgJob">Data package job</param>
         /// <returns></returns>
         private bool ProcessOnePeptideHitJob(
             udtDataPackageRetrievalOptionsType udtOptions,
             IDictionary<int, udtDataPackageJobMetadata> cachedJobMetadata,
-            clsIonicZipTools ionicZipTools,
+            clsDotNetZipTools dotNetTools,
             string workingDir,
             clsDataPackageJobInfo dataPkgJob)
         {
@@ -667,7 +667,7 @@ namespace AnalysisManagerBase
                         udtOptions,
                         candidateMzIdFiles,
                         cachedJobMetadata,
-                        ionicZipTools,
+                        dotNetTools,
                         dataPkgJob,
                         workingDir,
                         localFolderPath,
@@ -692,7 +692,7 @@ namespace AnalysisManagerBase
                 else
                 {
                     var unzipSuccess = UnzipFiles(
-                        ionicZipTools, workingDir, prefixRequired, dataPkgJob,
+                        dotNetTools, workingDir, prefixRequired, dataPkgJob,
                         lstFoundFiles, zipFileCandidates, gzipFileCandidates,
                         zippedPepXmlFile);
 
@@ -860,7 +860,7 @@ namespace AnalysisManagerBase
             udtDataPackageRetrievalOptionsType udtOptions,
             ICollection<string> candidateMzIdFiles,
             IDictionary<int, udtDataPackageJobMetadata> cachedJobMetadata,
-            clsIonicZipTools ionicZipTools,
+            clsDotNetZipTools dotNetTools,
             clsDataPackageJobInfo dataPkgJob,
             string workingDir,
             string localFolderPath,
@@ -891,7 +891,7 @@ namespace AnalysisManagerBase
                 {
                     // Example the .mzid file to determine whether a .mzML file was used
                     // This will involve decompressing if it's a gzip file, then examining the XML to look for the SpectraData element
-                    searchUsedmzML = MSGFPlusSearchUsedMzML(mzIDFileToInspect, ionicZipTools);
+                    searchUsedmzML = MSGFPlusSearchUsedMzML(mzIDFileToInspect, dotNetTools);
 
                     var newMetadata = new udtDataPackageJobMetadata
                     {
@@ -1092,8 +1092,8 @@ namespace AnalysisManagerBase
 
             try
             {
-                var ionicZipTools = new clsIonicZipTools(debugLevel, workingDir);
-                RegisterEvents(ionicZipTools);
+                var dotNetTools = new clsDotNetZipTools(debugLevel, workingDir);
+                RegisterEvents(dotNetTools);
 
                 // Make sure the MyEMSL download queue is empty
                 mAnalysisResources.ProcessMyEMSLDownloadQueue();
@@ -1142,7 +1142,7 @@ namespace AnalysisManagerBase
                     }
                     else
                     {
-                        var success = ProcessOnePeptideHitJob(udtOptions, cachedJobMetadata, ionicZipTools, workingDir, dataPkgJob);
+                        var success = ProcessOnePeptideHitJob(udtOptions, cachedJobMetadata, dotNetTools, workingDir, dataPkgJob);
 
                         if (!success)
                         {
@@ -1594,7 +1594,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Unzip any mzid files that were found
         /// </summary>
-        /// <param name="ionicZipTools"></param>
+        /// <param name="dotNetTools"></param>
         /// <param name="workingDir"></param>
         /// <param name="prefixRequired"></param>
         /// <param name="dataPkgJob"></param>
@@ -1604,7 +1604,7 @@ namespace AnalysisManagerBase
         /// <param name="zippedPepXmlFile"></param>
         /// <returns></returns>
         private bool UnzipFiles(
-            clsIonicZipTools ionicZipTools,
+            clsDotNetZipTools dotNetTools,
             string workingDir,
             bool prefixRequired,
             clsDataPackageJobInfo dataPkgJob,
@@ -1623,8 +1623,8 @@ namespace AnalysisManagerBase
                     var fiFileToUnzip = new FileInfo(Path.Combine(workingDir, gzipCandidate));
                     if (fiFileToUnzip.Exists)
                     {
-                        ionicZipTools.GUnzipFile(fiFileToUnzip.FullName);
-                        unzippedFilePath = MostRecentUnzippedFile(ionicZipTools);
+                        dotNetTools.GUnzipFile(fiFileToUnzip.FullName);
+                        unzippedFilePath = MostRecentUnzippedFile(dotNetTools);
                         break;
                     }
                 }
@@ -1636,8 +1636,8 @@ namespace AnalysisManagerBase
                         var fiFileToUnzip = new FileInfo(Path.Combine(workingDir, zipCandidate));
                         if (fiFileToUnzip.Exists)
                         {
-                            ionicZipTools.UnzipFile(fiFileToUnzip.FullName);
-                            unzippedFilePath = MostRecentUnzippedFile(ionicZipTools);
+                            dotNetTools.UnzipFile(fiFileToUnzip.FullName);
+                            unzippedFilePath = MostRecentUnzippedFile(dotNetTools);
                             break;
                         }
                     }
@@ -1676,8 +1676,8 @@ namespace AnalysisManagerBase
                 var fiFileToUnzip = new FileInfo(Path.Combine(workingDir, zippedPepXmlFile));
                 if (fiFileToUnzip.Exists)
                 {
-                    ionicZipTools.UnzipFile(fiFileToUnzip.FullName);
-                    lstFoundFiles.Add(MostRecentUnzippedFile(ionicZipTools));
+                    dotNetTools.UnzipFile(fiFileToUnzip.FullName);
+                    lstFoundFiles.Add(MostRecentUnzippedFile(dotNetTools));
                 }
             }
 

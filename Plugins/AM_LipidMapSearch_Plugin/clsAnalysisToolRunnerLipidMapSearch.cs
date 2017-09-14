@@ -822,9 +822,9 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 Thread.Sleep(500);
 
                 // Zip up the files in the PlotData folder
-                var oIonicZipper = new clsIonicZipTools(m_DebugLevel, m_WorkDir);
+                var dotNetZipTools = new clsDotNetZipTools(m_DebugLevel, m_WorkDir);
 
-                oIonicZipper.ZipDirectory(strFolderToZip, Path.Combine(m_WorkDir, "LipidMap_PlotData.zip"));
+                dotNetZipTools.ZipDirectory(strFolderToZip, Path.Combine(m_WorkDir, "LipidMap_PlotData.zip"));
             }
             catch (Exception ex)
             {

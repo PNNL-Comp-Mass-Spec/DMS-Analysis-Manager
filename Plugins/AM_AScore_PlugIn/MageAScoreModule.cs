@@ -41,7 +41,7 @@ namespace AnalysisManager_AScore_PlugIn
         private int datasetTypeIdx;
         private int settingsFileIdx;
 
-        private clsIonicZipTools mIonicZipTools;
+        private clsDotNetZipTools mDotNetZipTools;
 
         #endregion
 
@@ -67,9 +67,9 @@ namespace AnalysisManager_AScore_PlugIn
             ExtractedResultsFileName = "extracted_results.txt";
         }
 
-        public void Initialize(clsIonicZipTools ionicZipTools)
+        public void Initialize(clsDotNetZipTools dotNetZipTools)
         {
-            mIonicZipTools = ionicZipTools;
+            mDotNetZipTools = dotNetZipTools;
         }
 
         #endregion
@@ -334,7 +334,7 @@ namespace AnalysisManager_AScore_PlugIn
             try
             {
                 // Unzip the file
-                mIonicZipTools.UnzipFile(dtaZipPathLocal);
+                mDotNetZipTools.UnzipFile(dtaZipPathLocal);
             }
             catch (Exception ex)
             {

@@ -595,11 +595,11 @@ namespace AnalysisManagerMzRefineryPlugIn
             try
             {
                 // Compress the MSGF+ .mzID file
-                var success = m_IonicZipTools.GZipFile(fiMSGFPlusResults.FullName, true);
+                var success = m_DotNetZipTools.GZipFile(fiMSGFPlusResults.FullName, true);
 
                 if (!success)
                 {
-                    m_message = m_IonicZipTools.Message;
+                    m_message = m_DotNetZipTools.Message;
                     return false;
                 }
 
@@ -1015,11 +1015,11 @@ namespace AnalysisManagerMzRefineryPlugIn
             try
             {
                 // Compress the .mzXML or .mzML file
-                var success = m_IonicZipTools.GZipFile(fiFixedMSXmlFile.FullName, true);
+                var success = m_DotNetZipTools.GZipFile(fiFixedMSXmlFile.FullName, true);
 
                 if (!success)
                 {
-                    m_message = m_IonicZipTools.Message;
+                    m_message = m_DotNetZipTools.Message;
                     return false;
                 }
             }

@@ -418,7 +418,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 // Copy the .mzXML file to the cache
                 // Gzip it first before copying
                 var fiMzXmlFileGZipped = new FileInfo(fiMzXmlFilePathLocal + clsAnalysisResources.DOT_GZ_EXTENSION);
-                success = m_IonicZipTools.GZipFile(fiMzXmlFilePathLocal.FullName, true);
+                success = m_DotNetZipTools.GZipFile(fiMzXmlFilePathLocal.FullName, true);
                 if (!success)
                 {
                     m_message = "Error compressing .mzXML file " + fiMzXmlFilePathLocal.Name + " with GZip: ";

@@ -17,24 +17,6 @@ namespace AnalysisManagerBase
     {
         #region "Constants"
 
-        /// <summary>
-        /// Define the maximum file size to process using IonicZip;
-        ///  the reason we don't want to process larger files is that IonicZip is 1.5x to 2x slower than PkZip
-        ///  For example, given a 1.9 GB _isos.csv file zipped to a 660 MB .Zip file:
-        ///   SharpZipLib unzips the file in 130 seconds
-        ///   WinRar      unzips the file in 120 seconds
-        ///   PKZipC      unzips the file in  84 seconds
-        ///
-        /// Re-tested on 1/7/2011 with a 611 MB file
-        ///   IonicZip    unzips the file in 70 seconds (reading/writing to the same drive)
-        ///   IonicZip    unzips the file in 62 seconds (reading/writing from different drives)
-        ///   WinRar      unzips the file in 36 seconds (reading/writing from different drives)
-        ///   PKZipC      unzips the file in 38 seconds (reading/writing from different drives)
-        ///
-        ///  For smaller files, the speed differences are much less noticable
-        /// </summary>
-        protected const int IONIC_ZIP_MAX_FILESIZE_MB = 1280;
-
         private const string MYEMSL_PATH_FLAG = clsMyEMSLUtilities.MYEMSL_PATH_FLAG;
 
         #endregion
@@ -57,7 +39,7 @@ namespace AnalysisManagerBase
 
         private readonly clsMyEMSLUtilities m_MyEMSLUtilities;
 
-        private readonly clsIonicZipTools m_IonicZipTools;
+        private readonly clsDotNetZipTools m_DotNetZipTools;
 
         #endregion
 
@@ -114,8 +96,8 @@ namespace AnalysisManagerBase
             m_WorkingDir = workingDir;
             m_AuroraAvailable = auroraAvailable;
 
-            m_IonicZipTools = new clsIonicZipTools(debugLevel, workingDir);
-            RegisterEvents(m_IonicZipTools);
+            m_DotNetZipTools = new clsDotNetZipTools(debugLevel, workingDir);
+            RegisterEvents(m_DotNetZipTools);
         }
 
         /// <summary>
@@ -1043,7 +1025,7 @@ namespace AnalysisManagerBase
         /// <returns>True if success; false if an error</returns>
         public bool GUnzipFile(string gzipFilePath)
         {
-            return m_IonicZipTools.GUnzipFile(gzipFilePath);
+            return m_DotNetZipTools.GUnzipFile(gzipFilePath);
         }
 
         private void NotifyInvalidParentDirectory(FileSystemInfo fiSourceFile)
@@ -1273,7 +1255,7 @@ namespace AnalysisManagerBase
 
                     if (!GUnzipFile(localzippedFile))
                     {
-                        errorMessage = m_IonicZipTools.Message;
+                        errorMessage = m_DotNetZipTools.Message;
                         return false;
                     }
                 }
@@ -2737,7 +2719,7 @@ namespace AnalysisManagerBase
                         }
                     }
 
-                    // Now use Ionic to unzip zipFilePathLocal to the data cache folder
+                    // Now use DotNetZip (aka Ionic.Zip) to unzip zipFilePathLocal to the data cache folder
                     // Do not overwrite existing files (assume they're already valid)
 
                     try
@@ -2763,7 +2745,7 @@ namespace AnalysisManagerBase
                     if (!unzipOverNetwork)
                     {
                         // Need to delete the zip file that we copied locally
-                        // However, Ionic may have a file handle open so we use a queue to keep track of files that need to be deleted
+                        // However, DotNet may have a file handle open so we use a queue to keep track of files that need to be deleted
 
                         DeleteQueuedFiles(filesToDelete, zipFilePathToExtract);
                     }
@@ -2885,8 +2867,8 @@ namespace AnalysisManagerBase
                 Directory.CreateDirectory(datasetWorkFolder);
 
                 // Set up the unzipper
-                var ionicZipTools = new clsIonicZipTools(m_DebugLevel, datasetWorkFolder);
-                RegisterEvents(ionicZipTools);
+                var dotNetZipTools = new clsDotNetZipTools(m_DebugLevel, datasetWorkFolder);
+                RegisterEvents(dotNetZipTools);
 
                 // Unzip each of the zip files to the working directory
                 foreach (var zipFilePath in zipFiles)
@@ -2912,7 +2894,7 @@ namespace AnalysisManagerBase
 
                         var sourceFilePath = Path.Combine(m_WorkingDir, sourceFileName);
 
-                        if (!ionicZipTools.UnzipFile(sourceFilePath, targetFolderPath))
+                        if (!dotNetZipTools.UnzipFile(sourceFilePath, targetFolderPath))
                         {
                             OnErrorEvent("Error unzipping file " + zipFilePath);
                             return false;
@@ -2991,8 +2973,6 @@ namespace AnalysisManagerBase
 
         /// <summary>
         /// Unzips all files in the specified Zip file
-        /// If the file is less than 1.25 GB in size (IONIC_ZIP_MAX_FILESIZE_MB) then uses Ionic.Zip
-        /// Otherwise, uses PKZipC (provided PKZipC.exe exists)
         /// </summary>
         /// <param name="zipFilePath">File to unzip</param>
         /// <param name="outFolderPath">Target directory for the extracted files</param>
@@ -3031,67 +3011,21 @@ namespace AnalysisManagerBase
                     return false;
                 }
 
-                var useExternalUnzipper = false;
-
                 if (zipFilePath.EndsWith(clsAnalysisResources.DOT_GZ_EXTENSION, StringComparison.OrdinalIgnoreCase))
                 {
                     // This is a gzipped file
-                    // Use Ionic.Zip
-                    unzipperName = clsIonicZipTools.IONIC_ZIP_NAME;
-                    m_IonicZipTools.DebugLevel = m_DebugLevel;
-                    return m_IonicZipTools.GUnzipFile(zipFilePath, outFolderPath);
+                    // Use DotNetZip
+                    unzipperName = clsDotNetZipTools.DOTNET_ZIP_NAME;
+                    m_DotNetZipTools.DebugLevel = m_DebugLevel;
+                    return m_DotNetZipTools.GUnzipFile(zipFilePath, outFolderPath);
                 }
 
-                // Use the external zipper if the file size is over IONIC_ZIP_MAX_FILESIZE_MB or if ForceExternalZipProgramUse = True
-                // However, if the .Exe file for the external zipper is not found, fall back to use Ionic.Zip
-                if (forceExternalZipProgramUse || fileSizeMB >= IONIC_ZIP_MAX_FILESIZE_MB)
-                {
-                    if (externalUnzipperFilePath.Length > 0 && externalUnzipperFilePath.ToLower() != "na")
-                    {
-                        if (File.Exists(externalUnzipperFilePath))
-                        {
-                            useExternalUnzipper = true;
-                        }
-                    }
+                // Use DotNetZip
+                unzipperName = clsDotNetZipTools.DOTNET_ZIP_NAME;
+                m_DotNetZipTools.DebugLevel = m_DebugLevel;
+                var success = m_DotNetZipTools.UnzipFile(zipFilePath, outFolderPath);
 
-                    if (!useExternalUnzipper)
-                    {
-
-                        OnWarningEvent("External zip program not found: " + externalUnzipperFilePath + "; will instead use Ionic.Zip");
-                    }
-                }
-
-                if (useExternalUnzipper)
-                {
-                    unzipperName = Path.GetFileName(externalUnzipperFilePath);
-
-                    var UnZipper = new ZipTools(outFolderPath, externalUnzipperFilePath);
-
-                    var dtStartTime = DateTime.UtcNow;
-                    var success = UnZipper.UnzipFile("", zipFilePath, outFolderPath);
-                    var dtEndTime = DateTime.UtcNow;
-
-                    if (success)
-                    {
-                        m_IonicZipTools.ReportZipStats(fiFileInfo, dtStartTime, dtEndTime, false, unzipperName);
-                    }
-                    else
-                    {
-                        OnErrorEvent("Error unzipping " + Path.GetFileName(zipFilePath) + " using " + unzipperName);
-                        OnStatusEvent("CallingFunction: " + callingFunctionName);
-                    }
-
-                    return success;
-                }
-                else
-                {
-                    // Use Ionic.Zip
-                    unzipperName = clsIonicZipTools.IONIC_ZIP_NAME;
-                    m_IonicZipTools.DebugLevel = m_DebugLevel;
-                    var success = m_IonicZipTools.UnzipFile(zipFilePath, outFolderPath);
-
-                    return success;
-                }
+                return success;
 
             }
             catch (Exception ex)

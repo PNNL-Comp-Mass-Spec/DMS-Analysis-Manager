@@ -1607,7 +1607,7 @@ namespace AnalysisManagerExtractionPlugin
             }
 
             var zippedConsoleOutputFilePath = Path.Combine(diWorkingDirectory.FullName, "MSGFPlus_ConsoleOutput_Files.zip");
-            if (!m_IonicZipTools.ZipDirectory(diConsoleOutputFiles.FullName, zippedConsoleOutputFilePath))
+            if (!m_DotNetZipTools.ZipDirectory(diConsoleOutputFiles.FullName, zippedConsoleOutputFilePath))
             {
                 LogError("Problem zipping the ConsoleOutput files; will not delete the separate copies from the transfer folder");
                 return;

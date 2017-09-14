@@ -306,13 +306,13 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
                     var strZipFilePath = Path.Combine(diPlotsFolder.FullName, "PlotFiles.zip");
 
-                    var success = m_IonicZipTools.ZipDirectory(diPlotsFolder.FullName, strZipFilePath, false, "*.png");
+                    var success = m_DotNetZipTools.ZipDirectory(diPlotsFolder.FullName, strZipFilePath, false, "*.png");
 
                     if (!success)
                     {
                         var msg = "Error zipping the plot files";
-                        if (!string.IsNullOrEmpty(m_IonicZipTools.Message))
-                            LogError(msg + ": " + m_IonicZipTools.Message);
+                        if (!string.IsNullOrEmpty(m_DotNetZipTools.Message))
+                            LogError(msg + ": " + m_DotNetZipTools.Message);
                         else
                             LogError(msg);
 

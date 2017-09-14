@@ -1130,15 +1130,15 @@ namespace AnalysisManagerProg
             const int debugLevel = 2;
             const string workDir = @"C:\DMS_WorkDir";
 
-            var ionicZipTools = new clsIonicZipTools(debugLevel, workDir);
-            RegisterEvents(ionicZipTools);
+            var dotNetZipTools = new clsDotNetZipTools(debugLevel, workDir);
+            RegisterEvents(dotNetZipTools);
 
-            ionicZipTools.UnzipFile(zipFilePath);
+            dotNetZipTools.UnzipFile(zipFilePath);
 
             var diWorkDir = new DirectoryInfo(workDir);
             foreach (var fiFile in diWorkDir.GetFiles("*.mzid"))
             {
-                ionicZipTools.GZipFile(fiFile.FullName, true);
+                dotNetZipTools.GZipFile(fiFile.FullName, true);
             }
         }
 
@@ -1166,7 +1166,7 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Test unzipping a file
         /// </summary>
-        /// <remarks>This uses ionic zip</remarks>
+        /// <remarks>This uses DotNetZip</remarks>
         public bool TestUnzip(string zipFilePath, string outFolderPath)
         {
             var debugLevel = 2;
@@ -1182,7 +1182,7 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Test zipping a file
         /// </summary>
-        /// <remarks>This uses ionic zip</remarks>
+        /// <remarks>This uses DotNetZip</remarks>
         public void TestZip()
         {
 
@@ -1198,22 +1198,22 @@ namespace AnalysisManagerProg
 
             objToolRunner.UnzipFile(zippedFile, @"F:\Temp\ZipTest\UnzipTarget");
 
-            var ionicZipTools = new clsIonicZipTools(1, GetWorkDirPath());
-            RegisterEvents(ionicZipTools);
+            var dotNetZipTools = new clsDotNetZipTools(1, GetWorkDirPath());
+            RegisterEvents(dotNetZipTools);
 
-            ionicZipTools.ZipDirectory(@"F:\Temp\ZipTest\QExact01\", @"F:\Temp\ZipTest\QExact01_Folder.zip");
+            dotNetZipTools.ZipDirectory(@"F:\Temp\ZipTest\QExact01\", @"F:\Temp\ZipTest\QExact01_Folder.zip");
         }
 
         /// <summary>
-        /// Test Ionic zip
+        /// Test DotNetZip (aka Ionic zip)
         /// </summary>
-        public void TestIonicZipTools()
+        public void TestDotNetZipTools()
         {
-            var ionicZipTools = new clsIonicZipTools(1, @"C:\DMS_WorkDir");
-            RegisterEvents(ionicZipTools);
+            var dotNetZipTools = new clsDotNetZipTools(1, @"C:\DMS_WorkDir");
+            RegisterEvents(dotNetZipTools);
 
-            ionicZipTools.UnzipFile(@"C:\DMS_WorkDir\Temp.zip", @"C:\DMS_WorkDir", "*.png");
-            foreach (var item in ionicZipTools.MostRecentUnzippedFiles)
+            dotNetZipTools.UnzipFile(@"C:\DMS_WorkDir\Temp.zip", @"C:\DMS_WorkDir", "*.png");
+            foreach (var item in dotNetZipTools.MostRecentUnzippedFiles)
             {
                 Console.WriteLine(item.Key + " - " + item.Value);
             }

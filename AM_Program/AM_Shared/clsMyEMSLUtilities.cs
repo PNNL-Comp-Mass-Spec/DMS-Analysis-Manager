@@ -19,7 +19,7 @@ namespace AnalysisManagerBase
         /// </summary>
         public const string MYEMSL_PATH_FLAG = @"\\MyEMSL";
 
-        private readonly clsIonicZipTools m_IonicZipTools;
+        private readonly clsDotNetZipTools m_DotNetZipTools;
         private readonly DatasetListInfo m_MyEMSLDatasetListInfo;
 
         private readonly List<DatasetFolderOrFileInfo> m_AllFoundMyEMSLFiles;
@@ -106,8 +106,8 @@ namespace AnalysisManagerBase
             m_AllFoundMyEMSLFiles = new List<DatasetFolderOrFileInfo>();
             m_RecentlyFoundMyEMSLFiles = new List<DatasetFolderOrFileInfo>();
 
-            m_IonicZipTools = new clsIonicZipTools(debugLevel, workingDir);
-            RegisterEvents(m_IonicZipTools);
+            m_DotNetZipTools = new clsDotNetZipTools(debugLevel, workingDir);
+            RegisterEvents(m_DotNetZipTools);
 
             mFileIDComparer = new clsMyEMSLFileIDComparer();
 
@@ -327,15 +327,15 @@ namespace AnalysisManagerBase
                 {
                     // Decompress the .zip file
                     OnStatusEvent("Unzipping file " + fiFileToUnzip.Name);
-                    m_IonicZipTools.UnzipFile(fiFileToUnzip.FullName, e.DownloadFolderPath);
-                    m_MostRecentUnzippedFiles.AddRange(m_IonicZipTools.MostRecentUnzippedFiles);
+                    m_DotNetZipTools.UnzipFile(fiFileToUnzip.FullName, e.DownloadFolderPath);
+                    m_MostRecentUnzippedFiles.AddRange(m_DotNetZipTools.MostRecentUnzippedFiles);
                 }
                 else if (fiFileToUnzip.Extension.ToLower() == ".gz")
                 {
                     // Decompress the .gz file
                     OnStatusEvent("Unzipping file " + fiFileToUnzip.Name);
-                    m_IonicZipTools.GUnzipFile(fiFileToUnzip.FullName, e.DownloadFolderPath);
-                    m_MostRecentUnzippedFiles.AddRange(m_IonicZipTools.MostRecentUnzippedFiles);
+                    m_DotNetZipTools.GUnzipFile(fiFileToUnzip.FullName, e.DownloadFolderPath);
+                    m_MostRecentUnzippedFiles.AddRange(m_DotNetZipTools.MostRecentUnzippedFiles);
                 }
 
             }

@@ -139,9 +139,9 @@ namespace AnalysisManagerBase
         protected string m_FileDate;
 
         /// <summary>
-        /// Ionic zip tools
+        /// DotNetZip tools
         /// </summary>
-        protected clsIonicZipTools m_IonicZipTools;
+        protected clsDotNetZipTools m_DotNetZipTools;
 
         /// <summary>
         /// Set to true if we need to abort processing as soon as possible
@@ -297,8 +297,8 @@ namespace AnalysisManagerBase
                 LogDebug("clsAnalysisToolRunnerBase.Setup()");
             }
 
-            m_IonicZipTools = new clsIonicZipTools(m_DebugLevel, m_WorkDir);
-            RegisterEvents(m_IonicZipTools);
+            m_DotNetZipTools = new clsDotNetZipTools(m_DebugLevel, m_WorkDir);
+            RegisterEvents(m_DotNetZipTools);
 
             InitFileTools(m_MachName, m_DebugLevel);
 
@@ -2023,7 +2023,7 @@ namespace AnalysisManagerBase
         /// <returns></returns>
         public string GetZipFilePathForFile(string sourceFilePath)
         {
-            return clsIonicZipTools.GetZipFilePathForFile(sourceFilePath);
+            return clsDotNetZipTools.GetZipFilePathForFile(sourceFilePath);
         }
 
         /// <summary>
@@ -2045,10 +2045,10 @@ namespace AnalysisManagerBase
         /// <returns></returns>
         public bool GUnzipFile(string gzipFilePath, string targetDirectory)
         {
-            m_IonicZipTools.DebugLevel = m_DebugLevel;
+            m_DotNetZipTools.DebugLevel = m_DebugLevel;
 
-            // Note that m_IonicZipTools logs error messages using clsLogTools
-            return m_IonicZipTools.GUnzipFile(gzipFilePath, targetDirectory);
+            // Note that m_DotNetZipTools logs error messages using clsLogTools
+            return m_DotNetZipTools.GUnzipFile(gzipFilePath, targetDirectory);
         }
 
         /// <summary>
@@ -2059,12 +2059,12 @@ namespace AnalysisManagerBase
         /// <returns>True if success; false if an error</returns>
         public bool GZipFile(string sourceFilePath, bool deleteSourceAfterZip)
         {
-            m_IonicZipTools.DebugLevel = m_DebugLevel;
+            m_DotNetZipTools.DebugLevel = m_DebugLevel;
 
-            // Note that m_IonicZipTools logs error messages using clsLogTools
-            var success = m_IonicZipTools.GZipFile(sourceFilePath, deleteSourceAfterZip);
+            // Note that m_DotNetZipTools logs error messages using clsLogTools
+            var success = m_DotNetZipTools.GZipFile(sourceFilePath, deleteSourceAfterZip);
 
-            if (!success && m_IonicZipTools.Message.ToLower().Contains("OutOfMemoryException".ToLower()))
+            if (!success && m_DotNetZipTools.Message.ToLower().Contains("OutOfMemoryException".ToLower()))
             {
                 m_NeedToAbortProcessing = true;
             }
@@ -2083,12 +2083,12 @@ namespace AnalysisManagerBase
         public bool GZipFile(string sourceFilePath, string targetDirectoryPath, bool deleteSourceAfterZip)
         {
 
-            m_IonicZipTools.DebugLevel = m_DebugLevel;
+            m_DotNetZipTools.DebugLevel = m_DebugLevel;
 
-            // Note that m_IonicZipTools logs error messages using clsLogTools
-            var success = m_IonicZipTools.GZipFile(sourceFilePath, targetDirectoryPath, deleteSourceAfterZip);
+            // Note that m_DotNetZipTools logs error messages using clsLogTools
+            var success = m_DotNetZipTools.GZipFile(sourceFilePath, targetDirectoryPath, deleteSourceAfterZip);
 
-            if (!success && m_IonicZipTools.Message.ToLower().Contains("OutOfMemoryException".ToLower()))
+            if (!success && m_DotNetZipTools.Message.ToLower().Contains("OutOfMemoryException".ToLower()))
             {
                 m_NeedToAbortProcessing = true;
             }
@@ -4270,10 +4270,10 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public bool UnzipFile(string zipFilePath, string targetDirectory, string FileFilter)
         {
-            m_IonicZipTools.DebugLevel = m_DebugLevel;
+            m_DotNetZipTools.DebugLevel = m_DebugLevel;
 
-            // Note that m_IonicZipTools logs error messages using clsLogTools
-            return m_IonicZipTools.UnzipFile(zipFilePath, targetDirectory, FileFilter);
+            // Note that m_DotNetZipTools logs error messages using clsLogTools
+            return m_DotNetZipTools.UnzipFile(zipFilePath, targetDirectory, FileFilter);
 
         }
 
@@ -4577,10 +4577,10 @@ namespace AnalysisManagerBase
         /// <returns>True if a valid zip file, otherwise false</returns>
         protected bool VerifyZipFile(string zipFilePath, float crcCheckThresholdGB = 4)
         {
-            m_IonicZipTools.DebugLevel = m_DebugLevel;
+            m_DotNetZipTools.DebugLevel = m_DebugLevel;
 
-            // Note that m_IonicZipTools logs error messages using clsLogTools
-            var success = m_IonicZipTools.VerifyZipFile(zipFilePath, crcCheckThresholdGB);
+            // Note that m_DotNetZipTools logs error messages using clsLogTools
+            var success = m_DotNetZipTools.VerifyZipFile(zipFilePath, crcCheckThresholdGB);
 
             return success;
 
@@ -4594,12 +4594,12 @@ namespace AnalysisManagerBase
         /// <returns>True if success; false if an error</returns>
         public bool ZipFile(string sourceFilePath, bool deleteSourceAfterZip)
         {
-            m_IonicZipTools.DebugLevel = m_DebugLevel;
+            m_DotNetZipTools.DebugLevel = m_DebugLevel;
 
-            // Note that m_IonicZipTools logs error messages using clsLogTools
-            var success = m_IonicZipTools.ZipFile(sourceFilePath, deleteSourceAfterZip);
+            // Note that m_DotNetZipTools logs error messages using clsLogTools
+            var success = m_DotNetZipTools.ZipFile(sourceFilePath, deleteSourceAfterZip);
 
-            if (!success && m_IonicZipTools.Message.ToLower().Contains("OutOfMemoryException".ToLower()))
+            if (!success && m_DotNetZipTools.Message.ToLower().Contains("OutOfMemoryException".ToLower()))
             {
                 m_NeedToAbortProcessing = true;
             }
@@ -4675,12 +4675,12 @@ namespace AnalysisManagerBase
         /// <returns>True if success; false if an error</returns>
         public bool ZipFile(string sourceFilePath, bool deleteSourceAfterZip, string zipFilePath)
         {
-            m_IonicZipTools.DebugLevel = m_DebugLevel;
+            m_DotNetZipTools.DebugLevel = m_DebugLevel;
 
-            // Note that m_IonicZipTools logs error messages using clsLogTools
-            var success = m_IonicZipTools.ZipFile(sourceFilePath, deleteSourceAfterZip, zipFilePath);
+            // Note that m_DotNetZipTools logs error messages using clsLogTools
+            var success = m_DotNetZipTools.ZipFile(sourceFilePath, deleteSourceAfterZip, zipFilePath);
 
-            if (!success && m_IonicZipTools.Message.ToLower().Contains("OutOfMemoryException".ToLower()))
+            if (!success && m_DotNetZipTools.Message.ToLower().Contains("OutOfMemoryException".ToLower()))
             {
                 m_NeedToAbortProcessing = true;
             }
