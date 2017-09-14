@@ -1,25 +1,27 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using AnalysisManagerBase;
 using AnalysisManager_Ape_PlugIn;
 
 
 namespace TestApePlugIn {
 
-    class TestToolRunnerApe {
+    class TestToolRunnerApe
+    {
+        private const int DEBUG_LEVEL = 1;
+        private const string WORK_DIR = @"C:\DMS_WorkDir";
+        private const string STEP_TOOL_NAME = "TestToolRunnerApe";
 
-        private Dictionary<string, string> mMgrParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
-                { "debuglevel", "0" },
-                { "workdir", @"C:\DMS_WorkDir" },
+        private readonly Dictionary<string, string> mMgrParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
+                { "debuglevel", DEBUG_LEVEL.ToString() },
+                { "workdir",  WORK_DIR},
                 { "connectionstring", "Data Source=gigasax;Initial Catalog=DMS5_T3;Integrated Security=SSPI;" },
                 { "MgrName", "Test_harness" },
                 { "brokerconnectionstring", "Data Source=gigasax;Initial Catalog=DMS_Pipeline_Test;Integrated Security=SSPI;" },
                 { "MgrCnfgDbConnectStr", "Data Source=ProteinSeqs;Initial Catalog=Manager_Control;Integrated Security=SSPI;" }
             };
 
-        private Dictionary<string, string> mRunWorkflowJobParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
+        private readonly Dictionary<string, string> mRunWorkflowJobParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
                 //{ "DatasetNum", "Aggregation" },
                 { "Job", "678425" },
                 { "ApeOperations",	"GetImprovResults" },
@@ -37,24 +39,25 @@ namespace TestApePlugIn {
                 { "DataPackageID", "159" }
             };
 
-        public IJobParams.CloseOutType TestRunWorkflow()
+        public CloseOutType TestRunWorkflow()
         {
-            clsAnalysisResourcesApe apeResourcer = new clsAnalysisResourcesApe();
-            clsAnalysisToolRunnerApe apeToolRunner = new clsAnalysisToolRunnerApe();
-            clsSummaryFile summaryFile = new clsSummaryFile();
+            var apeResourcer = new clsAnalysisResourcesApe();
+            var apeToolRunner = new clsAnalysisToolRunnerApe();
+            var summaryFile = new clsSummaryFile();
 
             IMgrParams mgrParams = new MgrParamsStub(mMgrParms);
             IJobParams jobParams = new JobParamsStub(mRunWorkflowJobParms);
-            StatusFileStub statusFile = new StatusFileStub();
-            IJobParams.CloseOutType eResult;
+            var statusFile = new StatusFileStub();
 
-            apeResourcer.Setup(mgrParams, jobParams);
-            eResult = apeResourcer.GetResources();
+            var myEMSLUtilities = new clsMyEMSLUtilities(DEBUG_LEVEL, WORK_DIR);
 
-            if (eResult != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            apeResourcer.Setup(STEP_TOOL_NAME, mgrParams, jobParams, statusFile, myEMSLUtilities);
+            var eResult = apeResourcer.GetResources();
+
+            if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
                 return eResult;
 
-            apeToolRunner.Setup(mgrParams, jobParams, statusFile, ref summaryFile);
+            apeToolRunner.Setup(STEP_TOOL_NAME, mgrParams, jobParams, statusFile, summaryFile, myEMSLUtilities);
             eResult =  apeToolRunner.RunTool();
 
             return eResult;

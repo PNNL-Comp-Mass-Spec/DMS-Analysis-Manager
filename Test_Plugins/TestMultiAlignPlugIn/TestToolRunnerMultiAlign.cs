@@ -1,18 +1,19 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using AnalysisManagerBase;
-using AnalysisManager_MultiAlign_Aggregator_PlugIn;
+using AnalysisManagerMultiAlign_AggregatorPlugIn;
 
 
 namespace TestMultiAlignPlugIn {
 
     class TestToolRunnerMultiAlign {
+        private const int DEBUG_LEVEL = 1;
+        private const string WORK_DIR = @"C:\DMS_WorkDir";
+        private const string STEP_TOOL_NAME = "TestToolRunnerApe";
 
-        private Dictionary<string, string> mMgrParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
-                { "debuglevel", "0" },
-                { "workdir", @"C:\DMS_WorkDir" },
+        private readonly Dictionary<string, string> mMgrParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
+                { "debuglevel", DEBUG_LEVEL.ToString() },
+                { "workdir",  WORK_DIR},
                 { "logfilename", "AM_AnalysisManager_Log" },
                 { "connectionstring", "Data Source=gigasax;Initial Catalog=DMS5_T3;Integrated Security=SSPI;" },
                 { "MgrName", "Test_harness" },
@@ -21,8 +22,8 @@ namespace TestMultiAlignPlugIn {
                 { "MultiAlignProgLoc", @"C:\DMS_Programs\MultiAlign\" },
                 { "StepTool_ParamFileStoragePath_MultiAlign", @"\\gigasax\DMS_Parameter_Files\MultiAlign\"}
             };
-    
-        private Dictionary<string, string> mJobParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
+
+        private readonly Dictionary<string, string> mJobParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
                 { "Job", "520598" },
                 { "transferFolderPath", @"\\protoapps\DataPkgs\Public\2011\157_Johns_Test_Package_for_MultiAlign" },
                 { "ResultsBaseName", "Results" },
@@ -40,24 +41,25 @@ namespace TestMultiAlignPlugIn {
                 { "MultiAlignSearchType", "_LCMSFeatures.txt" }
         };
 
-        public IJobParams.CloseOutType TestRunMultiAlign()
+        public CloseOutType TestRunMultiAlign()
         {
-            clsAnalysisResourcesMultiAlignAggregator multialignResourcer = new clsAnalysisResourcesMultiAlignAggregator();
-            clsAnalysisToolRunnerMultiAlignAggregator multialignToolRunner = new clsAnalysisToolRunnerMultiAlignAggregator();
-            clsSummaryFile summaryFile = new clsSummaryFile();
+            var multialignResourcer = new clsAnalysisResourcesMultiAlignAggregator();
+            var multialignToolRunner = new clsAnalysisToolRunnerMultiAlignAggregator();
+            var summaryFile = new clsSummaryFile();
 
             IMgrParams mgrParams = new MgrParamsStub(mMgrParms);
             IJobParams jobParams = new JobParamsStub(mJobParms);
-            StatusFileStub statusFile = new StatusFileStub();
-            IJobParams.CloseOutType eResult;
+            var statusFile = new StatusFileStub();
 
-            multialignResourcer.Setup(mgrParams, jobParams);
-            eResult = multialignResourcer.GetResources();
+            var myEMSLUtilities = new clsMyEMSLUtilities(DEBUG_LEVEL, WORK_DIR);
 
-            if (eResult != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            multialignResourcer.Setup(STEP_TOOL_NAME, mgrParams, jobParams, statusFile, myEMSLUtilities);
+            var eResult = multialignResourcer.GetResources();
+
+            if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
                 return eResult;
 
-            multialignToolRunner.Setup(mgrParams, jobParams, statusFile, ref summaryFile);
+            multialignToolRunner.Setup(STEP_TOOL_NAME, mgrParams, jobParams, statusFile, summaryFile, myEMSLUtilities);
             eResult = multialignToolRunner.RunTool();
 
             return eResult;

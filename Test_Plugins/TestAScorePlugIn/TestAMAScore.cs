@@ -10,7 +10,7 @@ namespace TestAScorePlugIn {
 
         //-------------------------------- PHOSPHO
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public void Test_RunAScore()
         {
@@ -50,14 +50,14 @@ namespace TestAScorePlugIn {
             };
             var mgrParams = new MgrParamsStub(dctMgrParms);
             var jobParams = new JobParamsStub(dctJobParms);
-            
-            string workDir = mgrParams.GetParam("workdir");
-            string logFilenameSaved = mgrParams.GetParam("logfilename");
+
+            var workDir = mgrParams.GetParam("workdir");
+            var logFilenameSaved = mgrParams.GetParam("logfilename");
 
             var ionicZipTools = new clsIonicZipTools(1, workDir);
 
             //Change the name of the log file for the local log file to the plugin log filename
-            String logFileName = Path.Combine(workDir, "AScore_Log");
+            var logFileName = Path.Combine(workDir, "AScore_Log");
             log4net.GlobalContext.Properties["LogName"] = logFileName;
             clsLogTools.ChangeLogFileName(logFileName);
 

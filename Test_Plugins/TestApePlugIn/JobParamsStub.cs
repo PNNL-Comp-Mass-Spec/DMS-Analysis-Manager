@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using AnalysisManagerBase;
 
 
@@ -9,7 +7,7 @@ namespace TestApePlugIn {
 
     class JobParamsStub : IJobParams {
 
-        private Dictionary<string, string> mParms;
+        private readonly Dictionary<string, string> mParms;
 
         // List of file extensions to NOT move to the result folder; comparison checks if the end of the filename matches any entry ResultFileExtensionsToSkip
         protected SortedSet<String> m_ResultFileExtensionsToSkip = new SortedSet<String>(StringComparer.CurrentCultureIgnoreCase);
@@ -20,45 +18,17 @@ namespace TestApePlugIn {
 
         #region IJobParams Properties
 
-        public Dictionary<string, int> DatasetInfoList
-        {
-            get
-            {
-                return new Dictionary<string, int>();
-            }
-        }
-        
-        public SortedSet<string> ResultFilesToKeep
-        {
-            get
-            {
-                return new SortedSet<String>();
-            }
-        }
+        public Dictionary<string, int> DatasetInfoList => new Dictionary<string, int>();
 
-        public SortedSet<string> ResultFilesToSkip
-        {
-            get
-            {
-                return new SortedSet<String>();
-            }
-        }
+        public SortedSet<string> ResultFilesToKeep => new SortedSet<string>();
 
-        public SortedSet<string> ResultFileExtensionsToSkip
-        {
-            get
-            {
-                return m_ResultFileExtensionsToSkip;
-            }
-        }
+        public SortedSet<string> ResultFilesToSkip => new SortedSet<string>();
 
-        public SortedSet<string> ServerFilesToDelete
-        {
-            get
-            {
-                return new SortedSet<String>();
-            }
-        }
+        public SortedSet<string> ResultFileExtensionsToSkip => m_ResultFileExtensionsToSkip;
+
+        public SortedSet<string> ServerFilesToDelete => new SortedSet<string>();
+
+        public bool TaskClosed { get; set; }
 
         #endregion
 
@@ -66,12 +36,20 @@ namespace TestApePlugIn {
 
         public bool AddAdditionalParameter(string ParamSection, string ParamName, string ParamValue)
         {
-            this.SetParam(ParamSection, ParamName, ParamValue);
+            SetParam(ParamSection, ParamName, ParamValue);
+            return true;
+        }
+
+        public bool AddAdditionalParameter(string sectionName, string paramName, bool paramValue)
+        {
+            SetParam(sectionName, paramName, paramValue.ToString());
             return true;
         }
 
         public bool AddAdditionalParameter(string ParamName, string ParamValue) {
-            throw new NotImplementedException();
+            SetParam("", ParamName, ParamValue);
+            return true;
+
         }
 
         public void AddDatasetInfo(string DatasetName, int DatasetID)
@@ -83,6 +61,26 @@ namespace TestApePlugIn {
         {
             if (!m_ResultFileExtensionsToSkip.Contains(Extension))
                 m_ResultFileExtensionsToSkip.Add(Extension);
+        }
+
+        public void CloseTask(CloseOutType closeOut, string compMsg)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void CloseTask(CloseOutType closeOut, string compMsg, int evalCode, string evalMsg)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Dictionary<string, string> GetAllParametersForSection(string sectionName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public List<string> GetAllSectionNames()
+        {
+            throw new NotImplementedException();
         }
 
         public void AddResultFileToKeep(string FileName)
@@ -100,28 +98,23 @@ namespace TestApePlugIn {
             throw new NotImplementedException();
         }
 
-        public void CloseTask(IJobParams.CloseOutType CloseOut, string CompMsg)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void CloseTask(IJobParams.CloseOutType CloseOut, string CompMsg, int EvalCode, string EvalMessage)
-        {
-            throw new NotImplementedException();
-        }
-
         public string GetCurrentJobToolDescription() {
             return "Test stub";
+        }
+
+        public string GetJobStepDescription()
+        {
+            throw new NotImplementedException();
         }
 
         public bool GetJobParameter(string Name, bool ValueIfMissing)
         {
 
-            string strValue = null;
+            string strValue;
 
             try
             {
-                strValue = this.GetParam(Name);
+                strValue = GetParam(Name);
 
                 if (string.IsNullOrEmpty(strValue))
                 {
@@ -142,11 +135,11 @@ namespace TestApePlugIn {
         public string GetJobParameter(string Name, string ValueIfMissing)
         {
 
-            string strValue = null;
+            string strValue;
 
             try
             {
-                strValue = this.GetParam(Name);
+                strValue = GetParam(Name);
 
                 if (string.IsNullOrEmpty(strValue))
                 {
@@ -164,11 +157,11 @@ namespace TestApePlugIn {
 
         public float GetJobParameter(string Name, float ValueIfMissing)
         {
-            string strValue = null;
+            string strValue;
 
             try
             {
-                strValue = this.GetParam(Name);
+                strValue = GetParam(Name);
 
                 if (string.IsNullOrEmpty(strValue))
                 {
@@ -187,11 +180,11 @@ namespace TestApePlugIn {
 
         public int GetJobParameter(string Name, int ValueIfMissing)
         {
-            string strValue = null;
+            string strValue;
 
             try
             {
-                strValue = this.GetParam(Name);
+                strValue = GetParam(Name);
 
                 if (string.IsNullOrEmpty(strValue))
                 {
@@ -236,7 +229,7 @@ namespace TestApePlugIn {
 
         public string GetParam(string Name)
         {
-            string val = "";
+            var val = "";
             if (mParms.ContainsKey(Name))
             {
                 val = mParms[Name];
@@ -246,7 +239,7 @@ namespace TestApePlugIn {
 
         public string GetParam(string Section, string Name)
         {
-            string val = "";
+            var val = "";
             if (mParms.ContainsKey(Name))
             {
                 val = mParms[Name];
@@ -272,7 +265,7 @@ namespace TestApePlugIn {
                 mParms.Add(KeyName, Value);
         }
 
-        public void SetParam(string Section, string KeyName, string Value) {			
+        public void SetParam(string Section, string KeyName, string Value) {
             SetParam(KeyName, Value);
         }
         #endregion

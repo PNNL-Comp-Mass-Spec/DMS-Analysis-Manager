@@ -9,7 +9,10 @@ namespace TestAScorePlugIn {
 
         private Dictionary<string, string> mParms;
 
-        public MgrParamsStub(Dictionary<string, string> parms) {
+        public MgrParamsStub(Dictionary<string, string> parms)
+        {
+
+            ManagerName = "MgrParamsStub";
 
             if (!LoadSettings(parms))
             {
@@ -19,13 +22,9 @@ namespace TestAScorePlugIn {
 
         #region IMgrParams Properties
 
-        public string ErrMsg
-        {
-            get
-            {
-                return string.Empty;
-            }
-        }
+        public string ErrMsg => string.Empty;
+
+        public string ManagerName { get; }
 
         #endregion
 
@@ -33,7 +32,6 @@ namespace TestAScorePlugIn {
 
         public void AckManagerUpdateRequired()
         {
-            return;
         }
 
         public bool DisableManagerLocally()
@@ -46,14 +44,14 @@ namespace TestAScorePlugIn {
             throw new NotImplementedException();
         }
 
-        public bool LoadSettings(System.Collections.Generic.Dictionary<string, string> ConfigFileSettings)
+        public bool LoadSettings(Dictionary<string, string> ConfigFileSettings)
         {
             mParms = ConfigFileSettings;
             return true;
         }
 
         public string GetParam(string Name) {
-            string val = "";
+            var val = "";
             if (mParms.ContainsKey(Name)) {
                 val = mParms[Name];
             }
@@ -72,15 +70,12 @@ namespace TestAScorePlugIn {
 
         public string GetParam(string ItemKey, string ValueIfMissing)
         {
-            string strValue = GetParam(ItemKey);
+            var strValue = GetParam(ItemKey);
             if (string.IsNullOrEmpty(strValue))
             {
                 return ValueIfMissing;
             }
-            else
-            {
-                return strValue;
-            }
+            return strValue;
         }
         public void SetParam(string ItemKey, string ItemValue) {
             throw new NotImplementedException();

@@ -3,14 +3,16 @@ using System.Collections.Generic;
 using AnalysisManagerBase;
 using AnalysisManager_AScore_PlugIn;
 
-
 namespace TestAScorePlugIn {
 
     class TestToolRunnerAScore {
+        private const int DEBUG_LEVEL = 1;
+        private const string WORK_DIR = @"C:\DMS_WorkDir";
+        private const string STEP_TOOL_NAME = "TestToolRunnerApe";
 
-        private Dictionary<string, string> mMgrParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
-                { "debuglevel", "0" },
-                { "workdir", @"C:\DMS_WorkDir" },
+        private readonly Dictionary<string, string> mMgrParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
+                { "debuglevel", DEBUG_LEVEL.ToString() },
+                { "workdir",  WORK_DIR},
                 { "connectionstring", "Data Source=gigasax;Initial Catalog=DMS5_T3;Integrated Security=SSPI;" },
                 { "MgrName", "Test_harness" },
                 { "brokerconnectionstring", "Data Source=gigasax;Initial Catalog=DMS_Pipeline_Test;Integrated Security=SSPI;" },
@@ -18,8 +20,8 @@ namespace TestAScorePlugIn {
                 { "zipprogram", @"C:\PKWare\Pkzipc\Pkzipc.exe" },
                 { "StepTool_ParamFileStoragePath_AScore", @"\\gigasax\DMS_Parameter_Files\AScore"}
             };
-    
-        private Dictionary<string, string> mJobParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
+
+        private readonly Dictionary<string, string> mJobParms = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase) {
                 { "Job", "520598" },
                 { "AScoreOperations",	"GetImprovResults" },
                 { "transferFolderPath", @"\\protoapps\DataPkgs\Public\2011\162_Test_DatapackegeJosh" },
@@ -42,24 +44,25 @@ namespace TestAScorePlugIn {
                 { "AScoreSearchType", "sequest" }
             };
 
-        public IJobParams.CloseOutType TestRunAScore()
+        public CloseOutType TestRunAScore()
         {
-            clsAnalysisResourcesAScore ascoreResourcer = new clsAnalysisResourcesAScore();
-            clsAnalysisToolRunnerAScore ascoreToolRunner = new clsAnalysisToolRunnerAScore();
-            clsSummaryFile summaryFile = new clsSummaryFile();
+            var ascoreResourcer = new clsAnalysisResourcesAScore();
+            var ascoreToolRunner = new clsAnalysisToolRunnerAScore();
+            var summaryFile = new clsSummaryFile();
 
             IMgrParams mgrParams = new MgrParamsStub(mMgrParms);
             IJobParams jobParams = new JobParamsStub(mJobParms);
-            StatusFileStub statusFile = new StatusFileStub();
-            IJobParams.CloseOutType eResult;
+            var statusFile = new StatusFileStub();
 
-            ascoreResourcer.Setup(mgrParams, jobParams);
-            eResult = ascoreResourcer.GetResources();
+            var myEMSLUtilities = new clsMyEMSLUtilities(DEBUG_LEVEL, WORK_DIR);
 
-            if (eResult != IJobParams.CloseOutType.CLOSEOUT_SUCCESS)
+            ascoreResourcer.Setup(STEP_TOOL_NAME, mgrParams, jobParams, statusFile, myEMSLUtilities);
+            var eResult = ascoreResourcer.GetResources();
+
+            if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
                 return eResult;
 
-            ascoreToolRunner.Setup(mgrParams, jobParams, statusFile, ref summaryFile);						
+            ascoreToolRunner.Setup(STEP_TOOL_NAME, mgrParams, jobParams, statusFile, summaryFile, myEMSLUtilities);
             eResult = ascoreToolRunner.RunTool();
 
             return eResult;
