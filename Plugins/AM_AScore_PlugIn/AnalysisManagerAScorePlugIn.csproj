@@ -46,13 +46,6 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\AM_Common\AScore_DLL.dll</HintPath>
     </Reference>
-    <Reference Include="Ionic.Zip">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\AM_Common\Ionic.Zip.dll</HintPath>
-    </Reference>
-    <Reference Include="log4net">
-      <HintPath>..\..\AM_Common\log4net.dll</HintPath>
-    </Reference>
     <Reference Include="Mage">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\AM_Common\Mage.dll</HintPath>
@@ -63,9 +56,6 @@
     </Reference>
     <Reference Include="MyEMSLReader">
       <HintPath>..\..\AM_Common\MyEMSLReader.dll</HintPath>
-    </Reference>
-    <Reference Include="PRISM">
-      <HintPath>..\..\AM_Common\PRISM.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -93,6 +83,17 @@
     <Content Include="QueryDefinitions.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="DotNetZip">
+      <Version>1.10.1</Version>
+    </PackageReference>
+    <PackageReference Include="log4net">
+      <Version>2.0.8</Version>
+    </PackageReference>
+    <PackageReference Include="PRISM-Library">
+      <Version>2.4.32</Version>
+    </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

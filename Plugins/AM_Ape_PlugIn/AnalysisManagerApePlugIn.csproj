@@ -44,9 +44,6 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\AM_Common\Ape.dll</HintPath>
     </Reference>
-    <Reference Include="log4net">
-      <HintPath>..\..\AM_Common\log4net.dll</HintPath>
-    </Reference>
     <Reference Include="SetCover">
       <HintPath>..\..\AM_Common\SetCover.dll</HintPath>
     </Reference>
@@ -73,8 +70,11 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="log4net">
+      <Version>2.0.8</Version>
+    </PackageReference>
     <PackageReference Include="PRISM-Library">
-      <Version>2.4.31</Version>
+      <Version>2.4.32</Version>
     </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
