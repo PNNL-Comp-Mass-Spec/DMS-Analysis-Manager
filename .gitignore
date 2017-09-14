@@ -32,3 +32,9 @@ Plugins/AM_QC-ART_PlugIn/Docs/QC-ART
 *.zip
 cloc*.pl
 CachedLibs/
+/AM_Common/DotNetZip.dll
+/AM_Common/DynamicInterop.dll
+/AM_Common/log4net.dll
+/AM_Common/RDotNet.dll
+/AM_Common/RDotNet.NativeLibrary.dll
+/AM_Common/Renci.SshNet.dll
