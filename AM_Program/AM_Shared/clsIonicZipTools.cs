@@ -779,7 +779,7 @@ namespace AnalysisManagerBase
                 {
                     n = srReader.Read(bytBuffer, 0, bytBuffer.Length);
                     totalBytesRead += n;
-                } while ((n > 0));
+                } while (n > 0);
 
                 if (srReader.Crc != entry.Crc)
                 {
@@ -789,7 +789,7 @@ namespace AnalysisManagerBase
                     return false;
                 }
 
-                if ((totalBytesRead != entry.UncompressedSize))
+                if (totalBytesRead != entry.UncompressedSize)
                 {
                     Message = string.Format("Unexpected number of bytes for entry " + entry.FileName + " in " + zipFilePath +
                                               " ({0} != {1})", totalBytesRead, entry.UncompressedSize);

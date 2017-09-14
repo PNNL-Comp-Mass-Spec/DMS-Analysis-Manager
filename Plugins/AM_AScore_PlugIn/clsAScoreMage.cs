@@ -20,9 +20,6 @@ namespace AnalysisManager_AScore_PlugIn
 
         protected JobParameters m_jobParams;
         protected ManagerParameters m_mgrParams;
-        protected static clsIonicZipTools m_IonicZipTools;
-        protected const int IONIC_ZIP_MAX_FILESIZE_MB = 1280;
-        protected static string mMessage = string.Empty;
 
         protected string mSearchType = string.Empty;
         protected string mParamFilename = string.Empty;

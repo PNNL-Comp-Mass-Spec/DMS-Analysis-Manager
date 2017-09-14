@@ -140,9 +140,7 @@ namespace DTASpectraFileGen
 
         private eDTAGeneratorConstants GetDTAGenerator(out clsDtaGen spectraGen)
         {
-            var strErrorMessage = string.Empty;
-
-            var eDtaGeneratorType = GetDTAGeneratorInfo(m_jobParams, out m_ConcatenateDTAs, out strErrorMessage);
+            var eDtaGeneratorType = GetDTAGeneratorInfo(m_jobParams, out m_ConcatenateDTAs, out var strErrorMessage);
             spectraGen = null;
 
             switch (eDtaGeneratorType)
@@ -199,17 +197,13 @@ namespace DTASpectraFileGen
             strErrorMessage = string.Empty;
             blnConcatenateDTAs = true;
 
-            clsAnalysisResources.eRawDataTypeConstants eRawDataType;
-
             if (string.IsNullOrEmpty(strRawDataType))
             {
                 strErrorMessage = NotifyMissingParameter(oJobParams, "RawDataType");
                 return eDTAGeneratorConstants.Unknown;
             }
-            else
-            {
-                eRawDataType = clsAnalysisResources.GetRawDataType(strRawDataType);
-            }
+
+            var eRawDataType = clsAnalysisResources.GetRawDataType(strRawDataType);
 
             if (blnMGFInstrumentData)
             {
@@ -402,7 +396,7 @@ namespace DTASpectraFileGen
             }
 
             // Store the Version info in the database
-            var blnSuccess = false;
+            bool blnSuccess;
             if (eDtaGeneratorType == eDTAGeneratorConstants.MGFtoDTA)
             {
                 // MGFtoDTA Dll
@@ -863,7 +857,7 @@ namespace DTASpectraFileGen
                 {
                     var strLine = trReader.ReadLine();
 
-                    if (strLine.StartsWith("="))
+                    if (strLine != null && strLine.StartsWith("="))
                     {
                         // Skip this line
                         blnPreviousLineWasTitleLine = true;
@@ -907,26 +901,24 @@ namespace DTASpectraFileGen
                 {
                     return true;
                 }
-                else
-                {
-                    // MSConvert wrote out these headers for dataset Athal0503_26Mar12_Jaguar_12-02-26
-                    // 3160.0001.13.dta
-                    // 3211.0001.11.dta
-                    // 3258.0001.12.dta
-                    // 3259.0001.13.dta
 
-                    // Thus, allow a match if ScanNumberStart matches but ScanNumberEnd is less than ScanNumberStart
-                    if (udtFragIonDataHeader.ScanNumberEnd < udtFragIonDataHeader.ScanNumberStart)
-                    {
-                        return true;
-                    }
+                // MSConvert wrote out these headers for dataset Athal0503_26Mar12_Jaguar_12-02-26
+                // 3160.0001.13.dta
+                // 3211.0001.11.dta
+                // 3258.0001.12.dta
+                // 3259.0001.13.dta
+
+                // Thus, allow a match if ScanNumberStart matches but ScanNumberEnd is less than ScanNumberStart
+                if (udtFragIonDataHeader.ScanNumberEnd < udtFragIonDataHeader.ScanNumberStart)
+                {
+                    return true;
                 }
             }
 
             return false;
         }
 
-        private CloseOutType StartAndWaitForDTAGenerator(clsDtaGen oDTAGenerator, string strCallingFunction, bool blnSecondPass)
+        private CloseOutType StartAndWaitForDTAGenerator(ISpectraFileProcessor oDTAGenerator, string strCallingFunction, bool blnSecondPass)
         {
             var retVal = oDTAGenerator.Start();
             if (retVal == ProcessStatus.SF_ERROR)
@@ -985,12 +977,10 @@ namespace DTASpectraFileGen
                 LogError("No spectra files created in " + strCallingFunction);
                 return CloseOutType.CLOSEOUT_NO_DTA_FILES;
             }
-            else
+
+            if (m_DebugLevel >= 2)
             {
-                if (m_DebugLevel >= 2)
-                {
-                    LogMessage("clsDtaGenToolRunner." + strCallingFunction + ": Spectra generation completed");
-                }
+                LogMessage("clsDtaGenToolRunner." + strCallingFunction + ": Spectra generation completed");
             }
 
             return CloseOutType.CLOSEOUT_SUCCESS;
@@ -1016,7 +1006,7 @@ namespace DTASpectraFileGen
                 {
                     LogError("DtaGenerator not found: " + strDtaGeneratorAppPath);
                     strToolVersionInfo = "Unknown";
-                    return base.SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>(), saveToolVersionTextFile: false);
+                    return SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>(), saveToolVersionTextFile: false);
                 }
                 catch (Exception ex)
                 {
@@ -1033,7 +1023,7 @@ namespace DTASpectraFileGen
             if (eDtaGenerator == eDTAGeneratorConstants.DeconConsole || eDtaGenerator == eDTAGeneratorConstants.DeconMSn)
             {
                 // Lookup the version of the DeconConsole or DeconMSn application
-                string strDllPath = null;
+                string strDllPath;
 
                 var blnSuccess = StoreToolVersionInfoViaSystemDiagnostics(ref strToolVersionInfo, fiDtaGenerator.FullName);
                 if (!blnSuccess)
@@ -1048,13 +1038,13 @@ namespace DTASpectraFileGen
                         // C# version of DeconMSn (released in January 2017)
                         strDllPath = Path.Combine(fiDtaGenerator.DirectoryName, "DeconEngineV2.dll");
                         ioToolFiles.Add(new FileInfo(strDllPath));
-                        blnSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strDllPath);
+                        blnSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, strDllPath);
                     }
                     else
                     {
                         strDllPath = Path.Combine(fiDtaGenerator.DirectoryName, "DeconMSnEngine.dll");
                         ioToolFiles.Add(new FileInfo(strDllPath));
-                        blnSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strDllPath);
+                        blnSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, strDllPath);
                     }
 
                     if (!blnSuccess)
@@ -1068,13 +1058,13 @@ namespace DTASpectraFileGen
                     // In addition, add it to ioToolFiles
                     strDllPath = Path.Combine(fiDtaGenerator.DirectoryName, "DeconTools.Backend.dll");
                     ioToolFiles.Add(new FileInfo(strDllPath));
-                    blnSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strDllPath);
+                    blnSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, strDllPath);
                     if (!blnSuccess)
                         return false;
 
                     // Lookup the version of DeconEngineV2 (in the DeconTools folder)
                     strDllPath = Path.Combine(fiDtaGenerator.DirectoryName, "DeconEngineV2.dll");
-                    blnSuccess = base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strDllPath);
+                    blnSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, strDllPath);
                     if (!blnSuccess)
                         return false;
                 }
@@ -1088,7 +1078,7 @@ namespace DTASpectraFileGen
 
             try
             {
-                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, saveToolVersionTextFile: false);
+                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, saveToolVersionTextFile: false);
             }
             catch (Exception ex)
             {
@@ -1107,7 +1097,7 @@ namespace DTASpectraFileGen
             }
 
             // Lookup the version of the DLL
-            base.StoreToolVersionInfoOneFile(ref strToolVersionInfo, strDtaGeneratorDLLPath);
+            StoreToolVersionInfoOneFile(ref strToolVersionInfo, strDtaGeneratorDLLPath);
 
             // Store paths to key files in ioToolFiles
             var ioToolFiles = new List<FileInfo> {
@@ -1122,7 +1112,7 @@ namespace DTASpectraFileGen
 
             try
             {
-                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, saveToolVersionTextFile: false);
+                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, saveToolVersionTextFile: false);
             }
             catch (Exception ex)
             {
@@ -1204,7 +1194,7 @@ namespace DTASpectraFileGen
             // Zip the file using IonicZip
             try
             {
-                if (base.ZipFile(DtaFilePath, false))
+                if (ZipFile(DtaFilePath, false))
                 {
                     return CloseOutType.CLOSEOUT_SUCCESS;
                 }
@@ -1219,7 +1209,7 @@ namespace DTASpectraFileGen
             // Occasionally the zip file is corrupted and will need to be zipped using ICSharpCode.SharpZipLib instead
             // If the file exists and is not zero bytes in length, try zipping again, but instead use ICSharpCode.SharpZipLib
 
-            var fiZipFile = new FileInfo(base.GetZipFilePathForFile(DtaFilePath));
+            var fiZipFile = new FileInfo(GetZipFilePathForFile(DtaFilePath));
             if (!fiZipFile.Exists || fiZipFile.Length <= 0)
             {
                 var msg = "Error zipping concat dta file, job " + m_JobNum + ", step " + m_StepNum;
