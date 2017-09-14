@@ -94,10 +94,11 @@ namespace AnalysisManager_Cyclops_PlugIn
                     AppendToCyclopsLog(INITIALIZING_LOG_FILE);
 
                     var cyclops = new CyclopsController(d_Params);
+                    RegisterEvents(cyclops);
 
-                    cyclops.ErrorEvent += cyclops_ErrorEvent;
-                    cyclops.WarningEvent += cyclops_WarningEvent;
-                    cyclops.MessageEvent += cyclops_MessageEvent;
+                    cyclops.ErrorEvent += Cyclops_ErrorEvent;
+                    cyclops.WarningEvent += Cyclops_WarningEvent;
+                    cyclops.StatusEvent += Cyclops_StatusEvent;
 
                     // Don't log these:
                     // cyclops.OperationsDatabasePath (always blank)
@@ -229,8 +230,7 @@ namespace AnalysisManager_Cyclops_PlugIn
 
                 if (deleteFile)
                 {
-                    string errorMessage;
-                    m_FileTools.DeleteFileWithRetry(fiCyclopsLogFile, out errorMessage);
+                    m_FileTools.DeleteFileWithRetry(fiCyclopsLogFile, out _);
                 }
 
             }
@@ -271,44 +271,46 @@ namespace AnalysisManager_Cyclops_PlugIn
             return success;
         }
 
-        private void cyclops_ErrorEvent(object sender, MessageEventArgs e)
+
+        private void Cyclops_ErrorEvent(string message, Exception ex)
         {
             AppendToCyclopsLog();
             string errorMessage;
-            if (e.Message.StartsWith("Error", StringComparison.InvariantCultureIgnoreCase))
-                errorMessage = e.Message;
+            if (message.StartsWith("Error", StringComparison.InvariantCultureIgnoreCase))
+                errorMessage = message;
             else
-                errorMessage = "Error: " + e.Message;
+                errorMessage = "Error: " + message;
 
-            AppendToCyclopsLog(errorMessage + " (step " + e.Step + ", module " + e.Module + ")");
+            AppendToCyclopsLog(errorMessage);
 
             // Cyclops error messages sometimes contain a carriage return followed by a stack trace
             // We don't want that information in m_message so split on \r and \n
-            var messageParts = e.Message.Split('\r', '\n');
+            var messageParts = message.Split('\r', '\n');
             LogError(messageParts[0]);
         }
 
-        private void cyclops_WarningEvent(object sender, MessageEventArgs e)
+        private void Cyclops_WarningEvent(string message)
         {
             AppendToCyclopsLog();
 
             string warningMessage;
-            if (e.Message.StartsWith("Warning", StringComparison.InvariantCultureIgnoreCase))
-                warningMessage = e.Message;
+            if (message.StartsWith("Warning", StringComparison.InvariantCultureIgnoreCase))
+                warningMessage = message;
             else
-                warningMessage = "Warning: " + e.Message;
+                warningMessage = "Warning: " + message;
 
-            AppendToCyclopsLog(warningMessage + " (step " + e.Step + ", module " + e.Module + ")");
+            AppendToCyclopsLog(warningMessage);
 
             // Cyclops messages sometimes contain a carriage return followed by a stack trace
             // We don't want that information in m_message so split on \r and \n
-            var messageParts = e.Message.Split('\r', '\n');
+            var messageParts = message.Split('\r', '\n');
             LogWarning(messageParts[0]);
         }
 
-        private void cyclops_MessageEvent(object sender, MessageEventArgs e)
+
+        private void Cyclops_StatusEvent(string message)
         {
-            AppendToCyclopsLog(e.Message + " (step " + e.Step + ", module " + e.Module + ")");
+            AppendToCyclopsLog(message);
         }
 
     }
