@@ -295,7 +295,7 @@ namespace AnalysisManagerDataImportPlugIn
 
             try
             {
-                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, false);
+                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, false);
             }
             catch (Exception ex)
             {

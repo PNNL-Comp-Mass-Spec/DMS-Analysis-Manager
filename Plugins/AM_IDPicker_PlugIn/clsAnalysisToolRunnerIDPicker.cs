@@ -1353,7 +1353,7 @@ namespace AnalysisManagerIDPickerPlugIn
                     try
                     {
                         strToolVersionInfo = "Unknown";
-                        return base.SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>());
+                        return SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>());
                     }
                     catch (Exception ex)
                     {

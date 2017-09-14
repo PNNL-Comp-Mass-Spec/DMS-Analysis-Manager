@@ -337,6 +337,10 @@ namespace AnalysisManagerBrukerDAExportPlugin
 
         }
 
+        /// <summary>
+        /// Determine the location of Bruker's DataAnalysis.exe program
+        /// </summary>
+        /// <returns></returns>
         protected string FindDataAnalysisProgram()
         {
             try
@@ -574,7 +578,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 try
                 {
                     strToolVersionInfo = "Unknown";
-                    return base.SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>(), saveToolVersionTextFile: false);
+                    return SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>(), saveToolVersionTextFile: false);
                 }
                 catch (Exception ex)
                 {
@@ -600,7 +604,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
 
             try
             {
-                return base.SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, saveToolVersionTextFile: false);
+                return SetStepTaskToolVersion(strToolVersionInfo, ioToolFiles, saveToolVersionTextFile: false);
             }
             catch (Exception ex)
             {
