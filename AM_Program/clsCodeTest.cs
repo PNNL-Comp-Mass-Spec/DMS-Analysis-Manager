@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -1280,36 +1281,45 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
-        /// Test zipping and unzipping with ionic zip
+        /// Test zipping and unzipping with DotNetZip
         /// </summary>
         public void TestZipAndUnzip()
         {
-            var ionicZipTools = new clsIonicZipTools(3, @"F:\Temp");
-            RegisterEvents(ionicZipTools);
+            // Zip Benchmark stats
+            //
+            // January 2011 tests with a 611 MB file
+            //   IonicZip    unzips the file in 70 seconds (reading/writing to the same drive)
+            //   IonicZip    unzips the file in 62 seconds (reading/writing from different drives)
+            //   WinRar      unzips the file in 36 seconds (reading/writing from different drives)
+            //   PKZipC      unzips the file in 38 seconds (reading/writing from different drives)
+            //
+            // September 2017 tests
+            //   IonicZip compressed a 2.6 GB UIMF file in 86 seconds (reading/writing to the same drive)
+            //   IonicZip compressed a 556 MB text file in 3.7 seconds (creating a 107 MB file)
+            //   IonicZip compressed a folder with 996 MB of data (FASTA files, text files, one .gz file) in 12 seconds (creating a 348 MB zip file)
 
-            ionicZipTools.ZipFile(@"F:\Temp\Sarc_P12_D12_1104_148_8Sep11_Cheetah_11-05-34.uimf", false);
+            var dotNetZipTools = new clsDotNetZipTools(3, @"F:\Temp");
+            RegisterEvents(dotNetZipTools);
 
-            ionicZipTools.ZipFile(@"F:\Temp\Schutzer_cf_ff_XTandem_AllProt.txt", false, @"F:\Temp\TestCustom.zip");
+            var stopWatch = new Stopwatch();
 
-            ionicZipTools.ZipDirectory(@"F:\Temp\STAC", @"F:\Temp\ZippedFolderTest.zip");
+            stopWatch.Start();
+            dotNetZipTools.ZipFile(@"F:\Temp\OHSU_mortality_lipids_137_Pos_12Sep17_Brandi-WCSH7908.uimf", false);
+            stopWatch.Stop();
+            Console.WriteLine("Elapsed time: {0:F3} seconds", stopWatch.ElapsedMilliseconds / 1000.0);
 
-            // ionicZipTools.ZipDirectory(@"F:\Temp\UnzipTest\0_R00X051Y065", @"F:\Temp\UnzipTest\0_R00X051Y065.zip", false);
+            stopWatch.Reset();
+            stopWatch.Start();
+            dotNetZipTools.ZipFile(@"F:\Temp\TestData.txt", false, @"F:\Temp\TestCustom.zip");
+            stopWatch.Stop();
+            Console.WriteLine("Elapsed time: {0:F3} seconds", stopWatch.ElapsedMilliseconds / 1000.0);
 
-            //      ionicZipTools.ZipDirectory(@"F:\Temp\UnzipTest\0_R00X051Y065", @"F:\Temp\UnzipTest\ZippedFolders2.zip", True, "*.baf*");
+            stopWatch.Reset();
+            stopWatch.Start();
+            dotNetZipTools.ZipDirectory(@"F:\Temp\FolderTest", @"F:\Temp\ZippedFolderTest.zip");
+            stopWatch.Stop();
+            Console.WriteLine("Elapsed time: {0:F3} seconds", stopWatch.ElapsedMilliseconds / 1000.0);
 
-            //      ionicZipTools.ZipDirectory(@"F:\Temp\UnzipTest\0_R00X051Y065", @"F:\Temp\UnzipTest\ZippedFolders3.zip", True, "*.ini");
-
-            //      ionicZipTools.UnzipFile(@"F:\temp\unziptest\StageMD5_Scratch.zip");
-
-            //      ionicZipTools.UnzipFile(@"F:\Temp\UnzipTest\ZippedFolders.zip", @"F:\Temp\UnzipTest\Unzipped");
-
-            //      ionicZipTools.UnzipFile(@"F:\Temp\UnzipTest\ZippedFolders.zip", @"F:\Temp\UnzipTest\Unzipped2", "*.baf*");
-
-            //      ionicZipTools.UnzipFile(@"F:\Temp\UnzipTest\ZippedFolders.zip", @"F:\Temp\UnzipTest\Unzipped3", "*.baf*", Ionic.Zip.ExtractExistingFileAction.DoNotOverwrite);
-
-            //      ionicZipTools.UnzipFile(@"F:\Temp\UnzipTest\ZippedFolders3.zip", @"F:\Temp\UnzipTest\Unzipped4", "*.ini", Ionic.Zip.ExtractExistingFileAction.OverwriteSilently);
-
-            //      ionicZipTools.UnzipFile(@"F:\Temp\UnzipTest\ZippedFolders3.zip", @"F:\Temp\UnzipTest\Unzipped5", "my*.ini", Ionic.Zip.ExtractExistingFileAction.OverwriteSilently);
         }
 
         /// <summary>

@@ -33,7 +33,7 @@ namespace AnalysisManagerProg
 {
     static class modMain
     {
-        public const string PROGRAM_DATE = "August 8, 2017";
+        public const string PROGRAM_DATE = "September 13, 2017";
 
         private static bool mCodeTestMode;
         private static bool mCreateWindowsEventLog;
@@ -129,6 +129,7 @@ namespace AnalysisManagerProg
                         // objTest.TestGetToolVersionInfo();
                         // objTest.TestConnectRSA();
                         // objTest.TestStatusLogging();
+                        // objTest.TestZipAndUnzip();
 
                         objTest.TestCopyToRemote();
 
