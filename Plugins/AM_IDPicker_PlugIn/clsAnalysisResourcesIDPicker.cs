@@ -72,8 +72,8 @@ namespace AnalysisManagerIDPickerPlugIn
 #pragma warning restore 162
             }
 
-            var RawDataType = m_jobParams.GetParam("RawDataType");
-            var eRawDataType = GetRawDataType(RawDataType);
+            var rawDataTypeName = m_jobParams.GetParam("RawDataType");
+            var eRawDataType = GetRawDataType(rawDataTypeName);
             var blnMGFInstrumentData = m_jobParams.GetJobParameter("MGFInstrumentData", false);
 
             // Retrieve the PSM result files, PHRP files, and MSGF file
@@ -112,7 +112,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 }
                 else
                 {
-                    LogWarning("Not retrieving MASIC files since unsupported data type: " + RawDataType);
+                    LogWarning("Not retrieving MASIC files since unsupported data type: " + rawDataTypeName);
                 }
             }
 
