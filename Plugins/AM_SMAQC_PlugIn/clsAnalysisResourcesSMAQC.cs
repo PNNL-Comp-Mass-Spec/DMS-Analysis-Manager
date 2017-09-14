@@ -68,6 +68,8 @@ namespace AnalysisManagerSMAQCPlugIn
             if (!clsAnalysisToolRunnerSMAQC.LLRC_ENABLED)
                 throw new Exception("LLRC is disabled -- do not call this function");
 
+#pragma warning disable 162
+
             var strLLRCRunnerProgLoc = m_mgrParams.GetParam("LLRCRunnerProgLoc", @"\\gigasax\DMS_Programs\LLRCRunner");
             var lstFilesToCopy = new List<string> {
                 LLRC.LLRCWrapper.RDATA_FILE_ALLDATA,
@@ -92,6 +94,9 @@ namespace AnalysisManagerSMAQCPlugIn
             }
 
             return true;
+
+#pragma warning restore 162
+
         }
 
         private bool RetrieveMASICFiles()

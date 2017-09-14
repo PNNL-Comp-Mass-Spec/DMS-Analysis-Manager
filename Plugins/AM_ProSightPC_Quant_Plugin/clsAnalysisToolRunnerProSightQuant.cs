@@ -59,11 +59,15 @@ namespace AnalysisManagerProSightQuantPlugIn
                     LogDebug("clsAnalysisToolRunnerProSightQuant.RunTool(): Enter");
                 }
 
+
+                // ReSharper disable once ConditionIsAlwaysTrueOrFalse
                 if (clsAnalysisResourcesProSightQuant.TOOL_DISABLED)
                 {
                     // This tool is currently disabled, so just return Success
                     return CloseOutType.CLOSEOUT_SUCCESS;
                 }
+
+#pragma warning disable 162
 
                 // Determine the path to the TargetedWorkflowConsole.exe program
                 mTargetedWorkflowsProgLoc = DetermineProgramLocation("TargetedWorkflowsProgLoc", "TargetedWorkflowConsole.exe");
@@ -238,6 +242,8 @@ namespace AnalysisManagerProSightQuantPlugIn
                 var success = CopyResultsToTransferDirectory();
 
                 return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
+
+#pragma warning restore 162
             }
             catch (Exception ex)
             {

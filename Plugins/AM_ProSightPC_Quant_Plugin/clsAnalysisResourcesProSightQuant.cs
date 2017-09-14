@@ -33,11 +33,14 @@ namespace AnalysisManagerProSightQuantPlugIn
                 return result;
             }
 
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalse
             if (TOOL_DISABLED)
             {
                 // This tool is currently disabled, so just return Success
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
+
+#pragma warning disable 162
 
             // Retrieve the MSAlign_Quant parameter file
             // For example, MSAlign_Quant_Workflow_2012-07-25
@@ -138,6 +141,8 @@ namespace AnalysisManagerProSightQuantPlugIn
             }
 
             return CloseOutType.CLOSEOUT_SUCCESS;
+
+#pragma warning restore 162
         }
     }
 }

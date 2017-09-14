@@ -256,6 +256,8 @@ namespace AnalysisManagerSMAQCPlugIn
             if (!LLRC_ENABLED)
                 throw new Exception("LLRC is disabled -- do not call this function");
 
+#pragma warning disable 162
+
             if (intDatasetID < 0)
             {
                 LogError("Job parameter DatasetID is missing; cannot compute LLRC");
@@ -293,6 +295,9 @@ namespace AnalysisManagerSMAQCPlugIn
             }
 
             return blnSuccess;
+
+#pragma warning restore 162
+
         }
 
         /// <summary>
@@ -812,7 +817,9 @@ namespace AnalysisManagerSMAQCPlugIn
             var additionalDLLs = new List<string>();
             if (LLRC_ENABLED)
             {
+#pragma warning disable 162
                 additionalDLLs.Add("LLRC.dll");
+#pragma warning restore 162
             }
 
             var success = StoreDotNETToolVersionInfo(progLoc, additionalDLLs);
