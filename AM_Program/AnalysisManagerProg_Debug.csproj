@@ -157,6 +157,7 @@
     <PostBuildEvent>xcopy "$(ProjectDir)..\AM_Common\DLLVersionInspector*.exe" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\DTAtoMGF.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\FileConcatenator.dll" "$(TargetDir)" /y /d  /F
+xcopy "$(ProjectDir)..\AM_Common\gzip.exe" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\MascotGenericFileToDTA.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\PeptideFileExtractor.dll" "$(TargetDir)" /y /d /F
 xcopy "$(ProjectDir)..\AM_Common\PeptideToProteinMapEngine.dll" "$(TargetDir)" /D /Y
