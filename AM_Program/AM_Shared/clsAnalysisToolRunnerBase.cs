@@ -4613,6 +4613,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <returns>True if success; false if an error</returns>
         /// <remarks>IonicZip is faster, so we typically use function ZipFile</remarks>
+        [Obsolete("Use ZipFile, which uses DotNetZip")]
         public bool ZipFileSharpZipLib(string sourceFilePath)
         {
 
