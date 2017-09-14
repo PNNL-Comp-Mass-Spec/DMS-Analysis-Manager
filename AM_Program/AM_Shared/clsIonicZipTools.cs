@@ -785,7 +785,7 @@ namespace AnalysisManagerBase
                 {
                     Message = string.Format("Zip entry " + entry.FileName + " failed the CRC Check in " + zipFilePath +
                                               " (0x{0:X8} != 0x{1:X8})", srReader.Crc, entry.Crc);
-                    OnWarningEvent(Message);
+                    OnErrorEvent(Message);
                     return false;
                 }
 
