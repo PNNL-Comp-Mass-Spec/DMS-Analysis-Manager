@@ -191,7 +191,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             }
             else
             {
-                var oMassErrorExtractor = new clsDtaRefLogMassErrorExtractor(m_mgrParams, m_WorkDir, m_DebugLevel, blnPostResultsToDB:true);
+                var oMassErrorExtractor = new clsDtaRefLogMassErrorExtractor(m_mgrParams, m_WorkDir, m_DebugLevel, blnPostResultsToDB: true);
                 RegisterEvents(oMassErrorExtractor);
 
                 var intDatasetID = m_jobParams.GetJobParameter("DatasetID", 0);
@@ -395,6 +395,8 @@ namespace AnalysisManagerDtaRefineryPlugIn
             // * total ion current in the ICR/Orbitrap cell: _trappedIonsTIC.png
 
             // Delete the original DTA files
+            var targetFile = "??";
+
             try
             {
                 var ioWorkDirectory = new DirectoryInfo(m_WorkDir);
@@ -404,14 +406,15 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 {
                     if (!ioFile.Name.EndsWith("_FIXED_dta.txt", StringComparison.InvariantCultureIgnoreCase))
                     {
-                        ioFile.Attributes = ioFile.Attributes & (~FileAttributes.ReadOnly);
+                        targetFile = ioFile.Name;
+                        ioFile.Attributes = ioFile.Attributes & ~FileAttributes.ReadOnly;
                         ioFile.Delete();
                     }
                 }
             }
             catch (Exception ex)
             {
-                LogError("Error deleting _om.omx file: " + ex.Message, ex);
+                LogError(string.Format("Error deleting file {0}: {1}", targetFile, ex.Message), ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
