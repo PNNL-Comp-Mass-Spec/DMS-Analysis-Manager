@@ -15,6 +15,9 @@ namespace AnalysisManagerPRIDEConverterPlugIn
     /// <summary>
     /// Class for running PRIDEConverter
     /// </summary>
+    /// <remarks>
+    /// Although this class was originally created to prepare data for submission to PRIDE,
+    /// we primarily now use it to submit data to ProteomeXchange</remarks>
     public class clsAnalysisToolRunnerPRIDEConverter : clsAnalysisToolRunnerBase
     {
         #region "Constants"
@@ -1246,8 +1249,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                         scoreForCurrentMatch = 1000 - (reader.CurrentPSM.GetScoreDbl(clsPHRPParserSequest.DATA_COLUMN_XCorr, 1));
                                     }
                                 }
-
                                 break;
+
                             case clsPHRPReader.ePeptideHitResultType.XTandem:
                                 if (msgfSpecProb < MSGF_SPECPROB_NOTDEFINED)
                                 {
@@ -1269,8 +1272,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                         scoreForCurrentMatch = 1000 + reader.CurrentPSM.GetScoreDbl(clsPHRPParserXTandem.DATA_COLUMN_Peptide_Expectation_Value_LogE, 1);
                                     }
                                 }
-
                                 break;
+
                             case clsPHRPReader.ePeptideHitResultType.Inspect:
                                 pValue = reader.CurrentPSM.GetScoreDbl(clsPHRPParserInspect.DATA_COLUMN_PValue, PVALUE_NOTDEFINED);
 
@@ -1292,8 +1295,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                         scoreForCurrentMatch = 1000 - (reader.CurrentPSM.GetScoreDbl(clsPHRPParserInspect.DATA_COLUMN_TotalPRMScore, 1));
                                     }
                                 }
-
                                 break;
+
                             case clsPHRPReader.ePeptideHitResultType.MSGFDB:
                                 fdr = reader.CurrentPSM.GetScoreDbl(clsPHRPParserMSGFDB.DATA_COLUMN_FDR, -1);
                                 if (fdr > -1)
@@ -1440,25 +1443,24 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                 pValueFormatted = pValue.ToString("0.00");
                                 deltaScore = reader.CurrentPSM.GetScore(clsPHRPParserSequest.DATA_COLUMN_DelCn);
                                 deltaScoreOther = reader.CurrentPSM.GetScore(clsPHRPParserSequest.DATA_COLUMN_DelCn2);
-
                                 break;
+
                             case clsPHRPReader.ePeptideHitResultType.XTandem:
                                 totalPRMScore = reader.CurrentPSM.GetScore(clsPHRPParserXTandem.DATA_COLUMN_Peptide_Hyperscore);
                                 pValueFormatted = pValue.ToString("0.00");
                                 deltaScore = reader.CurrentPSM.GetScore(clsPHRPParserXTandem.DATA_COLUMN_DeltaCn2);
-
                                 break;
+
                             case clsPHRPReader.ePeptideHitResultType.Inspect:
                                 totalPRMScore = reader.CurrentPSM.GetScore(clsPHRPParserInspect.DATA_COLUMN_TotalPRMScore);
                                 pValueFormatted = reader.CurrentPSM.GetScore(clsPHRPParserInspect.DATA_COLUMN_PValue);
                                 deltaScore = reader.CurrentPSM.GetScore(clsPHRPParserInspect.DATA_COLUMN_DeltaScore);
                                 deltaScoreOther = reader.CurrentPSM.GetScore(clsPHRPParserInspect.DATA_COLUMN_DeltaScoreOther);
-
                                 break;
+
                             case clsPHRPReader.ePeptideHitResultType.MSGFDB:
                                 totalPRMScore = reader.CurrentPSM.GetScore(clsPHRPParserMSGFDB.DATA_COLUMN_DeNovoScore);
                                 pValueFormatted = reader.CurrentPSM.GetScore(clsPHRPParserMSGFDB.DATA_COLUMN_PValue);
-
                                 break;
                         }
 
@@ -1790,14 +1792,14 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         switch (xmlReader.NodeType)
                         {
                             case XmlNodeType.Whitespace:
+                                // Skip whitespace since the writer should be auto-formatting things
+                                // writer.WriteWhitespace(xmlReader.Value)
                                 break;
-                            // Skip whitespace since the writer should be auto-formatting things
-                            // writer.WriteWhitespace(xmlReader.Value)
 
                             case XmlNodeType.Comment:
                                 writer.WriteComment(xmlReader.Value);
-
                                 break;
+
                             case XmlNodeType.Element:
                                 // Start element
 
@@ -1823,18 +1825,18 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                         // Update this element's value to contain pseudoMsgfFilePath
                                         writer.WriteElementString("sourceFilePath", pseudoMsgfFilePath);
                                         skipNode = true;
-
                                         break;
+
                                     case "timeCreated":
                                         // Write out the current date/time in this format: 2012-11-06T16:04:44Z
                                         writer.WriteElementString("timeCreated", DateTime.Now.ToUniversalTime().ToString("s") + "Z");
                                         skipNode = true;
-
                                         break;
+
                                     case "MzDataDescription":
                                         insideMzDataDescription = true;
-
                                         break;
+
                                     case "sampleName":
                                         if (eFileLocation == eMSGFReportXMLFileLocation.MzDataAdmin)
                                         {
@@ -1842,8 +1844,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                             writer.WriteElementString("sampleName", dataPkgJob.Experiment);
                                             skipNode = true;
                                         }
-
                                         break;
+
                                     case "sampleDescription":
                                         if (eFileLocation == eMSGFReportXMLFileLocation.MzDataAdmin)
                                         {
@@ -1873,8 +1875,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                                             attributeOverride.Add("comment", commentOverride);
                                         }
-
                                         break;
+
                                     case "sourceFile":
                                         if (eFileLocation == eMSGFReportXMLFileLocation.MzDataAdmin)
                                         {
@@ -1887,16 +1889,16 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                             writer.WriteEndElement();  // sourceFile
                                             skipNode = true;
                                         }
-
                                         break;
+
                                     case "software":
                                         if (eFileLocation == eMSGFReportXMLFileLocation.MzDataDataProcessing)
                                         {
                                             CreateMSGFReportXmlFileWriteSoftwareVersion(xmlReader, writer, dataPkgJob.PeptideHitResultType);
                                             skipNode = true;
                                         }
-
                                         break;
+
                                     case "instrumentName":
                                         if (eFileLocation == eMSGFReportXMLFileLocation.MzDataInstrument)
                                         {
@@ -1906,8 +1908,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                                             instrumentDetailsAutoDefined = WriteXMLInstrumentInfo(writer, dataPkgJob.InstrumentGroup);
                                         }
-
                                         break;
+
                                     case "source":
                                     case "analyzerList":
                                     case "detector":
@@ -1915,8 +1917,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                         {
                                             skipNode = true;
                                         }
-
                                         break;
+
                                     case "cvParam":
                                         if (eFileLocation == eMSGFReportXMLFileLocation.ExperimentAdditional)
                                         {
@@ -1950,8 +1952,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                             writer.WriteEndElement();  // cvParam
                                             skipNode = true;
                                         }
-
                                         break;
+
                                     case "Identifications":
                                         if (!CreateMSGFReportXMLFileWriteIDs(writer, pseudoMSGFData, orgDBNameGenerated))
                                         {
@@ -1966,20 +1968,19 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                         }
 
                                         skipNode = true;
-
                                         break;
+
                                     case "Fasta":
                                         // This section is written out by CreateMSGFReportXMLFileWriteIDs
                                         skipNode = true;
-
                                         break;
+
                                     case "PTMs":
                                         // In the future, we might write out customized PTMs in CreateMSGFReportXMLFileWriteProteins
                                         // For now, just copy over whatever is in the template msgf-report.xml file
-                                        //
                                         skipNode = false;
-
                                         break;
+
                                     case "DatabaseMappings":
 
                                         writer.WriteStartElement("DatabaseMappings");
@@ -1995,8 +1996,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                         writer.WriteEndElement();      // DatabaseMappings
 
                                         skipNode = true;
-
                                         break;
+
                                     case "ConfigurationOptions":
                                         writer.WriteStartElement("ConfigurationOptions");
 
@@ -2007,7 +2008,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                         writer.WriteEndElement();      // ConfigurationOptions
 
                                         skipNode = true;
-
                                         break;
                                 }
 
@@ -2048,8 +2048,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                         writer.WriteEndElement();
                                     }
                                 }
-
                                 break;
+
                             case XmlNodeType.EndElement:
 
                                 if (recentElements.Count > 10)
@@ -2073,8 +2073,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                 {
                                     elementCloseDepths.Pop();
                                 }
-
                                 break;
+
                             case XmlNodeType.Text:
 
                                 if (!string.IsNullOrEmpty(xmlReader.Value))
@@ -2092,7 +2092,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                 }
 
                                 writer.WriteString(xmlReader.Value);
-
                                 break;
                         }
                     }
@@ -4515,8 +4514,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                             LogDebug("Skip updating the .mzid file since already in the tranfer folder");
                             mzIdExistsRemotely = true;
 
-                                                    // Must append .gz to the .mzid file name to allow for successful lookups in function CreatePXSubmissionFile
-                        StoreMzIdSampleInfo(mzIDFilePath + DOT_GZ, sampleMetadata);
+                            // Must append .gz to the .mzid file name to allow for successful lookups in function CreatePXSubmissionFile
+                            StoreMzIdSampleInfo(mzIDFilePath + DOT_GZ, sampleMetadata);
 
                             return true;
                         }
@@ -4553,14 +4552,14 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         switch (xmlReader.NodeType)
                         {
                             case XmlNodeType.Whitespace:
+                                // Skip whitespace since the writer should be auto-formatting things
+                                // writer.WriteWhitespace(xmlReader.Value)
                                 break;
-                            // Skip whitespace since the writer should be auto-formatting things
-                            // writer.WriteWhitespace(xmlReader.Value)
 
                             case XmlNodeType.Comment:
                                 writer.WriteComment(xmlReader.Value);
-
                                 break;
+
                             case XmlNodeType.Element:
                                 // Start element
 
@@ -4605,11 +4604,12 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                                 spectraDataFilename = dataPkgDataset + "_dta.txt";
                                             }
 
-                                            attributeOverride.Add("location", "C:\\DMS_WorkDir\\" + spectraDataFilename);
+                                            // The following statement intentionally uses a generic DMS_WorkDir path; do not use m_WorkDir
+                                            attributeOverride.Add("location", @"C:\DMS_WorkDir\" + spectraDataFilename);
                                             attributeOverride.Add("name", spectraDataFilename);
                                         }
-
                                         break;
+
                                     case "FileFormat":
 
                                         if (eFileLocation == eMzIDXMLFileLocation.InputSpectraData && !searchedMzML)
@@ -4647,23 +4647,23 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                                             skipNode = true;
                                         }
-
                                         break;
+
                                     case "SearchModification":
                                         if (eFileLocation == eMzIDXMLFileLocation.AnalysisProtocolCollection)
                                         {
                                             // The next cvParam entry that we read should have the Unimod accession
                                             readModAccession = true;
                                         }
-
                                         break;
+
                                     case "SpecificityRules":
                                         if (readModAccession)
                                         {
                                             readingSpecificityRules = true;
                                         }
-
                                         break;
+
                                     case "cvParam":
                                         if (readModAccession && !readingSpecificityRules)
                                         {
@@ -4727,8 +4727,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                         writer.WriteEndElement();
                                     }
                                 }
-
                                 break;
+
                             case XmlNodeType.EndElement:
 
                                 if (recentElements.Count > 10)
@@ -4757,8 +4757,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                 {
                                     readingSpecificityRules = false;
                                 }
-
                                 break;
+
                             case XmlNodeType.Text:
 
                                 if (!string.IsNullOrEmpty(xmlReader.Value))
@@ -4776,7 +4776,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                 }
 
                                 writer.WriteString(xmlReader.Value);
-
                                 break;
                         }
                     }
@@ -5031,17 +5030,19 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     oWriter.WriteEndElement();   // analyzerList
 
                     WriteXMLInstrumentInfoDetector(oWriter, "MS", "MS:1000624", "inductive detector");
-
                     break;
+
                 case "LCQ":
                     isLCQ = true;
                     break;
+
                 case "LTQ":
                 case "LTQ-ETD":
                 case "LTQ-Prep":
                 case "VelosPro":
                     isLTQ = true;
                     break;
+
                 case "LTQ-FT":
                     instrumentDetailsAutoDefined = true;
 
@@ -5056,8 +5057,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     oWriter.WriteEndElement();   // analyzerList
 
                     WriteXMLInstrumentInfoDetector(oWriter, "MS", "MS:1000624", "inductive detector");
-
                     break;
+
                 case "Exactive":
                     instrumentDetailsAutoDefined = true;
 
@@ -5071,8 +5072,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     oWriter.WriteEndElement();   // analyzerList
 
                     WriteXMLInstrumentInfoDetector(oWriter, "MS", "MS:1000624", "inductive detector");
-
                     break;
+
                 default:
                     if (instrumentGroup.StartsWith("LTQ"))
                     {

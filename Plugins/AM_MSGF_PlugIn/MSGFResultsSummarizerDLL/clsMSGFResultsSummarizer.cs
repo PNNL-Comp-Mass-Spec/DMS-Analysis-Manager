@@ -57,6 +57,7 @@ namespace MSGFResultsSummarizer
             /// For modified peptides, collapses peptides with the same sequence and same modifications (+/- 1 residue)
             /// For example, LS*SPATLNSR and LSS*PATLNSR are considered equivalent
             /// But P#EPT*IDES and PEP#T*IDES and P#EPTIDES* are all different
+            /// (the collapsing of similar peptides is done in method LoadPSMs with the call to FindNormalizedSequence)
             /// </remarks>
             public int UniquePeptideCount;
 
@@ -1649,6 +1650,10 @@ namespace MSGFResultsSummarizer
             try
             {
                 // The Keys in this dictionary are SeqID values; the values track observation count, whether the peptide ends in K or R, etc.
+                // Populated from data in lstFilteredPSMs, where peptides with the same sequence and same modifications (+/- 1 residue) were collapsed
+                // For example, LS*SPATLNSR and LSS*PATLNSR are considered equivalent
+                // But P#EPT*IDES and PEP#T*IDES and P#EPTIDES* are all different
+                // (the collapsing of similar peptides is done in method LoadPSMs with the call to FindNormalizedSequence)
                 var lstUniqueSequences = new Dictionary<int, clsUniqueSeqInfo>();
 
                 // The Keys in this dictionary are SeqID values; the values track observation count, whether the peptide ends in K or R, etc.
