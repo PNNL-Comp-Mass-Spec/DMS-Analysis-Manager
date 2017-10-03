@@ -626,7 +626,7 @@ namespace MSGFResultsSummarizer
             }
             else
             {
-                // Sort the data by ascending SpecProb, then step through the list and compute FDR
+                // Sort the data by ascending SpecEValue, then step through the list and compute FDR
                 // Use FDR = #Reverse / #Forward
                 //
                 // Alternative FDR formula is:  FDR = 2 * #Reverse / (#Forward + #Reverse)
@@ -640,7 +640,7 @@ namespace MSGFResultsSummarizer
                 var blnValidMSGFOrEValue = false;
                 foreach (var kvEntry in lstPSMs)
                 {
-                    if (kvEntry.Value.BestMSGF < clsPSMInfo.UNKNOWN_MSGF_SPECPROB)
+                    if (kvEntry.Value.BestMSGF < clsPSMInfo.UNKNOWN_MSGF_SPEC_EVALUE)
                     {
                         lstMSGFtoResultIDMap.Add(new KeyValuePair<double, int>(kvEntry.Value.BestMSGF, kvEntry.Key));
                         if (kvEntry.Value.BestMSGF < 1)
@@ -1028,7 +1028,7 @@ namespace MSGFResultsSummarizer
                 // For example, LS*SPATLNSR and LSS*PATLNSR are considered equivalent
                 // But P#EPT*IDES and PEP#T*IDES and P#EPTIDES* are all different
                 //
-                // The values contain mapped protein name, FDR, and MSGF SpecProb, and the scans that the normalized peptide was observed in
+                // The values contain mapped protein name, FDR, and MSGF SpecEValue, and the scans that the normalized peptide was observed in
                 // We'll deal with multiple proteins for each peptide later when we parse the _ResultToSeqMap.txt and _SeqToProteinMap.txt files
                 // If those files are not found, we'll simply use the protein information stored in lstPSMs
                 var lstNormalizedPSMs = new Dictionary<int, clsPSMInfo>();
@@ -1109,7 +1109,7 @@ namespace MSGFResultsSummarizer
             out SortedList<int, int> lstResultToSeqMap, out SortedList<int, List<clsProteinInfo>> lstSeqToProteinMap,
             out SortedList<int, clsSeqInfo> lstSeqInfo)
         {
-            var dblSpecProb = clsPSMInfo.UNKNOWN_MSGF_SPECPROB;
+            var specEValue = clsPSMInfo.UNKNOWN_MSGF_SPEC_EVALUE;
             var eValue = clsPSMInfo.UNKNOWN_EVALUE;
 
             bool blnSuccess;

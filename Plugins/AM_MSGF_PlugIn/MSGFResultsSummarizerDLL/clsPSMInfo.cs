@@ -6,7 +6,11 @@ namespace MSGFResultsSummarizer
 {
     public class clsPSMInfo : clsUniqueSeqInfo
     {
+        [Obsolete("Use UNKNOWN_MSGF_SPEC_EVALUE")]
         public const double UNKNOWN_MSGF_SPECPROB = 10;
+
+        public const double UNKNOWN_MSGF_SPEC_EVALUE = 10;
+
         public const double UNKNOWN_EVALUE = double.MaxValue;
         public const int UNKNOWN_FDR = -1;
         public const int UNKNOWN_SEQID = -1;
@@ -41,7 +45,7 @@ namespace MSGFResultsSummarizer
             {
                 if (mObservations.Count == 0)
                 {
-                    return UNKNOWN_MSGF_SPECPROB;
+                    return UNKNOWN_MSGF_SPEC_EVALUE;
                 }
                 else
                 {
@@ -174,13 +178,13 @@ namespace MSGFResultsSummarizer
             public double FDR { get; set; }
 
             /// <summary>
-            /// MSGF SpecProb; will be UNKNOWN_MSGF_SPECPROB (10) if MSGF SpecProb is not available
+            /// MSGF SpecEValue; will be UNKNOWN_MSGF_SPEC_EVALUE (10) if MSGF SpecEValue is not available
             /// </summary>
             /// <remarks>MSPathFinder results use this field to store SpecEValue</remarks>
             public double MSGF { get; set; }
 
             /// <summary>
-            /// Only used when MSGF SpecProb is not available
+            /// Only used when MSGF SpecEValue is not available
             /// </summary>
             public double EValue { get; set; }
 
@@ -195,7 +199,7 @@ namespace MSGFResultsSummarizer
             {
                 Scan = 0;
                 FDR = clsPSMInfo.UNKNOWN_FDR;
-                MSGF = clsPSMInfo.UNKNOWN_MSGF_SPECPROB;
+                MSGF = clsPSMInfo.UNKNOWN_MSGF_SPEC_EVALUE;
                 EValue = clsPSMInfo.UNKNOWN_EVALUE;
                 PassesFilter = false;
             }
