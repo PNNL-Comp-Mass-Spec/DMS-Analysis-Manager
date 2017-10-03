@@ -3449,8 +3449,13 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             resultFiles.MGFFilePath = string.Empty;
             if (mCreateMGFFiles && !searchedMzML)
             {
-                // Check whether the .mgf file already exists on the target server
-                if (!FileExistsInTransferFolder(remoteTransferFolder, dataset + ".mgf"))
+                if (FileExistsInTransferFolder(remoteTransferFolder, dataset + DOT_MGF))
+                {
+                    // The .mgf file already exists on the remote server; upate .MGFFilePath
+                    // The path to the file doesn't matter; just the name
+                    resultFiles.MGFFilePath = Path.Combine(m_WorkDir, dataset + DOT_MGF);
+                }
+                else
                 {
                     // Convert the _dta.txt file to .mgf files
                     success = ConvertCDTAToMGF(jobInfo.Value, out var mgfPath);
@@ -3805,6 +3810,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                 {
                                     filesCopied.Add(Path.GetFileName(sourceFilePath));
                                 }
+
+                                filesCopied.Add(dataset + DOT_MGF);
                                 return true;
                             }
                         }
@@ -4203,6 +4210,9 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         var targetFilePath = Path.Combine(remoteTransferFolder, Path.GetFileName(srcFilePath));
 
                         if (!File.Exists(srcFilePath))
+                            continue;
+
+                        if (string.Equals(srcFilePath, targetFilePath, StringComparison.OrdinalIgnoreCase))
                             continue;
 
                         try
