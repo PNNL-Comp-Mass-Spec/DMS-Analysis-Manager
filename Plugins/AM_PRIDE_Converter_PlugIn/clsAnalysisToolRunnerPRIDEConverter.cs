@@ -22,9 +22,10 @@ namespace AnalysisManagerPRIDEConverterPlugIn
     {
         #region "Constants"
 
-        const string DOT_GZ = clsAnalysisResources.DOT_GZ_EXTENSION;
-        const string DOT_MZML = clsAnalysisResources.DOT_MZML_EXTENSION;
-        const string DOT_MZML_GZ = clsAnalysisResources.DOT_MZML_EXTENSION + clsAnalysisResources.DOT_GZ_EXTENSION;
+        private const string DOT_GZ = clsAnalysisResources.DOT_GZ_EXTENSION;
+        private const string DOT_MGF = clsAnalysisResources.DOT_MGF_EXTENSION;
+        private const string DOT_MZML = clsAnalysisResources.DOT_MZML_EXTENSION;
+        private const string DOT_MZML_GZ = clsAnalysisResources.DOT_MZML_EXTENSION + clsAnalysisResources.DOT_GZ_EXTENSION;
 
         #endregion
 
@@ -878,7 +879,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 Thread.Sleep(125);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
-                var fiNewMGFFile = new FileInfo(Path.Combine(m_WorkDir, dataPkgJob.Dataset + ".mgf"));
+                var fiNewMGFFile = new FileInfo(Path.Combine(m_WorkDir, dataPkgJob.Dataset + DOT_MGF));
 
                 if (!fiNewMGFFile.Exists)
                 {
@@ -910,7 +911,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             m_jobParams.RemoveResultFileToSkip(PRIDEConverter_CONSOLE_OUTPUT);
 
             // Skip the .mgf files; no need to put them in the FailedResults folder
-            m_jobParams.AddResultFileExtensionToSkip(".mgf");
+            m_jobParams.AddResultFileExtensionToSkip(DOT_MGF);
 
             base.CopyFailedResultsToArchiveFolder();
         }
@@ -3791,7 +3792,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                     if (otherFiles.Count == 0 && cdtaFile && mzidFiles.Count > 0)
                     {
-                        if (FileExistsInTransferFolder(remoteTransferFolder, dataset + ".mgf"))
+                        if (FileExistsInTransferFolder(remoteTransferFolder, dataset + DOT_MGF))
                         {
                             var allowSkip = mzidFiles.All(remoteMzIdFile => FileExistsInTransferFolder(remoteTransferFolder, remoteMzIdFile));
 
@@ -4597,7 +4598,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                                             if (mCreateMGFFiles)
                                             {
-                                                spectraDataFilename = dataPkgDataset + ".mgf";
+                                                spectraDataFilename = dataPkgDataset + DOT_MGF;
                                             }
                                             else
                                             {
