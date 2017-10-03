@@ -259,8 +259,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 LogMessage("Running PRIDEConverter");
 
-                // Initialize dctDataPackageDatasets
-                if (!LoadDataPackageDatasetInfo(out var dctDataPackageDatasets))
+                // Initialize dataPackageDatasets
+                if (!LoadDataPackageDatasetInfo(out var dataPackageDatasets))
                 {
                     var msg = "Error loading data package dataset info";
                     LogError(msg + ": clsAnalysisToolRunnerBase.LoadDataPackageDatasetInfo returned false");
@@ -296,12 +296,12 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 }
 
                 // Read the PX_Submission_Template.px file
-                var dctTemplateParameters = ReadTemplatePXSubmissionFile();
+                var templateParameters = ReadTemplatePXSubmissionFile();
 
-                var jobFailureCount = ProcessJobs(analysisResults, remoteTransferFolder, dctTemplateParameters, dctDataPackageDatasets);
+                var jobFailureCount = ProcessJobs(analysisResults, remoteTransferFolder, templateParameters, dataPackageDatasets);
 
                 // Create the PX Submission file
-                var success = CreatePXSubmissionFile(dctTemplateParameters);
+                var success = CreatePXSubmissionFile(templateParameters);
 
                 m_progress = PROGRESS_PCT_COMPLETE;
                 m_StatusTools.UpdateAndWrite(m_progress);
@@ -350,7 +350,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         }
 
         private int ProcessJobs(clsAnalysisResults analysisResults, string remoteTransferFolder,
-            IReadOnlyDictionary<string, string> dctTemplateParameters, Dictionary<int, clsDataPackageDatasetInfo> dctDataPackageDatasets)
+            IReadOnlyDictionary<string, string> templateParameters, Dictionary<int, clsDataPackageDatasetInfo> dataPackageDatasets)
         {
             var jobsProcessed = 0;
             var jobFailureCount = 0;
@@ -361,7 +361,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 var udtFilterThresholds = InitializeOptions();
 
                 // Extract the dataset raw file paths
-                var dctDatasetRawFilePaths = ExtractPackedJobParameterDictionary(clsAnalysisResources.JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS);
+                var datasetRawFilePaths = ExtractPackedJobParameterDictionary(clsAnalysisResources.JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS);
 
                 // Process each job in mDataPackagePeptideHitJobs
                 // Sort the jobs by dataset so that we can use the same .mzXML file for datasets with multiple jobs
@@ -375,19 +375,19 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 // This dictionary tracks the datasets that have been processed
                 // Keys are dataset ID, values are dataset name
-                var dctDatasetsProcessed = new Dictionary<int, string>();
+                var datasetsProcessed = new Dictionary<int, string>();
 
-                foreach (var kvJobInfo in linqJobsSortedByDataset)
+                foreach (var jobInfo in linqJobsSortedByDataset)
                 {
-                    var udtCurrentJobInfo = kvJobInfo.Value;
+                    var udtCurrentJobInfo = jobInfo.Value;
 
                     m_StatusTools.CurrentOperation = "Processing job " + udtCurrentJobInfo.Job + ", dataset " + udtCurrentJobInfo.Dataset;
 
                     Console.WriteLine();
                     LogDebug((jobsProcessed + 1) + ": " + m_StatusTools.CurrentOperation, 10);
 
-                    var result = ProcessJob(kvJobInfo, udtFilterThresholds, analysisResults, remoteTransferFolder, dctDatasetRawFilePaths,
-                        dctTemplateParameters, assumeInstrumentDataUnpurged);
+                    var result = ProcessJob(jobInfo, udtFilterThresholds, analysisResults, remoteTransferFolder, datasetRawFilePaths,
+                        templateParameters, assumeInstrumentDataUnpurged);
 
                     if (result != CloseOutType.CLOSEOUT_SUCCESS)
                     {
@@ -396,9 +396,9 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                             break;
                     }
 
-                    if (!dctDatasetsProcessed.ContainsKey(udtCurrentJobInfo.DatasetID))
+                    if (!datasetsProcessed.ContainsKey(udtCurrentJobInfo.DatasetID))
                     {
-                        dctDatasetsProcessed.Add(udtCurrentJobInfo.DatasetID, udtCurrentJobInfo.Dataset);
+                        datasetsProcessed.Add(udtCurrentJobInfo.DatasetID, udtCurrentJobInfo.Dataset);
                     }
 
                     jobsProcessed += 1;
@@ -418,16 +418,16 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 // Look for datasets associated with the data package that have no PeptideHit jobs
                 // Create fake PeptideHit jobs in the .px file to alert the user of the missing jobs
 
-                foreach (var kvDatasetInfo in dctDataPackageDatasets)
+                foreach (var datasetInfo in dataPackageDatasets)
                 {
-                    if (!dctDatasetsProcessed.ContainsKey(kvDatasetInfo.Key))
+                    if (!datasetsProcessed.ContainsKey(datasetInfo.Key))
                     {
-                        m_StatusTools.CurrentOperation = "Adding dataset " + kvDatasetInfo.Value.Dataset + " (no associated PeptideHit job)";
+                        m_StatusTools.CurrentOperation = "Adding dataset " + datasetInfo.Value.Dataset + " (no associated PeptideHit job)";
 
                         Console.WriteLine();
                         LogDebug(m_StatusTools.CurrentOperation, 10);
 
-                        AddPlaceholderDatasetEntry(kvDatasetInfo);
+                        AddPlaceholderDatasetEntry(datasetInfo);
                     }
                 }
 
@@ -458,14 +458,14 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             return 5;
         }
 
-        private void AddPlaceholderDatasetEntry(KeyValuePair<int, clsDataPackageDatasetInfo> kvDatasetInfo)
+        private void AddPlaceholderDatasetEntry(KeyValuePair<int, clsDataPackageDatasetInfo> datasetInfo)
         {
-            AddNEWTInfo(kvDatasetInfo.Value.Experiment_NEWT_ID, kvDatasetInfo.Value.Experiment_NEWT_Name);
+            AddNEWTInfo(datasetInfo.Value.Experiment_NEWT_ID, datasetInfo.Value.Experiment_NEWT_Name);
 
             // Store the instrument group and instrument name
-            StoreInstrumentInfo(kvDatasetInfo.Value);
+            StoreInstrumentInfo(datasetInfo.Value);
 
-            var udtDatasetInfo = kvDatasetInfo.Value;
+            var udtDatasetInfo = datasetInfo.Value;
             var datasetRawFilePath = Path.Combine(udtDatasetInfo.ServerStoragePath, udtDatasetInfo.Dataset + ".raw");
 
             var dataPkgJob = clsAnalysisResources.GetPseudoDataPackageJobInfo(udtDatasetInfo);
@@ -573,7 +573,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
         }
 
-        private bool AppendToPXFileInfo(clsDataPackageJobInfo dataPkgJob, IReadOnlyDictionary<string, string> dctDatasetRawFilePaths,
+        private bool AppendToPXFileInfo(clsDataPackageJobInfo dataPkgJob, IReadOnlyDictionary<string, string> datasetRawFilePaths,
             clsResultFileContainer resultFiles)
         {
             // Add the files to be submitted to ProteomeXchange to the master file list
@@ -592,7 +592,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
 
             var rawFileID = 0;
-            if (dctDatasetRawFilePaths.TryGetValue(dataPkgJob.Dataset, out var datasetRawFilePath))
+            if (datasetRawFilePaths.TryGetValue(dataPkgJob.Dataset, out var datasetRawFilePath))
             {
                 if (!string.IsNullOrEmpty(datasetRawFilePath))
                 {
@@ -933,7 +933,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <returns>True if the file exists or was created</returns>
         /// <remarks></remarks>
         private bool CreateMzXMLFileIfMissing(string dataset, clsAnalysisResults analysisResults,
-            IReadOnlyDictionary<string, string> dctDatasetRawFilePaths)
+            IReadOnlyDictionary<string, string> datasetRawFilePaths)
         {
             try
             {
@@ -967,10 +967,10 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 // Need to create the .mzXML file
 
-                var dctDatasetYearQuarter =
+                var datasetYearQuarterByDataset =
                     ExtractPackedJobParameterDictionary(clsAnalysisResourcesPRIDEConverter.JOB_PARAM_DICTIONARY_DATASET_STORAGE_YEAR_QUARTER);
 
-                if (!dctDatasetRawFilePaths.ContainsKey(dataset))
+                if (!datasetRawFilePaths.ContainsKey(dataset))
                 {
                     LogError("Dataset " + dataset + " not found in job parameter " +
                         clsAnalysisResources.JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS +
@@ -990,7 +990,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 // Make sure the dataset file is present in the working directory
                 // Copy it locally if necessary
 
-                var datasetFilePathRemote = dctDatasetRawFilePaths[dataset];
+                var datasetFilePathRemote = datasetRawFilePaths[dataset];
                 if (string.IsNullOrWhiteSpace(datasetFilePathRemote))
                 {
                     LogError("Dataset " + dataset + " has an empty value for the instrument file path in " +
@@ -1076,7 +1076,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 // Copy the .mzXML file to the cache
 
                 var msXmlGeneratorName = Path.GetFileNameWithoutExtension(mMSXmlGeneratorAppPath);
-                if (!dctDatasetYearQuarter.TryGetValue(dataset, out var datasetYearQuarter))
+                if (!datasetYearQuarterByDataset.TryGetValue(dataset, out var datasetYearQuarter))
                 {
                     datasetYearQuarter = string.Empty;
                 }
@@ -1152,10 +1152,10 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 // Furthermore, the .msgf-report.xml file cannot have extra entries that are not in the .msgf file
                 // Thus, only keep the best-scoring match for each spectrum
                 //
-                // The keys in each of dctBestMatchByScan and dctBestMatchByScanScoreValues are scan numbers
-                // The value for dctBestMatchByScan is a KeyValue pair where the key is the score for this match
-                var dctBestMatchByScan = new Dictionary<int, KeyValuePair<double, string>>();
-                var dctBestMatchByScanScoreValues = new Dictionary<int, udtPseudoMSGFDataType>();
+                // The keys in each of bestMatchByScan and bestMatchByScanScoreValues are scan numbers
+                // The value for bestMatchByScan is a KeyValue pair where the key is the score for this match
+                var bestMatchByScan = new Dictionary<int, KeyValuePair<double, string>>();
+                var bestMatchByScanScoreValues = new Dictionary<int, udtPseudoMSGFDataType>();
 
                 var mzXMLFilename = dataset + ".mzXML";
 
@@ -1391,7 +1391,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                             // Determine the protein index in mCachedProteins
 
 
-                            if (!mCachedProteins.TryGetValue(reader.CurrentPSM.ProteinFirst, out var kvIndexAndSequence))
+                            if (!mCachedProteins.TryGetValue(reader.CurrentPSM.ProteinFirst, out var indexAndSequence))
                             {
                                 // Protein not found in mCachedProteins
                                 // If the search engine is MSGFDB and the protein name starts with REV_ or XXX_ then skip this protein since it's a decoy result
@@ -1417,9 +1417,9 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                                 if (validPSM)
                                 {
-                                    kvIndexAndSequence = new KeyValuePair<int, string>(mCachedProteins.Count, string.Empty);
-                                    mCachedProteinPSMCounts.Add(kvIndexAndSequence.Key, 0);
-                                    mCachedProteins.Add(reader.CurrentPSM.ProteinFirst, kvIndexAndSequence);
+                                    indexAndSequence = new KeyValuePair<int, string>(mCachedProteins.Count, string.Empty);
+                                    mCachedProteinPSMCounts.Add(indexAndSequence.Key, 0);
+                                    mCachedProteins.Add(reader.CurrentPSM.ProteinFirst, indexAndSequence);
                                 }
                             }
                         }
@@ -1479,29 +1479,29 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                             reader.CurrentPSM.ResultID + "\t" + "0\t" + "0\t" +
                             reader.CurrentPSM.MSGFSpecProb;
 
-                        // Add or update dctBestMatchByScan and dctBestMatchByScanScoreValues
+                        // Add or update bestMatchByScan and bestMatchByScanScoreValues
                         bool newScanNumber;
 
-                        if (dctBestMatchByScan.TryGetValue(reader.CurrentPSM.ScanNumber, out var kvBestMatchForScan))
+                        if (bestMatchByScan.TryGetValue(reader.CurrentPSM.ScanNumber, out var bestMatchForScan))
                         {
-                            if (scoreForCurrentMatch >= kvBestMatchForScan.Key)
+                            if (scoreForCurrentMatch >= bestMatchForScan.Key)
                             {
-                                // Skip this result since it has a lower score than the match already stored in dctBestMatchByScan
+                                // Skip this result since it has a lower score than the match already stored in bestMatchByScan
                                 validPSM = false;
                             }
                             else
                             {
-                                // Update dctBestMatchByScan
-                                dctBestMatchByScan[reader.CurrentPSM.ScanNumber] = new KeyValuePair<double, string>(scoreForCurrentMatch, msgfText);
+                                // Update bestMatchByScan
+                                bestMatchByScan[reader.CurrentPSM.ScanNumber] = new KeyValuePair<double, string>(scoreForCurrentMatch, msgfText);
                                 validPSM = true;
                             }
                             newScanNumber = false;
                         }
                         else
                         {
-                            // Scan not yet present in dctBestMatchByScan; add it
-                            kvBestMatchForScan = new KeyValuePair<double, string>(scoreForCurrentMatch, msgfText);
-                            dctBestMatchByScan.Add(reader.CurrentPSM.ScanNumber, kvBestMatchForScan);
+                            // Scan not yet present in bestMatchByScan; add it
+                            bestMatchForScan = new KeyValuePair<double, string>(scoreForCurrentMatch, msgfText);
+                            bestMatchByScan.Add(reader.CurrentPSM.ScanNumber, bestMatchForScan);
                             validPSM = true;
                             newScanNumber = true;
                         }
@@ -1537,11 +1537,11 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                         if (newScanNumber)
                         {
-                            dctBestMatchByScanScoreValues.Add(reader.CurrentPSM.ScanNumber, udtPseudoMSGFData);
+                            bestMatchByScanScoreValues.Add(reader.CurrentPSM.ScanNumber, udtPseudoMSGFData);
                         }
                         else
                         {
-                            dctBestMatchByScanScoreValues[reader.CurrentPSM.ScanNumber] = udtPseudoMSGFData;
+                            bestMatchByScanScoreValues[reader.CurrentPSM.ScanNumber] = udtPseudoMSGFData;
                         }
                     }
                 }
@@ -1564,26 +1564,26 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                          "SpecFilePos\t" + "SpecProb");
 
                     // Write out the filter-passing matches to the pseudo MSGF text file
-                    foreach (var kvItem in dctBestMatchByScan)
+                    foreach (var item in bestMatchByScan)
                     {
-                        swMSGFFile.WriteLine(kvItem.Value.Value);
+                        swMSGFFile.WriteLine(item.Value.Value);
                     }
                 }
 
                 // Store the filter-passing matches in pseudoMSGFData
 
-                foreach (var kvItem in dctBestMatchByScanScoreValues)
+                foreach (var item in bestMatchByScanScoreValues)
                 {
-                    if (pseudoMSGFData.TryGetValue(kvItem.Value.Protein, out var matchesForProtein))
+                    if (pseudoMSGFData.TryGetValue(item.Value.Protein, out var matchesForProtein))
                     {
-                        matchesForProtein.Add(kvItem.Value);
+                        matchesForProtein.Add(item.Value);
                     }
                     else
                     {
                         matchesForProtein = new List<udtPseudoMSGFDataType> {
-                            kvItem.Value
+                            item.Value
                         };
-                        pseudoMSGFData.Add(kvItem.Value.Protein, matchesForProtein);
+                        pseudoMSGFData.Add(item.Value.Protein, matchesForProtein);
                     }
                 }
             }
@@ -1667,11 +1667,11 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     {
                         if (!mCachedProteins.ContainsKey(fastaFileReader.ProteinName))
                         {
-                            var kvIndexAndSequence = new KeyValuePair<int, string>(mCachedProteins.Count, fastaFileReader.ProteinSequence);
+                            var indexAndSequence = new KeyValuePair<int, string>(mCachedProteins.Count, fastaFileReader.ProteinSequence);
 
                             try
                             {
-                                mCachedProteins.Add(fastaFileReader.ProteinName, kvIndexAndSequence);
+                                mCachedProteins.Add(fastaFileReader.ProteinName, indexAndSequence);
                             }
                             catch (Exception ex)
                             {
@@ -1680,7 +1680,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                             try
                             {
-                                mCachedProteinPSMCounts.Add(kvIndexAndSequence.Key, 0);
+                                mCachedProteinPSMCounts.Add(indexAndSequence.Key, 0);
                             }
                             catch (Exception ex)
                             {
@@ -2132,33 +2132,33 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             {
                 writer.WriteStartElement("Identifications");
 
-                foreach (var kvProteinEntry in pseudoMSGFData)
+                foreach (var proteinEntry in pseudoMSGFData)
                 {
 
-                    if (!mCachedProteins.TryGetValue(kvProteinEntry.Key, out var kvIndexAndSequence))
+                    if (!mCachedProteins.TryGetValue(proteinEntry.Key, out var indexAndSequence))
                     {
                         // Protein not found in mCachedProteins; this is unexpected (should have already been added by CreatePseudoMSGFFileUsingPHRPReader()
                         // Add the protein to mCachedProteins and mCachedProteinPSMCounts, though we won't know its sequence
 
-                        kvIndexAndSequence = new KeyValuePair<int, string>(mCachedProteins.Count, string.Empty);
-                        mCachedProteinPSMCounts.Add(kvIndexAndSequence.Key, kvProteinEntry.Value.Count);
-                        mCachedProteins.Add(kvProteinEntry.Key, kvIndexAndSequence);
+                        indexAndSequence = new KeyValuePair<int, string>(mCachedProteins.Count, string.Empty);
+                        mCachedProteinPSMCounts.Add(indexAndSequence.Key, proteinEntry.Value.Count);
+                        mCachedProteins.Add(proteinEntry.Key, indexAndSequence);
                     }
                     else
                     {
-                        mCachedProteinPSMCounts[kvIndexAndSequence.Key] = kvProteinEntry.Value.Count;
+                        mCachedProteinPSMCounts[indexAndSequence.Key] = proteinEntry.Value.Count;
                     }
 
                     writer.WriteStartElement("Identification");
 
                     // Protein name
-                    writer.WriteElementString("Accession", kvProteinEntry.Key);
+                    writer.WriteElementString("Accession", proteinEntry.Key);
 
                     // Cleaned-up version of the Protein name; for example, for ref|NP_035862.2 we would put "NP_035862" here
-                    // writer.WriteElementString("CuratedAccession", kvProteinEntry.Key);
+                    // writer.WriteElementString("CuratedAccession", proteinEntry.Key);
 
                     // Protein name
-                    writer.WriteElementString("UniqueIdentifier", kvProteinEntry.Key);
+                    writer.WriteElementString("UniqueIdentifier", proteinEntry.Key);
 
                     // Accession version would be determined when curating the "Accession" name.  For example, for ref|NP_035862.2 we would put "2" here
                     // writer.WriteElementString("AccessionVersion", "1");
@@ -2167,7 +2167,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     writer.WriteElementString("DatabaseVersion", "Unknown");
 
                     // Write out each PSM for this protein
-                    foreach (var udtPeptide in kvProteinEntry.Value)
+                    foreach (var udtPeptide in proteinEntry.Value)
                     {
                         writer.WriteStartElement("Peptide");
 
@@ -2234,7 +2234,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     writer.WriteStartElement("additional");
                     writer.WriteEndElement();
 
-                    writer.WriteElementString("FastaSequenceReference", kvIndexAndSequence.Key.ToString());
+                    writer.WriteElementString("FastaSequenceReference", indexAndSequence.Key.ToString());
 
                     writer.WriteEndElement();      // Identification
                 }
@@ -2262,10 +2262,10 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 // For each entry, the key is the protein name
                 // The value is itself a key-value pair, where Value.Key is the protein index and Value.Value is the protein sequence
 
-                foreach (var kvEntry in mCachedProteins)
+                foreach (var entry in mCachedProteins)
                 {
-                    var proteinName = string.Copy(kvEntry.Key);
-                    var proteinIndex = kvEntry.Value.Key;
+                    var proteinName = string.Copy(entry.Key);
+                    var proteinIndex = entry.Value.Key;
 
                     // Only write out this protein if it had 1 or more PSMs
                     if (!mCachedProteinPSMCounts.TryGetValue(proteinIndex, out var psmCount) || psmCount <= 0)
@@ -2275,7 +2275,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     writer.WriteAttributeString("id", proteinIndex.ToString());
                     writer.WriteAttributeString("accession", proteinName);
 
-                    writer.WriteValue(kvEntry.Value.Value);
+                    writer.WriteValue(entry.Value.Value);
 
                     writer.WriteEndElement();          // Sequence
                 }
@@ -2325,6 +2325,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                 break;
                         }
                         break;
+
                     case XmlNodeType.EndElement:
                         if (xmlReader.Depth <= nodeDepth)
                         {
@@ -2332,6 +2333,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         }
                         break;
                 }
+
                 if (error)
                 {
                     break;
@@ -2440,7 +2442,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
         }
 
-        private bool CreatePXSubmissionFile(IReadOnlyDictionary<string, string> dctTemplateParameters)
+        private bool CreatePXSubmissionFile(IReadOnlyDictionary<string, string> templateParameters)
         {
             const string TBD = "******* UPDATE ****** ";
 
@@ -2540,42 +2542,42 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 using (var swPXFile = new StreamWriter(new FileStream(pXFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    WritePXHeader(swPXFile, "submitter_name", "Matthew Monroe", dctTemplateParameters);
-                    WritePXHeader(swPXFile, "submitter_email", "matthew.monroe@pnnl.gov", dctTemplateParameters);
-                    WritePXHeader(swPXFile, "submitter_affiliation", PNNL_NAME_COUNTRY, dctTemplateParameters);
-                    WritePXHeader(swPXFile, "submitter_pride_login", "matthew.monroe@pnnl.gov", dctTemplateParameters);
+                    WritePXHeader(swPXFile, "submitter_name", "Matthew Monroe", templateParameters);
+                    WritePXHeader(swPXFile, "submitter_email", "matthew.monroe@pnnl.gov", templateParameters);
+                    WritePXHeader(swPXFile, "submitter_affiliation", PNNL_NAME_COUNTRY, templateParameters);
+                    WritePXHeader(swPXFile, "submitter_pride_login", "matthew.monroe@pnnl.gov", templateParameters);
 
-                    WritePXHeader(swPXFile, "lab_head_name", "Richard D. Smith", dctTemplateParameters);
-                    WritePXHeader(swPXFile, "lab_head_email", "dick.smith@pnnl.gov", dctTemplateParameters);
-                    WritePXHeader(swPXFile, "lab_head_affiliation", PNNL_NAME_COUNTRY, dctTemplateParameters);
+                    WritePXHeader(swPXFile, "lab_head_name", "Richard D. Smith", templateParameters);
+                    WritePXHeader(swPXFile, "lab_head_email", "dick.smith@pnnl.gov", templateParameters);
+                    WritePXHeader(swPXFile, "lab_head_affiliation", PNNL_NAME_COUNTRY, templateParameters);
 
-                    WritePXHeader(swPXFile, "project_title", TBD + "User-friendly Article Title", dctTemplateParameters);
+                    WritePXHeader(swPXFile, "project_title", TBD + "User-friendly Article Title", templateParameters);
 
                     // Minimum 50 characterse, max 5000 characters
-                    WritePXHeader(swPXFile, "project_description", TBD + "Summary sentence", dctTemplateParameters, 50);
+                    WritePXHeader(swPXFile, "project_description", TBD + "Summary sentence", templateParameters, 50);
 
                     // We don't normally use the project_tag field, so it is commented out
                     // Example official tags are:
                     //  Human proteome project
                     //  Human plasma project
-                    // WritePXHeader(swPXFile, "project_tag", TBD + "Official project tag assigned by the repository", dctTemplateParameters)
+                    // WritePXHeader(swPXFile, "project_tag", TBD + "Official project tag assigned by the repository", templateParameters)
 
-                    if (dctTemplateParameters.ContainsKey("pubmed_id"))
+                    if (templateParameters.ContainsKey("pubmed_id"))
                     {
-                        WritePXHeader(swPXFile, "pubmed_id", TBD, dctTemplateParameters);
+                        WritePXHeader(swPXFile, "pubmed_id", TBD, templateParameters);
                     }
 
                     // We don't normally use this field, so it is commented out
                     // WritePXHeader(swPXFile, "other_omics_link", "Related data is available from PeptideAtlas at http://www.peptideatlas.org/PASS/PASS00297")
 
                     // Comma separated list; suggest at least 3 keywords
-                    WritePXHeader(swPXFile, "keywords", TBD, dctTemplateParameters);
+                    WritePXHeader(swPXFile, "keywords", TBD, templateParameters);
 
                     // Minimum 50 characters, max 5000 characters
-                    WritePXHeader(swPXFile, "sample_processing_protocol", TBD, dctTemplateParameters, 50);
+                    WritePXHeader(swPXFile, "sample_processing_protocol", TBD, templateParameters, 50);
 
                     // Minimum 50 characters, max 5000 characters
-                    WritePXHeader(swPXFile, "data_processing_protocol", TBD, dctTemplateParameters, 50);
+                    WritePXHeader(swPXFile, "data_processing_protocol", TBD, templateParameters, 50);
 
                     // Example values for experiment_type (a given submission can have more than one experiment_type listed)
                     //   [PRIDE, PRIDE:0000427, Top-down proteomics, ]
@@ -2590,7 +2592,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     //   [PRIDE, PRIDE:0000454, All-ion fragmentation, ]
                     //   [MS, MS:1002521, Mass spectrometry imaging,]
                     //   [MS, MS:1002521, Mass spectrometry imaging,]
-                    WritePXHeader(swPXFile, "experiment_type", GetCVString("PRIDE", "PRIDE:0000429", "Shotgun proteomics", ""), dctTemplateParameters);
+                    WritePXHeader(swPXFile, "experiment_type", GetCVString("PRIDE", "PRIDE:0000429", "Shotgun proteomics", ""), templateParameters);
 
                     WritePXLine(swPXFile, new List<string>
                     {
@@ -2633,7 +2635,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     if (mExperimentNEWTInfo.Count == 0)
                     {
                         // None of the data package jobs had valid NEWT info
-                        WritePXHeader(swPXFile, "species", TBD + GetCVString("NEWT", "2323", "unclassified Bacteria", ""), dctTemplateParameters);
+                        WritePXHeader(swPXFile, "species", TBD + GetCVString("NEWT", "2323", "unclassified Bacteria", ""), templateParameters);
                     }
                     else
                     {
@@ -2651,12 +2653,12 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     }
 
                     if (mouseOrHuman)
-                        WritePXHeader(swPXFile, "tissue", TBD + DEFAULT_TISSUE_CV_MOUSE_HUMAN, dctTemplateParameters);
+                        WritePXHeader(swPXFile, "tissue", TBD + DEFAULT_TISSUE_CV_MOUSE_HUMAN, templateParameters);
                     else
-                        WritePXHeader(swPXFile, "tissue", TBD + DEFAULT_TISSUE_CV, dctTemplateParameters);
+                        WritePXHeader(swPXFile, "tissue", TBD + DEFAULT_TISSUE_CV, templateParameters);
 
-                    WritePXHeader(swPXFile, "cell_type", TBD + "Optional, e.g. " + DEFAULT_CELL_TYPE_CV + DELETION_WARNING, dctTemplateParameters);
-                    WritePXHeader(swPXFile, "disease", TBD + "Optional, e.g. " + DEFAULT_DISEASE_TYPE_CV + DELETION_WARNING, dctTemplateParameters);
+                    WritePXHeader(swPXFile, "cell_type", TBD + "Optional, e.g. " + DEFAULT_CELL_TYPE_CV + DELETION_WARNING, templateParameters);
+                    WritePXHeader(swPXFile, "disease", TBD + "Optional, e.g. " + DEFAULT_DISEASE_TYPE_CV + DELETION_WARNING, templateParameters);
 
                     // Example values for quantification (a given submission can have more than one type listed)
                     //   [PRIDE, PRIDE:0000318, 18O,]
@@ -2675,7 +2677,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     //   [PRIDE, PRIDE:0000439, Spectral Abundance Factor – SAF,]
                     //   [PRIDE, PRIDE:0000440, Normalized Spectral Abundance Factor – NSAF,]
                     //   [PRIDE, PRIDE:0000441, APEX - Absolute Protein Expression,]
-                    WritePXHeader(swPXFile, "quantification", TBD + "Optional, e.g. " + DEFAULT_QUANTIFICATION_TYPE_CV, dctTemplateParameters);
+                    WritePXHeader(swPXFile, "quantification", TBD + "Optional, e.g. " + DEFAULT_QUANTIFICATION_TYPE_CV, templateParameters);
 
                     if (mInstrumentGroupsStored.Count > 0)
                     {
@@ -2684,7 +2686,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     else
                     {
                         // Instrument type is unknown
-                        WritePXHeader(swPXFile, "instrument", TBD + GetCVString("MS", "MS:1000031", "instrument model", "CUSTOM UNKNOWN MASS SPEC"), dctTemplateParameters);
+                        WritePXHeader(swPXFile, "instrument", TBD + GetCVString("MS", "MS:1000031", "instrument model", "CUSTOM UNKNOWN MASS SPEC"), templateParameters);
                     }
 
                     // Note that the modification terms are optional for complete submissions
@@ -2692,11 +2694,11 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     WritePXMods(swPXFile);
 
                     // Could write additional terms here
-                    // WritePXHeader(swPXFile, "additional", GetCVString("", "", "Patient", "Colorectal cancer patient 1"), dctTemplateParameters)
+                    // WritePXHeader(swPXFile, "additional", GetCVString("", "", "Patient", "Colorectal cancer patient 1"), templateParameters)
 
                     // If this is a re-submission or re-analysis, use these:
-                    // WritePXHeader(swPXFile, "resubmission_px", "PXD00001", dctTemplateParameters)
-                    // WritePXHeader(swPXFile, "reanalysis_px", "PXD00001", dctTemplateParameters)
+                    // WritePXHeader(swPXFile, "resubmission_px", "PXD00001", templateParameters)
+                    // WritePXHeader(swPXFile, "reanalysis_px", "PXD00001", templateParameters)
 
                     // Add a blank line
                     swPXFile.WriteLine();
@@ -2751,8 +2753,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     }
 
                     // Determine whether the tissue or cell_type columns will bein the SMH section
-                    var smhIncludesCellType = DictionaryHasDefinedValue(dctTemplateParameters, "cell_type");
-                    var smhIncludesDisease = DictionaryHasDefinedValue(dctTemplateParameters, "disease");
+                    var smhIncludesCellType = DictionaryHasDefinedValue(templateParameters, "cell_type");
+                    var smhIncludesDisease = DictionaryHasDefinedValue(templateParameters, "disease");
 
                     var reJobAddon = new Regex(@"(_Job\d+)(_msgfplus)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
@@ -2841,7 +2843,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                             fileInfoCols.Add(instrumentCV);
 
-                            fileInfoCols.Add(GetValueOrDefault("quantification)", dctTemplateParameters, sampleMetadata.Quantification));
+                            fileInfoCols.Add(GetValueOrDefault("quantification)", templateParameters, sampleMetadata.Quantification));
 
                             fileInfoCols.Add(sampleMetadata.ExperimentalFactor);
                         }
@@ -2919,9 +2921,9 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             return true;
         }
 
-        private bool DictionaryHasDefinedValue(IReadOnlyDictionary<string, string> dctTemplateParameters, string termName)
+        private bool DictionaryHasDefinedValue(IReadOnlyDictionary<string, string> templateParameters, string termName)
         {
-            if (dctTemplateParameters.TryGetValue(termName, out var value))
+            if (templateParameters.TryGetValue(termName, out var value))
             {
                 if (!string.IsNullOrWhiteSpace(value))
                     return true;
@@ -3153,9 +3155,9 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             return prideConverterVersion;
         }
 
-        private string GetValueOrDefault(string type, IReadOnlyDictionary<string, string> dctParameters, string defaultValue)
+        private string GetValueOrDefault(string type, IReadOnlyDictionary<string, string> parameters, string defaultValue)
         {
-            if (dctParameters.TryGetValue(type, out var valueOverride))
+            if (parameters.TryGetValue(type, out var valueOverride))
             {
                 return valueOverride;
             }
@@ -3254,8 +3256,8 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 mDataPackagePeptideHitJobs.Clear();
             }
 
-            var lstDataPackagePeptideHitJobs = RetrieveDataPackagePeptideHitJobInfo(out var lstAdditionalJobs, out var errorMsg);
-            if (lstDataPackagePeptideHitJobs.Count == 0)
+            var dataPackagePeptideHitJobs = RetrieveDataPackagePeptideHitJobInfo(out var additionalJobs, out var errorMsg);
+            if (dataPackagePeptideHitJobs.Count == 0)
             {
                 var msg = "Error loading data package job info";
                 if (string.IsNullOrEmpty(errorMsg))
@@ -3275,17 +3277,17 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
             else
             {
-                var dctDataPackageJobs = new Dictionary<int, clsDataPackageJobInfo>();
-                foreach (var item in lstDataPackagePeptideHitJobs)
+                var dataPackageJobs = new Dictionary<int, clsDataPackageJobInfo>();
+                foreach (var item in dataPackagePeptideHitJobs)
                 {
-                    if (!dctDataPackageJobs.ContainsKey(item.Job))
-                        dctDataPackageJobs.Add(item.Job, item);
+                    if (!dataPackageJobs.ContainsKey(item.Job))
+                        dataPackageJobs.Add(item.Job, item);
                 }
 
-                foreach (var item in lstAdditionalJobs)
+                foreach (var item in additionalJobs)
                 {
-                    if (!dctDataPackageJobs.ContainsKey(item.Job))
-                        dctDataPackageJobs.Add(item.Job, item);
+                    if (!dataPackageJobs.ContainsKey(item.Job))
+                        dataPackageJobs.Add(item.Job, item);
                 }
 
                 // Populate mDataPackagePeptideHitJobs using the jobs in jobsToUse
@@ -3294,7 +3296,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     if (!int.TryParse(job, out var jobNumber))
                         continue;
 
-                    if (dctDataPackageJobs.TryGetValue(jobNumber, out var dataPkgJob))
+                    if (dataPackageJobs.TryGetValue(jobNumber, out var dataPkgJob))
                     {
                         mDataPackagePeptideHitJobs.Add(jobNumber, dataPkgJob);
                     }
@@ -3383,19 +3385,19 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         }
 
         private CloseOutType ProcessJob(
-            KeyValuePair<int, clsDataPackageJobInfo> kvJobInfo,
+            KeyValuePair<int, clsDataPackageJobInfo> jobInfo,
             udtFilterThresholdsType udtFilterThresholds,
             clsAnalysisResults analysisResults,
             string remoteTransferFolder,
-            IReadOnlyDictionary<string, string> dctDatasetRawFilePaths,
-            IReadOnlyDictionary<string, string> dctTemplateParameters,
+            IReadOnlyDictionary<string, string> datasetRawFilePaths,
+            IReadOnlyDictionary<string, string> templateParameters,
             bool assumeInstrumentDataUnpurged)
         {
             bool success;
             var resultFiles = new clsResultFileContainer();
 
-            var job = kvJobInfo.Value.Job;
-            var dataset = kvJobInfo.Value.Dataset;
+            var job = jobInfo.Value.Job;
+            var dataset = jobInfo.Value.Dataset;
 
             if (mPreviousDatasetName != dataset)
             {
@@ -3407,7 +3409,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 if (mCreatePrideXMLFiles && !mCreateMSGFReportFilesOnly)
                 {
                     // Create the .mzXML files if it is missing
-                    success = CreateMzXMLFileIfMissing(dataset, analysisResults, dctDatasetRawFilePaths);
+                    success = CreateMzXMLFileIfMissing(dataset, analysisResults, datasetRawFilePaths);
                     if (!success)
                     {
                         return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
@@ -3416,13 +3418,13 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
 
             // Update the cached analysis tool names
-            if (!mSearchToolsUsed.Contains(kvJobInfo.Value.Tool))
+            if (!mSearchToolsUsed.Contains(jobInfo.Value.Tool))
             {
-                mSearchToolsUsed.Add(kvJobInfo.Value.Tool);
+                mSearchToolsUsed.Add(jobInfo.Value.Tool);
             }
 
             // Update the cached NEWT info
-            AddNEWTInfo(kvJobInfo.Value.Experiment_NEWT_ID, kvJobInfo.Value.Experiment_NEWT_Name);
+            AddNEWTInfo(jobInfo.Value.Experiment_NEWT_ID, jobInfo.Value.Experiment_NEWT_Name);
 
             // Retrieve the PHRP files, MSGF+ results, and _dta.txt or .mzML.gz file for this job
             var filesCopied = new List<string>();
@@ -3451,13 +3453,12 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 if (!FileExistsInTransferFolder(remoteTransferFolder, dataset + ".mgf"))
                 {
                     // Convert the _dta.txt file to .mgf files
-                    success = ConvertCDTAToMGF(kvJobInfo.Value, out var mgfPath);
+                    success = ConvertCDTAToMGF(jobInfo.Value, out var mgfPath);
                     resultFiles.MGFFilePath = mgfPath;
                     if (!success)
                     {
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
-
                 }
 
             }
@@ -3484,11 +3485,11 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             // Update the .mzID file(s) for this job
             // Gzip after updating
 
-            if (mProcessMzIdFiles && kvJobInfo.Value.PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB)
+            if (mProcessMzIdFiles && jobInfo.Value.PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB)
             {
                 m_message = string.Empty;
 
-                success = UpdateMzIdFiles(remoteTransferFolder, kvJobInfo.Value, searchedMzML, out var mzIdFilePaths, out var mzIdExistsRemotely, dctTemplateParameters);
+                success = UpdateMzIdFiles(remoteTransferFolder, jobInfo.Value, searchedMzML, out var mzIdFilePaths, out var mzIdExistsRemotely, templateParameters);
 
                 if (!success || mzIdFilePaths == null || mzIdFilePaths.Count == 0)
                 {
@@ -3528,10 +3529,10 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 }
             }
 
-            if (mIncludePepXMLFiles && kvJobInfo.Value.PeptideHitResultType != clsPHRPReader.ePeptideHitResultType.Unknown ||
-                kvJobInfo.Value.PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.Sequest)
+            if (mIncludePepXMLFiles && jobInfo.Value.PeptideHitResultType != clsPHRPReader.ePeptideHitResultType.Unknown ||
+                jobInfo.Value.PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.Sequest)
             {
-                var pepXmlFilename = kvJobInfo.Value.Dataset + ".pepXML";
+                var pepXmlFilename = jobInfo.Value.Dataset + ".pepXML";
                 var pepXMLFile = new FileInfo(Path.Combine(m_WorkDir, pepXmlFilename));
                 if (pepXMLFile.Exists)
                 {
@@ -3562,7 +3563,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
 
             // Store the instrument group and instrument name
-            StoreInstrumentInfo(kvJobInfo.Value);
+            StoreInstrumentInfo(jobInfo.Value);
 
             resultFiles.PrideXmlFilePath = string.Empty;
 
@@ -3590,7 +3591,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 }
             }
 
-            success = AppendToPXFileInfo(kvJobInfo.Value, dctDatasetRawFilePaths, resultFiles);
+            success = AppendToPXFileInfo(jobInfo.Value, datasetRawFilePaths, resultFiles);
 
             if (success)
             {
@@ -3629,9 +3630,9 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         {
             const string OBSOLETE_FIELD_FLAG = "SKIP_OBSOLETE_FIELD";
 
-            var dctParameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            var parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-            var dctKeyNameOverrides = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            var keyNameOverrides = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
                 {"name", "submitter_name"},
                 {"email", "submitter_email"},
@@ -3651,7 +3652,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 if (!File.Exists(templateFilePath))
                 {
-                    return dctParameters;
+                    return parameters;
                 }
 
                 using (var srTemplateFile = new StreamReader(new FileStream(templateFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
@@ -3674,14 +3675,14 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         var keyName = columns[1];
 
                         // Automatically rename parameters updated from v1.x to v2.x of the .px file format
-                        if (dctKeyNameOverrides.TryGetValue(keyName, out var keyNameNew))
+                        if (keyNameOverrides.TryGetValue(keyName, out var keyNameNew))
                         {
                             keyName = keyNameNew;
                         }
 
-                        if (!string.Equals(keyName, OBSOLETE_FIELD_FLAG) && !dctParameters.ContainsKey(keyName))
+                        if (!string.Equals(keyName, OBSOLETE_FIELD_FLAG) && !parameters.ContainsKey(keyName))
                         {
-                            dctParameters.Add(keyName, columns[2]);
+                            parameters.Add(keyName, columns[2]);
                         }
                     }
                 }
@@ -3689,10 +3690,10 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             catch (Exception ex)
             {
                 LogError("Error in ReadTemplatePXSubmissionFile", ex);
-                return dctParameters;
+                return parameters;
             }
 
-            return dctParameters;
+            return parameters;
         }
 
         private clsSampleMetadata.udtCvParamInfoType ReadWriteCvParam(XmlReader xmlReader, XmlWriter writer,
@@ -3901,10 +3902,10 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                         if (unzipped)
                         {
-                            foreach (var kvUnzippedFile in m_DotNetZipTools.MostRecentUnzippedFiles)
+                            foreach (var unzippedFile in m_DotNetZipTools.MostRecentUnzippedFiles)
                             {
-                                filesCopied.Add(kvUnzippedFile.Key);
-                                AddToListIfNew(mPreviousDatasetFilesToDelete, kvUnzippedFile.Value);
+                                filesCopied.Add(unzippedFile.Key);
+                                AddToListIfNew(mPreviousDatasetFilesToDelete, unzippedFile.Value);
                             }
                         }
                     }
@@ -4327,7 +4328,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <param name="searchedMzML">True if analysis job used a .mzML file (though we track .mzml.gz files with this class)</param>
         /// <param name="mzIdFilePaths">Output parameter: path to the .mzid file for this job (will be multiple files if a SplitFasta search was performed)</param>
         /// <param name="mzIdExistsRemotely">Output parameter: true if the .mzid.gz file already exists in the remote transfer folder</param>
-        /// <param name="dctTemplateParameters"></param>
+        /// <param name="templateParameters"></param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks></remarks>
         private bool UpdateMzIdFiles(
@@ -4336,15 +4337,15 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             bool searchedMzML,
             out List<string> mzIdFilePaths,
             out bool mzIdExistsRemotely,
-            IReadOnlyDictionary<string, string> dctTemplateParameters)
+            IReadOnlyDictionary<string, string> templateParameters)
         {
             var sampleMetadata = new clsSampleMetadata();
             sampleMetadata.Clear();
 
             sampleMetadata.Species = GetNEWTCv(dataPkgJob.Experiment_NEWT_ID, dataPkgJob.Experiment_NEWT_Name);
-            sampleMetadata.Tissue = GetValueOrDefault("tissue", dctTemplateParameters, DEFAULT_TISSUE_CV);
+            sampleMetadata.Tissue = GetValueOrDefault("tissue", templateParameters, DEFAULT_TISSUE_CV);
 
-            if (dctTemplateParameters.TryGetValue("cell_type", out var cellType))
+            if (templateParameters.TryGetValue("cell_type", out var cellType))
             {
                 sampleMetadata.CellType = cellType;
             }
@@ -4353,7 +4354,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 sampleMetadata.CellType = string.Empty;
             }
 
-            if (dctTemplateParameters.TryGetValue("disease", out var disease))
+            if (templateParameters.TryGetValue("disease", out var disease))
             {
                 sampleMetadata.Disease = disease;
             }
@@ -4905,17 +4906,17 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// <param name="swPXFile"></param>
         /// <param name="type"></param>
         /// <param name="value"></param>
-        /// <param name="dctParameters"></param>
+        /// <param name="parameters"></param>
         /// <param name="minimumValueLength"></param>
         /// <remarks></remarks>
         private void WritePXHeader(
             TextWriter swPXFile,
             string type,
             string value,
-            IReadOnlyDictionary<string, string> dctParameters,
+            IReadOnlyDictionary<string, string> parameters,
             int minimumValueLength = 0)
         {
-            if (dctParameters.TryGetValue(type, out var valueOverride))
+            if (parameters.TryGetValue(type, out var valueOverride))
             {
                 value = valueOverride;
             }
@@ -4941,13 +4942,13 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             });
         }
 
-        private void WritePXInstruments(StreamWriter swPXFile)
+        private void WritePXInstruments(TextWriter swPXFile)
         {
-            foreach (var kvInstrumentGroup in mInstrumentGroupsStored)
+            foreach (var instrumentGroup in mInstrumentGroupsStored)
             {
-                GetInstrumentAccession(kvInstrumentGroup.Key, out var accession, out var description);
+                GetInstrumentAccession(instrumentGroup.Key, out var accession, out var description);
 
-                if (kvInstrumentGroup.Value.Contains("TSQ_2") && kvInstrumentGroup.Value.Count == 1)
+                if (instrumentGroup.Value.Contains("TSQ_2") && instrumentGroup.Value.Count == 1)
                 {
                     // TSQ_1 is a TSQ Quantum Ultra
                     accession = "MS:1000751";
@@ -4967,7 +4968,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
         }
 
-        private void WritePXMods(StreamWriter swPXFile)
+        private void WritePXMods(TextWriter swPXFile)
         {
             if (mModificationsUsed.Count == 0)
             {
@@ -5173,9 +5174,9 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         {
             if (e.UnzipRequired)
             {
-                foreach (var kvUnzippedFile in m_MyEMSLUtilities.MostRecentUnzippedFiles)
+                foreach (var unzippedFile in m_MyEMSLUtilities.MostRecentUnzippedFiles)
                 {
-                    AddToListIfNew(mPreviousDatasetFilesToDelete, kvUnzippedFile.Value);
+                    AddToListIfNew(mPreviousDatasetFilesToDelete, unzippedFile.Value);
                 }
             }
 
