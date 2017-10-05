@@ -3687,7 +3687,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                         if (!string.Equals(keyName, OBSOLETE_FIELD_FLAG) && !parameters.ContainsKey(keyName))
                         {
-                            parameters.Add(keyName, columns[2]);
+                            parameters.Add(keyName, columns[2].Trim());
                         }
                     }
                 }
