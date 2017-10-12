@@ -24,6 +24,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Status message
         /// </summary>
+        /// <remarks>Text here will be stored in the Completion_Message column in the database when the job is closed</remarks>
         protected string m_message;
 
         private readonly string m_derivedClassName;

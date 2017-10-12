@@ -4461,6 +4461,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="statusMessage">New status message</param>
         /// <param name="appendToExisting">True to append to m_message; false to overwrite it</param>
+        /// <remarks>Text in m_message will be stored in the Completion_Message column in the database</remarks>
         protected void UpdateStatusMessage(string statusMessage, bool appendToExisting = false)
         {
             if (appendToExisting)
