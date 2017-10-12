@@ -141,16 +141,16 @@
       <Version>1.10.1</Version>
     </PackageReference>
     <PackageReference Include="PRISM-Library">
-      <Version>2.4.32</Version>
+      <Version>2.4.34</Version>
     </PackageReference>
     <PackageReference Include="PRISMWin-Library">
-      <Version>1.0.2</Version>
+      <Version>1.0.3</Version>
     </PackageReference>
     <PackageReference Include="PRISM-Library">
-      <Version>2.4.32</Version>
+      <Version>2.4.34</Version>
     </PackageReference>
     <PackageReference Include="PRISMWin-Library">
-      <Version>1.0.2</Version>
+      <Version>1.0.3</Version>
     </PackageReference>
     <PackageReference Include="SSH.NET">
       <Version>2016.0.0</Version>
@@ -159,7 +159,7 @@
       <Version>1.0.97</Version>
     </PackageReference>
     <PackageReference Include="UIMFLibrary">
-      <Version>1.0.9</Version>
+      <Version>3.5.7.7</Version>
     </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
