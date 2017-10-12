@@ -60,7 +60,7 @@ namespace AnalysisManagerExtractionPlugin
         public override CloseOutType RunTool()
         {
 
-            var strCurrentAction = "preparing for extraction";
+            var currentAction = "preparing for extraction";
 
             try
             {
@@ -96,80 +96,81 @@ namespace AnalysisManagerExtractionPlugin
                     mGeneratedFastaFilePath = Path.Combine(orgDbDir, fastaFileName);
                 }
 
-                CloseOutType eResult;
+                CloseOutType result;
                 var processingSuccess = true;
 
                 switch (m_jobParams.GetParam("ResultType"))
                 {
                     case clsAnalysisResources.RESULT_TYPE_SEQUEST:   // Sequest result type
                         // Run Ken's Peptide Extractor DLL
-                        strCurrentAction = "running peptide extraction for Sequest";
-                        eResult = PerformPeptideExtraction();
+                        currentAction = "running peptide extraction for Sequest";
+                        result = PerformPeptideExtraction();
+
                         // Check for no data first. If no data, exit but still copy results to server
-                        if (eResult == CloseOutType.CLOSEOUT_NO_DATA)
+                        if (result == CloseOutType.CLOSEOUT_NO_DATA)
                         {
                             break;
                         }
 
                         // Run PHRP
-                        if (eResult == CloseOutType.CLOSEOUT_SUCCESS)
+                        if (result == CloseOutType.CLOSEOUT_SUCCESS)
                         {
                             m_progress = SEQUEST_PROGRESS_EXTRACTION_DONE;     // 33% done
                             UpdateStatusRunning(m_progress);
 
-                            strCurrentAction = "running peptide hits result processor for Sequest";
-                            eResult = RunPhrpForSequest();
+                            currentAction = "running peptide hits result processor for Sequest";
+                            result = RunPhrpForSequest();
                         }
 
-                        if (eResult == CloseOutType.CLOSEOUT_SUCCESS)
+                        if (result == CloseOutType.CLOSEOUT_SUCCESS)
                         {
                             m_progress = SEQUEST_PROGRESS_PHRP_DONE;   // 66% done
                             UpdateStatusRunning(m_progress);
-                            strCurrentAction = "running peptide prophet for Sequest";
+                            currentAction = "running peptide prophet for Sequest";
                             RunPeptideProphet();
                         }
 
                         break;
                     case clsAnalysisResources.RESULT_TYPE_XTANDEM:
                         // Run PHRP
-                        strCurrentAction = "running peptide hits result processor for X!Tandem";
-                        eResult = RunPhrpForXTandem();
+                        currentAction = "running peptide hits result processor for X!Tandem";
+                        result = RunPhrpForXTandem();
                         break;
                     case clsAnalysisResources.RESULT_TYPE_INSPECT:
                         // Run PHRP
-                        strCurrentAction = "running peptide hits result processor for Inspect";
-                        eResult = RunPhrpForInSpecT();
+                        currentAction = "running peptide hits result processor for Inspect";
+                        result = RunPhrpForInSpecT();
                         break;
                     case clsAnalysisResources.RESULT_TYPE_MSGFPLUS:
                         // Run PHRP
-                        strCurrentAction = "running peptide hits result processor for MSGF+";
-                        eResult = RunPhrpForMSGFPlus();
+                        currentAction = "running peptide hits result processor for MSGF+";
+                        result = RunPhrpForMSGFPlus();
                         break;
                     case clsAnalysisResources.RESULT_TYPE_MSALIGN:
                         // Run PHRP
-                        strCurrentAction = "running peptide hits result processor for MSAlign";
-                        eResult = RunPhrpForMSAlign();
+                        currentAction = "running peptide hits result processor for MSAlign";
+                        result = RunPhrpForMSAlign();
                         break;
                     case clsAnalysisResources.RESULT_TYPE_MODA:
                         // Convert the MODa results to a tab-delimited file; do not filter out the reversed-hit proteins
-                        eResult = ConvertMODaResultsToTxt(out var strFilteredMODaResultsFilePath, true);
-                        if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+                        result = ConvertMODaResultsToTxt(out var filteredMODaResultsFilePath, true);
+                        if (result != CloseOutType.CLOSEOUT_SUCCESS)
                         {
                             processingSuccess = false;
                             break;
                         }
 
                         // Run PHRP
-                        strCurrentAction = "running peptide hits result processor for MODa";
-                        eResult = RunPhrpForMODa(strFilteredMODaResultsFilePath);
-                        if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+                        currentAction = "running peptide hits result processor for MODa";
+                        result = RunPhrpForMODa(filteredMODaResultsFilePath);
+                        if (result != CloseOutType.CLOSEOUT_SUCCESS)
                         {
                             processingSuccess = false;
                         }
 
                         // Convert the MODa results to a tab-delimited file, filter by FDR (and filter out the reverse-hit proteins)
-                        eResult = ConvertMODaResultsToTxt(out strFilteredMODaResultsFilePath, false);
-                        if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+                        result = ConvertMODaResultsToTxt(out filteredMODaResultsFilePath, false);
+                        if (result != CloseOutType.CLOSEOUT_SUCCESS)
                         {
                             processingSuccess = false;
                         }
@@ -177,24 +178,24 @@ namespace AnalysisManagerExtractionPlugin
                         break;
                     case clsAnalysisResources.RESULT_TYPE_MODPLUS:
                         // Convert the MODPlus results to a tab-delimited file; do not filter out the reversed-hit proteins
-                        eResult = ConvertMODPlusResultsToTxt(out var strFilteredMODPlusResultsFilePath, true);
-                        if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+                        result = ConvertMODPlusResultsToTxt(out var filteredMODPlusResultsFilePath, true);
+                        if (result != CloseOutType.CLOSEOUT_SUCCESS)
                         {
                             processingSuccess = false;
                             break;
                         }
 
                         // Run PHRP
-                        strCurrentAction = "running peptide hits result processor for MODPlus";
-                        eResult = RunPhrpForMODPlus(strFilteredMODPlusResultsFilePath);
-                        if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+                        currentAction = "running peptide hits result processor for MODPlus";
+                        result = RunPhrpForMODPlus(filteredMODPlusResultsFilePath);
+                        if (result != CloseOutType.CLOSEOUT_SUCCESS)
                         {
                             processingSuccess = false;
                         }
 
                         // Convert the MODa results to a tab-delimited file, filter by FDR (and filter out the reverse-hit proteins)
-                        eResult = ConvertMODPlusResultsToTxt(out strFilteredMODPlusResultsFilePath, false);
-                        if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+                        result = ConvertMODPlusResultsToTxt(out filteredMODPlusResultsFilePath, false);
+                        if (result != CloseOutType.CLOSEOUT_SUCCESS)
                         {
                             processingSuccess = false;
                         }
@@ -202,8 +203,8 @@ namespace AnalysisManagerExtractionPlugin
                         break;
                     case clsAnalysisResources.RESULT_TYPE_MSPATHFINDER:
                         // Run PHRP
-                        strCurrentAction = "running peptide hits result processor for MSPathFinder";
-                        eResult = RunPHRPForMSPathFinder();
+                        currentAction = "running peptide hits result processor for MSPathFinder";
+                        result = RunPHRPForMSPathFinder();
                         break;
                     default:
                         // Should never get here - invalid result type specified
@@ -213,7 +214,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 if (eResult != CloseOutType.CLOSEOUT_SUCCESS && eResult != CloseOutType.CLOSEOUT_NO_DATA)
                 {
-                    LogError("Error " + strCurrentAction);
+                    LogError("Error " + currentAction);
                     processingSuccess = false;
                 }
                 else
@@ -261,34 +262,34 @@ namespace AnalysisManagerExtractionPlugin
         /// <summary>
         /// Convert the MODa output file to a tab-delimited text file
         /// </summary>
-        /// <param name="strFilteredMODaResultsFilePath">Output parameter: path to the filtered results file</param>
+        /// <param name="filteredMODaResultsFilePath">Output parameter: path to the filtered results file</param>
         /// <param name="keepAllResults"></param>
         /// <returns>The path to the .txt file if successful; empty string if an error</returns>
         /// <remarks></remarks>
-        private CloseOutType ConvertMODaResultsToTxt(out string strFilteredMODaResultsFilePath, bool keepAllResults)
+        private CloseOutType ConvertMODaResultsToTxt(out string filteredMODaResultsFilePath, bool keepAllResults)
         {
             var fdrThreshold = m_jobParams.GetJobParameter("MODaFDRThreshold", 0.05f);
             var decoyPrefix = m_jobParams.GetJobParameter("MODaDecoyPrefix", "Reversed_");
 
             const bool isModPlus = false;
 
-            return ConvertMODaOrMODPlusResultsToTxt(fdrThreshold, decoyPrefix, isModPlus, out strFilteredMODaResultsFilePath, keepAllResults);
+            return ConvertMODaOrMODPlusResultsToTxt(fdrThreshold, decoyPrefix, isModPlus, out filteredMODaResultsFilePath, keepAllResults);
         }
 
-        private CloseOutType ConvertMODPlusResultsToTxt(out string strFilteredMODPlusResultsFilePath, bool keepAllResults)
+        private CloseOutType ConvertMODPlusResultsToTxt(out string filteredMODPlusResultsFilePath, bool keepAllResults)
         {
             var fdrThreshold = m_jobParams.GetJobParameter("MODPlusDecoyFilterFDR", 0.05f);
             var decoyPrefix = m_jobParams.GetJobParameter("MODPlusDecoyPrefix", "Reversed_");
 
             const bool isModPlus = true;
 
-            return ConvertMODaOrMODPlusResultsToTxt(fdrThreshold, decoyPrefix, isModPlus, out strFilteredMODPlusResultsFilePath, keepAllResults);
+            return ConvertMODaOrMODPlusResultsToTxt(fdrThreshold, decoyPrefix, isModPlus, out filteredMODPlusResultsFilePath, keepAllResults);
         }
 
         private CloseOutType ConvertMODaOrMODPlusResultsToTxt(float fdrThreshold, string decoyPrefixJobParam, bool isModPlus,
-            out string strFilteredResultsFilePath, bool keepAllResults)
+            out string filteredResultsFilePath, bool keepAllResults)
         {
-            strFilteredResultsFilePath = string.Empty;
+            filteredResultsFilePath = string.Empty;
 
             try
             {
@@ -333,7 +334,7 @@ namespace AnalysisManagerExtractionPlugin
 
                     foreach (var decoyPrefix in decoyPrefixes)
                     {
-                        var fractionDecoy = clsAnalysisResources.GetDecoyFastaCompositionStats(fiFastaFile, decoyPrefix, out var proteinCount);
+                        var fractionDecoy = clsAnalysisResources.GetDecoyFastaCompositionStats(fiFastaFile, decoyPrefix, out var _);
 
                         if (fractionDecoy * 100 >= MINIMUM_PERCENT_DECOY)
                         {
@@ -428,9 +429,9 @@ namespace AnalysisManagerExtractionPlugin
                 };
                 RegisterEvents(progRunner);
 
-                var blnSuccess = progRunner.RunProgram(javaProgLoc, cmdStr, toolName + "_Filter", true);
+                var success = progRunner.RunProgram(javaProgLoc, cmdStr, toolName + "_Filter", true);
 
-                if (!blnSuccess)
+                if (!success)
                 {
                     LogError("Error parsing and filtering " + toolName + " results");
 
@@ -458,7 +459,7 @@ namespace AnalysisManagerExtractionPlugin
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
-                strFilteredResultsFilePath = fiFilteredResultsFilePath.FullName;
+                filteredResultsFilePath = fiFilteredResultsFilePath.FullName;
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
             catch (Exception ex)
@@ -478,17 +479,17 @@ namespace AnalysisManagerExtractionPlugin
         {
             try
             {
-                var strMZIDFileName = m_Dataset + "_msgfplus" + suffixToAdd + ".mzid";
-                if (!File.Exists(Path.Combine(m_WorkDir, strMZIDFileName)))
+                var mzidFileName = m_Dataset + "_msgfplus" + suffixToAdd + ".mzid";
+                if (!File.Exists(Path.Combine(m_WorkDir, mzidFileName)))
                 {
-                    var strMZIDFileNameAlternate = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(strMZIDFileName, "Dataset_msgfdb.txt");
-                    if (File.Exists(Path.Combine(m_WorkDir, strMZIDFileNameAlternate)))
+                    var mzidFileNameAlternate = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(mzidFileName, "Dataset_msgfdb.txt");
+                    if (File.Exists(Path.Combine(m_WorkDir, mzidFileNameAlternate)))
                     {
-                        strMZIDFileName = strMZIDFileNameAlternate;
+                        mzidFileName = mzidFileNameAlternate;
                     }
                     else
                     {
-                        LogError(strMZIDFileName + " file not found");
+                        LogError(mzidFileName + " file not found");
                         return string.Empty;
                     }
                 }
@@ -515,7 +516,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 mMSGFPlusUtilsError = false;
 
-                var strTSVFilePath = mMSGFPlusUtils.ConvertMZIDToTSV(mzidToTsvConverterProgLoc, m_Dataset, strMZIDFileName);
+                var tsvFilePath = mMSGFPlusUtils.ConvertMZIDToTSV(mzidToTsvConverterProgLoc, m_Dataset, mzidFileName);
 
                 if (mMSGFPlusUtilsError)
                 {
@@ -526,13 +527,13 @@ namespace AnalysisManagerExtractionPlugin
                     return string.Empty;
                 }
 
-                if (!string.IsNullOrEmpty(strTSVFilePath))
+                if (!string.IsNullOrEmpty(tsvFilePath))
                 {
                     // File successfully created
 
                     if (!string.IsNullOrEmpty(suffixToAdd))
                     {
-                        var fiTSVFile = new FileInfo(strTSVFilePath);
+                        var fiTSVFile = new FileInfo(tsvFilePath);
 
                         if (string.IsNullOrWhiteSpace(fiTSVFile.DirectoryName))
                         {
@@ -541,12 +542,12 @@ namespace AnalysisManagerExtractionPlugin
                         }
 
                         var newTSVPath = Path.Combine(fiTSVFile.DirectoryName,
-                            Path.GetFileNameWithoutExtension(strTSVFilePath) + suffixToAdd + ".tsv");
+                            Path.GetFileNameWithoutExtension(tsvFilePath) + suffixToAdd + ".tsv");
 
                         fiTSVFile.MoveTo(newTSVPath);
                     }
 
-                    return strTSVFilePath;
+                    return tsvFilePath;
                 }
 
                 if (string.IsNullOrEmpty(m_message))
@@ -650,8 +651,8 @@ namespace AnalysisManagerExtractionPlugin
                         {
                             while (!srSourceFile.EndOfStream)
                             {
-                                var strLineIn = srSourceFile.ReadLine();
-                                if (string.IsNullOrWhiteSpace(strLineIn))
+                                var lineIn = srSourceFile.ReadLine();
+                                if (string.IsNullOrWhiteSpace(lineIn))
                                     continue;
 
                                 linesRead += 1;
@@ -663,7 +664,7 @@ namespace AnalysisManagerExtractionPlugin
                                         continue;
 
                                     // Write the header line
-                                    swMergedFile.WriteLine(strLineIn);
+                                    swMergedFile.WriteLine(lineIn);
 
                                     const bool IS_CASE_SENSITIVE = false;
                                     var lstHeaderNames = new List<string>
@@ -674,7 +675,7 @@ namespace AnalysisManagerExtractionPlugin
                                         "Protein",
                                         "SpecEValue"
                                     };
-                                    dctHeaderMapping = clsGlobal.ParseHeaderLine(strLineIn, lstHeaderNames, IS_CASE_SENSITIVE);
+                                    dctHeaderMapping = clsGlobal.ParseHeaderLine(lineIn, lstHeaderNames, IS_CASE_SENSITIVE);
 
                                     foreach (var headerName in lstHeaderNames)
                                     {
@@ -688,7 +689,7 @@ namespace AnalysisManagerExtractionPlugin
                                 }
                                 else
                                 {
-                                    var splitLine = strLineIn.Split('\t');
+                                    var splitLine = lineIn.Split('\t');
 
                                     var scanNumber = splitLine[dctHeaderMapping["ScanNum"]];
                                     var chargeState = splitLine[dctHeaderMapping["Charge"]];
@@ -705,7 +706,7 @@ namespace AnalysisManagerExtractionPlugin
                                     {
                                         if (warningsLogged < 10)
                                         {
-                                            LogWarning("SpecEValue was not numeric: " + specEValueText + " in " + strLineIn);
+                                            LogWarning("SpecEValue was not numeric: " + specEValueText + " in " + lineIn);
                                             warningsLogged += 1;
 
                                             if (warningsLogged >= 10)
@@ -721,7 +722,7 @@ namespace AnalysisManagerExtractionPlugin
                                     {
                                         Peptide = peptide,
                                         SpecEValue = specEValue,
-                                        DataLine = strLineIn
+                                        DataLine = lineIn
                                     };
 
                                     if (dctScanChargeTopHits.TryGetValue(scanChargeCombo, out var hitsForScan))
@@ -832,8 +833,8 @@ namespace AnalysisManagerExtractionPlugin
                         {
                             while (!srSourceFile.EndOfStream)
                             {
-                                var strLineIn = srSourceFile.ReadLine();
-                                if (string.IsNullOrWhiteSpace(strLineIn))
+                                var lineIn = srSourceFile.ReadLine();
+                                if (string.IsNullOrWhiteSpace(lineIn))
                                     continue;
 
                                 linesRead += 1;
@@ -842,17 +843,17 @@ namespace AnalysisManagerExtractionPlugin
                                 if (linesRead == 1 && iteration == 1)
                                 {
                                     // Write the header line
-                                    swTempFile.WriteLine(strLineIn);
+                                    swTempFile.WriteLine(lineIn);
                                     continue;
                                 }
 
-                                var charIndex = strLineIn.IndexOf('\t');
+                                var charIndex = lineIn.IndexOf('\t');
                                 if (charIndex <= 0)
                                 {
                                     continue;
                                 }
 
-                                var peptideFull = strLineIn.Substring(0, charIndex);
+                                var peptideFull = lineIn.Substring(0, charIndex);
                                 var peptide = clsMSGFPlusPSMs.RemovePrefixAndSuffix(peptideFull);
 
                                 if (string.Equals(lastPeptideFull, peptideFull) || lstFilterPassingPeptides.Contains(peptide))
@@ -877,7 +878,7 @@ namespace AnalysisManagerExtractionPlugin
                                     // Add this peptide if we didn't already add it during a previous iteration
                                     if (addCurrentPeptide)
                                     {
-                                        swTempFile.WriteLine(strLineIn);
+                                        swTempFile.WriteLine(lineIn);
                                         totalLinesToWrite += 1;
                                     }
                                 }
@@ -929,21 +930,21 @@ namespace AnalysisManagerExtractionPlugin
 
             try
             {
-                var eResult = pepExtractTool.PerformExtraction();
+                var result = pepExtractTool.PerformExtraction();
 
-                if ((eResult != CloseOutType.CLOSEOUT_SUCCESS) && (eResult != CloseOutType.CLOSEOUT_NO_DATA))
+                if (result != CloseOutType.CLOSEOUT_SUCCESS && result != CloseOutType.CLOSEOUT_NO_DATA)
                 {
                     // Log error and return result calling routine handles the error appropriately
                     LogError("Error encountered during extraction");
-                    return eResult;
+                    return result;
                 }
 
                 // If there was a _syn.txt file created, but it contains no data, we want to clean up and exit
-                if (eResult == CloseOutType.CLOSEOUT_NO_DATA)
+                if (result == CloseOutType.CLOSEOUT_NO_DATA)
                 {
                     // Log error and return result calling routine handles the error appropriately
                     LogError("No results above threshold");
-                    return eResult;
+                    return result;
                 }
             }
             catch (Exception ex)
@@ -961,9 +962,8 @@ namespace AnalysisManagerExtractionPlugin
         /// <remarks></remarks>
         private CloseOutType RunPhrpForSequest()
         {
-            string msg;
-            CloseOutType eResult;
-            string strSynFilePath;
+            CloseOutType result;
+            string synFilePath;
 
             var phrp = new clsPepHitResultsProcWrapper(m_mgrParams, m_jobParams);
             RegisterEvents(phrp);
@@ -974,15 +974,15 @@ namespace AnalysisManagerExtractionPlugin
             // Run the processor
             if (m_DebugLevel > 3)
             {
-                msg = "clsExtractToolRunner.RunPhrpForSequest(); Starting PHRP";
-                LogDebug(msg);
+                LogDebug("clsExtractToolRunner.RunPhrpForSequest(); Starting PHRP");
             }
             try
             {
-                var strTargetFilePath = Path.Combine(m_WorkDir, m_Dataset + "_syn.txt");
-                strSynFilePath = string.Copy(strTargetFilePath);
+                var targetFilePath = Path.Combine(m_WorkDir, m_Dataset + "_syn.txt");
+                synFilePath = string.Copy(targetFilePath);
 
-                eResult = phrp.ExtractDataFromResults(strTargetFilePath, mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_SEQUEST);
+                result = phrp.ExtractDataFromResults(targetFilePath, mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_SEQUEST);
+
             }
             catch (Exception ex)
             {
@@ -1000,8 +1000,8 @@ namespace AnalysisManagerExtractionPlugin
             }
 
             // Validate that the mass errors are within tolerance
-            var strParamFileName = m_jobParams.GetParam("ParmFileName");
-            if (!ValidatePHRPResultMassErrors(strSynFilePath, clsPHRPReader.ePeptideHitResultType.Sequest, strParamFileName))
+            var paramFileName = m_jobParams.GetParam("ParmFileName");
+            if (!ValidatePHRPResultMassErrors(synFilePath, clsPHRPReader.ePeptideHitResultType.Sequest, paramFileName))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -1011,8 +1011,7 @@ namespace AnalysisManagerExtractionPlugin
 
         private CloseOutType RunPhrpForXTandem()
         {
-            string msg;
-            string strSynFilePath;
+            string synFilePath;
 
             var phrp = new clsPepHitResultsProcWrapper(m_mgrParams, m_jobParams);
             RegisterEvents(phrp);
@@ -1023,16 +1022,15 @@ namespace AnalysisManagerExtractionPlugin
             // Run the processor
             if (m_DebugLevel > 2)
             {
-                msg = "clsExtractToolRunner.RunPhrpForXTandem(); Starting PHRP";
-                LogDebug(msg);
+                LogDebug("clsExtractToolRunner.RunPhrpForXTandem(); Starting PHRP");
             }
 
             try
             {
-                var strTargetFilePath = Path.Combine(m_WorkDir, m_Dataset + "_xt.xml");
-                strSynFilePath = Path.Combine(m_WorkDir, m_Dataset + "_xt.txt");
+                var targetFilePath = Path.Combine(m_WorkDir, m_Dataset + "_xt.xml");
+                synFilePath = Path.Combine(m_WorkDir, m_Dataset + "_xt.txt");
 
-                var eResult = phrp.ExtractDataFromResults(strTargetFilePath, mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_XTANDEM);
+                var result = phrp.ExtractDataFromResults(targetFilePath, mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_XTANDEM);
 
                 if ((eResult != CloseOutType.CLOSEOUT_SUCCESS))
                 {
@@ -1051,7 +1049,7 @@ namespace AnalysisManagerExtractionPlugin
 
             // Validate that the mass errors are within tolerance
             // Use input.xml for the X!Tandem parameter file
-            if (!ValidatePHRPResultMassErrors(strSynFilePath, clsPHRPReader.ePeptideHitResultType.XTandem, "input.xml"))
+            if (!ValidatePHRPResultMassErrors(synFilePath, clsPHRPReader.ePeptideHitResultType.XTandem, "input.xml"))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -1061,7 +1059,7 @@ namespace AnalysisManagerExtractionPlugin
 
         private CloseOutType RunPhrpForMSAlign()
         {
-            string strSynFilePath;
+            string synFilePath;
 
             var phrp = new clsPepHitResultsProcWrapper(m_mgrParams, m_jobParams);
             RegisterEvents(phrp);
@@ -1078,10 +1076,10 @@ namespace AnalysisManagerExtractionPlugin
             try
             {
                 // Create the Synopsis file using the _MSAlign_ResultTable.txt file
-                var strTargetFilePath = Path.Combine(m_WorkDir, m_Dataset + "_MSAlign_ResultTable.txt");
-                strSynFilePath = Path.Combine(m_WorkDir, m_Dataset + "_msalign_syn.txt");
+                var targetFilePath = Path.Combine(m_WorkDir, m_Dataset + "_MSAlign_ResultTable.txt");
+                synFilePath = Path.Combine(m_WorkDir, m_Dataset + "_msalign_syn.txt");
 
-                var eResult = phrp.ExtractDataFromResults(strTargetFilePath, mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_MSALIGN);
+                var result = phrp.ExtractDataFromResults(targetFilePath, mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_MSALIGN);
 
                 if ((eResult != CloseOutType.CLOSEOUT_SUCCESS))
                 {
@@ -1100,30 +1098,30 @@ namespace AnalysisManagerExtractionPlugin
 
             // Summarize the number of PSMs in _msalign_syn.txt
             // ReSharper disable once UseImplicitlyTypedVariableEvident
-            const clsPHRPReader.ePeptideHitResultType eResultType = clsPHRPReader.ePeptideHitResultType.MSAlign;
+            const clsPHRPReader.ePeptideHitResultType resultType = clsPHRPReader.ePeptideHitResultType.MSAlign;
 
-            var objSummarizer = new clsMSGFResultsSummarizer(eResultType, m_Dataset, m_JobNum, m_WorkDir);
-            RegisterEvents(objSummarizer);
-            objSummarizer.ErrorEvent += MSGFResultsSummarizer_ErrorHandler;
+            var summarizer = new clsMSGFResultsSummarizer(resultType, m_Dataset, m_JobNum, m_WorkDir);
+            RegisterEvents(summarizer);
+            summarizer.ErrorEvent += MSGFResultsSummarizer_ErrorHandler;
 
-            objSummarizer.MSGFThreshold = clsMSGFResultsSummarizer.DEFAULT_MSGF_THRESHOLD;
+            summarizer.MSGFThreshold = clsMSGFResultsSummarizer.DEFAULT_MSGF_THRESHOLD;
 
-            objSummarizer.ContactDatabase = true;
-            objSummarizer.PostJobPSMResultsToDB = false;
-            objSummarizer.SaveResultsToTextFile = false;
-            objSummarizer.DatasetName = m_Dataset;
+            summarizer.ContactDatabase = true;
+            summarizer.PostJobPSMResultsToDB = false;
+            summarizer.SaveResultsToTextFile = false;
+            summarizer.DatasetName = m_Dataset;
 
-            var blnSuccess = objSummarizer.ProcessMSGFResults();
+            var success = summarizer.ProcessMSGFResults();
 
-            if (!blnSuccess)
+            if (!success)
             {
-                if (string.IsNullOrEmpty(objSummarizer.ErrorMessage))
+                if (string.IsNullOrEmpty(summarizer.ErrorMessage))
                 {
                     LogError("Error summarizing the PSMs using clsMSGFResultsSummarizer");
                 }
                 else
                 {
-                    LogError("Error summarizing the PSMs: " + objSummarizer.ErrorMessage);
+                    LogError("Error summarizing the PSMs: " + summarizer.ErrorMessage);
                 }
 
                 LogError("RunPhrpForMSAlign: " + m_message);
@@ -1131,8 +1129,8 @@ namespace AnalysisManagerExtractionPlugin
             }
 
             // Validate that the mass errors are within tolerance
-            var strParamFileName = m_jobParams.GetParam("ParmFileName");
-            if (!ValidatePHRPResultMassErrors(strSynFilePath, clsPHRPReader.ePeptideHitResultType.MSAlign, strParamFileName))
+            var paramFileName = m_jobParams.GetParam("ParmFileName");
+            if (!ValidatePHRPResultMassErrors(synFilePath, clsPHRPReader.ePeptideHitResultType.MSAlign, paramFileName))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -1140,7 +1138,7 @@ namespace AnalysisManagerExtractionPlugin
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        private CloseOutType RunPhrpForMODa(string strFilteredMODaResultsFilePath)
+        private CloseOutType RunPhrpForMODa(string filteredMODaResultsFilePath)
         {
             var currentStep = "Initializing";
 
@@ -1165,9 +1163,9 @@ namespace AnalysisManagerExtractionPlugin
 
                     currentStep = "Looking for the results file";
 
-                    if (!File.Exists(strFilteredMODaResultsFilePath))
+                    if (!File.Exists(filteredMODaResultsFilePath))
                     {
-                        LogError("Filtered MODa results file not found: " + Path.GetFileName(strFilteredMODaResultsFilePath));
+                        LogError("Filtered MODa results file not found: " + Path.GetFileName(filteredMODaResultsFilePath));
                         return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                     }
 
@@ -1179,7 +1177,7 @@ namespace AnalysisManagerExtractionPlugin
                     const bool CreateFirstHitsFile = true;
                     const bool CreateSynopsisFile = true;
 
-                    var eResult = phrp.ExtractDataFromResults(strFilteredMODaResultsFilePath, CreateFirstHitsFile, CreateSynopsisFile,
+                    var result = phrp.ExtractDataFromResults(filteredMODaResultsFilePath, CreateFirstHitsFile, CreateSynopsisFile,
                         mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_MODA);
 
                     if ((eResult != CloseOutType.CLOSEOUT_SUCCESS))
@@ -1201,7 +1199,7 @@ namespace AnalysisManagerExtractionPlugin
                     }
 
                     // Skip the _moda.id.txt file
-                    m_jobParams.AddResultFileToSkip(strFilteredMODaResultsFilePath);
+                    m_jobParams.AddResultFileToSkip(filteredMODaResultsFilePath);
                 }
                 catch (Exception ex)
                 {
@@ -1211,7 +1209,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 // Could validate that the mass errors are within tolerance
                 // var paramFileName = m_jobParams.GetParam("ParmFileName");
-                // if (!ValidatePHRPResultMassErrors(strSynFilePath, clsPHRPReader.ePeptideHitResultType.MODa, paramFileName))
+                // if (!ValidatePHRPResultMassErrors(synFilePath, clsPHRPReader.ePeptideHitResultType.MODa, paramFileName))
                 //     return CloseOutType.CLOSEOUT_FAILED;
                 // else
                 //     return CloseOutType.CLOSEOUT_SUCCESS;
@@ -1265,7 +1263,7 @@ namespace AnalysisManagerExtractionPlugin
                     const bool CreateFirstHitsFile = false;
                     const bool CreateSynopsisFile = true;
 
-                    var eResult = phrp.ExtractDataFromResults(filteredMODPlusResultsFilePath, CreateFirstHitsFile, CreateSynopsisFile,
+                    var result = phrp.ExtractDataFromResults(filteredMODPlusResultsFilePath, CreateFirstHitsFile, CreateSynopsisFile,
                         mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_MODPLUS);
 
                     if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
@@ -1294,7 +1292,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 // Could validate that the mass errors are within tolerance
                 // var paramFileName = m_jobParams.GetParam("ParmFileName");
-                // if (!ValidatePHRPResultMassErrors(strSynFilePath, clsPHRPReader.ePeptideHitResultType.MODPlus, paramFileName))
+                // if (!ValidatePHRPResultMassErrors(synFilePath, clsPHRPReader.ePeptideHitResultType.MODPlus, paramFileName))
                 //     return CloseOutType.CLOSEOUT_FAILED;
                 // else
                 //     return CloseOutType.CLOSEOUT_SUCCESS;
@@ -1327,7 +1325,7 @@ namespace AnalysisManagerExtractionPlugin
                     LogDebug("clsExtractToolRunner.RunPhrpForMSGFPlus(); Starting PHRP");
                 }
 
-                string strSynFilePath;
+                string synFilePath;
                 try
                 {
                     // The goal:
@@ -1339,9 +1337,9 @@ namespace AnalysisManagerExtractionPlugin
                     var splitFastaEnabled = m_jobParams.GetJobParameter("SplitFasta", false);
                     var numberOfClonedSteps = 1;
 
-                    var strTargetFilePath = Path.Combine(m_WorkDir, m_Dataset + "_msgfplus.txt");
-                    CloseOutType eResult;
-                    if (!File.Exists(strTargetFilePath))
+                    var targetFilePath = Path.Combine(m_WorkDir, m_Dataset + "_msgfplus.txt");
+                    CloseOutType result;
+                    if (!File.Exists(targetFilePath))
                     {
                         // Processing MSGF+ results, work with .tsv files
 
@@ -1367,33 +1365,33 @@ namespace AnalysisManagerExtractionPlugin
                             }
 
                             var toolNameTag = "_msgfplus";
-                            strTargetFilePath = Path.Combine(m_WorkDir, m_Dataset + toolNameTag + suffixToAdd + ".tsv");
+                            targetFilePath = Path.Combine(m_WorkDir, m_Dataset + toolNameTag + suffixToAdd + ".tsv");
 
-                            if (!File.Exists(strTargetFilePath))
+                            if (!File.Exists(targetFilePath))
                             {
-                                var strTargetFilePathAlt = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(strTargetFilePath, "Dataset_msgfdb.txt");
-                                if (File.Exists(strTargetFilePathAlt))
+                                var targetFilePathAlt = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(targetFilePath, "Dataset_msgfdb.txt");
+                                if (File.Exists(targetFilePathAlt))
                                 {
-                                    strTargetFilePath = strTargetFilePathAlt;
+                                    targetFilePath = targetFilePathAlt;
                                     toolNameTag = "_msgfdb";
                                 }
                             }
 
-                            if (!File.Exists(strTargetFilePath))
+                            if (!File.Exists(targetFilePath))
                             {
                                 // Need to create the .tsv file
-                                currentStep = "Creating .tsv file " + strTargetFilePath;
+                                currentStep = "Creating .tsv file " + targetFilePath;
 
-                                strTargetFilePath = ConvertMZIDToTSV(suffixToAdd);
-                                if (string.IsNullOrEmpty(strTargetFilePath))
+                                targetFilePath = ConvertMZIDToTSV(suffixToAdd);
+                                if (string.IsNullOrEmpty(targetFilePath))
                                 {
                                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                                 }
                             }
 
-                            var strPeptoProtMapFilePath = Path.Combine(m_WorkDir, m_Dataset + toolNameTag + suffixToAdd + "_PepToProtMap.txt");
+                            var peptoProtMapFilePath = Path.Combine(m_WorkDir, m_Dataset + toolNameTag + suffixToAdd + "_PepToProtMap.txt");
 
-                            if (!File.Exists(strPeptoProtMapFilePath))
+                            if (!File.Exists(peptoProtMapFilePath))
                             {
                                 var skipPeptideToProteinMapping = m_jobParams.GetJobParameter("SkipPeptideToProteinMapping", false);
 
@@ -1403,10 +1401,10 @@ namespace AnalysisManagerExtractionPlugin
                                 }
                                 else
                                 {
-                                    eResult = CreateMSGFPlusResultsProteinToPeptideMappingFile(strTargetFilePath);
-                                    if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+                                    result = CreateMSGFPlusResultsProteinToPeptideMappingFile(targetFilePath);
+                                    if (result != CloseOutType.CLOSEOUT_SUCCESS)
                                     {
-                                        return eResult;
+                                        return result;
                                     }
                                 }
                             }
@@ -1424,33 +1422,33 @@ namespace AnalysisManagerExtractionPlugin
                             // Keys in lstFilterPassingPeptides are peptide sequences; values indicate whether the peptide (and its associated proteins) has been written to the merged _PepToProtMap.txt file
 
                             currentStep = "Merging the TSV files";
-                            eResult = ParallelMSGFPlusMergeTSVFiles(numberOfClonedSteps, numberOfHitsPerScanToKeep, out var lstFilterPassingPeptides);
+                            result = ParallelMSGFPlusMergeTSVFiles(numberOfClonedSteps, numberOfHitsPerScanToKeep, out var lstFilterPassingPeptides);
 
-                            if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+                            if (result != CloseOutType.CLOSEOUT_SUCCESS)
                             {
-                                return eResult;
+                                return result;
                             }
 
                             // Merge the _PepToProtMap files (making sure we don't have any duplicates, and only keeping peptides that passed the filters)
                             currentStep = "Merging the _PepToProtMap files";
-                            eResult = ParallelMSGFPlusMergePepToProtMapFiles(numberOfClonedSteps, lstFilterPassingPeptides);
+                            result = ParallelMSGFPlusMergePepToProtMapFiles(numberOfClonedSteps, lstFilterPassingPeptides);
 
-                            if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+                            if (result != CloseOutType.CLOSEOUT_SUCCESS)
                             {
-                                return eResult;
+                                return result;
                             }
 
-                            strTargetFilePath = Path.Combine(m_WorkDir, m_Dataset + "_msgfplus.tsv");
+                            targetFilePath = Path.Combine(m_WorkDir, m_Dataset + "_msgfplus.tsv");
                         }
                     }
 
-                    strSynFilePath = Path.Combine(m_WorkDir, m_Dataset + "_msgfplus_syn.txt");
+                    synFilePath = Path.Combine(m_WorkDir, m_Dataset + "_msgfplus_syn.txt");
 
                     // Create the Synopsis and First Hits files using the _msgfplus.txt file
-                    var createMSGFPlusFirstHitsFile = true;
-                    var createMSGFPlusSynopsisFile = true;
+                    const bool createMSGFPlusFirstHitsFile = true;
+                    const bool createMSGFPlusSynopsisFile = true;
 
-                    eResult = phrp.ExtractDataFromResults(strTargetFilePath, createMSGFPlusFirstHitsFile, createMSGFPlusSynopsisFile,
+                    result = phrp.ExtractDataFromResults(targetFilePath, createMSGFPlusFirstHitsFile, createMSGFPlusSynopsisFile,
                         mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_MSGFPLUS);
 
                     if ((eResult != CloseOutType.CLOSEOUT_SUCCESS))
@@ -1472,7 +1470,7 @@ namespace AnalysisManagerExtractionPlugin
                         try
                         {
                             // Delete the _msgfplus.txt or _msgfplus.tsv file
-                            File.Delete(strTargetFilePath);
+                            File.Delete(targetFilePath);
                         }
                         catch (Exception)
                         {
@@ -1487,8 +1485,8 @@ namespace AnalysisManagerExtractionPlugin
                 }
 
                 // Validate that the mass errors are within tolerance
-                var strParamFileName = m_jobParams.GetParam("ParmFileName");
-                if (!ValidatePHRPResultMassErrors(strSynFilePath, clsPHRPReader.ePeptideHitResultType.MSGFDB, strParamFileName))
+                var paramFileName = m_jobParams.GetParam("ParmFileName");
+                if (!ValidatePHRPResultMassErrors(synFilePath, clsPHRPReader.ePeptideHitResultType.MSGFDB, paramFileName))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -1520,7 +1518,7 @@ namespace AnalysisManagerExtractionPlugin
                     LogDebug("clsExtractToolRunner.RunPhrpForMODa(); Starting PHRP");
                 }
 
-                var strSynFilePath = Path.Combine(m_WorkDir, m_Dataset + "_mspath_syn.txt");
+                var synFilePath = Path.Combine(m_WorkDir, m_Dataset + "_mspath_syn.txt");
 
                 try
                 {
@@ -1542,7 +1540,7 @@ namespace AnalysisManagerExtractionPlugin
                     const bool CreateFirstHitsFile = false;
                     const bool CreateSynopsisFile = true;
 
-                    var eResult = phrp.ExtractDataFromResults(msPathFinderResultsFilePath, CreateFirstHitsFile, CreateSynopsisFile,
+                    var result = phrp.ExtractDataFromResults(msPathFinderResultsFilePath, CreateFirstHitsFile, CreateSynopsisFile,
                         mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_MSPATHFINDER);
 
                     if ((eResult != CloseOutType.CLOSEOUT_SUCCESS))
@@ -1570,8 +1568,8 @@ namespace AnalysisManagerExtractionPlugin
                 }
 
                 // Validate that the mass errors are within tolerance
-                var strParamFileName = m_jobParams.GetParam("ParmFileName");
-                if (!ValidatePHRPResultMassErrors(strSynFilePath, clsPHRPReader.ePeptideHitResultType.MSPathFinder, strParamFileName))
+                var paramFileName = m_jobParams.GetParam("ParmFileName");
+                if (!ValidatePHRPResultMassErrors(synFilePath, clsPHRPReader.ePeptideHitResultType.MSPathFinder, paramFileName))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -1636,7 +1634,7 @@ namespace AnalysisManagerExtractionPlugin
 
         private CloseOutType RunPhrpForInSpecT()
         {
-            string strSynFilePath;
+            string synFilePath;
 
             var phrp = new clsPepHitResultsProcWrapper(m_mgrParams, m_jobParams);
             RegisterEvents(phrp);
@@ -1657,10 +1655,10 @@ namespace AnalysisManagerExtractionPlugin
                 //   Get the other files from the _inspect.txt file in the_inspect.zip file
 
                 // Extract _inspect.txt from the _inspect_fht.zip file
-                var strTargetFilePath = Path.Combine(m_WorkDir, m_Dataset + "_inspect_fht.zip");
-                var blnSuccess = UnzipFile(strTargetFilePath);
+                var targetFilePath = Path.Combine(m_WorkDir, m_Dataset + "_inspect_fht.zip");
+                var success = UnzipFile(targetFilePath);
 
-                if (!blnSuccess)
+                if (!success)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -1668,11 +1666,11 @@ namespace AnalysisManagerExtractionPlugin
                 // Create the First Hits files using the _inspect.txt file
                 var createInspectFirstHitsFile = true;
                 var createInspectSynopsisFile = false;
-                strTargetFilePath = Path.Combine(m_WorkDir, m_Dataset + "_inspect.txt");
-                var eResult = phrp.ExtractDataFromResults(strTargetFilePath, createInspectFirstHitsFile, createInspectSynopsisFile,
+                targetFilePath = Path.Combine(m_WorkDir, m_Dataset + "_inspect.txt");
+                var result = phrp.ExtractDataFromResults(targetFilePath, createInspectFirstHitsFile, createInspectSynopsisFile,
                     mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_INSPECT);
 
-                if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     var msg = "Error running PHRP";
                     if (!string.IsNullOrWhiteSpace(phrp.ErrMsg))
@@ -1682,15 +1680,15 @@ namespace AnalysisManagerExtractionPlugin
                 }
 
                 // Delete the _inspect.txt file
-                File.Delete(strTargetFilePath);
+                File.Delete(targetFilePath);
 
                 Thread.Sleep(250);
 
                 // Extract _inspect.txt from the _inspect.zip file
-                strTargetFilePath = Path.Combine(m_WorkDir, m_Dataset + "_inspect.zip");
-                blnSuccess = UnzipFile(strTargetFilePath);
+                targetFilePath = Path.Combine(m_WorkDir, m_Dataset + "_inspect.zip");
+                success = UnzipFile(targetFilePath);
 
-                if (!blnSuccess)
+                if (!success)
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -1698,10 +1696,10 @@ namespace AnalysisManagerExtractionPlugin
                 // Create the Synopsis files using the _inspect.txt file
                 createInspectFirstHitsFile = false;
                 createInspectSynopsisFile = true;
-                strTargetFilePath = Path.Combine(m_WorkDir, m_Dataset + "_inspect.txt");
-                strSynFilePath = Path.Combine(m_WorkDir, m_Dataset + "_inspect_syn.txt");
+                targetFilePath = Path.Combine(m_WorkDir, m_Dataset + "_inspect.txt");
+                synFilePath = Path.Combine(m_WorkDir, m_Dataset + "_inspect_syn.txt");
 
-                eResult = phrp.ExtractDataFromResults(strTargetFilePath, createInspectFirstHitsFile, createInspectSynopsisFile,
+                result = phrp.ExtractDataFromResults(targetFilePath, createInspectFirstHitsFile, createInspectSynopsisFile,
                     mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_INSPECT);
 
                 if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
@@ -1716,7 +1714,7 @@ namespace AnalysisManagerExtractionPlugin
                 try
                 {
                     // Delete the _inspect.txt file
-                    File.Delete(strTargetFilePath);
+                    File.Delete(targetFilePath);
                 }
                 catch (Exception)
                 {
@@ -1730,8 +1728,8 @@ namespace AnalysisManagerExtractionPlugin
             }
 
             // Validate that the mass errors are within tolerance
-            var strParamFileName = m_jobParams.GetParam("ParmFileName");
-            if (!ValidatePHRPResultMassErrors(strSynFilePath, clsPHRPReader.ePeptideHitResultType.Inspect, strParamFileName))
+            var paramFileName = m_jobParams.GetParam("ParmFileName");
+            if (!ValidatePHRPResultMassErrors(synFilePath, clsPHRPReader.ePeptideHitResultType.Inspect, paramFileName))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -1744,13 +1742,13 @@ namespace AnalysisManagerExtractionPlugin
             const int SYN_FILE_MAX_SIZE_MB = 200;
             const string PEPPROPHET_RESULT_FILE_SUFFIX = "_PepProphet.txt";
 
-            string strPepProphetOutputFilePath;
+            string pepProphetOutputFilePath;
 
-            var eResult = CloseOutType.CLOSEOUT_SUCCESS;
+            var result = CloseOutType.CLOSEOUT_SUCCESS;
 
-            bool blnSuccess;
+            bool success;
 
-            var blnIgnorePeptideProphetErrors = m_jobParams.GetJobParameter("IgnorePeptideProphetErrors", false);
+            var ignorePeptideProphetErrors = m_jobParams.GetJobParameter("IgnorePeptideProphetErrors", false);
 
             var progLoc = m_mgrParams.GetParam("PeptideProphetRunnerProgLoc");
 
@@ -1808,9 +1806,9 @@ namespace AnalysisManagerExtractionPlugin
                 }
 
                 // File is too large; split it into multiple chunks
-                blnSuccess = SplitFileRoundRobin(fiSynFile.FullName, SYN_FILE_MAX_SIZE_MB * 1024 * 1024, true, out splitFileList);
+                success = SplitFileRoundRobin(fiSynFile.FullName, SYN_FILE_MAX_SIZE_MB * 1024 * 1024, true, out splitFileList);
 
-                if (blnSuccess)
+                if (success)
                 {
                     if (m_DebugLevel >= 3)
                     {
@@ -1821,7 +1819,7 @@ namespace AnalysisManagerExtractionPlugin
                 {
                     var msg = "Error splitting synopsis file that is over " + SYN_FILE_MAX_SIZE_MB + " MB in size";
 
-                    if (blnIgnorePeptideProphetErrors)
+                    if (ignorePeptideProphetErrors)
                     {
                         msg += "; Ignoring the error since 'IgnorePeptideProphetErrors' = True";
                         LogWarning(msg);
@@ -1833,7 +1831,7 @@ namespace AnalysisManagerExtractionPlugin
                 }
             }
 
-            // Setup Peptide Prophet and run for each file in strFileList
+            // Setup Peptide Prophet and run for each file in fileList
             foreach (var splitFile in splitFileList)
             {
                 m_PeptideProphet.InputFile = splitFile;
@@ -1842,73 +1840,73 @@ namespace AnalysisManagerExtractionPlugin
                 m_PeptideProphet.DebugLevel = m_DebugLevel;
 
                 fiSynFile = new FileInfo(splitFile);
-                var strSynFileNameAndSize = fiSynFile.Name + " (file size = " + (fiSynFile.Length / 1024.0 / 1024.0).ToString("0.00") + " MB";
+                var synFileNameAndSize = fiSynFile.Name + " (file size = " + (fiSynFile.Length / 1024.0 / 1024.0).ToString("0.00") + " MB";
                 if (splitFileList.Count > 1)
                 {
-                    strSynFileNameAndSize += "; parent syn file is " + sngParentSynFileSizeMB.ToString("0.00") + " MB)";
+                    synFileNameAndSize += "; parent syn file is " + sngParentSynFileSizeMB.ToString("0.00") + " MB)";
                 }
                 else
                 {
-                    strSynFileNameAndSize += ")";
+                    synFileNameAndSize += ")";
                 }
 
                 if (m_DebugLevel >= 1)
                 {
-                    LogDebug("Running peptide prophet on file " + strSynFileNameAndSize);
+                    LogDebug("Running peptide prophet on file " + synFileNameAndSize);
                 }
 
-                eResult = m_PeptideProphet.CallPeptideProphet();
+                result = m_PeptideProphet.CallPeptideProphet();
 
-                if (eResult == CloseOutType.CLOSEOUT_SUCCESS)
+                if (result == CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     // Make sure the Peptide Prophet output file was actually created
-                    strPepProphetOutputFilePath = Path.Combine(m_PeptideProphet.OutputFolderPath,
+                    pepProphetOutputFilePath = Path.Combine(m_PeptideProphet.OutputFolderPath,
                         Path.GetFileNameWithoutExtension(splitFile) + PEPPROPHET_RESULT_FILE_SUFFIX);
 
                     if (m_DebugLevel >= 3)
                     {
-                        LogDebug("Peptide prophet processing complete; checking for file " + strPepProphetOutputFilePath);
+                        LogDebug("Peptide prophet processing complete; checking for file " + pepProphetOutputFilePath);
                     }
 
-                    if (!File.Exists(strPepProphetOutputFilePath))
+                    if (!File.Exists(pepProphetOutputFilePath))
                     {
                         LogError("clsExtractToolRunner.RunPeptideProphet(); Peptide Prophet output file not found for synopsis file " +
-                                 strSynFileNameAndSize);
+                                 synFileNameAndSize);
 
                         if (!string.IsNullOrEmpty(m_PeptideProphet.ErrMsg))
                         {
                             LogError(m_PeptideProphet.ErrMsg);
                         }
 
-                        if (blnIgnorePeptideProphetErrors)
+                        if (ignorePeptideProphetErrors)
                         {
                             LogWarning("Ignoring peptide prophet execution error since 'IgnorePeptideProphetErrors' = True");
                         }
                         else
                         {
                             LogWarning("To ignore this error, update this job to use a settings file that has 'IgnorePeptideProphetErrors' set to True");
-                            eResult = CloseOutType.CLOSEOUT_FAILED;
+                            result = CloseOutType.CLOSEOUT_FAILED;
                             break;
                         }
                     }
                 }
                 else
                 {
-                    LogError("clsExtractToolRunner.RunPeptideProphet(); Error running Peptide Prophet on file " + strSynFileNameAndSize + ": " + m_PeptideProphet.ErrMsg);
+                    LogError("clsExtractToolRunner.RunPeptideProphet(); Error running Peptide Prophet on file " + synFileNameAndSize + ": " + m_PeptideProphet.ErrMsg);
 
-                    if (blnIgnorePeptideProphetErrors)
+                    if (ignorePeptideProphetErrors)
                     {
                         LogWarning("Ignoring peptide prophet execution error since 'IgnorePeptideProphetErrors' = True");
                     }
                     else
                     {
-                        eResult = CloseOutType.CLOSEOUT_FAILED;
+                        result = CloseOutType.CLOSEOUT_FAILED;
                         break;
                     }
                 }
             }
 
-            if (eResult == CloseOutType.CLOSEOUT_SUCCESS || blnIgnorePeptideProphetErrors)
+            if (result == CloseOutType.CLOSEOUT_SUCCESS || ignorePeptideProphetErrors)
             {
                 if (splitFileList.Count > 1)
                 {
@@ -1917,55 +1915,55 @@ namespace AnalysisManagerExtractionPlugin
 
                     // We now need to recombine the peptide prophet result files
 
-                    // Update strFileList() to have the peptide prophet result file names
-                    var strBaseName = Path.Combine(m_PeptideProphet.OutputFolderPath, Path.GetFileNameWithoutExtension(SynFile));
+                    // Update fileList() to have the peptide prophet result file names
+                    var baseName = Path.Combine(m_PeptideProphet.OutputFolderPath, Path.GetFileNameWithoutExtension(SynFile));
 
                     for (var intFileIndex = 0; intFileIndex <= splitFileList.Count - 1; intFileIndex++)
                     {
-                        var splitFile = strBaseName + "_part" + (intFileIndex + 1) + PEPPROPHET_RESULT_FILE_SUFFIX;
+                        var splitFile = baseName + "_part" + (intFileIndex + 1) + PEPPROPHET_RESULT_FILE_SUFFIX;
 
                         // Add this file to the global delete list
                         m_jobParams.AddResultFileToSkip(splitFile);
                     }
 
                     // Define the final peptide prophet output file name
-                    strPepProphetOutputFilePath = strBaseName + PEPPROPHET_RESULT_FILE_SUFFIX;
+                    pepProphetOutputFilePath = baseName + PEPPROPHET_RESULT_FILE_SUFFIX;
 
                     if (m_DebugLevel >= 2)
                     {
                         LogDebug(
                             "Combining " + splitFileList.Count + " separate Peptide Prophet result files to create " +
-                            Path.GetFileName(strPepProphetOutputFilePath));
+                            Path.GetFileName(pepProphetOutputFilePath));
                     }
 
-                    blnSuccess = InterleaveFiles(splitFileList, strPepProphetOutputFilePath, true);
+                    success = InterleaveFiles(splitFileList, pepProphetOutputFilePath, true);
 
                     // Delete each of the temporary peptide prophet result files
                     DeleteTemporaryFiles(splitFileList);
 
-                    if (blnSuccess)
+                    if (success)
                     {
-                        eResult = CloseOutType.CLOSEOUT_SUCCESS;
+                        result = CloseOutType.CLOSEOUT_SUCCESS;
                     }
                     else
                     {
                         var msg = "Error interleaving the peptide prophet result files (FileCount=" + splitFileList.Count + ")";
-                        if (blnIgnorePeptideProphetErrors)
+                        if (ignorePeptideProphetErrors)
                         {
                             msg += "; Ignoring the error since 'IgnorePeptideProphetErrors' = True";
                             LogWarning(msg);
-                            eResult = CloseOutType.CLOSEOUT_SUCCESS;
+                            result = CloseOutType.CLOSEOUT_SUCCESS;
                         }
                         else
                         {
                             LogError(msg);
-                            eResult = CloseOutType.CLOSEOUT_FAILED;
+                            result = CloseOutType.CLOSEOUT_FAILED;
                         }
                     }
                 }
             }
 
-            return eResult;
+            return result;
         }
 
         /// <summary>
@@ -1979,7 +1977,7 @@ namespace AnalysisManagerExtractionPlugin
             Thread.Sleep(1000);
             PRISM.clsProgRunner.GarbageCollectNow();
 
-            // Delete each file in strFileList
+            // Delete each file in fileList
             foreach (var splitFile in splitFileList)
             {
                 if (m_DebugLevel >= 5)
@@ -1999,16 +1997,16 @@ namespace AnalysisManagerExtractionPlugin
         }
 
         /// <summary>
-        /// Reads each file in fileList line by line, writing the lines to strCombinedFilePath
+        /// Reads each file in fileList line by line, writing the lines to combinedFilePath
         /// Can also check for a header line on the first line; if a header line is found in the first file,
         /// then the header is also written to the combined file
         /// </summary>
         /// <param name="fileList">Files to combine</param>
-        /// <param name="strCombinedFilePath">File to create</param>
-        /// <param name="blnLookForHeaderLine">When true, looks for a header line by checking if the first column contains a number</param>
+        /// <param name="combinedFilePath">File to create</param>
+        /// <param name="lookForHeaderLine">When true, looks for a header line by checking if the first column contains a number</param>
         /// <returns>True if success; false if failure</returns>
         /// <remarks></remarks>
-        private bool InterleaveFiles(IReadOnlyList<string> fileList, string strCombinedFilePath, bool blnLookForHeaderLine)
+        private bool InterleaveFiles(IReadOnlyList<string> fileList, string combinedFilePath, bool lookForHeaderLine)
         {
 
 
@@ -2041,12 +2039,12 @@ namespace AnalysisManagerExtractionPlugin
 
                 // Create the output file
 
-                using (var swOutFile = new StreamWriter(new FileStream(strCombinedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                using (var swOutFile = new StreamWriter(new FileStream(combinedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
                     var intTotalLinesRead = 0;
-                    var blnContinueReading = true;
+                    var continueReading = true;
 
-                    while (blnContinueReading)
+                    while (continueReading)
                     {
                         var intTotalLinesReadSaved = intTotalLinesRead;
 
@@ -2055,42 +2053,42 @@ namespace AnalysisManagerExtractionPlugin
                             if (srInFiles[intFileIndex].EndOfStream)
                                 continue;
 
-                            var strLineIn = srInFiles[intFileIndex].ReadLine();
+                            var lineIn = srInFiles[intFileIndex].ReadLine();
 
                             intLinesRead[intFileIndex] += 1;
                             intTotalLinesRead += 1;
 
-                            if (strLineIn == null)
+                            if (lineIn == null)
                                 continue;
 
-                            var blnProcessLine = true;
+                            var processLine = true;
 
-                            if (intLinesRead[intFileIndex] == 1 && blnLookForHeaderLine && strLineIn.Length > 0)
+                            if (intLinesRead[intFileIndex] == 1 && lookForHeaderLine && lineIn.Length > 0)
                             {
                                 // check for a header line
-                                var strSplitLine = strLineIn.Split(new[] {'\t'}, 2);
+                                var splitLine = lineIn.Split(new[] {'\t'}, 2);
 
-                                if (strSplitLine.Length > 0 && !double.TryParse(strSplitLine[0], out _))
+                                if (splitLine.Length > 0 && !double.TryParse(splitLine[0], out _))
                                 {
                                     // first column does not contain a number; this must be a header line
                                     // write the header to the output file (provided intfileindex=0)
                                     if (intFileIndex == 0)
                                     {
-                                        swOutFile.WriteLine(strLineIn);
+                                        swOutFile.WriteLine(lineIn);
                                     }
-                                    blnProcessLine = false;
+                                    processLine = false;
                                 }
                             }
 
-                            if (blnProcessLine)
+                            if (processLine)
                             {
-                                swOutFile.WriteLine(strLineIn);
+                                swOutFile.WriteLine(lineIn);
                             }
                         }
 
                         if (intTotalLinesRead == intTotalLinesReadSaved)
                         {
-                            blnContinueReading = false;
+                            continueReading = false;
                         }
                     }
 
@@ -2113,24 +2111,24 @@ namespace AnalysisManagerExtractionPlugin
         }
 
         /// <summary>
-        /// Reads strSrcFilePath line-by-line and splits into multiple files such that none of the output
+        /// Reads srcFilePath line-by-line and splits into multiple files such that none of the output
         /// files has length greater than lngMaxSizeBytes. Can also check for a header line on the first line;
         /// if a header line is found, all of the split files will be assigned the same header line
         /// </summary>
-        /// <param name="strSrcFilePath">FilePath to parse</param>
+        /// <param name="srcFilePath">FilePath to parse</param>
         /// <param name="lngMaxSizeBytes">Maximum size of each file</param>
-        /// <param name="blnLookForHeaderLine">When true, looks for a header line by checking if the first column contains a number</param>
+        /// <param name="lookForHeaderLine">When true, looks for a header line by checking if the first column contains a number</param>
         /// <param name="splitFileList">Output array listing the full paths to the split files that were created</param>
         /// <returns>True if success, false if failure</returns>
         /// <remarks></remarks>
-        private bool SplitFileRoundRobin(string strSrcFilePath, long lngMaxSizeBytes, bool blnLookForHeaderLine, out List<string> splitFileList)
+        private bool SplitFileRoundRobin(string srcFilePath, long lngMaxSizeBytes, bool lookForHeaderLine, out List<string> splitFileList)
         {
-            bool blnSuccess;
+            bool success;
             splitFileList = new List<string>();
 
             try
             {
-                var fiFileInfo = new FileInfo(strSrcFilePath);
+                var fiFileInfo = new FileInfo(srcFilePath);
                 if (!fiFileInfo.Exists)
                 {
                     LogError("File not found: " + fiFileInfo.FullName);
@@ -2166,11 +2164,11 @@ namespace AnalysisManagerExtractionPlugin
                     // Create each of the output files
                     var swOutFiles = new StreamWriter[intSplitCount];
 
-                    var strBaseName = Path.Combine(fiFileInfo.DirectoryName, Path.GetFileNameWithoutExtension(fiFileInfo.Name));
+                    var baseName = Path.Combine(fiFileInfo.DirectoryName, Path.GetFileNameWithoutExtension(fiFileInfo.Name));
 
                     for (var intIndex = 0; intIndex <= intSplitCount - 1; intIndex++)
                     {
-                        splitFileList[intIndex] = strBaseName + "_part" + (intIndex + 1) + Path.GetExtension(fiFileInfo.Name);
+                        splitFileList[intIndex] = baseName + "_part" + (intIndex + 1) + Path.GetExtension(fiFileInfo.Name);
                         swOutFiles[intIndex] =
                             new StreamWriter(new FileStream(splitFileList[intIndex], FileMode.Create, FileAccess.Write, FileShare.Read));
                     }
@@ -2180,34 +2178,34 @@ namespace AnalysisManagerExtractionPlugin
 
                     while (!srInFile.EndOfStream)
                     {
-                        var strLineIn = srInFile.ReadLine();
+                        var lineIn = srInFile.ReadLine();
                         intLinesRead += 1;
 
-                        if (strLineIn == null)
+                        if (lineIn == null)
                             continue;
 
-                        var blnProcessLine = true;
+                        var processLine = true;
 
-                        if (intLinesRead == 1 && blnLookForHeaderLine && strLineIn.Length > 0)
+                        if (intLinesRead == 1 && lookForHeaderLine && lineIn.Length > 0)
                         {
                             // Check for a header line
-                            var strSplitLine = strLineIn.Split(new[] {'\t'}, 2);
+                            var splitLine = lineIn.Split(new[] {'\t'}, 2);
 
-                            if (strSplitLine.Length > 0 && !double.TryParse(strSplitLine[0], out _))
+                            if (splitLine.Length > 0 && !double.TryParse(splitLine[0], out _))
                             {
                                 // First column does not contain a number; this must be a header line
                                 // Write the header to each output file
                                 for (var intIndex = 0; intIndex <= intSplitCount - 1; intIndex++)
                                 {
-                                    swOutFiles[intIndex].WriteLine(strLineIn);
+                                    swOutFiles[intIndex].WriteLine(lineIn);
                                 }
-                                blnProcessLine = false;
+                                processLine = false;
                             }
                         }
 
-                        if (blnProcessLine)
+                        if (processLine)
                         {
-                            swOutFiles[intTargetFileIndex].WriteLine(strLineIn);
+                            swOutFiles[intTargetFileIndex].WriteLine(lineIn);
                             intTargetFileIndex += 1;
                             if (intTargetFileIndex == intSplitCount)
                                 intTargetFileIndex = 0;
@@ -2224,15 +2222,15 @@ namespace AnalysisManagerExtractionPlugin
 
                 }
 
-                blnSuccess = true;
+                success = true;
             }
             catch (Exception ex)
             {
                 LogError("Exception in clsExtractToolRunner.SplitFileRoundRobin", ex);
-                blnSuccess = false;
+                success = false;
             }
 
-            return blnSuccess;
+            return success;
         }
 
         /// <summary>
@@ -2241,7 +2239,7 @@ namespace AnalysisManagerExtractionPlugin
         /// <remarks></remarks>
         private bool StoreToolVersionInfo()
         {
-            var strToolVersionInfo = string.Empty;
+            var toolVersionInfo = string.Empty;
 
             if (m_DebugLevel >= 2)
             {
@@ -2258,7 +2256,7 @@ namespace AnalysisManagerExtractionPlugin
                 // verify that program file exists
                 if (diPHRP.Exists)
                 {
-                    StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, Path.Combine(diPHRP.FullName, "PeptideHitResultsProcessor.dll"));
+                    StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, Path.Combine(diPHRP.FullName, "PeptideHitResultsProcessor.dll"));
                 }
                 else
                 {
@@ -2277,38 +2275,38 @@ namespace AnalysisManagerExtractionPlugin
                 // Sequest result type
 
                 // Lookup the version of the PeptideFileExtractor
-                if (!StoreToolVersionInfoForLoadedAssembly(ref strToolVersionInfo, "PeptideFileExtractor"))
+                if (!StoreToolVersionInfoForLoadedAssembly(ref toolVersionInfo, "PeptideFileExtractor"))
                 {
                     return false;
                 }
 
                 // Lookup the version of the PeptideProphetRunner
 
-                var strPeptideProphetRunnerLoc = m_mgrParams.GetParam("PeptideProphetRunnerProgLoc");
-                var ioPeptideProphetRunner = new FileInfo(strPeptideProphetRunnerLoc);
+                var peptideProphetRunnerLoc = m_mgrParams.GetParam("PeptideProphetRunnerProgLoc");
+                var ioPeptideProphetRunner = new FileInfo(peptideProphetRunnerLoc);
 
                 if (ioPeptideProphetRunner.Exists)
                 {
                     // Lookup the version of the PeptideProphetRunner
-                    var blnSuccess = StoreToolVersionInfoOneFile(ref strToolVersionInfo, ioPeptideProphetRunner.FullName);
-                    if (!blnSuccess)
+                    var success = StoreToolVersionInfoOneFile(ref toolVersionInfo, ioPeptideProphetRunner.FullName);
+                    if (!success)
                         return false;
 
                     if (!string.IsNullOrWhiteSpace(ioPeptideProphetRunner.DirectoryName))
                     {
                         // Lookup the version of the PeptideProphetLibrary
                         var dllPath = Path.Combine(ioPeptideProphetRunner.DirectoryName, "PeptideProphetLibrary.dll");
-                        blnSuccess = StoreToolVersionInfoOneFile32Bit(ref strToolVersionInfo, dllPath);
+                        success = StoreToolVersionInfoOneFile32Bit(ref toolVersionInfo, dllPath);
                     }
 
-                    if (!blnSuccess)
+                    if (!success)
                         return false;
                 }
             }
 
             try
             {
-                return SetStepTaskToolVersion(strToolVersionInfo, new List<FileInfo>(), saveToolVersionTextFile: false);
+                return SetStepTaskToolVersion(toolVersionInfo, new List<FileInfo>(), saveToolVersionTextFile: false);
             }
             catch (Exception ex)
             {
@@ -2317,20 +2315,20 @@ namespace AnalysisManagerExtractionPlugin
             }
         }
 
-        private bool ValidatePHRPResultMassErrors(string strInputFilePath, clsPHRPReader.ePeptideHitResultType eResultType,
-            string strSearchEngineParamFileName)
+        private bool ValidatePHRPResultMassErrors(string inputFilePath, clsPHRPReader.ePeptideHitResultType resultType,
+            string searchEngineParamFileName)
         {
-            bool blnSuccess;
+            bool success;
 
             try
             {
                 var oValidator = new clsPHRPMassErrorValidator(m_DebugLevel);
                 RegisterEvents(oValidator);
 
-                var paramFilePath = Path.Combine(m_WorkDir, strSearchEngineParamFileName);
+                var paramFilePath = Path.Combine(m_WorkDir, searchEngineParamFileName);
 
-                blnSuccess = oValidator.ValidatePHRPResultMassErrors(strInputFilePath, eResultType, paramFilePath);
-                if (!blnSuccess)
+                success = oValidator.ValidatePHRPResultMassErrors(inputFilePath, resultType, paramFilePath);
+                if (!success)
                 {
                     var toolName = m_jobParams.GetJobParameter("ToolName", "");
 
@@ -2340,11 +2338,11 @@ namespace AnalysisManagerExtractionPlugin
                         var paramFileName = m_jobParams.GetJobParameter("ParmFileName", "");
                         if (paramFileName.IndexOf("Unrestrictive", StringComparison.OrdinalIgnoreCase) >= 0)
                         {
-                            blnSuccess = true;
+                            success = true;
                         }
                     }
 
-                    if (!blnSuccess)
+                    if (!success)
                     {
                         if (string.IsNullOrWhiteSpace(oValidator.ErrorMessage))
                         {
@@ -2360,10 +2358,10 @@ namespace AnalysisManagerExtractionPlugin
             catch (Exception ex)
             {
                 LogError("Exception calling ValidatePHRPResultMassErrors", ex);
-                blnSuccess = false;
+                success = false;
             }
 
-            return blnSuccess;
+            return success;
         }
 
         #endregion

@@ -37,7 +37,7 @@ namespace AnalysisManagerExtractionPlugin
             const int MIN_LOG_INTERVAL_SECONDS = 5;
             const int MAX_LOG_INTERVAL_SECONDS = 300;
 
-            var blnUpdateLog = false;
+            var updateLog = false;
 
             // We divide the progress by 3 since creation of the FHT and SYN files takes ~33% of the time, while the remainder is spent running PHRP and PeptideProphet
             m_Progress = (float)(100 * fractionDone / 3f);
@@ -51,15 +51,15 @@ namespace AnalysisManagerExtractionPlugin
             if (m_DebugLevel > 3 && DateTime.UtcNow.Subtract(dtLastLogTime).TotalSeconds >= MIN_LOG_INTERVAL_SECONDS)
             {
                 // Over MIN_LOG_INTERVAL_SECONDS seconds has elapsed; update the log file
-                blnUpdateLog = true;
+                updateLog = true;
             }
             else if (m_DebugLevel >= 1 && DateTime.UtcNow.Subtract(dtLastLogTime).TotalSeconds >= MAX_LOG_INTERVAL_SECONDS)
             {
                 // Over MAX_LOG_INTERVAL_SECONDS seconds has elapsed; update the log file
-                blnUpdateLog = true;
+                updateLog = true;
             }
 
-            if (blnUpdateLog)
+            if (updateLog)
             {
                 dtLastLogTime = DateTime.UtcNow;
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,

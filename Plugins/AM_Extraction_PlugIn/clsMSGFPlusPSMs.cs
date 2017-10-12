@@ -15,7 +15,7 @@ namespace AnalysisManagerExtractionPlugin
 
         // Keys are the protein and peptide (separated by an undercore)
         // Values are the PSM details, including the original data line from the .TSV file
-        private Dictionary<string, udtPSMType> mPSMs;
+        private readonly Dictionary<string, udtPSMType> mPSMs;
 
         // List of SpecEValues associated with this scan/charge
         private readonly SortedSet<double> mSpecEValues;
@@ -23,36 +23,19 @@ namespace AnalysisManagerExtractionPlugin
         private double mBestSpecEValue;
         private double mWorstSpecEValue;
 
-        private readonly int mCharge;
-        private readonly int mScan;
+        public int Charge { get; }
 
-        private readonly int mMaximumPSMsToKeep;
+        public int MaximumPSMsToKeep { get; }
 
-        public int Charge
-        {
-            get { return mCharge; }
-        }
+        public List<udtPSMType> PSMs => mPSMs.Values.ToList();
 
-        public int MaximumPSMsToKeep
-        {
-            get { return mMaximumPSMsToKeep; }
-        }
-
-        public List<udtPSMType> PSMs
-        {
-            get { return mPSMs.Values.ToList(); }
-        }
-
-        public int Scan
-        {
-            get { return mScan; }
-        }
+        public int Scan { get; }
 
         public clsMSGFPlusPSMs(int scanNumber, int chargeState, int maximumPSMsToRetain)
         {
-            mMaximumPSMsToKeep = maximumPSMsToRetain;
-            if (mMaximumPSMsToKeep < 1)
-                mMaximumPSMsToKeep = 1;
+            MaximumPSMsToKeep = maximumPSMsToRetain;
+            if (MaximumPSMsToKeep < 1)
+                MaximumPSMsToKeep = 1;
 
             mPSMs = new Dictionary<string, udtPSMType>();
             mSpecEValues = new SortedSet<double>();
@@ -60,8 +43,8 @@ namespace AnalysisManagerExtractionPlugin
             mBestSpecEValue = 0;
             mWorstSpecEValue = 0;
 
-            mScan = scanNumber;
-            mCharge = chargeState;
+            Scan = scanNumber;
+            Charge = chargeState;
         }
 
         /// <summary>
@@ -78,7 +61,7 @@ namespace AnalysisManagerExtractionPlugin
             var updateScores = false;
             var addPeptide = false;
 
-            if (mSpecEValues.Count < mMaximumPSMsToKeep)
+            if (mSpecEValues.Count < MaximumPSMsToKeep)
             {
                 addPeptide = true;
             }
@@ -94,9 +77,7 @@ namespace AnalysisManagerExtractionPlugin
 
             if (addPeptide)
             {
-                udtPSMType udtExistingPSM;
-
-                if (mPSMs.TryGetValue(proteinPeptide, out udtExistingPSM))
+                if (mPSMs.TryGetValue(proteinPeptide, out var udtExistingPSM))
                 {
                     if (udtExistingPSM.SpecEValue > udtPSM.SpecEValue)
                     {
@@ -157,8 +138,7 @@ namespace AnalysisManagerExtractionPlugin
                     foreach (var psm in mPSMs)
                     {
                         var peptideToFind = psm.Value.Peptide;
-                        double storedScore = 0;
-                        if (bestScoreByPeptide.TryGetValue(peptideToFind, out storedScore))
+                        if (bestScoreByPeptide.TryGetValue(peptideToFind, out var storedScore))
                         {
                             bestScoreByPeptide[peptideToFind] = Math.Min(storedScore, psm.Value.SpecEValue);
                         }
@@ -189,10 +169,8 @@ namespace AnalysisManagerExtractionPlugin
 
                 return true;
             }
-            else
-            {
-                return false;
-            }
+
+            return false;
         }
 
         public static string RemovePrefixAndSuffix(string peptide)

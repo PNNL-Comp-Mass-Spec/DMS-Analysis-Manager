@@ -55,9 +55,9 @@ namespace AnalysisManagerExtractionPlugin
 
         #region "Methods"
 
-        public clsPeptideProphetWrapper(string strPeptideProphetRunnerLocation)
+        public clsPeptideProphetWrapper(string peptideProphetRunnerLocation)
         {
-            m_PeptideProphetRunnerLocation = strPeptideProphetRunnerLocation;
+            m_PeptideProphetRunnerLocation = peptideProphetRunnerLocation;
         }
 
         public CloseOutType CallPeptideProphet()
@@ -67,7 +67,7 @@ namespace AnalysisManagerExtractionPlugin
                 ErrMsg = string.Empty;
 
                 var ioInputFile = new FileInfo(InputFile);
-                var strPeptideProphetConsoleOutputFilePath = Path.Combine(ioInputFile.DirectoryName, "PeptideProphetConsoleOutput.txt");
+                var peptideProphetConsoleOutputFilePath = Path.Combine(ioInputFile.DirectoryName, "PeptideProphetConsoleOutput.txt");
 
                 // verify that program file exists
                 if (!File.Exists(m_PeptideProphetRunnerLocation))
@@ -89,7 +89,7 @@ namespace AnalysisManagerExtractionPlugin
                     CacheStandardOutput = true,
                     EchoOutputToConsole = true,
                     WriteConsoleOutputToFile = true,
-                    ConsoleOutputFilePath = strPeptideProphetConsoleOutputFilePath
+                    ConsoleOutputFilePath = peptideProphetConsoleOutputFilePath
                 };
                 mCmdRunner.ErrorEvent += CmdRunner_ErrorEvent;
                 mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
@@ -107,8 +107,8 @@ namespace AnalysisManagerExtractionPlugin
                     // Parse the console output file for any lines that contain "Error"
                     // Append them to m_ErrMsg
 
-                    var ioConsoleOutputFile = new FileInfo(strPeptideProphetConsoleOutputFilePath);
-                    var blnErrorMessageFound = false;
+                    var ioConsoleOutputFile = new FileInfo(peptideProphetConsoleOutputFilePath);
+                    var errorMessageFound = false;
 
                     if (ioConsoleOutputFile.Exists)
                     {
@@ -116,20 +116,20 @@ namespace AnalysisManagerExtractionPlugin
 
                         while (!srInFile.EndOfStream)
                         {
-                            var strLineIn = srInFile.ReadLine();
-                            if (!string.IsNullOrWhiteSpace(strLineIn))
+                            var lineIn = srInFile.ReadLine();
+                            if (!string.IsNullOrWhiteSpace(lineIn))
                             {
-                                if (strLineIn.ToLower().Contains("error"))
+                                if (lineIn.ToLower().Contains("error"))
                                 {
                                     ErrMsg += "; " + ErrMsg;
-                                    blnErrorMessageFound = true;
+                                    errorMessageFound = true;
                                 }
                             }
                         }
                         srInFile.Close();
                     }
 
-                    if (!blnErrorMessageFound)
+                    if (!errorMessageFound)
                     {
                         ErrMsg += "; Unknown error message";
                     }

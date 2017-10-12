@@ -117,8 +117,8 @@ namespace AnalysisManagerExtractionPlugin
                 // Define the modification definitions file name
                 var ModDefsFileName = Path.GetFileNameWithoutExtension(ParamFileName) + clsAnalysisResourcesExtraction.MOD_DEFS_FILE_SUFFIX;
 
-                var ioInputFile = new FileInfo(peptideSearchResultsFileName);
-                m_PHRPConsoleOutputFilePath = Path.Combine(ioInputFile.DirectoryName, "PHRPOutput.txt");
+                var psmResultsFile = new FileInfo(peptideSearchResultsFileName);
+                m_PHRPConsoleOutputFilePath = Path.Combine(psmResultsFile.DirectoryName, "PHRPOutput.txt");
 
                 var progLoc = m_MgrParams.GetParam("PHRPProgLoc");
                 progLoc = Path.Combine(progLoc, "PeptideHitResultsProcRunner.exe");
@@ -134,14 +134,14 @@ namespace AnalysisManagerExtractionPlugin
                 // Note:
                 //   /SynPvalue is only used when processing Inspect files
                 //   /SynProb is only used for MODa and MODPlus results
-                var cmdStr = ioInputFile.FullName + " /O:" + ioInputFile.DirectoryName + " /M:" + ModDefsFileName + " /T:" +
+                var cmdStr = psmResultsFile.FullName + " /O:" + psmResultsFile.DirectoryName + " /M:" + ModDefsFileName + " /T:" +
                                 clsAnalysisResourcesExtraction.MASS_CORRECTION_TAGS_FILENAME + " /N:" + ParamFileName + " /SynPvalue:0.2 " +
                                 " /SynProb:0.05 ";
 
-                cmdStr += " /L:" + Path.Combine(ioInputFile.DirectoryName, PHRP_LOG_FILE_NAME);
+                cmdStr += " /L:" + Path.Combine(psmResultsFile.DirectoryName, PHRP_LOG_FILE_NAME);
 
-                var blnSkipProteinMods = m_JobParams.GetJobParameter("SkipProteinMods", false);
-                if (!blnSkipProteinMods)
+                var skipProteinMods = m_JobParams.GetJobParameter("SkipProteinMods", false);
+                if (!skipProteinMods)
                 {
                     cmdStr += " /ProteinMods";
                 }
@@ -180,7 +180,7 @@ namespace AnalysisManagerExtractionPlugin
                     OnDebugEvent(progLoc + " " + cmdStr);
                 }
 
-                var cmdRunner = new clsRunDosProgram(ioInputFile.DirectoryName)
+                var cmdRunner = new clsRunDosProgram(psmResultsFile.DirectoryName)
                 {
                     CreateNoWindow = true,
                     CacheStandardOutput = true,
@@ -192,10 +192,10 @@ namespace AnalysisManagerExtractionPlugin
                 cmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
                 // Abort PHRP if it runs for over 720 minutes (this generally indicates that it's stuck)
-                const int intMaxRuntimeSeconds = 720 * 60;
-                var blnSuccess = cmdRunner.RunProgram(progLoc, cmdStr, "PHRP", true, intMaxRuntimeSeconds);
+                const int maxRuntimeSeconds = 720 * 60;
+                var success = cmdRunner.RunProgram(progLoc, cmdStr, "PHRP", true, maxRuntimeSeconds);
 
-                if (!blnSuccess)
+                if (!success)
                 {
                     m_ErrMsg = "Error running PHRP";
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -208,30 +208,30 @@ namespace AnalysisManagerExtractionPlugin
                     // Parse the console output file for any lines that contain "Error"
                     // Append them to m_ErrMsg
 
-                    var ioConsoleOutputFile = new FileInfo(m_PHRPConsoleOutputFilePath);
-                    var blnErrorMessageFound = false;
+                    var consoleOutputFile = new FileInfo(m_PHRPConsoleOutputFilePath);
+                    var errorMessageFound = false;
 
-                    if (ioConsoleOutputFile.Exists)
+                    if (consoleOutputFile.Exists)
                     {
-                        var srInFile = new StreamReader(new FileStream(ioConsoleOutputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
-
-                        while (!srInFile.EndOfStream)
+                        using (var reader = new StreamReader(new FileStream(consoleOutputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                         {
-                            string strLineIn = null;
-                            strLineIn = srInFile.ReadLine();
-                            if (!string.IsNullOrWhiteSpace(strLineIn))
+
+                            while (!reader.EndOfStream)
                             {
-                                if (strLineIn.ToLower().Contains("error"))
-                                {
-                                    m_ErrMsg += "; " + m_ErrMsg;
-                                    blnErrorMessageFound = true;
-                                }
+                                var lineIn = reader.ReadLine();
+                                if (string.IsNullOrWhiteSpace(lineIn))
+                                    continue;
+
+                                if (!lineIn.ToLower().Contains("error"))
+                                    continue;
+
+                                m_ErrMsg += "; " + m_ErrMsg;
+                                errorMessageFound = true;
                             }
                         }
-                        srInFile.Close();
                     }
 
-                    if (!blnErrorMessageFound)
+                    if (!errorMessageFound)
                     {
                         m_ErrMsg += "; Unknown error message";
                     }
@@ -260,9 +260,7 @@ namespace AnalysisManagerExtractionPlugin
                     {
                         if (!string.IsNullOrEmpty(fastaFilePath))
                         {
-                            var strWarningMessage = string.Empty;
-
-                            if (PeptideHitResultsProcessor.clsPHRPBaseClass.ValidateProteinFastaFile(fastaFilePath, out strWarningMessage))
+                            if (PeptideHitResultsProcessor.clsPHRPBaseClass.ValidateProteinFastaFile(fastaFilePath, out _))
                             {
                                 lstFilesToCheck.Add("_ProteinMods.txt");
                             }
@@ -274,17 +272,17 @@ namespace AnalysisManagerExtractionPlugin
                     }
                 }
 
-                foreach (var strFileName in lstFilesToCheck)
+                foreach (var fileName in lstFilesToCheck)
                 {
-                    if (ioInputFile.Directory.GetFiles("*" + strFileName).Length == 0)
+                    if (psmResultsFile.Directory.GetFiles("*" + fileName).Length == 0)
                     {
-                        m_ErrMsg = "PHRP results file not found: " + strFileName;
+                        m_ErrMsg = "PHRP results file not found: " + fileName;
                         OnErrorEvent(m_ErrMsg);
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
                 }
 
-                // Delete strPHRPConsoleOutputFilePath, since we didn't encounter any errors and the file is typically not useful
+                // Delete pHRPConsoleOutputFilePath, since we didn't encounter any errors and the file is typically not useful
                 try
                 {
                     File.Delete(m_PHRPConsoleOutputFilePath);
@@ -325,64 +323,63 @@ namespace AnalysisManagerExtractionPlugin
 
                 float progressSubtask = 0;
 
-                if (File.Exists(m_PHRPConsoleOutputFilePath))
+                if (!File.Exists(m_PHRPConsoleOutputFilePath)) return;
+
+                using (var srInFile = new StreamReader(new FileStream(m_PHRPConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    using (var srInFile = new StreamReader(new FileStream(m_PHRPConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                    while (!srInFile.EndOfStream)
                     {
-                        while (!srInFile.EndOfStream)
+                        var lineIn = srInFile.ReadLine();
+                        if (string.IsNullOrWhiteSpace(lineIn))
                         {
-                            var strLineIn = srInFile.ReadLine();
-                            if (string.IsNullOrWhiteSpace(strLineIn))
-                            {
-                                continue;
-                            }
+                            continue;
+                        }
 
-                            if (strLineIn.StartsWith("Creating the FHT file"))
-                            {
-                                currentTaskProgressAtStart = CREATING_FHT;
-                                currentTaskProgressAtEnd = CREATING_SYN;
-                                progressSubtask = 0;
-                            }
-                            else if (strLineIn.StartsWith("Creating the SYN file"))
-                            {
-                                currentTaskProgressAtStart = CREATING_SYN;
-                                currentTaskProgressAtEnd = CREATING_PHRP_FILES;
-                                progressSubtask = 0;
-                            }
-                            else if (strLineIn.StartsWith("Creating the PHRP files"))
-                            {
-                                currentTaskProgressAtStart = CREATING_PHRP_FILES;
-                                currentTaskProgressAtEnd = PHRP_COMPLETE;
-                                progressSubtask = 0;
-                            }
+                        if (lineIn.StartsWith("Creating the FHT file"))
+                        {
+                            currentTaskProgressAtStart = CREATING_FHT;
+                            currentTaskProgressAtEnd = CREATING_SYN;
+                            progressSubtask = 0;
+                        }
+                        else if (lineIn.StartsWith("Creating the SYN file"))
+                        {
+                            currentTaskProgressAtStart = CREATING_SYN;
+                            currentTaskProgressAtEnd = CREATING_PHRP_FILES;
+                            progressSubtask = 0;
+                        }
+                        else if (lineIn.StartsWith("Creating the PHRP files"))
+                        {
+                            currentTaskProgressAtStart = CREATING_PHRP_FILES;
+                            currentTaskProgressAtEnd = PHRP_COMPLETE;
+                            progressSubtask = 0;
+                        }
 
-                            Match reMatch;
-                            if (currentTaskProgressAtStart < CREATING_PHRP_FILES)
+                        Match reMatch;
+                        if (currentTaskProgressAtStart < CREATING_PHRP_FILES)
+                        {
+                            reMatch = reProcessing.Match(lineIn);
+                            if (reMatch.Success)
                             {
-                                reMatch = reProcessing.Match(strLineIn);
-                                if (reMatch.Success)
-                                {
-                                    float.TryParse(reMatch.Groups[1].Value, out progressSubtask);
-                                }
+                                float.TryParse(reMatch.Groups[1].Value, out progressSubtask);
                             }
-                            else
+                        }
+                        else
+                        {
+                            reMatch = reProcessingPHRP.Match(lineIn);
+                            if (reMatch.Success)
                             {
-                                reMatch = reProcessingPHRP.Match(strLineIn);
-                                if (reMatch.Success)
-                                {
-                                    float.TryParse(reMatch.Groups[1].Value, out progressSubtask);
-                                }
+                                float.TryParse(reMatch.Groups[1].Value, out progressSubtask);
                             }
                         }
                     }
+                }
 
-                    var progressOverall = clsAnalysisToolRunnerBase.ComputeIncrementalProgress(currentTaskProgressAtStart, currentTaskProgressAtEnd, progressSubtask);
+                var progressOverall = clsAnalysisToolRunnerBase.ComputeIncrementalProgress(currentTaskProgressAtStart, currentTaskProgressAtEnd, progressSubtask);
 
-                    if (progressOverall > m_Progress)
-                    {
-                        m_Progress = (int)progressOverall;
-                        ProgressChanged?.Invoke("Running PHRP", m_Progress);
-                    }
+                if (progressOverall > m_Progress)
+                {
+                    m_Progress = (int)progressOverall;
+                    ProgressChanged?.Invoke("Running PHRP", m_Progress);
                 }
             }
             catch (Exception ex)
@@ -404,9 +401,9 @@ namespace AnalysisManagerExtractionPlugin
         private void CmdRunner_LoopWaiting()
         {
             // Update the status by parsing the PHRP Console Output file every 20 seconds
-            if (System.DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 20)
+            if (DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 20)
             {
-                dtLastStatusUpdate = System.DateTime.UtcNow;
+                dtLastStatusUpdate = DateTime.UtcNow;
                 ParsePHRPConsoleOutputFile();
             }
         }

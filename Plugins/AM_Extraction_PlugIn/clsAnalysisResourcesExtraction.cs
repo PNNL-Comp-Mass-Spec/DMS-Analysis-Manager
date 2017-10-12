@@ -70,16 +70,16 @@ namespace AnalysisManagerExtractionPlugin
             mRetrieveOrganismDB = true;
             m_PendingFileRenames = new Dictionary<string, string>();
 
-            var strResultType = m_jobParams.GetParam("ResultType");
+            var resultType = m_jobParams.GetParam("ResultType");
 
             // Get analysis results files
-            if (GetInputFiles(strResultType, out var createPepToProtMapFile) != CloseOutType.CLOSEOUT_SUCCESS)
+            if (GetInputFiles(resultType, out var createPepToProtMapFile) != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
             // Get misc files
-            if (RetrieveMiscFiles(strResultType) != CloseOutType.CLOSEOUT_SUCCESS)
+            if (RetrieveMiscFiles(resultType) != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -117,64 +117,64 @@ namespace AnalysisManagerExtractionPlugin
         /// <summary>
         /// Retrieves input files (ie, .out files) needed for extraction
         /// </summary>
-        /// <param name="strResultType">String specifying type of analysis results input to extraction process</param>
+        /// <param name="resultType">String specifying type of analysis results input to extraction process</param>
         /// <param name="createPepToProtMapFile"></param>
         /// <returns>CloseOutType specifying results</returns>
         /// <remarks></remarks>
-        private CloseOutType GetInputFiles(string strResultType, out bool createPepToProtMapFile)
+        private CloseOutType GetInputFiles(string resultType, out bool createPepToProtMapFile)
         {
             createPepToProtMapFile = false;
 
             try
             {
-                CloseOutType eResult;
-                switch (strResultType)
+                CloseOutType result;
+                switch (resultType)
                 {
                     case RESULT_TYPE_SEQUEST:
-                        eResult = GetSequestFiles();
+                        result = GetSequestFiles();
 
                         break;
                     case RESULT_TYPE_XTANDEM:
-                        eResult = GetXTandemFiles();
+                        result = GetXTandemFiles();
 
                         break;
                     case RESULT_TYPE_INSPECT:
-                        eResult = GetInspectFiles();
+                        result = GetInspectFiles();
 
                         break;
                     case RESULT_TYPE_MSGFPLUS:
-                        eResult = GetMSGFPlusFiles(out createPepToProtMapFile);
+                        result = GetMSGFPlusFiles(out createPepToProtMapFile);
 
                         break;
                     case RESULT_TYPE_MSALIGN:
-                        eResult = GetMSAlignFiles();
+                        result = GetMSAlignFiles();
 
                         break;
                     case RESULT_TYPE_MODA:
-                        eResult = GetMODaFiles();
+                        result = GetMODaFiles();
 
                         break;
                     case RESULT_TYPE_MODPLUS:
-                        eResult = GetMODPlusFiles();
+                        result = GetMODPlusFiles();
 
                         break;
                     case RESULT_TYPE_MSPATHFINDER:
-                        eResult = GetMSPathFinderFiles();
+                        result = GetMSPathFinderFiles();
 
                         m_jobParams.AddResultFileExtensionToSkip(".tsv");
 
                         break;
                     default:
-                        LogError("Invalid tool result type: " + strResultType);
+                        LogError("Invalid tool result type: " + resultType);
                         return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
-                    return eResult;
+                    return result;
                 }
 
-                RetrieveToolVersionFile(strResultType);
+                RetrieveToolVersionFile(resultType);
             }
             catch (Exception ex)
             {
@@ -377,7 +377,7 @@ namespace AnalysisManagerExtractionPlugin
                 }
 
                 currentStep = "Determining results file type based on the results file name";
-                var blnUseLegacyMSGFDB = false;
+                var useLegacyMSGFDB = false;
 
                 var fileToFind = DatasetName + "_msgfplus" + suffixToAdd + ".mzid.gz";
                 var sourceFolder = FileSearch.FindDataFile(fileToFind, true, false);
@@ -416,7 +416,7 @@ namespace AnalysisManagerExtractionPlugin
                             if (!string.IsNullOrEmpty(zipSourceFolderAlt))
                             {
                                 // File Found
-                                blnUseLegacyMSGFDB = true;
+                                useLegacyMSGFDB = true;
                                 mzidSuffix = ".zip";
                                 sourceFolder = zipSourceFolderAlt;
                             }
@@ -436,7 +436,7 @@ namespace AnalysisManagerExtractionPlugin
                 for (var iteration = 1; iteration <= numberOfClonedSteps; iteration++)
                 {
                     var skipMSGFResultsZipFileCopy = false;
-                    string strBaseName;
+                    string baseName;
 
                     if (splitFastaEnabled)
                     {
@@ -447,9 +447,9 @@ namespace AnalysisManagerExtractionPlugin
                         suffixToAdd = string.Empty;
                     }
 
-                    if (blnUseLegacyMSGFDB)
+                    if (useLegacyMSGFDB)
                     {
-                        strBaseName = DatasetName + "_msgfdb";
+                        baseName = DatasetName + "_msgfdb";
 
                         if (splitFastaEnabled)
                         {
@@ -459,7 +459,7 @@ namespace AnalysisManagerExtractionPlugin
                     }
                     else
                     {
-                        strBaseName = DatasetName + "_msgfplus" + suffixToAdd;
+                        baseName = DatasetName + "_msgfplus" + suffixToAdd;
 
                         var tsvFile = DatasetName + "_msgfplus" + suffixToAdd + ".tsv";
                         currentStep = "Retrieving " + tsvFile;
@@ -505,7 +505,7 @@ namespace AnalysisManagerExtractionPlugin
 
                     if (!skipMSGFResultsZipFileCopy)
                     {
-                        var mzidFile = strBaseName + mzidSuffix;
+                        var mzidFile = baseName + mzidSuffix;
                         currentStep = "Retrieving " + mzidFile;
 
                         if (!FileSearch.FindAndRetrieveMiscFiles(mzidFile, unzip: true, searchArchivedDatasetFolder: true, logFileNotFound: true))
@@ -555,7 +555,7 @@ namespace AnalysisManagerExtractionPlugin
                         }
                         else
                         {
-                            if (blnUseLegacyMSGFDB)
+                            if (useLegacyMSGFDB)
                             {
                                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                             }
@@ -645,8 +645,8 @@ namespace AnalysisManagerExtractionPlugin
         //{
         //    try
         //    {
-        //        var strParamFileStoragePath = m_jobParams.GetParam("ParmFileStoragePath");
-        //        var ioFolderInfo = new DirectoryInfo(strParamFileStoragePath).Parent;
+        //        var paramFileStoragePath = m_jobParams.GetParam("ParmFileStoragePath");
+        //        var ioFolderInfo = new DirectoryInfo(paramFileStoragePath).Parent;
         //
         //        var ioSubfolders = ioFolderInfo.GetDirectories("MassCorrectionTags");
         //
@@ -690,8 +690,8 @@ namespace AnalysisManagerExtractionPlugin
         /// <remarks></remarks>
         protected internal CloseOutType RetrieveMiscFiles(string ResultType)
         {
-            var strParamFileName = m_jobParams.GetParam("ParmFileName");
-            var ModDefsFilename = Path.GetFileNameWithoutExtension(strParamFileName) + MOD_DEFS_FILE_SUFFIX;
+            var paramFileName = m_jobParams.GetParam("ParmFileName");
+            var ModDefsFilename = Path.GetFileNameWithoutExtension(paramFileName) + MOD_DEFS_FILE_SUFFIX;
 
             try
             {
@@ -706,9 +706,9 @@ namespace AnalysisManagerExtractionPlugin
                 //  FROM V_Param_File_Mass_Mod_Info
                 //  WHERE Param_File_Name = 'ParamFileName'
 
-                var blnSuccess = RetrieveGeneratedParamFile(strParamFileName);
+                var success = RetrieveGeneratedParamFile(paramFileName);
 
-                if (!blnSuccess)
+                if (!success)
                 {
                     LogError("Error retrieving parameter file and ModDefs.txt file");
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -736,11 +736,11 @@ namespace AnalysisManagerExtractionPlugin
                     m_message = "Unable to create the ModDefs.txt file; update T_Param_File_Mass_Mods";
                     LogWarning(
                         "Unable to create the ModDefs.txt file; define the modifications in table T_Param_File_Mass_Mods for parameter file " +
-                        strParamFileName);
+                        paramFileName);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                m_jobParams.AddResultFileToSkip(strParamFileName);
+                m_jobParams.AddResultFileToSkip(paramFileName);
                 m_jobParams.AddResultFileToSkip(MASS_CORRECTION_TAGS_FILENAME);
 
                 var logModFilesFileNotFound = (ResultType == RESULT_TYPE_MSALIGN);
@@ -775,52 +775,52 @@ namespace AnalysisManagerExtractionPlugin
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
-        protected bool RetrieveToolVersionFile(string strResultType)
+        protected bool RetrieveToolVersionFile(string resultTypeName)
         {
-            bool blnSuccess;
+            bool success;
 
             try
             {
                 // Make sure the ResultType is valid
-                var eResultType = clsPHRPReader.GetPeptideHitResultType(strResultType);
+                var resultType = clsPHRPReader.GetPeptideHitResultType(resultTypeName);
 
-                var strToolVersionFile = clsPHRPReader.GetToolVersionInfoFilename(eResultType);
-                var strToolVersionFileNewName = string.Empty;
+                var toolVersionFile = clsPHRPReader.GetToolVersionInfoFilename(resultType);
+                var toolVersionFileNewName = string.Empty;
 
-                var strToolNameForScript = m_jobParams.GetJobParameter("ToolName", string.Empty);
-                if (eResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB && strToolNameForScript == "MSGFPlus_IMS")
+                var toolNameForScript = m_jobParams.GetJobParameter("ToolName", string.Empty);
+                if (resultType == clsPHRPReader.ePeptideHitResultType.MSGFDB && toolNameForScript == "MSGFPlus_IMS")
                 {
                     // PeptideListToXML expects the ToolVersion file to be named "Tool_Version_Info_MSGFPlus.txt"
                     // However, this is the MSGFPlus_IMS script, so the file is currently "Tool_Version_Info_MSGFPlus_IMS.txt"
                     // We'll copy the current file locally, then rename it to the expected name
-                    strToolVersionFileNewName = string.Copy(strToolVersionFile);
-                    strToolVersionFile = "Tool_Version_Info_MSGFPlus_IMS.txt";
+                    toolVersionFileNewName = string.Copy(toolVersionFile);
+                    toolVersionFile = "Tool_Version_Info_MSGFPlus_IMS.txt";
                 }
 
-                blnSuccess = FileSearch.FindAndRetrieveMiscFiles(strToolVersionFile, false, false);
+                success = FileSearch.FindAndRetrieveMiscFiles(toolVersionFile, false, false);
 
-                if (blnSuccess && !string.IsNullOrEmpty(strToolVersionFileNewName))
+                if (success && !string.IsNullOrEmpty(toolVersionFileNewName))
                 {
-                    m_PendingFileRenames.Add(strToolVersionFile, strToolVersionFileNewName);
+                    m_PendingFileRenames.Add(toolVersionFile, toolVersionFileNewName);
 
-                    strToolVersionFile = strToolVersionFileNewName;
+                    toolVersionFile = toolVersionFileNewName;
                 }
-                else if (!blnSuccess)
+                else if (!success)
                 {
-                    if (strToolVersionFile.ToLower().Contains("msgfplus"))
+                    if (toolVersionFile.ToLower().Contains("msgfplus"))
                     {
-                        var strToolVersionFileLegacy = "Tool_Version_Info_MSGFDB.txt";
-                        blnSuccess = FileSearch.FindAndRetrieveMiscFiles(strToolVersionFileLegacy, false, false);
-                        if (blnSuccess)
+                        var toolVersionFileLegacy = "Tool_Version_Info_MSGFDB.txt";
+                        success = FileSearch.FindAndRetrieveMiscFiles(toolVersionFileLegacy, false, false);
+                        if (success)
                         {
                             // Rename the Tool_Version file to the expected name (Tool_Version_Info_MSGFPlus.txt)
-                            m_PendingFileRenames.Add(strToolVersionFileLegacy, strToolVersionFile);
-                            m_jobParams.AddResultFileToSkip(strToolVersionFileLegacy);
+                            m_PendingFileRenames.Add(toolVersionFileLegacy, toolVersionFile);
+                            m_jobParams.AddResultFileToSkip(toolVersionFileLegacy);
                         }
                     }
                 }
 
-                m_jobParams.AddResultFileToSkip(strToolVersionFile);
+                m_jobParams.AddResultFileToSkip(toolVersionFile);
             }
             catch (Exception ex)
             {
@@ -828,7 +828,7 @@ namespace AnalysisManagerExtractionPlugin
                 return false;
             }
 
-            return blnSuccess;
+            return success;
         }
 
     }
