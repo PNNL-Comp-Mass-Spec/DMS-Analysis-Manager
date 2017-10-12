@@ -212,7 +212,14 @@ namespace AnalysisManagerExtractionPlugin
                         return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (eResult != CloseOutType.CLOSEOUT_SUCCESS && eResult != CloseOutType.CLOSEOUT_NO_DATA)
+                if (result == CloseOutType.CLOSEOUT_NO_DATA)
+                {
+                    // Make sure m_message has text; this will appear in the Completion_Message column in the database
+                    if (string.IsNullOrWhiteSpace(m_message))
+                        m_message = "No results above threshold";
+                }
+
+                if (result != CloseOutType.CLOSEOUT_SUCCESS && result != CloseOutType.CLOSEOUT_NO_DATA)
                 {
                     LogError("Error " + currentAction);
                     processingSuccess = false;
@@ -249,7 +256,7 @@ namespace AnalysisManagerExtractionPlugin
                 // For SplitFasta files there will be multiple tsv files to delete, plus the individual ConsoleOutput.txt files (all tracked with m_jobParams.ServerFilesToDelete)
                 RemoveNonResultServerFiles();
 
-                return CloseOutType.CLOSEOUT_SUCCESS;
+                return result;
             }
             catch (Exception ex)
             {
@@ -990,9 +997,15 @@ namespace AnalysisManagerExtractionPlugin
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+            if (result == CloseOutType.CLOSEOUT_NO_DATA)
             {
-                msg = "Error running PHRP";
+                // Message has already been logged
+                return result;
+            }
+
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+            {
+                var msg = "Error running PHRP";
                 if (!string.IsNullOrWhiteSpace(phrp.ErrMsg))
                     msg += "; " + phrp.ErrMsg;
                 LogDebug(msg);
@@ -1032,9 +1045,15 @@ namespace AnalysisManagerExtractionPlugin
 
                 var result = phrp.ExtractDataFromResults(targetFilePath, mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_XTANDEM);
 
-                if ((eResult != CloseOutType.CLOSEOUT_SUCCESS))
+                if (result == CloseOutType.CLOSEOUT_NO_DATA)
                 {
-                    msg = "Error running PHRP";
+                    // Message has already been logged
+                    return result;
+                }
+
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    var msg = "Error running PHRP";
                     if (!string.IsNullOrWhiteSpace(phrp.ErrMsg))
                         msg += "; " + phrp.ErrMsg;
                     LogDebug(msg);
@@ -1081,7 +1100,13 @@ namespace AnalysisManagerExtractionPlugin
 
                 var result = phrp.ExtractDataFromResults(targetFilePath, mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_MSALIGN);
 
-                if ((eResult != CloseOutType.CLOSEOUT_SUCCESS))
+                if (result == CloseOutType.CLOSEOUT_NO_DATA)
+                {
+                    // Message has already been logged
+                    return result;
+                }
+
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     var msg = "Error running PHRP";
                     if (!string.IsNullOrWhiteSpace(phrp.ErrMsg))
@@ -1169,8 +1194,6 @@ namespace AnalysisManagerExtractionPlugin
                         return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                     }
 
-                    var strSynFilePath = Path.Combine(m_WorkDir, m_Dataset + "_moda_syn.txt");
-
                     currentStep = "Running PHRP";
 
                     // Create the Synopsis and First Hits files using the _moda.id.txt file
@@ -1180,7 +1203,13 @@ namespace AnalysisManagerExtractionPlugin
                     var result = phrp.ExtractDataFromResults(filteredMODaResultsFilePath, CreateFirstHitsFile, CreateSynopsisFile,
                         mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_MODA);
 
-                    if ((eResult != CloseOutType.CLOSEOUT_SUCCESS))
+                    if (result == CloseOutType.CLOSEOUT_NO_DATA)
+                    {
+                        // Message has already been logged
+                        return result;
+                    }
+
+                    if (result != CloseOutType.CLOSEOUT_SUCCESS)
                     {
                         var msg = "Error running PHRP";
                         if (!string.IsNullOrWhiteSpace(phrp.ErrMsg))
@@ -1190,13 +1219,6 @@ namespace AnalysisManagerExtractionPlugin
                     }
 
                     currentStep = "Verifying results exist";
-
-                    // Confirm that the synopsis file was made
-                    if (!File.Exists(strSynFilePath))
-                    {
-                        LogError("Synopsis file not found: " + Path.GetFileName(strSynFilePath));
-                        return CloseOutType.CLOSEOUT_NO_DATA;
-                    }
 
                     // Skip the _moda.id.txt file
                     m_jobParams.AddResultFileToSkip(filteredMODaResultsFilePath);
@@ -1255,8 +1277,6 @@ namespace AnalysisManagerExtractionPlugin
                         return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                     }
 
-                    var strSynFilePath = Path.Combine(m_WorkDir, m_Dataset + "_modp_syn.txt");
-
                     currentStep = "Running PHRP";
 
                     // Create the Synopsis file using the _modp.id.txt file
@@ -1266,7 +1286,13 @@ namespace AnalysisManagerExtractionPlugin
                     var result = phrp.ExtractDataFromResults(filteredMODPlusResultsFilePath, CreateFirstHitsFile, CreateSynopsisFile,
                         mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_MODPLUS);
 
-                    if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+                    if (result == CloseOutType.CLOSEOUT_NO_DATA)
+                    {
+                        // Message has already been logged
+                        return result;
+                    }
+
+                    if (result != CloseOutType.CLOSEOUT_SUCCESS)
                     {
                         var msg = "Error running PHRP";
                         if (!string.IsNullOrWhiteSpace(phrp.ErrMsg))
@@ -1275,14 +1301,6 @@ namespace AnalysisManagerExtractionPlugin
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
 
-                    currentStep = "Verifying results exist";
-
-                    // Confirm that the synopsis file was made
-                    if (!File.Exists(strSynFilePath))
-                    {
-                        LogError("Synopsis file not found: " + Path.GetFileName(strSynFilePath));
-                        return CloseOutType.CLOSEOUT_NO_DATA;
-                    }
                 }
                 catch (Exception ex)
                 {
@@ -1451,7 +1469,13 @@ namespace AnalysisManagerExtractionPlugin
                     result = phrp.ExtractDataFromResults(targetFilePath, createMSGFPlusFirstHitsFile, createMSGFPlusSynopsisFile,
                         mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_MSGFPLUS);
 
-                    if ((eResult != CloseOutType.CLOSEOUT_SUCCESS))
+                    if (result == CloseOutType.CLOSEOUT_NO_DATA)
+                    {
+                        // Message has already been logged
+                        return result;
+                    }
+
+                    if (result != CloseOutType.CLOSEOUT_SUCCESS)
                     {
                         var msg = "Error running PHRP";
                         if (!string.IsNullOrWhiteSpace(phrp.ErrMsg))
@@ -1543,22 +1567,19 @@ namespace AnalysisManagerExtractionPlugin
                     var result = phrp.ExtractDataFromResults(msPathFinderResultsFilePath, CreateFirstHitsFile, CreateSynopsisFile,
                         mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_MSPATHFINDER);
 
-                    if ((eResult != CloseOutType.CLOSEOUT_SUCCESS))
+                    if (result == CloseOutType.CLOSEOUT_NO_DATA)
+                    {
+                        // Message has already been logged
+                        return result;
+                    }
+
+                    if (result != CloseOutType.CLOSEOUT_SUCCESS)
                     {
                         var msg = "Error running PHRP";
                         if (!string.IsNullOrWhiteSpace(phrp.ErrMsg))
                             msg += "; " + phrp.ErrMsg;
                         LogWarning(msg);
                         return CloseOutType.CLOSEOUT_FAILED;
-                    }
-
-                    currentStep = "Verifying results exist";
-
-                    // Confirm that the synopsis file was made
-                    if (!File.Exists(strSynFilePath))
-                    {
-                        LogError("Synopsis file not found: " + Path.GetFileName(strSynFilePath));
-                        return CloseOutType.CLOSEOUT_NO_DATA;
                     }
                 }
                 catch (Exception ex)
@@ -1702,7 +1723,13 @@ namespace AnalysisManagerExtractionPlugin
                 result = phrp.ExtractDataFromResults(targetFilePath, createInspectFirstHitsFile, createInspectSynopsisFile,
                     mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_INSPECT);
 
-                if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
+                if (result == CloseOutType.CLOSEOUT_NO_DATA)
+                {
+                    // Message has already been logged
+                    return result;
+                }
+
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     var msg = "Error running PHRP";
                     if (!string.IsNullOrWhiteSpace(phrp.ErrMsg))

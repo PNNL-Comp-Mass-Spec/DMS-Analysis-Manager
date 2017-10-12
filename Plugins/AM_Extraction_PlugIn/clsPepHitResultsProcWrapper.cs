@@ -12,6 +12,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using AnalysisManagerBase;
 using PRISM;
@@ -105,6 +106,12 @@ namespace AnalysisManagerExtractionPlugin
 
             try
             {
+                if (!createFirstHitsFile && !createSynopsisFile)
+                {
+                    m_ErrMsg = "Must create either a first hits file or a synopsis file (or both); cannot continue";
+                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                }
+
                 m_Progress = 0;
                 m_ErrMsg = string.Empty;
 
@@ -242,21 +249,37 @@ namespace AnalysisManagerExtractionPlugin
                 // Make sure the key PHRP result files were created
                 var lstFilesToCheck = new List<string>();
 
+                string fileDescription;
+
                 if (createFirstHitsFile && !createSynopsisFile)
                 {
                     // We're processing Inspect data, and PHRP simply created the _fht.txt file
                     // Thus, only look for the first-hits file
                     lstFilesToCheck.Add("_fht.txt");
+                    fileDescription = "first hits";
                 }
                 else
                 {
+                    lstFilesToCheck.Add("_syn.txt");
+                    fileDescription = "synopsis";
+                }
+
+                // Check for an empty first hits or synopsis file
+                var validationResult = ValidatePrimaryResultsFile(psmResultsFile, lstFilesToCheck.First(), fileDescription);
+
+                if (validationResult != CloseOutType.CLOSEOUT_SUCCESS && validationResult != CloseOutType.CLOSEOUT_NO_DATA)
+                    return validationResult;
+
+                if (createSynopsisFile)
+                {
+                    // Add additional files to find
                     lstFilesToCheck.Add("_ResultToSeqMap.txt");
                     lstFilesToCheck.Add("_SeqInfo.txt");
                     lstFilesToCheck.Add("_SeqToProteinMap.txt");
                     lstFilesToCheck.Add("_ModSummary.txt");
                     lstFilesToCheck.Add("_ModDetails.txt");
 
-                    if (!blnSkipProteinMods)
+                    if (!skipProteinMods && validationResult != CloseOutType.CLOSEOUT_NO_DATA)
                     {
                         if (!string.IsNullOrEmpty(fastaFilePath))
                         {
@@ -291,6 +314,13 @@ namespace AnalysisManagerExtractionPlugin
                 {
                     // Ignore errors here
                 }
+
+                if (m_DebugLevel >= 3)
+                {
+                    OnDebugEvent("Peptide hit results processor complete");
+                }
+
+                return validationResult;
             }
             catch (Exception ex)
             {
@@ -298,12 +328,6 @@ namespace AnalysisManagerExtractionPlugin
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (m_DebugLevel >= 3)
-            {
-                OnDebugEvent("Peptide hit results processor complete");
-            }
-
-            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         private readonly Regex reProcessing = new Regex(@"Processing: (\d+)");
@@ -386,6 +410,28 @@ namespace AnalysisManagerExtractionPlugin
             {
                 OnErrorEvent("Error parsing PHRP Console Output File", ex);
             }
+        }
+
+        private CloseOutType ValidatePrimaryResultsFile(FileInfo psmResultsFile, string fileSuffix, string fileDescription)
+        {
+
+            var files = psmResultsFile.Directory.GetFiles("*" + fileSuffix).ToList();
+            if (files.Count == 0)
+            {
+                m_ErrMsg = "PHRP did not create a " + fileDescription + " file";
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            var synopsisFileHasData = clsAnalysisResources.ValidateFileHasData(files.First().FullName, "PHRP " + fileDescription + " file", out var errorMessage);
+            if (!synopsisFileHasData)
+            {
+                m_ErrMsg = errorMessage;
+                OnWarningEvent(errorMessage);
+                return CloseOutType.CLOSEOUT_NO_DATA;
+            }
+
+            return CloseOutType.CLOSEOUT_SUCCESS;
+
         }
 
         #endregion
