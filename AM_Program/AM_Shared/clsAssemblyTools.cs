@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.IO;
 
 //*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy
+// Written by Dave Clark and Matthew Monroe for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2006, Battelle Memorial Institute
 // Created 06/07/2006

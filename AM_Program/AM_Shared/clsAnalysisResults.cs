@@ -4,7 +4,7 @@ using System.IO;
 using System.Threading;
 
 //*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy
+// Written by Dave Clark and Matthew Monroe for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 2007, Battelle Memorial Institute
 // Created 12/19/2007

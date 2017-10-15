@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 
 //*********************************************************************************************************
-// Written by Dave Clark for the US Department of Energy
+// Written by Dave Clark and Matthew Monroe for the US Department of Energy
 // Pacific Northwest National Laboratory, Richland, WA
 // Copyright 12/18/2007
 //
