@@ -1273,7 +1273,7 @@ namespace AnalysisManagerProg
                     var dtCurrentDate = DateTime.Parse(year + "-" + month + "-" + day);
                     var dtNewDate = dtCurrentDate.AddDays(-1);
 
-                    var previousLogFilePath = objMatch.Groups["BaseName"].Value + dtNewDate.ToString("MM-dd-yyyy") + Path.GetExtension(logFilePath);
+                    var previousLogFilePath = objMatch.Groups["BaseName"].Value + dtNewDate.ToString(clsLogTools.LOG_FILE_DATECODE) + Path.GetExtension(logFilePath);
                     return previousLogFilePath;
                 }
 
