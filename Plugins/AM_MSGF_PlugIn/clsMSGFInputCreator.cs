@@ -156,7 +156,7 @@ namespace AnalysisManagerMSGFPlugin
 
         public void CloseLogFileNow()
         {
-            if ((mLogFile != null))
+            if (mLogFile != null)
             {
                 mLogFile.Close();
                 mLogFile = null;

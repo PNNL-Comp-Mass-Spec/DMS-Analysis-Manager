@@ -309,9 +309,9 @@ namespace AnalysisManagerProg
                                 // Make sure the readonly flag is not set (it's likely not even possible for a folder to have a readonly flag set, but it doesn't hurt to check)
                                 diSubDirectory.Refresh();
                                 var attributes = diSubDirectory.Attributes;
-                                if (((attributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly))
+                                if ((attributes & FileAttributes.ReadOnly) == FileAttributes.ReadOnly)
                                 {
-                                    diSubDirectory.Attributes = attributes & (~FileAttributes.ReadOnly);
+                                    diSubDirectory.Attributes = attributes & ~FileAttributes.ReadOnly;
                                 }
 
                                 try

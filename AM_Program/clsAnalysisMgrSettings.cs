@@ -235,7 +235,7 @@ namespace AnalysisManagerProg
                 ShowTraceMessage("Initialized clsAnalysisMgrSettings");
 
                 Console.ForegroundColor = ConsoleMsgUtils.DebugFontColor;
-                foreach (var key in (from item in mParamDictionary.Keys orderby item select item))
+                foreach (var key in from item in mParamDictionary.Keys orderby item select item)
                 {
                     var value = mParamDictionary[key];
                     Console.WriteLine("  {0,-30} {1}", key, value);
@@ -457,7 +457,7 @@ namespace AnalysisManagerProg
             if (!success)
             {
                 // Log the message to the DB if the monthly Windows updates are not pending
-                var allowLogToDB = !(clsWindowsUpdateStatus.ServerUpdatesArePending());
+                var allowLogToDB = !clsWindowsUpdateStatus.ServerUpdatesArePending();
 
                 mErrMsg = "clsAnalysisMgrSettings.LoadMgrSettingsFromDBWork; Excessive failures attempting to retrieve manager settings from database " +
                           "for manager '" + managerName + "'";

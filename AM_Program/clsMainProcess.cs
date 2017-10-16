@@ -305,7 +305,7 @@ namespace AnalysisManagerProg
             }
 
             // Get the debug level
-            m_DebugLevel = (short)(m_MgrSettings.GetParam("debuglevel", 2));
+            m_DebugLevel = (short)m_MgrSettings.GetParam("debuglevel", 2);
 
             // Make sure that the manager name matches the machine name (with a few exceptions)
 
@@ -735,7 +735,7 @@ namespace AnalysisManagerProg
 
             var runJobsRemotely = m_MgrSettings.GetParam("RunJobsRemotely", false);
             var runningRemoteFlag = m_AnalysisTask.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "RunningRemote", 0);
-            var runningRemote = (runningRemoteFlag > 0);
+            var runningRemote = runningRemoteFlag > 0;
 
             if (clsGlobal.OfflineMode)
             {
@@ -1334,7 +1334,7 @@ namespace AnalysisManagerProg
                 var qErrorMsgQueue = new Queue<string>(errorMessageCountToReturn);
 
                 // Initialize the hashtable to hold the error messages, but without date stamps
-                var uniqueErrorMessages = new Dictionary<string, DateTime>((StringComparer.InvariantCultureIgnoreCase));
+                var uniqueErrorMessages = new Dictionary<string, DateTime>(StringComparer.InvariantCultureIgnoreCase);
 
                 // Examine the most recent error reported by objLogger
                 var lineIn = clsLogTools.MostRecentErrorMessage;
@@ -2652,7 +2652,7 @@ namespace AnalysisManagerProg
             // Periodically log errors to the database
             var flagFile = new FileInfo(m_MgrErrorCleanup.FlagFilePath);
             string errorMessage;
-            if ((flagFile.Directory == null))
+            if (flagFile.Directory == null)
             {
                 errorMessage = "Flag file exists in the manager folder";
             }
@@ -2807,7 +2807,7 @@ namespace AnalysisManagerProg
                     {
                         // Dataset folder not found; that's OK, since the Results Transfer plugin will auto-create it
                         // Try to use the parent folder (or the parent of the parent)
-                        while (!diDatasetStoragePath.Exists && (diDatasetStoragePath.Parent != null))
+                        while (!diDatasetStoragePath.Exists && diDatasetStoragePath.Parent != null)
                         {
                             diDatasetStoragePath = diDatasetStoragePath.Parent;
                         }
