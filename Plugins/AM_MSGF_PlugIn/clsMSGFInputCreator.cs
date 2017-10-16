@@ -20,7 +20,7 @@ using PHRPReader;
 
 namespace AnalysisManagerMSGFPlugin
 {
-    public abstract class clsMSGFInputCreator
+    public abstract class clsMSGFInputCreator : clsEventNotifier
     {
         #region "Constants"
 
@@ -65,18 +65,6 @@ namespace AnalysisManagerMSGFPlugin
         private int mMSGFInputFileLineCount;
 
         private StreamWriter mLogFile;
-
-        #endregion
-
-        #region "Events"
-
-        public event ErrorEventEventHandler ErrorEvent;
-
-        public delegate void ErrorEventEventHandler(string strErrorMessage);
-
-        public event WarningEventEventHandler WarningEvent;
-
-        public delegate void WarningEventEventHandler(string strWarningMessage);
 
         #endregion
 
@@ -587,7 +575,7 @@ namespace AnalysisManagerMSGFPlugin
             }
             catch (Exception ex)
             {
-                ErrorEvent?.Invoke("Error writing to MSGFInputCreator log file: " + ex.Message);
+                OnErrorEvent("Error writing to MSGFInputCreator log file: " + ex.Message);
             }
         }
 
@@ -760,17 +748,17 @@ namespace AnalysisManagerMSGFPlugin
             }
         }
 
-        protected void ReportError(string strErrorMessage)
+        protected void ReportError(string message)
         {
-            mErrorMessage = strErrorMessage;
-            LogError(mErrorMessage);
-            ErrorEvent?.Invoke(mErrorMessage);
+            mErrorMessage = message;
+            LogError(message);
+            OnErrorEvent(message);
         }
 
-        private void ReportWarning(string strWarningMessage)
+        private void ReportWarning(string message)
         {
-            LogError(strWarningMessage);
-            WarningEvent?.Invoke(strWarningMessage);
+            LogError(message);
+            OnWarningEvent(message);
         }
 
         /// <summary>

@@ -710,9 +710,9 @@ namespace AnalysisManagerMSGFPlugin
             if (blnSuccess)
             {
                 // Register events
+                mMSGFInputCreator.StatusEvent += mMSGFInputCreator_StatusEvent;
                 mMSGFInputCreator.ErrorEvent += mMSGFInputCreator_ErrorEvent;
                 mMSGFInputCreator.WarningEvent += mMSGFInputCreator_WarningEvent;
-
                 mMSGFInputFilePath = mMSGFInputCreator.MSGFInputFilePath;
                 mMSGFResultsFilePath = mMSGFInputCreator.MSGFResultsFilePath;
 
@@ -2650,15 +2650,25 @@ namespace AnalysisManagerMSGFPlugin
         /// <summary>
         /// Event handler for Error Events reported by the MSGF Input Creator
         /// </summary>
-        /// <param name="strErrorMessage"></param>
+        /// <param name="message"></param>
+        /// <param name="ex"></param>
         /// <remarks></remarks>
-        private void mMSGFInputCreator_ErrorEvent(string strErrorMessage)
+        private void mMSGFInputCreator_ErrorEvent(string message, Exception ex)
         {
             mMSGFInputCreatorErrorCount += 1;
             if (mMSGFInputCreatorErrorCount < 10 || mMSGFInputCreatorErrorCount % 1000 == 0)
             {
-                LogError("Error reported by MSGFInputCreator; " + strErrorMessage + " (ErrorCount=" + mMSGFInputCreatorErrorCount + ")");
+                LogError("Error reported by MSGFInputCreator; " + message + " (ErrorCount=" + mMSGFInputCreatorErrorCount + ")");
             }
+        }
+
+        /// <summary>
+        /// Event handler for status events reported by the MSGF Input Creator
+        /// </summary>
+        /// <param name="message"></param>
+        private void mMSGFInputCreator_StatusEvent(string message)
+        {
+            LogMessage(message, 10);
         }
 
         /// <summary>
