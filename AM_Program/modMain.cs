@@ -33,7 +33,7 @@ namespace AnalysisManagerProg
 {
     static class modMain
     {
-        public const string PROGRAM_DATE = "October 12, 2017";
+        public const string PROGRAM_DATE = "October 15, 2017";
 
         private static bool mCodeTestMode;
         private static bool mCreateWindowsEventLog;
@@ -176,6 +176,7 @@ namespace AnalysisManagerProg
             catch (Exception ex)
             {
                 clsGlobal.LogError("Error occurred in modMain->Main: " + Environment.NewLine + ex.Message, ex);
+                ShowErrorMessage("Error occurred in modMain->Main: " + ex.Message);
                 return -1;
             }
 
@@ -326,35 +327,12 @@ namespace AnalysisManagerProg
 
         private static void ShowErrorMessage(string message)
         {
-            const string separator = "------------------------------------------------------------------------------";
-
-            Console.WriteLine();
-            Console.WriteLine(separator);
-            Console.WriteLine(message);
-            Console.WriteLine(separator);
-            Console.WriteLine();
-
-            WriteToErrorStream(message);
+            ConsoleMsgUtils.ShowError(message);
         }
 
-        private static void ShowErrorMessage(string title, IEnumerable<string> items)
+        private static void ShowErrorMessage(string title, IEnumerable<string> errorMessages)
         {
-            const string separator = "------------------------------------------------------------------------------";
-
-            Console.WriteLine();
-            Console.WriteLine(separator);
-            Console.WriteLine(title);
-            var message = title + ":";
-
-            foreach (var item in items)
-            {
-                Console.WriteLine("   " + item);
-                message += " " + item;
-            }
-            Console.WriteLine(separator);
-            Console.WriteLine();
-
-            WriteToErrorStream(message);
+            ConsoleMsgUtils.ShowErrors(title, errorMessages);
         }
 
         private static void ShowProgramHelp()
@@ -411,21 +389,6 @@ namespace AnalysisManagerProg
             catch (Exception ex)
             {
                 clsGlobal.LogError("Error displaying the program syntax: " + ex.Message, ex);
-            }
-        }
-
-        private static void WriteToErrorStream(string errorMessage)
-        {
-            try
-            {
-                using (var swErrorStream = new StreamWriter(Console.OpenStandardError()))
-                {
-                    swErrorStream.WriteLine(errorMessage);
-                }
-            }
-            catch (Exception)
-            {
-                // Ignore errors here
             }
         }
 
