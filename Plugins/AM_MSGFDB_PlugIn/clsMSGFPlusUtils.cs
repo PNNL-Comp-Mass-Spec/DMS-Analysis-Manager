@@ -891,14 +891,14 @@ namespace AnalysisManagerMSGFDBPlugIn
                 {
                     if (mPeptideToProteinMapper.GetErrorMessage().Length == 0 && mPeptideToProteinMapper.StatusMessage.ToLower().Contains("error"))
                     {
-                        OnErrorEvent("Error running clsPeptideToProteinMapEngine: " + mPeptideToProteinMapper.StatusMessage);
+                        OnErrorEvent("Error running the PeptideToProteinMapEngine: " + mPeptideToProteinMapper.StatusMessage);
                     }
                     else
                     {
-                        OnErrorEvent("Error running clsPeptideToProteinMapEngine: " + mPeptideToProteinMapper.GetErrorMessage());
+                        OnErrorEvent("Error running the PeptideToProteinMapEngine: " + mPeptideToProteinMapper.GetErrorMessage());
                         if (mPeptideToProteinMapper.StatusMessage.Length > 0)
                         {
-                            OnErrorEvent("clsPeptideToProteinMapEngine status: " + mPeptideToProteinMapper.StatusMessage);
+                            OnErrorEvent("PeptideToProteinMapEngine status: " + mPeptideToProteinMapper.StatusMessage);
                         }
                     }
 

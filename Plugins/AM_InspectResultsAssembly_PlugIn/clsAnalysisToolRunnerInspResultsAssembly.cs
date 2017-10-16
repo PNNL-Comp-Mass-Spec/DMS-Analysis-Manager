@@ -69,6 +69,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
         protected string mInspectSearchLogFilePath = "InspectSearchLog.txt";      // This value gets updated in function RunInSpecT
 
+        // Note that clsPeptideToProteinMapEngine utilizes System.Data.SQLite.dll
         private clsPeptideToProteinMapEngine mPeptideToProteinMapper;
 
         // mPercentCompleteStartLevels is an array that lists the percent complete value to report
@@ -602,7 +603,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 }
                 else
                 {
-                    LogError("Error running clsPeptideToProteinMapEngine: " + mPeptideToProteinMapper.GetErrorMessage());
+                    LogError("Error running the PeptideToProteinMapEngine: " + mPeptideToProteinMapper.GetErrorMessage());
 
                     if (blnIgnorePeptideToProteinMapperErrors)
                     {
@@ -617,7 +618,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             {
                 m_message = "Error in InspectResultsAssembly->CreatePeptideToProteinMapping";
 
-                LogError("clsAnalysisToolRunnerInspResultsAssembly.CreatePeptideToProteinMapping, Error running clsPeptideToProteinMapEngine, job " +
+                LogError("clsAnalysisToolRunnerInspResultsAssembly.CreatePeptideToProteinMapping, Error running the PeptideToProteinMapEngine, job " +
                     m_JobNum, ex);
 
                 if (blnIgnorePeptideToProteinMapperErrors)
