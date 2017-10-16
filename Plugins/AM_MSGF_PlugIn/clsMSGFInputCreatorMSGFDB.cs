@@ -148,10 +148,10 @@ namespace AnalysisManagerMSGFPlugin
                         {
                             var objPSM = objReader.CurrentPSM;
 
-                            // objPSM.MSGFSpecProb comes from column MSGFDB_SpecProb   if MS-GFDB
-                            //                 it  comes from column MSGFDB_SpecEValue if MS-GF+
+                            // objPSM.MSGFSpecEValue comes from column MSGFDB_SpecProb   if MS-GFDB
+                            //                    it comes from column MSGFDB_SpecEValue if MS-GF+
                             swMSGFFile.WriteLine(objPSM.ResultID + "\t" + objPSM.ScanNumber + "\t" + objPSM.Charge + "\t" + objPSM.ProteinFirst + "\t" +
-                                                 objPSM.Peptide + "\t" + objPSM.MSGFSpecProb + "\t" + string.Empty);
+                                                 objPSM.Peptide + "\t" + objPSM.MSGFSpecEValue + "\t" + string.Empty);
                         }
                     }
                 }
