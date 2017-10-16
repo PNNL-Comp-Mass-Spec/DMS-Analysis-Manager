@@ -17,6 +17,7 @@ using System.Collections.Generic;
 using System.IO;
 using MsMsDataFileReader;
 using PHRPReader;
+using PRISM;
 
 namespace AnalysisManagerMSGFPlugin
 {
@@ -128,12 +129,7 @@ namespace AnalysisManagerMSGFPlugin
             }
         }
 
-        private string AppendText(string strText, string strAddnl)
-        {
-            return AppendText(strText, strAddnl, ": ");
-        }
-
-        private string AppendText(string strText, string strAddnl, string strDelimiter)
+        private string AppendText(string strText, string strAddnl, string strDelimiter = ": ")
         {
             if (string.IsNullOrWhiteSpace(strAddnl))
             {
@@ -149,7 +145,7 @@ namespace AnalysisManagerMSGFPlugin
                 mLogFile.Close();
                 mLogFile = null;
 
-                PRISM.clsProgRunner.GarbageCollectNow();
+                clsProgRunner.GarbageCollectNow();
                 System.Threading.Thread.Sleep(100);
             }
         }
@@ -197,11 +193,8 @@ namespace AnalysisManagerMSGFPlugin
 
                 while (true)
                 {
-                    // Read the next available spectrum
-                    List<string> msmsDataList;
-                    clsMsMsDataFileReaderBaseClass.udtSpectrumHeaderInfoType udtSpectrumHeaderInfo;
 
-                    var blnSpectrumFound = objMGFReader.ReadNextSpectrum(out msmsDataList, out udtSpectrumHeaderInfo);
+                    var blnSpectrumFound = objMGFReader.ReadNextSpectrum(out _, out var udtSpectrumHeaderInfo);
                     if (!blnSpectrumFound)
                         break;
 
@@ -289,8 +282,7 @@ namespace AnalysisManagerMSGFPlugin
 
                         var strPeptideResultCode = ConstructMSGFResultCode(objPSM.ScanNumber, objPSM.Charge, objPSM.Peptide);
 
-                        string strMSGFResultData;
-                        if (mMSGFCachedResults.TryGetValue(strPeptideResultCode, out strMSGFResultData))
+                        if (mMSGFCachedResults.TryGetValue(strPeptideResultCode, out var strMSGFResultData))
                         {
                             if (string.IsNullOrEmpty(strMSGFResultData))
                             {
@@ -515,9 +507,8 @@ namespace AnalysisManagerMSGFPlugin
 
         public List<string> GetSkippedInfoByResultId(int intResultID)
         {
-            List<string> objSkipList;
 
-            if (mSkippedLineInfo.TryGetValue(intResultID, out objSkipList))
+            if (mSkippedLineInfo.TryGetValue(intResultID, out var objSkipList))
             {
                 return objSkipList;
             }
@@ -534,9 +525,8 @@ namespace AnalysisManagerMSGFPlugin
         /// <remarks></remarks>
         public int GetScanByMGFSpectrumIndex(int intMGFSpectrumIndex)
         {
-            int intScanNumber;
 
-            if (mMGFIndexToScan.TryGetValue(intMGFSpectrumIndex, out intScanNumber))
+            if (mMGFIndexToScan.TryGetValue(intMGFSpectrumIndex, out var intScanNumber))
             {
                 return intScanNumber;
             }
@@ -591,7 +581,7 @@ namespace AnalysisManagerMSGFPlugin
         /// <remarks></remarks>
         private void ReadAndStorePHRPData(
             clsPHRPReader objReader,
-            StreamWriter swMSGFInputFile,
+            TextWriter swMSGFInputFile,
             string strSpectrumFileName,
             bool blnParsingSynopsisFile)
         {
@@ -650,8 +640,7 @@ namespace AnalysisManagerMSGFPlugin
                         {
                             blnSuccess = false;
 
-                            List<string> objSkipList;
-                            if (mSkippedLineInfo.TryGetValue(intResultIDPrevious, out objSkipList))
+                            if (mSkippedLineInfo.TryGetValue(intResultIDPrevious, out var objSkipList))
                             {
                                 objSkipList.Add(objPSM.ResultID + "\t" + objPSM.ProteinFirst);
                             }

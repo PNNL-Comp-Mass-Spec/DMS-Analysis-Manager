@@ -395,8 +395,7 @@ namespace AnalysisManagerMSGFPlugin
                             {
                                 var strFragMode = strLineIn.Substring(intCharIndex + 1).Trim();
 
-                                int intFragMode;
-                                if (int.TryParse(strFragMode, out intFragMode))
+                                if (int.TryParse(strFragMode, out var intFragMode))
                                 {
                                     if (intFragMode == 2)
                                     {
@@ -488,11 +487,9 @@ namespace AnalysisManagerMSGFPlugin
 
                                 if (strIonWeights.Length >= 12)
                                 {
-                                    double dblCWeight;
-                                    double dblZWeight;
 
-                                    double.TryParse(strIonWeights[5], out dblCWeight);
-                                    double.TryParse(strIonWeights[11], out dblZWeight);
+                                    double.TryParse(strIonWeights[5], out var dblCWeight);
+                                    double.TryParse(strIonWeights[11], out var dblZWeight);
 
                                     if (m_DebugLevel >= 3)
                                     {
@@ -666,39 +663,38 @@ namespace AnalysisManagerMSGFPlugin
 
                     // Convert Sequest results to input format required for MSGF
                     mMSGFInputCreator = new clsMSGFInputCreatorSequest(m_Dataset, m_WorkDir);
-
                     break;
+
                 case clsPHRPReader.ePeptideHitResultType.XTandem:
 
                     // Convert X!Tandem results to input format required for MSGF
                     mMSGFInputCreator = new clsMSGFInputCreatorXTandem(m_Dataset, m_WorkDir);
-
                     break;
 
                 case clsPHRPReader.ePeptideHitResultType.Inspect:
 
                     // Convert Inspect results to input format required for MSGF
                     mMSGFInputCreator = new clsMSGFInputCreatorInspect(m_Dataset, m_WorkDir);
-
                     break;
+
                 case clsPHRPReader.ePeptideHitResultType.MSGFDB:
 
                     // Convert MSGFDB results to input format required for MSGF
                     mMSGFInputCreator = new clsMSGFInputCreatorMSGFDB(m_Dataset, m_WorkDir);
-
                     break;
+
                 case clsPHRPReader.ePeptideHitResultType.MODa:
 
                     // Convert MODa results to input format required for MSGF
                     mMSGFInputCreator = new clsMSGFInputCreatorMODa(m_Dataset, m_WorkDir);
-
                     break;
+
                 case clsPHRPReader.ePeptideHitResultType.MODPlus:
 
                     // Convert MODPlus results to input format required for MSGF
                     mMSGFInputCreator = new clsMSGFInputCreatorMODPlus(m_Dataset, m_WorkDir);
-
                     break;
+
                 default:
                     // Should never get here; invalid result type specified
                     LogError("Invalid PeptideHit ResultType specified: " + eResultType);
@@ -713,6 +709,7 @@ namespace AnalysisManagerMSGFPlugin
                 mMSGFInputCreator.StatusEvent += mMSGFInputCreator_StatusEvent;
                 mMSGFInputCreator.ErrorEvent += mMSGFInputCreator_ErrorEvent;
                 mMSGFInputCreator.WarningEvent += mMSGFInputCreator_WarningEvent;
+                
                 mMSGFInputFilePath = mMSGFInputCreator.MSGFInputFilePath;
                 mMSGFResultsFilePath = mMSGFInputCreator.MSGFResultsFilePath;
 
@@ -1242,9 +1239,8 @@ namespace AnalysisManagerMSGFPlugin
                     if (blnMGFInstrumentData)
                     {
                         // Update the scan number
-                        int intMGFScanIndex;
                         var intActualScanNumber = 0;
-                        if (int.TryParse(strScan, out intMGFScanIndex))
+                        if (int.TryParse(strScan, out var intMGFScanIndex))
                         {
                             intActualScanNumber = mMSGFInputCreator.GetScanByMGFSpectrumIndex(intMGFScanIndex);
                         }
@@ -1261,8 +1257,7 @@ namespace AnalysisManagerMSGFPlugin
                         strScan = intActualScanNumber.ToString();
                     }
 
-                    double dblSpecProb;
-                    if (double.TryParse(strSpecProb, out dblSpecProb))
+                    if (double.TryParse(strSpecProb, out var dblSpecProb))
                     {
                         if (strOriginalPeptide != strPeptide)
                         {
@@ -1336,8 +1331,7 @@ namespace AnalysisManagerMSGFPlugin
                         // See if any entries were skipped when reading the synopsis file used to create the MSGF input file
                         // If they were, add them to the validated MSGF file (to aid in linking up files later)
 
-                        int intResultID;
-                        if (!int.TryParse(strResultID, out intResultID))
+                        if (!int.TryParse(strResultID, out var intResultID))
                             continue;
 
                         var objSkipList = mMSGFInputCreator.GetSkippedInfoByResultId(intResultID);
@@ -1403,7 +1397,6 @@ namespace AnalysisManagerMSGFPlugin
         private bool ProcessFilesWrapper(clsAnalysisResources.eRawDataTypeConstants eRawDataType, clsPHRPReader.ePeptideHitResultType eResultType,
             bool blnDoNotFilterPeptides, bool blnMGFInstrumentData)
         {
-            int intMSGFInputFileLineCount;
 
             // Parse the Sequest, X!Tandem, Inspect, or MODa parameter file to determine if ETD mode was used
             var strSearchToolParamFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("ParmFileName"));
@@ -1419,7 +1412,7 @@ namespace AnalysisManagerMSGFPlugin
             m_StatusTools.UpdateAndWrite(m_progress);
 
             // Create the _MSGF_input.txt file
-            blnSuccess = CreateMSGFInputFile(eResultType, blnDoNotFilterPeptides, blnMGFInstrumentData, out intMSGFInputFileLineCount);
+            blnSuccess = CreateMSGFInputFile(eResultType, blnDoNotFilterPeptides, blnMGFInstrumentData, out var intMSGFInputFileLineCount);
 
             if (!blnSuccess)
             {
@@ -1695,7 +1688,7 @@ namespace AnalysisManagerMSGFPlugin
             }
         }
 
-        private bool RunMSGFonMSGFDBCachedData(List<string> lstData, string strMSGFInputFilePath, string strMSGFResultsFilePathFinal, string strCollisionMode)
+        private bool RunMSGFonMSGFDBCachedData(IReadOnlyCollection<string> lstData, string strMSGFInputFilePath, string strMSGFResultsFilePathFinal, string strCollisionMode)
         {
 
             try
@@ -2126,8 +2119,7 @@ namespace AnalysisManagerMSGFPlugin
                         else
                         {
                             // Data line
-                            int intResultID;
-                            if (int.TryParse(strSplitLine[0], out intResultID))
+                            if (int.TryParse(strSplitLine[0], out var intResultID))
                             {
                                 if (intMSGFSpecProbColIndex < strSplitLine.Length)
                                 {
@@ -2234,7 +2226,7 @@ namespace AnalysisManagerMSGFPlugin
         }
 
         private bool SplitMSGFInputFile(int intMSGFinputFileLineCount, string strMSGFInputFilePath, int intMSGFEntriesPerSegment,
-            List<udtSegmentFileInfoType> lstSegmentFileInfo)
+            ICollection<udtSegmentFileInfoType> lstSegmentFileInfo)
         {
             var intLinesRead = 0;
             var strHeaderLine = string.Empty;
@@ -2516,8 +2508,7 @@ namespace AnalysisManagerMSGFPlugin
 
                 LogDebug("Load MSGFResults from " + strMSGFResultsFilePath, 3);
 
-                Dictionary <int, string> lstMSGFResults;
-                blnSuccess = LoadMSGFResults(strMSGFResultsFilePath, out lstMSGFResults);
+                blnSuccess = LoadMSGFResults(strMSGFResultsFilePath, out var lstMSGFResults);
                 if (!blnSuccess)
                 {
                     return false;
@@ -2571,16 +2562,13 @@ namespace AnalysisManagerMSGFPlugin
                         else
                         {
                             // Data line; determine the ResultID
-                            int intResultID;
-                            if (int.TryParse(strSplitLine[0], out intResultID))
+                            if (int.TryParse(strSplitLine[0], out var intResultID))
                             {
                                 // Lookup the MSGFSpecProb value for this ResultID
-                                string strMSGFSpecProb;
-                                if (lstMSGFResults.TryGetValue(intResultID, out strMSGFSpecProb))
+                                if (lstMSGFResults.TryGetValue(intResultID, out var strMSGFSpecProb))
                                 {
                                     // Only update the value if strMSGFSpecProb is a number
-                                    double dblValue;
-                                    if (double.TryParse(strMSGFSpecProb, out dblValue))
+                                    if (double.TryParse(strMSGFSpecProb, out var dblValue))
                                     {
                                         strSplitLine[intMSGFSpecProbColIndex] = strMSGFSpecProb;
                                     }

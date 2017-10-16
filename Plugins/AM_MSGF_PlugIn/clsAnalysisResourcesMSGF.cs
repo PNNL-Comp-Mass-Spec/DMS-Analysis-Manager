@@ -397,10 +397,9 @@ namespace AnalysisManagerMSGFPlugin
             }
             else if (!blnOnlyCopyFHTandSYNfiles)
             {
-                string strMzXMLFilePath;
 
                 // See if a .mzXML file already exists for this dataset
-                blnSuccess = FileSearch.RetrieveMZXmlFile(false, out strMzXMLFilePath);
+                blnSuccess = FileSearch.RetrieveMZXmlFile(false, out var strMzXMLFilePath);
 
                 // Make sure we don't move the .mzXML file into the results folder
                 m_jobParams.AddResultFileExtensionToSkip(DOT_MZXML_EXTENSION);
