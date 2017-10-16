@@ -703,40 +703,40 @@ namespace AnalysisManagerMSGFPlugin
                     break;
             }
 
-            if (blnSuccess)
+            if (!blnSuccess)
+                return false;
+
+            // Register events (do not use RegisterEvents since we only log the first 10 errors/warnings, then every 1000th one after that)
+            mMSGFInputCreator.StatusEvent += mMSGFInputCreator_StatusEvent;
+            mMSGFInputCreator.ErrorEvent += mMSGFInputCreator_ErrorEvent;
+            mMSGFInputCreator.WarningEvent += mMSGFInputCreator_WarningEvent;
+
+            mMSGFInputFilePath = mMSGFInputCreator.MSGFInputFilePath;
+            mMSGFResultsFilePath = mMSGFInputCreator.MSGFResultsFilePath;
+
+            mMSGFInputCreator.DoNotFilterPeptides = blnDoNotFilterPeptides;
+            mMSGFInputCreator.MgfInstrumentData = blnMGFInstrumentData;
+
+            m_StatusTools.CurrentOperation = "Creating the MSGF Input file";
+
+            if (m_DebugLevel >= 3)
             {
-                // Register events
-                mMSGFInputCreator.StatusEvent += mMSGFInputCreator_StatusEvent;
-                mMSGFInputCreator.ErrorEvent += mMSGFInputCreator_ErrorEvent;
-                mMSGFInputCreator.WarningEvent += mMSGFInputCreator_WarningEvent;
-                
-                mMSGFInputFilePath = mMSGFInputCreator.MSGFInputFilePath;
-                mMSGFResultsFilePath = mMSGFInputCreator.MSGFResultsFilePath;
+                LogDebug("Creating the MSGF Input file");
+            }
 
-                mMSGFInputCreator.DoNotFilterPeptides = blnDoNotFilterPeptides;
-                mMSGFInputCreator.MgfInstrumentData = blnMGFInstrumentData;
+            blnSuccess = mMSGFInputCreator.CreateMSGFInputFileUsingPHRPResultFiles();
 
-                m_StatusTools.CurrentOperation = "Creating the MSGF Input file";
+            intMSGFInputFileLineCount = mMSGFInputCreator.MSGFInputFileLineCount;
 
-                if (m_DebugLevel >= 3)
+            if (!blnSuccess)
+            {
+                LogError("mMSGFInputCreator.MSGFDataFileLineCount returned False");
+            }
+            else
+            {
+                if (m_DebugLevel >= 2)
                 {
-                    LogDebug("Creating the MSGF Input file");
-                }
-
-                blnSuccess = mMSGFInputCreator.CreateMSGFInputFileUsingPHRPResultFiles();
-
-                intMSGFInputFileLineCount = mMSGFInputCreator.MSGFInputFileLineCount;
-
-                if (!blnSuccess)
-                {
-                    LogError("mMSGFInputCreator.MSGFDataFileLineCount returned False");
-                }
-                else
-                {
-                    if (m_DebugLevel >= 2)
-                    {
-                        LogDebug("CreateMSGFInputFileUsingPHRPResultFile complete; " + intMSGFInputFileLineCount + " lines of data");
-                    }
+                    LogDebug("CreateMSGFInputFileUsingPHRPResultFile complete; " + intMSGFInputFileLineCount + " lines of data");
                 }
             }
 
