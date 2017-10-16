@@ -103,9 +103,7 @@ namespace AnalysisManagerExtractionPlugin
                 };
 
                 mPHRPReader = new clsPHRPReader(inputFilePath, eResultType, oStartupOptions);
-                mPHRPReader.ErrorEvent += mPHRPReader_ErrorEvent;
-                mPHRPReader.MessageEvent += mPHRPReader_MessageEvent;
-                mPHRPReader.WarningEvent += mPHRPReader_WarningEvent;
+                RegisterEvents(mPHRPReader);
 
                 // Report any errors cached during instantiation of mPHRPReader
                 foreach (var message in mPHRPReader.ErrorMessages)
@@ -311,19 +309,5 @@ namespace AnalysisManagerExtractionPlugin
             }
         }
 
-        private void mPHRPReader_ErrorEvent(string errorMessage)
-        {
-            OnErrorEvent("PHRPReader: " + errorMessage);
-        }
-
-        private void mPHRPReader_MessageEvent(string message)
-        {
-            OnStatusEvent("PHRPReader: " + message);
-        }
-
-        private void mPHRPReader_WarningEvent(string warningMessage)
-        {
-            OnWarningEvent("PHRPReader: " + warningMessage);
-        }
     }
 }

@@ -845,7 +845,10 @@ namespace AnalysisManagerMSGFDBPlugIn
                     SearchAllProteinsSkipCoverageComputationSteps = true,
                     ShowMessages = false
                 };
-                mPeptideToProteinMapper.ProgressChanged += PeptideToProteinMapper_ProgressChanged;
+
+                RegisterEvents(mPeptideToProteinMapper);
+                mPeptideToProteinMapper.ProgressUpdate -= base.OnProgressUpdate;
+                mPeptideToProteinMapper.ProgressUpdate += PeptideToProteinMapper_ProgressChanged;
 
                 if (m_DebugLevel > 2)
                 {
@@ -3009,13 +3012,12 @@ namespace AnalysisManagerMSGFDBPlugIn
         {
             const int MAPPER_PROGRESS_LOG_INTERVAL_SECONDS = 120;
 
-            if (m_DebugLevel >= 1)
+            if (m_DebugLevel < 1) return;
+
+            if (DateTime.UtcNow.Subtract(dtLastLogTime).TotalSeconds >= MAPPER_PROGRESS_LOG_INTERVAL_SECONDS)
             {
-                if (DateTime.UtcNow.Subtract(dtLastLogTime).TotalSeconds >= MAPPER_PROGRESS_LOG_INTERVAL_SECONDS)
-                {
-                    dtLastLogTime = DateTime.UtcNow;
-                    OnStatusEvent("Mapping peptides to proteins: " + percentComplete.ToString("0.0") + "% complete");
-                }
+                dtLastLogTime = DateTime.UtcNow;
+                OnStatusEvent("Mapping peptides to proteins: " + percentComplete.ToString("0.0") + "% complete");
             }
         }
 

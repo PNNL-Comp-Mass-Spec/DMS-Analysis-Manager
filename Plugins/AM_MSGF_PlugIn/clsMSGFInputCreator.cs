@@ -274,7 +274,7 @@ namespace AnalysisManagerMSGFPlugin
 
                 // Open the first-hits file
                 var phrpReader = new clsPHRPReader(mPHRPFirstHitsFilePath, mPeptideHitResultType, startupOptions);
-                RegisterPHRPReaderEventHandlers(phrpReader);
+                RegisterEvents(phrpReader);
                 phrpReader.EchoMessagesToConsole = true;
 
                 if (!phrpReader.CanRead)
@@ -443,7 +443,7 @@ namespace AnalysisManagerMSGFPlugin
 
                         // Read the synopsis file data
                         var phrpReader = new clsPHRPReader(mPHRPSynopsisFilePath, mPeptideHitResultType, startupOptions);
-                        RegisterPHRPReaderEventHandlers(phrpReader);
+                        RegisterEvents(phrpReader);
                         phrpReader.EchoMessagesToConsole = true;
 
                         // Report any errors cached during instantiation of mPHRPReader
@@ -482,7 +482,7 @@ namespace AnalysisManagerMSGFPlugin
                         startupOptions.LoadModsAndSeqInfo = true;
 
                         var phrpReader = new clsPHRPReader(mPHRPFirstHitsFilePath, mPeptideHitResultType, startupOptions);
-                        RegisterPHRPReaderEventHandlers(phrpReader);
+                        RegisterEvents(phrpReader);
                         phrpReader.EchoMessagesToConsole = true;
 
                         if (!phrpReader.CanRead)
@@ -792,31 +792,5 @@ namespace AnalysisManagerMSGFPlugin
             swOutFile.WriteLine("Result_ID\tScan\tCharge\tProtein\tPeptide\tSpecProb\tNotes");
         }
 
-        /// <summary>
-        /// Note that clsPHRPReader is instantiated and disposed of several times
-        /// Make it easy to attach the event handlers
-        /// </summary>
-        /// <param name="reader"></param>
-        private void RegisterPHRPReaderEventHandlers(clsPHRPReader reader)
-        {
-            reader.ErrorEvent += PHRPReader_ErrorEvent;
-            reader.MessageEvent += PHRPReader_MessageEvent;
-            reader.WarningEvent += PHRPReader_WarningEvent;
-        }
-
-        private void PHRPReader_ErrorEvent(string strErrorMessage)
-        {
-            ReportError(strErrorMessage);
-        }
-
-        private void PHRPReader_MessageEvent(string strMessage)
-        {
-            Console.WriteLine(strMessage);
-        }
-
-        private void PHRPReader_WarningEvent(string strWarningMessage)
-        {
-            ReportWarning(strWarningMessage);
-        }
     }
 }
