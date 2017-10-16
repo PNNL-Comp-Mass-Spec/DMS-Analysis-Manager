@@ -8,6 +8,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using AnalysisManagerBase;
+using PeptideToProteinMapEngine;
 using PRISM;
 
 namespace AnalysisManagerMSGFDBPlugIn
@@ -140,7 +141,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         private bool mResultsIncludeAutoAddedDecoyPeptides;
 
         // Note that clsPeptideToProteinMapEngine utilizes System.Data.SQLite.dll
-        private PeptideToProteinMapEngine.clsPeptideToProteinMapEngine mPeptideToProteinMapper;
+        private clsPeptideToProteinMapEngine mPeptideToProteinMapper;
 
         #endregion
 
@@ -693,7 +694,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="ePeptideInputFileFormat"></param>
         /// <returns></returns>
         public CloseOutType CreatePeptideToProteinMapping(string resultsFileName,
-            PeptideToProteinMapEngine.clsPeptideToProteinMapEngine.ePeptideInputFileFormatConstants ePeptideInputFileFormat)
+            clsPeptideToProteinMapEngine.ePeptideInputFileFormatConstants ePeptideInputFileFormat)
         {
             const bool resultsIncludeAutoAddedDecoyPeptides = false;
             var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
@@ -722,7 +723,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         public CloseOutType CreatePeptideToProteinMapping(string resultsFileName, bool resultsIncludeAutoAddedDecoyPeptides, string localOrgDbFolder)
         {
             return CreatePeptideToProteinMapping(resultsFileName, resultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder,
-                PeptideToProteinMapEngine.clsPeptideToProteinMapEngine.ePeptideInputFileFormatConstants.MSGFDBResultsFile);
+                clsPeptideToProteinMapEngine.ePeptideInputFileFormatConstants.MSGFDBResultsFile);
         }
 
         /// <summary>
@@ -734,7 +735,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="ePeptideInputFileFormat"></param>
         /// <returns></returns>
         public CloseOutType CreatePeptideToProteinMapping(string resultsFileName, bool resultsIncludeAutoAddedDecoyPeptides,
-            string localOrgDbFolder, PeptideToProteinMapEngine.clsPeptideToProteinMapEngine.ePeptideInputFileFormatConstants ePeptideInputFileFormat)
+            string localOrgDbFolder, clsPeptideToProteinMapEngine.ePeptideInputFileFormatConstants ePeptideInputFileFormat)
         {
             // Note that job parameter "generatedFastaName" gets defined by clsAnalysisResources.RetrieveOrgDB
             var dbFilename = m_jobParams.GetParam("PeptideSearch", clsAnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME);
@@ -829,7 +830,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 ignorePeptideToProteinMapperErrors = m_jobParams.GetJobParameter("IgnorePeptideToProteinMapError", false);
 
-                mPeptideToProteinMapper = new PeptideToProteinMapEngine.clsPeptideToProteinMapEngine
+                mPeptideToProteinMapper = new clsPeptideToProteinMapEngine
                 {
                     DeleteTempFiles = true,
                     IgnoreILDifferences = false,
@@ -866,7 +867,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 mPeptideToProteinMapper.CloseLogFileNow();
 
                 var pepToProtMapFileName = Path.GetFileNameWithoutExtension(inputFilePath) +
-                    PeptideToProteinMapEngine.clsPeptideToProteinMapEngine.FILENAME_SUFFIX_PEP_TO_PROTEIN_MAPPING;
+                    clsPeptideToProteinMapEngine.FILENAME_SUFFIX_PEP_TO_PROTEIN_MAPPING;
 
                 var pepToProtMapFilePath = Path.Combine(m_WorkDir, pepToProtMapFileName);
 
