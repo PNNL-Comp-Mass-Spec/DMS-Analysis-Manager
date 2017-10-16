@@ -168,9 +168,7 @@ namespace AnalysisManagerMSGFPlugin
         protected override bool PassesFilters(clsPSM objPSM)
         {
             // All MSGFDB data is considered to be "filter-passing"
-            var blnPassesFilters = true;
-
-            return blnPassesFilters;
+            return true;
         }
     }
 }

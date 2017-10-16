@@ -990,8 +990,6 @@ namespace AnalysisManagerMSGFPlugin
                 // If 10% or more of the data has a message like "N/A: precursor mass != peptide mass (3571.8857 vs 3581.9849)"
                 // then set blnTooManyPrecursorMassMismatches to True
 
-                blnTooManyPrecursorMassMismatches = false;
-
                 if (intLinesRead >= 2 && intPrecursorMassErrorCount > 0)
                 {
                     var sngPercentDataPrecursorMassError = intPrecursorMassErrorCount / (float)intLinesRead * 100f;
