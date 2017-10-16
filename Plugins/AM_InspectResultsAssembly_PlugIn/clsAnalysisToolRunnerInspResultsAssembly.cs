@@ -564,7 +564,10 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 blnIgnorePeptideToProteinMapperErrors = m_jobParams.GetJobParameter("IgnorePeptideToProteinMapError", false);
 
                 mPeptideToProteinMapper = new clsPeptideToProteinMapEngine();
-                mPeptideToProteinMapper.ProgressChanged += mPeptideToProteinMapper_ProgressChanged;
+
+                RegisterEvents(mPeptideToProteinMapper);
+                mPeptideToProteinMapper.ProgressUpdate -= base.ProgressUpdateHandler;
+                mPeptideToProteinMapper.ProgressUpdate += mPeptideToProteinMapper_ProgressChanged;
 
                 mPeptideToProteinMapper.DeleteInspectTempFiles = true;
                 mPeptideToProteinMapper.IgnoreILDifferences = false;
