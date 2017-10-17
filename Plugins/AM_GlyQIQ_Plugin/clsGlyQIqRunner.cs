@@ -34,39 +34,21 @@ namespace AnalysisManagerGlyQIQPlugin
 
         #region "Properties"
 
-        public string BatchFilePath
-        {
-            get { return mBatchFilePath; }
-        }
+        public string BatchFilePath => mBatchFilePath;
 
-        public string ConsoleOutputFilePath
-        {
-            get { return mConsoleOutputFilePath; }
-        }
+        public string ConsoleOutputFilePath => mConsoleOutputFilePath;
 
-        public int Core
-        {
-            get { return mCore; }
-        }
+        public int Core => mCore;
 
         /// <summary>
         /// Value between 0 and 100
         /// </summary>
         /// <remarks></remarks>
-        public double Progress
-        {
-            get { return mProgress; }
-        }
+        public double Progress => mProgress;
 
-        public clsRunDosProgram ProgRunner
-        {
-            get { return mCmdRunner; }
-        }
+        public clsRunDosProgram ProgRunner => mCmdRunner;
 
-        public GlyQIqRunnerStatusCodes Status
-        {
-            get { return mStatus; }
-        }
+        public GlyQIqRunnerStatusCodes Status => mStatus;
 
         public clsProgRunner.States ProgRunnerStatus
         {
@@ -122,10 +104,7 @@ namespace AnalysisManagerGlyQIQPlugin
         /// <remarks></remarks>
         public void AbortProcessingNow()
         {
-            if ((mCmdRunner != null))
-            {
-                mCmdRunner.AbortProgramNow();
-            }
+            mCmdRunner?.AbortProgramNow();
         }
 
         protected void CacheTargets()
@@ -193,16 +172,18 @@ namespace AnalysisManagerGlyQIQPlugin
                     if (!srTargetsFile.EndOfStream)
                     {
                         var headerLine = srTargetsFile.ReadLine();
+                        if (headerLine == null)
+                            throw new Exception("Header line in the targets file is empty, " + fiTargetsFile.Name);
 
                         var headers = headerLine.Split('\t');
                         if (headers.Length < 3)
                         {
-                            throw new DirectoryNotFoundException("Header line in the targets file does not have enough columns, " + fiTargetsFile.Name);
+                            throw new Exception("Header line in the targets file does not have enough columns, " + fiTargetsFile.Name);
                         }
 
-                        if (string.Compare(headers[CODE_COLUMN_INDEX], "Code", true) != 0)
+                        if (!string.Equals(headers[CODE_COLUMN_INDEX], "Code", StringComparison.OrdinalIgnoreCase))
                         {
-                            throw new DirectoryNotFoundException("The 3rd column in the header line of the targets file is not 'Code', it is '" +
+                            throw new Exception("The 3rd column in the header line of the targets file is not 'Code', it is '" +
                                                                  headers[2] + "' in " + fiTargetsFile.Name);
                         }
                     }
@@ -210,6 +191,8 @@ namespace AnalysisManagerGlyQIQPlugin
                     while (!srTargetsFile.EndOfStream)
                     {
                         var dataLine = srTargetsFile.ReadLine();
+                        if (string.IsNullOrWhiteSpace(dataLine))
+                            continue;
 
                         var targetInfoColumns = dataLine.Split(columnDelimiters, 4);
 
@@ -268,7 +251,7 @@ namespace AnalysisManagerGlyQIQPlugin
         //
         // The Target Code is listed at the end of those lines, there 3-6-1-0-0
         // That code corresponds to the third column in the Targets file
-        private Regex reStartWorkflows = new Regex(@"^Start Workflows... .+ on (.+)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private readonly Regex reStartWorkflows = new Regex(@"^Start Workflows... .+ on (.+)$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
         /// Parse the GlyQ-IQ console output file to track the search progress
@@ -284,14 +267,13 @@ namespace AnalysisManagerGlyQIQPlugin
                     return;
                 }
 
-                string strLineIn = null;
                 var analysisFinished = false;
 
                 using (var srInFile = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     while (!srInFile.EndOfStream)
                     {
-                        strLineIn = srInFile.ReadLine();
+                        var strLineIn = srInFile.ReadLine();
 
                         if (!string.IsNullOrWhiteSpace(strLineIn))
                         {
@@ -314,7 +296,7 @@ namespace AnalysisManagerGlyQIQPlugin
                     }
                 }
 
-                var targetsProcessed = (from item in mTargets where item.Value == true select item).Count() - 1;
+                var targetsProcessed = (from item in mTargets where item.Value select item).Count() - 1;
                 if (targetsProcessed < 0)
                     targetsProcessed = 0;
 
@@ -357,10 +339,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 ParseConsoleOutputFile(mConsoleOutputFilePath);
             }
 
-            if (CmdRunnerWaiting != null)
-            {
-                CmdRunnerWaiting();
-            }
+            CmdRunnerWaiting?.Invoke();
         }
     }
 }

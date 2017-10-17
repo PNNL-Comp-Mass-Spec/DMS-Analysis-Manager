@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
 using AnalysisManagerGlyQIQPlugin;
+using PRISM;
 
 namespace GlyQResultsSummarizer
 {
@@ -22,11 +23,11 @@ namespace GlyQResultsSummarizer
 
         static int Main(string[] args)
         {
-            var objParseCommandLine = new FileProcessor.clsParseCommandLine();
+            var objParseCommandLine = new clsParseCommandLine();
 
             try
             {
-                bool success = false;
+                var success = false;
 
                 if (objParseCommandLine.ParseCommandLine())
                 {
@@ -113,7 +114,7 @@ namespace GlyQResultsSummarizer
             return success;
         }
 
-        private static bool SetOptionsUsingCommandLineParameters(FileProcessor.clsParseCommandLine objParseCommandLine)
+        private static bool SetOptionsUsingCommandLineParameters(clsParseCommandLine objParseCommandLine)
         {
             // Returns True if no problems; otherwise, returns false
             var lstValidParameters = new List<string> { "I", "Job" };
@@ -124,7 +125,7 @@ namespace GlyQResultsSummarizer
                 if (objParseCommandLine.InvalidParametersPresent(lstValidParameters))
                 {
                     var badArguments = new List<string>();
-                    foreach (string item in objParseCommandLine.InvalidParameters(lstValidParameters))
+                    foreach (var item in objParseCommandLine.InvalidParameters(lstValidParameters))
                     {
                         badArguments.Add("/" + item);
                     }
@@ -134,14 +135,13 @@ namespace GlyQResultsSummarizer
                     return false;
                 }
 
-                // Query objParseCommandLine to see if various parameters are present						
+                // Query objParseCommandLine to see if various parameters are present
                 if (objParseCommandLine.NonSwitchParameterCount > 0)
                 {
                     mGlyQResultsFilePath = objParseCommandLine.RetrieveNonSwitchParameter(0);
                 }
 
-                string strValue;
-                if (objParseCommandLine.RetrieveValueForParameter("I", out strValue))
+                if (objParseCommandLine.RetrieveValueForParameter("I", out var strValue))
                 {
                     if (string.IsNullOrWhiteSpace(strValue))
                     {
@@ -185,43 +185,19 @@ namespace GlyQResultsSummarizer
         }
 
 
-        private static void ShowErrorMessage(string strMessage)
+        private static void ShowErrorMessage(string message)
         {
-            const string strSeparator = "------------------------------------------------------------------------------";
-
-            Console.WriteLine();
-            Console.WriteLine(strSeparator);
-            Console.WriteLine(strMessage);
-            Console.WriteLine(strSeparator);
-            Console.WriteLine();
-
-            WriteToErrorStream(strMessage);
+            ConsoleMsgUtils.ShowError(message);
         }
 
-        private static void ShowErrorMessage(string strTitle, IEnumerable<string> items)
+        private static void ShowErrorMessage(string title, IEnumerable<string> errorMessages)
         {
-            const string strSeparator = "------------------------------------------------------------------------------";
-
-            Console.WriteLine();
-            Console.WriteLine(strSeparator);
-            Console.WriteLine(strTitle);
-            string strMessage = strTitle + ":";
-
-            foreach (string item in items)
-            {
-                Console.WriteLine("   " + item);
-                strMessage += " " + item;
-            }
-            Console.WriteLine(strSeparator);
-            Console.WriteLine();
-
-            WriteToErrorStream(strMessage);
+            ConsoleMsgUtils.ShowErrors(title, errorMessages);
         }
-
 
         private static void ShowProgramHelp()
         {
-            string exeName = System.IO.Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            var exeName = Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().Location);
 
             try
             {
@@ -255,39 +231,9 @@ namespace GlyQResultsSummarizer
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Error displaying the program syntax: " + ex.Message);
+                ShowErrorMessage("Error displaying the program syntax: " + ex.Message);
             }
 
-        }
-
-        private static void WriteToErrorStream(string strErrorMessage)
-        {
-            try
-            {
-                using (var swErrorStream = new System.IO.StreamWriter(Console.OpenStandardError()))
-                {
-                    swErrorStream.WriteLine(strErrorMessage);
-                }
-            }
-            // ReSharper disable once EmptyGeneralCatchClause
-            catch
-            {
-                // Ignore errors here
-            }
-        }
-
-        static void ShowErrorMessage(string message, bool pauseAfterError)
-        {
-            Console.WriteLine();
-            Console.WriteLine("===============================================");
-
-            Console.WriteLine(message);
-
-            if (pauseAfterError)
-            {
-                Console.WriteLine("===============================================");
-                System.Threading.Thread.Sleep(1500);
-            }
         }
 
     }

@@ -186,7 +186,7 @@ namespace AnalysisManagerGlyQIQPlugin
             }
         }
 
-        private bool CreateLauncherBatchFiles(Dictionary<int, FileInfo> splitTargetFileInfo)
+        private bool CreateLauncherBatchFiles(IReadOnlyDictionary<int, FileInfo> splitTargetFileInfo)
         {
             try
             {
@@ -223,8 +223,7 @@ namespace AnalysisManagerGlyQIQPlugin
                         swOutFile.Write(" " + "\"" + DatasetName + "\"");
                         swOutFile.Write(" " + "\"" + "raw" + "\"");
 
-                        FileInfo targetsFile = null;
-                        if (!splitTargetFileInfo.TryGetValue(core, out targetsFile))
+                        if (!splitTargetFileInfo.TryGetValue(core, out var targetsFile))
                         {
                             LogError("Logic error; core " + core + " not found in dictionary splitTargetFileInfo");
                             return false;
@@ -296,9 +295,6 @@ namespace AnalysisManagerGlyQIQPlugin
         {
             try
             {
-                string sourceFolderPath = null;
-                string sourceFileName = null;
-
                 // Define the base source folder path
                 // Typically \\gigasax\DMS_Parameter_Files\GlyQ-IQ
                 var paramFileStoragePathBase = m_jobParams.GetParam("ParmFileStoragePath");
@@ -312,8 +308,8 @@ namespace AnalysisManagerGlyQIQPlugin
 
                 // Retrieve the GlyQ-IQ parameter file
                 // Typically \\gigasax\DMS_Parameter_Files\GlyQ-IQ\ParameterFiles
-                sourceFolderPath = Path.Combine(paramFileStoragePathBase, "ParameterFiles");
-                sourceFileName = string.Copy(mGlyQIQParams.IQParamFileName);
+                var sourceFolderPath = Path.Combine(paramFileStoragePathBase, "ParameterFiles");
+                var sourceFileName = string.Copy(mGlyQIQParams.IQParamFileName);
 
                 if (!CopyFileToWorkingDirectories(sourceFileName, sourceFolderPath, "IQ Parameter File"))
                 {
@@ -390,8 +386,9 @@ namespace AnalysisManagerGlyQIQPlugin
                     // Running on just one core
                     fiTargetsFile.MoveTo(Path.Combine(mGlyQIQParams.WorkingParameterFolders.First().Value.FullName, sourceFileName));
 
-                    splitTargetFileInfo = new Dictionary<int, FileInfo>();
-                    splitTargetFileInfo.Add(1, fiTargetsFile);
+                    splitTargetFileInfo = new Dictionary<int, FileInfo> {
+                        { 1, fiTargetsFile}
+                    };
                 }
                 else
                 {
@@ -458,11 +455,9 @@ namespace AnalysisManagerGlyQIQPlugin
                 }
 
                 // Retrieve the _peaks.txt file
-                string fileToFind = null;
-                var sourceFolderPath = string.Empty;
 
-                fileToFind = DatasetName + "_peaks.txt";
-                if (!FileSearch.FindAndRetrieveMiscFiles(fileToFind, unzip: false, searchArchivedDatasetFolder: false, sourceFolderPath: out sourceFolderPath))
+                var fileToFind = DatasetName + "_peaks.txt";
+                if (!FileSearch.FindAndRetrieveMiscFiles(fileToFind, false, false, out var sourceFolderPath))
                 {
                     m_message = "Could not find the _peaks.txt file; this is typically created by the DeconPeakDetector job step; rerun that job step if it has been deleted";
                     return false;
@@ -492,7 +487,7 @@ namespace AnalysisManagerGlyQIQPlugin
                     return false;
                 }
 
-                if (!base.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+                if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
                 {
                     return false;
                 }
@@ -514,7 +509,7 @@ namespace AnalysisManagerGlyQIQPlugin
         /// <param name="numTargets"></param>
         /// <returns>List of FileInfo objects for the newly created target files (key is core number, value is the Targets file path)</returns>
         /// <remarks></remarks>
-        private Dictionary<int, FileInfo> SplitTargetsFile(FileInfo fiTargetsFile, int numTargets)
+        private Dictionary<int, FileInfo> SplitTargetsFile(FileSystemInfo fiTargetsFile, int numTargets)
         {
             try
             {

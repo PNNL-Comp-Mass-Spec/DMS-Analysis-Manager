@@ -399,7 +399,7 @@ namespace AnalysisManagerGlyQIQPlugin
             }
         }
 
-        private bool PackageResults()
+        private void PackageResults()
         {
             var diTempZipFolder = new DirectoryInfo(Path.Combine(m_WorkDir, "FilesToZip"));
 
@@ -478,7 +478,7 @@ namespace AnalysisManagerGlyQIQPlugin
             {
                 m_message = "Exception creating GlyQIq_Automation_Files.zip";
                 LogError(m_message + ": " + ex.Message);
-                return false;
+                return;
             }
 
             try
@@ -495,7 +495,6 @@ namespace AnalysisManagerGlyQIQPlugin
                 // This error can be safely ignored
             }
 
-            return true;
         }
 
         protected bool PostJobResults(int jobNumber, udtPSMStatsType udtPSMStats, string dmsConnectionStringOverride)
