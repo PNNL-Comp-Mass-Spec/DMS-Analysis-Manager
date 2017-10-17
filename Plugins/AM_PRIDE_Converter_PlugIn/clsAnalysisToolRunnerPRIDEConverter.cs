@@ -147,20 +147,20 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             public float PValueThreshold;
             public float FDRThreshold;
             public float PepFDRThreshold;
-            public float MSGFSpecProbThreshold;
+            public float MSGFSpecEValueThreshold;
             public bool UseFDRThreshold;
             public bool UsePepFDRThreshold;
-            public bool UseMSGFSpecProb;
+            public bool UseMSGFSpecEValue;
 
             public void Clear()
             {
                 PValueThreshold = (float)DEFAULT_PVALUE_THRESHOLD;
                 UseFDRThreshold = false;
                 UsePepFDRThreshold = false;
-                UseMSGFSpecProb = true;
+                UseMSGFSpecEValue = true;
                 FDRThreshold = 0.01f;
                 PepFDRThreshold = 0.01f;
-                MSGFSpecProbThreshold = 1E-09f;
+                MSGFSpecEValueThreshold = 1E-09f;
             }
         }
 
@@ -177,7 +177,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             public string MQScore;
             public string TotalPRMScore;
             public short NTT;
-            public string MSGFSpecProb;
+            public string MSGFSpecEValue;
             public string DeltaScore;
             public string DeltaScoreOther;
             public string Protein;
@@ -751,7 +751,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             return filename;
         }
 
-        private double ComputeApproximatePValue(double msgfSpecProb)
+        private double ComputeApproximateEValue(double msgfSpecEValue)
         {
             double specProb = 0;
             var pValueEstimate = msgfSpecProb;
@@ -767,10 +767,10 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             catch (Exception)
             {
                 // Ignore errors here
-                // We will simply return the PValue estimate
+                // We will simply return the EValue estimate
             }
 
-            return pValueEstimate;
+            return eValueEstimate;
         }
 
         /// <summary>
@@ -1129,7 +1129,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         private string CreatePseudoMSGFFileUsingPHRPReader(int job, string dataset, udtFilterThresholdsType udtFilterThresholds,
             IDictionary<string, List<udtPseudoMSGFDataType>> pseudoMSGFData)
         {
-            const int MSGF_SPECPROB_NOTDEFINED = 10;
+            const int MSGF_SPECEVALUE_NOTDEFINED = 10;
             const int PVALUE_NOTDEFINED = 10;
 
             string pseudoMsgfFilePath;
@@ -1206,9 +1206,11 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 using (var reader = new clsPHRPReader(synopsisFilePath, dataPkgJob.PeptideHitResultType, true, true))
                 {
+                    RegisterEvents(reader);
+
                     reader.SkipDuplicatePSMs = false;
 
-                    // Read the data, filtering on either PepFDR or FDR if defined, or MSGF_SpecProb if PepFDR and/or FDR are not available
+                    // Read the data, filtering on either PepFDR or FDR if defined, or MSGF_SpecEValue if PepFDR and/or FDR are not available
 
                     while (reader.MoveNext())
                     {
@@ -1220,19 +1222,19 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         var pValue = (double)PVALUE_NOTDEFINED;
                         var scoreForCurrentMatch = 100.0;
 
-                        // Determine MSGFSpecProb; store 10 if we don't find a valid number
-                        if (!double.TryParse(reader.CurrentPSM.MSGFSpecProb, out var msgfSpecProb))
+                        // Determine MSGFSpecEValue; store 10 if we don't find a valid number
+                        if (!double.TryParse(reader.CurrentPSM.MSGFSpecEValue, out var msgfSpecEValue))
                         {
-                            msgfSpecProb = MSGF_SPECPROB_NOTDEFINED;
+                            msgfSpecEValue = MSGF_SPECEVALUE_NOTDEFINED;
                         }
 
                         switch (dataPkgJob.PeptideHitResultType)
                         {
                             case clsPHRPReader.ePeptideHitResultType.Sequest:
-                                if (msgfSpecProb < MSGF_SPECPROB_NOTDEFINED)
+                                if (msgfSpecEValue < MSGF_SPECEVALUE_NOTDEFINED)
                                 {
-                                    pValue = ComputeApproximatePValue(msgfSpecProb);
-                                    scoreForCurrentMatch = msgfSpecProb;
+                                    pValue = ComputeApproximateEValue(msgfSpecEValue);
+                                    scoreForCurrentMatch = msgfSpecEValue;
                                     msgfValuesArePresent = true;
                                 }
                                 else
@@ -1253,10 +1255,10 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                 break;
 
                             case clsPHRPReader.ePeptideHitResultType.XTandem:
-                                if (msgfSpecProb < MSGF_SPECPROB_NOTDEFINED)
+                                if (msgfSpecEValue < MSGF_SPECEVALUE_NOTDEFINED)
                                 {
-                                    pValue = ComputeApproximatePValue(msgfSpecProb);
-                                    scoreForCurrentMatch = msgfSpecProb;
+                                    pValue = ComputeApproximateEValue(msgfSpecEValue);
+                                    scoreForCurrentMatch = msgfSpecEValue;
                                     msgfValuesArePresent = true;
                                 }
                                 else
@@ -1278,9 +1280,9 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                             case clsPHRPReader.ePeptideHitResultType.Inspect:
                                 pValue = reader.CurrentPSM.GetScoreDbl(clsPHRPParserInspect.DATA_COLUMN_PValue, PVALUE_NOTDEFINED);
 
-                                if (msgfSpecProb < MSGF_SPECPROB_NOTDEFINED)
+                                if (msgfSpecEValue < MSGF_SPECEVALUE_NOTDEFINED)
                                 {
-                                    scoreForCurrentMatch = msgfSpecProb;
+                                    scoreForCurrentMatch = msgfSpecEValue;
                                 }
                                 else
                                 {
@@ -1312,22 +1314,22 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                 }
 
                                 pValue = reader.CurrentPSM.GetScoreDbl(clsPHRPParserMSGFDB.DATA_COLUMN_PValue, PVALUE_NOTDEFINED);
-                                scoreForCurrentMatch = msgfSpecProb;
+                                scoreForCurrentMatch = msgfSpecEValue;
                                 break;
                         }
 
-                        if (udtFilterThresholds.UseMSGFSpecProb)
+                        if (udtFilterThresholds.UseMSGFSpecEValue)
                         {
-                            if (msgfSpecProb > udtFilterThresholds.MSGFSpecProbThreshold)
+                            if (msgfSpecEValue > udtFilterThresholds.MSGFSpecEValueThreshold)
                             {
                                 validPSM = false;
                             }
                             thresholdChecked = true;
 
-                            if (!mFilterThresholdsUsed.UseMSGFSpecProb)
+                            if (!mFilterThresholdsUsed.UseMSGFSpecEValue)
                             {
-                                mFilterThresholdsUsed.UseMSGFSpecProb = true;
-                                mFilterThresholdsUsed.MSGFSpecProbThreshold = udtFilterThresholds.MSGFSpecProbThreshold;
+                                mFilterThresholdsUsed.UseMSGFSpecEValue = true;
+                                mFilterThresholdsUsed.MSGFSpecEValueThreshold = udtFilterThresholds.MSGFSpecEValueThreshold;
                             }
                         }
 
@@ -1365,18 +1367,18 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                         if (validPSM && !thresholdChecked)
                         {
-                            // Switch to filtering on MSGFSpecProbThreshold instead of on FDR or PepFDR
-                            if (msgfSpecProb < MSGF_SPECPROB_NOTDEFINED && udtFilterThresholds.MSGFSpecProbThreshold < 0.0001)
+                            // Switch to filtering on MSGFSpecEValueThreshold instead of on FDR or PepFDR
+                            if (msgfSpecEValue < MSGF_SPECEVALUE_NOTDEFINED && udtFilterThresholds.MSGFSpecEValueThreshold < 0.0001)
                             {
-                                if (msgfSpecProb > udtFilterThresholds.MSGFSpecProbThreshold)
+                                if (msgfSpecEValue > udtFilterThresholds.MSGFSpecEValueThreshold)
                                 {
                                     validPSM = false;
                                 }
 
-                                if (!mFilterThresholdsUsed.UseMSGFSpecProb)
+                                if (!mFilterThresholdsUsed.UseMSGFSpecEValue)
                                 {
-                                    mFilterThresholdsUsed.UseMSGFSpecProb = true;
-                                    mFilterThresholdsUsed.MSGFSpecProbThreshold = udtFilterThresholds.MSGFSpecProbThreshold;
+                                    mFilterThresholdsUsed.UseMSGFSpecEValue = true;
+                                    mFilterThresholdsUsed.MSGFSpecEValueThreshold = udtFilterThresholds.MSGFSpecEValueThreshold;
                                 }
                             }
                         }
@@ -1472,7 +1474,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                             reader.CurrentPSM.Peptide + "\t" +
                             reader.CurrentPSM.ProteinFirst + "\t" +
                             reader.CurrentPSM.Charge + "\t" +
-                            reader.CurrentPSM.MSGFSpecProb + "\t" +
+                            reader.CurrentPSM.MSGFSpecEValue + "\t" +
                             reader.CurrentPSM.PeptideCleanSequence.Length + "\t" +
                             totalPRMScore + "\t" + "0\t" + "0\t" + "0\t" + "0\t" +
                             reader.CurrentPSM.NumTrypticTerminii + "\t" +
@@ -1480,7 +1482,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                             deltaScore + "\t" +
                             deltaScoreOther + "\t" +
                             reader.CurrentPSM.ResultID + "\t" + "0\t" + "0\t" +
-                            reader.CurrentPSM.MSGFSpecProb;
+                            reader.CurrentPSM.MSGFSpecEValue;
 
                         // Add or update bestMatchByScan and bestMatchByScanScoreValues
                         bool newScanNumber;
@@ -1529,10 +1531,10 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                             ScanNumber = reader.CurrentPSM.ScanNumber,
                             ChargeState = reader.CurrentPSM.Charge,
                             PValue = string.Copy(pValueFormatted),
-                            MQScore = string.Copy(reader.CurrentPSM.MSGFSpecProb),
+                            MQScore = string.Copy(reader.CurrentPSM.MSGFSpecEValue),
                             TotalPRMScore = string.Copy(totalPRMScore),
                             NTT = reader.CurrentPSM.NumTrypticTerminii,
-                            MSGFSpecProb = string.Copy(reader.CurrentPSM.MSGFSpecProb),
+                            MSGFSpecEValue = string.Copy(reader.CurrentPSM.MSGFSpecEValue),
                             DeltaScore = string.Copy(deltaScore),
                             DeltaScoreOther = string.Copy(deltaScoreOther),
                             Protein = reader.CurrentPSM.ProteinFirst
@@ -2219,7 +2221,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                         WriteUserParam(writer, "DeltaScore", udtPeptide.DeltaScore);
                         WriteUserParam(writer, "DeltaScoreOther", udtPeptide.DeltaScoreOther);
-                        WriteUserParam(writer, "SpecProb", udtPeptide.MSGFSpecProb);
+                        WriteUserParam(writer, "SpecProb", udtPeptide.MSGFSpecEValue);
 
                         writer.WriteEndElement();      // additional
 
@@ -2491,7 +2493,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 {
                     submissionType = COMPLETE_SUBMISSION;
 
-                    if (mFilterThresholdsUsed.UseFDRThreshold || mFilterThresholdsUsed.UsePepFDRThreshold || mFilterThresholdsUsed.UseMSGFSpecProb)
+                    if (mFilterThresholdsUsed.UseFDRThreshold || mFilterThresholdsUsed.UsePepFDRThreshold || mFilterThresholdsUsed.UseMSGFSpecEValue)
                     {
                         const string filterTextBase = "msgf-pride.xml files are filtered on ";
                         filterText = string.Empty;
@@ -2524,7 +2526,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                             filterText += (mFilterThresholdsUsed.PepFDRThreshold * 100).ToString("0.0") + "% FDR at the peptide level";
                         }
 
-                        if (mFilterThresholdsUsed.UseMSGFSpecProb)
+                        if (mFilterThresholdsUsed.UseMSGFSpecEValue)
                         {
                             if (string.IsNullOrEmpty(filterText))
                             {
@@ -2535,7 +2537,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                 filterText += " and ";
                             }
 
-                            filterText += "MSGF Spectral Probability <= " + mFilterThresholdsUsed.MSGFSpecProbThreshold.ToString("0.0E+00");
+                            filterText += "MSGF Spectral Probability <= " + mFilterThresholdsUsed.MSGFSpecEValueThreshold.ToString("0.0E+00");
                         }
                     }
                 }
@@ -3218,11 +3220,17 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             udtFilterThresholds.PValueThreshold = m_jobParams.GetJobParameter("PValueThreshold", udtFilterThresholds.PValueThreshold);
             udtFilterThresholds.FDRThreshold = m_jobParams.GetJobParameter("FDRThreshold", udtFilterThresholds.FDRThreshold);
             udtFilterThresholds.PepFDRThreshold = m_jobParams.GetJobParameter("PepFDRThreshold", udtFilterThresholds.PepFDRThreshold);
-            udtFilterThresholds.MSGFSpecProbThreshold = m_jobParams.GetJobParameter("MSGFSpecProbThreshold", udtFilterThresholds.MSGFSpecProbThreshold);
+
+            // Support both SpecProb and SpecEValue job parameters
+            udtFilterThresholds.MSGFSpecEValueThreshold = m_jobParams.GetJobParameter("MSGFSpecProbThreshold", udtFilterThresholds.MSGFSpecEValueThreshold);
+            udtFilterThresholds.MSGFSpecEValueThreshold = m_jobParams.GetJobParameter("MSGFSpecEvalueThreshold", udtFilterThresholds.MSGFSpecEValueThreshold);
 
             udtFilterThresholds.UseFDRThreshold = m_jobParams.GetJobParameter("UseFDRThreshold", udtFilterThresholds.UseFDRThreshold);
             udtFilterThresholds.UsePepFDRThreshold = m_jobParams.GetJobParameter("UsePepFDRThreshold", udtFilterThresholds.UsePepFDRThreshold);
-            udtFilterThresholds.UseMSGFSpecProb = m_jobParams.GetJobParameter("UseMSGFSpecProb", udtFilterThresholds.UseMSGFSpecProb);
+
+            // Support both SpecProb and SpecEValue job parameters
+            udtFilterThresholds.UseMSGFSpecEValue = m_jobParams.GetJobParameter("UseMSGFSpecProb", udtFilterThresholds.UseMSGFSpecEValue);
+            udtFilterThresholds.UseMSGFSpecEValue = m_jobParams.GetJobParameter("UseMSGFSpecEValue", udtFilterThresholds.UseMSGFSpecEValue);
 
             return udtFilterThresholds;
         }
