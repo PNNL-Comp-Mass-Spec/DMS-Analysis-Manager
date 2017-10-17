@@ -753,16 +753,18 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
         private double ComputeApproximateEValue(double msgfSpecEValue)
         {
-            double specProb = 0;
-            var pValueEstimate = msgfSpecProb;
+            var eValueEstimate = msgfSpecEValue;
+
+            if (msgfSpecEValue < 1E-106)
+                return 1E-100;
 
             try
             {
-                // Estimate Log10(PValue) using 10^(Log10(SpecProb) x 0.9988 + 6.43)
-                // This was determined using Job 893431 for dataset QC_Shew_12_02_0pt25_Frac-08_7Nov12_Tiger_12-09-36
-                //
-                pValueEstimate = Math.Log10(specProb) * 0.9988 + 6.43;
-                pValueEstimate = Math.Pow(10, pValueEstimate);
+                // Estimate Log10(EValue) using 10^(Log10(SpecEValue) x 0.9988 + 6.43)
+                // This equation also works for estimating PValue given SpecProb,
+                // and was originally determined using Job 893431 for dataset QC_Shew_12_02_0pt25_Frac-08_7Nov12_Tiger_12-09-36
+                eValueEstimate = Math.Log10(msgfSpecEValue) * 0.9988 + 6.43;
+                eValueEstimate = Math.Pow(10, eValueEstimate);
             }
             catch (Exception)
             {
