@@ -774,6 +774,8 @@ namespace AnalysisManagerIDPickerPlugIn
 
                 using (var reader = new clsPHRPReader(strSynFilePath, eResultType, false, false, false))
                 {
+                    RegisterEvents(reader);
+
                     while (reader.MoveNext())
                     {
                         var found = false;

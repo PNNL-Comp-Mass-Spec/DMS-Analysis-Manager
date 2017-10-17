@@ -73,6 +73,7 @@ namespace AnalysisManagerMSGFPlugin
                 // Open the file (no need to read the Mods and Seq Info since we're not actually running MSGF)
                 using (var reader = new clsPHRPReader(strSourceFilePath, eResultType, startupOptions))
                 {
+                    RegisterEvents(reader);
 
                     reader.SkipDuplicatePSMs = false;
 
@@ -134,6 +135,7 @@ namespace AnalysisManagerMSGFPlugin
                 // Open the file (no need to read the Mods and Seq Info since we're not actually running MSGF)
                 using (var reader = new clsPHRPReader(strSourceFilePath, clsPHRPReader.ePeptideHitResultType.MSGFDB, startupOptions))
                 {
+                    RegisterEvents(reader);
 
                     reader.SkipDuplicatePSMs = false;
 
