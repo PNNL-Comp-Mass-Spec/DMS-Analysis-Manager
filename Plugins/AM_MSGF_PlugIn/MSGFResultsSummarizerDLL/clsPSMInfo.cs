@@ -101,7 +101,7 @@ namespace MSGFResultsSummarizer
             base.Clear();
             Protein = string.Empty;
             SeqIdFirst = UNKNOWN_SEQID;
-            if ((mObservations != null))
+            if (mObservations != null)
             {
                 mObservations.Clear();
             }

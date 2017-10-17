@@ -772,16 +772,16 @@ namespace AnalysisManagerIDPickerPlugIn
                     LogDebug("Looking for decoy proteins in the MSGF+ synopsis file");
                 }
 
-                using (var oReader = new clsPHRPReader(strSynFilePath, eResultType, false, false, false))
+                using (var reader = new clsPHRPReader(strSynFilePath, eResultType, false, false, false))
                 {
-                    while (oReader.MoveNext())
+                    while (reader.MoveNext())
                     {
                         var found = false;
                         foreach (var strPrefixToCheck in lstPrefixesToCheck)
                         {
-                            if (oReader.CurrentPSM.ProteinFirst.ToUpper().StartsWith(strPrefixToCheck))
+                            if (reader.CurrentPSM.ProteinFirst.ToUpper().StartsWith(strPrefixToCheck))
                             {
-                                strDecoyPrefix = oReader.CurrentPSM.ProteinFirst.Substring(0, strPrefixToCheck.Length);
+                                strDecoyPrefix = reader.CurrentPSM.ProteinFirst.Substring(0, strPrefixToCheck.Length);
 
                                 if (m_DebugLevel >= 4)
                                 {

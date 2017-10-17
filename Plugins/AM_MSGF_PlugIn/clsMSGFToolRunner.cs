@@ -2513,7 +2513,6 @@ namespace AnalysisManagerMSGFPlugin
                 }
 
                 var intMSGFSpecProbColIndex = -1;
-                blnSuccess = true;
 
                 LogDebug("Read " + fiProteinModsFile.FullName + " and create " + fiProteinModsFileNew.FullName, 3);
 
@@ -2566,7 +2565,7 @@ namespace AnalysisManagerMSGFPlugin
                                 if (lstMSGFResults.TryGetValue(intResultID, out var strMSGFSpecProb))
                                 {
                                     // Only update the value if strMSGFSpecProb is a number
-                                    if (double.TryParse(strMSGFSpecProb, out var dblValue))
+                                    if (double.TryParse(strMSGFSpecProb, out _))
                                     {
                                         strSplitLine[intMSGFSpecProbColIndex] = strMSGFSpecProb;
                                     }

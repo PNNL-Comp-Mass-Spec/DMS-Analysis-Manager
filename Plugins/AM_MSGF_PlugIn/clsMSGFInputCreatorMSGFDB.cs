@@ -71,29 +71,30 @@ namespace AnalysisManagerMSGFPlugin
                 }
 
                 // Open the file (no need to read the Mods and Seq Info since we're not actually running MSGF)
-                using (var objReader = new clsPHRPReader(strSourceFilePath, eResultType, startupOptions))
+                using (var reader = new clsPHRPReader(strSourceFilePath, eResultType, startupOptions))
                 {
-                    objReader.SkipDuplicatePSMs = false;
+
+                    reader.SkipDuplicatePSMs = false;
 
                     // Define the path to write the first-hits MSGF results to
                     var strMSGFFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(strSourceFilePath) + MSGF_RESULT_FILENAME_SUFFIX);
 
                     // Create the output file
-                    using (var swMSGFFile = new StreamWriter(new FileStream(strMSGFFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                    using (var msgfFile = new StreamWriter(new FileStream(strMSGFFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                     {
                         // Write out the headers to swMSGFFHTFile
-                        WriteMSGFResultsHeaders(swMSGFFile);
+                        WriteMSGFResultsHeaders(msgfFile);
 
-                        while (objReader.MoveNext())
+                        while (reader.MoveNext())
                         {
-                            var objPSM = objReader.CurrentPSM;
+                            var objPSM = reader.CurrentPSM;
 
                             // Converting MODa/MODPlus probability to a fake Spectral Probability using 1 - probability
                             var dblProbability = objPSM.GetScoreDbl(probabilityColumnName, 0);
                             var strProbabilityValue = (1 - dblProbability).ToString("0.0000");
 
                             // objPSM.MSGFSpecProb comes from column Probability
-                            swMSGFFile.WriteLine(objPSM.ResultID + "\t" + objPSM.ScanNumber + "\t" + objPSM.Charge + "\t" + objPSM.ProteinFirst + "\t" +
+                            msgfFile.WriteLine(objPSM.ResultID + "\t" + objPSM.ScanNumber + "\t" + objPSM.Charge + "\t" + objPSM.ProteinFirst + "\t" +
                                                  objPSM.Peptide + "\t" + strProbabilityValue + "\t" + string.Empty);
                         }
                     }
@@ -131,26 +132,27 @@ namespace AnalysisManagerMSGFPlugin
                 var startupOptions = GetMinimalMemoryPHRPStartupOptions();
 
                 // Open the file (no need to read the Mods and Seq Info since we're not actually running MSGF)
-                using (var objReader = new clsPHRPReader(strSourceFilePath, clsPHRPReader.ePeptideHitResultType.MSGFDB, startupOptions))
+                using (var reader = new clsPHRPReader(strSourceFilePath, clsPHRPReader.ePeptideHitResultType.MSGFDB, startupOptions))
                 {
-                    objReader.SkipDuplicatePSMs = false;
+
+                    reader.SkipDuplicatePSMs = false;
 
                     // Define the path to write the first-hits MSGF results to
                     var strMSGFFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(strSourceFilePath) + MSGF_RESULT_FILENAME_SUFFIX);
 
                     // Create the output file
-                    using (var swMSGFFile = new StreamWriter(new FileStream(strMSGFFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                    using (var msgfFile = new StreamWriter(new FileStream(strMSGFFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                     {
                         // Write out the headers to swMSGFFHTFile
-                        WriteMSGFResultsHeaders(swMSGFFile);
+                        WriteMSGFResultsHeaders(msgfFile);
 
-                        while (objReader.MoveNext())
+                        while (reader.MoveNext())
                         {
-                            var objPSM = objReader.CurrentPSM;
+                            var objPSM = reader.CurrentPSM;
 
                             // objPSM.MSGFSpecEValue comes from column MSGFDB_SpecProb   if MS-GFDB
                             //                    it comes from column MSGFDB_SpecEValue if MS-GF+
-                            swMSGFFile.WriteLine(objPSM.ResultID + "\t" + objPSM.ScanNumber + "\t" + objPSM.Charge + "\t" + objPSM.ProteinFirst + "\t" +
+                            msgfFile.WriteLine(objPSM.ResultID + "\t" + objPSM.ScanNumber + "\t" + objPSM.Charge + "\t" + objPSM.ProteinFirst + "\t" +
                                                  objPSM.Peptide + "\t" + objPSM.MSGFSpecEValue + "\t" + string.Empty);
                         }
                     }

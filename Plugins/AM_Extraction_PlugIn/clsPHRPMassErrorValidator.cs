@@ -17,8 +17,6 @@ namespace AnalysisManagerExtractionPlugin
         // This is a value between 0 and 100
         private const double mErrorThresholdPercent = 5;
 
-        private clsPHRPReader mPHRPReader;
-
         #endregion
 
         public string ErrorMessage { get; private set; } = string.Empty;
@@ -102,147 +100,155 @@ namespace AnalysisManagerExtractionPlugin
                     PeptideMassCalculator = oPeptideMassCalculator
                 };
 
-                mPHRPReader = new clsPHRPReader(inputFilePath, eResultType, oStartupOptions);
-                RegisterEvents(mPHRPReader);
-
-                // Report any errors cached during instantiation of mPHRPReader
-                foreach (var message in mPHRPReader.ErrorMessages)
-                {
-                    if (string.IsNullOrEmpty(ErrorMessage))
-                    {
-                        ErrorMessage = string.Copy(message);
-                    }
-                    OnErrorEvent(message);
-                }
-                if (mPHRPReader.ErrorMessages.Count > 0)
-                    return false;
-
-                // Report any warnings cached during instantiation of mPHRPReader
-                foreach (var message in mPHRPReader.WarningMessages)
-                {
-                    if (message.StartsWith("Warning, taxonomy file not found"))
-                    {
-                        // Ignore this warning; the taxonomy file would have been used to determine the fasta file that was searched
-                        // We don't need that information in this application
-                    }
-                    else
-                    {
-                        OnWarningEvent(message);
-                    }
-                }
-
-                mPHRPReader.ClearErrors();
-                mPHRPReader.ClearWarnings();
-                mPHRPReader.SkipDuplicatePSMs = true;
-
-                // Load the search engine parameters
-                var searchEngineParams = LoadSearchEngineParameters(mPHRPReader, searchEngineParamFilePath, eResultType);
-
-                // Check for a custom charge carrier mass
-                if (clsPHRPParserMSGFDB.GetCustomChargeCarrierMass(searchEngineParams, out var customChargeCarrierMass))
-                {
-                    if (mDebugLevel >= 2)
-                    {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                            string.Format("Custom charge carrier mass defined: {0:F3} Da", customChargeCarrierMass));
-                    }
-                    oPeptideMassCalculator.ChargeCarrierMass = customChargeCarrierMass;
-                }
-
-                // Define the precursor mass tolerance threshold
-                // At a minimum, use 6 Da, though we'll bump that up by 1 Da for each charge state (7 Da for CS 2, 8 Da for CS 3, 9 Da for CS 4, etc.)
-                // However, for MSGF+ we require that the masses match within 0.1 Da because the IsotopeError column allows for a more accurate comparison
-                var precursorMassTolerance = searchEngineParams.PrecursorMassToleranceDa;
-                if (precursorMassTolerance < 6)
-                {
-                    precursorMassTolerance = 6;
-                }
-
-                var highResMS1 = searchEngineParams.PrecursorMassToleranceDa < 0.75;
-
-                if (mDebugLevel >= 2)
-                {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                        "Will use mass tolerance of " + precursorMassTolerance.ToString("0.0") + " Da when determining PHRP mass errors");
-                }
-
-                // Count the number of PSMs with a mass error greater than precursorMassTolerance
-
-                var intErrorCount = 0;
                 var intPsmCount = 0;
-                var dtLastProgress = DateTime.UtcNow;
+                var intErrorCount = 0;
+                double precursorMassTolerance;
 
                 var lstLargestMassErrors = new SortedDictionary<double, string>();
 
-                while (mPHRPReader.MoveNext())
+                using (var reader = new clsPHRPReader(inputFilePath, eResultType, oStartupOptions))
                 {
+                    RegisterEvents(reader);
 
-                    intPsmCount += 1;
-
-                    if (intPsmCount % 100 == 0 && DateTime.UtcNow.Subtract(dtLastProgress).TotalSeconds >= 15)
+                    // Report any errors cached during instantiation of mPHRPReader
+                    foreach (var message in reader.ErrorMessages)
                     {
-                        dtLastProgress = DateTime.UtcNow;
-                        var statusMessage = "Validating mass errors: " + mPHRPReader.PercentComplete.ToString("0.0") + "% complete";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, statusMessage);
-                        Console.WriteLine(statusMessage);
+                        if (string.IsNullOrEmpty(ErrorMessage))
+                        {
+                            ErrorMessage = string.Copy(message);
+                        }
+                        OnErrorEvent(message);
+                    }
+                    if (reader.ErrorMessages.Count > 0)
+                        return false;
+
+                    // Report any warnings cached during instantiation of mPHRPReader
+                    foreach (var message in reader.WarningMessages)
+                    {
+                        if (message.StartsWith("Warning, taxonomy file not found"))
+                        {
+                            // Ignore this warning; the taxonomy file would have been used to determine the fasta file that was searched
+                            // We don't need that information in this application
+                        }
+                        else
+                        {
+                            OnWarningEvent(message);
+                        }
                     }
 
-                    var currentPSM = mPHRPReader.CurrentPSM;
+                    reader.ClearErrors();
+                    reader.ClearWarnings();
+                    reader.SkipDuplicatePSMs = true;
 
-                    if (currentPSM.PeptideMonoisotopicMass <= 0)
+                    // Load the search engine parameters
+                    var searchEngineParams = LoadSearchEngineParameters(reader, searchEngineParamFilePath, eResultType);
+
+                    // Check for a custom charge carrier mass
+                    if (clsPHRPParserMSGFDB.GetCustomChargeCarrierMass(searchEngineParams, out var customChargeCarrierMass))
                     {
-                        continue;
+                        if (mDebugLevel >= 2)
+                        {
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                                 string.Format("Custom charge carrier mass defined: {0:F3} Da", customChargeCarrierMass));
+                        }
+                        oPeptideMassCalculator.ChargeCarrierMass = customChargeCarrierMass;
                     }
 
-                    // PrecursorNeutralMass is based on the mass value reported by the search engine
-                    //   (will be reported mono mass or could be m/z or MH converted to neutral mass)
-                    // PeptideMonoisotopicMass is the mass value computed by PHRP based on .PrecursorNeutralMass plus any modification masses associated with residues
-                    var massError = currentPSM.PrecursorNeutralMass - currentPSM.PeptideMonoisotopicMass;
-                    double toleranceCurrent;
+                    // Define the precursor mass tolerance threshold
+                    // At a minimum, use 6 Da, though we'll bump that up by 1 Da for each charge state (7 Da for CS 2, 8 Da for CS 3, 9 Da for CS 4, etc.)
+                    // However, for MSGF+ we require that the masses match within 0.1 Da because the IsotopeError column allows for a more accurate comparison
 
-                    if (eResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB &&
-                        highResMS1 &&
-                        currentPSM.TryGetScore("IsotopeError", out var psmIsotopeError))
+                    if (searchEngineParams.PrecursorMassToleranceDa < 6)
                     {
-                        // The integer value of massError should match psmIsotopeError
-                        // However, scale up the tolerance based on the peptide mass
-                        toleranceCurrent = 0.2 + currentPSM.PeptideMonoisotopicMass / 50000.0;
-                        massError -= Convert.ToInt32(psmIsotopeError);
+                        precursorMassTolerance = 6;
                     }
                     else
                     {
-                        toleranceCurrent = precursorMassTolerance + currentPSM.Charge - 1;
+                        precursorMassTolerance = searchEngineParams.PrecursorMassToleranceDa;
                     }
 
-                    if (Math.Abs(massError) <= toleranceCurrent)
+                    var highResMS1 = searchEngineParams.PrecursorMassToleranceDa < 0.75;
+
+                    if (mDebugLevel >= 2)
                     {
-                        continue;
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                             "Will use mass tolerance of " + precursorMassTolerance.ToString("0.0") +
+                                             " Da when determining PHRP mass errors");
                     }
 
-                    var peptideDescription = "Scan=" + currentPSM.ScanNumberStart + ", charge=" + currentPSM.Charge + ", peptide=" +
-                                                   currentPSM.PeptideWithNumericMods;
-                    intErrorCount += 1;
+                    // Count the number of PSMs with a mass error greater than precursorMassTolerance
 
-                    // Keep track of the 100 largest mass errors
-                    if (lstLargestMassErrors.Count < 100)
+                    var dtLastProgress = DateTime.UtcNow;
+
+                    while (reader.MoveNext())
                     {
-                        if (!lstLargestMassErrors.ContainsKey(massError))
+
+                        intPsmCount += 1;
+
+                        if (intPsmCount % 100 == 0 && DateTime.UtcNow.Subtract(dtLastProgress).TotalSeconds >= 15)
                         {
-                            lstLargestMassErrors.Add(massError, peptideDescription);
+                            dtLastProgress = DateTime.UtcNow;
+                            var statusMessage = "Validating mass errors: " + reader.PercentComplete.ToString("0.0") + "% complete";
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, statusMessage);
+                            Console.WriteLine(statusMessage);
+                        }
+
+                        var currentPSM = reader.CurrentPSM;
+
+                        if (currentPSM.PeptideMonoisotopicMass <= 0)
+                        {
+                            continue;
+                        }
+
+                        // PrecursorNeutralMass is based on the mass value reported by the search engine
+                        //   (will be reported mono mass or could be m/z or MH converted to neutral mass)
+                        // PeptideMonoisotopicMass is the mass value computed by PHRP based on .PrecursorNeutralMass plus any modification masses associated with residues
+                        var massError = currentPSM.PrecursorNeutralMass - currentPSM.PeptideMonoisotopicMass;
+                        double toleranceCurrent;
+
+                        if (eResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB &&
+                            highResMS1 &&
+                            currentPSM.TryGetScore("IsotopeError", out var psmIsotopeError))
+                        {
+                            // The integer value of massError should match psmIsotopeError
+                            // However, scale up the tolerance based on the peptide mass
+                            toleranceCurrent = 0.2 + currentPSM.PeptideMonoisotopicMass / 50000.0;
+                            massError -= Convert.ToInt32(psmIsotopeError);
+                        }
+                        else
+                        {
+                            toleranceCurrent = precursorMassTolerance + currentPSM.Charge - 1;
+                        }
+
+                        if (Math.Abs(massError) <= toleranceCurrent)
+                        {
+                            continue;
+                        }
+
+                        var peptideDescription = "Scan=" + currentPSM.ScanNumberStart + ", charge=" + currentPSM.Charge + ", peptide=" +
+                                                 currentPSM.PeptideWithNumericMods;
+                        intErrorCount += 1;
+
+                        // Keep track of the 100 largest mass errors
+                        if (lstLargestMassErrors.Count < 100)
+                        {
+                            if (!lstLargestMassErrors.ContainsKey(massError))
+                            {
+                                lstLargestMassErrors.Add(massError, peptideDescription);
+                            }
+                        }
+                        else
+                        {
+                            var minValue = lstLargestMassErrors.Keys.Min();
+                            if (massError > minValue && !lstLargestMassErrors.ContainsKey(massError))
+                            {
+                                lstLargestMassErrors.Remove(minValue);
+                                lstLargestMassErrors.Add(massError, peptideDescription);
+                            }
                         }
                     }
-                    else
-                    {
-                        var minValue = lstLargestMassErrors.Keys.Min();
-                        if (massError > minValue && !lstLargestMassErrors.ContainsKey(massError))
-                        {
-                            lstLargestMassErrors.Remove(minValue);
-                            lstLargestMassErrors.Add(massError, peptideDescription);
-                        }
-                    }
+
                 }
-
-                mPHRPReader.Dispose();
 
                 if (intPsmCount == 0)
                 {

@@ -323,11 +323,13 @@ namespace MSGFResultsSummarizer
 
                 var startupOptions = GetMinimalMemoryPHRPStartupOptions();
 
-                using (var objReader = new clsPHRPReader(strFirstHitsFilePath, startupOptions))
+                using (var reader = new clsPHRPReader(strFirstHitsFilePath, startupOptions))
                 {
-                    while (objReader.MoveNext())
+                    RegisterEvents(reader);
+
+                    while (reader.MoveNext())
                     {
-                        var objPSM = objReader.CurrentPSM;
+                        var objPSM = reader.CurrentPSM;
 
                         if (objPSM.Charge >= 0)
                         {
@@ -745,7 +747,7 @@ namespace MSGFResultsSummarizer
             {
                 foreach (var observation in item.Value.Observations)
                 {
-                    observation.PassesFilter = (observation.EValue <= dblEValueThreshold);
+                    observation.PassesFilter = observation.EValue <= dblEValueThreshold;
                 }
                 lstFilteredPSMs.Add(item.Key, item.Value);
             }
@@ -763,7 +765,7 @@ namespace MSGFResultsSummarizer
             {
                 foreach (var observation in item.Value.Observations)
                 {
-                    observation.PassesFilter = (observation.MSGF <= dblMSGFThreshold);
+                    observation.PassesFilter = observation.MSGF <= dblMSGFThreshold;
                 }
                 lstFilteredPSMs.Add(item.Key, item.Value);
             }
@@ -1197,11 +1199,13 @@ namespace MSGFResultsSummarizer
                 //
                 var dictNormalizedPeptides = new Dictionary<string, List<clsNormalizedPeptideInfo>>();
 
-                using (var objReader = new clsPHRPReader(strPHRPSynopsisFilePath, startupOptions))
+                using (var reader = new clsPHRPReader(strPHRPSynopsisFilePath, startupOptions))
                 {
-                    while (objReader.MoveNext())
+                    RegisterEvents(reader);
+
+                    while (reader.MoveNext())
                     {
-                        var objPSM = objReader.CurrentPSM;
+                        var objPSM = reader.CurrentPSM;
 
                         if (objPSM.ScoreRank > 1)
                         {
@@ -1243,7 +1247,7 @@ namespace MSGFResultsSummarizer
                         }
                         else
                         {
-                            valid = double.TryParse(objPSM.MSGFSpecProb, out specEValue);
+                            valid = double.TryParse(objPSM.MSGFSpecEValue, out specEValue);
                         }
 
                         if (!valid)
@@ -1292,7 +1296,7 @@ namespace MSGFResultsSummarizer
                         var normalized = false;
                         var seqID = clsPSMInfo.UNKNOWN_SEQID;
 
-                        if (sequenceInfoAvailable && (lstResultToSeqMap != null))
+                        if (sequenceInfoAvailable && lstResultToSeqMap != null)
                         {
                             if (!lstResultToSeqMap.TryGetValue(objPSM.ResultID, out seqID))
                             {
