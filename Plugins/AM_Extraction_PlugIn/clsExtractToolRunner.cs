@@ -216,7 +216,11 @@ namespace AnalysisManagerExtractionPlugin
                 {
                     // Make sure m_message has text; this will appear in the Completion_Message column in the database
                     if (string.IsNullOrWhiteSpace(m_message))
-                        m_message = "No results above threshold";
+                    {
+                        // Storing "No results above threshold" in m_message will result in the job being assigned state No Export (14) in DMS
+                        // See stored procedure UpdateJobState
+                        m_message = NO_RESULTS_ABOVE_THRESHOLD;
+                    }
                 }
 
                 if (result != CloseOutType.CLOSEOUT_SUCCESS && result != CloseOutType.CLOSEOUT_NO_DATA)
@@ -949,8 +953,9 @@ namespace AnalysisManagerExtractionPlugin
                 // If there was a _syn.txt file created, but it contains no data, we want to clean up and exit
                 if (result == CloseOutType.CLOSEOUT_NO_DATA)
                 {
-                    // Log error and return result calling routine handles the error appropriately
-                    LogError("No results above threshold");
+                    // Storing "No results above threshold" in m_message will result in the job being assigned state No Export (14) in DMS
+                    // See stored procedure UpdateJobState
+                    LogError(NO_RESULTS_ABOVE_THRESHOLD);
                     return result;
                 }
             }

@@ -540,8 +540,11 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 if (intLinesRead <= 1)
                 {
                     // File is empty or only contains a header line
-                    m_message = "No results above threshold";
                     LogError("No results above threshold; filtered inspect results file is empty");
+
+                    // Storing "No results above threshold" in m_message will result in the job being assigned state No Export (14) in DMS
+                    // See stored procedure UpdateJobState
+                    m_message = NO_RESULTS_ABOVE_THRESHOLD;
                     return CloseOutType.CLOSEOUT_NO_DATA;
                 }
             }

@@ -38,6 +38,15 @@ namespace AnalysisManagerBase
         public const string DATE_TIME_FORMAT = "yyyy-MM-dd hh:mm:ss tt";
 
         /// <summary>
+        /// Text to store in m_message when no results passed filters
+        /// </summary>
+        /// <remarks>
+        /// This text will be sent to the database via the CompletionMessage parameter,
+        /// and the job will be assigned state No Export (14) in DMS (see stored procedure UpdateJobState)
+        /// </remarks>
+        public const string NO_RESULTS_ABOVE_THRESHOLD = "No results above threshold";
+
+        /// <summary>
         /// This error message is reported by the SEQUEST plugin
         /// </summary>
         /// <remarks>The Analysis Manager looks for this message when deciding whether the manager needs to be disabled locally if a job fails</remarks>
