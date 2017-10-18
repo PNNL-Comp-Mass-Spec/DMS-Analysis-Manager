@@ -1077,7 +1077,7 @@ namespace AnalysisManagerBase
                     foreach (var coreUsageSample in coreUsageHistory)
                     {
                         xWriter.WriteStartElement("CoreUsageSample");
-                        xWriter.WriteAttributeString("Date", coreUsageSample.Key.ToString("yyyy-MM-dd hh:mm:ss tt"));
+                        xWriter.WriteAttributeString("Date", coreUsageSample.Key.ToString(LOCAL_TIME_FORMAT));
                         xWriter.WriteValue(coreUsageSample.Value.ToString("0.0"));
                         xWriter.WriteEndElement(); // CoreUsageSample
                     }

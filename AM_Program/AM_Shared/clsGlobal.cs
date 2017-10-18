@@ -1360,7 +1360,7 @@ namespace AnalysisManagerBase
             {
                 swOutFile.WriteLine("# Hashcheck file created " + DateTime.Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
                 swOutFile.WriteLine("size=" + fiDataFile.Length);
-                swOutFile.WriteLine("modification_date_utc=" + fiDataFile.LastWriteTimeUtc.ToString("yyyy-MM-dd hh:mm:ss tt"));
+                swOutFile.WriteLine("modification_date_utc=" + fiDataFile.LastWriteTimeUtc.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
                 swOutFile.WriteLine("hash=" + md5Hash);
             }
 
