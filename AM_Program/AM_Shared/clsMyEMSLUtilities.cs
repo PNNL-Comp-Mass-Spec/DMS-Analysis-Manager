@@ -19,6 +19,8 @@ namespace AnalysisManagerBase
         /// </summary>
         public const string MYEMSL_PATH_FLAG = @"\\MyEMSL";
 
+        private const string DATETIME_FORMAT_NO_SECONDS = "yyyy-MM-dd hh:mm tt";
+
         private readonly clsDotNetZipTools m_DotNetZipTools;
         private readonly DatasetListInfo m_MyEMSLDatasetListInfo;
 
@@ -27,6 +29,14 @@ namespace AnalysisManagerBase
         private List<DatasetFolderOrFileInfo> m_RecentlyFoundMyEMSLFiles;
 
         private DateTime m_LastMyEMSLProgressWriteTime = DateTime.UtcNow;
+
+        private DateTime mLastDisableNotify = DateTime.MinValue;
+
+        private bool mMyEMSLAutoDisabled;
+        private DateTime mMyEMSLReEnableTime = DateTime.MinValue;
+
+        private int mMyEMSLConnectionErrorCount;
+        private int mMyEMSLDisableCount;
 
         private readonly clsMyEMSLFileIDComparer mFileIDComparer;
 
@@ -99,9 +109,12 @@ namespace AnalysisManagerBase
 
             // Use a custom progress update handler
             m_MyEMSLDatasetListInfo.ProgressUpdate -= OnProgressUpdate;
-            m_MyEMSLDatasetListInfo.ProgressUpdate += m_MyEMSLDatasetListInfo_ProgressEvent;
+            m_MyEMSLDatasetListInfo.ProgressUpdate += MyEMSLDatasetListInfo_ProgressEvent;
 
-            m_MyEMSLDatasetListInfo.FileDownloadedEvent += m_MyEMSLDatasetListInfo_FileDownloadedEvent;
+            m_MyEMSLDatasetListInfo.FileDownloadedEvent += MyEMSLDatasetListInfo_FileDownloadedEvent;
+
+            // Watch for error message "Unable to connect to the remote server"
+            m_MyEMSLDatasetListInfo.MyEMSLOffline += MyEMSLDatasetListInfo_MyEMSLOffline;
 
             m_AllFoundMyEMSLFiles = new List<DatasetFolderOrFileInfo>();
             m_RecentlyFoundMyEMSLFiles = new List<DatasetFolderOrFileInfo>();
@@ -112,6 +125,8 @@ namespace AnalysisManagerBase
             mFileIDComparer = new clsMyEMSLFileIDComparer();
 
             m_MostRecentUnzippedFiles = new List<KeyValuePair<string, string>>();
+
+            mMyEMSLAutoDisabled = false;
         }
 
         /// <summary>
@@ -242,7 +257,38 @@ namespace AnalysisManagerBase
             // Make sure the dataset name is being tracked by m_MyEMSLDatasetListInfo
             AddDataset(datasetName);
 
+            if (mMyEMSLAutoDisabled)
+            {
+                if (DateTime.UtcNow > mMyEMSLReEnableTime)
+                {
+                    mMyEMSLAutoDisabled = false;
+                    OnStatusEvent("Re-enabling MyEMSL querying");
+                }
+                else
+                {
+                    if (DateTime.UtcNow.Subtract(mLastDisableNotify).TotalSeconds > 5)
+                    {
+                        mLastDisableNotify = DateTime.UtcNow;
+                        OnDebugEvent("MyEMSL querying is currently disabled until " +
+                                     mMyEMSLReEnableTime.ToLocalTime().ToString(DATETIME_FORMAT_NO_SECONDS));
+                    }
+
+                    if (m_RecentlyFoundMyEMSLFiles == null)
+                        m_RecentlyFoundMyEMSLFiles = new List<DatasetFolderOrFileInfo>();
+                    else
+                        m_RecentlyFoundMyEMSLFiles.Clear();
+
+                    return m_RecentlyFoundMyEMSLFiles;
+                }
+            }
+
             m_RecentlyFoundMyEMSLFiles = m_MyEMSLDatasetListInfo.FindFiles(fileName, subFolderName, datasetName, recurse);
+
+            if (!mMyEMSLAutoDisabled)
+            {
+                mMyEMSLConnectionErrorCount = 0;
+                mMyEMSLDisableCount = 0;
+            }
 
             var filesToAdd = m_RecentlyFoundMyEMSLFiles.Except(m_AllFoundMyEMSLFiles, mFileIDComparer);
 
@@ -305,7 +351,23 @@ namespace AnalysisManagerBase
 
         #region "MyEMSL Event Handlers"
 
-        private void m_MyEMSLDatasetListInfo_ProgressEvent(string progressMessage, float percentComplete)
+
+        private void MyEMSLDatasetListInfo_MyEMSLOffline(string message)
+        {
+            mMyEMSLConnectionErrorCount += 1;
+
+            if (mMyEMSLConnectionErrorCount < 3)
+                return;
+
+            // Disable contacting MyEMSL for the next 15 minutes (or longer if mMyEMSLDisableCount is > 1)
+            mMyEMSLAutoDisabled = true;
+
+            mMyEMSLDisableCount += 1;
+            mMyEMSLReEnableTime = DateTime.UtcNow.AddMinutes(15 * mMyEMSLDisableCount);
+            OnWarningEvent("Disabling MyEMSL until " + mMyEMSLReEnableTime.ToLocalTime().ToString(DATETIME_FORMAT_NO_SECONDS));
+        }
+
+        private void MyEMSLDatasetListInfo_ProgressEvent(string progressMessage, float percentComplete)
         {
             if (DateTime.UtcNow.Subtract(m_LastMyEMSLProgressWriteTime).TotalMinutes > 0.2)
             {
@@ -314,7 +376,7 @@ namespace AnalysisManagerBase
             }
         }
 
-        private void m_MyEMSLDatasetListInfo_FileDownloadedEvent(object sender, FileDownloadedEventArgs e)
+        private void MyEMSLDatasetListInfo_FileDownloadedEvent(object sender, FileDownloadedEventArgs e)
         {
             if (e.UnzipRequired)
             {
