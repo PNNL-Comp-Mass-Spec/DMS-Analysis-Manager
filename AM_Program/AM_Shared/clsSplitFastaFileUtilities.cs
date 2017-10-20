@@ -110,8 +110,8 @@ namespace AnalysisManagerBase
                         mWaitingForLockFile = true;
 
                         var LockTimeoutTime = lockFi.LastWriteTimeUtc.AddMinutes(60);
-                        OnProgressUpdate(LOCK_FILE_PROGRESS_TEXT + " found; waiting until it is deleted or until " +
-                            LockTimeoutTime.ToLocalTime() + ": " + lockFi.Name, 0);
+                        OnStatusEvent(LOCK_FILE_PROGRESS_TEXT + " found; waiting until it is deleted or until " +
+                            LockTimeoutTime.ToLocalTime() + ": " + lockFi.Name);
 
                         while (lockFi.Exists && DateTime.UtcNow < LockTimeoutTime)
                         {
@@ -126,7 +126,7 @@ namespace AnalysisManagerBase
                         lockFi.Refresh();
                         if (lockFi.Exists)
                         {
-                            OnProgressUpdate(LOCK_FILE_PROGRESS_TEXT + " still exists; assuming another process timed out; thus, now deleting file " + lockFi.Name, 0);
+                            OnStatusEvent(LOCK_FILE_PROGRESS_TEXT + " still exists; assuming another process timed out; thus, now deleting file " + lockFi.Name);
                             lockFi.Delete();
                         }
 
@@ -152,16 +152,16 @@ namespace AnalysisManagerBase
                     {
                         if (ex.Message.Contains("being used by another process"))
                         {
-                            OnProgressUpdate("Another process has already created a " + LOCK_FILE_PROGRESS_TEXT + " at " + lockFi.FullName + "; will try again to monitor or create a new one", 0);
+                            OnStatusEvent("Another process has already created a " + LOCK_FILE_PROGRESS_TEXT + " at " + lockFi.FullName + "; will try again to monitor or create a new one");
                         }
                         else
                         {
-                            OnProgressUpdate("Exception while creating a new " + LOCK_FILE_PROGRESS_TEXT + " at " + lockFi.FullName + ": " + ex.Message, 0);
+                            OnWarningEvent("Exception while creating a new " + LOCK_FILE_PROGRESS_TEXT + " at " + lockFi.FullName + ": " + ex.Message);
                         }
                     }
                     else
                     {
-                        OnProgressUpdate("Exception while monitoring " + LOCK_FILE_PROGRESS_TEXT + " " + lockFi.FullName + ": " + ex.Message, 0);
+                        OnWarningEvent("Exception while monitoring " + LOCK_FILE_PROGRESS_TEXT + " " + lockFi.FullName + ": " + ex.Message);
                     }
 
                 }
@@ -561,7 +561,7 @@ namespace AnalysisManagerBase
                     }
                 }
 
-                OnProgressUpdate("Fasta file successfully split into " + mNumSplitParts + " parts", 100);
+                OnStatusEvent("Fasta file successfully split into " + mNumSplitParts + " parts");
 
                 // Store the newly created Fasta file names, plus their protein and residue stats, in DMS
                 currentTask = "StoreSplitFastaFileNames";

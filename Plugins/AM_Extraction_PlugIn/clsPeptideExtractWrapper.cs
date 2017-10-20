@@ -12,6 +12,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using AnalysisManagerBase;
 using PeptideFileExtractor;
+using PRISM;
 
 namespace AnalysisManagerExtractionPlugin
 {
@@ -19,7 +20,7 @@ namespace AnalysisManagerExtractionPlugin
     /// Perform Peptide extraction from Sequest results
     /// </summary>
     /// <remarks></remarks>
-    public class clsPeptideExtractWrapper
+    public class clsPeptideExtractWrapper : clsEventNotifier
     {
         #region "Event Handlers"
 
@@ -30,11 +31,13 @@ namespace AnalysisManagerExtractionPlugin
 
         private DateTime dtLastStatusUpdate = DateTime.MinValue;
         private DateTime dtLastLogTime = DateTime.MinValue;
+        private DateTime dtLastConsoleLogTime = DateTime.UtcNow;
 
         private void m_ExtractTools_CurrentProgress(double fractionDone)
         {
+            const int CONSOLE_LOG_INTERVAL_SECONDS = 60;
             const int MIN_STATUS_INTERVAL_SECONDS = 3;
-            const int MIN_LOG_INTERVAL_SECONDS = 5;
+            const int MIN_LOG_INTERVAL_SECONDS = 15;
             const int MAX_LOG_INTERVAL_SECONDS = 300;
 
             var updateLog = false;
@@ -50,20 +53,26 @@ namespace AnalysisManagerExtractionPlugin
 
             if (m_DebugLevel > 3 && DateTime.UtcNow.Subtract(dtLastLogTime).TotalSeconds >= MIN_LOG_INTERVAL_SECONDS)
             {
-                // Over MIN_LOG_INTERVAL_SECONDS seconds has elapsed; update the log file
+                // Update the log file every 15 seconds if DebugLevel is > 3
                 updateLog = true;
             }
             else if (m_DebugLevel >= 1 && DateTime.UtcNow.Subtract(dtLastLogTime).TotalSeconds >= MAX_LOG_INTERVAL_SECONDS)
             {
-                // Over MAX_LOG_INTERVAL_SECONDS seconds has elapsed; update the log file
+                // Update the log file every 10 minutes if DebugLevel is >= 1
                 updateLog = true;
+            }
+
+            if (DateTime.UtcNow.Subtract(dtLastConsoleLogTime).TotalSeconds >= CONSOLE_LOG_INTERVAL_SECONDS)
+            {
+                // Show progress at the console every 60 seconds
+                dtLastConsoleLogTime = DateTime.UtcNow;
+                OnDebugEvent(string.Format( "Extraction progress: {0:F2}% complete", m_Progress));
             }
 
             if (updateLog)
             {
                 dtLastLogTime = DateTime.UtcNow;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                    "Extraction progress: " + m_Progress.ToString("##0.0") + "%");
+                OnProgressUpdate("Extraction progress", m_Progress);
             }
         }
 
@@ -131,7 +140,7 @@ namespace AnalysisManagerExtractionPlugin
             // Verify the concatenated _out.txt file exists
             if (!StartParams.CatOutFileExists)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Concatenated Out file not found");
+                OnErrorEvent("Concatenated Out file not found");
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -148,7 +157,7 @@ namespace AnalysisManagerExtractionPlugin
                 // Call the dll
                 if (m_DebugLevel >= 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Beginning peptide extraction");
+                    OnDebugEvent("Beginning peptide extraction");
                 }
 
                 m_ExtractTools.ProcessInputFile();
@@ -169,14 +178,13 @@ namespace AnalysisManagerExtractionPlugin
                 // Extraction must have finished successfully, so exit
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Extraction complete");
+                    OnDebugEvent("Extraction complete");
                 }
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                    "Exception while extracting files: " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex));
+                OnErrorEvent("Exception while extracting files: " + ex.Message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
             finally
@@ -211,8 +219,7 @@ namespace AnalysisManagerExtractionPlugin
 
             if (string.IsNullOrWhiteSpace(workFileMatch))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
-                    "clsPeptideExtractor.TestOutputSynFile: No _syn.txt file found");
+                OnErrorEvent("clsPeptideExtractor.TestOutputSynFile: No _syn.txt file found");
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -223,8 +230,7 @@ namespace AnalysisManagerExtractionPlugin
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
-                                 "clsPeptideExtractor.TestOutputSynFile: No data in _syn.txt file");
+            OnWarningEvent("No data in _syn.txt file");
 
             return CloseOutType.CLOSEOUT_NO_DATA;
         }

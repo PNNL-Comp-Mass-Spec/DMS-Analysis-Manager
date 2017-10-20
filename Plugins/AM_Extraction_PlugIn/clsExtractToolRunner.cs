@@ -934,6 +934,7 @@ namespace AnalysisManagerExtractionPlugin
         private CloseOutType PerformPeptideExtraction()
         {
             var pepExtractTool = new clsPeptideExtractWrapper(m_mgrParams, m_jobParams, ref m_StatusTools);
+            RegisterEvents(pepExtractTool);
 
             // Run the extractor
             if (m_DebugLevel > 3)
@@ -948,7 +949,15 @@ namespace AnalysisManagerExtractionPlugin
                 if (result != CloseOutType.CLOSEOUT_SUCCESS && result != CloseOutType.CLOSEOUT_NO_DATA)
                 {
                     // Log error and return result calling routine handles the error appropriately
-                    LogError("Error encountered during extraction");
+                    if (string.IsNullOrWhiteSpace(m_message))
+                    {
+                        LogError("Error encountered during extraction");
+                    }
+                    else
+                    {
+                        LogErrorNoMessageUpdate("Error encountered during extraction");
+                    }
+
                     return result;
                 }
 
@@ -969,6 +978,17 @@ namespace AnalysisManagerExtractionPlugin
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
+        private void RegisterPHRPEvents(clsPepHitResultsProcWrapper phrp)
+        {
+            RegisterEvents(phrp);
+
+            // Handle progress events with PHRP_ProgressChanged
+            phrp.ProgressUpdate -= ProgressUpdateHandler;
+            phrp.ProgressChanged += PHRP_ProgressChanged;
+            phrp.SkipConsoleWriteIfNoProgressListener = true;
+
+        }
+
         /// <summary>
         /// Runs PeptideHitsResultsProcessor on Sequest output
         /// </summary>
@@ -980,10 +1000,7 @@ namespace AnalysisManagerExtractionPlugin
             string synFilePath;
 
             var phrp = new clsPepHitResultsProcWrapper(m_mgrParams, m_jobParams);
-            RegisterEvents(phrp);
-
-            phrp.ProgressUpdate -= ProgressUpdateHandler;
-            phrp.ProgressChanged += PHRP_ProgressChanged;
+            RegisterPHRPEvents(phrp);
 
             // Run the processor
             if (m_DebugLevel > 3)
@@ -1015,7 +1032,7 @@ namespace AnalysisManagerExtractionPlugin
                 var msg = "Error running PHRP";
                 if (!string.IsNullOrWhiteSpace(phrp.ErrMsg))
                     msg += "; " + phrp.ErrMsg;
-                LogDebug(msg);
+                LogWarning(msg);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -1034,10 +1051,7 @@ namespace AnalysisManagerExtractionPlugin
             string synFilePath;
 
             var phrp = new clsPepHitResultsProcWrapper(m_mgrParams, m_jobParams);
-            RegisterEvents(phrp);
-
-            phrp.ProgressUpdate -= ProgressUpdateHandler;
-            phrp.ProgressChanged += PHRP_ProgressChanged;
+            RegisterPHRPEvents(phrp);
 
             // Run the processor
             if (m_DebugLevel > 2)
@@ -1063,7 +1077,7 @@ namespace AnalysisManagerExtractionPlugin
                     var msg = "Error running PHRP";
                     if (!string.IsNullOrWhiteSpace(phrp.ErrMsg))
                         msg += "; " + phrp.ErrMsg;
-                    LogDebug(msg);
+                    LogWarning(msg);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
             }
@@ -1088,10 +1102,7 @@ namespace AnalysisManagerExtractionPlugin
             string synFilePath;
 
             var phrp = new clsPepHitResultsProcWrapper(m_mgrParams, m_jobParams);
-            RegisterEvents(phrp);
-
-            phrp.ProgressUpdate -= ProgressUpdateHandler;
-            phrp.ProgressChanged += PHRP_ProgressChanged;
+            RegisterPHRPEvents(phrp);
 
             // Run the processor
             if (m_DebugLevel > 3)
@@ -1134,6 +1145,8 @@ namespace AnalysisManagerExtractionPlugin
 
             var summarizer = new clsMSGFResultsSummarizer(resultType, m_Dataset, m_JobNum, m_WorkDir);
             RegisterEvents(summarizer);
+
+            // Monitor events for "permission was denied"
             summarizer.ErrorEvent += MSGFResultsSummarizer_ErrorHandler;
 
             summarizer.MSGFThreshold = clsMSGFResultsSummarizer.DEFAULT_MSGF_THRESHOLD;
@@ -1177,10 +1190,7 @@ namespace AnalysisManagerExtractionPlugin
             try
             {
                 var phrp = new clsPepHitResultsProcWrapper(m_mgrParams, m_jobParams);
-                RegisterEvents(phrp);
-
-                phrp.ProgressUpdate -= ProgressUpdateHandler;
-                phrp.ProgressChanged += PHRP_ProgressChanged;
+                RegisterPHRPEvents(phrp);
 
                 // Run the processor
                 if (m_DebugLevel > 3)
@@ -1260,10 +1270,7 @@ namespace AnalysisManagerExtractionPlugin
             try
             {
                 var phrp = new clsPepHitResultsProcWrapper(m_mgrParams, m_jobParams);
-                RegisterEvents(phrp);
-
-                phrp.ProgressUpdate -= ProgressUpdateHandler;
-                phrp.ProgressChanged += PHRP_ProgressChanged;
+                RegisterPHRPEvents(phrp);
 
                 // Run the processor
                 if (m_DebugLevel > 3)
@@ -1339,10 +1346,7 @@ namespace AnalysisManagerExtractionPlugin
             try
             {
                 var phrp = new clsPepHitResultsProcWrapper(m_mgrParams, m_jobParams);
-                RegisterEvents(phrp);
-
-                phrp.ProgressUpdate -= ProgressUpdateHandler;
-                phrp.ProgressChanged += PHRP_ProgressChanged;
+                RegisterPHRPEvents(phrp);
 
                 // Run the processor
                 if (m_DebugLevel > 3)
@@ -1538,10 +1542,7 @@ namespace AnalysisManagerExtractionPlugin
             try
             {
                 var phrp = new clsPepHitResultsProcWrapper(m_mgrParams, m_jobParams);
-                RegisterEvents(phrp);
-
-                phrp.ProgressUpdate -= ProgressUpdateHandler;
-                phrp.ProgressChanged += PHRP_ProgressChanged;
+                RegisterPHRPEvents(phrp);
 
                 // Run the processor
                 if (m_DebugLevel > 3)
@@ -1628,7 +1629,7 @@ namespace AnalysisManagerExtractionPlugin
 
             if (consoleOutputFiles.Count == 0)
             {
-                LogError("MSGF+ Console output files not found");
+                LogWarning("MSGF+ Console output files not found");
                 return;
             }
 
@@ -1665,10 +1666,7 @@ namespace AnalysisManagerExtractionPlugin
             string synFilePath;
 
             var phrp = new clsPepHitResultsProcWrapper(m_mgrParams, m_jobParams);
-            RegisterEvents(phrp);
-
-            phrp.ProgressUpdate -= ProgressUpdateHandler;
-            phrp.ProgressChanged += PHRP_ProgressChanged;
+            RegisterPHRPEvents(phrp);
 
             // Run the processor
             if (m_DebugLevel > 3)
@@ -1800,8 +1798,9 @@ namespace AnalysisManagerExtractionPlugin
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            m_PeptideProphet = new clsPeptideProphetWrapper(progLoc);
-            m_PeptideProphet.PeptideProphetRunning += m_PeptideProphet_PeptideProphetRunning;
+            var peptideProphet = new clsPeptideProphetWrapper(progLoc);
+            RegisterEvents(peptideProphet);
+            peptideProphet.PeptideProphetRunning += m_PeptideProphet_PeptideProphetRunning;
 
             if (m_DebugLevel >= 3)
             {
@@ -1918,7 +1917,8 @@ namespace AnalysisManagerExtractionPlugin
                         }
                         else
                         {
-                            LogWarning("To ignore this error, update this job to use a settings file that has 'IgnorePeptideProphetErrors' set to True");
+                            LogWarning(
+                                "To ignore this error, update this job to use a settings file that has 'IgnorePeptideProphetErrors' set to True");
                             result = CloseOutType.CLOSEOUT_FAILED;
                             break;
                         }

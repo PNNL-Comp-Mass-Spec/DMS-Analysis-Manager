@@ -466,6 +466,7 @@ namespace AnalysisManagerBase
                     {
                         MgrName = clsXMLUtils.GetXmlValue(managerInfo, "MgrName")
                     };
+                    RegisterEvents(status);
 
                     // Note: do not configure status to push to the BrokerDB or the MessageQueue
 

@@ -108,7 +108,7 @@ namespace AnalysisManagerExtractionPlugin
             {
                 if (!createFirstHitsFile && !createSynopsisFile)
                 {
-                    m_ErrMsg = "Must create either a first hits file or a synopsis file (or both); cannot continue";
+                    ReportError("Must create either a first hits file or a synopsis file (or both); cannot continue");
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
@@ -117,7 +117,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 if (string.IsNullOrWhiteSpace(peptideSearchResultsFileName))
                 {
-                    m_ErrMsg = "PeptideSearchResultsFileName is empty; unable to continue";
+                    ReportError("PeptideSearchResultsFileName is empty; unable to continue");
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
@@ -125,7 +125,13 @@ namespace AnalysisManagerExtractionPlugin
                 var ModDefsFileName = Path.GetFileNameWithoutExtension(ParamFileName) + clsAnalysisResourcesExtraction.MOD_DEFS_FILE_SUFFIX;
 
                 var psmResultsFile = new FileInfo(peptideSearchResultsFileName);
-                m_PHRPConsoleOutputFilePath = Path.Combine(psmResultsFile.DirectoryName, "PHRPOutput.txt");
+                if (psmResultsFile.Directory == null)
+                {
+                    ReportError("Unable to determine the parent directory of PeptideSearchResultsFileName: " + peptideSearchResultsFileName);
+                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                }
+
+                m_PHRPConsoleOutputFilePath = Path.Combine(psmResultsFile.Directory.FullName, "PHRPOutput.txt");
 
                 var progLoc = m_MgrParams.GetParam("PHRPProgLoc");
                 progLoc = Path.Combine(progLoc, "PeptideHitResultsProcRunner.exe");
@@ -133,7 +139,7 @@ namespace AnalysisManagerExtractionPlugin
                 // Verify that program file exists
                 if (!File.Exists(progLoc))
                 {
-                    m_ErrMsg = "PHRP not found at " + progLoc;
+                    ReportError("PHRP not found at " + progLoc);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -204,13 +210,13 @@ namespace AnalysisManagerExtractionPlugin
 
                 if (!success)
                 {
-                    m_ErrMsg = "Error running PHRP";
+                    ReportError("Error running PHRP");
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 if (cmdRunner.ExitCode != 0)
                 {
-                    m_ErrMsg = "PHRP runner returned a non-zero error code: " + cmdRunner.ExitCode;
+                    ReportError("PHRP runner returned a non-zero error code: " + cmdRunner.ExitCode);
 
                     // Parse the console output file for any lines that contain "Error"
                     // Append them to m_ErrMsg
@@ -232,7 +238,9 @@ namespace AnalysisManagerExtractionPlugin
                                 if (!lineIn.ToLower().Contains("error"))
                                     continue;
 
-                                m_ErrMsg += "; " + m_ErrMsg;
+                                m_ErrMsg += "; " + lineIn;
+                                OnWarningEvent(lineIn);
+
                                 errorMessageFound = true;
                             }
                         }
@@ -241,6 +249,7 @@ namespace AnalysisManagerExtractionPlugin
                     if (!errorMessageFound)
                     {
                         m_ErrMsg += "; Unknown error message";
+                        OnWarningEvent("Unknown PHRP error message");
                     }
 
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -299,8 +308,7 @@ namespace AnalysisManagerExtractionPlugin
                 {
                     if (psmResultsFile.Directory.GetFiles("*" + fileName).Length == 0)
                     {
-                        m_ErrMsg = "PHRP results file not found: " + fileName;
-                        OnErrorEvent(m_ErrMsg);
+                        ReportError("PHRP results file not found: " + fileName);
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
                 }
@@ -412,13 +420,24 @@ namespace AnalysisManagerExtractionPlugin
             }
         }
 
+        private void ReportError(string message)
+        {
+            m_ErrMsg = message;
+            OnErrorEvent(m_ErrMsg);
+        }
+
         private CloseOutType ValidatePrimaryResultsFile(FileInfo psmResultsFile, string fileSuffix, string fileDescription)
         {
+            if (psmResultsFile?.Directory == null)
+            {
+                OnWarningEvent("psmResultsFile.Directory is null; cannot validate existence of the " + fileSuffix + " file");
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+            }
 
             var files = psmResultsFile.Directory.GetFiles("*" + fileSuffix).ToList();
             if (files.Count == 0)
             {
-                m_ErrMsg = "PHRP did not create a " + fileDescription + " file";
+                ReportError("PHRP did not create a " + fileDescription + " file");
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 

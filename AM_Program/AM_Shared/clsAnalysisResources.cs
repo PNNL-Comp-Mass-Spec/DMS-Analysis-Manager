@@ -1309,10 +1309,14 @@ namespace AnalysisManagerBase
                 //
                 // Do not use RegisterEvents with m_SplitFastaFileUtility because we handle the progress with a custom handler
                 m_SplitFastaFileUtility = new clsSplitFastaFileUtilities(dmsConnectionString, proteinSeqsDBConnectionString, numberOfClonedSteps, m_MgrName);
+                RegisterEvents(m_SplitFastaFileUtility);
+
+                m_SplitFastaFileUtility.ProgressUpdate -= ProgressUpdateHandler;
+                m_SplitFastaFileUtility.ProgressUpdate += m_SplitFastaFileUtility_ProgressUpdate;
+                m_SplitFastaFileUtility.SkipConsoleWriteIfNoProgressListener = true;
 
                 m_SplitFastaFileUtility.SplittingBaseFastafile += m_SplitFastaFileUtility_SplittingBaseFastaFile;
-                m_SplitFastaFileUtility.ErrorEvent += m_SplitFastaFileUtility_ErrorEvent;
-                m_SplitFastaFileUtility.ProgressUpdate += m_SplitFastaFileUtility_ProgressUpdate;
+
 
                 m_SplitFastaFileUtility.MSGFPlusIndexFilesFolderPathLegacyDB = strMSGFPlusIndexFilesFolderPathLegacyDB;
 
@@ -4939,11 +4943,6 @@ namespace AnalysisManagerBase
                 }
             }
 
-        }
-
-        private void m_SplitFastaFileUtility_ErrorEvent(string errorMessage, Exception ex)
-        {
-            LogError(errorMessage, ex);
         }
 
         /// <summary>

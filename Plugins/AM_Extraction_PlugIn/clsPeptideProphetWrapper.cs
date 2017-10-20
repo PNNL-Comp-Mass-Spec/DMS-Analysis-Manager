@@ -12,6 +12,7 @@
 using System;
 using System.IO;
 using AnalysisManagerBase;
+using PRISM;
 
 namespace AnalysisManagerExtractionPlugin
 {
@@ -19,7 +20,7 @@ namespace AnalysisManagerExtractionPlugin
     /// Calls the PeptideProphetRunner application
     /// </summary>
     /// <remarks></remarks>
-    public class clsPeptideProphetWrapper
+    public class clsPeptideProphetWrapper : clsEventNotifier
     {
         #region "Constants"
 
@@ -72,7 +73,7 @@ namespace AnalysisManagerExtractionPlugin
                 // verify that program file exists
                 if (!File.Exists(m_PeptideProphetRunnerLocation))
                 {
-                    ErrMsg = "PeptideProphetRunner not found at " + m_PeptideProphetRunnerLocation;
+                    ReportError("PeptideProphetRunner not found at " + m_PeptideProphetRunnerLocation);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
@@ -80,7 +81,7 @@ namespace AnalysisManagerExtractionPlugin
                 var cmdStr = ioInputFile.FullName + " " + ioInputFile.DirectoryName + " /T:" + MAX_PEPTIDE_PROPHET_RUNTIME_MINUTES;
                 if (DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, m_PeptideProphetRunnerLocation + " " + cmdStr);
+                    OnDebugEvent(m_PeptideProphetRunnerLocation + " " + cmdStr);
                 }
 
                 mCmdRunner = new clsRunDosProgram(ioInputFile.DirectoryName)
@@ -96,13 +97,13 @@ namespace AnalysisManagerExtractionPlugin
 
                 if (!mCmdRunner.RunProgram(m_PeptideProphetRunnerLocation, cmdStr, "PeptideProphetRunner", true))
                 {
-                   ErrMsg = "Error running PeptideProphetRunner";
+                    ReportError("Error running PeptideProphetRunner");
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
                 if (mCmdRunner.ExitCode != 0)
                 {
-                    ErrMsg = "Peptide prophet runner returned a non-zero error code: " + mCmdRunner.ExitCode;
+                    ReportError("Peptide prophet runner returned a non-zero error code: " + mCmdRunner.ExitCode);
 
                     // Parse the console output file for any lines that contain "Error"
                     // Append them to m_ErrMsg
@@ -121,7 +122,8 @@ namespace AnalysisManagerExtractionPlugin
                             {
                                 if (lineIn.ToLower().Contains("error"))
                                 {
-                                    ErrMsg += "; " + ErrMsg;
+                                    ErrMsg += "; " + lineIn;
+                                    OnWarningEvent(ErrMsg);
                                     errorMessageFound = true;
                                 }
                             }
@@ -132,6 +134,7 @@ namespace AnalysisManagerExtractionPlugin
                     if (!errorMessageFound)
                     {
                         ErrMsg += "; Unknown error message";
+                        OnWarningEvent("Unknown PeptideProphet error message");
                     }
 
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -143,15 +146,20 @@ namespace AnalysisManagerExtractionPlugin
             }
             catch (Exception ex)
             {
-                ErrMsg = "Exception while running peptide prophet: " + ex.Message + "; " + clsGlobal.GetExceptionStackTrace(ex);
+                ReportError("Exception while running peptide prophet: " + ex.Message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
         }
 
-        private void CmdRunner_ErrorEvent(string message, Exception ex)
+        private void ReportError(string message, Exception ex = null)
         {
             ErrMsg = message;
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "PeptideProphetRunner: " + ErrMsg);
+            OnErrorEvent(ErrMsg, ex);
+        }
+
+        private void CmdRunner_ErrorEvent(string message, Exception ex)
+        {
+            ReportError("PeptideProphetRunner: " + ErrMsg);
         }
 
         private DateTime dtLastStatusUpdate = DateTime.MinValue;
