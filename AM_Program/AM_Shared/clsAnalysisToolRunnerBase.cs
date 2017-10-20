@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Text.RegularExpressions;
+using PRISM;
 
 //*********************************************************************************************************
 // Written by Dave Clark and Matthew Monroe for the US Department of Energy
@@ -2303,7 +2304,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Logs current progress to the log file at a given interval
+        /// Logs current progress to the log file at a given interval (track progress with m_progress)
         /// </summary>
         /// <param name="toolName"></param>
         /// <remarks>Longer log intervals when m_debuglevel is 0 or 1; shorter intervals for 5</remarks>
@@ -2336,7 +2337,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Logs m_progress to the log file at interval logIntervalMinutes
+        /// Logs m_progress to the log file at interval logIntervalMinutes (track progress with m_progress)
         /// </summary>
         /// <param name="toolName"></param>
         /// <param name="logIntervalMinutes"></param>
@@ -2355,7 +2356,7 @@ namespace AnalysisManagerBase
                 if (DateTime.UtcNow.Subtract(m_LastProgressConsoleTime).TotalMinutes >= CONSOLE_PROGRESS_INTERVAL_MINUTES)
                 {
                     m_LastProgressConsoleTime = DateTime.UtcNow;
-                    Console.WriteLine(progressMessage);
+                    ConsoleMsgUtils.ShowDebug(progressMessage);
                 }
 
                 if (DateTime.UtcNow.Subtract(m_LastProgressWriteTime).TotalMinutes >= logIntervalMinutes)

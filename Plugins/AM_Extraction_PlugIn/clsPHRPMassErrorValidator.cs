@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using AnalysisManagerBase;
 using PHRPReader;
 using PRISM;
 
@@ -110,6 +109,10 @@ namespace AnalysisManagerExtractionPlugin
                 {
                     RegisterEvents(reader);
 
+                    // Progress is reported below via a manual call to OnDebugEvent
+                    reader.ProgressUpdate -= OnProgressUpdate;
+                    reader.SkipConsoleWriteIfNoProgressListener = true;
+
                     // Report any errors cached during instantiation of mPHRPReader
                     foreach (var message in reader.ErrorMessages)
                     {
@@ -148,8 +151,7 @@ namespace AnalysisManagerExtractionPlugin
                     {
                         if (mDebugLevel >= 2)
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                                 string.Format("Custom charge carrier mass defined: {0:F3} Da", customChargeCarrierMass));
+                            OnDebugEvent(string.Format("Custom charge carrier mass defined: {0:F3} Da", customChargeCarrierMass));
                         }
                         oPeptideMassCalculator.ChargeCarrierMass = customChargeCarrierMass;
                     }
@@ -171,9 +173,7 @@ namespace AnalysisManagerExtractionPlugin
 
                     if (mDebugLevel >= 2)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
-                                             "Will use mass tolerance of " + precursorMassTolerance.ToString("0.0") +
-                                             " Da when determining PHRP mass errors");
+                        OnDebugEvent(string.Format("Will use mass tolerance of {0:0.0} Da when determining PHRP mass errors", precursorMassTolerance));
                     }
 
                     // Count the number of PSMs with a mass error greater than precursorMassTolerance
@@ -188,9 +188,7 @@ namespace AnalysisManagerExtractionPlugin
                         if (intPsmCount % 100 == 0 && DateTime.UtcNow.Subtract(dtLastProgress).TotalSeconds >= 15)
                         {
                             dtLastProgress = DateTime.UtcNow;
-                            var statusMessage = "Validating mass errors: " + reader.PercentComplete.ToString("0.0") + "% complete";
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, statusMessage);
-                            Console.WriteLine(statusMessage);
+                            OnDebugEvent("Validating mass errors: " + reader.PercentComplete.ToString("0.0") + "% complete");
                         }
 
                         var currentPSM = reader.CurrentPSM;

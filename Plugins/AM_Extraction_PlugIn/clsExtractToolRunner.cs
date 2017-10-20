@@ -517,6 +517,8 @@ namespace AnalysisManagerExtractionPlugin
                     return string.Empty;
                 }
 
+                Console.WriteLine();
+
                 // Initialize mMSGFPlusUtils
                 mMSGFPlusUtils = new MSGFPlusUtils(m_mgrParams, m_jobParams, m_WorkDir, m_DebugLevel);
                 RegisterEvents(mMSGFPlusUtils);
