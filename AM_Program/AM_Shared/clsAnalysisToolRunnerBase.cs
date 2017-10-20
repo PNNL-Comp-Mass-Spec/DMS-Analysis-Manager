@@ -2387,7 +2387,7 @@ namespace AnalysisManagerBase
         {
             if (updateEvalMessage)
             {
-                m_EvalMessage = warningMessage;
+                m_EvalMessage = clsGlobal.AppendToComment(m_EvalMessage, warningMessage);
             }
             base.LogWarning(warningMessage);
         }
