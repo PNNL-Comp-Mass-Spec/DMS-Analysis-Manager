@@ -36,9 +36,12 @@ namespace AnalysisManagerExtractionPlugin
 
         #endregion
 
+        /// <summary>
+        /// Even used to report progress
+        /// </summary>
         public event PeptideProphetRunningEventHandler PeptideProphetRunning;
 
-        public delegate void PeptideProphetRunningEventHandler(string PepProphetStatus, float PercentComplete);
+        public delegate void PeptideProphetRunningEventHandler(string pepProphetStatus, float percentComplete);
 
         #region "Properties"
 
@@ -67,8 +70,14 @@ namespace AnalysisManagerExtractionPlugin
             {
                 ErrMsg = string.Empty;
 
-                var ioInputFile = new FileInfo(InputFile);
-                var peptideProphetConsoleOutputFilePath = Path.Combine(ioInputFile.DirectoryName, "PeptideProphetConsoleOutput.txt");
+                var inputFile = new FileInfo(InputFile);
+                if (inputFile.Directory == null)
+                {
+                    ReportError("Unable to determine the parent directory of the input file for peptide prophet: " + InputFile);
+                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                }
+
+                var peptideProphetConsoleOutputFilePath = Path.Combine(inputFile.Directory.FullName, "PeptideProphetConsoleOutput.txt");
 
                 // verify that program file exists
                 if (!File.Exists(m_PeptideProphetRunnerLocation))
@@ -78,13 +87,17 @@ namespace AnalysisManagerExtractionPlugin
                 }
 
                 // Set up and execute a program runner to run the Peptide Prophet Runner
-                var cmdStr = ioInputFile.FullName + " " + ioInputFile.DirectoryName + " /T:" + MAX_PEPTIDE_PROPHET_RUNTIME_MINUTES;
+                var cmdStr =
+                    clsGlobal.PossiblyQuotePath(inputFile.FullName) + " " +
+                    clsGlobal.PossiblyQuotePath(inputFile.Directory.FullName) +
+                    " /T:" + MAX_PEPTIDE_PROPHET_RUNTIME_MINUTES;
+
                 if (DebugLevel >= 2)
                 {
                     OnDebugEvent(m_PeptideProphetRunnerLocation + " " + cmdStr);
                 }
 
-                mCmdRunner = new clsRunDosProgram(ioInputFile.DirectoryName)
+                mCmdRunner = new clsRunDosProgram(inputFile.Directory.FullName)
                 {
                     CreateNoWindow = true,
                     CacheStandardOutput = true,
@@ -167,7 +180,7 @@ namespace AnalysisManagerExtractionPlugin
         /// <summary>
         /// Event handler for CmdRunner.LoopWaiting event
         /// </summary>
-        /// <remarks></remarks>
+        /// <remarks>Always reports 50% complete</remarks>
         private void CmdRunner_LoopWaiting()
         {
             // Update the status (limit the updates to every 5 seconds)

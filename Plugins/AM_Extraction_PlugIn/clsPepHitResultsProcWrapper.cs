@@ -151,7 +151,7 @@ namespace AnalysisManagerExtractionPlugin
                                 clsAnalysisResourcesExtraction.MASS_CORRECTION_TAGS_FILENAME + " /N:" + ParamFileName + " /SynPvalue:0.2 " +
                                 " /SynProb:0.05 ";
 
-                cmdStr += " /L:" + Path.Combine(psmResultsFile.DirectoryName, PHRP_LOG_FILE_NAME);
+                cmdStr += " /L:" + Path.Combine(psmResultsFile.Directory.FullName, PHRP_LOG_FILE_NAME);
 
                 var skipProteinMods = m_JobParams.GetJobParameter("SkipProteinMods", false);
                 if (!skipProteinMods)
@@ -193,7 +193,7 @@ namespace AnalysisManagerExtractionPlugin
                     OnDebugEvent(progLoc + " " + cmdStr);
                 }
 
-                var cmdRunner = new clsRunDosProgram(psmResultsFile.DirectoryName)
+                var cmdRunner = new clsRunDosProgram(psmResultsFile.Directory.FullName)
                 {
                     CreateNoWindow = true,
                     CacheStandardOutput = true,
