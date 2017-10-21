@@ -503,8 +503,21 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 // The conversion succeeded
 
-                // Append the first line from the console output file to the end of the MSGFPlus console output file
-                AppendConsoleOutputHeader(m_WorkDir, MZIDToTSV_CONSOLE_OUTPUT_FILE, MSGFPLUS_CONSOLE_OUTPUT_FILE, 1);
+                // Update MSGFPlus_ConsoleOutput with the contents of MzIDToTsv_ConsoleOutput.txt
+
+                var targetFile = new FileInfo(Path.Combine(m_WorkDir, MSGFPLUS_CONSOLE_OUTPUT_FILE));
+
+                if (!targetFile.Exists && m_jobParams.GetJobParameter("NumberOfClonedSteps", 0) > 1)
+                {
+                    // We're likely rerunning data extraction on an old job; this step is not necessary
+                    // Skip the call to AppendConsoleOutputHeader to avoid repeated warnings
+                }
+                else
+                {
+                    // Append the first line from the console output file to the end of the MSGFPlus console output file
+                    AppendConsoleOutputHeader(m_WorkDir, MZIDToTSV_CONSOLE_OUTPUT_FILE, MSGFPLUS_CONSOLE_OUTPUT_FILE, 1);
+                }
+
 
                 try
                 {
