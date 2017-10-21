@@ -1243,7 +1243,6 @@ namespace AnalysisManagerBase
         {
             Progress = percentComplete;
             WriteStatusFile();
-
         }
 
         /// <summary>
@@ -1262,7 +1261,6 @@ namespace AnalysisManagerBase
             TaskStatusDetail = eTaskStatusDetail;
             Progress = percentComplete;
             WriteStatusFile();
-
         }
 
         /// <summary>
@@ -1279,7 +1277,6 @@ namespace AnalysisManagerBase
             SpectrumCount = spectrumCountTotal;
 
             WriteStatusFile();
-
         }
 
         /// <summary>
@@ -1317,7 +1314,6 @@ namespace AnalysisManagerBase
             StoreRecentJobInfo(recentJobInfo);
 
             WriteStatusFile(forceLogToBrokerDB);
-
         }
 
         /// <summary>
@@ -1362,7 +1358,6 @@ namespace AnalysisManagerBase
             StoreRecentJobInfo(recentJobInfo);
 
             WriteStatusFile(forceLogToBrokerDB);
-
         }
 
         /// <summary>

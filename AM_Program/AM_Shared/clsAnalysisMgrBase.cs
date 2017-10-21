@@ -290,6 +290,9 @@ namespace AnalysisManagerBase
             oProcessingClass.StatusEvent += StatusEventHandler;
             oProcessingClass.ErrorEvent += ErrorEventHandler;
             oProcessingClass.WarningEvent += WarningEventHandler;
+
+            // Note that ProgressUpdateHandler does not display a message at console
+            // Instead, it calls m_StatusTools.UpdateAndWrite, which updates the status file
             oProcessingClass.ProgressUpdate += ProgressUpdateHandler;
         }
 
@@ -323,6 +326,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="progressMessage"></param>
         /// <param name="percentComplete"></param>
+        /// <remarks>This does not display a message at console (intentionally)</remarks>
         protected void ProgressUpdateHandler(string progressMessage, float percentComplete)
         {
             m_StatusTools.CurrentOperation = progressMessage;
