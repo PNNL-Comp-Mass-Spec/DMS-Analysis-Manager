@@ -75,7 +75,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// access to settings file parameters
         /// </summary>
-        protected readonly PRISM.XmlSettingsFileAccessor m_settingsFileParams = new PRISM.XmlSettingsFileAccessor();
+        protected readonly XmlSettingsFileAccessor m_settingsFileParams = new XmlSettingsFileAccessor();
 
         /// <summary>
         /// Progress of run (in percent)
@@ -1276,7 +1276,7 @@ namespace AnalysisManagerBase
                     Thread.Sleep(2000);
 
                     // Do a garbage collection in case something is hanging onto the file that has been closed, but not GC'd
-                    PRISM.clsProgRunner.GarbageCollectNow();
+                    clsProgRunner.GarbageCollectNow();
                     retryCount += 1;
 
                 }
@@ -2511,7 +2511,7 @@ namespace AnalysisManagerBase
                         }
                     }
 
-                    if (okToMove && PRISM.clsFileTools.IsVimSwapFile(tmpFileName))
+                    if (okToMove && clsFileTools.IsVimSwapFile(tmpFileName))
                     {
                         // VIM swap file; skip it
                         okToMove = false;

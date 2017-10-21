@@ -132,15 +132,15 @@ namespace MSGFResultsSummarizer
             }
             else
             {
-                seqInfo.UpdateObservationCount(this.ObsCount);
+                seqInfo.UpdateObservationCount(ObsCount);
             }
 
-            seqInfo.CTermK = this.CTermK;
-            seqInfo.CTermR = this.CTermR;
-            seqInfo.MissedCleavage = this.MissedCleavage;
-            seqInfo.KeratinPeptide = this.KeratinPeptide;
-            seqInfo.TrypsinPeptide = this.TrypsinPeptide;
-            seqInfo.Tryptic = this.Tryptic;
+            seqInfo.CTermK = CTermK;
+            seqInfo.CTermR = CTermR;
+            seqInfo.MissedCleavage = MissedCleavage;
+            seqInfo.KeratinPeptide = KeratinPeptide;
+            seqInfo.TrypsinPeptide = TrypsinPeptide;
+            seqInfo.Tryptic = Tryptic;
 
             return seqInfo;
         }
@@ -198,9 +198,9 @@ namespace MSGFResultsSummarizer
             public void Clear()
             {
                 Scan = 0;
-                FDR = clsPSMInfo.UNKNOWN_FDR;
-                MSGF = clsPSMInfo.UNKNOWN_MSGF_SPEC_EVALUE;
-                EValue = clsPSMInfo.UNKNOWN_EVALUE;
+                FDR = UNKNOWN_FDR;
+                MSGF = UNKNOWN_MSGF_SPEC_EVALUE;
+                EValue = UNKNOWN_EVALUE;
                 PassesFilter = false;
             }
 

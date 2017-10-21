@@ -569,7 +569,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 mPeptideToProteinMapper = new clsPeptideToProteinMapEngine();
 
                 RegisterEvents(mPeptideToProteinMapper);
-                mPeptideToProteinMapper.ProgressUpdate -= base.ProgressUpdateHandler;
+                mPeptideToProteinMapper.ProgressUpdate -= ProgressUpdateHandler;
                 mPeptideToProteinMapper.ProgressUpdate += mPeptideToProteinMapper_ProgressChanged;
 
                 mPeptideToProteinMapper.DeleteInspectTempFiles = true;

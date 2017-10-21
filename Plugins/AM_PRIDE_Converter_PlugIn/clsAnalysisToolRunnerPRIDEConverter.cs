@@ -710,7 +710,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             return true;
         }
 
-        private string CheckFilenameCase(FileInfo fiFile, string dataset)
+        private string CheckFilenameCase(FileSystemInfo fiFile, string dataset)
         {
             var filename = fiFile.Name;
 
@@ -2129,7 +2129,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             return prideReportXMLFilePath;
         }
 
-        private bool CreateMSGFReportXMLFileWriteIDs(XmlTextWriter writer,
+        private bool CreateMSGFReportXMLFileWriteIDs(XmlWriter writer,
             IReadOnlyDictionary<string, List<udtPseudoMSGFDataType>> pseudoMSGFData, string orgDBNameGenerated)
         {
             try
@@ -5026,7 +5026,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             writer.WriteEndElement();
         }
 
-        private bool WriteXMLInstrumentInfo(XmlTextWriter oWriter, string instrumentGroup)
+        private bool WriteXMLInstrumentInfo(XmlWriter oWriter, string instrumentGroup)
         {
             var instrumentDetailsAutoDefined = false;
 
@@ -5133,21 +5133,21 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             return instrumentDetailsAutoDefined;
         }
 
-        private void WriteXMLInstrumentInfoAnalyzer(XmlTextWriter oWriter, string cvLabel, string accession, string description)
+        private void WriteXMLInstrumentInfoAnalyzer(XmlWriter oWriter, string cvLabel, string accession, string description)
         {
             oWriter.WriteStartElement("analyzer");
             WriteCVParam(oWriter, cvLabel, accession, description, string.Empty);
             oWriter.WriteEndElement();
         }
 
-        private void WriteXMLInstrumentInfoDetector(XmlTextWriter oWriter, string cvLabel, string accession, string description)
+        private void WriteXMLInstrumentInfoDetector(XmlWriter oWriter, string cvLabel, string accession, string description)
         {
             oWriter.WriteStartElement("detector");
             WriteCVParam(oWriter, cvLabel, accession, description, string.Empty);
             oWriter.WriteEndElement();
         }
 
-        private void WriteXMLInstrumentInfoESI(XmlTextWriter oWriter, string polarity)
+        private void WriteXMLInstrumentInfoESI(XmlWriter oWriter, string polarity)
         {
             if (string.IsNullOrEmpty(polarity))
                 polarity = "positive";
