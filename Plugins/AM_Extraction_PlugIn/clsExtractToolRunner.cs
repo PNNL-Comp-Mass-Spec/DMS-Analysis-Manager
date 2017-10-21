@@ -42,8 +42,6 @@ namespace AnalysisManagerExtractionPlugin
 
         #region "Module variables"
 
-        private clsPeptideProphetWrapper m_PeptideProphet;
-
         private MSGFPlusUtils mMSGFPlusUtils;
         private bool mMSGFPlusUtilsError;
 
@@ -324,10 +322,15 @@ namespace AnalysisManagerExtractionPlugin
                     modxFilterJarName = MODa_FILTER_JAR_NAME;
                 }
 
-                if (keepAllResults)
+                if (keepAllResults || string.IsNullOrWhiteSpace(mGeneratedFastaFilePath))
                 {
                     // Use a fake decoy prefix so that all results will be kept (the top hit for each scan that anal_moda/tda_plus decides to keep)
                     decoyPrefixJobParam = "ABC123XYZ_";
+
+                    if (!keepAllResults)
+                    {
+                        LogWarning("FASTA file not defined, cannot verify the decoy prefix; will instead include the top hit for each scan, regardless of protein");
+                    }
                 }
                 else
                 {
@@ -544,23 +547,22 @@ namespace AnalysisManagerExtractionPlugin
                 {
                     // File successfully created
 
-                    if (!string.IsNullOrEmpty(suffixToAdd))
+                    if (string.IsNullOrEmpty(suffixToAdd))
+                        return tsvFilePath;
+
+                    var fiTSVFile = new FileInfo(tsvFilePath);
+
+                    if (string.IsNullOrWhiteSpace(fiTSVFile.DirectoryName))
                     {
-                        var fiTSVFile = new FileInfo(tsvFilePath);
-
-                        if (string.IsNullOrWhiteSpace(fiTSVFile.DirectoryName))
-                        {
-                            LogError("Cannot determine the parent directory of " + fiTSVFile.FullName);
-                            return string.Empty;
-                        }
-
-                        var newTSVPath = Path.Combine(fiTSVFile.DirectoryName,
-                            Path.GetFileNameWithoutExtension(tsvFilePath) + suffixToAdd + ".tsv");
-
-                        fiTSVFile.MoveTo(newTSVPath);
+                        LogError("Cannot determine the parent directory of " + fiTSVFile.FullName);
+                        return string.Empty;
                     }
 
-                    return tsvFilePath;
+                    var newTSVPath = Path.Combine(fiTSVFile.DirectoryName,
+                                                  Path.GetFileNameWithoutExtension(tsvFilePath) + suffixToAdd + ".tsv");
+
+                    fiTSVFile.MoveTo(newTSVPath);
+                    return newTSVPath;
                 }
 
                 if (string.IsNullOrEmpty(m_message))
@@ -599,7 +601,7 @@ namespace AnalysisManagerExtractionPlugin
             mMSGFPlusUtilsError = false;
 
             // Assume this is true
-            var resultsIncludeAutoAddedDecoyPeptides = true;
+            const bool resultsIncludeAutoAddedDecoyPeptides = true;
 
             var result = mMSGFPlusUtils.CreatePeptideToProteinMapping(resultsFileName, resultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder);
 
@@ -830,19 +832,23 @@ namespace AnalysisManagerExtractionPlugin
 
                 using (var swTempFile = new StreamWriter(new FileStream(fiTempFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    // ReSharper disable once UseImplicitlyTypedVariableEvident
-
                     for (var iteration = 1; iteration <= numberOfClonedSteps; iteration++)
                     {
-                        var sourceFilePath = Path.Combine(m_WorkDir, m_Dataset + "_msgfplus_Part" + iteration + "_PepToProtMap.txt");
+                        var sourceFile = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + "_msgfplus_Part" + iteration + "_PepToProtMap.txt"));
+                        if (!sourceFile.Exists)
+                        {
+                            LogWarning("Peptide to protein map file not found; cannot merge: " + sourceFile.FullName);
+                            continue;
+                        }
+
                         var linesRead = 0;
 
                         if (m_DebugLevel >= 2)
                         {
-                            LogDebug("Caching data from " + sourceFilePath);
+                            LogDebug("Caching data from " + sourceFile.FullName);
                         }
 
-                        using (var srSourceFile = new StreamReader(new FileStream(sourceFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                        using (var srSourceFile = new StreamReader(new FileStream(sourceFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
                         {
                             while (!srSourceFile.EndOfStream)
                             {
@@ -1365,6 +1371,9 @@ namespace AnalysisManagerExtractionPlugin
 
                     var splitFastaEnabled = m_jobParams.GetJobParameter("SplitFasta", false);
                     var numberOfClonedSteps = 1;
+                    var peptToProtMapCount = 0;
+
+                    var skipWarned = false;
 
                     var targetFilePath = Path.Combine(m_WorkDir, m_Dataset + "_msgfplus.txt");
                     CloseOutType result;
@@ -1377,9 +1386,12 @@ namespace AnalysisManagerExtractionPlugin
                             numberOfClonedSteps = m_jobParams.GetJobParameter("NumberOfClonedSteps", 0);
                         }
 
+                        var skipProteinMods = m_jobParams.GetJobParameter("SkipProteinMods", false);
+
                         // ReSharper disable once UseImplicitlyTypedVariableEvident
                         for (var iteration = 1; iteration <= numberOfClonedSteps; iteration++)
                         {
+
                             currentStep = "Verifying that .tsv files exist; iteration " + iteration;
 
                             string suffixToAdd;
@@ -1420,22 +1432,49 @@ namespace AnalysisManagerExtractionPlugin
 
                             var peptoProtMapFilePath = Path.Combine(m_WorkDir, m_Dataset + toolNameTag + suffixToAdd + "_PepToProtMap.txt");
 
-                            if (!File.Exists(peptoProtMapFilePath))
-                            {
-                                var skipPeptideToProteinMapping = m_jobParams.GetJobParameter("SkipPeptideToProteinMapping", false);
 
-                                if (skipPeptideToProteinMapping)
+                            if (File.Exists(peptoProtMapFilePath))
+                            {
+                                peptToProtMapCount++;
+                                continue;
+                            }
+
+                            var skipPeptideToProteinMapping = m_jobParams.GetJobParameter("SkipPeptideToProteinMapping", false);
+
+                            if (skipPeptideToProteinMapping)
+                            {
+                                if (skipWarned)
+                                    continue;
+
+                                LogMessage("Skipping PeptideToProteinMapping since job parameter SkipPeptideToProteinMapping is True");
+                                skipWarned = true;
+                            }
+                            else if (string.IsNullOrWhiteSpace(mGeneratedFastaFilePath))
+                            {
+                                if (skipWarned)
+                                    continue;
+
+                                if (skipProteinMods)
                                 {
-                                    LogMessage("Skipping PeptideToProteinMapping since job parameter SkipPeptideToProteinMapping is True");
+                                    LogWarning("Skipping PeptideToProteinMapping since the FASTA file is not defined; " +
+                                               "this is the case because job parameter SkipProteinMods is true", true);
+                                    skipWarned = true;
                                 }
                                 else
                                 {
-                                    result = CreateMSGFPlusResultsProteinToPeptideMappingFile(targetFilePath);
-                                    if (result != CloseOutType.CLOSEOUT_SUCCESS)
-                                    {
-                                        return result;
-                                    }
+                                    LogError("Skipping PeptideToProteinMapping since the FASTA file is not defined; " +
+                                             "job parameter SkipProteinMods is false, so this indicates a problem");
+                                    skipWarned = true;
                                 }
+                            }
+                            else
+                            {
+                                result = CreateMSGFPlusResultsProteinToPeptideMappingFile(targetFilePath);
+                                if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                                {
+                                    return result;
+                                }
+                                peptToProtMapCount++;
                             }
                         }
 
@@ -1458,15 +1497,17 @@ namespace AnalysisManagerExtractionPlugin
                                 return result;
                             }
 
-                            // Merge the _PepToProtMap files (making sure we don't have any duplicates, and only keeping peptides that passed the filters)
-                            currentStep = "Merging the _PepToProtMap files";
-                            result = ParallelMSGFPlusMergePepToProtMapFiles(numberOfClonedSteps, lstFilterPassingPeptides);
-
-                            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                            if (peptToProtMapCount > 0)
                             {
-                                return result;
-                            }
+                                // Merge the _PepToProtMap files (making sure we don't have any duplicates, and only keeping peptides that passed the filters)
+                                currentStep = "Merging the _PepToProtMap files";
+                                result = ParallelMSGFPlusMergePepToProtMapFiles(numberOfClonedSteps, lstFilterPassingPeptides);
 
+                                if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                                {
+                                    return result;
+                                }
+                            }
                             targetFilePath = Path.Combine(m_WorkDir, m_Dataset + "_msgfplus.tsv");
                         }
                     }
@@ -1497,7 +1538,7 @@ namespace AnalysisManagerExtractionPlugin
 
                     if (splitFastaEnabled)
                     {
-                        // Zip the MSGFPlus_ConsoleOutput files
+                        // Zip the MSGFPlus_ConsoleOutput files (if they exist)
                         ZipConsoleOutputFiles();
                     }
                     else
@@ -1824,7 +1865,8 @@ namespace AnalysisManagerExtractionPlugin
             var sngParentSynFileSizeMB = (float)(fiSynFile.Length / 1024.0 / 1024.0);
             if (sngParentSynFileSizeMB <= SYN_FILE_MAX_SIZE_MB)
             {
-                splitFileList = new List<string> {
+                splitFileList = new List<string>
+                {
                     fiSynFile.FullName
                 };
             }
@@ -1867,10 +1909,10 @@ namespace AnalysisManagerExtractionPlugin
             // Setup Peptide Prophet and run for each file in fileList
             foreach (var splitFile in splitFileList)
             {
-                m_PeptideProphet.InputFile = splitFile;
-                m_PeptideProphet.Enzyme = "tryptic";
-                m_PeptideProphet.OutputFolderPath = m_WorkDir;
-                m_PeptideProphet.DebugLevel = m_DebugLevel;
+                peptideProphet.InputFile = splitFile;
+                peptideProphet.Enzyme = "tryptic";
+                peptideProphet.OutputFolderPath = m_WorkDir;
+                peptideProphet.DebugLevel = m_DebugLevel;
 
                 fiSynFile = new FileInfo(splitFile);
                 var synFileNameAndSize = fiSynFile.Name + " (file size = " + (fiSynFile.Length / 1024.0 / 1024.0).ToString("0.00") + " MB";
@@ -1888,13 +1930,13 @@ namespace AnalysisManagerExtractionPlugin
                     LogDebug("Running peptide prophet on file " + synFileNameAndSize);
                 }
 
-                result = m_PeptideProphet.CallPeptideProphet();
+                result = peptideProphet.CallPeptideProphet();
 
                 if (result == CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     // Make sure the Peptide Prophet output file was actually created
-                    pepProphetOutputFilePath = Path.Combine(m_PeptideProphet.OutputFolderPath,
-                        Path.GetFileNameWithoutExtension(splitFile) + PEPPROPHET_RESULT_FILE_SUFFIX);
+                    pepProphetOutputFilePath = Path.Combine(peptideProphet.OutputFolderPath,
+                                                            Path.GetFileNameWithoutExtension(splitFile) + PEPPROPHET_RESULT_FILE_SUFFIX);
 
                     if (m_DebugLevel >= 3)
                     {
@@ -1905,11 +1947,6 @@ namespace AnalysisManagerExtractionPlugin
                     {
                         LogError("clsExtractToolRunner.RunPeptideProphet(); Peptide Prophet output file not found for synopsis file " +
                                  synFileNameAndSize);
-
-                        if (!string.IsNullOrEmpty(m_PeptideProphet.ErrMsg))
-                        {
-                            LogError(m_PeptideProphet.ErrMsg);
-                        }
 
                         if (ignorePeptideProphetErrors)
                         {
@@ -1926,7 +1963,15 @@ namespace AnalysisManagerExtractionPlugin
                 }
                 else
                 {
-                    LogError("clsExtractToolRunner.RunPeptideProphet(); Error running Peptide Prophet on file " + synFileNameAndSize + ": " + m_PeptideProphet.ErrMsg);
+                    if (string.IsNullOrWhiteSpace(m_message))
+                    {
+                        LogError("Error running Peptide Prophet: " + peptideProphet.ErrMsg);
+                        LogWarning("Input file: " + synFileNameAndSize);
+                    }
+                    else
+                    {
+                        LogErrorNoMessageUpdate("Error running Peptide Prophet on file " + synFileNameAndSize + ": " + peptideProphet.ErrMsg);
+                    }
 
                     if (ignorePeptideProphetErrors)
                     {
@@ -1940,60 +1985,60 @@ namespace AnalysisManagerExtractionPlugin
                 }
             }
 
-            if (result == CloseOutType.CLOSEOUT_SUCCESS || ignorePeptideProphetErrors)
+            if (result != CloseOutType.CLOSEOUT_SUCCESS && !ignorePeptideProphetErrors)
+                return result;
+
+            if (splitFileList.Count <= 1)
+                return result;
+
+            // Delete each of the temporary synopsis files
+            DeleteTemporaryFiles(splitFileList);
+
+            // We now need to recombine the peptide prophet result files
+
+            // Update fileList() to have the peptide prophet result file names
+            var baseName = Path.Combine(peptideProphet.OutputFolderPath, Path.GetFileNameWithoutExtension(SynFile));
+
+            for (var intFileIndex = 0; intFileIndex <= splitFileList.Count - 1; intFileIndex++)
             {
-                if (splitFileList.Count > 1)
+                var splitFile = baseName + "_part" + (intFileIndex + 1) + PEPPROPHET_RESULT_FILE_SUFFIX;
+
+                // Add this file to the global delete list
+                m_jobParams.AddResultFileToSkip(splitFile);
+            }
+
+            // Define the final peptide prophet output file name
+            pepProphetOutputFilePath = baseName + PEPPROPHET_RESULT_FILE_SUFFIX;
+
+            if (m_DebugLevel >= 2)
+            {
+                LogDebug(
+                    "Combining " + splitFileList.Count + " separate Peptide Prophet result files to create " +
+                    Path.GetFileName(pepProphetOutputFilePath));
+            }
+
+            success = InterleaveFiles(splitFileList, pepProphetOutputFilePath, true);
+
+            // Delete each of the temporary peptide prophet result files
+            DeleteTemporaryFiles(splitFileList);
+
+            if (success)
+            {
+                result = CloseOutType.CLOSEOUT_SUCCESS;
+            }
+            else
+            {
+                var msg = "Error interleaving the peptide prophet result files (FileCount=" + splitFileList.Count + ")";
+                if (ignorePeptideProphetErrors)
                 {
-                    // Delete each of the temporary synopsis files
-                    DeleteTemporaryFiles(splitFileList);
-
-                    // We now need to recombine the peptide prophet result files
-
-                    // Update fileList() to have the peptide prophet result file names
-                    var baseName = Path.Combine(m_PeptideProphet.OutputFolderPath, Path.GetFileNameWithoutExtension(SynFile));
-
-                    for (var intFileIndex = 0; intFileIndex <= splitFileList.Count - 1; intFileIndex++)
-                    {
-                        var splitFile = baseName + "_part" + (intFileIndex + 1) + PEPPROPHET_RESULT_FILE_SUFFIX;
-
-                        // Add this file to the global delete list
-                        m_jobParams.AddResultFileToSkip(splitFile);
-                    }
-
-                    // Define the final peptide prophet output file name
-                    pepProphetOutputFilePath = baseName + PEPPROPHET_RESULT_FILE_SUFFIX;
-
-                    if (m_DebugLevel >= 2)
-                    {
-                        LogDebug(
-                            "Combining " + splitFileList.Count + " separate Peptide Prophet result files to create " +
-                            Path.GetFileName(pepProphetOutputFilePath));
-                    }
-
-                    success = InterleaveFiles(splitFileList, pepProphetOutputFilePath, true);
-
-                    // Delete each of the temporary peptide prophet result files
-                    DeleteTemporaryFiles(splitFileList);
-
-                    if (success)
-                    {
-                        result = CloseOutType.CLOSEOUT_SUCCESS;
-                    }
-                    else
-                    {
-                        var msg = "Error interleaving the peptide prophet result files (FileCount=" + splitFileList.Count + ")";
-                        if (ignorePeptideProphetErrors)
-                        {
-                            msg += "; Ignoring the error since 'IgnorePeptideProphetErrors' = True";
-                            LogWarning(msg);
-                            result = CloseOutType.CLOSEOUT_SUCCESS;
-                        }
-                        else
-                        {
-                            LogError(msg);
-                            result = CloseOutType.CLOSEOUT_FAILED;
-                        }
-                    }
+                    msg += "; Ignoring the error since 'IgnorePeptideProphetErrors' = True";
+                    LogWarning(msg);
+                    result = CloseOutType.CLOSEOUT_SUCCESS;
+                }
+                else
+                {
+                    LogError(msg);
+                    result = CloseOutType.CLOSEOUT_FAILED;
                 }
             }
 
@@ -2404,20 +2449,22 @@ namespace AnalysisManagerExtractionPlugin
 
         private DateTime dtLastPepProphetStatusLog = DateTime.MinValue;
 
-        private void m_PeptideProphet_PeptideProphetRunning(string PepProphetStatus, float PercentComplete)
+        private void m_PeptideProphet_PeptideProphetRunning(string pepProphetStatus, float percentComplete)
         {
             const int PEPPROPHET_DETAILED_LOG_INTERVAL_SECONDS = 60;
-            m_progress = SEQUEST_PROGRESS_PHRP_DONE + (float)(PercentComplete / 3.0);
+            m_progress = SEQUEST_PROGRESS_PHRP_DONE + (float)(percentComplete / 3.0);
             m_StatusTools.UpdateAndWrite(m_progress);
 
-            if (m_DebugLevel >= 4)
-            {
-                if (DateTime.UtcNow.Subtract(dtLastPepProphetStatusLog).TotalSeconds >= PEPPROPHET_DETAILED_LOG_INTERVAL_SECONDS)
-                {
-                    dtLastPepProphetStatusLog = DateTime.UtcNow;
-                    LogDebug("Running peptide prophet: " + PepProphetStatus + "; " + PercentComplete + "% complete");
-                }
-            }
+            if (m_DebugLevel < 3 || DateTime.UtcNow.Subtract(dtLastPepProphetStatusLog).TotalSeconds < PEPPROPHET_DETAILED_LOG_INTERVAL_SECONDS)
+                return;
+
+            dtLastPepProphetStatusLog = DateTime.UtcNow;
+
+            // Note that LogProgress uses m_progress
+            LogProgress("Peptide prophet");
+
+            if (!string.IsNullOrWhiteSpace(pepProphetStatus))
+                LogDebug(pepProphetStatus);
         }
 
         private DateTime dtLastPHRPStatusLog = DateTime.MinValue;
