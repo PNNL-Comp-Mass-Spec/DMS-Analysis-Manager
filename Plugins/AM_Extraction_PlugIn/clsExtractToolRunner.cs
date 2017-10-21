@@ -2430,14 +2430,14 @@ namespace AnalysisManagerExtractionPlugin
             m_progress = SEQUEST_PROGRESS_EXTRACTION_DONE + (float)(percentComplete / 3.0);
             m_StatusTools.UpdateAndWrite(m_progress);
 
-            if (m_DebugLevel >= 1)
+            if (m_DebugLevel < 1)
+                return;
+
+            if (DateTime.UtcNow.Subtract(dtLastPHRPStatusLog).TotalSeconds >= PHRP_DETAILED_LOG_INTERVAL_SECONDS && m_DebugLevel >= 3 ||
+                DateTime.UtcNow.Subtract(dtLastPHRPStatusLog).TotalSeconds >= PHRP_LOG_INTERVAL_SECONDS)
             {
-                if (DateTime.UtcNow.Subtract(dtLastPHRPStatusLog).TotalSeconds >= PHRP_DETAILED_LOG_INTERVAL_SECONDS && m_DebugLevel >= 3 ||
-                    DateTime.UtcNow.Subtract(dtLastPHRPStatusLog).TotalSeconds >= PHRP_LOG_INTERVAL_SECONDS)
-                {
-                    dtLastPHRPStatusLog = DateTime.UtcNow;
-                    LogDebug("Running PHRP: " + taskDescription + "; " + percentComplete + "% complete");
-                }
+                dtLastPHRPStatusLog = DateTime.UtcNow;
+                LogDebug("Running PHRP: " + taskDescription + "; " + percentComplete + "% complete");
             }
         }
 

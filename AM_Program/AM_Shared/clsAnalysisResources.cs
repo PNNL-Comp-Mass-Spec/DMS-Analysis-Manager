@@ -4952,26 +4952,24 @@ namespace AnalysisManagerBase
         /// <param name="percentComplete">Value between 0 and 100</param>
         private void m_SplitFastaFileUtility_ProgressUpdate(string progressMessage, float percentComplete)
         {
-
-            if (m_DebugLevel >= 1)
+            if (m_DebugLevel < 1 ||
+                m_DebugLevel == 1 && DateTime.UtcNow.Subtract(m_SplitFastaLastUpdateTime).TotalSeconds < 60 ||
+                m_DebugLevel > 1 && DateTime.UtcNow.Subtract(m_SplitFastaLastUpdateTime).TotalSeconds < 20 ||
+                !(percentComplete >= 100 && m_SplitFastaLastPercentComplete < 100))
             {
+                return;
+            }
 
-                if (m_DebugLevel == 1 && DateTime.UtcNow.Subtract(m_SplitFastaLastUpdateTime).TotalSeconds >= 60 ||
-                    m_DebugLevel > 1 && DateTime.UtcNow.Subtract(m_SplitFastaLastUpdateTime).TotalSeconds >= 20 ||
-                    percentComplete >= 100 && m_SplitFastaLastPercentComplete < 100)
-                {
-                    m_SplitFastaLastUpdateTime = DateTime.UtcNow;
-                    m_SplitFastaLastPercentComplete = percentComplete;
+            m_SplitFastaLastUpdateTime = DateTime.UtcNow;
+            m_SplitFastaLastPercentComplete = percentComplete;
 
-                    if (percentComplete > 0)
-                    {
-                        LogDebugMessage(" ... " + progressMessage + ", " + percentComplete + "% complete");
-                    }
-                    else
-                    {
-                        LogDebugMessage(" ... SplitFastaFile: " + progressMessage);
-                    }
-                }
+            if (percentComplete > 0)
+            {
+                LogDebugMessage(" ... " + progressMessage + ", " + percentComplete + "% complete");
+            }
+            else
+            {
+                LogDebugMessage(" ... SplitFastaFile: " + progressMessage);
             }
 
         }
