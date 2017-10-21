@@ -50,18 +50,18 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="strWorkDirectoryPath"></param>
-        /// <param name="strDatasetName"></param>
-        public clsScanTypeFileCreator(string strWorkDirectoryPath, string strDatasetName)
+        /// <param name="workDirectoryPath"></param>
+        /// <param name="datasetName"></param>
+        public clsScanTypeFileCreator(string workDirectoryPath, string datasetName)
         {
-            WorkDir = strWorkDirectoryPath;
-            DatasetName = strDatasetName;
+            WorkDir = workDirectoryPath;
+            DatasetName = datasetName;
             ErrorMessage = string.Empty;
             ExceptionDetails = string.Empty;
             ScanTypeFilePath = string.Empty;
         }
 
-        private bool CacheScanTypeUsingScanStatsEx(string strScanStatsExFilePath)
+        private bool CacheScanTypeUsingScanStatsEx(string scanStatsExFilePath)
         {
             try
             {
@@ -74,13 +74,13 @@ namespace AnalysisManagerMSGFDBPlugIn
                     mScanTypeMap.Clear();
                 }
 
-                if (!File.Exists(strScanStatsExFilePath))
+                if (!File.Exists(scanStatsExFilePath))
                 {
-                    ErrorMessage = "_ScanStatsEx.txt file not found: " + strScanStatsExFilePath;
+                    ErrorMessage = "_ScanStatsEx.txt file not found: " + scanStatsExFilePath;
                     return false;
                 }
 
-                using (var srScanStatsExFile = new StreamReader(new FileStream(strScanStatsExFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var srScanStatsExFile = new StreamReader(new FileStream(scanStatsExFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     // Define the default column mapping
                     var scanNumberColIndex = 1;
@@ -104,14 +104,14 @@ namespace AnalysisManagerMSGFDBPlugIn
                             // This is a header line; define the column mapping
 
                             const bool IS_CASE_SENSITIVE = false;
-                            var lstHeaderNames = new List<string> {
+                            var headerNames = new List<string> {
                                 "ScanNumber",
                                 "Collision Mode",
                                 "Scan Filter Text"
                             };
 
                             // Keys in this dictionary are column names, values are the 0-based column index
-                            var dctHeaderMapping = clsGlobal.ParseHeaderLine(dataLine, lstHeaderNames, IS_CASE_SENSITIVE);
+                            var dctHeaderMapping = clsGlobal.ParseHeaderLine(dataLine, headerNames, IS_CASE_SENSITIVE);
 
                             scanNumberColIndex = dctHeaderMapping["ScanNumber"];
                             collisionModeColIndex = dctHeaderMapping["Collision Mode"];
@@ -125,7 +125,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                         {
                             var storeData = false;
 
-                            if (clsGlobal.TryGetValue(dataColumns, collisionModeColIndex, out var strCollisionMode))
+                            if (clsGlobal.TryGetValue(dataColumns, collisionModeColIndex, out var collisionMode))
                             {
                                 storeData = true;
                             }
@@ -136,7 +136,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                                     filterText = dataColumns[scanFilterColIndex];
 
                                     // Parse the filter text to determine scan type
-                                    strCollisionMode = XRawFileIO.GetScanTypeNameFromFinniganScanFilterText(filterText);
+                                    collisionMode = XRawFileIO.GetScanTypeNameFromFinniganScanFilterText(filterText);
 
                                     storeData = true;
                                 }
@@ -144,18 +144,18 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                             if (storeData)
                             {
-                                if (string.IsNullOrEmpty(strCollisionMode))
+                                if (string.IsNullOrEmpty(collisionMode))
                                 {
-                                    strCollisionMode = "MS";
+                                    collisionMode = "MS";
                                 }
-                                else if (strCollisionMode == "0")
+                                else if (collisionMode == "0")
                                 {
-                                    strCollisionMode = "MS";
+                                    collisionMode = "MS";
                                 }
 
                                 if (!mScanTypeMap.ContainsKey(scanNumber))
                                 {
-                                    mScanTypeMap.Add(scanNumber, strCollisionMode);
+                                    mScanTypeMap.Add(scanNumber, collisionMode);
                                 }
                             }
                         }
@@ -185,19 +185,19 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 ValidScanTypeLineCount = 0;
 
-                var strScanStatsFilePath = Path.Combine(WorkDir, DatasetName + "_ScanStats.txt");
-                var strScanStatsExFilePath = Path.Combine(WorkDir, DatasetName + "_ScanStatsEx.txt");
+                var scanStatsFilePath = Path.Combine(WorkDir, DatasetName + "_ScanStats.txt");
+                var scanStatsExFilePath = Path.Combine(WorkDir, DatasetName + "_ScanStatsEx.txt");
 
-                if (!File.Exists(strScanStatsFilePath))
+                if (!File.Exists(scanStatsFilePath))
                 {
-                    ErrorMessage = "_ScanStats.txt file not found: " + strScanStatsFilePath;
+                    ErrorMessage = "_ScanStats.txt file not found: " + scanStatsFilePath;
                     return false;
                 }
 
-                var blnDetailedScanTypesDefined = clsAnalysisResourcesMSGFDB.ValidateScanStatsFileHasDetailedScanTypes(strScanStatsFilePath);
+                var detailedScanTypesDefined = clsAnalysisResourcesMSGFDB.ValidateScanStatsFileHasDetailedScanTypes(scanStatsFilePath);
 
                 // Open the input file
-                using (var srScanStatsFile = new StreamReader(new FileStream(strScanStatsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var srScanStatsFile = new StreamReader(new FileStream(scanStatsFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     ScanTypeFilePath = Path.Combine(WorkDir, DatasetName + "_ScanType.txt");
 
@@ -232,7 +232,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                                 // This is a header line; define the column mapping
 
                                 const bool IS_CASE_SENSITIVE = false;
-                                var lstHeaderNames = new List<string> {
+                                var headerNames = new List<string> {
                                     "ScanNumber",
                                     "ScanTime",
                                     "ScanType",
@@ -240,7 +240,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                                 };
 
                                 // Keys in this dictionary are column names, values are the 0-based column index
-                                var dctHeaderMapping = clsGlobal.ParseHeaderLine(dataLine, lstHeaderNames, IS_CASE_SENSITIVE);
+                                var dctHeaderMapping = clsGlobal.ParseHeaderLine(dataLine, headerNames, IS_CASE_SENSITIVE);
 
                                 scanNumberColIndex = dctHeaderMapping["ScanNumber"];
                                 scanTimeColIndex = dctHeaderMapping["ScanTime"];
@@ -249,7 +249,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                                 continue;
                             }
 
-                            if (linesRead == 1 && firstColumnIsNumber && dataColumns.Length >= 11 && blnDetailedScanTypesDefined)
+                            if (linesRead == 1 && firstColumnIsNumber && dataColumns.Length >= 11 && detailedScanTypesDefined)
                             {
                                 // This is a ScanStats file that does not have a header line
                                 // Assume the column indices are 1, 2, 3, and 10
@@ -264,7 +264,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                             {
                                 // Need to read the ScanStatsEx file
 
-                                if (!CacheScanTypeUsingScanStatsEx(strScanStatsExFilePath))
+                                if (!CacheScanTypeUsingScanStatsEx(scanStatsExFilePath))
                                 {
                                     srScanStatsFile.Close();
                                     swOutFile.Close();

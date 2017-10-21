@@ -503,13 +503,13 @@ namespace MSGFResultsSummarizer
         /// <summary>
         /// Either filter by MSGF or filter by FDR, then update the stats
         /// </summary>
-        /// <param name="blnUsingMSGFOrEValueFilter">When true, filter by MSGF or EValue, otherwise filter by FDR</param>
+        /// <param name="usingMSGFOrEValueFilter">When true, filter by MSGF or EValue, otherwise filter by FDR</param>
         /// <param name="lstNormalizedPSMs">PSM results (keys are NormalizedSeqID, values are the protein and scan info for each normalized sequence)</param>
         /// <param name="lstSeqToProteinMap">Sequence to Protein map information (empty if the _resultToSeqMap file was not found)</param>
         /// <param name="lstSeqInfo">Sequence information (empty if the _resultToSeqMap file was not found)</param>
         /// <returns></returns>
         /// <remarks></remarks>
-        private bool FilterAndComputeStats(bool blnUsingMSGFOrEValueFilter, IDictionary<int, clsPSMInfo> lstNormalizedPSMs,
+        private bool FilterAndComputeStats(bool usingMSGFOrEValueFilter, IDictionary<int, clsPSMInfo> lstNormalizedPSMs,
             IDictionary<int, List<clsProteinInfo>> lstSeqToProteinMap, IDictionary<int, clsSeqInfo> lstSeqInfo)
         {
             var lstFilteredPSMs = new Dictionary<int, clsPSMInfo>();
@@ -529,7 +529,7 @@ namespace MSGFResultsSummarizer
                 }
             }
 
-            if (blnUsingMSGFOrEValueFilter)
+            if (usingMSGFOrEValueFilter)
             {
                 if (ResultType == clsPHRPReader.ePeptideHitResultType.MSAlign)
                 {
@@ -566,14 +566,14 @@ namespace MSGFResultsSummarizer
                 blnSuccess = true;
             }
 
-            if (!blnUsingMSGFOrEValueFilter && FDRThreshold < 1)
+            if (!usingMSGFOrEValueFilter && FDRThreshold < 1)
             {
                 // Filter on FDR (we'll compute the FDR using Reverse Proteins, if necessary)
                 ReportDebugMessage("Call FilterPSMsByFDR", 3);
 
                 blnSuccess = FilterPSMsByFDR(lstFilteredPSMs);
 
-                ReportDebugMessage("FilterPSMsByFDR returned " + blnSuccess, 2);
+                ReportDebugMessage("FilterPSMsByFDR returned " + blnSuccess);
 
                 foreach (var entry in lstFilteredPSMs)
                 {
@@ -593,7 +593,7 @@ namespace MSGFResultsSummarizer
                 // We also count phosphopeptides using several metrics
                 ReportDebugMessage("Call SummarizeResults for " + lstFilteredPSMs.Count + " Filtered PSMs", 3);
 
-                blnSuccess = SummarizeResults(blnUsingMSGFOrEValueFilter, lstFilteredPSMs, lstSeqToProteinMap, lstSeqInfo);
+                blnSuccess = SummarizeResults(usingMSGFOrEValueFilter, lstFilteredPSMs, lstSeqToProteinMap, lstSeqInfo);
 
                 ReportDebugMessage("SummarizeResults returned " + blnSuccess, 3);
             }
@@ -1037,7 +1037,7 @@ namespace MSGFResultsSummarizer
                 var lstNormalizedPSMs = new Dictionary<int, clsPSMInfo>();
 
 
-                var psmsLoaded = LoadPSMs(strPHRPSynopsisFilePath, lstNormalizedPSMs, out var lstResultToSeqMap, out var lstSeqToProteinMap, out var lstSeqInfo);
+                var psmsLoaded = LoadPSMs(strPHRPSynopsisFilePath, lstNormalizedPSMs, out _, out var lstSeqToProteinMap, out var lstSeqInfo);
                 if (!psmsLoaded)
                 {
                     return false;
@@ -1077,7 +1077,7 @@ namespace MSGFResultsSummarizer
 
                 if (ContactDatabase)
                 {
-                    ReportDebugMessage("Call PostJobPSMResults for job " + mJob, 2);
+                    ReportDebugMessage("Call PostJobPSMResults for job " + mJob);
 
                     var psmResultsPosted = PostJobPSMResults(mJob);
 
@@ -1519,7 +1519,7 @@ namespace MSGFResultsSummarizer
             var sbAminoAcids = new StringBuilder(sequenceWithMods.Length);
             var modList = new List<KeyValuePair<string, int>>();
 
-            clsPeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(sequenceWithMods, out var strPrimarySequence, out var strPrefix, out var strSuffix);
+            clsPeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(sequenceWithMods, out var strPrimarySequence, out _, out _);
 
             for (var index = 0; index <= strPrimarySequence.Length - 1; index++)
             {

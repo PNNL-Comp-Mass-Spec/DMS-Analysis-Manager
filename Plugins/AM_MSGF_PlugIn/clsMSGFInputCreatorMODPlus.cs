@@ -17,11 +17,11 @@ namespace AnalysisManagerMSGFPlugin
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="strDatasetName">Dataset name</param>
-        /// <param name="strWorkDir">Working directory</param>
+        /// <param name="datasetName">Dataset name</param>
+        /// <param name="workDir">Working directory</param>
         /// <remarks></remarks>
-        public clsMSGFInputCreatorMODPlus(string strDatasetName, string strWorkDir)
-            : base(strDatasetName, strWorkDir, clsPHRPReader.ePeptideHitResultType.MODPlus)
+        public clsMSGFInputCreatorMODPlus(string datasetName, string workDir)
+            : base(datasetName, workDir, clsPHRPReader.ePeptideHitResultType.MODPlus)
         {
             // Initialize the file paths
             // This updates mPHRPFirstHitsFilePath and mPHRPSynopsisFilePath
@@ -39,18 +39,18 @@ namespace AnalysisManagerMSGFPlugin
 
         protected override bool PassesFilters(clsPSM objPSM)
         {
-            var blnPassesFilters = false;
+            var passesFilters = false;
 
             // Keep MODPlus results with Probability >= 0.05  (higher probability values are better)
             // This will typically keep all data in the _syn.txt file
 
-            var dblProbability = objPSM.GetScoreDbl(clsPHRPParserMODPlus.DATA_COLUMN_Probability, 0);
-            if (dblProbability >= 0.05)
+            var probability = objPSM.GetScoreDbl(clsPHRPParserMODPlus.DATA_COLUMN_Probability, 0);
+            if (probability >= 0.05)
             {
-                blnPassesFilters = true;
+                passesFilters = true;
             }
 
-            return blnPassesFilters;
+            return passesFilters;
         }
     }
 }

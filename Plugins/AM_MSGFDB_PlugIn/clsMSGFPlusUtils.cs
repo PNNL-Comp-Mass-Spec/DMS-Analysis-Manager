@@ -861,7 +861,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 };
 
                 RegisterEvents(mPeptideToProteinMapper);
-                mPeptideToProteinMapper.ProgressUpdate -= base.OnProgressUpdate;
+                mPeptideToProteinMapper.ProgressUpdate -= OnProgressUpdate;
                 mPeptideToProteinMapper.ProgressUpdate += PeptideToProteinMapper_ProgressChanged;
 
                 if (m_DebugLevel > 2)
@@ -1484,22 +1484,22 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// Reads the contents of a _ScanType.txt file, returning the scan info using three generic dictionary objects
         /// </summary>
         /// <param name="scanTypeFilePath"></param>
-        /// <param name="lstLowResMSn">Low Res MSn spectra</param>
-        /// <param name="lstHighResMSn">High Res MSn spectra (but not HCD)</param>
-        /// <param name="lstHCDMSn">HCD Spectra</param>
-        /// <param name="lstOther">Spectra that are not MSn</param>
+        /// <param name="lowResMSn">Low Res MSn spectra</param>
+        /// <param name="highResMSn">High Res MSn spectra (but not HCD)</param>
+        /// <param name="hcdMSn">HCD Spectra</param>
+        /// <param name="other">Spectra that are not MSn</param>
         /// <returns></returns>
         /// <remarks></remarks>
-        public bool LoadScanTypeFile(string scanTypeFilePath, out Dictionary<int, string> lstLowResMSn, out Dictionary<int, string> lstHighResMSn,
-            out Dictionary<int, string> lstHCDMSn, out Dictionary<int, string> lstOther)
+        public bool LoadScanTypeFile(string scanTypeFilePath, out Dictionary<int, string> lowResMSn, out Dictionary<int, string> highResMSn,
+            out Dictionary<int, string> hcdMSn, out Dictionary<int, string> other)
         {
             var scanNumberColIndex = -1;
             var scanTypeNameColIndex = -1;
 
-            lstLowResMSn = new Dictionary<int, string>();
-            lstHighResMSn = new Dictionary<int, string>();
-            lstHCDMSn = new Dictionary<int, string>();
-            lstOther = new Dictionary<int, string>();
+            lowResMSn = new Dictionary<int, string>();
+            highResMSn = new Dictionary<int, string>();
+            hcdMSn = new Dictionary<int, string>();
+            other = new Dictionary<int, string>();
 
             try
             {
@@ -1518,52 +1518,52 @@ namespace AnalysisManagerMSGFDBPlugIn
                         if (string.IsNullOrWhiteSpace(dataLine))
                             continue;
 
-                        var lstColumns = dataLine.Split('\t').ToList();
+                        var columns = dataLine.Split('\t').ToList();
 
                         if (scanNumberColIndex < 0)
                         {
                             // Parse the header line to define the mapping
                             // Expected headers are ScanNumber   ScanTypeName   ScanType
-                            scanNumberColIndex = lstColumns.IndexOf("ScanNumber");
-                            scanTypeNameColIndex = lstColumns.IndexOf("ScanTypeName");
+                            scanNumberColIndex = columns.IndexOf("ScanNumber");
+                            scanTypeNameColIndex = columns.IndexOf("ScanTypeName");
                         }
                         else if (scanNumberColIndex >= 0)
                         {
 
-                            if (!int.TryParse(lstColumns[scanNumberColIndex], out var scanNumber))
+                            if (!int.TryParse(columns[scanNumberColIndex], out var scanNumber))
                                 continue;
 
                             if (scanTypeNameColIndex < 0)
                                 continue;
 
-                            var scanType = lstColumns[scanTypeNameColIndex];
+                            var scanType = columns[scanTypeNameColIndex];
                             var scanTypeLCase = scanType.ToLower();
 
                             if (scanTypeLCase.Contains("hcd"))
                             {
-                                lstHCDMSn.Add(scanNumber, scanType);
+                                hcdMSn.Add(scanNumber, scanType);
                             }
                             else if (scanTypeLCase.Contains("hmsn"))
                             {
-                                lstHighResMSn.Add(scanNumber, scanType);
+                                highResMSn.Add(scanNumber, scanType);
                             }
                             else if (scanTypeLCase.Contains("msn"))
                             {
                                 // Not HCD and doesn't contain HMSn; assume low-res
-                                lstLowResMSn.Add(scanNumber, scanType);
+                                lowResMSn.Add(scanNumber, scanType);
                             }
                             else if (scanTypeLCase.Contains("cid") || scanTypeLCase.Contains("etd"))
                             {
                                 // The ScanTypeName likely came from the "Collision Mode" column of a MASIC ScanStatsEx file; we don't know if it is high res MSn or low res MSn
                                 // This will be the case for MASIC results from prior to February 1, 2010, since those results did not have the ScanTypeName column in the _ScanStats.txt file
                                 // We'll assume low res
-                                lstLowResMSn.Add(scanNumber, scanType);
+                                lowResMSn.Add(scanNumber, scanType);
                             }
                             else
                             {
                                 // Does not contain MSn or HCD
                                 // Likely SRM or MS1
-                                lstOther.Add(scanNumber, scanType);
+                                other.Add(scanNumber, scanType);
                             }
                         }
                     }
@@ -1769,7 +1769,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         {
             var consoleOutputFilePath = "??";
 
-            float sngEffectiveProgress = 0;
+            float effectiveProgress = 0;
             float percentCompleteAllTasks = 0;
             var tasksCompleteViaSearchProgress = 0;
 
@@ -1801,7 +1801,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 mConsoleOutputErrorMsg = string.Empty;
 
-                sngEffectiveProgress = PROGRESS_PCT_MSGFPLUS_STARTING;
+                effectiveProgress = PROGRESS_PCT_MSGFPLUS_STARTING;
                 mContinuumSpectraSkipped = 0;
                 mSpectraSearched = 0;
 
@@ -1860,16 +1860,16 @@ namespace AnalysisManagerMSGFDBPlugIn
                         }
                         else if (dataLine.StartsWith("Loading database files", StringComparison.OrdinalIgnoreCase))
                         {
-                            if (sngEffectiveProgress < PROGRESS_PCT_MSGFPLUS_LOADING_DATABASE)
+                            if (effectiveProgress < PROGRESS_PCT_MSGFPLUS_LOADING_DATABASE)
                             {
-                                sngEffectiveProgress = PROGRESS_PCT_MSGFPLUS_LOADING_DATABASE;
+                                effectiveProgress = PROGRESS_PCT_MSGFPLUS_LOADING_DATABASE;
                             }
                         }
                         else if (dataLine.StartsWith("Reading spectra", StringComparison.OrdinalIgnoreCase))
                         {
-                            if (sngEffectiveProgress < PROGRESS_PCT_MSGFPLUS_READING_SPECTRA)
+                            if (effectiveProgress < PROGRESS_PCT_MSGFPLUS_READING_SPECTRA)
                             {
-                                sngEffectiveProgress = PROGRESS_PCT_MSGFPLUS_READING_SPECTRA;
+                                effectiveProgress = PROGRESS_PCT_MSGFPLUS_READING_SPECTRA;
                             }
                         }
                         else if (dataLine.StartsWith("Using", StringComparison.OrdinalIgnoreCase))
@@ -1881,9 +1881,9 @@ namespace AnalysisManagerMSGFDBPlugIn
                             {
                                 short.TryParse(oThreadMatch.Groups["ThreadCount"].Value, out totalThreadCount);
 
-                                if (sngEffectiveProgress < PROGRESS_PCT_MSGFPLUS_THREADS_SPAWNED)
+                                if (effectiveProgress < PROGRESS_PCT_MSGFPLUS_THREADS_SPAWNED)
                                 {
-                                    sngEffectiveProgress = PROGRESS_PCT_MSGFPLUS_THREADS_SPAWNED;
+                                    effectiveProgress = PROGRESS_PCT_MSGFPLUS_THREADS_SPAWNED;
                                 }
                             }
                         }
@@ -1910,17 +1910,17 @@ namespace AnalysisManagerMSGFDBPlugIn
                         else if (dataLine.StartsWith("Computing EFDRs", StringComparison.OrdinalIgnoreCase) ||
                                  dataLine.StartsWith("Computing q-values", StringComparison.OrdinalIgnoreCase))
                         {
-                            if (sngEffectiveProgress < PROGRESS_PCT_MSGFPLUS_COMPUTING_FDRS)
+                            if (effectiveProgress < PROGRESS_PCT_MSGFPLUS_COMPUTING_FDRS)
                             {
-                                sngEffectiveProgress = PROGRESS_PCT_MSGFPLUS_COMPUTING_FDRS;
+                                effectiveProgress = PROGRESS_PCT_MSGFPLUS_COMPUTING_FDRS;
                             }
                         }
                         else if (dataLine.StartsWith("MS-GF+ complete", StringComparison.OrdinalIgnoreCase) ||
                                  dataLine.StartsWith("MS-GF+ complete", StringComparison.OrdinalIgnoreCase))
                         {
-                            if (sngEffectiveProgress < PROGRESS_PCT_MSGFPLUS_COMPLETE)
+                            if (effectiveProgress < PROGRESS_PCT_MSGFPLUS_COMPLETE)
                             {
-                                sngEffectiveProgress = PROGRESS_PCT_MSGFPLUS_COMPLETE;
+                                effectiveProgress = PROGRESS_PCT_MSGFPLUS_COMPLETE;
                             }
                         }
                         else if (string.IsNullOrEmpty(mConsoleOutputErrorMsg))
@@ -1976,7 +1976,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (percentCompleteAllTasks > 0)
                 {
-                    sngEffectiveProgress = percentCompleteAllTasks * PROGRESS_PCT_MSGFPLUS_COMPLETE / 100f;
+                    effectiveProgress = percentCompleteAllTasks * PROGRESS_PCT_MSGFPLUS_COMPLETE / 100f;
                 }
             }
             catch (Exception ex)
@@ -1988,7 +1988,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
             }
 
-            return sngEffectiveProgress;
+            return effectiveProgress;
         }
 
         /// <summary>
@@ -1997,13 +1997,13 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="parameterFilePath">Full path to the MSGF parameter file; will create file MSGFPlus_Mods.txt in the same folder</param>
         /// <param name="sbOptions">String builder of command line arguments to pass to MS-GF+</param>
         /// <param name="numMods">Max Number of Modifications per peptide</param>
-        /// <param name="lstStaticMods">List of Static Mods</param>
-        /// <param name="lstDynamicMods">List of Dynamic Mods</param>
-        /// <param name="lstCustomAminoAcids">List of Custom Amino Acids</param>
+        /// <param name="staticMods">List of Static Mods</param>
+        /// <param name="dynamicMods">List of Dynamic Mods</param>
+        /// <param name="customAminoAcids">List of Custom Amino Acids</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks></remarks>
         private bool ParseMSGFDBModifications(string parameterFilePath, StringBuilder sbOptions, int numMods,
-            IReadOnlyCollection<string> lstStaticMods, IReadOnlyCollection<string> lstDynamicMods, IReadOnlyCollection<string> lstCustomAminoAcids)
+            IReadOnlyCollection<string> staticMods, IReadOnlyCollection<string> dynamicMods, IReadOnlyCollection<string> customAminoAcids)
         {
             bool success;
 
@@ -2032,13 +2032,13 @@ namespace AnalysisManagerMSGFDBPlugIn
                     swModFile.WriteLine("# If this value is large, the search will be slow");
                     swModFile.WriteLine("NumMods=" + numMods);
 
-                    if (lstCustomAminoAcids.Count > 0)
+                    if (customAminoAcids.Count > 0)
                     {
                         // Custom Amino Acid definitions need to be listed before static or dynamic modifications
                         swModFile.WriteLine();
                         swModFile.WriteLine("# Custom Amino Acids");
 
-                        foreach (var customAADef in lstCustomAminoAcids)
+                        foreach (var customAADef in customAminoAcids)
                         {
 
                             if (ParseMSGFDbValidateMod(customAADef, out var customAADefClean))
@@ -2058,13 +2058,13 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                     swModFile.WriteLine();
                     swModFile.WriteLine("# Static mods");
-                    if (lstStaticMods.Count == 0)
+                    if (staticMods.Count == 0)
                     {
                         swModFile.WriteLine("# None");
                     }
                     else
                     {
-                        foreach (var staticMod in lstStaticMods)
+                        foreach (var staticMod in staticMods)
                         {
 
                             if (ParseMSGFDbValidateMod(staticMod, out var modClean))
@@ -2084,13 +2084,13 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                     swModFile.WriteLine();
                     swModFile.WriteLine("# Dynamic mods");
-                    if (lstDynamicMods.Count == 0)
+                    if (dynamicMods.Count == 0)
                     {
                         swModFile.WriteLine("# None");
                     }
                     else
                     {
-                        foreach (var dynamicMod in lstDynamicMods)
+                        foreach (var dynamicMod in dynamicMods)
                         {
 
                             if (ParseMSGFDbValidateMod(dynamicMod, out var modClean))
@@ -2163,9 +2163,9 @@ namespace AnalysisManagerMSGFDBPlugIn
             var paramFileThreadCount = 0;
 
             var numMods = 0;
-            var lstStaticMods = new List<string>();
-            var lstDynamicMods = new List<string>();
-            var lstCustomAminoAcids = new List<string>();
+            var staticMods = new List<string>();
+            var dynamicMods = new List<string>();
+            var customAminoAcids = new List<string>();
 
             var isTDA = false;
 
@@ -2371,21 +2371,21 @@ namespace AnalysisManagerMSGFDBPlugIn
                         {
                             if (!string.IsNullOrWhiteSpace(valueText) && !clsGlobal.IsMatch(valueText, "none"))
                             {
-                                lstStaticMods.Add(valueText);
+                                staticMods.Add(valueText);
                             }
                         }
                         else if (clsGlobal.IsMatch(kvSetting.Key, "DynamicMod"))
                         {
                             if (!string.IsNullOrWhiteSpace(valueText) && !clsGlobal.IsMatch(valueText, "none"))
                             {
-                                lstDynamicMods.Add(valueText);
+                                dynamicMods.Add(valueText);
                             }
                         }
                         else if (clsGlobal.IsMatch(kvSetting.Key, "CustomAA"))
                         {
                             if (!string.IsNullOrWhiteSpace(valueText) && !clsGlobal.IsMatch(valueText, "none"))
                             {
-                                lstCustomAminoAcids.Add(valueText);
+                                customAminoAcids.Add(valueText);
                             }
                         }
 
@@ -2504,7 +2504,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             // Create the modification file and append the -mod switch
             // We'll also set mPhosphorylationSearch to True if a dynamic or static mod is STY phosphorylation
-            if (!ParseMSGFDBModifications(parameterFilePath, sbOptions, numMods, lstStaticMods, lstDynamicMods, lstCustomAminoAcids))
+            if (!ParseMSGFDBModifications(parameterFilePath, sbOptions, numMods, staticMods, dynamicMods, customAminoAcids))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -2579,7 +2579,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // Count HCD spectra separately since MS-GF+ has a special scoring model for HCD spectra
 
 
-                var success = LoadScanTypeFile(scanTypeFilePath, out var lstLowResMSn, out var lstHighResMSn, out var lstHCDMSn, out _);
+                var success = LoadScanTypeFile(scanTypeFilePath, out var lowResMSn, out var highResMSn, out var hcdMSn, out _);
 
                 if (!success)
                 {
@@ -2591,14 +2591,14 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                if (lstLowResMSn.Count + lstHighResMSn.Count + lstHCDMSn.Count == 0)
+                if (lowResMSn.Count + highResMSn.Count + hcdMSn.Count == 0)
                 {
                     mErrorMessage = "LoadScanTypeFile could not find any MSn spectra " + Path.GetFileName(scanTypeFilePath);
                     OnErrorEvent(mErrorMessage);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                ExamineScanTypes(lstLowResMSn.Count, lstHighResMSn.Count, lstHCDMSn.Count, out instrumentIDNew, out autoSwitchReason);
+                ExamineScanTypes(lowResMSn.Count, highResMSn.Count, hcdMSn.Count, out instrumentIDNew, out autoSwitchReason);
             }
 
             AutoUpdateInstrumentIDIfChanged(ref instrumentIDCurrent, instrumentIDNew, autoSwitchReason);
@@ -2618,18 +2618,18 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
             else
             {
-                double dblFractionHiRes = 0;
+                double fractionHiRes = 0;
 
                 if (countHighResMSn > 0)
                 {
-                    dblFractionHiRes = countHighResMSn / (double)(countLowResMSn + countHighResMSn);
+                    fractionHiRes = countHighResMSn / (double)(countLowResMSn + countHighResMSn);
                 }
 
-                if (dblFractionHiRes > 0.1)
+                if (fractionHiRes > 0.1)
                 {
                     // At least 10% of the spectra are HMSn
                     instrumentIDNew = "1";
-                    autoSwitchReason = "since " + (dblFractionHiRes * 100).ToString("0") + "% of the spectra are HMSn";
+                    autoSwitchReason = "since " + (fractionHiRes * 100).ToString("0") + "% of the spectra are HMSn";
                 }
                 else
                 {
@@ -2789,9 +2789,9 @@ namespace AnalysisManagerMSGFDBPlugIn
             {
                 // Make sure that the custom amino acid definition does not have any invalid characters
                 var reInvalidCharacters = new Regex(@"[^CHNOS0-9]", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-                var lstInvalidCharacters = reInvalidCharacters.Matches(modClean);
+                var invalidCharacters = reInvalidCharacters.Matches(modClean);
 
-                if (lstInvalidCharacters.Count > 0)
+                if (invalidCharacters.Count > 0)
                 {
                     mErrorMessage = "Custom amino acid empirical formula " + modClean + " has invalid characters. " +
                                     "It must only contain C, H, N, O, and S, and optionally an integer after each element, for example: C6H7N3O";
@@ -2804,10 +2804,10 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 var reElementSplitter = new Regex(@"(?<Atom>[A-Z])(?<Count>\d*)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-                var lstElements = reElementSplitter.Matches(modClean);
+                var elements = reElementSplitter.Matches(modClean);
                 var reconstructedFormula = string.Empty;
 
-                foreach (Match subPart in lstElements)
+                foreach (Match subPart in elements)
                 {
                     var elementSymbol = subPart.Groups["Atom"].ToString();
                     var elementCount = subPart.Groups["Count"].ToString();
@@ -2943,9 +2943,9 @@ namespace AnalysisManagerMSGFDBPlugIn
                 else
                 {
                     // Value between 0 and 100
-                    var dblErrorPercent = peptideCountNoMatch / (double)peptideCount * 100.0;
+                    var errorPercent = peptideCountNoMatch / (double)peptideCount * 100.0;
 
-                    mErrorMessage = dblErrorPercent.ToString("0.0") + "% of the entries in the peptide to protein map file did not match to a protein in the FASTA file";
+                    mErrorMessage = errorPercent.ToString("0.0") + "% of the entries in the peptide to protein map file did not match to a protein in the FASTA file";
                     OnErrorEvent(mErrorMessage);
 
                     if (ignorePeptideToProteinMapperErrors)

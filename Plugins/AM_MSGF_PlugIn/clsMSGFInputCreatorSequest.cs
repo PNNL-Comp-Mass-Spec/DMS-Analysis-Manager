@@ -17,11 +17,11 @@ namespace AnalysisManagerMSGFPlugin
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="strDatasetName">Dataset name</param>
-        /// <param name="strWorkDir">Working directory</param>
+        /// <param name="datasetName">Dataset name</param>
+        /// <param name="workDir">Working directory</param>
         /// <remarks></remarks>
-        public clsMSGFInputCreatorSequest(string strDatasetName, string strWorkDir)
-            : base(strDatasetName, strWorkDir, clsPHRPReader.ePeptideHitResultType.Sequest)
+        public clsMSGFInputCreatorSequest(string datasetName, string workDir)
+            : base(datasetName, workDir, clsPHRPReader.ePeptideHitResultType.Sequest)
         {
             // Initialize the file paths
             // This updates mPHRPFirstHitsFilePath and mPHRPSynopsisFilePath
@@ -39,8 +39,8 @@ namespace AnalysisManagerMSGFPlugin
 
         protected override bool PassesFilters(clsPSM objPSM)
         {
-            bool blnIsProteinTerminus;
-            var blnPassesFilters = false;
+            bool isProteinTerminus;
+            var passesFilters = false;
 
             // Examine the score values and possibly filter out this line
 
@@ -56,39 +56,39 @@ namespace AnalysisManagerMSGFPlugin
 
             if (objPSM.Peptide.StartsWith("-") || objPSM.Peptide.EndsWith("-"))
             {
-                blnIsProteinTerminus = true;
+                isProteinTerminus = true;
             }
             else
             {
-                blnIsProteinTerminus = false;
+                isProteinTerminus = false;
             }
 
-            var dblDeltaCN = objPSM.GetScoreDbl(clsPHRPParserSequest.DATA_COLUMN_DelCn);
-            var dblXCorr = objPSM.GetScoreDbl(clsPHRPParserSequest.DATA_COLUMN_XCorr);
+            var deltaCN = objPSM.GetScoreDbl(clsPHRPParserSequest.DATA_COLUMN_DelCn);
+            var xCorr = objPSM.GetScoreDbl(clsPHRPParserSequest.DATA_COLUMN_XCorr);
 
-            int intCleavageState = clsPeptideCleavageStateCalculator.CleavageStateToShort(objPSM.CleavageState);
-            var intCleavageStateAlt = (short)objPSM.GetScoreInt(clsPHRPParserSequest.DATA_COLUMN_NumTrypticEnds, 0);
+            int cleavageState = clsPeptideCleavageStateCalculator.CleavageStateToShort(objPSM.CleavageState);
+            var cleavageStateAlt = (short)objPSM.GetScoreInt(clsPHRPParserSequest.DATA_COLUMN_NumTrypticEnds, 0);
 
-            if (intCleavageStateAlt > intCleavageState)
+            if (cleavageStateAlt > cleavageState)
             {
-                intCleavageState = intCleavageStateAlt;
+                cleavageState = cleavageStateAlt;
             }
 
-            if (dblDeltaCN <= 0.25)
+            if (deltaCN <= 0.25)
             {
-                if (intCleavageState >= 1 || blnIsProteinTerminus)
+                if (cleavageState >= 1 || isProteinTerminus)
                 {
                     // Partially or fully tryptic, or protein terminal
                     if (objPSM.Charge == 1 | objPSM.Charge == 2)
                     {
-                        if (dblXCorr >= 1.5)
-                            blnPassesFilters = true;
+                        if (xCorr >= 1.5)
+                            passesFilters = true;
                     }
                     else
                     {
                         // Charge is 3 or higher (or zero)
-                        if (dblXCorr >= 2.2)
-                            blnPassesFilters = true;
+                        if (xCorr >= 2.2)
+                            passesFilters = true;
                     }
                 }
                 else
@@ -96,24 +96,24 @@ namespace AnalysisManagerMSGFPlugin
                     // Non-tryptic
                     if (objPSM.Charge == 1)
                     {
-                        if (dblXCorr >= 1.5)
-                            blnPassesFilters = true;
+                        if (xCorr >= 1.5)
+                            passesFilters = true;
                     }
                     else if (objPSM.Charge == 2)
                     {
-                        if (dblXCorr >= 2.0)
-                            blnPassesFilters = true;
+                        if (xCorr >= 2.0)
+                            passesFilters = true;
                     }
                     else
                     {
                         // Charge is 3 or higher (or zero)
-                        if (dblXCorr >= 2.5)
-                            blnPassesFilters = true;
+                        if (xCorr >= 2.5)
+                            passesFilters = true;
                     }
                 }
             }
 
-            return blnPassesFilters;
+            return passesFilters;
         }
     }
 }

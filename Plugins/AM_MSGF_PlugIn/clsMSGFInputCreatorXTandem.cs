@@ -17,11 +17,11 @@ namespace AnalysisManagerMSGFPlugin
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="strDatasetName">Dataset name</param>
-        /// <param name="strWorkDir">Working directory</param>
+        /// <param name="datasetName">Dataset name</param>
+        /// <param name="workDir">Working directory</param>
         /// <remarks></remarks>
-        public clsMSGFInputCreatorXTandem(string strDatasetName, string strWorkDir)
-            : base(strDatasetName, strWorkDir, clsPHRPReader.ePeptideHitResultType.XTandem)
+        public clsMSGFInputCreatorXTandem(string datasetName, string workDir)
+            : base(datasetName, workDir, clsPHRPReader.ePeptideHitResultType.XTandem)
         {
             // Initialize the file paths
             // This updates mPHRPFirstHitsFilePath and mPHRPSynopsisFilePath
@@ -39,18 +39,18 @@ namespace AnalysisManagerMSGFPlugin
 
         protected override bool PassesFilters(clsPSM objPSM)
         {
-            var blnPassesFilters = false;
+            var passesFilters = false;
 
             // Keep X!Tandem results with Peptide_Expectation_Value_Log(e) <= -0.3
             // This will typically keep all data in the _xt.txt file
 
-            var dblLogEValue = objPSM.GetScoreDbl(clsPHRPParserXTandem.DATA_COLUMN_Peptide_Expectation_Value_LogE, 0);
-            if (dblLogEValue <= -0.3)
+            var logEValue = objPSM.GetScoreDbl(clsPHRPParserXTandem.DATA_COLUMN_Peptide_Expectation_Value_LogE, 0);
+            if (logEValue <= -0.3)
             {
-                blnPassesFilters = true;
+                passesFilters = true;
             }
 
-            return blnPassesFilters;
+            return passesFilters;
         }
     }
 }

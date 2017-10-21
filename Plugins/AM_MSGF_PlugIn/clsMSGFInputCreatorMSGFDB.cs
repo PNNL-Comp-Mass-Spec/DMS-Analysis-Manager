@@ -19,11 +19,11 @@ namespace AnalysisManagerMSGFPlugin
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="strDatasetName">Dataset name</param>
-        /// <param name="strWorkDir">Working directory</param>
+        /// <param name="datasetName">Dataset name</param>
+        /// <param name="workDir">Working directory</param>
         /// <remarks></remarks>
-        public clsMSGFInputCreatorMSGFDB(string strDatasetName, string strWorkDir)
-            : base(strDatasetName, strWorkDir, clsPHRPReader.ePeptideHitResultType.MSGFDB)
+        public clsMSGFInputCreatorMSGFDB(string datasetName, string workDir)
+            : base(datasetName, workDir, clsPHRPReader.ePeptideHitResultType.MSGFDB)
         {
             // Initialize the file paths
             // This updates mPHRPFirstHitsFilePath and mPHRPSynopsisFilePath
@@ -43,17 +43,17 @@ namespace AnalysisManagerMSGFPlugin
         /// Reads a MODa or MODPlus FHT or SYN file and creates the corresponding _syn_MSGF.txt or _fht_MSGF.txt file
         /// using the Probability values for the MSGF score
         /// </summary>
-        /// <param name="strSourceFilePath"></param>
+        /// <param name="sourceFilePath"></param>
         /// <param name="eResultType"></param>
-        /// <param name="strSourceFileDescription"></param>
+        /// <param name="sourceFileDescription"></param>
         /// <returns></returns>
         /// <remarks>Note that higher probability values are better.  Also, note that Probability is actually just a score between 0 and 1; not a true probability</remarks>
         [Obsolete("This function does not appear to be used anywhere")]
-        public bool CreateMSGFFileUsingMODaOrModPlusProbabilities(string strSourceFilePath, clsPHRPReader.ePeptideHitResultType eResultType, string strSourceFileDescription)
+        public bool CreateMSGFFileUsingMODaOrModPlusProbabilities(string sourceFilePath, clsPHRPReader.ePeptideHitResultType eResultType, string sourceFileDescription)
         {
             try
             {
-                if (string.IsNullOrEmpty(strSourceFilePath))
+                if (string.IsNullOrEmpty(sourceFilePath))
                 {
                     // Source file not defined
                     mErrorMessage = "Source file not provided to CreateMSGFFileUsingMODaOrModPlusProbabilities";
@@ -71,17 +71,17 @@ namespace AnalysisManagerMSGFPlugin
                 }
 
                 // Open the file (no need to read the Mods and Seq Info since we're not actually running MSGF)
-                using (var reader = new clsPHRPReader(strSourceFilePath, eResultType, startupOptions))
+                using (var reader = new clsPHRPReader(sourceFilePath, eResultType, startupOptions))
                 {
                     RegisterEvents(reader);
 
                     reader.SkipDuplicatePSMs = false;
 
                     // Define the path to write the first-hits MSGF results to
-                    var strMSGFFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(strSourceFilePath) + MSGF_RESULT_FILENAME_SUFFIX);
+                    var mSGFFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(sourceFilePath) + MSGF_RESULT_FILENAME_SUFFIX);
 
                     // Create the output file
-                    using (var msgfFile = new StreamWriter(new FileStream(strMSGFFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                    using (var msgfFile = new StreamWriter(new FileStream(mSGFFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                     {
                         // Write out the headers to swMSGFFHTFile
                         WriteMSGFResultsHeaders(msgfFile);
@@ -91,19 +91,19 @@ namespace AnalysisManagerMSGFPlugin
                             var objPSM = reader.CurrentPSM;
 
                             // Converting MODa/MODPlus probability to a fake Spectral Probability using 1 - probability
-                            var dblProbability = objPSM.GetScoreDbl(probabilityColumnName, 0);
-                            var strProbabilityValue = (1 - dblProbability).ToString("0.0000");
+                            var probability = objPSM.GetScoreDbl(probabilityColumnName, 0);
+                            var probabilityValue = (1 - probability).ToString("0.0000");
 
                             // objPSM.MSGFSpecProb comes from column Probability
                             msgfFile.WriteLine(objPSM.ResultID + "\t" + objPSM.ScanNumber + "\t" + objPSM.Charge + "\t" + objPSM.ProteinFirst + "\t" +
-                                                 objPSM.Peptide + "\t" + strProbabilityValue + "\t" + string.Empty);
+                                                 objPSM.Peptide + "\t" + probabilityValue + "\t" + string.Empty);
                         }
                     }
                 }
             }
             catch (Exception ex)
             {
-                ReportError("Error creating the MSGF file for the MODa / MODPlus file " + Path.GetFileName(strSourceFilePath) + ": " + ex.Message);
+                ReportError("Error creating the MSGF file for the MODa / MODPlus file " + Path.GetFileName(sourceFilePath) + ": " + ex.Message);
                 return false;
             }
 
@@ -114,15 +114,15 @@ namespace AnalysisManagerMSGFPlugin
         /// Reads a MSGFDB FHT or SYN file and creates the corresponding _syn_MSGF.txt or _fht_MSGF.txt file
         /// using the MSGFDB_SpecProb values for the MSGF score
         /// </summary>
-        /// <param name="strSourceFilePath">_msgfplus_fht.txt or _msgfplus_syn.txt file</param>
-        /// <param name="strSourceFileDescription"></param>
+        /// <param name="sourceFilePath">_msgfplus_fht.txt or _msgfplus_syn.txt file</param>
+        /// <param name="sourceFileDescription"></param>
         /// <returns></returns>
         /// <remarks></remarks>
-        public bool CreateMSGFFileUsingMSGFDBSpecProb(string strSourceFilePath, string strSourceFileDescription)
+        public bool CreateMSGFFileUsingMSGFDBSpecProb(string sourceFilePath, string sourceFileDescription)
         {
             try
             {
-                if (string.IsNullOrEmpty(strSourceFilePath))
+                if (string.IsNullOrEmpty(sourceFilePath))
                 {
                     // Source file not defined
                     mErrorMessage = "Source file not provided to CreateMSGFFileUsingMSGFDBSpecProb";
@@ -133,17 +133,17 @@ namespace AnalysisManagerMSGFPlugin
                 var startupOptions = GetMinimalMemoryPHRPStartupOptions();
 
                 // Open the file (no need to read the Mods and Seq Info since we're not actually running MSGF)
-                using (var reader = new clsPHRPReader(strSourceFilePath, clsPHRPReader.ePeptideHitResultType.MSGFDB, startupOptions))
+                using (var reader = new clsPHRPReader(sourceFilePath, clsPHRPReader.ePeptideHitResultType.MSGFDB, startupOptions))
                 {
                     RegisterEvents(reader);
 
                     reader.SkipDuplicatePSMs = false;
 
                     // Define the path to write the first-hits MSGF results to
-                    var strMSGFFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(strSourceFilePath) + MSGF_RESULT_FILENAME_SUFFIX);
+                    var mSGFFilePath = Path.Combine(mWorkDir, Path.GetFileNameWithoutExtension(sourceFilePath) + MSGF_RESULT_FILENAME_SUFFIX);
 
                     // Create the output file
-                    using (var msgfFile = new StreamWriter(new FileStream(strMSGFFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                    using (var msgfFile = new StreamWriter(new FileStream(mSGFFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                     {
                         // Write out the headers to swMSGFFHTFile
                         WriteMSGFResultsHeaders(msgfFile);
@@ -162,7 +162,7 @@ namespace AnalysisManagerMSGFPlugin
             }
             catch (Exception ex)
             {
-                ReportError("Error creating the MSGF file for MSGFDB file " + Path.GetFileName(strSourceFilePath) + ": " + ex.Message);
+                ReportError("Error creating the MSGF file for MSGFDB file " + Path.GetFileName(sourceFilePath) + ": " + ex.Message);
                 return false;
             }
 

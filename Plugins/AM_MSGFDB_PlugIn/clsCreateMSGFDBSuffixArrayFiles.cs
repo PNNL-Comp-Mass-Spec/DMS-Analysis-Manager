@@ -116,14 +116,14 @@ namespace AnalysisManagerMSGFDBPlugIn
                         if (string.IsNullOrEmpty(dataLine))
                             continue;
 
-                        var lstData = dataLine.Split('\t').ToList();
+                        var data = dataLine.Split('\t').ToList();
 
-                        if (lstData.Count >= 3)
+                        if (data.Count >= 3)
                         {
                             // Add this file to the list of files to copy
-                            if (long.TryParse(lstData[1], out var fileSizeBytes))
+                            if (long.TryParse(data[1], out var fileSizeBytes))
                             {
-                                filesToCopy.Add(lstData[0], fileSizeBytes);
+                                filesToCopy.Add(data[0], fileSizeBytes);
                                 fileSizeTotalKB += (long)(fileSizeBytes / 1024.0);
                             }
                         }
@@ -155,7 +155,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     OnStatusEvent("Copying existing MSGF+ index files from " + diRemoteIndexFolderPath.FullName);
                 }
 
-                // Copy each file in lstFilesToCopy (overwrite existing files)
+                // Copy each file in filesToCopy (overwrite existing files)
                 var manager = GetPseudoManagerName();
 
                 var filesCopied = 0;
@@ -311,7 +311,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 var filesToCopy = new Dictionary<string, long>();
 
-                var lstFileInfo = new List<string>();
+                var fileInfo = new List<string>();
 
                 // Find the index files for fiFastaFile
                 foreach (var fiSourceFile in fiFastaFile.Directory.GetFiles(Path.GetFileNameWithoutExtension(fiFastaFile.Name) + ".*"))
@@ -325,7 +325,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                         continue;
 
                     filesToCopy.Add(fiSourceFile.Name, fiSourceFile.Length);
-                    lstFileInfo.Add(fiSourceFile.Name + "\t" + fiSourceFile.Length + "\t" +
+                    fileInfo.Add(fiSourceFile.Name + "\t" + fiSourceFile.Length + "\t" +
                                     fiSourceFile.LastWriteTimeUtc.ToString(DATE_TIME_FORMAT));
                 }
 
@@ -355,7 +355,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 using (var swOutFile = new StreamWriter(new FileStream(fiMSGFPlusIndexFileInfo.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    foreach (var entry in lstFileInfo)
+                    foreach (var entry in fileInfo)
                     {
                         swOutFile.WriteLine(entry);
                     }
@@ -504,28 +504,28 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 // This dictionary contains file suffixes to look for
                 // Keys will be "True" if the file exists and false if it does not exist
-                var lstFilesToFind = new List<string>();
+                var filesToFind = new List<string>();
 
                 if (!reindexingRequired)
                 {
 
                     currentTask = "Validating that expected files exist";
-                    var lstExistingFiles = FindExistingSuffixArrayFiles(
+                    var existingFiles = FindExistingSuffixArrayFiles(
                         fastaFileIsDecoy, outputNameBase, fiFastaFile.DirectoryName,
-                        lstFilesToFind, out var existingFiles, out var missingFiles);
+                        filesToFind, out var existingFileList, out var missingFiles);
 
-                    if (lstExistingFiles.Count < lstFilesToFind.Count)
+                    if (existingFiles.Count < filesToFind.Count)
                     {
                         reindexingRequired = true;
 
-                        currentTask = "Some files are missing: " + lstExistingFiles.Count + " vs. " + lstFilesToFind.Count;
-                        if (lstExistingFiles.Count > 0)
+                        currentTask = "Some files are missing: " + existingFiles.Count + " vs. " + filesToFind.Count;
+                        if (existingFiles.Count > 0)
                         {
                             if (debugLevel >= 1)
                             {
-                                OnWarningEvent("Indexing of " + fiFastaFile.Name + " was incomplete (found " + lstExistingFiles.Count + " out of " +
-                                               lstFilesToFind.Count + " index files)");
-                                OnStatusEvent(" ... existing files: " + existingFiles);
+                                OnWarningEvent("Indexing of " + fiFastaFile.Name + " was incomplete (found " + existingFiles.Count + " out of " +
+                                               filesToFind.Count + " index files)");
+                                OnStatusEvent(" ... existing files: " + existingFileList);
                                 OnStatusEvent(" ... missing files: " + missingFiles);
                             }
                         }
@@ -537,7 +537,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                         // We can't do this for programatically generated fasta files (that use protein collections)
                         //   since their modification date will be the time that the file was created
 
-                        foreach (var fiIndexFile in lstExistingFiles)
+                        foreach (var fiIndexFile in existingFiles)
                         {
                             if (fiIndexFile.LastWriteTimeUtc < fiFastaFile.LastWriteTimeUtc.AddSeconds(-0.1))
                             {
@@ -663,7 +663,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             try
             {
-                // Try to create the index files for fasta file strDBFileNameInput
+                // Try to create the index files for fasta file dBFileNameInput
                 currentTask = "Look for java.exe and .jar file";
 
                 // Verify that Java exists
@@ -750,11 +750,11 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 var outputNameBase = Path.GetFileNameWithoutExtension(fiFastaFile.Name);
 
-                var lstExistingFiles = FindExistingSuffixArrayFiles(
+                var existingFiles = FindExistingSuffixArrayFiles(
                     fastaFileIsDecoy, outputNameBase, fiFastaFile.DirectoryName,
                     new List<string>(), out _, out _);
 
-                foreach (var fiIndexFileToDelete in lstExistingFiles)
+                foreach (var fiIndexFileToDelete in existingFiles)
                 {
                     if (fiIndexFileToDelete.Exists)
                     {
@@ -972,45 +972,45 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <param name="fastaFileIsDecoy"></param>
         /// <param name="outputNameBase"></param>
         /// <param name="folderPathToSearch"></param>
-        /// <param name="lstFilesToFind">List of files that should exist; calling function must have initialized it</param>
-        /// <param name="existingFiles">Output param: semicolon separated list of existing files</param>
+        /// <param name="filesToFind">List of files that should exist; calling function must have initialized it</param>
+        /// <param name="existingFileList">Output param: semicolon separated list of existing files</param>
         /// <param name="missingFiles">Output param: semicolon separated list of missing files</param>
         /// <returns>A list of the files that currently exist</returns>
         /// <remarks></remarks>
         private List<FileInfo> FindExistingSuffixArrayFiles(
             bool fastaFileIsDecoy, string outputNameBase,
-            string folderPathToSearch, ICollection<string> lstFilesToFind,
-            out string existingFiles,
+            string folderPathToSearch, ICollection<string> filesToFind,
+            out string existingFileList,
             out string missingFiles)
         {
-            var lstExistingFiles = new List<FileInfo>();
+            var existingFiles = new List<FileInfo>();
 
-            lstFilesToFind.Clear();
+            filesToFind.Clear();
 
-            existingFiles = string.Empty;
+            existingFileList = string.Empty;
             missingFiles = string.Empty;
 
             // Suffixes for MSGFDB (effective 8/22/2011) and MSGF+
-            lstFilesToFind.Add(".canno");
-            lstFilesToFind.Add(".cnlcp");
-            lstFilesToFind.Add(".csarr");
-            lstFilesToFind.Add(".cseq");
+            filesToFind.Add(".canno");
+            filesToFind.Add(".cnlcp");
+            filesToFind.Add(".csarr");
+            filesToFind.Add(".cseq");
 
             // Note: Suffixes for MSPathFinder
-            // lstFilesToFind.Add(".icanno")
-            // lstFilesToFind.Add(".icplcp")
-            // lstFilesToFind.Add(".icseq")
+            // filesToFind.Add(".icanno")
+            // filesToFind.Add(".icplcp")
+            // filesToFind.Add(".icseq")
 
             if (!fastaFileIsDecoy)
             {
-                lstFilesToFind.Add(".revCat.canno");
-                lstFilesToFind.Add(".revCat.cnlcp");
-                lstFilesToFind.Add(".revCat.csarr");
-                lstFilesToFind.Add(".revCat.cseq");
-                lstFilesToFind.Add(".revCat.fasta");
+                filesToFind.Add(".revCat.canno");
+                filesToFind.Add(".revCat.cnlcp");
+                filesToFind.Add(".revCat.csarr");
+                filesToFind.Add(".revCat.cseq");
+                filesToFind.Add(".revCat.fasta");
             }
 
-            foreach (var suffix in lstFilesToFind)
+            foreach (var suffix in filesToFind)
             {
                 var fileNameToFind = outputNameBase + suffix;
 
@@ -1018,8 +1018,8 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (fiFileToFind.Exists)
                 {
-                    lstExistingFiles.Add(fiFileToFind);
-                    existingFiles = clsGlobal.AppendToComment(existingFiles, fileNameToFind);
+                    existingFiles.Add(fiFileToFind);
+                    existingFileList = clsGlobal.AppendToComment(existingFileList, fileNameToFind);
                 }
                 else
                 {
@@ -1027,7 +1027,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
             }
 
-            return lstExistingFiles;
+            return existingFiles;
         }
 
         private string GetPseudoManagerName()

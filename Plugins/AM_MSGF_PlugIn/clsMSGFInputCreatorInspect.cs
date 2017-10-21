@@ -17,11 +17,11 @@ namespace AnalysisManagerMSGFPlugin
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="strDatasetName">Dataset name</param>
-        /// <param name="strWorkDir">Working directory</param>
+        /// <param name="datasetName">Dataset name</param>
+        /// <param name="workDir">Working directory</param>
         /// <remarks></remarks>
-        public clsMSGFInputCreatorInspect(string strDatasetName, string strWorkDir)
-            : base(strDatasetName, strWorkDir, clsPHRPReader.ePeptideHitResultType.Inspect)
+        public clsMSGFInputCreatorInspect(string datasetName, string workDir)
+            : base(datasetName, workDir, clsPHRPReader.ePeptideHitResultType.Inspect)
         {
             // Initialize the file paths
             // This updates mPHRPFirstHitsFilePath and mPHRPSynopsisFilePath
@@ -39,21 +39,21 @@ namespace AnalysisManagerMSGFPlugin
 
         protected override bool PassesFilters(clsPSM objPSM)
         {
-            var blnPassesFilters = false;
+            var passesFilters = false;
 
             // Keep Inspect results with pValue <= 0.2 Or TotalPRMScore >= 50 or FScore >= 0
             // PHRP has likely already filtered the _inspect_syn.txt file using these filters
 
-            var dblPValue = objPSM.GetScoreDbl(clsPHRPParserInspect.DATA_COLUMN_PValue);
-            var dblTotalPRMScore = objPSM.GetScoreDbl(clsPHRPParserInspect.DATA_COLUMN_TotalPRMScore);
-            var dblFScore = objPSM.GetScoreDbl(clsPHRPParserInspect.DATA_COLUMN_FScore);
+            var pValue = objPSM.GetScoreDbl(clsPHRPParserInspect.DATA_COLUMN_PValue);
+            var totalPRMScore = objPSM.GetScoreDbl(clsPHRPParserInspect.DATA_COLUMN_TotalPRMScore);
+            var fScore = objPSM.GetScoreDbl(clsPHRPParserInspect.DATA_COLUMN_FScore);
 
-            if (dblPValue <= 0.2 || dblTotalPRMScore >= 50 || dblFScore >= 0)
+            if (pValue <= 0.2 || totalPRMScore >= 50 || fScore >= 0)
             {
-                blnPassesFilters = true;
+                passesFilters = true;
             }
 
-            return blnPassesFilters;
+            return passesFilters;
         }
     }
 }

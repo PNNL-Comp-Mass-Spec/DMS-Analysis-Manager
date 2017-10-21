@@ -53,9 +53,9 @@ namespace AnalysisManagerMSGFPlugin
 
             m_PendingFileRenames = new Dictionary<string, string>();
 
-            var strScriptName = m_jobParams.GetParam("ToolName");
+            var scriptName = m_jobParams.GetParam("ToolName");
 
-            if (!strScriptName.ToLower().StartsWith("MSGFPlus".ToLower()))
+            if (!scriptName.ToLower().StartsWith("MSGFPlus".ToLower()))
             {
                 // Make sure the machine has enough free memory to run MSGF
                 if (!ValidateFreeMemorySize("MSGFJavaMemorySize"))
@@ -84,10 +84,10 @@ namespace AnalysisManagerMSGFPlugin
         private CloseOutType GetInputFiles(string resultType)
         {
             string fileToGet;
-            var strSynFilePath = string.Empty;
+            var synFilePath = string.Empty;
 
-            bool blnSuccess;
-            bool blnOnlyCopyFHTandSYNfiles;
+            bool success;
+            bool onlyCopyFHTandSYNfiles;
 
             // Make sure the ResultType is valid
             var eResultType = clsPHRPReader.GetPeptideHitResultType(resultType);
@@ -100,15 +100,15 @@ namespace AnalysisManagerMSGFPlugin
                 eResultType == clsPHRPReader.ePeptideHitResultType.MODPlus ||
                 eResultType == clsPHRPReader.ePeptideHitResultType.MSPathFinder)
             {
-                blnSuccess = true;
+                success = true;
             }
             else
             {
                 LogError("Invalid tool result type (not supported by MSGF): " + resultType);
-                blnSuccess = false;
+                success = false;
             }
 
-            if (!blnSuccess)
+            if (!success)
             {
                 return (CloseOutType.CLOSEOUT_NO_OUT_FILES);
             }
@@ -116,31 +116,31 @@ namespace AnalysisManagerMSGFPlugin
             // Make sure the dataset type is valid
             var rawDataType = m_jobParams.GetParam("RawDataType");
             var eRawDataType = GetRawDataType(rawDataType);
-            var blnMGFInstrumentData = m_jobParams.GetJobParameter("MGFInstrumentData", false);
+            var mgfInstrumentData = m_jobParams.GetJobParameter("MGFInstrumentData", false);
 
             if (eResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB)
             {
                 // We do not need the mzXML file, the parameter file, or various other files if we are running MSGF+ and running MSGF v6432 or later
                 // Determine this by looking for job parameter MSGF_Version
 
-                var strMSGFStepToolVersion = m_jobParams.GetParam("MSGF_Version");
+                var msgfStepToolVersion = m_jobParams.GetParam("MSGF_Version");
 
-                if (string.IsNullOrWhiteSpace(strMSGFStepToolVersion))
+                if (string.IsNullOrWhiteSpace(msgfStepToolVersion))
                 {
                     // Production version of MSGF+; don't need the parameter file, ModSummary file, or mzXML file
-                    blnOnlyCopyFHTandSYNfiles = true;
+                    onlyCopyFHTandSYNfiles = true;
                 }
                 else
                 {
                     // Specific version of MSGF is defined
                     // Check whether the version is one of the known versions for the old MSGF
-                    if (clsMSGFRunner.IsLegacyMSGFVersion(strMSGFStepToolVersion))
+                    if (clsMSGFRunner.IsLegacyMSGFVersion(msgfStepToolVersion))
                     {
-                        blnOnlyCopyFHTandSYNfiles = false;
+                        onlyCopyFHTandSYNfiles = false;
                     }
                     else
                     {
-                        blnOnlyCopyFHTandSYNfiles = true;
+                        onlyCopyFHTandSYNfiles = true;
                     }
                 }
             }
@@ -149,14 +149,14 @@ namespace AnalysisManagerMSGFPlugin
                      eResultType == clsPHRPReader.ePeptideHitResultType.MSPathFinder)
             {
                 // We do not need any raw data files for MODa, modPlus, or MSPathFinder
-                blnOnlyCopyFHTandSYNfiles = true;
+                onlyCopyFHTandSYNfiles = true;
             }
             else
             {
                 // Not running MSGF+ or running MSGF+ but using legacy msgf
-                blnOnlyCopyFHTandSYNfiles = false;
+                onlyCopyFHTandSYNfiles = false;
 
-                if (!blnMGFInstrumentData)
+                if (!mgfInstrumentData)
                 {
                     switch (eRawDataType)
                     {
@@ -175,7 +175,7 @@ namespace AnalysisManagerMSGFPlugin
                 }
             }
 
-            if (!blnOnlyCopyFHTandSYNfiles)
+            if (!onlyCopyFHTandSYNfiles)
             {
                 // Get the Sequest, X!Tandem, Inspect, MSGF+, MODa, MODPlus, or MSPathFinder parameter file
                 fileToGet = m_jobParams.GetParam("ParmFileName");
@@ -202,21 +202,21 @@ namespace AnalysisManagerMSGFPlugin
             fileToGet = clsPHRPReader.GetPHRPSynopsisFileName(eResultType, DatasetName);
             if (!string.IsNullOrEmpty(fileToGet))
             {
-                blnSuccess = FileSearch.FindAndRetrievePHRPDataFile(ref fileToGet, "");
-                if (!blnSuccess)
+                success = FileSearch.FindAndRetrievePHRPDataFile(ref fileToGet, "");
+                if (!success)
                 {
                     // Errors were reported in function call, so just return
                     return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                 }
-                strSynFilePath = Path.Combine(m_WorkingDir, fileToGet);
+                synFilePath = Path.Combine(m_WorkingDir, fileToGet);
             }
 
             // Get the PHRP _fht.txt file
             fileToGet = clsPHRPReader.GetPHRPFirstHitsFileName(eResultType, DatasetName);
             if (!string.IsNullOrEmpty(fileToGet))
             {
-                blnSuccess = FileSearch.FindAndRetrievePHRPDataFile(ref fileToGet, strSynFilePath);
-                if (!blnSuccess)
+                success = FileSearch.FindAndRetrievePHRPDataFile(ref fileToGet, synFilePath);
+                if (!success)
                 {
                     // Errors were reported in function call, so just return
                     return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
@@ -227,8 +227,8 @@ namespace AnalysisManagerMSGFPlugin
             fileToGet = clsPHRPReader.GetPHRPFirstHitsFileName(eResultType, DatasetName);
             if (!string.IsNullOrEmpty(fileToGet))
             {
-                blnSuccess = FileSearch.FindAndRetrievePHRPDataFile(ref fileToGet, strSynFilePath);
-                if (!blnSuccess)
+                success = FileSearch.FindAndRetrievePHRPDataFile(ref fileToGet, synFilePath);
+                if (!success)
                 {
                     // Errors were reported in function call, so just return
                     return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
@@ -239,8 +239,8 @@ namespace AnalysisManagerMSGFPlugin
             fileToGet = clsPHRPReader.GetPHRPFirstHitsFileName(eResultType, DatasetName);
             if (!string.IsNullOrEmpty(fileToGet))
             {
-                blnSuccess = FileSearch.FindAndRetrievePHRPDataFile(ref fileToGet, strSynFilePath);
-                if (!blnSuccess)
+                success = FileSearch.FindAndRetrievePHRPDataFile(ref fileToGet, synFilePath);
+                if (!success)
                 {
                     // Errors were reported in function call, so just return
                     return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
@@ -254,8 +254,8 @@ namespace AnalysisManagerMSGFPlugin
                 // We're passing a dummy syn file name to FileSearch.FindAndRetrievePHRPDataFile
                 // because there are a few jobs that have file _msgfplus_fht.txt (created by the November 2016 version of the DataExtractor tool)
                 // but also have file msgfdb_PepToProtMapMTS.txt (created by an older version of the MSGFPlus tool)
-                blnSuccess = FileSearch.FindAndRetrievePHRPDataFile(ref fileToGet, "Dataset_msgfdb.txt");
-                if (!blnSuccess)
+                success = FileSearch.FindAndRetrievePHRPDataFile(ref fileToGet, "Dataset_msgfdb.txt");
+                if (!success)
                 {
                     if (m_jobParams.GetJobParameter("IgnorePeptideToProteinMapError", false))
                     {
@@ -273,25 +273,25 @@ namespace AnalysisManagerMSGFPlugin
                 }
             }
 
-            blnSuccess = ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders);
-            if (!blnSuccess)
+            success = ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders);
+            if (!success)
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
             Int64 synFileSizeBytes = 0;
-            var fiSynopsisFile = new FileInfo(strSynFilePath);
+            var fiSynopsisFile = new FileInfo(synFilePath);
             if (fiSynopsisFile.Exists)
             {
                 synFileSizeBytes = fiSynopsisFile.Length;
             }
 
-            if (!blnOnlyCopyFHTandSYNfiles)
+            if (!onlyCopyFHTandSYNfiles)
             {
                 // Get the ModSummary.txt file
                 fileToGet = clsPHRPReader.GetPHRPModSummaryFileName(eResultType, DatasetName);
-                blnSuccess = FileSearch.FindAndRetrievePHRPDataFile(ref fileToGet, strSynFilePath);
-                if (!blnSuccess)
+                success = FileSearch.FindAndRetrievePHRPDataFile(ref fileToGet, synFilePath);
+                if (!success)
                 {
                     // _ModSummary.txt file not found
                     // This will happen if the synopsis file is empty
@@ -300,14 +300,14 @@ namespace AnalysisManagerMSGFPlugin
                     if (synFileSizeBytes == 0)
                     {
                         // If the synopsis file is 0-bytes, the _ModSummary.txt file won't exist; that's OK
-                        var strTargetFile = Path.Combine(m_WorkingDir, fileToGet);
+                        var targetFile = Path.Combine(m_WorkingDir, fileToGet);
 
-                        var strModDefsFile = Path.GetFileNameWithoutExtension(m_jobParams.GetParam("ParmFileName")) + PHRP_MOD_DEFS_SUFFIX;
+                        var modDefsFile = Path.GetFileNameWithoutExtension(m_jobParams.GetParam("ParmFileName")) + PHRP_MOD_DEFS_SUFFIX;
 
-                        if (!FileSearch.FindAndRetrieveMiscFiles(strModDefsFile, false))
+                        if (!FileSearch.FindAndRetrieveMiscFiles(modDefsFile, false))
                         {
                             // Rename the file to end in _ModSummary.txt
-                            m_PendingFileRenames.Add(strModDefsFile, strTargetFile);
+                            m_PendingFileRenames.Add(modDefsFile, targetFile);
                         }
                         else
                         {
@@ -329,7 +329,7 @@ namespace AnalysisManagerMSGFPlugin
             fileToGet = clsPHRPReader.GetPHRPResultToSeqMapFileName(eResultType, DatasetName);
             if (!string.IsNullOrEmpty(fileToGet))
             {
-                if (!FileSearch.FindAndRetrievePHRPDataFile(ref fileToGet, strSynFilePath))
+                if (!FileSearch.FindAndRetrievePHRPDataFile(ref fileToGet, synFilePath))
                 {
                     if (synFileSizeBytes == 0)
                     {
@@ -351,7 +351,7 @@ namespace AnalysisManagerMSGFPlugin
             fileToGet = clsPHRPReader.GetPHRPSeqToProteinMapFileName(eResultType, DatasetName);
             if (!string.IsNullOrEmpty(fileToGet))
             {
-                if (!FileSearch.FindAndRetrievePHRPDataFile(ref fileToGet, strSynFilePath))
+                if (!FileSearch.FindAndRetrievePHRPDataFile(ref fileToGet, synFilePath))
                 {
                     if (synFileSizeBytes == 0)
                     {
@@ -373,7 +373,7 @@ namespace AnalysisManagerMSGFPlugin
             fileToGet = clsPHRPReader.GetPHRPSeqInfoFileName(eResultType, DatasetName);
             if (!string.IsNullOrEmpty(fileToGet))
             {
-                if (FileSearch.FindAndRetrievePHRPDataFile(ref fileToGet, strSynFilePath))
+                if (FileSearch.FindAndRetrievePHRPDataFile(ref fileToGet, synFilePath))
                 {
                 }
                 else
@@ -382,12 +382,12 @@ namespace AnalysisManagerMSGFPlugin
                 }
             }
 
-            if (blnMGFInstrumentData)
+            if (mgfInstrumentData)
             {
-                var strFileToFind = DatasetName + DOT_MGF_EXTENSION;
-                if (!FileSearch.FindAndRetrieveMiscFiles(strFileToFind, false))
+                var fileToFind = DatasetName + DOT_MGF_EXTENSION;
+                if (!FileSearch.FindAndRetrieveMiscFiles(fileToFind, false))
                 {
-                    m_message = "Instrument data not found: " + strFileToFind;
+                    m_message = "Instrument data not found: " + fileToFind;
                     LogError("clsAnalysisResourcesMSGF.GetResources: " + m_message);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -395,21 +395,21 @@ namespace AnalysisManagerMSGFPlugin
                 m_jobParams.AddResultFileExtensionToSkip(DOT_MGF_EXTENSION);
 
             }
-            else if (!blnOnlyCopyFHTandSYNfiles)
+            else if (!onlyCopyFHTandSYNfiles)
             {
 
                 // See if a .mzXML file already exists for this dataset
-                blnSuccess = FileSearch.RetrieveMZXmlFile(false, out var strMzXMLFilePath);
+                success = FileSearch.RetrieveMZXmlFile(false, out var mzXMLFilePath);
 
                 // Make sure we don't move the .mzXML file into the results folder
                 m_jobParams.AddResultFileExtensionToSkip(DOT_MZXML_EXTENSION);
 
-                if (blnSuccess)
+                if (success)
                 {
                     // .mzXML file found and copied locally; no need to retrieve the .Raw file
                     if (m_DebugLevel >= 1)
                     {
-                        LogMessage("Existing .mzXML file found: " + strMzXMLFilePath);
+                        LogMessage("Existing .mzXML file found: " + mzXMLFilePath);
                     }
 
                     // Possibly unzip the .mzXML file
@@ -444,8 +444,8 @@ namespace AnalysisManagerMSGFPlugin
                 }
             }
 
-            blnSuccess = ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders);
-            if (!blnSuccess)
+            success = ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders);
+            if (!success)
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -466,8 +466,8 @@ namespace AnalysisManagerMSGFPlugin
         {
             try
             {
-                var strFilePath = Path.Combine(m_WorkingDir, fileName);
-                using (var swOutfile = new StreamWriter(new FileStream(strFilePath, FileMode.CreateNew, FileAccess.Write, FileShare.Read)))
+                var filePath = Path.Combine(m_WorkingDir, fileName);
+                using (var swOutfile = new StreamWriter(new FileStream(filePath, FileMode.CreateNew, FileAccess.Write, FileShare.Read)))
                 {
                     swOutfile.WriteLine("Result_ID\tUnique_Seq_ID");
                 }
@@ -486,8 +486,8 @@ namespace AnalysisManagerMSGFPlugin
         {
             try
             {
-                var strFilePath = Path.Combine(m_WorkingDir, FileName);
-                using (var swOutfile = new StreamWriter(new FileStream(strFilePath, FileMode.CreateNew, FileAccess.Write, FileShare.Read)))
+                var filePath = Path.Combine(m_WorkingDir, FileName);
+                using (var swOutfile = new StreamWriter(new FileStream(filePath, FileMode.CreateNew, FileAccess.Write, FileShare.Read)))
                 {
                     swOutfile.WriteLine("Unique_Seq_ID\tCleavage_State\tTerminus_State\tProtein_Name\tProtein_Expectation_Value_Log(e)\tProtein_Intensity_Log(I)");
                 }

@@ -339,11 +339,11 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
 
             // Make sure that the spectra are centroided
-            var strCDTAPath = Path.Combine(m_WorkingDir, DatasetName + "_dta.txt");
+            var cdtaPath = Path.Combine(m_WorkingDir, DatasetName + "_dta.txt");
 
             LogMessage("Validating that the _dta.txt file has centroided spectra");
 
-            if (!ValidateCDTAFileIsCentroided(strCDTAPath))
+            if (!ValidateCDTAFileIsCentroided(cdtaPath))
             {
                 // m_message is already updated
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -359,13 +359,13 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <returns></returns>
         public static bool ValidateScanStatsFileHasDetailedScanTypes(string scanStatsFilePath)
         {
-            var lstColumnNameWithScanType = new List<string>
+            var columnNameWithScanType = new List<string>
             {
                 "ScanTypeName",
                 "Collision Mode",
                 "Scan Filter Text"
             };
-            var lstColumnIndicesToCheck = new List<int>();
+            var columnIndicesToCheck = new List<int>();
 
             var detailedScanTypesDefined = false;
 
@@ -388,16 +388,16 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // Parse the scan headers
                 var headerColumns = headerLine.Split('\t').ToList();
 
-                foreach (var columnName in lstColumnNameWithScanType)
+                foreach (var columnName in columnNameWithScanType)
                 {
                     var scanTypeIndex = headerColumns.IndexOf(columnName);
                     if (scanTypeIndex >= 0)
                     {
-                        lstColumnIndicesToCheck.Add(scanTypeIndex);
+                        columnIndicesToCheck.Add(scanTypeIndex);
                     }
                 }
 
-                if (lstColumnIndicesToCheck.Count == 0)
+                if (columnIndicesToCheck.Count == 0)
                 {
                     if (float.TryParse(headerColumns[0], out var _) || float.TryParse(headerColumns[1], out _))
                     {
@@ -437,7 +437,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     }
                 }
 
-                if (lstColumnIndicesToCheck.Count <= 0)
+                if (columnIndicesToCheck.Count <= 0)
                     return false;
 
                 while (!srScanStatsFile.EndOfStream && !detailedScanTypesDefined)
@@ -446,11 +446,11 @@ namespace AnalysisManagerMSGFDBPlugIn
                     if (string.IsNullOrWhiteSpace(dataLine))
                         continue;
 
-                    var lstColumns = dataLine.Split('\t').ToList();
+                    var columns = dataLine.Split('\t').ToList();
 
-                    foreach (var columnIndex in lstColumnIndicesToCheck)
+                    foreach (var columnIndex in columnIndicesToCheck)
                     {
-                        var scanType = lstColumns[columnIndex];
+                        var scanType = columns[columnIndex];
 
                         if (scanType.IndexOf("HCD", StringComparison.OrdinalIgnoreCase) >= 0)
                         {
@@ -485,24 +485,24 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 // Parse the scan headers to look for ScanTypeName
 
-                var lstColumns = headerLine.Split('\t').ToList();
+                var columns = headerLine.Split('\t').ToList();
 
-                if (lstColumns.Contains("ScanTypeName"))
+                if (columns.Contains("ScanTypeName"))
                 {
                     return true;
                 }
 
-                if (!float.TryParse(lstColumns[0], out var _) && !float.TryParse(lstColumns[1], out _))
+                if (!float.TryParse(columns[0], out var _) && !float.TryParse(columns[1], out _))
                     return false;
 
                 // This file does not have a header line
-                if (lstColumns.Count < 11)
+                if (columns.Count < 11)
                     return false;
 
                 // Assume column 11 is the ScanTypeName column
-                if (lstColumns[10].IndexOf("MS", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                    lstColumns[10].IndexOf("SRM", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                    lstColumns[10].IndexOf("MRM", StringComparison.OrdinalIgnoreCase) >= 0)
+                if (columns[10].IndexOf("MS", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    columns[10].IndexOf("SRM", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    columns[10].IndexOf("MRM", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
                     return true;
                 }
