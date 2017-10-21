@@ -611,7 +611,6 @@ namespace AnalysisManagerBase
             RegisterEvents(m_CDTAUtilities);
             m_CDTAUtilities.ProgressUpdate -= ProgressUpdateHandler;
             m_CDTAUtilities.ProgressUpdate += m_CDTAUtilities_ProgressEvent;
-
         }
 
         /// <summary>
@@ -1313,7 +1312,6 @@ namespace AnalysisManagerBase
 
                 m_SplitFastaFileUtility.ProgressUpdate -= ProgressUpdateHandler;
                 m_SplitFastaFileUtility.ProgressUpdate += m_SplitFastaFileUtility_ProgressUpdate;
-                m_SplitFastaFileUtility.SkipConsoleWriteIfNoProgressListener = true;
 
                 m_SplitFastaFileUtility.SplittingBaseFastafile += m_SplitFastaFileUtility_SplittingBaseFastaFile;
 

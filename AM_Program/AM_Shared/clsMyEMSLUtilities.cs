@@ -110,7 +110,6 @@ namespace AnalysisManagerBase
             // Use a custom progress update handler
             m_MyEMSLDatasetListInfo.ProgressUpdate -= OnProgressUpdate;
             m_MyEMSLDatasetListInfo.ProgressUpdate += MyEMSLDatasetListInfo_ProgressEvent;
-            m_MyEMSLDatasetListInfo.SkipConsoleWriteIfNoProgressListener = true;
 
             m_MyEMSLDatasetListInfo.FileDownloadedEvent += MyEMSLDatasetListInfo_FileDownloadedEvent;
 
