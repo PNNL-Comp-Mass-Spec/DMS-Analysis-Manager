@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace MSGFResultsSummarizer
 {
-    public class clsPSMInfo : clsUniqueSeqInfo
+    public sealed class clsPSMInfo : clsUniqueSeqInfo
     {
         [Obsolete("Use UNKNOWN_MSGF_SPEC_EVALUE")]
         public const double UNKNOWN_MSGF_SPECPROB = 10;
@@ -47,10 +47,8 @@ namespace MSGFResultsSummarizer
                 {
                     return UNKNOWN_MSGF_SPEC_EVALUE;
                 }
-                else
-                {
-                    return (from item in mObservations orderby item.MSGF select item.MSGF).First();
-                }
+
+                return (from item in mObservations orderby item.MSGF select item.MSGF).First();
             }
         }
 
@@ -62,10 +60,8 @@ namespace MSGFResultsSummarizer
                 {
                     return UNKNOWN_EVALUE;
                 }
-                else
-                {
-                    return (from item in mObservations orderby item.EValue select item.EValue).First();
-                }
+
+                return (from item in mObservations orderby item.EValue select item.EValue).First();
             }
         }
 
@@ -77,10 +73,8 @@ namespace MSGFResultsSummarizer
                 {
                     return UNKNOWN_FDR;
                 }
-                else
-                {
-                    return (from item in mObservations orderby item.FDR select item.FDR).First();
-                }
+
+                return (from item in mObservations orderby item.FDR select item.FDR).First();
             }
         }
 
@@ -101,10 +95,7 @@ namespace MSGFResultsSummarizer
             base.Clear();
             Protein = string.Empty;
             SeqIdFirst = UNKNOWN_SEQID;
-            if (mObservations != null)
-            {
-                mObservations.Clear();
-            }
+            mObservations?.Clear();
             Phosphopeptide = false;
         }
 
@@ -161,11 +152,9 @@ namespace MSGFResultsSummarizer
             {
                 return string.Format("SeqID {0}, {1}, Scan {2} (1 observation)", SeqIdFirst, Protein, mObservations[0].Scan);
             }
-            else
-            {
-                return string.Format("SeqID {0}, {1}, Scans {2}-{3} ({4} observations)", SeqIdFirst, Protein, mObservations[0].Scan,
-                    mObservations[mObservations.Count - 1].Scan, mObservations.Count);
-            }
+
+            return string.Format("SeqID {0}, {1}, Scans {2}-{3} ({4} observations)", SeqIdFirst, Protein, mObservations[0].Scan,
+                                 mObservations[mObservations.Count - 1].Scan, mObservations.Count);
         }
 
         public class PSMObservation
