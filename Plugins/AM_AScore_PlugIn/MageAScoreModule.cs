@@ -187,8 +187,15 @@ namespace AnalysisManager_AScore_PlugIn
                 }
 
                 var paramManager = new ParameterFileManager(paramFileToUse);
-                var dtaManager = new DtaManager(dtaFile);
                 RegisterEvents(paramManager);
+
+                var peptideMassCalculator = new PHRPReader.clsPeptideMassCalculator();
+
+                var spectraCache = new SpectraManagerCache(peptideMassCalculator);
+                RegisterEvents(spectraCache);
+
+                spectraCache.OpenFile(dtaFile);
+
                 DatasetManager datasetManager;
 
                 switch (searchType)
@@ -214,10 +221,9 @@ namespace AnalysisManager_AScore_PlugIn
                 // Make the call to AScore
                 var ascoreEngine = new Algorithm();
 
-                // Attach the events
-                ascoreEngine.ErrorEvent += ascoreAlgorithm_ErrorEvent;
-                ascoreEngine.WarningEvent += ascoreAlgorithm_WarningEvent;
-                ascoreEngine.AlgorithmRun(dtaManager, datasetManager, paramManager, ascoreOutputFilePath, FastaFilePath);
+                RegisterEvents(ascoreEngine);
+
+                ascoreEngine.AlgorithmRun(spectraCache, datasetManager, paramManager, ascoreOutputFilePath, FastaFilePath);
 
                 Console.WriteLine();
 
@@ -237,7 +243,6 @@ namespace AnalysisManager_AScore_PlugIn
                     clsAScoreMagePipeline.ImportFileToSQLite(fiAScoreFile.FullName, dbFilePath, tableName);
                 }
 
-                dtaManager.Abort();
                 if (File.Exists(ascoreOutputFilePath))
                 {
                     try
