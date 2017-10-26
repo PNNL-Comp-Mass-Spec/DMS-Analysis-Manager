@@ -6,11 +6,12 @@ using AnalysisManagerBase;
 using Mage;
 using MageExtExtractionFilters;
 using MyEMSLReader;
+using PRISM;
 
 namespace AnalysisManager_AScore_PlugIn
 {
 
-    public class clsAScoreMagePipeline
+    public class clsAScoreMagePipeline : clsEventNotifier
     {
 
         #region Member Variables
@@ -47,8 +48,7 @@ namespace AnalysisManager_AScore_PlugIn
             if (mMyEMSLDatasetInfo == null)
             {
                 mMyEMSLDatasetInfo = new DatasetListInfo();
-                mMyEMSLDatasetInfo.ErrorEvent += mReader_ErrorEvent;
-                mMyEMSLDatasetInfo.StatusEvent += mReader_MessageEvent;
+                RegisterEvents(mMyEMSLDatasetInfo);
             }
         }
 
@@ -207,7 +207,10 @@ namespace AnalysisManager_AScore_PlugIn
             var connStr = m_mgrParams.RequireMgrParam("ConnectionString");
 
             var ascoreModule = new MageAScoreModule(connStr);
-            ascoreModule.WarningMessageUpdated += ascoreModule_WarningMessageUpdated;
+
+            ascoreModule.ErrorEvent += OnErrorEvent;
+            ascoreModule.WarningEvent += OnWarningEvent;
+
 
             ascoreModule.ExtractionParms = GetExtractionParametersFromJobParameters();
             ascoreModule.WorkingDir = mWorkingDir;
@@ -383,27 +386,6 @@ namespace AnalysisManager_AScore_PlugIn
             extractionParms.MSGFCutoff = m_jobParams.GetJobParam("MSGFCutoff", "All Pass");
 
             return extractionParms;
-        }
-
-        #endregion
-
-        #region Event Handlers
-
-        void ascoreModule_WarningMessageUpdated(object sender, MageStatusEventArgs e)
-        {
-            var msg = "AScore warning: " + e.Message;
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msg);
-        }
-
-        void mReader_MessageEvent(string message)
-        {
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, message);
-        }
-
-        void mReader_ErrorEvent(string message, Exception ex)
-        {
-            mErrorMessage = "MyEMSL Reader error: " + message;
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mErrorMessage, ex);
         }
 
         #endregion

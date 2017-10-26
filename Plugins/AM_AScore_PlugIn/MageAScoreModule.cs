@@ -6,11 +6,11 @@ using AnalysisManagerBase;
 using AScore_DLL;
 using AScore_DLL.Managers;
 using AScore_DLL.Managers.DatasetManagers;
+using AScore_DLL.Managers.SpectraManagers;
 using Mage;
 using MageExtExtractionFilters;
 using MyEMSLReader;
 using PRISM;
-using MessageEventArgs = AScore_DLL.MessageEventArgs;
 
 namespace AnalysisManager_AScore_PlugIn
 {
@@ -188,6 +188,7 @@ namespace AnalysisManager_AScore_PlugIn
 
                 var paramManager = new ParameterFileManager(paramFileToUse);
                 var dtaManager = new DtaManager(dtaFile);
+                RegisterEvents(paramManager);
                 DatasetManager datasetManager;
 
                 switch (searchType)
@@ -494,7 +495,7 @@ namespace AnalysisManager_AScore_PlugIn
 
 
         }
-      
+
         // Build Mage source module containing one job to process
         private BaseModule MakeJobSourceModule(string[] jobFieldNameList, string[] jobFields)
         {
@@ -509,17 +510,54 @@ namespace AnalysisManager_AScore_PlugIn
 
         #endregion
 
-        #region "Event handlers"
+        #region "Event handlers and methods"
 
-        void ascoreAlgorithm_WarningEvent(object sender, MessageEventArgs e)
+        /// <summary>
+        /// Report an error
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="ex">Exception (allowed to be nothing)</param>
+        protected void OnErrorEvent(string message, Exception ex)
         {
-            OnWarningMessage(new MageStatusEventArgs(e.Message));
+            ErrorEvent?.Invoke(message, ex);
         }
 
-        void ascoreAlgorithm_ErrorEvent(object sender, MessageEventArgs e)
+        /// <summary>
+        /// Report a warning
+        /// </summary>
+        /// <param name="message"></param>
+        protected void OnWarningEvent(string message)
         {
-            OnWarningMessage(new MageStatusEventArgs(e.Message));
+            WarningEvent?.Invoke(message);
         }
+
+        /// <summary>Use this method to chain events between classes</summary>
+        /// <param name="sourceClass"></param>
+        protected void RegisterEvents(clsEventNotifier sourceClass)
+        {
+            sourceClass.ErrorEvent += OnErrorEvent;
+            sourceClass.WarningEvent += OnWarningEvent;
+        }
+
+        /// <summary>
+        /// Error event
+        /// </summary>
+        public event ErrorEventEventHandler ErrorEvent;
+
+        /// <summary>Error event</summary>
+        /// <param name="message"></param>
+        /// <param name="ex"></param>
+        public delegate void ErrorEventEventHandler(string message, Exception ex);
+
+        /// <summary>
+        /// Warning event
+        /// </summary>
+        public event WarningEventEventHandler WarningEvent;
+
+        /// <summary>Warning event</summary>
+        /// <param name="message"></param>
+        public delegate void WarningEventEventHandler(string message);
+
         #endregion
     }
 }

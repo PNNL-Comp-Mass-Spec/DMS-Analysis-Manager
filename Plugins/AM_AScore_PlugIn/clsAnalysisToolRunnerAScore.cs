@@ -210,6 +210,8 @@ namespace AnalysisManager_AScore_PlugIn
         {
             // run the appropriate Mage pipeline(s) according to operations list parameter
             var ascoreMage = new clsAScoreMagePipeline(m_jobParams, m_mgrParams, m_DotNetZipTools);
+            RegisterEvents(ascoreMage);
+
             var success = ascoreMage.Run();
 
             // Delete any PeptideToProteinMapEngine_log files
