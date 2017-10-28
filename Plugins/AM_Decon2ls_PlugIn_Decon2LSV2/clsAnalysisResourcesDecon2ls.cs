@@ -108,7 +108,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         /// <param name="processMSMS">Output parameter: true if ProcessMSMS is True in the parameter file</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks></remarks>
-        private bool IsMSMSProcessingEnabled(FileInfo fiParamFile, out bool processMSMS)
+        private bool IsMSMSProcessingEnabled(FileSystemInfo fiParamFile, out bool processMSMS)
         {
             processMSMS = false;
 
@@ -264,39 +264,33 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
                     for (var scanNumber = rawFileReader.FileInfo.ScanStart; scanNumber <= rawFileReader.FileInfo.ScanEnd; scanNumber++)
                     {
-                        if (rawFileReader.GetScanInfo(scanNumber, out clsScanInfo scanInfo))
+                        var msLevel = rawFileReader.GetMSLevel(scanNumber);
+                        if (msLevel == 1)
                         {
-                            if (scanInfo.MSLevel == 1)
-                            {
-                                countMs1 += 1;
-                            }
-                            else
-                            {
-                                countMSn += 1;
-                            }
+                            countMs1 += 1;
+                        }
+                        else if (msLevel > 1)
+                        {
+                            countMSn += 1;
                         }
 
-                        // Write out the latest scan number twice per second
-                        // We're doing this because the rawFileReader can crash the analysis manager abruptly with corrupt .raw files
-                        // It's helpful to determine roughly where the corrupt scan is
-                        if (DateTime.UtcNow.Subtract(lastProgress).TotalMilliseconds >= 500)
+                        var logMessage = string.Format("Examining scan levels in .raw file, scan {0} / {1}", scanNumber, scanCount);
+
+                        if (DateTime.UtcNow.Subtract(lastProgress).TotalSeconds >= 5)
                         {
+                            // Show progress at the console, but do not write to the log file
+                            LogDebug(logMessage, 10);
                             lastProgress = DateTime.UtcNow;
+                        }
 
-                            if (DateTime.UtcNow.Subtract(lastProgressLog).TotalSeconds < 60)
-                            {
-                                // Show progress at the console, but do not write to the log file
-                                LogDebug("Examining scan levels in .raw file, scan " + scanNumber, 10);
-                            }
-                            else
-                            {
-                                lastProgressLog = DateTime.UtcNow;
-                                LogDebug("Examining scan levels in .raw file, scan " + scanNumber, 1);
+                        if (DateTime.UtcNow.Subtract(lastProgressLog).TotalSeconds >= 60)
+                        {
+                            lastProgressLog = DateTime.UtcNow;
+                            LogDebug(logMessage, 1);
 
-                                // Note: do not multiply by 100 since we want to call UpdateAndWrite with a number between 0 and 1 (meaning 0 to 1%)
-                                var percentComplete = scanNumber / (float)scanCount;
-                                m_StatusTools.UpdateAndWrite(percentComplete);
-                            }
+                            // Note: do not multiply by 100 since we want to call UpdateAndWrite with a number between 0 and 1 (meaning 0 to 1%)
+                            var percentComplete = scanNumber / (float)scanCount;
+                            m_StatusTools.UpdateAndWrite(percentComplete);
                         }
                     }
 
@@ -307,7 +301,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             }
             catch (Exception ex)
             {
-                LogError("Error in ExamineScansTypesInRawFile", ex);
+                LogError("Error in ExamineScanTypesInRawFile", ex);
                 return false;
             }
         }
@@ -323,7 +317,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 {
                     var frameList = reader.GetMasterFrameList();
 
-                    var query = from item in frameList where item.Value == DataReader.FrameType.MS1 select item;
+                    var query = from item in frameList where item.Value == UIMFData.FrameType.MS1 select item;
                     countMs1 = query.Count();
 
                     countMSn = frameList.Count - countMs1;
@@ -333,7 +327,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             }
             catch (Exception ex)
             {
-                LogError("Error in ExamineScansTypesInRawFile", ex);
+                LogError("Error in ExamineScanTypesInUIMFFile", ex);
                 return false;
             }
         }
@@ -422,7 +416,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
                 if ((objNode != null))
                 {
-                    var objNewChild = (XmlElement) xmlDoc.CreateNode(XmlNodeType.Element, elementName, string.Empty);
+                    var objNewChild = (XmlElement)xmlDoc.CreateNode(XmlNodeType.Element, elementName, string.Empty);
                     objNewChild.InnerXml = newElementValue;
 
                     objNode.AppendChild(objNewChild);
