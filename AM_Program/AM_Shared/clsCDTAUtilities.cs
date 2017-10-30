@@ -182,40 +182,37 @@ namespace AnalysisManagerBase
 
                 var sourceFilePath = fiOriginalFile.FullName;
 
-                if (replaceSourceFile)
-                {
-                    // Replace the original file with the new one
-                    string oldFilePath;
-                    var addon = 0;
-
-                    do
-                    {
-                        oldFilePath = fiOriginalFile.FullName + ".old";
-                        if (addon > 0)
-                        {
-                            oldFilePath += addon.ToString();
-                        }
-                        addon += 1;
-                    } while (File.Exists(oldFilePath));
-
-                    fiOriginalFile.MoveTo(oldFilePath);
-                    Thread.Sleep(100);
-
-                    fiUpdatedFile.MoveTo(sourceFilePath);
-
-                    if (deleteSourceFileIfUpdated)
-                    {
-                        Thread.Sleep(125);
-                        PRISM.clsProgRunner.GarbageCollectNow();
-
-                        fiOriginalFile.Delete();
-                    }
-
-
-                }
-                else
+                if (!replaceSourceFile)
                 {
                     // Directly wrote to the output file; nothing to rename
+                    return;
+                }
+
+                // Replace the original file with the new one
+                string oldFilePath;
+                var addon = 0;
+
+                do
+                {
+                    oldFilePath = fiOriginalFile.FullName + ".old";
+                    if (addon > 0)
+                    {
+                        oldFilePath += addon.ToString();
+                    }
+                    addon += 1;
+                } while (File.Exists(oldFilePath));
+
+                fiOriginalFile.MoveTo(oldFilePath);
+                Thread.Sleep(100);
+
+                fiUpdatedFile.MoveTo(sourceFilePath);
+
+                if (deleteSourceFileIfUpdated)
+                {
+                    Thread.Sleep(125);
+                    clsProgRunner.GarbageCollectNow();
+
+                    fiOriginalFile.Delete();
                 }
             }
             else
@@ -223,7 +220,7 @@ namespace AnalysisManagerBase
                 // No changes were made; nothing to update
                 // However, delete the new file we created
                 Thread.Sleep(125);
-                PRISM.clsProgRunner.GarbageCollectNow();
+                clsProgRunner.GarbageCollectNow();
 
                 fiUpdatedFile.Delete();
 
@@ -319,7 +316,7 @@ namespace AnalysisManagerBase
                                 var strDTAHeader = lineIn.Trim('=', ' ', '"');
 
 
-                                objReader.ExtractScanInfoFromDtaHeader(strDTAHeader, out scanNumberStart, out var scanNumberEnd, out var scanCount, out charge);
+                                objReader.ExtractScanInfoFromDtaHeader(strDTAHeader, out scanNumberStart, out _, out _, out charge);
 
                                 parentIonLineIsNext = true;
 
@@ -466,46 +463,6 @@ namespace AnalysisManagerBase
 
         #endregion
 
-        #region "Events"
-        /*
-        public event ErrorEventEventHandler ErrorEvent;
-
-        public delegate void ErrorEventEventHandler(string ErrorMessage);
-
-        public event InfoEventEventHandler InfoEvent;
-
-        public delegate void InfoEventEventHandler(string Message, int DebugLevel);
-
-        public event ProgressEventEventHandler ProgressEvent;
-
-        public delegate void ProgressEventEventHandler(string taskDescription, float PercentComplete);
-
-        public event WarningEventEventHandler WarningEvent;
-
-        public delegate void WarningEventEventHandler(string Message);
-
-        protected void ReportError(string errorMessage)
-        {
-            ErrorEvent?.Invoke(errorMessage);
-        }
-
-        protected void ReportInfo(string message, int debugLevel)
-        {
-            InfoEvent?.Invoke(message, debugLevel);
-        }
-
-        protected void ReportProgress(string taskDescription, float PercentComplete)
-        {
-            ProgressEvent?.Invoke(taskDescription, PercentComplete);
-        }
-
-        protected void ReportWarning(string message)
-        {
-            WarningEvent?.Invoke(message);
-        }
-        */
-
-        #endregion
 
     }
 
