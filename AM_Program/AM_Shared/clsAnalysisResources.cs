@@ -3526,6 +3526,11 @@ namespace AnalysisManagerBase
             try
             {
                 var diOrgDbFolder = fiMaxDirSize.Directory;
+                if (diOrgDbFolder == null)
+                {
+                    LogError("Unable to determine the parent directory of file " + fiMaxDirSize.FullName + "; cannot manage drive space usage");
+                    return;
+                }
 
                 var errorSuffix = "; cannot manage drive space usage: " + diOrgDbFolder.FullName;
                 var maxSizeGB = 0;
@@ -3705,16 +3710,16 @@ namespace AnalysisManagerBase
         /// If not present, looks for a file named FileName_StoragePathInfo.txt; if that file is found, opens the file and reads the path
         /// If the file isn't found (and the _StoragePathInfo.txt file isn't present), returns an empty string
         /// </summary>
-        /// <param name="FolderPath">The folder to look in</param>
-        /// <param name="FileName">The file name to find</param>
+        /// <param name="folderPath">The folder to look in</param>
+        /// <param name="fileName">The file name to find</param>
         /// <returns></returns>
         /// <remarks></remarks>
-        public static string ResolveStoragePath(string FolderPath, string FileName)
+        public static string ResolveStoragePath(string folderPath, string fileName)
         {
 
             var physicalFilePath = string.Empty;
 
-            var filePath = Path.Combine(FolderPath, FileName);
+            var filePath = Path.Combine(folderPath, fileName);
 
             if (File.Exists(filePath))
             {
@@ -3753,14 +3758,14 @@ namespace AnalysisManagerBase
         /// If found, returns the path to the 0.ser folder
         /// Otherwise, returns an empty string
         /// </summary>
-        /// <param name="FolderPath">The folder to look in</param>
+        /// <param name="folderPath">The folder to look in</param>
         /// <returns></returns>
         /// <remarks></remarks>
-        public static string ResolveSerStoragePath(string FolderPath)
+        public static string ResolveSerStoragePath(string folderPath)
         {
             string physicalFilePath;
 
-            var filePath = Path.Combine(FolderPath, STORAGE_PATH_INFO_FILE_SUFFIX);
+            var filePath = Path.Combine(folderPath, STORAGE_PATH_INFO_FILE_SUFFIX);
 
             if (File.Exists(filePath))
             {
@@ -3781,13 +3786,13 @@ namespace AnalysisManagerBase
                 // The desired file was not found
 
                 // Look for a ser file in the dataset folder
-                physicalFilePath = Path.Combine(FolderPath, BRUKER_SER_FILE);
+                physicalFilePath = Path.Combine(folderPath, BRUKER_SER_FILE);
                 var fiFile = new FileInfo(physicalFilePath);
 
                 if (!fiFile.Exists)
                 {
                     // See if a folder named 0.ser exists in FolderPath
-                    physicalFilePath = Path.Combine(FolderPath, BRUKER_ZERO_SER_FOLDER);
+                    physicalFilePath = Path.Combine(folderPath, BRUKER_ZERO_SER_FOLDER);
                     var diFolder = new DirectoryInfo(physicalFilePath);
                     if (!diFolder.Exists)
                     {
@@ -4612,9 +4617,9 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Validate that data in a _dta.txt ifle is centroided
         /// </summary>
-        /// <param name="strCDTAPath"></param>
+        /// <param name="cdtaPath"></param>
         /// <returns></returns>
-        public bool ValidateCDTAFileIsCentroided(string strCDTAPath)
+        public bool ValidateCDTAFileIsCentroided(string cdtaPath)
         {
 
             try
@@ -4626,7 +4631,7 @@ namespace AnalysisManagerBase
                 mSpectraTypeClassifier.ErrorEvent += mSpectraTypeClassifier_ErrorEvent;
                 mSpectraTypeClassifier.ReadingSpectra += mSpectraTypeClassifier_ReadingSpectra;
 
-                var success = mSpectraTypeClassifier.CheckCDTAFile(strCDTAPath);
+                var success = mSpectraTypeClassifier.CheckCDTAFile(cdtaPath);
 
                 if (!success)
                 {
@@ -4843,6 +4848,11 @@ namespace AnalysisManagerBase
             try
             {
                 // Find the hashcheck file for this FASTA file
+                if (fastaFile.Directory == null)
+                {
+                    LogError("Unable to determine the parent directory of " + fastaFile.FullName);
+                    return false;
+                }
 
                 var hashcheckFileSpec = fastaFile.Name + "*" + Protein_Exporter.clsGetFASTAFromDMS.HASHCHECK_SUFFIX;
                 var hashcheckFiles = fastaFile.Directory.GetFiles(hashcheckFileSpec);
@@ -4916,10 +4926,10 @@ namespace AnalysisManagerBase
 
         }
 
-        private void m_FastaTools_FileGenerationCompleted(string FullOutputPath)
+        private void m_FastaTools_FileGenerationCompleted(string fullOutputPath)
         {
             // Get the name of the fasta file that was generated
-            m_FastaFileName = Path.GetFileName(FullOutputPath);
+            m_FastaFileName = Path.GetFileName(fullOutputPath);
         }
 
         private void m_FastaTools_FileGenerationProgress(string statusMsg, double fractionDone)
