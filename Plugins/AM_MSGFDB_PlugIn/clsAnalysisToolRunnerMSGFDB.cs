@@ -312,8 +312,34 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             LogMessage("Running MSGF+");
 
-            // If an MSGF+ analysis crashes with an "out-of-memory" error, we need to reserve more memory for Java
-            // The amount of memory required depends on both the fasta file size and the size of the input .mzML file, since data from all spectra are cached in memory
+            string inputFileName;
+            string inputFileDescription;
+
+            switch (eInputFileFormat)
+            {
+                case eInputFileFormatTypes.CDTA:
+                    inputFileName = Dataset + "_dta.txt";
+                    inputFileDescription = "CDTA (_dta.txt) file";
+                    break;
+                case eInputFileFormatTypes.MzML:
+                    inputFileName = Dataset + clsAnalysisResources.DOT_MZML_EXTENSION;
+                    inputFileDescription = ".mzML file";
+                    break;
+                case eInputFileFormatTypes.MzXML:
+                    inputFileName = Dataset + clsAnalysisResources.DOT_MZXML_EXTENSION;
+                    inputFileDescription = ".mzXML file";
+                    break;
+                default:
+                    LogError("Unsupported InputFileFormat: " + eInputFileFormat);
+                    // Immediately exit the plugin; results and console output files will not be saved
+                    return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            var inputFile = new FileInfo(Path.Combine(m_WorkDir, inputFileName));
+
+            // If an MSGF+ analysis crashes with an "out-of-memory" error, we need to reserve more memory for Java.
+            // The amount of memory required depends on both the fasta file size and the size of the input data file (_dta.txt or .mzML)
+            //   since data from all spectra are cached in memory.
             // Customize this on a per-job basis using the MSGFDBJavaMemorySize setting in the settings file
             // (job 611216 succeeded with a value of 5000)
 
@@ -326,46 +352,48 @@ namespace AnalysisManagerMSGFDBPlugIn
             // executing the tasks via a pool, meaning the memory overhead of each thread is lower vs. previous versions that
             // had large numbers of tasks on a small, finite number of threads
 
-            var javaMemorySize = m_jobParams.GetJobParameter("MSGFDBJavaMemorySize", 4000);
-            if (javaMemorySize < 512)
-                javaMemorySize = 512;
+            var javaMemorySizeMB = m_jobParams.GetJobParameter("MSGFDBJavaMemorySize", 4000);
+            if (javaMemorySizeMB < 512)
+                javaMemorySizeMB = 512;
 
-            // Possibly increase the java memory size based on the size of the FASTA file
-            var minimumJavaMemoryMB = 7.5 * fastaFileSizeKB / 1024.0 + 1000;
+            // Possibly increase the Java memory size based on the size of the FASTA file
+            var fastaBasedMinimumJavaMemoryMB = 7.5 * fastaFileSizeKB / 1024.0 + 1000;
 
-            // Round up minimumJavaMemoryMB to the neareast 500
-            minimumJavaMemoryMB = Math.Ceiling(minimumJavaMemoryMB / 500.0) * 500;
+            // Possibly increase the Java memory size based on the size of the spectrum file
+            var spectraBasedMinimumJavaMemoryMB = 3 * clsGlobal.BytesToMB(inputFile.Length) + 2250;
 
-            if (javaMemorySize < minimumJavaMemoryMB)
+            int minimumJavaMemoryMB;
+            string warningMsg;
+            if (fastaBasedMinimumJavaMemoryMB > javaMemorySizeMB && fastaBasedMinimumJavaMemoryMB > spectraBasedMinimumJavaMemoryMB)
             {
-                LogWarning(
-                    string.Format("Increasing Java memory size from {0:N0} MB to {1:N0} MB due to a large FASTA file ({2:N0} MB)",
-                    javaMemorySize, minimumJavaMemoryMB, fastaFileSizeKB / 1024.0));
+                minimumJavaMemoryMB = (int)Math.Ceiling(fastaBasedMinimumJavaMemoryMB / 500.0) * 500;
+                warningMsg = string.Format("Increasing Java memory size from {0:N0} MB to {1:N0} MB due to large FASTA file ({2:N0} MB)",
+                    javaMemorySizeMB, minimumJavaMemoryMB, fastaFileSizeKB / 1024.0);
 
-                javaMemorySize = (int)minimumJavaMemoryMB;
+            } else if (spectraBasedMinimumJavaMemoryMB > javaMemorySizeMB)
+            {
+                minimumJavaMemoryMB = (int)Math.Ceiling(spectraBasedMinimumJavaMemoryMB / 500.0) * 500;
+                warningMsg = string.Format("Increasing Java memory size from {0:N0} MB to {1:N0} MB due to large {2} ({3:N0} MB)",
+                    javaMemorySizeMB, minimumJavaMemoryMB, inputFileDescription, clsGlobal.BytesToMB(inputFile.Length));
+            }
+            else
+            {
+                minimumJavaMemoryMB = javaMemorySizeMB;
+                warningMsg = string.Empty;
+            }
+
+            if (javaMemorySizeMB < minimumJavaMemoryMB)
+            {
+                LogWarning(warningMsg);
+                javaMemorySizeMB = minimumJavaMemoryMB;
             }
 
             // Set up and execute a program runner to run MSGF+
-            var cmdStr = " -Xmx" + javaMemorySize + "M -jar " + msgfPlusJarFilePath;
+            var cmdStr = " -Xmx" + javaMemorySizeMB + "M -jar " + msgfPlusJarFilePath;
 
             // Define the input file, output file, and fasta file
-            switch (eInputFileFormat)
-            {
-                case eInputFileFormatTypes.CDTA:
-                    cmdStr += " -s " + Dataset + "_dta.txt";
-                    break;
-                case eInputFileFormatTypes.MzML:
-                    cmdStr += " -s " + Dataset + clsAnalysisResources.DOT_MZML_EXTENSION;
-                    break;
-                case eInputFileFormatTypes.MzXML:
-                    cmdStr += " -s " + Dataset + clsAnalysisResources.DOT_MZXML_EXTENSION;
-                    break;
-                default:
-                    LogError("Unsupported InputFileFormat: " + eInputFileFormat);
-                    // Immediately exit the plugin; results and console output files will not be saved
-                    return CloseOutType.CLOSEOUT_FAILED;
-            }
-
+            // It is safe to simply use the input file name since the working directory will be m_WorkDir
+            cmdStr += " -s " + inputFile.Name;
             cmdStr += " -o " + fiMSGFPlusResults.Name;
             cmdStr += " -d " + PossiblyQuotePath(fastaFilePath);
 
@@ -375,7 +403,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             // Make sure the machine has enough free memory to run MSGFPlus
             var logFreeMemoryOnSuccess = (m_DebugLevel >= 1);
 
-            if (!clsAnalysisResources.ValidateFreeMemorySize(javaMemorySize, "MSGF+", logFreeMemoryOnSuccess))
+            if (!clsAnalysisResources.ValidateFreeMemorySize(javaMemorySizeMB, "MSGF+", logFreeMemoryOnSuccess))
             {
                 m_message = "Not enough free memory to run MSGF+";
                 // Immediately exit the plugin; results and console output files will not be saved
