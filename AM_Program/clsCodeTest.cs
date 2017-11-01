@@ -268,6 +268,16 @@ namespace AnalysisManagerProg
             return jobParams;
         }
 
+        private clsCodeTestAM GetCodeTestToolRunner()
+        {
+            return GetCodeTestToolRunner(out _, out _);
+        }
+
+        private clsCodeTestAM GetCodeTestToolRunner(out clsAnalysisJob jobParams)
+        {
+            return GetCodeTestToolRunner(out jobParams, out _);
+        }
+
         private clsCodeTestAM GetCodeTestToolRunner(out clsAnalysisJob jobParams, out clsMyEMSLUtilities myEMSLUtilities)
         {
             const short DEBUG_LEVEL = 2;
@@ -506,7 +516,7 @@ namespace AnalysisManagerProg
         public void TestArchiveFailedResults()
         {
 
-            var objToolRunner = GetCodeTestToolRunner(out var jobParams, out var myEMSLUtilities);
+            var objToolRunner = GetCodeTestToolRunner(out var jobParams);
 
             if (string.IsNullOrWhiteSpace(m_mgrParams.GetParam(clsAnalysisMgrSettings.MGR_PARAM_FAILED_RESULTS_FOLDER_PATH)))
             {
@@ -914,7 +924,7 @@ namespace AnalysisManagerProg
             var OutFileName = "MyTestDataset_out.txt";
 
 
-            var objToolRunner = GetCodeTestToolRunner(out var jobParams, out var myEMSLUtilities);
+            var objToolRunner = GetCodeTestToolRunner(out var jobParams);
 
             jobParams.AddResultFileToSkip(OutFileName);
 
@@ -928,7 +938,7 @@ namespace AnalysisManagerProg
         {
 
 
-            var objToolRunner = GetCodeTestToolRunner(out var jobParams, out var myEMSLUtilities);
+            var objToolRunner = GetCodeTestToolRunner(out var jobParams);
 
             jobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "OutputFolderName", "Test_Results_" + DateTime.Now.ToString("hh_mm_ss"));
             jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "transferFolderPath", @"\\proto-3\DMS3_XFER");
@@ -964,7 +974,7 @@ namespace AnalysisManagerProg
             var dllFile = "AM_Shared.dll";
             var dllFile64Bit = "PeptideToProteinMapEngine.dll";
 
-            var objToolRunner = GetCodeTestToolRunner(out var jobParams, out var myEMSLUtilities);
+            var objToolRunner = GetCodeTestToolRunner();
 
             var toolVersionInfo = string.Empty;
 
@@ -985,7 +995,7 @@ namespace AnalysisManagerProg
             clsLogTools.CreateFileLogger(logFileNameBase);
 
 
-            var objToolRunner = GetCodeTestToolRunner(out var jobParams, out var myEMSLUtilities);
+            GetCodeTestToolRunner(out var jobParams);
 
             m_DebugLevel = 2;
             jobParams.DebugLevel = m_DebugLevel;
@@ -1064,7 +1074,7 @@ namespace AnalysisManagerProg
 
             if (proteinCollectionInfo.UsingSplitFasta)
             {
-                legacyFastaName = clsAnalysisResources.GetSplitFastaFileName(jobParams, out var errorMessage);
+                legacyFastaName = clsAnalysisResources.GetSplitFastaFileName(jobParams, out _);
             }
             else
             {
@@ -1149,7 +1159,7 @@ namespace AnalysisManagerProg
         public void TestGZip()
         {
 
-            var objToolRunner = GetCodeTestToolRunner(out var jobParams, out var myEMSLUtilities);
+            var objToolRunner = GetCodeTestToolRunner();
 
             const string sourceFilePath = @"F:\Temp\ZipTest\QExact01\UDD-1_27Feb13_Gimli_12-07-03_HCD.mgf";
 
@@ -1187,7 +1197,7 @@ namespace AnalysisManagerProg
         public void TestZip()
         {
 
-            var objToolRunner = GetCodeTestToolRunner(out var jobParams, out var myEMSLUtilities);
+            var objToolRunner = GetCodeTestToolRunner();
 
             const string sourceFilePath = @"F:\Temp\ZipTest\QExact01\UDD-1_27Feb13_Gimli_12-07-03_HCD.mgf";
 
@@ -1240,7 +1250,7 @@ namespace AnalysisManagerProg
             }
 
 
-            var objToolRunner = GetCodeTestToolRunner(out var jobParams, out var myEMSLUtilities);
+            GetCodeTestToolRunner(out var jobParams, out var myEMSLUtilities);
 
             m_mgrParams.SetParam("ChameleonCachedDataFolder", @"H:\9T_Imaging");
 
@@ -1434,7 +1444,7 @@ namespace AnalysisManagerProg
             };
             RegisterEvents(progRunner);
 
-            var success = progRunner.RunProgram(appPath, "input.xml", "X!Tandem", false);
+            progRunner.RunProgram(appPath, "input.xml", "X!Tandem", false);
 
             if (progRunner.CacheStandardOutput && !progRunner.EchoOutputToConsole)
             {
@@ -1498,7 +1508,7 @@ namespace AnalysisManagerProg
         public void TestMSXmlCachePurge()
         {
 
-            var objToolRunner = GetCodeTestToolRunner(out var jobParams, out var myEMSLUtilities);
+            var objToolRunner = GetCodeTestToolRunner();
 
             const string cacheFolderPath = @"\\proto-2\past\PurgeTest";
 
@@ -1621,7 +1631,7 @@ namespace AnalysisManagerProg
         public void TestGetVersionInfo()
         {
 
-            var objToolRunner = GetCodeTestToolRunner(out var jobParams, out var myEMSLUtilities);
+            var objToolRunner = GetCodeTestToolRunner();
 
             var pathToTestx86 = @"F:\My Documents\Projects\DataMining\DMS_Programs\DLLVersionInspector\bin\32bit_Dll_Examples\UIMFLibrary.dll";
             var pathToTestx64 = @"F:\My Documents\Projects\DataMining\DMS_Programs\DLLVersionInspector\bin\64bit_Dll_Examples\UIMFLibrary.dll";
