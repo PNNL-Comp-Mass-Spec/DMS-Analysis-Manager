@@ -1595,6 +1595,8 @@ namespace AnalysisManagerBase
                 remoteProgressParam.Value = clsGlobal.CSngSafe(remoteProgressText, 0);
             }
 
+            cmd.Parameters.Add(new SqlParameter("@processorName", SqlDbType.VarChar, 128)).Value = ManagerName;
+
             // Execute the Stored Procedure (retry the call up to 20 times)
             var returnCode = PipelineDBProcedureExecutor.ExecuteSP(cmd, 20);
 
