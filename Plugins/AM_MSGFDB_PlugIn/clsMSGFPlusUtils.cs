@@ -518,7 +518,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                     AppendConsoleOutputHeader(m_WorkDir, MZIDToTSV_CONSOLE_OUTPUT_FILE, MSGFPLUS_CONSOLE_OUTPUT_FILE, 1);
                 }
 
-
                 try
                 {
                     // The MzIDToTsv console output file doesn't contain any log messsages we need to save, so delete it
@@ -1977,6 +1976,11 @@ namespace AnalysisManagerMSGFDBPlugIn
                 if (percentCompleteAllTasks > 0)
                 {
                     effectiveProgress = percentCompleteAllTasks * PROGRESS_PCT_MSGFPLUS_COMPLETE / 100f;
+                    if (effectiveProgress > PROGRESS_PCT_MSGFPLUS_COMPLETE)
+                    {
+                        effectiveProgress = PROGRESS_PCT_MSGFPLUS_COMPLETE;
+                    }
+
                 }
             }
             catch (Exception ex)

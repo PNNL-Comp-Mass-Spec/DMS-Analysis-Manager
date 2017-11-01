@@ -49,6 +49,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
         private bool mMSGFPlusComplete;
         private DateTime mMSGFPlusCompletionTime;
+        private double mMSGFPlusRunTimeMinutes;
 
         private MSGFPlusUtils mMSGFPlusUtils;
 
@@ -201,7 +202,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                 var success = CopyResultsToTransferDirectory();
                 if (!success)
                     return CloseOutType.CLOSEOUT_FAILED;
-
 
                 if (tooManySkippedSpectra)
                 {
@@ -461,7 +461,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                 if (!mMSGFPlusComplete)
                 {
                     mMSGFPlusComplete = true;
-                    mMSGFPlusCompletionTime = DateTime.UtcNow;
                 }
             }
             else
@@ -824,17 +823,23 @@ namespace AnalysisManagerMSGFDBPlugIn
             {
                 mMSGFPlusComplete = true;
                 mMSGFPlusCompletionTime = DateTime.UtcNow;
+                mMSGFPlusRunTimeMinutes = Math.Max(1, mCmdRunner?.RunTime.TotalMinutes ?? 1);
             }
             else
             {
-                if (DateTime.UtcNow.Subtract(mMSGFPlusCompletionTime).TotalMinutes < 5)
+                // Wait a minimum of 5 minutes for Java to finish
+                // Wait longer for jobs that have been running longer
+                var waitTimeMinutes = (int)Math.Ceiling(Math.Max(5, Math.Sqrt(mMSGFPlusRunTimeMinutes)));
+
+                if (DateTime.UtcNow.Subtract(mMSGFPlusCompletionTime).TotalMinutes < waitTimeMinutes)
                     return;
 
-                // MSGF+ is stuck at 96% complete and has been that way for 5 minutes
-                // Java is likely frozen and thus the process should be aborted
+                // MSGF+ is finished but hasn't exited after 5 minutes (longer for long-running jobs)
+                // If there is a large number results, we need to given MSGF+ time to sort them prior to writing to disk
+                // However, it is also possible that Java frozen and thus the process should be aborted
 
                 var warningMessage = "MSGF+ has been stuck at " +
-                                     MSGFPlusUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE.ToString("0") + "% complete for 5 minutes; " +
+                                     MSGFPlusUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE.ToString("0") + "% complete for " + waitTimeMinutes + " minutes; " +
                                      "aborting since Java appears frozen";
 
                 LogWarning(warningMessage);
