@@ -36,6 +36,10 @@ namespace AnalysisManagerBase
         /// </summary>
         private clsProgRunner m_ProgRunner;
 
+        private DateTime m_StopTime;
+
+        private bool m_IsRunning;
+
         #endregion
 
         #region "Events"
@@ -228,6 +232,22 @@ namespace AnalysisManagerBase
         /// Returns true if program was aborted via call to AbortProgramNow()
         /// </summary>
         public bool ProgramAborted { get; private set; }
+
+        /// <summary>
+        /// Time that the program runner has been running for (or time that it ran if finished)
+        /// </summary>
+        public TimeSpan RunTime => StopTime.Subtract(StartTime);
+
+        /// <summary>
+        /// Time the program runner started (UTC-based)
+        /// </summary>
+        public DateTime StartTime { get; private set; }
+
+        /// <summary>
+        /// Time the program runner finished (UTC-based)
+        /// </summary>
+        /// <remarks>Will be the current time-of-day if still running</remarks>
+        public DateTime StopTime => m_IsRunning ? DateTime.UtcNow : m_StopTime;
 
         /// <summary>
         /// Current monitoring state
@@ -435,7 +455,6 @@ namespace AnalysisManagerBase
 
             var runtimeExceeded = false;
             var abortLogged = false;
-            var dtStartTime = DateTime.UtcNow;
 
             var cachedProcessID = 0;
 
@@ -443,6 +462,10 @@ namespace AnalysisManagerBase
             {
                 // Start the program executing
                 m_ProgRunner.StartAndMonitorProgram();
+
+                StartTime = DateTime.UtcNow;
+                m_StopTime = DateTime.MinValue;
+                m_IsRunning = true;
 
                 // Loop until program is complete, or until MaxRuntimeSeconds seconds elapses
                 while (m_ProgRunner.State != clsProgRunner.States.NotMonitoring)
@@ -455,7 +478,7 @@ namespace AnalysisManagerBase
 
                     if (MaxRuntimeSeconds > 0)
                     {
-                        if (DateTime.UtcNow.Subtract(dtStartTime).TotalSeconds > MaxRuntimeSeconds && !ProgramAborted)
+                        if (RunTime.TotalSeconds > MaxRuntimeSeconds && !ProgramAborted)
                         {
                             AbortProgramNow(false);
                             runtimeExceeded = true;
@@ -486,6 +509,9 @@ namespace AnalysisManagerBase
 
                 } // end while
 
+                m_StopTime = DateTime.UtcNow;
+                m_IsRunning = false;
+
                 clsGlobal.ProcessInfo.ClearCachedPerformanceCounterForProcessID(cachedProcessID);
 
             }
@@ -494,6 +520,10 @@ namespace AnalysisManagerBase
                 var msg = "Exception running external program " + executablePath;
                 OnErrorEvent(msg, ex);
                 m_ProgRunner = null;
+
+                m_StopTime = DateTime.UtcNow;
+                m_IsRunning = false;
+
                 return false;
             }
 
