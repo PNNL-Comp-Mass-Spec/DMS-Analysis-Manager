@@ -219,8 +219,7 @@ namespace AnalysisManagerSequestPlugin
                         reMatch = m_OutFileSearchTimeRegEx.Match(strLineIn);
                         if (reMatch.Success)
                         {
-                            float sngOutFileSearchTimeSeconds;
-                            if (float.TryParse(reMatch.Groups["time"].Value, out sngOutFileSearchTimeSeconds))
+                            if (float.TryParse(reMatch.Groups["time"].Value, out var sngOutFileSearchTimeSeconds))
                             {
                                 if (mRecentOutFileSearchTimes.Count >= MAX_OUT_FILE_SEARCH_TIMES_TO_TRACK)
                                 {

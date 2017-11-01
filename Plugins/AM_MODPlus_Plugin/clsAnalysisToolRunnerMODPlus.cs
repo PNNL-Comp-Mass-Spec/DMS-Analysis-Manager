@@ -297,7 +297,7 @@ namespace AnalysisManagerMODPlusPlugin
             }
         }
 
-        private Dictionary<int, string> CreateThreadParamFiles(FileInfo fiMasterParamFile, XmlDocument doc, IEnumerable<FileInfo> mgfFiles)
+        private Dictionary<int, string> CreateThreadParamFiles(FileInfo fiMasterParamFile, XmlNode doc, IEnumerable<FileInfo> mgfFiles)
         {
             var reThreadNumber = new Regex(@"_Part(\d+)\.mgf", RegexOptions.Compiled | RegexOptions.IgnoreCase);
             var paramFileList = new Dictionary<int, string>();
@@ -549,7 +549,7 @@ namespace AnalysisManagerMODPlusPlugin
         /// <remarks>Code adapted from "http://stackoverflow.com/questions/508390/create-xml-nodes-based-on-xpath"</remarks>
         private XmlNode MakeXPath(XmlDocument doc, string xpath, Dictionary<string, string> attributes)
         {
-            return MakeXPath(doc, doc as XmlNode, xpath, attributes);
+            return MakeXPath(doc, doc, xpath, attributes);
         }
 
         private XmlNode MakeXPath(XmlDocument doc, XmlNode parent, string xpath, Dictionary<string, string> attributes)

@@ -28,15 +28,10 @@ namespace AnalysisManager_Mage_PlugIn
         #region Constructors
 
         #region "Properties"
-        public string WarningMsg
-        {
-            get { return _warningMsg; }
-        }
 
-        public string WarningMsgVerbose
-        {
-            get { return _warningMsgVerbose; }
-        }
+        public string WarningMsg => _warningMsg;
+
+        public string WarningMsgVerbose => _warningMsgVerbose;
 
         #endregion
 

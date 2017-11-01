@@ -172,13 +172,12 @@ namespace AnalysisManager_IDM_Plugin
         /// Stores the tool version info in the database
         /// </summary>
         /// <remarks></remarks>
-        private bool StoreToolVersionInfo()
+        private void StoreToolVersionInfo()
         {
             var fiIDMdll = Path.Combine(clsGlobal.GetAppFolderPath(), "InterDetect.dll");
 
-            var success = StoreDotNETToolVersionInfo(fiIDMdll);
+            StoreDotNETToolVersionInfo(fiIDMdll);
 
-            return success;
         }
 
         #endregion

@@ -6,7 +6,6 @@
 *****************************************************************/
 
 using System;
-using System.CodeDom;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -102,10 +101,8 @@ namespace AnalysisManagerNOMSIPlugin
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                bool noPeaksFound;
-
                 // Process the XML files using NOMSI
-                var processingSuccess = ProcessScansWithNOMSI(progLoc, out noPeaksFound);
+                var processingSuccess = ProcessScansWithNOMSI(progLoc, out var noPeaksFound);
 
                 var eReturnCode = CloseOutType.CLOSEOUT_SUCCESS;
 
@@ -204,17 +201,12 @@ namespace AnalysisManagerNOMSIPlugin
         private string GetUsername()
         {
             var currentUser = System.Security.Principal.WindowsIdentity.GetCurrent();
-            if (currentUser != null)
-            {
-                var userName = currentUser.Name;
-                var lastSlashIndex = userName.LastIndexOf('\\');
-                if (lastSlashIndex >= 0)
-                    userName = userName.Substring(lastSlashIndex + 1);
+            var userName = currentUser.Name;
+            var lastSlashIndex = userName.LastIndexOf('\\');
+            if (lastSlashIndex >= 0)
+                userName = userName.Substring(lastSlashIndex + 1);
 
-                return userName;
-            }
-
-            return string.Empty;
+            return userName;
         }
 
         private List<FileInfo> GetXMLSpectraFiles(DirectoryInfo diWorkDir)
@@ -224,7 +216,7 @@ namespace AnalysisManagerNOMSIPlugin
         }
 
 
-        private int MoveWorkDirFiles(DirectoryInfo diZipWork, string fileMask)
+        private int MoveWorkDirFiles(FileSystemInfo diZipWork, string fileMask)
         {
             var diWorkDir = new DirectoryInfo(m_WorkDir);
             var filesToMove = diWorkDir.GetFiles(fileMask).ToList();
@@ -375,7 +367,7 @@ namespace AnalysisManagerNOMSIPlugin
 
         private bool ProcessOneFileWithNOMSI(
             string progLoc,
-            FileInfo spectrumFile,
+            FileSystemInfo spectrumFile,
             string paramFilePath,
             int filesProcessed,
             out int scanNumber)
@@ -529,8 +521,7 @@ namespace AnalysisManagerNOMSIPlugin
                 {
                     mNoPeaksFound = false;
 
-                    int scanNumber;
-                    success = ProcessOneFileWithNOMSI(progLoc, spectrumFile, paramFilePath, filesProcessed, out scanNumber);
+                    success = ProcessOneFileWithNOMSI(progLoc, spectrumFile, paramFilePath, filesProcessed, out var scanNumber);
                     if (!success)
                         return false;
 

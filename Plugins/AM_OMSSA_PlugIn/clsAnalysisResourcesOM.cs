@@ -154,14 +154,12 @@ namespace AnalysisManagerOMSSAPlugIn
 
         protected bool ConvertDtaToXml()
         {
-            string SourceFilePath = null;
-
             var blnSuccess = false;
 
             try
             {
                 // Convert the _DTA.txt file to a DTA .XML file
-                SourceFilePath = Path.Combine(m_WorkingDir, DatasetName + "_dta.txt");
+                var sourceFilePath = Path.Combine(m_WorkingDir, DatasetName + "_dta.txt");
 
                 var objDtaConverter = new DtaTextConverter.clsDtaTextToDtaXML
                 {
@@ -178,7 +176,7 @@ namespace AnalysisManagerOMSSAPlugIn
                     LogDebug("Converting _DTA.txt file to DTA XML file using the DtaTextConverter");
                 }
 
-                blnSuccess = objDtaConverter.ProcessFile(SourceFilePath, m_WorkingDir);
+                blnSuccess = objDtaConverter.ProcessFile(sourceFilePath, m_WorkingDir);
 
                 if (!blnSuccess)
                 {
@@ -188,7 +186,7 @@ namespace AnalysisManagerOMSSAPlugIn
                 {
                     if (m_DebugLevel >= 1)
                     {
-                        LogDebug("DTA XML file created for " + Path.GetFileName(SourceFilePath));
+                        LogDebug("DTA XML file created for " + Path.GetFileName(sourceFilePath));
                     }
                 }
             }
@@ -213,12 +211,7 @@ namespace AnalysisManagerOMSSAPlugIn
             m_jobParams.AddResultFileExtensionToSkip(DatasetName + "_om_large.omx");
             var MSCsvOutFilename = Path.Combine(m_WorkingDir, DatasetName + "_om.csv");
 
-            string strOutputFilePath = null;
-
-            var intMatchCount = 0;
-
             XmlNode objMostRecentComment = null;
-            var blnCopyThisComment = false;
 
             try
             {
@@ -238,7 +231,7 @@ namespace AnalysisManagerOMSSAPlugIn
                 }
 
                 // Construct the name of the new .XML file
-                strOutputFilePath = OmssaInput;
+                var strOutputFilePath = OmssaInput;
 
                 // Open the template XML file
                 var objTemplate = new XmlDocument {
@@ -296,6 +289,7 @@ namespace AnalysisManagerOMSSAPlugIn
                         // Look for this node in objTemplate
                         // The Do loop is required because we have to call .SelectNodes() again after removing any extra nodes
                         XmlNodeList objSelectedNodes;
+                        int intMatchCount;
                         do
                         {
                             // This XPath statement says to:
@@ -385,7 +379,7 @@ namespace AnalysisManagerOMSSAPlugIn
                                         objPrevNode = objPrevNode.PreviousSibling;
                                     }
 
-                                    blnCopyThisComment = true;
+                                    var blnCopyThisComment = true;
                                     if ((objPrevNode != null) && objPrevNode.NodeType == XmlNodeType.Comment)
                                     {
                                         if (objPrevNode.InnerText == objMostRecentComment.InnerText)

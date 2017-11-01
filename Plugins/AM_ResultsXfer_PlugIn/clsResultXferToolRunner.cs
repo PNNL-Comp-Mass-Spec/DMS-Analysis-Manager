@@ -47,8 +47,8 @@ namespace AnalysisManagerResultsXferPlugin
                 }
 
                 // Transfer the results
-                var Result = PerformResultsXfer();
-                if (Result != CloseOutType.CLOSEOUT_SUCCESS)
+                var result = PerformResultsXfer();
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     if (string.IsNullOrEmpty(m_message))
                     {

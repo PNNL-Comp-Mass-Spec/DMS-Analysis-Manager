@@ -1524,8 +1524,7 @@ namespace AnalysisManagerSequestPlugin
                         {
                             var strNodeName = reMatch.Groups["node"].Value;
 
-                            DateTime dtLastFinishTime;
-                            if (mSequestNodes.TryGetValue(strNodeName, out dtLastFinishTime))
+                            if (mSequestNodes.TryGetValue(strNodeName, out _))
                             {
                                 mSequestNodes[strNodeName] = DateTime.UtcNow;
                             }

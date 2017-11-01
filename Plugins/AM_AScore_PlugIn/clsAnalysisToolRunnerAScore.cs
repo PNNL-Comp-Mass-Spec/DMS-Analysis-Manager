@@ -181,7 +181,7 @@ namespace AnalysisManager_AScore_PlugIn
 
         }
 
-        private void ExportTable(FileInfo sqlLiteDB, string tableName, FileInfo targetFile)
+        private void ExportTable(FileSystemInfo sqlLiteDB, string tableName, FileSystemInfo targetFile)
         {
             var reader = new SQLiteReader
             {

@@ -690,34 +690,34 @@ namespace AnalysisManagerBase
 
             // Not found in the cache; look in the dataset folder
 
-            var DatasetID = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetID");
+            var datasetID = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetID");
 
             const string MSXmlFoldernameBase = "MSXML_Gen_1_";
-            var MzXMLFilename = DatasetName + ".mzXML";
+            var mzXMLFilename = DatasetName + ".mzXML";
 
             const int MAX_ATTEMPTS = 1;
 
-            var valuesToCheck = new List<int>();
-
             // Initialize the values we'll look for
             // Note that these values are added to the list in the order of the preferred file to retrieve
-
-            //                               Example folder name          CentroidMSXML  MSXMLGenerator   CentroidPeakCount    MSXMLOutputType
-            valuesToCheck.Add(215);       // MSXML_Gen_1_215_DatasetID,   True           MSConvert        -1                   mzXML
-            valuesToCheck.Add(149);       // MSXML_Gen_1_149_DatasetID,   True           MSConvert        1000                 mzXML
-            valuesToCheck.Add(148);       // MSXML_Gen_1_148_DatasetID,   True           MSConvert        500                  mzXML
-            valuesToCheck.Add(154);       // MSXML_Gen_1_154_DatasetID,   True           MSConvert        250                  mzXML
-            valuesToCheck.Add(132);       // MSXML_Gen_1_132_DatasetID,   True           MSConvert        150                  mzXML
-            valuesToCheck.Add(93);        // MSXML_Gen_1_93_DatasetID,    True           ReadW.exe        n/a                  mzXML
-            valuesToCheck.Add(126);       // MSXML_Gen_1_126_DatasetID,   True           ReadW.exe        n/a                  mzXML; ReAdW_Version=v2.1
-            valuesToCheck.Add(177);       // MSXML_Gen_1_177_DatasetID,   False          MSConvert.exe    n/a                  mzXML
-            valuesToCheck.Add(39);        // MSXML_Gen_1_39_DatasetID,    False          ReadW.exe        n/a                  mzXML
+            var valuesToCheck = new List<int>
+            {
+                //         Example folder name          CentroidMSXML  MSXMLGenerator   CentroidPeakCount    MSXMLOutputType
+                215,    // MSXML_Gen_1_215_DatasetID,   True           MSConvert        -1                   mzXML
+                149,    // MSXML_Gen_1_149_DatasetID,   True           MSConvert        1000                 mzXML
+                148,    // MSXML_Gen_1_148_DatasetID,   True           MSConvert        500                  mzXML
+                154,    // MSXML_Gen_1_154_DatasetID,   True           MSConvert        250                  mzXML
+                132,    // MSXML_Gen_1_132_DatasetID,   True           MSConvert        150                  mzXML
+                93,     // MSXML_Gen_1_93_DatasetID,    True           ReadW.exe        n/a                  mzXML
+                126,    // MSXML_Gen_1_126_DatasetID,   True           ReadW.exe        n/a                  mzXML; ReAdW_Version=v2.1
+                177,    // MSXML_Gen_1_177_DatasetID,   False          MSConvert.exe    n/a                  mzXML
+                39      // MSXML_Gen_1_39_DatasetID,    False          ReadW.exe        n/a                  mzXML
+            };
 
             hashCheckFilePath = string.Empty;
 
             foreach (var version in valuesToCheck)
             {
-                var msXmlFoldername = MSXmlFoldernameBase + version + "_" + DatasetID;
+                var msXmlFoldername = MSXmlFoldernameBase + version + "_" + datasetID;
 
                 // Look for the MSXmlFolder
                 // If the folder cannot be found, m_FolderSearch.FindValidFolder will return the folder defined by "DatasetStoragePath"
@@ -738,7 +738,7 @@ namespace AnalysisManagerBase
                     foreach (var udtArchivedFile in m_MyEMSLUtilities.RecentlyFoundMyEMSLFiles)
                     {
                         var fiArchivedFile = new FileInfo(udtArchivedFile.FileInfo.RelativePathWindows);
-                        if (clsGlobal.IsMatch(fiArchivedFile.Name, MzXMLFilename))
+                        if (clsGlobal.IsMatch(fiArchivedFile.Name, mzXMLFilename))
                         {
                             myEmslFileID = udtArchivedFile.FileID;
                             break;
@@ -747,7 +747,7 @@ namespace AnalysisManagerBase
 
                     if (myEmslFileID > 0)
                     {
-                        return Path.Combine(ServerPath, msXmlFoldername, DatasetInfoBase.AppendMyEMSLFileID(MzXMLFilename, myEmslFileID));
+                        return Path.Combine(ServerPath, msXmlFoldername, DatasetInfoBase.AppendMyEMSLFileID(mzXMLFilename, myEmslFileID));
                     }
 
                 }
@@ -764,7 +764,7 @@ namespace AnalysisManagerBase
                         if (diSubfolders.Length > 0)
                         {
                             // MSXmlFolder found; return the path to the file
-                            return Path.Combine(diSubfolders[0].FullName, MzXMLFilename);
+                            return Path.Combine(diSubfolders[0].FullName, mzXMLFilename);
 
                         }
 
