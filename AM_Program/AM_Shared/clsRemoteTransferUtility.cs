@@ -1281,7 +1281,7 @@ namespace AnalysisManagerBase
 
         private string GetManagerName()
         {
-            var mgrName = MgrParams.GetParam("MgrName", Environment.MachineName + "_Undefined-Manager");
+            var mgrName = MgrParams.ManagerName;
             return mgrName;
         }
 

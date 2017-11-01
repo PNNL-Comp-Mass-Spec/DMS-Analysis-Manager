@@ -177,7 +177,7 @@ namespace AnalysisManagerBase
         {
             m_MgrParams = mgrParams;
 
-            ManagerName = m_MgrParams.GetParam("MgrName", Environment.MachineName + "_Undefined-Manager");
+            ManagerName = m_MgrParams.ManagerName;
 
             // Gigasax.DMS5
             m_ConnStr = m_MgrParams.GetParam("ConnectionString");

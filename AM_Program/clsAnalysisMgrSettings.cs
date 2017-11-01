@@ -139,7 +139,7 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Manager name
         /// </summary>
-        public string ManagerName => GetParam(MGR_PARAM_MGR_NAME, "Unknown_Manager");
+        public string ManagerName => GetParam(MGR_PARAM_MGR_NAME, Environment.MachineName + "_Undefined-Manager");
 
         #endregion
 

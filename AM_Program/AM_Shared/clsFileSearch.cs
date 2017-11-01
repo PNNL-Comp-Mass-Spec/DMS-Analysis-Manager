@@ -2522,7 +2522,7 @@ namespace AnalysisManagerBase
                                 OnDebugEvent("Deleting old dataset subfolder from chameleon cached data folder: " + diSubFolder.FullName);
                             }
 
-                            if (m_mgrParams.GetParam("MgrName").ToLower().Contains("monroe"))
+                            if (m_mgrParams.ManagerName.ToLower().Contains("monroe"))
                             {
 
                                 OnDebugEvent(" Skipping delete since this is a development computer");

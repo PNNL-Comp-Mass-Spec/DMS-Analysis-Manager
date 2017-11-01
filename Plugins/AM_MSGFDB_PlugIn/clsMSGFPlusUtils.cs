@@ -1308,7 +1308,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         {
             var oRand = new Random();
 
-            var mgrName = m_mgrParams.GetParam("MgrName", "Undefined-Manager");
+            var mgrName = m_mgrParams.ManagerName;
 
             var objIndexedDBCreator = new clsCreateMSGFDBSuffixArrayFiles(mgrName);
             RegisterEvents(objIndexedDBCreator);

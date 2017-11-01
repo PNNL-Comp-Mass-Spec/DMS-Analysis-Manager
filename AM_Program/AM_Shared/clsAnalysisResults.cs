@@ -61,7 +61,7 @@ namespace AnalysisManagerBase
 
             m_mgrParams = mgrParams;
             m_jobParams = jobParams;
-            var mgrName = m_mgrParams.GetParam("MgrName", Environment.MachineName + "_Undefined-Manager");
+            var mgrName = m_mgrParams.ManagerName;
             m_DebugLevel = (short)m_mgrParams.GetParam("debuglevel", 1);
 
             InitFileTools(mgrName, m_DebugLevel);
@@ -148,7 +148,6 @@ namespace AnalysisManagerBase
                     if (overwrite)
                     {
                         CopyFileWithRetry(childFile.FullName, targetPath, true, maxRetryCount, DEFAULT_RETRY_HOLDOFF_SEC);
-
                     }
                     else
                     {
@@ -383,7 +382,7 @@ namespace AnalysisManagerBase
             {
                 swInfoFile.WriteLine("Date" + '\t' + DateTime.Now);
                 swInfoFile.WriteLine("ResultsFolderName" + '\t' + resultsFolderName);
-                swInfoFile.WriteLine("Manager" + '\t' + m_mgrParams.GetParam("MgrName", Environment.MachineName + "_Undefined-Manager"));
+                swInfoFile.WriteLine("Manager" + '\t' + m_mgrParams.ManagerName);
 
                 if ((m_jobParams != null))
                 {

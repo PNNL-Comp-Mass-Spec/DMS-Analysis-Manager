@@ -286,7 +286,7 @@ namespace AnalysisManagerBase
             m_jobParams = jobParams;
             m_StatusTools = statusTools;
             m_WorkDir = m_mgrParams.GetParam("workdir");
-            m_MachName = m_mgrParams.GetParam("MgrName", Environment.MachineName + "_Undefined-Manager");
+            m_MachName = m_mgrParams.ManagerName;
 
             m_JobNum = m_jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job", 0);
 
@@ -295,7 +295,7 @@ namespace AnalysisManagerBase
             m_MyEMSLUtilities = myEMSLUtilities ?? new clsMyEMSLUtilities(m_DebugLevel, m_WorkDir);
             RegisterEvents(m_MyEMSLUtilities);
 
-            m_DebugLevel = (short)(m_mgrParams.GetParam("debuglevel", 1));
+            m_DebugLevel = (short)m_mgrParams.GetParam("debuglevel", 1);
             m_StatusTools.Tool = m_jobParams.GetCurrentJobToolDescription();
 
             m_SummaryFile = summaryFile;
@@ -1702,7 +1702,7 @@ namespace AnalysisManagerBase
 
                 // Data Source=proteinseqs;Initial Catalog=manager_control
                 var connectionString = objMgrParams.GetParam("MgrCnfgDbConnectStr");
-                var managerName = objMgrParams.GetParam("MgrName", Environment.MachineName + "_Undefined-Manager");
+                var managerName = objMgrParams.ManagerName;
 
                 var newDebugLevel = GetManagerDebugLevel(connectionString, managerName, debugLevel, 0);
 
@@ -2943,7 +2943,6 @@ namespace AnalysisManagerBase
                     }
 
                     var lstSortedFiles = (from item in lstDataFiles orderby item.Key select item);
-                    var managerName = m_mgrParams.GetParam("MgrName", m_MachName);
 
                     foreach (var kvItem in lstSortedFiles)
                     {
@@ -2961,7 +2960,7 @@ namespace AnalysisManagerBase
                             // Keep track of the deleted file's details
                             purgedFileLogEntries.Add(string.Join("\t",
                                 DateTime.Now.ToString(DATE_TIME_FORMAT),
-                                managerName,
+                                m_MachName,
                                 fileSizeMB.ToString("0.00"),
                                 kvItem.Value.LastWriteTime.ToString(DATE_TIME_FORMAT),
                                 kvItem.Value.FullName));
