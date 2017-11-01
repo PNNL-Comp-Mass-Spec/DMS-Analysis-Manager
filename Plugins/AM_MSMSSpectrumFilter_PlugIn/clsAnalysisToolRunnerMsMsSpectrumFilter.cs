@@ -744,11 +744,9 @@ namespace MSMSSpectrumFilterAM
                 m_ErrMsg = "";
                 return true;
             }
-            else
-            {
-                m_ErrMsg = "Directory " + TestDir + " not found";
-                return false;
-            }
+
+            m_ErrMsg = "Directory " + TestDir + " not found";
+            return false;
         }
 
         private bool VerifyDtaCreation(string strDTATextFilePath)
@@ -759,10 +757,8 @@ namespace MSMSSpectrumFilterAM
                 m_ErrMsg = "No dta files remain after filtering";
                 return false;
             }
-            else
-            {
-                return true;
-            }
+
+            return true;
         }
 
         protected virtual bool VerifyFileExists(string TestFile)
@@ -773,11 +769,9 @@ namespace MSMSSpectrumFilterAM
                 m_ErrMsg = "";
                 return true;
             }
-            else
-            {
-                m_ErrMsg = "File " + TestFile + " not found";
-                return false;
-            }
+
+            m_ErrMsg = "File " + TestFile + " not found";
+            return false;
         }
 
         /// <summary>

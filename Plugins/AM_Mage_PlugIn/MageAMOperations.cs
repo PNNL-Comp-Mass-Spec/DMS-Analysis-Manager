@@ -197,27 +197,26 @@ namespace AnalysisManager_Mage_PlugIn
                 throw new DirectoryNotFoundException("Folder specified by job parameter DataPackageSourceFolderName does not exist: " + inputFolderPath);
 
             var lstInputFolderFiles = diInputFolder.GetFiles().ToList();
+
             if (lstInputFolderFiles.Count == 0)
                 throw new DirectoryNotFoundException("DataPackageSourceFolderName is empty (should typically be ImportFiles and it should have a file named T_alias.txt): " + inputFolderPath);
-            else
+
+            var lstMatchingFiles = (from item in lstInputFolderFiles
+                                    where item.Name.ToLower() == "t_alias.txt"
+                                    select item).ToList();
+
+            if (lstMatchingFiles.Count == 0)
             {
-                var lstMatchingFiles = (from item in lstInputFolderFiles
-                                        where item.Name.ToLower() == "t_alias.txt"
-                                        select item).ToList();
-
-                if (lstMatchingFiles.Count == 0)
+                var analysisType = _jobParams.GetJobParameter("AnalysisType", string.Empty);
+                if (analysisType.IndexOf("iTRAQ", System.StringComparison.OrdinalIgnoreCase) >= 0)
                 {
-                    var analysisType = _jobParams.GetJobParameter("AnalysisType", string.Empty);
-                    if (analysisType.IndexOf("iTRAQ", System.StringComparison.OrdinalIgnoreCase) >= 0)
-                    {
-                        throw new System.Exception("File T_alias.txt was not found in " + inputFolderPath + "; this file is required because this is an iTRAQ analysis");
-                    }
-
-                    const string msg = "File T_alias.txt was not found in the DataPackageSourceFolderName folder; this may result in a failure during Ape processing";
-                    var msgVerbose = msg + ": " + inputFolderPath;
-                    AppendToWarningMessage(msg, msgVerbose);
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msgVerbose);
+                    throw new System.Exception("File T_alias.txt was not found in " + inputFolderPath + "; this file is required because this is an iTRAQ analysis");
                 }
+
+                const string msg = "File T_alias.txt was not found in the DataPackageSourceFolderName folder; this may result in a failure during Ape processing";
+                var msgVerbose = msg + ": " + inputFolderPath;
+                AppendToWarningMessage(msg, msgVerbose);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msgVerbose);
             }
 
             GetPriorStepResults();

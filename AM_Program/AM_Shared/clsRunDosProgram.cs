@@ -463,25 +463,27 @@ namespace AnalysisManagerBase
                         }
                     }
 
-                    if (ProgramAborted)
-                    {
-                        if (m_AbortProgramPostLogEntry && !abortLogged)
-                        {
-                            abortLogged = true;
-                            string msg;
-                            if (runtimeExceeded)
-                            {
-                                msg = "  Aborting ProgRunner for " + progName + " since " + MaxRuntimeSeconds + " seconds has elapsed";
-                            }
-                            else
-                            {
-                                msg = "  Aborting ProgRunner for " + progName + " since AbortProgramNow() was called";
-                            }
+                    if (!ProgramAborted)
+                        continue;
 
-                            OnErrorEvent(msg);
+                    if (m_AbortProgramPostLogEntry && !abortLogged)
+                    {
+                        abortLogged = true;
+                        string msg;
+                        if (runtimeExceeded)
+                        {
+                            msg = "  Aborting ProgRunner for " + progName + " since " + MaxRuntimeSeconds + " seconds has elapsed";
                         }
-                        m_ProgRunner.StopMonitoringProgram(kill: true);
+                        else
+                        {
+                            msg = "  Aborting ProgRunner for " + progName + " since AbortProgramNow() was called";
+                        }
+
+                        OnErrorEvent(msg);
                     }
+
+                    m_ProgRunner.StopMonitoringProgram(kill: true);
+
                 } // end while
 
                 clsGlobal.ProcessInfo.ClearCachedPerformanceCounterForProcessID(cachedProcessID);

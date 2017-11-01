@@ -166,7 +166,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public void AddDataset(string datasetName)
         {
-            if ((!m_MyEMSLDatasetListInfo.ContainsDataset(datasetName)))
+            if (!m_MyEMSLDatasetListInfo.ContainsDataset(datasetName))
             {
                 m_MyEMSLDatasetListInfo.AddDataset(datasetName);
             }
@@ -193,33 +193,31 @@ namespace AnalysisManagerBase
 
             var myEMSLFileID = DatasetInfoBase.ExtractMyEMSLFileID(encodedFilePath);
 
-            if (myEMSLFileID > 0)
+            if (myEMSLFileID <= 0)
             {
-
-                if (!GetCachedArchivedFileInfo(myEMSLFileID, out var matchingFileInfo))
-                {
-                    // File not found in m_RecentlyFoundMyEMSLFiles
-                    // Instead check m_AllFoundMyEMSLFiles
-
-                    var fileInfoQuery = (from item in m_AllFoundMyEMSLFiles where item.FileID == myEMSLFileID select item.FileInfo).ToList();
-
-                    if (fileInfoQuery.Count == 0)
-                    {
-                        OnErrorEvent("Cached ArchiveFileInfo does not contain MyEMSL File ID " + myEMSLFileID);
-                        return false;
-                    }
-
-                    matchingFileInfo = fileInfoQuery.First();
-                }
-
-                AddDataset(matchingFileInfo.Dataset);
-                m_MyEMSLDatasetListInfo.AddFileToDownloadQueue(matchingFileInfo, unzipRequired);
-                return true;
-
+                OnErrorEvent("MyEMSL File ID not found in path: " + encodedFilePath);
+                return false;
             }
 
-            OnErrorEvent("MyEMSL File ID not found in path: " + encodedFilePath);
-            return false;
+            if (!GetCachedArchivedFileInfo(myEMSLFileID, out var matchingFileInfo))
+            {
+                // File not found in m_RecentlyFoundMyEMSLFiles
+                // Instead check m_AllFoundMyEMSLFiles
+
+                var fileInfoQuery = (from item in m_AllFoundMyEMSLFiles where item.FileID == myEMSLFileID select item.FileInfo).ToList();
+
+                if (fileInfoQuery.Count == 0)
+                {
+                    OnErrorEvent("Cached ArchiveFileInfo does not contain MyEMSL File ID " + myEMSLFileID);
+                    return false;
+                }
+
+                matchingFileInfo = fileInfoQuery.First();
+            }
+
+            AddDataset(matchingFileInfo.Dataset);
+            m_MyEMSLDatasetListInfo.AddFileToDownloadQueue(matchingFileInfo, unzipRequired);
+            return true;
         }
 
         /// <summary>
