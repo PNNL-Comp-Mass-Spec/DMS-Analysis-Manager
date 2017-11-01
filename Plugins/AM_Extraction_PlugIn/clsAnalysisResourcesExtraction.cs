@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using AnalysisManagerBase;
+using AnalysisManagerMSGFDBPlugIn;
 using PHRPReader;
 
 namespace AnalysisManagerExtractionPlugin
@@ -513,6 +514,12 @@ namespace AnalysisManagerExtractionPlugin
                             return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                         }
                         m_jobParams.AddResultFileToSkip(mzidFile);
+
+                        // Also retrieve the ConsoleOutput file; the command line used to call the MzidToTsvConverter.exe will be appended to this file
+                        // This file is not critical, so pass false to logFileNotFound
+                        FileSearch.FindAndRetrieveMiscFiles(MSGFPlusUtils.MSGFPLUS_CONSOLE_OUTPUT_FILE, unzip: false,
+                                                            searchArchivedDatasetFolder: true, logFileNotFound: false);
+
                     }
 
                     // Manually add several files to skip
