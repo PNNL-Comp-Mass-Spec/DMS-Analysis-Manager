@@ -108,10 +108,16 @@ namespace AnalysisManagerResultsXferPlugin
         private void DeleteTransferFolderIfEmpty()
         {
 
+            var transferFolderPath = m_jobParams.GetParam("transferFolderPath");
+            if (string.IsNullOrWhiteSpace(transferFolderPath))
+            {
+                LogError("Job parameter transferFolderPath is empty or not defined");
+                return;
+            }
 
             try
             {
-                var diTransferFolder = new DirectoryInfo(Path.Combine(m_jobParams.GetParam("transferFolderPath"), m_Dataset));
+                var diTransferFolder = new DirectoryInfo(Path.Combine(transferFolderPath, m_Dataset));
 
                 if (diTransferFolder.Exists && diTransferFolder.GetFileSystemInfos("*", SearchOption.AllDirectories).Length == 0)
                 {
@@ -129,8 +135,10 @@ namespace AnalysisManagerResultsXferPlugin
                     {
                         // Log this exception, but don't treat it is a job failure
                         var msg = "clsResultXferToolRunner.RunTool(); Exception deleting dataset folder " + m_jobParams.GetParam("DatasetFolderName") +
-                                  " in xfer folder(another results manager may have deleted it): " + ex.Message;
+                                  " in xfer folder (another results manager may have deleted it): " + ex.Message;
                         LogWarning(msg);
+
+                        UpdateEvalCode(0, "Exception deleting dataset folder in xfer folder: " + ex.Message + "; " + diTransferFolder.FullName);
                     }
                 }
                 else
@@ -147,6 +155,8 @@ namespace AnalysisManagerResultsXferPlugin
                 var msg = "clsResultXferToolRunner.RunTool(); Exception looking for dataset folder " + m_jobParams.GetParam("DatasetFolderName") +
                           " in xfer folder (another results manager may have deleted it): " + ex.Message;
                 LogWarning(msg);
+
+                UpdateEvalCode(0, "Exception looking for dataset folder in xfer folder " + ex.Message + "; " + transferFolderPath);
             }
         }
 
