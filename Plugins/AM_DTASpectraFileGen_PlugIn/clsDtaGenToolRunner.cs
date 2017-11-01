@@ -833,8 +833,8 @@ namespace DTASpectraFileGen
 
                 if (intSpectrumCountSkipped > 0)
                 {
-                    m_EvalMessage = "Skipped " + intSpectrumCountSkipped + " spectra in MergeCDTAs since they were not created by MSConvert";
-                    LogWarning(m_EvalMessage);
+                    var msg = "Skipped " + intSpectrumCountSkipped + " spectra in MergeCDTAs since they were not created by MSConvert";
+                    LogWarning(msg, true);
                 }
             }
             catch (Exception ex)

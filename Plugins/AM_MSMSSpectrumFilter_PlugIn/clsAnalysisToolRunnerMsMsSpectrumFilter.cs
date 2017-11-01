@@ -101,7 +101,7 @@ namespace MSMSSpectrumFilterAM
             if (m_Results == ProcessResults.SF_NO_SPECTRA_ALTERED)
             {
                 result = CloseOutType.CLOSEOUT_SUCCESS;
-                m_EvalMessage = "Filtered CDTA file is identical to the original file and was thus not copied to the job results folder";
+                LogWarning("Filtered CDTA file is identical to the original file and was thus not copied to the job results folder", true);
             }
             else
             {
@@ -713,26 +713,10 @@ namespace MSMSSpectrumFilterAM
             return true;
         }
 
-        private void LogErrors(string strSource, string strMessage, Exception ex, bool blnLogLocalOnly = true)
+        private void LogErrors(string source, string message, Exception ex = null)
         {
-            m_ErrMsg = string.Copy(strMessage).Replace("\n", "; ").Replace("\r", "");
-
-            if (ex == null)
-            {
-                ex = new Exception("Error");
-            }
-            else
-            {
-                if (!string.IsNullOrEmpty(ex.Message))
-                {
-                    m_ErrMsg += "; " + ex.Message;
-                }
-            }
-
-            Trace.WriteLine(DateTime.Now.ToLongTimeString() + "; " + m_ErrMsg, strSource);
-            Console.WriteLine(DateTime.Now.ToLongTimeString() + "; " + m_ErrMsg, strSource);
-
-            LogError(m_ErrMsg + ex.Message);
+            m_ErrMsg = message.Replace("\n", "; ").Replace("\r", "");
+            LogError(source + ": " + m_ErrMsg, ex);
         }
 
         /// <summary>

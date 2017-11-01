@@ -172,8 +172,8 @@ namespace AnalysisManagerResultsCleanupPlugin
 
                     m_EvalMessage = "Deleted " + intFileCountDeleted + " extra " + RESULTS_DB3_FILE + " " +
                                     clsGlobal.CheckPlural(intFileCountDeleted, "file", "files");
-                    LogMessage(
-                        m_EvalMessage + " from " + diResultsFolder.FullName);
+
+                    LogMessage(m_EvalMessage + " from " + diResultsFolder.FullName);
                 }
                 else if (dctResultsFiles.Count == 1)
                 {
@@ -184,8 +184,7 @@ namespace AnalysisManagerResultsCleanupPlugin
                 {
                     if (intStepFolderCount > 0)
                     {
-                        m_EvalMessage = "None of the Step_# folders has a " + RESULTS_DB3_FILE + " file";
-                        LogWarning(m_EvalMessage);
+                        LogWarning("None of the Step_# folders has a " + RESULTS_DB3_FILE + " file", true);
                     }
                     else
                     {

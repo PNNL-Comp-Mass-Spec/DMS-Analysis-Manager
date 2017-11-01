@@ -2724,8 +2724,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
             catch (Exception ex)
             {
-                const string msg = "Exception in LookupScanTypersForDataset";
-                OnErrorEvent(msg, ex);
+                OnErrorEvent("Exception in LookupScanTypersForDataset", ex);
                 return false;
             }
         }

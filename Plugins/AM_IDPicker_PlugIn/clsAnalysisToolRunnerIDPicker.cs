@@ -168,8 +168,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 if (!skipIDPicker && blnSplitFasta)
                 {
                     skipIDPicker = true;
-                    m_EvalMessage = "SplitFasta jobs typically have fasta files too large for IDPQonvert; skipping IDPicker";
-                    LogWarning(m_EvalMessage);
+                    LogWarning("SplitFasta jobs typically have fasta files too large for IDPQonvert; skipping IDPicker", true);
                 }
 
                 // Store the version of IDPicker and PeptideListToXML in the database
@@ -334,8 +333,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
             if (string.IsNullOrEmpty(strDecoyPrefix))
             {
-                m_EvalMessage = "No decoy proteins; skipping IDPicker";
-                LogWarning(m_EvalMessage);
+                LogWarning("No decoy proteins; skipping IDPicker", true);
                 return true;
             }
 

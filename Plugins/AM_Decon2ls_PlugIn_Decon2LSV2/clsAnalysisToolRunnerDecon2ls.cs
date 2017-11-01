@@ -170,8 +170,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                     // Raise an error if it should have had data
                     if (blnWritePeaksToTextFile)
                     {
-                        m_EvalMessage = "Warning: no results in DeconTools Peaks.txt file";
-                        LogWarning(m_EvalMessage);
+                        LogWarning("Warning: no results in DeconTools Peaks.txt file", true);
                     }
                     else
                     {

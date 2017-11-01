@@ -86,24 +86,21 @@ namespace AnalysisManagerXTandemPlugIn
             var success = CopyFileToWorkDir("taxonomy_base.xml", m_jobParams.GetParam("ParmFileStoragePath"), m_WorkingDir);
             if (!success)
             {
-                const string Msg = "clsAnalysisResourcesXT.GetResources(), failed retrieving taxonomy_base.xml file.";
-                LogError(Msg);
+                LogError("clsAnalysisResourcesXT.GetResources(), failed retrieving taxonomy_base.xml file");
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
             success = CopyFileToWorkDir("input_base.txt", m_jobParams.GetParam("ParmFileStoragePath"), m_WorkingDir);
             if (!success)
             {
-                const string Msg = "clsAnalysisResourcesXT.GetResources(), failed retrieving input_base.xml file.";
-                LogError(Msg);
+                LogError("clsAnalysisResourcesXT.GetResources(), failed retrieving input_base.xml file");
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
             success = CopyFileToWorkDir("default_input.xml", m_jobParams.GetParam("ParmFileStoragePath"), m_WorkingDir);
             if (!success)
             {
-                const string Msg = "clsAnalysisResourcesXT.GetResources(), failed retrieving default_input.xml file.";
-                LogError(Msg);
+                LogError("clsAnalysisResourcesXT.GetResources(), failed retrieving default_input.xml file");
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -116,8 +113,7 @@ namespace AnalysisManagerXTandemPlugIn
             success = MakeTaxonomyFile();
             if (!success)
             {
-                const string Msg = "clsAnalysisResourcesXT.GetResources(), failed making taxonomy file.";
-                LogError(Msg);
+                LogError("clsAnalysisResourcesXT.GetResources(), failed making taxonomy file");
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -125,8 +121,7 @@ namespace AnalysisManagerXTandemPlugIn
             success = MakeInputFile();
             if (!success)
             {
-                const string Msg = "clsAnalysisResourcesXT.GetResources(), failed making input file.";
-                LogError(Msg);
+                LogError("clsAnalysisResourcesXT.GetResources(), failed making input file");
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 

@@ -233,8 +233,7 @@ namespace AnalysisManagerExtractionPlugin
 
             if (!CopyFileToWorkDir("default_input.xml", m_jobParams.GetParam("ParmFileStoragePath"), m_WorkingDir))
             {
-                const string Msg = "Failed retrieving default_input.xml file.";
-                LogError(Msg);
+                LogError("Failed retrieving default_input.xml file");
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
             }
 

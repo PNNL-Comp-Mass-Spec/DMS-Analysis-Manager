@@ -483,9 +483,9 @@ namespace AnalysisManagerSequestPlugin
                                 // Just a handful of DTA files remain; assume they're corrupt
                                 var diWorkDir = new DirectoryInfo(m_WorkDir);
 
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
-                                    "Sequest is stalled, and " + intDTAsRemaining + " .DTA file" + CheckForPlurality(intDTAsRemaining) +
-                                    " remain; assuming they are corrupt and deleting them");
+                                LogWarning("Sequest is stalled, and " + intDTAsRemaining + " .DTA file" + CheckForPlurality(intDTAsRemaining) + " remain; " +
+                                           "assuming they are corrupt and deleting them");
+
                                 m_EvalMessage = "Sequest is stalled, but only " + intDTAsRemaining + " .DTA file" +
                                                 CheckForPlurality(intDTAsRemaining) + " remain";
 

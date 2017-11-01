@@ -452,14 +452,11 @@ namespace AnalysisManagerMODPlusPlugin
                     if (attributeCollection?["msms"] != null)
                     {
                         attributeCollection["msms"].Value = instrumentResolutionMsMs;
-                        m_EvalMessage = clsGlobal.AppendToComment(m_EvalMessage, "Auto-switched to low resolution mode for MS/MS data");
-                        LogWarning(m_EvalMessage);
+                        LogWarning("Auto-switched to low resolution mode for MS/MS data", true);
                     }
                     else
                     {
-                        m_EvalMessage = clsGlobal.AppendToComment(
-                            m_EvalMessage, "Unable to auto-switch to low resolution mode for MS/MS data; attribute not found");
-                        LogWarning(m_EvalMessage);
+                        LogWarning("Unable to auto-switch to low resolution mode for MS/MS data; attribute not found", true);
                     }
                 }
             }

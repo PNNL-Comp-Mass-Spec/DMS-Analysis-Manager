@@ -361,11 +361,11 @@ namespace AnalysisManagerExtractionPlugin
 
                     if (!string.IsNullOrEmpty(bestPrefix.Value) && bestPrefix.Value != decoyPrefixJobParam)
                     {
-                        m_EvalMessage = "Using decoy prefix " + bestPrefix.Value + " instead of " + decoyPrefixJobParam +
-                                        " as defined by job parameter MODPlusDecoyPrefix because " + (bestPrefix.Key * 100).ToString("0") +
-                                        "% of the proteins start with " + bestPrefix.Value;
+                        var msg = string.Format("Using decoy prefix {0} instead of {1} as defined by job parameter MODPlusDecoyPrefix " +
+                                                "because {2:F1}% of the proteins start with {0}",
+                                                bestPrefix.Value, decoyPrefixJobParam, bestPrefix.Key * 100);
 
-                        LogMessage(m_EvalMessage);
+                        LogWarning(msg, true);
 
                         decoyPrefixJobParam = bestPrefix.Value;
                     }

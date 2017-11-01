@@ -53,8 +53,7 @@ namespace AnalysisManagerOMSSAPlugIn
             var success = ConvertOMSSAFastaFile();
             if (!success)
             {
-                const string msg = "clsAnalysisResourcesOM.GetResources(), failed converting fasta file to OMSSA format.";
-                LogError(msg);
+                LogError("clsAnalysisResourcesOM.GetResources(), failed converting fasta file to OMSSA format");
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -78,8 +77,7 @@ namespace AnalysisManagerOMSSAPlugIn
             success = ConvertDtaToXml();
             if (!success)
             {
-                const string Msg = "clsAnalysisResourcesOM.GetResources(), failed converting dta file to xml format.";
-                LogError(Msg);
+                LogError("clsAnalysisResourcesOM.GetResources(), failed converting dta file to xml format");
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 

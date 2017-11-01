@@ -635,8 +635,7 @@ namespace AnalysisManagerNOMSIPlugin
                 if (string.IsNullOrWhiteSpace(targetsFileName))
                 {
                     // Leave the parameter file unchanged
-                    m_EvalMessage = "Warning: targets file was empty; parameter file used as-is";
-                    LogWarning(m_EvalMessage);
+                    LogWarning("Warning: targets file was empty; parameter file used as-is", true);
                     return true;
                 }
 

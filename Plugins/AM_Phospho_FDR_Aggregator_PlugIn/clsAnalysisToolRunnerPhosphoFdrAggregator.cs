@@ -192,11 +192,8 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
                 if (!fiMsgfFile.Exists)
                 {
-                    var warningMessage = "MSGF file not found for job " + jobNumber;
-                    m_EvalMessage = clsGlobal.AppendToComment(m_EvalMessage, warningMessage);
-
-                    warningMessage += "; cannot add MSGF_SpecProb values to the " + fileTypeTag + " file; " + fiMsgfFile.FullName;
-                    LogWarning(warningMessage);
+                    LogWarning("MSGF file not found for job " + jobNumber, true);
+                    LogWarning("Cannot add MSGF_SpecProb values to the " + fileTypeTag + " file; " + fiMsgfFile.FullName);
                     return true;
                 }
 
