@@ -545,7 +545,7 @@ namespace AnalysisManagerProg
                     // Re-initialize these utilities for each analysis job
                     // Note that when RetrieveResources is called, the MyEMSL certificate file (svc-dms.pfx) will be verified to exist
                     // (via GetSharedResources calling CertificateFileExists)
-                    m_MyEMSLUtilities = new clsMyEMSLUtilities(m_DebugLevel, m_WorkDirPath);
+                    m_MyEMSLUtilities = new clsMyEMSLUtilities(m_DebugLevel, m_WorkDirPath, TraceMode);
                     RegisterEvents(m_MyEMSLUtilities);
 
                     // Get an analysis job, if any are available
@@ -903,6 +903,7 @@ namespace AnalysisManagerProg
                 else
                 {
                     success = RunJobLocally(toolRunner, jobNum, datasetName, out eToolRunnerResult);
+
                     // Note: if success is false, RunJobLocally will have already called .CloseTask
 
                     jobSucceeded = success;

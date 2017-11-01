@@ -279,7 +279,7 @@ namespace AnalysisManagerProg
 
             var objSummaryFile = new clsSummaryFile();
 
-            myEMSLUtilities = new clsMyEMSLUtilities(DEBUG_LEVEL, GetWorkDirPath());
+            myEMSLUtilities = new clsMyEMSLUtilities(DEBUG_LEVEL, GetWorkDirPath(), true);
             RegisterEvents(myEMSLUtilities);
 
             var objToolRunner = new clsCodeTestAM();
@@ -302,7 +302,7 @@ namespace AnalysisManagerProg
             var statusTools = new clsStatusFile("Status.xml", debugLevel);
             RegisterEvents(statusTools);
 
-            var myEMSLUtilities = new clsMyEMSLUtilities(debugLevel, GetWorkDirPath());
+            var myEMSLUtilities = new clsMyEMSLUtilities(debugLevel, GetWorkDirPath(), true);
             RegisterEvents(myEMSLUtilities);
 
             m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_WORK_DIR, GetWorkDirPath());
@@ -764,7 +764,7 @@ namespace AnalysisManagerProg
             var statusTools = new clsStatusFile("Status.xml", debugLevel);
             RegisterEvents(statusTools);
 
-            var myEMSLUtilities = new clsMyEMSLUtilities(debugLevel, GetWorkDirPath());
+            var myEMSLUtilities = new clsMyEMSLUtilities(debugLevel, GetWorkDirPath(), true);
             RegisterEvents(myEMSLUtilities);
 
             jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetNum", "QC_05_2_05Dec05_Doc_0508-08");

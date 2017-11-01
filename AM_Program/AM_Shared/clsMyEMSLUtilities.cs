@@ -22,6 +22,7 @@ namespace AnalysisManagerBase
         private const string DATETIME_FORMAT_NO_SECONDS = "yyyy-MM-dd hh:mm tt";
 
         private readonly clsDotNetZipTools m_DotNetZipTools;
+
         private readonly DatasetListInfo m_MyEMSLDatasetListInfo;
 
         private readonly List<DatasetFolderOrFileInfo> m_AllFoundMyEMSLFiles;
@@ -101,10 +102,17 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="debugLevel">Debug level (higher number means more messages)</param>
         /// <param name="workingDir">Working directory path</param>
+        /// <param name="traceMode">Set to true to show additional debug messages</param>
         /// <remarks></remarks>
-        public clsMyEMSLUtilities(int debugLevel, string workingDir)
+        public clsMyEMSLUtilities(int debugLevel, string workingDir, bool traceMode = false)
         {
-            m_MyEMSLDatasetListInfo = new DatasetListInfo();
+            m_MyEMSLDatasetListInfo = new DatasetListInfo
+            {
+                ReportMetadataURLs = traceMode || debugLevel >= 2,
+                ThrowErrors = true,
+                TraceMode = traceMode
+            };
+
             RegisterEvents(m_MyEMSLDatasetListInfo);
 
             // Use a custom progress update handler
