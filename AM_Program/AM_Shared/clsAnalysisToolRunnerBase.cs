@@ -878,6 +878,11 @@ namespace AnalysisManagerBase
 
             if (errorEncountered)
             {
+                // Message will be of the form
+                // Error copying 1 file to transfer folder
+                // or
+                // Error copying 3 files to transfer folder
+
                 var msg = "Error copying " + failedFileCount +
                     clsGlobal.CheckPlural(failedFileCount, " file", " files") +
                     " to transfer folder";
@@ -3045,6 +3050,7 @@ namespace AnalysisManagerBase
 
             m_Dataset = diTransferFolder.Name;
 
+            // ReSharper disable once JoinNullCheckWithUsage
             if (diTransferFolder.Parent == null)
             {
                 throw new DirectoryNotFoundException("Unable to determine the parent folder of " + diTransferFolder.FullName);

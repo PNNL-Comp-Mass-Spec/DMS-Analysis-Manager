@@ -30,8 +30,9 @@ namespace MSMSSpectrumFilterAM
         private readonly clsMsMsSpectrumFilter m_MsMsSpectrumFilter;
 
         private string m_ErrMsg = string.Empty;
-        // Handy place to store value so repeated calls to m_JobParams aren't required
+
         private string m_SettingsFileName = string.Empty;
+
         private ProcessResults m_Results;
 
         private string m_DTATextFileName = string.Empty;

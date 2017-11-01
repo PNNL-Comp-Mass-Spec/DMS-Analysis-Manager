@@ -22,14 +22,18 @@ namespace AnalysisManagerBase
 
         #region "Module variables"
 
-        // msec
+        /// <summary>
+        /// Monitor interval, in milliseconds
+        /// </summary>
         private int m_MonitorInterval = 2000;
 
         private string m_CachedConsoleErrors = string.Empty;
 
         private bool m_AbortProgramPostLogEntry;
 
-        // Runs specified program
+        /// <summary>
+        /// Program runner
+        /// </summary>
         private clsProgRunner m_ProgRunner;
 
         #endregion

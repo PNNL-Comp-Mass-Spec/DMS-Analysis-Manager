@@ -47,6 +47,9 @@ namespace AnalysisManagerBase
         /// </summary>
         protected const string SP_NAME_SET_COMPLETE = "SetStepTaskComplete";
 
+        /// <summary>
+        /// Stored procedure the manager calls to indicate that a deadlock occurred, and this manager was not assigned a job
+        /// </summary>
         private const string SP_NAME_REPORT_IDLE = "ReportManagerIdle";
 
         /// <summary>
@@ -1495,9 +1498,9 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Call stored procedure ReportManagerIdle to make sure that
-        /// the database didn't actually assign a job to this manager
+        /// Call stored procedure ReportManagerIdle to inform the database that this manager did not receive a job
         /// </summary>
+        /// <remarks>This is used when a Deadlock occurs while requesting a job</remarks>
         private void ReportManagerIdle()
         {
             if (clsGlobal.OfflineMode)

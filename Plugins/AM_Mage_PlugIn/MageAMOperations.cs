@@ -6,7 +6,7 @@ namespace AnalysisManager_Mage_PlugIn
 {
 
     /// <summary>
-    /// Class that defines Mac Mage operations that can be selected by the 
+    /// Class that defines Mac Mage operations that can be selected by the
     /// "MageOperations" parameter
     /// </summary>
     public class MageAMOperations
@@ -134,7 +134,7 @@ namespace AnalysisManager_Mage_PlugIn
 
         /// <summary>
         /// Import factors for set of datasets referenced by analysis jobs in data package
-        /// to table in the SQLite step results database (in crosstab format). 
+        /// to table in the SQLite step results database (in crosstab format).
         /// </summary>
         /// <returns></returns>
         private bool GetFactors()
@@ -160,7 +160,7 @@ namespace AnalysisManager_Mage_PlugIn
         }
 
         /// <summary>
-        /// Import contents of set of master FDR template files (set members defined by job parameters) 
+        /// Import contents of set of master FDR template files (set members defined by job parameters)
         /// to tables in the SQLite step results database.
         /// </summary>
         /// <returns></returns>
@@ -176,7 +176,7 @@ namespace AnalysisManager_Mage_PlugIn
 
         /// <summary>
         /// Imports contents of files specified by job parameter "DataPackageSourceFolderName"
-        /// to tables in the SQLite step results database.  
+        /// to tables in the SQLite step results database.
         /// </summary>
         /// <returns></returns>
         private bool ImportDataPackageFiles()
@@ -244,7 +244,7 @@ namespace AnalysisManager_Mage_PlugIn
 
         /// <summary>
         /// Import contents of reporter ion results files for MASIC jobs in data package
-        /// into a table in the SQLite step results database. 
+        /// into a table in the SQLite step results database.
         /// </summary>
         /// <returns></returns>
         private bool ImportReporterIons()
@@ -273,7 +273,7 @@ namespace AnalysisManager_Mage_PlugIn
         }
 
         /// <summary>
-        /// Import list of .raw files (full paths) for for datasets for sequest jobs in data package 
+        /// Import list of .raw files (full paths) for for datasets for sequest jobs in data package
         /// into a table in the SQLite step results database
         /// </summary>
         /// <returns></returns>
