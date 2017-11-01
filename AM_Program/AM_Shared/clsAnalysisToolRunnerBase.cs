@@ -470,7 +470,6 @@ namespace AnalysisManagerBase
 
             LogWarning("Processing interrupted; copying results to archive folder: " + failedResultsFolderPath);
 
-
             // Bump up the debug level if less than 2
             if (m_DebugLevel < 2)
                 m_DebugLevel = 2;
@@ -985,9 +984,10 @@ namespace AnalysisManagerBase
 
             foreach (var fileToCopy in resultFiles)
             {
-                var sourceFileName = Path.GetFileName(fileToCopy);
-                if (sourceFileName == null)
+                if (string.IsNullOrWhiteSpace(fileToCopy))
                     continue;
+
+                var sourceFileName = Path.GetFileName(fileToCopy);
 
                 var targetPath = Path.Combine(targetDirectoryPath, sourceFileName);
 
