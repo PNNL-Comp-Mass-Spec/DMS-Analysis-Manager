@@ -115,6 +115,7 @@ namespace AnalysisManagerBase
         #endregion
 
         #region "Methods"
+
         /// <summary>
         /// Appends a string to a job comment string
         /// </summary>

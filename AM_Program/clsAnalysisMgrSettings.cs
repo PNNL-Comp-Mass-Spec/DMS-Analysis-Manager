@@ -76,7 +76,7 @@ namespace AnalysisManagerProg
         public const string MGR_PARAM_USING_DEFAULTS = "UsingDefaults";
 
         /// <summary>
-        /// Manager parameter: DMS connection string
+        /// Connection string to DMS5
         /// </summary>
         public const string MGR_PARAM_DEFAULT_DMS_CONN_STRING = "DefaultDMSConnString";
 
@@ -114,7 +114,7 @@ namespace AnalysisManagerProg
 
         #endregion
 
-        #region "Module variables"
+        #region "Class variables"
 
         private const string SP_NAME_ACKMANAGERUPDATE = "AckManagerUpdateRequired";
 
@@ -177,7 +177,7 @@ namespace AnalysisManagerProg
                 myConnection.Open();
 
                 // Set up the command object prior to SP execution
-                var cmd = new SqlCommand(SP_NAME_ACKMANAGERUPDATE, myConnection) {CommandType = CommandType.StoredProcedure};
+                var cmd = new SqlCommand(SP_NAME_ACKMANAGERUPDATE, myConnection) { CommandType = CommandType.StoredProcedure };
 
                 cmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
                 cmd.Parameters.Add(new SqlParameter("@managerName", SqlDbType.VarChar, 128)).Value = ManagerName;
@@ -381,11 +381,10 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Gets manager config settings from manager control DB (Manager_Control)
         /// </summary>
-        /// <returns>True for success; False for error</returns>
-        /// <remarks></remarks>
+        /// <returns>True if success, otherwise false</returns>
+        /// <remarks>Performs retries if necessary.</remarks>
         private bool LoadMgrSettingsFromDB()
         {
-            // Requests manager specific settings from database. Performs retries if necessary.
 
             var managerName = ManagerName;
 
@@ -406,6 +405,7 @@ namespace AnalysisManagerProg
             }
 
             success = StoreParameters(dtSettings, skipExistingParameters: false, managerName: managerName);
+
             if (!success)
                 return false;
 
@@ -463,7 +463,7 @@ namespace AnalysisManagerProg
                 // Log the message to the DB if the monthly Windows updates are not pending
                 var allowLogToDB = !clsWindowsUpdateStatus.ServerUpdatesArePending();
 
-                mErrMsg = "IMgrParams.LoadMgrSettingsFromDBWork; Excessive failures attempting to retrieve manager settings from database " +
+                mErrMsg = "LoadMgrSettingsFromDBWork; Excessive failures attempting to retrieve manager settings from database " +
                           "for manager '" + managerName + "'";
                 WriteErrorMsg(mErrMsg, allowLogToDB);
 
@@ -475,7 +475,7 @@ namespace AnalysisManagerProg
             if (dtSettings.Rows.Count < 1 && returnErrorIfNoParameters)
             {
                 // No data was returned
-                mErrMsg = "IMgrParams.LoadMgrSettingsFromDBWork; Manager '" + managerName + "' not defined in the manager control database; using " + connectionString;
+                mErrMsg = "LoadMgrSettingsFromDBWork; Manager '" + managerName + "' not defined in the manager control database; using " + connectionString;
                 WriteErrorMsg(mErrMsg);
                 dtSettings.Dispose();
                 return false;
@@ -680,8 +680,8 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                mErrMsg = "clsAnalysisMgrSettings.StoreParameters; Exception filling string dictionary from table for manager '" + managerName + "': " +
-                          ex.Message;
+                mErrMsg = "clsAnalysisMgrSettings.StoreParameters; Exception filling string dictionary from table for manager " +
+                          "'" + managerName + "': " + ex.Message;
                 WriteErrorMsg(mErrMsg);
                 success = false;
             }
@@ -982,7 +982,7 @@ namespace AnalysisManagerProg
             try
             {
                 // Select the element containing the value for the specified key containing the key
-                var myElement = (XmlElement) myNode.SelectSingleNode(string.Format("// setting[@name='{0}']/value", key));
+                var myElement = (XmlElement)myNode.SelectSingleNode(string.Format("// setting[@name='{0}']/value", key));
                 if (myElement != null)
                 {
                     // Set key to specified value
@@ -1074,9 +1074,9 @@ namespace AnalysisManagerProg
         {
             try
             {
-                var myDoc = new XmlDocument();
-                myDoc.Load(GetConfigFilePath());
-                return myDoc;
+                var doc = new XmlDocument();
+                doc.Load(GetConfigFilePath());
+                return doc;
             }
             catch (Exception ex)
             {
@@ -1089,7 +1089,6 @@ namespace AnalysisManagerProg
         /// Specifies the full name and path for the application config file
         /// </summary>
         /// <returns>String containing full name and path</returns>
-        /// <remarks></remarks>
         private string GetConfigFilePath()
         {
             var exeName = Path.GetFileName(Assembly.GetExecutingAssembly().Location);
