@@ -386,7 +386,7 @@ namespace AnalysisManagerProg
         private bool LoadMgrSettingsFromDB()
         {
 
-            var managerName = ManagerName;
+            var managerName = GetParam(MGR_PARAM_MGR_NAME, string.Empty);
 
             if (string.IsNullOrEmpty(managerName))
             {
@@ -423,7 +423,7 @@ namespace AnalysisManagerProg
 
                 if (success)
                 {
-                    success = StoreParameters(dtSettings, skipExistingParameters: true, managerName: managerName);
+                    success = StoreParameters(dtSettings, skipExistingParameters: true, managerName: mgrSettingsGroup);
                 }
             }
 
