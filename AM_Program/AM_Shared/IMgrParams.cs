@@ -26,6 +26,11 @@ namespace AnalysisManagerBase
         /// </summary>
         string ManagerName { get; }
 
+        /// <summary>
+        /// True when TraceMode has been enabled at the command line via /trace
+        /// </summary>
+        bool TraceMode { get; }
+
         #endregion
 
         #region "Methods"

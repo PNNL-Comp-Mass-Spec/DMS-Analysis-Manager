@@ -125,7 +125,6 @@ namespace AnalysisManagerProg
         private readonly string mEmergencyLogName;
 
         private readonly string mMgrFolderPath;
-        private readonly bool mTraceMode;
 
         #endregion
 
@@ -140,6 +139,11 @@ namespace AnalysisManagerProg
         /// Manager name
         /// </summary>
         public string ManagerName => GetParam(MGR_PARAM_MGR_NAME, Environment.MachineName + "_Undefined-Manager");
+
+        /// <summary>
+        /// True when TraceMode has been enabled at the command line via /trace
+        /// </summary>
+        public bool TraceMode { get; }
 
         #endregion
 
@@ -166,7 +170,7 @@ namespace AnalysisManagerProg
                     return;
                 }
 
-                if (mTraceMode)
+                if (TraceMode)
                     ShowTraceMessage("AckManagerUpdateRequired using " + connectionString);
 
                 var myConnection = new SqlConnection(connectionString);
@@ -216,7 +220,7 @@ namespace AnalysisManagerProg
             mEmergencyLogName = emergencyLogName;
             mEmergencyLogSource = emergencyLogSource;
             mMgrFolderPath = mgrFolderPath;
-            mTraceMode = traceMode;
+            TraceMode = traceMode;
 
             mParamDictionary = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
@@ -230,9 +234,9 @@ namespace AnalysisManagerProg
                 throw new ApplicationException("Unable to initialize manager settings class: unknown error");
             }
 
-            if (mTraceMode)
+            if (TraceMode)
             {
-                ShowTraceMessage("Initialized clsAnalysisMgrSettings");
+                ShowTraceMessage("Initialized IMgrParams");
 
                 Console.ForegroundColor = ConsoleMsgUtils.DebugFontColor;
                 foreach (var key in from item in mParamDictionary.Keys orderby item select item)
@@ -389,7 +393,7 @@ namespace AnalysisManagerProg
             {
                 mErrMsg = "Manager parameter " + MGR_PARAM_MGR_NAME + " is missing from file AnalysisManagerProg.exe.config";
 
-                if (mTraceMode)
+                if (TraceMode)
                     LogError("Error in LoadMgrSettingsFromDB: " + mErrMsg);
 
                 return false;
@@ -438,14 +442,14 @@ namespace AnalysisManagerProg
                 mErrMsg = "MgrCnfgDbConnectStr parameter not found in m_ParamDictionary; " +
                           "it should be defined in the AnalysisManagerProg.exe.config file";
 
-                if (mTraceMode)
+                if (TraceMode)
                     ShowTraceMessage("LoadMgrSettingsFromDBWork: " + mErrMsg);
 
                 dtSettings = null;
                 return false;
             }
 
-            if (mTraceMode)
+            if (TraceMode)
                 ShowTraceMessage("LoadMgrSettingsFromDBWork using [" + connectionString + "] for manager " + managerName);
 
             var sqlStr = "SELECT ParameterName, ParameterValue FROM V_MgrParams WHERE ManagerName = '" + managerName + "'";
@@ -459,7 +463,7 @@ namespace AnalysisManagerProg
                 // Log the message to the DB if the monthly Windows updates are not pending
                 var allowLogToDB = !clsWindowsUpdateStatus.ServerUpdatesArePending();
 
-                mErrMsg = "clsAnalysisMgrSettings.LoadMgrSettingsFromDBWork; Excessive failures attempting to retrieve manager settings from database " +
+                mErrMsg = "IMgrParams.LoadMgrSettingsFromDBWork; Excessive failures attempting to retrieve manager settings from database " +
                           "for manager '" + managerName + "'";
                 WriteErrorMsg(mErrMsg, allowLogToDB);
 
@@ -471,7 +475,7 @@ namespace AnalysisManagerProg
             if (dtSettings.Rows.Count < 1 && returnErrorIfNoParameters)
             {
                 // No data was returned
-                mErrMsg = "clsAnalysisMgrSettings.LoadMgrSettingsFromDBWork; Manager '" + managerName + "' not defined in the manager control database; using " + connectionString;
+                mErrMsg = "IMgrParams.LoadMgrSettingsFromDBWork; Manager '" + managerName + "' not defined in the manager control database; using " + connectionString;
                 WriteErrorMsg(mErrMsg);
                 dtSettings.Dispose();
                 return false;
@@ -629,7 +633,7 @@ namespace AnalysisManagerProg
                     return null;
                 }
 
-                return ParseXMLSettings(settingNodes, mTraceMode);
+                return ParseXMLSettings(settingNodes, TraceMode);
 
             }
             catch (Exception ex)
@@ -709,7 +713,7 @@ namespace AnalysisManagerProg
             // Gigasax.DMS_Pipeline
             var connectionString = GetParam("brokerconnectionstring");
 
-            if (mTraceMode)
+            if (TraceMode)
                 ShowTraceMessage("LoadBrokerDBSettings has brokerconnectionstring = " + connectionString);
 
             // Construct the Sql to obtain the information:
@@ -723,7 +727,7 @@ namespace AnalysisManagerProg
                 " WHERE ISNULL([Param File Storage Path], '') <> ''";
 
 
-            if (mTraceMode)
+            if (TraceMode)
                 ShowTraceMessage("Query V_Pipeline_Step_Tools_Detail_Report in broker");
 
             // Get a table to hold the results of the query
@@ -924,7 +928,7 @@ namespace AnalysisManagerProg
                 LogError(errorMessage);
             }
 
-            if (mTraceMode)
+            if (TraceMode)
             {
                 ShowTraceMessage(errorMessage);
             }
@@ -1007,7 +1011,7 @@ namespace AnalysisManagerProg
 
         private void WriteToEmergencyLog(string sourceName, string logName, string message)
         {
-            if (mTraceMode)
+            if (TraceMode)
                 ShowTraceMessage(message);
 
             if (clsGlobal.LinuxOS)
