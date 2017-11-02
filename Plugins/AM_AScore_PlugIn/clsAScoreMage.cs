@@ -47,7 +47,13 @@ namespace AnalysisManager_AScore_PlugIn
 
             if (mMyEMSLDatasetInfo == null)
             {
-                mMyEMSLDatasetInfo = new DatasetListInfo();
+                var debugLevel = (short)mgrParms.GetParam("debuglevel", 2);
+                mMyEMSLDatasetInfo = new DatasetListInfo
+                {
+                    ReportMetadataURLs = mgrParms.TraceMode || debugLevel >= 2,
+                    ThrowErrors = true,
+                    TraceMode = mgrParms.TraceMode
+                };
                 RegisterEvents(mMyEMSLDatasetInfo);
             }
         }
@@ -275,7 +281,8 @@ namespace AnalysisManager_AScore_PlugIn
         {
             var reader = new MSSQLReader
             {
-                ConnectionString = connectionString, SQLText = sql
+                ConnectionString = connectionString,
+                SQLText = sql
             };
             return reader;
         }
