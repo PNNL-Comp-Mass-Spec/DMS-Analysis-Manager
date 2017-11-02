@@ -994,7 +994,6 @@ namespace AnalysisManagerProg
 
             clsLogTools.CreateFileLogger(logFileNameBase);
 
-
             GetCodeTestToolRunner(out var jobParams);
 
             m_DebugLevel = 2;
