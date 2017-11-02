@@ -275,7 +275,7 @@ namespace AnalysisManagerProg
             // Determine if manager is deactivated locally
             if (!mParamDictionary.TryGetValue(MGR_PARAM_MGR_ACTIVE_LOCAL, out var activeLocalText))
             {
-                mErrMsg = "Manager parameter " + MGR_PARAM_MGR_ACTIVE_LOCAL + " is missing from file AnalysisManagerProg.exe.config";
+                mErrMsg = "Manager parameter " + MGR_PARAM_MGR_ACTIVE_LOCAL + " is missing from file " + Path.GetFileName(GetConfigFilePath());
                 WriteToEmergencyLog(mErrMsg);
             }
 
@@ -390,7 +390,7 @@ namespace AnalysisManagerProg
 
             if (string.IsNullOrEmpty(managerName))
             {
-                mErrMsg = "Manager parameter " + MGR_PARAM_MGR_NAME + " is missing from file AnalysisManagerProg.exe.config";
+                mErrMsg = "Manager parameter " + MGR_PARAM_MGR_NAME + " is missing from file " + Path.GetFileName(GetConfigFilePath());
 
                 if (TraceMode)
                     LogError("Error in LoadMgrSettingsFromDB: " + mErrMsg);
@@ -440,7 +440,7 @@ namespace AnalysisManagerProg
             if (string.IsNullOrEmpty(managerName))
             {
                 mErrMsg = "MgrCnfgDbConnectStr parameter not found in m_ParamDictionary; " +
-                          "it should be defined in the AnalysisManagerProg.exe.config file";
+                          "it should be defined in the " + Path.GetFileName(GetConfigFilePath()) + " file";
 
                 if (TraceMode)
                     ShowTraceMessage("LoadMgrSettingsFromDBWork: " + mErrMsg);
