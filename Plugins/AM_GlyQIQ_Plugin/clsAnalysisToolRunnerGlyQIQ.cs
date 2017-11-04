@@ -251,8 +251,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 }
 
                 mThermoFileReader = new XRawFileIO();
-                mThermoFileReader.ReportError += mThermoFileReader_ReportError;
-                mThermoFileReader.ReportWarning += mThermoFileReader_ReportWarning;
+                RegisterEvents(mThermoFileReader);
 
                 if (!mThermoFileReader.OpenRawFile(rawFilePath))
                 {
@@ -898,16 +897,6 @@ namespace AnalysisManagerGlyQIQPlugin
             {
                 LogErrorToDatabase(Message);
             }
-        }
-
-        private void mThermoFileReader_ReportError(string strMessage)
-        {
-            LogError(Message);
-        }
-
-        private void mThermoFileReader_ReportWarning(string strMessage)
-        {
-            LogWarning(Message);
         }
 
         /// <summary>

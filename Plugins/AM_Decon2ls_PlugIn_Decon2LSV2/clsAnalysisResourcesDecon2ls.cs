@@ -252,6 +252,8 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             {
                 using (var rawFileReader = new XRawFileIO())
                 {
+                    RegisterEvents(rawFileReader);
+
                     if (!rawFileReader.OpenRawFile(datasetFilePath))
                     {
                         LogError("Error opening Thermo raw file " + Path.GetFileName(datasetFilePath));
