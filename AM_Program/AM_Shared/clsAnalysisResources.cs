@@ -4628,7 +4628,7 @@ namespace AnalysisManagerBase
                 // Examine the data in each spectrum to determine if it is centroided
 
                 mSpectraTypeClassifier = new SpectraTypeClassifier.clsSpectrumTypeClassifier();
-                mSpectraTypeClassifier.ErrorEvent += mSpectraTypeClassifier_ErrorEvent;
+                RegisterEvents(mSpectraTypeClassifier);
                 mSpectraTypeClassifier.ReadingSpectra += mSpectraTypeClassifier_ReadingSpectra;
 
                 var success = mSpectraTypeClassifier.CheckCDTAFile(cdtaPath);
@@ -4643,9 +4643,9 @@ namespace AnalysisManagerBase
                     return false;
                 }
 
-                var fractionCentroided = mSpectraTypeClassifier.FractionCentroided();
+                var fractionCentroided = mSpectraTypeClassifier.FractionCentroided;
 
-                var commentSuffix = " (" + mSpectraTypeClassifier.TotalSpectra() + " total spectra)";
+                var commentSuffix = string.Format(" ({0:N0} total spectra)", mSpectraTypeClassifier.TotalSpectra);
 
                 if (fractionCentroided > 0.8)
                 {
@@ -5004,10 +5004,6 @@ namespace AnalysisManagerBase
         #endregion
 
         #region "SpectraTypeClassifier Events"
-
-        private void mSpectraTypeClassifier_ErrorEvent(string message)
-        {
-        }
 
         private void mSpectraTypeClassifier_ReadingSpectra(int spectraProcessed)
         {

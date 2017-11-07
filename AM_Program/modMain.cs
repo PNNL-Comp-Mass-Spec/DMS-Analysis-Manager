@@ -33,7 +33,7 @@ namespace AnalysisManagerProg
 {
     static class modMain
     {
-        public const string PROGRAM_DATE = "November 1, 2017";
+        public const string PROGRAM_DATE = "November 7, 2017";
 
         private static bool mCodeTestMode;
         private static bool mCreateWindowsEventLog;
