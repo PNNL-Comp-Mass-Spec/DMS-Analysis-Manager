@@ -224,6 +224,11 @@ namespace AnalysisManager_Mage_PlugIn
                 AppendToWarningMessage(msg, msgVerbose);
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msgVerbose);
             }
+            else
+            {
+                // Validate the T_alias.txt file to remove blank rows and remove extra columns
+                ValidateAliasFile(lstMatchingFiles.First());
+            }
 
             GetPriorStepResults();
             mageObj.ImportFilesInFolderToSQLite(inputFolderPath, "", importMode);
@@ -300,6 +305,105 @@ namespace AnalysisManager_Mage_PlugIn
             return true;
         }
 
+        private void ValidateAliasFile(FileSystemInfo tAliasFile)
+        {
+            try
+            {
+                var updatedFilePath = Path.GetTempFileName();
+                var replaceOriginal = false;
+
+                using (var reader = new StreamReader(new FileStream(tAliasFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var writer = new StreamWriter(new FileStream(updatedFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
+                {
+
+                    // List of column indices to write to the output file (we skip columns with an empty column name)
+                    var columnsIndicesToUse = new SortedSet<int>();
+
+                    while (!reader.EndOfStream)
+                    {
+                        var dataLine = reader.ReadLine();
+                        if (string.IsNullOrWhiteSpace(dataLine))
+                        {
+                            replaceOriginal = true;
+                            continue;
+                        }
+
+                        var lineParts = dataLine.Split('\t');
+
+                        if (columnsIndicesToUse.Count == 0)
+                        {
+                            var skipList = new List<int>();
+
+                            for (var i = 0; i < lineParts.Length; i++)
+                            {
+                                if (string.IsNullOrWhiteSpace(lineParts[i]))
+                                {
+                                    skipList.Add(i);
+                                    continue;
+                                }
+                                columnsIndicesToUse.Add(i);
+                            }
+
+                            if (skipList.Count > 0)
+                            {
+                                replaceOriginal = true;
+                                if (skipList.Count == 1)
+                                {
+                                    OnWarningEvent(string.Format("Skipped column {0} in {1} because it had an empty column name",
+                                                                 skipList.First() + 1, tAliasFile.Name));
+                                }
+                                else
+                                {
+                                    OnWarningEvent(string.Format("Skipped {0} columns in {1} due to empty column names",
+                                                                 skipList.Count, tAliasFile.Name));
+                                }
+                            }
+
+                        }
+
+                        // Add data for columns that had a valid header
+                        var dataToWrite = new List<string>();
+                        foreach (var colIndex in columnsIndicesToUse)
+                        {
+                            if (colIndex < lineParts.Length)
+                            {
+                                dataToWrite.Add(lineParts[colIndex]);
+                            }
+                        }
+
+                        // Add any missing columns
+                        while (dataToWrite.Count < columnsIndicesToUse.Count)
+                        {
+                            dataToWrite.Add(string.Empty);
+                            replaceOriginal = true;
+                        }
+
+                        writer.WriteLine(string.Join("\t", dataToWrite));
+                    }
+                }
+
+                if (!replaceOriginal)
+                    return;
+
+                // Rename the original to .old
+                var invalidFile = new FileInfo(tAliasFile.FullName + ".old");
+                if (invalidFile.Exists)
+                    invalidFile.Delete();
+
+                File.Move(tAliasFile.FullName, invalidFile.FullName);
+
+                // Copy the temp file to the remote server
+                File.Copy(updatedFilePath, tAliasFile.FullName);
+
+                // Delete the temp file
+                File.Delete(updatedFilePath);
+
+            }
+            catch (Exception ex)
+            {
+                OnErrorEvent("Error validating the t_alias file: " + ex.Message, ex);
+            }
+        }
 
         #endregion
 
