@@ -28,6 +28,8 @@ namespace AnalysisManager_Mage_PlugIn
             // run the appropriate Mage pipeline(s) according to operations list parameter
             var mageOperations = m_jobParams.GetParam("MageOperations");
             var ops = new MageAMOperations(m_jobParams, m_mgrParams);
+            RegisterEvents(ops);
+
             var success = ops.RunMageOperations(mageOperations);
 
             // Change the name of the log file back to the analysis manager log file
@@ -302,7 +304,7 @@ namespace AnalysisManager_Mage_PlugIn
             {
                 errorMessage = "threw an exception while querying";
                 exceptionDetail = ex.Message;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Exception in ValidateFactors: " + ex.Message);
+                LogError("Exception in ValidateFactors: " + ex.Message, ex);
                 return false;
             }
 

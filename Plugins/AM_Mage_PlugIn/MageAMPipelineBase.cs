@@ -1,14 +1,16 @@
 ﻿using System;
+using System.Collections.Generic;
 using Mage;
 using MageExtExtractionFilters;
 using AnalysisManagerBase;
 using System.IO;
 using System.Text.RegularExpressions;
+using PRISM;
 
 namespace AnalysisManager_Mage_PlugIn
 {
 
-    public class MageAMPipelineBase
+    public class MageAMPipelineBase : clsEventNotifier
     {
 
         #region Member Variables
@@ -194,12 +196,12 @@ namespace AnalysisManager_Mage_PlugIn
                 }
             }
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, args.Message);
+            OnDebugEvent(args.Message);
         }
 
         private void HandlePipelineCompletion(object sender, MageStatusEventArgs args)
         {
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, args.Message);
+            OnDebugEvent(args.Message);
         }
 
 

@@ -1,6 +1,9 @@
-﻿using System.Linq;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using AnalysisManagerBase;
 using System.IO;
+using PRISM;
 
 namespace AnalysisManager_Mage_PlugIn
 {
@@ -9,7 +12,7 @@ namespace AnalysisManager_Mage_PlugIn
     /// Class that defines Mac Mage operations that can be selected by the
     /// "MageOperations" parameter
     /// </summary>
-    public class MageAMOperations
+    public class MageAMOperations : clsEventNotifier
     {
 
         #region Member Variables
@@ -135,6 +138,8 @@ namespace AnalysisManager_Mage_PlugIn
         private bool GetFactors()
         {
             var mageObj = new MageAMFileProcessingPipelines(_jobParams, _mgrParams);
+            RegisterMageEvents(mageObj);
+
             var sql = GetSQLFromParameter("FactorsSource", mageObj);
             GetPriorStepResults();
             mageObj.GetDatasetFactors(sql);
@@ -148,6 +153,8 @@ namespace AnalysisManager_Mage_PlugIn
         private bool ExtractFromJobs()
         {
             var mageObj = new MageAMExtractionPipelines(_jobParams, _mgrParams);
+            RegisterMageEvents(mageObj);
+
             var sql = GetSQLFromParameter("ExtractionSource", mageObj);
             GetPriorStepResults();
             mageObj.ExtractFromJobs(sql);
@@ -162,6 +169,8 @@ namespace AnalysisManager_Mage_PlugIn
         private bool ImportFDRTables()
         {
             var mageObj = new MageAMFileProcessingPipelines(_jobParams, _mgrParams);
+            RegisterMageEvents(mageObj);
+
             const string inputFolderPath = @"\\gigasax\DMS_Workflows\Mage\SpectralCounting\FDR";
             var inputfileList = mageObj.GetJobParam("MageFDRFiles");
             GetPriorStepResults();
@@ -189,6 +198,8 @@ namespace AnalysisManager_Mage_PlugIn
         private bool ImportDataPackageFiles(string importMode)
         {
             var mageObj = new MageAMFileProcessingPipelines(_jobParams, _mgrParams);
+            RegisterMageEvents(mageObj);
+
             var dataPackageStorageFolderRoot = mageObj.RequireJobParam("transferFolderPath");
             var inputFolderPath = Path.Combine(dataPackageStorageFolderRoot, mageObj.RequireJobParam("DataPackageSourceFolderName"));
 
@@ -222,7 +233,7 @@ namespace AnalysisManager_Mage_PlugIn
 
                 var msgVerbose = msg + ": " + inputFolderPath;
                 AppendToWarningMessage(msg, msgVerbose);
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msgVerbose);
+                OnWarningEvent(msgVerbose);
             }
             else
             {
@@ -256,6 +267,8 @@ namespace AnalysisManager_Mage_PlugIn
         {
             _jobParams.AddAdditionalParameter("runtime", "Tool", "MASIC_Finnigan");
             var mageObj = new MageAMFileProcessingPipelines(_jobParams, _mgrParams);
+            RegisterMageEvents(mageObj);
+
             var sql = GetSQLFromParameter("ReporterIonSource", mageObj);
             GetPriorStepResults();
             mageObj.ImportJobResults(sql, "_ReporterIons.txt", "t_reporter_ions", "SimpleImport");
@@ -271,6 +284,8 @@ namespace AnalysisManager_Mage_PlugIn
         {
             _jobParams.AddAdditionalParameter("runtime", "Tool", "Sequest");
             var mageObj = new MageAMFileProcessingPipelines(_jobParams, _mgrParams);
+            RegisterMageEvents(mageObj);
+
             var sql = GetSQLFromParameter("FirstHitsSource", mageObj);
             GetPriorStepResults();
             mageObj.ImportJobResults(sql, "_fht.txt", "first_hits", "AddDatasetIDToImport");
@@ -286,6 +301,8 @@ namespace AnalysisManager_Mage_PlugIn
         {
             _jobParams.AddAdditionalParameter("runtime", "Tool", "Sequest");
             var mageObj = new MageAMFileProcessingPipelines(_jobParams, _mgrParams);
+            RegisterMageEvents(mageObj);
+
             var sql = GetSQLForTemplate("JobDatasetsFromDataPackageIDForTool", mageObj);
             GetPriorStepResults();
             mageObj.ImportFileList(sql, ".raw", "t_msms_raw_files");
@@ -299,6 +316,8 @@ namespace AnalysisManager_Mage_PlugIn
         private bool ImportJobList()
         {
             var mageObj = new MageAMFileProcessingPipelines(_jobParams, _mgrParams);
+            RegisterMageEvents(mageObj);
+
             var sql = GetSQLForTemplate("JobsFromDataPackageID", mageObj);
             GetPriorStepResults();
             mageObj.ImportJobList(sql, "t_data_package_analysis_jobs");
@@ -419,6 +438,8 @@ namespace AnalysisManager_Mage_PlugIn
             {
                 _previousStepResultsImported = true;
                 var mageObj = new MageAMPipelineBase(_jobParams, _mgrParams);
+                RegisterMageEvents(mageObj);
+
                 mageObj.GetPriorResultsToWorkDir();
             }
         }
@@ -460,6 +481,32 @@ namespace AnalysisManager_Mage_PlugIn
         public static string[] GetParamValues(MageAMPipelineBase mageObject, string paramNameList)
         {
             return paramNameList.Split(',').Select(paramName => mageObject.GetJobParam(paramName.Trim())).ToArray();
+        }
+
+        private void RegisterMageEvents(clsEventNotifier sourceClass)
+        {
+            sourceClass.DebugEvent += Mage_DebugEvent;
+            sourceClass.StatusEvent += OnStatusEvent;
+            sourceClass.ErrorEvent += OnErrorEvent;
+            sourceClass.WarningEvent += OnWarningEvent;
+            sourceClass.ProgressUpdate += OnProgressUpdate;
+        }
+
+        private void Mage_DebugEvent(string message)
+        {
+            if (string.IsNullOrWhiteSpace(message))
+                return;
+
+            switch (message)
+            {
+                case "Running...":
+                case "Process Complete":
+                    break;
+                default:
+                    OnDebugEvent(message);
+                    break;
+            }
+
         }
 
         #endregion
