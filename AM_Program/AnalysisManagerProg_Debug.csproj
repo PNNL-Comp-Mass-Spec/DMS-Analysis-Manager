@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -159,10 +159,13 @@
   <PropertyGroup>
     <PostBuildEvent>xcopy "$(ProjectDir)..\AM_Common\DLLVersionInspector*.exe" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\DTAtoMGF.dll" "$(TargetDir)" /D /Y
-xcopy "$(ProjectDir)..\AM_Common\FileConcatenator.dll" "$(TargetDir)" /y /d  /F
+xcopy "$(ProjectDir)..\AM_Common\FileConcatenator.dll" "$(TargetDir)" /D /Y  /F
 xcopy "$(ProjectDir)..\AM_Common\gzip.exe" "$(TargetDir)" /D /Y
+xcopy "$(ProjectDir)..\AM_Common\MageExtExtractionFilters.dll" "$(TargetDir)" /D /Y
+xcopy "$(ProjectDir)..\AM_Common\MageExtContentFilters.dll" "$(TargetDir)" /D /Y
+xcopy "$(ProjectDir)..\AM_Common\MageDisplayLib.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\MascotGenericFileToDTA.dll" "$(TargetDir)" /D /Y
-xcopy "$(ProjectDir)..\AM_Common\PeptideFileExtractor.dll" "$(TargetDir)" /y /d /F
+xcopy "$(ProjectDir)..\AM_Common\PeptideFileExtractor.dll" "$(TargetDir)" /D /Y /F
 xcopy "$(ProjectDir)..\AM_Common\PeptideToProteinMapEngine.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\PHRPReader.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\PNNLOmics.dll" "$(TargetDir)" /D /Y
