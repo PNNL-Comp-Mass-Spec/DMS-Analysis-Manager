@@ -141,6 +141,8 @@ namespace AnalysisManager_Mage_PlugIn
             RegisterMageEvents(mageObj);
 
             var sql = GetSQLFromParameter("FactorsSource", mageObj);
+            OnDebugEvent("Adding factors to SQLite using: " + sql);
+
             GetPriorStepResults();
             mageObj.GetDatasetFactors(sql);
             return true;
@@ -156,6 +158,8 @@ namespace AnalysisManager_Mage_PlugIn
             RegisterMageEvents(mageObj);
 
             var sql = GetSQLFromParameter("ExtractionSource", mageObj);
+            OnDebugEvent("Running Mage Extractor pipeline: " + sql);
+
             GetPriorStepResults();
             mageObj.ExtractFromJobs(sql);
             return true;
@@ -173,6 +177,9 @@ namespace AnalysisManager_Mage_PlugIn
 
             const string inputFolderPath = @"\\gigasax\DMS_Workflows\Mage\SpectralCounting\FDR";
             var inputfileList = mageObj.GetJobParam("MageFDRFiles");
+
+            OnDebugEvent("Importing FDR tables from " + inputFolderPath + ", files: "  + inputfileList);
+
             GetPriorStepResults();
             mageObj.ImportFilesInFolderToSQLite(inputFolderPath, inputfileList, "CopyAndImport");
             return true;
@@ -241,6 +248,8 @@ namespace AnalysisManager_Mage_PlugIn
                 ValidateAliasFile(lstMatchingFiles.First());
             }
 
+            OnDebugEvent("Importing data package files into SQLite, source folder " + inputFolderPath + ", import mode " + importMode);
+
             GetPriorStepResults();
             mageObj.ImportFilesInFolderToSQLite(inputFolderPath, "", importMode);
             return true;
@@ -270,6 +279,8 @@ namespace AnalysisManager_Mage_PlugIn
             RegisterMageEvents(mageObj);
 
             var sql = GetSQLFromParameter("ReporterIonSource", mageObj);
+            OnDebugEvent("Adding MASIC-based reporter ions to SQLite using: " + sql);
+
             GetPriorStepResults();
             mageObj.ImportJobResults(sql, "_ReporterIons.txt", "t_reporter_ions", "SimpleImport");
             return true;
@@ -287,6 +298,8 @@ namespace AnalysisManager_Mage_PlugIn
             RegisterMageEvents(mageObj);
 
             var sql = GetSQLFromParameter("FirstHitsSource", mageObj);
+            OnDebugEvent("Adding FirstHits file data to SQLite using: " + sql);
+
             GetPriorStepResults();
             mageObj.ImportJobResults(sql, "_fht.txt", "first_hits", "AddDatasetIDToImport");
             return true;
@@ -304,6 +317,8 @@ namespace AnalysisManager_Mage_PlugIn
             RegisterMageEvents(mageObj);
 
             var sql = GetSQLForTemplate("JobDatasetsFromDataPackageIDForTool", mageObj);
+            OnDebugEvent("Adding dataset metadata to SQLite using: " + sql);
+
             GetPriorStepResults();
             mageObj.ImportFileList(sql, ".raw", "t_msms_raw_files");
             return true;
@@ -319,6 +334,8 @@ namespace AnalysisManager_Mage_PlugIn
             RegisterMageEvents(mageObj);
 
             var sql = GetSQLForTemplate("JobsFromDataPackageID", mageObj);
+            OnDebugEvent("Adding job info to SQLite using: " + sql);
+
             GetPriorStepResults();
             mageObj.ImportJobList(sql, "t_data_package_analysis_jobs");
             return true;

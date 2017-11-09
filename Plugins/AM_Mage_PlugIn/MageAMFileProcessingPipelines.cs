@@ -46,6 +46,8 @@ namespace AnalysisManager_Mage_PlugIn
             const string columnsToIncludeInOutput = "Job, Dataset, Dataset_ID, Tool, Settings_File, Parameter_File, Instrument";
             var fileList = GetListOfFilesFromFolderList(jobList, fileNameSelector, columnsToIncludeInOutput);
 
+            NotifyImportStarting("Importing job result data", tableName, fileList, "files");
+
             // import contents of each file in list
             var contentProc = new MageAMFileContentProcessor(this) { DBTableName = tableName, Operation = fileProcessName };
             var p = ProcessingPipeline.Assemble("Proc", fileList, contentProc);
@@ -69,6 +71,8 @@ namespace AnalysisManager_Mage_PlugIn
             // get selected list files from list of datasets
             const string columnsToIncludeInOutput = "Dataset_ID, Dataset, Experiment, Campaign, State, Instrument, Created, Type";
             var fileList = GetListOfFilesFromFolderList(jobList, fileNameSelector, columnsToIncludeInOutput);
+
+            NotifyImportStarting("Importing result file metadata", tableName, fileList, "files");
 
             // import file list to SQLite
             var dbFilePath = GetResultsDBFilePath();
@@ -107,6 +111,9 @@ namespace AnalysisManager_Mage_PlugIn
                 DBTableName = "",
                 FileNameList = fileNameList
             };
+
+            NotifyImportStarting("Importing files in folder", "auto-defined", fileList, "files");
+
             var fileImportPipeline = ProcessingPipeline.Assemble("Proc", fileList, contentProc);
             ConnectPipelineToStatusHandlers(fileImportPipeline);
             fileImportPipeline.RunRoot(null);
@@ -126,6 +133,8 @@ namespace AnalysisManager_Mage_PlugIn
             var tableName = (!string.IsNullOrEmpty(dbTableName)) ? dbTableName : Path.GetFileNameWithoutExtension(inputFilePath);
             writer.DbPath = dbFilePath;
             writer.TableName = tableName;
+
+            OnDebugEvent("Importing file into SQLite, storing in table " + tableName + "; file " + inputFilePath);
 
             var pipeline = ProcessingPipeline.Assemble("DefaultFileProcessingPipeline", reader, writer);
             ConnectPipelineToStatusHandlers(pipeline);
@@ -154,6 +163,8 @@ namespace AnalysisManager_Mage_PlugIn
             writer.DbPath = dbFilePath;
             writer.TableName = tableName;
 
+            NotifyImportStarting("Importing file with remapped columns", tableName, null, "file");
+
             var pipeline = ProcessingPipeline.Assemble("DefaultFileProcessingPipeline", reader, filter, writer);
             ConnectPipelineToStatusHandlers(pipeline);
             pipeline.RunRoot(null);
@@ -169,6 +180,8 @@ namespace AnalysisManager_Mage_PlugIn
             var tableName = (!string.IsNullOrEmpty(dbTableName)) ? dbTableName : Path.GetFileNameWithoutExtension(inputFilePath);
             writer.DbPath = dbFilePath;
             writer.TableName = tableName;
+
+            NotifyImportStarting("Importing improve cluster file", tableName, null, "file");
 
             var pipeline = ProcessingPipeline.Assemble("DefaultFileProcessingPipeline", reader, filter, writer);
             ConnectPipelineToStatusHandlers(pipeline);
@@ -250,6 +263,8 @@ namespace AnalysisManager_Mage_PlugIn
                     writePipeline = ProcessingPipeline.Assemble("WriteFactors", sink, writer);
                 }
 
+                NotifyImportStarting("Importing factors", "t_factors", sink, "factors");
+
                 ConnectPipelineToStatusHandlers(writePipeline);
                 writePipeline.RunRoot(null);
             }
@@ -265,7 +280,29 @@ namespace AnalysisManager_Mage_PlugIn
         {
             var jobList = GetListOfDMSItems(sql);
             var writer = new SQLiteWriter { DbPath = GetResultsDBFilePath(), TableName = tableName };
+
+            NotifyImportStarting("Importing job list", tableName, jobList, "jobs");
+
             ProcessingPipeline.Assemble("JobListPipeline", jobList, writer).RunRoot(null);
+        }
+
+        private void NotifyImportStarting(string taskDescription, string tableName, ISinkModule itemList, string itemDescription)
+        {
+            int itemCount;
+
+            if (itemList != null && itemList is SimpleSink jobsToProcess)
+            {
+                itemCount = jobsToProcess.Rows.Count;
+            }
+            else
+            {
+                itemCount = 1;
+            }
+
+            // Example message:
+            // Importing result files into SQLite, storing in table T_Results; 6 jobs
+            OnDebugEvent(string.Format("{0} into SQLite, storing in table {1}; {2} {3}", taskDescription, tableName, itemCount, itemDescription));
+
         }
     }
 }

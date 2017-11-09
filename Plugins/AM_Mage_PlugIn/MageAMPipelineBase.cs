@@ -144,6 +144,8 @@ namespace AnalysisManager_Mage_PlugIn
                 if (File.Exists(priorResultsDBFilePath))
                 {
                     var workingFilePath = Path.Combine(WorkingDirPath, ResultsDBFileName);
+                    OnDebugEvent("Copying results from the previous job step to the working directory; source file: " + workingFilePath);
+
                     File.Copy(priorResultsDBFilePath, workingFilePath, true);
                 }
             }
