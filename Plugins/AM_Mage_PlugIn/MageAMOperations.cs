@@ -28,15 +28,15 @@ namespace AnalysisManager_Mage_PlugIn
 
         #endregion
 
-        #region Constructors
-
-        #region "Properties"
+        #region Properties
 
         public string WarningMsg => _warningMsg;
 
         public string WarningMsgVerbose => _warningMsgVerbose;
 
         #endregion
+
+        #region Constructors
 
         public MageAMOperations(IJobParams jobParms, IMgrParams mgrParms)
         {
@@ -121,7 +121,7 @@ namespace AnalysisManager_Mage_PlugIn
         }
 
         /// <summary>
-        ///  don't do anything
+        /// Don't do anything
         /// </summary>
         /// <returns></returns>
         private bool NoOperation()
@@ -149,7 +149,7 @@ namespace AnalysisManager_Mage_PlugIn
         }
 
         /// <summary>
-        /// Setup and run Mage Extractor pipleline according to job parameters
+        /// Setup and run Mage Extractor pipeline according to job parameters
         /// </summary>
         /// <returns></returns>
         private bool ExtractFromJobs()
@@ -227,7 +227,7 @@ namespace AnalysisManager_Mage_PlugIn
             if (lstMatchingFiles.Count == 0)
             {
                 var analysisType = _jobParams.GetJobParameter("AnalysisType", string.Empty);
-                if (analysisType.IndexOf("iTRAQ", System.StringComparison.OrdinalIgnoreCase) >= 0)
+                if (analysisType.IndexOf("iTRAQ", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
                     // File T_alias.txt was not found in ...
                     throw new Exception(string.Format("File {0} was not found in {1}; this file is required because this is an iTRAQ analysis",
@@ -306,7 +306,7 @@ namespace AnalysisManager_Mage_PlugIn
         }
 
         /// <summary>
-        /// Import list of .raw files (full paths) for for datasets for sequest jobs in data package
+        /// Import list of .raw files (full paths) for datasets for jobs in data package
         /// into a table in the SQLite step results database
         /// </summary>
         /// <returns></returns>
@@ -461,7 +461,6 @@ namespace AnalysisManager_Mage_PlugIn
             }
         }
 
-
         /// <summary>
         /// Get an executable SQL statement by populating a given query template
         /// with actual parameter values
@@ -528,6 +527,5 @@ namespace AnalysisManager_Mage_PlugIn
 
         #endregion
     }
-
 
 }

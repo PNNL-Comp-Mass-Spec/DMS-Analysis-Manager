@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.IO;
 using Mage;
@@ -219,7 +218,7 @@ namespace AnalysisManager_Mage_PlugIn
         }
 
         /// <summary>
-        /// make Mage pipeline using given sql as source of factors and use it
+        /// Make Mage pipeline using given sql as source of factors and use it
         /// to create and populate a factors table in a SQLite database (in crosstab format)
         /// </summary>
         /// <param name="sql">Query to use a source of factors</param>
@@ -246,7 +245,7 @@ namespace AnalysisManager_Mage_PlugIn
             // if there are factors, add them to results database
             if (sink.Rows.Count > 0)
             {
-                // second pipeline - write factors to SQLite DB
+                // Second pipeline - write factors to SQLite DB
                 // (and add "Alias" factor if not already present in factors)
                 ProcessingPipeline writePipeline;
 
@@ -271,7 +270,7 @@ namespace AnalysisManager_Mage_PlugIn
         }
 
         /// <summary>
-        /// make Mage pipeline to use given sql to get list of jobs
+        /// Make Mage pipeline to use given sql to get list of jobs
         /// from data package into a SQLite database table
         /// </summary>
         /// <param name="sql"></param>

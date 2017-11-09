@@ -39,6 +39,7 @@ namespace AnalysisManager_Mage_PlugIn
 
             if (!string.IsNullOrEmpty(ops.WarningMsg))
             {
+                // Update EvalMessage (the warning has already been logged)
                 m_EvalMessage = ops.WarningMsg;
             }
 
@@ -361,7 +362,6 @@ namespace AnalysisManager_Mage_PlugIn
                                 "; place a valid " + T_ALIAS_FILE + " file in the the data package's ImportFiles folder; " + exceptionDetail;
                     return false;
                 }
-
 
                 if (!ValidateFactors(fiResultsDB, out errorMessage, out exceptionDetail))
                 {
