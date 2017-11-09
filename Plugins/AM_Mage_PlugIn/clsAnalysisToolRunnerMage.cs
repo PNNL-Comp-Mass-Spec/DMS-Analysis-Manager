@@ -21,7 +21,7 @@ namespace AnalysisManager_Mage_PlugIn
         protected override bool RunMACTool()
         {
             // Change the name of the log file for the local log file to the plug in log filename
-            var logFileName = Path.Combine(m_WorkDir, "Mage_Log");
+            var logFileName = Path.Combine(m_WorkDir, "Mage_Log.txt");
             log4net.GlobalContext.Properties["LogName"] = logFileName;
             clsLogTools.ChangeLogFileName(logFileName);
 
