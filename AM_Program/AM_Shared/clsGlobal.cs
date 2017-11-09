@@ -330,23 +330,15 @@ namespace AnalysisManagerBase
         /// <returns>Full directory path</returns>
         public static string GetAppFolderPath()
         {
-
             if (mAppFolderPath != null)
                 return mAppFolderPath;
 
             var objAssembly = Assembly.GetEntryAssembly();
 
-            if (objAssembly.Location == null)
-            {
-                mAppFolderPath = string.Empty;
-            }
-            else
-            {
-                var fiAssemblyFile = new FileInfo(objAssembly.Location);
-                mAppFolderPath = fiAssemblyFile.DirectoryName;
-            }
-            return mAppFolderPath;
+            var fiAssemblyFile = new FileInfo(objAssembly.Location);
+            mAppFolderPath = fiAssemblyFile.DirectoryName;
 
+            return mAppFolderPath;
         }
 
         /// <summary>
