@@ -199,10 +199,11 @@ namespace AnalysisManager_Mage_PlugIn
             var lstInputFolderFiles = diInputFolder.GetFiles().ToList();
 
             if (lstInputFolderFiles.Count == 0)
-                throw new DirectoryNotFoundException("DataPackageSourceFolderName is empty (should typically be ImportFiles and it should have a file named T_alias.txt): " + inputFolderPath);
+                throw new DirectoryNotFoundException("DataPackageSourceFolderName is empty (should typically be ImportFiles " +
+                                                     "and it should have a file named " + clsAnalysisToolRunnerMage.T_ALIAS_FILE + "): " + inputFolderPath);
 
             var lstMatchingFiles = (from item in lstInputFolderFiles
-                                    where item.Name.ToLower() == "t_alias.txt"
+                                    where string.Equals(item.Name, clsAnalysisToolRunnerMage.T_ALIAS_FILE, StringComparison.OrdinalIgnoreCase)
                                     select item).ToList();
 
             if (lstMatchingFiles.Count == 0)
@@ -210,10 +211,15 @@ namespace AnalysisManager_Mage_PlugIn
                 var analysisType = _jobParams.GetJobParameter("AnalysisType", string.Empty);
                 if (analysisType.IndexOf("iTRAQ", System.StringComparison.OrdinalIgnoreCase) >= 0)
                 {
-                    throw new System.Exception("File T_alias.txt was not found in " + inputFolderPath + "; this file is required because this is an iTRAQ analysis");
+                    // File T_alias.txt was not found in ...
+                    throw new Exception(string.Format("File {0} was not found in {1}; this file is required because this is an iTRAQ analysis",
+                        clsAnalysisToolRunnerMage.T_ALIAS_FILE, inputFolderPath));
                 }
 
-                const string msg = "File T_alias.txt was not found in the DataPackageSourceFolderName folder; this may result in a failure during Ape processing";
+                var msg = string.Format(
+                    "File {0} was not found in the DataPackageSourceFolderName folder; this may result in a failure during Ape processing",
+                    clsAnalysisToolRunnerMage.T_ALIAS_FILE);
+
                 var msgVerbose = msg + ": " + inputFolderPath;
                 AppendToWarningMessage(msg, msgVerbose);
                 clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, msgVerbose);

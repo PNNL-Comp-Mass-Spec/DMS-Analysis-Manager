@@ -12,6 +12,9 @@ namespace AnalysisManager_Mage_PlugIn
     public class clsAnalysisToolRunnerMage : clsAnalysisToolRunnerMAC
     {
 
+        public const string T_ALIAS_FILE = "t_alias.txt";
+        public const string T_ALIAS_TABLE = "T_alias";
+
         /// <summary>
         /// Sequentially run the Mage operations listed in "MageOperations" parameter
         /// </summary>
@@ -169,12 +172,12 @@ namespace AnalysisManager_Mage_PlugIn
                         }
                     }
 
-                    // Make sure the sample names in sampleNames correspond to the names defined in t_alias
+                    // Make sure the sample names in sampleNames correspond to the names defined in table t_alias
                     // At the same time, count the number of ions defined for each sample
                     var sampleToIonMapping = new Dictionary<string, byte>(StringComparer.OrdinalIgnoreCase);
 
                     query = "SELECT Sample, Count(Ion) as Ions " +
-                            "FROM T_alias " +
+                            "FROM " + T_ALIAS_TABLE + " " +
                             "GROUP BY Sample ";
 
                     using (var cmd = new SQLiteCommand(query, conn))
@@ -204,8 +207,8 @@ namespace AnalysisManager_Mage_PlugIn
                     {
                         if (!sampleToIonMapping.TryGetValue(sampleName, out var ionCount))
                         {
-                            errorMessage = "t_alias table does not have an entry for Sample '" + sampleName + "'; " +
-                                           "this Sample name is a dataset factor and must be defined in the t_alias.txt file";
+                            errorMessage = T_ALIAS_TABLE + " table does not have an entry for Sample '" + sampleName + "'; " +
+                                           "this Sample name is a dataset factor and must be defined in the " + T_ALIAS_FILE + " file";
                             return false;
                         }
 
@@ -217,7 +220,11 @@ namespace AnalysisManager_Mage_PlugIn
                     var lookupQ = (from item in lstIonCounts where item != ionCountFirst select item).ToList();
                     if (lookupQ.Count > 0)
                     {
-                        errorMessage = "not all entries in the t_alias table have " + ionCountFirst + " ions; edit the t_alias.txt file";
+                        // Example message:
+                        // Not all entries in the t_alias table have 4 ions; edit the T_alias.txt file
+                        errorMessage = "Not all entries in the " + T_ALIAS_FILE + " table have " + ionCountFirst + " ions; " +
+                                       "edit the " + T_ALIAS_FILE + " file";
+
                         return false;
                     }
 
@@ -326,25 +333,30 @@ namespace AnalysisManager_Mage_PlugIn
             // If it wasn't, we should fail out this job step
             if (itraqMode || mageOperations.Contains("ImportDataPackageFiles"))
             {
-                if (!TableExists(fiResultsDB, "T_alias"))
+                if (!TableExists(fiResultsDB, T_ALIAS_FILE))
                 {
                     m_message =
-                        "Results.db3 file does not have table T_alias; place a valid T_alias.txt file in the the data package's ImportFiles folder";
+                        "Results.db3 file does not have table " + T_ALIAS_FILE + "; " +
+                        "place a valid " + T_ALIAS_FILE + " file in the the data package's ImportFiles folder";
                     return false;
                 }
 
-                // Confirm that the T_alias table contains columns Sample and Ion
+                // Confirm that the T_alias table contains columns Sample and Ion and that it contains data
 
-                var lstColumns = new List<string>()
+                var lstColumns = new List<string>
                 {
                     "Sample",
                     "Ion"
                 };
 
-                if (!TableContainsDataAndColumns(fiResultsDB, "T_alias", lstColumns, out var errorMessage, out var exceptionDetail))
+                // Look for the T_alias table
+                if (!TableContainsDataAndColumns(fiResultsDB, T_ALIAS_TABLE, lstColumns, out var errorMessage, out var exceptionDetail))
                 {
-                    m_message = "Table T_alias in Results.db3 " + errorMessage +
-                                "; place a valid T_alias.txt file in the the data package's ImportFiles folder; " + exceptionDetail;
+                    // Example messages
+                    // Table T_alias in Results.db3 is empty
+                    // Table T_alias in Results.db3 is missing column Tissue
+                    m_message = "Table " + T_ALIAS_FILE + " in Results.db3 " + errorMessage +
+                                "; place a valid " + T_ALIAS_FILE + " file in the the data package's ImportFiles folder; " + exceptionDetail;
                     return false;
                 }
 
