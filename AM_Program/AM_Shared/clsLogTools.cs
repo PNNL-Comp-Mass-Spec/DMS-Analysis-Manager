@@ -439,6 +439,12 @@ namespace AnalysisManagerBase
                 var matchSpec = "*_" + LOG_FILE_MATCH_SPEC + LOG_FILE_EXTENSION;
 
                 var logDirectory = currentLogFile.Directory;
+                if (logDirectory == null)
+                {
+                    WriteLog(LoggerTypes.LogFile, LogLevels.WARN, "Error archiving old log files; cannot determine the parent directory of " + currentLogFile);
+                    return;
+                }
+
                 var logFiles = logDirectory.GetFiles(matchSpec);
 
                 var matcher = new Regex(LOG_FILE_DATE_REGEX, RegexOptions.Compiled);
