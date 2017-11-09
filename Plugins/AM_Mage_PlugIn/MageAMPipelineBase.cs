@@ -15,29 +15,35 @@ namespace AnalysisManager_Mage_PlugIn
 
         #region Member Variables
 
-        protected readonly string ResultsDBFileName;
+        protected readonly Regex mProcessingResults = new Regex(@"Extracting results for job (\d+)", RegexOptions.Compiled);
 
-        protected readonly string WorkingDirPath;
+        protected int mLastProgressJob;
 
-        protected readonly IJobParams JobParms;
+        protected DateTime mLastProgressTime = DateTime.UtcNow;
 
-        protected readonly IMgrParams MgrParams;
+        #endregion
+
+        #region Properties
+
+        protected string ResultsDBFileName { get; }
+
+        protected string WorkingDirPath { get; }
+
+        protected IJobParams JobParms { get; }
+
+        protected IMgrParams MgrParams { get; }
 
         /// <summary>
         /// Pipeline queue for running the multiple pipelines that make up the workflows for this module
         /// </summary>
-        protected PipelineQueue BasePipelineQueue = new PipelineQueue();
-
+        protected PipelineQueue BasePipelineQueue { get; set; } = new PipelineQueue();
 
         /// <summary>
         /// Where extracted results will be delivered
         /// </summary>
-        protected DestinationType ResultsDestination;
+        protected DestinationType ResultsDestination { get; set; }
 
-        protected readonly Regex mProcessingResults = new Regex(@"Extracting results for job (\d+)", RegexOptions.Compiled);
 
-        protected int mLastProgressJob;
-        protected DateTime mLastProgressTime = DateTime.UtcNow;
 
         #endregion
 
