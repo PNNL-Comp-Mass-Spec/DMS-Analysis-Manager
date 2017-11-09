@@ -376,12 +376,12 @@ namespace AnalysisManagerProg
                 // Next
                 // Console.WriteLine()
 
-                var mCPUUsagePerformanceCounter = new System.Diagnostics.PerformanceCounter("Processor", "% Processor Time", "_Total")
+                var mCPUUsagePerformanceCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total")
                 {
                     ReadOnly = true
                 };
 
-                var mFreeMemoryPerformanceCounter = new System.Diagnostics.PerformanceCounter("Memory", "Available MBytes") { ReadOnly = true };
+                var mFreeMemoryPerformanceCounter = new PerformanceCounter("Memory", "Available MBytes") { ReadOnly = true };
             }
             catch (Exception ex)
             {

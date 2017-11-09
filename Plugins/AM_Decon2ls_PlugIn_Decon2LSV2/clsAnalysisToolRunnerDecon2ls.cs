@@ -301,8 +301,8 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
                 var objQCPlotGenerator = new clsDeconToolsQCPlotsGenerator(strMSFileInfoScannerDLLPath, m_DebugLevel);
                 RegisterEvents(objQCPlotGenerator);
-                objQCPlotGenerator.ErrorEvent += QCPlotGenerator_ErrorEvent
-                    ;
+                objQCPlotGenerator.ErrorEvent += QCPlotGenerator_ErrorEvent;
+
                 // Create the QC Plot .png files and associated Index.html file
                 var success = objQCPlotGenerator.CreateQCPlots(isosFilePath, m_WorkDir);
 

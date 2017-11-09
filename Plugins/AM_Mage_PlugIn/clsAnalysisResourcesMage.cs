@@ -96,19 +96,25 @@ namespace AnalysisManager_Mage_PlugIn
             return CloseOutType.CLOSEOUT_FAILED;
         }
 
-        private bool ValidateDeconJobs(int dataPackageID, List<clsDataPackageJobInfo> peptideHitJobs, List<clsDataPackageJobInfo> lstAdditionalJobs)
+        private bool ValidateDeconJobs(
+            int dataPackageID,
+            IReadOnlyCollection<clsDataPackageJobInfo> peptideHitJobs,
+            IReadOnlyCollection<clsDataPackageJobInfo> lstAdditionalJobs)
         {
             return ValidateMatchingJobs(dataPackageID, peptideHitJobs, lstAdditionalJobs, "HMMA_Peak", "DeconTools");
         }
 
-        private bool ValidateMasicJobs(int dataPackageID, List<clsDataPackageJobInfo> peptideHitJobs, List<clsDataPackageJobInfo> lstAdditionalJobs)
+        private bool ValidateMasicJobs(int dataPackageID,
+            IReadOnlyCollection<clsDataPackageJobInfo> peptideHitJobs,
+            IReadOnlyCollection<clsDataPackageJobInfo> lstAdditionalJobs)
         {
             return ValidateMatchingJobs(dataPackageID, peptideHitJobs, lstAdditionalJobs, "SIC", "MASIC");
         }
 
         private bool ValidateMatchingJobs(
-            int dataPackageID, List<clsDataPackageJobInfo> peptideHitJobs,
-            List<clsDataPackageJobInfo> lstAdditionalJobs,
+            int dataPackageID,
+            IReadOnlyCollection<clsDataPackageJobInfo> peptideHitJobs,
+            IReadOnlyCollection<clsDataPackageJobInfo> lstAdditionalJobs,
             string resultType,
             string toolName)
         {

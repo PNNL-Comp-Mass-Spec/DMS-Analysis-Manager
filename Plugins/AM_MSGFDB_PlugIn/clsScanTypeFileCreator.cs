@@ -103,7 +103,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                         {
                             // This is a header line; define the column mapping
 
-                            const bool IS_CASE_SENSITIVE = false;
                             var headerNames = new List<string> {
                                 "ScanNumber",
                                 "Collision Mode",
@@ -111,7 +110,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                             };
 
                             // Keys in this dictionary are column names, values are the 0-based column index
-                            var dctHeaderMapping = clsGlobal.ParseHeaderLine(dataLine, headerNames, IS_CASE_SENSITIVE);
+                            var dctHeaderMapping = clsGlobal.ParseHeaderLine(dataLine, headerNames);
 
                             scanNumberColIndex = dctHeaderMapping["ScanNumber"];
                             collisionModeColIndex = dctHeaderMapping["Collision Mode"];
@@ -231,7 +230,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                             {
                                 // This is a header line; define the column mapping
 
-                                const bool IS_CASE_SENSITIVE = false;
                                 var headerNames = new List<string> {
                                     "ScanNumber",
                                     "ScanTime",
@@ -240,7 +238,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                                 };
 
                                 // Keys in this dictionary are column names, values are the 0-based column index
-                                var dctHeaderMapping = clsGlobal.ParseHeaderLine(dataLine, headerNames, IS_CASE_SENSITIVE);
+                                var dctHeaderMapping = clsGlobal.ParseHeaderLine(dataLine, headerNames);
 
                                 scanNumberColIndex = dctHeaderMapping["ScanNumber"];
                                 scanTimeColIndex = dctHeaderMapping["ScanTime"];
