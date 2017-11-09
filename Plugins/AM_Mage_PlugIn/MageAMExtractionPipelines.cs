@@ -83,12 +83,17 @@ namespace AnalysisManager_Mage_PlugIn
         /// <param name="jobList">List of jobs to perform extraction from</param>
         protected void ExtractFromJobsList(BaseModule jobList)
         {
+            if (jobList is SimpleSink jobsToProcess){
+                JobCount = jobsToProcess.Rows.Count;
+            }
+
             BasePipelineQueue = ExtractionPipelines.MakePipelineQueueToExtractFromJobList(jobList, ExtractionParms, ResultsDestination);
             foreach (var p in BasePipelineQueue.Pipelines.ToArray())
             {
                 ConnectPipelineToStatusHandlers(p);
             }
             ConnectPipelineQueueToStatusHandlers(BasePipelineQueue);
+
             BasePipelineQueue.RunRoot(null);
         }
     }

@@ -43,7 +43,17 @@ namespace AnalysisManager_Mage_PlugIn
         /// </summary>
         protected DestinationType ResultsDestination { get; set; }
 
+        /// <summary>
+        /// Number of jobs to process
+        /// </summary>
+        /// <remarks>Updated by ExtractFromJobsList in MageAMExtractionPipelines</remarks>
+        protected int JobCount { get; set; }
 
+        /// <summary>
+        /// Jobs that have been processed
+        /// </summary>
+        /// <remarks>Updated by HandlePipelineUpdate</remarks>
+        protected SortedSet<int> JobsProcessed { get; }
 
         #endregion
 
@@ -61,6 +71,8 @@ namespace AnalysisManager_Mage_PlugIn
             MgrParams = mgrParms;
             ResultsDBFileName = RequireJobParam("ResultsBaseName") + ".db3";
             WorkingDirPath = RequireMgrParam("workdir");
+
+            JobsProcessed = new SortedSet<int>();
         }
 
         #endregion
@@ -187,13 +199,21 @@ namespace AnalysisManager_Mage_PlugIn
             var reMatch = mProcessingResults.Match(args.Message);
             if (reMatch.Success)
             {
-                int job;
-                if (int.TryParse(reMatch.Groups[1].Value, out job))
+                if (int.TryParse(reMatch.Groups[1].Value, out var job))
                 {
-                    // ReSharper disable once RedundantCheckBeforeAssignment
                     if (mLastProgressJob != job)
                     {
                         mLastProgressJob = job;
+                        if (!JobsProcessed.Contains(job))
+                        {
+                            JobsProcessed.Add(job);
+
+                            if (JobCount > 0)
+                            {
+                                var percentComplete = JobsProcessed.Count / (float)JobCount * 100;
+                                OnProgressUpdate(args.Message, percentComplete);
+                            }
+                        }
                     }
                     else
                     {
@@ -201,6 +221,7 @@ namespace AnalysisManager_Mage_PlugIn
                             return;
                     }
                     mLastProgressTime = DateTime.UtcNow;
+
                 }
             }
 
