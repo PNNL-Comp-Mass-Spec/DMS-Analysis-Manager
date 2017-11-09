@@ -563,7 +563,7 @@ namespace AnalysisManagerBase
                 //  DatasetName_msgfplus.mzid.gz
                 //  DatasetName_msgfplus_Part5.mzid.gz
                 //  DatasetName_msgfplus.zip
-                var candidateMzIdFiles = new SortedSet<string>(StringComparer.InvariantCultureIgnoreCase);
+                var candidateMzIdFiles = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
 
                 var datasetName = dataPkgJob.Dataset;
 

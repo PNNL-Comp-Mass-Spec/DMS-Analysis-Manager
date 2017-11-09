@@ -255,7 +255,7 @@ namespace AnalysisManagerBase
             const int RETRY_COUNT = 3;
             const int TIMEOUT_SECONDS = 30;
 
-            jobParameters = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
+            jobParameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             errorMsg = string.Empty;
 
             // Throttle the calls to this function to avoid overloading the database for data packages with hundreds of jobs

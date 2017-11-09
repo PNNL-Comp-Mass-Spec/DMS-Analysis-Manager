@@ -1335,7 +1335,7 @@ namespace AnalysisManagerProg
                 var qErrorMsgQueue = new Queue<string>(errorMessageCountToReturn);
 
                 // Initialize the hashtable to hold the error messages, but without date stamps
-                var uniqueErrorMessages = new Dictionary<string, DateTime>(StringComparer.InvariantCultureIgnoreCase);
+                var uniqueErrorMessages = new Dictionary<string, DateTime>(StringComparer.OrdinalIgnoreCase);
 
                 // Examine the most recent error reported by objLogger
                 var lineIn = clsLogTools.MostRecentErrorMessage;

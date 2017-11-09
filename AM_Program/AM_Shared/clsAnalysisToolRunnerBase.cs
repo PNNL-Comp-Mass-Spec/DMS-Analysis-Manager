@@ -919,7 +919,7 @@ namespace AnalysisManagerBase
             bool increaseHoldoffOnEachRetry)
         {
 
-            var filesToOverwrite = new SortedSet<string>(StringComparer.InvariantCultureIgnoreCase);
+            var filesToOverwrite = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
 
             try
             {
@@ -2457,8 +2457,8 @@ namespace AnalysisManagerBase
                     EnumTaskStatusDetail.PACKAGING_RESULTS, 0);
 
                 resFolderNamePath = Path.Combine(m_WorkDir, m_ResFolderName);
-                var dctRejectStats = new Dictionary<string, int>(StringComparer.InvariantCultureIgnoreCase);
-                var dctAcceptStats = new Dictionary<string, int>(StringComparer.InvariantCultureIgnoreCase);
+                var dctRejectStats = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+                var dctAcceptStats = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
                 // Log status
                 if (m_DebugLevel >= 2)

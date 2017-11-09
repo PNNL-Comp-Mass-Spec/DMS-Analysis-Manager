@@ -588,39 +588,39 @@ namespace AnalysisManagerSMAQCPlugIn
                         }
 
                         // Update progress if the line starts with one of the expected phrases
-                        if (strLineIn.StartsWith("Searching for Text Files", StringComparison.InvariantCultureIgnoreCase))
+                        if (strLineIn.StartsWith("Searching for Text Files", StringComparison.OrdinalIgnoreCase))
                         {
                             if (sngEffectiveProgress < PROGRESS_PCT_SMAQC_SEARCHING_FOR_FILES)
                             {
                                 sngEffectiveProgress = PROGRESS_PCT_SMAQC_SEARCHING_FOR_FILES;
                             }
                         }
-                        else if (strLineIn.StartsWith("Parsing and Inserting Data", StringComparison.InvariantCultureIgnoreCase))
+                        else if (strLineIn.StartsWith("Parsing and Inserting Data", StringComparison.OrdinalIgnoreCase))
                         {
                             if (sngEffectiveProgress < PROGRESS_PCT_SMAQC_POPULATING_DB_TEMP_TABLES)
                             {
                                 sngEffectiveProgress = PROGRESS_PCT_SMAQC_POPULATING_DB_TEMP_TABLES;
                             }
                         }
-                        else if (strLineIn.StartsWith("Now running Measurements", StringComparison.InvariantCultureIgnoreCase))
+                        else if (strLineIn.StartsWith("Now running Measurements", StringComparison.OrdinalIgnoreCase))
                         {
                             if (sngEffectiveProgress < PROGRESS_PCT_SMAQC_RUNNING_MEASUREMENTS)
                             {
                                 sngEffectiveProgress = PROGRESS_PCT_SMAQC_RUNNING_MEASUREMENTS;
                             }
                         }
-                        else if (strLineIn.StartsWith("Saving Scan Results", StringComparison.InvariantCultureIgnoreCase))
+                        else if (strLineIn.StartsWith("Saving Scan Results", StringComparison.OrdinalIgnoreCase))
                         {
                             if (sngEffectiveProgress < PROGRESS_PCT_SMAQC_SAVING_RESULTS)
                             {
                                 sngEffectiveProgress = PROGRESS_PCT_SMAQC_SAVING_RESULTS;
                             }
                         }
-                        else if (strLineIn.StartsWith("Scan output has been saved", StringComparison.InvariantCultureIgnoreCase))
+                        else if (strLineIn.StartsWith("Scan output has been saved", StringComparison.OrdinalIgnoreCase))
                         {
                             // Ignore this line
                         }
-                        else if (strLineIn.StartsWith("SMAQC analysis complete", StringComparison.InvariantCultureIgnoreCase))
+                        else if (strLineIn.StartsWith("SMAQC analysis complete", StringComparison.OrdinalIgnoreCase))
                         {
                             // Ignore this line
                         }
