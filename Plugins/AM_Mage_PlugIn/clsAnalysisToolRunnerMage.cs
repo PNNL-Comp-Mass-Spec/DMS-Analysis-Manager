@@ -223,7 +223,7 @@ namespace AnalysisManager_Mage_PlugIn
                     {
                         // Example message:
                         // Not all entries in the t_alias table have 4 ions; edit the T_alias.txt file
-                        errorMessage = "Not all entries in the " + T_ALIAS_FILE + " table have " + ionCountFirst + " ions; " +
+                        errorMessage = "Not all entries in the " + T_ALIAS_TABLE + " table have " + ionCountFirst + " ions; " +
                                        "edit the " + T_ALIAS_FILE + " file";
 
                         return false;
@@ -334,11 +334,11 @@ namespace AnalysisManager_Mage_PlugIn
             // If it wasn't, we should fail out this job step
             if (itraqMode || mageOperations.Contains("ImportDataPackageFiles"))
             {
-                if (!TableExists(fiResultsDB, T_ALIAS_FILE))
+                if (!TableExists(fiResultsDB, T_ALIAS_TABLE))
                 {
-                    m_message =
-                        "Results.db3 file does not have table " + T_ALIAS_FILE + "; " +
-                        "place a valid " + T_ALIAS_FILE + " file in the the data package's ImportFiles folder";
+                    // Results.db3 file does not have table t_alias.txt; place a valid t_alias.txt file in the the data package's ImportFiles folder
+                    LogError("Results.db3 file does not have table " + T_ALIAS_TABLE + "; " +
+                        "place a valid " + T_ALIAS_FILE + " file in the the data package's ImportFiles folder");
                     return false;
                 }
 
@@ -356,8 +356,8 @@ namespace AnalysisManager_Mage_PlugIn
                     // Example messages
                     // Table T_alias in Results.db3 is empty
                     // Table T_alias in Results.db3 is missing column Tissue
-                    m_message = "Table " + T_ALIAS_FILE + " in Results.db3 " + errorMessage +
-                                "; place a valid " + T_ALIAS_FILE + " file in the the data package's ImportFiles folder; " + exceptionDetail;
+                    LogError("Table " + T_ALIAS_TABLE + " in Results.db3 " + errorMessage +
+                                "; place a valid " + T_ALIAS_FILE + " file in the the data package's ImportFiles folder; " + exceptionDetail);
                     return false;
                 }
 
