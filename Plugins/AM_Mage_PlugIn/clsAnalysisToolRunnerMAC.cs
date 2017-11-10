@@ -13,7 +13,9 @@ namespace AnalysisManager_Mage_PlugIn
     public abstract class clsAnalysisToolRunnerMAC : clsAnalysisToolRunnerBase
     {
 
-        #region "Module Variables"
+        #region "Constants"
+
+        protected const string MAGE_LOG_FILE_NAME = "Mage_Log.txt";
 
         protected const float ProgressPctMacDone = 95;
 
@@ -38,17 +40,26 @@ namespace AnalysisManager_Mage_PlugIn
 
                 LogMessage("Running MAC Plugin");
 
-
                 bool processingSuccess;
                 try
                 {
 
-                    // run the appropriate MAC pipeline(s) according to mode parameter
+                    // Run the appropriate MAC pipeline(s) according to mode parameter
                     processingSuccess = RunMACTool();
 
-                    if (!processingSuccess && !string.IsNullOrWhiteSpace(m_message))
+
+                    var currentLogFilePath = (string)log4net.GlobalContext.Properties["LogName"];
+                    if (string.Equals(MAGE_LOG_FILE_NAME, Path.GetFileName(currentLogFilePath)))
                     {
-                        LogError("Error running MAC: " + m_message);
+                        ResetLogFileNameToDefault();
+                    }
+
+                    if (!processingSuccess)
+                    {
+                        if (string.IsNullOrWhiteSpace(m_message))
+                        {
+                            LogError("Error running MAC: RunMACTool returned false");
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -56,14 +67,14 @@ namespace AnalysisManager_Mage_PlugIn
                     // Change the name of the log file back to the analysis manager log file
                     ResetLogFileNameToDefault();
 
-                    LogError("Error running MAC: " + ex.Message, ex);
+                    LogError("Exception running MAC: " + ex.Message, ex);
+
                     processingSuccess = false;
 
-                    m_message = "Error running MAC: " + ex.Message;
                     var sDataPackageSourceFolderName = m_jobParams.GetJobParameter("DataPackageSourceFolderName", "ImportFiles");
                     if (ex.Message.Contains(sDataPackageSourceFolderName + "\\--No Files Found"))
                     {
-                        m_message += "; " + sDataPackageSourceFolderName + " folder in the data package is empty or does not exist";
+                        LogError(sDataPackageSourceFolderName + " folder in the data package is empty or does not exist");
                     }
 
                 }
@@ -101,8 +112,8 @@ namespace AnalysisManager_Mage_PlugIn
             }
             catch (Exception ex)
             {
-                m_message = "Error in MAC Plugin->RunTool";
-                LogError(m_message, ex);
+                var msg = "Error in MAC Plugin->RunTool: " + ex.Message;
+                LogError(msg, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 

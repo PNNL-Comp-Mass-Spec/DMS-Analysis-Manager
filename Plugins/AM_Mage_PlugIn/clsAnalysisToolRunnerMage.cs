@@ -20,8 +20,8 @@ namespace AnalysisManager_Mage_PlugIn
         /// </summary>
         protected override bool RunMACTool()
         {
-            // Change the name of the log file for the local log file to the plug in log filename
-            var logFileName = Path.Combine(m_WorkDir, "Mage_Log.txt");
+            // Change the name of the log file for the local log file to the plugin log filename
+            var logFileName = Path.Combine(m_WorkDir, MAGE_LOG_FILE_NAME);
             log4net.GlobalContext.Properties["LogName"] = logFileName;
             clsLogTools.ChangeLogFileName(logFileName);
 
@@ -48,7 +48,7 @@ namespace AnalysisManager_Mage_PlugIn
             var fiResultsDB = new FileInfo(Path.Combine(m_WorkDir, "Results.db3"));
             if (!fiResultsDB.Exists)
             {
-                m_message = "Results.db3 file was not created";
+                LogError("Results.db3 file was not created");
                 return false;
             }
 
@@ -320,7 +320,7 @@ namespace AnalysisManager_Mage_PlugIn
             {
                 if (!TableExists(fiResultsDB, "t_results"))
                 {
-                    m_message = "Results.db3 file does not have table T_Results; Mage did not extract results from any jobs";
+                    LogError("Results.db3 file does not have table T_Results; Mage did not extract results from any jobs");
                     return false;
                 }
             }
@@ -363,7 +363,10 @@ namespace AnalysisManager_Mage_PlugIn
 
                 if (!ValidateFactors(fiResultsDB, out errorMessage, out exceptionDetail))
                 {
-                    m_message = "Error validating factors: " + errorMessage + "; " + exceptionDetail;
+                    if (!m_message.Contains(errorMessage))
+                    {
+                        LogError("Error validating factors: " + errorMessage + "; " + exceptionDetail);
+                    }
                     return false;
                 }
 
