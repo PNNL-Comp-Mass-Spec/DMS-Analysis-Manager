@@ -33,9 +33,7 @@ namespace AnalysisManager_Mage_PlugIn
             var success = ops.RunMageOperations(mageOperations);
 
             // Change the name of the log file back to the analysis manager log file
-            logFileName = m_mgrParams.GetParam("logfilename");
-            log4net.GlobalContext.Properties["LogName"] = logFileName;
-            clsLogTools.ChangeLogFileName(logFileName);
+            ResetLogFileNameToDefault();
 
             if (!string.IsNullOrEmpty(ops.WarningMsg))
             {

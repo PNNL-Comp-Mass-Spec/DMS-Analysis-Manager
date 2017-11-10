@@ -86,10 +86,10 @@ namespace AnalysisManager_IDM_Plugin
                         LogDebug("clsAnalysisToolRunnerIDM.RunTool(): Enter");
                     }
 
-                    // Change the name of the log file for the local log file to the plug in log filename
-                    var LogFileName = Path.Combine(m_WorkDir, "IDM_Log");
-                    GlobalContext.Properties["LogName"] = LogFileName;
-                    clsLogTools.ChangeLogFileName(LogFileName);
+                    // Change the name of the log file for the local log file to the plugin log filename
+                    var logFileName = Path.Combine(m_WorkDir, "IDM_Log.txt");
+                    GlobalContext.Properties["LogName"] = logFileName;
+                    clsLogTools.ChangeLogFileName(logFileName);
 
                     try
                     {
@@ -103,17 +103,13 @@ namespace AnalysisManager_IDM_Plugin
 
                         processingSuccess = idm.Run(m_WorkDir, "Results.db3");
 
-                        // Change the name of the log file for the local log file to the plug in log filename
-                        LogFileName = m_mgrParams.GetParam("logfilename");
-                        GlobalContext.Properties["LogName"] = LogFileName;
-                        clsLogTools.ChangeLogFileName(LogFileName);
+                        // Change the name of the log file back to the default
+                        ResetLogFileNameToDefault();
                     }
                     catch (Exception ex)
                     {
-                        // Change the name of the log file for the local log file to the plug in log filename
-                        LogFileName = m_mgrParams.GetParam("logfilename");
-                        GlobalContext.Properties["LogName"] = LogFileName;
-                        clsLogTools.ChangeLogFileName(LogFileName);
+                        // Change the name of the log file back to the default
+                        ResetLogFileNameToDefault();
 
                         LogError("Error running IDM: " + ex.Message);
                         processingSuccess = false;

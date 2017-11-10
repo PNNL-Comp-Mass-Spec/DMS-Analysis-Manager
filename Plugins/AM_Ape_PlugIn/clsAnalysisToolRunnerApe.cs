@@ -47,9 +47,9 @@ namespace AnalysisManager_Ape_PlugIn
                 LogMessage(m_CurrentApeTask);
 
                 // Change the name of the log file for the local log file to the plugin log filename
-                var LogFileName = Path.Combine(m_WorkDir, "Ape_Log");
-                log4net.GlobalContext.Properties["LogName"] = LogFileName;
-                clsLogTools.ChangeLogFileName(LogFileName);
+                var logFileName = Path.Combine(m_WorkDir, "Ape_Log.txt");
+                log4net.GlobalContext.Properties["LogName"] = logFileName;
+                clsLogTools.ChangeLogFileName(logFileName);
 
                 bool processingSuccess;
 
@@ -60,9 +60,7 @@ namespace AnalysisManager_Ape_PlugIn
                     processingSuccess = RunApe();
 
                     // Change the name of the log file back to the analysis manager log file
-                    LogFileName = m_mgrParams.GetParam("logfilename");
-                    log4net.GlobalContext.Properties["LogName"] = LogFileName;
-                    clsLogTools.ChangeLogFileName(LogFileName);
+                    ResetLogFileNameToDefault();
 
                     if (!processingSuccess) {
                         if (string.IsNullOrWhiteSpace(m_message))
@@ -74,9 +72,7 @@ namespace AnalysisManager_Ape_PlugIn
                 catch (Exception ex)
                 {
                     // Change the name of the log file back to the analysis manager log file
-                    LogFileName = m_mgrParams.GetParam("logfilename");
-                    log4net.GlobalContext.Properties["LogName"] = LogFileName;
-                    clsLogTools.ChangeLogFileName(LogFileName);
+                    ResetLogFileNameToDefault();
 
                     LogError("Error running Ape: " + ex.Message);
                     processingSuccess = false;

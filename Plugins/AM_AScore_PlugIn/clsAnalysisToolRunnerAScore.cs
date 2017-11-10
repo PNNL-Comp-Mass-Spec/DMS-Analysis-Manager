@@ -66,9 +66,9 @@ namespace AnalysisManager_AScore_PlugIn
                     LogMessage(m_CurrentAScoreTask);
 
                     // Change the name of the log file for the local log file to the plugin log filename
-                    var LogFileName = Path.Combine(m_WorkDir, "Ascore_Log");
-                    GlobalContext.Properties["LogName"] = LogFileName;
-                    clsLogTools.ChangeLogFileName(LogFileName);
+                    var logFileName = Path.Combine(m_WorkDir, "Ascore_Log.txt");
+                    GlobalContext.Properties["LogName"] = logFileName;
+                    clsLogTools.ChangeLogFileName(logFileName);
 
                     try
                     {
@@ -77,9 +77,7 @@ namespace AnalysisManager_AScore_PlugIn
                         processingSuccess = RunAScore();
 
                         // Change the name of the log file back to the analysis manager log file
-                        LogFileName = m_mgrParams.GetParam("logfilename");
-                        GlobalContext.Properties["LogName"] = LogFileName;
-                        clsLogTools.ChangeLogFileName(LogFileName);
+                        ResetLogFileNameToDefault();
 
                         if (!processingSuccess && !string.IsNullOrWhiteSpace(m_message))
                         {
@@ -100,9 +98,7 @@ namespace AnalysisManager_AScore_PlugIn
                     catch (Exception ex)
                     {
                         // Change the name of the log file back to the analysis manager log file
-                        LogFileName = m_mgrParams.GetParam("logfilename");
-                        GlobalContext.Properties["LogName"] = LogFileName;
-                        clsLogTools.ChangeLogFileName(LogFileName);
+                        ResetLogFileNameToDefault();
 
                         LogError("Error running AScore: " + ex.Message, ex);
                         processingSuccess = false;

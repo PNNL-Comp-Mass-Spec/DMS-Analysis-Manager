@@ -3229,6 +3229,16 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
+        /// Change the log file back to the analysis manager log file
+        /// </summary>
+        protected void ResetLogFileNameToDefault()
+        {
+            var logFileName = m_mgrParams.GetParam("logfilename");
+            log4net.GlobalContext.Properties["LogName"] = logFileName;
+            clsLogTools.ChangeLogFileBaseName(logFileName);
+        }
+
+        /// <summary>
         /// Retrieve results from a remote processing job; storing in the local working directory
         /// </summary>
         /// <param name="transferUtility">Remote transfer utility</param>

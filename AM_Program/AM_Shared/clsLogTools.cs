@@ -304,6 +304,17 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
+        /// Update the log file's base name
+        /// </summary>
+        /// <param name="baseName"></param>
+        /// <remarks>Will append today's date to the base name</remarks>
+        public static void ChangeLogFileBaseName(string baseName)
+        {
+            m_BaseFileName = baseName;
+            ChangeLogFileName();
+        }
+
+        /// <summary>
         /// Changes the base log file name
         /// </summary>
         public static void ChangeLogFileName()

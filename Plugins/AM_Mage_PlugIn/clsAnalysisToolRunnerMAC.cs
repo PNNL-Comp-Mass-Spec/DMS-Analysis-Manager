@@ -54,9 +54,7 @@ namespace AnalysisManager_Mage_PlugIn
                 catch (Exception ex)
                 {
                     // Change the name of the log file back to the analysis manager log file
-                    var logFileName = m_mgrParams.GetParam("logfilename");
-                    log4net.GlobalContext.Properties["LogName"] = logFileName;
-                    clsLogTools.ChangeLogFileName(logFileName);
+                    ResetLogFileNameToDefault();
 
                     LogError("Error running MAC: " + ex.Message, ex);
                     processingSuccess = false;
