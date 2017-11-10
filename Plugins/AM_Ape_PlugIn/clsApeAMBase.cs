@@ -91,9 +91,9 @@ namespace AnalysisManager_Ape_PlugIn
 
         #endregion
 
-        protected void OnProgressChanged(string TaskDescription, float PctComplete) {
-            if (ProgressChanged != null)
-                ProgressChanged(this, new ProgressChangedEventArgs(TaskDescription, PctComplete));
+        protected void OnProgressChanged(string TaskDescription, float PctComplete)
+        {
+            ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(TaskDescription, PctComplete));
         }	
 
         public class ProgressChangedEventArgs : EventArgs {
