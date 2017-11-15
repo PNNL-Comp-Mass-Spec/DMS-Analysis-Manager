@@ -246,7 +246,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 var fiSourceFile = new FileInfo(Path.Combine(m_WorkDir, m_Dataset + "_dta_DtaRefineryLog.txt"));
                 if (!fiSourceFile.Exists)
                 {
-                    LogDebug("DTA_Refinery log file not found by IsXTandemFinished: " + fiSourceFile.Name);
+                    LogDebug("DTA_Refinery log file not found by IsXTandemFinished: " + fiSourceFile.Name, 10);
                     return false;
                 }
 
@@ -263,6 +263,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
                         if (strLineIn != null && strLineIn.Contains("finished x!tandem"))
                         {
+                            LogMessage("X!Tandem has finished searching and now DTA_Refinery is running (parsed " + fiSourceFile.Name + ")");
                             return true;
                         }
                     }
