@@ -625,7 +625,6 @@ namespace AnalysisManagerBase
             var freeMemoryMB = clsGlobal.GetFreeMemoryMB();
 
             return freeMemoryMB;
-
         }
 
         /// <summary>

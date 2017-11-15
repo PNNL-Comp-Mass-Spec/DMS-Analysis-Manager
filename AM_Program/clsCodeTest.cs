@@ -1277,6 +1277,8 @@ namespace AnalysisManagerProg
             var statusTools = new clsStatusFile("Status.xml", 2);
             RegisterEvents(statusTools);
 
+            statusTools.MgrName = m_mgrParams.ManagerName;
+
             var exePath = Assembly.GetExecutingAssembly().Location;
             if (exePath == null)
                 throw new Exception("Unable to determine the Exe path of the currently executing assembly");
