@@ -119,7 +119,7 @@ namespace AnalysisManagerProg
 
                     try
                     {
-                        // objTest.SystemMemoryUsage();
+                        objTest.SystemMemoryUsage();
                         // objTest.TestDTASplit();
                         // objTest.TestProteinDBExport(@"C:\DMS_Temp_Org");
                         // objTest.TestDeleteFiles();
@@ -128,10 +128,10 @@ namespace AnalysisManagerProg
                         // objTest.TestArchiveFailedResults();
                         // objTest.TestGetToolVersionInfo();
                         // objTest.TestConnectRSA();
-                        // objTest.TestStatusLogging();
+                        objTest.TestStatusLogging();
                         // objTest.TestZipAndUnzip();
+                        // objTest.TestCopyToRemote();
 
-                        objTest.TestCopyToRemote();
 
                     }
                     catch (Exception ex)
