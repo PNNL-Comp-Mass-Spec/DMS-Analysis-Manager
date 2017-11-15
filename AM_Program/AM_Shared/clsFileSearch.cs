@@ -2987,10 +2987,7 @@ namespace AnalysisManagerBase
                     return false;
                 }
 
-                var externalUnzipperFilePath = m_mgrParams.GetParam("zipprogram", string.Empty);
-
                 var fiFileInfo = new FileInfo(zipFilePath);
-                var fileSizeMB = clsGlobal.BytesToMB(fiFileInfo.Length);
 
                 if (!fiFileInfo.Exists)
                 {
