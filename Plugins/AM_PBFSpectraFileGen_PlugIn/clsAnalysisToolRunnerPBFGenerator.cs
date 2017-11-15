@@ -100,6 +100,8 @@ namespace AnalysisManagerPBFGenerator
                         if (string.IsNullOrEmpty(mPbfFormatVersion))
                             mPbfFormatVersion = string.Empty;
 
+                        var knownVersion = true;
+
                         switch (mPbfFormatVersion)
                         {
                             case "150601":
@@ -121,7 +123,7 @@ namespace AnalysisManagerPBFGenerator
                                 }
                                 break;
                             case "150605":
-                                // This version is created by Pbf_Gen.exe v1.0.5714
+                                // This version is created by Pbf_Gen.exe v1.0.6526
                                 // Make sure the output folder starts with PBF_Gen_1_214
                                 // (which will be the case if the settings file has <item key="PbfFormatVersion" value="150605"/>)
                                 if (!m_ResFolderName.StartsWith("PBF_Gen_1_214"))
@@ -129,16 +131,37 @@ namespace AnalysisManagerPBFGenerator
                                     processingSuccess = false;
                                 }
                                 break;
+
+                            case "150608":
+                                // This version is created by Pbf_Gen.exe v1.0.5714
+                                // Make sure the output folder starts with PBF_Gen_1_243
+                                // (which will be the case if the settings file has <item key="PbfFormatVersion" value="150608"/>)
+                                if (!m_ResFolderName.StartsWith("PBF_Gen_1_243"))
+                                {
+                                    processingSuccess = false;
+                                }
+                                break;
+
                             default:
                                 processingSuccess = false;
+                                knownVersion = false;
                                 break;
                         }
 
                         if (!processingSuccess)
                         {
-                            LogError("Unrecognized PbfFormatVersion.  Either create a new Settings file with PbfFormatVersion " + mPbfFormatVersion +
-                                     " or update the version listed in the current, default settings file;" +
-                                     " next, delete the job from the DMS_Pipeline database then update the job to use the new settings file (or reset the job)");
+                            if (knownVersion)
+                            {
+                                LogError("Unrecognized PbfFormatVersion.  Either create a new Settings file with PbfFormatVersion " + mPbfFormatVersion +
+                                         " or update the version listed in the current, default settings file;" +
+                                         " next, delete the job from the DMS_Pipeline database then update the job to use the new settings file (or reset the job)");
+                            }
+                            else
+                            {
+                                LogError("Unrecognized PbfFormatVersion. Update file clsAnalysisToolRunnerPBFGenerator.cs in the PBFSpectraFileGen Plugin " +
+                                         "of the Analysis Manager to add version " + mPbfFormatVersion + "; next, reset the failed job step");
+                            }
+
                         }
                         else
                         {
