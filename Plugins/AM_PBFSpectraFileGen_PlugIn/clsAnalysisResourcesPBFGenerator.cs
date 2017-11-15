@@ -17,7 +17,7 @@ namespace AnalysisManagerPBFGenerator
     /// </summary>
     public class clsAnalysisResourcesPBFGenerator : clsAnalysisResources
     {
-        public override AnalysisManagerBase.CloseOutType GetResources()
+        public override CloseOutType GetResources()
         {
             // Retrieve shared resources, including the JobParameters file from the previous job step
             var result = GetSharedResources();
@@ -69,7 +69,7 @@ namespace AnalysisManagerPBFGenerator
 
                 currentTask = "Process MyEMSL Download Queue";
 
-                if (!base.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+                if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
                 {
                     return false;
                 }

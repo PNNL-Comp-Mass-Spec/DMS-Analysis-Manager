@@ -421,22 +421,22 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
             try
             {
-                var strFixedDTAFilePath = Path.Combine(m_WorkDir, m_Dataset + "_FIXED_dta.txt");
-                var ioFile = new FileInfo(strFixedDTAFilePath);
+                var fixedDTAFilePath = Path.Combine(m_WorkDir, m_Dataset + "_FIXED_dta.txt");
+                var fixedDtaFile = new FileInfo(fixedDTAFilePath);
 
-                if (!ioFile.Exists)
+                if (!fixedDtaFile.Exists)
                 {
-                    LogError("DTARefinery output file not found: " + ioFile.Name);
+                    LogError("DTARefinery output file not found: " + fixedDtaFile.Name);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                ioFile.MoveTo(Path.Combine(m_WorkDir, m_Dataset + "_dta.txt"));
+                fixedDtaFile.MoveTo(Path.Combine(m_WorkDir, m_Dataset + "_dta.txt"));
 
                 try
                 {
-                    if (!ZipFile(ioFile.FullName, true))
+                    if (!ZipFile(fixedDtaFile.FullName, true))
                     {
-                        LogError("Error zipping DTARefinery output file: " + ioFile.FullName);
+                        LogError("Error zipping DTARefinery output file: " + fixedDtaFile.FullName);
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
                 }

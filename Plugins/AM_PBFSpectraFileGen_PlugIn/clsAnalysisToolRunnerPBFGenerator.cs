@@ -331,9 +331,6 @@ namespace AnalysisManagerPBFGenerator
 
         protected bool StartPBFFileCreation(string progLoc)
         {
-            string cmdStr = null;
-            var blnSuccess = false;
-
             mConsoleOutputErrorMsg = string.Empty;
 
             var rawDataType = m_jobParams.GetJobParameter("RawDataType", "");
@@ -364,7 +361,7 @@ namespace AnalysisManagerPBFGenerator
             LogMessage("Running PBFGen to create the PBF file");
 
             // Set up and execute a program runner to run PBFGen
-            cmdStr = " -s " + rawFilePath;
+            var cmdStr = " -s " + rawFilePath;
 
             // cmdStr += " -o " + m_WorkDir
 
@@ -386,7 +383,7 @@ namespace AnalysisManagerPBFGenerator
 
             m_progress = PROGRESS_PCT_STARTING;
 
-            blnSuccess = cmdRunner.RunProgram(progLoc, cmdStr, "PbfGen", true);
+            var success = cmdRunner.RunProgram(progLoc, cmdStr, "PbfGen", true);
 
             if (!cmdRunner.WriteConsoleOutputToFile)
             {
@@ -413,7 +410,7 @@ namespace AnalysisManagerPBFGenerator
                 LogError(mConsoleOutputErrorMsg);
             }
 
-            if (!blnSuccess)
+            if (!success)
             {
                 LogError("Error running PBFGen to create a PBF file");
 
