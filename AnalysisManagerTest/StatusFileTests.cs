@@ -2,7 +2,6 @@
 using System.IO;
 using AnalysisManagerBase;
 using NUnit.Framework;
-using PRISM;
 
 namespace AnalysisManagerTest
 {
