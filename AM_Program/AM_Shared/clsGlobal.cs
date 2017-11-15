@@ -108,8 +108,6 @@ namespace AnalysisManagerBase
 
         private static string mAppFolderPath;
 
-        private static SystemMemoryInfo mSystemMemoryInfo;
-
         private static SystemProcessInfo mSystemProcessInfo;
 
         #endregion
@@ -1483,14 +1481,12 @@ namespace AnalysisManagerBase
         /// <returns>Free memory, in MB</returns>
         public static float GetFreeMemoryMB()
         {
-            if (mSystemMemoryInfo == null)
-            {
-                mSystemMemoryInfo = new SystemMemoryInfo();
-                RegisterEvents(mSystemMemoryInfo, writeDebugEventsToLog: false);
-            }
+            // Use PRISM.SystemInfo to determine free memory
+            // This works for both Windows and Linux
+            // OS version is determined using:
+            //   clsOSVersionInfo().GetOSVersion().ToLower().Contains("windows")
 
-            return mSystemMemoryInfo.GetFreeMemoryMB();
-
+            return SystemInfo.GetFreeMemoryMB();
         }
 
         /// <summary>
