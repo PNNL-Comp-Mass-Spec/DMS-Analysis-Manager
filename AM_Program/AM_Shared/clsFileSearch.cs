@@ -440,18 +440,6 @@ namespace AnalysisManagerBase
         /// Finds the server or archive folder where specified file is located
         /// </summary>
         /// <param name="fileToFind">Name of the file to search for</param>
-        /// <param name="searchArchivedDatasetFolder">TRUE if the EMSL archive (Aurora) should also be searched</param>
-        /// <returns>Path to the directory containing the file if the file was found; empty string if not found found</returns>
-        /// <remarks>If the file is found in MyEMSL, the directory path returned will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
-        private string FindDataFile(string fileToFind, bool searchArchivedDatasetFolder)
-        {
-            return FindDataFile(fileToFind, searchArchivedDatasetFolder, logFileNotFound: true);
-        }
-
-        /// <summary>
-        /// Finds the server or archive folder where specified file is located
-        /// </summary>
-        /// <param name="fileToFind">Name of the file to search for</param>
         /// <param name="searchArchivedDatasetFolder">
         /// TRUE if the EMSL archive (Aurora) or MyEMSL should also be searched
         /// (m_AuroraAvailable and MyEMSLSearchDisabled take precedence)
@@ -459,7 +447,7 @@ namespace AnalysisManagerBase
         /// <param name="logFileNotFound">True if an error should be logged when a file is not found</param>
         /// <returns>Path to the directory containing the file if the file was found; empty string if not found found</returns>
         /// <remarks>If the file is found in MyEMSL, the directory path returned will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
-        public string FindDataFile(string fileToFind, bool searchArchivedDatasetFolder, bool logFileNotFound)
+        public string FindDataFile(string fileToFind, bool searchArchivedDatasetFolder, bool logFileNotFound = true)
         {
 
             try
