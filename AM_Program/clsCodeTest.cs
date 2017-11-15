@@ -1582,19 +1582,11 @@ namespace AnalysisManagerProg
         public void SystemMemoryUsage()
         {
 
-            var sngFreeMemoryMB = clsGlobal.GetFreeMemoryMB();
+            var freeMemoryMB = clsGlobal.GetFreeMemoryMB();
 
             Console.WriteLine();
-            Console.WriteLine("Available memory (MB) = {0:F1}", sngFreeMemoryMB);
+            Console.WriteLine("Available memory (MB) = {0:F1}", freeMemoryMB);
 
-            if (clsGlobal.LinuxOS)
-                return;
-
-            var systemMemoryInfo = new SystemMemoryInfo();
-            var freeMemoryMBAlt = systemMemoryInfo.GetGlobalMemoryStatusWindows(true);
-
-            Console.WriteLine();
-            Console.WriteLine("Available memory (MB) = {0:F1} (from kernel32.dll)", freeMemoryMBAlt);
         }
 
         /// <summary>

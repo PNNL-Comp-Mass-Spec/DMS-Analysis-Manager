@@ -431,8 +431,6 @@ namespace AnalysisManagerExtractionPlugin
                     }
                 }
 
-                // ReSharper disable once UseImplicitlyTypedVariableEvident
-
                 for (var iteration = 1; iteration <= numberOfClonedSteps; iteration++)
                 {
                     var skipMSGFResultsZipFileCopy = false;

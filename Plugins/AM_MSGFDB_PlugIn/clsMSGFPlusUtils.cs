@@ -1752,7 +1752,6 @@ namespace AnalysisManagerMSGFDBPlugIn
         // Writing results finished (elapsed time: 22.71 sec)
         // MS-GF+ complete (total elapsed time: 1073.62 sec)
 
-        // ReSharper disable once UseImplicitlyTypedVariableEvident
         private readonly Regex reExtractThreadCount = new Regex(@"Using (?<ThreadCount>\d+) threads", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private readonly Regex reExtractTaskCount = new Regex(@"Splitting work into +(?<TaskCount>\d+) +tasks", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private readonly Regex reSpectraSearched = new Regex(@"Spectrum.+\(total: *(?<SpectrumCount>\d+)\)", RegexOptions.Compiled | RegexOptions.IgnoreCase);

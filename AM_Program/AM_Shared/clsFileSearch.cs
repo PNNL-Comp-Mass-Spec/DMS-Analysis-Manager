@@ -323,7 +323,6 @@ namespace AnalysisManagerBase
 
         }
 
-        // ReSharper disable once UnusedMember.Global
         /// <summary>
         /// Search for the specified PHRP file and copy it to the work directory
         /// If the filename contains _msgfplus and the file is not found, auto looks for the _msgfdb version of the file
@@ -1378,6 +1377,8 @@ namespace AnalysisManagerBase
                 if (sourceFilePath.StartsWith(MYEMSL_PATH_FLAG))
                 {
                     m_MyEMSLUtilities.AddFileToDownloadQueue(sourceFilePath);
+
+                    // ReSharper disable once RedundantNameQualifier
                     if (m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
                     {
                         if (m_DebugLevel >= 1)

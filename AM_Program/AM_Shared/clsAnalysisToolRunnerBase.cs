@@ -22,7 +22,6 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Base class for analysis tool runner
     /// </summary>
-    // ReSharper disable once ClassNeverInstantiated.Global
     public class clsAnalysisToolRunnerBase : clsAnalysisMgrBase, IToolRunner
     {
 

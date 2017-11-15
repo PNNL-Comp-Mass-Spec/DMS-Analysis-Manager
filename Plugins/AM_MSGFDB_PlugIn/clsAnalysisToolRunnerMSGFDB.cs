@@ -419,7 +419,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                 validExistingResults = MSGFPlusUtils.MSGFPlusResultsFileHasClosingTag(fiMSGFPlusResults);
                 if (validExistingResults)
                 {
-                    // ReSharper disable once UseFormatSpecifierInFormatString
                     LogMessage(string.Format("Using existing MSGF+ results: {0} created {1}",
                         fiMSGFPlusResults.Name, fiMSGFPlusResults.LastWriteTime.ToString(DATE_TIME_FORMAT)));
                 }

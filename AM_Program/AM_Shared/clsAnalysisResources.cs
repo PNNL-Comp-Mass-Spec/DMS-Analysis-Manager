@@ -3298,14 +3298,13 @@ namespace AnalysisManagerBase
         /// Delete the specified FASTA file and its associated files
         /// </summary>
         /// <param name="diOrgDbFolder"></param>
-        /// <param name="fiFileToPurge"></param>
+        /// <param name="fileToPurge"></param>
         /// <param name="legacyFastaFileBaseName"></param>
         /// <returns>Number of bytes deleted</returns>
-        // ReSharper disable once SuggestBaseTypeForParameter
-        private long PurgeFastaFiles(DirectoryInfo diOrgDbFolder, FileInfo fiFileToPurge, string legacyFastaFileBaseName)
+        private long PurgeFastaFiles(DirectoryInfo diOrgDbFolder, FileSystemInfo fileToPurge, string legacyFastaFileBaseName)
         {
 
-            var baseName = Path.GetFileNameWithoutExtension(fiFileToPurge.Name);
+            var baseName = Path.GetFileNameWithoutExtension(fileToPurge.Name);
 
             if (!string.IsNullOrWhiteSpace(legacyFastaFileBaseName) && baseName.StartsWith(legacyFastaFileBaseName, StringComparison.OrdinalIgnoreCase))
             {
@@ -3324,7 +3323,7 @@ namespace AnalysisManagerBase
                 {
                     fileText += "s";
                 }
-                LogDebugMessage("Deleting " + fileText + " associated with " + fiFileToPurge.FullName);
+                LogDebugMessage("Deleting " + fileText + " associated with " + fileToPurge.FullName);
             }
 
             long bytesDeleted = 0;

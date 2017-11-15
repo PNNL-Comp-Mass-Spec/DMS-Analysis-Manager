@@ -2074,8 +2074,7 @@ namespace AnalysisManagerProg
             return true;
         }
 
-        // ReSharper disable once SuggestBaseTypeForParameter
-        private Dictionary<string, DateTime> LoadCachedLogMessages(FileInfo messageCacheFile)
+        private Dictionary<string, DateTime> LoadCachedLogMessages(FileSystemInfo messageCacheFile)
         {
             var cachedMessages = new Dictionary<string, DateTime>();
 
@@ -2164,7 +2163,6 @@ namespace AnalysisManagerProg
                     writer.WriteLine("{0}\t{1}", "TimeStamp", "Message");
                     foreach (var message in cachedMessages)
                     {
-                        // ReSharper disable once UseFormatSpecifierInFormatString
                         writer.WriteLine("{0}\t{1}", message.Value.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT), message.Key);
                     }
                 }
