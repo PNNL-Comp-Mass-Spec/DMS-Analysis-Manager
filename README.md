@@ -40,8 +40,8 @@ the processing details for each analysis tool.
 | MSAlign_Quant | Quantifies MSAlign results | AM_MSAlign_Quant_Plugin | AnalysisManagerMSAlignQuantPlugIn.dll | 
 | MSClusterDTAtoDAT | Produce an MSCluster-compatible DAT file from an existing DTA | AM_MSClusterDTAtoDAT_PlugIn | (obsolete) | 
 | MSDeconv | Deisotopes peptides with charge 4+ or higher; intended for top-down or middle-down datasets | AM_MSDeconv_Plugin | AnalysisManagerMSDeconvPlugIn.dll | 
-| MSGF | Runs MSGF, aka the MS-GeneratingFunction (CPU Load is 4 to keep to just one or two tasks per box) | AM_MSGF_PlugIn | AnalysisManagerMSGFPlugin.dll | 
-| MSGFPlus | Runs MSGF+ (CPU load is 4 to allow for debugging, but MSGF+ will use 1 fewer than the number of cores) | AM_MSGFDB_PlugIn | AnalysisManagerMSGFDBPlugIn.dll | 
+| MSGF | Runs MSGF, aka the MS-GeneratingFunction | AM_MSGF_PlugIn | AnalysisManagerMSGFPlugin.dll | 
+| MSGFPlus | Runs MSGF+ | AM_MSGFDB_PlugIn | AnalysisManagerMSGFDBPlugIn.dll | 
 | MSGFPlus_IMS | Processes IMS MSn data with MSGFDB_IMS; requires a DeconTools job as import | AM_MSGFDB_IMS_Plugin | (obsolete) | 
 | MSMSSpectraPreprocessor | Produce modified DTA by filtering existing DTA | AM_MSMSSpectrumFilter_PlugIn | MSMSSpectrumFilterAM.dll | 
 | MSPathFinder | Searches top down datasets for proteins | AM_MSPathFinder_Plugin | AnalysisManagerMSPathFinderPlugIn.dll | 
@@ -53,17 +53,17 @@ the processing details for each analysis tool.
 | mzXML_Aggregator | Extracts mzXML results from multiple mzXML jobs and aggregates the result | AM_PRIDE_MzXML_PlugIn | AnalysisManagerPRIDEMzXMLPlugIn.dll | 
 | NOMSI | Process XML files created by Bruker_DA_Export | AM_NOMSI | AnalysisManagerNOMSIPlugin.dll | 
 | OMSSA | Runs OMSSA | AM_OMSSA_PlugIn | AnalysisManagerOMSSAPlugIn.dll | 
-| PBF_Gen | Creates PBF (PNNL Binary Format) files; if a new .Exe results in a different file format, then increment PbfFormatVersion in MSPF_TopDown_Standard.xml and possibly increment Shared_Result_Version in this table | AM_PBFSpectraFileGen_PlugIn | AnalysisManagerPBFGenerator.dll | 
+| PBF_Gen | Creates PBF (PNNL Binary Format) files; if a new .Exe results in a different file format, increment PbfFormatVersion in MSPF_TopDown_Standard.xml | AM_PBFSpectraFileGen_PlugIn | AnalysisManagerPBFGenerator.dll | 
 | Phospho_FDR_Aggregator | Calculates phosphoproteomics FDR for datasets and aggregates the results | AM_Phospho_FDR_Aggregator_PlugIn | AnalysisManagerPhospho_FDR_AggregatorPlugIn.dll | 
 | PRIDE_Converter | Converts Peptide_Hit results (Sequest, X!Tandem, or MSGFDB) to the msgf-pride.xml format | AM_PRIDE_Converter_PlugIn | AnalysisManagerPRIDEConverterPlugIn.dll | 
 | ProMex | Deisotopes high resolution spectra in PBF files | AM_ProMex_Plugin | AnalysisManagerProMexPlugIn.dll | 
 | ProSight_Quant | Quantifies ProSightPC results | AM_ProSightPC_Quant_Plugin | AnalysisManagerProSightQuantPlugIn.dll | 
-| QC_ART | Runs QC-ART; requires R 3.x. CPU_Load is 0 because virtually no system resources are utilized | AM_QC-ART_PlugIn | AnalysisManagerQCARTPlugIn.dll | 
+| QC_ART | Runs QC-ART; requires R 3.x. | AM_QC-ART_PlugIn | AnalysisManagerQCARTPlugIn.dll | 
 | RepoPkgr | Aggregates data and results files from DMS into package that can be uploaded to a public proteomics repository | AM_RepoPkgr_PlugIn | AnalysisManager_RepoPkgr_PlugIn.dll | 
 | Results_Cleanup | Looks for Results.db3 files in MAC jobs; deletes all except the one in the final job step | AM_ResultsCleanup_PlugIn | AnalysisManagerResultsCleanupPlugin.dll | 
 | Results_Transfer | Moves results folder from Xfer to storage | AM_ResultsXfer_PlugIn | AnalysisManagerResultsXferPlugin.dll | 
 | Sequest | Identify peptides by searching protein collection | AM_Sequest_PlugIn | AnalysisManagerSequestPlugin.dll | 
-| SMAQC | Runs SMAQC.  Also ran LLRC from June 2013 to November 2015, but disabled in November 2015 because requires R 2.x and we have updated to R 3.x | AM_SMAQC_PlugIn | AnalysisManagerSMAQCPlugIn.dll | 
+| SMAQC | Runs SMAQC | AM_SMAQC_PlugIn | AnalysisManagerSMAQCPlugIn.dll | 
 | XTandem | Identify peptides by searching protein collection | AM_XTandem_PlugIn | AnalysisManagerXTandemPlugIn.dll | 
 | XTandem_HPC | Runs XTandem on Chinook high-performance computer | AM_XTandemHPC_PlugIn | (obsolete) | 
 	
