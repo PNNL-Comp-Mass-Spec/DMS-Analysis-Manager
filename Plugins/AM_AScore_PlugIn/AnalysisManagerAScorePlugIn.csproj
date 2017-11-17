@@ -96,7 +96,7 @@
       <Version>2.0.8</Version>
     </PackageReference>
     <PackageReference Include="PRISM-Library">
-      <Version>2.4.47</Version>
+      <Version>2.4.48</Version>
     </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
