@@ -674,6 +674,7 @@ namespace AnalysisManagerBase
                     // message queue logger sets up local message buffering (so calls to log don't block)
                     // and uses message sender (as a delegate) to actually send off the messages
                     m_QueueLogger = new clsMessageQueueLogger();
+                    RegisterEvents(m_QueueLogger);
                     m_QueueLogger.Sender += m_MessageSender.SendMessage;
 
                     var timeOfDay = DateTime.Now;

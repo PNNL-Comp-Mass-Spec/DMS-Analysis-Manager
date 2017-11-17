@@ -1,6 +1,7 @@
 ﻿
 using System.Collections.Generic;
 using System.Threading;
+using PRISM;
 
 namespace AnalysisManagerBase
 {
@@ -14,7 +15,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Class for interacting with a message queue
     /// </summary>
-    class clsMessageQueueLogger
+    class clsMessageQueueLogger : clsEventNotifier
     {
         /// <summary>
         /// Actual delegate registers here
@@ -57,6 +58,7 @@ namespace AnalysisManagerBase
 
             if (!worker.IsAlive)
             {
+                OnWarningEvent("Restarting PostalWorker thread in the MessageQueueLogger");
                 StartWorkerThread();
             }
 
