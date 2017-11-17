@@ -675,6 +675,12 @@ namespace AnalysisManagerBase
                     m_QueueLogger.Sender += m_MessageSender.SendMessage;
 
                     if (m_DebugLevel >= 3)
+                    var timeOfDay = DateTime.Now;
+
+                    // This variable is true if the local time is between 12:00 am and 12:05 am or 12:00 pm and 12:05 pm
+                    var midnightOrNoon = (timeOfDay.Hour == 0 || timeOfDay.Hour == 12) && timeOfDay.Minute >= 0 && timeOfDay.Minute < 5;
+
+                    if (m_DebugLevel >= 3 || m_DebugLevel >=1 && midnightOrNoon)
                     {
                         OnStatusEvent("Message queue initialized with URI '" + MessageQueueURI + "'; posting to Topic '" + MessageQueueTopic + "'");
                     }
