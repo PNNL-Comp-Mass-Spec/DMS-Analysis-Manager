@@ -46,24 +46,28 @@ namespace AnalysisManagerBase
             {
                 return;
             }
+
             if (!hasConnection)
             {
                 CreateConnection();
             }
-            if (hasConnection)
+
+            if (!hasConnection)
             {
-                try
-                {
-                    var textMessage = session.CreateTextMessage(message);
-                    textMessage.Properties.SetString("ProcessorName", processorName);
-                    producer.Send(textMessage);
-                }
-                catch (Exception)
-                {
-                    // something went wrong trying to send message,
-                    // get rid of current set of connection object - they'll never work again anyway
-                    DestroyConnection();
-                }
+                return;
+            }
+
+            try
+            {
+                var textMessage = session.CreateTextMessage(message);
+                textMessage.Properties.SetString("ProcessorName", processorName);
+                producer.Send(textMessage);
+            }
+            catch (Exception)
+            {
+                // something went wrong trying to send message,
+                // get rid of current set of connection object - they'll never work again anyway
+                DestroyConnection();
             }
         }
 
