@@ -920,7 +920,7 @@ namespace AnalysisManagerBase
                 }
 
                 // Wait retryHoldoffSeconds seconds before retrying
-                Thread.Sleep(new TimeSpan(0, 0, retryHoldoffSeconds));
+                clsGlobal.IdleLoop(retryHoldoffSeconds);
             }
 
             return false;

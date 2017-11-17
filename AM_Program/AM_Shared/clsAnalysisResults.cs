@@ -1,7 +1,6 @@
 
 using System;
 using System.IO;
-using System.Threading;
 
 //*********************************************************************************************************
 // Written by Dave Clark and Matthew Monroe for the US Department of Energy
@@ -273,7 +272,7 @@ namespace AnalysisManagerBase
                         break;
 
                     // Wait several seconds before retrying
-                    Thread.Sleep((int)Math.Floor(actualRetryHoldoffSeconds * 1000));
+                    clsGlobal.IdleLoop(actualRetryHoldoffSeconds);
 
                     PRISM.clsProgRunner.GarbageCollectNow();
                 }
@@ -478,7 +477,7 @@ namespace AnalysisManagerBase
                         break;
 
                     // Wait several seconds before retrying
-                    Thread.Sleep((int)Math.Floor(actualRetryHoldoffSeconds * 1000));
+                    clsGlobal.IdleLoop(actualRetryHoldoffSeconds);
 
                     PRISM.clsProgRunner.GarbageCollectNow();
                 }
@@ -608,7 +607,7 @@ namespace AnalysisManagerBase
                         break;
 
                     // Wait several seconds before retrying
-                    Thread.Sleep((int)Math.Floor(actualRetryHoldoffSeconds * 1000));
+                    clsGlobal.IdleLoop(actualRetryHoldoffSeconds);
 
                     PRISM.clsProgRunner.GarbageCollectNow();
                 }

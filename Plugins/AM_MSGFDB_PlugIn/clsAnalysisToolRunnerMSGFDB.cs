@@ -433,7 +433,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             if (!success && string.IsNullOrEmpty(mMSGFPlusUtils.ConsoleOutputErrorMsg))
             {
                 // Wait 2 seconds to give the log file a chance to finalize
-                Thread.Sleep(2000);
+                clsGlobal.IdleLoop(2);
 
                 // Parse the console output file one more time in hopes of finding an error message
                 ParseConsoleOutputFile(mWorkingDirectoryInUse);
@@ -513,7 +513,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     var waitStartTime = DateTime.UtcNow;
                     while (DateTime.UtcNow.Subtract(waitStartTime).TotalSeconds < 45)
                     {
-                        Thread.Sleep(5000);
+                        clsGlobal.IdleLoop(5);
                         mMSGFPlusUtils.ParseMSGFPlusConsoleOutputFile(mWorkingDirectoryInUse);
 
                         if (mMSGFPlusUtils.TaskCountCompleted == mMSGFPlusUtils.TaskCountTotal)

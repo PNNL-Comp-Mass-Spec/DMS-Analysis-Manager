@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
+using System.Threading;
 using PRISM;
 
 namespace AnalysisManagerBase
@@ -187,7 +188,7 @@ namespace AnalysisManagerBase
 
                                 if (nextWriter.SpectraWritten == 0)
                                 {
-                                    System.Threading.Thread.Sleep(50);
+                                    Thread.Sleep(50);
                                     nextWriter.OutputFile.Delete();
                                     lstSplitMgfFiles.Remove(nextWriter.OutputFile);
                                 }

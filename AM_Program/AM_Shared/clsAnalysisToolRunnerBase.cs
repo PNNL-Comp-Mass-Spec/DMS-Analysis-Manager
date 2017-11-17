@@ -1277,7 +1277,7 @@ namespace AnalysisManagerBase
                     errType = AMFileNotDeletedAfterRetryException.RetryExceptionType.IO_Exception;
 
                     // Delay 2 seconds
-                    Thread.Sleep(2000);
+                    clsGlobal.IdleLoop(2);
 
                     // Do a garbage collection in case something is hanging onto the file that has been closed, but not GC'd
                     clsProgRunner.GarbageCollectNow();
@@ -4164,7 +4164,7 @@ namespace AnalysisManagerBase
                                 LogMessage("Error copying " + fiSourceFile.FullName + " to " + fiTargetFile.DirectoryName + "; RetriesRemaining: " + retriesRemaining, 0, true);
 
                                 // Wait 2 seconds then try again
-                                Thread.Sleep(2000);
+                                clsGlobal.IdleLoop(2);
                             }
                         }
 

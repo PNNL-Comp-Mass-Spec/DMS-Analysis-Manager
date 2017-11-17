@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading;
 using System.Xml.Linq;
 using PRISM;
 using Renci.SshNet;
@@ -326,11 +325,7 @@ namespace AnalysisManagerBase
             while (waitingForLockFile)
             {
                 // Wait for a period of time, the check on the status of the lock file
-                var timeThreshold = DateTime.UtcNow.AddSeconds(waitTimeSeconds);
-                while (timeThreshold > DateTime.UtcNow)
-                {
-                    Thread.Sleep(2000);
-                }
+                clsGlobal.IdleLoop(waitTimeSeconds);
 
                 fiLockFile = FindLockFile(sftp, remoteDirectoryPath, lockFileName);
 
@@ -401,7 +396,7 @@ namespace AnalysisManagerBase
 
             // Wait 2 to 5 seconds, then re-open the file to make sure it was created by this manager
             var oRandom = new Random();
-            Thread.Sleep(oRandom.Next(2, 5) * 1000);
+            clsGlobal.IdleLoop(oRandom.Next(2, 5));
 
             var lockFileContentsNew = sftp.ReadAllLines(remoteLockFilePath, Encoding.ASCII);
 
@@ -1881,11 +1876,7 @@ namespace AnalysisManagerBase
                                            "currently {0} bytes for {1} ", remoteFile.Length, remoteFilePath));
 
                 // Wait for 1 minute
-                var sleepTimeStart = DateTime.UtcNow;
-                while (DateTime.UtcNow.Subtract(sleepTimeStart).TotalMinutes < 1)
-                {
-                    Thread.Sleep(2000);
-                }
+                clsGlobal.IdleLoop(60);
 
                 // Update the info on the remote file
                 var matchingFiles = GetRemoteFileListing(sourceFile.DirectoryName, sourceFile.Name);

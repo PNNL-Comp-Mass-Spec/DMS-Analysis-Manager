@@ -1194,7 +1194,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             while (fiLockFile.Exists)
             {
                 // Sleep for 2 seconds
-                Thread.Sleep(2000);
+                clsGlobal.IdleLoop(2);
 
                 if (DateTime.UtcNow.Subtract(fiLockFile.CreationTimeUtc).TotalHours >= maxWaitTimeHours)
                 {

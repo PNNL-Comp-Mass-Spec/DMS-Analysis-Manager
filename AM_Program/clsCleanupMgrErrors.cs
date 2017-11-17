@@ -222,27 +222,27 @@ namespace AnalysisManagerProg
         /// <remarks></remarks>
         private bool CleanWorkDir(string workDir, float holdoffSeconds)
         {
-            int holdoffMilliseconds;
+            double actualHoldoffSeconds;
 
             if (Environment.MachineName.StartsWith("monroe", StringComparison.OrdinalIgnoreCase) && holdoffSeconds > 1)
                 holdoffSeconds = 1;
 
             try
             {
-                holdoffMilliseconds = (int)(holdoffSeconds * 1000);
-                if (holdoffMilliseconds < 100)
-                    holdoffMilliseconds = 100;
-                if (holdoffMilliseconds > 300000)
-                    holdoffMilliseconds = 300000;
+                actualHoldoffSeconds = holdoffSeconds;
+                if (actualHoldoffSeconds < 0.1)
+                    actualHoldoffSeconds = 0.1;
+                if (actualHoldoffSeconds > 300)
+                    actualHoldoffSeconds = 300;
             }
             catch (Exception)
             {
-                holdoffMilliseconds = 10000;
+                actualHoldoffSeconds = 10;
             }
 
             // Try to ensure there are no open objects with file handles
             PRISM.clsProgRunner.GarbageCollectNow();
-            System.Threading.Thread.Sleep(holdoffMilliseconds);
+            clsGlobal.IdleLoop(actualHoldoffSeconds);
 
             // Delete all of the files and folders in the work directory
             var diWorkFolder = new DirectoryInfo(workDir);

@@ -403,7 +403,7 @@ namespace AnalysisManagerBase
         /// <remarks>maxRuntimeSeconds will be increased to 15 seconds if it is between 1 and 14 seconds</remarks>
         public bool RunProgram(string executablePath, string arguments, string progName, bool useResCode, int maxRuntimeSeconds)
         {
-            // Require a minimum monitoring interval of 250 mseconds
+            // Require a minimum monitoring interval of 250 milliseconds
             if (m_MonitorInterval < 250)
                 m_MonitorInterval = 250;
 
@@ -467,6 +467,8 @@ namespace AnalysisManagerBase
                 m_StopTime = DateTime.MinValue;
                 m_IsRunning = true;
 
+                var monitorIntervalSeconds = m_MonitorInterval / 1000.0;
+
                 // Loop until program is complete, or until MaxRuntimeSeconds seconds elapses
                 while (m_ProgRunner.State != clsProgRunner.States.NotMonitoring)
                 {
@@ -474,7 +476,7 @@ namespace AnalysisManagerBase
                         cachedProcessID = m_ProgRunner.PID;
 
                     OnLoopWaiting();
-                    Thread.Sleep(m_MonitorInterval);
+                    clsGlobal.IdleLoop(monitorIntervalSeconds);
 
                     if (MaxRuntimeSeconds > 0)
                     {

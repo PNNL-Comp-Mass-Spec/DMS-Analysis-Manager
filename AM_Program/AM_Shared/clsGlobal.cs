@@ -513,7 +513,7 @@ namespace AnalysisManagerBase
                     if (retryCount <= 0)
                         break;
 
-                    Thread.Sleep(retryDelaySeconds * 1000);
+                    IdleLoop(retryDelaySeconds);
 
                     retryDelaySeconds *= 2;
                     if (retryDelaySeconds > 90)
@@ -697,6 +697,21 @@ namespace AnalysisManagerBase
             }
 
             return new KeyValuePair<string, string>(key, value);
+        }
+
+        /// <summary>
+        /// Sleep for the specified seconds, using Sleep calls ranging from 100 msec to 1000 msec, depending on waitTimeSeconds
+        /// </summary>
+        /// <param name="waitTimeSeconds"></param>
+        public static void IdleLoop(double waitTimeSeconds)
+        {
+            var sleepIntervalMsec = Math.Min(1000, Math.Max(100, (int)Math.Floor(waitTimeSeconds * 1000 / 10)));
+
+            var stopTime = DateTime.UtcNow.AddSeconds(waitTimeSeconds);
+            while (stopTime > DateTime.UtcNow)
+            {
+                Thread.Sleep(sleepIntervalMsec);
+            }
         }
 
         /// <summary>

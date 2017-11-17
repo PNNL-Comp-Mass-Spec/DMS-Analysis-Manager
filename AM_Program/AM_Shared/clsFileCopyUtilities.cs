@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading;
 using PRISM;
 
 namespace AnalysisManagerBase
@@ -409,7 +408,7 @@ namespace AnalysisManagerBase
                         break;
 
                     // Wait several seconds before retrying
-                    Thread.Sleep(RETRY_HOLDOFF_SECONDS * 1000);
+                    clsGlobal.IdleLoop(RETRY_HOLDOFF_SECONDS);
                 }
             }
 
@@ -530,7 +529,7 @@ namespace AnalysisManagerBase
                 if (retryCount > 0)
                 {
                     // Wait RetryHoldoffSeconds seconds before retrying
-                    Thread.Sleep(new TimeSpan(0, 0, retryHoldoffSeconds));
+                    clsGlobal.IdleLoop(retryHoldoffSeconds);
                 }
             }
 

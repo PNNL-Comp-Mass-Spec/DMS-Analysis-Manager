@@ -7,7 +7,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Xml;
 using System.Xml.Linq;
 using PRISM;
@@ -1424,7 +1423,7 @@ namespace AnalysisManagerBase
 
             // Wait 2 to 5 seconds, then re-open the file to make sure it was created by this manager
             var oRandom = new Random();
-            Thread.Sleep(oRandom.Next(2, 5) * 1000);
+            clsGlobal.IdleLoop(oRandom.Next(2, 5));
 
             var lockFileContentsNew = new List<string>();
 

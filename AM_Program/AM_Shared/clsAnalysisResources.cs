@@ -1063,7 +1063,7 @@ namespace AnalysisManagerBase
                 while (waitingForLockFile)
                 {
                     // Wait 5 seconds
-                    Thread.Sleep(5000);
+                    clsGlobal.IdleLoop(5);
 
                     fiLockFile.Refresh();
 
@@ -1199,11 +1199,11 @@ namespace AnalysisManagerBase
                         // Sleep 20 seconds after the first failure and 30 seconds after the second failure
                         if (retryCount == 3)
                         {
-                            Thread.Sleep(20000);
+                            clsGlobal.IdleLoop(20);
                         }
                         else
                         {
-                            Thread.Sleep(30000);
+                            clsGlobal.IdleLoop(30);
                         }
                     }
                     else

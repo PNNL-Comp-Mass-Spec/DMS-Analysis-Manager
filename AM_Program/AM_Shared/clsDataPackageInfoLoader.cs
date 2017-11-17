@@ -308,8 +308,8 @@ namespace AnalysisManagerBase
 
                         clsGlobal.LogError(msg);
 
-                        // Delay for 5 second before trying again
-                        Thread.Sleep(5000);
+                        // Delay for 5 seconds before trying again
+                        clsGlobal.IdleLoop(5);
                     }
                 }
 

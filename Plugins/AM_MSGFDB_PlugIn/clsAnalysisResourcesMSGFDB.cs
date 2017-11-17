@@ -182,7 +182,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                     LogWarning("Copy of FASTA file to remote host failed; will try again in 5 seconds");
 
-                    System.Threading.Thread.Sleep(5000);
+                    clsGlobal.IdleLoop(5);
                 }
 
             }

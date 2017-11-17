@@ -7,6 +7,7 @@
 //*********************************************************************************************************
 
 using System.IO;
+using System.Threading;
 using AnalysisManagerBase;
 
 namespace AnalysisManagerProg
@@ -78,7 +79,7 @@ namespace AnalysisManagerProg
             }
 
             // Make sure objects are released
-            System.Threading.Thread.Sleep(500);
+            Thread.Sleep(500);
             PRISM.clsProgRunner.GarbageCollectNow();
 
             var folderCreateSuccess = MakeResultsFolder();
@@ -136,7 +137,7 @@ namespace AnalysisManagerProg
                     swOutFile.WriteLine(System.DateTime.Now.ToString(DATE_TIME_FORMAT) + " - This is a test file.");
                 }
 
-                System.Threading.Thread.Sleep(50);
+                Thread.Sleep(50);
             }
 
             return true;

@@ -119,7 +119,7 @@ namespace AnalysisManagerBase
                     }
 
                     // Sleep for 3 seconds
-                    System.Threading.Thread.Sleep(3000);
+                    clsGlobal.IdleLoop(3);
                 }
 
                 retriesRemaining -= 1;

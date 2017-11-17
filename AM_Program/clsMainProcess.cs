@@ -124,6 +124,9 @@ namespace AnalysisManagerProg
 
                 DoAnalysis();
 
+                // Wait 1 second to give the message queue time to flush
+                clsGlobal.IdleLoop(1);
+
                 ShowTrace("Exiting clsMainProcess.Main with error code = 0");
                 return 0;
             }
@@ -489,7 +492,7 @@ namespace AnalysisManagerProg
                     {
                         LogError("Flag file exists - unable to perform any further analysis jobs");
                         UpdateStatusFlagFileExists();
-                        Thread.Sleep(1500);
+                        clsGlobal.IdleLoop(1.5);
                         return;
                     }
 
@@ -685,7 +688,7 @@ namespace AnalysisManagerProg
                         if (tasksStartedCount > 0)
                         {
                             LogWarning("Error deleting file with an open file handle; closing manager. Jobs processed: " + tasksStartedCount.ToString());
-                            Thread.Sleep(1500);
+                            clsGlobal.IdleLoop(1.5);
                         }
                     }
                     else
@@ -1059,7 +1062,7 @@ namespace AnalysisManagerProg
                     // If there was a problem deleting non result files, return success and let the manager try to delete the files one more time on the next start up
                     // However, wait another 5 seconds before continuing
                     clsProgRunner.GarbageCollectNow();
-                    Thread.Sleep(5000);
+                    clsGlobal.IdleLoop(5);
 
                     return true;
                 }
@@ -2904,7 +2907,7 @@ namespace AnalysisManagerProg
             if (!Directory.Exists(m_WorkDirPath))
             {
                 LogError("Invalid working directory: " + m_WorkDirPath);
-                Thread.Sleep(1500);
+                clsGlobal.IdleLoop(1.5);
                 return false;
             }
 

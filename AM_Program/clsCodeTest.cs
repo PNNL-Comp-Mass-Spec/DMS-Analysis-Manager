@@ -10,6 +10,7 @@ using System.Reflection;
 using System.Runtime.Versioning;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using AnalysisManagerBase;
 using PRISM;
 using Renci.SshNet;
@@ -84,7 +85,7 @@ namespace AnalysisManagerProg
                 Console.WriteLine("Exception loading settings from AnalysisManagerProg.exe.config: " + ex.Message);
                 Console.WriteLine("===============================================================");
                 Console.WriteLine();
-                System.Threading.Thread.Sleep(500);
+                Thread.Sleep(500);
             }
         }
 
@@ -902,7 +903,7 @@ namespace AnalysisManagerProg
             // Wait for fasta creation to finish
             while (!m_GenerationComplete)
             {
-                System.Threading.Thread.Sleep(2000);
+                clsGlobal.IdleLoop(2);
             }
 
             if (m_FastaGenTimeOut)

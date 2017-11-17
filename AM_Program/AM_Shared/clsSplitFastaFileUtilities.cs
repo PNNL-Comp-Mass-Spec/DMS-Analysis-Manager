@@ -115,7 +115,7 @@ namespace AnalysisManagerBase
 
                         while (lockFi.Exists && DateTime.UtcNow < LockTimeoutTime)
                         {
-                            Thread.Sleep(5000);
+                            clsGlobal.IdleLoop(5);
                             lockFi.Refresh();
                             if (DateTime.UtcNow.Subtract(startTime).TotalMinutes >= 60)
                             {
@@ -167,7 +167,7 @@ namespace AnalysisManagerBase
                 }
 
                 // Something went wrong; wait for 15 seconds then try again
-                Thread.Sleep(15000);
+                clsGlobal.IdleLoop(15);
 
                 if (attemptCount >= 4)
                 {
@@ -348,7 +348,7 @@ namespace AnalysisManagerBase
                             mErrorMessage = "Exception storing fasta file " + splitFastaName + " in T_Organism_DB_File: " + ex.Message;
                             OnErrorEvent(mErrorMessage);
                             // Delay for 2 seconds before trying again
-                            Thread.Sleep(2000);
+                            clsGlobal.IdleLoop(2);
 
                         }
 
@@ -431,7 +431,7 @@ namespace AnalysisManagerBase
                         mErrorMessage = "Exception updating the cached organism DB info on ProteinSeqs: " + ex.Message;
                         OnErrorEvent(mErrorMessage);
                         // Delay for 2 seconds before trying again
-                        Thread.Sleep(2000);
+                        clsGlobal.IdleLoop(2);
 
                     }
 
