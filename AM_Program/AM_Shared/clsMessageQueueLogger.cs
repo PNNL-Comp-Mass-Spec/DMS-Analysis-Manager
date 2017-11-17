@@ -24,7 +24,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// The worker thread that pulls messages off the queue and posts them
         /// </summary>
-        private readonly Thread worker;
+        private Thread worker;
 
         /// <summary>
         /// Synchronization and signalling stuff to coordinate with worker thread
@@ -40,8 +40,7 @@ namespace AnalysisManagerBase
 
         public clsMessageQueueLogger()
         {
-            worker = new Thread(PostalWorker);
-            worker.Start();
+            StartWorkerThread();
         }
 
         /// <summary>
@@ -55,6 +54,12 @@ namespace AnalysisManagerBase
             {
                 m_statusMessages.Enqueue(statusMessage);
             }
+
+            if (!worker.IsAlive)
+            {
+                StartWorkerThread();
+            }
+
             waitHandle.Set();
         }
 
@@ -94,9 +99,16 @@ namespace AnalysisManagerBase
             }
         }
 
+        private void StartWorkerThread()
+        {
+            worker = new Thread(PostalWorker);
+            worker.Start();
+        }
+
         public void Dispose()
         {
             LogStatusMessage(null);
+
             // Signal the worker to exit.
             // Wait a maximum of 15 seconds
             if (!worker.Join(15000))
