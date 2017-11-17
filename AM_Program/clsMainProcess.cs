@@ -124,9 +124,6 @@ namespace AnalysisManagerProg
 
                 DoAnalysis();
 
-                // Wait 1 second to give the message queue time to flush
-                clsGlobal.IdleLoop(1);
-
                 ShowTrace("Exiting clsMainProcess.Main with error code = 0");
                 return 0;
             }
@@ -721,6 +718,10 @@ namespace AnalysisManagerProg
             {
                 if (m_StatusTools != null)
                 {
+
+                    // Wait 1 second to give the message queue time to flush
+                    clsGlobal.IdleLoop(1);
+
                     ShowTrace("Disposing message queue via m_StatusTools.DisposeMessageQueue");
                     m_StatusTools.DisposeMessageQueue();
                 }
