@@ -33,7 +33,7 @@ namespace AnalysisManagerProg
 {
     static class modMain
     {
-        public const string PROGRAM_DATE = "November 7, 2017";
+        public const string PROGRAM_DATE = "November 16, 2017";
 
         private static bool mCodeTestMode;
         private static bool mCreateWindowsEventLog;
@@ -59,7 +59,10 @@ namespace AnalysisManagerProg
             mDisplayDllPath = string.Empty;
             mShowVersionOnly = false;
 
-            if (Path.DirectorySeparatorChar == '/')
+            var osVersionInfo = new clsOSVersionInfo();
+
+            var osVersion = osVersionInfo.GetOSVersion();
+            if (osVersion.IndexOf("windows", StringComparison.OrdinalIgnoreCase) < 0)
             {
                 // Running on Linux
                 // Auto-enable offline mode
