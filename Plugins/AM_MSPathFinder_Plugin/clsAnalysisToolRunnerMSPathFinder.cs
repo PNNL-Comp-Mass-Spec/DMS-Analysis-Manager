@@ -7,13 +7,12 @@
 
 using System;
 using System.Collections.Generic;
-
-using AnalysisManagerBase;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Text;
 using System.Threading;
+using AnalysisManagerBase;
 using PRISM;
 
 namespace AnalysisManagerMSPathFinderPlugin
@@ -255,10 +254,10 @@ namespace AnalysisManagerMSPathFinderPlugin
             return strLineIn.ToLower().StartsWith(matchString.ToLower());
         }
 
-        private const string REGEX_PROMEX_RESULTS = @"ProMex[^\d]+(\d+)/(\d+) features loaded";
-        private const string REGEX_MSPATHFINDER_PROGRESS = @"([0-9.]+)% complete";
-        private readonly Regex rePromexFeatureStats = new Regex(REGEX_PROMEX_RESULTS, RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        private readonly Regex reCheckProgress = new Regex(REGEX_MSPATHFINDER_PROGRESS, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private readonly Regex rePromexFeatureStats = new Regex(@"ProMex[^\d]+(\d+)/(\d+) features loaded", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+        private readonly Regex reCheckProgress = new Regex(@"([0-9.]+)% complete", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
         private readonly Regex reProcessingProteins = new Regex(@"(\d+) proteins done", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         /// <summary>
