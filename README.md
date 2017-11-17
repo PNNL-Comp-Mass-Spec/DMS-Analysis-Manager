@@ -1,6 +1,6 @@
 # DMS Analysis Manager
 
-The DMS Analysis Tool Manager is a part of the PRISM, the
+The DMS Analysis Tool Manager is a part of PRISM, the
 Proteomics Research Information and Management System.
 The analysis manager performs automated processing of available job steps, 
 tracked by the in the DMS_Pipeline database.  Plugin DLLs implement
