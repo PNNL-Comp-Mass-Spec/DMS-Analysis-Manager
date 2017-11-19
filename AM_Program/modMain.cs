@@ -90,7 +90,14 @@ namespace AnalysisManagerProg
                     }
                     else
                     {
-                        Console.WriteLine("Error parsing the command line arguments");
+                        if (objParseCommandLine.NeedToShowHelp)
+                        {
+                            ShowProgramHelp();
+                        }
+                        else
+                        {
+                            Console.WriteLine("Error parsing the command line arguments");
+                        }
                         return -1;
                     }
                 }
