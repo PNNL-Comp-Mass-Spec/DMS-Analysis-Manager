@@ -272,7 +272,6 @@ namespace AnalysisManagerProg
 
             clsLogTools.CreateFileLogger(logFileNameBase);
 
-
             if (!clsGlobal.OfflineMode)
             {
                 clsLogTools.RemoveDefaultDbLogger();
@@ -281,7 +280,7 @@ namespace AnalysisManagerProg
             }
 
             // Make the initial log entry
-            ShowTrace("Initializing log file " + clsLogTools.CurrentFileAppenderPath);
+            ShowTrace("Initializing log file " + clsPathUtils.CompactPathString(clsLogTools.CurrentFileAppenderPath, 60));
 
             var startupMsg = "=== Started Analysis Manager V" + System.Windows.Forms.Application.ProductVersion + " ===== ";
             LogMessage(startupMsg);
