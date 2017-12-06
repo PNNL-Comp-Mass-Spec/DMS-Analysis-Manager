@@ -438,6 +438,8 @@ namespace AnalysisManagerBase
                 ConsoleOutputFileIncludesCommandLine = ConsoleOutputFileIncludesCommandLine
             };
 
+            RegisterEvents(m_ProgRunner);
+
             m_ProgRunner.ConsoleErrorEvent += ProgRunner_ConsoleErrorEvent;
             m_ProgRunner.ConsoleOutputEvent += ProgRunner_ConsoleOutputEvent;
             m_ProgRunner.ProgChanged += ProgRunner_ProgChanged;
