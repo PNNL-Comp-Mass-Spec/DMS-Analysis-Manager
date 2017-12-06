@@ -13,16 +13,19 @@ using System.IO;
 using System.Text.RegularExpressions;
 using log4net;
 using log4net.Appender;
-using log4net.Util.TypeConverters;
 
 // This assembly attribute tells Log4Net where to find the config file
 [assembly: log4net.Config.XmlConfigurator(ConfigFile = "Logging.config", Watch = true)]
+
 namespace AnalysisManagerBase
 {
     /// <summary>
     /// Class for handling logging via Log4Net
     /// </summary>
-    public class clsLogTools
+    /// <remarks>
+    /// Call method CreateFileLogger to define the log file name
+    /// </remarks>
+    public static class clsLogTools
     {
 
         #region "Constants"
@@ -112,15 +115,28 @@ namespace AnalysisManagerBase
 
         #region "Class variables"
 
+        /// <summary>
+        /// File Logger (RollingFileAppender)
+        /// </summary>
         private static readonly ILog m_FileLogger = LogManager.GetLogger("FileLogger");
+        /// <summary>
+        /// Database logger
+        /// </summary>
         private static readonly ILog m_DbLogger = LogManager.GetLogger("DbLogger");
+        /// <summary>
+        /// System event log logger
+        /// </summary>
         private static readonly ILog m_SysLogger = LogManager.GetLogger("SysLogger");
 
         private static string m_FileDate = "";
+        /// <summary>
+        /// Base log file name
+        /// </summary>
+        /// <remarks>This is updated by ChangeLogFileBaseName or CreateFileLogger</remarks>
         private static string m_BaseFileName = "";
-        private static string m_MostRecentErrorMessage = string.Empty;
-
         private static FileAppender m_FileAppender;
+
+        private static DateTime m_LastCheckOldLogs = DateTime.UtcNow.AddDays(-1);
 
         #endregion
 
@@ -152,7 +168,8 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Most recent error message
         /// </summary>
-        public static string MostRecentErrorMessage => m_MostRecentErrorMessage;
+        /// <returns></returns>
+        public static string MostRecentErrorMessage { get; private set; } = string.Empty;
 
         #endregion
 
@@ -221,6 +238,8 @@ namespace AnalysisManagerBase
                 default:
                     throw new Exception("Invalid logger type specified");
             }
+
+            MessageLogged?.Invoke(message, logLevel);
 
             if (myLogger == null)
                 return;
@@ -299,7 +318,25 @@ namespace AnalysisManagerBase
 
             if (logLevel <= LogLevels.ERROR)
             {
-                m_MostRecentErrorMessage = message;
+                MostRecentErrorMessage = message;
+            }
+
+            if (DateTime.UtcNow.Subtract(m_LastCheckOldLogs).TotalHours > 24)
+            {
+                m_LastCheckOldLogs = DateTime.UtcNow;
+
+                if (!(m_FileLogger.Logger is log4net.Repository.Hierarchy.Logger curLogger))
+                    return;
+
+                foreach (var item in curLogger.Appenders)
+                {
+                    if (!(item is FileAppender curAppender))
+                        return;
+
+                    ArchiveOldLogs(curAppender.File);
+                    break;
+                }
+
             }
         }
 
@@ -343,7 +380,7 @@ namespace AnalysisManagerBase
                 // Convert the IAppender object to a FileAppender instance
                 if (!(selectedAppender is FileAppender appenderToChange))
                 {
-                    WriteLog(LoggerTypes.LogSystem, LogLevels.ERROR, "Unable to convert appender");
+                    WriteLog(LoggerTypes.LogSystem, LogLevels.ERROR, "Unable to convert appender since not a FileAppender");
                     return;
                 }
 
@@ -456,6 +493,8 @@ namespace AnalysisManagerBase
                     return;
                 }
 
+                m_LastCheckOldLogs = DateTime.UtcNow;
+
                 var logFiles = logDirectory.GetFiles(matchSpec);
 
                 var matcher = new Regex(LOG_FILE_DATE_REGEX, RegexOptions.Compiled);
@@ -536,11 +575,11 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Configures the file logger
         /// </summary>
-        /// <param name="logFileName">Base name for log file</param>
-        public static void CreateFileLogger(string logFileName)
+        /// <param name="logFileNameBase">Base name for log file</param>
+        public static void CreateFileLogger(string logFileNameBase)
         {
             var curLogger = (log4net.Repository.Hierarchy.Logger)m_FileLogger.Logger;
-            m_FileAppender = CreateFileAppender(logFileName);
+            m_FileAppender = CreateFileAppender(logFileNameBase);
             curLogger.AddAppender(m_FileAppender);
 
             ArchiveOldLogs(m_FileAppender.File);
@@ -555,7 +594,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="connStr">Database connection string</param>
         /// <param name="moduleName">Module name used by logger</param>
-        /// <param name="isBeforeMgrControlParams">Should be True when this function is called before parameters are retrieved from the Manager Control DB</param>
+        /// <param name="isBeforeMgrControlParams">True if creating the database logger before contacting the manager control database</param>
         public static void CreateDbLogger(string connStr, string moduleName, bool isBeforeMgrControlParams)
         {
             var curLogger = (log4net.Repository.Hierarchy.Logger)m_DbLogger.Logger;
@@ -681,7 +720,7 @@ namespace AnalysisManagerBase
 
             if (retItem == null)
             {
-                throw new ConversionNotSupportedException("Error converting a PatternLayout to IRawLayout");
+                throw new log4net.Util.TypeConverters.ConversionNotSupportedException("Error converting a PatternLayout to IRawLayout");
             }
 
             return retItem;
@@ -689,5 +728,18 @@ namespace AnalysisManagerBase
 
         #endregion
 
+        #region "Events"
+
+        /// <summary>
+        /// Delegate for event MessageLogged
+        /// </summary>
+        public delegate void MessageLoggedEventHandler(string message, LogLevels logLevel);
+
+        /// <summary>
+        /// This event is raised when a message is logged
+        /// </summary>
+        public static event MessageLoggedEventHandler MessageLogged;
+
+        #endregion
     }
 }
