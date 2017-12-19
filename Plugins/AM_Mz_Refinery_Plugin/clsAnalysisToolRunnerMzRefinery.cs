@@ -590,7 +590,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             return success;
         }
 
-        private bool CompressMSGFPlusResults(FileInfo fiMSGFPlusResults)
+        private bool CompressMSGFPlusResults(FileSystemInfo fiMSGFPlusResults)
         {
             try
             {
@@ -954,7 +954,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             }
         }
 
-        private bool PostProcessMzRefineryResults(FileInfo fiMSGFPlusResults, FileInfo fiFixedMSXmlFile)
+        private bool PostProcessMzRefineryResults(FileSystemInfo fiMSGFPlusResults, FileInfo fiFixedMSXmlFile)
         {
             var strOriginalMSXmlFilePath = Path.Combine(m_WorkDir, m_Dataset + fiFixedMSXmlFile.Extension);
 
@@ -1068,7 +1068,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             return gzipSuccess;
         }
 
-        private bool StartMzRefinery(FileInfo fiOriginalMzMLFile, FileInfo fiMSGFPlusResults)
+        private bool StartMzRefinery(FileSystemInfo fiOriginalMzMLFile, FileSystemInfo fiMSGFPlusResults)
         {
             mConsoleOutputErrorMsg = string.Empty;
 
@@ -1227,12 +1227,12 @@ namespace AnalysisManagerMzRefineryPlugIn
             return true;
         }
 
-        private bool StartPpmErrorCharter(FileInfo fiMSGFPlusResults)
+        private bool StartPpmErrorCharter(FileSystemInfo fiMSGFPlusResults)
         {
             LogMessage("Running PPMErrorCharter");
 
             // Set up and execute a program runner to run the PPMErrorCharter
-            var cmdStr = " " + fiMSGFPlusResults.FullName + " " + mMzRefinerSpecEValueThreshold.ToString("0.###E+00");
+            var cmdStr = " " + fiMSGFPlusResults.FullName + " " + mMzRefinerSpecEValueThreshold.ToString("0.###E+00") + " /Python";
 
             if (m_DebugLevel >= 1)
             {
