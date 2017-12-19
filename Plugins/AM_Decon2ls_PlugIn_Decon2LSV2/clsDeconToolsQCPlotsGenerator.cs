@@ -49,6 +49,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 mMSFileInfoScanner.SaveLCMS2DPlots = true;
                 mMSFileInfoScanner.SaveTICAndBPIPlots = true;
                 mMSFileInfoScanner.UpdateDatasetStatsTextFile = false;
+                mMSFileInfoScanner.PlotWithPython = true;
 
                 mInputFilePath = strInputFilePath;
                 mOutputFolderPath = strOutputFolderPath;
