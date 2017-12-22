@@ -1325,8 +1325,6 @@ namespace AnalysisManagerMzRefineryPlugIn
                 m_message = msg;
             }
 
-            m_jobParams.AddResultFileToSkip(ERROR_CHARTER_CONSOLE_OUTPUT_FILE);
-
             return success;
         }
 
