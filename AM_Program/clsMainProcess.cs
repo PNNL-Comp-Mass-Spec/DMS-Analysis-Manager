@@ -17,6 +17,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Xml;
 using AnalysisManagerBase;
+using AnalysisManagerBase.Logging;
 using PRISM;
 
 namespace AnalysisManagerProg
@@ -199,7 +200,7 @@ namespace AnalysisManagerProg
                 }
 
                 ShowTrace("Instantiate a DbLogger using " + dmsConnectionString);
-                clsLogTools.CreateDbLogger(dmsConnectionString, "Analysis Tool Manager: " + hostName, true);
+                clsLogTools.CreateDbLogger(dmsConnectionString, "Analysis Tool Manager: " + hostName, TraceMode);
             }
 
             try
@@ -276,7 +277,7 @@ namespace AnalysisManagerProg
             {
                 clsLogTools.RemoveDefaultDbLogger();
                 var logCnStr = m_MgrSettings.GetParam("connectionstring");
-                clsLogTools.CreateDbLogger(logCnStr, "Analysis Tool Manager: " + m_MgrName, false);
+                clsLogTools.CreateDbLogger(logCnStr, "Analysis Tool Manager: " + m_MgrName, TraceMode);
             }
 
             // Make the initial log entry
@@ -1277,7 +1278,7 @@ namespace AnalysisManagerProg
                     var dtCurrentDate = DateTime.Parse(year + "-" + month + "-" + day);
                     var dtNewDate = dtCurrentDate.AddDays(-1);
 
-                    var previousLogFilePath = objMatch.Groups["BaseName"].Value + dtNewDate.ToString(clsLogTools.LOG_FILE_DATECODE) + Path.GetExtension(logFilePath);
+                    var previousLogFilePath = objMatch.Groups["BaseName"].Value + dtNewDate.ToString(FileLogger.LOG_FILE_DATECODE) + Path.GetExtension(logFilePath);
                     return previousLogFilePath;
                 }
 

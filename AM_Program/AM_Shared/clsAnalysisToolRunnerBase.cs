@@ -3233,7 +3233,6 @@ namespace AnalysisManagerBase
         protected void ResetLogFileNameToDefault()
         {
             var logFileName = m_mgrParams.GetParam("logfilename");
-            log4net.GlobalContext.Properties["LogName"] = logFileName;
             clsLogTools.ChangeLogFileBaseName(logFileName);
         }
 

@@ -5,6 +5,7 @@ using System.Data.SqlClient;
 using System.Xml.XPath;
 using System.Xml;
 using System.IO;
+using AnalysisManagerBase.Logging;
 
 //*********************************************************************************************************
 // Written by Dave Clark and Matthew Monroe for the US Department of Energy
@@ -316,7 +317,7 @@ namespace AnalysisManagerBase
 
         private void ProcedureExecutor_DebugEvent(string message)
         {
-            LogDebug(message, (int)clsLogTools.LogLevels.DEBUG);
+            LogDebug(message, (int)BaseLogger.LogLevels.DEBUG);
         }
 
         private void ProcedureExecutor_DBErrorEvent(string message, Exception ex)
@@ -325,7 +326,7 @@ namespace AnalysisManagerBase
             {
                 try
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, message);
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, BaseLogger.LogLevels.ERROR, message);
                 }
                 catch (Exception ex2)
                 {

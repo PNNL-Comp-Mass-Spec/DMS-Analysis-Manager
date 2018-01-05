@@ -1,6 +1,7 @@
 ﻿
 using System;
 using System.IO;
+using AnalysisManagerBase.Logging;
 using PRISM;
 
 namespace AnalysisManagerBase
@@ -157,10 +158,11 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="errorMessage">Error message (do not include ex.message, unless you want that message to appear in the job comment)</param>
         /// <param name="ex">Exception to log</param>
-        protected override void LogError(string errorMessage, Exception ex)
+        /// <param name="logToDatabase">When true, log to the database (and to the file)</param>
+        protected override void LogError(string errorMessage, Exception ex, bool logToDatabase = false)
         {
             m_message = clsGlobal.AppendToComment(m_message, errorMessage);
-            base.LogError(errorMessage, ex);
+            base.LogError(errorMessage, ex, logToDatabase);
         }
 
         /// <summary>
@@ -183,7 +185,7 @@ namespace AnalysisManagerBase
 
             try
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, detailedMessage);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, detailedMessage);
             }
             catch (Exception logException)
             {
@@ -211,7 +213,7 @@ namespace AnalysisManagerBase
 
             try
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, detailedMessage);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, detailedMessage);
             }
             catch (Exception ex)
             {

@@ -9,6 +9,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Linq;
+using AnalysisManagerBase.Logging;
 using PRISM;
 
 //*********************************************************************************************************
@@ -1014,8 +1015,8 @@ namespace AnalysisManagerBase
 
                 if (m_DebugLevel > 4)
                 {
-                    LogDebug("clsAnalysisJob.RequestAnalysisJob(), connection string: " + m_BrokerConnStr, (int)clsLogTools.LogLevels.DEBUG);
-                    LogDebug("clsAnalysisJob.RequestAnalysisJob(), printing param list", (int)clsLogTools.LogLevels.DEBUG);
+                    LogDebug("clsAnalysisJob.RequestAnalysisJob(), connection string: " + m_BrokerConnStr, (int)BaseLogger.LogLevels.DEBUG);
+                    LogDebug("clsAnalysisJob.RequestAnalysisJob(), printing param list", (int)BaseLogger.LogLevels.DEBUG);
                     PrintCommandParams(cmd);
                 }
 
@@ -1244,7 +1245,7 @@ namespace AnalysisManagerBase
                 // Copy the Job Parameter file to the Analysis Manager folder so that we can inspect it if the job fails
                 clsGlobal.CopyAndRenameFileWithBackup(xmlParameterFile.FullName, clsGlobal.GetAppFolderPath(), "RecentJobParameters.xml", 5);
 
-                LogDebug(msg, (int)clsLogTools.LogLevels.DEBUG);
+                LogDebug(msg, (int)BaseLogger.LogLevels.DEBUG);
 
             }
             catch (Exception ex)

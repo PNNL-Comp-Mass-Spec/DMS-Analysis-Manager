@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Xml;
+using AnalysisManagerBase.Logging;
 using PHRPReader;
 using PRISM;
 
@@ -276,7 +277,7 @@ namespace AnalysisManagerBase
 
                     var success = mAnalysisResources.CopyFileToWorkDir(
                         sourceCacheInfoFile.Name, sourceCacheInfoFile.DirectoryName,
-                        workingDir, clsLogTools.LogLevels.ERROR);
+                        workingDir, BaseLogger.LogLevels.ERROR);
 
                     if (!success)
                     {
@@ -757,17 +758,17 @@ namespace AnalysisManagerBase
                         }
                     }
 
-                    clsLogTools.LogLevels eLogMsgTypeIfNotFound;
+                    BaseLogger.LogLevels eLogMsgTypeIfNotFound;
 
                     if (!fileRequired)
                     {
                         // It's OK if this file doesn't exist, we'll just log a debug message
-                        eLogMsgTypeIfNotFound = clsLogTools.LogLevels.DEBUG;
+                        eLogMsgTypeIfNotFound = BaseLogger.LogLevels.DEBUG;
                     }
                     else
                     {
                         // This file must exist; log an error if it's not found
-                        eLogMsgTypeIfNotFound = clsLogTools.LogLevels.ERROR;
+                        eLogMsgTypeIfNotFound = BaseLogger.LogLevels.ERROR;
                     }
 
                     if (udtOptions.CreateJobPathFiles && !sourceFolderPath.StartsWith(clsAnalysisResources.MYEMSL_PATH_FLAG))
@@ -785,7 +786,7 @@ namespace AnalysisManagerBase
                         }
                         else
                         {
-                            if (eLogMsgTypeIfNotFound != clsLogTools.LogLevels.DEBUG)
+                            if (eLogMsgTypeIfNotFound != BaseLogger.LogLevels.DEBUG)
                             {
                                 var warningMessage = "Required PHRP file not found: " + sourceFilename;
                                 if (sourceFilename.EndsWith("_msgfplus.zip", StringComparison.OrdinalIgnoreCase) ||
@@ -819,7 +820,7 @@ namespace AnalysisManagerBase
 
                         if (!fileCopied)
                         {
-                            if (eLogMsgTypeIfNotFound != clsLogTools.LogLevels.DEBUG)
+                            if (eLogMsgTypeIfNotFound != BaseLogger.LogLevels.DEBUG)
                             {
                                 OnErrorEvent("CopyFileToWorkDir returned False for " + sourceFilename + " using folder " + sourceFolderPath);
                                 mAnalysisResources.RestoreCachedDataAndJobInfo();
@@ -933,7 +934,7 @@ namespace AnalysisManagerBase
                     if (targetMzMLFile.Exists)
                         return true;
 
-                    var eLogMsgTypeIfNotFound = clsLogTools.LogLevels.ERROR;
+                    var eLogMsgTypeIfNotFound = BaseLogger.LogLevels.ERROR;
 
                     var fileCopied = mAnalysisResources.CopyFileToWorkDir(sourceMzMLFile.Name, sourceMzMLFile.DirectoryName, localFolderPath, eLogMsgTypeIfNotFound);
 
@@ -1692,7 +1693,7 @@ namespace AnalysisManagerBase
             {
                 try
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR, message);
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, BaseLogger.LogLevels.ERROR, message);
                 }
                 catch (Exception ex2)
                 {

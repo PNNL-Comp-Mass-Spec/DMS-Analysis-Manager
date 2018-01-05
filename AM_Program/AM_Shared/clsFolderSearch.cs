@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using AnalysisManagerBase.Logging;
 using MyEMSLReader;
 using PRISM;
 
@@ -822,7 +823,7 @@ namespace AnalysisManagerBase
                     // Note: Using a 1 second holdoff between retries
                     var fileFound = m_FileCopyUtilities.FileExistsWithRetry(
                         Path.Combine(pathToCheck, fileNameToFind), retryHoldoffSeconds: 1,
-                        logMsgTypeIfNotFound: clsLogTools.LogLevels.WARN, maxAttempts: maxAttempts);
+                        logMsgTypeIfNotFound: BaseLogger.LogLevels.WARN, maxAttempts: maxAttempts);
 
                     if (!fileFound)
                     {

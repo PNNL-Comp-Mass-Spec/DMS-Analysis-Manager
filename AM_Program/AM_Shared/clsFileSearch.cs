@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
+using AnalysisManagerBase.Logging;
 using MyEMSLReader;
 using PHRPReader;
 using PRISM;
@@ -301,7 +302,7 @@ namespace AnalysisManagerBase
             }
 
             // Copy the file
-            if (!m_FileCopyUtilities.CopyFileToWorkDir(fileName, sourceFolderPath, m_WorkingDir, clsLogTools.LogLevels.ERROR, CreateStoragePathInfoFile))
+            if (!m_FileCopyUtilities.CopyFileToWorkDir(fileName, sourceFolderPath, m_WorkingDir, BaseLogger.LogLevels.ERROR, CreateStoragePathInfoFile))
             {
                 return false;
             }
@@ -1223,7 +1224,7 @@ namespace AnalysisManagerBase
                 return false;
             }
 
-            if (!m_FileCopyUtilities.CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName, m_WorkingDir, clsLogTools.LogLevels.ERROR))
+            if (!m_FileCopyUtilities.CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName, m_WorkingDir, BaseLogger.LogLevels.ERROR))
             {
                 errorMessage = "Error copying " + fiSourceFile.Name;
                 return false;
@@ -1331,7 +1332,7 @@ namespace AnalysisManagerBase
             }
 
             if (m_FileCopyUtilities.CopyFileToWorkDir(fiDatasetFile.Name, fiDatasetFile.DirectoryName, m_WorkingDir,
-                clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly))
+                BaseLogger.LogLevels.ERROR, createStoragePathInfoOnly))
             {
                 return true;
             }
@@ -1391,7 +1392,7 @@ namespace AnalysisManagerBase
                     }
 
                     // Copy the file locally
-                    if (!m_FileCopyUtilities.CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName, m_WorkingDir, clsLogTools.LogLevels.ERROR))
+                    if (!m_FileCopyUtilities.CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName, m_WorkingDir, BaseLogger.LogLevels.ERROR))
                     {
                         if (m_DebugLevel >= 2)
                         {
@@ -1460,7 +1461,7 @@ namespace AnalysisManagerBase
         {
 
             // Copy the file
-            if (!m_FileCopyUtilities.CopyFileToWorkDir(fileName, sourceFolderPath, m_WorkingDir, clsLogTools.LogLevels.ERROR))
+            if (!m_FileCopyUtilities.CopyFileToWorkDir(fileName, sourceFolderPath, m_WorkingDir, BaseLogger.LogLevels.ERROR))
             {
                 return false;
             }
@@ -1478,7 +1479,7 @@ namespace AnalysisManagerBase
         /// <param name="logMsgTypeIfNotFound">Type of message to log if the file is not found</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
         public bool RetrieveFile(string fileName, string sourceFolderPath, int maxCopyAttempts,
-            clsLogTools.LogLevels logMsgTypeIfNotFound = clsLogTools.LogLevels.ERROR)
+            BaseLogger.LogLevels logMsgTypeIfNotFound = BaseLogger.LogLevels.ERROR)
         {
 
             // Copy the file
@@ -1522,7 +1523,7 @@ namespace AnalysisManagerBase
 
             // Do the copy
             if (!m_FileCopyUtilities.CopyFileToWorkDirWithRename(DatasetName, fiMGFFile.Name, fiMGFFile.DirectoryName, m_WorkingDir,
-                clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly, maxCopyAttempts: 3))
+                BaseLogger.LogLevels.ERROR, createStoragePathInfoOnly, maxCopyAttempts: 3))
                 return false;
 
             // If we don't need to copy the .cdf file, we're done; othewise, find the .cdf file and copy it
@@ -1539,7 +1540,7 @@ namespace AnalysisManagerBase
             {
                 // Copy the .cdf file that was found
                 if (m_FileCopyUtilities.CopyFileToWorkDirWithRename(DatasetName, fiCDFFile.Name, fiCDFFile.DirectoryName, m_WorkingDir,
-                    clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly, maxCopyAttempts: 3))
+                    BaseLogger.LogLevels.ERROR, createStoragePathInfoOnly, maxCopyAttempts: 3))
                 {
                     return true;
                 }
@@ -1605,7 +1606,7 @@ namespace AnalysisManagerBase
                 }
 
                 if (m_FileCopyUtilities.CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName, m_WorkingDir,
-                    clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly))
+                    BaseLogger.LogLevels.ERROR, createStoragePathInfoOnly))
                 {
                     if (!string.IsNullOrEmpty(hashCheckFilePath) && File.Exists(hashCheckFilePath))
                     {
@@ -1716,7 +1717,7 @@ namespace AnalysisManagerBase
 
             // No folder found containing the zipped OUT files
             // Copy the file
-            if (!m_FileCopyUtilities.CopyFileToWorkDir(zippedFileName, zippedFolderName, m_WorkingDir, clsLogTools.LogLevels.ERROR))
+            if (!m_FileCopyUtilities.CopyFileToWorkDir(zippedFileName, zippedFolderName, m_WorkingDir, BaseLogger.LogLevels.ERROR))
             {
                 return false;
             }
@@ -2171,14 +2172,14 @@ namespace AnalysisManagerBase
 
             var ignoreFile = SafeToIgnore(fiSourceFile.Name, lstNonCriticalFileSuffixes);
 
-            clsLogTools.LogLevels logMsgTypeIfNotFound;
+            BaseLogger.LogLevels logMsgTypeIfNotFound;
             if (ignoreFile)
             {
-                logMsgTypeIfNotFound = clsLogTools.LogLevels.DEBUG;
+                logMsgTypeIfNotFound = BaseLogger.LogLevels.DEBUG;
             }
             else
             {
-                logMsgTypeIfNotFound = clsLogTools.LogLevels.ERROR;
+                logMsgTypeIfNotFound = BaseLogger.LogLevels.ERROR;
             }
 
             if (fiSourceFile.Directory == null)

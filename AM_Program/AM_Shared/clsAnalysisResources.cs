@@ -9,6 +9,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Xml;
 using System.Xml.Linq;
+using AnalysisManagerBase.Logging;
 using MyEMSLReader;
 using ParamFileGenerator.MakeParams;
 using Renci.SshNet.Sftp;
@@ -1139,7 +1140,7 @@ namespace AnalysisManagerBase
         /// <param name="logMsgTypeIfNotFound">Type of message to log if the file is not found</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks>If the file was found in MyEMSL, sourceFolderPath will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
-        public bool CopyFileToWorkDir(string sourceFileName, string sourceFolderPath, string targetFolderPath, clsLogTools.LogLevels logMsgTypeIfNotFound)
+        public bool CopyFileToWorkDir(string sourceFileName, string sourceFolderPath, string targetFolderPath, BaseLogger.LogLevels logMsgTypeIfNotFound)
         {
 
             return m_FileCopyUtilities.CopyFileToWorkDir(sourceFileName, sourceFolderPath, targetFolderPath, logMsgTypeIfNotFound);
@@ -4033,7 +4034,7 @@ namespace AnalysisManagerBase
                                 return false;
                             }
 
-                            if (!m_FileCopyUtilities.CopyFileToWorkDir(sourceFileName, sourceFolderPath, m_WorkingDir, clsLogTools.LogLevels.ERROR))
+                            if (!m_FileCopyUtilities.CopyFileToWorkDir(sourceFileName, sourceFolderPath, m_WorkingDir, BaseLogger.LogLevels.ERROR))
                             {
                                 m_message = "CopyFileToWorkDir returned False for " + sourceFileName + " using folder " + sourceFolderPath + " for job " + dataPkgJob.Key;
                                 if (m_DebugLevel >= 1)

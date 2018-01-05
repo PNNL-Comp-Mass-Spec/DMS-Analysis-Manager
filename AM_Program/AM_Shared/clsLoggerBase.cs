@@ -1,5 +1,7 @@
 ﻿
 using System;
+using AnalysisManagerBase.Logging;
+
 using PRISM;
 
 namespace AnalysisManagerBase
@@ -56,7 +58,7 @@ namespace AnalysisManagerBase
 
             try
             {
-                clsLogTools.WriteLog(loggerType, clsLogTools.LogLevels.ERROR, errorMessage);
+                clsLogTools.WriteLog(loggerType, BaseLogger.LogLevels.ERROR, errorMessage);
             }
             catch (Exception ex)
             {
@@ -70,10 +72,11 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="errorMessage">Error message (do not include ex.message)</param>
         /// <param name="ex">Exception to log (allowed to be nothing)</param>
+        /// <param name="logToDatabase">When true, log to the database (and to the file)</param>
         /// <remarks>The error is shown in red in the console.  The exception stack trace is shown in cyan</remarks>
-        protected virtual void LogError(string errorMessage, Exception ex)
+        protected virtual void LogError(string errorMessage, Exception ex, bool logToDatabase = false)
         {
-            clsGlobal.LogError(errorMessage, ex);
+            clsGlobal.LogError(errorMessage, ex, logToDatabase);
         }
 
         /// <summary>

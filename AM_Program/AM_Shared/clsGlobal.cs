@@ -9,6 +9,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
+using AnalysisManagerBase.Logging;
 using PRISM;
 using PRISMWin;
 
@@ -1519,7 +1520,7 @@ namespace AnalysisManagerBase
 
             try
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, statusMessage);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, statusMessage);
             }
             catch (Exception ex)
             {
@@ -1543,7 +1544,7 @@ namespace AnalysisManagerBase
             {
                 var logType = logToDatabase ? clsLogTools.LoggerTypes.LogDb : clsLogTools.LoggerTypes.LogFile;
 
-                clsLogTools.WriteLog(logType, clsLogTools.LogLevels.ERROR, formattedError, ex);
+                clsLogTools.WriteLog(logType, BaseLogger.LogLevels.ERROR, formattedError, ex);
             }
             catch (Exception ex2)
             {
@@ -1560,6 +1561,7 @@ namespace AnalysisManagerBase
         /// <param name="writeToLog">True to write to the log file; false to only display at console</param>
         public static void LogMessage(string statusMessage, bool isError = false, bool writeToLog = true)
         {
+
             if (isError)
             {
                 ConsoleMsgUtils.ShowError(statusMessage, false);
@@ -1576,11 +1578,11 @@ namespace AnalysisManagerBase
             {
                 if (isError)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, statusMessage);
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, statusMessage);
                 }
                 else
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, statusMessage);
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.INFO, statusMessage);
                 }
             }
             catch (Exception ex)
@@ -1600,7 +1602,7 @@ namespace AnalysisManagerBase
 
             try
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN, warningMessage);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN, warningMessage);
             }
             catch (Exception ex)
             {
@@ -1645,6 +1647,15 @@ namespace AnalysisManagerBase
             }
 
             return newText;
+        }
+
+        /// <summary>
+        /// Show a trace message at the console, prepending it with a timestamp that includes milliseconds
+        /// </summary>
+        /// <param name="message"></param>
+        public static void ShowTimestampTrace(string message)
+        {
+            ConsoleMsgUtils.ShowDebug(string.Format("{0:yyyy-MM-dd hh:mm:ss.fff tt}: {1}", DateTime.Now, message));
         }
 
         /// <summary>

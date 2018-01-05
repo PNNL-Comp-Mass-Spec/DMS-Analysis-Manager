@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using AnalysisManagerBase.Logging;
 using PRISM;
 
 namespace AnalysisManagerBase
@@ -110,7 +111,7 @@ namespace AnalysisManagerBase
 
             const int MAX_ATTEMPTS = 3;
             return CopyFileToWorkDir(sourceFileName, sourceFolderPath, targetFolderPath,
-                clsLogTools.LogLevels.ERROR, createStoragePathInfoOnly: false, maxCopyAttempts: MAX_ATTEMPTS);
+                BaseLogger.LogLevels.ERROR, createStoragePathInfoOnly: false, maxCopyAttempts: MAX_ATTEMPTS);
 
         }
 
@@ -123,7 +124,7 @@ namespace AnalysisManagerBase
         /// <param name="logMsgTypeIfNotFound">Type of message to log if the file is not found</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks>If the file was found in MyEMSL, sourceFolderPath will be of the form \\MyEMSL@MyEMSLID_84327</remarks>
-        public bool CopyFileToWorkDir(string sourceFileName, string sourceFolderPath, string targetFolderPath, clsLogTools.LogLevels logMsgTypeIfNotFound)
+        public bool CopyFileToWorkDir(string sourceFileName, string sourceFolderPath, string targetFolderPath, BaseLogger.LogLevels logMsgTypeIfNotFound)
         {
 
             const int MAX_ATTEMPTS = 3;
@@ -146,7 +147,7 @@ namespace AnalysisManagerBase
             string sourceFileName,
             string sourceFolderPath,
             string targetFolderPath,
-            clsLogTools.LogLevels logMsgTypeIfNotFound,
+            BaseLogger.LogLevels logMsgTypeIfNotFound,
             int maxCopyAttempts)
         {
 
@@ -169,7 +170,7 @@ namespace AnalysisManagerBase
             string sourceFileName,
             string sourceFolderPath,
             string targetFolderPath,
-            clsLogTools.LogLevels logMsgTypeIfNotFound,
+            BaseLogger.LogLevels logMsgTypeIfNotFound,
             bool createStoragePathInfoOnly)
         {
 
@@ -194,7 +195,7 @@ namespace AnalysisManagerBase
             string sourceFileName,
             string sourceFolderPath,
             string targetFolderPath,
-            clsLogTools.LogLevels logMsgTypeIfNotFound,
+            BaseLogger.LogLevels logMsgTypeIfNotFound,
             bool createStoragePathInfoOnly,
             int maxCopyAttempts)
         {
@@ -262,7 +263,7 @@ namespace AnalysisManagerBase
             string sourceFileName,
             string sourceFolderPath,
             string targetFolderPath,
-            clsLogTools.LogLevels logMsgTypeIfNotFound,
+            BaseLogger.LogLevels logMsgTypeIfNotFound,
             int maxCopyAttempts)
         {
             return CopyFileToWorkDirWithRename(datasetName, sourceFileName, sourceFolderPath, targetFolderPath,
@@ -288,7 +289,7 @@ namespace AnalysisManagerBase
             string sourceFileName,
             string sourceFolderPath,
             string targetFolderPath,
-            clsLogTools.LogLevels logMsgTypeIfNotFound,
+            BaseLogger.LogLevels logMsgTypeIfNotFound,
             bool createStoragePathInfoOnly,
             int maxCopyAttempts)
         {
@@ -462,7 +463,7 @@ namespace AnalysisManagerBase
         /// <param name="logMsgTypeIfNotFound">Type of message to log if the file is not found</param>
         /// <returns></returns>
         /// <remarks></remarks>
-        private bool FileExistsWithRetry(string fileName, clsLogTools.LogLevels logMsgTypeIfNotFound)
+        private bool FileExistsWithRetry(string fileName, BaseLogger.LogLevels logMsgTypeIfNotFound)
         {
 
             return FileExistsWithRetry(fileName, DEFAULT_FILE_EXISTS_RETRY_HOLDOFF_SECONDS, logMsgTypeIfNotFound);
@@ -477,7 +478,7 @@ namespace AnalysisManagerBase
         /// <param name="logMsgTypeIfNotFound">Type of message to log if the file is not found</param>
         /// <returns>True if the file exists, otherwise false</returns>
         /// <remarks></remarks>
-        private bool FileExistsWithRetry(string fileName, int retryHoldoffSeconds, clsLogTools.LogLevels logMsgTypeIfNotFound)
+        private bool FileExistsWithRetry(string fileName, int retryHoldoffSeconds, BaseLogger.LogLevels logMsgTypeIfNotFound)
         {
 
             const int MAX_ATTEMPTS = 3;
@@ -494,7 +495,7 @@ namespace AnalysisManagerBase
         /// <param name="maxAttempts">Maximum number of attempts</param>
         /// <returns>True if the file exists, otherwise false</returns>
         /// <remarks></remarks>
-        public bool FileExistsWithRetry(string fileName, int retryHoldoffSeconds, clsLogTools.LogLevels logMsgTypeIfNotFound, int maxAttempts)
+        public bool FileExistsWithRetry(string fileName, int retryHoldoffSeconds, BaseLogger.LogLevels logMsgTypeIfNotFound, int maxAttempts)
         {
 
             if (maxAttempts < 1)
@@ -517,7 +518,7 @@ namespace AnalysisManagerBase
                     return true;
                 }
 
-                if (logMsgTypeIfNotFound == clsLogTools.LogLevels.ERROR)
+                if (logMsgTypeIfNotFound == BaseLogger.LogLevels.ERROR)
                 {
                     // Only log each failed attempt to find the file if logMsgTypeIfNotFound = ILogger.logMsgType.OnErrorEvent
                     // Otherwise, we won't log each failed attempt
@@ -565,9 +566,9 @@ namespace AnalysisManagerBase
             CopyWithLocksComplete?.Invoke(startTimeUtc, destFilePath);
         }
 
-        private void LogMessageOrError(string msg, clsLogTools.LogLevels logMsgTypeIfNotFound)
+        private void LogMessageOrError(string msg, BaseLogger.LogLevels logMsgTypeIfNotFound)
         {
-            if (logMsgTypeIfNotFound == clsLogTools.LogLevels.ERROR)
+            if (logMsgTypeIfNotFound == BaseLogger.LogLevels.ERROR)
                 OnErrorEvent(msg);
             else
                 OnStatusEvent(msg);
