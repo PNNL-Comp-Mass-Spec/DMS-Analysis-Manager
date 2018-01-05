@@ -129,18 +129,22 @@ namespace AnalysisManagerProg
 
                     try
                     {
-                        objTest.SystemMemoryUsage();
+                        // objTest.SystemMemoryUsage();
                         // objTest.TestDTASplit();
                         // objTest.TestProteinDBExport(@"C:\DMS_Temp_Org");
                         // objTest.TestDeleteFiles();
-                        // objTest.TestLogging();
                         // objTest.GenerateScanStatsFile();
                         // objTest.TestArchiveFailedResults();
                         // objTest.TestGetToolVersionInfo();
                         // objTest.TestConnectRSA();
-                        objTest.TestStatusLogging();
                         // objTest.TestZipAndUnzip();
                         // objTest.TestCopyToRemote();
+
+                        objTest.TestLogging();
+                        objTest.TestStatusLogging();
+
+                        var connString = "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI";
+                        objTest.TestDatabaseLogging(connString);
 
 
                     }

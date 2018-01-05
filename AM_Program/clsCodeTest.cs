@@ -12,6 +12,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using AnalysisManagerBase;
+using AnalysisManagerBase.Logging;
 using PRISM;
 using Renci.SshNet;
 
@@ -1040,7 +1041,45 @@ namespace AnalysisManagerProg
                 Console.WriteLine("]");
             }
 
+            clsGlobal.ShowTimestampTrace("Logging 'testing complete'");
+
             LogMessage("Testing complete");
+
+            clsGlobal.ShowTimestampTrace("Exiting method TestLogging");
+        }
+
+        /// <summary>
+        /// Test database logging
+        /// </summary>
+        /// <param name="connStr">ODBC-style connection string</param>
+        public void TestDatabaseLogging(string connStr)
+        {
+
+            clsLogTools.CreateDbLogger(connStr, "clsCodeTest");
+
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, BaseLogger.LogLevels.INFO, "Test analysis manager status message");
+
+            LogError("Test analysis manager error", null, true);
+
+            try
+            {
+                throw new FileNotFoundException("TestFile.txt");
+            }
+            catch (Exception ex)
+            {
+                LogError("Test exception", ex, true);
+            }
+
+            var sqlServerLogger = new SQLServerDatabaseLogger();
+            sqlServerLogger.ChangeConnectionInfo("clsCodeTest2", connStr, "PostLogEntry", "type", "message", "postedBy");
+            sqlServerLogger.WriteLog(BaseLogger.LogLevels.FATAL, "SQL Server Fatal Test");
+
+            var odbcConnectionString = ODBCDatabaseLogger.ConvertSqlServerConnectionStringToODBC(connStr);
+            var odbcLogger = new ODBCDatabaseLogger();
+            odbcLogger.ChangeConnectionInfo("clsCodeTest2", odbcConnectionString, "PostLogEntry", "type", "message", "postedBy", 128, 4096, 128);
+
+            odbcLogger.WriteLog(BaseLogger.LogLevels.INFO, "ODBC Log Test");
+            odbcLogger.WriteLog(BaseLogger.LogLevels.WARN, "ODBC Warning Test");
         }
 
         /// <summary>
