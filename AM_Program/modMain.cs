@@ -108,8 +108,7 @@ namespace AnalysisManagerProg
                     return -1;
                 }
 
-                if (mTraceMode)
-                    ShowTraceMessage("Command line arguments parsed");
+                ShowTraceMessage("Command line arguments parsed");
 
                 if (mShowVersionOnly)
                 {
@@ -122,8 +121,7 @@ namespace AnalysisManagerProg
 
                 if (mCodeTestMode)
                 {
-                    if (mTraceMode)
-                        ShowTraceMessage("Code test mode enabled");
+                    ShowTraceMessage("Code test mode enabled");
 
                     var objTest = new clsCodeTest { TraceMode = mTraceMode };
 
@@ -174,8 +172,7 @@ namespace AnalysisManagerProg
                 }
 
                 // Initiate automated analysis
-                if (mTraceMode)
-                    ShowTraceMessage("Instantiating clsMainProcess");
+                ShowTraceMessage("Instantiating clsMainProcess");
 
                 var objDMSMain = new clsMainProcess(mTraceMode)
                 {
@@ -406,9 +403,10 @@ namespace AnalysisManagerProg
             }
         }
 
-        public static void ShowTraceMessage(string message)
+        private static void ShowTraceMessage(string message)
         {
-            clsMainProcess.ShowTraceMessage(message);
+            if (mTraceMode)
+                clsMainProcess.ShowTraceMessage(message);
         }
     }
 }
