@@ -93,15 +93,14 @@
     <Compile Include="clsDataPackageJobInfo.cs" />
     <Compile Include="clsDBStatusLogger.cs" />
     <Compile Include="clsDBTask.cs" />
+    <Compile Include="clsDotNetZipTools.cs" />
     <Compile Include="clsEmergencyLog.cs" />
     <Compile Include="clsFileCopyUtilities.cs" />
     <Compile Include="clsFolderSearch.cs" />
     <Compile Include="clsFormattedXMLWriter.cs" />
     <Compile Include="clsGlobal.cs" />
-    <Compile Include="clsIonicZipTools.cs" />
     <Compile Include="clsLoggerBase.cs" />
     <Compile Include="clsLogTools.cs" />
-    <Compile Include="clsLogToolsPatternLayout.cs" />
     <Compile Include="clsMemoryUsageLogger.cs" />
     <Compile Include="clsMessageQueueLogger.cs" />
     <Compile Include="clsMessageSender.cs" />
@@ -129,8 +128,13 @@
     <Compile Include="ISpectraFilter.cs" />
     <Compile Include="IStatusFile.cs" />
     <Compile Include="IToolRunner.cs" />
+    <Compile Include="Logging\BaseLogger.cs" />
+    <Compile Include="Logging\DatabaseLogger.cs" />
+    <Compile Include="Logging\FileLogger.cs" />
+    <Compile Include="Logging\LogMessage.cs" />
+    <Compile Include="Logging\ODBCDatabaseLogger.cs" />
+    <Compile Include="Logging\SqlServerDatabaseLogger.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="clsSystemMemoryInfo.cs" />
     <Compile Include="clsFileSearch.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -153,6 +157,7 @@
       <Version>3.5.7.7</Version>
     </PackageReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>xcopy "$(TargetDir)AM_Shared.dll" "$(ProjectDir)..\..\AM_Common" /Y /D /F
