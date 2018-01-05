@@ -33,7 +33,7 @@ namespace AnalysisManagerProg
 {
     static class modMain
     {
-        public const string PROGRAM_DATE = "December 6, 2017";
+        public const string PROGRAM_DATE = "January 4, 2018";
 
         private static bool mCodeTestMode;
         private static bool mCreateWindowsEventLog;
@@ -151,7 +151,9 @@ namespace AnalysisManagerProg
                         clsGlobal.LogError("clsCodeTest exception", ex);
                     }
 
-                    clsParseCommandLine.PauseAtConsole(1500);
+                    ShowTraceMessage("Exiting application");
+
+                    clsParseCommandLine.PauseAtConsole(500);
                     return 0;
                 }
 
@@ -188,6 +190,7 @@ namespace AnalysisManagerProg
             {
                 clsGlobal.LogError("Error occurred in modMain->Main: " + Environment.NewLine + ex.Message, ex);
                 ShowErrorMessage("Error occurred in modMain->Main: " + ex.Message);
+                clsParseCommandLine.PauseAtConsole(1500);
                 return -1;
             }
 
