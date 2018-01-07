@@ -106,7 +106,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                     }
 
                     // Copy the file
-                    if (!CopyFileToWorkDir(sourceFile.Name, transferFolderPath, m_WorkingDir, clsLogTools.LogLevels.ERROR))
+                    if (!CopyFileToWorkDir(sourceFile.Name, transferFolderPath, m_WorkingDir, PRISM.Logging.BaseLogger.LogLevels.ERROR))
                     {
                         // Error copying; move on to the next file
                         continue;

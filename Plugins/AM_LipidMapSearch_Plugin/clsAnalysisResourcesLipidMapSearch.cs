@@ -235,10 +235,10 @@ namespace AnalysisManagerLipidMapSearchPlugIn
             // Search the dataset folder first, then the archive folder
 
             strFileToFind = strDatasetName + DOT_RAW_EXTENSION;
-            if (!CopyFileToWorkDir(strFileToFind, strDatasetFolderPath, m_WorkingDir, clsLogTools.LogLevels.INFO))
+            if (!CopyFileToWorkDir(strFileToFind, strDatasetFolderPath, m_WorkingDir, PRISM.Logging.BaseLogger.LogLevels.INFO))
             {
                 // Raw file not found on the storage server; try the archive
-                if (!CopyFileToWorkDir(strFileToFind, strDatasetFolderPathArchive, m_WorkingDir, clsLogTools.LogLevels.ERROR))
+                if (!CopyFileToWorkDir(strFileToFind, strDatasetFolderPathArchive, m_WorkingDir, PRISM.Logging.BaseLogger.LogLevels.ERROR))
                 {
                     // Raw file still not found; try MyEMSL
 

@@ -2,7 +2,6 @@ using System.IO;
 using System.Threading;
 using AnalysisManagerBase;
 using System;
-using log4net;
 using Mage;
 using PRISM;
 
@@ -67,8 +66,8 @@ namespace AnalysisManager_AScore_PlugIn
 
                     // Change the name of the log file for the local log file to the plugin log filename
                     var logFileName = Path.Combine(m_WorkDir, "Ascore_Log.txt");
-                    GlobalContext.Properties["LogName"] = logFileName;
-                    clsLogTools.ChangeLogFileName(logFileName);
+                    // log4net.GlobalContext.Properties["LogName"] = logFileName;
+                    clsLogTools.ChangeLogFileBaseName(logFileName);
 
                     try
                     {

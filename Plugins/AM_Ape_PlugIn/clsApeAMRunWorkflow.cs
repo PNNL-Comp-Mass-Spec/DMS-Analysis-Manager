@@ -35,13 +35,13 @@ namespace AnalysisManager_Ape_PlugIn
 				{
 					if (success)
 					{
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Ape successfully ran workflow " + GetJobParam("ApeWorkflowName"));
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.INFO, "Ape successfully ran workflow " + GetJobParam("ApeWorkflowName"));
 						blnSuccess = true;
 					}
 					else
 					{
 						mErrorMessage = "Error running Ape in clsApeAMRunWorkflow";
-						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mErrorMessage);
+						clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR, mErrorMessage);
 						blnSuccess = false;
 					}
 				}

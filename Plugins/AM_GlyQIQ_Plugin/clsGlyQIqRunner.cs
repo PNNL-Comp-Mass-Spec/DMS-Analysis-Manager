@@ -313,7 +313,7 @@ namespace AnalysisManagerGlyQIQPlugin
             catch (Exception ex)
             {
                 // Ignore errors here
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR,
                     "Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
             }
         }
@@ -325,7 +325,7 @@ namespace AnalysisManagerGlyQIQPlugin
         /// <param name="ex"></param>
         private void CmdRunner_ErrorEvent(string strMessage, Exception ex)
         {
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMessage, ex);
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR, strMessage, ex);
         }
 
         private DateTime dtLastConsoleOutputParse = DateTime.MinValue;

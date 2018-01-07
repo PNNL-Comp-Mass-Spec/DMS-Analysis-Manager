@@ -12,7 +12,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using AnalysisManagerBase;
-using AnalysisManagerBase.Logging;
+using PRISM.Logging;
 using PRISM;
 using Renci.SshNet;
 

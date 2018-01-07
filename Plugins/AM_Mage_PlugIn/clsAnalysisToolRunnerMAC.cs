@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data.SQLite;
 using System.IO;
 using AnalysisManagerBase;
+using PRISM.Logging;
 
 namespace AnalysisManager_Mage_PlugIn
 {
@@ -48,11 +49,12 @@ namespace AnalysisManager_Mage_PlugIn
                     processingSuccess = RunMACTool();
 
 
-                    var currentLogFilePath = (string)log4net.GlobalContext.Properties["LogName"];
-                    if (string.Equals(MAGE_LOG_FILE_NAME, Path.GetFileName(currentLogFilePath)))
-                    {
-                        ResetLogFileNameToDefault();
-                    }
+                    // ToDo: Verify that this is no longer needed since we're now using PRISM.Logging instead of log4net
+                    // var currentLogFilePath = (string)log4net.GlobalContext.Properties["LogName"];
+                    // if (string.Equals(MAGE_LOG_FILE_NAME, Path.GetFileName(FileLogger.LogFilePath)))
+                    // {
+                    //    ResetLogFileNameToDefault();
+                    // }
 
                     if (!processingSuccess)
                     {

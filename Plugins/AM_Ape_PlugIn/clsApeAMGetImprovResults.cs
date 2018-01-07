@@ -46,13 +46,13 @@ namespace AnalysisManager_Ape_PlugIn
                 {
                     if (success)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Ape successfully created Improv datbase." + GetJobParam("ApeWorkflowName"));
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.INFO, "Ape successfully created Improv datbase." + GetJobParam("ApeWorkflowName"));
                         blnSuccess = true;
                     }
                     else
                     {
                         mErrorMessage = "Error running Ape in GetImprovResultsAll";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, mErrorMessage);
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR, mErrorMessage);
                         blnSuccess = false;
                     }
                 }
@@ -167,8 +167,8 @@ namespace AnalysisManager_Ape_PlugIn
             }
             else
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.INFO, "Retrieving " + intJobCount + " jobs in clsApeAMGetImprovResults");
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Job list: " + jobList);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.INFO, "Retrieving " + intJobCount + " jobs in clsApeAMGetImprovResults");
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.DEBUG, "Job list: " + jobList);
             }
 
             return jobList;

@@ -9,7 +9,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
-using AnalysisManagerBase.Logging;
+using PRISM.Logging;
 using PRISM;
 using PRISMWin;
 
@@ -654,10 +654,10 @@ namespace AnalysisManagerBase
         {
             if (multiLineOutput)
             {
-                return Utilities.GetExceptionStackTraceMultiLine(ex);
+                return clsStackTraceFormatter.GetExceptionStackTraceMultiLine(ex);
             }
 
-            return Utilities.GetExceptionStackTrace(ex);
+            return clsStackTraceFormatter.GetExceptionStackTrace(ex);
 
         }
 

@@ -17,7 +17,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Xml;
 using AnalysisManagerBase;
-using AnalysisManagerBase.Logging;
+using PRISM.Logging;
 using PRISM;
 
 namespace AnalysisManagerProg

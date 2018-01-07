@@ -144,7 +144,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 return true;
             }
 
-            var success = FileSearch.RetrieveFile(paramFileName, m_jobParams.GetParam("transferFolderPath"), 2, clsLogTools.LogLevels.DEBUG);
+            var success = FileSearch.RetrieveFile(paramFileName, m_jobParams.GetParam("transferFolderPath"), 2, PRISM.Logging.BaseLogger.LogLevels.DEBUG);
 
             if (!success)
             {

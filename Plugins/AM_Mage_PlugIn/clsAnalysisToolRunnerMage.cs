@@ -22,8 +22,8 @@ namespace AnalysisManager_Mage_PlugIn
         {
             // Change the name of the log file for the local log file to the plugin log filename
             var logFileName = Path.Combine(m_WorkDir, MAGE_LOG_FILE_NAME);
-            log4net.GlobalContext.Properties["LogName"] = logFileName;
-            clsLogTools.ChangeLogFileName(logFileName);
+            // log4net.GlobalContext.Properties["LogName"] = logFileName;
+            clsLogTools.ChangeLogFileBaseName(logFileName);
 
             // run the appropriate Mage pipeline(s) according to operations list parameter
             var mageOperations = m_jobParams.GetParam("MageOperations");

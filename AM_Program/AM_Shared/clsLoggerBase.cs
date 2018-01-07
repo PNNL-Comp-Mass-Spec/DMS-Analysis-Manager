@@ -1,6 +1,6 @@
 ﻿
 using System;
-using AnalysisManagerBase.Logging;
+using PRISM.Logging;
 
 using PRISM;
 

@@ -135,7 +135,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
             if (mDebugLevel > 4)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "clsMultiAlignMage.RunTool(): Enter");
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.DEBUG, "clsMultiAlignMage.RunTool(): Enter");
             }
 
             if (string.IsNullOrWhiteSpace(sMultiAlignConsolePath))
@@ -161,7 +161,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             var cmdStr = " -files " + MULTIALIGN_INPUT_FILE + " -params " + Path.Combine(mWorkingDir, mParamFilename) + " -path " + mWorkingDir + " -name " + mResultsDBFileName + " -plots";
             if (mDebugLevel >= 1)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, sMultiAlignConsolePath + " " + cmdStr);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.DEBUG, sMultiAlignConsolePath + " " + cmdStr);
             }
 
             cmdRunner.CreateNoWindow = true;
@@ -576,7 +576,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 {
                     if (mDebugLevel >= 4)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "MultiAlign log file not found: " + strLogFilePath);
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.DEBUG, "MultiAlign log file not found: " + strLogFilePath);
                     }
 
                     return;
@@ -584,7 +584,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
                 if (mDebugLevel >= 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Parsing file " + strLogFilePath);
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.DEBUG, "Parsing file " + strLogFilePath);
                 }
 
 
@@ -705,7 +705,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                         if (mDebugLevel >= 3 || DateTime.UtcNow.Subtract(mLastProgressWriteTime).TotalMinutes >= 10)
                         {
                             mLastProgressWriteTime = DateTime.UtcNow;
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, " ... " + mProgress.ToString("0.0") + "% complete");
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.DEBUG, " ... " + mProgress.ToString("0.0") + "% complete");
                         }
 
                     }

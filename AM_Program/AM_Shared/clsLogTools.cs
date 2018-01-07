@@ -7,7 +7,7 @@
 
 using System;
 using System.Globalization;
-using AnalysisManagerBase.Logging;
+using PRISM.Logging;
 
 namespace AnalysisManagerBase
 {
@@ -64,12 +64,12 @@ namespace AnalysisManagerBase
         {
             get
             {
-                if (string.IsNullOrEmpty(m_FileLogger?.LogFilePath))
+                if (string.IsNullOrEmpty(FileLogger.LogFilePath))
                 {
                     return string.Empty;
                 }
 
-                return m_FileLogger.LogFilePath;
+                return FileLogger.LogFilePath;
             }
         }
 

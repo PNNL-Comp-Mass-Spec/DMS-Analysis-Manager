@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
-using AnalysisManagerBase.Logging;
+using PRISM.Logging;
 using MyEMSLReader;
 using PHRPReader;
 using PRISM;

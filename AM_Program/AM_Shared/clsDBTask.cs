@@ -5,7 +5,7 @@ using System.Data.SqlClient;
 using System.Xml.XPath;
 using System.Xml;
 using System.IO;
-using AnalysisManagerBase.Logging;
+using PRISM.Logging;
 
 //*********************************************************************************************************
 // Written by Dave Clark and Matthew Monroe for the US Department of Energy

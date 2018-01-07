@@ -100,7 +100,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Logging class
         /// </summary>
-        public PRISM.ILogger Logger;
+        public PRISM.Logging.BaseLogger Logger;
 
         /// <summary>
         /// Manager parameters

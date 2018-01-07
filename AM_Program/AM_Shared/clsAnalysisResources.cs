@@ -9,7 +9,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Xml;
 using System.Xml.Linq;
-using AnalysisManagerBase.Logging;
+using PRISM.Logging;
 using MyEMSLReader;
 using ParamFileGenerator.MakeParams;
 using Renci.SshNet.Sftp;

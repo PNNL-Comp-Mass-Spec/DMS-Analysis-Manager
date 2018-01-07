@@ -27,7 +27,7 @@ namespace AnalysisManagerICR2LSPlugIn
             // Store the ICR2LS version info in the database
             if (!StoreToolVersionInfo())
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR,
                     "Aborting since StoreToolVersionInfo returned false");
                 m_message = "Error determining ICR2LS version";
                 return CloseOutType.CLOSEOUT_FAILED;
@@ -39,7 +39,7 @@ namespace AnalysisManagerICR2LSPlugIn
             {
                 // Param file wasn't specified, but is required for ICR-2LS analysis
                 m_message = "ICR-2LS Param file not found";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message + ": " + paramFilePath);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR, m_message + ": " + paramFilePath);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -67,7 +67,7 @@ namespace AnalysisManagerICR2LSPlugIn
             if (!File.Exists(DSNamePath))
             {
                 m_message = "Raw file not found: " + DSNamePath;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, m_message);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR, m_message);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -87,13 +87,13 @@ namespace AnalysisManagerICR2LSPlugIn
             }
             else
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, "Error running ICR-2LS on file " + DSNamePath);
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR, "Error running ICR-2LS on file " + DSNamePath);
 
                 // If a .PEK file exists, call PerfPostAnalysisTasks() to move the .Pek file into the results folder, which we'll then archive in the Failed Results folder
                 if (VerifyPEKFileExists(m_WorkDir, m_Dataset))
                 {
                     m_message = "ICR-2LS returned false (see .PEK file in Failed results folder)";
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.DEBUG,
                         ".Pek file was found, so will save results to the failed results archive folder");
 
                     PerfPostAnalysisTasks(false);
@@ -143,7 +143,7 @@ namespace AnalysisManagerICR2LSPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR,
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, PRISM.Logging.BaseLogger.LogLevels.ERROR,
                     "Error deleting .raw file, job " + m_JobNum + ex.Message);
                 return CloseOutType.CLOSEOUT_FAILED;
             }

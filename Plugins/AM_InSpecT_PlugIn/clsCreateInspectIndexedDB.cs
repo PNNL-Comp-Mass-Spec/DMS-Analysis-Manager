@@ -49,7 +49,7 @@ namespace AnalysisManagerInSpecTPlugIn
             {
                 if (DebugLevel > 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.DEBUG,
                         "clsCreateInspectIndexedDB.CreateIndexedDbFiles(): Enter");
                 }
 
@@ -88,7 +88,7 @@ namespace AnalysisManagerInSpecTPlugIn
                 {
                     if (DebugLevel >= 1)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.DEBUG,
                             "Lock file found: " + dbLockFilename + "; waiting for file to be removed by other manager generating .trie file " +
                             Path.GetFileName(dbTrieFilename));
                     }
@@ -111,7 +111,7 @@ namespace AnalysisManagerInSpecTPlugIn
                     // If the duration time has exceeded sngMaxWaitTimeHours, delete the lock file and try again with this manager
                     if (durationTime.Hours > sngMaxWaitTimeHours)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.WARN,
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.WARN,
                             "Waited over " + sngMaxWaitTimeHours.ToString("0.0") + " hour(s) for lock file: " + dbLockFilename +
                             " to be deleted, but it is still present; deleting the file now and continuing");
                         if (File.Exists(dbLockFilename))
@@ -131,7 +131,7 @@ namespace AnalysisManagerInSpecTPlugIn
                     // Verify that python program file exists
                     if (!File.Exists(pythonProgLoc))
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR,
                             "Cannot find python.exe program file: " + pythonProgLoc);
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
@@ -140,7 +140,7 @@ namespace AnalysisManagerInSpecTPlugIn
                     var PrebDBScriptPath = Path.Combine(InspectDir, PREPDB_SCRIPT);
                     if (!File.Exists(PrebDBScriptPath))
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR,
                             "Cannot find PrepDB script: " + PrebDBScriptPath);
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
@@ -151,7 +151,7 @@ namespace AnalysisManagerInSpecTPlugIn
                     {
                         if (!File.Exists(ShuffleDBScriptPath))
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR,
                                 "Cannot find ShuffleDB script: " + ShuffleDBScriptPath);
                             return CloseOutType.CLOSEOUT_FAILED;
                         }
@@ -159,7 +159,7 @@ namespace AnalysisManagerInSpecTPlugIn
 
                     if (DebugLevel >= 3)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Creating lock file: " + dbLockFilename);
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.DEBUG, "Creating lock file: " + dbLockFilename);
                     }
 
                     // Create lock file
@@ -172,7 +172,7 @@ namespace AnalysisManagerInSpecTPlugIn
 
                     if (DebugLevel >= 2)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.DEBUG,
                             "Creating indexed database file: " + dbTrieFilenameBeforeShuffle);
                     }
 
@@ -180,12 +180,12 @@ namespace AnalysisManagerInSpecTPlugIn
                     cmdStr = " " + PrebDBScriptPath + " FASTA " + strDBFileNameInput;
                     if (DebugLevel >= 1)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, pythonProgLoc + " " + cmdStr);
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.DEBUG, pythonProgLoc + " " + cmdStr);
                     }
 
                     if (!objPrepDB.RunProgram(pythonProgLoc, cmdStr, "PrepDB", true))
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR,
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, PRISM.Logging.BaseLogger.LogLevels.ERROR,
                             "Error running " + PREPDB_SCRIPT + " for " + strDBFileNameInput + " : " + JobNum);
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
@@ -193,7 +193,7 @@ namespace AnalysisManagerInSpecTPlugIn
                     {
                         if (DebugLevel >= 1)
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.DEBUG,
                                 "Created .trie file for " + strDBFileNameInput);
                         }
                     }
@@ -218,12 +218,12 @@ namespace AnalysisManagerInSpecTPlugIn
 
                         if (DebugLevel >= 1)
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, pythonProgLoc + " " + cmdStr);
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.DEBUG, pythonProgLoc + " " + cmdStr);
                         }
 
                         if (!objShuffleDB.RunProgram(pythonProgLoc, cmdStr, "ShuffleDB", true))
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, clsLogTools.LogLevels.ERROR,
+                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, PRISM.Logging.BaseLogger.LogLevels.ERROR,
                                 "Error running " + SHUFFLEDB_SCRIPT + " for " + dbTrieFilenameBeforeShuffle + " : " + JobNum);
                             return CloseOutType.CLOSEOUT_FAILED;
                         }
@@ -231,7 +231,7 @@ namespace AnalysisManagerInSpecTPlugIn
                         {
                             if (DebugLevel >= 1)
                             {
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG,
+                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.DEBUG,
                                     "Shuffled .trie file created: " + dbTrieFilename);
                             }
                         }
@@ -239,7 +239,7 @@ namespace AnalysisManagerInSpecTPlugIn
 
                     if (DebugLevel >= 3)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.DEBUG, "Deleting lock file: " + dbLockFilename);
+                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.DEBUG, "Deleting lock file: " + dbLockFilename);
                     }
 
                     // Delete the lock file
@@ -251,7 +251,7 @@ namespace AnalysisManagerInSpecTPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR,
                     "clsCreateInspectIndexedDB.CreateIndexedDbFiles, An exception has occurred: " + ex.Message);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -275,7 +275,7 @@ namespace AnalysisManagerInSpecTPlugIn
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR,
+                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR,
                     "clsCreateInspectIndexedDB.CreateLockFile, Error creating lock file: " + ex.Message);
                 return false;
             }
@@ -290,7 +290,7 @@ namespace AnalysisManagerInSpecTPlugIn
         /// <param name="ex"></param>
         private void CmdRunner_ErrorEvent(string strMessage, Exception ex)
         {
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, clsLogTools.LogLevels.ERROR, strMessage);
+            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR, strMessage);
         }
     }
 }

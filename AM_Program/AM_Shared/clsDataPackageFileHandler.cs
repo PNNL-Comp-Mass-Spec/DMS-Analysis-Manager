@@ -6,7 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Xml;
-using AnalysisManagerBase.Logging;
+using PRISM.Logging;
 using PHRPReader;
 using PRISM;
 

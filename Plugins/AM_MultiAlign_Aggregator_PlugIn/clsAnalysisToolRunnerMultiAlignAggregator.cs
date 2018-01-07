@@ -60,8 +60,8 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
                 // Change the name of the log file for the local log file to the plugin log filename
                 var logFileName = Path.Combine(m_WorkDir, "MultiAlign_Log.txt");
-                log4net.GlobalContext.Properties["LogName"] = logFileName;
-                clsLogTools.ChangeLogFileName(logFileName);
+                // log4net.GlobalContext.Properties["LogName"] = logFileName;
+                clsLogTools.ChangeLogFileBaseName(logFileName);
 
                 bool processingSuccess;
 
