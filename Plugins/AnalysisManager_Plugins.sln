@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26430.16
+VisualStudioVersion = 15.0.27130.2020
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerApePlugIn", "AM_Ape_PlugIn\AnalysisManagerApePlugIn.csproj", "{41393E6D-5164-462C-81EE-C1A07CFAD4C2}"
 EndProject
@@ -114,6 +114,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AM_Shared", "..\AM_Program\AM_Shared\AM_Shared.csproj", "{35B6B79E-C3B0-4E3A-B3ED-64167A470D7E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerUIMFtoMassHunterPlugin", "AM_UIMFtoMassHunter_Plugin\AnalysisManagerUIMFtoMassHunterPlugin.csproj", "{43A57577-6207-4FB7-92EE-C4E1B9BED1E3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalysisManagerProg_Debug", "..\AM_Program\AnalysisManagerProg_Debug.csproj", "{A939D260-136F-4400-8750-1B3E9E57F2F8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -345,8 +347,15 @@ Global
 		{43A57577-6207-4FB7-92EE-C4E1B9BED1E3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{43A57577-6207-4FB7-92EE-C4E1B9BED1E3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{43A57577-6207-4FB7-92EE-C4E1B9BED1E3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A939D260-136F-4400-8750-1B3E9E57F2F8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A939D260-136F-4400-8750-1B3E9E57F2F8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A939D260-136F-4400-8750-1B3E9E57F2F8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A939D260-136F-4400-8750-1B3E9E57F2F8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {3E023407-F3FE-4A3E-A371-101C356D478C}
 	EndGlobalSection
 EndGlobal
