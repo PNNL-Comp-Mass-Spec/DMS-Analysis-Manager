@@ -994,8 +994,7 @@ namespace AnalysisManagerProg
         {
             var logFileNameBase = Path.Combine("Logs", "AnalysisMgr");
 
-            clsLogTools.CreateFileLogger(logFileNameBase);
-
+            clsLogTools.CreateFileLogger(logFileNameBase);            
             GetCodeTestToolRunner(out var jobParams);
 
             m_DebugLevel = 2;

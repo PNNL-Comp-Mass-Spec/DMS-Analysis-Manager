@@ -3233,7 +3233,7 @@ namespace AnalysisManagerBase
         protected void ResetLogFileNameToDefault()
         {
             var logFileName = m_mgrParams.GetParam("logfilename");
-            clsLogTools.ChangeLogFileBaseName(logFileName);
+            clsLogTools.ChangeLogFileBaseName(logFileName, appendDateToBaseName: true);
         }
 
         /// <summary>

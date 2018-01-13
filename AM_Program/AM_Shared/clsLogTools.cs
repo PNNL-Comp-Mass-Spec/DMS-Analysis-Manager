@@ -7,6 +7,7 @@
 
 using System;
 using System.Globalization;
+using System.IO;
 using PRISM.Logging;
 
 namespace AnalysisManagerBase
@@ -86,6 +87,11 @@ namespace AnalysisManagerBase
         /// <returns></returns>
         public static string MostRecentErrorMessage => BaseLogger.MostRecentErrorMessage;
 
+        /// <summary>
+        /// Working directory path
+        /// </summary>
+        public static string WorkDirPath { get; set; }
+
         #endregion
 
         #region "Methods"
@@ -140,6 +146,20 @@ namespace AnalysisManagerBase
 
                 case LoggerTypes.LogFile:
                     myLogger = m_FileLogger;
+
+                    if (!string.IsNullOrWhiteSpace(FileLogger.LogFilePath) &&
+                        !FileLogger.LogFilePath.Contains(Path.DirectorySeparatorChar.ToString()))
+                    {
+                        var logFileName = Path.GetFileName(FileLogger.LogFilePath);
+                        string workDirLogPath;
+                        if (string.IsNullOrEmpty(WorkDirPath))
+                            workDirLogPath = Path.Combine(".", logFileName);
+                        else
+                            workDirLogPath = Path.Combine(WorkDirPath, logFileName);
+
+                        ChangeLogFileBaseName(workDirLogPath, FileLogger.AppendDateToBaseFileName);
+                    }
+
                     break;
 
                 default:
@@ -154,88 +174,20 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Update the log file's base name
+        /// Update the log file's base name (or relative path)
+        /// However, if appendDateToBaseName is false, baseName is the full path to the log file
         /// </summary>
-        /// <param name="baseName"></param>
-        /// <remarks>Will append today's date to the base name</remarks>
-        public static void ChangeLogFileBaseName(string baseName)
+        /// <param name="baseName">Base log file name (or relative path)</param>
+        /// <param name="appendDateToBaseName">
+        /// When true, the actual log file name will have today's date appended to it, in the form mm-dd-yyyy.txt
+        /// When false, the actual log file name will be the base name plus .txt (unless the base name already has an extension)
+        /// </param>
+        /// <remarks>If baseName is null or empty, the log file name will be named DefaultLogFileName</remarks>
+        public static void ChangeLogFileBaseName(string baseName, bool appendDateToBaseName)
         {
-            FileLogger.ChangeLogFileBaseName(baseName);
+            FileLogger.ChangeLogFileBaseName(baseName, appendDateToBaseName);
         }
 
-/*
-        /// <summary>
-        /// Changes the base log file name
-        /// </summary>
-        public static void ChangeLogFileName()
-        {
-            m_FileDate = DateTime.Now.ToString(LOG_FILE_DATECODE);
-            ChangeLogFileName(m_BaseFileName + "_" + m_FileDate + LOG_FILE_EXTENSION);
-        }
-
-        /// <summary>
-        /// Changes the base log file name
-        /// </summary>
-        /// <param name="relativeFilePath">Log file base name and path (relative to program folder)</param>
-        /// <remarks>This method is called by the Mage, Ascore, and Multialign plugins</remarks>
-        public static void ChangeLogFileName(string relativeFilePath)
-        {
-            // Get a list of appenders
-            var appendList = FindAppenders(LOG_FILE_APPENDER);
-            if (appendList == null)
-            {
-                WriteLog(LoggerTypes.LogSystem, LogLevels.WARN, "Unable to change file name. No appender found");
-                return;
-            }
-
-            foreach (var selectedAppender in appendList)
-            {
-                // Convert the IAppender object to a FileAppender instance
-                if (!(selectedAppender is FileAppender appenderToChange))
-                {
-                    WriteLog(LoggerTypes.LogSystem, LogLevels.ERROR, "Unable to convert appender since not a FileAppender");
-                    return;
-                }
-
-                // Change the file name and activate change
-                appenderToChange.File = relativeFilePath;
-                appenderToChange.ActivateOptions();
-            }
-        }
-
-        /// <summary>
-        /// Gets the specified appender
-        /// </summary>
-        /// <param name="appenderName">Name of appender to find</param>
-        /// <returns>List(IAppender) objects if found; null otherwise</returns>
-        private static IEnumerable<IAppender> FindAppenders(string appenderName)
-        {
-
-            // Get a list of the current loggers
-            var loggerList = LogManager.GetCurrentLoggers();
-            if (loggerList.GetLength(0) < 1)
-                return null;
-
-            // Create a List of appenders matching the criteria for each logger
-            var retList = new List<IAppender>();
-            foreach (var testLogger in loggerList)
-            {
-                foreach (var testAppender in testLogger.Logger.Repository.GetAppenders())
-                {
-                    if (testAppender.Name == appenderName)
-                        retList.Add(testAppender);
-                }
-            }
-
-            // Return the list of appenders, if any found
-            if (retList.Count > 0)
-            {
-                return retList;
-            }
-
-            return null;
-        }
-*/
         /// <summary>
         /// Sets the file logging level via an integer value (Overloaded)
         /// </summary>
@@ -265,6 +217,7 @@ namespace AnalysisManagerBase
         {
             m_FileLogger.LogLevel = logLevel;
         }
+
         /// <summary>
         /// Configures the file logger
         /// </summary>
@@ -275,7 +228,7 @@ namespace AnalysisManagerBase
             if (traceMode && !BaseLogger.TraceMode)
                 BaseLogger.TraceMode = true;
 
-            FileLogger.ChangeLogFileBaseName(logFileNameBase);
+            FileLogger.ChangeLogFileBaseName(logFileNameBase, appendDateToBaseName: true);
 
             // The analysis manager determines when to log or not log based on internal logic
             // Set the LogLevel tracked by FileLogger to DEBUG so that all messages sent to this class are logged

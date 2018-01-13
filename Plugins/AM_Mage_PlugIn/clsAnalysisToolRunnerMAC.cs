@@ -48,13 +48,10 @@ namespace AnalysisManager_Mage_PlugIn
                     // Run the appropriate MAC pipeline(s) according to mode parameter
                     processingSuccess = RunMACTool();
 
-
-                    // ToDo: Verify that this is no longer needed since we're now using PRISM.Logging instead of log4net
-                    // var currentLogFilePath = (string)log4net.GlobalContext.Properties["LogName"];
-                    // if (string.Equals(MAGE_LOG_FILE_NAME, Path.GetFileName(FileLogger.LogFilePath)))
-                    // {
-                    //    ResetLogFileNameToDefault();
-                    // }
+                    if (string.Equals(MAGE_LOG_FILE_NAME, Path.GetFileName(FileLogger.LogFilePath)))
+                    {
+                        ResetLogFileNameToDefault();
+                    }
 
                     if (!processingSuccess)
                     {

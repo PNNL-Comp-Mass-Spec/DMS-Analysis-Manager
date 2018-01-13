@@ -45,6 +45,8 @@ namespace AnalysisManagerProg
         private const string DECON2LS_FATAL_REMOTING_ERROR = "Fatal remoting error";
         private const string DECON2LS_CORRUPTED_MEMORY_ERROR = "Corrupted memory error";
         private const string DECON2LS_TCP_ALREADY_REGISTERED_ERROR = "channel 'tcp' is already registered";
+
+        private const bool ENABLE_LOGGER_TRACE_MODE = false;
         #endregion
 
         #region "Member variables"
@@ -200,7 +202,9 @@ namespace AnalysisManagerProg
                 }
 
                 ShowTrace("Instantiate a DbLogger using " + dmsConnectionString);
-                clsLogTools.CreateDbLogger(dmsConnectionString, "Analysis Tool Manager: " + hostName, TraceMode);
+
+                // ReSharper disable once ConditionIsAlwaysTrueOrFalse
+                clsLogTools.CreateDbLogger(dmsConnectionString, "Analysis Tool Manager: " + hostName, TraceMode && ENABLE_LOGGER_TRACE_MODE);
             }
 
             try
@@ -277,7 +281,9 @@ namespace AnalysisManagerProg
             {
                 clsLogTools.RemoveDefaultDbLogger();
                 var logCnStr = m_MgrSettings.GetParam("connectionstring");
-                clsLogTools.CreateDbLogger(logCnStr, "Analysis Tool Manager: " + m_MgrName, TraceMode);
+
+                // ReSharper disable once ConditionIsAlwaysTrueOrFalse
+                clsLogTools.CreateDbLogger(logCnStr, "Analysis Tool Manager: " + m_MgrName, TraceMode && ENABLE_LOGGER_TRACE_MODE);
             }
 
             // Make the initial log entry
@@ -326,6 +332,8 @@ namespace AnalysisManagerProg
             m_AnalysisTask = new clsAnalysisJob(m_MgrSettings, m_DebugLevel);
 
             m_WorkDirPath = m_MgrSettings.GetParam(clsAnalysisMgrSettings.MGR_PARAM_WORK_DIR);
+
+            clsLogTools.WorkDirPath = m_WorkDirPath;
 
             // Setup the manager cleanup class
             ShowTrace("Setup the manager cleanup class");

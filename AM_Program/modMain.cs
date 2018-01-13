@@ -33,7 +33,7 @@ namespace AnalysisManagerProg
 {
     static class modMain
     {
-        public const string PROGRAM_DATE = "January 4, 2018";
+        public const string PROGRAM_DATE = "January 10, 2018";
 
         private static bool mCodeTestMode;
         private static bool mCreateWindowsEventLog;
@@ -139,10 +139,10 @@ namespace AnalysisManagerProg
                         // objTest.TestCopyToRemote();
 
                         objTest.TestLogging();
-                        objTest.TestStatusLogging();
+                        //objTest.TestStatusLogging();
 
-                        var connString = "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI";
-                        objTest.TestDatabaseLogging(connString);
+                        //var connString = "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI";
+                        //objTest.TestDatabaseLogging(connString);
 
 
                     }

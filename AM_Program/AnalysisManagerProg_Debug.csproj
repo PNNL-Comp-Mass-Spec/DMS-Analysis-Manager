@@ -131,7 +131,7 @@
       <Version>0.8.1</Version>
     </PackageReference>
     <PackageReference Include="PRISM-Library">
-      <Version>2.4.50</Version>
+      <Version>2.4.54</Version>
     </PackageReference>
     <PackageReference Include="PRISMWin-Library">
       <Version>1.0.3</Version>
@@ -158,6 +158,7 @@
 xcopy "$(ProjectDir)..\AM_Common\DTAtoMGF.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\FileConcatenator.dll" "$(TargetDir)" /D /Y  /F
 xcopy "$(ProjectDir)..\AM_Common\gzip.exe" "$(TargetDir)" /D /Y
+xcopy "$(ProjectDir)..\AM_Common\InterDetect.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\MageExtExtractionFilters.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\MageExtContentFilters.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\MageDisplayLib.dll" "$(TargetDir)" /D /Y
@@ -168,6 +169,7 @@ xcopy "$(ProjectDir)..\AM_Common\PHRPReader.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\PNNLOmics.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\ProteinCoverageSummarizer.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\ProteinFileReader.dll" "$(TargetDir)" /D /Y
+xcopy "$(ProjectDir)..\AM_Common\SetCover.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\ThermoRawFileReader.dll" "$(TargetDir)" /D /Y
 
 xcopy "$(TargetDir)AnalysisManagerProg.exe" "$(ProjectDir)..\AM_Common\" /D /Y

@@ -8,7 +8,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 {
     /// Handler that provides pre-packaged Mage pipelines
     /// that do the heavy lifting tasks that get data package items,
-    /// find associated files, and copy them to repo cache folders    
+    /// find associated files, and copy them to repo cache folders
     public class MageRepoPkgrPipelines
     {
         #region Properties
@@ -65,9 +65,9 @@ namespace AnalysisManager_RepoPkgr_Plugin
         /// <summary>
         /// Copy given set of files for given set of items from data package
         /// to the given subfolder in the repo cache folder.
-        /// Query the database (using the given query templage and (optional) secondary filter value) to get items from data package, 
+        /// Query the database (using the given query templage and (optional) secondary filter value) to get items from data package,
         /// then search for files associated with those items using the given file name filter,
-        /// and then copy the files to the given subfolder in the repo cache 
+        /// and then copy the files to the given subfolder in the repo cache
         /// (include metadata file (based on data package items) as well)
         /// </summary>
         /// <param name="queryTmpltName">Name of query template to use to get items from data package</param>
@@ -88,7 +88,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
         /// Copy given set of files for given set of items from data package
         /// using existing list of data package items.
         /// Search for files associated with those items using the given file name filter,
-        /// and then copy the files to the given subfolder in the repo cache 
+        /// and then copy the files to the given subfolder in the repo cache
         /// (include metadata file (based on data package items) as well)
         /// </summary>
         /// <param name="fileNameSelector">Mage file filter to select specific files to copy (semi-colon delimited list of file matching patterns)</param>
@@ -105,7 +105,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
         /// <summary>
         /// Copy given set of files for given set of items from data package
         /// using existing list of files and existing list of data package items.
-        /// Copy the files to the given subfolder in the repo cache 
+        /// Copy the files to the given subfolder in the repo cache
         /// (include metadata file (based on data package items) as well)
         /// </summary>
         /// <param name="outputSubfolderName">Subfolder in repo package cache folder to copy files into</param>
@@ -131,10 +131,9 @@ namespace AnalysisManager_RepoPkgr_Plugin
             return (duplicates.Any());
         }
 
-
         /// <summary>
-        /// Write the contents of the given metadata to a file in 
-        /// the appropriate target folder.  Metadata file name is based 
+        /// Write the contents of the given metadata to a file in
+        /// the appropriate target folder.  Metadata file name is based
         /// on the outputSubFolder name. If outputSubfolderName is
         /// a nested partial path, name will be based on last segment.
         /// </summary>
@@ -144,8 +143,10 @@ namespace AnalysisManager_RepoPkgr_Plugin
         {
             if (!EnableMetadataFile)
                 return;
+
             if (metadata.Rows.Count == 0)
                 return;
+
             var subfolders = outputSubfolderName.Split(new[] { Path.DirectorySeparatorChar });
             var metadataFolderPath = Path.Combine(OutputResultsFolderPath, outputSubfolderName);
             var metadataFileName = string.Format("{0}_metadata.txt", subfolders.Last());
@@ -167,15 +168,20 @@ namespace AnalysisManager_RepoPkgr_Plugin
             var result = new SimpleSink();
             var cnStr = QueryDefs.GetCnStr(queryTmpltName);
             var sqlText = QueryDefs.GetQueryTmplt(queryTmpltName).Sql(DataPkgId, filter);
-            var pl = ProcessingPipeline.Assemble("GetDataPackageItems",
-                                        new MSSQLReader { ConnectionString = cnStr, SQLText = sqlText }, result);
+
+            var sqlReader = new MSSQLReader(cnStr)
+            {
+                SQLText = sqlText
+            };
+
+            var pl = ProcessingPipeline.Assemble("GetDataPackageItems", sqlReader, result);
             ConnectEventHandlersToPipeline(pl);
             pl.RunRoot(null);
             return result;
         }
 
         /// <summary>
-        /// Simple Mage pipeline that returns results of seaching 
+        /// Simple Mage pipeline that returns results of seaching
         /// the given set of input folders for files matching the given selector pattern
         /// </summary>
         /// <param name="searchList">SimpleSink object holding list of folders to search (plus optional metadata)</param>
@@ -210,10 +216,12 @@ namespace AnalysisManager_RepoPkgr_Plugin
             var result = new SimpleSink();
             if (sourceObject.Rows.Count == 0)
                 return result;
+
             if (!Directory.Exists(outputFolder))
             {
                 Directory.CreateDirectory(outputFolder);
             }
+
             var source = new SinkWrapper(sourceObject);
             var copier = new FileCopy { OutputFolderPath = outputFolder, OverwriteExistingFiles = true };
             if (!string.IsNullOrEmpty(prefixCol) && CheckForDuplicateFileNames(copier.OutputFileColumnName))

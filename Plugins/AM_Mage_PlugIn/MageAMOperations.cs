@@ -9,8 +9,7 @@ namespace AnalysisManager_Mage_PlugIn
 {
 
     /// <summary>
-    /// Class that defines Mac Mage operations that can be selected by the
-    /// "MageOperations" parameter
+    /// Class that defines Mac Mage operations that can be selected by the "MageOperations" parameter
     /// </summary>
     public class MageAMOperations : clsEventNotifier
     {
@@ -38,11 +37,13 @@ namespace AnalysisManager_Mage_PlugIn
 
         #region Constructors
 
-        public MageAMOperations(IJobParams jobParms, IMgrParams mgrParms)
+        public MageAMOperations(IJobParams jobParms, IMgrParams mgrParms, string logFilePath, bool appendDateToLogFileName)
         {
             _previousStepResultsImported = false;
             _jobParams = jobParms;
             _mgrParams = mgrParms;
+
+            clsLogTools.ChangeLogFileBaseName(logFilePath, appendDateToLogFileName);
         }
 
         #endregion

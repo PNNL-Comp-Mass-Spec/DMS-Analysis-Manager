@@ -330,9 +330,8 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         /// <returns></returns>
         public static MSSQLReader MakeDBReaderModule(string sql, string connectionString)
         {
-            var reader = new MSSQLReader
+            var reader = new MSSQLReader(connectionString)
             {
-                ConnectionString = connectionString,
                 SQLText = sql
             };
             return reader;

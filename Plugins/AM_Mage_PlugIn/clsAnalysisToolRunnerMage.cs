@@ -21,13 +21,13 @@ namespace AnalysisManager_Mage_PlugIn
         protected override bool RunMACTool()
         {
             // Change the name of the log file for the local log file to the plugin log filename
-            var logFileName = Path.Combine(m_WorkDir, MAGE_LOG_FILE_NAME);
-            // log4net.GlobalContext.Properties["LogName"] = logFileName;
-            clsLogTools.ChangeLogFileBaseName(logFileName);
+            var logFilePath = Path.Combine(m_WorkDir, MAGE_LOG_FILE_NAME);
+            const bool appendDateToBaseName = false;
+            clsLogTools.ChangeLogFileBaseName(logFilePath, appendDateToBaseName);
 
             // run the appropriate Mage pipeline(s) according to operations list parameter
             var mageOperations = m_jobParams.GetParam("MageOperations");
-            var ops = new MageAMOperations(m_jobParams, m_mgrParams);
+            var ops = new MageAMOperations(m_jobParams, m_mgrParams, logFilePath, appendDateToBaseName);
             RegisterEvents(ops);
 
             var success = ops.RunMageOperations(mageOperations);
