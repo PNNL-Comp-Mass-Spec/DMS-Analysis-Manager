@@ -118,7 +118,6 @@ namespace AnalysisManager_Ape_PlugIn
             return blnSuccess;
         }
 
-
         void ApeProgressChanged(object sender, clsApeAMBase.ProgressChangedEventArgs e)
         {
 

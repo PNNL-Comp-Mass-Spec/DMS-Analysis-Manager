@@ -36,8 +36,7 @@ namespace AnalysisManagerBase
             /// <summary>
             /// Log to the database and to the log file
             /// </summary>
-            LogDb,
-
+            LogDb
         }
 
         #endregion
@@ -77,14 +76,11 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Tells calling program file debug status
         /// </summary>
-        /// <returns>TRUE if debug level enabled for file logger; FALSE otherwise</returns>
-        /// <remarks></remarks>
         public static bool FileLogDebugEnabled => m_FileLogger.IsDebugEnabled;
 
         /// <summary>
         /// Most recent error message
         /// </summary>
-        /// <returns></returns>
         public static string MostRecentErrorMessage => BaseLogger.MostRecentErrorMessage;
 
         /// <summary>
@@ -244,6 +240,7 @@ namespace AnalysisManagerBase
         public static void CreateDbLogger(string connStr, string moduleName, bool traceMode = false)
         {
             m_DbLogger.LogLevel = BaseLogger.LogLevels.INFO;
+
             if (traceMode && !BaseLogger.TraceMode)
                 BaseLogger.TraceMode = true;
 
