@@ -224,6 +224,8 @@ namespace AnalysisManagerBase
             if (traceMode && !BaseLogger.TraceMode)
                 BaseLogger.TraceMode = true;
 
+            BaseLogger.TimestampFormat = LogMessage.TimestampFormatMode.YearMonthDay24hr;
+
             FileLogger.ChangeLogFileBaseName(logFileNameBase, appendDateToBaseName: true);
 
             // The analysis manager determines when to log or not log based on internal logic
