@@ -111,7 +111,7 @@ namespace AnalysisManager_Ape_PlugIn
                     throw new IOException("Error determining the parent folder path for the Ape database");
 
                 // Add the protein parsimony tables
-                success = parsimonyRunner.RunAlgorithm(fiDatabase.Directory.FullName, fiDatabase.Name, SOURCE_TABLE);
+                success = parsimonyRunner.ProcessSQLite(fiDatabase.Directory.FullName, fiDatabase.Name, SOURCE_TABLE);
 
             }
             catch (Exception ex)
