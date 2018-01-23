@@ -154,7 +154,10 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>xcopy "$(ProjectDir)..\AM_Common\DLLVersionInspector*.exe" "$(TargetDir)" /D /Y
+    <PostBuildEvent>xcopy "$(ProjectDir)..\AM_Common\Ape.dll" "$(TargetDir)" /D /Y
+xcopy "$(ProjectDir)..\AM_Common\AScore_DLL.dll" "$(TargetDir)" /D /Y
+xcopy "$(ProjectDir)..\AM_Common\Cyclops.dll" "$(TargetDir)" /D /Y
+xcopy "$(ProjectDir)..\AM_Common\DLLVersionInspector*.exe" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\DTAtoMGF.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\FileConcatenator.dll" "$(TargetDir)" /D /Y  /F
 xcopy "$(ProjectDir)..\AM_Common\gzip.exe" "$(TargetDir)" /D /Y
@@ -169,7 +172,9 @@ xcopy "$(ProjectDir)..\AM_Common\PHRPReader.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\PNNLOmics.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\ProteinCoverageSummarizer.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\ProteinFileReader.dll" "$(TargetDir)" /D /Y
+xcopy "$(ProjectDir)..\AM_Common\RangerLib.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\SetCover.dll" "$(TargetDir)" /D /Y
+xcopy "$(ProjectDir)..\AM_Common\TableFunctions.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\ThermoRawFileReader.dll" "$(TargetDir)" /D /Y
 
 xcopy "$(TargetDir)AnalysisManagerProg.exe" "$(ProjectDir)..\AM_Common\" /D /Y
