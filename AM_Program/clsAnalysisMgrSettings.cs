@@ -11,7 +11,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -121,8 +120,6 @@ namespace AnalysisManagerProg
         private readonly Dictionary<string, string> mParamDictionary;
 
         private string mErrMsg = string.Empty;
-        private readonly string mEmergencyLogSource;
-        private readonly string mEmergencyLogName;
 
         private readonly string mMgrFolderPath;
 
@@ -204,21 +201,15 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="emergencyLogSource">Source name registered for emergency logging</param>
-        /// <param name="emergencyLogName">Name of system log for emergency logging</param>
         /// <param name="lstMgrSettings">Manager settings loaded from file AnalysisManagerProg.exe.config</param>
         /// <param name="mgrFolderPath"></param>
         /// <param name="traceMode"></param>
         /// <remarks></remarks>
         public clsAnalysisMgrSettings(
-            string emergencyLogSource,
-            string emergencyLogName,
             Dictionary<string, string> lstMgrSettings,
             string mgrFolderPath,
             bool traceMode)
         {
-            mEmergencyLogName = emergencyLogName;
-            mEmergencyLogSource = emergencyLogSource;
             mMgrFolderPath = mgrFolderPath;
             TraceMode = traceMode;
 
@@ -1006,63 +997,11 @@ namespace AnalysisManagerProg
 
         private void WriteToEmergencyLog(string message)
         {
-            WriteToEmergencyLog(mEmergencyLogSource, mEmergencyLogName, message);
-        }
-
-        private void WriteToEmergencyLog(string sourceName, string logName, string message)
-        {
             if (TraceMode)
                 ShowTraceMessage(message);
 
-            if (clsGlobal.LinuxOS)
-            {
-                LogError(message);
-                return;
-            }
+            LogError(message);
 
-            WriteToEmergencyLogWindows(sourceName, logName, message);
-        }
-
-        private void WriteToEmergencyLogWindows(string sourceName, string logName, string message)
-        {
-            // Post a message to the the Windows application event log named LogName
-            // If the application log does not exist yet, we will try to create it
-            // However, in order to do that, the program needs to be running from an elevated (administrative level) command prompt
-            // Thus, it is advisable to run this program once from an elevated command prompt while MgrActive_Local is set to false
-
-            // If custom event log doesn't exist yet, create it
-            if (!EventLog.SourceExists(sourceName))
-            {
-                var sourceData = new EventSourceCreationData(sourceName, logName);
-                EventLog.CreateEventSource(sourceData);
-            }
-
-            // Create custom event logging object and write to log
-            var customEventLog = new EventLog
-            {
-                Log = logName,
-                Source = sourceName
-            };
-
-            try
-            {
-                customEventLog.MaximumKilobytes = 1024;
-            }
-            catch (Exception)
-            {
-                // Leave this as the default
-            }
-
-            try
-            {
-                customEventLog.ModifyOverflowPolicy(OverflowAction.OverwriteAsNeeded, 90);
-            }
-            catch (Exception)
-            {
-                // Access denied to change the overflow policy; safe to ignore
-            }
-
-            EventLog.WriteEntry(sourceName, message, EventLogEntryType.Error);
         }
 
         /// <summary>

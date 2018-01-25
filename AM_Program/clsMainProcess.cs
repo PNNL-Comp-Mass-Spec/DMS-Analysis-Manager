@@ -30,17 +30,6 @@ namespace AnalysisManagerProg
     {
         #region "Constants"
 
-        /// <summary>
-        /// This is used to create the Windows Event log (aka the EmergencyLog) that this program rights to
-        ///  when the manager is disabled or cannot make an entry in the log file
-        /// </summary>
-        private const string CUSTOM_LOG_SOURCE_NAME = "Analysis Manager";
-
-        /// <summary>
-        /// Windows application log name for the analysis manager
-        /// </summary>
-        public const string CUSTOM_LOG_NAME = "DMS_AnalysisMgr";
-
         private const int MAX_ERROR_COUNT = 10;
         private const string DECON2LS_FATAL_REMOTING_ERROR = "Fatal remoting error";
         private const string DECON2LS_CORRUPTED_MEMORY_ERROR = "Corrupted memory error";
@@ -132,10 +121,9 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                // Report any exceptions not handled at a lower level to the system application log
+                // Report any exceptions not handled at a lower level to the console
                 var errMsg = "Critical exception starting application: " + ex.Message;
                 ShowTrace(errMsg + "; " + clsGlobal.GetExceptionStackTrace(ex, true));
-                PostToEventLog(errMsg + "; " + clsGlobal.GetExceptionStackTrace(ex, false));
                 ShowTrace("Exiting clsMainProcess.Main with error code = 1");
                 return 1;
             }
@@ -159,16 +147,6 @@ namespace AnalysisManagerProg
             var fiMgr = new FileInfo(exeName);
             m_MgrExeName = fiMgr.Name;
             m_MgrFolderPath = fiMgr.DirectoryName;
-        }
-
-        private static void ConfirmWindowsEventLog()
-        {
-            // Confirm that the application event log exists
-            if (EventLog.SourceExists(CUSTOM_LOG_SOURCE_NAME))
-                return;
-
-            var sourceData = new EventSourceCreationData(CUSTOM_LOG_SOURCE_NAME, CUSTOM_LOG_NAME);
-            EventLog.CreateEventSource(sourceData);
         }
 
         /// <summary>
@@ -225,37 +203,18 @@ namespace AnalysisManagerProg
                         foreach (var setting in lstMgrSettings)
                             ShowTrace(string.Format("  {0}: {1}", setting.Key, setting.Value));
                     }
-                    m_MgrSettings = new clsAnalysisMgrSettings(CUSTOM_LOG_SOURCE_NAME, CUSTOM_LOG_NAME, lstMgrSettings, m_MgrFolderPath, TraceMode);
+                    m_MgrSettings = new clsAnalysisMgrSettings(lstMgrSettings, m_MgrFolderPath, TraceMode);
                 }
                 catch (Exception ex)
                 {
-                    // Failures are logged by clsMgrSettings to application event logs;
-                    //  this includes MgrActive_Local = False
-                    //
-                    // If the DMS_AnalysisMgr application log does not exist yet, the SysLogger will create it
-                    // However, in order to do that, the program needs to be running from an elevated (administrative level) command prompt
-                    // Thus, it is advisable to run this program once from an elevated command prompt while MgrActive_Local is set to false
-
-                    Console.WriteLine();
-                    Console.WriteLine("===============================================================");
-                    Console.WriteLine("Exception instantiating clsAnalysisMgrSettings: " + ex.Message);
-                    Console.WriteLine("===============================================================");
-                    Console.WriteLine();
-                    Console.WriteLine("You may need to start this application once from an elevated (administrative level) command prompt " +
-                        "using the /EL switch so that it can create the " + CUSTOM_LOG_NAME + " application log");
-                    Console.WriteLine();
+                    ConsoleMsgUtils.ShowError("Exception instantiating clsAnalysisMgrSettings: " + ex.Message);
                     Thread.Sleep(500);
-
                     return false;
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine();
-                Console.WriteLine("===============================================================");
-                Console.WriteLine("Exception loading settings from AnalysisManagerProg.exe.config: " + ex.Message);
-                Console.WriteLine("===============================================================");
-                Console.WriteLine();
+                ConsoleMsgUtils.ShowError("Exception loading settings from AnalysisManagerProg.exe.config: " + ex.Message);
                 Thread.Sleep(500);
                 return false;
             }
@@ -265,11 +224,6 @@ namespace AnalysisManagerProg
 
             // Delete any temporary files that may be left in the app directory
             RemoveTempFiles();
-
-            if (!clsGlobal.OfflineMode)
-            {
-                ConfirmWindowsEventLog();
-            }
 
             // Setup the loggers
 
@@ -1137,84 +1091,6 @@ namespace AnalysisManagerProg
                 // Error combining the terms; return an empty string
                 return string.Empty;
             }
-        }
-
-        /// <summary>
-        /// Initialize the analysis manager application log,
-        /// </summary>
-        public static void CreateAnalysisManagerEventLog()
-        {
-            if (clsGlobal.LinuxOS)
-            {
-                Console.WriteLine("The Windows event log cannot be initialized on Linux (CreateAnalysisManagerEventLog)");
-                return;
-            }
-            var success = CreateAnalysisManagerEventLog(CUSTOM_LOG_SOURCE_NAME, CUSTOM_LOG_NAME);
-
-            if (success)
-            {
-                Console.WriteLine();
-                clsGlobal.LogDebug("Windows Event Log '" + CUSTOM_LOG_NAME + "' has been validated for source '" + CUSTOM_LOG_SOURCE_NAME + "'", false);
-                Console.WriteLine();
-            }
-        }
-
-        private static bool CreateAnalysisManagerEventLog(string sourceName, string logName)
-        {
-            try
-            {
-                if (string.IsNullOrEmpty(sourceName))
-                {
-                    ConsoleMsgUtils.ShowError("Error creating the Windows Event Log: SourceName cannot be blank");
-                    return false;
-                }
-
-                if (string.IsNullOrEmpty(logName))
-                {
-                    ConsoleMsgUtils.ShowError("Error creating the Windows Event Log: LogName cannot be blank");
-                    return false;
-                }
-
-                if (!EventLog.SourceExists(sourceName))
-                {
-                    clsGlobal.LogDebug("Creating Windows Event Log " + logName + " for source " + sourceName, false);
-                    var sourceData = new EventSourceCreationData(sourceName, logName);
-                    EventLog.CreateEventSource(sourceData);
-                }
-
-                // Create custom event logging object and update it's configuration
-                var eventLog = new EventLog
-                {
-                    Log = logName,
-                    Source = sourceName
-                };
-
-                try
-                {
-                    eventLog.MaximumKilobytes = 1024;
-                }
-                catch (Exception ex)
-                {
-                    ConsoleMsgUtils.ShowWarning("Warning: unable to update the maximum log size to 1024 KB: \n  " + ex.Message);
-                }
-
-                try
-                {
-                    eventLog.ModifyOverflowPolicy(OverflowAction.OverwriteAsNeeded, 90);
-                }
-                catch (Exception ex)
-                {
-                    ConsoleMsgUtils.ShowWarning("Warning: unable to update the overflow policy to keep events for 90 days " +
-                                                "and overwrite as needed: \n  " + ex.Message);
-                }
-            }
-            catch (Exception ex)
-            {
-                ConsoleMsgUtils.ShowError("Exception creating the Windows Event Log named '" + logName + "' for source '" + sourceName + "'", ex);
-                return false;
-            }
-
-            return true;
         }
 
         private FileSystemWatcher CreateConfigFileWatcher(string configFileName)
@@ -2184,36 +2060,7 @@ namespace AnalysisManagerProg
                 LogError("Exception in LogErrorToDatabasePeriodically", ex);
             }
         }
-
-        private void PostToEventLog(string ErrMsg)
-        {
-            const string EVENT_LOG_NAME = "DMSAnalysisManager";
-
-            try
-            {
-                Console.WriteLine();
-                Console.WriteLine("===============================================================");
-                Console.WriteLine(ErrMsg);
-                Console.WriteLine("===============================================================");
-                Console.WriteLine();
-                Console.WriteLine("You may need to start this application once from an elevated (administrative level) command prompt " +
-                                  "using the /EL switch so that it can create the " + EVENT_LOG_NAME + " application log");
-                Console.WriteLine();
-
-                var ev = new EventLog("Application", ".", EVENT_LOG_NAME);
-                Trace.Listeners.Add(new EventLogTraceListener(EVENT_LOG_NAME));
-                Trace.WriteLine(ErrMsg);
-                ev.Close();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine();
-                Console.WriteLine("Exception logging to the event log: " + ex.Message);
-            }
-
-            Thread.Sleep(500);
-        }
-
+        
         /// <summary>
         /// Reload the settings from AnalysisManagerProg.exe.config
         /// </summary>

@@ -36,7 +36,6 @@ namespace AnalysisManagerProg
         public const string PROGRAM_DATE = "January 25, 2018";
 
         private static bool mCodeTestMode;
-        private static bool mCreateWindowsEventLog;
         private static bool mTraceMode;
         private static bool mDisableMessageQueue;
         private static bool mDisableMyEMSL;
@@ -160,12 +159,6 @@ namespace AnalysisManagerProg
                     return 0;
                 }
 
-                if (mCreateWindowsEventLog)
-                {
-                    clsMainProcess.CreateAnalysisManagerEventLog();
-                    return 0;
-                }
-
                 if (mDisplayDllVersions)
                 {
                     var testHarness = new clsCodeTest {
@@ -270,7 +263,6 @@ namespace AnalysisManagerProg
                 "T",
                 "Test",
                 "Trace",
-                "EL",
                 "NQ",
                 "NoMyEMSL",
                 "DLL",
@@ -299,9 +291,6 @@ namespace AnalysisManagerProg
 
                 if (commandLineParser.IsParameterPresent("Trace"))
                     mTraceMode = true;
-
-                if (objParseCommandLine.IsParameterPresent("EL"))
-                    mCreateWindowsEventLog = true;
 
                 if (commandLineParser.IsParameterPresent("NQ"))
                     mDisableMessageQueue = true;
@@ -360,12 +349,9 @@ namespace AnalysisManagerProg
 
                 Console.WriteLine("This program processes DMS analysis jobs for PRISM. Normal operation is to run the program without any command line switches.");
                 Console.WriteLine();
-                Console.WriteLine("Program syntax:\n" + exeName + " [/EL] [/NQ] [/NoMyEMSL] [/T] [/Trace]");
+                Console.WriteLine("Program syntax:\n" + exeName + " [/NQ] [/NoMyEMSL] [/T] [/Trace]");
                 Console.WriteLine("[/DLL] [/Offline] [/Linux] [/Version]");
-                Console.WriteLine();
 
-                Console.WriteLine("Use /EL to create the Windows Event Log named '" + clsMainProcess.CUSTOM_LOG_NAME + "' then exit the program. " +
-                                  "You should do this from a Windows Command Prompt that you started using 'Run as Administrator'");
                 Console.WriteLine();
                 Console.WriteLine("Use /NQ to disable posting status messages to the message queue");
                 Console.WriteLine();

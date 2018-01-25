@@ -53,8 +53,6 @@ namespace AnalysisManagerProg
         /// <remarks></remarks>
         public clsCodeTest()
         {
-            const string CUSTOM_LOG_SOURCE_NAME = "Analysis Manager";
-            const string CUSTOM_LOG_NAME = "DMS_AnalysisMgr";
             const bool TRACE_MODE_ENABLED = true;
 
             m_DebugLevel = 2;
@@ -67,7 +65,7 @@ namespace AnalysisManagerProg
 
                 var lstMgrSettings = mainProcess.LoadMgrSettingsFromFile();
 
-                m_mgrParams = new clsAnalysisMgrSettings(CUSTOM_LOG_SOURCE_NAME, CUSTOM_LOG_NAME, lstMgrSettings, clsGlobal.GetAppFolderPath(), TRACE_MODE_ENABLED);
+                m_mgrParams = new clsAnalysisMgrSettings(lstMgrSettings, clsGlobal.GetAppFolderPath(), TRACE_MODE_ENABLED);
 
                 m_DebugLevel = 2;
 
@@ -81,11 +79,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                Console.WriteLine();
-                Console.WriteLine("===============================================================");
-                Console.WriteLine("Exception loading settings from AnalysisManagerProg.exe.config: " + ex.Message);
-                Console.WriteLine("===============================================================");
-                Console.WriteLine();
+                ConsoleMsgUtils.ShowError("Exception loading settings from AnalysisManagerProg.exe.config", ex);
                 Thread.Sleep(500);
             }
         }
