@@ -789,7 +789,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
 
                 var consoleOutputFilePath = Path.Combine(logFileDir, "MSGFPlus_BuildSA_ConsoleOutput.txt");
-                var objBuildSA = new clsRunDosProgram(fiFastaFile.DirectoryName)
+                var buildSA = new clsRunDosProgram(fiFastaFile.DirectoryName)
                 {
                     CreateNoWindow = true,
                     CacheStandardOutput = true,
@@ -797,13 +797,13 @@ namespace AnalysisManagerMSGFDBPlugIn
                     WriteConsoleOutputToFile = true,
                     ConsoleOutputFilePath = consoleOutputFilePath
                 };
-                RegisterEvents(objBuildSA);
+                RegisterEvents(buildSA);
 
                 currentTask = "Run BuildSA using " + cmdStr;
 
                 // Run BuildSA and wait for it to exit
                 // This process generally doesn't take that long so we do not track CPU usage
-                success = objBuildSA.RunProgram(javaProgLoc, cmdStr, "BuildSA", true);
+                success = buildSA.RunProgram(javaProgLoc, cmdStr, "BuildSA", true);
 
                 if (!success)
                 {

@@ -795,7 +795,7 @@ namespace AnalysisManagerBase
             var sourceFolderPath = string.Empty;
             string targetDirectoryPath;
 
-            var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
+            var analysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
 
             var errorEncountered = false;
             var failedFileCount = 0;
@@ -832,10 +832,10 @@ namespace AnalysisManagerBase
                 }
 
                 // Determine the remote transfer folder path (create it if missing)
-                targetDirectoryPath = CreateRemoteTransferFolder(objAnalysisResults, transferFolderPath);
+                targetDirectoryPath = CreateRemoteTransferFolder(analysisResults, transferFolderPath);
                 if (string.IsNullOrEmpty(targetDirectoryPath))
                 {
-                    objAnalysisResults.CopyFailedResultsToArchiveFolder(sourceFolderPath);
+                    analysisResults.CopyFailedResultsToArchiveFolder(sourceFolderPath);
                     return false;
                 }
 
@@ -845,7 +845,7 @@ namespace AnalysisManagerBase
                 LogError("Error creating results folder in transfer directory", ex);
                 if (!string.IsNullOrEmpty(sourceFolderPath))
                 {
-                    objAnalysisResults.CopyFailedResultsToArchiveFolder(sourceFolderPath);
+                    analysisResults.CopyFailedResultsToArchiveFolder(sourceFolderPath);
                 }
 
                 return false;
@@ -860,7 +860,7 @@ namespace AnalysisManagerBase
 
                 // Copy the files and subfolders
                 var success = CopyResultsFolderRecursive(
-                    sourceFolderPath, sourceFolderPath, targetDirectoryPath, objAnalysisResults,
+                    sourceFolderPath, sourceFolderPath, targetDirectoryPath, analysisResults,
                     ref errorEncountered, ref failedFileCount, retryCount,
                     retryHoldoffSeconds, increaseHoldoffOnEachRetry);
 
@@ -885,7 +885,7 @@ namespace AnalysisManagerBase
                     clsGlobal.CheckPlural(failedFileCount, " file", " files") +
                     " to transfer folder";
                 LogError(msg);
-                objAnalysisResults.CopyFailedResultsToArchiveFolder(sourceFolderPath);
+                analysisResults.CopyFailedResultsToArchiveFolder(sourceFolderPath);
                 return false;
             }
 
@@ -899,7 +899,7 @@ namespace AnalysisManagerBase
         /// <param name="rootSourceFolderPath"></param>
         /// <param name="sourceFolderPath"></param>
         /// <param name="targetDirectoryPath"></param>
-        /// <param name="objAnalysisResults"></param>
+        /// <param name="analysisResults"></param>
         /// <param name="errorEncountered"></param>
         /// <param name="failedFileCount"></param>
         /// <param name="retryCount"></param>
@@ -910,7 +910,7 @@ namespace AnalysisManagerBase
             string rootSourceFolderPath,
             string sourceFolderPath,
             string targetDirectoryPath,
-            clsAnalysisResults objAnalysisResults,
+            clsAnalysisResults analysisResults,
             ref bool errorEncountered,
             ref int failedFileCount,
             int retryCount,
@@ -922,7 +922,8 @@ namespace AnalysisManagerBase
 
             try
             {
-                if (objAnalysisResults.FolderExistsWithRetry(targetDirectoryPath))
+
+                if (analysisResults.FolderExistsWithRetry(targetDirectoryPath))
                 {
                     // The target folder already exists
 
@@ -930,29 +931,29 @@ namespace AnalysisManagerBase
                     // If they do, compare the file modification dates and post a warning if a file will be overwritten (because the file on the local computer is newer)
                     // However, if file sizes differ, replace the file
 
-                    var objSourceFolderInfo = new DirectoryInfo(sourceFolderPath);
-                    foreach (var objSourceFile in objSourceFolderInfo.GetFiles())
+                    var resultFolder = new DirectoryInfo(sourceFolderPath);
+                    foreach (var sourceFile in resultFolder.GetFiles())
                     {
-                        if (File.Exists(Path.Combine(targetDirectoryPath, objSourceFile.Name)))
+                        if (!File.Exists(Path.Combine(targetDirectoryPath, sourceFile.Name)))
+                            continue;
+
+                        var targetFile = new FileInfo(Path.Combine(targetDirectoryPath, sourceFile.Name));
+
+                        if (sourceFile.Length == targetFile.Length && sourceFile.LastWriteTimeUtc <= targetFile.LastWriteTimeUtc)
+                            continue;
+
+                        var message = "File in transfer folder on server will be overwritten by newer file in results folder: " + sourceFile.Name +
+                                      "; new file date (UTC): " + sourceFile.LastWriteTimeUtc +
+                                      "; old file date (UTC): " + targetFile.LastWriteTimeUtc;
+
+                        // Log a warning, though not if the file is JobParameters_1394245.xml since we update that file after each job step
+                        if (sourceFile.Name != clsAnalysisJob.JobParametersFilename(Job))
                         {
-                            var objTargetFile = new FileInfo(Path.Combine(targetDirectoryPath, objSourceFile.Name));
-
-                            if (objSourceFile.Length != objTargetFile.Length || objSourceFile.LastWriteTimeUtc > objTargetFile.LastWriteTimeUtc)
-                            {
-                                var message = "File in transfer folder on server will be overwritten by newer file in results folder: " + objSourceFile.Name +
-                                    "; new file date (UTC): " + objSourceFile.LastWriteTimeUtc +
-                                    "; old file date (UTC): " + objTargetFile.LastWriteTimeUtc;
-
-                                // Log a warning, though not if the file is JobParameters_1394245.xml since we update that file after each job step
-                                if (objSourceFile.Name != clsAnalysisJob.JobParametersFilename(Job))
-                                {
-                                    LogWarning(message);
-                                }
-
-                                if (!filesToOverwrite.Contains(objSourceFile.Name))
-                                    filesToOverwrite.Add(objSourceFile.Name);
-                            }
+                            LogWarning(message);
                         }
+
+                        if (!filesToOverwrite.Contains(sourceFile.Name))
+                            filesToOverwrite.Add(sourceFile.Name);
                     }
                 }
                 else
@@ -960,12 +961,12 @@ namespace AnalysisManagerBase
                     // Need to create the target folder
                     try
                     {
-                        objAnalysisResults.CreateFolderWithRetry(targetDirectoryPath);
+                        analysisResults.CreateFolderWithRetry(targetDirectoryPath);
                     }
                     catch (Exception ex)
                     {
                         LogError("Error creating results folder in transfer directory, " + Path.GetPathRoot(targetDirectoryPath), ex);
-                        objAnalysisResults.CopyFailedResultsToArchiveFolder(rootSourceFolderPath);
+                        analysisResults.CopyFailedResultsToArchiveFolder(rootSourceFolderPath);
                         return false;
                     }
                 }
@@ -974,19 +975,18 @@ namespace AnalysisManagerBase
             catch (Exception ex)
             {
                 LogError("Error comparing files in source folder to " + targetDirectoryPath, ex);
-                objAnalysisResults.CopyFailedResultsToArchiveFolder(rootSourceFolderPath);
+                analysisResults.CopyFailedResultsToArchiveFolder(rootSourceFolderPath);
                 return false;
             }
 
+            var sourceFolder = new DirectoryInfo(sourceFolderPath);
+
             // Note: Entries in ResultFiles will have full file paths, not just file names
-            var resultFiles = Directory.GetFiles(sourceFolderPath, "*");
+            var resultFiles = sourceFolder.GetFiles("*");
 
             foreach (var fileToCopy in resultFiles)
             {
-                if (string.IsNullOrWhiteSpace(fileToCopy))
-                    continue;
-
-                var sourceFileName = Path.GetFileName(fileToCopy);
+                var sourceFileName = fileToCopy.Name;
 
                 var targetPath = Path.Combine(targetDirectoryPath, sourceFileName);
 
@@ -995,21 +995,21 @@ namespace AnalysisManagerBase
                     if (filesToOverwrite.Contains(sourceFileName))
                     {
                         // Copy file and overwrite existing
-                        objAnalysisResults.CopyFileWithRetry(fileToCopy, targetPath, true, retryCount, retryHoldoffSeconds, increaseHoldoffOnEachRetry);
+                        analysisResults.CopyFileWithRetry(fileToCopy.FullName, targetPath, true, retryCount, retryHoldoffSeconds, increaseHoldoffOnEachRetry);
                     }
                     else
                     {
                         // Copy file only if it doesn't currently exist
                         if (!File.Exists(targetPath))
                         {
-                            objAnalysisResults.CopyFileWithRetry(fileToCopy, targetPath, true, retryCount, retryHoldoffSeconds, increaseHoldoffOnEachRetry);
+                            analysisResults.CopyFileWithRetry(fileToCopy.FullName, targetPath, true, retryCount, retryHoldoffSeconds, increaseHoldoffOnEachRetry);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
                     // Continue copying files; we'll fail the results at the end of this function
-                    LogError(" CopyResultsFolderToServer: error copying " + Path.GetFileName(fileToCopy) + " to " + targetPath, ex);
+                    LogError(" CopyResultsFolderToServer: error copying " + fileToCopy.Name + " to " + targetPath, ex);
                     errorEncountered = true;
                     failedFileCount += 1;
                 }
@@ -1019,13 +1019,11 @@ namespace AnalysisManagerBase
             // If any of the subfolders have an error, we'll continue copying, but will set errorEncountered to True
             var success = true;
 
-            var diSourceFolder = new DirectoryInfo(sourceFolderPath);
-
-            foreach (var objSubFolder in diSourceFolder.GetDirectories())
+            foreach (var subFolder in sourceFolder.GetDirectories())
             {
-                var targetDirectoryPathCurrent = Path.Combine(targetDirectoryPath, objSubFolder.Name);
+                var targetDirectoryPathCurrent = Path.Combine(targetDirectoryPath, subFolder.Name);
 
-                success = CopyResultsFolderRecursive(rootSourceFolderPath, objSubFolder.FullName, targetDirectoryPathCurrent, objAnalysisResults,
+                success = CopyResultsFolderRecursive(rootSourceFolderPath, subFolder.FullName, targetDirectoryPathCurrent, analysisResults,
                     ref errorEncountered, ref failedFileCount, retryCount, retryHoldoffSeconds, increaseHoldoffOnEachRetry);
 
                 if (!success)
@@ -1089,7 +1087,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <returns>The full path to the remote transfer folder; an empty string if an error</returns>
         /// <remarks></remarks>
-        protected string CreateRemoteTransferFolder(clsAnalysisResults objAnalysisResults)
+        protected string CreateRemoteTransferFolder(clsAnalysisResults analysisResults)
         {
 
             var transferFolderPath = m_jobParams.GetParam("transferFolderPath");
@@ -1103,7 +1101,7 @@ namespace AnalysisManagerBase
                 return string.Empty;
             }
 
-            return CreateRemoteTransferFolder(objAnalysisResults, transferFolderPath);
+            return CreateRemoteTransferFolder(analysisResults, transferFolderPath);
 
         }
 
@@ -1111,10 +1109,10 @@ namespace AnalysisManagerBase
         /// Determines the path to the remote transfer folder
         /// Creates the folder if it does not exist
         /// </summary>
-        /// <param name="objAnalysisResults">Analysis results object</param>
+        /// <param name="analysisResults">Analysis results object</param>
         /// <param name="transferFolderPath">Base transfer folder path, e.g. \\proto-11\DMS3_Xfer\</param>
         /// <returns>The full path to the remote transfer folder; an empty string if an error</returns>
-        protected string CreateRemoteTransferFolder(clsAnalysisResults objAnalysisResults, string transferFolderPath)
+        protected string CreateRemoteTransferFolder(clsAnalysisResults analysisResults, string transferFolderPath)
         {
 
             if (string.IsNullOrEmpty(m_ResFolderName))
@@ -1128,7 +1126,7 @@ namespace AnalysisManagerBase
             // If this is an Aggregation job, we create missing folders later in this method
             try
             {
-                var folderExists = objAnalysisResults.FolderExistsWithRetry(transferFolderPath);
+                var folderExists = analysisResults.FolderExistsWithRetry(transferFolderPath);
 
                 if (!folderExists && !clsGlobal.IsMatch(Dataset, "Aggregation"))
                 {
@@ -1171,7 +1169,7 @@ namespace AnalysisManagerBase
             // Create the target folder if it doesn't exist
             try
             {
-                objAnalysisResults.CreateFolderWithRetry(remoteTransferFolderPath, maxRetryCount: 5, retryHoldoffSeconds: 20, increaseHoldoffOnEachRetry: true);
+                analysisResults.CreateFolderWithRetry(remoteTransferFolderPath, maxRetryCount: 5, retryHoldoffSeconds: 20, increaseHoldoffOnEachRetry: true);
             }
             catch (Exception ex)
             {
@@ -2669,8 +2667,8 @@ namespace AnalysisManagerBase
             if (errorEncountered)
             {
                 // Try to save whatever files were moved into the results folder
-                var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
-                objAnalysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(m_WorkDir, m_ResFolderName));
+                var analysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
+                analysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(m_WorkDir, m_ResFolderName));
 
                 return false;
             }
@@ -2708,9 +2706,9 @@ namespace AnalysisManagerBase
             }
 
             // Saves the summary file in the results folder
-            var objAssemblyTools = new clsAssemblyTools();
+            var assemblyTools = new clsAssemblyTools();
 
-            objAssemblyTools.GetComponentFileVersionInfo(m_SummaryFile);
+            assemblyTools.GetComponentFileVersionInfo(m_SummaryFile);
 
             var summaryFileName = m_jobParams.GetParam("StepTool") + "_AnalysisSummary.txt";
 
@@ -3628,10 +3626,10 @@ namespace AnalysisManagerBase
             cmd.Parameters.Add(new SqlParameter("@step", SqlDbType.Int)).Value = m_jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step", 0);
             cmd.Parameters.Add(new SqlParameter("@ToolVersionInfo", SqlDbType.VarChar, 900)).Value = toolVersionInfo;
 
-            var objAnalysisTask = new clsAnalysisJob(m_mgrParams, m_DebugLevel);
+            var analysisTask = new clsAnalysisJob(m_mgrParams, m_DebugLevel);
 
             // Execute the stored procedure (retry the call up to 4 times)
-            var resCode = objAnalysisTask.PipelineDBProcedureExecutor.ExecuteSP(cmd, 4);
+            var resCode = analysisTask.PipelineDBProcedureExecutor.ExecuteSP(cmd, 4);
 
             if (resCode == 0)
             {

@@ -722,26 +722,26 @@ namespace AnalysisManagerMSGFDBPlugIn
 
         private bool CreateScanTypeFile(out string scanTypeFilePath)
         {
-            var objScanTypeFileCreator = new clsScanTypeFileCreator(m_WorkDir, Dataset);
+            var scanTypeFileCreator = new clsScanTypeFileCreator(m_WorkDir, Dataset);
 
             scanTypeFilePath = string.Empty;
 
-            if (objScanTypeFileCreator.CreateScanTypeFile())
+            if (scanTypeFileCreator.CreateScanTypeFile())
             {
                 if (m_DebugLevel >= 1)
                 {
-                    LogMessage("Created ScanType file: " + Path.GetFileName(objScanTypeFileCreator.ScanTypeFilePath));
+                    LogMessage("Created ScanType file: " + Path.GetFileName(scanTypeFileCreator.ScanTypeFilePath));
                 }
-                scanTypeFilePath = objScanTypeFileCreator.ScanTypeFilePath;
+                scanTypeFilePath = scanTypeFileCreator.ScanTypeFilePath;
                 return true;
             }
 
-            var errorMessage = "Error creating scan type file: " + objScanTypeFileCreator.ErrorMessage;
+            var errorMessage = "Error creating scan type file: " + scanTypeFileCreator.ErrorMessage;
             var detailedMessage = string.Empty;
 
-            if (!string.IsNullOrEmpty(objScanTypeFileCreator.ExceptionDetails))
+            if (!string.IsNullOrEmpty(scanTypeFileCreator.ExceptionDetails))
             {
-                detailedMessage += "; " + objScanTypeFileCreator.ExceptionDetails;
+                detailedMessage += "; " + scanTypeFileCreator.ExceptionDetails;
             }
 
             LogError(errorMessage, detailedMessage);

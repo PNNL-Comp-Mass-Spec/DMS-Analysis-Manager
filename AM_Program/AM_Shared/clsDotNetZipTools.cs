@@ -150,55 +150,55 @@ namespace AnalysisManagerBase
 
             try
             {
-                var fiFile = new FileInfo(gzipFilePath);
+                var fileToGUnzip = new FileInfo(gzipFilePath);
 
-                if (!fiFile.Exists)
+                if (!fileToGUnzip.Exists)
                 {
-                    LogError("GZip file not found: " + fiFile.FullName);
+                    LogError("GZip file not found: " + fileToGUnzip.FullName);
                     return false;
                 }
 
-                if (fiFile.Extension.ToLower() != ".gz")
+                if (fileToGUnzip.Extension.ToLower() != ".gz")
                 {
-                    LogError("Not a GZipped file; must have extension .gz: " + fiFile.FullName);
+                    LogError("Not a GZipped file; must have extension .gz: " + fileToGUnzip.FullName);
                     return false;
                 }
 
                 if (DebugLevel >= 3)
                 {
-                    OnStatusEvent("Unzipping file: " + fiFile.FullName);
+                    OnStatusEvent("Unzipping file: " + fileToGUnzip.FullName);
                 }
 
                 var dtStartTime = DateTime.UtcNow;
 
                 // Get original file extension, for example "doc" from report.doc.gz
-                var curFile = fiFile.Name;
-                var decompressedFilePath = Path.Combine(targetDirectory, curFile.Remove(curFile.Length - fiFile.Extension.Length));
+                var curFile = fileToGUnzip.Name;
+                var decompressedFilePath = Path.Combine(targetDirectory, curFile.Remove(curFile.Length - fileToGUnzip.Extension.Length));
 
-                var fiDecompressedFile = new FileInfo(decompressedFilePath);
+                var decompressedFile = new FileInfo(decompressedFilePath);
 
-                if (fiDecompressedFile.Exists)
+                if (decompressedFile.Exists)
                 {
-                    if (overwriteBehavior == Ionic.Zip.ExtractExistingFileAction.DoNotOverwrite)
+                    if (overwriteBehavior == ExtractExistingFileAction.DoNotOverwrite)
                     {
-                        Message = "Decompressed file already exists; will not overwrite: " + fiDecompressedFile.FullName;
+                        Message = "Decompressed file already exists; will not overwrite: " + decompressedFile.FullName;
                         OnStatusEvent(Message);
                         return true;
                     }
 
-                    if (overwriteBehavior == Ionic.Zip.ExtractExistingFileAction.Throw)
+                    if (overwriteBehavior == ExtractExistingFileAction.Throw)
                     {
-                        throw new Exception("Decompressed file already exists: " + fiDecompressedFile.FullName);
+                        throw new Exception("Decompressed file already exists: " + decompressedFile.FullName);
                     }
                 }
                 else
                 {
                     // Make sure the target directory exists
-                    if (!fiDecompressedFile.Directory.Exists)
-                        fiDecompressedFile.Directory.Create();
+                    if (decompressedFile.Directory != null && !decompressedFile.Directory.Exists)
+                        decompressedFile.Directory.Create();
                 }
 
-                using (var inFile = fiFile.OpenRead())
+                using (var inFile = fileToGUnzip.OpenRead())
                 {
 
                     // Create the decompressed file.
@@ -209,7 +209,7 @@ namespace AnalysisManagerBase
 
                             // Copy the decompression stream into the output file.
                             decompress.CopyTo(outFile);
-                            MostRecentUnzippedFiles.Add(new KeyValuePair<string, string>(fiDecompressedFile.Name, fiDecompressedFile.FullName));
+                            MostRecentUnzippedFiles.Add(new KeyValuePair<string, string>(decompressedFile.Name, decompressedFile.FullName));
                         }
                     }
                 }
@@ -218,14 +218,14 @@ namespace AnalysisManagerBase
 
                 if (DebugLevel >= 2)
                 {
-                    ReportZipStats(fiFile, dtStartTime, dtEndTime, false);
+                    ReportZipStats(fileToGUnzip, dtStartTime, dtEndTime, false);
                 }
 
                 // Update the file modification time of the decompressed file
-                fiDecompressedFile.Refresh();
-                if (fiDecompressedFile.LastWriteTimeUtc > fiFile.LastWriteTimeUtc)
+                decompressedFile.Refresh();
+                if (decompressedFile.LastWriteTimeUtc > fileToGUnzip.LastWriteTimeUtc)
                 {
-                    fiDecompressedFile.LastWriteTimeUtc = fiFile.LastWriteTimeUtc;
+                    decompressedFile.LastWriteTimeUtc = fileToGUnzip.LastWriteTimeUtc;
                 }
 
                 // Call the garbage collector to assure the handle to the .gz file is released
@@ -326,7 +326,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Compress a file using the external GZip.exe software
         /// </summary>
-        /// <param name="fiFile">File to compress</param>
+        /// <param name="fileToGZip">File to compress</param>
         /// <param name="gzipFilePath">Full path to the .gz file to be created</param>
         /// <param name="fiGZip">GZip.exe fileinfo object</param>
         /// <returns></returns>
@@ -334,7 +334,7 @@ namespace AnalysisManagerBase
         /// The .gz file will initially be created in the same folder as the original file.
         /// If gzipFilePath points to a different folder, the file will be moved to that new location.
         /// </remarks>
-        private bool GZipUsingExe(FileSystemInfo fiFile, string gzipFilePath, FileSystemInfo fiGZip)
+        private bool GZipUsingExe(FileSystemInfo fileToGZip, string gzipFilePath, FileSystemInfo fiGZip)
         {
 
             try
@@ -346,7 +346,7 @@ namespace AnalysisManagerBase
 
                 var dtStartTime = DateTime.UtcNow;
 
-                var args = "-f -k " + clsGlobal.PossiblyQuotePath(fiFile.FullName);
+                var args = "-f -k " + clsGlobal.PossiblyQuotePath(fileToGZip.FullName);
 
                 if (DebugLevel >= 3)
                 {
@@ -378,40 +378,39 @@ namespace AnalysisManagerBase
 
                 // Confirm that the .gz file was created
 
-                var fiCompressedFile = new FileInfo(fiFile.FullName + ".gz");
-                if (!fiCompressedFile.Exists)
+                var compressedFile = new FileInfo(fileToGZip.FullName + ".gz");
+                if (!compressedFile.Exists)
                 {
-                    LogError("GZip.exe did not create a .gz file: " + fiCompressedFile.FullName);
+                    LogError("GZip.exe did not create a .gz file: " + compressedFile.FullName);
                     return false;
                 }
 
                 if (DebugLevel >= 2)
                 {
-                    ReportZipStats(fiFile, dtStartTime, dtEndTime, true);
+                    ReportZipStats(fileToGZip, dtStartTime, dtEndTime, true);
                 }
 
-                var fiCompressedFileFinal = new FileInfo(gzipFilePath);
+                var finalCompressedFile = new FileInfo(gzipFilePath);
 
-
-                if (!clsGlobal.IsMatch(fiCompressedFile.FullName, fiCompressedFileFinal.FullName))
+                if (!clsGlobal.IsMatch(compressedFile.FullName, finalCompressedFile.FullName))
                 {
-                    if (fiCompressedFileFinal.Exists)
+                    if (finalCompressedFile.Exists)
                     {
-                        fiCompressedFileFinal.Delete();
+                        finalCompressedFile.Delete();
                     }
                     else
                     {
-                        if (!fiCompressedFileFinal.Directory.Exists)
-                            fiCompressedFileFinal.Directory.Create();
+                        if (finalCompressedFile.Directory != null && !finalCompressedFile.Directory.Exists)
+                            finalCompressedFile.Directory.Create();
                     }
 
-                    fiCompressedFile.MoveTo(fiCompressedFileFinal.FullName);
+                    compressedFile.MoveTo(finalCompressedFile.FullName);
                 }
 
             }
             catch (Exception ex)
             {
-                LogError("Error gzipping file " + fiFile.FullName + " using gzip.exe", ex);
+                LogError("Error gzipping file " + fileToGZip.FullName + " using gzip.exe", ex);
                 return false;
             }
 
@@ -422,11 +421,11 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Compress the file using DotNetZip
         /// </summary>
-        /// <param name="fiFile"></param>
+        /// <param name="fileToGZip">File to compress</param>
         /// <param name="gzipFilePath"></param>
         /// <returns></returns>
         /// <remarks>DotNetZip creates a valid .gz file, but it does not include the header information (filename and timestamp of the original file)</remarks>
-        private bool GZipUsingDotNetZip(FileInfo fiFile, string gzipFilePath)
+        private bool GZipUsingDotNetZip(FileInfo fileToGZip, string gzipFilePath)
         {
             try
             {
@@ -437,7 +436,7 @@ namespace AnalysisManagerBase
 
                 var dtStartTime = DateTime.UtcNow;
 
-                using (Stream inFile = fiFile.OpenRead())
+                using (Stream inFile = fileToGZip.OpenRead())
                 {
                     using (var outFile = File.Create(gzipFilePath))
                     {
@@ -454,7 +453,7 @@ namespace AnalysisManagerBase
 
                 if (DebugLevel >= 2)
                 {
-                    ReportZipStats(fiFile, dtStartTime, dtEndTime, true);
+                    ReportZipStats(fileToGZip, dtStartTime, dtEndTime, true);
                 }
 
                 // Update the file modification time of the .gz file to use the modification time of the original file
@@ -466,12 +465,12 @@ namespace AnalysisManagerBase
                     return false;
                 }
 
-                fiGZippedFile.LastWriteTimeUtc = fiFile.LastWriteTimeUtc;
+                fiGZippedFile.LastWriteTimeUtc = fileToGZip.LastWriteTimeUtc;
 
             }
             catch (Exception ex)
             {
-                LogError("Error gzipping file " + fiFile.FullName, ex);
+                LogError("Error gzipping file " + fileToGZip.FullName, ex);
                 return false;
             }
 
@@ -494,14 +493,14 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Update Message with stats on the most recent zip file created
         /// </summary>
-        /// <param name="fiFileSystemInfo"></param>
+        /// <param name="fileOrFolderZippedOrUnzipped"></param>
         /// <param name="dtStartTime"></param>
         /// <param name="dtEndTime"></param>
         /// <param name="fileWasZipped"></param>
         /// <param name="zipProgramName"></param>
         /// <remarks>If DebugLevel is 2 or larger, also raises event StatusEvent</remarks>
         public void ReportZipStats(
-            FileSystemInfo fiFileSystemInfo,
+            FileSystemInfo fileOrFolderZippedOrUnzipped,
             DateTime dtStartTime,
             DateTime dtEndTime,
             bool fileWasZipped,
@@ -509,21 +508,21 @@ namespace AnalysisManagerBase
         {
 
             long totalSizeBytes = 0;
-            double dblUnzipSpeedMBPerSec;
+            double unzipSpeedMBPerSec;
 
             if (zipProgramName == null)
                 zipProgramName = "??";
 
-            var dblUnzipTimeSeconds = dtEndTime.Subtract(dtStartTime).TotalSeconds;
+            var unzipTimeSeconds = dtEndTime.Subtract(dtStartTime).TotalSeconds;
 
-            if (fiFileSystemInfo is FileInfo)
+            if (fileOrFolderZippedOrUnzipped is FileInfo)
             {
-                totalSizeBytes = ((FileInfo)fiFileSystemInfo).Length;
+                totalSizeBytes = ((FileInfo)fileOrFolderZippedOrUnzipped).Length;
 
             }
-            else if (fiFileSystemInfo is DirectoryInfo)
+            else if (fileOrFolderZippedOrUnzipped is DirectoryInfo)
             {
-                var diFolderInfo = (DirectoryInfo)fiFileSystemInfo;
+                var diFolderInfo = (DirectoryInfo)fileOrFolderZippedOrUnzipped;
 
                 totalSizeBytes = 0;
                 foreach (var fiEntry in diFolderInfo.GetFiles("*", SearchOption.AllDirectories))
@@ -532,13 +531,13 @@ namespace AnalysisManagerBase
                 }
             }
 
-            if (dblUnzipTimeSeconds > 0)
+            if (unzipTimeSeconds > 0)
             {
-                dblUnzipSpeedMBPerSec = clsGlobal.BytesToMB(totalSizeBytes) / dblUnzipTimeSeconds;
+                unzipSpeedMBPerSec = clsGlobal.BytesToMB(totalSizeBytes) / unzipTimeSeconds;
             }
             else
             {
-                dblUnzipSpeedMBPerSec = 0;
+                unzipSpeedMBPerSec = 0;
             }
 
             string zipAction;
@@ -551,9 +550,9 @@ namespace AnalysisManagerBase
                 zipAction = "Unzipped ";
             }
 
-            Message = zipAction + fiFileSystemInfo.Name + " using " + zipProgramName + "; " +
-                "elapsed time = " + dblUnzipTimeSeconds.ToString("0.0") + " seconds; " +
-                "rate = " + dblUnzipSpeedMBPerSec.ToString("0.0") + " MB/sec";
+            Message = zipAction + fileOrFolderZippedOrUnzipped.Name + " using " + zipProgramName + "; " +
+                "elapsed time = " + unzipTimeSeconds.ToString("0.0") + " seconds; " +
+                "rate = " + unzipSpeedMBPerSec.ToString("0.0") + " MB/sec";
 
             if (DebugLevel >= 2)
             {
@@ -617,20 +616,21 @@ namespace AnalysisManagerBase
 
             try
             {
-                var fiFile = new FileInfo(zipFilePath);
+                var fileToUnzip = new FileInfo(zipFilePath);
 
                 if (!File.Exists(zipFilePath))
                 {
-                    LogError("Zip file not found: " + fiFile.FullName);
+                    LogError("Zip file not found: " + fileToUnzip.FullName);
                     return false;
                 }
 
                 if (DebugLevel >= 3)
                 {
-                    OnStatusEvent("Unzipping file: " + fiFile.FullName);
+                    OnStatusEvent("Unzipping file: " + fileToUnzip.FullName);
                 }
 
-                using (var zipper = new Ionic.Zip.ZipFile(zipFilePath))
+                // Ionic.Zip.ZipFile
+                using (var zipper = new ZipFile(zipFilePath))
                 {
 
                     var dtStartTime = DateTime.UtcNow;
@@ -639,27 +639,27 @@ namespace AnalysisManagerBase
                     {
                         zipper.ExtractAll(targetDirectory, overwriteBehavior);
 
-                        foreach (var objItem in zipper.Entries)
+                        foreach (var item in zipper.Entries)
                         {
-                            if (!objItem.IsDirectory)
+                            if (!item.IsDirectory)
                             {
                                 // Note that objItem.FileName contains the relative path of the file, for example "Filename.txt" or "Subfolder/Filename.txt"
-                                var fiUnzippedItem = new FileInfo(Path.Combine(targetDirectory, objItem.FileName.Replace('/', Path.DirectorySeparatorChar)));
+                                var fiUnzippedItem = new FileInfo(Path.Combine(targetDirectory, item.FileName.Replace('/', Path.DirectorySeparatorChar)));
                                 MostRecentUnzippedFiles.Add(new KeyValuePair<string, string>(fiUnzippedItem.Name, fiUnzippedItem.FullName));
                             }
                         }
                     }
                     else
                     {
-                        var objEntries = zipper.SelectEntries(fileFilter);
+                        var zipEntries = zipper.SelectEntries(fileFilter);
 
-                        foreach (var objItem in objEntries)
+                        foreach (var item in zipEntries)
                         {
-                            objItem.Extract(targetDirectory, overwriteBehavior);
-                            if (!objItem.IsDirectory)
+                            item.Extract(targetDirectory, overwriteBehavior);
+                            if (!item.IsDirectory)
                             {
                                 // Note that objItem.FileName contains the relative path of the file, for example "Filename.txt" or "Subfolder/Filename.txt"
-                                var fiUnzippedItem = new FileInfo(Path.Combine(targetDirectory, objItem.FileName.Replace('/', Path.DirectorySeparatorChar)));
+                                var fiUnzippedItem = new FileInfo(Path.Combine(targetDirectory, item.FileName.Replace('/', Path.DirectorySeparatorChar)));
                                 MostRecentUnzippedFiles.Add(new KeyValuePair<string, string>(fiUnzippedItem.Name, fiUnzippedItem.FullName));
                             }
                         }
@@ -669,7 +669,7 @@ namespace AnalysisManagerBase
 
                     if (DebugLevel >= 2)
                     {
-                        ReportZipStats(fiFile, dtStartTime, dtEndTime, false);
+                        ReportZipStats(fileToUnzip, dtStartTime, dtEndTime, false);
                     }
 
                 }
@@ -742,13 +742,13 @@ namespace AnalysisManagerBase
 
 
                 // Unzip each zipped file to a byte buffer (no need to actually write to disk)
-
-                using (var zipper = new Ionic.Zip.ZipFile(zipFilePath))
+                // Ionic.Zip.ZipFile
+                using (var zipper = new ZipFile(zipFilePath))
                 {
 
-                    var objEntries = zipper.SelectEntries("*");
+                    var entries = zipper.SelectEntries("*");
 
-                    foreach (var entry in objEntries)
+                    foreach (var entry in entries)
                     {
                         if (entry.IsDirectory)
                             continue;
@@ -832,7 +832,7 @@ namespace AnalysisManagerBase
         public bool ZipFile(string sourceFilePath, bool deleteSourceAfterZip, string zipFilePath)
         {
 
-            var fiFile = new FileInfo(sourceFilePath);
+            var fileToZip = new FileInfo(sourceFilePath);
 
             Message = string.Empty;
             MostRecentZipFilePath = string.Copy(zipFilePath);
@@ -865,18 +865,19 @@ namespace AnalysisManagerBase
                     OnStatusEvent("Creating .zip file: " + zipFilePath);
                 }
 
-                using (var zipper = new Ionic.Zip.ZipFile(zipFilePath))
+                // Ionic.Zip.ZipFile
+                using (var zipper = new ZipFile(zipFilePath))
                 {
-                    zipper.UseZip64WhenSaving = Ionic.Zip.Zip64Option.AsNecessary;
+                    zipper.UseZip64WhenSaving = Zip64Option.AsNecessary;
 
                     var dtStartTime = DateTime.UtcNow;
-                    zipper.AddItem(fiFile.FullName, string.Empty);
+                    zipper.AddItem(fileToZip.FullName, string.Empty);
                     zipper.Save();
                     var dtEndTime = DateTime.UtcNow;
 
                     if (DebugLevel >= 2)
                     {
-                        ReportZipStats(fiFile, dtStartTime, dtEndTime, true);
+                        ReportZipStats(fileToZip, dtStartTime, dtEndTime, true);
                     }
 
                 }
@@ -884,7 +885,7 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                LogError("Error zipping file " + fiFile.FullName, ex);
+                LogError("Error zipping file " + fileToZip.FullName, ex);
                 return false;
             }
 
@@ -898,7 +899,7 @@ namespace AnalysisManagerBase
 
             if (deleteSourceAfterZip)
             {
-                DeleteFile(fiFile);
+                DeleteFile(fileToZip);
             }
 
             return true;
@@ -943,7 +944,7 @@ namespace AnalysisManagerBase
         public bool ZipDirectory(string sourceDirectoryPath, string zipFilePath, bool recurse, string fileFilter)
         {
 
-            var diDirectory = new DirectoryInfo(sourceDirectoryPath);
+            var directoryToZip = new DirectoryInfo(sourceDirectoryPath);
 
             Message = string.Empty;
             MostRecentZipFilePath = string.Copy(zipFilePath);
@@ -974,15 +975,16 @@ namespace AnalysisManagerBase
                     OnStatusEvent("Creating .zip file: " + zipFilePath);
                 }
 
-                using (var zipper = new Ionic.Zip.ZipFile(zipFilePath))
+                // Ionic.Zip.ZipFile
+                using (var zipper = new ZipFile(zipFilePath))
                 {
-                    zipper.UseZip64WhenSaving = Ionic.Zip.Zip64Option.AsNecessary;
+                    zipper.UseZip64WhenSaving = Zip64Option.AsNecessary;
 
                     var dtStartTime = DateTime.UtcNow;
 
                     if (string.IsNullOrEmpty(fileFilter) && recurse)
                     {
-                        zipper.AddDirectory(diDirectory.FullName);
+                        zipper.AddDirectory(directoryToZip.FullName);
                     }
                     else
                     {
@@ -991,7 +993,7 @@ namespace AnalysisManagerBase
                             fileFilter = "*";
                         }
 
-                        zipper.AddSelectedFiles(fileFilter, diDirectory.FullName, string.Empty, recurse);
+                        zipper.AddSelectedFiles(fileFilter, directoryToZip.FullName, string.Empty, recurse);
                     }
 
                     zipper.Save();
@@ -1000,7 +1002,7 @@ namespace AnalysisManagerBase
 
                     if (DebugLevel >= 2)
                     {
-                        ReportZipStats(diDirectory, dtStartTime, dtEndTime, true);
+                        ReportZipStats(directoryToZip, dtStartTime, dtEndTime, true);
                     }
 
                 }
@@ -1008,7 +1010,7 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                LogError("Error zipping directory " + diDirectory.FullName, ex);
+                LogError("Error zipping directory " + directoryToZip.FullName, ex);
                 return false;
             }
 

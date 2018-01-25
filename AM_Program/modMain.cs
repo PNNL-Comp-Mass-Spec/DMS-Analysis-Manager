@@ -33,7 +33,7 @@ namespace AnalysisManagerProg
 {
     static class modMain
     {
-        public const string PROGRAM_DATE = "January 22, 2018";
+        public const string PROGRAM_DATE = "January 25, 2018";
 
         private static bool mCodeTestMode;
         private static bool mCreateWindowsEventLog;
@@ -45,11 +45,14 @@ namespace AnalysisManagerProg
 
         private static string mDisplayDllPath;
 
+        /// <summary>
+        /// The main entry point for the application.
+        /// </summary>
+        /// <returns> Returns 0 if no error, error code if an error</returns>
         public static int Main()
         {
-            // Returns 0 if no error, error code if an error
 
-            var objParseCommandLine = new clsParseCommandLine();
+            var commandLineParser = new clsParseCommandLine();
 
             mCodeTestMode = false;
             mTraceMode = false;
@@ -78,19 +81,19 @@ namespace AnalysisManagerProg
                 //
                 // Other valid switches are /I, /NoStatus, /T, /Test, /Trace, /EL, /Offline, /Version, /Q, and /?
                 //
-                if (objParseCommandLine.ParseCommandLine())
+                if (commandLineParser.ParseCommandLine())
                 {
-                    validArgs = SetOptionsUsingCommandLineParameters(objParseCommandLine);
+                    validArgs = SetOptionsUsingCommandLineParameters(commandLineParser);
                 }
                 else
                 {
-                    if (objParseCommandLine.NoParameters)
+                    if (commandLineParser.NoParameters)
                     {
                         validArgs = true;
                     }
                     else
                     {
-                        if (objParseCommandLine.NeedToShowHelp)
+                        if (commandLineParser.NeedToShowHelp)
                         {
                             ShowProgramHelp();
                         }
@@ -102,7 +105,7 @@ namespace AnalysisManagerProg
                     }
                 }
 
-                if (objParseCommandLine.NeedToShowHelp || !validArgs)
+                if (commandLineParser.NeedToShowHelp || !validArgs)
                 {
                     ShowProgramHelp();
                     return -1;
@@ -123,26 +126,26 @@ namespace AnalysisManagerProg
                 {
                     ShowTraceMessage("Code test mode enabled");
 
-                    var objTest = new clsCodeTest { TraceMode = mTraceMode };
+                    var testHarness = new clsCodeTest { TraceMode = mTraceMode };
 
                     try
                     {
-                        // objTest.SystemMemoryUsage();
-                        // objTest.TestDTASplit();
-                        // objTest.TestProteinDBExport(@"C:\DMS_Temp_Org");
-                        // objTest.TestDeleteFiles();
-                        // objTest.GenerateScanStatsFile();
-                        // objTest.TestArchiveFailedResults();
-                        // objTest.TestGetToolVersionInfo();
-                        // objTest.TestConnectRSA();
-                        // objTest.TestZipAndUnzip();
-                        // objTest.TestCopyToRemote();
+                        // testHarness.SystemMemoryUsage();
+                        // testHarness.TestDTASplit();
+                        // testHarness.TestProteinDBExport(@"C:\DMS_Temp_Org");
+                        // testHarness.TestDeleteFiles();
+                        // testHarness.GenerateScanStatsFile();
+                        // testHarness.TestArchiveFailedResults();
+                        // testHarness.TestGetToolVersionInfo();
+                        // testHarness.TestConnectRSA();
+                        // testHarness.TestZipAndUnzip();
+                        // testHarness.TestCopyToRemote();
 
-                        objTest.TestLogging();
-                        //objTest.TestStatusLogging();
+                        testHarness.TestLogging();
+                        //testHarness.TestStatusLogging();
 
                         //var connString = "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI";
-                        //objTest.TestDatabaseLogging(connString);
+                        //testHarness.TestDatabaseLogging(connString);
 
 
                     }
@@ -165,10 +168,10 @@ namespace AnalysisManagerProg
 
                 if (mDisplayDllVersions)
                 {
-                    var objTest = new clsCodeTest {
+                    var testHarness = new clsCodeTest {
                         TraceMode = mTraceMode
                     };
-                    objTest.DisplayDllVersions(mDisplayDllPath);
+                    testHarness.DisplayDllVersions(mDisplayDllPath);
                     clsParseCommandLine.PauseAtConsole();
                     return 0;
                 }
@@ -176,13 +179,13 @@ namespace AnalysisManagerProg
                 // Initiate automated analysis
                 ShowTraceMessage("Instantiating clsMainProcess");
 
-                var objDMSMain = new clsMainProcess(mTraceMode)
+                var mainProcess = new clsMainProcess(mTraceMode)
                 {
                     DisableMessageQueue = mDisableMessageQueue,
                     DisableMyEMSL = mDisableMyEMSL
                 };
 
-                var returnCode = objDMSMain.Main();
+                var returnCode = mainProcess.Main();
 
                 return returnCode;
             }
@@ -259,7 +262,7 @@ namespace AnalysisManagerProg
             return Assembly.GetExecutingAssembly().GetName().Version + " (" + programDate + ")";
         }
 
-        private static bool SetOptionsUsingCommandLineParameters(clsParseCommandLine objParseCommandLine)
+        private static bool SetOptionsUsingCommandLineParameters(clsParseCommandLine commandLineParser)
         {
             // Returns True if no problems; otherwise, returns false
 
@@ -279,37 +282,37 @@ namespace AnalysisManagerProg
             try
             {
                 // Make sure no invalid parameters are present
-                if (objParseCommandLine.InvalidParametersPresent(lstValidParameters))
+                if (commandLineParser.InvalidParametersPresent(lstValidParameters))
                 {
                     ShowErrorMessage("Invalid commmand line parameters",
-                        (from item in objParseCommandLine.InvalidParameters(lstValidParameters) select "/" + item).ToList());
+                        (from item in commandLineParser.InvalidParameters(lstValidParameters) select "/" + item).ToList());
 
                     return false;
                 }
 
                 // Query objParseCommandLine to see if various parameters are present
 
-                if (objParseCommandLine.IsParameterPresent("T"))
+                if (commandLineParser.IsParameterPresent("T"))
                     mCodeTestMode = true;
-                if (objParseCommandLine.IsParameterPresent("Test"))
+                if (commandLineParser.IsParameterPresent("Test"))
                     mCodeTestMode = true;
 
-                if (objParseCommandLine.IsParameterPresent("Trace"))
+                if (commandLineParser.IsParameterPresent("Trace"))
                     mTraceMode = true;
 
                 if (objParseCommandLine.IsParameterPresent("EL"))
                     mCreateWindowsEventLog = true;
 
-                if (objParseCommandLine.IsParameterPresent("NQ"))
+                if (commandLineParser.IsParameterPresent("NQ"))
                     mDisableMessageQueue = true;
 
-                if (objParseCommandLine.IsParameterPresent("NoMyEMSL"))
+                if (commandLineParser.IsParameterPresent("NoMyEMSL"))
                     mDisableMyEMSL = true;
 
-                if (objParseCommandLine.IsParameterPresent("DLL"))
+                if (commandLineParser.IsParameterPresent("DLL"))
                 {
                     mDisplayDllVersions = true;
-                    if (objParseCommandLine.RetrieveValueForParameter("DLL", out var value))
+                    if (commandLineParser.RetrieveValueForParameter("DLL", out var value))
                     {
                         if (!string.IsNullOrWhiteSpace(value))
                         {
@@ -320,14 +323,14 @@ namespace AnalysisManagerProg
 
                 if (!clsGlobal.OfflineMode)
                 {
-                    if (!clsGlobal.LinuxOS && objParseCommandLine.IsParameterPresent("Linux"))
+                    if (!clsGlobal.LinuxOS && commandLineParser.IsParameterPresent("Linux"))
                         EnableOfflineMode(true);
 
-                    if (!clsGlobal.OfflineMode && objParseCommandLine.IsParameterPresent("Offline"))
+                    if (!clsGlobal.OfflineMode && commandLineParser.IsParameterPresent("Offline"))
                         EnableOfflineMode();
                 }
 
-                if (objParseCommandLine.IsParameterPresent("Version"))
+                if (commandLineParser.IsParameterPresent("Version"))
                     mShowVersionOnly = true;
 
                 return true;

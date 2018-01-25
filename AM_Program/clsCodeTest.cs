@@ -289,15 +289,15 @@ namespace AnalysisManagerProg
             var statusTools = new clsStatusFile("Status.xml", DEBUG_LEVEL);
             RegisterEvents(statusTools);
 
-            var objSummaryFile = new clsSummaryFile();
+            var summaryFile = new clsSummaryFile();
 
             myEMSLUtilities = new clsMyEMSLUtilities(DEBUG_LEVEL, GetWorkDirPath(), true);
             RegisterEvents(myEMSLUtilities);
 
-            var objToolRunner = new clsCodeTestAM();
-            objToolRunner.Setup("CodeTest", m_mgrParams, jobParams, statusTools, objSummaryFile, myEMSLUtilities);
+            var toolRunner = new clsCodeTestAM();
+            toolRunner.Setup("CodeTest", m_mgrParams, jobParams, statusTools, summaryFile, myEMSLUtilities);
 
-            return objToolRunner;
+            return toolRunner;
         }
 
         private clsResourceTestClass GetResourcesObject(int debugLevel)
@@ -309,7 +309,7 @@ namespace AnalysisManagerProg
 
         private clsResourceTestClass GetResourcesObject(int debugLevel, IJobParams jobParams)
         {
-            var objResources = new clsResourceTestClass();
+            var resourceTester = new clsResourceTestClass();
 
             var statusTools = new clsStatusFile("Status.xml", debugLevel);
             RegisterEvents(statusTools);
@@ -328,9 +328,9 @@ namespace AnalysisManagerProg
             jobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job", "12345");
             jobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "OutputFolderName", "Test_Results");
 
-            objResources.Setup("CodeTest", m_mgrParams, jobParams, statusTools, myEMSLUtilities);
+            resourceTester.Setup("CodeTest", m_mgrParams, jobParams, statusTools, myEMSLUtilities);
 
-            return objResources;
+            return resourceTester;
         }
 
         private string GetWorkDirPath()
@@ -518,7 +518,7 @@ namespace AnalysisManagerProg
         public void TestArchiveFailedResults()
         {
 
-            var objToolRunner = GetCodeTestToolRunner(out var jobParams);
+            var toolRunner = GetCodeTestToolRunner(out var jobParams);
 
             if (string.IsNullOrWhiteSpace(m_mgrParams.GetParam(clsAnalysisMgrSettings.MGR_PARAM_FAILED_RESULTS_FOLDER_PATH)))
             {
@@ -567,8 +567,8 @@ namespace AnalysisManagerProg
                 }
             }
 
-            var objAnalysisResults = new clsAnalysisResults(m_mgrParams, jobParams);
-            objAnalysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(GetWorkDirPath(), resFolderName));
+            var analysisResults = new clsAnalysisResults(m_mgrParams, jobParams);
+            analysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(GetWorkDirPath(), resFolderName));
         }
 
         /// <summary>
@@ -791,9 +791,9 @@ namespace AnalysisManagerProg
 
             var pluginLoader = new clsPluginLoader(summaryFile, mgrFolderPath);
 
-            var objToolRunner = pluginLoader.GetToolRunner("dta_split".ToLower());
-            objToolRunner.Setup("CodeTest", m_mgrParams, jobParams, statusTools, summaryFile, myEMSLUtilities);
-            objToolRunner.RunTool();
+            var toolRunner = pluginLoader.GetToolRunner("dta_split".ToLower());
+            toolRunner.Setup("CodeTest", m_mgrParams, jobParams, statusTools, summaryFile, myEMSLUtilities);
+            toolRunner.RunTool();
 
         }
 
@@ -923,14 +923,13 @@ namespace AnalysisManagerProg
         /// </summary>
         public void TestDeleteFiles()
         {
-            var OutFileName = "MyTestDataset_out.txt";
+            var outFileName = "MyTestDataset_out.txt";
 
+            var toolRunner = GetCodeTestToolRunner(out var jobParams);
 
-            var objToolRunner = GetCodeTestToolRunner(out var jobParams);
+            jobParams.AddResultFileToSkip(outFileName);
 
-            jobParams.AddResultFileToSkip(OutFileName);
-
-            objToolRunner.RunTool();
+            toolRunner.RunTool();
         }
 
         /// <summary>
@@ -938,15 +937,13 @@ namespace AnalysisManagerProg
         /// </summary>
         public void TestDeliverResults()
         {
-
-
-            var objToolRunner = GetCodeTestToolRunner(out var jobParams);
+            var toolRunner = GetCodeTestToolRunner(out var jobParams);
 
             jobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "OutputFolderName", "Test_Results_" + DateTime.Now.ToString("hh_mm_ss"));
             jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "transferFolderPath", @"\\proto-3\DMS3_XFER");
             jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetNum", "Test_Dataset");
 
-            objToolRunner.RunTool();
+            toolRunner.RunTool();
         }
 
         /// <summary>
@@ -954,18 +951,18 @@ namespace AnalysisManagerProg
         /// </summary>
         public void TestFileDateConversion()
         {
-            var objTargetFile = new FileInfo(@"D:\JobSteps.png");
+            var targetFile = new FileInfo(@"D:\JobSteps.png");
 
-            var date = objTargetFile.LastWriteTime.ToString(CultureInfo.InvariantCulture);
+            var lastWriteTime = targetFile.LastWriteTime.ToString(CultureInfo.InvariantCulture);
 
-            var ResultFiles = Directory.GetFiles(@"C:\Temp\", "*");
+            var resultFiles = Directory.GetFiles(@"C:\Temp\", "*");
 
-            foreach (var FileToCopy in ResultFiles)
+            foreach (var fileToCopy in resultFiles)
             {
-                Console.WriteLine(FileToCopy);
+                Console.WriteLine(fileToCopy);
             }
 
-            Console.WriteLine(date);
+            Console.WriteLine(lastWriteTime);
         }
 
         /// <summary>
@@ -976,13 +973,13 @@ namespace AnalysisManagerProg
             var dllFile = "AM_Shared.dll";
             var dllFile64Bit = "PeptideToProteinMapEngine.dll";
 
-            var objToolRunner = GetCodeTestToolRunner();
+            var toolRunner = GetCodeTestToolRunner();
 
             var toolVersionInfo = string.Empty;
 
-            objToolRunner.StoreToolVersionInfoOneFile(ref toolVersionInfo, dllFile);
+            toolRunner.StoreToolVersionInfoOneFile(ref toolVersionInfo, dllFile);
 
-            objToolRunner.StoreToolVersionInfoOneFile(ref toolVersionInfo, dllFile64Bit);
+            toolRunner.StoreToolVersionInfoOneFile(ref toolVersionInfo, dllFile64Bit);
 
             Console.WriteLine(toolVersionInfo);
         }
@@ -1102,11 +1099,11 @@ namespace AnalysisManagerProg
             jobParams.SetParam("PeptideSearch", "ProteinOptions", "na");
 
             var debugLevel = 2;
-            var objResources = GetResourcesObject(debugLevel, jobParams);
+            var resourcer = GetResourcesObject(debugLevel, jobParams);
 
             var proteinCollectionInfo = new clsProteinCollectionInfo(jobParams);
 
-            var spaceRequiredMB = objResources.LookupLegacyDBDiskSpaceRequiredMB(proteinCollectionInfo);
+            var spaceRequiredMB = resourcer.LookupLegacyDBDiskSpaceRequiredMB(proteinCollectionInfo);
 
             string legacyFastaName;
 
@@ -1197,19 +1194,19 @@ namespace AnalysisManagerProg
         public void TestGZip()
         {
 
-            var objToolRunner = GetCodeTestToolRunner();
+            var toolRunner = GetCodeTestToolRunner();
 
             const string sourceFilePath = @"F:\Temp\ZipTest\QExact01\UDD-1_27Feb13_Gimli_12-07-03_HCD.mgf";
 
-            objToolRunner.GZipFile(sourceFilePath, @"F:\Temp\ZipTest\QExact01\GZipTarget", false);
+            toolRunner.GZipFile(sourceFilePath, @"F:\Temp\ZipTest\QExact01\GZipTarget", false);
 
-            objToolRunner.GZipFile(sourceFilePath, false);
+            toolRunner.GZipFile(sourceFilePath, false);
 
             var gzippedFile = @"F:\Temp\ZipTest\QExact01\" + Path.GetFileName(sourceFilePath) + ".gz";
 
-            objToolRunner.GUnzipFile(gzippedFile);
+            toolRunner.GUnzipFile(gzippedFile);
 
-            objToolRunner.GUnzipFile(gzippedFile, @"F:\Temp\ZipTest\GUnzipTarget");
+            toolRunner.GUnzipFile(gzippedFile, @"F:\Temp\ZipTest\GUnzipTarget");
         }
 
         /// <summary>
@@ -1220,10 +1217,10 @@ namespace AnalysisManagerProg
         {
             var debugLevel = 2;
 
-            var objResources = GetResourcesObject(debugLevel);
+            var resourcer = GetResourcesObject(debugLevel);
 
-            var success = objResources.UnzipFileStart(zipFilePath, outFolderPath, "TestUnzip", false);
-            // success = objResources.UnzipFileStart(zipFilePath, outFolderPath, "TestUnzip", True)
+            var success = resourcer.UnzipFileStart(zipFilePath, outFolderPath, "TestUnzip", false);
+            // success = resourcer.UnzipFileStart(zipFilePath, outFolderPath, "TestUnzip", True)
 
             return success;
         }
@@ -1235,17 +1232,17 @@ namespace AnalysisManagerProg
         public void TestZip()
         {
 
-            var objToolRunner = GetCodeTestToolRunner();
+            var toolRunner = GetCodeTestToolRunner();
 
             const string sourceFilePath = @"F:\Temp\ZipTest\QExact01\UDD-1_27Feb13_Gimli_12-07-03_HCD.mgf";
 
-            objToolRunner.ZipFile(sourceFilePath, false);
+            toolRunner.ZipFile(sourceFilePath, false);
 
             var zippedFile = @"F:\Temp\ZipTest\QExact01\" + Path.GetFileNameWithoutExtension(sourceFilePath) + ".zip";
 
-            objToolRunner.UnzipFile(zippedFile);
+            toolRunner.UnzipFile(zippedFile);
 
-            objToolRunner.UnzipFile(zippedFile, @"F:\Temp\ZipTest\UnzipTarget");
+            toolRunner.UnzipFile(zippedFile, @"F:\Temp\ZipTest\UnzipTarget");
 
             var dotNetZipTools = new clsDotNetZipTools(1, GetWorkDirPath());
             RegisterEvents(dotNetZipTools);
@@ -1277,7 +1274,7 @@ namespace AnalysisManagerProg
         {
             var debugLevel = 2;
 
-            var objResources = new clsResourceTestClass();
+            var resourceTester = new clsResourceTestClass();
 
             var statusTools = new clsStatusFile("Status.xml", debugLevel);
             RegisterEvents(statusTools);
@@ -1298,11 +1295,11 @@ namespace AnalysisManagerProg
             jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetArchivePath", @"\\adms.emsl.pnl.gov\dmsarch\9T_FTICR_Imaging_1");
             jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "transferFolderPath", @"\\proto-10\DMS3_Xfer");
 
-            objResources.Setup("CodeTest", m_mgrParams, jobParams, statusTools, myEMSLUtilities);
+            resourceTester.Setup("CodeTest", m_mgrParams, jobParams, statusTools, myEMSLUtilities);
 
-            var success = objResources.FileSearch.RetrieveBrukerMALDIImagingFolders(true);
+            var success = resourceTester.FileSearch.RetrieveBrukerMALDIImagingFolders(true);
 
-            // success = objResources.UnzipFileStart(zipFilePath, outFolderPath, "TestUnzip", True)
+            // success = resourceTester.UnzipFileStart(zipFilePath, outFolderPath, "TestUnzip", True)
 
             return success;
         }
@@ -1411,16 +1408,16 @@ namespace AnalysisManagerProg
                 return false;
             }
 
-            var objScanStatsGenerator = new clsScanStatsGenerator(strMSFileInfoScannerDLLPath, m_DebugLevel);
-            RegisterEvents(objScanStatsGenerator);
+            var scanStatsGenerator = new clsScanStatsGenerator(strMSFileInfoScannerDLLPath, m_DebugLevel);
+            RegisterEvents(scanStatsGenerator);
 
             const int datasetID = 0;
 
-            objScanStatsGenerator.ScanStart = 11000;
-            objScanStatsGenerator.ScanEnd = 12000;
+            scanStatsGenerator.ScanStart = 11000;
+            scanStatsGenerator.ScanEnd = 12000;
 
             // Create the _ScanStats.txt and _ScanStatsEx.txt files
-            var success = objScanStatsGenerator.GenerateScanStatsFile(inputFilePath, workingDir, datasetID);
+            var success = scanStatsGenerator.GenerateScanStatsFile(inputFilePath, workingDir, datasetID);
 
             return success;
         }
@@ -1548,13 +1545,13 @@ namespace AnalysisManagerProg
         public void TestMSXmlCachePurge()
         {
 
-            var objToolRunner = GetCodeTestToolRunner();
+            var toolRunner = GetCodeTestToolRunner();
 
             const string cacheFolderPath = @"\\proto-2\past\PurgeTest";
 
             try
             {
-                objToolRunner.PurgeOldServerCacheFilesTest(cacheFolderPath, 10);
+                toolRunner.PurgeOldServerCacheFilesTest(cacheFolderPath, 10);
             }
             catch (Exception ex)
             {
@@ -1571,12 +1568,12 @@ namespace AnalysisManagerProg
         /// <remarks></remarks>
         public void FixICR2LSResultFileNames(string folderPath, string datasetName)
         {
-            var objExtensionsToCheck = new List<string>();
+            var extensionsToCheck = new List<string>();
 
             try
             {
-                objExtensionsToCheck.Add("PAR");
-                objExtensionsToCheck.Add("Pek");
+                extensionsToCheck.Add("PAR");
+                extensionsToCheck.Add("Pek");
 
                 var fiFolder = new DirectoryInfo(folderPath);
 
@@ -1586,7 +1583,7 @@ namespace AnalysisManagerProg
                     return;
                 }
 
-                foreach (var extension in objExtensionsToCheck)
+                foreach (var extension in extensionsToCheck)
                 {
                     foreach (var fiFile in fiFolder.GetFiles("*." + extension))
                     {
@@ -1663,22 +1660,22 @@ namespace AnalysisManagerProg
         public void TestGetVersionInfo()
         {
 
-            var objToolRunner = GetCodeTestToolRunner();
+            var toolRunner = GetCodeTestToolRunner();
 
             var pathToTestx86 = @"F:\My Documents\Projects\DataMining\DMS_Programs\DLLVersionInspector\bin\32bit_Dll_Examples\UIMFLibrary.dll";
             var pathToTestx64 = @"F:\My Documents\Projects\DataMining\DMS_Programs\DLLVersionInspector\bin\64bit_Dll_Examples\UIMFLibrary.dll";
             var pathToTestAnyCPU = @"F:\My Documents\Projects\DataMining\DMS_Programs\DLLVersionInspector\bin\AnyCPU_DLL_Examples\UIMFLibrary.dll";
 
             var toolVersionInfo = string.Empty;
-            objToolRunner.StoreToolVersionInfoOneFile(ref toolVersionInfo, pathToTestx86);
+            toolRunner.StoreToolVersionInfoOneFile(ref toolVersionInfo, pathToTestx86);
             Console.WriteLine(toolVersionInfo);
 
             toolVersionInfo = string.Empty;
-            objToolRunner.StoreToolVersionInfoOneFile(ref toolVersionInfo, pathToTestx64);
+            toolRunner.StoreToolVersionInfoOneFile(ref toolVersionInfo, pathToTestx64);
             Console.WriteLine(toolVersionInfo);
 
             toolVersionInfo = string.Empty;
-            objToolRunner.StoreToolVersionInfoOneFile(ref toolVersionInfo, pathToTestAnyCPU);
+            toolRunner.StoreToolVersionInfoOneFile(ref toolVersionInfo, pathToTestAnyCPU);
             Console.WriteLine(toolVersionInfo);
         }
 
@@ -1700,9 +1697,9 @@ namespace AnalysisManagerProg
         {
             const int debugLevel = 2;
 
-            var objResources = GetResourcesObject(debugLevel);
+            var resourcer = GetResourcesObject(debugLevel);
 
-            objResources.ValidateCDTAFileIsCentroided(@"\\proto-7\dms3_Xfer\UW_HCV_03_Run2_19Dec13_Pippin_13-07-06\DTA_Gen_1_26_350136\UW_HCV_03_Run2_19Dec13_Pippin_13-07-06_dta.txt");
+            resourcer.ValidateCDTAFileIsCentroided(@"\\proto-7\dms3_Xfer\UW_HCV_03_Run2_19Dec13_Pippin_13-07-06\DTA_Gen_1_26_350136\UW_HCV_03_Run2_19Dec13_Pippin_13-07-06_dta.txt");
         }
 
         private class clsResourceTestClass : clsAnalysisResources

@@ -465,7 +465,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // Set up and execute a program runner to run MzidToTsvConverter.exe
                 var cmdStr = GetMZIDtoTSVCommandLine(mzidFileName, tsvFileName, m_WorkDir, mzidToTsvConverterProgLoc);
 
-                var objCreateTSV = new clsRunDosProgram(m_WorkDir)
+                var mzidToTsvRunner = new clsRunDosProgram(m_WorkDir)
                 {
                     CreateNoWindow = true,
                     CacheStandardOutput = true,
@@ -473,12 +473,12 @@ namespace AnalysisManagerMSGFDBPlugIn
                     WriteConsoleOutputToFile = true,
                     ConsoleOutputFilePath = Path.Combine(m_WorkDir, MZIDToTSV_CONSOLE_OUTPUT_FILE)
                 };
-                RegisterEvents(objCreateTSV);
+                RegisterEvents(mzidToTsvRunner);
 
                 if (clsGlobal.LinuxOS)
                 {
                     // Need to run MzidToTsvConverter.exe using mono
-                    var updated = objCreateTSV.UpdateToUseMono(m_mgrParams, ref mzidToTsvConverterProgLoc, ref cmdStr);
+                    var updated = mzidToTsvRunner.UpdateToUseMono(m_mgrParams, ref mzidToTsvConverterProgLoc, ref cmdStr);
                     if (!updated)
                     {
                         OnWarningEvent("Unable to run MzidToTsvConverter.exe with mono");
@@ -493,11 +493,11 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
 
                 // This process is typically quite fast, so we do not track CPU usage
-                var success = objCreateTSV.RunProgram(mzidToTsvConverterProgLoc, cmdStr, "MzIDToTsv", true);
+                var success = mzidToTsvRunner.RunProgram(mzidToTsvConverterProgLoc, cmdStr, "MzIDToTsv", true);
 
                 if (!success)
                 {
-                    OnErrorEvent("MzidToTsvConverter.exe returned an error code converting the .mzid file To a .tsv file: " + objCreateTSV.ExitCode);
+                    OnErrorEvent("MzidToTsvConverter.exe returned an error code converting the .mzid file To a .tsv file: " + mzidToTsvRunner.ExitCode);
                     return string.Empty;
                 }
 
@@ -521,7 +521,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 try
                 {
                     // The MzIDToTsv console output file doesn't contain any log messsages we need to save, so delete it
-                    File.Delete(objCreateTSV.ConsoleOutputFilePath);
+                    File.Delete(mzidToTsvRunner.ConsoleOutputFilePath);
                 }
                 catch (Exception)
                 {
@@ -610,7 +610,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     OnStatusEvent(javaProgLoc + " " + cmdStr);
                 }
 
-                var objCreateTSV = new clsRunDosProgram(m_WorkDir)
+                var mzidToTsvRunner = new clsRunDosProgram(m_WorkDir)
                 {
                     CreateNoWindow = true,
                     CacheStandardOutput = true,
@@ -618,14 +618,14 @@ namespace AnalysisManagerMSGFDBPlugIn
                     WriteConsoleOutputToFile = true,
                     ConsoleOutputFilePath = Path.Combine(m_WorkDir, MZIDToTSV_CONSOLE_OUTPUT_FILE)
                 };
-                RegisterEvents(objCreateTSV);
+                RegisterEvents(mzidToTsvRunner);
 
                 // This process is typically quite fast, so we do not track CPU usage
-                var success = objCreateTSV.RunProgram(javaProgLoc, cmdStr, "MzIDToTsv", true);
+                var success = mzidToTsvRunner.RunProgram(javaProgLoc, cmdStr, "MzIDToTsv", true);
 
                 if (!success)
                 {
-                    OnErrorEvent("MSGFPlus returned an error code converting the .mzid file to a .tsv file: " + objCreateTSV.ExitCode);
+                    OnErrorEvent("MSGFPlus returned an error code converting the .mzid file to a .tsv file: " + mzidToTsvRunner.ExitCode);
                     return string.Empty;
                 }
 
@@ -637,7 +637,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 try
                 {
                     // Delete the console output file
-                    File.Delete(objCreateTSV.ConsoleOutputFilePath);
+                    File.Delete(mzidToTsvRunner.ConsoleOutputFilePath);
                 }
                 catch (Exception)
                 {
@@ -1309,8 +1309,8 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             var mgrName = m_mgrParams.ManagerName;
 
-            var objIndexedDBCreator = new clsCreateMSGFDBSuffixArrayFiles(mgrName);
-            RegisterEvents(objIndexedDBCreator);
+            var indexedDBCreator = new clsCreateMSGFDBSuffixArrayFiles(mgrName);
+            RegisterEvents(indexedDBCreator);
 
             // Define the path to the fasta file
             var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
@@ -1449,7 +1449,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             {
                 indexIteration += 1;
 
-                var result = objIndexedDBCreator.CreateSuffixArrayFiles(m_WorkDir, m_DebugLevel, javaProgLoc, msgfPlusProgLoc, fastaFilePath,
+                var result = indexedDBCreator.CreateSuffixArrayFiles(m_WorkDir, m_DebugLevel, javaProgLoc, msgfPlusProgLoc, fastaFilePath,
                     fastaFileIsDecoy, msgfPlusIndexFilesFolderPath, msgfPlusIndexFilesFolderPathLegacyDB);
 
                 if (result == CloseOutType.CLOSEOUT_SUCCESS)
@@ -1459,9 +1459,9 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (result == CloseOutType.CLOSEOUT_FAILED || (result != CloseOutType.CLOSEOUT_FAILED && indexIteration > 2))
                 {
-                    if (!string.IsNullOrEmpty(objIndexedDBCreator.ErrorMessage))
+                    if (!string.IsNullOrEmpty(indexedDBCreator.ErrorMessage))
                     {
-                        OnErrorEvent(objIndexedDBCreator.ErrorMessage);
+                        OnErrorEvent(indexedDBCreator.ErrorMessage);
                     }
                     else
                     {

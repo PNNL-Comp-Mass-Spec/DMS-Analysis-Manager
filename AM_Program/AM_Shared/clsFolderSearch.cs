@@ -802,12 +802,12 @@ namespace AnalysisManagerBase
 
                     // Wildcard in the name
                     // Look for any files matching fileNameToFind
-                    var objFolderInfo = new DirectoryInfo(pathToCheck);
+                    var folderInfo = new DirectoryInfo(pathToCheck);
 
                     // Do not recurse here
                     // If the dataset folder does not contain a target file, and if folderNameToFind is defined,
                     // FindValidFolder will append folderNameToFind to the dataset folder path and call this method again
-                    if (objFolderInfo.GetFiles(fileNameToFind, SearchOption.TopDirectoryOnly).Length == 0)
+                    if (folderInfo.GetFiles(fileNameToFind, SearchOption.TopDirectoryOnly).Length == 0)
                     {
                         validFolder = false;
                     }
@@ -844,9 +844,9 @@ namespace AnalysisManagerBase
 
                     // Wildcard in the name
                     // Look for any folders matching folderNameToFind
-                    var objFolderInfo = new DirectoryInfo(pathToCheck);
+                    var folderInfo = new DirectoryInfo(pathToCheck);
 
-                    if (objFolderInfo.GetDirectories(folderNameToFind).Length == 0)
+                    if (folderInfo.GetDirectories(folderNameToFind).Length == 0)
                     {
                         validFolder = false;
                     }

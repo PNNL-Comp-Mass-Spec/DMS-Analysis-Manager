@@ -133,26 +133,26 @@ namespace AnalysisManagerBase
 
         }
 
-        private MSFileInfoScannerInterfaces.iMSFileInfoScanner LoadMSFileInfoScanner(string strMSFileInfoScannerDLLPath)
+        private MSFileInfoScannerInterfaces.iMSFileInfoScanner LoadMSFileInfoScanner(string msFileInfoScannerDLLPath)
         {
             const string MsDataFileReaderClass = "MSFileInfoScanner.clsMSFileInfoScanner";
 
-            MSFileInfoScannerInterfaces.iMSFileInfoScanner objMSFileInfoScanner = null;
+            MSFileInfoScannerInterfaces.iMSFileInfoScanner msFileInfoScanner = null;
 
             try
             {
-                if (!File.Exists(strMSFileInfoScannerDLLPath))
+                if (!File.Exists(msFileInfoScannerDLLPath))
                 {
-                    var msg = "DLL not found: " + strMSFileInfoScannerDLLPath;
+                    var msg = "DLL not found: " + msFileInfoScannerDLLPath;
                     OnErrorEvent(msg);
                 }
                 else
                 {
-                    var obj = LoadObject(MsDataFileReaderClass, strMSFileInfoScannerDLLPath);
-                    if (obj != null)
+                    var newInstance = LoadObject(MsDataFileReaderClass, msFileInfoScannerDLLPath);
+                    if (newInstance != null)
                     {
-                        objMSFileInfoScanner = (MSFileInfoScannerInterfaces.iMSFileInfoScanner)obj;
-                        var msg = "Loaded MSFileInfoScanner from " + strMSFileInfoScannerDLLPath;
+                        msFileInfoScanner = (MSFileInfoScannerInterfaces.iMSFileInfoScanner)newInstance;
+                        var msg = "Loaded MSFileInfoScanner from " + msFileInfoScannerDLLPath;
                         if (mDebugLevel >= 2)
                         {
                             OnStatusEvent(msg);
@@ -166,22 +166,22 @@ namespace AnalysisManagerBase
                 OnErrorEvent("Exception loading class " + MsDataFileReaderClass, ex);
             }
 
-            return objMSFileInfoScanner;
+            return msFileInfoScanner;
         }
 
-        private object LoadObject(string className, string strDLLFilePath)
+        private object LoadObject(string className, string dllFilePath)
         {
             try
             {
-                // Dynamically load the specified class from strDLLFilePath
-                var assem = System.Reflection.Assembly.LoadFrom(strDLLFilePath);
+                // Dynamically load the specified class from dllFilePath
+                var assem = System.Reflection.Assembly.LoadFrom(dllFilePath);
                 var dllType = assem.GetType(className, false, true);
-                var obj = Activator.CreateInstance(dllType);
-                return obj;
+                var newInstance = Activator.CreateInstance(dllType);
+                return newInstance;
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Exception loading DLL " + strDLLFilePath, ex);
+                OnErrorEvent("Exception loading DLL " + dllFilePath, ex);
                 return null;
             }
         }

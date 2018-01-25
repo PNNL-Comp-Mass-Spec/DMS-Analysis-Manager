@@ -29,7 +29,13 @@ namespace AnalysisManagerProg
         /// <param name="summaryFile"></param>
         /// <param name="myEMSLUtilities"></param>
         /// <remarks></remarks>
-        public override void Setup(string stepToolName, IMgrParams mgrParams, IJobParams jobParams, IStatusFile statusTools, clsSummaryFile summaryFile, clsMyEMSLUtilities myEMSLUtilities)
+        public override void Setup(
+            string stepToolName,
+            IMgrParams mgrParams,
+            IJobParams jobParams,
+            IStatusFile statusTools,
+            clsSummaryFile summaryFile,
+            clsMyEMSLUtilities myEMSLUtilities)
         {
             base.Setup(stepToolName, mgrParams, jobParams, statusTools, summaryFile, myEMSLUtilities);
 
@@ -108,8 +114,8 @@ namespace AnalysisManagerProg
             if (!success || eReturnCode == CloseOutType.CLOSEOUT_FAILED)
             {
                 // Try to save whatever files were moved into the results folder
-                var objAnalysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
-                objAnalysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(m_WorkDir, m_ResFolderName));
+                var analysisResults = new clsAnalysisResults(m_mgrParams, m_jobParams);
+                analysisResults.CopyFailedResultsToArchiveFolder(Path.Combine(m_WorkDir, m_ResFolderName));
 
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -126,11 +132,11 @@ namespace AnalysisManagerProg
 
         private bool CreateTestFiles(string folderPath, int filesToCreate, string fileNameBase)
         {
-            var objRand = new System.Random();
+            var randGenerator = new System.Random();
 
             for (var index = 1; index <= filesToCreate; index++)
             {
-                var outFilePath = Path.Combine(folderPath, fileNameBase + index + "_" + objRand.Next(1, 99) + ".txt");
+                var outFilePath = Path.Combine(folderPath, fileNameBase + index + "_" + randGenerator.Next(1, 99) + ".txt");
 
                 using (var swOutFile = new StreamWriter(new FileStream(outFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {

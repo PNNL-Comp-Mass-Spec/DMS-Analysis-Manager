@@ -80,19 +80,19 @@ namespace AnalysisManagerBase
                             OnStatusEvent("Confirming that 'Thermo MSFileReader' registry key exists");
                         }
 
-                        var objValue = regProteoWizard.GetValue("Thermo MSFileReader");
+                        var registryValue = regProteoWizard.GetValue("Thermo MSFileReader");
 
-                        if (objValue == null)
+                        if (registryValue == null)
                         {
                             valueMissing = true;
                         }
-                        else if (string.IsNullOrEmpty(Convert.ToString(objValue)))
+                        else if (string.IsNullOrEmpty(Convert.ToString(registryValue)))
                         {
                             valueMissing = true;
                         }
                         else
                         {
-                            if (bool.Parse(Convert.ToString(objValue)))
+                            if (bool.Parse(Convert.ToString(registryValue)))
                             {
                                 valueMissing = false;
                             }

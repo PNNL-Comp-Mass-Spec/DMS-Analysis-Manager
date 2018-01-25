@@ -1275,18 +1275,18 @@ namespace AnalysisManagerProg
             {
                 var reLogFileName = new Regex(@"(?<BaseName>.+_)(?<Month>\d+)-(?<Day>\d+)-(?<Year>\d+).\S+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-                var objMatch = reLogFileName.Match(logFilePath);
+                var match = reLogFileName.Match(logFilePath);
 
-                if (objMatch.Success)
+                if (match.Success)
                 {
-                    var month = Convert.ToInt32(objMatch.Groups["Month"].Value);
-                    var day = Convert.ToInt32(objMatch.Groups["Day"].Value);
-                    var year = Convert.ToInt32(objMatch.Groups["Year"].Value);
+                    var month = Convert.ToInt32(match.Groups["Month"].Value);
+                    var day = Convert.ToInt32(match.Groups["Day"].Value);
+                    var year = Convert.ToInt32(match.Groups["Year"].Value);
 
                     var dtCurrentDate = DateTime.Parse(year + "-" + month + "-" + day);
                     var dtNewDate = dtCurrentDate.AddDays(-1);
 
-                    var previousLogFilePath = objMatch.Groups["BaseName"].Value + dtNewDate.ToString(FileLogger.LOG_FILE_DATECODE) + Path.GetExtension(logFilePath);
+                    var previousLogFilePath = match.Groups["BaseName"].Value + dtNewDate.ToString(FileLogger.LOG_FILE_DATECODE) + Path.GetExtension(logFilePath);
                     return previousLogFilePath;
                 }
 
@@ -1450,11 +1450,11 @@ namespace AnalysisManagerProg
                 {
                     // Append the error message reported by the Logger to the error message queue (treating it as the newest error)
                     lineIn = clsLogTools.MostRecentErrorMessage;
-                    var objMatch = reErrorLine.Match(lineIn);
+                    var match = reErrorLine.Match(lineIn);
 
-                    if (objMatch.Success)
+                    if (match.Success)
                     {
-                        DetermineRecentErrorCacheError(objMatch, lineIn, uniqueErrorMessages, qErrorMsgQueue, errorMessageCountToReturn);
+                        DetermineRecentErrorCacheError(match, lineIn, uniqueErrorMessages, qErrorMsgQueue, errorMessageCountToReturn);
                     }
                 }
 
@@ -1505,7 +1505,7 @@ namespace AnalysisManagerProg
         }
 
         private void DetermineRecentErrorCacheError(
-            Match oMatch,
+            Match match,
             string errorMessage,
             IDictionary<string, DateTime> uniqueErrorMessages,
             Queue<string> qErrorMsgQueue,
@@ -1518,13 +1518,13 @@ namespace AnalysisManagerProg
             // If it is present, update the timestamp in uniqueErrorMessages
             // If not present, queue it
 
-            if (oMatch.Groups.Count >= 2)
+            if (match.Groups.Count >= 2)
             {
-                var timestamp = oMatch.Groups["Date"].Value;
+                var timestamp = match.Groups["Date"].Value;
                 if (!DateTime.TryParse(timestamp, out timeStamp))
                     timeStamp = DateTime.MinValue;
 
-                errorMessageClean = oMatch.Groups["Error"].Value;
+                errorMessageClean = match.Groups["Error"].Value;
             }
             else
             {

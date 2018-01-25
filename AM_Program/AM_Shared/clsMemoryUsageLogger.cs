@@ -247,10 +247,10 @@ namespace AnalysisManagerBase
             try
             {
                 // Obtain a handle to the current process
-                var objProcess = Process.GetCurrentProcess();
+                var currentProcess = Process.GetCurrentProcess();
 
                 // The WorkingSet is the total physical memory usage
-                return (float)(clsGlobal.BytesToMB(objProcess.WorkingSet64));
+                return (float)(clsGlobal.BytesToMB(currentProcess.WorkingSet64));
             }
             catch (Exception ex)
             {

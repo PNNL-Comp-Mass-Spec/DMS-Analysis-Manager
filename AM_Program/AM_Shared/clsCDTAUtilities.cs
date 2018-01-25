@@ -284,7 +284,7 @@ namespace AnalysisManagerBase
                 var fiUpdatedFile = new FileInfo(outputFilePathTemp);
 
                 // We use the DtaTextFileReader to parse out the scan and charge from the header line
-                var objReader = new MSDataFileReader.clsDtaTextFileReader(false);
+                var dtaTextReader = new MSDataFileReader.clsDtaTextFileReader(false);
 
                 // Open the input file
                 using (var srInFile = new StreamReader(new FileStream(fiOriginalFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
@@ -315,8 +315,7 @@ namespace AnalysisManagerBase
                                 // Remove the leading and trailing characters, then extract the scan and charge
                                 var strDTAHeader = lineIn.Trim('=', ' ', '"');
 
-
-                                objReader.ExtractScanInfoFromDtaHeader(strDTAHeader, out scanNumberStart, out _, out _, out charge);
+                                dtaTextReader.ExtractScanInfoFromDtaHeader(strDTAHeader, out scanNumberStart, out _, out _, out charge);
 
                                 parentIonLineIsNext = true;
 

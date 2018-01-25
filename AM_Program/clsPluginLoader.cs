@@ -204,12 +204,12 @@ namespace AnalysisManagerProg
                 if (TraceMode)
                     OnDebugEvent("Call System.Reflection.Assembly.LoadFrom for assembly " + pluginInfoFile.FullName);
 
-                var a = System.Reflection.Assembly.LoadFrom(pluginInfoFile.FullName);
+                var assembly = System.Reflection.Assembly.LoadFrom(pluginInfoFile.FullName);
 
-                var t = a.GetType(className, false, true);
+                var assemblyType = assembly.GetType(className, false, true);
 
-                var obj = Activator.CreateInstance(t);
-                return obj;
+                var instance = Activator.CreateInstance(assemblyType);
+                return instance;
             }
             catch (Exception ex)
             {
@@ -242,12 +242,12 @@ namespace AnalysisManagerProg
                 }
 #endif
 
-                var obj = LoadObject(className, assyName);
-                if (obj != null)
+                var newToolRunner = LoadObject(className, assyName);
+                if (newToolRunner != null)
                 {
                     try
                     {
-                        myToolRunner = (IToolRunner)obj;
+                        myToolRunner = (IToolRunner)newToolRunner;
                     }
                     catch (Exception ex)
                     {
@@ -280,12 +280,12 @@ namespace AnalysisManagerProg
                 }
 #endif
 
-                var obj = LoadObject(className, assyName);
-                if (obj != null)
+                var newResourcer = LoadObject(className, assyName);
+                if (newResourcer != null)
                 {
                     try
                     {
-                        myModule = (IAnalysisResources)obj;
+                        myModule = (IAnalysisResources)newResourcer;
                     }
                     catch (Exception ex)
                     {

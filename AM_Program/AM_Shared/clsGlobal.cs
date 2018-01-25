@@ -332,10 +332,10 @@ namespace AnalysisManagerBase
             if (mAppFolderPath != null)
                 return mAppFolderPath;
 
-            var objAssembly = Assembly.GetEntryAssembly();
+            var entryAssembly = Assembly.GetEntryAssembly();
 
-            var fiAssemblyFile = new FileInfo(objAssembly.Location);
-            mAppFolderPath = fiAssemblyFile.DirectoryName;
+            var assemblyFile = new FileInfo(entryAssembly.Location);
+            mAppFolderPath = assemblyFile.DirectoryName;
 
             return mAppFolderPath;
         }
@@ -346,11 +346,11 @@ namespace AnalysisManagerBase
         /// <returns>Assembly version, e.g. 1.0.4482.23831</returns>
         public static string GetAssemblyVersion()
         {
-            var objAssembly = Assembly.GetEntryAssembly();
-            if (objAssembly == null)
+            var entryAssembly = Assembly.GetEntryAssembly();
+            if (entryAssembly == null)
                 return string.Empty;
 
-            return GetAssemblyVersion(objAssembly);
+            return GetAssemblyVersion(entryAssembly);
 
         }
 
@@ -1278,8 +1278,8 @@ namespace AnalysisManagerBase
         private static string ComputeMD5Hash(Stream data)
         {
 
-            var objMD5 = new MD5CryptoServiceProvider();
-            return ComputeHash(objMD5, data);
+            var md5Hasher = new MD5CryptoServiceProvider();
+            return ComputeHash(md5Hasher, data);
 
         }
 
@@ -1292,8 +1292,8 @@ namespace AnalysisManagerBase
         private static string ComputeSha1Hash(Stream data)
         {
 
-            var objSha1 = new SHA1CryptoServiceProvider();
-            return ComputeHash(objSha1, data);
+            var sha1Hasher = new SHA1CryptoServiceProvider();
+            return ComputeHash(sha1Hasher, data);
 
         }
 

@@ -1455,11 +1455,11 @@ namespace AnalysisManagerBase
         private bool CreateSettingsFile(string FileText, string FileNamePath)
         {
 
-            var objFormattedXMLWriter = new clsFormattedXMLWriter();
+            var formattedXMLWriter = new clsFormattedXMLWriter();
 
-            if (!objFormattedXMLWriter.WriteXMLToFile(FileText, FileNamePath))
+            if (!formattedXMLWriter.WriteXMLToFile(FileText, FileNamePath))
             {
-                LogError("Error creating settings file " + FileNamePath + ": " + objFormattedXMLWriter.ErrMsg);
+                LogError("Error creating settings file " + FileNamePath + ": " + formattedXMLWriter.ErrMsg);
                 m_message = "Error creating settings file";
                 return false;
             }
@@ -1606,13 +1606,13 @@ namespace AnalysisManagerBase
             // Make sure the raw data file does not get copied to the results folder
             m_jobParams.AddResultFileToSkip(Path.GetFileName(inputFilePath));
 
-            var objScanStatsGenerator = new clsScanStatsGenerator(strMSFileInfoScannerDLLPath, m_DebugLevel);
-            RegisterEvents(objScanStatsGenerator);
+            var scanStatsGenerator = new clsScanStatsGenerator(strMSFileInfoScannerDLLPath, m_DebugLevel);
+            RegisterEvents(scanStatsGenerator);
 
             LogMessage("Generating the ScanStats files for " + Path.GetFileName(inputFilePath));
 
             // Create the _ScanStats.txt and _ScanStatsEx.txt files
-            var success = objScanStatsGenerator.GenerateScanStatsFile(inputFilePath, m_WorkingDir, datasetID);
+            var success = scanStatsGenerator.GenerateScanStatsFile(inputFilePath, m_WorkingDir, datasetID);
 
             if (success)
             {
@@ -1636,10 +1636,10 @@ namespace AnalysisManagerBase
             }
             else
             {
-                LogError("Error generating ScanStats files with clsScanStatsGenerator", objScanStatsGenerator.ErrorMessage);
-                if (objScanStatsGenerator.MSFileInfoScannerErrorCount > 0)
+                LogError("Error generating ScanStats files with clsScanStatsGenerator", scanStatsGenerator.ErrorMessage);
+                if (scanStatsGenerator.MSFileInfoScannerErrorCount > 0)
                 {
-                    LogMessage("MSFileInfoScanner encountered " + objScanStatsGenerator.MSFileInfoScannerErrorCount + " errors");
+                    LogMessage("MSFileInfoScanner encountered " + scanStatsGenerator.MSFileInfoScannerErrorCount + " errors");
                 }
             }
 
@@ -4367,8 +4367,8 @@ namespace AnalysisManagerBase
         {
             string xmlText;
 
-            var objMemoryStream = new MemoryStream();
-            using (var xWriter = new XmlTextWriter(objMemoryStream, System.Text.Encoding.UTF8))
+            var memoryStream = new MemoryStream();
+            using (var xWriter = new XmlTextWriter(memoryStream, System.Text.Encoding.UTF8))
             {
 
                 xWriter.Formatting = Formatting.Indented;
@@ -4403,14 +4403,11 @@ namespace AnalysisManagerBase
                 xWriter.Flush();
 
                 // Now use a StreamReader to copy the XML text to a string variable
-                objMemoryStream.Seek(0, SeekOrigin.Begin);
-                var srMemoryStreamReader = new StreamReader(objMemoryStream);
-                xmlText = srMemoryStreamReader.ReadToEnd();
+                memoryStream.Seek(0, SeekOrigin.Begin);
 
-                srMemoryStreamReader.Close();
-                objMemoryStream.Close();
+                var memoryStreamReader = new StreamReader(memoryStream);
+                xmlText = memoryStreamReader.ReadToEnd();
 
-                // Since xmlText now contains the XML, we can now safely close the xWriter
             }
 
             var jobParamsFile = new FileInfo(Path.Combine(WorkDir, clsAnalysisJob.OFFLINE_JOB_PARAMS_FILE));
