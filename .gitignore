@@ -40,3 +40,4 @@ CachedLibs/
 /AM_Common/RDotNet.NativeLibrary.dll
 /AM_Common/Renci.SshNet.dll
 **/.vs/
+/AM_Common/Jayrock.Json.dll
