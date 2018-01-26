@@ -139,6 +139,9 @@
     <PackageReference Include="DynamicInterop">
       <Version>0.8.1</Version>
     </PackageReference>
+    <PackageReference Include="jayrock-json">
+      <Version>0.9.16530.1</Version>
+    </PackageReference>
     <PackageReference Include="PRISM-Library">
       <Version>2.4.58</Version>
     </PackageReference>
