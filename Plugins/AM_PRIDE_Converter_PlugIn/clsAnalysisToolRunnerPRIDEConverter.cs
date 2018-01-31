@@ -4616,6 +4616,16 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                                         }
                                         break;
 
+                                    case "ModificationParams":
+
+                                        if (xmlReader.IsEmptyElement)
+                                        {
+                                            // Element is <ModificationParams />
+                                            // Skip it
+                                            skipNode = true;
+                                        }
+                                        break;
+
                                     case "FileFormat":
 
                                         if (eFileLocation == eMzIDXMLFileLocation.InputSpectraData && !searchedMzML)
