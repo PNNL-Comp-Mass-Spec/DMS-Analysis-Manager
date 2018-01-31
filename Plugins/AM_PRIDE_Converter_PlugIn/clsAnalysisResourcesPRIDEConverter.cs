@@ -115,7 +115,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
 
             udtOptions.RetrieveDTAFiles = m_jobParams.GetJobParameter("CreateMGFFiles", true);
-            udtOptions.RetrieveMZidFiles = m_jobParams.GetJobParameter("IncludeMZidFiles", true);
+            udtOptions.RetrieveMzidFiles = m_jobParams.GetJobParameter("IncludeMZidFiles", true);
             udtOptions.RetrievePepXMLFiles = m_jobParams.GetJobParameter("IncludePepXMLFiles", false);
 
             var disableMyEMSL = m_jobParams.GetJobParameter("DisableMyEMSL", false);
@@ -129,7 +129,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             if (createMSGFReportFilesOnly)
             {
                 udtOptions.RetrieveDTAFiles = false;
-                udtOptions.RetrieveMZidFiles = false;
+                udtOptions.RetrieveMzidFiles = false;
             }
             else
             {

@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Xml;
 using PRISM.Logging;
@@ -59,10 +61,10 @@ namespace AnalysisManagerBase
             public bool RetrieveDTAFiles;
 
             /// <summary>
-            /// Set to True to obtain MSGF+ .mzID files
+            /// Set to True to obtain MSGF+ .mzid.gz files
             /// </summary>
             /// <remarks></remarks>
-            public bool RetrieveMZidFiles;
+            public bool RetrieveMzidFiles;
 
             /// <summary>
             /// Set to True to obtain .pepXML files (typically stored as _pepXML.zip)
@@ -341,7 +343,11 @@ namespace AnalysisManagerBase
         /// <param name="splitFastaResultID"></param>
         /// <param name="zipFileCandidates">Potential names of zip files to decompress</param>
         /// <param name="gzipFileCandidates">Potential names of gzip files to decompress</param>
-        private void GetMzIdFilesToFind(string datasetName, int splitFastaResultID, ICollection<string> zipFileCandidates, ICollection<string> gzipFileCandidates)
+        private void GetMzIdFilesToFind(
+            string datasetName,
+            int splitFastaResultID,
+            ICollection<string> zipFileCandidates,
+            ICollection<string> gzipFileCandidates)
         {
             string zipFile;
             string gZipFile;
@@ -416,7 +422,7 @@ namespace AnalysisManagerBase
 
                 string mzidFilePathLocal;
                 bool deleteLocalFile;
-                var searchedUsedMzML = false;
+                bool searchedUsedMzML;
 
                 if (mzidFile.Name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
                 {
@@ -430,17 +436,6 @@ namespace AnalysisManagerBase
                     deleteLocalFile = true;
 
                 }
-                else if (mzidFile.Name.EndsWith(".gz", StringComparison.OrdinalIgnoreCase))
-                {
-                    if (!dotNetTools.GUnzipFile(mzidFile.FullName))
-                    {
-                        OnErrorEvent("Error unzipping " + mzidFile.FullName);
-                        return false;
-                    }
-
-                    mzidFilePathLocal = MostRecentUnzippedFile(dotNetTools);
-                    deleteLocalFile = true;
-                }
                 else
                 {
                     mzidFilePathLocal = mzidFile.FullName;
@@ -449,43 +444,24 @@ namespace AnalysisManagerBase
 
                 if (!File.Exists(mzidFilePathLocal))
                 {
-                    OnErrorEvent("mzID file not found in the working directory; cannot inspect it in MSGFPlusSearchUsedMzML: " + Path.GetFileName(mzidFilePathLocal));
+                    OnErrorEvent("mzid file not found in the working directory; cannot inspect it in MSGFPlusSearchUsedMzML: " + Path.GetFileName(mzidFilePathLocal));
                     return false;
                 }
 
-                var spectraLocationFound = false;
-
-                using (var reader = new XmlTextReader(mzidFilePathLocal))
+                if (mzidFilePathLocal.EndsWith(clsAnalysisResources.DOT_GZ_EXTENSION, StringComparison.OrdinalIgnoreCase))
                 {
-
-                    while (reader.Read())
+                    using (Stream unzippedStream = new GZipStream(new FileStream(mzidFilePathLocal, FileMode.Open, FileAccess.Read, FileShare.Read), CompressionMode.Decompress))
+                    using (var srSourceFile = new StreamReader(unzippedStream, Encoding.GetEncoding("ISO-8859-1")))
+                    using (var xmlReader = new XmlTextReader(srSourceFile))
                     {
-                        switch (reader.NodeType)
-                        {
-                            case XmlNodeType.Element:
-                                if (reader.Name == "SpectraData")
-                                {
-                                    // The location attribute of the SpectraData element has the input file name
-                                    if (reader.MoveToAttribute("location"))
-                                    {
-                                        var spectraDataFileName = Path.GetFileName(reader.Value);
-                                        const string DOT_MZML = clsAnalysisResources.DOT_MZML_EXTENSION;
-                                        const string DOT_MZML_GZ = clsAnalysisResources.DOT_MZML_EXTENSION + clsAnalysisResources.DOT_GZ_EXTENSION;
-
-                                        if (spectraDataFileName.EndsWith(DOT_MZML, StringComparison.OrdinalIgnoreCase) ||
-                                            spectraDataFileName.EndsWith(DOT_MZML_GZ, StringComparison.OrdinalIgnoreCase))
-                                        {
-                                            searchedUsedMzML = true;
-                                        }
-
-                                        spectraLocationFound = true;
-                                    }
-                                }
-                                break;
-                        }
-
-                        if (spectraLocationFound)
-                            break;
+                        searchedUsedMzML = MSGFPlusSearchUsedMzML(xmlReader, mzidFilePathLocal);
+                    }
+                }
+                else
+                {
+                    using (var xmlReader = new XmlTextReader(mzidFilePathLocal))
+                    {
+                        searchedUsedMzML = MSGFPlusSearchUsedMzML(xmlReader, mzidFilePathLocal);
                     }
                 }
 
@@ -493,12 +469,6 @@ namespace AnalysisManagerBase
                 {
                     Thread.Sleep(200);
                     File.Delete(mzidFilePathLocal);
-                }
-
-                if (!spectraLocationFound)
-                {
-                    OnErrorEvent(".mzID file did not have node SpectraData with attribute location: " + Path.GetFileName(mzidFilePathLocal));
-                    return false;
                 }
 
                 return searchedUsedMzML;
@@ -510,6 +480,42 @@ namespace AnalysisManagerBase
                 return false;
             }
 
+        }
+
+        /// <summary>
+        /// Examine the contents of a .mzid file to determine if a .mzML file was searched
+        /// </summary>
+        /// <param name="reader"></param>
+        /// <param name="mzidFilePath"></param>
+        /// <returns>True if the location attribute of the SpectraData element has a .mzML or .mzML.gz file</returns>
+        private bool MSGFPlusSearchUsedMzML(XmlReader reader, string mzidFilePath)
+        {
+            while (reader.Read())
+            {
+                if (reader.NodeType != XmlNodeType.Element)
+                    continue;
+
+                if (reader.Name != "SpectraData")
+                    continue;
+
+                // The location attribute of the SpectraData element has the input file name
+                if (!reader.MoveToAttribute("location"))
+                {
+                    OnErrorEvent(".mzid file has node SpectraData but it does not have attribute location: " + Path.GetFileName(mzidFilePath));
+                    return false;
+                }
+
+                var spectraDataFileName = Path.GetFileName(reader.Value);
+                const string DOT_MZML = clsAnalysisResources.DOT_MZML_EXTENSION;
+                const string DOT_MZML_GZ = clsAnalysisResources.DOT_MZML_EXTENSION + clsAnalysisResources.DOT_GZ_EXTENSION;
+
+                return spectraDataFileName.EndsWith(DOT_MZML, StringComparison.OrdinalIgnoreCase) ||
+                       spectraDataFileName.EndsWith(DOT_MZML_GZ, StringComparison.OrdinalIgnoreCase);
+            }
+
+            OnErrorEvent(".mzid file did not have node SpectraData: " + Path.GetFileName(mzidFilePath));
+
+            return false;
         }
 
         /// <summary>
@@ -535,7 +541,7 @@ namespace AnalysisManagerBase
                 var lstFilesToGet = new SortedList<string, bool>();
                 string localFolderPath;
 
-                // These two variables track filenames that should be decompressed if they were copied locally
+                // These two variables track compressed mzid files to look for
                 var zipFileCandidates = new List<string>();
                 var gzipFileCandidates = new List<string>();
 
@@ -568,9 +574,9 @@ namespace AnalysisManagerBase
 
                 var datasetName = dataPkgJob.Dataset;
 
-                if (udtOptions.RetrieveMZidFiles && dataPkgJob.PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB)
+                if (udtOptions.RetrieveMzidFiles && dataPkgJob.PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.MSGFDB)
                 {
-                    // Retrieve MSGF+ .mzID files
+                    // Retrieve MSGF+ .mzid files
                     // They will either be stored as .zip files or as .gz files
 
                     if (dataPkgJob.NumberOfClonedSteps > 0)
@@ -890,8 +896,7 @@ namespace AnalysisManagerBase
                 }
                 else
                 {
-                    // Example the .mzid file to determine whether a .mzML file was used
-                    // This will involve decompressing if it's a gzip file, then examining the XML to look for the SpectraData element
+                    // Examine the .mzid file to determine whether a .mzML file was used
                     searchUsedmzML = MSGFPlusSearchUsedMzML(mzIDFileToInspect, dotNetTools);
 
                     var newMetadata = new udtDataPackageJobMetadata
@@ -981,7 +986,7 @@ namespace AnalysisManagerBase
 
         private bool RenameDuplicatePHRPFile(
             string sourceFolderPath,
-            string sourceFilename,
+            string sourceFileName,
             string targetFolderPath,
             string prefixToAdd,
             int job,
@@ -990,7 +995,7 @@ namespace AnalysisManagerBase
 
             try
             {
-                var fiFileToRename = new FileInfo(Path.Combine(sourceFolderPath, sourceFilename));
+                var fiFileToRename = new FileInfo(Path.Combine(sourceFolderPath, sourceFileName));
                 newFilePath = Path.Combine(targetFolderPath, prefixToAdd + fiFileToRename.Name);
 
                 Thread.Sleep(100);
@@ -1002,7 +1007,7 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Exception renaming PHRP file " + sourceFilename + " For job " + job + " (data package has multiple jobs For the same dataset)", ex);
+                OnErrorEvent("Exception renaming PHRP file " + sourceFileName + " for job " + job + " (data package has multiple jobs for the same dataset)", ex);
                 newFilePath = string.Empty;
                 return false;
             }
@@ -1521,7 +1526,7 @@ namespace AnalysisManagerBase
 
                         if (!headersParsed)
                         {
-                            var requiredColumns = new List<string> {"Job", "SearchUsedmzML"};
+                            var requiredColumns = new List<string> { "Job", "SearchUsedmzML" };
 
                             var dctHeaderMapping = clsGlobal.ParseHeaderLine(dataline, requiredColumns);
 
@@ -1593,15 +1598,16 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Unzip any mzid files that were found
+        /// Unzip the PepXML file (_pepXML.zip) if it was retrieved
+        /// If the .mzid file is named Dataset_msgfplus.zip, unzip it, then compress it so that it's named Dataset.mzid.gz
         /// </summary>
         /// <param name="dotNetTools"></param>
         /// <param name="workingDir"></param>
         /// <param name="prefixRequired"></param>
         /// <param name="dataPkgJob"></param>
         /// <param name="lstFoundFiles"></param>
-        /// <param name="zipFileCandidates"></param>
-        /// <param name="gzipFileCandidates"></param>
+        /// <param name="zipFileCandidates">Candidate mzid .zip files</param>
+        /// <param name="gzipFileCandidates">Candiadte .mzid.gz files</param>
         /// <param name="zippedPepXmlFile"></param>
         /// <returns></returns>
         private bool UnzipFiles(
@@ -1617,34 +1623,36 @@ namespace AnalysisManagerBase
 
             if (zipFileCandidates.Count > 0 || gzipFileCandidates.Count > 0)
             {
-                var unzippedFilePath = string.Empty;
+                var matchedFilePath = string.Empty;
 
                 foreach (var gzipCandidate in gzipFileCandidates)
                 {
-                    var fiFileToUnzip = new FileInfo(Path.Combine(workingDir, gzipCandidate));
-                    if (fiFileToUnzip.Exists)
+                    var gzippedMzidFile = new FileInfo(Path.Combine(workingDir, gzipCandidate));
+                    if (gzippedMzidFile.Exists)
                     {
-                        dotNetTools.GUnzipFile(fiFileToUnzip.FullName);
-                        unzippedFilePath = MostRecentUnzippedFile(dotNetTools);
+                        matchedFilePath = gzippedMzidFile.FullName;
                         break;
                     }
                 }
 
-                if (string.IsNullOrEmpty(unzippedFilePath))
+                if (string.IsNullOrEmpty(matchedFilePath))
                 {
                     foreach (var zipCandidate in zipFileCandidates)
                     {
-                        var fiFileToUnzip = new FileInfo(Path.Combine(workingDir, zipCandidate));
-                        if (fiFileToUnzip.Exists)
+                        var fileToUnzip = new FileInfo(Path.Combine(workingDir, zipCandidate));
+                        if (fileToUnzip.Exists)
                         {
-                            dotNetTools.UnzipFile(fiFileToUnzip.FullName);
-                            unzippedFilePath = MostRecentUnzippedFile(dotNetTools);
+                            dotNetTools.UnzipFile(fileToUnzip.FullName);
+                            var unzippedFilePath = MostRecentUnzippedFile(dotNetTools);
+
+                            dotNetTools.GZipFile(unzippedFilePath, true);
+                            matchedFilePath = dotNetTools.MostRecentZipFilePath;
                             break;
                         }
                     }
                 }
 
-                if (string.IsNullOrEmpty(unzippedFilePath))
+                if (string.IsNullOrEmpty(matchedFilePath))
                 {
                     OnErrorEvent("Could not find either the _msgfplus.zip file or the _msgfplus.mzid.gz file for dataset");
                     mAnalysisResources.RestoreCachedDataAndJobInfo();
@@ -1653,21 +1661,24 @@ namespace AnalysisManagerBase
 
                 if (prefixRequired)
                 {
-                    if (RenameDuplicatePHRPFile(
-                        workingDir, dataPkgJob.Dataset + "_msgfplus.mzid",
-                        workingDir, "Job" + dataPkgJob.Job + "_",
+
+                    var sourceFileName = dataPkgJob.Dataset + "_msgfplus.mzid.gz";
+                    var prefixToAdd = "Job" + dataPkgJob.Job + "_";
+
+                    var success = RenameDuplicatePHRPFile(
+                        workingDir, sourceFileName,
+                        workingDir, prefixToAdd,
                         dataPkgJob.Job,
-                        out unzippedFilePath))
-                    {
-                    }
-                    else
+                        out matchedFilePath);
+
+                    if (!success)
                     {
                         mAnalysisResources.RestoreCachedDataAndJobInfo();
                         return false;
                     }
                 }
 
-                lstFoundFiles.Add(unzippedFilePath);
+                lstFoundFiles.Add(matchedFilePath);
 
             }
 
