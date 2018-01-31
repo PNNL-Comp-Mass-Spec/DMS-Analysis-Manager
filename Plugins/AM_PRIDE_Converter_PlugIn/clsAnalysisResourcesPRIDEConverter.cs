@@ -148,12 +148,20 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
 
             // Obtain the PHRP-related files for the Peptide_Hit jobs defined for the data package associated with this data aggregation job
-            // Possibly also obtain the .mzXML file or .Raw file for each dataset
-            // The .mzXML file is required if we are creating Pride XML files (which were required for a "complete" submission
-            //   prior to May 2013; we now submit .mzid.gz files, .mgf files, and instrument binary files and thus don't need the .mzXML file.
-            //   However, if the MSGF+ search used searched a .mzML file and not a _dta.txt file, we _do_ need the .mzid file)
-            if (!RetrieveDataPackagePeptideHitJobPHRPFiles(udtOptions, out var dataPackagePeptideHitJobs, 0,
-                    clsAnalysisToolRunnerPRIDEConverter.PROGRESS_PCT_TOOL_RUNNER_STARTING))
+            // Possibly also obtain the .mzML file or .Raw file for each dataset
+            // Starting in 2013, we switched to submitting .mzid.gz files, .mgf files, and instrument binary files and thus don't need the .mzML file.
+            // However, if the MSGF+ search used a .mzML file and not a _dta.txt file, we _do_ need the .mzML file
+            //
+            // Prior to May 2013 the .mzML file was required when creating Pride XML files for a "complete" submission
+            // However, that mode is no longer required
+
+            var filesRetrieved = RetrieveDataPackagePeptideHitJobPHRPFiles(
+                udtOptions,
+                out var dataPackagePeptideHitJobs,
+                0,
+                clsAnalysisToolRunnerPRIDEConverter.PROGRESS_PCT_TOOL_RUNNER_STARTING);
+
+            if (!filesRetrieved)
             {
                 return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
