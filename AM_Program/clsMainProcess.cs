@@ -243,7 +243,8 @@ namespace AnalysisManagerProg
             // Make the initial log entry
             ShowTrace("Initializing log file " + clsPathUtils.CompactPathString(clsLogTools.CurrentFileAppenderPath, 60));
 
-            var startupMsg = "=== Started Analysis Manager V" + System.Windows.Forms.Application.ProductVersion + " ===== ";
+            var appVersion = Assembly.GetEntryAssembly().GetName().Version;
+            var startupMsg = "=== Started Analysis Manager V" + appVersion + " ===== ";
             LogMessage(startupMsg);
 
             var configFileName = m_MgrSettings.GetParam("configfilename");
