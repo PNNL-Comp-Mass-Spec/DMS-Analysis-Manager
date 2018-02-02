@@ -36,6 +36,7 @@ namespace AnalysisManagerProg
         private const string DECON2LS_TCP_ALREADY_REGISTERED_ERROR = "channel 'tcp' is already registered";
 
         private const bool ENABLE_LOGGER_TRACE_MODE = false;
+
         #endregion
 
         #region "Member variables"
@@ -241,7 +242,9 @@ namespace AnalysisManagerProg
             }
 
             // Make the initial log entry
-            ShowTrace("Initializing log file " + clsPathUtils.CompactPathString(clsLogTools.CurrentFileAppenderPath, 60));
+            var relativeLogFilePath = clsLogTools.CurrentFileAppenderPath;
+            var logFile = new FileInfo(relativeLogFilePath);
+            ShowTrace("Initializing log file " + clsPathUtils.CompactPathString(logFile.FullName, 60));
 
             var appVersion = Assembly.GetEntryAssembly().GetName().Version;
             var startupMsg = "=== Started Analysis Manager V" + appVersion + " ===== ";
@@ -269,7 +272,6 @@ namespace AnalysisManagerProg
             m_DebugLevel = (short)m_MgrSettings.GetParam("debuglevel", 2);
 
             // Make sure that the manager name matches the machine name (with a few exceptions)
-
             if (!hostName.StartsWith("emslmq", StringComparison.OrdinalIgnoreCase) &&
                 !hostName.StartsWith("emslpub", StringComparison.OrdinalIgnoreCase) &&
                 !hostName.StartsWith("monroe", StringComparison.OrdinalIgnoreCase) &&
@@ -277,7 +279,7 @@ namespace AnalysisManagerProg
             {
                 if (!m_MgrName.StartsWith(hostName, StringComparison.OrdinalIgnoreCase))
                 {
-                    LogError("Manager name does not match the host name: " + m_MgrName + " vs. " + hostName + "; update AnalysisManagerProg.exe.config");
+                    LogError("Manager name does not match the host name: " + m_MgrName + " vs. " + hostName + "; update " + configFileName);
                     return false;
                 }
             }
@@ -2061,7 +2063,7 @@ namespace AnalysisManagerProg
                 LogError("Exception in LogErrorToDatabasePeriodically", ex);
             }
         }
-        
+
         /// <summary>
         /// Reload the settings from AnalysisManagerProg.exe.config
         /// </summary>

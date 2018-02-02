@@ -855,8 +855,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     ProteinInputFilePath = fastaFileToSearch,
                     SaveProteinToPeptideMappingFile = true,
                     SearchAllProteinsForPeptideSequence = true,
-                    SearchAllProteinsSkipCoverageComputationSteps = true,
-                    ShowMessages = false
+                    SearchAllProteinsSkipCoverageComputationSteps = true
                 };
 
                 RegisterEvents(mPeptideToProteinMapper);
