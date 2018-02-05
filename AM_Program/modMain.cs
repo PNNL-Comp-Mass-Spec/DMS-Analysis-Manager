@@ -33,7 +33,7 @@ namespace AnalysisManagerProg
 {
     static class modMain
     {
-        public const string PROGRAM_DATE = "January 26, 2018";
+        public const string PROGRAM_DATE = "February 2, 2018";
 
         private static bool mCodeTestMode;
         private static bool mTraceMode;
@@ -180,6 +180,7 @@ namespace AnalysisManagerProg
 
                 var returnCode = mainProcess.Main();
 
+                PRISM.Logging.FileLogger.FlushPendingMessages();
                 return returnCode;
             }
             catch (Exception ex)
@@ -187,6 +188,7 @@ namespace AnalysisManagerProg
                 clsGlobal.LogError("Error occurred in modMain->Main: " + Environment.NewLine + ex.Message, ex);
                 ShowErrorMessage("Error occurred in modMain->Main: " + ex.Message);
                 clsParseCommandLine.PauseAtConsole(1500);
+                PRISM.Logging.FileLogger.FlushPendingMessages();
                 return -1;
             }
 
