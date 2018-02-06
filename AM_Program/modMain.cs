@@ -34,7 +34,7 @@ namespace AnalysisManagerProg
 {
     static class modMain
     {
-        public const string PROGRAM_DATE = "February 5, 2018";
+        public const string PROGRAM_DATE = "February 6, 2018";
 
         private static bool mCodeTestMode;
         private static bool mTraceMode;
@@ -121,7 +121,6 @@ namespace AnalysisManagerProg
                 }
 
                 // Note: CodeTestMode is enabled using command line switch /T
-
                 if (mCodeTestMode)
                 {
                     ShowTraceMessage("Code test mode enabled");
@@ -151,7 +150,7 @@ namespace AnalysisManagerProg
                     }
                     catch (Exception ex)
                     {
-                        LogTools.LogError("clsCodeTest exception", ex);
+                        LogTools.LogError("Exception calling clsCodeTest", ex);
                     }
 
                     ShowTraceMessage("Exiting application");
@@ -181,15 +180,15 @@ namespace AnalysisManagerProg
 
                 var returnCode = mainProcess.Main();
 
-                PRISM.Logging.FileLogger.FlushPendingMessages();
+                ShowTraceMessage("Exiting application");
+                FileLogger.FlushPendingMessages();
                 return returnCode;
             }
             catch (Exception ex)
             {
-                LogTools.LogError("Error occurred in modMain->Main: " + Environment.NewLine + ex.Message, ex);
-                ShowErrorMessage("Error occurred in modMain->Main: " + ex.Message);
+                LogTools.LogError("Error occurred in modMain->Main", ex);
                 clsParseCommandLine.PauseAtConsole(1500);
-                PRISM.Logging.FileLogger.FlushPendingMessages();
+                FileLogger.FlushPendingMessages();
                 return -1;
             }
 
@@ -203,7 +202,6 @@ namespace AnalysisManagerProg
             Console.WriteLine();
 
             DisplayOSVersion();
-
         }
 
         private static void DisplayOSVersion()
@@ -215,7 +213,6 @@ namespace AnalysisManagerProg
                 var osDescription = osVersionInfo.GetOSVersion();
 
                 Console.WriteLine("OS Version: " + osDescription);
-
             }
             catch (Exception ex)
             {
@@ -242,11 +239,6 @@ namespace AnalysisManagerProg
             clsMainProcess.EnableOfflineMode(runningLinux);
         }
 
-        private static string GetAppPath()
-        {
-            return Assembly.GetExecutingAssembly().Location;
-        }
-
         /// <summary>
         /// Returns the .NET assembly version followed by the program date
         /// </summary>
@@ -255,7 +247,7 @@ namespace AnalysisManagerProg
         /// <remarks></remarks>
         private static string GetAppVersion(string programDate)
         {
-            return Assembly.GetExecutingAssembly().GetName().Version + " (" + programDate + ")";
+            return PRISM.FileProcessor.ProcessFilesOrFoldersBase.GetAppVersion(programDate);
         }
 
         private static bool SetOptionsUsingCommandLineParameters(clsParseCommandLine commandLineParser)
@@ -334,9 +326,9 @@ namespace AnalysisManagerProg
             }
         }
 
-        private static void ShowErrorMessage(string message)
+        private static void ShowErrorMessage(string message, Exception ex = null)
         {
-            ConsoleMsgUtils.ShowError(message);
+            ConsoleMsgUtils.ShowError(message, ex);
         }
 
         private static void ShowErrorMessage(string title, IEnumerable<string> errorMessages)
@@ -394,7 +386,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                LogTools.LogError("Error displaying the program syntax: " + ex.Message, ex);
+                ConsoleMsgUtils.ShowWarning("Error displaying the program syntax: " + ex.Message);
             }
         }
 

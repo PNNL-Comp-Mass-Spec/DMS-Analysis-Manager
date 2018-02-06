@@ -518,12 +518,12 @@ namespace AnalysisManagerProg
                     switch (taskReturn)
                     {
                         case clsDBTask.RequestTaskResult.NoTaskFound:
-                            ShowTrace("No tasks found");
+                            ShowTrace("No tasks found for " + m_MgrName);
 
                             // No tasks found
                             if (m_DebugLevel >= 3)
                             {
-                                LogMessage("No analysis jobs found");
+                                LogMessage("No analysis jobs found for " + m_MgrName);
                             }
                             requestJobs = false;
                             criticalMgrErrorCount = 0;
@@ -531,7 +531,7 @@ namespace AnalysisManagerProg
 
                             break;
                         case clsDBTask.RequestTaskResult.ResultError:
-                            ShowTrace("Error requesting a task");
+                            ShowTrace("Error requesting a task for " + m_MgrName);
 
                             // There was a problem getting the task; errors were logged by RequestTaskResult
                             criticalMgrErrorCount += 1;
@@ -539,7 +539,7 @@ namespace AnalysisManagerProg
                             break;
                         case clsDBTask.RequestTaskResult.TaskFound:
 
-                            ShowTrace("Task found");
+                            ShowTrace("Task found for " + m_MgrName);
 
                             tasksStartedCount += 1;
                             successiveDeadLockCount = 0;
@@ -1812,15 +1812,16 @@ namespace AnalysisManagerProg
         /// Read settings from file AnalysisManagerProg.exe.config
         /// </summary>
         /// <returns>String dictionary of settings as key/value pairs; null on error</returns>
-        private Dictionary<string, string> ReadMgrSettingsFile()
+        private Dictionary<string, string> ReadMgrSettingsFile(out string configFilePath)
         {
 
             XmlDocument configDoc;
+            configFilePath = string.Empty;
 
             try
             {
                 // Construct the path to the config document
-                var configFilePath = Path.Combine(m_MgrFolderPath, m_MgrExeName + ".config");
+                configFilePath = Path.Combine(m_MgrFolderPath, m_MgrExeName + ".config");
                 var configfile = new FileInfo(configFilePath);
                 if (!configfile.Exists)
                 {
@@ -1894,7 +1895,7 @@ namespace AnalysisManagerProg
             // Method ReadMgrSettingsFile() works with both versions of the .exe.config file
 
             // Load initial settings into string dictionary
-            var lstMgrSettings = ReadMgrSettingsFile();
+            var lstMgrSettings = ReadMgrSettingsFile(out var configFilePath);
 
             if (lstMgrSettings == null)
                 return null;
