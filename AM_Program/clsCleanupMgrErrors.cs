@@ -178,7 +178,7 @@ namespace AnalysisManagerProg
             }
 
             // If successful, call SP with ReportManagerErrorCleanup @ActionCode=2
-            //  otherwise call SP ReportManagerErrorCleanup with @ActionCode=3
+            // Otherwise call SP ReportManagerErrorCleanup with @ActionCode=3
 
             if (success)
             {

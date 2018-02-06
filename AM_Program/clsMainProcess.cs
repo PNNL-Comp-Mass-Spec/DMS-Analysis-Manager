@@ -89,7 +89,7 @@ namespace AnalysisManagerProg
         public bool DisableMyEMSL { get; set; }
 
         /// <summary>
-        /// When true, show additional trace log messages
+        /// When true, show additional messages at the console
         /// </summary>
         public bool TraceMode { get; set; }
 

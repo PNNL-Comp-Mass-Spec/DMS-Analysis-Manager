@@ -139,7 +139,7 @@ namespace AnalysisManagerProg
         public string ManagerName => GetParam(MGR_PARAM_MGR_NAME, Environment.MachineName + "_Undefined-Manager");
 
         /// <summary>
-        /// True when TraceMode has been enabled at the command line via /trace
+        /// When true, show additional messages at the console
         /// </summary>
         public bool TraceMode { get; }
 

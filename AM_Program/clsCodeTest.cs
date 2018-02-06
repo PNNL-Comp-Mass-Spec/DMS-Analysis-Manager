@@ -41,7 +41,7 @@ namespace AnalysisManagerProg
         #region "Properties"
 
         /// <summary>
-        /// When true, show extra messages at the console
+        /// When true, show additional messages at the console
         /// </summary>
         public bool TraceMode { get; set; }
 

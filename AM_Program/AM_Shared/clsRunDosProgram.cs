@@ -166,7 +166,7 @@ namespace AnalysisManagerBase
         public int DebugLevel { get; set; }
 
         /// <summary>
-        /// When true, then echoes, in real time, text written to the Console by the external program
+        /// When true, echoes, in real time, text written to the Console by the external program
         /// Ignored if CreateNoWindow = False
         /// </summary>
         public bool EchoOutputToConsole { get; set; } = true;
@@ -290,7 +290,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="workDir">Workdirectory for input/output files, if any</param>
+        /// <param name="workDir">Work directory for input/output files, if any</param>
         /// <param name="debugLevel">Debug level (Higher values mean more log messages)</param>
         /// <remarks></remarks>
         public clsRunDosProgram(string workDir, int debugLevel = 1)
