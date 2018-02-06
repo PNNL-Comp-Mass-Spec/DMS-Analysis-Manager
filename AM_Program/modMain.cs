@@ -258,6 +258,7 @@ namespace AnalysisManagerProg
                 "T",
                 "Test",
                 "Trace",
+                "V",
                 "NQ",
                 "NoMyEMSL",
                 "DLL",
@@ -281,10 +282,14 @@ namespace AnalysisManagerProg
 
                 if (commandLineParser.IsParameterPresent("T"))
                     mCodeTestMode = true;
+
                 if (commandLineParser.IsParameterPresent("Test"))
                     mCodeTestMode = true;
 
                 if (commandLineParser.IsParameterPresent("Trace"))
+                    mTraceMode = true;
+
+                if (commandLineParser.IsParameterPresent("V"))
                     mTraceMode = true;
 
                 if (commandLineParser.IsParameterPresent("NQ"))
@@ -340,11 +345,12 @@ namespace AnalysisManagerProg
         {
             try
             {
-                var exeName = Path.GetFileName(GetAppPath());
+                var exeName = Path.GetFileName(PRISM.FileProcessor.ProcessFilesOrFoldersBase.GetAppPath());
 
                 Console.WriteLine("This program processes DMS analysis jobs for PRISM. Normal operation is to run the program without any command line switches.");
                 Console.WriteLine();
-                Console.WriteLine("Program syntax:\n" + exeName + " [/NQ] [/NoMyEMSL] [/T] [/Trace]");
+                Console.WriteLine("Program syntax:" + Environment.NewLine +
+                                  exeName + " [/NQ] [/NoMyEMSL] [/T] [/Trace]");
                 Console.WriteLine("[/DLL] [/Offline] [/Linux] [/Version]");
 
                 Console.WriteLine();
@@ -354,7 +360,7 @@ namespace AnalysisManagerProg
                 Console.WriteLine();
                 Console.WriteLine("Use /T or /Test to start the program in code test mode.");
                 Console.WriteLine();
-                Console.WriteLine("Use /Trace to enable trace mode, where debug messages are written to the command prompt");
+                Console.WriteLine("Use /Trace or /V to enable trace mode, where debug messages are written to the command prompt");
                 Console.WriteLine();
                 Console.WriteLine("Use /DLL to display the version of all DLLs in the same folder as this .exe");
                 Console.WriteLine("Use /DLL:Path to display the version of all DLLs in the specified folder (surround path with double quotes if spaces)");
@@ -374,8 +380,8 @@ namespace AnalysisManagerProg
                 Console.WriteLine("Version: " + GetAppVersion(PROGRAM_DATE));
                 Console.WriteLine();
 
-                Console.WriteLine("E-mail: matthew.monroe@pnnl.gov or matt@alchemistmatt.com");
-                Console.WriteLine("Website: http://omics.pnl.gov/ or http://panomics.pnnl.gov/");
+                Console.WriteLine("E-mail: matthew.monroe@pnnl.gov or proteomics@pnnl.gov");
+                Console.WriteLine("Website: https://omics.pnl.gov/ or https://panomics.pnnl.gov/");
                 Console.WriteLine();
 
                 Console.WriteLine("Licensed under the Apache License, Version 2.0; you may not use this file except in compliance with the License.  " +
