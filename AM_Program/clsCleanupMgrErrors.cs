@@ -112,10 +112,11 @@ namespace AnalysisManagerProg
         /// <param name="workingDirPath"></param>
         public clsCleanupMgrErrors(string mgrConfigDBConnectionString, string managerName, int debugLevel, string mgrFolderPath, string workingDirPath)
         {
+            if (string.IsNullOrEmpty(mgrConfigDBConnectionString))
+                throw new Exception("Manager config DB connection string is not defined");
+
             if (string.IsNullOrEmpty(managerName))
-            {
                 throw new Exception("Manager name is not defined");
-            }
 
             mMgrConfigDBConnectionString = string.Copy(mgrConfigDBConnectionString);
             mManagerName = string.Copy(managerName);
