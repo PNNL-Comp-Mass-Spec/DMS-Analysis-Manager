@@ -190,10 +190,7 @@ namespace AnalysisManagerMODPlusPlugin
         /// <remarks></remarks>
         public void AbortProcessingNow()
         {
-            if ((mCmdRunner != null))
-            {
-                mCmdRunner.AbortProgramNow();
-            }
+            mCmdRunner?.AbortProgramNow();
         }
 
         public void StartAnalysis()
