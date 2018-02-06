@@ -186,6 +186,9 @@ namespace AnalysisManagerProg
                 LogTools.CreateDbLogger(dmsConnectionString, "Analysis Tool Manager: " + hostName, TraceMode && ENABLE_LOGGER_TRACE_MODE);
             }
 
+            // Get the manager settings from the database or from ManagerSettingsLocal.xml if clsGlobal.OfflineMode is true
+            // If you get an exception here while debugging in Visual Studio, be sure
+            //   that "UsingDefaults" is set to False in AppName.exe.config
             try
             {
                 ShowTrace("Reading application config file");
@@ -193,17 +196,8 @@ namespace AnalysisManagerProg
                 // Load settings from config file AnalysisManagerProg.exe.config
                 var lstMgrSettings = LoadMgrSettingsFromFile();
 
-                // Get the manager settings from the database or from ManagerSettingsLocal.xml if clsGlobal.OfflineMode is true
-                // If you get an exception here while debugging in Visual Studio, be sure
-                //   that "UsingDefaults" is set to False in CaptureTaskManager.exe.config
                 try
                 {
-                    if (TraceMode)
-                    {
-                        ShowTrace("Instantiating clsAnalysisMgrSettings");
-                        foreach (var setting in lstMgrSettings)
-                            ShowTrace(string.Format("  {0}: {1}", setting.Key, setting.Value));
-                    }
                     m_MgrSettings = new clsAnalysisMgrSettings(lstMgrSettings, m_MgrFolderPath, TraceMode);
                 }
                 catch (Exception ex)
@@ -1946,6 +1940,12 @@ namespace AnalysisManagerProg
             if (!lstMgrSettings.ContainsKey(clsAnalysisMgrSettings.MGR_PARAM_DEFAULT_DMS_CONN_STRING))
             {
                 lstMgrSettings.Add(clsAnalysisMgrSettings.MGR_PARAM_DEFAULT_DMS_CONN_STRING, Properties.Settings.Default.DefaultDMSConnString);
+            }
+
+            if (TraceMode)
+            {
+                ShowTrace("Settings loaded from " + clsPathUtils.CompactPathString(configFilePath, 60));
+                clsAnalysisMgrSettings.ShowDictionaryTrace(lstMgrSettings);
             }
 
             return lstMgrSettings;

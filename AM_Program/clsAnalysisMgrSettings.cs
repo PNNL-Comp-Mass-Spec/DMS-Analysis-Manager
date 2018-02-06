@@ -13,7 +13,6 @@ using System.Data;
 using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Xml;
 using AnalysisManagerBase;
 using PRISM;
@@ -151,7 +150,7 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="lstMgrSettings">Manager settings loaded from file AnalysisManagerProg.exe.config</param>
+        /// <param name="lstMgrSettings">Manager settings loaded from file AppName.exe.config</param>
         /// <param name="mgrFolderPath"></param>
         /// <param name="traceMode"></param>
         /// <remarks></remarks>
@@ -178,14 +177,7 @@ namespace AnalysisManagerProg
             if (TraceMode)
             {
                 ShowTraceMessage("Initialized IMgrParams");
-
-                Console.ForegroundColor = ConsoleMsgUtils.DebugFontColor;
-                foreach (var key in from item in mParamDictionary.Keys orderby item select item)
-                {
-                    var value = mParamDictionary[key];
-                    Console.WriteLine("  {0,-30} {1}", key, value);
-                }
-                Console.ResetColor();
+                ShowDictionaryTrace(mParamDictionary);
             }
         }
 
@@ -245,7 +237,7 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Updates manager settings, then loads settings from the database or from ManagerSettingsLocal.xml if clsGlobal.OfflineMode is true
         /// </summary>
-        /// <param name="configFileSettings">Manager settings loaded from file AnalysisManagerProg.exe.config</param>
+        /// <param name="configFileSettings">Manager settings loaded from file AppName.exe.config</param>
         /// <returns>True if successful; False on error</returns>
         /// <remarks></remarks>
         public bool LoadSettings(Dictionary<string, string> configFileSettings)
@@ -863,6 +855,23 @@ namespace AnalysisManagerProg
             {
                 mParamDictionary.Add(itemKey, itemValue);
             }
+        }
+
+        /// <summary>
+        /// Show contents of a dictionary
+        /// </summary>
+        /// <param name="settings"></param>
+        public static void ShowDictionaryTrace(IReadOnlyDictionary<string, string> settings)
+        {
+            Console.ForegroundColor = ConsoleMsgUtils.DebugFontColor;
+            foreach (var key in from item in settings.Keys orderby item select item)
+            {
+                var value = settings[key];
+                var keyWidth = Math.Max(30, Math.Ceiling(key.Length / 15.0) * 15);
+                var formatString = "  {0,-" + keyWidth + "} {1}";
+                Console.WriteLine(formatString, key, value);
+            }
+            Console.ResetColor();
         }
 
         private static void ShowTraceMessage(string message)
