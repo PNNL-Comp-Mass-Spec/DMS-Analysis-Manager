@@ -814,7 +814,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
                 m_progress = PROGRESS_PCT_PHOSPHO_FDR_RUNNING;
 
-                mCmdRunner = new clsRunDosProgram(m_WorkDir);
+                mCmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
                 RegisterEvents(mCmdRunner);
                 mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
@@ -993,7 +993,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 LogDebug(progLoc + cmdStr);
             }
 
-            mCmdRunner = new clsRunDosProgram(m_WorkDir);
+            mCmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 

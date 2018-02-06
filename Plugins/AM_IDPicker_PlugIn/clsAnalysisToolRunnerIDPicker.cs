@@ -1207,7 +1207,7 @@ namespace AnalysisManagerIDPickerPlugIn
             mCmdRunnerDescription = string.Copy(strProgramDescription);
             ClearConcurrentBag(ref mCmdRunnerErrors);
 
-            var cmdRunner = new clsRunDosProgram(m_WorkDir);
+            var cmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
             RegisterEvents(cmdRunner);
             cmdRunner.ErrorEvent += CmdRunner_ConsoleErrorEvent;
             cmdRunner.LoopWaiting += CmdRunner_LoopWaiting;

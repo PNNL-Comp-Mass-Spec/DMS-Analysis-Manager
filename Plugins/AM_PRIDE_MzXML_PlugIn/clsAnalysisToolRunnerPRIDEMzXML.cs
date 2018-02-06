@@ -49,7 +49,7 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
 
             LogMessage("Running MSDataFileTrimmer");
 
-            mCmdRunner = new clsRunDosProgram(m_WorkDir);
+            mCmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 

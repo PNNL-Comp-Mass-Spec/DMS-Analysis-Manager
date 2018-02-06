@@ -162,7 +162,8 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Debug level for logging
         /// </summary>
-        public int DebugLevel { get; set; } = 0;
+        /// <remarks>Higher values mean more log messages</remarks>
+        public int DebugLevel { get; set; }
 
         /// <summary>
         /// When true, then echoes, in real time, text written to the Console by the external program
@@ -290,10 +291,12 @@ namespace AnalysisManagerBase
         /// Constructor
         /// </summary>
         /// <param name="workDir">Workdirectory for input/output files, if any</param>
+        /// <param name="debugLevel">Debug level (Higher values mean more log messages)</param>
         /// <remarks></remarks>
-        public clsRunDosProgram(string workDir)
+        public clsRunDosProgram(string workDir, int debugLevel = 1)
         {
             WorkDir = workDir;
+            DebugLevel = debugLevel;
         }
 
         /// <summary>

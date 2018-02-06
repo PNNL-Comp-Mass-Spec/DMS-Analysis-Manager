@@ -106,7 +106,7 @@ namespace AnalysisManagerSMAQCPlugIn
                     LogDebug(progLoc + " " + cmdStr);
                 }
 
-                mCmdRunner = new clsRunDosProgram(m_WorkDir)
+                mCmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel)
                 {
                     CreateNoWindow = true,
                     CacheStandardOutput = true,

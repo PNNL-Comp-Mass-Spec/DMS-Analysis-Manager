@@ -465,7 +465,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // Set up and execute a program runner to run MzidToTsvConverter.exe
                 var cmdStr = GetMZIDtoTSVCommandLine(mzidFileName, tsvFileName, m_WorkDir, mzidToTsvConverterProgLoc);
 
-                var mzidToTsvRunner = new clsRunDosProgram(m_WorkDir)
+                var mzidToTsvRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel)
                 {
                     CreateNoWindow = true,
                     CacheStandardOutput = true,
@@ -610,7 +610,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     OnStatusEvent(javaProgLoc + " " + cmdStr);
                 }
 
-                var mzidToTsvRunner = new clsRunDosProgram(m_WorkDir)
+                var mzidToTsvRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel)
                 {
                     CreateNoWindow = true,
                     CacheStandardOutput = true,

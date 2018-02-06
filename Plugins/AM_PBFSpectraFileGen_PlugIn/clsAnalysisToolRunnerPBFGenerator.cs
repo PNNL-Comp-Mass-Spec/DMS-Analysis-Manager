@@ -393,7 +393,7 @@ namespace AnalysisManagerPBFGenerator
                 LogDebug(progLoc + cmdStr);
             }
 
-            var cmdRunner = new clsRunDosProgram(m_WorkDir);
+            var cmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
             RegisterEvents(cmdRunner);
             cmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 

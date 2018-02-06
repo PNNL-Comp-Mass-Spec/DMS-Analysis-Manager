@@ -71,7 +71,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 LogMessage("Running DTA_Refinery");
             }
 
-            mCmdRunner = new clsRunDosProgram(m_WorkDir)
+            mCmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel)
             {
                 CreateNoWindow = false,
                 EchoOutputToConsole = false,

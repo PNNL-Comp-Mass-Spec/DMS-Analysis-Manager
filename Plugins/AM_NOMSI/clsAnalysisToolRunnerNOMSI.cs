@@ -395,7 +395,7 @@ namespace AnalysisManagerNOMSIPlugin
 
             mCurrentConsoleOutputFile = Path.Combine(m_WorkDir, NOMSI_CONSOLE_OUTPUT_BASE + scanNumber + ".txt");
 
-            var cmdRunner = new clsRunDosProgram(m_WorkDir)
+            var cmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel)
             {
                 CreateNoWindow = true,
                 CacheStandardOutput = false,

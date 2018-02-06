@@ -1994,7 +1994,7 @@ namespace AnalysisManagerMSGFPlugin
 
             LogDebug(mJavaProgLoc + " " + cmdStr);
 
-            mMSGFRunner = new clsRunDosProgram(m_WorkDir)
+            mMSGFRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel)
             {
                 CreateNoWindow = false,
                 CacheStandardOutput = false,

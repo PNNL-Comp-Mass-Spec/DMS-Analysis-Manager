@@ -3887,13 +3887,12 @@ namespace AnalysisManagerBase
                     LogDebug(appPath + " " + args);
                 }
 
-                var progRunner = new clsRunDosProgram(clsGlobal.GetAppFolderPath())
+                var progRunner = new clsRunDosProgram(clsGlobal.GetAppFolderPath(), m_DebugLevel)
                 {
                     CacheStandardOutput = false,
                     CreateNoWindow = true,
                     EchoOutputToConsole = true,
                     WriteConsoleOutputToFile = false,
-                    DebugLevel = 1,
                     MonitorInterval = 250
                 };
                 RegisterEvents(progRunner);

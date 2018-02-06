@@ -789,7 +789,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
 
                 var consoleOutputFilePath = Path.Combine(logFileDir, "MSGFPlus_BuildSA_ConsoleOutput.txt");
-                var buildSA = new clsRunDosProgram(fiFastaFile.DirectoryName)
+                var buildSA = new clsRunDosProgram(fiFastaFile.DirectoryName, debugLevel)
                 {
                     CreateNoWindow = true,
                     CacheStandardOutput = true,

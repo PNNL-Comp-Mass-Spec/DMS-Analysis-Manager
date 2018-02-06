@@ -189,7 +189,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                 LogDebug(JavaProgLoc + " " + cmdStr);
 
-                var cmdRunner = new clsRunDosProgram(mMSAlignWorkFolderPath);
+                var cmdRunner = new clsRunDosProgram(mMSAlignWorkFolderPath, m_DebugLevel);
                 RegisterEvents(cmdRunner);
                 cmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
@@ -728,7 +728,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
                 LogDebug(JavaProgLoc + " " + cmdStr);
 
-                var cmdRunner = new clsRunDosProgram(mMSAlignWorkFolderPath);
+                var cmdRunner = new clsRunDosProgram(mMSAlignWorkFolderPath, m_DebugLevel);
                 RegisterEvents(cmdRunner);
                 cmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 

@@ -182,7 +182,7 @@ namespace AnalysisManagerMSAlignPlugIn
 
                 LogDebug(JavaProgLoc + " " + cmdStr);
 
-                mCmdRunner = new clsRunDosProgram(mMSAlignWorkFolderPath);
+                mCmdRunner = new clsRunDosProgram(mMSAlignWorkFolderPath, m_DebugLevel);
                 RegisterEvents(mCmdRunner);
                 mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 

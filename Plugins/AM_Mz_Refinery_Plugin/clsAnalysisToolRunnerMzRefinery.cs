@@ -567,7 +567,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 LogDebug(javaExePath + " " + cmdStr);
             }
 
-            mCmdRunner = new clsRunDosProgram(m_WorkDir);
+            mCmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
@@ -1101,7 +1101,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 LogDebug(mMSConvertProgLoc + cmdStr);
             }
 
-            mCmdRunner = new clsRunDosProgram(m_WorkDir);
+            mCmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
@@ -1239,7 +1239,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 LogDebug(mPpmErrorCharterProgLoc + cmdStr);
             }
 
-            mCmdRunner = new clsRunDosProgram(m_WorkDir);
+            mCmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 

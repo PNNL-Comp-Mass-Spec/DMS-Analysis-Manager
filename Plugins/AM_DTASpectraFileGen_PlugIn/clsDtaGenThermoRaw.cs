@@ -411,7 +411,7 @@ namespace DTASpectraFileGen
             m_NumScans = scanStop - scanStart + 1;
 
             // Setup a program runner tool to make the spectra files
-            mCmdRunner = new clsRunDosProgram(m_WorkDir);
+            mCmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
             mCmdRunner.ErrorEvent += CmdRunner_ErrorEvent;
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 

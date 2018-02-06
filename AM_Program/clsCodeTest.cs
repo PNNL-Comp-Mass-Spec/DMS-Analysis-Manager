@@ -485,7 +485,7 @@ namespace AnalysisManagerProg
             var dataFilePath = @"C:\DMS_WorkDir\QC_ShewPartialInj_15_02-100ng_Run-1_20Jan16_Pippin_15-08-53.raw";
             var cmdStr = dataFilePath + @" --filter ""peakPicking true 1-"" --filter ""threshold count 500 most-intense"" --mgf -o C:\DMS_WorkDir";
 
-            m_RunProgTool = new clsRunDosProgram(workDir)
+            m_RunProgTool = new clsRunDosProgram(workDir, m_DebugLevel)
             {
                 CreateNoWindow = true,
                 CacheStandardOutput = true,
@@ -1473,7 +1473,7 @@ namespace AnalysisManagerProg
 
             var workDir = Path.GetDirectoryName(appPath);
 
-            var progRunner = new clsRunDosProgram(workDir)
+            var progRunner = new clsRunDosProgram(workDir, m_DebugLevel)
             {
                 CacheStandardOutput = true,
                 CreateNoWindow = true,
@@ -1518,7 +1518,7 @@ namespace AnalysisManagerProg
 
             var programDescription = "IDPQonvert";
 
-            var progRunner = new clsRunDosProgram(m_WorkDir)
+            var progRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel)
             {
                 CreateNoWindow = false,
                 EchoOutputToConsole = false

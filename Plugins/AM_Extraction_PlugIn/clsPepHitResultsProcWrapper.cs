@@ -193,7 +193,7 @@ namespace AnalysisManagerExtractionPlugin
                     OnDebugEvent(progLoc + " " + cmdStr);
                 }
 
-                var cmdRunner = new clsRunDosProgram(psmResultsFile.Directory.FullName)
+                var cmdRunner = new clsRunDosProgram(psmResultsFile.Directory.FullName, m_DebugLevel)
                 {
                     CreateNoWindow = true,
                     CacheStandardOutput = true,

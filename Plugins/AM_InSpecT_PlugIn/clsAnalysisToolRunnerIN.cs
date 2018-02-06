@@ -420,7 +420,7 @@ namespace AnalysisManagerInSpecTPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            mCmdRunner = new clsRunDosProgram(InspectDir);
+            mCmdRunner = new clsRunDosProgram(InspectDir, m_DebugLevel);
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 

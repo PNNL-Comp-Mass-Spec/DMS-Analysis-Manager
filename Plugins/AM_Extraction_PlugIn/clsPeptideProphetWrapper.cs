@@ -97,7 +97,7 @@ namespace AnalysisManagerExtractionPlugin
                     OnDebugEvent(m_PeptideProphetRunnerLocation + " " + cmdStr);
                 }
 
-                mCmdRunner = new clsRunDosProgram(inputFile.Directory.FullName)
+                mCmdRunner = new clsRunDosProgram(inputFile.Directory.FullName, DebugLevel)
                 {
                     CreateNoWindow = true,
                     CacheStandardOutput = true,

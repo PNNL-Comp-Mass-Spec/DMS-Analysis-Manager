@@ -3102,7 +3102,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         {
             var prideConverterVersion = "unknown";
 
-            mCmdRunner = new clsRunDosProgram(m_WorkDir);
+            mCmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
@@ -4019,7 +4019,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 return false;
             }
 
-            mCmdRunner = new clsRunDosProgram(m_WorkDir);
+            mCmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 

@@ -129,7 +129,7 @@ namespace AnalysisManagerProSightQuantPlugIn
                     LogDebug(mTargetedWorkflowsProgLoc + cmdStr);
                 }
 
-                mCmdRunner = new clsRunDosProgram(m_WorkDir);
+                mCmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
                 RegisterEvents(mCmdRunner);
                 mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 

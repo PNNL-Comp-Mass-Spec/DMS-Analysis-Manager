@@ -871,7 +871,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             // Lookup the p-value to filter on
             var pthresh = m_jobParams.GetJobParameter("InspectPvalueThreshold", "0.1");
 
-            var cmdRunner = new clsRunDosProgram(InspectDir);
+            var cmdRunner = new clsRunDosProgram(InspectDir, m_DebugLevel);
             RegisterEvents(cmdRunner);
 
             if (m_DebugLevel > 4)

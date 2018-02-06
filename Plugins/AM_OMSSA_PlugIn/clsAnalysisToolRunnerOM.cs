@@ -56,7 +56,7 @@ namespace AnalysisManagerOMSSAPlugIn
 
             LogMessage("Running OMSSA");
 
-            var cmdRunner = new clsRunDosProgram(m_WorkDir);
+            var cmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
             RegisterEvents(cmdRunner);
             cmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
@@ -176,7 +176,7 @@ namespace AnalysisManagerOMSSAPlugIn
 
                 LogMessage("Running OMSSA2PepXml");
 
-                var cmdRunner = new clsRunDosProgram(m_WorkDir);
+                var cmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
                 RegisterEvents(cmdRunner);
                 cmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 

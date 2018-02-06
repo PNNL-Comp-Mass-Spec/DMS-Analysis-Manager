@@ -81,7 +81,7 @@ namespace AnalysisManagerInSpecTPlugIn
 
                 pythonProgLoc = mgrParams.GetParam("pythonprogloc");
 
-                var objPrepDB = new clsRunDosProgram(InspectDir + Path.DirectorySeparatorChar);
+                var objPrepDB = new clsRunDosProgram(InspectDir + Path.DirectorySeparatorChar, DebugLevel);
                 objPrepDB.ErrorEvent += CmdRunner_ErrorEvent;
 
                 // Check to see if another Analysis Manager is already creating the indexed db files
@@ -202,7 +202,7 @@ namespace AnalysisManagerInSpecTPlugIn
                     if (blnUseShuffledDB)
                     {
                         // Set up and execute a program runner to run ShuffleDB_seed.py
-                        var objShuffleDB = new clsRunDosProgram(InspectDir + Path.DirectorySeparatorChar);
+                        var objShuffleDB = new clsRunDosProgram(InspectDir + Path.DirectorySeparatorChar, DebugLevel);
                         objShuffleDB.ErrorEvent += CmdRunner_ErrorEvent;
 
                         cmdStr = " " + ShuffleDBScriptPath + " -r " + dbTrieFilenameBeforeShuffle + " -w " + dbTrieFilename;

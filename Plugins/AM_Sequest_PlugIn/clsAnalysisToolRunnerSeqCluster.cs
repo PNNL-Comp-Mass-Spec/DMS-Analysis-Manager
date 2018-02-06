@@ -203,7 +203,7 @@ namespace AnalysisManagerSequestPlugin
                 mLastOutFileCountTime = DateTime.UtcNow;
                 mLastActiveNodeQueryTime = DateTime.UtcNow;
 
-                mCmdRunner = new clsRunDosProgram(m_WorkDir);
+                mCmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
                 RegisterEvents(mCmdRunner);
                 mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
@@ -830,7 +830,7 @@ namespace AnalysisManagerSequestPlugin
             {
                 if (m_UtilityRunner == null)
                 {
-                    m_UtilityRunner = new clsRunDosProgram(strWorkDir);
+                    m_UtilityRunner = new clsRunDosProgram(strWorkDir, m_DebugLevel);
                     RegisterEvents(m_UtilityRunner);
                     m_UtilityRunner.Timeout += m_UtilityRunner_Timeout;
                 }

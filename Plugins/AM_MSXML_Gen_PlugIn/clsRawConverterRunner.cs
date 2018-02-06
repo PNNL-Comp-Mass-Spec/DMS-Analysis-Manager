@@ -75,7 +75,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                 var consoleOutputFilePath = Path.Combine(fiSourceFile.Directory.FullName, "RawConverter_ConsoleOutput.txt");
 
-                var progRunner = new clsRunDosProgram(fiRawConverter.Directory.FullName)
+                var progRunner = new clsRunDosProgram(fiRawConverter.Directory.FullName, m_DebugLevel)
                 {
                     CreateNoWindow = true,
                     CacheStandardOutput = true,

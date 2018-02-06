@@ -152,7 +152,7 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
 
             mConsoleOutputFile = Path.Combine(m_WorkDir, UIMF_CONVERTER_CONSOLE_OUTPUT);
 
-            var cmdRunner = new clsRunDosProgram(m_WorkDir)
+            var cmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel)
             {
                 CreateNoWindow = true,
                 CacheStandardOutput = false,

@@ -211,7 +211,7 @@ namespace DTASpectraFileGen
             }
 
             // Setup a program runner tool to make the spectra files
-            mCmdRunner = new clsRunDosProgram(m_WorkDir)
+            mCmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel)
             {
                 CreateNoWindow = true,
                 CacheStandardOutput = true,

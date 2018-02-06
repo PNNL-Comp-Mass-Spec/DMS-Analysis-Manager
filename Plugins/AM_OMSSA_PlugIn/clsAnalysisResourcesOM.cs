@@ -111,7 +111,7 @@ namespace AnalysisManagerOMSSAPlugIn
 
                 LogMessage("Running formatdb.exe");
 
-                mCmdRunner = new clsRunDosProgram(m_WorkingDir);
+                mCmdRunner = new clsRunDosProgram(m_WorkingDir, m_DebugLevel);
                 RegisterEvents(mCmdRunner);
 
                 if (m_DebugLevel > 4)

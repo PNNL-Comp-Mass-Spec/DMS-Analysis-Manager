@@ -45,7 +45,7 @@ namespace AnalysisManagerMultiAlignPlugIn
 
             LogMessage("Running MultiAlign");
 
-            mCmdRunner = new clsRunDosProgram(m_WorkDir);
+            mCmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
             RegisterEvents(mCmdRunner);
             mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 

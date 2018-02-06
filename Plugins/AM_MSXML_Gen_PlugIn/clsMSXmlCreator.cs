@@ -84,7 +84,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             }
 
             // Setup a program runner tool to call MSConvert
-            var oProgRunner = new clsRunDosProgram(m_WorkDir);
+            var oProgRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
             RegisterEvents(oProgRunner);
 
             // Set up command

@@ -433,7 +433,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 LogDebug(javaProgLoc + " " + cmdStr);
 
-                var progRunner = new clsRunDosProgram(m_WorkDir)
+                var progRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel)
                 {
                     CreateNoWindow = true,
                     CacheStandardOutput = false,

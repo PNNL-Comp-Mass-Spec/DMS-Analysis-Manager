@@ -209,7 +209,7 @@ namespace AnalysisManagerMODPlusPlugin
                 LogDebug(msConvertProgLoc + " " + cmdStr);
             }
 
-            var msConvertRunner = new clsRunDosProgram(m_WorkDir);
+            var msConvertRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel);
             RegisterEvents(msConvertRunner);
             msConvertRunner.LoopWaiting += MSConvert_CmdRunner_LoopWaiting;
 
