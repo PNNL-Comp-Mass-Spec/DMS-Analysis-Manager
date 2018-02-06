@@ -284,7 +284,9 @@ namespace AnalysisManagerProg
 
             // Setup the tool for getting tasks
             ShowTrace("Instantiate m_AnalysisTask as new clsAnalysisJob");
-            m_AnalysisTask = new clsAnalysisJob(m_MgrSettings, m_DebugLevel);
+            m_AnalysisTask = new clsAnalysisJob(m_MgrSettings, m_DebugLevel) {
+                TraceMode = TraceMode
+            };
 
             m_WorkDirPath = m_MgrSettings.GetParam(clsAnalysisMgrSettings.MGR_PARAM_WORK_DIR);
 

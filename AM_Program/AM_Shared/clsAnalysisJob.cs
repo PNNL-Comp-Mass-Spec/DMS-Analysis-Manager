@@ -160,6 +160,11 @@ namespace AnalysisManagerBase
         /// </summary>
         public bool TaskClosed { get; set; }
 
+        /// <summary>
+        /// When true, show additional messages at the console
+        /// </summary>
+        public bool TraceMode { get; set; }
+
         #endregion
 
         #region "Methods"
@@ -1013,7 +1018,7 @@ namespace AnalysisManagerBase
                 var remoteInfo = runJobsRemotely ? clsRemoteTransferUtility.GetRemoteInfoXml(m_MgrParams) : string.Empty;
                 cmd.Parameters.Add(new SqlParameter("@remoteInfo", SqlDbType.VarChar, 900)).Value = remoteInfo;
 
-                if (m_DebugLevel > 4)
+                if (m_DebugLevel > 4 || TraceMode)
                 {
                     LogDebug("clsAnalysisJob.RequestAnalysisJob(), connection string: " + m_BrokerConnStr, (int)BaseLogger.LogLevels.DEBUG);
                     LogDebug("clsAnalysisJob.RequestAnalysisJob(), printing param list", (int)BaseLogger.LogLevels.DEBUG);
