@@ -32,10 +32,12 @@ namespace AnalysisManagerProg
 
         #region "Constants"
 
+        const string SP_NAME_ACKMANAGERUPDATE = "AckManagerUpdateRequired";
+
         /// <summary>
         /// Status message for when the manager is deactivated locally
         /// </summary>
-        /// <remarks>Used when MgrActive_Local is False in AnalysisManagerProg.exe.config</remarks>
+        /// <remarks>Used when MgrActive_Local is False in AppName.exe.config</remarks>
         public const string DEACTIVATED_LOCALLY = "Manager deactivated locally";
 
         /// <summary>
@@ -61,7 +63,7 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Manager parameter: manager active
         /// </summary>
-        /// <remarks>Defined in AnalysisManagerProg.exe.config</remarks>
+        /// <remarks>Defined in AppName.exe.config</remarks>
         public const string MGR_PARAM_MGR_ACTIVE_LOCAL = "MgrActive_Local";
 
         /// <summary>
@@ -115,9 +117,9 @@ namespace AnalysisManagerProg
 
         #region "Class variables"
 
-        private const string SP_NAME_ACKMANAGERUPDATE = "AckManagerUpdateRequired";
-
         private readonly Dictionary<string, string> mParamDictionary;
+
+        private bool mMCParamsLoaded;
 
         private string mErrMsg = string.Empty;
 
@@ -145,58 +147,6 @@ namespace AnalysisManagerProg
         #endregion
 
         #region "Methods"
-
-        /// <summary>
-        /// Calls stored procedure AckManagerUpdateRequired in the Manager Control DB
-        /// </summary>
-        /// <remarks></remarks>
-        public void AckManagerUpdateRequired()
-        {
-            try
-            {
-                // Data Source=proteinseqs;Initial Catalog=manager_control
-                var connectionString = GetParam(MGR_PARAM_MGR_CFG_DB_CONN_STRING);
-
-                if (string.IsNullOrWhiteSpace(connectionString))
-                {
-                    if (clsGlobal.OfflineMode)
-                        LogDebug("Skipping call to " + SP_NAME_ACKMANAGERUPDATE + " since offline");
-                    else
-                        LogError("Skipping call to " + SP_NAME_ACKMANAGERUPDATE + " since the Manager Control connection string is empty");
-
-                    return;
-                }
-
-                if (TraceMode)
-                    ShowTraceMessage("AckManagerUpdateRequired using " + connectionString);
-
-                var myConnection = new SqlConnection(connectionString);
-                myConnection.Open();
-
-                // Set up the command object prior to SP execution
-                var cmd = new SqlCommand(SP_NAME_ACKMANAGERUPDATE, myConnection) { CommandType = CommandType.StoredProcedure };
-
-                cmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
-                cmd.Parameters.Add(new SqlParameter("@managerName", SqlDbType.VarChar, 128)).Value = ManagerName;
-                cmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
-
-                // Execute the SP
-                cmd.ExecuteNonQuery();
-            }
-            catch (Exception ex)
-            {
-                LogError("Exception calling " + SP_NAME_ACKMANAGERUPDATE, ex);
-            }
-        }
-
-        /// <summary>
-        /// Disable the manager by changing MgrActive_Local to False in AnalysisManagerProg.exe.config
-        /// </summary>
-        /// <returns></returns>
-        public bool DisableManagerLocally()
-        {
-            return WriteConfigSetting(MGR_PARAM_MGR_ACTIVE_LOCAL, "False");
-        }
 
         /// <summary>
         /// Constructor
@@ -240,6 +190,59 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
+        /// Calls stored procedure AckManagerUpdateRequired to acknowledge that the manager has exited so that an update can be applied
+        /// </summary>
+        public void AckManagerUpdateRequired()
+        {
+            try
+            {
+                // Data Source=proteinseqs;Initial Catalog=manager_control
+                var connectionString = GetParam(MGR_PARAM_MGR_CFG_DB_CONN_STRING);
+
+                if (string.IsNullOrWhiteSpace(connectionString))
+                {
+                    if (clsGlobal.OfflineMode)
+                        LogDebug("Skipping call to " + SP_NAME_ACKMANAGERUPDATE + " since offline");
+                    else
+                        LogError("Skipping call to " + SP_NAME_ACKMANAGERUPDATE + " since the Manager Control connection string is empty");
+
+                    return;
+                }
+
+                if (TraceMode)
+                    ShowTraceMessage("AckManagerUpdateRequired using " + connectionString);
+
+                var conn = new SqlConnection(connectionString);
+                conn.Open();
+
+                // Set up the command object prior to SP execution
+                var cmd = new SqlCommand(SP_NAME_ACKMANAGERUPDATE, conn) {
+                    CommandType = CommandType.StoredProcedure
+                };
+
+                cmd.Parameters.Add(new SqlParameter("@Return", SqlDbType.Int)).Direction = ParameterDirection.ReturnValue;
+                cmd.Parameters.Add(new SqlParameter("@managerName", SqlDbType.VarChar, 128)).Value = ManagerName;
+                cmd.Parameters.Add(new SqlParameter("@message", SqlDbType.VarChar, 512)).Direction = ParameterDirection.Output;
+
+                // Execute the SP
+                cmd.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception calling " + SP_NAME_ACKMANAGERUPDATE, ex);
+            }
+        }
+
+        /// <summary>
+        /// Disable the manager by changing MgrActive_Local to False in AnalysisManagerProg.exe.config
+        /// </summary>
+        /// <returns></returns>
+        public bool DisableManagerLocally()
+        {
+            return WriteConfigSetting(MGR_PARAM_MGR_ACTIVE_LOCAL, "False");
+        }
+
+        /// <summary>
         /// Updates manager settings, then loads settings from the database or from ManagerSettingsLocal.xml if clsGlobal.OfflineMode is true
         /// </summary>
         /// <param name="configFileSettings">Manager settings loaded from file AnalysisManagerProg.exe.config</param>
@@ -267,20 +270,29 @@ namespace AnalysisManagerProg
             if (!mParamDictionary.TryGetValue(MGR_PARAM_MGR_ACTIVE_LOCAL, out var activeLocalText))
             {
                 mErrMsg = "Manager parameter " + MGR_PARAM_MGR_ACTIVE_LOCAL + " is missing from file " + Path.GetFileName(GetConfigFilePath());
-                WriteToEmergencyLog(mErrMsg);
+                LogError(mErrMsg);
             }
 
             if (!bool.TryParse(activeLocalText, out var activeLocal) || !activeLocal)
             {
-                WriteToEmergencyLog(DEACTIVATED_LOCALLY);
+                LogWarning(DEACTIVATED_LOCALLY);
                 mErrMsg = DEACTIVATED_LOCALLY;
                 return false;
             }
 
             // Load settings from Manager Control DB and Broker DB
             // or from ManagerSettingsLocal.xml if clsGlobal.OfflineMode is true
-            return LoadDBSettings();
+            if (!LoadDBSettings())
+            {
+                // Error logging handled by LoadDBSettings
+                return false;
+            }
 
+            // Set flag indicating manager parameters have been loaded
+            mMCParamsLoaded = true;
+
+            // No problems found
+            return true;
         }
 
         /// <summary>
@@ -295,8 +307,7 @@ namespace AnalysisManagerProg
             if (paramDictionary == null)
             {
                 mErrMsg = "CheckInitialSettings: Manager parameter string dictionary not found";
-
-                WriteToEmergencyLog(mErrMsg);
+                LogError(mErrMsg, true);
                 return false;
             }
 
@@ -304,16 +315,14 @@ namespace AnalysisManagerProg
             if (!paramDictionary.TryGetValue(MGR_PARAM_USING_DEFAULTS, out var usingDefaultsText))
             {
                 mErrMsg = "CheckInitialSettings: 'UsingDefaults' entry not found in Config file";
-
-                WriteToEmergencyLog(mErrMsg);
+                LogError(mErrMsg, true);
             }
             else
             {
                 if (bool.TryParse(usingDefaultsText, out var usingDefaults) && usingDefaults)
                 {
                     mErrMsg = "CheckInitialSettings: Config file problem, contains UsingDefaults=True";
-
-                    WriteToEmergencyLog(mErrMsg);
+                    LogError(mErrMsg, true);
                     return false;
                 }
             }
@@ -324,14 +333,14 @@ namespace AnalysisManagerProg
 
         private string GetGroupNameFromSettings(DataTable dtSettings)
         {
-            foreach (DataRow oRow in dtSettings.Rows)
+            foreach (DataRow currentRow in dtSettings.Rows)
             {
                 // Add the column heading and value to the dictionary
-                var paramKey = DbCStr(oRow[dtSettings.Columns["ParameterName"]]);
+                var paramKey = DbCStr(currentRow[dtSettings.Columns["ParameterName"]]);
 
-                if (clsGlobal.IsMatch(paramKey, "MgrSettingGroupName"))
+                if (string.Equals(paramKey, "MgrSettingGroupName", StringComparison.OrdinalIgnoreCase))
                 {
-                    var groupName = DbCStr(oRow[dtSettings.Columns["ParameterValue"]]);
+                    var groupName = DbCStr(currentRow[dtSettings.Columns["ParameterValue"]]);
                     if (!string.IsNullOrWhiteSpace(groupName))
                     {
                         return groupName;
@@ -340,6 +349,7 @@ namespace AnalysisManagerProg
                     return string.Empty;
                 }
             }
+
             return string.Empty;
         }
 
@@ -382,14 +392,11 @@ namespace AnalysisManagerProg
             if (string.IsNullOrEmpty(managerName))
             {
                 mErrMsg = "Manager parameter " + MGR_PARAM_MGR_NAME + " is missing from file " + Path.GetFileName(GetConfigFilePath());
-
-                if (TraceMode)
-                    LogError("Error in LoadMgrSettingsFromDB: " + mErrMsg);
-
+                LogError(mErrMsg);
                 return false;
             }
 
-            var success = LoadMgrSettingsFromDBWork(managerName, out var dtSettings, returnErrorIfNoParameters: true);
+            var success = LoadMgrSettingsFromDBWork(managerName, out var dtSettings, logConnectionErrors: true, returnErrorIfNoParameters: true);
             if (!success)
             {
                 return false;
@@ -410,7 +417,7 @@ namespace AnalysisManagerProg
 
                 // This manager has group-based settings defined; load them now
 
-                success = LoadMgrSettingsFromDBWork(mgrSettingsGroup, out dtSettings, returnErrorIfNoParameters: false);
+                success = LoadMgrSettingsFromDBWork(mgrSettingsGroup, out dtSettings, logConnectionErrors: true, returnErrorIfNoParameters: false);
 
                 if (success)
                 {
@@ -421,7 +428,11 @@ namespace AnalysisManagerProg
             return success;
         }
 
-        private bool LoadMgrSettingsFromDBWork(string managerName, out DataTable dtSettings, bool returnErrorIfNoParameters)
+        private bool LoadMgrSettingsFromDBWork(
+            string managerName,
+            out DataTable dtSettings,
+            bool logConnectionErrors,
+            bool returnErrorIfNoParameters)
         {
             const short retryCount = 6;
 
@@ -436,6 +447,15 @@ namespace AnalysisManagerProg
                 if (TraceMode)
                     ShowTraceMessage("LoadMgrSettingsFromDBWork: " + mErrMsg);
 
+                dtSettings = null;
+                return false;
+            }
+
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                mErrMsg = MGR_PARAM_MGR_CFG_DB_CONN_STRING +
+                           " parameter not found in mParamDictionary; it should be defined in the " + Path.GetFileName(GetConfigFilePath()) + " file";
+                WriteErrorMsg(mErrMsg);
                 dtSettings = null;
                 return false;
             }
@@ -456,8 +476,8 @@ namespace AnalysisManagerProg
 
                 mErrMsg = "LoadMgrSettingsFromDBWork; Excessive failures attempting to retrieve manager settings from database " +
                           "for manager '" + managerName + "'";
-                WriteErrorMsg(mErrMsg, allowLogToDB);
-
+                if (logConnectionErrors)
+                    WriteErrorMsg(mErrMsg, allowLogToDB);
                 dtSettings?.Dispose();
                 return false;
             }
@@ -467,8 +487,9 @@ namespace AnalysisManagerProg
             {
                 // No data was returned
                 mErrMsg = "LoadMgrSettingsFromDBWork; Manager '" + managerName + "' not defined in the manager control database; using " + connectionString;
-                WriteErrorMsg(mErrMsg);
-                dtSettings.Dispose();
+                if (logConnectionErrors)
+                    WriteErrorMsg(mErrMsg);
+                dtSettings?.Dispose();
                 return false;
             }
 
@@ -649,11 +670,11 @@ namespace AnalysisManagerProg
 
             try
             {
-                foreach (DataRow oRow in dtSettings.Rows)
+                foreach (DataRow currentRow in dtSettings.Rows)
                 {
                     // Add the column heading and value to the dictionary
-                    var paramKey = DbCStr(oRow[dtSettings.Columns["ParameterName"]]);
-                    var paramVal = DbCStr(oRow[dtSettings.Columns["ParameterValue"]]);
+                    var paramKey = DbCStr(currentRow[dtSettings.Columns["ParameterName"]]);
+                    var paramVal = DbCStr(currentRow[dtSettings.Columns["ParameterValue"]]);
 
                     if (mParamDictionary.ContainsKey(paramKey))
                     {
@@ -747,11 +768,11 @@ namespace AnalysisManagerProg
             // Fill a string dictionary with the new parameters that have been found
             try
             {
-                foreach (DataRow curRow in dt.Rows)
+                foreach (DataRow currentRow in dt.Rows)
                 {
                     // Add the column heading and value to the dictionary
-                    var paramKey = DbCStr(curRow[dt.Columns["ParameterName"]]);
-                    var paramVal = DbCStr(curRow[dt.Columns["ParameterValue"]]);
+                    var paramKey = DbCStr(currentRow[dt.Columns["ParameterName"]]);
+                    var paramVal = DbCStr(currentRow[dt.Columns["ParameterValue"]]);
 
                     SetParam(paramKey, paramVal);
                 }
@@ -826,11 +847,6 @@ namespace AnalysisManagerProg
             return value;
         }
 
-        private static void ShowTraceMessage(string message)
-        {
-            ConsoleMsgUtils.ShowDebug(DateTime.Now.ToString("hh:mm:ss.fff tt") + ": " + message);
-        }
-
         /// <summary>
         /// Sets a parameter in the parameters string dictionary
         /// </summary>
@@ -847,6 +863,11 @@ namespace AnalysisManagerProg
             {
                 mParamDictionary.Add(itemKey, itemValue);
             }
+        }
+
+        private static void ShowTraceMessage(string message)
+        {
+            clsMainProcess.ShowTraceMessage(message);
         }
 
         private bool ValidateOfflineTaskDirectories()
@@ -896,35 +917,6 @@ namespace AnalysisManagerProg
             }
         }
 
-
-        /// <summary>
-        /// Writes an error message to the application log and the database
-        /// </summary>
-        /// <param name="errorMessage">Message to write</param>
-        /// <param name="allowLogToDB"></param>
-        /// <remarks></remarks>
-        private void WriteErrorMsg(string errorMessage, bool allowLogToDB = true)
-        {
-            if (!clsGlobal.LinuxOS)
-            {
-                WriteToEmergencyLog(errorMessage);
-            }
-
-            if (allowLogToDB)
-            {
-                LogError(errorMessage, true);
-            }
-            else
-            {
-                LogError(errorMessage);
-            }
-
-            if (TraceMode)
-            {
-                ShowTraceMessage(errorMessage);
-            }
-        }
-
         /// <summary>
         /// Converts a database output object that could be dbNull to a string
         /// </summary>
@@ -940,6 +932,23 @@ namespace AnalysisManagerProg
             }
 
             return Convert.ToString(inpObj);
+        }
+
+        /// <summary>
+        /// Writes an error message to the application log and the database
+        /// </summary>
+        /// <param name="errorMessage">Message to write</param>
+        /// <param name="allowLogToDB"></param>
+        /// <remarks></remarks>
+        private void WriteErrorMsg(string errorMessage, bool allowLogToDB = true)
+        {
+            var logToDb = !mMCParamsLoaded && allowLogToDB;
+            LogError(errorMessage, logToDb);
+
+            if (TraceMode)
+            {
+                ShowTraceMessage(errorMessage);
+            }
         }
 
         /// <summary>
@@ -995,15 +1004,6 @@ namespace AnalysisManagerProg
             }
         }
 
-        private void WriteToEmergencyLog(string message)
-        {
-            if (TraceMode)
-                ShowTraceMessage(message);
-
-            LogError(message);
-
-        }
-
         /// <summary>
         /// Loads an app config file for changing parameters
         /// </summary>
@@ -1030,8 +1030,8 @@ namespace AnalysisManagerProg
         /// <returns>String containing full name and path</returns>
         private string GetConfigFilePath()
         {
-            var exeName = Path.GetFileName(Assembly.GetExecutingAssembly().Location);
-            return Path.Combine(mMgrFolderPath, exeName + ".config");
+            var configFilePath = PRISM.FileProcessor.ProcessFilesOrFoldersBase.GetAppPath() + ".config";
+            return configFilePath;
         }
 
         #endregion
