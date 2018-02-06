@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using AnalysisManagerBase;
 using System;
+using PRISM.Logging;
 
 namespace AnalysisManager_Ape_PlugIn
 {
@@ -48,7 +49,7 @@ namespace AnalysisManager_Ape_PlugIn
 
                 // Change the name of the log file for the local log file to the plugin log filename
                 var logFileName = Path.Combine(m_WorkDir, "Ape_Log.txt");
-                clsLogTools.ChangeLogFileBaseName(logFileName, appendDateToBaseName: false);
+                LogTools.ChangeLogFileBaseName(logFileName, appendDateToBaseName: false);
 
                 bool processingSuccess;
 

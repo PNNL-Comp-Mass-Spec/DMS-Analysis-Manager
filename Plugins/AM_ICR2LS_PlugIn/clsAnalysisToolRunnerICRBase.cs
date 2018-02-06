@@ -4,6 +4,7 @@ using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading;
 using AnalysisManagerBase;
+using PRISM.Logging;
 
 namespace AnalysisManagerICR2LSPlugIn
 {
@@ -734,22 +735,22 @@ namespace AnalysisManagerICR2LSPlugIn
 
             if (!string.Equals(mICR2LSStatus.ProcessingState, ICR2LS_STATE_FINISHED, StringComparison.InvariantCultureIgnoreCase))
             {
-                PRISM.Logging.BaseLogger.LogLevels eLogLevel;
+                BaseLogger.LogLevels eLogLevel;
                 if (string.Equals(mICR2LSStatus.ProcessingState, ICR2LS_STATE_ERROR, StringComparison.InvariantCultureIgnoreCase) |
                     string.Equals(mICR2LSStatus.ProcessingState, ICR2LS_STATE_KILLED, StringComparison.InvariantCultureIgnoreCase) | m_progress < 100)
                 {
-                    eLogLevel = PRISM.Logging.BaseLogger.LogLevels.ERROR;
+                    eLogLevel = BaseLogger.LogLevels.ERROR;
                 }
                 else
                 {
-                    eLogLevel = PRISM.Logging.BaseLogger.LogLevels.WARN;
+                    eLogLevel = BaseLogger.LogLevels.WARN;
                 }
 
                 var msg = "ICR-2LS processing state not Finished: " + mICR2LSStatus.ProcessingState + "; Processed " +
                           mICR2LSStatus.ScansProcessed + " scans (" + mICR2LSStatus.PercentComplete.ToString("0.0") + "% complete); " +
                           "Status = " + mICR2LSStatus.ProcessingStatus;
 
-                if (eLogLevel == PRISM.Logging.BaseLogger.LogLevels.WARN)
+                if (eLogLevel == BaseLogger.LogLevels.WARN)
                     LogWarning(msg);
                 else
                     LogError(msg);

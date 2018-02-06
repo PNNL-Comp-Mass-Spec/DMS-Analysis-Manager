@@ -594,7 +594,6 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 mPeptideToProteinMapper.SaveProteinToPeptideMappingFile = true;
                 mPeptideToProteinMapper.SearchAllProteinsForPeptideSequence = true;
                 mPeptideToProteinMapper.SearchAllProteinsSkipCoverageComputationSteps = true;
-                mPeptideToProteinMapper.ShowMessages = false;
 
                 var blnSuccess = mPeptideToProteinMapper.ProcessFile(strInputFilePath, m_WorkDir, string.Empty, true);
 

@@ -5,6 +5,7 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Threading;
 using PHRPReader;
+using PRISM.Logging;
 
 namespace AnalysisManagerBase
 {
@@ -93,7 +94,7 @@ namespace AnalysisManagerBase
             if (!success)
             {
                 var errorMessage = "LoadDataPackageDatasetInfo; Excessive failures attempting to retrieve data package dataset info from database";
-                clsGlobal.LogError(errorMessage);
+                LogTools.LogError(errorMessage);
                 resultSet.Dispose();
                 return false;
             }
@@ -103,7 +104,7 @@ namespace AnalysisManagerBase
             {
                 // No data was returned
                 var warningMessage = "LoadDataPackageDatasetInfo; No datasets were found for data package " + dataPackageID;
-                clsGlobal.LogWarning(warningMessage);
+                LogTools.LogWarning(warningMessage);
                 return false;
             }
 
@@ -166,7 +167,7 @@ namespace AnalysisManagerBase
             if (!success)
             {
                 var errorMessage = "LoadDataPackageJobInfo; Excessive failures attempting to retrieve data package job info from database";
-                clsGlobal.LogError(errorMessage);
+                LogTools.LogError(errorMessage);
                 resultSet.Dispose();
                 return false;
             }
@@ -202,14 +203,14 @@ namespace AnalysisManagerBase
                             if (datasetCount > 1)
                                 warningMessage += "s";
 
-                            clsGlobal.LogWarning(warningMessage);
+                            LogTools.LogWarning(warningMessage);
                             return true;
                         }
                     }
                 }
 
                 warningMessage = "LoadDataPackageJobInfo; No jobs were found for data package " + dataPackageID;
-                clsGlobal.LogError(warningMessage);
+                LogTools.LogError(warningMessage);
                 return false;
             }
 
@@ -231,7 +232,7 @@ namespace AnalysisManagerBase
 
         private static void LogDebugMessage(string debugMessage)
         {
-            clsGlobal.LogDebug(debugMessage);
+            LogTools.LogDebug(debugMessage);
         }
 
         /// <summary>
@@ -306,7 +307,7 @@ namespace AnalysisManagerBase
                         retryCount -= 1;
                         var msg = "Exception running stored procedure " + cmd.CommandText + ": " + ex.Message + "; RetryCount = " + retryCount;
 
-                        clsGlobal.LogError(msg);
+                        LogTools.LogError(msg);
 
                         // Delay for 5 seconds before trying again
                         clsGlobal.IdleLoop(5);
@@ -338,7 +339,7 @@ namespace AnalysisManagerBase
                     if (jobParameters.ContainsKey(parameter))
                     {
                         var msg = "Job " + jobNumber + " has multiple values for parameter " + parameter + "; only using the first occurrence";
-                        clsGlobal.LogWarning(msg);
+                        LogTools.LogWarning(msg);
                     }
                     else
                     {
@@ -354,7 +355,7 @@ namespace AnalysisManagerBase
             catch (Exception ex)
             {
                 errorMsg = "Exception retrieving parameters from history for job " + jobNumber;
-                clsGlobal.LogError(errorMsg, ex);
+                LogTools.LogError(errorMsg, ex);
                 return false;
             }
 

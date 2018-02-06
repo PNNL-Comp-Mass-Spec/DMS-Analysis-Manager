@@ -185,7 +185,7 @@ namespace AnalysisManagerBase
 
             try
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, detailedMessage);
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, detailedMessage);
             }
             catch (Exception logException)
             {
@@ -213,7 +213,7 @@ namespace AnalysisManagerBase
 
             try
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, detailedMessage);
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, detailedMessage);
             }
             catch (Exception ex)
             {
@@ -300,7 +300,7 @@ namespace AnalysisManagerBase
 
         private void DebugEventHandlerConsoleOnly(string statusMessage)
         {
-            clsGlobal.LogDebug(statusMessage, writeToLog: false);
+            LogTools.LogDebug(statusMessage, writeToLog: false);
         }
 
         private void DebugEventHandler(string statusMessage)

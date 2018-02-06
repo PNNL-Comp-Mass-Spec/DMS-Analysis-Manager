@@ -28,12 +28,13 @@ using System.Reflection;
 using System.Threading;
 using AnalysisManagerBase;
 using PRISM;
+using PRISM.Logging;
 
 namespace AnalysisManagerProg
 {
     static class modMain
     {
-        public const string PROGRAM_DATE = "February 2, 2018";
+        public const string PROGRAM_DATE = "February 5, 2018";
 
         private static bool mCodeTestMode;
         private static bool mTraceMode;
@@ -150,7 +151,7 @@ namespace AnalysisManagerProg
                     }
                     catch (Exception ex)
                     {
-                        clsGlobal.LogError("clsCodeTest exception", ex);
+                        LogTools.LogError("clsCodeTest exception", ex);
                     }
 
                     ShowTraceMessage("Exiting application");
@@ -185,7 +186,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                clsGlobal.LogError("Error occurred in modMain->Main: " + Environment.NewLine + ex.Message, ex);
+                LogTools.LogError("Error occurred in modMain->Main: " + Environment.NewLine + ex.Message, ex);
                 ShowErrorMessage("Error occurred in modMain->Main: " + ex.Message);
                 clsParseCommandLine.PauseAtConsole(1500);
                 PRISM.Logging.FileLogger.FlushPendingMessages();
@@ -218,7 +219,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                clsGlobal.LogError("Error displaying the OS version: " + Environment.NewLine + ex.Message, ex);
+                LogTools.LogError("Error displaying the OS version: " + Environment.NewLine + ex.Message, ex);
             }
         }
 
@@ -328,7 +329,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                clsGlobal.LogError("Error parsing the command line parameters: " + Environment.NewLine + ex.Message, ex);
+                LogTools.LogError("Error parsing the command line parameters: " + Environment.NewLine + ex.Message, ex);
                 return false;
             }
         }
@@ -393,7 +394,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                clsGlobal.LogError("Error displaying the program syntax: " + ex.Message, ex);
+                LogTools.LogError("Error displaying the program syntax: " + ex.Message, ex);
             }
         }
 

@@ -6,6 +6,8 @@
 //
 //*********************************************************************************************************
 
+using PRISM.Logging;
+
 namespace AnalysisManagerBase
 {
 
@@ -100,7 +102,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Logging class
         /// </summary>
-        public PRISM.Logging.BaseLogger Logger;
+        public BaseLogger Logger;
 
         /// <summary>
         /// Manager parameters

@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading;
 using System.Text.RegularExpressions;
 using PRISM;
+using PRISM.Logging;
 
 //*********************************************************************************************************
 // Written by Dave Clark and Matthew Monroe for the US Department of Energy
@@ -1221,7 +1222,7 @@ namespace AnalysisManagerBase
 
             if (debugLevel > 4)
             {
-                clsGlobal.LogDebug("clsAnalysisToolRunnerBase.DeleteFileWithRetries, executing method");
+                LogTools.LogDebug("clsAnalysisToolRunnerBase.DeleteFileWithRetries, executing method");
             }
 
             // Verify specified file exists
@@ -1238,7 +1239,7 @@ namespace AnalysisManagerBase
                     File.Delete(fileNamePath);
                     if (debugLevel > 4)
                     {
-                        clsGlobal.LogDebug("clsAnalysisToolRunnerBase.DeleteFileWithRetries, normal exit");
+                        LogTools.LogDebug("clsAnalysisToolRunnerBase.DeleteFileWithRetries, normal exit");
                     }
                     return true;
 
@@ -1248,12 +1249,12 @@ namespace AnalysisManagerBase
                     // File may be read-only. Clear read-only flag and try again
                     if (debugLevel > 0)
                     {
-                        clsGlobal.LogDebug("File " + fileNamePath + " exception ERR1: " + ex1.Message);
+                        LogTools.LogDebug("File " + fileNamePath + " exception ERR1: " + ex1.Message);
                         if (ex1.InnerException != null)
                         {
-                            clsGlobal.LogDebug("Inner exception: " + ex1.InnerException.Message);
+                            LogTools.LogDebug("Inner exception: " + ex1.InnerException.Message);
                         }
-                        clsGlobal.LogDebug("File " + fileNamePath + " may be read-only, attribute reset attempt #" + retryCount);
+                        LogTools.LogDebug("File " + fileNamePath + " may be read-only, attribute reset attempt #" + retryCount);
                     }
                     File.SetAttributes(fileNamePath, File.GetAttributes(fileNamePath) & ~FileAttributes.ReadOnly);
                     errType = AMFileNotDeletedAfterRetryException.RetryExceptionType.Unauthorized_Access_Exception;
@@ -1265,12 +1266,12 @@ namespace AnalysisManagerBase
                     // If problem is locked file, attempt to fix lock and retry
                     if (debugLevel > 0)
                     {
-                        clsGlobal.LogDebug("File " + fileNamePath + " exception ERR2: " + ex2.Message);
+                        LogTools.LogDebug("File " + fileNamePath + " exception ERR2: " + ex2.Message);
                         if (ex2.InnerException != null)
                         {
-                            clsGlobal.LogDebug("Inner exception: " + ex2.InnerException.Message);
+                            LogTools.LogDebug("Inner exception: " + ex2.InnerException.Message);
                         }
-                        clsGlobal.LogDebug("Error deleting file " + fileNamePath + ", attempt #" + retryCount);
+                        LogTools.LogDebug("Error deleting file " + fileNamePath + ", attempt #" + retryCount);
                     }
                     errType = AMFileNotDeletedAfterRetryException.RetryExceptionType.IO_Exception;
 
@@ -1285,7 +1286,7 @@ namespace AnalysisManagerBase
                 catch (Exception ex3)
                 {
                     var msg = "Error deleting file, exception ERR3 " + fileNamePath + ex3.Message;
-                    clsGlobal.LogError(msg);
+                    LogTools.LogError(msg);
                     throw new AMFileNotDeletedException(fileNamePath, ex3.Message);
                 }
             }
@@ -1558,7 +1559,7 @@ namespace AnalysisManagerBase
             if (string.IsNullOrWhiteSpace(progLoc))
             {
                 errorMessage = "Manager parameter " + progLocManagerParamName + " is not defined in the Manager Control DB";
-                clsGlobal.LogError(errorMessage);
+                LogTools.LogError(errorMessage);
                 return string.Empty;
             }
 
@@ -1572,11 +1573,11 @@ namespace AnalysisManagerBase
                 if (!Directory.Exists(progLoc))
                 {
                     errorMessage = "Version-specific folder not found for " + stepToolName;
-                    clsGlobal.LogError(errorMessage + ": " + progLoc);
+                    LogTools.LogError(errorMessage + ": " + progLoc);
                     return string.Empty;
                 }
 
-                clsGlobal.LogMessage("Using specific version of " + stepToolName + ": " + progLoc);
+                LogTools.LogMessage("Using specific version of " + stepToolName + ": " + progLoc);
             }
 
             // Define the path to the .Exe, then verify that it exists
@@ -1585,7 +1586,7 @@ namespace AnalysisManagerBase
             if (!File.Exists(progLoc))
             {
                 errorMessage = "Cannot find " + stepToolName + " program file " + exeName;
-                clsGlobal.LogError(errorMessage + " at " + progLoc);
+                LogTools.LogError(errorMessage + " at " + progLoc);
                 return string.Empty;
             }
 
@@ -1694,7 +1695,7 @@ namespace AnalysisManagerBase
 
                 if (debugLevel >= 5)
                 {
-                    clsGlobal.LogDebug("Updating manager settings from the Manager Control DB");
+                    LogTools.LogDebug("Updating manager settings from the Manager Control DB");
                 }
 
                 // Data Source=proteinseqs;Initial Catalog=manager_control
@@ -1705,7 +1706,7 @@ namespace AnalysisManagerBase
 
                 if (debugLevel > 0 && newDebugLevel != debugLevel)
                 {
-                    clsGlobal.LogDebug("Debug level changed from " + debugLevel + " to " + newDebugLevel);
+                    LogTools.LogDebug("Debug level changed from " + debugLevel + " to " + newDebugLevel);
                     debugLevel = newDebugLevel;
                 }
 
@@ -1715,7 +1716,7 @@ namespace AnalysisManagerBase
             catch (Exception ex)
             {
                 var errorMessage = "Exception getting current manager settings from the manager control DB";
-                clsGlobal.LogError(errorMessage, ex);
+                LogTools.LogError(errorMessage, ex);
             }
 
             return false;
@@ -2059,7 +2060,7 @@ namespace AnalysisManagerBase
         {
             m_DotNetZipTools.DebugLevel = m_DebugLevel;
 
-            // Note that m_DotNetZipTools logs error messages using clsLogTools
+            // Note that m_DotNetZipTools logs error messages using LogTools
             return m_DotNetZipTools.GUnzipFile(gzipFilePath, targetDirectory);
         }
 
@@ -2073,7 +2074,7 @@ namespace AnalysisManagerBase
         {
             m_DotNetZipTools.DebugLevel = m_DebugLevel;
 
-            // Note that m_DotNetZipTools logs error messages using clsLogTools
+            // Note that m_DotNetZipTools logs error messages using LogTools
             var success = m_DotNetZipTools.GZipFile(sourceFilePath, deleteSourceAfterZip);
 
             if (!success && m_DotNetZipTools.Message.ToLower().Contains("OutOfMemoryException".ToLower()))
@@ -2097,7 +2098,7 @@ namespace AnalysisManagerBase
 
             m_DotNetZipTools.DebugLevel = m_DebugLevel;
 
-            // Note that m_DotNetZipTools logs error messages using clsLogTools
+            // Note that m_DotNetZipTools logs error messages using LogTools
             var success = m_DotNetZipTools.GZipFile(sourceFilePath, targetDirectoryPath, deleteSourceAfterZip);
 
             if (!success && m_DotNetZipTools.Message.ToLower().Contains("OutOfMemoryException".ToLower()))
@@ -3231,7 +3232,7 @@ namespace AnalysisManagerBase
         protected void ResetLogFileNameToDefault()
         {
             var logFileName = m_mgrParams.GetParam("logfilename");
-            clsLogTools.ChangeLogFileBaseName(logFileName, appendDateToBaseName: true);
+            LogTools.ChangeLogFileBaseName(logFileName, appendDateToBaseName: true);
         }
 
         /// <summary>
@@ -4293,7 +4294,7 @@ namespace AnalysisManagerBase
         {
             m_DotNetZipTools.DebugLevel = m_DebugLevel;
 
-            // Note that m_DotNetZipTools logs error messages using clsLogTools
+            // Note that m_DotNetZipTools logs error messages using LogTools
             return m_DotNetZipTools.UnzipFile(zipFilePath, targetDirectory, FileFilter);
 
         }
@@ -4601,7 +4602,7 @@ namespace AnalysisManagerBase
         {
             m_DotNetZipTools.DebugLevel = m_DebugLevel;
 
-            // Note that m_DotNetZipTools logs error messages using clsLogTools
+            // Note that m_DotNetZipTools logs error messages using LogTools
             var success = m_DotNetZipTools.VerifyZipFile(zipFilePath, crcCheckThresholdGB);
 
             return success;
@@ -4618,7 +4619,7 @@ namespace AnalysisManagerBase
         {
             m_DotNetZipTools.DebugLevel = m_DebugLevel;
 
-            // Note that m_DotNetZipTools logs error messages using clsLogTools
+            // Note that m_DotNetZipTools logs error messages using LogTools
             var success = m_DotNetZipTools.ZipFile(sourceFilePath, deleteSourceAfterZip);
 
             if (!success && m_DotNetZipTools.Message.ToLower().Contains("OutOfMemoryException".ToLower()))
@@ -4699,7 +4700,7 @@ namespace AnalysisManagerBase
         {
             m_DotNetZipTools.DebugLevel = m_DebugLevel;
 
-            // Note that m_DotNetZipTools logs error messages using clsLogTools
+            // Note that m_DotNetZipTools logs error messages using LogTools
             var success = m_DotNetZipTools.ZipFile(sourceFilePath, deleteSourceAfterZip, zipFilePath);
 
             if (!success && m_DotNetZipTools.Message.ToLower().Contains("OutOfMemoryException".ToLower()))

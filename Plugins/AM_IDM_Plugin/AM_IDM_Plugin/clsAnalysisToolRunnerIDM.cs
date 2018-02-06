@@ -4,6 +4,7 @@ using System.Threading;
 using AnalysisManagerBase;
 using InterDetect;
 using PRISM;
+using PRISM.Logging;
 
 namespace AnalysisManager_IDM_Plugin
 {
@@ -87,7 +88,7 @@ namespace AnalysisManager_IDM_Plugin
 
                     // Change the name of the log file for the local log file to the plugin log filename
                     var logFileName = Path.Combine(m_WorkDir, "IDM_Log.txt");
-                    clsLogTools.ChangeLogFileBaseName(logFileName, appendDateToBaseName: false);
+                    LogTools.ChangeLogFileBaseName(logFileName, appendDateToBaseName: false);
 
                     try
                     {

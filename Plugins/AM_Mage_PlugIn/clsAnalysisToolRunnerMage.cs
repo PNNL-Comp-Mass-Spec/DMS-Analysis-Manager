@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Data.SQLite;
 using System.IO;
 using System.Linq;
+using PRISM.Logging;
 
 namespace AnalysisManager_Mage_PlugIn
 {
@@ -23,7 +24,7 @@ namespace AnalysisManager_Mage_PlugIn
             // Change the name of the log file for the local log file to the plugin log filename
             var logFilePath = Path.Combine(m_WorkDir, MAGE_LOG_FILE_NAME);
             const bool appendDateToBaseName = false;
-            clsLogTools.ChangeLogFileBaseName(logFilePath, appendDateToBaseName);
+            LogTools.ChangeLogFileBaseName(logFilePath, appendDateToBaseName);
 
             // run the appropriate Mage pipeline(s) according to operations list parameter
             var mageOperations = m_jobParams.GetParam("MageOperations");

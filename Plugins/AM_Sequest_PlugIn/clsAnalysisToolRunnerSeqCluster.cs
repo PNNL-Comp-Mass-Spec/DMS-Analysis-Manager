@@ -16,6 +16,7 @@ using System.Threading;
 using System.Timers;
 using AnalysisManagerBase;
 using PRISM;
+using PRISM.Logging;
 
 namespace AnalysisManagerSequestPlugin
 {
@@ -166,7 +167,7 @@ namespace AnalysisManagerSequestPlugin
             if (!File.Exists(ProgLoc))
             {
                 m_message = "Sequest .Exe not found";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR, m_message + " at " + ProgLoc);
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, m_message + " at " + ProgLoc);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -210,7 +211,7 @@ namespace AnalysisManagerSequestPlugin
                 var cmdStr = " -P" + m_jobParams.GetParam("parmFileName") + " *.dta";
                 if (m_DebugLevel >= 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.DEBUG, "  " + ProgLoc + " " + cmdStr);
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "  " + ProgLoc + " " + cmdStr);
                 }
 
                 // Run Sequest to generate OUT files
@@ -227,7 +228,7 @@ namespace AnalysisManagerSequestPlugin
                 {
                     if (!mResetPVM && !mAbortSinceSequestIsStalled)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.WARN,
+                        LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN,
                             " ... CmdRunner returned false; ExitCode = " + mCmdRunner.ExitCode);
                     }
 
@@ -241,7 +242,7 @@ namespace AnalysisManagerSequestPlugin
                         {
                             var intMaxPVMResetAttempts = 4;
 
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.INFO, "Resetting PVM in MakeOUTFiles");
+                            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.INFO, "Resetting PVM in MakeOUTFiles");
                             blnSuccess = ResetPVMWithRetry(intMaxPVMResetAttempts);
                         }
 
@@ -249,7 +250,7 @@ namespace AnalysisManagerSequestPlugin
                         {
                             // Log message "Error resetting PVM; disabling manager locally"
                             m_message = PVM_RESET_ERROR_MESSAGE;
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR,
+                            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR,
                                 m_message + "; disabling manager locally");
                             m_NeedToAbortProcessing = true;
                             blnProcessingError = true;
@@ -263,25 +264,25 @@ namespace AnalysisManagerSequestPlugin
 
                         if (intOutFileCount == m_DtaCount)
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.WARN,
+                            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN,
                                 " ... The number of OUT files (" + intOutFileCount + ") is equivalent to the original DTA count (" + m_DtaCount +
                                 "); we'll consider this a successful job despite the Sequest CmdRunner error");
                         }
                         else if (intOutFileCount > m_DtaCount)
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.WARN,
+                            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN,
                                 " ... The number of OUT files (" + intOutFileCount + ") is greater than the original DTA count (" + m_DtaCount +
                                 "); we'll consider this a successful job despite the Sequest CmdRunner error");
                         }
                         else if (intOutFileCount >= (int)(m_DtaCount * 0.999))
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.WARN,
+                            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN,
                                 " ... The number of OUT files (" + intOutFileCount + ") is within 0.1% of the original DTA count (" + m_DtaCount +
                                 "); we'll consider this a successful job despite the Sequest CmdRunner error");
                         }
                         else
                         {
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR,
+                            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR,
                                 "No DTA files remain and the number of OUT files (" + intOutFileCount + ") is less than the original DTA count (" +
                                 m_DtaCount + "); treating this as a job failure");
                             blnProcessingError = true;
@@ -303,13 +304,13 @@ namespace AnalysisManagerSequestPlugin
             // Verify out file creation
             if (m_DebugLevel >= 2 && !blnProcessingError)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.DEBUG, " ... Verifying out file creation");
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, " ... Verifying out file creation");
             }
 
             var OutFiles = Directory.GetFiles(m_WorkDir, "*.out");
             if (m_DebugLevel >= 1)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.DEBUG,
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG,
                     " ... Outfile count: " + (OutFiles.Length + mTotalOutFileCount).ToString("#,##0") + " files");
             }
 
@@ -415,13 +416,13 @@ namespace AnalysisManagerSequestPlugin
 
             if (mResetPVM)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.WARN,
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN,
                     " ... calling m_CmdRunner.AbortProgramNow in LoopWaiting since mResetPVM = True");
                 mCmdRunner.AbortProgramNow(false);
             }
             else if (mAbortSinceSequestIsStalled)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.WARN,
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN,
                     " ... calling m_CmdRunner.AbortProgramNow in LoopWaiting since mAbortSinceSequestIsStalled = True");
                 mCmdRunner.AbortProgramNow(false);
             }
@@ -454,7 +455,7 @@ namespace AnalysisManagerSequestPlugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.WARN, "Error in CacheNewOutFiles: " + ex.Message);
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN, "Error in CacheNewOutFiles: " + ex.Message);
             }
         }
 
@@ -499,7 +500,7 @@ namespace AnalysisManagerSequestPlugin
                                 // Too many DTAs remain unprocessed and Sequest is stalled
                                 // Abort the job
 
-                                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR,
+                                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR,
                                     "Sequest is stalled, and " + intDTAsRemaining + " .DTA files remain; aborting processing");
                                 m_message = "Sequest is stalled and too many .DTA files are un-processed";
                                 mAbortSinceSequestIsStalled = true;
@@ -513,7 +514,7 @@ namespace AnalysisManagerSequestPlugin
                         // Sequest appears stalled
                         // Reset PVM, then wait another 30 minutes
 
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.WARN,
+                        LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN,
                             "Sequest has not created a new .out file in the last " + SEQUEST_STALLED_WAIT_TIME_MINUTES +
                             " minutes; will Reset PVM then wait another " + SEQUEST_STALLED_WAIT_TIME_MINUTES + " minutes");
 
@@ -524,7 +525,7 @@ namespace AnalysisManagerSequestPlugin
 
                     if (blnResetPVM)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.INFO,
+                        LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.INFO,
                             "Setting mResetPVM to True in CheckForStalledSequest");
                         mResetPVM = true;
                     }
@@ -532,7 +533,7 @@ namespace AnalysisManagerSequestPlugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.WARN, "Error in CheckForStalledSequest: " + ex.Message);
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN, "Error in CheckForStalledSequest: " + ex.Message);
             }
         }
 
@@ -562,7 +563,7 @@ namespace AnalysisManagerSequestPlugin
             {
                 if (m_DebugLevel >= 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.WARN,
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN,
                         "Error copying file " + strSourceFileName + " to " + mTransferFolderPath + ": " + ex.Message);
                 }
                 return false;
@@ -619,7 +620,7 @@ namespace AnalysisManagerSequestPlugin
 
                 if (m_DebugLevel >= 3)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.DEBUG, " ... extracting node names from sequest.log");
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, " ... extracting node names from sequest.log");
                 }
 
                 // Initialize the RegEx objects
@@ -660,7 +661,7 @@ namespace AnalysisManagerSequestPlugin
                 {
                     if (m_DebugLevel >= 2)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.DEBUG,
+                        LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG,
                             " ... found " + mSequestNodesSpawned + " nodes in the sequest.log file");
                     }
 
@@ -680,14 +681,14 @@ namespace AnalysisManagerSequestPlugin
                             var strMessage = "Not enough nodes were spawned (Threshold = " + intNodeCountMinimum + " nodes): " + mSequestNodesSpawned +
                                              " spawned vs. " + intNodeCountExpected + " expected; " +
                                              "mNodeCountSpawnErrorOccurences=" + mNodeCountSpawnErrorOccurences;
-                            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR, strMessage);
+                            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, strMessage);
 
                             mResetPVM = true;
                         }
                     }
                     else if (mNodeCountSpawnErrorOccurences > 0)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.INFO,
+                        LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.INFO,
                             "Resetting mNodeCountSpawnErrorOccurences from " + mNodeCountSpawnErrorOccurences + " to 0");
                         mNodeCountSpawnErrorOccurences = 0;
                     }
@@ -697,13 +698,13 @@ namespace AnalysisManagerSequestPlugin
 
                 if (m_DebugLevel >= 1)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.DEBUG,
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG,
                                          " ... Did not find 'Spawned xx slave processes' in the sequest.log file; node names not yet determined");
                 }
 
                 if (DateTime.UtcNow.Subtract(mLastSequestStartTime).TotalMinutes > 15)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.DEBUG,
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG,
                                          " ... Over 15 minutes have elapsed since sequest.exe was called; aborting since node names could not be determined");
 
                     mNodeCountSpawnErrorOccurences += 1;
@@ -713,7 +714,7 @@ namespace AnalysisManagerSequestPlugin
             catch (Exception ex)
             {
                 // Error occurred
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR,
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR,
                     "Error parsing Sequest.log file in ValidateSequestNodeCount: " + ex.Message);
                 return false;
             }
@@ -787,14 +788,14 @@ namespace AnalysisManagerSequestPlugin
                 {
                     if (m_DebugLevel >= 3)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.DEBUG, "OutFileName is empty; this is unexpected");
+                        LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "OutFileName is empty; this is unexpected");
                     }
                 }
                 else
                 {
                     if (m_DebugLevel >= 5)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.DEBUG, "Caching new out file: " + OutFileName);
+                        LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "Caching new out file: " + OutFileName);
                     }
 
                     if (!mOutFileCandidateInfo.ContainsKey(OutFileName))
@@ -812,7 +813,7 @@ namespace AnalysisManagerSequestPlugin
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR,
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR,
                         "Error adding new candidate to mOutFileCandidates (" + OutFileName + "): " + ex.Message);
                 }
             }
@@ -837,7 +838,7 @@ namespace AnalysisManagerSequestPlugin
                 {
                     if (m_UtilityRunner.State != clsProgRunner.States.NotMonitoring)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR,
+                        LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR,
                             "Cannot re-initialize the UtilityRunner to perform task " + strTaskName + " since already running task " +
                             mUtilityRunnerTaskName);
                         return false;
@@ -852,7 +853,7 @@ namespace AnalysisManagerSequestPlugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR,
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR,
                     "Exception in InitializeUtilityRunner for task " + strTaskName + ": " + ex.Message);
                 return false;
             }
@@ -878,7 +879,7 @@ namespace AnalysisManagerSequestPlugin
 
                 if (m_DebugLevel >= 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.DEBUG,
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG,
                         "Examining out file creation dates (Candidate Count = " + mOutFileCandidates.Count + ")");
                 }
 
@@ -948,7 +949,7 @@ namespace AnalysisManagerSequestPlugin
                 {
                     if (m_DebugLevel >= 3)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.DEBUG,
+                        LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG,
                             "Appended " + intItemsProcessed + " .out file" + CheckForPlurality(intItemsProcessed) + " to the _out.txt.tmp file; " +
                             mOutFileCandidates.Count + " out file" + CheckForPlurality(mOutFileCandidates.Count) + " remain in the queue");
                     }
@@ -992,7 +993,7 @@ namespace AnalysisManagerSequestPlugin
             catch (Exception ex)
             {
                 Console.WriteLine("Warning, error in ProcessCandidateOutFiles: " + ex.Message);
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR, "Error in ProcessCandidateOutFiles: " + ex.Message);
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "Error in ProcessCandidateOutFiles: " + ex.Message);
                 blnAppendSuccess = false;
             }
             finally
@@ -1024,7 +1025,7 @@ namespace AnalysisManagerSequestPlugin
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR,
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR,
                     "Error renaming sequest.log file to " + strNewName + ": " + ex.Message);
             }
         }
@@ -1047,7 +1048,7 @@ namespace AnalysisManagerSequestPlugin
                 intMaxPVMResetAttempts -= 1;
                 if (intMaxPVMResetAttempts > 0)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.WARN,
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN,
                                          " ... Error resetting PVM; will try " + intMaxPVMResetAttempts + " more time" + CheckForPlurality(intMaxPVMResetAttempts));
                 }
             }
@@ -1069,7 +1070,7 @@ namespace AnalysisManagerSequestPlugin
                 var PVMProgFolder = m_mgrParams.GetParam("PVMProgLoc");
                 if (string.IsNullOrWhiteSpace(PVMProgFolder))
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR,
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR,
                         "PVMProgLoc parameter not defined for this manager");
                     return false;
                 }
@@ -1078,11 +1079,11 @@ namespace AnalysisManagerSequestPlugin
                 var ExePath = Path.Combine(PVMProgFolder, "pvm.exe");
                 if (!File.Exists(ExePath))
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR, "PVM not found: " + ExePath);
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "PVM not found: " + ExePath);
                     return false;
                 }
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.INFO, " ... Resetting PVM");
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.INFO, " ... Resetting PVM");
 
                 var blnSuccess = ResetPVMHalt(PVMProgFolder);
                 if (!blnSuccess)
@@ -1108,12 +1109,12 @@ namespace AnalysisManagerSequestPlugin
                     return false;
                 }
 
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.INFO, " ... PVM restarted");
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.INFO, " ... PVM restarted");
                 mLastActiveNodeQueryTime = DateTime.UtcNow;
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR, "Exception in ResetPVM: " + ex.Message);
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "Exception in ResetPVM: " + ex.Message);
                 return false;
             }
 
@@ -1127,14 +1128,14 @@ namespace AnalysisManagerSequestPlugin
                 var strBatchFilePath = Path.Combine(PVMProgFolder, "HaltPVM.bat");
                 if (!File.Exists(strBatchFilePath))
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR, "Batch file not found: " + strBatchFilePath);
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "Batch file not found: " + strBatchFilePath);
                     return false;
                 }
 
                 // Run the batch file
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.DEBUG, "     " + strBatchFilePath);
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "     " + strBatchFilePath);
                 }
 
                 var strTaskName = "HaltPVM";
@@ -1148,14 +1149,14 @@ namespace AnalysisManagerSequestPlugin
 
                 if (!blnSuccess)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR,
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR,
                         "UtilityRunner returned False for " + strBatchFilePath);
                     return false;
                 }
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR, "Exception in ResetPVMHalt: " + ex.Message);
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "Exception in ResetPVMHalt: " + ex.Message);
                 return false;
             }
 
@@ -1172,14 +1173,14 @@ namespace AnalysisManagerSequestPlugin
                 var strBatchFilePath = Path.Combine(PVMProgFolder, "wipe_temp.bat");
                 if (!File.Exists(strBatchFilePath))
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR, "Batch file not found: " + strBatchFilePath);
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "Batch file not found: " + strBatchFilePath);
                     return false;
                 }
 
                 // Run the batch file
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.DEBUG, "     " + strBatchFilePath);
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "     " + strBatchFilePath);
                 }
 
                 var strTaskName = "WipeTemp";
@@ -1193,14 +1194,14 @@ namespace AnalysisManagerSequestPlugin
 
                 if (!blnSuccess)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR,
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR,
                         "UtilityRunner returned False for " + strBatchFilePath);
                     return false;
                 }
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR, "Exception in ResetPVMWipeTemp: " + ex.Message);
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "Exception in ResetPVMWipeTemp: " + ex.Message);
                 return false;
             }
 
@@ -1225,14 +1226,14 @@ namespace AnalysisManagerSequestPlugin
                 var strBatchFilePath = Path.Combine(PVMProgFolder, "StartPVM.bat");
                 if (!File.Exists(strBatchFilePath))
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR, "Batch file not found: " + strBatchFilePath);
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "Batch file not found: " + strBatchFilePath);
                     return false;
                 }
 
                 // Run the batch file
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.DEBUG, "     " + strBatchFilePath);
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "     " + strBatchFilePath);
                 }
 
                 var strTaskName = "StartPVM";
@@ -1246,14 +1247,14 @@ namespace AnalysisManagerSequestPlugin
 
                 if (!blnSuccess)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR,
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR,
                         "UtilityRunner returned False for " + strBatchFilePath);
                     return false;
                 }
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR, "Exception in ResetPVMStartPVM: " + ex.Message);
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "Exception in ResetPVMStartPVM: " + ex.Message);
                 return false;
             }
 
@@ -1270,14 +1271,14 @@ namespace AnalysisManagerSequestPlugin
                 var strBatchFilePath = Path.Combine(PVMProgFolder, "AddHosts.bat");
                 if (!File.Exists(strBatchFilePath))
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR, "Batch file not found: " + strBatchFilePath);
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "Batch file not found: " + strBatchFilePath);
                     return false;
                 }
 
                 // Run the batch file
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.DEBUG, "     " + strBatchFilePath);
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "     " + strBatchFilePath);
                 }
 
                 var strTaskName = "AddHosts";
@@ -1291,14 +1292,14 @@ namespace AnalysisManagerSequestPlugin
 
                 if (!blnSuccess)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR,
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR,
                         "UtilityRunner returned False for " + strBatchFilePath);
                     return false;
                 }
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR, "Exception in ResetPVMAddNodes: " + ex.Message);
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "Exception in ResetPVMAddNodes: " + ex.Message);
                 return false;
             }
 
@@ -1332,7 +1333,7 @@ namespace AnalysisManagerSequestPlugin
             {
                 if (m_DebugLevel >= 2)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.WARN,
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN,
                         "Sequest log file not found, cannot update Node Processing Stats");
                     return;
                 }
@@ -1362,7 +1363,7 @@ namespace AnalysisManagerSequestPlugin
             catch (Exception ex)
             {
                 var Msg = "UpdateNodeStats: Exception reading sequest log file: " + ex.Message;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.WARN, Msg);
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN, Msg);
                 return;
             }
 
@@ -1373,12 +1374,12 @@ namespace AnalysisManagerSequestPlugin
             if (NumNodeMachines == 0)
             {
                 var Msg = "UpdateNodeStats: node machine count line not found";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.WARN, Msg);
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN, Msg);
             }
             else if (NumNodeMachines < 0)
             {
                 var Msg = "UpdateNodeStats: Exception retrieving node machine count: " + m_ErrMsg;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.WARN, Msg);
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN, Msg);
             }
 
             if (NumNodeMachines > mSequestNodeProcessingStats.NumNodeMachines)
@@ -1391,12 +1392,12 @@ namespace AnalysisManagerSequestPlugin
             if (NumSlaveProcesses == 0)
             {
                 var Msg = "UpdateNodeStats: slave process count line not found";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.WARN, Msg);
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN, Msg);
             }
             else if (NumSlaveProcesses < 0)
             {
                 var Msg = "UpdateNodeStats: Exception retrieving slave process count: " + m_ErrMsg;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.WARN, Msg);
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN, Msg);
             }
 
             if (NumSlaveProcesses > mSequestNodeProcessingStats.NumSlaveProcesses)
@@ -1461,7 +1462,7 @@ namespace AnalysisManagerSequestPlugin
                 var PVMProgFolder = m_mgrParams.GetParam("PVMProgLoc");
                 if (string.IsNullOrWhiteSpace(PVMProgFolder))
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR,
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR,
                         "PVMProgLoc parameter not defined for this manager");
                     return;
                 }
@@ -1469,7 +1470,7 @@ namespace AnalysisManagerSequestPlugin
                 var strBatchFilePath = Path.Combine(PVMProgFolder, "CheckActiveNodes.bat");
                 if (!File.Exists(strBatchFilePath))
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR, "Batch file not found: " + strBatchFilePath);
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, "Batch file not found: " + strBatchFilePath);
                     return;
                 }
 
@@ -1477,7 +1478,7 @@ namespace AnalysisManagerSequestPlugin
 
                 if (m_DebugLevel >= 4)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.DEBUG, "     " + strBatchFilePath);
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "     " + strBatchFilePath);
                 }
 
                 var strTaskName = "CheckActiveNodes";
@@ -1491,7 +1492,7 @@ namespace AnalysisManagerSequestPlugin
 
                 if (!blnSuccess)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR,
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR,
                         "UtilityRunner returned False for " + strBatchFilePath);
                 }
 
@@ -1499,7 +1500,7 @@ namespace AnalysisManagerSequestPlugin
                 {
                     if (m_DebugLevel >= 1)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.DEBUG,
+                        LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG,
                             "Warning, ActiveNodes files not found: " + strActiveNodesFilePath);
                     }
 
@@ -1541,7 +1542,7 @@ namespace AnalysisManagerSequestPlugin
                 // Log the number of active nodes every 10 minutes
                 if (m_DebugLevel >= 4 || DateTime.UtcNow.Subtract(mLastActiveNodeLogTime).TotalSeconds >= 600)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.DEBUG,
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG,
                         " ... " + intNodeCountCurrent + " / " + mSequestNodesSpawned + " Sequest nodes are active; median processing time = " +
                         ComputeMedianProcessingTime().ToString("0.0") + " seconds/spectrum; " + m_progress.ToString("0.0") + "% complete");
                     mLastActiveNodeLogTime = DateTime.UtcNow;
@@ -1567,19 +1568,19 @@ namespace AnalysisManagerSequestPlugin
                                      " active vs. " + mSequestNodesSpawned + " total nodes at start; " +
                                      "mNodeCountActiveErrorOccurences=" + mNodeCountActiveErrorOccurences;
 
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.WARN, strMessage);
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN, strMessage);
                     mResetPVM = true;
                 }
                 else if (mNodeCountActiveErrorOccurences > 0)
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.INFO,
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.INFO,
                         "Resetting mNodeCountActiveErrorOccurences from " + mNodeCountActiveErrorOccurences + " to 0");
                     mNodeCountActiveErrorOccurences = 0;
                 }
             }
             catch (Exception ex)
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR,
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR,
                     "Exception in ValidateProcessorsAreActive: " + ex.Message);
             }
         }
@@ -1602,7 +1603,7 @@ namespace AnalysisManagerSequestPlugin
 
         private void m_UtilityRunner_Timeout()
         {
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR,
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR,
                 "UtilityRunner task " + mUtilityRunnerTaskName + " has timed out; " + m_UtilityRunner.MaxRuntimeSeconds + " seconds has elapsed");
         }
 

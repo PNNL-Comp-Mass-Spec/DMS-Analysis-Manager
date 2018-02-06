@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
+using PRISM.Logging;
 
 namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 {
@@ -60,7 +61,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
                 // Change the name of the log file for the local log file to the plugin log filename
                 var logFileName = Path.Combine(m_WorkDir, "MultiAlign_Log.txt");
-                clsLogTools.ChangeLogFileBaseName(logFileName, appendDateToBaseName: false);
+                LogTools.ChangeLogFileBaseName(logFileName, appendDateToBaseName: false);
 
                 bool processingSuccess;
 

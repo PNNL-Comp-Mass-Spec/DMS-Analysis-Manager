@@ -1144,7 +1144,7 @@ namespace AnalysisManagerBase
                     if (dataPkgJob.PeptideHitResultType == clsPHRPReader.ePeptideHitResultType.Unknown)
                     {
                         var msg = "PeptideHit ResultType not recognized for job " + dataPkgJob.Job + ": " + dataPkgJob.ResultType;
-                        clsGlobal.LogWarning(msg);
+                        LogTools.LogWarning(msg);
                     }
                     else
                     {
@@ -1704,7 +1704,7 @@ namespace AnalysisManagerBase
             {
                 try
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, BaseLogger.LogLevels.ERROR, message);
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogDb, BaseLogger.LogLevels.ERROR, message);
                 }
                 catch (Exception ex2)
                 {

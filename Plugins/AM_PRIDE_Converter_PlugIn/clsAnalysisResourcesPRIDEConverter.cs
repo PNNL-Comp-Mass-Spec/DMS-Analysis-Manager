@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using AnalysisManagerBase;
+using PRISM.Logging;
 
 namespace AnalysisManagerPRIDEConverterPlugIn
 {
@@ -258,7 +259,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             {
                 if (WarnIfJobParamMissing)
                 {
-                    clsGlobal.LogWarning(
+                    LogTools.LogWarning(
                         "Job parameter " + JOB_PARAM_MSGF_REPORT_TEMPLATE_FILENAME + " is empty; will assume " + templateFileName);
                 }
                 templateFileName = DEFAULT_MSGF_REPORT_TEMPLATE_FILENAME;
@@ -282,7 +283,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 templateFileName = DEFAULT_PX_SUBMISSION_TEMPLATE_FILENAME;
                 if (WarnIfJobParamMissing)
                 {
-                    clsGlobal.LogWarning(
+                    LogTools.LogWarning(
                         "Job parameter " + JOB_PARAM_PX_SUBMISSION_TEMPLATE_FILENAME + " is empty; will assume " + templateFileName);
                 }
             }

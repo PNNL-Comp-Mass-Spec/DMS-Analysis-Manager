@@ -7,7 +7,7 @@ using PRISM;
 namespace AnalysisManagerBase
 {
     /// <summary>
-    /// Methods to be inherited by classes that use clsLogTools
+    /// Methods to be inherited by classes that use LogTools
     /// </summary>
     public abstract class clsLoggerBase
     {
@@ -33,7 +33,7 @@ namespace AnalysisManagerBase
         protected void LogDebug(string statusMessage, int logFileDebugLevel = 0)
         {
             var writeToLog = (logFileDebugLevel < 10 && (logFileDebugLevel == 0 || logFileDebugLevel <= m_DebugLevel));
-            clsGlobal.LogDebug(statusMessage, writeToLog);
+            LogTools.LogDebug(statusMessage, writeToLog);
         }
 
         /// <summary>
@@ -46,19 +46,19 @@ namespace AnalysisManagerBase
         {
             ConsoleMsgUtils.ShowError(errorMessage, false);
 
-            clsLogTools.LoggerTypes loggerType;
+            LogTools.LoggerTypes loggerType;
             if (logToDb && !clsGlobal.OfflineMode)
             {
-                loggerType = clsLogTools.LoggerTypes.LogDb;
+                loggerType = LogTools.LoggerTypes.LogDb;
             }
             else
             {
-                loggerType = clsLogTools.LoggerTypes.LogFile;
+                loggerType = LogTools.LoggerTypes.LogFile;
             }
 
             try
             {
-                clsLogTools.WriteLog(loggerType, BaseLogger.LogLevels.ERROR, errorMessage);
+                LogTools.WriteLog(loggerType, BaseLogger.LogLevels.ERROR, errorMessage);
             }
             catch (Exception ex)
             {
@@ -76,7 +76,7 @@ namespace AnalysisManagerBase
         /// <remarks>The error is shown in red in the console.  The exception stack trace is shown in cyan</remarks>
         protected virtual void LogError(string errorMessage, Exception ex, bool logToDatabase = false)
         {
-            clsGlobal.LogError(errorMessage, ex, logToDatabase);
+            LogTools.LogError(errorMessage, ex, logToDatabase);
         }
 
         /// <summary>
@@ -94,7 +94,7 @@ namespace AnalysisManagerBase
         protected void LogMessage(string statusMessage, int logFileDebugLevel = 0, bool isError = false)
         {
             var writeToLog = (logFileDebugLevel < 10 && (logFileDebugLevel == 0 || logFileDebugLevel <= m_DebugLevel));
-            clsGlobal.LogMessage(statusMessage, isError, writeToLog);
+            LogTools.LogMessage(statusMessage, isError, writeToLog);
         }
 
         /// <summary>
@@ -104,7 +104,7 @@ namespace AnalysisManagerBase
         /// <remarks>The warning is shown in yellow in the console.</remarks>
         protected void LogWarning(string warningMessage)
         {
-            clsGlobal.LogWarning(warningMessage);
+            LogTools.LogWarning(warningMessage);
         }
 
     }

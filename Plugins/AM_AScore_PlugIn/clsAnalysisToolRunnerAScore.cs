@@ -4,6 +4,7 @@ using AnalysisManagerBase;
 using System;
 using Mage;
 using PRISM;
+using PRISM.Logging;
 
 namespace AnalysisManager_AScore_PlugIn
 {
@@ -66,7 +67,7 @@ namespace AnalysisManager_AScore_PlugIn
 
                     // Change the name of the log file for the local log file to the plugin log filename
                     var logFileName = Path.Combine(m_WorkDir, "Ascore_Log.txt");
-                    clsLogTools.ChangeLogFileBaseName(logFileName, appendDateToBaseName: false);
+                    LogTools.ChangeLogFileBaseName(logFileName, appendDateToBaseName: false);
 
                     try
                     {

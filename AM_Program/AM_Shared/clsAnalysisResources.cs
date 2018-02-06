@@ -1046,7 +1046,7 @@ namespace AnalysisManagerBase
                     var debugMessage = dataFileDescription +
                         " lock file found; will wait for file to be deleted or age; " +
                         fiLockFile.Name + " created " + fiLockFile.LastWriteTime.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT);
-                    clsGlobal.LogDebug(debugMessage);
+                    LogTools.LogDebug(debugMessage);
                 }
                 else
                 {
@@ -1719,7 +1719,7 @@ namespace AnalysisManagerBase
             if (!success)
             {
                 var errorMessage = "GetDataPackageStoragePath; Excessive failures attempting to retrieve data package info from database";
-                clsGlobal.LogError(errorMessage);
+                LogTools.LogError(errorMessage);
                 resultSet.Dispose();
                 return string.Empty;
             }
@@ -1731,7 +1731,7 @@ namespace AnalysisManagerBase
                 // Log an error
 
                 var errorMessage = "GetDataPackageStoragePath; Data package not found: " + dataPackageID;
-                clsGlobal.LogError(errorMessage);
+                LogTools.LogError(errorMessage);
                 return string.Empty;
             }
 
@@ -2351,7 +2351,7 @@ namespace AnalysisManagerBase
             }
             catch (Exception)
             {
-                clsGlobal.LogWarning("Exception in GetPseudoDataPackageJobInfo determining the parent folder of " + udtDatasetInfo.ArchiveStoragePath);
+                LogTools.LogWarning("Exception in GetPseudoDataPackageJobInfo determining the parent folder of " + udtDatasetInfo.ArchiveStoragePath);
                 jobInfo.ArchiveStoragePath = udtDatasetInfo.ArchiveStoragePath.Replace(@"\" + udtDatasetInfo.Dataset, "");
             }
 
@@ -2365,7 +2365,7 @@ namespace AnalysisManagerBase
             }
             catch (Exception)
             {
-                clsGlobal.LogWarning("Exception in GetPseudoDataPackageJobInfo determining the parent folder of " + udtDatasetInfo.ServerStoragePath);
+                LogTools.LogWarning("Exception in GetPseudoDataPackageJobInfo determining the parent folder of " + udtDatasetInfo.ServerStoragePath);
                 jobInfo.ServerStoragePath = udtDatasetInfo.ServerStoragePath.Replace(@"\" + udtDatasetInfo.Dataset, "");
             }
 
@@ -2504,7 +2504,7 @@ namespace AnalysisManagerBase
             if (string.IsNullOrEmpty(legacyFastaFileName))
             {
                 errorMessage = "Parameter LegacyFastaFileName is empty for the job; cannot determine the SplitFasta file name for this job step";
-                clsGlobal.LogError(errorMessage);
+                LogTools.LogError(errorMessage);
                 return string.Empty;
             }
 
@@ -2512,7 +2512,7 @@ namespace AnalysisManagerBase
             if (numberOfClonedSteps == 0)
             {
                 errorMessage = "Settings file is missing parameter NumberOfClonedSteps; cannot determine the SplitFasta file name for this job step";
-                clsGlobal.LogError(errorMessage);
+                LogTools.LogError(errorMessage);
                 return string.Empty;
             }
 
@@ -2532,7 +2532,7 @@ namespace AnalysisManagerBase
                     {
                         errorMessage = "GetSplitFastaIteration computed an iteration value of " + iteration + "; " +
                             "cannot determine the SplitFasta file name for this job step";
-                        clsGlobal.LogError(errorMessage);
+                        LogTools.LogError(errorMessage);
                     }
                     return string.Empty;
                 }
@@ -2573,7 +2573,7 @@ namespace AnalysisManagerBase
             if (cloneStepRenumStart == 0)
             {
                 errorMessage = "Settings file is missing parameter CloneStepRenumberStart; cannot determine the SplitFasta iteration value for this job step";
-                clsGlobal.LogError(errorMessage);
+                LogTools.LogError(errorMessage);
                 return 0;
             }
 
@@ -2581,7 +2581,7 @@ namespace AnalysisManagerBase
             if (stepNumber == 0)
             {
                 errorMessage = "Job parameter Step is missing; cannot determine the SplitFasta iteration value for this job step";
-                clsGlobal.LogError(errorMessage);
+                LogTools.LogError(errorMessage);
                 return 0;
             }
 
@@ -2779,7 +2779,7 @@ namespace AnalysisManagerBase
             if (!success)
             {
                 var errorMessage = "LoadDataPackageDatasetInfo; Excessive failures attempting to retrieve data package dataset info from database";
-                clsGlobal.LogError(errorMessage);
+                LogTools.LogError(errorMessage);
                 resultSet.Dispose();
                 return false;
             }
@@ -2789,7 +2789,7 @@ namespace AnalysisManagerBase
             {
                 // No data was returned
                 var warningMessage = "LoadDataPackageDatasetInfo; No datasets were found for data package " + dataPackageID;
-                clsGlobal.LogError(warningMessage);
+                LogTools.LogError(warningMessage);
                 return false;
             }
 
@@ -2840,7 +2840,7 @@ namespace AnalysisManagerBase
         /// <param name="debugMessage"></param>
         protected void LogDebugMessage(string debugMessage)
         {
-            clsGlobal.LogDebug(debugMessage);
+            LogTools.LogDebug(debugMessage);
         }
 
         /// <summary>
@@ -2850,7 +2850,7 @@ namespace AnalysisManagerBase
         /// <param name="statusTools"></param>
         protected static void LogDebugMessage(string debugMessage, IStatusFile statusTools)
         {
-            clsGlobal.LogDebug(debugMessage);
+            LogTools.LogDebug(debugMessage);
 
             if (statusTools != null)
             {
@@ -4818,7 +4818,7 @@ namespace AnalysisManagerBase
                              "need " + freeMemoryRequiredMB + " MB but " +
                              "system has " + freeMemoryMB.ToString("0") + " MB available";
 
-                clsGlobal.LogError(errMsg);
+                LogTools.LogError(errMsg);
                 return false;
             }
 
@@ -4827,7 +4827,7 @@ namespace AnalysisManagerBase
                 // Example message: MSGF+ will use 4000 MB; system has 7296 MB available
                 var message = stepToolName + " will use " + freeMemoryRequiredMB + " MB; " +
                              "system has " + freeMemoryMB.ToString("0") + " MB available";
-                clsGlobal.LogDebug(message);
+                LogTools.LogDebug(message);
             }
 
             return true;

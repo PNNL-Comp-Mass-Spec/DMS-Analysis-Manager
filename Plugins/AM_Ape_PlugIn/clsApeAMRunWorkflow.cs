@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using AnalysisManagerBase;
+using PRISM.Logging;
 
 namespace AnalysisManager_Ape_PlugIn
 {
@@ -35,13 +36,13 @@ namespace AnalysisManager_Ape_PlugIn
                 {
                     if (success)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.INFO, "Ape successfully ran workflow " + GetJobParam("ApeWorkflowName"));
+                        LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.INFO, "Ape successfully ran workflow " + GetJobParam("ApeWorkflowName"));
                         blnSuccess = true;
                     }
                     else
                     {
                         mErrorMessage = "Error running Ape in clsApeAMRunWorkflow";
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR, mErrorMessage);
+                        LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, mErrorMessage);
                         blnSuccess = false;
                     }
                 }

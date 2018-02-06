@@ -11,6 +11,7 @@ using Mage;
 using MageExtExtractionFilters;
 using MyEMSLReader;
 using PRISM;
+using PRISM.Logging;
 
 namespace AnalysisManager_AScore_PlugIn
 {
@@ -113,7 +114,7 @@ namespace AnalysisManager_AScore_PlugIn
 
                 if (!int.TryParse(jobText, out var jobNumber))
                 {
-                    clsGlobal.LogError("Job number is not numeric: " + jobText);
+                    LogTools.LogError("Job number is not numeric: " + jobText);
                     return false;
                 }
 
@@ -251,7 +252,7 @@ namespace AnalysisManager_AScore_PlugIn
                     }
                     catch (Exception ex)
                     {
-                        clsGlobal.LogError("Error deleting file " + Path.GetFileName(ascoreOutputFilePath) +
+                        LogTools.LogError("Error deleting file " + Path.GetFileName(ascoreOutputFilePath) +
                                  " (" + ex.Message + "); may lead to duplicate values in Results.db3", ex);
                     }
 
@@ -272,7 +273,7 @@ namespace AnalysisManager_AScore_PlugIn
             }
             catch (Exception ex)
             {
-                clsGlobal.LogError("Exception in clsAScoreMage.CheckFilter: " + ex.Message, ex);
+                LogTools.LogError("Exception in clsAScoreMage.CheckFilter: " + ex.Message, ex);
                 Console.WriteLine(ex.Message);
                 throw;
             }
@@ -333,7 +334,7 @@ namespace AnalysisManager_AScore_PlugIn
             // If we have changed the string from empty we have found the correct _dta.zip file
             if (string.IsNullOrEmpty(dtaZipPathLocal))
             {
-                clsGlobal.LogError("DTA File not found");
+                LogTools.LogError("DTA File not found");
                 return null;
             }
 
@@ -344,7 +345,7 @@ namespace AnalysisManager_AScore_PlugIn
             }
             catch (Exception ex)
             {
-                clsGlobal.LogError("Exception copying and unzipping _DTA.zip file: " + ex.Message, ex);
+                LogTools.LogError("Exception copying and unzipping _DTA.zip file: " + ex.Message, ex);
                 return null;
             }
 
@@ -358,7 +359,7 @@ namespace AnalysisManager_AScore_PlugIn
             }
             catch (Exception ex)
             {
-                clsGlobal.LogWarning("Unable to delete _dta.zip file: " + ex.Message);
+                LogTools.LogWarning("Unable to delete _dta.zip file: " + ex.Message);
             }
 
             var unzippedDtaResultsFilePath = Path.ChangeExtension(dtaZipPathLocal, ".txt");
@@ -385,7 +386,7 @@ namespace AnalysisManager_AScore_PlugIn
 
                 if (lstArchiveFiles.Count == 0)
                 {
-                    clsGlobal.LogError("DTA file not found in folder " + dtaFolderName + " in MyEMSL");
+                    LogTools.LogError("DTA file not found in folder " + dtaFolderName + " in MyEMSL");
                     return null;
                 }
             }
@@ -394,7 +395,7 @@ namespace AnalysisManager_AScore_PlugIn
 
             if (!clsAScoreMagePipeline.mMyEMSLDatasetInfo.ProcessDownloadQueue(WorkingDir, Downloader.DownloadFolderLayout.FlatNoSubfolders))
             {
-                clsGlobal.LogError("Error downloading the _DTA.zip file from MyEMSL");
+                LogTools.LogError("Error downloading the _DTA.zip file from MyEMSL");
                 return null;
             }
 
@@ -429,21 +430,21 @@ namespace AnalysisManager_AScore_PlugIn
 
                 if (diResultsFolder.Parent == null || !diResultsFolder.Parent.Exists)
                 {
-                    clsGlobal.LogError("DTA directory not found; " + diResultsFolder.FullName + " does not have a parent folder");
+                    LogTools.LogError("DTA directory not found; " + diResultsFolder.FullName + " does not have a parent folder");
                     return null;
                 }
 
                 var diAlternateDtaFolder = new DirectoryInfo(Path.Combine(diResultsFolder.Parent.FullName, dtaFolderName));
                 if (!diAlternateDtaFolder.Exists)
                 {
-                    clsGlobal.LogError("DTA directory not found: " + diAlternateDtaFolder.FullName);
+                    LogTools.LogError("DTA directory not found: " + diAlternateDtaFolder.FullName);
                     return null;
                 }
 
                 lstFiles = diAlternateDtaFolder.GetFiles("*_dta.zip").ToList();
                 if (lstFiles.Count == 0)
                 {
-                    clsGlobal.LogError("DTA file not found in folder " + diAlternateDtaFolder.FullName);
+                    LogTools.LogError("DTA file not found in folder " + diAlternateDtaFolder.FullName);
                     return null;
                 }
 
@@ -482,7 +483,7 @@ namespace AnalysisManager_AScore_PlugIn
 
                 if (!success || lstResults.Count == 0)
                 {
-                    clsGlobal.LogError("Cannot determine shared results folder; match not found for job " + jobNumber + " and tool " + toolName + " in V_Job_Steps opr V_Job_Steps_History");
+                    LogTools.LogError("Cannot determine shared results folder; match not found for job " + jobNumber + " and tool " + toolName + " in V_Job_Steps opr V_Job_Steps_History");
                     return string.Empty;
 
                 }
@@ -493,7 +494,7 @@ namespace AnalysisManager_AScore_PlugIn
             }
             catch (Exception ex)
             {
-                clsGlobal.LogError("Error looking up the input folder for job " + jobNumber + " and tool " + toolName +
+                LogTools.LogError("Error looking up the input folder for job " + jobNumber + " and tool " + toolName +
                          " in GetSharedResultFolderName: " + ex.Message, ex);
                 return string.Empty;
             }

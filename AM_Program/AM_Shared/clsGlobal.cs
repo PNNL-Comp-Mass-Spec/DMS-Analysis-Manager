@@ -300,6 +300,8 @@ namespace AnalysisManagerBase
             OfflineMode = true;
             LinuxOS = runningLinux;
 
+            LogTools.OfflineMode = true;
+
             if (runningLinux)
                 Console.WriteLine("Offline mode enabled globally (running Linux)");
             else
@@ -509,7 +511,7 @@ namespace AnalysisManagerBase
                         msg += ", Query = " + cmd.CommandText;
                     }
 
-                    LogError(msg);
+                    LogTools.LogError(msg);
 
                     if (retryCount <= 0)
                         break;
@@ -543,7 +545,7 @@ namespace AnalysisManagerBase
             catch (Exception ex)
             {
                 var msg = "Unknown .NET version, " + ex.Message;
-                LogError(msg, ex);
+                LogTools.LogError(msg, ex);
                 return msg;
             }
         }
@@ -613,7 +615,7 @@ namespace AnalysisManagerBase
 
             if (OfflineMode)
             {
-                LogError(string.Format("Offline mode enabled; {0} cannot execute query {1}", callingFunction, sqlQuery));
+                LogTools.LogError(string.Format("Offline mode enabled; {0} cannot execute query {1}", callingFunction, sqlQuery));
                 lstResults = new List<List<string>>();
                 return false;
             }
@@ -1506,112 +1508,6 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Show a status message at the console and optionally include in the log file, tagging it as a debug message
-        /// </summary>
-        /// <param name="statusMessage">Status message</param>
-        /// <param name="writeToLog">True to write to the log file; false to only display at console</param>
-        /// <remarks>The message is shown in dark grey in the console.</remarks>
-        public static void LogDebug(string statusMessage, bool writeToLog = true)
-        {
-            ConsoleMsgUtils.ShowDebug(statusMessage);
-
-            if (!writeToLog)
-                return;
-
-            try
-            {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, statusMessage);
-            }
-            catch (Exception ex)
-            {
-                ErrorWritingToLog(statusMessage, ex);
-            }
-
-        }
-
-        /// <summary>
-        /// Log an error message and exception
-        /// </summary>
-        /// <param name="errorMessage">Error message (do not include ex.message)</param>
-        /// <param name="ex">Exception to log (allowed to be nothing)</param>
-        /// <param name="logToDatabase">When true, log to the database (and to the file)</param>
-        /// <remarks>The error is shown in red in the console.  The exception stack trace is shown in cyan</remarks>
-        public static void LogError(string errorMessage, Exception ex = null, bool logToDatabase = false)
-        {
-            var formattedError = ConsoleMsgUtils.ShowError(errorMessage, ex);
-
-            try
-            {
-                var logType = logToDatabase ? clsLogTools.LoggerTypes.LogDb : clsLogTools.LoggerTypes.LogFile;
-
-                clsLogTools.WriteLog(logType, BaseLogger.LogLevels.ERROR, formattedError, ex);
-            }
-            catch (Exception ex2)
-            {
-                ErrorWritingToLog(formattedError, ex2);
-            }
-
-        }
-
-        /// <summary>
-        /// Show a status message at the console and optionally include in the log file
-        /// </summary>
-        /// <param name="statusMessage">Status message</param>
-        /// <param name="isError">True if this is an error</param>
-        /// <param name="writeToLog">True to write to the log file; false to only display at console</param>
-        public static void LogMessage(string statusMessage, bool isError = false, bool writeToLog = true)
-        {
-
-            if (isError)
-            {
-                ConsoleMsgUtils.ShowError(statusMessage, false);
-            }
-            else
-            {
-                Console.WriteLine(statusMessage);
-            }
-
-            if (!writeToLog)
-                return;
-
-            try
-            {
-                if (isError)
-                {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, statusMessage);
-                }
-                else
-                {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.INFO, statusMessage);
-                }
-            }
-            catch (Exception ex)
-            {
-                ErrorWritingToLog(statusMessage, ex);
-            }
-
-        }
-
-        /// <summary>
-        /// Display a warning message at the console and write to the log file
-        /// </summary>
-        /// <param name="warningMessage">Warning message</param>
-        public static void LogWarning(string warningMessage)
-        {
-            ConsoleMsgUtils.ShowWarning(warningMessage);
-
-            try
-            {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN, warningMessage);
-            }
-            catch (Exception ex)
-            {
-                ErrorWritingToLog(warningMessage, ex);
-            }
-
-        }
-
-        /// <summary>
         /// Replaces text in a string, ignoring case
         /// </summary>
         /// <param name="textToSearch"></param>
@@ -2094,10 +1990,10 @@ namespace AnalysisManagerBase
             string directoryDescription,
             string directoryPath,
             int minFreeSpaceMB,
-            clsLogTools.LoggerTypes eLogLocationIfNotFound,
+            LogTools.LoggerTypes eLogLocationIfNotFound,
             out string errorMessage)
         {
-            var logToDatabase = eLogLocationIfNotFound == clsLogTools.LoggerTypes.LogDb;
+            var logToDatabase = eLogLocationIfNotFound == LogTools.LoggerTypes.LogDb;
             return ValidateFreeDiskSpace(directoryDescription, directoryPath, minFreeSpaceMB, out errorMessage, logToDatabase);
         }
 
@@ -2125,7 +2021,7 @@ namespace AnalysisManagerBase
             {
                 // Example error message: Organism DB directory not found: G:\DMS_Temp_Org
                 errorMessage = directoryDescription + " not found: " + directoryPath;
-                LogError(errorMessage, null, logToDatabase);
+                LogTools.LogError(errorMessage, null, logToDatabase);
                 return false;
             }
 
@@ -2145,7 +2041,7 @@ namespace AnalysisManagerBase
                 // Example error message: Organism DB directory drive has less than 6858 MB free: 5794 MB
                 errorMessage = $"{directoryDescription} drive has less than {minFreeSpaceMB} MB free: {(int)freeSpaceMB} MB";
                 Console.WriteLine(errorMessage);
-                LogError(errorMessage);
+                LogTools.LogError(errorMessage);
                 return false;
             }
 
@@ -2175,27 +2071,27 @@ namespace AnalysisManagerBase
 
         private static void DebugEventHandlerConsoleOnly(string statusMessage)
         {
-            LogDebug(statusMessage, writeToLog: false);
+            LogTools.LogDebug(statusMessage, writeToLog: false);
         }
 
         private static void DebugEventHandler(string statusMessage)
         {
-            LogDebug(statusMessage);
+            LogTools.LogDebug(statusMessage);
         }
 
         private static void StatusEventHandler(string statusMessage)
         {
-            LogMessage(statusMessage);
+            LogTools.LogMessage(statusMessage);
         }
 
         private static void ErrorEventHandler(string errorMessage, Exception ex)
         {
-            LogError(errorMessage, ex);
+            LogTools.LogError(errorMessage, ex);
         }
 
         private static void WarningEventHandler(string warningMessage)
         {
-            LogWarning(warningMessage);
+            LogTools.LogWarning(warningMessage);
         }
 
         #endregion

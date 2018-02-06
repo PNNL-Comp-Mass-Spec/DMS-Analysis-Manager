@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using AnalysisManagerBase;
+using PRISM.Logging;
 
 namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 {
@@ -144,7 +145,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 return true;
             }
 
-            var success = FileSearch.RetrieveFile(paramFileName, m_jobParams.GetParam("transferFolderPath"), 2, PRISM.Logging.BaseLogger.LogLevels.DEBUG);
+            var success = FileSearch.RetrieveFile(paramFileName, m_jobParams.GetParam("transferFolderPath"), 2, BaseLogger.LogLevels.DEBUG);
 
             if (!success)
             {

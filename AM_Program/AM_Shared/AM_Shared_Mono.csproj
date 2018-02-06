@@ -100,7 +100,6 @@
     <Compile Include="clsFormattedXMLWriter.cs" />
     <Compile Include="clsGlobal.cs" />
     <Compile Include="clsLoggerBase.cs" />
-    <Compile Include="clsLogTools.cs" />
     <Compile Include="clsMemoryUsageLogger.cs" />
     <Compile Include="clsMessageQueueLogger.cs" />
     <Compile Include="clsMessageSender.cs" />
@@ -136,7 +135,7 @@
       <Version>1.10.1</Version>
     </PackageReference>
     <PackageReference Include="PRISM-Library">
-      <Version>2.4.60</Version>
+      <Version>2.4.63</Version>
     </PackageReference>
     <PackageReference Include="PRISMWin-Library">
       <Version>1.0.3</Version>

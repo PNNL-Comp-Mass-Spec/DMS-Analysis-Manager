@@ -7,6 +7,7 @@ using Mage;
 using MageExtExtractionFilters;
 using MyEMSLReader;
 using PRISM;
+using PRISM.Logging;
 
 namespace AnalysisManager_AScore_PlugIn
 {
@@ -142,7 +143,7 @@ namespace AnalysisManager_AScore_PlugIn
             if (string.IsNullOrEmpty(mParamFilename))
             {
                 mErrorMessage = "AScore ParmFileName not defined in the settings for this job; unable to continue";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR, mErrorMessage);
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, mErrorMessage);
                 return false;
             }
 
@@ -151,7 +152,7 @@ namespace AnalysisManager_AScore_PlugIn
             if (string.IsNullOrEmpty(strMAParameterFileStoragePath))
             {
                 strMAParameterFileStoragePath = @"\\gigasax\DMS_Parameter_Files\AScore";
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.WARN,
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN,
                     "Parameter " + strParamFileStoragePathKeyName + " is not defined " +
                     "(obtained using V_Pipeline_Step_Tools_Detail_Report in the Broker DB); " +
                     "will assume: " + strMAParameterFileStoragePath);
@@ -168,7 +169,7 @@ namespace AnalysisManager_AScore_PlugIn
             if (fiParamFiles.Count == 0)
             {
                 mErrorMessage = "No parameter files matching " + fileMask + " were found at " + diParamFileFolder.FullName;
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR, mErrorMessage);
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, mErrorMessage);
                 return false;
             }
 
@@ -181,7 +182,7 @@ namespace AnalysisManager_AScore_PlugIn
                 catch (Exception ex)
                 {
                     mErrorMessage = "Error copying parameter file: " + ex.Message;
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR, mErrorMessage);
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, mErrorMessage);
                 }
             }
 

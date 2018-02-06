@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using AnalysisManagerBase;
+using PRISM.Logging;
 
 namespace AnalysisManagerICR2LSPlugIn
 {
@@ -119,7 +120,7 @@ namespace AnalysisManagerICR2LSPlugIn
 
                             LogMessage("Copying " + Path.GetFileName(serFileOrFolderPath) + " file from archive to working directory: " + serFileOrFolderPath);
 
-                            if (!CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName, strLocalDatasetFolderPath, PRISM.Logging.BaseLogger.LogLevels.ERROR))
+                            if (!CopyFileToWorkDir(fiSourceFile.Name, fiSourceFile.Directory.FullName, strLocalDatasetFolderPath, BaseLogger.LogLevels.ERROR))
                             {
                                 return false;
                             }

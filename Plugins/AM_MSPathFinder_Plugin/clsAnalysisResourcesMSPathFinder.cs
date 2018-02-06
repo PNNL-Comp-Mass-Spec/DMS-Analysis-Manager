@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using AnalysisManagerBase;
+using PRISM.Logging;
 
 namespace AnalysisManagerMSPathFinderPlugin
 {
@@ -106,7 +107,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                     }
 
                     // Copy the file
-                    if (!CopyFileToWorkDir(sourceFile.Name, transferFolderPath, m_WorkingDir, PRISM.Logging.BaseLogger.LogLevels.ERROR))
+                    if (!CopyFileToWorkDir(sourceFile.Name, transferFolderPath, m_WorkingDir, BaseLogger.LogLevels.ERROR))
                     {
                         // Error copying; move on to the next file
                         continue;

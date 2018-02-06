@@ -4,6 +4,7 @@ using System.IO;
 using System.Text.RegularExpressions;
 using AnalysisManagerBase;
 using PRISM;
+using PRISM.Logging;
 
 namespace AnalysisManagerMODPlusPlugin
 {
@@ -332,7 +333,7 @@ namespace AnalysisManagerMODPlusPlugin
             catch (Exception ex)
             {
                 // Ignore errors here
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR,
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR,
                     "Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
             }
         }
@@ -344,7 +345,7 @@ namespace AnalysisManagerMODPlusPlugin
         /// <param name="ex"></param>
         private void CmdRunner_ErrorEvent(string strMessage, Exception ex)
         {
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR, strMessage, ex);
+            LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, strMessage, ex);
         }
 
         private DateTime dtLastConsoleOutputParse = DateTime.MinValue;

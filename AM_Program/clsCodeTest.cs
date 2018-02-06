@@ -445,17 +445,17 @@ namespace AnalysisManagerProg
             // Note: add file clsDtaRefLogMassErrorExtractor to this project to use this functionality
             // var oMassErrorExtractor = new clsDtaRefLogMassErrorExtractor(m_mgrParams, workDir, m_DebugLevel, postResultsToDB);
 
-            foreach (DataRow CurRow in Dt.Rows)
+            foreach (DataRow curRow in Dt.Rows)
             {
-                var dataset = clsGlobal.DbCStr(CurRow["Dataset"]);
-                var datasetID = clsGlobal.DbCInt(CurRow["Dataset_ID"]);
-                var job = clsGlobal.DbCInt(CurRow["Job"]);
-                var dtaRefineryDataFolderPath = Path.Combine(clsGlobal.DbCStr(CurRow["Dataset_Folder_Path"]),
-                                                             clsGlobal.DbCStr(CurRow["Output_Folder"]));
+                var dataset = clsGlobal.DbCStr(curRow["Dataset"]);
+                var datasetID = clsGlobal.DbCInt(curRow["Dataset_ID"]);
+                var job = clsGlobal.DbCInt(curRow["Job"]);
+                var dtaRefineryDataFolderPath = Path.Combine(clsGlobal.DbCStr(curRow["Dataset_Folder_Path"]),
+                                                             clsGlobal.DbCStr(curRow["Output_Folder"]));
 
                 if (!Directory.Exists(dtaRefineryDataFolderPath))
                 {
-                    dtaRefineryDataFolderPath = Path.Combine(clsGlobal.DbCStr(CurRow["Transfer_Folder_Path"]), clsGlobal.DbCStr(CurRow["Output_Folder"]));
+                    dtaRefineryDataFolderPath = Path.Combine(clsGlobal.DbCStr(curRow["Transfer_Folder_Path"]), clsGlobal.DbCStr(curRow["Output_Folder"]));
                 }
 
                 if (Directory.Exists(dtaRefineryDataFolderPath))
@@ -985,7 +985,12 @@ namespace AnalysisManagerProg
         {
             var logFileNameBase = Path.Combine("Logs", "AnalysisMgr");
 
-            clsLogTools.CreateFileLogger(logFileNameBase);
+            LogTools.CreateFileLogger(logFileNameBase);
+
+            // The analysis manager determines when to log or not log based on internal logic
+            // Set the LogLevel tracked by FileLogger to DEBUG so that all messages sent to the class are logged
+            LogTools.SetFileLogLevel(BaseLogger.LogLevels.DEBUG);
+
             GetCodeTestToolRunner(out var jobParams);
 
             m_DebugLevel = 2;
@@ -1045,9 +1050,9 @@ namespace AnalysisManagerProg
         public void TestDatabaseLogging(string connStr)
         {
 
-            clsLogTools.CreateDbLogger(connStr, "clsCodeTest");
+            LogTools.CreateDbLogger(connStr, "clsCodeTest");
 
-            clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, BaseLogger.LogLevels.INFO, "Test analysis manager status message");
+            LogTools.WriteLog(LogTools.LoggerTypes.LogDb, BaseLogger.LogLevels.INFO, "Test analysis manager status message");
 
             LogError("Test analysis manager error", null, true);
 
@@ -1060,12 +1065,16 @@ namespace AnalysisManagerProg
                 LogError("Test exception", ex, true);
             }
 
-            var sqlServerLogger = new SQLServerDatabaseLogger();
+            var sqlServerLogger = new SQLServerDatabaseLogger {
+                EchoMessagesToFileLogger = true
+            };
             sqlServerLogger.ChangeConnectionInfo("clsCodeTest2", connStr, "PostLogEntry", "type", "message", "postedBy");
             sqlServerLogger.WriteLog(BaseLogger.LogLevels.FATAL, "SQL Server Fatal Test");
 
             var odbcConnectionString = ODBCDatabaseLogger.ConvertSqlServerConnectionStringToODBC(connStr);
-            var odbcLogger = new ODBCDatabaseLogger();
+            var odbcLogger = new ODBCDatabaseLogger {
+                EchoMessagesToFileLogger = true
+            };
             odbcLogger.ChangeConnectionInfo("clsCodeTest2", odbcConnectionString, "PostLogEntry", "type", "message", "postedBy", 128, 4096, 128);
 
             odbcLogger.WriteLog(BaseLogger.LogLevels.INFO, "ODBC Log Test");

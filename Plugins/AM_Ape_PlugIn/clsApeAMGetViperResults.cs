@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Data.SqlClient;
 using AnalysisManagerBase;
+using PRISM.Logging;
 
 namespace AnalysisManager_Ape_PlugIn
 {
@@ -46,13 +47,13 @@ namespace AnalysisManager_Ape_PlugIn
                 {
                     if (success)
                     {
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.INFO, "Ape successfully created QRollup database." + GetJobParam("ApeWorkflowName"));
+                        LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.INFO, "Ape successfully created QRollup database." + GetJobParam("ApeWorkflowName"));
                         blnSuccess = true;
                     }
                     else
                     {
                         mErrorMessage = "Error using APE to create QRollup database for workflow " + GetJobParam("ApeWorkflowName");
-                        clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.ERROR, mErrorMessage);
+                        LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.ERROR, mErrorMessage);
                         blnSuccess = false;
                     }
                 }
@@ -144,8 +145,8 @@ namespace AnalysisManager_Ape_PlugIn
             }
             else
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.INFO, "Retrieving " + intMDIDCount + " MDIDs in clsApeAMGetViperResults");
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.DEBUG, "MDID list: " + MDIDList);
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.INFO, "Retrieving " + intMDIDCount + " MDIDs in clsApeAMGetViperResults");
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.DEBUG, "MDID list: " + MDIDList);
             }
 
             return MDIDList;

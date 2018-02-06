@@ -1,5 +1,6 @@
 using System;
 using AnalysisManagerBase;
+using PRISM.Logging;
 
 namespace AnalysisManager_Ape_PlugIn
 {
@@ -64,7 +65,7 @@ namespace AnalysisManager_Ape_PlugIn
             var val = mMgrParms.GetParam(paramName);
             if (string.IsNullOrEmpty(val))
             {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.WARN, string.Format("Required job parameter '{0}' was missing.", paramName));
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN, string.Format("Required job parameter '{0}' was missing.", paramName));
             }
             return val;
         }
@@ -73,7 +74,7 @@ namespace AnalysisManager_Ape_PlugIn
         {
             var val = mJobParms.GetParam(paramName);
             if (string.IsNullOrEmpty(val)) {
-                clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogFile, PRISM.Logging.BaseLogger.LogLevels.WARN, string.Format("Required job parameter '{0}' was missing.", paramName));
+                LogTools.WriteLog(LogTools.LoggerTypes.LogFile, BaseLogger.LogLevels.WARN, string.Format("Required job parameter '{0}' was missing.", paramName));
             }
             return val;
         }

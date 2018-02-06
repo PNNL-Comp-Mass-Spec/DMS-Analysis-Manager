@@ -326,7 +326,7 @@ namespace AnalysisManagerBase
             {
                 try
                 {
-                    clsLogTools.WriteLog(clsLogTools.LoggerTypes.LogDb, BaseLogger.LogLevels.ERROR, message);
+                    LogTools.WriteLog(LogTools.LoggerTypes.LogDb, BaseLogger.LogLevels.ERROR, message);
                 }
                 catch (Exception ex2)
                 {

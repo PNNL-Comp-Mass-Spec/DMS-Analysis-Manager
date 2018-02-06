@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Xml.Linq;
 using PRISM;
+using PRISM.Logging;
 using Renci.SshNet;
 using Renci.SshNet.Sftp;
 
@@ -299,7 +300,7 @@ namespace AnalysisManagerBase
 
                     var debugMessage = "Lock file found, will wait for it to be deleted or age; " +
                         fiLockFile.Name + " created " + fiLockFile.LastWriteTime.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT);
-                    clsGlobal.LogDebug(debugMessage);
+                    LogTools.LogDebug(debugMessage);
                 }
                 else
                 {

@@ -4,6 +4,7 @@ using System.Linq;
 using AnalysisManagerBase;
 using System.IO;
 using PRISM;
+using PRISM.Logging;
 
 namespace AnalysisManager_Mage_PlugIn
 {
@@ -43,7 +44,7 @@ namespace AnalysisManager_Mage_PlugIn
             _jobParams = jobParms;
             _mgrParams = mgrParms;
 
-            clsLogTools.ChangeLogFileBaseName(logFilePath, appendDateToLogFileName);
+            LogTools.ChangeLogFileBaseName(logFilePath, appendDateToLogFileName);
         }
 
         #endregion

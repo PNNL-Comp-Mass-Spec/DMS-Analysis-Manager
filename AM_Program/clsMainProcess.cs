@@ -183,7 +183,7 @@ namespace AnalysisManagerProg
                 ShowTrace("Instantiate a DbLogger using " + dmsConnectionString);
 
                 // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-                clsLogTools.CreateDbLogger(dmsConnectionString, "Analysis Tool Manager: " + hostName, TraceMode && ENABLE_LOGGER_TRACE_MODE);
+                LogTools.CreateDbLogger(dmsConnectionString, "Analysis Tool Manager: " + hostName, TraceMode && ENABLE_LOGGER_TRACE_MODE);
             }
 
             try
@@ -230,19 +230,23 @@ namespace AnalysisManagerProg
 
             var logFileNameBase = GetBaseLogFileName();
 
-            clsLogTools.CreateFileLogger(logFileNameBase);
+            LogTools.CreateFileLogger(logFileNameBase);
+
+            // The analysis manager determines when to log or not log based on internal logic
+            // Set the LogLevel tracked by FileLogger to DEBUG so that all messages sent to the class are logged
+            LogTools.SetFileLogLevel(BaseLogger.LogLevels.DEBUG);
 
             if (!clsGlobal.OfflineMode)
             {
-                clsLogTools.RemoveDefaultDbLogger();
+                LogTools.RemoveDefaultDbLogger();
                 var logCnStr = m_MgrSettings.GetParam("connectionstring");
 
                 // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-                clsLogTools.CreateDbLogger(logCnStr, "Analysis Tool Manager: " + m_MgrName, TraceMode && ENABLE_LOGGER_TRACE_MODE);
+                LogTools.CreateDbLogger(logCnStr, "Analysis Tool Manager: " + m_MgrName, TraceMode && ENABLE_LOGGER_TRACE_MODE);
             }
 
             // Make the initial log entry
-            var relativeLogFilePath = clsLogTools.CurrentFileAppenderPath;
+            var relativeLogFilePath = LogTools.CurrentLogFilePath;
             var logFile = new FileInfo(relativeLogFilePath);
             ShowTrace("Initializing log file " + clsPathUtils.CompactPathString(logFile.FullName, 60));
 
@@ -290,7 +294,7 @@ namespace AnalysisManagerProg
 
             m_WorkDirPath = m_MgrSettings.GetParam(clsAnalysisMgrSettings.MGR_PARAM_WORK_DIR);
 
-            clsLogTools.WorkDirPath = m_WorkDirPath;
+            LogTools.WorkDirPath = m_WorkDirPath;
 
             // Setup the manager cleanup class
             ShowTrace("Setup the manager cleanup class");
@@ -1229,7 +1233,7 @@ namespace AnalysisManagerProg
                 var uniqueErrorMessages = new Dictionary<string, DateTime>(StringComparer.OrdinalIgnoreCase);
 
                 // Examine the most recent error reported by objLogger
-                var lineIn = clsLogTools.MostRecentErrorMessage;
+                var lineIn = LogTools.MostRecentErrorMessage;
                 bool loggerReportsError;
                 if (!string.IsNullOrWhiteSpace(lineIn))
                 {
@@ -1328,7 +1332,7 @@ namespace AnalysisManagerProg
                 if (loggerReportsError)
                 {
                     // Append the error message reported by the Logger to the error message queue (treating it as the newest error)
-                    lineIn = clsLogTools.MostRecentErrorMessage;
+                    lineIn = LogTools.MostRecentErrorMessage;
                     var match = reErrorLine.Match(lineIn);
 
                     if (match.Success)
@@ -2875,7 +2879,7 @@ namespace AnalysisManagerProg
 
         private void DebugEventHandlerConsoleOnly(string statusMessage)
         {
-            clsGlobal.LogDebug(statusMessage, writeToLog: false);
+            LogTools.LogDebug(statusMessage, writeToLog: false);
         }
 
         private void DebugEventHandler(string statusMessage)
