@@ -472,8 +472,6 @@ namespace AnalysisManagerBase
                 m_StopTime = DateTime.MinValue;
                 m_IsRunning = true;
 
-                var monitorIntervalSeconds = m_MonitorInterval / 1000.0;
-
                 // Loop until program is complete, or until MaxRuntimeSeconds seconds elapses
                 while (m_ProgRunner.State != clsProgRunner.States.NotMonitoring)
                 {
@@ -481,7 +479,7 @@ namespace AnalysisManagerBase
                         cachedProcessID = m_ProgRunner.PID;
 
                     OnLoopWaiting();
-                    clsGlobal.IdleLoop(monitorIntervalSeconds);
+                    clsProgRunner.SleepMilliseconds(m_MonitorInterval);
 
                     if (MaxRuntimeSeconds > 0)
                     {
