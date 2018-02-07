@@ -99,7 +99,8 @@ namespace AnalysisManagerProg
                         }
                         else
                         {
-                            Console.WriteLine("Error parsing the command line arguments");
+                            ConsoleMsgUtils.ShowWarning("Error parsing the command line arguments");
+                            clsParseCommandLine.PauseAtConsole(750);
                         }
                         return -1;
                     }
