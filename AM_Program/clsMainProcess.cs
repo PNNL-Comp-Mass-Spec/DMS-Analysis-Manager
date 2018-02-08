@@ -224,11 +224,9 @@ namespace AnalysisManagerProg
 
             var logFileNameBase = GetBaseLogFileName();
 
-            LogTools.CreateFileLogger(logFileNameBase);
-
             // The analysis manager determines when to log or not log based on internal logic
             // Set the LogLevel tracked by FileLogger to DEBUG so that all messages sent to the class are logged
-            LogTools.SetFileLogLevel(BaseLogger.LogLevels.DEBUG);
+            LogTools.CreateFileLogger(logFileNameBase, BaseLogger.LogLevels.DEBUG);
 
             if (!clsGlobal.OfflineMode)
             {
