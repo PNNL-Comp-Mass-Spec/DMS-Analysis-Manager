@@ -24,7 +24,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Threading;
 using AnalysisManagerBase;
 using PRISM;
@@ -34,7 +33,7 @@ namespace AnalysisManagerProg
 {
     static class modMain
     {
-        public const string PROGRAM_DATE = "February 6, 2018";
+        public const string PROGRAM_DATE = "February 7, 2018";
 
         private static bool mCodeTestMode;
         private static bool mTraceMode;
