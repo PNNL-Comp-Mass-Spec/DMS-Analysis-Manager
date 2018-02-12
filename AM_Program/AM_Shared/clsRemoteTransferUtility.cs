@@ -1020,7 +1020,7 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Error creating remote directories: " + ex.Message, ex);
+                OnErrorEvent("Error creating remote directories", ex);
                 return false;
             }
         }
@@ -1131,7 +1131,7 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Error moving files: " + ex.Message, ex);
+                OnErrorEvent("Error moving files", ex);
                 return false;
             }
         }
@@ -1232,7 +1232,7 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Error deleting remote work directory: " + ex.Message, ex);
+                OnErrorEvent("Error deleting remote work directory", ex);
             }
 
         }
@@ -1342,7 +1342,7 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Error retrieving remote file listing: " + ex.Message, ex);
+                OnErrorEvent("Error retrieving remote file listing", ex);
                 return matchingFiles;
             }
         }
@@ -1439,7 +1439,7 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Error retrieving remote file/directory listing: " + ex.Message, ex);
+                OnErrorEvent("Error retrieving remote file/directory listing", ex);
                 return filesAndDirectories;
             }
 
@@ -1582,7 +1582,7 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                OnErrorEvent(string.Format("Error retrieving remote status files: " + ex.Message), ex);
+                OnErrorEvent("Error retrieving remote status files", ex);
                 return new Dictionary<string, SftpFile>();
             }
         }
