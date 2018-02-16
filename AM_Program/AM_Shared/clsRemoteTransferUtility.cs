@@ -4,9 +4,8 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Xml.Linq;
+using DMSUpdateManager;
 using PRISM;
-using PRISM.Logging;
-using Renci.SshNet;
 using Renci.SshNet.Sftp;
 
 namespace AnalysisManagerBase
@@ -16,7 +15,7 @@ namespace AnalysisManagerBase
     /// Uses sftp for file listings
     /// Uses scp for file transfers
     /// </summary>
-    public class clsRemoteTransferUtility : clsEventNotifier
+    public class clsRemoteTransferUtility : RemoteUpdateUtility
     {
         #region "Constants"
 
@@ -41,11 +40,7 @@ namespace AnalysisManagerBase
 
         #region "Module variables"
 
-        private bool mParametersValidated;
-
         private bool mUsingManagerRemoteInfo;
-
-        private PrivateKeyFile mPrivateKeyFile;
 
         #endregion
 
@@ -75,32 +70,6 @@ namespace AnalysisManagerBase
         /// Manager parameters
         /// </summary>
         private IMgrParams MgrParams { get; }
-
-        /// <summary>
-        /// Remote host name
-        /// </summary>
-        public string RemoteHostName { get; private set; }
-
-        /// <summary>
-        /// Remote host username
-        /// </summary>
-        public string RemoteHostUser { get; private set; }
-
-        /// <summary>
-        /// Path to the file with the RSA private key for connecting to RemoteHostName as user RemoteHostUser
-        /// </summary>
-        /// <remarks>
-        /// For example, C:\DMS_RemoteInfo\user.key
-        /// </remarks>
-        public string RemoteHostPrivateKeyFile { get; private set; }
-
-        /// <summary>
-        /// Path to the file with the passphrase for the RSA private key
-        /// </summary>
-        /// <remarks>
-        /// For example, C:\DMS_RemoteInfo\user.pass
-        /// </remarks>
-        public string RemoteHostPassphraseFile { get; private set; }
 
         /// <summary>
         /// Folder for FASTA files
@@ -223,230 +192,20 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Constructor
         /// </summary>
-        public clsRemoteTransferUtility(IMgrParams mgrParams, IJobParams jobParams)
+        public clsRemoteTransferUtility(IMgrParams mgrParams, IJobParams jobParams) : base(new RemoteHostConnectionInfo())
         {
             MgrParams = mgrParams;
             JobParams = jobParams;
 
-            mParametersValidated = false;
             mUsingManagerRemoteInfo = true;
 
             // Initialize the properties to have empty strings
             DatasetName = string.Empty;
-            RemoteHostName = string.Empty;
-            RemoteHostUser = string.Empty;
-            RemoteHostPrivateKeyFile = string.Empty;
-            RemoteHostPassphraseFile = string.Empty;
             RemoteOrgDBPath = string.Empty;
             RemoteTaskQueuePath = string.Empty;
             RemoteWorkDirPath = string.Empty;
             WorkDir = string.Empty;
-        }
 
-        /// <summary>
-        /// Look for a lock file named dataFileName + ".lock" in directory remoteDirectoryPath
-        /// If found, and if less than maxWaitTimeMinutes old, waits for it to be deleted by another process or to age
-        /// </summary>
-        /// <param name="sftp">Sftp client (to avoid connecting / disconnecting repeatedly)</param>
-        /// <param name="remoteDirectoryPath">Target directory on the remote server (use Linux-style forward slashes)</param>
-        /// <param name="dataFileName">Data file name (without .lock)</param>
-        /// <param name="lockFileWasFound">
-        /// Output: true if a lock file was found and we waited for it to be deleted or age
-        /// </param>
-        /// <param name="lockFileWasAged">
-        /// Output: true if either an aged lock file was found and deleted,
-        /// or if a current lock file was found but we waited more than maxWaitTimeMinutes and it still existed
-        /// </param>
-        /// <param name="maxWaitTimeMinutes">Maximum age of the lock file</param>
-        /// <param name="logIntervalMinutes"></param>
-        /// <remarks>
-        /// Typical steps for using lock files to assure that only one manager is creating a specific file
-        /// 1. Call CheckForRemoteLockFile() to check for a lock file; wait for it to age
-        /// 2. Once CheckForRemoteLockFile() exits, check for the required data file; exit the function if the desired file is found
-        /// 3. If the file was not found, create a new lock file by calling CreateRemoteLockFile()
-        /// 4. Copy the file to the remote server
-        /// 5. Delete the lock file by calling DeleteLockFile()
-        /// </remarks>
-        /// <remarks>This method is similar to CheckForLockFile in clsAnalysisResources but it uses sftp or file lookups and scp for file creation</remarks>
-        private void CheckForRemoteLockFile(
-            SftpClient sftp,
-            string remoteDirectoryPath,
-            string dataFileName,
-            out bool lockFileWasFound,
-            out bool lockFileWasAged,
-            int maxWaitTimeMinutes = 120,
-            int logIntervalMinutes = 5)
-        {
-
-            if (dataFileName.EndsWith(clsGlobal.LOCK_FILE_EXTENSION, StringComparison.OrdinalIgnoreCase))
-                throw new ArgumentException("dataFileName may not end in .lock", nameof(dataFileName));
-
-            lockFileWasFound = false;
-            lockFileWasAged = false;
-
-            var waitingForLockFile = false;
-            var dtLockFileCreated = DateTime.UtcNow;
-
-            // Look for a recent .lock file on the remote server
-            var lockFileName = dataFileName + clsGlobal.LOCK_FILE_EXTENSION;
-
-            var fiLockFile = FindLockFile(sftp, remoteDirectoryPath, lockFileName);
-            if (fiLockFile != null)
-            {
-                if (DateTime.UtcNow.Subtract(fiLockFile.LastWriteTimeUtc).TotalMinutes < maxWaitTimeMinutes)
-                {
-                    waitingForLockFile = true;
-                    dtLockFileCreated = fiLockFile.LastWriteTimeUtc;
-
-                    var debugMessage = "Lock file found, will wait for it to be deleted or age; " +
-                        fiLockFile.Name + " created " + fiLockFile.LastWriteTime.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT);
-                    LogTools.LogDebug(debugMessage);
-                }
-                else
-                {
-                    // Lock file has aged; delete it
-                    fiLockFile.Delete();
-                    lockFileWasAged = true;
-                }
-            }
-
-            if (!waitingForLockFile)
-                return;
-
-            lockFileWasFound = true;
-
-            var dtLastProgressTime = DateTime.UtcNow;
-            if (logIntervalMinutes < 1)
-                logIntervalMinutes = 1;
-
-            // Initially wait 30 seconds before checking for the lock file again
-            // After that, add 30 seconds onto the wait time for every iteration
-            var waitTimeSeconds = 30;
-
-            while (waitingForLockFile)
-            {
-                // Wait for a period of time, the check on the status of the lock file
-                clsGlobal.IdleLoop(waitTimeSeconds);
-
-                fiLockFile = FindLockFile(sftp, remoteDirectoryPath, lockFileName);
-
-                if (fiLockFile == null)
-                {
-                    // Lock file no longer exists
-                    waitingForLockFile = false;
-                }
-                else if (DateTime.UtcNow.Subtract(dtLockFileCreated).TotalMinutes > maxWaitTimeMinutes)
-                {
-                    // We have waited too long
-                    waitingForLockFile = false;
-                    lockFileWasAged = true;
-                }
-                else
-                {
-                    if (DateTime.UtcNow.Subtract(dtLastProgressTime).TotalMinutes >= logIntervalMinutes)
-                    {
-                        OnDebugEvent("Waiting for lock file " + fiLockFile.Name);
-                        dtLastProgressTime = DateTime.UtcNow;
-                    }
-                }
-
-                // Increase the wait time by 30 seconds
-                waitTimeSeconds += 30;
-            }
-
-            // Check for the lock file one more time
-            fiLockFile = FindLockFile(sftp, remoteDirectoryPath, lockFileName);
-            if (fiLockFile != null)
-            {
-                // Lock file is over 2 hours old; delete it
-                DeleteLockFile(fiLockFile);
-            }
-        }
-
-        /// <summary>
-        /// Create a new lock file named dataFileName + ".lock" in directory remoteDirectoryPath
-        /// </summary>
-        /// <param name="sftp">Sftp client</param>
-        /// <param name="remoteDirectoryPath">Target directory on the remote server (use Linux-style forward slashes)</param>
-        /// <param name="dataFileName">Data file name (without .lock)</param>
-        /// <returns>Full path to the lock file; empty string if a problem</returns>
-        private string CreateRemoteLockFile(SftpClient sftp, string remoteDirectoryPath, string dataFileName)
-        {
-
-            var lockFileContents = new[]
-            {
-                "Date: " + DateTime.Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT),
-                "Manager: " + GetManagerName()
-            };
-
-            var lockFileData = new StringBuilder();
-            foreach (var dataLine in lockFileContents)
-            {
-                lockFileData.AppendLine(dataLine);
-            }
-
-            var remoteLockFilePath = clsPathUtils.CombineLinuxPaths(remoteDirectoryPath, dataFileName + clsGlobal.LOCK_FILE_EXTENSION);
-
-            OnDebugEvent("  creating lock file at " + remoteLockFilePath);
-
-            using (var lockFileWriter = sftp.Create(remoteLockFilePath))
-            {
-                var buffer = Encoding.ASCII.GetBytes(lockFileData.ToString());
-                lockFileWriter.Write(buffer, 0, buffer.Length);
-            }
-
-            // Wait 2 to 5 seconds, then re-open the file to make sure it was created by this manager
-            var oRandom = new Random();
-            clsGlobal.IdleLoop(oRandom.Next(2, 5));
-
-            var lockFileContentsNew = sftp.ReadAllLines(remoteLockFilePath, Encoding.ASCII);
-
-            if (!clsGlobal.LockFilesMatch(remoteLockFilePath, lockFileContents, lockFileContentsNew, out var errorMessage))
-            {
-                // Lock file content doesn't match the expected value
-                OnWarningEvent(errorMessage);
-                return string.Empty;
-            }
-
-            return remoteLockFilePath;
-
-        }
-
-        /// <summary>
-        /// Delete the lock file from the remote host
-        /// </summary>
-        /// <param name="lockFile"></param>
-        /// <remarks>Requires an active sftp session</remarks>
-        private void DeleteLockFile(SftpFile lockFile)
-        {
-            try
-            {
-                lockFile.Delete();
-            }
-            catch (Exception)
-            {
-                // Ignore errors here
-            }
-        }
-
-        /// <summary>
-        /// Delete the lock file from the remote host
-        /// </summary>
-        /// <param name="sftp"></param>
-        /// <param name="remoteDirectoryPath"></param>
-        /// <param name="dataFileName"></param>
-        private void DeleteLockFile(SftpClient sftp, string remoteDirectoryPath, string dataFileName)
-        {
-            try
-            {
-                var lockFileName = dataFileName + clsGlobal.LOCK_FILE_EXTENSION;
-                var fiLockFile = FindLockFile(sftp, remoteDirectoryPath, lockFileName);
-                fiLockFile?.Delete();
-            }
-            catch (Exception)
-            {
-                // Ignore errors here
-            }
         }
 
         /// <summary>
@@ -495,97 +254,6 @@ namespace AnalysisManagerBase
             }
 
             return CopyFilesFromRemote(sourceDirectoryPath, sourceFileNames, localDirectoryPath, warnIfMissing);
-        }
-
-        /// <summary>
-        /// Copy files from the remote host to a local directory
-        /// </summary>
-        /// <param name="sourceDirectoryPath">Source directory</param>
-        /// <param name="sourceFileNames">Source file names; wildcards are not allowed</param>
-        /// <param name="localDirectoryPath">Local target directory</param>
-        /// <param name="warnIfMissing">Log warnings if any files are missing.  When false, logs debug messages instead</param>
-        /// <returns>
-        /// True on success, false if an error
-        /// Returns False if if any files were missing, even if warnIfMissing is false
-        /// </returns>
-        private bool CopyFilesFromRemote(
-            string sourceDirectoryPath,
-            IReadOnlyCollection<string> sourceFileNames,
-            string localDirectoryPath,
-            bool warnIfMissing = true)
-        {
-            // Use scp to retrieve the files
-            // scp is faster than sftp, but it has the downside that we can't check for the existence of a file before retrieving it
-
-            var successCount = 0;
-            var failCount = 0;
-
-            if (!mParametersValidated)
-                throw new Exception("Call UpdateParameters before calling CopyFilesFromRemote");
-
-            try
-            {
-                if (sourceFileNames.Count == 1)
-                    OnDebugEvent(string.Format("Retrieving file {0} from {1} on host {2}", sourceFileNames.First(), sourceDirectoryPath, RemoteHostName));
-                else
-                    OnDebugEvent(string.Format("Retrieving {0} files from {1} on host {2}", sourceFileNames.Count, sourceDirectoryPath, RemoteHostName));
-
-                using (var scp = new ScpClient(RemoteHostName, RemoteHostUser, mPrivateKeyFile))
-                {
-                    scp.Connect();
-
-                    foreach (var sourceFileName in sourceFileNames)
-                    {
-                        var remoteFilePath = clsPathUtils.CombineLinuxPaths(sourceDirectoryPath, sourceFileName);
-                        var targetFile = new FileInfo(clsPathUtils.CombinePathsLocalSepChar(localDirectoryPath, sourceFileName));
-
-                        try
-                        {
-                            scp.Download(remoteFilePath, targetFile);
-
-                            targetFile.Refresh();
-                            if (targetFile.Exists)
-                                successCount++;
-                            else
-                                failCount++;
-                        }
-                        catch (Exception ex)
-                        {
-                            failCount++;
-
-                            if (ex.Message.ToLower().Contains("no such file"))
-                            {
-                                if (warnIfMissing)
-                                    OnWarningEvent(string.Format("Remote file not found: {0}", remoteFilePath));
-                                else
-                                    OnDebugEvent(string.Format("Remote file not found: {0}", remoteFilePath));
-                            }
-                            else
-                            {
-                                OnWarningEvent(string.Format("Error copying {0}: {1}", remoteFilePath, ex.Message));
-                            }
-                        }
-
-                    }
-
-                    scp.Disconnect();
-
-                }
-
-                if (successCount > 0 && failCount == 0)
-                    return true;
-
-                if (warnIfMissing)
-                    OnWarningEvent(string.Format("Error retrieving {0} of {1} files from {2}", failCount, sourceFileNames.Count, sourceDirectoryPath));
-
-                return false;
-            }
-            catch (Exception ex)
-            {
-                OnErrorEvent(string.Format("Error copying files from {0}: {1}", sourceDirectoryPath, ex.Message), ex);
-                return false;
-            }
-
         }
 
         /// <summary>
@@ -644,217 +312,7 @@ namespace AnalysisManagerBase
                 UpdateParameters(useDefaultManagerRemoteInfo);
             }
 
-            return CopyFilesToRemote(sourceDirectoryPath, sourceFileNames, remoteDirectoryPath, useLockFile);
-        }
-
-        /// <summary>
-        /// Copy files from a local directory to the remote host
-        /// </summary>
-        /// <param name="sourceDirectoryPath">Source directory</param>
-        /// <param name="sourceFileNames">Source file names; wildcards are allowed</param>
-        /// <param name="remoteDirectoryPath">Remote target directory</param>
-        /// <param name="useLockFile">True to use a lock file when the destination directory might be accessed via multiple managers simultaneously</param>
-        /// <returns>True on success, false if an error</returns>
-        public bool CopyFilesToRemote(
-            string sourceDirectoryPath,
-            IEnumerable<string> sourceFileNames,
-            string remoteDirectoryPath,
-            bool useLockFile)
-        {
-            if (string.IsNullOrWhiteSpace(sourceDirectoryPath))
-            {
-                OnErrorEvent("Cannot copy files to remote; source directory is empty");
-                return false;
-            }
-
-            try
-            {
-                var sourceDirectory = new DirectoryInfo(sourceDirectoryPath);
-                if (!sourceDirectory.Exists)
-                {
-                    OnErrorEvent("Cannot copy files to remote; source directory not found: " + sourceDirectoryPath);
-                    return false;
-                }
-
-                var sourceDirectoryFiles = sourceDirectory.GetFiles();
-                var filesToCopy = new List<FileInfo>();
-
-                foreach (var sourceFileName in sourceFileNames)
-                {
-                    if (sourceFileName.Contains("*") || sourceFileName.Contains("?"))
-                    {
-                        // Filename has a wildcard
-                        var matchingFiles = sourceDirectory.GetFiles(sourceFileName);
-                        filesToCopy.AddRange(matchingFiles);
-                        continue;
-                    }
-
-                    var matchFound = false;
-                    foreach (var candidateFile in sourceDirectoryFiles)
-                    {
-                        if (!string.Equals(sourceFileName, candidateFile.Name, StringComparison.OrdinalIgnoreCase))
-                            continue;
-
-                        filesToCopy.Add(candidateFile);
-                        matchFound = true;
-                        break;
-                    }
-
-                    if (!matchFound)
-                    {
-                        OnWarningEvent(string.Format("Source file not found; cannot copy {0} to {1}",
-                            Path.Combine(sourceDirectory.FullName, sourceFileName), remoteDirectoryPath));
-                    }
-                }
-
-                return CopyFilesToRemote(filesToCopy, remoteDirectoryPath, useLockFile);
-
-            }
-            catch (Exception ex)
-            {
-                var errMsg = string.Format("Error copying files to {0}: {1}", remoteDirectoryPath, ex.Message);
-                OnErrorEvent(errMsg, ex);
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Copy files from a local directory to the remote host
-        /// </summary>
-        /// <param name="sourceFiles">Source files</param>
-        /// <param name="remoteDirectoryPath">Remote target directory</param>
-        /// <param name="useLockFile">True to use a lock file when the destination directory might be accessed via multiple managers simultaneously</param>
-        /// <returns>True on success, false if an error</returns>
-        public bool CopyFilesToRemote(IEnumerable<FileInfo> sourceFiles, string remoteDirectoryPath, bool useLockFile = false)
-        {
-            if (!mParametersValidated)
-                throw new Exception("Call UpdateParameters before calling CopyFilesToRemote");
-
-            try
-            {
-
-                var uniqueFiles = GetUniqueFileList(sourceFiles).ToList();
-                if (uniqueFiles.Count == 0)
-                {
-                    OnErrorEvent(string.Format("Cannot copy files to {0}; sourceFiles list is empty", RemoteHostName));
-                    return false;
-                }
-
-                var success = false;
-
-                if (uniqueFiles.Count == 1)
-                    OnDebugEvent(string.Format("Copying {0} to {1} on {2}", uniqueFiles.First().Name, remoteDirectoryPath, RemoteHostName));
-                else
-                    OnDebugEvent(string.Format("Copying {0} files to {1} on {2}", uniqueFiles.Count, remoteDirectoryPath, RemoteHostName));
-
-                SftpClient sftp;
-
-                if (useLockFile)
-                {
-                    sftp = new SftpClient(RemoteHostName, RemoteHostUser, mPrivateKeyFile);
-                    sftp.Connect();
-                }
-                else
-                {
-                    sftp = null;
-                }
-
-                using (var scp = new ScpClient(RemoteHostName, RemoteHostUser, mPrivateKeyFile))
-                {
-                    scp.Connect();
-
-                    var lockFileDefined = false;
-                    var lockFileDataFile = string.Empty;
-
-                    foreach (var sourceFile in uniqueFiles)
-                    {
-                        if (!sourceFile.Exists)
-                        {
-                            OnWarningEvent(string.Format("Source file not found; cannot copy {0} to {1} on {2}",
-                                                         sourceFile.FullName, remoteDirectoryPath, RemoteHostName));
-                            continue;
-                        }
-
-                        if (useLockFile && !lockFileDefined)
-                        {
-                            // Only create a lock file for the first file we copy
-                            // That lock file will not be deleted until after all files have been copied
-
-                            CheckForRemoteLockFile(sftp, remoteDirectoryPath, sourceFile.Name, out var lockFileWasFound, out var lockFileWasAged);
-
-                            if (lockFileWasFound && !lockFileWasAged)
-                            {
-                                // Another manager was copying this file
-                                // If the file length now matches the source file length, assume the file is up-to-date remotely
-                                var matchingFiles = GetRemoteFileListing(remoteDirectoryPath, sourceFile.Name);
-
-                                if (matchingFiles.Count > 0)
-                                {
-                                    var remoteFile = matchingFiles.First().Value;
-                                    if (remoteFile.Length == sourceFile.Length)
-                                    {
-                                        OnStatusEvent(string.Format("Remote file was being copied via locks; " +
-                                                                    "file length is now {0:N0} bytes so assuming up-to-date: {1}",
-                                                                    remoteFile.Length, remoteFile.FullName
-                                                                    ));
-
-                                        success = true;
-                                        continue;
-                                    }
-                                }
-
-                            }
-
-                            var remoteLockFilePath = CreateRemoteLockFile(sftp, remoteDirectoryPath, sourceFile.Name);
-                            if (string.IsNullOrWhiteSpace(remoteLockFilePath))
-                            {
-                                // Problem creating the lock file; abort the copy
-                                OnStatusEvent("Error creating lock file at: " + remoteLockFilePath + "; aborting copy to remote");
-
-                                return false;
-                            }
-
-                            lockFileDefined = true;
-                            lockFileDataFile = sourceFile.Name;
-                        }
-
-                        OnDebugEvent("  Copying " + sourceFile.FullName);
-
-                        var targetFilePath = clsPathUtils.CombineLinuxPaths(remoteDirectoryPath, sourceFile.Name);
-                        scp.Upload(sourceFile, targetFilePath);
-
-                        success = true;
-                    }
-
-                    if (useLockFile && !string.IsNullOrWhiteSpace(lockFileDataFile))
-                    {
-                        DeleteLockFile(sftp, remoteDirectoryPath, lockFileDataFile);
-                    }
-
-                    scp.Disconnect();
-
-                }
-
-                if (useLockFile)
-                {
-                    sftp.Disconnect();
-                }
-
-                if (success)
-                {
-                    return true;
-                }
-
-                OnErrorEvent(string.Format("Cannot copy files to {0}; all of the files in sourceFiles are missing", RemoteHostName));
-                return false;
-
-            }
-            catch (Exception ex)
-            {
-                OnErrorEvent(string.Format("Error copying files to {0} on {1}: {2}", remoteDirectoryPath, RemoteHostName, ex.Message), ex);
-                return false;
-            }
-
+            return CopyFilesToRemote(sourceDirectoryPath, sourceFileNames, remoteDirectoryPath, useLockFile, MgrParams.ManagerName);
         }
 
         /// <summary>
@@ -925,217 +383,6 @@ namespace AnalysisManagerBase
             }
         }
 
-        /// <summary>
-        /// Validates that the remote directory exists, creating it if missing
-        /// </summary>
-        /// <param name="remoteDirectoryPath"></param>
-        /// <returns>True on success, otherwise false</returns>
-        /// <remarks>The parent directory of remoteDirectoryPath must already exist</remarks>
-        public bool CreateRemoteDirectory(string remoteDirectoryPath)
-        {
-            if (!mParametersValidated)
-                throw new Exception("Call UpdateParameters before calling CreateRemoteDirectory");
-
-            return CreateRemoteDirectories(new List<string> { remoteDirectoryPath });
-        }
-
-        /// <summary>
-        /// Validates that the remote directories exists, creating any that are missing
-        /// </summary>
-        /// <param name="remoteDirectories"></param>
-        /// <returns>True on success, otherwise false</returns>
-        /// <remarks>The parent directory of each item in remoteDirectories must already exist</remarks>
-        public bool CreateRemoteDirectories(IReadOnlyCollection<string> remoteDirectories)
-        {
-
-            if (!mParametersValidated)
-                throw new Exception("Call UpdateParameters before calling CreateRemoteDirectories");
-
-            try
-            {
-                if (remoteDirectories.Count == 0)
-                    return true;
-
-                // Keys in this dictionary are parent directory paths; values are subdirectories to find in each
-                var parentDirectories = new Dictionary<string, SortedSet<string>>();
-                foreach (var remoteDirectory in remoteDirectories)
-                {
-                    var parentPath = clsPathUtils.GetParentDirectoryPath(remoteDirectory, out var directoryName);
-                    if (string.IsNullOrWhiteSpace(parentPath))
-                        continue;
-
-                    if (!parentDirectories.TryGetValue(parentPath, out var subDirectories))
-                    {
-                        subDirectories = new SortedSet<string>();
-                        parentDirectories.Add(parentPath, subDirectories);
-                    }
-
-                    if (!subDirectories.Contains(directoryName))
-                        subDirectories.Add(directoryName);
-
-                }
-
-                OnDebugEvent("Verifying directories on host " + RemoteHostName);
-
-                using (var sftp = new SftpClient(RemoteHostName, RemoteHostUser, mPrivateKeyFile))
-                {
-                    sftp.Connect();
-                    foreach (var parentDirectory in parentDirectories)
-                    {
-                        var remoteDirectoryPath = parentDirectory.Key;
-                        OnDebugEvent("  checking " + remoteDirectoryPath);
-
-                        var filesAndFolders = sftp.ListDirectory(remoteDirectoryPath);
-                        var remoteSubdirectories = new SortedSet<string>();
-
-                        foreach (var item in filesAndFolders)
-                        {
-                            if (!item.IsDirectory || item.Name == "." || item.Name == "..")
-                            {
-                                continue;
-                            }
-
-                            if (!remoteSubdirectories.Contains(item.Name))
-                                remoteSubdirectories.Add(item.Name);
-                        }
-
-                        foreach (var directoryToVerify in parentDirectory.Value)
-                        {
-                            if (remoteSubdirectories.Contains(directoryToVerify))
-                            {
-                                OnDebugEvent("    found " + directoryToVerify);
-                                continue;
-                            }
-                            var directoryPathToCreate = clsPathUtils.CombineLinuxPaths(remoteDirectoryPath, directoryToVerify);
-
-                            OnDebugEvent("  creating " + directoryPathToCreate);
-                            sftp.CreateDirectory(directoryPathToCreate);
-                        }
-
-                    }
-                    sftp.Disconnect();
-                }
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                OnErrorEvent("Error creating remote directories", ex);
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Look for the lock file in the given remote directory
-        /// </summary>
-        /// <param name="sftp">Sftp client</param>
-        /// <param name="remoteDirectoryPath"></param>
-        /// <param name="lockFileName"></param>
-        /// <returns>SftpFile info if found, otherwise null</returns>
-        private SftpFile FindLockFile(SftpClient sftp, string remoteDirectoryPath, string lockFileName)
-        {
-            const bool recurse = false;
-
-            var matchingFiles = new Dictionary<string, SftpFile>();
-
-            GetRemoteFileListing(sftp, new List<string> { remoteDirectoryPath }, lockFileName, recurse, matchingFiles);
-
-            return matchingFiles.Any() ? matchingFiles.First().Value : null;
-        }
-
-        /// <summary>
-        /// Move the specified files to targetRemoteDirectory, optionally deleting files in filesToDelete
-        /// </summary>
-        /// <param name="sourceFilePaths"></param>
-        /// <param name="targetRemoteDirectory"></param>
-        /// <param name="filesToDelete">File names or paths in sourceFilePaths to delete instead of moving</param>
-        /// <returns></returns>
-        public bool MoveFiles(
-            IReadOnlyCollection<string> sourceFilePaths,
-            string targetRemoteDirectory,
-            List<string> filesToDelete)
-        {
-            if (!mParametersValidated)
-                throw new Exception("Call UpdateParameters before calling MoveFiles");
-
-            try
-            {
-                if (sourceFilePaths.Count == 0)
-                    return true;
-
-                var fileNamesToDelete = new SortedSet<string>();
-                var filePathsToDelete = new SortedSet<string>();
-
-                foreach (var fileToDelete in filesToDelete)
-                {
-                    if (fileToDelete.StartsWith("/") || fileToDelete.StartsWith("\\"))
-                    {
-                        // Path is rooted
-                        if (!filePathsToDelete.Contains(fileToDelete))
-                            filePathsToDelete.Add(fileToDelete);
-                        continue;
-                    }
-
-                    // Note that Path.GetFileName handles both Windows and Linux file paths
-                    var fileName = Path.GetFileName(fileToDelete);
-
-                    if (!fileNamesToDelete.Contains(fileName))
-                        fileNamesToDelete.Add(fileName);
-                }
-
-                OnDebugEvent("Moving files on host " + RemoteHostName + " to " + targetRemoteDirectory);
-
-                using (var sftp = new SftpClient(RemoteHostName, RemoteHostUser, mPrivateKeyFile))
-                {
-                    sftp.Connect();
-                    foreach (var remoteFilePath in sourceFilePaths)
-                    {
-
-                        var fileName = Path.GetFileName(remoteFilePath);
-
-                        if (fileName != null && fileNamesToDelete.Contains(fileName) ||
-                            filePathsToDelete.Contains(remoteFilePath))
-                        {
-                            try
-                            {
-                                // Delete this file instead of moving it
-                                OnDebugEvent("  deleting " + remoteFilePath);
-                                sftp.Delete(remoteFilePath);
-                            }
-                            catch (Exception ex)
-                            {
-                                OnErrorEvent(string.Format("Error deleting {0}: {1}", remoteFilePath, ex.Message));
-                            }
-
-                            continue;
-                        }
-
-                        var newFilePath = clsPathUtils.CombineLinuxPaths(targetRemoteDirectory, fileName);
-
-                        try
-                        {
-                            // Move the file; if it already exists in the destination, an exception will occur (with message "Failure")
-                            OnDebugEvent("  moving " + remoteFilePath);
-                            sftp.RenameFile(remoteFilePath, newFilePath);
-                        }
-                        catch (Exception ex)
-                        {
-                            OnErrorEvent(string.Format("Error moving {0}: {1}", remoteFilePath, ex.Message));
-                        }
-                    }
-
-                    sftp.Disconnect();
-                }
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                OnErrorEvent("Error moving files", ex);
-                return false;
-            }
-        }
-
         private void DefineRemoteInfo()
         {
             var remoteInfo = GetRemoteInfoXml(USE_MANAGER_REMOTE_INFO);
@@ -1155,80 +402,17 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Delete a remote working directory
+        /// Delete the working directory for the current job and step (parameter RemoteJobStepWorkDirPath)
         /// </summary>
         public void DeleteRemoteWorkDir()
         {
-
-            if (!mParametersValidated)
-                throw new Exception("Call UpdateParameters before calling MoveFiles");
 
             try
             {
                 if (string.IsNullOrEmpty(RemoteWorkDirPath))
                     throw new Exception("RemoteWorkDirPath is empty; cannot delete files");
 
-                var workDirPath = RemoteJobStepWorkDirPath;
-
-                OnDebugEvent("Delete WorkDir files on host " + RemoteHostName + ": " + workDirPath);
-
-                using (var sftp = new SftpClient(RemoteHostName, RemoteHostUser, mPrivateKeyFile))
-                {
-                    sftp.Connect();
-
-                    // Keys are filenames, values are SftpFile objects
-                    var filesAndDirectories = new Dictionary<string, SftpFile>();
-                    var directoriesToDelete = new SortedSet<string>();
-
-                    GetRemoteFilesAndDirectories(sftp, workDirPath, true, filesAndDirectories);
-
-                    foreach (var workDirFile in filesAndDirectories)
-                    {
-                        if (workDirFile.Value.IsDirectory)
-                        {
-                            if (workDirFile.Value.Name == "." || workDirFile.Value.Name == "..")
-                                continue;
-
-                            if (!directoriesToDelete.Contains(workDirFile.Key))
-                                directoriesToDelete.Add(workDirFile.Key);
-
-                            continue;
-                        }
-
-                        try
-                        {
-                            OnDebugEvent("  deleting " + workDirFile.Key);
-                            workDirFile.Value.Delete();
-
-                            var parentPath = clsPathUtils.GetParentDirectoryPath(workDirFile.Value.FullName, out _);
-
-                            if (!directoriesToDelete.Contains(parentPath))
-                                directoriesToDelete.Add(parentPath);
-
-                        }
-                        catch (Exception ex)
-                        {
-                            OnErrorEvent(string.Format("Error deleting file {0}: {1}", workDirFile.Value.Name, ex.Message));
-                        }
-
-                    }
-
-                    foreach (var directoryToDelete in (from item in directoriesToDelete orderby item descending select item))
-                    {
-                        try
-                        {
-                            OnDebugEvent("  deleting directory " + directoryToDelete);
-                            sftp.DeleteDirectory(directoryToDelete);
-                        }
-                        catch (Exception ex)
-                        {
-                            OnErrorEvent(string.Format("Error deleting directory {0}: {1}", directoryToDelete, ex.Message));
-                        }
-                    }
-
-                    sftp.Disconnect();
-                }
-
+                DeleteDirectoryAndContents(RemoteJobStepWorkDirPath);
             }
             catch (Exception ex)
             {
@@ -1275,13 +459,6 @@ namespace AnalysisManagerBase
             return string.Format("Job{0}_Step{1}", JobNum, StepNum);
         }
 
-        private string GetManagerName()
-        {
-            var mgrName = MgrParams.ManagerName;
-            return mgrName;
-        }
-
-
         /// <summary>
         /// Retrieve a listing of files in the remoteDirectoryPath directory on the remote host
         /// </summary>
@@ -1308,195 +485,6 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Retrieve a listing of files in the remoteDirectoryPath directory on the remote host
-        /// </summary>
-        /// <param name="remoteDirectoryPath">Remote target directory</param>
-        /// <param name="fileMatchSpec">Filename to find, or files to find if wildcards are used</param>
-        /// <param name="recurse">True to find files in subdirectories</param>
-        /// <returns>Dictionary of matching files, where keys are full file paths and values are instances of SFtpFile</returns>
-        public Dictionary<string, SftpFile> GetRemoteFileListing(string remoteDirectoryPath, string fileMatchSpec, bool recurse = false)
-        {
-            var matchingFiles = new Dictionary<string, SftpFile>();
-
-            if (!mParametersValidated)
-                throw new Exception("Call UpdateParameters before calling GetRemoteFileListing");
-
-            try
-            {
-                if (string.IsNullOrWhiteSpace(remoteDirectoryPath))
-                    throw new ArgumentException("Remote directory path cannot be empty", nameof(remoteDirectoryPath));
-
-                if (string.IsNullOrWhiteSpace(fileMatchSpec))
-                    fileMatchSpec = "*";
-
-                OnDebugEvent(string.Format("Getting file listing for {0} on host {1}", remoteDirectoryPath, RemoteHostName));
-
-                using (var sftp = new SftpClient(RemoteHostName, RemoteHostUser, mPrivateKeyFile))
-                {
-                    sftp.Connect();
-                    GetRemoteFileListing(sftp, new List<string> { remoteDirectoryPath }, fileMatchSpec, recurse, matchingFiles);
-                    sftp.Disconnect();
-                }
-
-                return matchingFiles;
-            }
-            catch (Exception ex)
-            {
-                OnErrorEvent("Error retrieving remote file listing", ex);
-                return matchingFiles;
-            }
-        }
-
-        /// <summary>
-        /// Retrieve a listing of files in the specified remote directories on the remote host
-        /// </summary>
-        /// <param name="sftp">sftp client</param>
-        /// <param name="remoteDirectoryPaths">Paths to check</param>
-        /// <param name="fileMatchSpec">Filename to find, or files to find if wildcards are used</param>
-        /// <param name="recurse">True to find files in subdirectories</param>
-        /// <param name="matchingFiles">Dictionary of matching files, where keys are full file paths and values are instances of SFtpFile</param>
-        private void GetRemoteFileListing(
-            SftpClient sftp,
-            IEnumerable<string> remoteDirectoryPaths,
-            string fileMatchSpec,
-            bool recurse,
-            IDictionary<string, SftpFile> matchingFiles)
-        {
-            foreach (var remoteDirectory in remoteDirectoryPaths)
-            {
-                if (string.IsNullOrWhiteSpace(remoteDirectory))
-                {
-                    OnWarningEvent("Ignoring empty remote directory name from remoteDirectoryPaths in GetRemoteFileListing");
-                    continue;
-                }
-
-                var filesAndFolders = sftp.ListDirectory(remoteDirectory);
-                var subdirectoryPaths = new List<string>();
-
-                foreach (var item in filesAndFolders)
-                {
-                    if (item.IsDirectory)
-                    {
-                        if (item.Name == "." || item.Name == "..")
-                            continue;
-
-                        subdirectoryPaths.Add(item.FullName);
-                        continue;
-                    }
-
-                    if (fileMatchSpec == "*" || clsPathUtils.FitsMask(item.Name, fileMatchSpec))
-                    {
-                        try
-                        {
-                            matchingFiles.Add(item.FullName, item);
-                        }
-                        catch (ArgumentException)
-                        {
-                            OnWarningEvent("Skipping duplicate filename: " + item.FullName);
-                        }
-
-                    }
-                }
-
-                if (recurse && subdirectoryPaths.Count > 0)
-                {
-                    // Recursively call this function
-                    GetRemoteFileListing(sftp, subdirectoryPaths, fileMatchSpec, true, matchingFiles);
-                }
-            }
-
-        }
-
-        /// <summary>
-        /// Retrieve a listing of all files and directories below a given directory on the remote host
-        /// </summary>
-        /// <param name="remoteDirectoryPath">Directory to check</param>
-        /// <param name="recurse">True to find files and directories in subdirectories</param>
-        /// <returns>Dictionary of matching files and directories, where keys are full paths and values are instances of SFtpFile</returns>
-        public IDictionary<string, SftpFile> GetRemoteFilesAndDirectories(string remoteDirectoryPath, bool recurse = false)
-        {
-
-            var filesAndDirectories = new Dictionary<string, SftpFile>();
-
-            if (!mParametersValidated)
-                throw new Exception("Call UpdateParameters before calling GetRemoteFilesAndDirectories");
-
-            try
-            {
-                if (string.IsNullOrWhiteSpace(remoteDirectoryPath))
-                    throw new ArgumentException("Remote directory path cannot be empty", nameof(remoteDirectoryPath));
-
-                OnDebugEvent(string.Format("Getting file/directory listing for {0} on host {1}", remoteDirectoryPath, RemoteHostName));
-
-                using (var sftp = new SftpClient(RemoteHostName, RemoteHostUser, mPrivateKeyFile))
-                {
-                    sftp.Connect();
-                    GetRemoteFilesAndDirectories(sftp, remoteDirectoryPath, recurse, filesAndDirectories);
-                    sftp.Disconnect();
-                }
-
-                return filesAndDirectories;
-            }
-            catch (Exception ex)
-            {
-                OnErrorEvent("Error retrieving remote file/directory listing", ex);
-                return filesAndDirectories;
-            }
-
-        }
-
-        /// <summary>
-        /// Retrieve a listing of all files and directories below a given directory on the remote host
-        /// </summary>
-        /// <param name="sftp">sftp client</param>
-        /// <param name="remoteDirectoryPath">Directory to check</param>
-        /// <param name="recurse">True to find files and directories in subdirectories</param>
-        /// <param name="filesAndDirectories">Dictionary of matching files and directories, where keys are full paths and values are instances of SFtpFile</param>
-        private void GetRemoteFilesAndDirectories(
-            SftpClient sftp,
-            string remoteDirectoryPath,
-            bool recurse,
-            IDictionary<string, SftpFile> filesAndDirectories)
-        {
-
-            if (string.IsNullOrWhiteSpace(remoteDirectoryPath))
-            {
-                throw new ArgumentException("Remote directory path cannot be empty", nameof(remoteDirectoryPath));
-            }
-
-            var filesAndFolders = sftp.ListDirectory(remoteDirectoryPath);
-            var subdirectoryPaths = new List<string>();
-
-            foreach (var item in filesAndFolders)
-            {
-                if (item.IsDirectory)
-                {
-                    if (item.Name == "." || item.Name == "..")
-                        continue;
-
-                    subdirectoryPaths.Add(item.FullName);
-                }
-
-                try
-                {
-                    filesAndDirectories.Add(item.FullName, item);
-                }
-                catch (ArgumentException)
-                {
-                    OnWarningEvent("Skipping duplicate file or directory: " + item.FullName);
-                }
-            }
-
-            if (recurse && subdirectoryPaths.Count > 0)
-            {
-                // Recursively call this function
-                foreach (var subDirectoryPath in subdirectoryPaths)
-                    GetRemoteFilesAndDirectories(sftp, subDirectoryPath, true, filesAndDirectories);
-            }
-
-        }
-
-        /// <summary>
         /// Construct the XML string that should be stored as job parameter RemoteInfo
         /// </summary>
         /// <param name="useDefaultManagerRemoteInfo"></param>
@@ -1513,12 +501,12 @@ namespace AnalysisManagerBase
             var settings = new List<KeyValuePair<string, string>>
             {
                 new KeyValuePair<string, string>("host", RemoteHostName),
-                new KeyValuePair<string, string>("user", RemoteHostUser),
+                new KeyValuePair<string, string>("user", RemoteHostUsername),
                 new KeyValuePair<string, string>("taskQueue", RemoteTaskQueuePath),
                 new KeyValuePair<string, string>("workDir", RemoteWorkDirPath),
                 new KeyValuePair<string, string>("orgDB", RemoteOrgDBPath),
-                new KeyValuePair<string, string>("privateKey", Path.GetFileName(RemoteHostPrivateKeyFile)),
-                new KeyValuePair<string, string>("passphrase", Path.GetFileName(RemoteHostPassphraseFile))
+                new KeyValuePair<string, string>("privateKey", Path.GetFileName(RemoteHostInfo.PrivateKeyFile)),
+                new KeyValuePair<string, string>("passphrase", Path.GetFileName(RemoteHostInfo.PassphraseFile))
             };
 
             return ConstructRemoteInfoXml(settings);
@@ -1587,89 +575,9 @@ namespace AnalysisManagerBase
             }
         }
 
-        /// <summary>
-        /// Return a listing of files where there are no duplicate files (based on full file path)
-        /// </summary>
-        /// <param name="files">File list to check</param>
-        /// <param name="ignoreCase">True to ignore file case</param>
-        /// <returns></returns>
-        private static IEnumerable<FileInfo> GetUniqueFileList(IEnumerable<FileInfo> files, bool ignoreCase = true)
-        {
-            var comparer = ignoreCase ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
-            var uniqueFiles = new Dictionary<string, FileInfo>(comparer);
-
-            foreach (var file in files)
-            {
-                if (uniqueFiles.ContainsKey(file.FullName))
-                    continue;
-
-                uniqueFiles.Add(file.FullName, file);
-            }
-
-            return uniqueFiles.Values;
-        }
-
         private bool IsParameterUpdateRequired(bool useDefaultManagerRemoteInfo)
         {
-            return !mParametersValidated || mUsingManagerRemoteInfo != useDefaultManagerRemoteInfo;
-        }
-
-        private void LoadRSAPrivateKey()
-        {
-            OnDebugEvent("Loading RSA private key files");
-
-            var keyFile = new FileInfo(RemoteHostPrivateKeyFile);
-            if (!keyFile.Exists)
-            {
-                throw new FileNotFoundException("Private key file not found: " + keyFile.FullName);
-            }
-
-            var passPhraseFile = new FileInfo(RemoteHostPassphraseFile);
-            if (!passPhraseFile.Exists)
-            {
-                throw new FileNotFoundException("Passpharse file not found: " + passPhraseFile.FullName);
-            }
-
-            MemoryStream keyFileStream;
-            string passphraseEncoded;
-
-            try
-            {
-                OnDebugEvent("  reading " + keyFile.FullName);
-                using (var reader = new StreamReader(new FileStream(keyFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
-                {
-                    keyFileStream = new MemoryStream(Encoding.ASCII.GetBytes(reader.ReadToEnd()));
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Error reading the private key file: " + ex.Message, ex);
-            }
-
-            try
-            {
-                OnDebugEvent("  reading " + passPhraseFile.FullName);
-                using (var reader = new StreamReader(new FileStream(passPhraseFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
-                {
-                    passphraseEncoded = reader.ReadLine();
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Error reading the passpharse file: " + ex.Message, ex);
-            }
-
-            try
-            {
-                mPrivateKeyFile = new PrivateKeyFile(keyFileStream, clsGlobal.DecodePassword(passphraseEncoded));
-            }
-            catch (InvalidOperationException ex)
-            {
-                if (ex.Message.Contains("Invalid data type"))
-                    throw new Exception("Invalid passphrase for the private key file; see manager params RemoteHostPrivateKeyFile and RemoteHostPassphraseFile", ex);
-
-                throw new Exception("Error instantiating the private key " + ex.Message, ex);
-            }
+            return !ParametersValidated || mUsingManagerRemoteInfo != useDefaultManagerRemoteInfo;
         }
 
         /// <summary>
@@ -1761,11 +669,11 @@ namespace AnalysisManagerBase
                 // Use settings defined for this manager
                 OnDebugEvent("Updating remote transfer settings using manager defaults");
 
-                RemoteHostName = MgrParams.GetParam("RemoteHostName");
-                RemoteHostUser = MgrParams.GetParam("RemoteHostUser");
+                RemoteHostInfo.HostName = MgrParams.GetParam("RemoteHostName");
+                RemoteHostInfo.Username = MgrParams.GetParam("RemoteHostUser");
 
-                RemoteHostPrivateKeyFile = MgrParams.GetParam("RemoteHostPrivateKeyFile");
-                RemoteHostPassphraseFile = MgrParams.GetParam("RemoteHostPassphraseFile");
+                RemoteHostInfo.PrivateKeyFile = MgrParams.GetParam("RemoteHostPrivateKeyFile");
+                RemoteHostInfo.PassphraseFile = MgrParams.GetParam("RemoteHostPassphraseFile");
 
                 RemoteTaskQueuePath = MgrParams.GetParam("RemoteTaskQueuePath");
                 RemoteWorkDirPath = MgrParams.GetParam("RemoteWorkDirPath");
@@ -1790,8 +698,8 @@ namespace AnalysisManagerBase
                     var doc = XDocument.Parse("<root>" + remoteInfo + "</root>");
                     var elements = doc.Elements("root").ToList();
 
-                    RemoteHostName = clsXMLUtils.GetXmlValue(elements, "host");
-                    RemoteHostUser = clsXMLUtils.GetXmlValue(elements, "user");
+                    RemoteHostInfo.HostName = clsXMLUtils.GetXmlValue(elements, "host");
+                    RemoteHostInfo.Username = clsXMLUtils.GetXmlValue(elements, "user");
 
                     var mgrPrivateKeyFilePath = MgrParams.GetParam("RemoteHostPrivateKeyFile");
                     var mgrPassphraseFilePath = MgrParams.GetParam("RemoteHostPassphraseFile");
@@ -1799,8 +707,8 @@ namespace AnalysisManagerBase
                     var jobPrivateKeyFileName = clsXMLUtils.GetXmlValue(elements, "privateKey");
                     var jobPassphraseFileName = clsXMLUtils.GetXmlValue(elements, "passphrase");
 
-                    RemoteHostPrivateKeyFile = clsPathUtils.ReplaceFilenameInPath(mgrPrivateKeyFilePath, jobPrivateKeyFileName);
-                    RemoteHostPassphraseFile = clsPathUtils.ReplaceFilenameInPath(mgrPassphraseFilePath, jobPassphraseFileName);
+                    RemoteHostInfo.PrivateKeyFile = clsPathUtils.ReplaceFilenameInPath(mgrPrivateKeyFilePath, jobPrivateKeyFileName);
+                    RemoteHostInfo.PassphraseFile = clsPathUtils.ReplaceFilenameInPath(mgrPassphraseFilePath, jobPassphraseFileName);
 
                     RemoteTaskQueuePath = clsXMLUtils.GetXmlValue(elements, "taskQueue");
                     RemoteWorkDirPath = clsXMLUtils.GetXmlValue(elements, "workDir");
@@ -1823,18 +731,6 @@ namespace AnalysisManagerBase
             if (string.IsNullOrWhiteSpace(WorkDir))
                 throw new Exception("WorkDir parameter is empty; check the manager parameters");
 
-            if (string.IsNullOrWhiteSpace(RemoteHostName))
-                throw new Exception("RemoteHostName parameter is empty; check the manager parameters");
-
-            if (string.IsNullOrWhiteSpace(RemoteHostUser))
-                throw new Exception("RemoteHostUser parameter is empty; check the manager parameters");
-
-            if (string.IsNullOrWhiteSpace(RemoteHostPrivateKeyFile))
-                throw new Exception("RemoteHostPrivateKeyFile parameter is empty; check the manager parameters");
-
-            if (string.IsNullOrWhiteSpace(RemoteHostPassphraseFile))
-                throw new Exception("RemoteHostPassphraseFile parameter is empty; check the manager parameters");
-
             if (string.IsNullOrWhiteSpace(RemoteTaskQueuePath))
                 throw new Exception("RemoteTaskQueuePath parameter is empty; check the manager parameters");
 
@@ -1853,10 +749,11 @@ namespace AnalysisManagerBase
             if (string.IsNullOrWhiteSpace(DatasetName))
                 throw new Exception("Dataset name is empty; check the job parameters");
 
-            // Load the RSA private key info
-            LoadRSAPrivateKey();
 
-            mParametersValidated = true;
+            // Validate additional parameters, then load the RSA private key info
+            // If successful, mParametersValidated will be set to true
+            UpdateParameters();
+
         }
 
         /// <summary>

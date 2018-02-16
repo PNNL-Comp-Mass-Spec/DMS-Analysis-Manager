@@ -8,7 +8,6 @@ using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
 using PRISM.Logging;
 using PRISM;
 using PRISMWin;
@@ -47,9 +46,9 @@ namespace AnalysisManagerBase
         public const string SERVER_CACHE_HASHCHECK_FILE_SUFFIX = ".hashcheck";
 
         /// <summary>
-        /// Lock file suffix
+        /// Lock file suffix (.lock)
         /// </summary>
-        public const string LOCK_FILE_EXTENSION = ".lock";
+        public const string LOCK_FILE_EXTENSION = DMSUpdateManager.RemoteUpdateUtility.LOCK_FILE_EXTENSION;
 
         #endregion
 
@@ -731,32 +730,7 @@ namespace AnalysisManagerBase
             IReadOnlyList<string> lockFileContentsNew,
             out string errorMessage)
         {
-
-            if (lockFileContentsNew.Count < lockFileContents.Count)
-            {
-                // Remote lock file is shorter than we expected
-                errorMessage = "Lock file does have the expected content: " + lockFilePath;
-                return false;
-            }
-
-            for (var i = 0; i < lockFileContentsNew.Count; i++)
-            {
-                if (i >= lockFileContents.Count)
-                {
-                    // Lock file now has more rows than we expected; that's ok
-                    break;
-                }
-
-                if (string.Equals(lockFileContents[i], lockFileContentsNew[i]))
-                    continue;
-
-                // Lock file content doesn't match the expected value
-                errorMessage = "Another manager replaced the lock file that this manager created at " + lockFilePath;
-                return false;
-            }
-
-            errorMessage = string.Empty;
-            return true;
+            return DMSUpdateManager.RemoteUpdateUtility.LockFilesMatch(lockFilePath, lockFileContents, lockFileContentsNew, out errorMessage);
         }
 
         /// <summary>
