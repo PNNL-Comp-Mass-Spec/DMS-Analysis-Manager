@@ -554,7 +554,6 @@ namespace AnalysisManagerBase
             return true;
         }
 
-
         /// <summary>
         /// Update the executable path and arguments to run a .NET exe using mono
         /// </summary>
@@ -564,7 +563,7 @@ namespace AnalysisManagerBase
         /// <returns>True if success, false if a problem</returns>
         public bool UpdateToUseMono(IMgrParams mgrParams, ref string executablePath, ref string arguments)
         {
-
+            // Manager parameter MonoProgLoc is defined in file ManagerSettingsLocal.xml
             var monoProgLoc = mgrParams.GetParam("MonoProgLoc", string.Empty);
             if (string.IsNullOrWhiteSpace(monoProgLoc))
             {

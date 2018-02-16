@@ -240,6 +240,8 @@ namespace AnalysisManagerMSGFDBPlugIn
             tooManySkippedSpectra = false;
 
             // Determine the path to MSGF+
+            // Manager parameter MSGFPlusProgLoc will either come from the Manager Control database,
+            // or on Linux from file ManagerSettingsLocal.xml
             mMSGFPlusProgLoc = DetermineProgramLocation("MSGFPlusProgLoc", msgfPlusJarfile);
 
             if (string.IsNullOrWhiteSpace(mMSGFPlusProgLoc))
@@ -669,6 +671,8 @@ namespace AnalysisManagerMSGFDBPlugIn
         private string ConvertMZIDToTSV(string mzidFileName)
         {
             // Determine the path to the MzidToTsvConverter
+            // Manager parameter MzidToTsvConverterProgLoc will either come from the Manager Control database,
+            // or on Linux from file ManagerSettingsLocal.xml
             var mzidToTsvConverterProgLoc = DetermineProgramLocation("MzidToTsvConverterProgLoc", "MzidToTsvConverter.exe");
 
             if (string.IsNullOrEmpty(mzidToTsvConverterProgLoc))

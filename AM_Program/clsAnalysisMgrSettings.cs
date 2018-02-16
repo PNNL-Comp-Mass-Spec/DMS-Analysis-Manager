@@ -881,6 +881,7 @@ namespace AnalysisManagerProg
 
         private bool ValidateOfflineTaskDirectories()
         {
+            // These manaager parameters are defined in file ManagerSettingsLocal.xml
             try
             {
                 var taskQueuePath = GetParam(MGR_PARAM_LOCAL_TASK_QUEUE_PATH);

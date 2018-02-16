@@ -70,9 +70,9 @@ namespace AnalysisManagerBase
         /// Manager parameters
         /// </summary>
         private IMgrParams MgrParams { get; }
-
+        
         /// <summary>
-        /// Folder for FASTA files
+        /// Directory with FASTA files
         /// </summary>
         /// <remarks>
         /// For example, /file1/temp/DMSOrgDBs
@@ -80,7 +80,7 @@ namespace AnalysisManagerBase
         public string RemoteOrgDBPath { get; private set; }
 
         /// <summary>
-        /// Folder for task queue files
+        /// Directory with task queue files
         /// </summary>
         /// <remarks>
         /// For example, /file1/temp/DMSTasks
@@ -88,7 +88,7 @@ namespace AnalysisManagerBase
         public string RemoteTaskQueuePath { get; private set; }
 
         /// <summary>
-        /// Folder for task queue files for the step tool associated with this job
+        /// Directory with task queue files for the step tool associated with this job
         /// </summary>
         public string RemoteTaskQueuePathForTool
         {
@@ -102,7 +102,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Root folder for job task data files
+        /// Root directory with job task data files
         /// </summary>
         /// <remarks>
         /// For example, /file1/temp/DMSWorkDir
@@ -110,7 +110,7 @@ namespace AnalysisManagerBase
         public string RemoteWorkDirPath { get; private set; }
 
         /// <summary>
-        /// Remote working directory folder for this specific job
+        /// Remote working directory for this specific job
         /// </summary>
         public string RemoteJobStepWorkDirPath => clsPathUtils.CombineLinuxPaths(RemoteWorkDirPath, GetJobStepFileOrFolderName());
 
