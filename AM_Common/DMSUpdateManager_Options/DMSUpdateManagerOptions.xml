@@ -2,11 +2,13 @@
 <sections>
   <section name="DMSUpdateManager">
     <item key="OverwriteNewerFiles" value="False" />
-    <item key="SourceFolderPath" value="\\gigasax\DMS_Programs\AnalysisToolManagerDistribution_NewDecon2LS" />
+    <item key="SourceFolderPath" value="\\pnl\projects\OmicsSW\DMS_Programs\AnalysisToolManagerDistribution" />
     <item key="TargetFolderPath" value="." />
     <item key="CopySubdirectoriesToParentFolder" value="True" />
-    <item key="RebootCommandFolderPath" value="\\gigasax\DMS_Programs\AnalysisToolManagerReboot" />
-    <item key="FilesToIgnore" value="AnalysisManagerProg.exe.config, Utils.pyc, Global.pyc, PValues.txt, PTMods.txt" />
+    <item key="FilesToIgnore" value="AnalysisManagerProg.exe.config, Utils.pyc, Global.pyc, PValues.txt, PTMods.txt, thumbs.db" />
     <item key="LogMessages" value="True" />
+    <item key="MinimumRepeatTimeSeconds" value="60" />
+    <item key="LogFolderPath" value="..\DMSUpdateManager\Logs" />
+    <item key="LoggingLevel" value="Normal" />
   </section>
 </sections>
