@@ -1778,9 +1778,19 @@ namespace AnalysisManagerBase
         protected string GetJavaProgLoc()
         {
 
-            // JavaLoc will typically be "C:\Program Files\Java\jre8\bin\Java.exe"
-            // Or, on Linux "/usr/bin/java"
-            var javaProgLoc = m_mgrParams.GetParam("JavaLoc");
+            string javaProgLoc;
+
+            if (clsGlobal.LinuxOS)
+            {
+                // On Linux, the Java location is tracked via manager parameter JavaLocLinux, loaded from file ManagerSettingsLocal.xml
+                // For example: /usr/bin/java
+                javaProgLoc = m_mgrParams.GetParam("JavaLocLinux");
+            }
+            else
+            {
+                // JavaLoc will typically be "C:\Program Files\Java\jre8\bin\Java.exe"
+                javaProgLoc = m_mgrParams.GetParam("JavaLoc");
+            }
 
             if (string.IsNullOrEmpty(javaProgLoc))
             {
