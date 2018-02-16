@@ -70,7 +70,7 @@ namespace AnalysisManagerBase
         /// Manager parameters
         /// </summary>
         private IMgrParams MgrParams { get; }
-        
+
         /// <summary>
         /// Directory with FASTA files
         /// </summary>
@@ -500,8 +500,9 @@ namespace AnalysisManagerBase
 
             var settings = new List<KeyValuePair<string, string>>
             {
-                new KeyValuePair<string, string>("host", RemoteHostName),
-                new KeyValuePair<string, string>("user", RemoteHostUsername),
+                new KeyValuePair<string, string>("host", RemoteHostInfo.HostName),
+                new KeyValuePair<string, string>("user", RemoteHostInfo.Username),
+                new KeyValuePair<string, string>("dmsPrograms", RemoteHostInfo.BaseDirectoryPath),
                 new KeyValuePair<string, string>("taskQueue", RemoteTaskQueuePath),
                 new KeyValuePair<string, string>("workDir", RemoteWorkDirPath),
                 new KeyValuePair<string, string>("orgDB", RemoteOrgDBPath),
@@ -524,6 +525,7 @@ namespace AnalysisManagerBase
             {
                 new KeyValuePair<string, string>("host", mgrParams.GetParam("RemoteHostName")),
                 new KeyValuePair<string, string>("user", mgrParams.GetParam("RemoteHostUser")),
+                new KeyValuePair<string, string>("dmsPrograms", mgrParams.GetParam("RemoteHostDMSProgramsPath")),
                 new KeyValuePair<string, string>("taskQueue", mgrParams.GetParam("RemoteTaskQueuePath")),
                 new KeyValuePair<string, string>("workDir", mgrParams.GetParam("RemoteWorkDirPath")),
                 new KeyValuePair<string, string>("orgDB", mgrParams.GetParam("RemoteOrgDBPath")),
@@ -777,6 +779,8 @@ namespace AnalysisManagerBase
                 RemoteHostInfo.HostName = MgrParams.GetParam("RemoteHostName");
                 RemoteHostInfo.Username = MgrParams.GetParam("RemoteHostUser");
 
+                RemoteHostInfo.BaseDirectoryPath = MgrParams.GetParam("RemoteHostDMSProgramsPath");
+
                 RemoteHostInfo.PrivateKeyFile = MgrParams.GetParam("RemoteHostPrivateKeyFile");
                 RemoteHostInfo.PassphraseFile = MgrParams.GetParam("RemoteHostPassphraseFile");
 
@@ -805,6 +809,8 @@ namespace AnalysisManagerBase
 
                     RemoteHostInfo.HostName = clsXMLUtils.GetXmlValue(elements, "host");
                     RemoteHostInfo.Username = clsXMLUtils.GetXmlValue(elements, "user");
+
+                    RemoteHostInfo.BaseDirectoryPath = clsXMLUtils.GetXmlValue(elements, "dmsPrograms");
 
                     var mgrPrivateKeyFilePath = MgrParams.GetParam("RemoteHostPrivateKeyFile");
                     var mgrPassphraseFilePath = MgrParams.GetParam("RemoteHostPassphraseFile");
