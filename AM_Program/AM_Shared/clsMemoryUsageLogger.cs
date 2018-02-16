@@ -23,6 +23,19 @@ namespace AnalysisManagerBase
 
         private const char COL_SEP = '\t';
 
+        private const string LOG_FILE_EXTENSION = ".txt";
+
+        private const string LOG_FILE_TIMESTAMP_FORMAT = "yyyy-MM";
+
+        private const string LOG_FILE_MATCH_SPEC = "????-??";
+
+        private const string LOG_FILE_DATE_REGEX = @"(?<Year>\d{4,4})-(?<Month>\d+)";
+
+        private const string MEMORY_USAGE_LOG_PREFIX = "MemoryUsageLog";
+
+        #endregion
+
+        #region "Fields"
 
         /// <summary>
         /// The minimum interval between appending a new memory usage entry to the log
@@ -36,11 +49,12 @@ namespace AnalysisManagerBase
         private PerformanceCounter m_PerfCounterPoolPagedBytes;
 
         private PerformanceCounter m_PerfCounterPoolNonpagedBytes;
-        #endregion
 
         private bool m_PerfCountersIntitialized;
 
         private DateTime m_LastWriteTime;
+
+        #endregion
 
         #region "Properties"
 
@@ -96,6 +110,44 @@ namespace AnalysisManagerBase
             MinimumLogIntervalMinutes = minLogIntervalMinutes;
 
             m_LastWriteTime = DateTime.MinValue;
+
+        }
+
+        private void ArchiveOldLogs(string currentLogFilePath)
+        {
+            try
+            {
+                var currentLogFile = new FileInfo(currentLogFilePath);
+                var currentLogDirectory = currentLogFile.Directory;
+
+                if (currentLogDirectory == null)
+                {
+                    return;
+                }
+
+                var logFolder = new DirectoryInfo(Path.Combine(currentLogDirectory.FullName, "Logs"));
+
+                // Find all log files tht start with "MemoryUsageLog_" but are not the current log file
+                var logFiles = currentLogDirectory.GetFiles(MEMORY_USAGE_LOG_PREFIX + "*");
+
+                foreach (var item in logFiles)
+                {
+                    var newPath = Path.Combine(currentLogDirectory.FullName, "Logs", item.Name);
+                    if (File.Exists(newPath))
+                        continue;
+
+                    item.MoveTo(newPath);
+                }
+
+                // Move those files to the Logs folder
+
+                // Move MemoryUsageLog files in the Logs folder into year-based subfolders
+                PRISM.Logging.FileLogger.ArchiveOldLogs(logFolder, LOG_FILE_MATCH_SPEC, LOG_FILE_EXTENSION, LOG_FILE_DATE_REGEX);
+            }
+            catch (Exception ex)
+            {
+                OnErrorEvent("Exception archiving old log files", ex);
+            }
 
         }
 
@@ -304,6 +356,8 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public void WriteMemoryUsageLogEntry()
         {
+            // Create a new log file each month
+            var logFileName = MEMORY_USAGE_LOG_PREFIX + "_" + DateTime.Now.ToString(LOG_FILE_TIMESTAMP_FORMAT) + LOG_FILE_EXTENSION;
 
             try
             {
@@ -314,8 +368,6 @@ namespace AnalysisManagerBase
                 }
                 m_LastWriteTime = DateTime.UtcNow;
 
-                // We're creating a new log file each month
-                var logFileName = "MemoryUsageLog_" + DateTime.Now.ToString("yyyy-MM") + ".txt";
                 string logFilePath;
 
                 if (!string.IsNullOrWhiteSpace(LogFolderPath))
@@ -341,10 +393,22 @@ namespace AnalysisManagerBase
 
                 }
 
+                ArchiveOldLogs(logFilePath);
+
             }
             catch
             {
-                // Ignore errors here
+                var msg = "Error writing memory usage to file " + logFileName;
+
+                if (string.IsNullOrWhiteSpace(LogFolderPath))
+                {
+                    OnWarningEvent(msg);
+                }
+                else
+                {
+                    OnWarningEvent(msg + " in folder " + LogFolderPath);
+                }
+
             }
 
         }
