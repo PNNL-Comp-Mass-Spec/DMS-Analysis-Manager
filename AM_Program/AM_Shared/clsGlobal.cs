@@ -307,10 +307,7 @@ namespace AnalysisManagerBase
             if (mAppFolderPath != null)
                 return mAppFolderPath;
 
-            var entryAssembly = Assembly.GetEntryAssembly();
-
-            var assemblyFile = new FileInfo(entryAssembly.Location);
-            mAppFolderPath = assemblyFile.DirectoryName;
+            mAppFolderPath = PRISM.FileProcessor.ProcessFilesOrFoldersBase.GetAppFolderPath();
 
             return mAppFolderPath;
         }
