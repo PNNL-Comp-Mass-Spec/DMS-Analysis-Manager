@@ -23,10 +23,6 @@ namespace AnalysisManagerBase
 
         private const char COL_SEP = '\t';
 
-        /// <summary>
-        /// Status file name and location
-        /// </summary>
-        private readonly string m_LogFolderPath;
 
         /// <summary>
         /// The minimum interval between appending a new memory usage entry to the log
@@ -54,7 +50,7 @@ namespace AnalysisManagerBase
         /// <value></value>
         /// <returns></returns>
         /// <remarks>If this is an empty string, the log file is created in the working directory</remarks>
-        public string LogFolderPath => m_LogFolderPath;
+        public string LogFolderPath { get; }
 
         /// <summary>
         /// The minimum interval between appending a new memory usage entry to the log
@@ -90,11 +86,11 @@ namespace AnalysisManagerBase
         {
             if (string.IsNullOrWhiteSpace(logFolderPath))
             {
-                m_LogFolderPath = string.Empty;
+                LogFolderPath = string.Empty;
             }
             else
             {
-                m_LogFolderPath = logFolderPath;
+                LogFolderPath = logFolderPath;
             }
 
             MinimumLogIntervalMinutes = minLogIntervalMinutes;
@@ -322,9 +318,9 @@ namespace AnalysisManagerBase
                 var logFileName = "MemoryUsageLog_" + DateTime.Now.ToString("yyyy-MM") + ".txt";
                 string logFilePath;
 
-                if (!string.IsNullOrWhiteSpace(m_LogFolderPath))
+                if (!string.IsNullOrWhiteSpace(LogFolderPath))
                 {
-                    logFilePath = Path.Combine(m_LogFolderPath, logFileName);
+                    logFilePath = Path.Combine(LogFolderPath, logFileName);
                 }
                 else
                 {
