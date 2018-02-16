@@ -19,7 +19,7 @@ namespace AnalysisManagerBase
     public class clsMemoryUsageLogger : clsEventNotifier
     {
 
-        #region "Module variables"
+        #region "Constants and Enums"
 
         private const char COL_SEP = '\t';
 
@@ -313,7 +313,7 @@ namespace AnalysisManagerBase
             {
                 if (DateTime.UtcNow.Subtract(m_LastWriteTime).TotalMinutes < m_MinimumMemoryUsageLogIntervalMinutes)
                 {
-                    // Not enough time has elapsed since the last write; exit sub
+                    // Not enough time has elapsed since the last write; exit method
                     return;
                 }
                 m_LastWriteTime = DateTime.UtcNow;

@@ -244,7 +244,7 @@ namespace AnalysisManagerBase
 
                 if (!forceLogToDB && DateTime.UtcNow.Subtract(m_LastWriteTime).TotalMinutes < m_DBStatusUpdateIntervalMinutes)
                 {
-                    // Not enough time has elapsed since the last write; exit sub
+                    // Not enough time has elapsed since the last write; exit method
                     return;
                 }
                 m_LastWriteTime = DateTime.UtcNow;

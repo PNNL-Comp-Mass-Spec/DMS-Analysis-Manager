@@ -2333,7 +2333,7 @@ namespace AnalysisManagerProg
 
                     if (!successCopying)
                     {
-                        m_MostRecentErrorMessage = "Error copying files to the remote host";
+                        m_MostRecentErrorMessage = "Error copying job-related files to the remote host";
                         LogError(m_MostRecentErrorMessage);
 
                         eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
@@ -2342,7 +2342,7 @@ namespace AnalysisManagerProg
                 }
                 catch (Exception ex)
                 {
-                    m_MostRecentErrorMessage = "Exception copying files to the remote host: " + ex.Message;
+                    m_MostRecentErrorMessage = "Exception copying job-related files to the remote host: " + ex.Message;
                     LogError(m_MostRecentErrorMessage, ex);
 
                     eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;

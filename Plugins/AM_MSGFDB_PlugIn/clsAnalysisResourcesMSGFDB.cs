@@ -138,7 +138,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         }
 
         /// <summary>
-        /// Copy the working directory files, the job parameters file, and and FASTA file to the remote host
+        /// Copy resources to the remote host: working directory files, job parameters file, FASTA file
         /// </summary>
         /// <returns>True if success, false if an error</returns>
         public override bool CopyResourcesToRemote(clsRemoteTransferUtility transferUtility)
