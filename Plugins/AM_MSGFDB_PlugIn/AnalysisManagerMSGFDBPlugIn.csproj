@@ -39,6 +39,9 @@
     <Reference Include="CondenseCDTAFile">
       <HintPath>..\..\AM_Common\CondenseCDTAFile.dll</HintPath>
     </Reference>
+    <Reference Include="DMSUpdateManager">
+      <HintPath>..\..\AM_Common\DMSUpdateManager.dll</HintPath>
+    </Reference>
     <Reference Include="MyEMSLReader">
       <HintPath>..\..\AM_Common\MyEMSLReader.dll</HintPath>
     </Reference>
@@ -68,7 +71,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="PRISM-Library">
-      <Version>2.4.72</Version>
+      <Version>2.4.73</Version>
     </PackageReference>
     <PackageReference Include="ProteinFileReader">
       <Version>1.3.1</Version>

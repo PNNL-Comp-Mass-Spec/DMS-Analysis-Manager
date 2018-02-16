@@ -47,6 +47,9 @@
     <StartupObject>AnalysisManagerProg.modMain</StartupObject>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="DMSUpdateManager">
+      <HintPath>..\AM_Common\DMSUpdateManager.dll</HintPath>
+    </Reference>
     <Reference Include="FilterMsMsSpectra">
       <HintPath>..\AM_Common\FilterMsMsSpectra.dll</HintPath>
     </Reference>
@@ -62,11 +65,11 @@
     <Reference Include="PEKtoCSVConverter">
       <HintPath>..\AM_Common\PEKtoCSVConverter.dll</HintPath>
     </Reference>
-    <Reference Include="PeptideHitResultsProcessor, Version=1.5.6274.32624, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="PeptideHitResultsProcessor">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\AM_Common\PeptideHitResultsProcessor.dll</HintPath>
     </Reference>
-    <Reference Include="PeptideToProteinMapEngine, Version=1.1.6368.31619, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="PeptideToProteinMapEngine">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\AM_Common\PeptideToProteinMapEngine.dll</HintPath>
     </Reference>
@@ -134,7 +137,7 @@
       <Version>0.9.16530.1</Version>
     </PackageReference>
     <PackageReference Include="PRISM-Library">
-      <Version>2.4.72</Version>
+      <Version>2.4.73</Version>
     </PackageReference>
     <PackageReference Include="PRISMWin-Library">
       <Version>1.0.3</Version>

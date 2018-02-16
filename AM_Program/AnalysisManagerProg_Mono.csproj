@@ -47,6 +47,9 @@
     <StartupObject>AnalysisManagerProg.modMain</StartupObject>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="DMSUpdateManager">
+      <HintPath>..\AM_Common\DMSUpdateManager.dll</HintPath>
+    </Reference>
     <Reference Include="FilterMsMsSpectra">
       <HintPath>..\AM_Common\FilterMsMsSpectra.dll</HintPath>
     </Reference>
@@ -62,9 +65,6 @@
     <Reference Include="PEKtoCSVConverter">
       <HintPath>..\AM_Common\PEKtoCSVConverter.dll</HintPath>
     </Reference>
-    <Reference Include="PHRPReader">
-      <HintPath>..\AM_Common\PHRPReader.dll</HintPath>
-    </Reference>
     <Reference Include="PRISM, Version=2.4.4.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\CachedLibs\PRISM.dll</HintPath>
@@ -72,6 +72,17 @@
     <Reference Include="PRISMWin, Version=1.0.1.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\CachedLibs\PRISMWin.dll</HintPath>
+    </Reference>
+    <Reference Include="PeptideHitResultsProcessor, Version=1.5.6274.32624, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\AM_Common\PeptideHitResultsProcessor.dll</HintPath>
+    </Reference>
+    <Reference Include="PeptideToProteinMapEngine, Version=1.1.6368.31619, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\AM_Common\PeptideToProteinMapEngine.dll</HintPath>
+    </Reference>
+    <Reference Include="PHRPReader">
+      <HintPath>..\AM_Common\PHRPReader.dll</HintPath>
     </Reference>
     <Reference Include="Protein_Exporter">
       <HintPath>..\AM_Common\Protein_Exporter.dll</HintPath>
@@ -162,6 +173,7 @@ xcopy "$(ProjectDir)..\AM_Common\ThermoRawFileReader.dll" "$(TargetDir)" /D /Y
 
 xcopy "$(TargetDir)AnalysisManagerProg.exe" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)AnalysisManagerProg.pdb" "$(ProjectDir)..\AM_Common\" /D /Y
+xcopy "$(TargetDir)Jayrock.Json.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 
 rem if exist "$(TargetDir)SQLite.Interop.dll" (del "$(TargetDir)SQLite.Interop.dll")
 rem if not exist "$(TargetDir)x86" mkdir "$(TargetDir)x86"
