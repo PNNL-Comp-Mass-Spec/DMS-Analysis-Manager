@@ -61,6 +61,8 @@ namespace AnalysisManagerProg
 
         private bool m_ConfigChanged;
 
+        private bool mDMSProgramsSynchronized;
+
         private clsStatusFile m_StatusTools;
 
         private clsMyEMSLUtilities m_MyEMSLUtilities;
@@ -138,6 +140,7 @@ namespace AnalysisManagerProg
             TraceMode = traceModeEnabled;
             m_ConfigChanged = false;
             m_DebugLevel = 0;
+            mDMSProgramsSynchronized = false;
             m_NeedToAbortProcessing = false;
             m_MostRecentJobInfo = string.Empty;
 
@@ -2325,7 +2328,34 @@ namespace AnalysisManagerProg
                     return false;
                 }
 
-                ShowTrace("Transferring files to remote host to run remotely");
+                ShowTrace("Pushing new/updated DMS_Programs files to remote host");
+
+                try
+                {
+                    // We run the DMS Update Manager for the first job processed, but not for subsequent jobs
+                    var successCopying = mDMSProgramsSynchronized || transferUtility.RunDMSUpdateManager();
+
+                    if (!successCopying)
+                    {
+                        m_MostRecentErrorMessage = "Error copying manager-related files to the remote host";
+                        LogError(m_MostRecentErrorMessage);
+
+                        eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+                        return false;
+                    }
+
+                    mDMSProgramsSynchronized = true;
+                }
+                catch (Exception ex)
+                {
+                    m_MostRecentErrorMessage = "Exception copying manager-related files to the remote host: " + ex.Message;
+                    LogError(m_MostRecentErrorMessage, ex);
+
+                    eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+                    return false;
+                }
+
+                ShowTrace("Transferring job-related files to remote host to run remotely");
 
                 try
                 {

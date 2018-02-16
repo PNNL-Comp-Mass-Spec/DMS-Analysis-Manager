@@ -647,6 +647,111 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
+        /// Copy new/updated DMS_Programs files to the remote host
+        /// </summary>
+        /// <returns>True if success, falser if an error</returns>
+        public bool RunDMSUpdateManager()
+        {
+            try
+            {
+                if (IsParameterUpdateRequired(USE_MANAGER_REMOTE_INFO))
+                {
+                    // Validate that the required parameters are present and load the private key and passphrase from disk
+                    // This throws an exception if any parameters are missing
+                    UpdateParameters(USE_MANAGER_REMOTE_INFO);
+                }
+
+                var dmsUpdateMgrSource = MgrParams.GetParam("DMSUpdateManagerSource");
+                var targetDirectoryPath = MgrParams.GetParam("RemoteHostDMSProgramsPath");
+
+                if (string.IsNullOrEmpty(targetDirectoryPath))
+                {
+                    OnErrorEvent("Manager parameter not found: RemoteHostDMSProgramsPath; cannot run the DMS Update Manager");
+                    return false;
+                }
+
+                if (string.IsNullOrEmpty(targetDirectoryPath))
+                {
+                    OnErrorEvent("Manager parameter not found: RemoteHostDMSProgramsPath; cannot run the DMS Update Manager");
+                    return false;
+                }
+
+                var sourceDirectoryPath = string.Empty;
+
+                if (string.IsNullOrEmpty(dmsUpdateMgrSource))
+                {
+
+                    var sourceCandidates = new List<string>
+                    {
+                        @"C:\DMS_Programs"
+                    };
+
+                    var appFolder = new DirectoryInfo(clsGlobal.GetAppFolderPath());
+                    var appFolderParent = appFolder.Parent;
+                    if (appFolderParent != null)
+                    {
+                        sourceCandidates.Add(appFolderParent.FullName);
+                    }
+
+                    foreach (var candidatePath in sourceCandidates)
+                    {
+                        if (!Directory.Exists(sourceDirectoryPath))
+                            continue;
+
+                        sourceDirectoryPath = candidatePath;
+                        break;
+                    }
+
+                    if (string.IsNullOrWhiteSpace(sourceDirectoryPath))
+                    {
+                        OnErrorEvent("Manager parameter not found: DMSUpdateManagerSource; furthermore, unable to determine the local directory path");
+                        return false;
+                    }
+                    OnWarningEvent("Manager parameter not found: DMSUpdateManagerSource; will use " + sourceDirectoryPath);
+                }
+                else
+                {
+                    if (!Directory.Exists(dmsUpdateMgrSource))
+                    {
+                        OnErrorEvent("DMSUpdateManagerSource path not found; cannot run the DMS Update Manager: " + dmsUpdateMgrSource);
+                        return false;
+                    }
+
+                    sourceDirectoryPath = dmsUpdateMgrSource;
+                }
+
+                var filesToIgnore = MgrParams.GetParam("DMSUpdateManagerFilesToIgnore");
+
+                OnDebugEvent(string.Format("Copying new/updated DMS Programs files from {0} to {1} on remote host {2}",
+                                           sourceDirectoryPath, targetDirectoryPath, RemoteHostInfo.HostName));
+
+                RemoteHostInfo.BaseDirectoryPath = targetDirectoryPath;
+                var success = StartDMSUpdateManager(sourceDirectoryPath, targetDirectoryPath, filesToIgnore, out var errorMessage);
+
+                if (success)
+                    return true;
+
+                var msg = "Error pushing DMS Programs files to the remote host; UpdateRemoteHost returns false";
+
+                if (string.IsNullOrWhiteSpace(errorMessage))
+                {
+                    OnErrorEvent(msg);
+                }
+                else
+                {
+                    OnErrorEvent(msg + ": " + errorMessage);
+                }
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                OnErrorEvent("Error copying new/updated DMS_Programs files to the remote host", ex);
+                return false;
+            }
+        }
+
+        /// <summary>
         /// Update cached parameters using MgrParams and JobParams
         /// In addition, loads the private key information from RemoteHostPrivateKeyFile and RemoteHostPassphraseFile
         /// </summary>
