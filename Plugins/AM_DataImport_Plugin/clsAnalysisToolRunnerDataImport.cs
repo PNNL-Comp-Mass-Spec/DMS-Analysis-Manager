@@ -59,7 +59,7 @@ namespace AnalysisManagerDataImportPlugIn
                 }
 
                 // Stop the job timer
-                m_StopTime = System.DateTime.UtcNow;
+                m_StopTime = DateTime.UtcNow;
 
                 // Make sure objects are released
                 System.Threading.Thread.Sleep(500);
@@ -97,8 +97,8 @@ namespace AnalysisManagerDataImportPlugIn
         /// <remarks>The name of the new subfolder comes from m_ResFolderName</remarks>
         protected bool MoveImportedFiles()
         {
-            var strTargetFolder = "??";
-            var strTargetFilePath = "??";
+            var targetFolder = "??";
+            var targetFilePath = "??";
 
             try
             {
@@ -109,13 +109,13 @@ namespace AnalysisManagerDataImportPlugIn
                     return true;
                 }
 
-                strTargetFolder = Path.Combine(mSourceFiles[0].DirectoryName, m_ResFolderName);
-                var fiTargetFolder = new DirectoryInfo(strTargetFolder);
+                targetFolder = Path.Combine(mSourceFiles[0].DirectoryName, m_ResFolderName);
+                var fiTargetFolder = new DirectoryInfo(targetFolder);
                 if (fiTargetFolder.Exists)
                 {
                     // Need to rename the target folder
                     fiTargetFolder.MoveTo(fiTargetFolder.FullName + "_" + System.DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss"));
-                    fiTargetFolder = new DirectoryInfo(strTargetFolder);
+                    fiTargetFolder = new DirectoryInfo(targetFolder);
                 }
 
                 if (!fiTargetFolder.Exists)
@@ -127,19 +127,19 @@ namespace AnalysisManagerDataImportPlugIn
                 {
                     try
                     {
-                        strTargetFilePath = Path.Combine(strTargetFolder, fiFile.Name);
-                        fiFile.MoveTo(strTargetFilePath);
+                        targetFilePath = Path.Combine(targetFolder, fiFile.Name);
+                        fiFile.MoveTo(targetFilePath);
                     }
                     catch (Exception ex)
                     {
-                        LogWarning("Error moving file " + fiFile.Name + " to " + strTargetFilePath + ": " + ex.Message);
+                        LogWarning("Error moving file " + fiFile.Name + " to " + targetFilePath + ": " + ex.Message);
                         return false;
                     }
                 }
             }
             catch (Exception ex)
             {
-                LogError("Error moving files to " + strTargetFolder + ":" + ex.Message, ex);
+                LogError("Error moving files to " + targetFolder + ":" + ex.Message, ex);
                 return false;
             }
 
@@ -155,37 +155,30 @@ namespace AnalysisManagerDataImportPlugIn
         {
             const string MATCH_ALL_FILES = "*";
 
-            string strSharePath = null;
-            string strDataImportFolder = null;
-            string strSourceFileSpec = null;
-            string strSourceFolderPath = null;
-
-            string strMessage = null;
-
             try
             {
                 mSourceFiles = new List<FileInfo>();
 
-                strSharePath = m_jobParams.GetJobParameter("DataImportSharePath", "");
+                var strSharePath = m_jobParams.GetJobParameter("DataImportSharePath", "");
 
                 // If the user specifies a DataImportFolder using the "Special Processing" field of an analysis job, the folder name will be stored in section JobParameters
                 var dataImportFolder = m_jobParams.GetJobParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DataImportFolder", "");
 
-                if (string.IsNullOrEmpty(strDataImportFolder))
+                if (string.IsNullOrEmpty(dataImportFolder))
                 {
-                    // If the user specifies a DataImportFolder using the SettingsFile for an analysis job, the folder name will be stored in section "JobParameters"
-                    strDataImportFolder = m_jobParams.GetJobParameter("DataImport", "DataImportFolder", "");
+                    // If the user specifies a DataImportFolder using the SettingsFile for an analysis job, the folder name will be stored in section JobParameters
+                    dataImportFolder = m_jobParams.GetJobParameter("DataImport", "DataImportFolder", "");
                 }
 
-                if (string.IsNullOrEmpty(strDataImportFolder))
+                if (string.IsNullOrEmpty(dataImportFolder))
                 {
-                    // strDataImportFolder is still empty, look for a parameter named DataImportFolder in any section
-                    strDataImportFolder = m_jobParams.GetJobParameter("DataImportFolder", "");
+                    // dataImportFolder is still empty, look for a parameter named DataImportFolder in any section
+                    dataImportFolder = m_jobParams.GetJobParameter("DataImportFolder", "");
                 }
 
-                strSourceFileSpec = m_jobParams.GetJobParameter("DataImportFileMask", "");
-                if (string.IsNullOrEmpty(strSourceFileSpec))
-                    strSourceFileSpec = MATCH_ALL_FILES;
+                var sourceFileSpec = m_jobParams.GetJobParameter("DataImportFileMask", "");
+                if (string.IsNullOrEmpty(sourceFileSpec))
+                    sourceFileSpec = MATCH_ALL_FILES;
 
                 if (string.IsNullOrEmpty(strSharePath))
                 {
@@ -193,11 +186,11 @@ namespace AnalysisManagerDataImportPlugIn
                     return false;
                 }
 
-                if (string.IsNullOrEmpty(strDataImportFolder))
+                if (string.IsNullOrEmpty(dataImportFolder))
                 {
-                    strMessage = "DataImportFolder not defined in the Special_Processing parameters or the settings file for this job; will assume the input folder is the dataset name";
+                    m_message = "DataImportFolder not defined in the Special_Processing parameters or the settings file for this job; will assume the input folder is the dataset name";
                     LogMessage(m_message);
-                    strDataImportFolder = string.Copy(m_Dataset);
+                    dataImportFolder = string.Copy(m_Dataset);
                 }
 
                 var fiSourceShare = new DirectoryInfo(strSharePath);
@@ -207,7 +200,7 @@ namespace AnalysisManagerDataImportPlugIn
                     return false;
                 }
 
-                strSourceFolderPath = Path.Combine(fiSourceShare.FullName, strDataImportFolder);
+                var strSourceFolderPath = Path.Combine(fiSourceShare.FullName, dataImportFolder);
                 var fiSourceFolder = new DirectoryInfo(strSourceFolderPath);
                 if (!fiSourceFolder.Exists)
                 {
@@ -217,7 +210,7 @@ namespace AnalysisManagerDataImportPlugIn
 
                 // Copy files from the source folder to the working directory
                 mSourceFiles.Clear();
-                foreach (var fiFile in fiSourceFolder.GetFiles(strSourceFileSpec))
+                foreach (var fiFile in fiSourceFolder.GetFiles(sourceFileSpec))
                 {
                     try
                     {
@@ -234,13 +227,13 @@ namespace AnalysisManagerDataImportPlugIn
                 if (mSourceFiles.Count == 0)
                 {
                     string msg;
-                    if (strSourceFileSpec == MATCH_ALL_FILES)
+                    if (sourceFileSpec == MATCH_ALL_FILES)
                     {
                         msg = "Source folder was empty; nothing to copy: " + fiSourceFolder.FullName;
                     }
                     else
                     {
-                        msg = "No files matching " + strSourceFileSpec + " were found in the source folder: " + fiSourceFolder.FullName;
+                        msg = "No files matching " + sourceFileSpec + " were found in the source folder: " + fiSourceFolder.FullName;
                     }
 
                     LogError(msg);
@@ -248,14 +241,14 @@ namespace AnalysisManagerDataImportPlugIn
                 }
                 else
                 {
-                    strMessage = "Copied " + mSourceFiles.Count + " file";
+                    var message = "Copied " + mSourceFiles.Count + " file";
                     if (mSourceFiles.Count > 1)
-                        strMessage += "s";
-                    strMessage += " from " + fiSourceFolder.FullName;
+                        message += "s";
+                    message += " from " + fiSourceFolder.FullName;
 
                     if (m_DebugLevel >= 2)
                     {
-                        LogMessage(strMessage);
+                        LogMessage(message);
                     }
                 }
             }
