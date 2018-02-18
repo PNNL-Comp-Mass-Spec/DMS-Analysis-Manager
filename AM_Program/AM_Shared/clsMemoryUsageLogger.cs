@@ -127,11 +127,14 @@ namespace AnalysisManagerBase
 
                 var logFolder = new DirectoryInfo(Path.Combine(currentLogDirectory.FullName, "Logs"));
 
-                // Find all log files tht start with "MemoryUsageLog_" but are not the current log file
+                // Find all log files that start with "MemoryUsageLog_" but are not the current log file
                 var logFiles = currentLogDirectory.GetFiles(MEMORY_USAGE_LOG_PREFIX + "*");
 
                 foreach (var item in logFiles)
                 {
+                    if (string.Equals(item.FullName, currentLogFile.FullName))
+                        continue;
+
                     var newPath = Path.Combine(currentLogDirectory.FullName, "Logs", item.Name);
                     if (File.Exists(newPath))
                         continue;
