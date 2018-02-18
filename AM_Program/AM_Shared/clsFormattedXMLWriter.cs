@@ -39,9 +39,6 @@ namespace AnalysisManagerBase
         {
 
             XmlDocument objXMLDoc;
-            XmlTextWriter swOutfile;
-
-            var success = false;
 
             ErrMsg = "";
 
@@ -60,37 +57,26 @@ namespace AnalysisManagerBase
 
             try
             {
-                // Initialize the XML writer
-                swOutfile = new XmlTextWriter(new FileStream(outputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read), System.Text.Encoding.UTF8)
+                // Write the XML to disk
+                using (var xWriter = new XmlTextWriter(
+                    new FileStream(outputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read), System.Text.Encoding.UTF8))
                 {
-                    Formatting = Formatting.Indented,
-                    Indentation = 2,
-                    IndentChar = ' '
-                };
+                    xWriter.Formatting = Formatting.Indented;
+                    xWriter.Indentation = 2;
+                    xWriter.IndentChar = ' ';
+
+                    // Write out the XML
+                    objXMLDoc.WriteTo(xWriter);
+                }
+
+                return true;
 
             }
             catch (Exception ex)
             {
-                ErrMsg = "Error opening the output file (" + outputFilePath + ") in WriteXMLToFile: " + ex.Message;
+                ErrMsg = "Error writing XML to file " + outputFilePath + ": " + ex.Message;
                 return false;
             }
-
-            try
-            {
-                // Write out the XML
-                objXMLDoc.WriteTo(swOutfile);
-                swOutfile.Close();
-
-                success = true;
-
-            }
-            catch (Exception ex)
-            {
-                ErrMsg = "Error in WritePepXMLFile: " + ex.Message;
-                swOutfile.Close();
-            }
-
-            return success;
 
         }
         #endregion
