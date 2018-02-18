@@ -664,15 +664,10 @@ namespace AnalysisManagerBase
                 }
 
                 var dmsUpdateMgrSource = MgrParams.GetParam("DMSUpdateManagerSource");
-                var targetDirectoryPath = MgrParams.GetParam("RemoteHostDMSProgramsPath");
+                var dmsProgramsPath = MgrParams.GetParam("RemoteHostDMSProgramsPath");
+                var analysisManagerDir = MgrParams.GetParam("RemoteHostAnalysisManagerDir", "AnalysisManager");
 
-                if (string.IsNullOrEmpty(targetDirectoryPath))
-                {
-                    OnErrorEvent("Manager parameter not found: RemoteHostDMSProgramsPath; cannot run the DMS Update Manager");
-                    return false;
-                }
-
-                if (string.IsNullOrEmpty(targetDirectoryPath))
+                if (string.IsNullOrEmpty(dmsProgramsPath))
                 {
                     OnErrorEvent("Manager parameter not found: RemoteHostDMSProgramsPath; cannot run the DMS Update Manager");
                     return false;
@@ -723,6 +718,8 @@ namespace AnalysisManagerBase
                 }
 
                 var filesToIgnore = MgrParams.GetParam("DMSUpdateManagerFilesToIgnore");
+
+                var targetDirectoryPath = clsPathUtils.CombineLinuxPaths(dmsProgramsPath, analysisManagerDir);
 
                 OnDebugEvent(string.Format("Copying new/updated DMS Programs files from {0} to {1} on remote host {2}",
                                            sourceDirectoryPath, targetDirectoryPath, RemoteHostInfo.HostName));
