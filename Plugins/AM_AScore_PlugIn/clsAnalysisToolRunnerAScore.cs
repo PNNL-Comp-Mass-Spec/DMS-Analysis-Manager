@@ -27,8 +27,6 @@ namespace AnalysisManager_AScore_PlugIn
             try
             {
 
-                m_jobParams.SetParam("JobParameters", "DatasetNum", m_jobParams.GetParam("OutputFolderPath"));
-
                 // Do the base class stuff
                 if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
                 {
