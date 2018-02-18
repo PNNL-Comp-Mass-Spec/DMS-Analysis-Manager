@@ -3501,11 +3501,10 @@ namespace AnalysisManagerBase
                     ChunkSizeMB = FlexibleFileSortUtility.TextFileSorter.DEFAULT_CHUNK_SIZE_MB
                 };
 
-
-                sortUtility.ProgressChanged += mSortUtility_ProgressChanged;
+                sortUtility.ProgressUpdate += mSortUtility_ProgressChanged;
                 sortUtility.ErrorEvent += mSortUtility_ErrorEvent;
                 sortUtility.WarningEvent += mSortUtility_WarningEvent;
-                sortUtility.MessageEvent += mSortUtility_MessageEvent;
+                sortUtility.StatusEvent += mSortUtility_MessageEvent;
 
                 var success = sortUtility.SortFile(textFilePath, sortedFilePath);
 
@@ -4760,32 +4759,32 @@ namespace AnalysisManagerBase
 
         #region "Event Handlers"
 
-        private void mSortUtility_ErrorEvent(object sender, FlexibleFileSortUtility.MessageEventArgs e)
+        private void mSortUtility_ErrorEvent(string message, Exception ex)
         {
-            mSortUtilityErrorMessage = e.Message;
-            LogMessage("SortUtility: " + e.Message, 0, true);
+            mSortUtilityErrorMessage = message;
+            LogError("SortUtility: " + message, ex);
         }
 
-        private void mSortUtility_MessageEvent(object sender, FlexibleFileSortUtility.MessageEventArgs e)
+        private void mSortUtility_MessageEvent(string message)
         {
             if (m_DebugLevel >= 1)
             {
-                LogMessage(e.Message);
+                LogMessage(message);
             }
         }
 
-        private void mSortUtility_ProgressChanged(object sender, FlexibleFileSortUtility.ProgressChangedEventArgs e)
+        private void mSortUtility_ProgressChanged(string progressMessage, float percentComplete)
         {
             if (m_DebugLevel >= 1 && DateTime.UtcNow.Subtract(mLastSortUtilityProgress).TotalSeconds >= 5)
             {
                 mLastSortUtilityProgress = DateTime.UtcNow;
-                LogMessage(e.taskDescription + ": " + e.percentComplete.ToString("0.0") + "% complete");
+                LogMessage(progressMessage + ": " + percentComplete.ToString("0.0") + "% complete");
             }
         }
 
-        private void mSortUtility_WarningEvent(object sender, FlexibleFileSortUtility.MessageEventArgs e)
+        private void mSortUtility_WarningEvent(string message)
         {
-            LogMessage("SortUtility Warning: " + e.Message);
+            LogWarning("SortUtility: " + Message);
         }
 
         #endregion
