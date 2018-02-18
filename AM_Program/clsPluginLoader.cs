@@ -8,6 +8,7 @@
 
 using System;
 using System.IO;
+using System.Text.RegularExpressions;
 using System.Xml;
 using AnalysisManagerBase;
 using PRISM;
@@ -99,12 +100,12 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Retrieves data for specified plugin from plugin info config file
         /// </summary>
-        /// <param name="XPath">XPath spec for specified plugin</param>
+        /// <param name="xpath">XPath spec for specified plugin</param>
         /// <param name="className">Name of class for plugin (return value) </param>
         /// <param name="assyName">Name of assembly for plugin (return value)</param>
         /// <returns>TRUE for success, FALSE for failure</returns>
         /// <remarks></remarks>
-        private bool GetPluginInfo(string XPath, out string className, out string assyName)
+        private bool GetPluginInfo(string xpath, out string className, out string assyName)
         {
             var doc = new XmlDocument();
             var pluginInfo = string.Empty;
@@ -114,12 +115,12 @@ namespace AnalysisManagerProg
 
             try
             {
-                if (string.IsNullOrEmpty(XPath))
+                if (string.IsNullOrEmpty(xpath))
                 {
-                    throw new ArgumentException("XPath must be defined", nameof(XPath));
+                    throw new ArgumentException("XPath must be defined", nameof(xpath));
                 }
 
-                pluginInfo = "XPath=\"" + XPath + "\"; className=\"" + className + "\"; assyName=" + assyName + "\"";
+                pluginInfo = "XPath=\"" + xpath + "\"; className=\"" + className + "\"; assyName=" + assyName + "\"";
 
                 //read the tool runner info file
                 doc.Load(GetPluginInfoFilePath(m_pluginConfigFile));
@@ -131,7 +132,7 @@ namespace AnalysisManagerProg
                 }
 
                 // find the element that matches the tool name
-                var nodeList = root.SelectNodes(XPath);
+                var nodeList = root.SelectNodes(xpath);
 
                 if (nodeList == null)
                 {
@@ -142,6 +143,15 @@ namespace AnalysisManagerProg
                 // and if we did, retrieve its information
                 if (nodeList.Count != 1)
                 {
+                    var testToolMatcher = new Regex(@"@Tool='(?<TestToolName>test_(?<AltToolName>[a-z_-]+))'", RegexOptions.IgnoreCase);
+                    var match = testToolMatcher.Match(pluginInfo);
+
+                    if (match.Success)
+                    {
+                        OnWarningEvent(string.Format("Could not resolve tool name '{0}'; will try '{1}'",
+                                                     match.Groups["TestToolName"], match.Groups["AltToolName"]));
+                        return false;
+                    }
                     throw new Exception("Could not resolve tool name; " + pluginInfo);
                 }
 
@@ -202,7 +212,7 @@ namespace AnalysisManagerProg
                 }
 
                 if (TraceMode)
-                    OnDebugEvent("Call System.Reflection.Assembly.LoadFrom for assembly " + pluginInfoFile.FullName);
+                    OnDebugEvent("Call System.Reflection.Assembly.LoadFrom for assembly " + clsPathUtils.CompactPathString(pluginInfoFile.FullName, 60));
 
                 var assembly = System.Reflection.Assembly.LoadFrom(pluginInfoFile.FullName);
 
@@ -254,8 +264,13 @@ namespace AnalysisManagerProg
                         OnErrorEvent(string.Format("clsPluginLoader.GetToolRunner(), for class {0}, assembly {1}", className, assyName), ex);
                     }
                 }
+                m_SummaryFile.Add("Loaded ToolRunner: " + className + " from " + assyName);
             }
-            m_SummaryFile.Add("Loaded ToolRunner: " + className + " from " + assyName);
+            else
+            {
+                m_SummaryFile.Add("Unable to load ToolRunner for " + toolName);
+            }
+
             return myToolRunner;
         }
 
@@ -267,7 +282,8 @@ namespace AnalysisManagerProg
         /// <remarks></remarks>
         public IAnalysisResources GetAnalysisResources(string toolName)
         {
-            var xpath = "//Resourcers/Resourcer[@Tool='" + toolName + "']";
+            var xpath = "//Resourcers/Resourcer[@Tool='" + toolName.ToLower() + "']";
+
             IAnalysisResources myModule = null;
 
             if (GetPluginInfo(xpath, out var className, out var assyName))
@@ -296,8 +312,9 @@ namespace AnalysisManagerProg
             }
             else
             {
-                m_SummaryFile.Add("Unable to load resourcer for tool " + toolName);
+                m_SummaryFile.Add("Unable to load resourcer for " + toolName);
             }
+
             return myModule;
         }
 
