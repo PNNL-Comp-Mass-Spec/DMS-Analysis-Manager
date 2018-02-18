@@ -88,7 +88,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
             // SourceJob2FolderPath          = "\\proto-3\LTQ_Orb_3\2011_1\XG_lipid_pt5aNeg\DLS201206180955_Auto852151"
             // SourceJob2FolderPathArchive   = "\\adms.emsl.pnl.gov\dmsarch\LTQ_Orb_3\2011_1\XG_lipid_pt5aNeg\DLS201206180955_Auto852151"
 
-            var strDeconToolsFolderName = m_jobParams.GetParam("StepParameters", "InputFolderName");
+            var strDeconToolsFolderName = m_jobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "InputFolderName");
 
             if (string.IsNullOrEmpty(strDeconToolsFolderName))
             {
@@ -104,8 +104,8 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 return false;
             }
 
-            var strDatasetFolder = m_jobParams.GetParam("JobParameters", "DatasetStoragePath");
-            var strDatasetFolderArchive = m_jobParams.GetParam("JobParameters", "DatasetArchivePath");
+            var strDatasetFolder = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetStoragePath");
+            var strDatasetFolderArchive = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetArchivePath");
 
             if (string.IsNullOrEmpty(strDatasetFolder))
             {
@@ -152,7 +152,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
             // SourceJob2FolderPath          = "\\proto-3\LTQ_Orb_3\2011_1\XG_lipid_pt5aNeg\DLS201206180955_Auto852151"
             // SourceJob2FolderPathArchive   = "\\adms.emsl.pnl.gov\dmsarch\LTQ_Orb_3\2011_1\XG_lipid_pt5aNeg\DLS201206180955_Auto852151"
 
-            var strSourceJob2 = m_jobParams.GetParam("JobParameters", "SourceJob2");
+            var strSourceJob2 = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "SourceJob2");
 
             if (string.IsNullOrWhiteSpace(strSourceJob2))
             {
@@ -173,7 +173,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 return true;
             }
 
-            var strDataset2 = m_jobParams.GetParam("JobParameters", "SourceJob2Dataset");
+            var strDataset2 = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "SourceJob2Dataset");
             if (string.IsNullOrEmpty(strDataset2))
             {
                 m_message = "SourceJob2Dataset job parameter not found; this is unexpected";
@@ -181,8 +181,8 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 return false;
             }
 
-            var strInputFolder = m_jobParams.GetParam("JobParameters", "SourceJob2FolderPath");
-            var strInputFolderArchive = m_jobParams.GetParam("JobParameters", "SourceJob2FolderPathArchive");
+            var strInputFolder = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "SourceJob2FolderPath");
+            var strInputFolderArchive = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "SourceJob2FolderPathArchive");
 
             if (string.IsNullOrEmpty(strInputFolder))
             {

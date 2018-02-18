@@ -34,11 +34,11 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
             string numClonedSteps = null;
 
-            var transferFolderName = Path.Combine(m_jobParams.GetParam("transferFolderPath"), DatasetName);
+            var transferFolderName = Path.Combine(m_jobParams.GetParam(JOB_PARAM_TRANSFER_FOLDER_PATH), DatasetName);
             var zippedResultName = DatasetName + "_inspect.zip";
             const string searchLogResultName = "InspectSearchLog.txt";
 
-            transferFolderName = Path.Combine(transferFolderName, m_jobParams.GetParam("OutputFolderName"));
+            transferFolderName = Path.Combine(transferFolderName, m_jobParams.GetParam(JOB_PARAM_OUTPUT_FOLDER_NAME));
 
             // Retrieve Fasta file (used by the PeptideToProteinMapper)
             if (!RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")))
@@ -120,19 +120,12 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
         /// <remarks></remarks>
         protected bool RetrieveMultiInspectResultFiles()
         {
-            string InspectResultsFile = null;
-            var strFileName = string.Empty;
+            int numOfResultFiles;
+            var transferFolderName = Path.Combine(m_jobParams.GetParam(JOB_PARAM_TRANSFER_FOLDER_PATH), DatasetName);
 
-            var numOfResultFiles = 0;
-            var fileNum = 0;
-            var DatasetName = m_jobParams.GetParam("datasetNum");
-            var transferFolderName = Path.Combine(m_jobParams.GetParam("transferFolderPath"), DatasetName);
-            string dtaFilename = null;
+            var fileCopyCount = 0;
 
-            var intFileCopyCount = 0;
-            var intLogFileIndex = 0;
-
-            transferFolderName = Path.Combine(transferFolderName, m_jobParams.GetParam("OutputFolderName"));
+            transferFolderName = Path.Combine(transferFolderName, m_jobParams.GetParam(JOB_PARAM_OUTPUT_FOLDER_NAME));
 
             try
             {
@@ -150,78 +143,82 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 return false;
             }
 
-            for (fileNum = 1; fileNum <= numOfResultFiles; fileNum++)
+            for (var fileNum = 1; fileNum <= numOfResultFiles; fileNum++)
             {
                 // Copy each Inspect result file from the transfer directory
-                InspectResultsFile = DatasetName + "_" + fileNum + "_inspect.txt";
-                dtaFilename = DatasetName + "_" + fileNum + "_dta.txt";
+                var inspectResultsFile = DatasetName + "_" + fileNum + "_inspect.txt";
+                var dtaFilename = DatasetName + "_" + fileNum + "_dta.txt";
 
-                if (File.Exists(Path.Combine(transferFolderName, InspectResultsFile)))
+                if (File.Exists(Path.Combine(transferFolderName, inspectResultsFile)))
                 {
-                    if (!CopyFileToWorkDir(InspectResultsFile, transferFolderName, m_WorkingDir))
+                    if (!CopyFileToWorkDir(inspectResultsFile, transferFolderName, m_WorkingDir))
                     {
                         // Error copying file (error will have already been logged)
                         if (m_DebugLevel >= 3)
                         {
                             LogError(
-                                "CopyFileToWorkDir returned False for " + InspectResultsFile + " using folder " + transferFolderName);
+                                "CopyFileToWorkDir returned False for " + inspectResultsFile + " using folder " + transferFolderName);
                         }
                         return false;
                     }
-                    intFileCopyCount += 1;
+                    fileCopyCount += 1;
 
                     // Update the list of files to delete from the server
-                    m_jobParams.AddServerFileToDelete(Path.Combine(transferFolderName, InspectResultsFile));
+                    m_jobParams.AddServerFileToDelete(Path.Combine(transferFolderName, inspectResultsFile));
                     m_jobParams.AddServerFileToDelete(Path.Combine(transferFolderName, dtaFilename));
 
                     // Update the list of local files to delete
-                    m_jobParams.AddResultFileToSkip(InspectResultsFile);
+                    m_jobParams.AddResultFileToSkip(inspectResultsFile);
                 }
 
                 // Copy the various log files
-                for (intLogFileIndex = 1; intLogFileIndex <= 3; intLogFileIndex++)
+                for (var intLogFileIndex = 1; intLogFileIndex <= 3; intLogFileIndex++)
                 {
+                    string fileName;
                     switch (intLogFileIndex)
                     {
                         case 1:
                             // Copy the Inspect error file from the transfer directory
-                            strFileName = DatasetName + "_" + fileNum + "_error.txt";
+                            fileName = DatasetName + "_" + fileNum + "_error.txt";
                             break;
                         case 2:
                             // Copy each Inspect search log file from the transfer directory
-                            strFileName = "InspectSearchLog_" + fileNum + ".txt";
+                            fileName = "InspectSearchLog_" + fileNum + ".txt";
                             break;
                         case 3:
                             // Copy each Inspect console output file from the transfer directory
-                            strFileName = "InspectConsoleOutput_" + fileNum + ".txt";
+                            fileName = "InspectConsoleOutput_" + fileNum + ".txt";
+                            break;
+                        default:
+                            fileName = string.Empty;
                             break;
                     }
 
-                    if (File.Exists(Path.Combine(transferFolderName, strFileName)))
+                    if (File.Exists(Path.Combine(transferFolderName, fileName)))
                     {
-                        if (!CopyFileToWorkDir(strFileName, transferFolderName, m_WorkingDir))
+                        if (!CopyFileToWorkDir(fileName, transferFolderName, m_WorkingDir))
                         {
                             // Error copying file (error will have already been logged)
                             if (m_DebugLevel >= 3)
                             {
                                 LogError(
-                                    "CopyFileToWorkDir returned False for " + strFileName + " using folder " + transferFolderName);
+                                    "CopyFileToWorkDir returned False for " + fileName + " using folder " + transferFolderName);
                             }
                             return false;
                         }
-                        intFileCopyCount += 1;
+                        fileCopyCount += 1;
 
                         // Update the list of files to delete from the server
-                        m_jobParams.AddServerFileToDelete(Path.Combine(transferFolderName, strFileName));
+                        m_jobParams.AddServerFileToDelete(Path.Combine(transferFolderName, fileName));
 
                         // Update the list of local files to delete
-                        m_jobParams.AddResultFileToSkip(strFileName);
+                        m_jobParams.AddResultFileToSkip(fileName);
                     }
                 }
             }
 
             LogMessage(
-                "Multi Inspect Result Files copied to local working directory; copied " + intFileCopyCount + " files");
+                "Multi Inspect Result Files copied to local working directory; copied " + fileCopyCount + " files");
 
             return true;
         }

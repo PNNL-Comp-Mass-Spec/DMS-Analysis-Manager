@@ -126,7 +126,7 @@ namespace DTASpectraFileGen
                         {
                             zippedDTAFilePath = Path.Combine(m_WorkingDir, fileToFind);
 
-                            m_jobParams.AddAdditionalParameter("JobParameters", USING_EXISTING_DECONMSN_RESULTS, "True");
+                            m_jobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, USING_EXISTING_DECONMSN_RESULTS, "True");
 
                             LogMessage(
                                 "Found pre-existing DeconMSn results; will not re-run DeconMSn if they are valid");

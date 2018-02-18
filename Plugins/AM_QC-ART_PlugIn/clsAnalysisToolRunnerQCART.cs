@@ -642,7 +642,7 @@ namespace AnalysisManagerQCARTPlugin
 
                 // Gigasax.DMS5
                 var connectionString = m_mgrParams.GetParam("connectionstring");
-                var datasetID = m_jobParams.GetJobParameter("JobParameters", "DatasetID", 0);
+                var datasetID = m_jobParams.GetJobParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetID", 0);
 
                 // Call stored procedure StoreQCARTResults
                 // Retry up to 3 times

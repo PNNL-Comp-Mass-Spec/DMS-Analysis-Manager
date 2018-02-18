@@ -664,7 +664,7 @@ namespace MSMSSpectrumFilterAM
 
             // Set settings file name
             // This is the job parameters file that contains the settings information
-            m_SettingsFileName = m_jobParams.GetParam("JobParameters", "genJobParamsFilename");
+            m_SettingsFileName = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_XML_PARAMS_FILE);
 
             // Source folder name
             if (string.IsNullOrEmpty(m_WorkDir))

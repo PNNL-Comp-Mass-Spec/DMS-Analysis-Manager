@@ -363,7 +363,7 @@ namespace AnalysisManagerIDPickerPlugIn
             }
 
             // Store the param file name so that we can load later
-            m_jobParams.AddAdditionalParameter("JobParameters", IDPICKER_PARAM_FILENAME_LOCAL, strIDPickerParamFileName);
+            m_jobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, IDPICKER_PARAM_FILENAME_LOCAL, strIDPickerParamFileName);
 
             return true;
         }

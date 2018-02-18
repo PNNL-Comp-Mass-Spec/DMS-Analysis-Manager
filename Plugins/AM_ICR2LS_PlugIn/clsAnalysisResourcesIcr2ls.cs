@@ -70,7 +70,7 @@ namespace AnalysisManagerICR2LSPlugIn
                     return true;
                 }
 
-                var strRemoteDatasetFolderPath = Path.Combine(m_jobParams.GetParam("DatasetArchivePath"), m_jobParams.GetParam("DatasetFolderName"));
+                var strRemoteDatasetFolderPath = Path.Combine(m_jobParams.GetParam("DatasetArchivePath"), m_jobParams.GetParam(JOB_PARAM_DATASET_FOLDER_NAME));
 
                 string strLocalDatasetFolderPath;
                 if (RawDataType.ToLower() == RAW_DATA_TYPE_BRUKER_FT_FOLDER)
@@ -83,8 +83,7 @@ namespace AnalysisManagerICR2LSPlugIn
                     strLocalDatasetFolderPath = string.Copy(m_WorkingDir);
                 }
 
-                bool blnIsFolder;
-                var serFileOrFolderPath = FindSerFileOrFolder(strLocalDatasetFolderPath, out blnIsFolder);
+                var serFileOrFolderPath = FindSerFileOrFolder(strLocalDatasetFolderPath, out var blnIsFolder);
 
                 if (string.IsNullOrEmpty(serFileOrFolderPath))
                 {
@@ -206,7 +205,7 @@ namespace AnalysisManagerICR2LSPlugIn
             try
             {
                 var strJob = m_jobParams.GetParam("Job");
-                var transferFolderPath = m_jobParams.GetParam("JobParameters", "transferFolderPath");
+                var transferFolderPath = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_TRANSFER_FOLDER_PATH);
 
                 if (string.IsNullOrWhiteSpace(transferFolderPath))
                 {
@@ -215,8 +214,8 @@ namespace AnalysisManagerICR2LSPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                transferFolderPath = Path.Combine(transferFolderPath, m_jobParams.GetParam("JobParameters", "DatasetFolderName"));
-                transferFolderPath = Path.Combine(transferFolderPath, m_jobParams.GetParam("StepParameters", "OutputFolderName"));
+                transferFolderPath = Path.Combine(transferFolderPath, m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_DATASET_FOLDER_NAME));
+                transferFolderPath = Path.Combine(transferFolderPath, m_jobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, JOB_PARAM_OUTPUT_FOLDER_NAME));
 
                 if (m_DebugLevel >= 4)
                 {

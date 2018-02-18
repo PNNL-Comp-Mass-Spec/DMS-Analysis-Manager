@@ -86,10 +86,11 @@ namespace AnalysisManagerExtractionPlugin
         #region "Module variables"
 
         private readonly short m_DebugLevel;
-        private readonly IMgrParams m_MgrParams;
-        private readonly IJobParams m_JobParams;
         private bool m_ExtractInProgress;
         private IPeptideFileExtractor m_ExtractTools;
+
+        private readonly string m_DatasetName;
+        private readonly string m_WorkDir;
 
         /// <summary>
         /// Percent complete, value between 0-100
@@ -105,16 +106,17 @@ namespace AnalysisManagerExtractionPlugin
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="MgrParams">IMgrParams object containing manager settings</param>
-        /// <param name="JobParams">IJobParams object containing job parameters</param>
+        /// <param name="mgrParams">IMgrParams object containing manager settings</param>
+        /// <param name="jobParams">IJobParams object containing job parameters</param>
         /// <param name="StatusTools"></param>
         /// <remarks></remarks>
-        public clsPeptideExtractWrapper(IMgrParams MgrParams, IJobParams JobParams, ref IStatusFile StatusTools)
+        public clsPeptideExtractWrapper(IMgrParams mgrParams, IJobParams jobParams, ref IStatusFile StatusTools)
         {
-            m_JobParams = JobParams;
-            m_MgrParams = MgrParams;
-            m_DebugLevel = (short)m_MgrParams.GetParam("debuglevel", 1);
+            m_DebugLevel = (short)mgrParams.GetParam("debuglevel", 1);
             m_StatusTools = StatusTools;
+
+            m_DatasetName = jobParams.GetParam(clsAnalysisResources.JOB_PARAM_DATASET_NAME);
+            m_WorkDir = mgrParams.GetParam("workdir");
         }
 
         /// <summary>
@@ -124,8 +126,7 @@ namespace AnalysisManagerExtractionPlugin
         /// <remarks></remarks>
         public CloseOutType PerformExtraction()
         {
-            var StartParams = new clsPeptideFileExtractor.StartupArguments(m_MgrParams.GetParam("workdir"),
-                m_JobParams.GetParam("DatasetNum"))
+            var startParams = new clsPeptideFileExtractor.StartupArguments(m_WorkDir, m_DatasetName)
             {
                 ExpandMultiORF = true,
                 FilterEFS = false,
@@ -138,14 +139,14 @@ namespace AnalysisManagerExtractionPlugin
             };
 
             // Verify the concatenated _out.txt file exists
-            if (!StartParams.CatOutFileExists)
+            if (!startParams.CatOutFileExists)
             {
                 OnErrorEvent("Concatenated Out file not found");
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
             // Setup the extractor and start extraction process
-            m_ExtractTools = new clsPeptideFileExtractor(StartParams);
+            m_ExtractTools = new clsPeptideFileExtractor(startParams);
             m_ExtractTools.EndTask += m_ExtractTools_EndTask;
             m_ExtractTools.CurrentProgress += m_ExtractTools_CurrentProgress;
             m_ExtractTools.CurrentStatus += m_ExtractTools_CurrentStatus;
@@ -194,7 +195,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 // Delay 1 second, then clean up processes
                 Thread.Sleep(1000);
-                PRISM.clsProgRunner.GarbageCollectNow();
+                clsProgRunner.GarbageCollectNow();
             }
         }
 
@@ -203,7 +204,7 @@ namespace AnalysisManagerExtractionPlugin
             // Verifies an _syn.txt file was created, and that valid data was found (file size > 0 bytes)
 
             // Test for presence of _syn.txt file
-            var workFiles = Directory.GetFiles(m_MgrParams.GetParam("workdir"));
+            var workFiles = Directory.GetFiles(m_WorkDir);
             var workFileMatch = string.Empty;
 
             var reCheckSuffix = new Regex(@"_syn.txt$", RegexOptions.Compiled | RegexOptions.IgnoreCase);

@@ -146,7 +146,7 @@ namespace AnalysisManagerBase
 
             JobNum = jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job", 0);
             StepNum = jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step", 0);
-            DatasetName = jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetNum");
+            DatasetName = jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_DATASET_NAME);
 
             TransferUtility = new clsRemoteTransferUtility(mgrParams, jobParams);
             RegisterEvents(TransferUtility);

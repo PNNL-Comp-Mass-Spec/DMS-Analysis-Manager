@@ -157,7 +157,7 @@ namespace AnalysisManager_Mage_PlugIn
         /// </summary>
         public void GetPriorResultsToWorkDir()
         {
-            var dataPackageFolderPath = Path.Combine(RequireJobParam("transferFolderPath"), RequireJobParam("OutputFolderName"));
+            var dataPackageFolderPath = Path.Combine(RequireJobParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH), RequireJobParam(clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME));
 
             var stepInputFolderName = GetJobParam("StepInputFolderName");
             if (stepInputFolderName != "")

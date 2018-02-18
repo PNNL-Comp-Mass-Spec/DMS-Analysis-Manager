@@ -469,7 +469,7 @@ namespace AnalysisManagerBase
                 var sharedResultFolderNames = GetSharedResultFolderList().ToList();
 
                 var parentFolderPaths = new List<string> {
-                    m_jobParams.GetParam("transferFolderPath"),
+                    m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH),
                     m_jobParams.GetParam("DatasetStoragePath")};
 
                 if (searchArchivedDatasetFolder)

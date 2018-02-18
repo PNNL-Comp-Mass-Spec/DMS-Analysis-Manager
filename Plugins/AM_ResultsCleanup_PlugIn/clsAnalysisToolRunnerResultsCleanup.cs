@@ -80,8 +80,8 @@ namespace AnalysisManagerResultsCleanupPlugin
 
             try
             {
-                var strTransferDirectoryPath = m_jobParams.GetJobParameter("JobParameters", "transferFolderPath", string.Empty);
-                var strResultsFolderName = m_jobParams.GetJobParameter("JobParameters", "InputFolderName", string.Empty);
+                var strTransferDirectoryPath = m_jobParams.GetJobParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH, string.Empty);
+                var strResultsFolderName = m_jobParams.GetJobParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, "InputFolderName", string.Empty);
 
                 if (string.IsNullOrWhiteSpace(strTransferDirectoryPath))
                 {

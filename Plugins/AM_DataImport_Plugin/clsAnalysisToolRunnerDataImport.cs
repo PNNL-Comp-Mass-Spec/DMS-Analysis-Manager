@@ -168,8 +168,8 @@ namespace AnalysisManagerDataImportPlugIn
 
                 strSharePath = m_jobParams.GetJobParameter("DataImportSharePath", "");
 
-                // If the user specifies a DataImportFolder using the "Special Processing" field of an analysis job, the folder name will be stored in section "JobParameters"
-                strDataImportFolder = m_jobParams.GetJobParameter("JobParameters", "DataImportFolder", "");
+                // If the user specifies a DataImportFolder using the "Special Processing" field of an analysis job, the folder name will be stored in section JobParameters
+                var dataImportFolder = m_jobParams.GetJobParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DataImportFolder", "");
 
                 if (string.IsNullOrEmpty(strDataImportFolder))
                 {

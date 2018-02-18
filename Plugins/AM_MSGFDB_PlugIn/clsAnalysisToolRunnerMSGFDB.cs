@@ -285,7 +285,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 return result;
             }
 
-            var instrumentGroup = m_jobParams.GetJobParameter("JobParameters", "InstrumentGroup", string.Empty);
+            var instrumentGroup = m_jobParams.GetJobParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, "InstrumentGroup", string.Empty);
 
             // Read the MSGFPlus Parameter File
 

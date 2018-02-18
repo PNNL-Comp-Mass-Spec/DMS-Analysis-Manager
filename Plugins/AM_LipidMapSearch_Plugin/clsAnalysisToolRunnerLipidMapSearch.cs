@@ -118,7 +118,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                     cmdStr += " -pp " + PossiblyQuotePath(strFilePath);                  // Positive-mode peaks.txt file
                 }
 
-                var strDataset2 = m_jobParams.GetParam("JobParameters", "SourceJob2Dataset");
+                var strDataset2 = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "SourceJob2Dataset");
                 if (!string.IsNullOrEmpty(strDataset2))
                 {
                     cmdStr += " -rn " + PossiblyQuotePath(Path.Combine(m_WorkDir, strDataset2 + clsAnalysisResources.DOT_RAW_EXTENSION)); // Negative-mode .Raw file

@@ -81,7 +81,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             var cacheFolderPath = m_jobParams.GetJobParameter("CacheFolderPath", DEFAULT_CACHE_FOLDER_PATH);
 
-            var resultsFolderName = m_jobParams.GetParam("OutputFolderName");
+            var resultsFolderName = m_jobParams.GetParam(JOB_PARAM_OUTPUT_FOLDER_NAME);
             if (string.IsNullOrWhiteSpace(resultsFolderName))
             {
                 LogError("Job parameter OutputFolderName is empty");
@@ -381,7 +381,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 var templateFileName = GetMSGFReportTemplateFilename(m_jobParams, WarnIfJobParamMissing: true);
 
                 // First look for the template file in the data package folder
-                var dataPackagePath = m_jobParams.GetJobParameter("JobParameters", "transferFolderPath", string.Empty);
+                var dataPackagePath = m_jobParams.GetJobParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_TRANSFER_FOLDER_PATH, string.Empty);
                 if (string.IsNullOrEmpty(dataPackagePath))
                 {
                     m_message = "Job parameter transferFolderPath is missing; unable to determine the data package folder path";
@@ -432,7 +432,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 }
 
                 // Assure that the MSGF Report Template file job parameter is up-to-date
-                m_jobParams.AddAdditionalParameter("JobParameters", JOB_PARAM_MSGF_REPORT_TEMPLATE_FILENAME, templateFileName);
+                m_jobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_MSGF_REPORT_TEMPLATE_FILENAME, templateFileName);
 
                 m_jobParams.AddResultFileToSkip(templateFileName);
             }
@@ -458,7 +458,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 // First look for the template file in the data package folder
                 // Note that transferFolderPath is likely \\protoapps\PeptideAtlas_Staging and not the real data package path
 
-                var transferFolderPath = m_jobParams.GetJobParameter("JobParameters", "transferFolderPath", string.Empty);
+                var transferFolderPath = m_jobParams.GetJobParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_TRANSFER_FOLDER_PATH, string.Empty);
                 if (string.IsNullOrEmpty(transferFolderPath))
                 {
                     m_message = "Job parameter transferFolderPath is missing; unable to determine the data package folder path";
@@ -526,7 +526,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 }
 
                 // Assure that the PX Submission Template file job parameter is up-to-date
-                m_jobParams.AddAdditionalParameter("JobParameters", JOB_PARAM_PX_SUBMISSION_TEMPLATE_FILENAME, templateFileName);
+                m_jobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_PX_SUBMISSION_TEMPLATE_FILENAME, templateFileName);
 
                 m_jobParams.AddResultFileToSkip(templateFileName);
             }

@@ -558,7 +558,7 @@ namespace AnalysisManagerBase
 
                 var instrumentDataPurged = m_jobParams.GetJobParameter("InstrumentDataPurged", 0);
 
-                var datasetFolderName = m_jobParams.GetParam("DatasetFolderName");
+                var datasetFolderName = m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME);
 
                 if (retrievingInstrumentDataFolder && instrumentDataPurged != 0 && !assumeUnpurged)
                 {
@@ -591,9 +591,9 @@ namespace AnalysisManagerBase
                         AddPathToCheck(lstPathsToCheck, Path.Combine(m_jobParams.GetParam("DatasetArchivePath"), dsName), false);
                 }
 
-                AddPathToCheck(lstPathsToCheck, Path.Combine(m_jobParams.GetParam("transferFolderPath"), datasetFolderName), false);
+                AddPathToCheck(lstPathsToCheck, Path.Combine(m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH), datasetFolderName), false);
                 if (datasetFolderName != dsName)
-                    AddPathToCheck(lstPathsToCheck, Path.Combine(m_jobParams.GetParam("transferFolderPath"), dsName), false);
+                    AddPathToCheck(lstPathsToCheck, Path.Combine(m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH), dsName), false);
 
                 var fileNotFoundEncountered = false;
 

@@ -307,7 +307,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                     return CloseOutType.CLOSEOUT_SUCCESS;
 
                 // If we get here, MSGF+ succeeded, but MzRefinery or PostProcessing failed
-                LogWarning("Processing failed; see results at " + m_jobParams.GetParam("transferFolderPath"));
+                LogWarning("Processing failed; see results at " + m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH));
                 if (m_UnableToUseMzRefinery)
                 {
                     return CloseOutType.CLOSEOUT_UNABLE_TO_USE_MZ_REFINERY;
@@ -383,7 +383,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 return result;
             }
 
-            var strInstrumentGroup = m_jobParams.GetJobParameter("JobParameters", "InstrumentGroup", string.Empty);
+            var strInstrumentGroup = m_jobParams.GetJobParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, "InstrumentGroup", string.Empty);
 
             // Read the MSGF+ Parameter File
 

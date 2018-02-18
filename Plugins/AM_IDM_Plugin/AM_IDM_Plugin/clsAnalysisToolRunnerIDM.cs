@@ -137,8 +137,8 @@ namespace AnalysisManager_IDM_Plugin
 
                 // Override the output folder name and the dataset name (since this is a dataset aggregation job)
                 m_ResFolderName = m_jobParams.GetParam("StepOutputFolderName");
-                m_Dataset = m_jobParams.GetParam("OutputFolderName");
-                m_jobParams.SetParam("StepParameters", "OutputFolderName", m_ResFolderName);
+                m_Dataset = m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME);
+                m_jobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, m_ResFolderName);
 
                 var success = CopyResultsToTransferDirectory();
 

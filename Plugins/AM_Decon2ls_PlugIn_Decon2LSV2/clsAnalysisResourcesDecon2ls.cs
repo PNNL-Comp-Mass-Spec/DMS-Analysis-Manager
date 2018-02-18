@@ -376,7 +376,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                         updatedXmlDoc.WriteContentTo(formattedXmlWriter);
                     }
 
-                    m_jobParams.AddAdditionalParameter("JobParameters", JOB_PARAM_PROCESSMSMS_AUTO_ENABLED, true);
+                    m_jobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_PROCESSMSMS_AUTO_ENABLED, true);
                     return true;
                 }
                 catch (Exception ex)

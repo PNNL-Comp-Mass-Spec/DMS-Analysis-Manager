@@ -1541,7 +1541,7 @@ namespace AnalysisManagerMSGFPlugin
 
             try
             {
-                var transferFolderPath = m_jobParams.GetParam("transferFolderPath");
+                var transferFolderPath = m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
                 var inputFolderName = m_jobParams.GetParam("inputFolderName");
 
                 folderToCheck = Path.Combine(Path.Combine(transferFolderPath, m_Dataset), inputFolderName);

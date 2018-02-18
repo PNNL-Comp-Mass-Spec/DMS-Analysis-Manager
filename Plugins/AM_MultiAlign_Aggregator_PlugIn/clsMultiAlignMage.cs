@@ -155,7 +155,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
             if (string.IsNullOrWhiteSpace(MultiAlignResultFilename))
             {
-                MultiAlignResultFilename = mJP.RequireJobParam("DatasetNum");
+                MultiAlignResultFilename = mJP.RequireJobParam(clsAnalysisResources.JOB_PARAM_DATASET_NAME);
             }
 
             // Set up and execute a program runner to run MultiAlign
@@ -895,7 +895,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 var val = mJobParms.GetParam(paramName);
                 if (string.IsNullOrWhiteSpace(val))
                 {
-                    mJobParms.AddAdditionalParameter("JobParameters", paramName, defaultValue);
+                    mJobParms.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, paramName, defaultValue);
                     return defaultValue;
                 }
                 return val;

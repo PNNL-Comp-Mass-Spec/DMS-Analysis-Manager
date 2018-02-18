@@ -108,7 +108,7 @@ namespace AnalysisManagerResultsXferPlugin
         private void DeleteTransferFolderIfEmpty()
         {
 
-            var transferFolderPath = m_jobParams.GetParam("transferFolderPath");
+            var transferFolderPath = m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
             if (string.IsNullOrWhiteSpace(transferFolderPath))
             {
                 LogError("Job parameter transferFolderPath is empty or not defined");
@@ -134,7 +134,7 @@ namespace AnalysisManagerResultsXferPlugin
                     catch (Exception ex)
                     {
                         // Log this exception, but don't treat it is a job failure
-                        var msg = "clsResultXferToolRunner.RunTool(); Exception deleting dataset folder " + m_jobParams.GetParam("DatasetFolderName") +
+                        var msg = "clsResultXferToolRunner.RunTool(); Exception deleting dataset folder " + m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME) +
                                   " in xfer folder (another results manager may have deleted it): " + ex.Message;
                         LogWarning(msg);
 
@@ -152,7 +152,7 @@ namespace AnalysisManagerResultsXferPlugin
             catch (Exception ex)
             {
                 // Log this exception, but don't treat it is a job failure
-                var msg = "clsResultXferToolRunner.RunTool(); Exception looking for dataset folder " + m_jobParams.GetParam("DatasetFolderName") +
+                var msg = "clsResultXferToolRunner.RunTool(); Exception looking for dataset folder " + m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME) +
                           " in xfer folder (another results manager may have deleted it): " + ex.Message;
                 LogWarning(msg);
 
@@ -356,7 +356,7 @@ namespace AnalysisManagerResultsXferPlugin
         /// <remarks></remarks>
         protected virtual CloseOutType PerformResultsXfer()
         {
-            var transferFolderPath = m_jobParams.GetParam("transferFolderPath");
+            var transferFolderPath = m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
             var datasetStoragePath = m_jobParams.GetParam("DatasetStoragePath");
 
             // Check whether the transfer folder and the dataset folder reside on the same server as this manager
@@ -380,7 +380,7 @@ namespace AnalysisManagerResultsXferPlugin
             }
 
             // Verify input folder exists in storage server xfer folder
-            var folderToMove = Path.Combine(transferFolderPath, m_jobParams.GetParam("DatasetFolderName"), m_jobParams.GetParam("InputFolderName"));
+            var folderToMove = Path.Combine(transferFolderPath, m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME), m_jobParams.GetParam("InputFolderName"));
 
             if (!Directory.Exists(folderToMove))
             {
@@ -395,7 +395,7 @@ namespace AnalysisManagerResultsXferPlugin
 
             // Verify dataset folder exists on storage server
             // If it doesn't exist, we will auto-create it (this behavior was added 4/24/2009)
-            var datasetDir = Path.Combine(datasetStoragePath, m_jobParams.GetParam("DatasetFolderName"));
+            var datasetDir = Path.Combine(datasetStoragePath, m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME));
             var diDatasetFolder = new DirectoryInfo(datasetDir);
             if (!diDatasetFolder.Exists)
             {

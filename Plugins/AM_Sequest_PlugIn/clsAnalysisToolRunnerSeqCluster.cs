@@ -147,9 +147,9 @@ namespace AnalysisManagerSequestPlugin
             mSequestAppearsStalled = false;
             mAbortSinceSequestIsStalled = false;
 
-            mTransferFolderPath = m_jobParams.GetParam("JobParameters", "transferFolderPath");
-            mTransferFolderPath = Path.Combine(mTransferFolderPath, m_jobParams.GetParam("JobParameters", "DatasetFolderName"));
-            mTransferFolderPath = Path.Combine(mTransferFolderPath, m_jobParams.GetParam("StepParameters", "OutputFolderName"));
+            mTransferFolderPath = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
+            mTransferFolderPath = Path.Combine(mTransferFolderPath, m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME));
+            mTransferFolderPath = Path.Combine(mTransferFolderPath, m_jobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME));
 
             // Initialize the out file watcher
             mOutFileWatcher = new FileSystemWatcher();

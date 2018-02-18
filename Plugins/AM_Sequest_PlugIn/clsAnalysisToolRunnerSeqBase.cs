@@ -161,7 +161,7 @@ namespace AnalysisManagerSequestPlugin
             if (!RemoveNonResultServerFiles())
             {
                 // Do not treat this as a fatal error
-                LogWarning("Error deleting .tmp files in folder " + m_jobParams.GetParam("JobParameters", "transferFolderPath"));
+                LogWarning("Error deleting .tmp files in folder " + m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH));
             }
 
             return eReturnCode;

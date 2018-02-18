@@ -96,7 +96,7 @@ namespace AnalysisManager_Ape_PlugIn
 
         private bool GetWorkflowFiles()
         {
-            var dataPackageFolderPath = Path.Combine(m_jobParams.GetParam("transferFolderPath"), m_jobParams.GetParam("OutputFolderName"));
+            var dataPackageFolderPath = Path.Combine(m_jobParams.GetParam(JOB_PARAM_TRANSFER_FOLDER_PATH), m_jobParams.GetParam(JOB_PARAM_OUTPUT_FOLDER_NAME));
             var analysisType = m_jobParams.GetParam("AnalysisType");
 
             var strStepInputFolderPath = Path.Combine(dataPackageFolderPath, m_jobParams.GetParam("StepInputFolderName"));
@@ -134,7 +134,7 @@ namespace AnalysisManager_Ape_PlugIn
         private bool GetQRollupFiles()
         {
 
-            var dataPackageFolderPath = Path.Combine(m_jobParams.GetParam("transferFolderPath"), m_jobParams.GetParam("OutputFolderName"));
+            var dataPackageFolderPath = Path.Combine(m_jobParams.GetParam(JOB_PARAM_TRANSFER_FOLDER_PATH), m_jobParams.GetParam(JOB_PARAM_OUTPUT_FOLDER_NAME));
 
             if (!CopyFileToWorkDir("Results.db3", Path.Combine(dataPackageFolderPath, m_jobParams.GetParam("StepInputFolderName")), m_WorkingDir))
             {

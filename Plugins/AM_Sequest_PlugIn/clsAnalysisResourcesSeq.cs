@@ -165,7 +165,7 @@ namespace AnalysisManagerSequestPlugin
             try
             {
                 var strJob = m_jobParams.GetParam("Job");
-                var transferFolderPath = m_jobParams.GetParam("JobParameters", "transferFolderPath");
+                var transferFolderPath = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_TRANSFER_FOLDER_PATH);
 
                 if (string.IsNullOrWhiteSpace(transferFolderPath))
                 {
@@ -175,8 +175,8 @@ namespace AnalysisManagerSequestPlugin
                 }
                 else
                 {
-                    transferFolderPath = Path.Combine(transferFolderPath, m_jobParams.GetParam("JobParameters", "DatasetFolderName"));
-                    transferFolderPath = Path.Combine(transferFolderPath, m_jobParams.GetParam("StepParameters", "OutputFolderName"));
+                    transferFolderPath = Path.Combine(transferFolderPath, m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_DATASET_FOLDER_NAME));
+                    transferFolderPath = Path.Combine(transferFolderPath, m_jobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, JOB_PARAM_OUTPUT_FOLDER_NAME));
                 }
 
                 if (m_DebugLevel >= 4)
@@ -222,7 +222,7 @@ namespace AnalysisManagerSequestPlugin
                 var remoteFilePath = Path.Combine(diSourceFolder.FullName, fileNameToCompare + ".tmp");
                 var localFilePath = Path.Combine(m_WorkingDir, fileNameToCompare);
 
-                var filesMatch = CompareRemoteAndLocalFilesForResume(remoteFilePath, localFilePath, "JobParameters");
+                var filesMatch = CompareRemoteAndLocalFilesForResume(remoteFilePath, localFilePath, "Job Parameters");
                 if (!filesMatch)
                 {
                     // Files don't match; do not resume

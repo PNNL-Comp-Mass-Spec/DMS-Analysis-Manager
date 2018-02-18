@@ -700,7 +700,7 @@ namespace AnalysisManagerProg
             var stepNum = m_AnalysisTask.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step", 0);
             var cpuLoadExpected = m_AnalysisTask.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "CPU_Load", 1);
 
-            var datasetName = m_AnalysisTask.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetNum");
+            var datasetName = m_AnalysisTask.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_DATASET_NAME);
             var jobToolDescription = m_AnalysisTask.GetCurrentJobToolDescription();
 
             var runJobsRemotely = m_MgrSettings.GetParam("RunJobsRemotely", false);
@@ -2721,7 +2721,7 @@ namespace AnalysisManagerProg
 
                 var workingDirMinFreeSpaceMB = m_MgrSettings.GetParam("WorkDirMinFreeSpaceMB", DEFAULT_WORKING_DIR_MIN_FREE_SPACE_MB);
 
-                var transferDir = m_AnalysisTask.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "transferFolderPath");
+                var transferDir = m_AnalysisTask.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
                 var transferDirMinFreeSpaceGB = m_MgrSettings.GetParam("TransferDirMinFreeSpaceGB", DEFAULT_TRANSFER_DIR_MIN_FREE_SPACE_GB);
 
                 var orgDbDir = m_MgrSettings.GetParam("orgdbdir");

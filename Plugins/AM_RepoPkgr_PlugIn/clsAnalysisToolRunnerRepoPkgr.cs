@@ -250,7 +250,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
         /// </summary>
         private void SetOutputFolderPath()
         {
-            var resultsFolderName = m_jobParams.GetJobParameter("OutputFolderName", "");
+            var resultsFolderName = m_jobParams.GetJobParameter(clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, "");
             var outputRootFolderPath = m_jobParams.GetJobParameter("CacheFolderPath", "");
             _outputResultsFolderPath = Path.Combine(outputRootFolderPath, resultsFolderName);
         }
@@ -387,7 +387,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 if (!dctDatasetRawDataTypes.TryGetValue(datasetName, out var rawDataType))
                     rawDataType = clsAnalysisResources.RAW_DATA_TYPE_DOT_RAW_FILES;
 
-                m_jobParams.AddAdditionalParameter("JobParameters", "RawDataType", rawDataType);
+                m_jobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, "RawDataType", rawDataType);
 
                 var success = objMSXmlCreator.CreateMZXMLFile();
 

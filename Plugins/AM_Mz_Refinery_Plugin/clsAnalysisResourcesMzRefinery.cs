@@ -107,8 +107,8 @@ namespace AnalysisManagerMzRefineryPlugIn
         /// <remarks>Will retrun True even if existing results are not found</remarks>
         private bool FindExistingMSGFPlusResults(string mzRefParamFileName)
         {
-            var resultsFolderName = m_jobParams.GetParam("OutputFolderName");
-            var transferFolderPath = m_jobParams.GetParam("transferFolderPath");
+            var resultsFolderName = m_jobParams.GetParam(JOB_PARAM_OUTPUT_FOLDER_NAME);
+            var transferFolderPath = m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
 
             if (string.IsNullOrWhiteSpace(resultsFolderName))
             {

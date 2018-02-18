@@ -1243,7 +1243,7 @@ namespace AnalysisManagerBase
                 var xmlWriter = new clsFormattedXMLWriter();
                 xmlWriter.WriteXMLToFile(filteredXML, xmlParameterFile.FullName);
 
-                AddAdditionalParameter(JOB_PARAMETERS_SECTION, "genJobParamsFilename", xmlParameterFilename);
+                AddAdditionalParameter(JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_XML_PARAMS_FILE, xmlParameterFilename);
 
                 var msg = "Job Parameters successfully saved to file: " + xmlParameterFile.FullName;
 

@@ -202,7 +202,7 @@ namespace AnalysisManagerSMAQCPlugIn
             //   SourceJob:Auto{Tool = "XTandem" AND Settings_File = "IonTrapDefSettings.xml" AND [Parm File] = "xtandem_Rnd1PartTryp.xml"}
             // leads to the input folder being XTM201009211859_Auto625059
 
-            var strInputFolder = m_jobParams.GetParam("StepParameters", "InputFolderName");
+            var strInputFolder = m_jobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "InputFolderName");
 
             if (string.IsNullOrEmpty(strInputFolder))
             {

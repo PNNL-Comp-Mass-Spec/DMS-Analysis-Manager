@@ -259,7 +259,7 @@ namespace AnalysisManagerProg
             jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "ToolName", "TestTool");
 
             jobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job", "12345");
-            jobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "OutputFolderName", "Test_Results");
+            jobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, "Test_Results");
 
             return jobParams;
         }
@@ -320,7 +320,7 @@ namespace AnalysisManagerProg
             jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "ToolName", "TestTool");
 
             jobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job", "12345");
-            jobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "OutputFolderName", "Test_Results");
+            jobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, "Test_Results");
 
             resourceTester.Setup("CodeTest", m_mgrParams, jobParams, statusTools, myEMSLUtilities);
 
@@ -351,7 +351,7 @@ namespace AnalysisManagerProg
             jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "ToolName", "TestTool");
 
             jobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job", "12345");
-            jobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "OutputFolderName", "Test_Results");
+            jobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, "Test_Results");
 
             return jobParams;
         }
@@ -729,7 +729,7 @@ namespace AnalysisManagerProg
             var jobParams = InitializeMgrAndJobParams(DEBUG_LEVEL);
 
             jobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "StepTool", "MSGFPlus");
-            jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetNum", "TestDataset");
+            jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_DATASET_NAME, "TestDataset");
 
             var transferUtility = new clsRemoteTransferUtility(m_mgrParams, jobParams);
             RegisterEvents(transferUtility);
@@ -773,7 +773,7 @@ namespace AnalysisManagerProg
             var myEMSLUtilities = new clsMyEMSLUtilities(debugLevel, GetWorkDirPath(), true);
             RegisterEvents(myEMSLUtilities);
 
-            jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetNum", "QC_05_2_05Dec05_Doc_0508-08");
+            jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_DATASET_NAME, "QC_05_2_05Dec05_Doc_0508-08");
             jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "NumberOfClonedSteps", "25");
             jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "ClonedStepsHaveEqualNumSpectra", "True");
 
@@ -933,9 +933,9 @@ namespace AnalysisManagerProg
         {
             var toolRunner = GetCodeTestToolRunner(out var jobParams);
 
-            jobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "OutputFolderName", "Test_Results_" + DateTime.Now.ToString("hh_mm_ss"));
-            jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "transferFolderPath", @"\\proto-3\DMS3_XFER");
-            jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetNum", "Test_Dataset");
+            jobParams.SetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME, "Test_Results_" + DateTime.Now.ToString("hh_mm_ss"));
+            jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH, @"\\proto-3\DMS3_XFER");
+            jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_DATASET_NAME, "Test_Dataset");
 
             toolRunner.RunTool();
         }
@@ -1290,11 +1290,11 @@ namespace AnalysisManagerProg
 
             m_mgrParams.SetParam("ChameleonCachedDataFolder", @"H:\9T_Imaging");
 
-            jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetNum", "ratjoint071110_INCAS_MS");
+            jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_DATASET_NAME, "ratjoint071110_INCAS_MS");
 
             jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetStoragePath", @"\\Proto-10\9T_FTICR_Imaging\2010_4\");
             jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetArchivePath", @"\\adms.emsl.pnl.gov\dmsarch\9T_FTICR_Imaging_1");
-            jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "transferFolderPath", @"\\proto-10\DMS3_Xfer");
+            jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH, @"\\proto-10\DMS3_Xfer");
 
             resourceTester.Setup("CodeTest", m_mgrParams, jobParams, statusTools, myEMSLUtilities);
 

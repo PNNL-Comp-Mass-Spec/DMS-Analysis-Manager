@@ -43,7 +43,7 @@ namespace AnalysisManagerDtaImportPlugIn
                 // This folder must contain subfolders whose name matches the output_folder name assigned to each job
                 // Furthermore, each subfolder must have a file named Dataset_dta.zip
 
-                var sourceFolderNamePath = Path.Combine(m_mgrParams.GetParam("DTAFolderLocation"), m_jobParams.GetParam("OutputFolderName"));
+                var sourceFolderNamePath = Path.Combine(m_mgrParams.GetParam("DTAFolderLocation"), m_jobParams.GetParam(JOB_PARAM_OUTPUT_FOLDER_NAME));
 
                 // Determine if Dta folder in source directory exists
                 if (!Directory.Exists(sourceFolderNamePath))

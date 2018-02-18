@@ -837,7 +837,7 @@ namespace AnalysisManagerBase
             JobNum = JobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job", 0);
             StepNum = JobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step", 0);
             StepTool = JobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "StepTool");
-            DatasetName = JobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetNum");
+            DatasetName = JobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_DATASET_NAME);
 
             if (string.IsNullOrWhiteSpace(WorkDir))
                 throw new Exception("WorkDir parameter is empty; check the manager parameters");

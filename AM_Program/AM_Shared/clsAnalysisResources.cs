@@ -216,6 +216,11 @@ namespace AnalysisManagerBase
         public const string DOT_MS1FT_EXTENSION = ".ms1ft";
 
         /// <summary>
+        /// FASTA file extension
+        /// </summary>
+        protected const string FASTA_FILE_EXTENSION = ".fasta";
+
+        /// <summary>
         /// Storage path info file suffix
         /// </summary>
         public const string STORAGE_PATH_INFO_FILE_SUFFIX = clsFileCopyUtilities.STORAGE_PATH_INFO_FILE_SUFFIX;
@@ -261,6 +266,16 @@ namespace AnalysisManagerBase
         public const string BRUKER_FID_FILE = "fid";
 
         /// <summary>
+        /// Dataset folder name
+        /// </summary>
+        public const string JOB_PARAM_DATASET_FOLDER_NAME = "DatasetFolderName";
+
+        /// <summary>
+        /// Dataset name
+        /// </summary>
+        public const string JOB_PARAM_DATASET_NAME = "DatasetNum";
+
+        /// <summary>
         /// Packed job parameter DatasetFilePaths
         /// </summary>
         public const string JOB_PARAM_DICTIONARY_DATASET_FILE_PATHS = "PackedParam_DatasetFilePaths";
@@ -293,6 +308,21 @@ namespace AnalysisManagerBase
         /// Job parameter to track the auto-generated FASTA file name
         /// </summary>
         public const string JOB_PARAM_GENERATED_FASTA_NAME = "generatedFastaName";
+
+        /// <summary>
+        /// Output folder name
+        /// </summary>
+        public const string JOB_PARAM_OUTPUT_FOLDER_NAME = "OutputFolderName";
+
+        /// <summary>
+        /// Transfer folder path
+        /// </summary>
+        public const string JOB_PARAM_TRANSFER_FOLDER_PATH = "transferFolderPath";
+
+        /// <summary>
+        /// Name of the XML file with job parameters, created in the working directory
+        /// </summary>
+        public const string JOB_PARAM_XML_PARAMS_FILE = "genJobParamsFilename";
 
         /// <summary>
         /// Warning message that spectra are not centroided
@@ -647,7 +677,7 @@ namespace AnalysisManagerBase
                 int.TryParse(jobNum, out m_JobNum);
             }
 
-            DatasetName = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetNum");
+            DatasetName = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, JOB_PARAM_DATASET_NAME);
 
             InitFileTools(m_MgrName, m_DebugLevel);
 
@@ -718,7 +748,8 @@ namespace AnalysisManagerBase
                 return false;
             }
 
-            var hashcheckFiles = localOrgDbFolder.GetFiles(sourceFasta.Name + "*.hashcheck");
+            // Find .hashcheck files
+            var hashcheckFiles = localOrgDbFolder.GetFiles(sourceFasta.Name + "*" + Protein_Exporter.clsGetFASTAFromDMS.HASHCHECK_SUFFIX);
             if (hashcheckFiles.Length <= 0)
             {
                 LogError("Local hashcheck file not found for " + sourceFasta.FullName + "; cannot copy remotely");
@@ -746,10 +777,10 @@ namespace AnalysisManagerBase
                     if (extension == null)
                         continue;
 
-                    if (string.Equals(extension, ".fasta", StringComparison.OrdinalIgnoreCase))
+                    if (string.Equals(extension, FASTA_FILE_EXTENSION, StringComparison.OrdinalIgnoreCase))
                         remoteFasta = remoteFile.Value;
 
-                    if (string.Equals(extension, ".hashcheck", StringComparison.OrdinalIgnoreCase))
+                    if (string.Equals(extension, Protein_Exporter.clsGetFASTAFromDMS.HASHCHECK_SUFFIX, StringComparison.OrdinalIgnoreCase))
                         remoteHashcheck = remoteFile.Value;
                 }
 
@@ -1656,7 +1687,7 @@ namespace AnalysisManagerBase
             const string jobParamsSection = clsAnalysisJob.JOB_PARAMETERS_SECTION;
 
             var jobNumber = m_jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job", 0);
-            var dataset = m_jobParams.GetJobParameter(jobParamsSection, "DatasetNum", m_DatasetName);
+            var dataset = m_jobParams.GetJobParameter(jobParamsSection, JOB_PARAM_DATASET_NAME, m_DatasetName);
 
             var jobInfo = new clsDataPackageJobInfo(jobNumber, dataset)
             {
@@ -1685,7 +1716,7 @@ namespace AnalysisManagerBase
             jobInfo.ServerStoragePath = m_jobParams.GetJobParameter(jobParamsSection, "DatasetStoragePath", string.Empty);
             jobInfo.ArchiveStoragePath = m_jobParams.GetJobParameter(jobParamsSection, "DatasetArchivePath", string.Empty);
             jobInfo.ResultsFolderName = m_jobParams.GetJobParameter(jobParamsSection, "inputFolderName", string.Empty);
-            jobInfo.DatasetFolderName = m_jobParams.GetJobParameter(jobParamsSection, "DatasetFolderName", string.Empty);
+            jobInfo.DatasetFolderName = m_jobParams.GetJobParameter(jobParamsSection, JOB_PARAM_DATASET_FOLDER_NAME, string.Empty);
             jobInfo.SharedResultsFolder = m_jobParams.GetJobParameter(jobParamsSection, "SharedResultsFolders", string.Empty);
             jobInfo.RawDataType = m_jobParams.GetJobParameter(jobParamsSection, "RawDataType", string.Empty);
 
@@ -1986,14 +2017,14 @@ namespace AnalysisManagerBase
             // Keys are the fasta file; values are the dtLastUsed time of the file (nominally obtained from a .hashcheck or .lastused file)
             var dctFastaFiles = new Dictionary<FileInfo, DateTime>();
 
-            foreach (var fiFile in diOrgDbFolder.GetFiles("*.fasta"))
+            foreach (var fiFile in diOrgDbFolder.GetFiles("*" + FASTA_FILE_EXTENSION))
             {
                 if (!dctFastaFiles.ContainsKey(fiFile))
                 {
                     var dtLastUsed = DateMax(fiFile.LastWriteTimeUtc, fiFile.CreationTimeUtc);
 
                     // Look for a .hashcheck file
-                    var lstHashCheckfiles = diOrgDbFolder.GetFiles(fiFile.Name + "*.hashcheck").ToList();
+                    var lstHashCheckfiles = diOrgDbFolder.GetFiles(fiFile.Name + "*" + Protein_Exporter.clsGetFASTAFromDMS.HASHCHECK_SUFFIX).ToList();
                     if (lstHashCheckfiles.Count > 0)
                     {
                         dtLastUsed = DateMax(dtLastUsed, lstHashCheckfiles.First().LastWriteTimeUtc);
@@ -2076,7 +2107,7 @@ namespace AnalysisManagerBase
         {
 
             // Lookup the output folder; e.g. MSXML_Gen_1_120_275966
-            var outputFolderName = jobParams.GetJobParameter("OutputFolderName", string.Empty);
+            var outputFolderName = jobParams.GetJobParameter(JOB_PARAM_OUTPUT_FOLDER_NAME, string.Empty);
             if (string.IsNullOrEmpty(outputFolderName))
             {
                 errorMessage = "OutputFolderName is empty; cannot construct MSXmlCache path";
@@ -2543,15 +2574,15 @@ namespace AnalysisManagerBase
 
             if (numberOfClonedSteps < 10)
             {
-                splitFastaName += iteration.ToString("0") + ".fasta";
+                splitFastaName += iteration.ToString("0") + FASTA_FILE_EXTENSION;
             }
             else if (numberOfClonedSteps < 100)
             {
-                splitFastaName += iteration.ToString("00") + ".fasta";
+                splitFastaName += iteration.ToString("00") + FASTA_FILE_EXTENSION;
             }
             else
             {
-                splitFastaName += iteration.ToString("000") + ".fasta";
+                splitFastaName += iteration.ToString("000") + FASTA_FILE_EXTENSION;
             }
 
             return splitFastaName;
@@ -2635,7 +2666,7 @@ namespace AnalysisManagerBase
         protected string GetTransferFolderPathForJobStep(bool useInputFolder)
         {
 
-            var transferFolderPathBase = m_jobParams.GetParam("transferFolderPath");
+            var transferFolderPathBase = m_jobParams.GetParam(JOB_PARAM_TRANSFER_FOLDER_PATH);
             if (string.IsNullOrEmpty(transferFolderPathBase))
             {
                 // Transfer folder parameter is empty; return an empty string
@@ -2643,7 +2674,7 @@ namespace AnalysisManagerBase
             }
 
             // Append the dataset folder name to the transfer folder path
-            var datasetFolderName = m_jobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "DatasetFolderName");
+            var datasetFolderName = m_jobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, JOB_PARAM_DATASET_FOLDER_NAME);
             if (string.IsNullOrWhiteSpace(datasetFolderName))
                 datasetFolderName = m_DatasetName;
 
@@ -2655,7 +2686,7 @@ namespace AnalysisManagerBase
             }
             else
             {
-                folderName = m_jobParams.GetParam("OutputFolderName");
+                folderName = m_jobParams.GetParam(JOB_PARAM_OUTPUT_FOLDER_NAME);
             }
 
             if (string.IsNullOrEmpty(folderName))
@@ -3139,7 +3170,7 @@ namespace AnalysisManagerBase
 
             const string jobParamsSection = clsAnalysisJob.JOB_PARAMETERS_SECTION;
 
-            m_jobParams.AddAdditionalParameter(jobParamsSection, "DatasetNum", dataPkgJob.Dataset);
+            m_jobParams.AddAdditionalParameter(jobParamsSection, JOB_PARAM_DATASET_NAME, dataPkgJob.Dataset);
             m_jobParams.AddAdditionalParameter(jobParamsSection, "DatasetID", dataPkgJob.DatasetID.ToString());
 
             m_jobParams.AddAdditionalParameter(jobParamsSection, "Instrument", dataPkgJob.Instrument);
@@ -3177,7 +3208,7 @@ namespace AnalysisManagerBase
             m_jobParams.AddAdditionalParameter(jobParamsSection, "DatasetStoragePath", dataPkgJob.ServerStoragePath);
             m_jobParams.AddAdditionalParameter(jobParamsSection, "DatasetArchivePath", dataPkgJob.ArchiveStoragePath);
             m_jobParams.AddAdditionalParameter(jobParamsSection, "inputFolderName", dataPkgJob.ResultsFolderName);
-            m_jobParams.AddAdditionalParameter(jobParamsSection, "DatasetFolderName", dataPkgJob.DatasetFolderName);
+            m_jobParams.AddAdditionalParameter(jobParamsSection, JOB_PARAM_DATASET_FOLDER_NAME, dataPkgJob.DatasetFolderName);
             m_jobParams.AddAdditionalParameter(jobParamsSection, "SharedResultsFolders", dataPkgJob.SharedResultsFolder);
             m_jobParams.AddAdditionalParameter(jobParamsSection, "RawDataType", dataPkgJob.RawDataType);
 
@@ -3661,7 +3692,7 @@ namespace AnalysisManagerBase
 
             if (remoteHashcheck == null)
             {
-                LogDebug(string.Format("Fasta .hashckeck file not found on remote host; copying {0} to {1}", sourceFasta.Name, remoteHostName));
+                LogDebug(string.Format("Fasta .hashcheck file not found on remote host; copying {0} to {1}", sourceFasta.Name, remoteHostName));
                 return false;
             }
 
@@ -4861,7 +4892,6 @@ namespace AnalysisManagerBase
 
                 var hashCheckFile = hashcheckFiles.First();
 
-                //
                 var reCRC32 = new Regex(@"\.(?<CRC32>[^.]+)\.hashcheck$");
 
                 var match = reCRC32.Match(hashCheckFile.Name);

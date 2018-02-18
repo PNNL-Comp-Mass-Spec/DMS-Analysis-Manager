@@ -432,7 +432,7 @@ namespace AnalysisManagerMODPlusPlugin
 
             // Validate the setting for instrument_resolution and fragment_ion_tol
 
-            var strDatasetType = m_jobParams.GetParam("JobParameters", "DatasetType");
+            var strDatasetType = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetType");
             var instrumentResolutionMsMs = LOW_RES_FLAG;
 
             if (strDatasetType.ToLower().EndsWith("hmsn"))

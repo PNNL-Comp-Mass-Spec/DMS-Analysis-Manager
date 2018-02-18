@@ -157,12 +157,12 @@ namespace AnalysisManagerICR2LSPlugIn
                         return;
                 }
 
-                var transferFolderPath = m_jobParams.GetParam("JobParameters", "transferFolderPath");
+                var transferFolderPath = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
                 if (string.IsNullOrEmpty(transferFolderPath))
                     return;
 
-                transferFolderPath = Path.Combine(transferFolderPath, m_jobParams.GetParam("JobParameters", "DatasetFolderName"));
-                transferFolderPath = Path.Combine(transferFolderPath, m_jobParams.GetParam("StepParameters", "OutputFolderName"));
+                transferFolderPath = Path.Combine(transferFolderPath, m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME));
+                transferFolderPath = Path.Combine(transferFolderPath, m_jobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME));
 
                 var diTransferFolder = new DirectoryInfo(transferFolderPath);
                 if (!diTransferFolder.Exists)

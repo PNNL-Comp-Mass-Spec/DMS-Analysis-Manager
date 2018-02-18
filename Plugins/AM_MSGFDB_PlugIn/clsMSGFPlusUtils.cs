@@ -2271,7 +2271,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                                     if (!CanDetermineInstIdFromInstGroup(instrumentGroup, out var instrumentIDNew, out var autoSwitchReason))
                                     {
-                                        var datasetName = m_jobParams.GetParam("JobParameters", "DatasetNum");
+                                        var datasetName = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_DATASET_NAME);
 
                                         if (LookupScanTypesForDataset(datasetName, out var countLowResMSn, out var countHighResMSn, out var countHCDMSn))
                                         {

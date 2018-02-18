@@ -209,7 +209,7 @@ namespace AnalysisManager_Mage_PlugIn
             var mageObj = new MageAMFileProcessingPipelines(_jobParams, _mgrParams);
             RegisterMageEvents(mageObj);
 
-            var dataPackageStorageFolderRoot = mageObj.RequireJobParam("transferFolderPath");
+            var dataPackageStorageFolderRoot = mageObj.RequireJobParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
             var inputFolderPath = Path.Combine(dataPackageStorageFolderRoot, mageObj.RequireJobParam("DataPackageSourceFolderName"));
 
             var diInputFolder = new DirectoryInfo(inputFolderPath);

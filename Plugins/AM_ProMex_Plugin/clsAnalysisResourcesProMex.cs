@@ -71,7 +71,7 @@ namespace AnalysisManagerProMexPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                m_jobParams.AddAdditionalParameter("StepParameters", "ProMexParamFile", paramFileName);
+                m_jobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "ProMexParamFile", paramFileName);
             }
             else
             {

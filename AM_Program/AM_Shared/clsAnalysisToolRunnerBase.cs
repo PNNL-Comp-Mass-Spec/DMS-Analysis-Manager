@@ -290,7 +290,7 @@ namespace AnalysisManagerBase
 
             m_JobNum = m_jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job", 0);
 
-            m_Dataset = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetNum");
+            m_Dataset = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_DATASET_NAME);
 
             m_MyEMSLUtilities = myEMSLUtilities ?? new clsMyEMSLUtilities(m_DebugLevel, m_WorkDir);
             RegisterEvents(m_MyEMSLUtilities);
@@ -300,7 +300,7 @@ namespace AnalysisManagerBase
 
             m_SummaryFile = summaryFile;
 
-            m_ResFolderName = m_jobParams.GetParam("OutputFolderName");
+            m_ResFolderName = m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_OUTPUT_FOLDER_NAME);
 
             if (m_DebugLevel > 3)
             {
@@ -1091,7 +1091,7 @@ namespace AnalysisManagerBase
         protected string CreateRemoteTransferFolder(clsAnalysisResults analysisResults)
         {
 
-            var transferFolderPath = m_jobParams.GetParam("transferFolderPath");
+            var transferFolderPath = m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
 
             // Verify transfer directory exists
             // First make sure TransferFolderPath is defined
@@ -1161,7 +1161,7 @@ namespace AnalysisManagerBase
             else
             {
                 // Append the dataset folder name to the transfer folder path
-                var datasetFolderName = m_jobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, "DatasetFolderName");
+                var datasetFolderName = m_jobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME);
                 if (string.IsNullOrWhiteSpace(datasetFolderName))
                     datasetFolderName = Dataset;
                 remoteTransferFolderPath = Path.Combine(transferFolderPath, datasetFolderName);
@@ -2027,7 +2027,7 @@ namespace AnalysisManagerBase
         protected string GetTransferFolderPath()
         {
 
-            var transferFolderPath = m_jobParams.GetParam("transferFolderPath");
+            var transferFolderPath = m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
 
             if (string.IsNullOrEmpty(transferFolderPath))
             {
@@ -2891,7 +2891,7 @@ namespace AnalysisManagerBase
 
                     // Make a list of all of the hashcheck files in diCacheFolder
 
-                    foreach (var fiItem in diCacheFolder.GetFiles("*.hashcheck", SearchOption.AllDirectories))
+                    foreach (var fiItem in diCacheFolder.GetFiles("*" + clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX, SearchOption.AllDirectories))
                     {
                         if (!fiItem.FullName.EndsWith(clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX, StringComparison.OrdinalIgnoreCase))
                             continue;
@@ -3052,7 +3052,7 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         protected void RedefineAggregationJobDatasetAndTransferFolder()
         {
-            var transferFolderPath = m_jobParams.GetParam("transferFolderPath");
+            var transferFolderPath = m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
             var diTransferFolder = new DirectoryInfo(transferFolderPath);
 
             m_Dataset = diTransferFolder.Name;
@@ -3064,7 +3064,7 @@ namespace AnalysisManagerBase
             }
 
             transferFolderPath = diTransferFolder.Parent.FullName;
-            m_jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "transferFolderPath", transferFolderPath);
+            m_jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH, transferFolderPath);
 
         }
 
@@ -4235,7 +4235,7 @@ namespace AnalysisManagerBase
                 m_SummaryFile.Add("Processor" + '\t' + m_MachName);
                 m_SummaryFile.Add("Tool" + '\t' + toolAndStepTool);
                 m_SummaryFile.Add("Dataset Name" + '\t' + Dataset);
-                m_SummaryFile.Add("Xfer Folder" + '\t' + m_jobParams.GetParam("transferFolderPath"));
+                m_SummaryFile.Add("Xfer Folder" + '\t' + m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH));
                 m_SummaryFile.Add("Param File Name" + '\t' + m_jobParams.GetParam("parmFileName"));
                 m_SummaryFile.Add("Settings File Name" + '\t' + m_jobParams.GetParam("settingsFileName"));
                 m_SummaryFile.Add("Legacy Organism Db Name" + '\t' + m_jobParams.GetParam("LegacyFastaFileName"));
