@@ -35,10 +35,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
         #endregion
 
-        public string ErrorMessage
-        {
-            get { return m_ErrorMessage; }
-        }
+        public string ErrorMessage => m_ErrorMessage;
 
         public clsMSXMLCreator(string MSXmlGeneratorAppPath, string WorkDir, string Dataset, short DebugLevel, IJobParams JobParams)
         {
