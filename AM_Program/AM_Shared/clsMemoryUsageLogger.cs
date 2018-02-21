@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using PRISM;
 
 //*********************************************************************************************************
@@ -127,22 +129,30 @@ namespace AnalysisManagerBase
 
                 var logFolder = new DirectoryInfo(Path.Combine(currentLogDirectory.FullName, "Logs"));
 
-                // Find all log files that start with "MemoryUsageLog_" but are not the current log file
+                // Find all log files that start with "MemoryUsageLog_"
                 var logFiles = currentLogDirectory.GetFiles(MEMORY_USAGE_LOG_PREFIX + "*");
 
+                var logFilesByDate = new List<KeyValuePair<DateTime, FileInfo>>();
+
+                // Move all but the two most recent files into the Logs folder
                 foreach (var item in logFiles)
                 {
+                    // Current log file; skip it
                     if (string.Equals(item.FullName, currentLogFile.FullName))
                         continue;
 
-                    var newPath = Path.Combine(currentLogDirectory.FullName, "Logs", item.Name);
+                    logFilesByDate.Add(new KeyValuePair<DateTime, FileInfo>(item.LastWriteTime, item));
+                }
+
+                var logFilesToMove = (from item in logFilesByDate orderby item.Key select item.Value).Take(logFilesByDate.Count - 1);
+                foreach (var logFile in logFilesToMove)
+                {
+                    var newPath = Path.Combine(currentLogDirectory.FullName, "Logs", logFile.Name);
                     if (File.Exists(newPath))
                         continue;
 
-                    item.MoveTo(newPath);
+                    logFile.MoveTo(newPath);
                 }
-
-                // Move those files to the Logs folder
 
                 // Move MemoryUsageLog files in the Logs folder into year-based subfolders
                 PRISM.Logging.FileLogger.ArchiveOldLogs(logFolder, LOG_FILE_MATCH_SPEC, LOG_FILE_EXTENSION, LOG_FILE_DATE_REGEX);
