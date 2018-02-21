@@ -2370,6 +2370,17 @@ namespace AnalysisManagerProg
                         return false;
                     }
                 }
+                catch (NotImplementedException ex)
+                {
+                    // Plugin XYZ must implement CopyResourcesToRemote to allow for remote processing"
+                    m_MostRecentErrorMessage = ex.Message;
+
+                    // Don't send ex to LogError; no need to log a stack trace
+                    LogError(m_MostRecentErrorMessage);
+
+                    eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+                    return false;
+                }
                 catch (Exception ex)
                 {
                     m_MostRecentErrorMessage = "Exception copying job-related files to the remote host: " + ex.Message;
