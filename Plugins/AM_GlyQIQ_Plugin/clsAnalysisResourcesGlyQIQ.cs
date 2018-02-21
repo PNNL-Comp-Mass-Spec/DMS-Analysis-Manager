@@ -465,7 +465,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 m_jobParams.AddResultFileToSkip(fileToFind);
                 m_jobParams.AddResultFileExtensionToSkip("_peaks.txt");
 
-                var diTransferFolder = new DirectoryInfo(m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH));
+                var diTransferFolder = new DirectoryInfo(m_jobParams.GetParam(JOB_PARAM_TRANSFER_FOLDER_PATH));
                 var diSourceFolder = new DirectoryInfo(sourceFolderPath);
                 if ((diSourceFolder.FullName.ToLower().StartsWith(diTransferFolder.FullName.ToLower())))
                 {

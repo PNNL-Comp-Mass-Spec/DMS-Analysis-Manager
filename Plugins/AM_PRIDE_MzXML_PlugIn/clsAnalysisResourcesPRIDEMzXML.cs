@@ -36,7 +36,7 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
 
             LogMessage("Getting PRIDE MzXML Input file");
 
-            if (!FileSearch.RetrieveFile(m_jobParams.GetParam("PRIDEMzXMLInputFile"), m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH)))
+            if (!FileSearch.RetrieveFile(m_jobParams.GetParam("PRIDEMzXMLInputFile"), m_jobParams.GetParam(JOB_PARAM_TRANSFER_FOLDER_PATH)))
                 return CloseOutType.CLOSEOUT_FAILED;
 
             m_jobParams.AddResultFileToSkip(m_jobParams.GetParam("PRIDEMzXMLInputFile"));
