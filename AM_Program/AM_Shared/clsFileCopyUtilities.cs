@@ -216,7 +216,7 @@ namespace AnalysisManagerBase
                 const int MAX_ATTEMPTS = 1;
                 if (!FileExistsWithRetry(sourceFilePath, HOLDOFF_SECONDS, logMsgTypeIfNotFound, MAX_ATTEMPTS))
                 {
-                    OnErrorEvent("File not found: " + sourceFilePath);
+                    // Errors have already been logged
                     return false;
                 }
 
@@ -570,6 +570,8 @@ namespace AnalysisManagerBase
         {
             if (logMsgTypeIfNotFound == BaseLogger.LogLevels.ERROR)
                 OnErrorEvent(msg);
+            else if (logMsgTypeIfNotFound == BaseLogger.LogLevels.WARN)
+                OnWarningEvent(msg);
             else
                 OnStatusEvent(msg);
         }
