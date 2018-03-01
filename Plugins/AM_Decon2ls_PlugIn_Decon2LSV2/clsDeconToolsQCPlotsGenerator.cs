@@ -24,15 +24,15 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
         public int MSFileInfoScannerErrorCount => mMSFileInfoScannerErrorCount;
 
-        public clsDeconToolsQCPlotsGenerator(string MSFileInfoScannerDLLPath, int DebugLevel)
+        public clsDeconToolsQCPlotsGenerator(string msFileInfoScannerDLLPath, int debugLevel)
         {
-            mMSFileInfoScannerDLLPath = MSFileInfoScannerDLLPath;
-            mDebugLevel = DebugLevel;
+            mMSFileInfoScannerDLLPath = msFileInfoScannerDLLPath;
+            mDebugLevel = debugLevel;
 
             mErrorMessage = string.Empty;
         }
 
-        public bool CreateQCPlots(string strInputFilePath, string strOutputFolderPath)
+        public bool CreateQCPlots(string inputFilePath, string outputFolderPath)
         {
 
             try
@@ -51,8 +51,8 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 mMSFileInfoScanner.UpdateDatasetStatsTextFile = false;
                 mMSFileInfoScanner.PlotWithPython = true;
 
-                mInputFilePath = strInputFilePath;
-                mOutputFolderPath = strOutputFolderPath;
+                mInputFilePath = inputFilePath;
+                mOutputFolderPath = outputFolderPath;
                 mSuccess = false;
 
                 var thread = new Thread(ProcessMSFileOrFolderThread);
@@ -92,12 +92,12 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
                 if (!mSuccess)
                 {
-                    mErrorMessage = "Error generating QC Plots using " + strInputFilePath;
-                    var strMsgAddnl = mMSFileInfoScanner.GetErrorMessage();
+                    mErrorMessage = "Error generating QC Plots using " + inputFilePath;
+                    var msgAddnl = mMSFileInfoScanner.GetErrorMessage();
 
-                    if (!string.IsNullOrEmpty(strMsgAddnl))
+                    if (!string.IsNullOrEmpty(msgAddnl))
                     {
-                        mErrorMessage = mErrorMessage + ": " + strMsgAddnl;
+                        mErrorMessage = mErrorMessage + ": " + msgAddnl;
                     }
                 }
             }
@@ -110,27 +110,27 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             return mSuccess;
         }
 
-        private MSFileInfoScannerInterfaces.iMSFileInfoScanner LoadMSFileInfoScanner(string strMSFileInfoScannerDLLPath)
+        private MSFileInfoScannerInterfaces.iMSFileInfoScanner LoadMSFileInfoScanner(string msFileInfoScannerDLLPath)
         {
             const string MsDataFileReaderClass = "MSFileInfoScanner.clsMSFileInfoScanner";
 
-            MSFileInfoScannerInterfaces.iMSFileInfoScanner objMSFileInfoScanner = null;
+            MSFileInfoScannerInterfaces.iMSFileInfoScanner msFileInfoScanner = null;
             string msg;
 
             try
             {
-                if (!File.Exists(strMSFileInfoScannerDLLPath))
+                if (!File.Exists(msFileInfoScannerDLLPath))
                 {
-                    msg = "DLL not found: " + strMSFileInfoScannerDLLPath;
+                    msg = "DLL not found: " + msFileInfoScannerDLLPath;
                     OnErrorEvent(msg);
                 }
                 else
                 {
-                    var obj = LoadObject(MsDataFileReaderClass, strMSFileInfoScannerDLLPath);
+                    var obj = LoadObject(MsDataFileReaderClass, msFileInfoScannerDLLPath);
                     if (obj != null)
                     {
-                        objMSFileInfoScanner = (MSFileInfoScannerInterfaces.iMSFileInfoScanner) obj;
-                        msg = "Loaded MSFileInfoScanner from " + strMSFileInfoScannerDLLPath;
+                        msFileInfoScanner = (MSFileInfoScannerInterfaces.iMSFileInfoScanner) obj;
+                        msg = "Loaded MSFileInfoScanner from " + msFileInfoScannerDLLPath;
                         if (mDebugLevel >= 2)
                         {
                             OnDebugEvent(msg);
@@ -144,22 +144,22 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 OnErrorEvent(msg, ex);
             }
 
-            return objMSFileInfoScanner;
+            return msFileInfoScanner;
         }
 
-        private object LoadObject(string className, string strDLLFilePath)
+        private object LoadObject(string className, string dllFilePath)
         {
             object obj = null;
             try
             {
-                // Dynamically load the specified class from strDLLFilePath
-                var assem = System.Reflection.Assembly.LoadFrom(strDLLFilePath);
+                // Dynamically load the specified class from dllFilePath
+                var assem = System.Reflection.Assembly.LoadFrom(dllFilePath);
                 var dllType = assem.GetType(className, false, true);
                 obj = Activator.CreateInstance(dllType);
             }
             catch (Exception ex)
             {
-                var msg = "Exception loading DLL " + strDLLFilePath + ": " + ex.Message;
+                var msg = "Exception loading DLL " + dllFilePath + ": " + ex.Message;
                 OnErrorEvent(msg, ex);
             }
             return obj;

@@ -184,7 +184,6 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         public string GetParameterBySection(string sectionName, string parameterName, string valueIfMissing)
         {
 
-
             if (mSections.TryGetValue(sectionName, out var dctParameters))
             {
 

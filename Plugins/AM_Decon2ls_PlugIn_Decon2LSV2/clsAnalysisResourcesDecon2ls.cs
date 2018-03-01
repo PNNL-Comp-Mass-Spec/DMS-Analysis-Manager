@@ -35,7 +35,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 return result;
             }
 
-            var strRawDataType = m_jobParams.GetParam("RawDataType");
+            var rawDataType = m_jobParams.GetParam("RawDataType");
 
             var msXmlOutputType = m_jobParams.GetParam("MSXMLOutputType");
 
@@ -65,7 +65,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             else
             {
                 // Get input data file
-                if (!FileSearch.RetrieveSpectra(strRawDataType))
+                if (!FileSearch.RetrieveSpectra(rawDataType))
                 {
                     LogError("clsAnalysisResourcesDecon2ls.GetResources: Error occurred retrieving spectra.");
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -104,29 +104,29 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         /// <summary>
         /// Read the setting for ProcessMSMS from the DeconTools parameter file
         /// </summary>
-        /// <param name="fiParamFile"></param>
+        /// <param name="paramFile"></param>
         /// <param name="processMSMS">Output parameter: true if ProcessMSMS is True in the parameter file</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks></remarks>
-        private bool IsMSMSProcessingEnabled(FileSystemInfo fiParamFile, out bool processMSMS)
+        private bool IsMSMSProcessingEnabled(FileSystemInfo paramFile, out bool processMSMS)
         {
             processMSMS = false;
 
             try
             {
-                using (var srParamFile = new FileStream(fiParamFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
+                using (var paramFileReader = new FileStream(paramFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
                 {
                     // Open the file and parse the XML
-                    var objParamFile = new XmlDocument();
-                    objParamFile.Load(srParamFile);
+                    var paramFileXml = new XmlDocument();
+                    paramFileXml.Load(paramFileReader);
 
                     // Look for the XML: <ProcessMSMS></ProcessMSMS>
-                    var objNode = objParamFile.SelectSingleNode("//parameters/Miscellaneous/ProcessMSMS");
+                    var node = paramFileXml.SelectSingleNode("//parameters/Miscellaneous/ProcessMSMS");
 
-                    if (objNode != null && objNode.HasChildNodes)
+                    if (node != null && node.HasChildNodes)
                     {
                         // Match found; read the value
-                        if (!bool.TryParse(objNode.ChildNodes[0].Value, out processMSMS))
+                        if (!bool.TryParse(node.ChildNodes[0].Value, out processMSMS))
                         {
                             // Parameter file formatting error
                             LogError("Invalid entry for ProcessMSMS in the parameter file; should be True or False");
@@ -147,9 +147,9 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
         private bool ValidateDeconProcessingOptions(string paramFileName)
         {
-            var fiParamFile = new FileInfo(Path.Combine(m_WorkingDir, paramFileName));
+            var paramFile = new FileInfo(Path.Combine(m_WorkingDir, paramFileName));
 
-            if (!fiParamFile.Exists)
+            if (!paramFile.Exists)
             {
                 // Parameter file not found
                 var errMsg = "Decon2LS param file not found by ValidateDeconProcessingOptions";
@@ -158,7 +158,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 return false;
             }
 
-            if (!IsMSMSProcessingEnabled(fiParamFile, out var processMSMS))
+            if (!IsMSMSProcessingEnabled(paramFile, out var processMSMS))
             {
                 return false;
             }
@@ -179,7 +179,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
             if (countMS1 == 0 && countMSn > 0)
             {
-                if (!EnableMSMSProcessingInParamFile(fiParamFile))
+                if (!EnableMSMSProcessingInParamFile(paramFile))
                 {
                     return false;
                 }
@@ -315,6 +315,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
             try
             {
+                // ReSharper disable once RedundantNameQualifier
                 using (var reader = new UIMFLibrary.DataReader(datasetFilePath))
                 {
                     var frameList = reader.GetMasterFrameList();
@@ -337,25 +338,25 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         /// <summary>
         /// Update the parameter file to have ProcessMSMS set to True
         /// </summary>
-        /// <param name="fiParamFile"></param>
+        /// <param name="paramFile"></param>
         /// <returns></returns>
         /// <remarks></remarks>
-        private bool EnableMSMSProcessingInParamFile(FileInfo fiParamFile)
+        private bool EnableMSMSProcessingInParamFile(FileInfo paramFile)
         {
             try
             {
-                var deconParamFilePath = string.Copy(fiParamFile.FullName);
+                var deconParamFilePath = string.Copy(paramFile.FullName);
 
                 // Rename the existing parameter file
-                var newParamFilePath = Path.Combine(m_WorkingDir, fiParamFile.Name + ".old");
+                var newParamFilePath = Path.Combine(m_WorkingDir, paramFile.Name + ".old");
                 m_jobParams.AddResultFileToSkip(newParamFilePath);
 
-                fiParamFile.MoveTo(newParamFilePath);
+                paramFile.MoveTo(newParamFilePath);
                 Thread.Sleep(250);
 
                 // Open the file and parse the XML
                 var updatedXmlDoc = new XmlDocument();
-                updatedXmlDoc.Load(new FileStream(fiParamFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read));
+                updatedXmlDoc.Load(new FileStream(paramFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read));
 
                 // Look for the XML: <ProcessMSMS></ProcessMSMS> in the Miscellaneous section
                 // Set its value to "True" (the setting is added if missing)
@@ -363,7 +364,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
 
                 try
                 {
-                    // Now write out the XML to strParamFileTemp
+                    // Now write out the XML to paramFileTemp
                     using (var updatedParamFileWriter = new StreamWriter(new FileStream(deconParamFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                     {
                         var formattedXmlWriter = new XmlTextWriter(updatedParamFileWriter)
@@ -402,26 +403,26 @@ namespace AnalysisManagerDecon2lsV2PlugIn
         /// <remarks></remarks>
         private void WriteTempParamFileUpdateElementValue(XmlDocument xmlDoc, string xpathForSection, string elementName, string newElementValue)
         {
-            var objNode = xmlDoc.SelectSingleNode(xpathForSection + "/" + elementName);
+            var node = xmlDoc.SelectSingleNode(xpathForSection + "/" + elementName);
 
-            if ((objNode != null))
+            if ((node != null))
             {
-                if (objNode.HasChildNodes)
+                if (node.HasChildNodes)
                 {
                     // Match found; update the value
-                    objNode.ChildNodes[0].Value = newElementValue;
+                    node.ChildNodes[0].Value = newElementValue;
                 }
             }
             else
             {
-                objNode = xmlDoc.SelectSingleNode(xpathForSection);
+                node = xmlDoc.SelectSingleNode(xpathForSection);
 
-                if ((objNode != null))
+                if ((node != null))
                 {
-                    var objNewChild = (XmlElement)xmlDoc.CreateNode(XmlNodeType.Element, elementName, string.Empty);
-                    objNewChild.InnerXml = newElementValue;
+                    var newChild = (XmlElement)xmlDoc.CreateNode(XmlNodeType.Element, elementName, string.Empty);
+                    newChild.InnerXml = newElementValue;
 
-                    objNode.AppendChild(objNewChild);
+                    node.AppendChild(newChild);
                 }
             }
         }
