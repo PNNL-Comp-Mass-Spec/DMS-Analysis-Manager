@@ -1103,27 +1103,26 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             {
                 // Parse scanFrameLine
                 // It will look like:
-                // Scan/Frame= 347; PercentComplete= 2.7; AccumlatedFeatures= 614
+                // Scan/Frame= 347; PercentComplete= 2.7; AccumulatedFeatures= 614
 
                 var progressStats = scanFrameLine.Split(';');
 
                 for (var i = 0; i <= progressStats.Length - 1; i++)
                 {
-                    var kvStat = ParseKeyValue(strProgressStats[i]);
-                    if (!string.IsNullOrWhiteSpace(kvStat.Key))
-                    {
-                        switch (kvStat.Key)
-                        {
-                            case "Scan/Frame":
-                                int.TryParse(kvStat.Value, out mDeconToolsStatus.CurrentLCScan);
-                                break;
-                            case "PercentComplete":
-                                float.TryParse(kvStat.Value, out mDeconToolsStatus.PercentComplete);
-                                break;
-                            case "AccumlatedFeatures":
+                    var kvStat = ParseKeyValue(progressStats[i]);
+                    if (string.IsNullOrWhiteSpace(kvStat.Key)) continue;
 
-                                break;
-                        }
+                    switch (kvStat.Key)
+                    {
+                        case "Scan/Frame":
+                            int.TryParse(kvStat.Value, out mDeconToolsStatus.CurrentLCScan);
+                            break;
+                        case "PercentComplete":
+                            float.TryParse(kvStat.Value, out mDeconToolsStatus.PercentComplete);
+                            break;
+                        case "AccumlatedFeatures":
+                        case "AccumulatedFeatures":
+                            break;
                     }
                 }
 
