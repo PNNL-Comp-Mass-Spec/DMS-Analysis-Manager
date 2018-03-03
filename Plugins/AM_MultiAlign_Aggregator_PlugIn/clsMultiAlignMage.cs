@@ -9,7 +9,9 @@ using PRISM.Logging;
 
 namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 {
-
+    /// <summary>
+    /// Runs the MultiAlign pipeline
+    /// </summary>
     public class clsMultiAlignMage : clsEventNotifier
     {
 
@@ -58,12 +60,21 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
         #region Properties
 
+        /// <summary>
+        /// Status message
+        /// </summary>
         public string Message => string.IsNullOrEmpty(mMessage) ? string.Empty : mMessage;
 
         #endregion
 
         #region Constructors
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="jobParms"></param>
+        /// <param name="mgrParms"></param>
+        /// <param name="statusTools"></param>
         public clsMultiAlignMage(IJobParams jobParms, IMgrParams mgrParms, IStatusFile statusTools)
         {
             mStatusTools = statusTools;
@@ -264,7 +275,7 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         /// </summary>
         /// <param name="multialignJobsToProcess"></param>
         /// <param name="fileSpec"></param>
-        private bool CopyMultiAlignInputFiles(SimpleSink multialignJobsToProcess, string fileSpec)
+        private bool CopyMultiAlignInputFiles(IBaseModule multialignJobsToProcess, string fileSpec)
         {
 
             try
@@ -650,9 +661,8 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 }
 
                 // Compute the actual progress
-                short intActualProgress;
 
-                if (mProgressStepPercentComplete.TryGetValue(eProgress, out intActualProgress))
+                if (mProgressStepPercentComplete.TryGetValue(eProgress, out var intActualProgress))
                 {
                     float sngActualProgress = intActualProgress;
 
@@ -687,9 +697,8 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                                 dblSubProgressPercent = 100;
 
                             // Bump up dblActualProgress based on dblSubProgressPercent
-                            short intProgressNext;
 
-                            if (mProgressStepPercentComplete.TryGetValue(eProgress + 1, out intProgressNext))
+                            if (mProgressStepPercentComplete.TryGetValue(eProgress + 1, out var intProgressNext))
                             {
                                 sngActualProgress += (float)(dblSubProgressPercent * (intProgressNext - intActualProgress) / 100.0);
                             }
@@ -748,18 +757,11 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
 
             #region Properties
 
+            /// <summary>
+            /// Work directory
+            /// </summary>
             public string WorkingDir { get; set; }
             // public string paramFilename { get; set; }
-
-            #endregion
-
-            #region Constructors
-
-            // constructor
-            public MageMultiAlign()
-            {
-
-            }
 
             #endregion
 
@@ -844,14 +846,24 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             #region Properties
 
             // public string DBTableName { get; set; }
+
+            /// <summary>
+            /// Database file path
+            /// </summary>
             public string DBFilePath { get; set; }
+
+            /// <summary>
+            /// Import column list
+            /// </summary>
             public string ImportColumnList { get; set; }
 
             #endregion
 
             #region Constructors
 
-            // constructor
+            /// <summary>
+            /// Constructor
+            /// </summary>
             public MageFileImport()
             {
                 base.SourceFolderColumnName = "Folder";
@@ -870,16 +882,27 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
         // ------------------------------------------------------------------------------
         #region Classes for handling parameters
 
-        // class for managing IJobParams object
+        /// <summary>
+        /// Class for managing IJobParams object
+        /// </summary>
         public class JobParameters
         {
             private readonly IJobParams mJobParms;
 
+            /// <summary>
+            /// Constructor
+            /// </summary>
+            /// <param name="jobParms"></param>
             public JobParameters(IJobParams jobParms)
             {
                 mJobParms = jobParms;
             }
 
+            /// <summary>
+            /// Verify that a job parameter is defined
+            /// </summary>
+            /// <param name="paramName"></param>
+            /// <returns></returns>
             public string RequireJobParam(string paramName)
             {
                 var val = mJobParms.GetParam(paramName);
@@ -890,6 +913,12 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 return val;
             }
 
+            /// <summary>
+            /// Verify that a job parameter is defined
+            /// </summary>
+            /// <param name="paramName"></param>
+            /// <param name="defaultValue"></param>
+            /// <returns></returns>
             public string RequireJobParam(string paramName, string defaultValue)
             {
                 var val = mJobParms.GetParam(paramName);
@@ -900,11 +929,23 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 }
                 return val;
             }
+
+            /// <summary>
+            /// Get a job parameter
+            /// </summary>
+            /// <param name="paramName"></param>
+            /// <returns></returns>
             public string GetJobParam(string paramName)
             {
                 return mJobParms.GetParam(paramName);
             }
 
+            /// <summary>
+            /// Get a job parameter
+            /// </summary>
+            /// <param name="paramName"></param>
+            /// <param name="defaultValue"></param>
+            /// <returns></returns>
             public string GetJobParam(string paramName, string defaultValue)
             {
                 var val = mJobParms.GetParam(paramName);
@@ -914,16 +955,27 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             }
         }
 
-        // class for managing IMgrParams object
+        /// <summary>
+        /// Class for managing IMgrParams object
+        /// </summary>
         public class ManagerParameters
         {
             private readonly IMgrParams mMgrParms;
 
+            /// <summary>
+            /// Constructor
+            /// </summary>
+            /// <param name="mgrParms"></param>
             public ManagerParameters(IMgrParams mgrParms)
             {
                 mMgrParms = mgrParms;
             }
 
+            /// <summary>
+            /// Verify that a manager parameter is defined
+            /// </summary>
+            /// <param name="paramName"></param>
+            /// <returns></returns>
             public string RequireMgrParam(string paramName)
             {
                 var val = mMgrParms.GetParam(paramName);

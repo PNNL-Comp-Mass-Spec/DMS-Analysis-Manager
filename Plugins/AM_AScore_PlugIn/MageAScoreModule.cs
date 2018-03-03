@@ -23,6 +23,9 @@ namespace AnalysisManager_AScore_PlugIn
     {
         #region Constants
 
+        /// <summary>
+        /// Base name for AScore output files
+        /// </summary>
         public const string ASCORE_OUTPUT_FILE_NAME_BASE = "AScoreFile";
 
         #endregion
