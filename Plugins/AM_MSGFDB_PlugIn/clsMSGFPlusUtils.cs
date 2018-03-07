@@ -1186,6 +1186,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             var dctParamNames = new Dictionary<string, string>(25, StringComparer.OrdinalIgnoreCase)
             {
                 {"PMTolerance", "t"},
+                {"FragTolerance", "f"},
                 {MSGFPLUS_OPTION_TDA, "tda"},
                 {MSGFPLUS_OPTION_SHOWDECOY, "showDecoy"},
                 // This setting is nearly always set to 0 since we create a _ScanType.txt file that specifies the type of each scan
