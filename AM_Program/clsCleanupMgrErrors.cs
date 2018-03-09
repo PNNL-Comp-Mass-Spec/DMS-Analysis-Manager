@@ -112,13 +112,13 @@ namespace AnalysisManagerProg
         /// <param name="workingDirPath"></param>
         public clsCleanupMgrErrors(string mgrConfigDBConnectionString, string managerName, int debugLevel, string mgrFolderPath, string workingDirPath)
         {
-            if (string.IsNullOrEmpty(mgrConfigDBConnectionString))
+            if (string.IsNullOrEmpty(mgrConfigDBConnectionString) && !clsGlobal.OfflineMode)
                 throw new Exception("Manager config DB connection string is not defined");
 
             if (string.IsNullOrEmpty(managerName))
                 throw new Exception("Manager name is not defined");
 
-            mMgrConfigDBConnectionString = string.Copy(mgrConfigDBConnectionString);
+            mMgrConfigDBConnectionString = string.Copy(mgrConfigDBConnectionString ?? "");
             mManagerName = string.Copy(managerName);
             mDebugLevel = debugLevel;
 
@@ -480,9 +480,9 @@ namespace AnalysisManagerProg
         /// <remarks></remarks>
         public bool DetectErrorDeletingFilesFlagFile()
         {
-            var TestFile = Path.Combine(mMgrFolderPath, ERROR_DELETING_FILES_FILENAME);
+            var testFile = Path.Combine(mMgrFolderPath, ERROR_DELETING_FILES_FILENAME);
 
-            return File.Exists(TestFile);
+            return File.Exists(testFile);
         }
 
         /// <summary>
