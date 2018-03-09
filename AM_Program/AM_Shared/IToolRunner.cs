@@ -7,6 +7,7 @@
 //
 //*********************************************************************************************************
 
+using System;
 using System.Collections.Generic;
 
 namespace AnalysisManagerBase
@@ -14,6 +15,7 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Tool runner interface
     /// </summary>
+    /// <remarks>Implemented by clsAnalysisToolRunnerBase</remarks>
     public interface IToolRunner
     {
 
@@ -44,12 +46,18 @@ namespace AnalysisManagerBase
         /// </summary>
         bool NeedToAbortProcessing { get; }
 
-        #endregion
-
         /// <summary>
         /// The state of completion of the job (as a percentage)
         /// </summary>
         float Progress { get; }
+
+        /// <summary>
+        /// Time the analysis started (UTC-based)
+        /// </summary>
+        /// <remarks>RunTool sets this in clsAnalysisToolRunnerBase</remarks>
+        DateTime StartTime { get; }
+
+        #endregion
 
         #region "Methods"
 

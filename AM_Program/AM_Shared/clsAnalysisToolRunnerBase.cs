@@ -124,7 +124,7 @@ namespace AnalysisManagerBase
         protected string m_Dataset;
 
         /// <summary>
-        /// Analysis start time
+        /// Analysis start time (UTC-based)
         /// </summary>
         protected DateTime m_StartTime;
 
@@ -237,6 +237,11 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <remarks>This is a value between 0 and 100</remarks>
         public float Progress => m_progress;
+
+        /// <summary>
+        /// Time the analysis started (UTC-based)
+        /// </summary>
+        public DateTime StartTime => m_StartTime;
 
         /// <summary>
         /// Step tool name

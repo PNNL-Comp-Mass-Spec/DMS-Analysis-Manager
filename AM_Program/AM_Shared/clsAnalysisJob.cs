@@ -111,6 +111,8 @@ namespace AnalysisManagerBase
         /// </summary>
         protected FileInfo m_OfflineJobInfoFile;
 
+        private DateTime m_StartTime;
+
         #endregion
 
         #region "Properties"
@@ -1199,6 +1201,7 @@ namespace AnalysisManagerBase
 
             m_JobParams.Clear();
 
+            m_StartTime = DateTime.UtcNow;
         }
 
         /// <summary>
@@ -1456,7 +1459,7 @@ namespace AnalysisManagerBase
         /// <param name="compMsg">Completion message to be added to database upon closeOut</param>
         public override void CloseTask(CloseOutType closeOut, string compMsg)
         {
-            CloseTask(closeOut, compMsg, 0, string.Empty);
+            CloseTask(closeOut, compMsg, 0, string.Empty, m_StartTime);
         }
 
         /// <summary>
@@ -1477,7 +1480,8 @@ namespace AnalysisManagerBase
         /// <param name="compMsg">Completion message to be added to database upon closeOut</param>
         /// <param name="evalCode">Evaluation code (0 if no special evaulation message)</param>
         /// <param name="evalMsg">Evaluation message ("" if no special message)</param>
-        public override void CloseTask(CloseOutType closeOut, string compMsg, int evalCode, string evalMsg)
+        /// <param name="startTime">Time the analysis started (UTC-based)</param>
+        private void CloseTask(CloseOutType closeOut, string compMsg, int evalCode, string evalMsg, DateTime startTime)
         {
             var compCode = (int)closeOut;
 
@@ -1500,7 +1504,7 @@ namespace AnalysisManagerBase
                     }
 
                     var succeeded = SuccessOrNoData(closeOut);
-                    clsOfflineProcessing.FinalizeJob(m_OfflineJobInfoFile.FullName, succeeded, compCode, compMsg, evalCode, evalMsg);
+                    clsOfflineProcessing.FinalizeJob(m_OfflineJobInfoFile.FullName, succeeded, startTime, compCode, compMsg, evalCode, evalMsg);
                 }
                 else
                 {
