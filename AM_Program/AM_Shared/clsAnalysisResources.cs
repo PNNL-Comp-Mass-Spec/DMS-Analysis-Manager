@@ -849,6 +849,9 @@ namespace AnalysisManagerBase
                     return false;
                 }
 
+                // Make sure the target working directory is empty
+                transferUtility.DeleteRemoteWorkDir(true);
+
                 // Copy the files
                 var success = transferUtility.CopyFilesToRemote(filesToCopy, remoteDirectoryPath);
 
