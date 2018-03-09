@@ -863,7 +863,7 @@ namespace AnalysisManagerProg
                         {
                             m_MostRecentErrorMessage = "Unknown error staging the job to run remotely";
                         }
-                        m_AnalysisTask.CloseTask(eToolRunnerResult, m_MostRecentErrorMessage, toolRunner.EvalCode, toolRunner.EvalMessage);
+                        m_AnalysisTask.CloseTask(eToolRunnerResult, m_MostRecentErrorMessage, toolRunner);
                     }
 
                     // jobSucceeded is always false when we stage files to run remotely
@@ -913,7 +913,7 @@ namespace AnalysisManagerProg
                 }
 
                 // Close out the job as a success
-                m_AnalysisTask.CloseTask(closeOut, string.Empty, toolRunner.EvalCode, toolRunner.EvalMessage);
+                m_AnalysisTask.CloseTask(closeOut, string.Empty, toolRunner);
                 LogMessage(m_MgrName + ": Completed job " + jobNum);
 
                 UpdateStatusIdle("Completed job " + jobNum + ", step " + stepNum);
@@ -985,14 +985,15 @@ namespace AnalysisManagerProg
                         var success = HandleRemoteJobSuccess(toolRunner, remoteMonitor, out eToolRunnerResult);
                         if (!success)
                         {
-                            m_AnalysisTask.CloseTask(eToolRunnerResult, m_MostRecentErrorMessage, toolRunner.EvalCode, toolRunner.EvalMessage);
+                            m_MostRecentErrorMessage = toolRunner.Message;
+                            m_AnalysisTask.CloseTask(eToolRunnerResult, m_MostRecentErrorMessage, toolRunner);
                         }
                         return success;
 
                     case clsRemoteMonitor.EnumRemoteJobStatus.Failed:
 
                         HandleRemoteJobFailure(toolRunner, remoteMonitor, out eToolRunnerResult);
-                        m_AnalysisTask.CloseTask(eToolRunnerResult, m_MostRecentErrorMessage, toolRunner.EvalCode, toolRunner.EvalMessage);
+                        m_AnalysisTask.CloseTask(eToolRunnerResult, m_MostRecentErrorMessage, toolRunner);
                         return false;
 
                     default:
@@ -1645,7 +1646,7 @@ namespace AnalysisManagerProg
                 {
                     LogWarning("Upstream code typically calls .CloseTask before HandleJobFailure is reached; closing the task now");
 
-                    m_AnalysisTask.CloseTask(eToolRunnerResult, m_MostRecentErrorMessage, toolRunner.EvalCode, toolRunner.EvalMessage);
+                    m_AnalysisTask.CloseTask(eToolRunnerResult, m_MostRecentErrorMessage, toolRunner);
                 }
 
                 if (m_MgrErrorCleanup.CleanWorkDir())
@@ -2247,7 +2248,7 @@ namespace AnalysisManagerProg
                     ShowTrace("Error running the tool; closing job step task");
 
                     LogError(m_MgrName + ": " + m_MostRecentErrorMessage + ", Job " + jobNum + ", Dataset " + datasetName);
-                    m_AnalysisTask.CloseTask(eToolRunnerResult, m_MostRecentErrorMessage, toolRunner.EvalCode, toolRunner.EvalMessage);
+                    m_AnalysisTask.CloseTask(eToolRunnerResult, m_MostRecentErrorMessage, toolRunner);
 
                     try
                     {
@@ -2279,7 +2280,7 @@ namespace AnalysisManagerProg
                 {
                     m_NeedToAbortProcessing = true;
                     ShowTrace("toolRunner.NeedToAbortProcessing = True; closing job step task");
-                    m_AnalysisTask.CloseTask(CloseOutType.CLOSEOUT_FAILED, m_MostRecentErrorMessage, toolRunner.EvalCode, toolRunner.EvalMessage);
+                    m_AnalysisTask.CloseTask(CloseOutType.CLOSEOUT_FAILED, m_MostRecentErrorMessage, toolRunner);
                 }
 
                 return success;
@@ -2294,7 +2295,7 @@ namespace AnalysisManagerProg
                 }
 
                 eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
-                m_AnalysisTask.CloseTask(eToolRunnerResult, "Exception running tool", toolRunner.EvalCode, toolRunner.EvalMessage);
+                m_AnalysisTask.CloseTask(eToolRunnerResult, "Exception running tool", toolRunner);
 
                 return false;
             }

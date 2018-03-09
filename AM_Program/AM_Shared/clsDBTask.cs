@@ -212,24 +212,21 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public abstract RequestTaskResult RequestTask();
 
-
         /// <summary>
         /// Closes out a task
         /// </summary>
-        /// <param name="closeOut"></param>
-        /// <param name="compMsg"></param>
+        /// <param name="closeOut">Closeout code</param>
+        /// <param name="compMsg">Closeout message</param>
         /// <remarks></remarks>
         public abstract void CloseTask(CloseOutType closeOut, string compMsg);
 
         /// <summary>
-        /// Closes out a task (includes EvalCode and EvalMessgae)
+        /// Contact the Pipeline database to close the analysis job
         /// </summary>
-        /// <param name="closeOut"></param>
-        /// <param name="compMsg"></param>
-        /// <param name="evalCode">Evaluation code (0 if no special evaulation message)</param>
-        /// <param name="evalMsg">Evaluation message (empty string if no special message)</param>
-        /// <remarks></remarks>
-        public abstract void CloseTask(CloseOutType closeOut, string compMsg, int evalCode, string evalMsg);
+        /// <param name="closeOut">Closeout code</param>
+        /// <param name="compMsg">Closeout message</param>
+        /// <param name="toolRunner">ToolRunner instance</param>
+        public abstract void CloseTask(CloseOutType closeOut, string compMsg, IToolRunner toolRunner);
 
         /// <summary>
         /// Populate the parameters dictionary using parameters stored as XML

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 //*********************************************************************************************************
@@ -215,20 +216,19 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Contact the Pipeline database to close the analysis job
         /// </summary>
-        /// <param name="closeOut"></param>
-        /// <param name="compMsg"></param>
+        /// <param name="closeOut">Closeout code</param>
+        /// <param name="compMsg">Closeout message</param>
         /// <remarks>Implemented in clsAnalysisJob</remarks>
         void CloseTask(CloseOutType closeOut, string compMsg);
 
         /// <summary>
         /// Contact the Pipeline database to close the analysis job
         /// </summary>
-        /// <param name="closeOut"></param>
-        /// <param name="compMsg"></param>
-        /// <param name="evalCode"></param>
-        /// <param name="evalMsg"></param>
+        /// <param name="closeOut">Closeout code</param>
+        /// <param name="compMsg">Closeout message</param>
+        /// <param name="toolRunner">ToolRunner instance</param>
         /// <remarks>Implemented in clsAnalysisJob</remarks>
-        void CloseTask(CloseOutType closeOut, string compMsg, int evalCode, string evalMsg);
+        void CloseTask(CloseOutType closeOut, string compMsg, IToolRunner toolRunner);
 
         /// <summary>
         /// Get all job parameters for the given section
