@@ -926,7 +926,9 @@ namespace AnalysisManagerProg
 
                 UpdateStatusIdle("Completed job " + jobNum + ", step " + stepNum);
 
-                var cleanupSuccess = CleanupAfterJob(jobSucceeded, runningRemote, remoteMonitor);
+                var deleteRemoteJobFiles = runningRemote && jobSucceeded;
+
+                var cleanupSuccess = CleanupAfterJob(deleteRemoteJobFiles, remoteMonitor);
 
                 return cleanupSuccess;
             }
@@ -1021,11 +1023,11 @@ namespace AnalysisManagerProg
             }
         }
 
-        private bool CleanupAfterJob(bool jobSucceeded, bool runningRemote, clsRemoteMonitor remoteMonitor)
+        private bool CleanupAfterJob(bool deleteRemoteJobFiles, clsRemoteMonitor remoteMonitor)
         {
             try
             {
-                if (jobSucceeded && runningRemote)
+                if (deleteRemoteJobFiles)
                 {
                     // Job succeeded, and the status in DMS was successfully updated
                     // Delete files on the remote host
