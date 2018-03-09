@@ -319,58 +319,91 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Look for .lock files that are over 24 hours old and do not have a .jobstatus file modified within the last 12 hours
-        /// If found, delete them
+        /// Look for files matching fileSpec that are over thresholdHours hours old
+        /// Delete any that are found
         /// </summary>
-        /// <param name="taskQueueFolder"></param>
-        private void DeleteOldLockFiles(DirectoryInfo taskQueueFolder)
+        /// <param name="taskQueueDirectory"></param>
+        /// <param name="fileSpec">Files to find, for example *.oldlock</param>
+        /// <param name="thresholdHours">Threshold, in hours, for example 24</param>
+        /// <param name="ignoreIfRecentJobStatusfile">When true, do not delete the file if a recent .jobstatus file exists</param>
+        private void DeleteOldFiles(
+            DirectoryInfo taskQueueDirectory, string fileSpec,
+            int thresholdHours, bool ignoreIfRecentJobStatusfile = false)
         {
             try
             {
-                var lockFiles = taskQueueFolder.GetFiles("*.lock");
-                if (lockFiles.Length == 0)
+                string targetFileDescription;
+                if (fileSpec.StartsWith("*.") && fileSpec.Length > 2)
+                {
+                    targetFileDescription = fileSpec.Substring(2);
+                }
+                else
+                {
+                    targetFileDescription = fileSpec;
+                }
+
+                var foundFiles = taskQueueDirectory.GetFiles(fileSpec);
+                if (foundFiles.Length == 0)
                     return;
 
-                var agedFileThreshold = DateTime.UtcNow.AddHours(-24);
+                if (thresholdHours < 1)
+                    thresholdHours = 1;
 
-                var agedLockFiles = (from lockFile in lockFiles where lockFile.LastWriteTimeUtc < agedFileThreshold select lockFile).ToList();
+                var agedFileThreshold = DateTime.UtcNow.AddHours(-Math.Abs(thresholdHours));
 
-                if (agedLockFiles.Count == 0)
+                var agedFiles = (from item in foundFiles where item.LastWriteTimeUtc < agedFileThreshold select item).ToList();
+
+                if (agedFiles.Count == 0)
                     return;
 
                 var jobStatusFiles = new Dictionary<string, FileInfo>();
-                foreach (var jobStatusFile in taskQueueFolder.GetFiles("*.jobstatus"))
+                if (ignoreIfRecentJobStatusfile)
                 {
-                    var baseName = Path.GetFileName(jobStatusFile.Name);
-                    if (jobStatusFiles.ContainsKey(baseName))
-                        continue;
+                    foreach (var jobStatusFile in taskQueueDirectory.GetFiles("*.jobstatus"))
+                    {
+                        var baseName = Path.GetFileName(jobStatusFile.Name);
+                        if (jobStatusFiles.ContainsKey(baseName))
+                            continue;
 
-                    jobStatusFiles.Add(baseName, jobStatusFile);
+                        jobStatusFiles.Add(baseName, jobStatusFile);
+                    }
                 }
 
-                foreach (var lockFile in agedLockFiles)
+                foreach (var agedFile in agedFiles)
                 {
-                    var baseName = Path.GetFileName(lockFile.Name);
+                    var baseName = Path.GetFileName(agedFile.Name);
 
                     if (jobStatusFiles.TryGetValue(baseName, out var jobStatusFile))
                     {
                         if (DateTime.UtcNow.Subtract(jobStatusFile.LastWriteTimeUtc).TotalHours < 12)
                         {
-                            // The lock file is aged, but the jobstatus file is less than 12 hours old
+                            // The file is aged, but the jobstatus file is less than 12 hours old
                             continue;
                         }
                     }
 
-                    var fileAgeHours = DateTime.UtcNow.Subtract(lockFile.LastWriteTimeUtc).TotalHours;
+                    var fileAgeHours = DateTime.UtcNow.Subtract(agedFile.LastWriteTimeUtc).TotalHours;
 
-                    LogWarning(string.Format("Deleting aged lock file modified {0:F0} hours ago: {1}", fileAgeHours, lockFile.FullName));
-                    lockFile.Delete();
+                    // Example message:
+                    // Deleting aged lock file modified 26 hours ago: /file1/temp/DMSTasks/Test_MSGFPlus/Job1451055_Step3_20180308_2148.lock
+                    LogWarning(string.Format("Deleting aged {0} file modified {1:F0} hours ago: {2}", targetFileDescription, fileAgeHours, agedFile.FullName));
+                    agedFile.Delete();
                 }
             }
             catch (Exception ex)
             {
-                LogError("Exception deleting old lock files in " + taskQueueFolder.FullName, ex);
+                LogError("Exception deleting aged files in " + taskQueueDirectory.FullName, ex);
             }
+        }
+
+        /// <summary>
+        /// Look for .lock files that are over 24 hours old and do not have a .jobstatus file modified within the last 12 hours
+        /// If found, delete them
+        /// </summary>
+        /// <param name="taskQueueDirectory"></param>
+        private void DeleteOldLockFiles(DirectoryInfo taskQueueDirectory)
+        {
+            DeleteOldFiles(taskQueueDirectory, "*.lock", 24, true);
         }
 
         /// <summary>
@@ -571,12 +604,10 @@ namespace AnalysisManagerBase
         /// <returns>String in the form "job x, step y"</returns>
         public string GetJobStepDescription()
         {
-
             var job = GetJobParameter(STEP_PARAMETERS_SECTION, "Job", 0);
             var step = GetJobParameter(STEP_PARAMETERS_SECTION, "Step", 0);
 
             return string.Format("job {0}, step {1}", job, step);
-
         }
 
         /// <summary>
@@ -1111,16 +1142,24 @@ namespace AnalysisManagerBase
 
                 foreach (var stepTool in stepTools)
                 {
-                    var taskQueueFolder = new DirectoryInfo(Path.Combine(taskQueuePathBase, stepTool.Trim()));
-                    if (!taskQueueFolder.Exists)
+                    var taskQueueDirectory = new DirectoryInfo(Path.Combine(taskQueuePathBase, stepTool.Trim()));
+                    if (!taskQueueDirectory.Exists)
                     {
-                        LogWarning("Task queue folder not found: " + taskQueueFolder.FullName);
+                        LogWarning("Task queue directory not found: " + taskQueueDirectory.FullName);
                         continue;
                     }
 
-                    DeleteOldLockFiles(taskQueueFolder);
+                    // Delete old lock files
+                    DeleteOldLockFiles(taskQueueDirectory);
 
-                    var infoFiles = taskQueueFolder.GetFiles("*.info");
+                    // Delete other old files over 48 hours old
+                    DeleteOldFiles(taskQueueDirectory, "*.oldinfo", 48);
+                    DeleteOldFiles(taskQueueDirectory, "*.oldlock", 48);
+
+                    // Delete .jobstatus files over 1 week old
+                    DeleteOldFiles(taskQueueDirectory, "*.jobstatus", 168);
+
+                    var infoFiles = taskQueueDirectory.GetFiles("*.info");
                     if (infoFiles.Length == 0)
                         continue;
 
@@ -1128,6 +1167,7 @@ namespace AnalysisManagerBase
                     // Values are are KeyValuePair of Timestamp and .info file, where Timestamp is of the form 20170518_0353
                     var jobStepInfoFiles = new Dictionary<string, KeyValuePair<string, FileInfo>>();
 
+                    // Step through the info files, keeping track of the newest file for each Job/Step combo
                     foreach (var infoFile in infoFiles)
                     {
                         var match = reJobStepTimestamp.Match(infoFile.Name);
@@ -1148,16 +1188,28 @@ namespace AnalysisManagerBase
                         }
 
                         var existingTimestamp = existingInfo.Key;
+
                         if (string.CompareOrdinal(timeStamp, existingTimestamp) > 0)
                         {
-                            // Rename the .info file with existingTimestamp to be .oldinfo
+                            // Old .info file with existingTimestamp; rename to .oldinfo
                             clsOfflineProcessing.RenameFileChangeExtension(existingInfo.Value, ".oldinfo", true);
+
+                            // Also check for a .lock file; if found, rename it
+                            var oldLockFile = new FileInfo(Path.ChangeExtension(existingInfo.Value.FullName, ".lock"));
+                            clsOfflineProcessing.RenameFileChangeExtension(oldLockFile, ".oldlock", true);
+
+                            // Add the new .info file to the dictionary
                             jobStepInfoFiles[jobStep] = new KeyValuePair<string, FileInfo>(timeStamp, infoFile);
                         }
                         else
                         {
+                            // Old .info file; rename to .oldinfo
                             // Rename the .info file with timestamp to be .oldinfo, leaving the dictionary unchanged
                             clsOfflineProcessing.RenameFileChangeExtension(infoFile, ".oldinfo", true);
+
+                            // Also check for a .lock file; if found, rename it
+                            var oldLockFile = new FileInfo(Path.ChangeExtension(infoFile.FullName, ".lock"));
+                            clsOfflineProcessing.RenameFileChangeExtension(oldLockFile, ".oldlock", true);
                         }
                     }
 
