@@ -109,11 +109,11 @@ namespace AnalysisManagerBase
                     {
                         mWaitingForLockFile = true;
 
-                        var LockTimeoutTime = lockFi.LastWriteTimeUtc.AddMinutes(60);
+                        var lockTimeoutTime = lockFi.LastWriteTimeUtc.AddMinutes(60);
                         OnStatusEvent(LOCK_FILE_PROGRESS_TEXT + " found; waiting until it is deleted or until " +
-                            LockTimeoutTime.ToLocalTime() + ": " + lockFi.Name);
+                                      lockTimeoutTime.ToLocalTime() + ": " + lockFi.Name);
 
-                        while (lockFi.Exists && DateTime.UtcNow < LockTimeoutTime)
+                        while (lockFi.Exists && DateTime.UtcNow < lockTimeoutTime)
                         {
                             clsGlobal.IdleLoop(5);
                             lockFi.Refresh();

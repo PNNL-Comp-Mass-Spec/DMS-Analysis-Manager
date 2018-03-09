@@ -643,7 +643,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Retrieve the JobX_StepY_RemoteTimestamp.jobstatus file from the remote TaskQueue folder
+        /// Retrieve the JobX_StepY_RemoteTimestamp.jobstatus file from the remote TaskQueue directory
         /// </summary>
         /// <param name="jobStatusFilePathLocal"></param>
         /// <returns>True if success, otherwise false</returns>
@@ -670,7 +670,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Retrieve the given status file from the remote TaskQueue folder
+        /// Retrieve the given status file from the remote TaskQueue directory
         /// </summary>
         /// <param name="statusFileName"></param>
         /// <param name="statusFilePathLocal">Output: full path to the status file on the local drive</param>
@@ -711,7 +711,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Copy new/updated DMS_Programs files to the remote host
         /// </summary>
-        /// <returns>True if success, falser if an error</returns>
+        /// <returns>True if success, false if an error</returns>
         public bool RunDMSUpdateManager()
         {
             try
