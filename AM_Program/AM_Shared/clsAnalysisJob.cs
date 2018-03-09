@@ -1272,6 +1272,8 @@ namespace AnalysisManagerBase
         {
             try
             {
+                var startTime = DateTime.Now;
+
                 // Example name: Job1451055_Step3_20170622_2205.lock
                 var lockFilePath = Path.ChangeExtension(infoFile.FullName, clsGlobal.LOCK_FILE_EXTENSION);
 
@@ -1327,19 +1329,19 @@ namespace AnalysisManagerBase
 
                 if (m_JobId == 0)
                 {
-                    FinalizeFailedOfflineJob(infoFile, "Job missing from .info file");
+                    FinalizeFailedOfflineJob(infoFile, startTime, "Job missing from .info file");
                     return false;
                 }
 
                 if (stepNum == 0)
                 {
-                    FinalizeFailedOfflineJob(infoFile, "Step missing from .info file");
+                    FinalizeFailedOfflineJob(infoFile, startTime, "Step missing from .info file");
                     return false;
                 }
 
                 if (string.IsNullOrWhiteSpace(workDirPath))
                 {
-                    FinalizeFailedOfflineJob(infoFile, "WorkDir missing from .info file");
+                    FinalizeFailedOfflineJob(infoFile, startTime, "WorkDir missing from .info file");
                     return false;
                 }
 
@@ -1363,7 +1365,7 @@ namespace AnalysisManagerBase
 
                 if (!jobParamsFile.Exists)
                 {
-                    FinalizeFailedOfflineJob(infoFile, "JobParams.xml file not found in the working directory: " + jobParamsFile.FullName);
+                    FinalizeFailedOfflineJob(infoFile, startTime, "JobParams.xml file not found in the working directory: " + jobParamsFile.FullName);
                     return false;
                 }
 
@@ -1397,10 +1399,10 @@ namespace AnalysisManagerBase
 
         }
 
-        private void FinalizeFailedOfflineJob(FileSystemInfo infoFile, string errorMessage)
+        private void FinalizeFailedOfflineJob(FileSystemInfo infoFile, DateTime startTime, string errorMessage)
         {
             LogError(errorMessage);
-            clsOfflineProcessing.FinalizeJob(infoFile.FullName, false, 1, errorMessage);
+            clsOfflineProcessing.FinalizeJob(infoFile.FullName, false, startTime, 1, errorMessage);
         }
 
         /// <summary>
