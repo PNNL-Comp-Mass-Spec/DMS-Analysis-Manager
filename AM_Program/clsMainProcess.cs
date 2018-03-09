@@ -53,6 +53,7 @@ namespace AnalysisManagerProg
 
         // clsAnalysisJob
         private IJobParams m_AnalysisTask;
+
         private clsPluginLoader m_PluginLoader;
 
         private clsSummaryFile m_SummaryFile;
@@ -554,7 +555,7 @@ namespace AnalysisManagerProg
                                 oneTaskStarted = true;
                                 var defaultManagerWorkDir = string.Copy(m_WorkDirPath);
 
-                                var success = DoAnalysisJob();
+                                var success = DoAnalysisJob(out var runningRemote);
 
                                 if (!string.Equals(m_WorkDirPath, defaultManagerWorkDir))
                                 {
@@ -579,7 +580,7 @@ namespace AnalysisManagerProg
                                         // Job failed, but this was not a manager error
                                         // Do not increment the error count
                                     }
-                                    else
+                                    else if (!runningRemote)
                                     {
                                         criticalMgrErrorCount += 1;
                                     }
@@ -598,8 +599,8 @@ namespace AnalysisManagerProg
                                 criticalMgrErrorCount += 1;
                                 m_NeedToAbortProcessing = true;
                             }
-
                             break;
+
                         case clsDBTask.RequestTaskResult.TooManyRetries:
                             ShowTrace("Too many retries calling the stored procedure");
 
@@ -607,8 +608,8 @@ namespace AnalysisManagerProg
                             // Bump up loopCount to the maximum to exit the loop
                             UpdateStatusIdle("Excessive retries requesting task");
                             loopCount = maxLoopCount;
-
                             break;
+
                         case clsDBTask.RequestTaskResult.Deadlock:
 
                             ShowTrace("Deadlock");
@@ -622,8 +623,8 @@ namespace AnalysisManagerProg
                                 LogWarning(msg);
                                 requestJobs = false;
                             }
-
                             break;
+
                         default:
                             // Shouldn't ever get here
                             LogError("Invalid request result: " + (int)taskReturn);
@@ -696,7 +697,12 @@ namespace AnalysisManagerProg
             }
         }
 
-        private bool DoAnalysisJob()
+        /// <summary>
+        /// Perform an analysis job
+        /// </summary>
+        /// <param name="runningRemote">True if we checked the status of a remote job</param>
+        /// <returns></returns>
+        private bool DoAnalysisJob(out bool runningRemote)
         {
             var jobNum = m_AnalysisTask.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job", 0);
             var stepNum = m_AnalysisTask.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step", 0);
@@ -707,7 +713,7 @@ namespace AnalysisManagerProg
 
             var runJobsRemotely = m_MgrSettings.GetParam("RunJobsRemotely", false);
             var runningRemoteFlag = m_AnalysisTask.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "RunningRemote", 0);
-            var runningRemote = runningRemoteFlag > 0;
+            runningRemote = runningRemoteFlag > 0;
 
             if (clsGlobal.OfflineMode)
             {
