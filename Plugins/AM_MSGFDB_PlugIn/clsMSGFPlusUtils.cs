@@ -107,14 +107,14 @@ namespace AnalysisManagerMSGFDBPlugIn
         #region "Events"
 
         /// <summary>
-        /// Even raised when a peptide to protein mapping error has been ignored
+        /// Event raised when a peptide to protein mapping error has been ignored
         /// </summary>
         public event IgnorePreviousErrorEventEventHandler IgnorePreviousErrorEvent;
 
         /// <summary>
         /// Delegate for IgnorePreviousErrorEvent
         /// </summary>
-        public delegate void IgnorePreviousErrorEventEventHandler();
+        public delegate void IgnorePreviousErrorEventEventHandler(string messageToIgnore);
 
         #endregion
 
@@ -1461,12 +1461,14 @@ namespace AnalysisManagerMSGFDBPlugIn
                 {
                     if (!string.IsNullOrEmpty(indexedDBCreator.ErrorMessage))
                     {
-                        OnErrorEvent(indexedDBCreator.ErrorMessage);
+                        mErrorMessage = indexedDBCreator.ErrorMessage;
                     }
                     else
                     {
-                        OnErrorEvent("Error creating Suffix Array files");
+                        mErrorMessage = "Error creating Suffix Array files";
                     }
+                    OnErrorEvent(indexedDBCreator.ErrorMessage);
+
                     return result;
                 }
 
@@ -2957,7 +2959,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     }
                     else
                     {
-                        IgnorePreviousErrorEvent?.Invoke();
+                        IgnorePreviousErrorEvent?.Invoke(mErrorMessage);
                         success = false;
                     }
                 }

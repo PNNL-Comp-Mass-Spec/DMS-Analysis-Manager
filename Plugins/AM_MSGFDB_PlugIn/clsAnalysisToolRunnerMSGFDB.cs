@@ -1092,9 +1092,9 @@ namespace AnalysisManagerMSGFDBPlugIn
             MonitorProgress();
         }
 
-        private void MSGFPlusUtils_IgnorePreviousErrorEvent()
+        private void MSGFPlusUtils_IgnorePreviousErrorEvent(string messageToIgnore)
         {
-            m_message = string.Empty;
+            m_message = m_message.Replace(messageToIgnore, string.Empty).Trim(';', ' ');
         }
 
         #endregion
