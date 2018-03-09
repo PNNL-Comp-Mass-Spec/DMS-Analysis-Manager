@@ -1526,10 +1526,10 @@ namespace AnalysisManagerBase
 
             var progLoc = DetermineProgramLocation(StepToolName, progLocManagerParamName, exeName, stepToolVersion, m_mgrParams, out var errorMessage);
 
-            if (string.IsNullOrEmpty(errorMessage))
+            if (!string.IsNullOrEmpty(errorMessage))
             {
                 // The error has already been logged, but we need to update m_message
-                m_message = errorMessage;
+                m_message = clsGlobal.AppendToComment(m_message, errorMessage);
             }
 
             return progLoc;
