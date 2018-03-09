@@ -747,6 +747,11 @@ namespace AnalysisManagerProg
             m_StatusTools.ProgRunnerProcessID = 0;
             m_StatusTools.ProgRunnerCoreUsage = cpuLoadExpected;
 
+            if (clsGlobal.OfflineMode)
+            {
+                m_StatusTools.OfflineJobStatusFilePath = clsRemoteTransferUtility.GetOfflineJobStatusFilePath(m_MgrSettings, m_AnalysisTask);
+            }
+
             m_StatusTools.UpdateAndWrite(
                 EnumMgrStatus.RUNNING,
                 EnumTaskStatus.RUNNING,
@@ -1700,7 +1705,7 @@ namespace AnalysisManagerProg
 
             if (!jobResultFile.Exists)
             {
-                m_MostRecentErrorMessage = "No status files were found, not even a .info file";
+                m_MostRecentErrorMessage = ".fail file not found in the working directory: " + remoteMonitor.TransferUtility.ProcessingFailureFile;
                 eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED_REMOTE;
                 return;
             }
@@ -1775,7 +1780,9 @@ namespace AnalysisManagerProg
 
             // Skip the status files when transferring results
             foreach (var statusFile in remoteMonitor.TransferUtility.StatusFileNames)
+            {
                 m_AnalysisTask.AddResultFileToSkip(statusFile);
+            }
 
             var success = toolRunner.CopyResultsToTransferDirectory();
             if (success)
@@ -1791,35 +1798,35 @@ namespace AnalysisManagerProg
         /// <remarks></remarks>
         private void InitStatusTools()
         {
-            if (m_StatusTools == null)
+            if (m_StatusTools != null)
+                return;
+
+            var statusFileLoc = Path.Combine(m_MgrFolderPath, m_MgrSettings.GetParam("statusfilelocation", "Status.xml"));
+
+            ShowTrace("Initialize m_StatusTools using " + statusFileLoc);
+
+            m_StatusTools = new clsStatusFile(statusFileLoc, m_DebugLevel)
             {
-                var statusFileLoc = Path.Combine(m_MgrFolderPath, m_MgrSettings.GetParam("statusfilelocation", "Status.xml"));
+                TaskStartTime = DateTime.UtcNow,
+                Dataset = string.Empty,
+                WorkDirPath = m_WorkDirPath,
+                JobNumber = 0,
+                JobStep = 0,
+                Tool = string.Empty,
+                MgrName = m_MgrName,
+                MgrStatus = EnumMgrStatus.RUNNING,
+                TaskStatus = EnumTaskStatus.NO_TASK,
+                TaskStatusDetail = EnumTaskStatusDetail.NO_TASK
+            };
+            RegisterEvents(m_StatusTools);
 
-                ShowTrace("Initialize m_StatusTools using " + statusFileLoc);
-
-                m_StatusTools = new clsStatusFile(statusFileLoc, m_DebugLevel)
-                {
-                    TaskStartTime = DateTime.UtcNow,
-                    Dataset = string.Empty,
-                    WorkDirPath = m_WorkDirPath,
-                    JobNumber = 0,
-                    JobStep = 0,
-                    Tool = string.Empty,
-                    MgrName = m_MgrName,
-                    MgrStatus = EnumMgrStatus.RUNNING,
-                    TaskStatus = EnumTaskStatus.NO_TASK,
-                    TaskStatusDetail = EnumTaskStatusDetail.NO_TASK
-                };
-                RegisterEvents(m_StatusTools);
-
-                var runJobsRemotely = m_MgrSettings.GetParam("RunJobsRemotely", false);
-                if (runJobsRemotely)
-                {
-                    m_StatusTools.RemoteMgrName = m_MgrSettings.GetParam("RemoteHostName");
-                }
-
-                UpdateStatusToolLoggingSettings(m_StatusTools);
+            var runJobsRemotely = m_MgrSettings.GetParam("RunJobsRemotely", false);
+            if (runJobsRemotely)
+            {
+                m_StatusTools.RemoteMgrName = m_MgrSettings.GetParam("RemoteHostName");
             }
+
+            UpdateStatusToolLoggingSettings(m_StatusTools);
         }
 
         /// <summary>
@@ -2403,7 +2410,7 @@ namespace AnalysisManagerProg
                     return false;
                 }
 
-                ShowTrace("Creating the .info file in the remote task queue folder ");
+                ShowTrace("Creating the .info file in the remote task queue directory");
 
                 // All files have been copied remotely
                 // Create the .info file so remote managers can start processing
@@ -2423,7 +2430,6 @@ namespace AnalysisManagerProg
 
                 eToolRunnerResult = CloseOutType.CLOSEOUT_RUNNING_REMOTE;
                 return true;
-
 
             }
             catch (Exception ex)
