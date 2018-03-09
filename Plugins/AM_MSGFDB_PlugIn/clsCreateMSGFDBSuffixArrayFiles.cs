@@ -556,70 +556,63 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return CloseOutType.CLOSEOUT_SUCCESS;
 
                 // Index files are missing or out of date
-                // Copy them from msgfPlusIndexFilesFolderPathBase or msgfPlusIndexFilesFolderPathLegacyDB if possible
-                // Otherwise, create new index files
 
-                string remoteIndexFolderPath;
-                bool remoteLockFileCreated;
-                FileInfo fiRemoteLockFile;
-
-                CloseOutType eResult;
                 if (clsGlobal.OfflineMode)
                 {
-                    remoteIndexFolderPath = string.Empty;
-                    eResult = CloseOutType.CLOSEOUT_FAILED;
+                    // The manager that pushed the FASTA files to the the remote host should have also indexed them and pushed all of the index files to this host
+                    // Fail out the job
+                    mErrorMessage = "Index files are missing or out of date for " + fastaFilePath;
 
-                    remoteLockFileCreated = false;
-                    fiRemoteLockFile = null;
+                    // Do not call OnErrorEvent; the calling procedure will do so
+                    return CloseOutType.CLOSEOUT_FAILED;
                 }
-                else
+
+                // Copy the missing index files from msgfPlusIndexFilesFolderPathBase or msgfPlusIndexFilesFolderPathLegacyDB if possible
+                // Otherwise, create new index files
+
+                var remoteIndexFolderPath = DetermineRemoteMSGFPlusIndexFilesFolderPath(
+                    fiFastaFile.Name, msgfPlusIndexFilesFolderPathBase, msgfPlusIndexFilesFolderPathLegacyDB);
+
+                const bool CHECK_FOR_LOCK_FILE_A = true;
+                var eResult = CopyExistingIndexFilesFromRemote(fiFastaFile, usingLegacyFasta, remoteIndexFolderPath, CHECK_FOR_LOCK_FILE_A,
+                                                                        debugLevel, maxWaitTimeHours, out var diskFreeSpaceBelowThreshold1);
+
+                if (diskFreeSpaceBelowThreshold1)
                 {
-                    remoteIndexFolderPath = DetermineRemoteMSGFPlusIndexFilesFolderPath(
-                        fiFastaFile.Name, msgfPlusIndexFilesFolderPathBase, msgfPlusIndexFilesFolderPathLegacyDB);
+                    // Not enough free disk space; abort
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
 
-                    const bool CHECK_FOR_LOCK_FILE_A = true;
-                    eResult = CopyExistingIndexFilesFromRemote(fiFastaFile, usingLegacyFasta, remoteIndexFolderPath, CHECK_FOR_LOCK_FILE_A,
-                                                               debugLevel, maxWaitTimeHours, out var diskFreeSpaceBelowThreshold1);
+                if (eResult == CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    return eResult;
+                }
 
+                // Files did not exist or were out of date, or an error occurred while copying them
+                currentTask = "Create a remote lock file";
+                var remoteLockFileCreated = CreateRemoteSuffixArrayLockFile(
+                    fiFastaFile.Name, remoteIndexFolderPath,
+                    out var fiRemoteLockFile, debugLevel, maxWaitTimeHours);
 
-                    if (diskFreeSpaceBelowThreshold1)
-                    {
-                        // Not enough free disk space; abort
-                        return CloseOutType.CLOSEOUT_FAILED;
-                    }
+                if (remoteLockFileCreated)
+                {
+                    // Lock file successfully created
+                    // If this manager ended up waiting while another manager was indexing the files, we should once again try to copy the files locally
+
+                    const bool CHECK_FOR_LOCK_FILE_B = false;
+                    eResult = CopyExistingIndexFilesFromRemote(fiFastaFile, usingLegacyFasta, remoteIndexFolderPath, CHECK_FOR_LOCK_FILE_B,
+                                                               debugLevel, maxWaitTimeHours, out var diskFreeSpaceBelowThreshold2);
 
                     if (eResult == CloseOutType.CLOSEOUT_SUCCESS)
                     {
-                        return eResult;
+                        // Existing files were copied; this manager does not need to re-create them
+                        reindexingRequired = false;
                     }
 
-
-                    // Files did not exist or were out of date, or an error occurred while copying them
-
-                    currentTask = "Create a remote lock file";
-                    remoteLockFileCreated = CreateRemoteSuffixArrayLockFile(fiFastaFile.Name, remoteIndexFolderPath, out fiRemoteLockFile,
-                                                                            debugLevel, maxWaitTimeHours);
-
-                    if (remoteLockFileCreated)
+                    if (diskFreeSpaceBelowThreshold2)
                     {
-                        // Lock file successfully created
-                        // If this manager ended up waiting while another manager was indexing the files, we should once again try to copy the files locally
-
-                        const bool CHECK_FOR_LOCK_FILE_B = false;
-                        eResult = CopyExistingIndexFilesFromRemote(fiFastaFile, usingLegacyFasta, remoteIndexFolderPath, CHECK_FOR_LOCK_FILE_B,
-                                                                   debugLevel, maxWaitTimeHours, out var diskFreeSpaceBelowThreshold2);
-
-                        if (eResult == CloseOutType.CLOSEOUT_SUCCESS)
-                        {
-                            // Existing files were copied; this manager does not need to re-create them
-                            reindexingRequired = false;
-                        }
-
-                        if (diskFreeSpaceBelowThreshold2)
-                        {
-                            // Not enough free disk space; abort
-                            return CloseOutType.CLOSEOUT_FAILED;
-                        }
+                        // Not enough free disk space; abort
+                        return CloseOutType.CLOSEOUT_FAILED;
                     }
                 }
 
