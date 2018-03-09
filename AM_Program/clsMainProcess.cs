@@ -506,7 +506,10 @@ namespace AnalysisManagerProg
                         }
                     }
 
-                    ShowTrace("Requesting a new task from DMS_Pipeline");
+                    if (clsGlobal.OfflineMode)
+                        ShowTrace("Looking for an available offline task in the task queue directory");
+                    else
+                        ShowTrace("Requesting a new task from DMS_Pipeline");
 
                     // Re-initialize these utilities for each analysis job
                     // Note that when RetrieveResources is called, the MyEMSL certificate file (svc-dms.pfx) will be verified to exist
@@ -530,16 +533,15 @@ namespace AnalysisManagerProg
                             }
                             requestJobs = false;
                             criticalMgrErrorCount = 0;
-                            UpdateStatusIdle("No analysis jobs found");
-
                             break;
+
                         case clsDBTask.RequestTaskResult.ResultError:
                             ShowTrace("Error requesting a task for " + m_MgrName);
 
                             // There was a problem getting the task; errors were logged by RequestTaskResult
                             criticalMgrErrorCount += 1;
-
                             break;
+
                         case clsDBTask.RequestTaskResult.TaskFound:
 
                             ShowTrace("Task found for " + m_MgrName);

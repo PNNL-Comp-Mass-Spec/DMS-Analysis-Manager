@@ -281,6 +281,12 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             if (result != CloseOutType.CLOSEOUT_SUCCESS)
             {
+                if (string.IsNullOrWhiteSpace(m_message) &&
+                    !string.IsNullOrWhiteSpace(mMSGFPlusUtils.ErrorMessage))
+                {
+                    m_message = mMSGFPlusUtils.ErrorMessage;
+                }
+
                 // Immediately exit the plugin; results and console output files will not be saved
                 return result;
             }
@@ -423,6 +429,13 @@ namespace AnalysisManagerMSGFDBPlugIn
                 {
                     LogMessage(string.Format("Using existing MSGF+ results: {0} created {1}",
                         fiMSGFPlusResults.Name, fiMSGFPlusResults.LastWriteTime.ToString(DATE_TIME_FORMAT)));
+                }
+                else
+                {
+                    LogMessage(string.Format("Deleting incomplete existing MSGF+ results: {0} created {1}",
+                                             fiMSGFPlusResults.Name, fiMSGFPlusResults.LastWriteTime.ToString(DATE_TIME_FORMAT)));
+                    fiMSGFPlusResults.Delete();
+                    fiMSGFPlusResults.Refresh();
                 }
             }
             else
@@ -902,7 +915,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     msgfPlusProgress = mMSGFPlusUtils.ParseMSGFPlusConsoleOutputFile(workingDirectory);
                 }
 
-                if (m_progress < msgfPlusProgress)
+                if (msgfPlusProgress > m_progress)
                 {
                     m_progress = msgfPlusProgress;
                 }
@@ -1039,7 +1052,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     MSGFPlusUtils.MSGFPLUS_CONSOLE_OUTPUT_FILE
                 };
 
-                var success = base.RetrieveRemoteResults(transferUtility, filesToRetrieve, verifyCopied, out retrievedFilePaths);
+                var success = RetrieveRemoteResults(transferUtility, filesToRetrieve, verifyCopied, out retrievedFilePaths);
                 return success;
 
             }
