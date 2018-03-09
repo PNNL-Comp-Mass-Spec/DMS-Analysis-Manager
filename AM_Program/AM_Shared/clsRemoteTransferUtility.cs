@@ -950,6 +950,10 @@ namespace AnalysisManagerBase
         public bool WaitForRemoteFileCopy(FileInfo sourceFile, SftpFile remoteFile, out bool abortCopy)
         {
             var remoteFilePath = remoteFile.FullName;
+
+            var remoteFileInfo = new FileOrDirectoryInfo(remoteFile);
+            var remoteDirectoryPath = remoteFileInfo.DirectoryName;
+
             abortCopy = false;
 
             while (DateTime.UtcNow.Subtract(remoteFile.LastWriteTimeUtc).TotalMinutes < 15)
@@ -957,11 +961,11 @@ namespace AnalysisManagerBase
                 OnDebugEvent(string.Format("Waiting for another manager to finish copying the file to the remote host; " +
                                            "currently {0} bytes for {1} ", remoteFile.Length, remoteFilePath));
 
-                // Wait for 1 minute
-                clsGlobal.IdleLoop(60);
+                // Wait for 30 seconds
+                clsGlobal.IdleLoop(10);
 
                 // Update the info on the remote file
-                var matchingFiles = GetRemoteFileListing(sourceFile.DirectoryName, sourceFile.Name);
+                var matchingFiles = GetRemoteFileListing(remoteDirectoryPath, sourceFile.Name);
                 if (matchingFiles.Count > 0)
                 {
                     var newFileInfo = matchingFiles.First().Value;
@@ -989,6 +993,8 @@ namespace AnalysisManagerBase
 
             return false;
         }
+
         #endregion
+
     }
 }
