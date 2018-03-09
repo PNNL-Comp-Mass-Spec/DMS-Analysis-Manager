@@ -135,6 +135,11 @@ namespace AnalysisManagerBase
         public EnumMgrStatus MgrStatus { get; set; }
 
         /// <summary>
+        /// Path to the .jobstatus file for jobs running offline
+        /// </summary>
+        public string OfflineJobStatusFilePath { get; set; }
+
+        /// <summary>
         /// Name of the manager remotely running the job, or of the remote host that this manager pushes jobs to
         /// </summary>
         public string RemoteMgrName { get; set; }
@@ -289,6 +294,8 @@ namespace AnalysisManagerBase
             RemoteMgrName = string.Empty;
 
             MgrStatus = EnumMgrStatus.STOPPED;
+
+            OfflineJobStatusFilePath = string.Empty;
 
             TaskStatus = EnumTaskStatus.NO_TASK;
             TaskStatusDetail = EnumTaskStatusDetail.NO_TASK;
@@ -715,7 +722,6 @@ namespace AnalysisManagerBase
 
             }
 
-
         }
 
         /// <summary>
@@ -892,8 +898,6 @@ namespace AnalysisManagerBase
         /// <remarks>The Message queue is always updated if LogToMsgQueue is true</remarks>
         public void WriteStatusFile(bool forceLogToBrokerDB)
         {
-            // Writes a status file for external monitor to read
-
             var lastUpdate = DateTime.MinValue;
             var processId = 0;
             var cpuUtilization = 0;
@@ -1162,7 +1166,6 @@ namespace AnalysisManagerBase
                         OnWarningEvent("Unable to copy temporary status file to the final status file (" + Path.GetFileName(tempStatusFilePath) +
                                        " to " + Path.GetFileName(FileNamePath) + "):" + ex.Message);
                     }
-
                 }
 
                 try
@@ -1178,12 +1181,25 @@ namespace AnalysisManagerBase
                         OnWarningEvent("Unable to delete temporary status file (" + Path.GetFileName(tempStatusFilePath) + "): " + ex.Message);
                     }
                 }
-
             }
             else
             {
                 // Error writing to the temporary status file; try the primary file
                 WriteStatusFileToDisk(FileNamePath, xmlText, logWarning);
+            }
+
+            if (string.IsNullOrWhiteSpace(OfflineJobStatusFilePath))
+                return;
+
+            try
+            {
+                // We're running an offline analysis job (clsGlobal.OfflineMode is true)
+                // Update the JobStatus file in the TaskQueue directory
+                File.Copy(FileNamePath, OfflineJobStatusFilePath, true);
+            }
+            catch (Exception ex)
+            {
+                OnDebugEvent("Error copying the status file to " + OfflineJobStatusFilePath + ": " + ex.Message);
             }
         }
 
@@ -1398,6 +1414,8 @@ namespace AnalysisManagerBase
 
             StoreRecentErrorMessages(recentErrorMessages);
             StoreRecentJobInfo(recentJobInfo);
+
+            OfflineJobStatusFilePath = string.Empty;
 
             WriteStatusFile(forceLogToBrokerDB);
         }

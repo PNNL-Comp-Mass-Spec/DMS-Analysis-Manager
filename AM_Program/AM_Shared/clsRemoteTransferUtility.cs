@@ -460,6 +460,63 @@ namespace AnalysisManagerBase
             return string.Format("Job{0}_Step{1}", job, step);
         }
 
+        /// <summary>
+        /// Construct the path to the .jobstatus file for the running offline job
+        /// </summary>
+        /// <param name="mgrParams"></param>
+        /// <param name="jobParams"></param>
+        /// <returns></returns>
+        public static string GetOfflineJobStatusFilePath(IMgrParams mgrParams, IJobParams jobParams)
+        {
+
+            var job = jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job", 0);
+            var step = jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step", 0);
+            var stepTool = jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "StepTool", "");
+
+            if (job == 0)
+            {
+                ConsoleMsgUtils.ShowWarning("Job parameter job is missing; " +
+                                            "cannot properly construct the .jobstatus file path");
+                return string.Empty;
+            }
+
+            if (step == 0)
+            {
+                ConsoleMsgUtils.ShowWarning("Job parameter step is missing; " +
+                                            "cannot properly construct the .jobstatus file path for job " + job);
+                return string.Empty;
+            }
+
+            var jobStepDescription = string.Format("job {0}, step {1}", job, step);
+            if (string.IsNullOrWhiteSpace(stepTool))
+            {
+                ConsoleMsgUtils.ShowWarning("Job parameter StepTool is empty; " +
+                                            "cannot properly construct the .jobstatus file path for " + jobStepDescription);
+                return string.Empty;
+            }
+
+            var remoteTimestamp = jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, STEP_PARAM_REMOTE_TIMESTAMP, "");
+            if (string.IsNullOrWhiteSpace(remoteTimestamp))
+            {
+                ConsoleMsgUtils.ShowWarning("Job parameter RemoteTimestamp is empty; " +
+                                            "cannot properly construct the .jobstatus file path for " + jobStepDescription);
+            }
+
+            var jobStatusFilename = GetBaseStatusFilename(job, step, remoteTimestamp) + ".jobstatus";
+
+            var taskQueuePath = mgrParams.GetParam("LocalTaskQueuePath");
+            if (string.IsNullOrWhiteSpace(taskQueuePath))
+            {
+                ConsoleMsgUtils.ShowWarning("Manager parameter LocalTaskQueuePath is empty; " +
+                                            "cannot properly construct the .jobstatus file path for " + jobStepDescription);
+                return string.Empty;
+            }
+
+            var taskQueuePathForTool = Path.Combine(taskQueuePath, stepTool);
+
+            var jobStatusFilePath = Path.Combine(taskQueuePathForTool, jobStatusFilename);
+
+            return jobStatusFilePath;
         }
 
         /// <summary>
