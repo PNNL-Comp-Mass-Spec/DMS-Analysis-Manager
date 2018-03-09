@@ -2757,8 +2757,9 @@ namespace AnalysisManagerBase
             var toolVersionInfoFile = new FileInfo(Path.Combine(m_WorkDir, ToolVersionInfoFile));
             if (!toolVersionInfoFile.Exists)
             {
-                LogError("ToolVersionInfo file not found for job " + m_JobNum +
-                         "; PostProcessRemoteResults cannot store the tool version in the database", true);
+                LogErrorNoMessageUpdate(
+                    "ToolVersionInfo file not found for job " + m_JobNum +
+                    "; PostProcessRemoteResults cannot store the tool version in the database", true);
             }
             else
             {

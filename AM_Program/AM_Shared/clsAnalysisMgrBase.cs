@@ -148,9 +148,10 @@ namespace AnalysisManagerBase
         /// Log an error message, but do not update m_message
         /// </summary>
         /// <param name="errorMessage">Error message</param>
-        protected void LogErrorNoMessageUpdate(string errorMessage)
+        /// <param name="logToDb">When true, log the message to the database and the local log file</param>
+        protected void LogErrorNoMessageUpdate(string errorMessage, bool logToDb = false)
         {
-            base.LogError(errorMessage);
+            base.LogError(errorMessage, logToDb);
         }
 
         /// <summary>
