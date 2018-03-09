@@ -2316,6 +2316,8 @@ namespace AnalysisManagerProg
                 var transferUtility = new clsRemoteTransferUtility(m_MgrSettings, m_AnalysisTask);
                 RegisterEvents(transferUtility);
 
+                var remoteTimestamp = transferUtility.UpdateRemoteTimestamp();
+
                 try
                 {
                     transferUtility.UpdateParameters(true);
@@ -2395,7 +2397,7 @@ namespace AnalysisManagerProg
 
                 // All files have been copied remotely
                 // Create the .info file so remote managers can start processing
-                var success = transferUtility.CreateJobTaskInfoFile(out var infoFilePathRemote);
+                var success = transferUtility.CreateJobTaskInfoFile(remoteTimestamp, out var infoFilePathRemote);
 
                 if (!success)
                 {

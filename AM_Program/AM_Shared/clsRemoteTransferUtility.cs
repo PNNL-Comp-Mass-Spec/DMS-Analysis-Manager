@@ -318,10 +318,11 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Create a new task info file for the current job on the remote host
         /// </summary>
+        /// <param name="remoteTimestamp">Output: Remote info file path</param>
         /// <param name="infoFilePathRemote">Output: Remote info file path</param>
         /// <remarks>Created in RemoteTaskQueuePath</remarks>
         /// <returns>True on success, false on an error</returns>
-        public bool CreateJobTaskInfoFile(out string infoFilePathRemote)
+        public bool CreateJobTaskInfoFile(string remoteTimestamp, out string infoFilePathRemote)
         {
             if (IsParameterUpdateRequired(USE_MANAGER_REMOTE_INFO))
             {
@@ -333,11 +334,9 @@ namespace AnalysisManagerBase
             try
             {
 
-                var remoteTimeStamp = DefineRemoteTimestamp();
-
                 DefineRemoteInfo();
 
-                var infoFileName = GetBaseStatusFilename(remoteTimeStamp) + ".info";
+                var infoFileName = GetBaseStatusFilename(JobNum, StepNum, remoteTimestamp) + ".info";
 
                 OnDebugEvent("Creating JobTaskInfo file " + infoFileName);
 
@@ -390,17 +389,6 @@ namespace AnalysisManagerBase
             JobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, STEP_PARAM_REMOTE_INFO, remoteInfo);
         }
 
-        private string DefineRemoteTimestamp()
-        {
-            // Note: use DateTime.Now and convert to a 24-hour clock
-            // Do not use UTCNow since DMS converts the RemoteTimestamp to a DateTime then compares the result to GetDate() to compute job runtime
-            var remoteTimestamp = DateTime.Now.ToString("yyyyMMdd_HHmm");
-
-            JobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, STEP_PARAM_REMOTE_TIMESTAMP, remoteTimestamp);
-
-            return remoteTimestamp;
-        }
-
         /// <summary>
         /// Delete the working directory for the current job and step (parameter RemoteJobStepWorkDirPath)
         /// </summary>
@@ -436,17 +424,19 @@ namespace AnalysisManagerBase
                 return string.Empty;
             }
 
-            return GetBaseStatusFilename(remoteTimestamp);
+            return GetBaseStatusFilename(JobNum, StepNum, remoteTimestamp);
         }
 
         /// <summary>
         /// Construct the base status file name, of the form JobX_StepY_TimeStamp
         /// </summary>
+        /// <param name="job"></param>
+        /// <param name="step"></param>
         /// <param name="remoteTimestamp"></param>
         /// <returns>Status filename</returns>
-        private string GetBaseStatusFilename(string remoteTimestamp)
+        private static string GetBaseStatusFilename(int job, int step, string remoteTimestamp)
         {
-            return GetJobStepFileOrFolderName() + "_" + remoteTimestamp;
+            return GetJobStepFileOrFolderName(job, step) + "_" + remoteTimestamp;
         }
 
         /// <summary>
@@ -456,7 +446,19 @@ namespace AnalysisManagerBase
         /// <remarks>Intended for use in file and directory names</remarks>
         private string GetJobStepFileOrFolderName()
         {
-            return string.Format("Job{0}_Step{1}", JobNum, StepNum);
+            return GetJobStepFileOrFolderName(JobNum, StepNum);
+        }
+
+        /// <summary>
+        /// Return text in the form "Job1234_Step3"
+        /// </summary>
+        /// <returns></returns>
+        /// <remarks>Intended for use in file and directory names</remarks>
+        private static string GetJobStepFileOrFolderName(int job, int step)
+        {
+            return string.Format("Job{0}_Step{1}", job, step);
+        }
+
         }
 
         /// <summary>
@@ -862,6 +864,22 @@ namespace AnalysisManagerBase
             // If successful, mParametersValidated will be set to true
             UpdateParameters();
 
+        }
+
+        /// <summary>
+        /// Create a new timestamp using the current time
+        /// Store in the job parameters, as parameter RemoteTimestamp
+        /// </summary>
+        /// <returns>The timestamp</returns>
+        public string UpdateRemoteTimestamp()
+        {
+            // Note: use DateTime.Now and convert to a 24-hour clock
+            // Do not use UTCNow since DMS converts the RemoteTimestamp to a DateTime then compares the result to GetDate() to compute job runtime
+            var remoteTimestamp = DateTime.Now.ToString("yyyyMMdd_HHmm");
+
+            JobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, STEP_PARAM_REMOTE_TIMESTAMP, remoteTimestamp);
+
+            return remoteTimestamp;
         }
 
         /// <summary>
