@@ -10,7 +10,7 @@ namespace AnalysisManagerBase
     public class clsOfflineProcessing
     {
         /// <summary>
-        /// Update files in the TaskQueue folder, renaming the .info file to .success or .fail and appending the completion code and eval code info
+        /// Update files in the TaskQueue directory, renaming the .info file to .success or .fail and appending the completion code and eval code info
         /// Also removes the .lock file
         /// </summary>
         /// <param name="infoFilePath">Info file path</param>
@@ -116,7 +116,10 @@ namespace AnalysisManagerBase
                 }
             }
 
-            fileToRename.MoveTo(newFilePath);
+            if (fileToRename.Exists)
+            {
+                fileToRename.MoveTo(newFilePath);
+            }
         }
 
     }
