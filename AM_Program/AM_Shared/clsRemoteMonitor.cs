@@ -267,7 +267,9 @@ namespace AnalysisManagerBase
                 var statusFiles = TransferUtility.GetStatusFiles();
                 mCachedStatusFiles.Clear();
                 foreach (var statusFile in statusFiles)
+                {
                     mCachedStatusFiles.Add(statusFile.Key);
+                }
 
                 if (statusFiles.Count == 0)
                 {
@@ -280,10 +282,11 @@ namespace AnalysisManagerBase
                         return EnumRemoteJobStatus.Failed;
                     }
 
-                    LogWarning("Remote task queue path is not accessible; possible network outage");
+                    LogWarning("Remote task queue path is empty or not accessible; possible network outage");
                     return EnumRemoteJobStatus.Running;
                 }
 
+                // Look for a .lock file
                 if (StatusFileExists(TransferUtility.StatusLockFile, statusFiles, out var remoteLockFile))
                 {
                     // Check whether the job has finished (success or failure)
@@ -307,7 +310,7 @@ namespace AnalysisManagerBase
 
                         if (!success)
                         {
-                            // Log a warning, but return .running
+                            // Log a warning, but return EnumRemoteJobStatus.running
                             LogWarning("Error retrieving the .jobstatus file for " + TransferUtility.JobStepDescription + " on " +
                                        TransferUtility.RemoteHostName);
                             return EnumRemoteJobStatus.Running;
@@ -509,7 +512,7 @@ namespace AnalysisManagerBase
                         case EnumTaskStatus.STOPPED:
                         case EnumTaskStatus.REQUESTING:
                         case EnumTaskStatus.NO_TASK:
-                            // The .jobstatus file in the Task Queue folder should not have these task status values
+                            // The .jobstatus file in the Task Queue directory should not have these task status values
                             // Return .Undefined, which will fail out the job step
                             jobStatus = EnumRemoteJobStatus.Undefined;
                             break;
@@ -656,6 +659,16 @@ namespace AnalysisManagerBase
                             case "EvalMsg":
                                 evalMessage = lineParts[1];
                                 break;
+                            case "StepTool":
+                            case "WorkDir":
+                            case "Staged":
+                            case "Started":
+                            case "Finished":
+                                // Ignore these lines
+                                break;
+                            default:
+                                LogWarning("Skippping unrecognized line label: " + lineParts[0]);
+                                break;
                         }
                     }
                 }
@@ -683,7 +696,7 @@ namespace AnalysisManagerBase
 
                 if (remoteStep != StepNum)
                 {
-                    LogError(string.Format("Status file retrieved from remote host has the wrong step number: {0} vs. {1}", remoteStep, StepNum));
+                    LogError(string.Format("Status file retrieved from remote host has the wrong step number for job {0}: {1} vs. {2}", JobNum, remoteStep, StepNum));
                     eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED_REMOTE;
                     return false;
                 }

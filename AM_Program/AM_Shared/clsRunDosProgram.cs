@@ -24,6 +24,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Monitor interval, in milliseconds
         /// </summary>
+        /// <remarks>Values over 10 seconds (10000 milliseconds) will result in a 10 second monitoring interval</remarks>
         private int m_MonitorInterval = 2000;
 
         private string m_CachedConsoleErrors = string.Empty;

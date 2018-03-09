@@ -455,6 +455,7 @@ namespace AnalysisManagerBase
         /// Prior to calling this method, add files to ignore using
         /// m_jobParams.AddResultFileToSkip and m_jobParams.AddResultFileExtensionToSkip
         /// Step tools may override this method if additional steps are required
+        /// The override method should then call base.CopyFailedResultsToArchiveFolder as the last step
         /// </remarks>
         public virtual void CopyFailedResultsToArchiveFolder()
         {
@@ -2753,7 +2754,7 @@ namespace AnalysisManagerBase
         /// <remarks>
         /// Actual post-processing of remote results should only be required if the remote host running the job
         /// could not perform a step that requires database access or Windows share access.
-        /// Override this method as required for specific step tools.
+        /// Override this method as required for specific step tools (however, still call base.PostProcessRemoteResults)
         /// </remarks>
         public virtual CloseOutType PostProcessRemoteResults()
         {
@@ -2780,7 +2781,6 @@ namespace AnalysisManagerBase
                 }
             }
 
-            LogDebug("Custom post-processing not required for " + StepToolName + ", job " + Job);
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 

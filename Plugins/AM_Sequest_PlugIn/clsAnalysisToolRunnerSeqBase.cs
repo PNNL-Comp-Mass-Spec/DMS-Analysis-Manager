@@ -1066,7 +1066,7 @@ namespace AnalysisManagerSequestPlugin
                         LogError(strProcessingMsg);
 
                         // Update the evaluation message and evaluation code
-                        // These will be used by sub CloseTask in clsAnalysisJob
+                        // These will be used by method CloseTask in clsAnalysisJob
                         //
                         // An evaluation code with bit ERROR_CODE_A set will result in DMS_Pipeline DB views
                         //  V_Job_Steps_Stale_and_Failed and V_Sequest_Cluster_Warnings showing this message:
@@ -1087,7 +1087,7 @@ namespace AnalysisManagerSequestPlugin
                             m_EvalCode = m_EvalCode | ERROR_CODE_B;
 
                             // Update the evaluation message and evaluation code
-                            // These will be used by sub CloseTask in clsAnalysisJob
+                            // These will be used by method CloseTask in clsAnalysisJob
                             // An evaluation code with bit ERROR_CODE_A set will result in view V_Sequest_Cluster_Warnings in the DMS_Pipeline DB showing this message:
                             //  "SEQUEST node count is less than the expected value"
                         }

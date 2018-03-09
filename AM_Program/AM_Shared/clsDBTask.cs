@@ -135,6 +135,15 @@ namespace AnalysisManagerBase
             /// Parameter value
             /// </summary>
             public string Value;
+
+            /// <summary>
+            /// Return Name and Value
+            /// </summary>
+            /// <returns></returns>
+            public override string ToString()
+            {
+                return ParamName + ": " + Value;
+            }
         }
         #endregion
 
