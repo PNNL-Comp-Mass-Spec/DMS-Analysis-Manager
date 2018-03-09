@@ -392,7 +392,8 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Delete the working directory for the current job and step (parameter RemoteJobStepWorkDirPath)
         /// </summary>
-        public void DeleteRemoteWorkDir()
+        /// <param name="keepEmptyDirectory">When true, delete all files/directories in the remote workdir but don't remove workdir</param>
+        public void DeleteRemoteWorkDir(bool keepEmptyDirectory = false)
         {
 
             try
@@ -400,7 +401,7 @@ namespace AnalysisManagerBase
                 if (string.IsNullOrEmpty(RemoteWorkDirPath))
                     throw new Exception("RemoteWorkDirPath is empty; cannot delete files");
 
-                DeleteDirectoryAndContents(RemoteJobStepWorkDirPath);
+                DeleteDirectoryAndContents(RemoteJobStepWorkDirPath, keepEmptyDirectory);
             }
             catch (Exception ex)
             {
