@@ -1386,14 +1386,8 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public void UpdateIdle(string managerIdleMessage, string idleErrorMessage, string recentJobInfo, bool forceLogToBrokerDB)
         {
-            ClearCachedInfo();
-            TaskStatus = EnumTaskStatus.NO_TASK;
-            MostRecentLogMessage = managerIdleMessage;
-
             StoreNewErrorMessage(idleErrorMessage, true);
-            StoreRecentJobInfo(recentJobInfo);
-
-            WriteStatusFile(forceLogToBrokerDB);
+            UpdateIdleWork(managerIdleMessage, recentJobInfo, forceLogToBrokerDB);
         }
 
         /// <summary>
@@ -1406,13 +1400,25 @@ namespace AnalysisManagerBase
         /// <remarks></remarks>
         public void UpdateIdle(string managerIdleMessage, IEnumerable<string> recentErrorMessages, string recentJobInfo, bool forceLogToBrokerDB)
         {
+            StoreRecentErrorMessages(recentErrorMessages);
+            UpdateIdleWork(managerIdleMessage, recentJobInfo, forceLogToBrokerDB);
+        }
+
+        /// <summary>
+        /// Logs to the status file that the manager is idle
+        /// </summary>
+        /// <param name="managerIdleMessage">Reason why the manager is idle (leave blank if unknown)</param>
+        /// <param name="recentJobInfo">Information on the job that started most recently</param>
+        /// <param name="forceLogToBrokerDB">If true, will force m_BrokerDBLogger to report the manager status directly to the database (if initialized)</param>
+        private void UpdateIdleWork(string managerIdleMessage, string recentJobInfo, bool forceLogToBrokerDB)
+        {
             ClearCachedInfo();
             MgrStatus = EnumMgrStatus.RUNNING;
             TaskStatus = EnumTaskStatus.NO_TASK;
             TaskStatusDetail = EnumTaskStatusDetail.NO_TASK;
+
             MostRecentLogMessage = managerIdleMessage;
 
-            StoreRecentErrorMessages(recentErrorMessages);
             StoreRecentJobInfo(recentJobInfo);
 
             OfflineJobStatusFilePath = string.Empty;
