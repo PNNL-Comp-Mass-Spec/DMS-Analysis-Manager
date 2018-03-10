@@ -3308,6 +3308,13 @@ namespace AnalysisManagerBase
                         LogError("Required result file not found: " + fileName);
                 }
 
+                var paramFileName = m_jobParams.GetParam("ParmFileName");
+                var modDefsFile = new FileInfo(Path.Combine(m_WorkDir, Path.GetFileNameWithoutExtension(paramFileName) + "_ModDefs.txt"));
+                if (modDefsFile.Exists && modDefsFile.Length == 0)
+                {
+                    m_jobParams.AddResultFileToSkip(modDefsFile.Name);
+                }
+
                 if (filesToRetrieve.Count == retrievedFilePaths.Count || !verifyCopied)
                     return true;
 
