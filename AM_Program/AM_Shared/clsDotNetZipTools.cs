@@ -204,9 +204,8 @@ namespace AnalysisManagerBase
                     // Create the decompressed file.
                     using (var outFile = File.Create(decompressedFilePath))
                     {
-                        using (var decompress = new Ionic.Zlib.GZipStream(inFile, Ionic.Zlib.CompressionMode.Decompress))
+                        using (var decompress = new System.IO.Compression.GZipStream(inFile, System.IO.Compression.CompressionMode.Decompress))
                         {
-
                             // Copy the decompression stream into the output file.
                             decompress.CopyTo(outFile);
                             MostRecentUnzippedFiles.Add(new KeyValuePair<string, string>(decompressedFile.Name, decompressedFile.FullName));
@@ -218,7 +217,7 @@ namespace AnalysisManagerBase
 
                 if (DebugLevel >= 2)
                 {
-                    ReportZipStats(fileToGUnzip, dtStartTime, dtEndTime, false);
+                    ReportZipStats(fileToGUnzip, dtStartTime, dtEndTime, false, "GZipStream");
                 }
 
                 // Update the file modification time of the decompressed file
@@ -227,9 +226,6 @@ namespace AnalysisManagerBase
                 {
                     decompressedFile.LastWriteTimeUtc = fileToGUnzip.LastWriteTimeUtc;
                 }
-
-                // Call the garbage collector to assure the handle to the .gz file is released
-                clsProgRunner.GarbageCollectNow();
 
             }
             catch (Exception ex)
@@ -243,7 +239,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Stores sourceFilePath in a zip file with the same name, but with extension .gz appended to the name (e.g. Dataset.mzid.gz)
+        /// Stores sourceFilePath in a GZip file with the same name, but with extension .gz appended to the name (e.g. Dataset.mzid.gz)
         /// </summary>
         /// <param name="sourceFilePath">Full path to the file to be zipped</param>
         /// <param name="deleteSourceAfterZip">If True, will delete the source file after zipping it</param>
@@ -255,13 +251,12 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Stores sourceFilePath in a zip file with the same name, but with extension .gz appended to the name (e.g. Dataset.mzid.gz)
+        /// Stores sourceFilePath in a GZip file with the same name, but with extension .gz appended to the name (e.g. Dataset.mzid.gz)
         /// </summary>
         /// <param name="sourceFilePath">Full path to the file to be zipped</param>
         /// <param name="targetFolderPath">Target directory to create the .gz file</param>
         /// <param name="deleteSourceAfterZip">If True, will delete the source file after zipping it</param>
         /// <returns>True if success; false if an error</returns>
-        /// <remarks>Preferably uses the external gzip.exe software, since that software properly stores the original filename and date in the .gz file</remarks>
         public bool GZipFile(string sourceFilePath, string targetFolderPath, bool deleteSourceAfterZip)
         {
 
@@ -293,6 +288,9 @@ namespace AnalysisManagerBase
                 return false;
             }
 
+            /*
+             * Deprecated:
+             *
             // Look for gzip.exe
             var fiGZip = new FileInfo(Path.Combine(clsGlobal.GetAppFolderPath(), "gzip.exe"));
             bool success;
@@ -305,14 +303,16 @@ namespace AnalysisManagerBase
             {
                 success = GZipUsingDotNetZip(fiFile, gzipFilePath);
             }
+            */
+
+            // Future: Include the expanded header info in the .gz file created by GZipStrea
+            // Specifically, the name and date of the original file
+            var success = GZipUsingGZipStream(fiFile, gzipFilePath);
 
             if (!success)
             {
                 return false;
             }
-
-            // Call the garbage collector to assure the handle to the .gz file is released
-            clsProgRunner.GarbageCollectNow();
 
             if (deleteSourceAfterZip)
             {
@@ -334,6 +334,7 @@ namespace AnalysisManagerBase
         /// The .gz file will initially be created in the same folder as the original file.
         /// If gzipFilePath points to a different folder, the file will be moved to that new location.
         /// </remarks>
+        [Obsolete("Unused")]
         private bool GZipUsingExe(FileSystemInfo fileToGZip, string gzipFilePath, FileSystemInfo fiGZip)
         {
 
@@ -425,6 +426,7 @@ namespace AnalysisManagerBase
         /// <param name="gzipFilePath"></param>
         /// <returns></returns>
         /// <remarks>DotNetZip creates a valid .gz file, but it does not include the header information (filename and timestamp of the original file)</remarks>
+        [Obsolete("Unused")]
         private bool GZipUsingDotNetZip(FileInfo fileToGZip, string gzipFilePath)
         {
             try
@@ -462,6 +464,66 @@ namespace AnalysisManagerBase
                 if (!fiGZippedFile.Exists)
                 {
                     LogError(DOTNET_ZIP_NAME + " did not create a .gz file: " + gzipFilePath);
+                    return false;
+                }
+
+                fiGZippedFile.LastWriteTimeUtc = fileToGZip.LastWriteTimeUtc;
+
+            }
+            catch (Exception ex)
+            {
+                LogError("Error gzipping file " + fileToGZip.FullName, ex);
+                return false;
+            }
+
+            return true;
+
+        }
+
+        /// <summary>
+        /// Compress the file using GZipStream
+        /// </summary>
+        /// <param name="fileToGZip">File to compress</param>
+        /// <param name="gzipFilePath"></param>
+        /// <returns></returns>
+        /// <remarks>The .gz file created by GZipStream does not include header information (filename and timestamp of the original file)</remarks>
+        private bool GZipUsingGZipStream(FileInfo fileToGZip, string gzipFilePath)
+        {
+            try
+            {
+                if (DebugLevel >= 3)
+                {
+                    OnStatusEvent("Creating .gz file using GZipStream: " + gzipFilePath);
+                }
+
+                var dtStartTime = DateTime.UtcNow;
+
+                using (Stream inFile = fileToGZip.OpenRead())
+                {
+                    using (var outFile = File.Create(gzipFilePath))
+                    {
+                        using (var gzippedStream = new System.IO.Compression.GZipStream(
+                            outFile, System.IO.Compression.CompressionMode.Compress))
+                        {
+                            inFile.CopyTo(gzippedStream);
+
+                        }
+                    }
+                }
+
+                var dtEndTime = DateTime.UtcNow;
+
+                if (DebugLevel >= 2)
+                {
+                    ReportZipStats(fileToGZip, dtStartTime, dtEndTime, true, "GZipStream");
+                }
+
+                // Update the file modification time of the .gz file to use the modification time of the original file
+                var fiGZippedFile = new FileInfo(gzipFilePath);
+
+                if (!fiGZippedFile.Exists)
+                {
+                    LogError("GZipStream did not create a .gz file: " + gzipFilePath);
                     return false;
                 }
 
