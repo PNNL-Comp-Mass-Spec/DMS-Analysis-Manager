@@ -42,6 +42,8 @@ namespace AnalysisManagerBase
                 evalMsg = string.Empty;
 
             var settingsToAppend = new SortedSet<string> {
+                "Started",
+                "Finished",
                 "CompCode",
                 "CompMsg",
                 "EvalCode",
