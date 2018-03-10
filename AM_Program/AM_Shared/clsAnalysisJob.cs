@@ -397,13 +397,20 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Look for .lock files that are over 24 hours old and do not have a .jobstatus file modified within the last 12 hours
-        /// If found, delete them
+        /// Delete old files in the task queue directory
         /// </summary>
         /// <param name="taskQueueDirectory"></param>
-        private void DeleteOldLockFiles(DirectoryInfo taskQueueDirectory)
+        private void DeleteOldTaskQueueFiles(DirectoryInfo taskQueueDirectory)
         {
+            // Look for .lock files that are over 24 hours old and do not have a .jobstatus file modified within the last 12 hours
             DeleteOldFiles(taskQueueDirectory, "*.lock", 24, true);
+
+            // Delete other old files over 48 hours old
+            DeleteOldFiles(taskQueueDirectory, "*.oldinfo", 48);
+            DeleteOldFiles(taskQueueDirectory, "*.oldlock", 48);
+
+            // Delete .jobstatus files over 1 week old
+            DeleteOldFiles(taskQueueDirectory, "*.jobstatus", 168);
         }
 
         /// <summary>
@@ -1149,15 +1156,7 @@ namespace AnalysisManagerBase
                         continue;
                     }
 
-                    // Delete old lock files
-                    DeleteOldLockFiles(taskQueueDirectory);
-
-                    // Delete other old files over 48 hours old
-                    DeleteOldFiles(taskQueueDirectory, "*.oldinfo", 48);
-                    DeleteOldFiles(taskQueueDirectory, "*.oldlock", 48);
-
-                    // Delete .jobstatus files over 1 week old
-                    DeleteOldFiles(taskQueueDirectory, "*.jobstatus", 168);
+                    DeleteOldTaskQueueFiles(taskQueueDirectory);
 
                     var infoFiles = taskQueueDirectory.GetFiles("*.info");
                     if (infoFiles.Length == 0)
@@ -1191,25 +1190,14 @@ namespace AnalysisManagerBase
 
                         if (string.CompareOrdinal(timeStamp, existingTimestamp) > 0)
                         {
-                            // Old .info file with existingTimestamp; rename to .oldinfo
-                            clsOfflineProcessing.RenameFileChangeExtension(existingInfo.Value, ".oldinfo", true);
-
-                            // Also check for a .lock file; if found, rename it
-                            var oldLockFile = new FileInfo(Path.ChangeExtension(existingInfo.Value.FullName, ".lock"));
-                            clsOfflineProcessing.RenameFileChangeExtension(oldLockFile, ".oldlock", true);
+                            RenameOldInfoFile(existingInfo.Value);
 
                             // Add the new .info file to the dictionary
                             jobStepInfoFiles[jobStep] = new KeyValuePair<string, FileInfo>(timeStamp, infoFile);
                         }
                         else
                         {
-                            // Old .info file; rename to .oldinfo
-                            // Rename the .info file with timestamp to be .oldinfo, leaving the dictionary unchanged
-                            clsOfflineProcessing.RenameFileChangeExtension(infoFile, ".oldinfo", true);
-
-                            // Also check for a .lock file; if found, rename it
-                            var oldLockFile = new FileInfo(Path.ChangeExtension(infoFile.FullName, ".lock"));
-                            clsOfflineProcessing.RenameFileChangeExtension(oldLockFile, ".oldlock", true);
+                            RenameOldInfoFile(infoFile);
                         }
                     }
 
@@ -1332,7 +1320,7 @@ namespace AnalysisManagerBase
                 if (File.Exists(lockFilePath))
                 {
                     // Another process already created the lock file
-                    // Note that DeleteOldLockFiles will eventually delete this .lock file if the other manager crashed
+                    // Note that DeleteOldTaskQueueFiles will eventually delete this .lock file if the other manager crashed
                     return false;
                 }
 
@@ -1451,6 +1439,12 @@ namespace AnalysisManagerBase
 
         }
 
+        /// <summary>
+        /// Finalize a failed offline job
+        /// </summary>
+        /// <param name="infoFile"></param>
+        /// <param name="startTime"></param>
+        /// <param name="errorMessage"></param>
         private void FinalizeFailedOfflineJob(FileSystemInfo infoFile, DateTime startTime, string errorMessage)
         {
             LogError(errorMessage);
@@ -1568,6 +1562,23 @@ namespace AnalysisManagerBase
                     }
                 }
             }
+
+        }
+
+        /// <summary>
+        /// Rename an old .info file to .oldinfo
+        /// Also check for a .lock file that corresponds to the .info file
+        /// </summary>
+        /// <param name="oldInfoFile"></param>
+        private static void RenameOldInfoFile(FileInfo oldInfoFile)
+        {
+
+            // Old .info file with existingTimestamp; rename to .oldinfo
+            clsOfflineProcessing.RenameFileChangeExtension(oldInfoFile, ".oldinfo", true);
+
+            // Also check for a .lock file; if found, rename it
+            var oldLockFile = new FileInfo(Path.ChangeExtension(oldInfoFile.FullName, ".lock"));
+            clsOfflineProcessing.RenameFileChangeExtension(oldLockFile, ".oldlock", true);
 
         }
 
