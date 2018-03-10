@@ -1046,13 +1046,23 @@ namespace AnalysisManagerMSGFDBPlugIn
         {
             try
             {
+                var paramFileName = m_jobParams.GetParam("ParmFileName");
+                var modDefsFile = new FileInfo(Path.Combine(m_WorkDir, Path.GetFileNameWithoutExtension(paramFileName) + "_ModDefs.txt"));
+
                 var filesToRetrieve = new List<string> {
-                    ToolVersionInfoFile,
                     Dataset + "_msgfplus.mzid.gz",
-                    MSGFPlusUtils.MSGFPLUS_CONSOLE_OUTPUT_FILE
+                    Dataset + "_msgfplus_PepToProtMap.txt",
+                    Dataset + "_ScanType.txt",
+                    "Mass_Correction_Tags.txt",
+                    modDefsFile.Name,
+                    "MSGFPlus_Mods.txt",
+                    MSGFPlusUtils.MSGFPLUS_CONSOLE_OUTPUT_FILE,
+                    paramFileName,
+                    ToolVersionInfoFile,
                 };
 
                 var success = RetrieveRemoteResults(transferUtility, filesToRetrieve, verifyCopied, out retrievedFilePaths);
+
                 return success;
 
             }
