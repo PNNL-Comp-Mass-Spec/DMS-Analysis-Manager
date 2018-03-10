@@ -388,7 +388,7 @@ namespace AnalysisManagerBase
 
                 if (DebugLevel >= 2)
                 {
-                    ReportZipStats(fileToGZip, dtStartTime, dtEndTime, true);
+                    ReportZipStats(fileToGZip, dtStartTime, dtEndTime, true, fiGZip.Name);
                 }
 
                 var finalCompressedFile = new FileInfo(gzipFilePath);
@@ -455,7 +455,7 @@ namespace AnalysisManagerBase
 
                 if (DebugLevel >= 2)
                 {
-                    ReportZipStats(fileToGZip, dtStartTime, dtEndTime, true);
+                    ReportZipStats(fileToGZip, dtStartTime, dtEndTime, true, DOTNET_ZIP_NAME);
                 }
 
                 // Update the file modification time of the .gz file to use the modification time of the original file
@@ -561,12 +561,12 @@ namespace AnalysisManagerBase
         /// <param name="fileWasZipped"></param>
         /// <param name="zipProgramName"></param>
         /// <remarks>If DebugLevel is 2 or larger, also raises event StatusEvent</remarks>
-        public void ReportZipStats(
+        private void ReportZipStats(
             FileSystemInfo fileOrFolderZippedOrUnzipped,
             DateTime dtStartTime,
             DateTime dtEndTime,
             bool fileWasZipped,
-            string zipProgramName = DOTNET_ZIP_NAME)
+            string zipProgramName)
         {
 
             long totalSizeBytes = 0;
@@ -577,19 +577,17 @@ namespace AnalysisManagerBase
 
             var unzipTimeSeconds = dtEndTime.Subtract(dtStartTime).TotalSeconds;
 
-            if (fileOrFolderZippedOrUnzipped is FileInfo)
+            if (fileOrFolderZippedOrUnzipped is FileInfo processedFile)
             {
-                totalSizeBytes = ((FileInfo)fileOrFolderZippedOrUnzipped).Length;
+                totalSizeBytes = processedFile.Length;
 
             }
-            else if (fileOrFolderZippedOrUnzipped is DirectoryInfo)
+            else if (fileOrFolderZippedOrUnzipped is DirectoryInfo processedDirectory)
             {
-                var diFolderInfo = (DirectoryInfo)fileOrFolderZippedOrUnzipped;
-
                 totalSizeBytes = 0;
-                foreach (var fiEntry in diFolderInfo.GetFiles("*", SearchOption.AllDirectories))
+                foreach (var item in processedDirectory.GetFiles("*", SearchOption.AllDirectories))
                 {
-                    totalSizeBytes += fiEntry.Length;
+                    totalSizeBytes += item.Length;
                 }
             }
 
@@ -731,7 +729,7 @@ namespace AnalysisManagerBase
 
                     if (DebugLevel >= 2)
                     {
-                        ReportZipStats(fileToUnzip, dtStartTime, dtEndTime, false);
+                        ReportZipStats(fileToUnzip, dtStartTime, dtEndTime, false, DOTNET_ZIP_NAME);
                     }
 
                 }
@@ -939,7 +937,7 @@ namespace AnalysisManagerBase
 
                     if (DebugLevel >= 2)
                     {
-                        ReportZipStats(fileToZip, dtStartTime, dtEndTime, true);
+                        ReportZipStats(fileToZip, dtStartTime, dtEndTime, true, DOTNET_ZIP_NAME);
                     }
 
                 }
@@ -1064,7 +1062,7 @@ namespace AnalysisManagerBase
 
                     if (DebugLevel >= 2)
                     {
-                        ReportZipStats(directoryToZip, dtStartTime, dtEndTime, true);
+                        ReportZipStats(directoryToZip, dtStartTime, dtEndTime, true, DOTNET_ZIP_NAME);
                     }
 
                 }
