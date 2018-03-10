@@ -1063,14 +1063,16 @@ namespace AnalysisManagerProg
                 LogError("Test exception", ex, true);
             }
 
-            var sqlServerLogger = new SQLServerDatabaseLogger {
+            var sqlServerLogger = new SQLServerDatabaseLogger
+            {
                 EchoMessagesToFileLogger = true
             };
             sqlServerLogger.ChangeConnectionInfo("clsCodeTest2", connStr, "PostLogEntry", "type", "message", "postedBy");
             sqlServerLogger.WriteLog(BaseLogger.LogLevels.FATAL, "SQL Server Fatal Test");
 
             var odbcConnectionString = ODBCDatabaseLogger.ConvertSqlServerConnectionStringToODBC(connStr);
-            var odbcLogger = new ODBCDatabaseLogger {
+            var odbcLogger = new ODBCDatabaseLogger
+            {
                 EchoMessagesToFileLogger = true
             };
             odbcLogger.ChangeConnectionInfo("clsCodeTest2", odbcConnectionString, "PostLogEntry", "type", "message", "postedBy", 128, 4096, 128);
