@@ -2771,7 +2771,7 @@ namespace AnalysisManagerBase
             {
                 using (var reader = new StreamReader(new FileStream(toolVersionInfoFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
-                    if (reader.EndOfStream)
+                    if (!reader.EndOfStream)
                     {
                         LogDebug("Storing tool version info in DB for " + toolJobDescription);
 
