@@ -4330,10 +4330,10 @@ namespace AnalysisManagerBase
 
                 // Examine the size of the ModDefs.txt file
                 // Add it to the ignore list if it is empty (no point in tracking a 0-byte file)
-                var fiModDefs = new FileInfo(Path.Combine(m_WorkingDir, Path.GetFileNameWithoutExtension(paramFileName) + "_ModDefs.txt"));
-                if (fiModDefs.Exists && fiModDefs.Length == 0)
+                var modDefsFile = new FileInfo(Path.Combine(m_WorkingDir, Path.GetFileNameWithoutExtension(paramFileName) + "_ModDefs.txt"));
+                if (modDefsFile.Exists && modDefsFile.Length == 0)
                 {
-                    m_jobParams.AddResultFileToSkip(fiModDefs.Name);
+                    m_jobParams.AddResultFileToSkip(modDefsFile.Name);
                 }
 
                 if (success)
