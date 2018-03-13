@@ -146,7 +146,6 @@ namespace AnalysisManagerMSGFPlugin
                 mLogFile = null;
 
                 clsProgRunner.GarbageCollectNow();
-                System.Threading.Thread.Sleep(100);
             }
         }
 

@@ -14,7 +14,6 @@ using AnalysisManagerMsXmlGenPlugIn;
 using PHRPReader;
 using System.IO;
 using System.Linq;
-using System.Threading;
 using System.Xml;
 using MSGFResultsSummarizer;
 using PRISM;
@@ -232,7 +231,7 @@ namespace AnalysisManagerMSGFPlugin
                         // If the Instrument Data was a .MGF file, we need to update the scan numbers using mMSGFInputCreator.GetScanByMGFSpectrumIndex()
 
                         // Sleep for 1 second to give the MSGF results file a chance to finalize
-                        Thread.Sleep(1000);
+                        clsGlobal.IdleLoop(1);
 
                         var success = PostProcessMSGFResults(eResultType, mMSGFResultsFilePath, mgfInstrumentData);
 
@@ -252,7 +251,7 @@ namespace AnalysisManagerMSGFPlugin
                 UpdateSummaryFile();
 
                 // Make sure objects are released
-                Thread.Sleep(500);
+                clsGlobal.IdleLoop(0.5);
                 clsProgRunner.GarbageCollectNow();
 
                 if (processingError)
@@ -1098,11 +1097,11 @@ namespace AnalysisManagerMSGFPlugin
                 // With the contents of:
                 //   QC_Shew_Dataset_syn_MSGF_PostProcess.txt
 
-                Thread.Sleep(500);
+                clsGlobal.IdleLoop(0.5);
 
                 // Delete the original file
                 fiInputFile.Delete();
-                Thread.Sleep(500);
+                clsGlobal.IdleLoop(0.5);
 
                 // Rename the _PostProcess.txt file
                 var fiMSGFSynFile = new FileInfo(msgfSynopsisResults);
@@ -1723,7 +1722,7 @@ namespace AnalysisManagerMSGFPlugin
                     return false;
                 }
 
-                Thread.Sleep(500);
+                clsGlobal.IdleLoop(0.5);
 
                 // Append the results of resultFileTempPath to msgfResultsFilePath
                 if (!File.Exists(msgfResultsFilePathFinal))
@@ -1746,7 +1745,7 @@ namespace AnalysisManagerMSGFPlugin
                     }
                 }
 
-                Thread.Sleep(500);
+                clsGlobal.IdleLoop(0.5);
 
                 if (!mKeepMSGFInputFiles)
                 {
@@ -2600,7 +2599,7 @@ namespace AnalysisManagerMSGFPlugin
                 if (success)
                 {
                     // Replace the original file with the new one
-                    Thread.Sleep(200);
+                    clsGlobal.IdleLoop(0.2);
                     clsProgRunner.GarbageCollectNow();
 
                     try
