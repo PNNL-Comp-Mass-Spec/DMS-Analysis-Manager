@@ -762,7 +762,6 @@ namespace AnalysisManagerBase
 
             // Check whether the file needs to be copied
             // Skip the copy if it exists and has the same size
-            // Also require the .hashcheck file to exist and match
             var fileMatchSpec = Path.GetFileNameWithoutExtension(sourceFasta.Name) + "*.*";
             var matchingFiles = transferUtility.GetRemoteFileListing(transferUtility.RemoteOrgDBPath, fileMatchSpec);
 
@@ -3680,7 +3679,7 @@ namespace AnalysisManagerBase
         }
 
         private bool RemoteFastaFilesMatch(
-            FileInfo sourceFasta, FileInfo sourceHashcheck,
+            FileInfo sourceFasta, FileSystemInfo sourceHashcheck,
             SftpFile remoteFasta, SftpFile remoteHashcheck,
             clsRemoteTransferUtility transferUtility)
         {
@@ -3699,7 +3698,9 @@ namespace AnalysisManagerBase
                 return false;
             }
 
-            if (remoteFasta.Length == sourceFasta.Length && remoteHashcheck.Length == sourceHashcheck.Length)
+            // Compare FASTA file lengths plus the names of the HashCheck files
+            // Do not compare the contents (or even the length) of the HashCheck files since the source HashCheck file gets updated every few days
+            if (remoteFasta.Length == sourceFasta.Length && remoteHashcheck.Name == sourceHashcheck.Name)
             {
                 return true;
             }
