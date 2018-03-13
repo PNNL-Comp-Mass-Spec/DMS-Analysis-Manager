@@ -66,11 +66,19 @@ namespace AnalysisManagerMSGFPlugin
 
         private struct udtSegmentFileInfoType
         {
-            // Segment number
+            /// <summary>
+            /// Segment number
+            /// </summary>
             public int Segment;
-            // Full path to the file
+
+            /// <summary>
+            /// Full path to the file
+            /// </summary>
             public string FilePath;
-            // Number of entries in this segment
+
+            /// <summary>
+            /// Number of entries in this segment
+            /// </summary>
             public int Entries;
         }
 
@@ -323,30 +331,29 @@ namespace AnalysisManagerMSGFPlugin
             {
                 case clsPHRPReader.ePeptideHitResultType.Sequest:
                     success = CheckETDModeEnabledSequest(searchToolParamFilePath);
-
                     break;
+
                 case clsPHRPReader.ePeptideHitResultType.XTandem:
                     success = CheckETDModeEnabledXTandem(searchToolParamFilePath);
-
                     break;
+
                 case clsPHRPReader.ePeptideHitResultType.Inspect:
                     LogDebug("Inspect does not support ETD data processing; will set mETDMode to False");
                     success = true;
-
                     break;
+
                 case clsPHRPReader.ePeptideHitResultType.MSGFDB:
                     success = CheckETDModeEnabledMSGFDB(searchToolParamFilePath);
-
                     break;
+
                 case clsPHRPReader.ePeptideHitResultType.MODa:
                     LogDebug("MODa does not support ETD data processing; will set mETDMode to False");
                     success = true;
-
                     break;
+
                 case clsPHRPReader.ePeptideHitResultType.MODPlus:
                     LogDebug("MODPlus does not support ETD data processing; will set mETDMode to False");
                     success = true;
-
                     break;
             }
 
@@ -970,11 +977,10 @@ namespace AnalysisManagerMSGFPlugin
                 case "v6393":
                 case "v6432":
                     // Legacy MSGF
-
                     return true;
+
                 default:
                     // Using MSGF inside MSGFDB
-
                     return false;
             }
         }
@@ -1184,7 +1190,6 @@ namespace AnalysisManagerMSGFPlugin
             // Using a case-insensitive comparer
             var objColumnHeaders = new SortedDictionary<string, int>(StringComparer.OrdinalIgnoreCase)
             {
-                // Define the default column mapping
                 {MSGF_RESULT_COLUMN_SpectrumFile, 0},
                 {MSGF_RESULT_COLUMN_Title, 1},
                 {MSGF_RESULT_COLUMN_ScanNumber, 2},
@@ -1929,12 +1934,14 @@ namespace AnalysisManagerMSGFPlugin
                 cmdStr += "-jar " + PossiblyQuotePath(mMSGFProgLoc);
             }
 
-            cmdStr += " -i " + PossiblyQuotePath(inputFilePath);
             // Input file
-            cmdStr += " -d " + PossiblyQuotePath(m_WorkDir);
+            cmdStr += " -i " + PossiblyQuotePath(inputFilePath);
+
             // Folder containing .mzXML, .mzML, or .mgf file
-            cmdStr += " -o " + PossiblyQuotePath(resultsFilePath);
+            cmdStr += " -d " + PossiblyQuotePath(m_WorkDir);
+
             // Output file
+            cmdStr += " -o " + PossiblyQuotePath(resultsFilePath);
 
             // MSGF v6432 and earlier use -m 0 for CID and -m 1 for ETD
             // MSGFDB v7097 and later use:
@@ -1982,14 +1989,17 @@ namespace AnalysisManagerMSGFPlugin
                 }
             }
 
-            cmdStr += " -e 1";
             // Enzyme is Trypsin; other supported enzymes are 2: Chymotrypsin, 3: Lys-C, 4: Lys-N, 5: Glu-C, 6: Arg-C, 7: Asp-N, and 8: aLP
-            cmdStr += " -fixMod 0";
+            cmdStr += " -e 1";
+
             // No fixed mods on cysteine
-            cmdStr += " -x 0";
+            cmdStr += " -fixMod 0";
+
             // Write out all matches for each spectrum
-            cmdStr += " -p 1";
+            cmdStr += " -x 0";
+
             // SpecProbThreshold threshold of 1, i.e., do not filter results by the computed SpecProb value
+            cmdStr += " -p 1";
 
             LogDebug(mJavaProgLoc + " " + cmdStr);
 

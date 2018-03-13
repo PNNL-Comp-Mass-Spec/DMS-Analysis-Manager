@@ -38,21 +38,32 @@ namespace AnalysisManagerMSGFPlugin
         private readonly clsPHRPReader.ePeptideHitResultType mPeptideHitResultType;
 
         private readonly SortedDictionary<int, List<string>> mSkippedLineInfo;
-        // This dictionary is initially populated with a string constructed using
-        // Scan plus "_" plus charge plus "_" plus the original peptide sequence in the PHRP file
-        // It will contain an entry for every line written to the MSGF input file
-        // It is later updated by AddUpdateMSGFResult() to store the properly formated MSGF result line for each entry
-        // Finally, it will be used by CreateMSGFFirstHitsFile to create the MSGF file that corresponds to the first-hits file
 
+        /// <summary>
+        /// MSGF cached results
+        /// </summary>
+        /// <remarks>
+        /// This dictionary is initially populated with a string constructed using 
+        /// Scan, Charge, and the original peptide sequence in the PHRP file: Scan_Charge_OriginalPeptideSequence
+        /// It will contain an entry for every line written to the MSGF input file
+        /// It is later updated by AddUpdateMSGFResult() to store the properly formatted MSGF result line for each entry
+        /// Finally, it will be used by CreateMSGFFirstHitsFile to create the MSGF file that corresponds to the first-hits file
+        /// </remarks>
         private readonly SortedDictionary<string, string> mMSGFCachedResults;
-        // This dictionary holds a mapping between Scan plus "_" plus charge to the spectrum index in the MGF file (first spectrum has index=1)
-        // It is only used if MGFInstrumentData=True
 
+        /// <summary>
+        /// This dictionary holds a mapping between Scan_Charge to the spectrum index in the MGF file (first spectrum has index=1)
+        /// It is only used if MGFInstrumentData=True
+        /// </summary>
         private SortedDictionary<string, int> mScanAndChargeToMGFIndex;
-        // This dictionary is the inverse of mScanAndChargeToMGFIndex
-        // mMGFIndexToScan allows for a lookup of Scan Number given the MGF index
-        // It is only used if MGFInstrumentData=True
 
+        /// <summary>
+        /// This dictionary is the inverse of mScanAndChargeToMGFIndex
+        /// </summary>
+        /// <remarks>
+        /// mMGFIndexToScan allows for a lookup of Scan Number given the MGF index
+        /// It is only used if MGFInstrumentData=True
+        /// </remarks>
         private SortedDictionary<int, int> mMGFIndexToScan;
 
         protected string mErrorMessage;
