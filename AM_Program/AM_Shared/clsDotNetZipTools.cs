@@ -136,7 +136,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Unzip gzipFilePath into the specified target directory, applying the specified file filter
+        /// Unzip gzipFilePath into the specified target directory
         /// </summary>
         /// <param name="gzipFilePath">.gz file to unzip</param>
         /// <param name="targetDirectory">Folder to place the unzipped files</param>
@@ -198,20 +198,16 @@ namespace AnalysisManagerBase
                         decompressedFile.Directory.Create();
                 }
 
-                using (var inFile = fileToGUnzip.OpenRead())
-                {
+                var actualDecompressedFilePath = clsFileTools.GZipDecompressWithMetadata(fileToGUnzip, decompressedFile.DirectoryName);
+                var actualDecompressedFile = new FileInfo(actualDecompressedFilePath);
 
-                    // Create the decompressed file.
-                    using (var outFile = File.Create(decompressedFilePath))
-                    {
-                        using (var decompress = new System.IO.Compression.GZipStream(inFile, System.IO.Compression.CompressionMode.Decompress))
-                        {
-                            // Copy the decompression stream into the output file.
-                            decompress.CopyTo(outFile);
-                            MostRecentUnzippedFiles.Add(new KeyValuePair<string, string>(decompressedFile.Name, decompressedFile.FullName));
-                        }
-                    }
+                if (!string.Equals(decompressedFile.FullName, actualDecompressedFile.FullName))
+                {
+                    OnWarningEvent(string.Format("GZipDecompressWithMetadata created a different file than expected; {0} vs. expected {1}",
+                                   actualDecompressedFile.FullName, decompressedFile.FullName));
                 }
+
+                MostRecentUnzippedFiles.Add(new KeyValuePair<string, string>(actualDecompressedFile.Name, actualDecompressedFile.FullName));
 
                 var dtEndTime = DateTime.UtcNow;
 
@@ -220,11 +216,10 @@ namespace AnalysisManagerBase
                     ReportZipStats(fileToGUnzip, dtStartTime, dtEndTime, false, "GZipStream");
                 }
 
-                // Update the file modification time of the decompressed file
-                decompressedFile.Refresh();
-                if (decompressedFile.LastWriteTimeUtc > fileToGUnzip.LastWriteTimeUtc)
+                // Update the file modification time of the decompressed file if the date is newer than the date of the original .gz file
+                if (actualDecompressedFile.LastWriteTimeUtc > fileToGUnzip.LastWriteTimeUtc)
                 {
-                    decompressedFile.LastWriteTimeUtc = fileToGUnzip.LastWriteTimeUtc;
+                    actualDecompressedFile.LastWriteTimeUtc = fileToGUnzip.LastWriteTimeUtc;
                 }
 
             }
@@ -288,9 +283,6 @@ namespace AnalysisManagerBase
                 return false;
             }
 
-
-            // Future: Include the expanded header info in the .gz file created by GZipStrea
-            // Specifically, the name and date of the original file
             var success = GZipUsingGZipStream(fiFile, gzipFilePath);
 
             if (!success)
@@ -308,13 +300,12 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// <summary>
-        /// Compress the file using GZipStream
+        /// Compress the file using GZipStream (as implemented in PRISM.dll)
         /// </summary>
         /// <param name="fileToGZip">File to compress</param>
         /// <param name="gzipFilePath"></param>
         /// <returns></returns>
-        /// <remarks>The .gz file created by GZipStream does not include header information (filename and timestamp of the original file)</remarks>
+        /// <remarks>The .gz file created by PRISM.dll will include header information (filename and timestamp of the original file)</remarks>
         private bool GZipUsingGZipStream(FileInfo fileToGZip, string gzipFilePath)
         {
             try
@@ -326,18 +317,9 @@ namespace AnalysisManagerBase
 
                 var dtStartTime = DateTime.UtcNow;
 
-                using (Stream inFile = fileToGZip.OpenRead())
-                {
-                    using (var outFile = File.Create(gzipFilePath))
-                    {
-                        using (var gzippedStream = new System.IO.Compression.GZipStream(
-                            outFile, System.IO.Compression.CompressionMode.Compress))
-                        {
-                            inFile.CopyTo(gzippedStream);
+                var gzipFile = new FileInfo(gzipFilePath);
 
-                        }
-                    }
-                }
+                clsFileTools.GZipCompressWithMetadata(fileToGZip, gzipFile.DirectoryName, gzipFile.Name);
 
                 var dtEndTime = DateTime.UtcNow;
 
