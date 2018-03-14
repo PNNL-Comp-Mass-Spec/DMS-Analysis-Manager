@@ -78,9 +78,8 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             }
 
             var processingErrorMessage = string.Empty;
-            FileInfo fiResultsFile = null;
 
-            var eResult = CreateMSXmlFile(out fiResultsFile);
+            var eResult = CreateMSXmlFile(out var fiResultsFile);
 
             if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
             {
@@ -94,9 +93,6 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
                 processingErrorMessage = string.Copy(m_message);
 
                 if (eResult == CloseOutType.CLOSEOUT_NO_DATA)
-                {
-                }
-                else
                 {
                 }
             }
@@ -164,9 +160,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             // Typically mzXML or mzML
             var CentroidMSXML = Convert.ToBoolean(m_jobParams.GetParam("CentroidMSXML"));
 
-            string CompassXportProgramPath = null;
-
-            var blnSuccess = false;
+            string CompassXportProgramPath;
 
             // Initialize the Results File output parameter to a dummy name for now
             fiResultsFile = new FileInfo(Path.Combine(m_WorkDir, "NonExistent_Placeholder_File.tmp"));
@@ -213,14 +207,15 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             mCompassXportRunner.ProgRunnerStarting += mCompassXportRunner_ProgRunnerStarting;
 
             // Create the file
-            blnSuccess = mCompassXportRunner.CreateMSXMLFile();
+            var blnSuccess = mCompassXportRunner.CreateMSXMLFile();
 
             if (!blnSuccess)
             {
                 LogWarning(mCompassXportRunner.ErrorMessage);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-            else if (mCompassXportRunner.ErrorMessage.Length > 0)
+
+            if (mCompassXportRunner.ErrorMessage.Length > 0)
             {
                 LogWarning(mCompassXportRunner.ErrorMessage);
             }
@@ -268,7 +263,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
             return CloseOutType.CLOSEOUT_FAILED;
         }
 
-        private CloseOutType PostProcessMsXmlFile(FileInfo fiResultsFile)
+        private void PostProcessMsXmlFile(FileInfo fiResultsFile)
         {
             // Compress the file using GZip
             LogMessage("GZipping " + fiResultsFile.Name);
@@ -276,7 +271,7 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
 
             if (fiResultsFile == null)
             {
-                return CloseOutType.CLOSEOUT_FAILED;
+                return;
             }
 
             // Copy the .mzXML.gz or .mzML.gz file to the MSXML cache
@@ -288,7 +283,8 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
                 {
                     LogError("CopyFileToServerCache returned false for " + fiResultsFile.Name);
                 }
-                return CloseOutType.CLOSEOUT_FAILED;
+
+                return;
             }
 
             // Create the _CacheInfo.txt file
@@ -300,7 +296,6 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
 
             m_jobParams.AddResultFileToSkip(fiResultsFile.Name);
 
-            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         /// <summary>
