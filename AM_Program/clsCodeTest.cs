@@ -1192,24 +1192,46 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
-        /// Test creating and decompressing .gz files using gzip
+        /// Test creating and decompressing .gz files using PRISM.dll
         /// </summary>
         public void TestGZip()
         {
 
             var toolRunner = GetCodeTestToolRunner();
 
-            const string sourceFilePath = @"F:\Temp\ZipTest\QExact01\UDD-1_27Feb13_Gimli_12-07-03_HCD.mgf";
+            var sourceFile = new FileInfo(@"\\proto-2\UnitTest_Files\ThermoRawFileReader\QC_Mam_16_01_125ng_2pt0-IT22_Run-A_16Oct17_Pippin_AQ_17-10-01.raw");
 
-            toolRunner.GZipFile(sourceFilePath, @"F:\Temp\ZipTest\QExact01\GZipTarget", false);
+            var targetDirectoryPath = Path.GetTempPath();
 
-            toolRunner.GZipFile(sourceFilePath, false);
+            Console.WriteLine();
+            Console.WriteLine("Compressing " + sourceFile.FullName);
+            toolRunner.GZipFile(sourceFile.FullName, targetDirectoryPath, false);
 
-            var gzippedFile = @"F:\Temp\ZipTest\QExact01\" + Path.GetFileName(sourceFilePath) + ".gz";
+            var gzippedFile = new FileInfo(Path.Combine(targetDirectoryPath, sourceFile.Name + ".gz"));
 
-            toolRunner.GUnzipFile(gzippedFile);
+            Console.WriteLine();
+            Console.WriteLine("Decompressing " + gzippedFile.FullName);
+            toolRunner.GUnzipFile(gzippedFile.FullName, targetDirectoryPath);
 
-            toolRunner.GUnzipFile(gzippedFile, @"F:\Temp\ZipTest\GUnzipTarget");
+            var roundTripFile = new FileInfo(Path.Combine(targetDirectoryPath, sourceFile.Name));
+
+            Console.WriteLine();
+            if (roundTripFile.Length == sourceFile.Length)
+            {
+                Console.WriteLine("Round trip file length matches the original file {0:#,###} bytes", sourceFile.Length);
+            }
+            else
+            {
+                Console.WriteLine("File size mismatch: {0:#,###} vs. {1:#,###} bytes", roundTripFile.Length, sourceFile.Length);
+            }
+
+            clsGlobal.IdleLoop(2);
+
+            Console.WriteLine();
+            Console.WriteLine("Deleting files in the temp directory");
+            gzippedFile.Delete();
+            roundTripFile.Delete();
+
         }
 
         /// <summary>

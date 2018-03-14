@@ -137,14 +137,15 @@ namespace AnalysisManagerProg
                         // testHarness.TestArchiveFailedResults();
                         // testHarness.TestGetToolVersionInfo();
                         // testHarness.TestConnectRSA();
+                        testHarness.TestGZip();
                         // testHarness.TestZipAndUnzip();
                         // testHarness.TestCopyToRemote();
 
-                        testHarness.TestLogging();
-                        //testHarness.TestStatusLogging();
+                        // testHarness.TestLogging();
+                        testHarness.TestStatusLogging();
 
-                        //var connString = "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI";
-                        //testHarness.TestDatabaseLogging(connString);
+                        // var connString = "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI";
+                        // testHarness.TestDatabaseLogging(connString);
 
 
                     }
