@@ -3505,7 +3505,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             {
                 m_message = string.Empty;
 
-                success = UpdateMzIdFiles(remoteTransferFolder, jobInfo.Value, searchedMzML, out var mzIdFilePaths, out var mzIdExistsRemotely, templateParameters);
+                success = UpdateMzIdFiles(remoteTransferFolder, jobInfo.Value, searchedMzML, out var mzIdFilePaths, out _, templateParameters);
 
                 if (!success || mzIdFilePaths == null || mzIdFilePaths.Count == 0)
                 {
@@ -4531,7 +4531,9 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 AddToListIfNew(mPreviousDatasetFilesToDelete, mzIdFilePath);
 
-                var updatedFilePathTemp = mzIdFilePath + ".tmp";
+                var sourceMzidFile = new FileInfo(mzIdFilePath);
+                var updatedMzidFile = new FileInfo(mzIdFilePath + ".tmp");
+
                 var replaceOriginal = false;
 
                 // Important: instantiate the XmlTextWriter using an instance of the UTF8Encoding class where the byte order mark (BOM) is not emitted
@@ -4541,7 +4543,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 // Thus, we instead first instantiate a streamreader using explicit encodings
                 // Then instantiate the XmlTextReader
 
-                using (var outFile = new FileStream(updatedFilePathTemp, FileMode.Create, FileAccess.Write, FileShare.Read))
+                using (var outFile = new FileStream(updatedMzidFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read))
                 using (var zippedOutStream = new GZipStream(outFile, CompressionMode.Compress))
                 using (var writer = new XmlTextWriter(zippedOutStream, new UTF8Encoding(false)))
                 using (Stream unzippedStream = new GZipStream(new FileStream(mzIdFilePath, FileMode.Open, FileAccess.Read, FileShare.Read), CompressionMode.Decompress))
@@ -4808,14 +4810,17 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 if (!replaceOriginal)
                 {
                     // Nothing was changed; delete the .tmp file
-                    File.Delete(updatedFilePathTemp);
+                    updatedMzidFile.Delete();
                     return true;
                 }
 
                 try
                 {
+                    // Update the date of the new .mzid.gz file to match the original file
+                    updatedMzidFile.LastWriteTimeUtc = sourceMzidFile.LastWriteTimeUtc;
+
                     // Replace the original .mzid.gz file with the updated one
-                    File.Delete(mzIdFilePath);
+                    sourceMzidFile.Delete();
 
                     if (JobFileRenameRequired(dataPkgJob))
                     {
@@ -4826,7 +4831,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         mzIdFilePath = Path.Combine(m_WorkDir, dataPkgDataset + "_msgfplus" + filePartText + DOT_MZID_GZ);
                     }
 
-                    File.Move(updatedFilePathTemp, mzIdFilePath);
+                    updatedMzidFile.MoveTo(mzIdFilePath);
                 }
                 catch (Exception ex)
                 {
