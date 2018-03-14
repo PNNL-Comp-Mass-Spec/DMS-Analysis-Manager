@@ -422,7 +422,7 @@ namespace AnalysisManagerBase
 
                 string mzidFilePathLocal;
                 bool deleteLocalFile;
-                bool searchedUsedMzML;
+                bool searchUsedMzML;
 
                 if (mzidFile.Name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
                 {
@@ -454,14 +454,14 @@ namespace AnalysisManagerBase
                     using (var srSourceFile = new StreamReader(unzippedStream, Encoding.GetEncoding("ISO-8859-1")))
                     using (var xmlReader = new XmlTextReader(srSourceFile))
                     {
-                        searchedUsedMzML = MSGFPlusSearchUsedMzML(xmlReader, mzidFilePathLocal);
+                        searchUsedMzML = MSGFPlusSearchUsedMzML(xmlReader, mzidFilePathLocal);
                     }
                 }
                 else
                 {
                     using (var xmlReader = new XmlTextReader(mzidFilePathLocal))
                     {
-                        searchedUsedMzML = MSGFPlusSearchUsedMzML(xmlReader, mzidFilePathLocal);
+                        searchUsedMzML = MSGFPlusSearchUsedMzML(xmlReader, mzidFilePathLocal);
                     }
                 }
 
@@ -471,7 +471,7 @@ namespace AnalysisManagerBase
                     File.Delete(mzidFilePathLocal);
                 }
 
-                return searchedUsedMzML;
+                return searchUsedMzML;
 
             }
             catch (Exception ex)
