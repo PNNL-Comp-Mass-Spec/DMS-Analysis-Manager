@@ -39,8 +39,10 @@ namespace AnalysisManagerMsXmlBrukerPlugIn
         /// Constructor
         /// </summary>
         /// <remarks>Presently not used</remarks>
+        // ReSharper disable once EmptyConstructor
         public clsAnalysisToolRunnerMSXMLBruker()
         {
+            // Empty constructor
         }
 
         /// <summary>

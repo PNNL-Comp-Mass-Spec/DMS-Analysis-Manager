@@ -33,7 +33,7 @@ namespace AnalysisManagerProg
 {
     static class modMain
     {
-        public const string PROGRAM_DATE = "March 12, 2018";
+        public const string PROGRAM_DATE = "March 13, 2018";
 
         private static bool mCodeTestMode;
         private static bool mTraceMode;
@@ -154,7 +154,7 @@ namespace AnalysisManagerProg
                         LogTools.LogError("Exception calling clsCodeTest", ex);
                     }
 
-                    ShowTraceMessage("Exiting application");
+                    ShowTraceMessage("Exiting the application");
 
                     clsParseCommandLine.PauseAtConsole(500);
                     return 0;
@@ -181,7 +181,7 @@ namespace AnalysisManagerProg
 
                 var returnCode = mainProcess.Main();
 
-                ShowTraceMessage("Exiting application");
+                ShowTraceMessage("Exiting the application");
                 FileLogger.FlushPendingMessages();
                 return returnCode;
             }
@@ -330,11 +330,6 @@ namespace AnalysisManagerProg
                 LogTools.LogError("Error parsing the command line parameters: " + Environment.NewLine + ex.Message, ex);
                 return false;
             }
-        }
-
-        private static void ShowErrorMessage(string message, Exception ex = null)
-        {
-            ConsoleMsgUtils.ShowError(message, ex);
         }
 
         private static void ShowErrorMessage(string title, IEnumerable<string> errorMessages)
