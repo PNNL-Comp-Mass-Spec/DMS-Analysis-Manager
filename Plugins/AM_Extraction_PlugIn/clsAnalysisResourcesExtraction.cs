@@ -128,43 +128,49 @@ namespace AnalysisManagerExtractionPlugin
 
             try
             {
+                var inputFolderName = m_jobParams.GetParam("inputFolderName");
+                if (string.IsNullOrWhiteSpace(inputFolderName))
+                {
+                    LogError("Input_Folder is not defined for this job step (job parameter inputFolderName); cannot retrieve input files");
+                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                }
+
                 CloseOutType result;
                 switch (resultType)
                 {
                     case RESULT_TYPE_SEQUEST:
                         result = GetSequestFiles();
-
                         break;
+
                     case RESULT_TYPE_XTANDEM:
                         result = GetXTandemFiles();
-
                         break;
+
                     case RESULT_TYPE_INSPECT:
                         result = GetInspectFiles();
-
                         break;
+
                     case RESULT_TYPE_MSGFPLUS:
                         result = GetMSGFPlusFiles(out createPepToProtMapFile);
-
                         break;
+
                     case RESULT_TYPE_MSALIGN:
                         result = GetMSAlignFiles();
-
                         break;
+
                     case RESULT_TYPE_MODA:
                         result = GetMODaFiles();
-
                         break;
+
                     case RESULT_TYPE_MODPLUS:
                         result = GetMODPlusFiles();
-
                         break;
+
                     case RESULT_TYPE_MSPATHFINDER:
                         result = GetMSPathFinderFiles();
-
                         m_jobParams.AddResultFileExtensionToSkip(".tsv");
-
                         break;
+
                     default:
                         LogError("Invalid tool result type: " + resultType);
                         return CloseOutType.CLOSEOUT_FAILED;
