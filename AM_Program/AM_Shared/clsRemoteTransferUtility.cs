@@ -222,7 +222,7 @@ namespace AnalysisManagerBase
             }
 
             // Convert to text, will look like
-            // <host>PrismWeb2</host><user>svc-dms</user><taskQueue>/file1/temp/DMSTasks</taskQueue> ...
+            // <host>prismweb2</host><user>svc-dms</user><dmsPrograms>/opt/DMS_Programs</dmsPrograms><taskQueue>/file1/temp/DMSTasks</taskQueue> ...
             return xmlText.ToString();
         }
 
