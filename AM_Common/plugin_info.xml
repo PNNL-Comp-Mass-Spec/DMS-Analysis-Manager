@@ -195,12 +195,12 @@
 	<ToolRunner 
 		Tool="msgfplus" 
 		Class="AnalysisManagerMSGFDBPlugin.clsAnalysisToolRunnerMSGFDB" 
-		AssemblyFile="AnalysisManagerMSGFDBPlugin.dll" 
+		AssemblyFile="AnalysisManagerMSGFDBPlugIn.dll" 
 	/>
 	<ToolRunner 
 		Tool="msgfplus_hpc" 
 		Class="AnalysisManagerMSGFDBPlugin.clsAnalysisToolRunnerMSGFDB" 
-		AssemblyFile="AnalysisManagerMSGFDBPlugin.dll" 
+		AssemblyFile="AnalysisManagerMSGFDBPlugIn.dll" 
 	/>	
 	<ToolRunner 
 		Tool="multialign" 
@@ -559,12 +559,12 @@
 	<Resourcer 
 		Tool="msgfplus" 
 		Class="AnalysisManagerMSGFDBPlugin.clsAnalysisResourcesMSGFDB" 
-		AssemblyFile="AnalysisManagerMSGFDBPlugin.dll" 
+		AssemblyFile="AnalysisManagerMSGFDBPlugIn.dll" 
 	/>
 	<Resourcer 
 		Tool="msgfplus_hpc" 
 		Class="AnalysisManagerMSGFDBPlugin.clsAnalysisResourcesMSGFDB" 
-		AssemblyFile="AnalysisManagerMSGFDBPlugin.dll" 
+		AssemblyFile="AnalysisManagerMSGFDBPlugIn.dll" 
 	/>	
 	<Resourcer 
 		Tool="multialign" 
