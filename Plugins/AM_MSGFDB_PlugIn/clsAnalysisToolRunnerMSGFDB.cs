@@ -1052,6 +1052,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 var filesToRetrieve = new List<string> {
                     Dataset + "_msgfplus.mzid.gz",
                     Dataset + "_msgfplus_PepToProtMap.txt",
+                    Dataset + MSGFPlusUtils.MSGFPLUS_TSV_SUFFIX,
                     Dataset + "_ScanType.txt",
                     "Mass_Correction_Tags.txt",
                     modDefsFile.Name,
