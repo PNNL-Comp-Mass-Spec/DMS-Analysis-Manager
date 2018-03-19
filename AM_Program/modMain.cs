@@ -33,7 +33,7 @@ namespace AnalysisManagerProg
 {
     static class modMain
     {
-        public const string PROGRAM_DATE = "March 14, 2018";
+        public const string PROGRAM_DATE = "March 19, 2018";
 
         private static bool mCodeTestMode;
         private static bool mTraceMode;
@@ -259,7 +259,7 @@ namespace AnalysisManagerProg
                 "T",
                 "Test",
                 "Trace",
-                "V",
+                "Verbose",
                 "NQ",
                 "NoMyEMSL",
                 "DLL",
@@ -290,7 +290,7 @@ namespace AnalysisManagerProg
                 if (commandLineParser.IsParameterPresent("Trace"))
                     mTraceMode = true;
 
-                if (commandLineParser.IsParameterPresent("V"))
+                if (commandLineParser.IsParameterPresent("Verbose"))
                     mTraceMode = true;
 
                 if (commandLineParser.IsParameterPresent("NQ"))
@@ -356,7 +356,7 @@ namespace AnalysisManagerProg
                 Console.WriteLine();
                 Console.WriteLine("Use /T or /Test to start the program in code test mode.");
                 Console.WriteLine();
-                Console.WriteLine("Use /Trace or /V to enable trace mode, where debug messages are written to the command prompt");
+                Console.WriteLine("Use /Trace or /Verbose to enable trace mode, where debug messages are written to the command prompt");
                 Console.WriteLine();
                 Console.WriteLine("Use /DLL to display the version of all DLLs in the same folder as this .exe");
                 Console.WriteLine("Use /DLL:Path to display the version of all DLLs in the specified folder (surround path with double quotes if spaces)");
