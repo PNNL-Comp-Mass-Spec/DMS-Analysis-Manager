@@ -678,20 +678,7 @@ namespace AnalysisManagerBase
         /// <param name="waitTimeSeconds"></param>
         public static void IdleLoop(double waitTimeSeconds)
         {
-            var endTime = DateTime.UtcNow.AddSeconds(waitTimeSeconds);
-            while (endTime.Subtract(DateTime.UtcNow).TotalMilliseconds > 10)
-            {
-                var remainingSeconds = endTime.Subtract(DateTime.UtcNow).TotalSeconds;
-                if (remainingSeconds > 10)
-                {
-                    clsProgRunner.SleepMilliseconds(10000);
-                }
-                else
-                {
-                    var sleepTimeMsec = (int)Math.Ceiling(remainingSeconds * 1000);
-                    clsProgRunner.SleepMilliseconds(sleepTimeMsec);
-                }
-            }
+            ConsoleMsgUtils.SleepSeconds(waitTimeSeconds);
         }
 
         /// <summary>
