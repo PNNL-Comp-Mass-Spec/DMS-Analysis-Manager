@@ -290,6 +290,9 @@ namespace AnalysisManagerBase
             m_mgrParams = mgrParams;
             m_jobParams = jobParams;
             m_StatusTools = statusTools;
+
+            TraceMode = mgrParams.TraceMode;
+
             m_WorkDir = m_mgrParams.GetParam("workdir");
             m_MachName = m_mgrParams.ManagerName;
 

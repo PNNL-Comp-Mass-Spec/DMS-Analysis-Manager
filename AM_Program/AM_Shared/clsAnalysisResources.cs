@@ -443,7 +443,6 @@ namespace AnalysisManagerBase
         /// </summary>
         protected IJobParams m_jobParams;
 
-
         /// <summary>
         /// Manager parameters
         /// </summary>
@@ -664,6 +663,9 @@ namespace AnalysisManagerBase
 
             m_mgrParams = mgrParams;
             m_jobParams = jobParams;
+            m_StatusTools = statusTools;
+
+            TraceMode = mgrParams.TraceMode;
 
             m_DebugLevel = (short)m_mgrParams.GetParam("debuglevel", 1);
             m_FastaToolsCnStr = m_mgrParams.GetParam("fastacnstring");
@@ -694,8 +696,6 @@ namespace AnalysisManagerBase
             m_ResourceOptions = new Dictionary<clsGlobal.eAnalysisResourceOptions, bool>();
             SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, false);
             SetOption(clsGlobal.eAnalysisResourceOptions.MyEMSLSearchDisabled, false);
-
-            m_StatusTools = statusTools;
 
             m_AuroraAvailable = m_mgrParams.GetParam("AuroraAvailable", true);
 

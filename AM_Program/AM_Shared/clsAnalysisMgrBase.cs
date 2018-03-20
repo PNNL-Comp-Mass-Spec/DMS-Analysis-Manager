@@ -36,6 +36,20 @@ namespace AnalysisManagerBase
         /// </summary>
         protected IStatusFile m_StatusTools;
 
+        #endregion
+
+        #region "Properties"
+
+        /// <summary>
+        /// When true, show additional messages at the console
+        /// </summary>
+        /// <remarks>
+        /// This property is updated when the Setup method is called in clsAnalysisResources or clsAnalysisToolRunnerBase
+        /// </remarks>
+        protected bool TraceMode { get; set; }
+
+        #endregion
+
         /// <summary>
         /// Constructor
         /// </summary>
