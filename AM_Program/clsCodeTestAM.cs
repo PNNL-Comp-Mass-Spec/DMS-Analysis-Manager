@@ -17,6 +17,7 @@ namespace AnalysisManagerProg
     /// </summary>
     public class clsCodeTestAM : clsAnalysisToolRunnerBase
     {
+
         #region "Methods"
 
         /// <summary>
@@ -148,6 +149,8 @@ namespace AnalysisManagerProg
 
             return true;
         }
+
         #endregion
+
     }
 }

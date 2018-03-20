@@ -1729,6 +1729,7 @@ namespace AnalysisManagerProg
 
         private class clsResourceTestClass : clsAnalysisResources
         {
+
             public override CloseOutType GetResources()
             {
                 return CloseOutType.CLOSEOUT_SUCCESS;

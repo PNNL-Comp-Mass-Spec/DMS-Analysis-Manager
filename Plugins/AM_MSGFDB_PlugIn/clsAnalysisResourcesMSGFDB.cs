@@ -18,7 +18,7 @@ namespace AnalysisManagerMSGFDBPlugIn
     /// </summary>
     public class clsAnalysisResourcesMSGFDB : clsAnalysisResources
     {
-
+       
         /// <summary>
         /// Initialize options
         /// </summary>
@@ -511,5 +511,6 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             return false;
         }
+
     }
 }
