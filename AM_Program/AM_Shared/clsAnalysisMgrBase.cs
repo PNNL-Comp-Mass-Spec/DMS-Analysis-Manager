@@ -12,6 +12,7 @@ namespace AnalysisManagerBase
     /// </summary>
     public abstract class clsAnalysisMgrBase : clsLoggerBase
     {
+        #region "Module variables"
 
         private DateTime m_LastLockQueueWaitTimeLog = DateTime.UtcNow;
 
@@ -28,7 +29,7 @@ namespace AnalysisManagerBase
         /// <remarks>Text here will be stored in the Completion_Message column in the database when the job is closed</remarks>
         protected string m_message;
 
-        private readonly string m_derivedClassName;
+        private readonly string m_DerivedClassName;
 
         /// <summary>
         /// status tools
@@ -41,7 +42,7 @@ namespace AnalysisManagerBase
         /// <param name="derivedClassName"></param>
         protected clsAnalysisMgrBase(string derivedClassName)
         {
-            m_derivedClassName = derivedClassName;
+            m_DerivedClassName = derivedClassName;
         }
 
         private bool IsLockQueueLogMessageNeeded(ref DateTime dtLockQueueWaitTimeStart, ref DateTime dtLastLockQueueWaitTimeLog)
@@ -237,7 +238,7 @@ namespace AnalysisManagerBase
         {
             if (m_DebugLevel >= 1)
             {
-                var msg = "Lockfile queue timed out after " + waitTimeMinutes.ToString("0") + " minutes " + "(" + m_derivedClassName + "); Source=" + sourceFilePath + ", Target=" + targetFilePath;
+                var msg = "Lockfile queue timed out after " + waitTimeMinutes.ToString("0") + " minutes " + "(" + m_DerivedClassName + "); Source=" + sourceFilePath + ", Target=" + targetFilePath;
                 LogWarning(msg);
             }
         }
@@ -246,7 +247,7 @@ namespace AnalysisManagerBase
         {
             if (m_DebugLevel >= 1 && waitTimeMinutes >= 1)
             {
-                var msg = "Exited lockfile queue after " + waitTimeMinutes.ToString("0") + " minutes (" + m_derivedClassName + "); will now copy file";
+                var msg = "Exited lockfile queue after " + waitTimeMinutes.ToString("0") + " minutes (" + m_DerivedClassName + "); will now copy file";
                 LogDebug(msg);
             }
         }
@@ -258,7 +259,7 @@ namespace AnalysisManagerBase
                 m_LastLockQueueWaitTimeLog = DateTime.UtcNow;
                 if (m_DebugLevel >= 1)
                 {
-                    var msg = "Waiting for lockfile queue to fall below threshold (" + m_derivedClassName + "); " +
+                    var msg = "Waiting for lockfile queue to fall below threshold (" + m_DerivedClassName + "); " +
                         "SourceBacklog=" + backlogSourceMB + " MB, " +
                         "TargetBacklog=" + backlogTargetMB + " MB, " +
                         "Source=" + sourceFilePath + ", " +
@@ -276,26 +277,27 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Register event handlers
         /// </summary>
-        /// <param name="oProcessingClass"></param>
+        /// <param name="processingClass"></param>
         /// <param name="writeDebugEventsToLog"></param>
-        protected void RegisterEvents(clsEventNotifier oProcessingClass, bool writeDebugEventsToLog = true)
+        protected void RegisterEvents(clsEventNotifier processingClass, bool writeDebugEventsToLog = true)
         {
             if (writeDebugEventsToLog)
             {
-                oProcessingClass.DebugEvent += DebugEventHandler;
+                processingClass.DebugEvent += DebugEventHandler;
             }
             else
             {
-                oProcessingClass.DebugEvent += DebugEventHandlerConsoleOnly;
+                processingClass.DebugEvent += DebugEventHandlerConsoleOnly;
             }
 
-            oProcessingClass.StatusEvent += StatusEventHandler;
-            oProcessingClass.ErrorEvent += ErrorEventHandler;
-            oProcessingClass.WarningEvent += WarningEventHandler;
+            processingClass.StatusEvent += StatusEventHandler;
+            processingClass.ErrorEvent += ErrorEventHandler;
+            processingClass.WarningEvent += WarningEventHandler;
 
             // Note that ProgressUpdateHandler does not display a message at console
             // Instead, it calls m_StatusTools.UpdateAndWrite, which updates the status file
-            oProcessingClass.ProgressUpdate += ProgressUpdateHandler;
+            processingClass.ProgressUpdate += ProgressUpdateHandler;
+        }
         }
 
         private void DebugEventHandlerConsoleOnly(string statusMessage)
