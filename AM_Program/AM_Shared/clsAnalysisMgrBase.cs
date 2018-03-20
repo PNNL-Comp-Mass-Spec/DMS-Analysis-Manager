@@ -87,7 +87,11 @@ namespace AnalysisManagerBase
         {
             ResetTimestampForQueueWaitTimeLogging();
             m_FileTools = new clsFileTools(mgrName, debugLevel);
-            RegisterEvents(m_FileTools);
+            RegisterEvents(m_FileTools, false);
+
+            // Use a custom event handler for status messages
+            UnregisterEventHandler(m_FileTools, BaseLogger.LogLevels.INFO);
+            m_FileTools.StatusEvent += m_FileTools_StatusEvent;
 
             m_FileTools.LockQueueTimedOut += m_FileTools_LockQueueTimedOut;
             m_FileTools.LockQueueWaitComplete += m_FileTools_LockQueueWaitComplete;
@@ -252,6 +256,22 @@ namespace AnalysisManagerBase
             }
         }
 
+        private void m_FileTools_StatusEvent(string message)
+        {
+            // Do not log certain common messages
+            if (message.StartsWith("Created lock file") ||
+                message.StartsWith("Copying file with CopyFileEx") ||
+                message.StartsWith("File to copy is") && message.Contains("will use CopyFileEx for"))
+            {
+                if (TraceMode)
+                    ConsoleMsgUtils.ShowDebug(message);
+
+                return;
+            }
+
+            LogMessage(message);
+        }
+
         private void m_FileTools_WaitingForLockQueue(string sourceFilePath, string targetFilePath, int backlogSourceMB, int backlogTargetMB)
         {
             if (IsLockQueueLogMessageNeeded(ref m_LockQueueWaitTimeStart, ref m_LastLockQueueWaitTimeLog))
@@ -298,6 +318,32 @@ namespace AnalysisManagerBase
             // Instead, it calls m_StatusTools.UpdateAndWrite, which updates the status file
             processingClass.ProgressUpdate += ProgressUpdateHandler;
         }
+
+        /// <summary>
+        /// Unregister the event handler for the given LogLevel
+        /// </summary>
+        /// <param name="processingClass"></param>
+        /// <param name="messageType"></param>
+        protected void UnregisterEventHandler(clsEventNotifier processingClass, BaseLogger.LogLevels messageType)
+        {
+            switch (messageType)
+            {
+                case BaseLogger.LogLevels.DEBUG:
+                    processingClass.DebugEvent -= DebugEventHandler;
+                    processingClass.DebugEvent -= DebugEventHandlerConsoleOnly;
+                    break;
+                case BaseLogger.LogLevels.ERROR:
+                    processingClass.ErrorEvent -= ErrorEventHandler;
+                    break;
+                case BaseLogger.LogLevels.WARN:
+                    processingClass.WarningEvent -= WarningEventHandler;
+                    break;
+                case BaseLogger.LogLevels.INFO:
+                    processingClass.StatusEvent -= StatusEventHandler;
+                    break;
+                default:
+                    throw new Exception("Log level not supported for unregistering");
+            }
         }
 
         private void DebugEventHandlerConsoleOnly(string statusMessage)
