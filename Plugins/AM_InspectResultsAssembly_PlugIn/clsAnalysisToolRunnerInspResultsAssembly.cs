@@ -1060,121 +1060,115 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                         if (m_DebugLevel > 4)
                         {
                             LogDebug("clsAnalysisToolRunnerInspResultsAssembly.UpdatePTModsFile(): Open " + strPTModsFilePath);
-                        }
-                        var srInFile = new StreamReader(new FileStream(strPTModsFilePath, FileMode.Open, FileAccess.Read, FileShare.Read));
-
-                        if (m_DebugLevel > 4)
-                        {
                             LogDebug("clsAnalysisToolRunnerInspResultsAssembly.UpdatePTModsFile(): Create " + strPTModsFilePathNew);
                         }
-                        var swOutFile = new StreamWriter(new FileStream(strPTModsFilePathNew, FileMode.Create, FileAccess.Write, FileShare.Read));
 
                         var blnDifferenceFound = false;
-                        int intIndex;
-                        string strLineIn;
-                        while (!srInFile.EndOfStream)
+
+                        using (var srInFile = new StreamReader(new FileStream(strPTModsFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                        using (var swOutFile = new StreamWriter(new FileStream(strPTModsFilePathNew, FileMode.Create, FileAccess.Write, FileShare.Read)))
                         {
-                            strLineIn = srInFile.ReadLine();
-                            if (string.IsNullOrWhiteSpace(strLineIn))
-                                continue;
 
-                            strLineIn = strLineIn.Trim();
-
-                            if (!string.IsNullOrEmpty(strLineIn))
+                            while (!srInFile.EndOfStream)
                             {
-                                if (strLineIn[0] == '#')
-                                {
-                                    // Comment line; skip it
-                                }
-                                else
-                                {
-                                    // Split the line on tabs
-                                    var strSplitLine = strLineIn.Split('\t');
+                                var strLineIn = srInFile.ReadLine();
+                                if (string.IsNullOrWhiteSpace(strLineIn))
+                                    continue;
 
-                                    if (strSplitLine.Length >= 3)
+                                strLineIn = strLineIn.Trim();
+
+                                if (!string.IsNullOrEmpty(strLineIn))
+                                {
+                                    if (strLineIn[0] == '#')
                                     {
-                                        var strModName = strSplitLine[0].ToLower();
+                                        // Comment line; skip it
+                                    }
+                                    else
+                                    {
+                                        // Split the line on tabs
+                                        var strSplitLine = strLineIn.Split('\t');
 
-                                        var blnMatchFound = false;
-                                        for (intIndex = 0; intIndex <= udtModList.Length - 1; intIndex++)
+                                        if (strSplitLine.Length >= 3)
                                         {
-                                            if (udtModList[intIndex].ModName.ToLower() == strModName)
-                                            {
-                                                // Match found
-                                                blnMatchFound = true;
-                                                break;
-                                            }
-                                        }
+                                            var strModName = strSplitLine[0].ToLower();
 
-                                        if (blnMatchFound)
-                                        {
-                                            if (blnModProcessed[intIndex])
+                                            var blnMatchFound = false;
+
+                                            int intIndex;
+                                            for (intIndex = 0; intIndex <= udtModList.Length - 1; intIndex++)
                                             {
-                                                // This mod was already processed; don't write the line out again
-                                                strLineIn = string.Empty;
-                                            }
-                                            else
-                                            {
-                                                var mod = udtModList[intIndex];
-                                                // First time we've seen this mod; make sure the mod mass and residues are correct
-                                                if (strSplitLine[1] != mod.ModMass || strSplitLine[2] != mod.Residues)
+                                                if (udtModList[intIndex].ModName.ToLower() == strModName)
                                                 {
-                                                    // Mis-match; update the line
-                                                    strLineIn = mod.ModName + "\t" + mod.ModMass + "\t" + mod.Residues;
-
-                                                    if (m_DebugLevel > 4)
-                                                    {
-                                                        LogDebug(
-                                                            "clsAnalysisToolRunnerInspResultsAssembly.UpdatePTModsFile(): Mod def in PTMods.txt doesn't match required mod def; updating to: " +
-                                                            strLineIn);
-                                                    }
-
-                                                    blnDifferenceFound = true;
+                                                    // Match found
+                                                    blnMatchFound = true;
+                                                    break;
                                                 }
-                                                blnModProcessed[intIndex] = true;
+                                            }
+
+                                            if (blnMatchFound)
+                                            {
+                                                if (blnModProcessed[intIndex])
+                                                {
+                                                    // This mod was already processed; don't write the line out again
+                                                    strLineIn = string.Empty;
+                                                }
+                                                else
+                                                {
+                                                    var mod = udtModList[intIndex];
+                                                    // First time we've seen this mod; make sure the mod mass and residues are correct
+                                                    if (strSplitLine[1] != mod.ModMass || strSplitLine[2] != mod.Residues)
+                                                    {
+                                                        // Mis-match; update the line
+                                                        strLineIn = mod.ModName + "\t" + mod.ModMass + "\t" + mod.Residues;
+
+                                                        if (m_DebugLevel > 4)
+                                                        {
+                                                            LogDebug(
+                                                                "clsAnalysisToolRunnerInspResultsAssembly.UpdatePTModsFile(): Mod def in PTMods.txt doesn't match required mod def; updating to: " +
+                                                                strLineIn);
+                                                        }
+
+                                                        blnDifferenceFound = true;
+                                                    }
+                                                    blnModProcessed[intIndex] = true;
+                                                }
                                             }
                                         }
                                     }
                                 }
-                            }
 
-                            if (blnPrevLineWasBlank && strLineIn.Length == 0)
-                            {
-                                // Don't write out two blank lines in a row; skip this line
-                            }
-                            else
-                            {
-                                swOutFile.WriteLine(strLineIn);
-
-                                if (strLineIn.Length == 0)
+                                if (blnPrevLineWasBlank && strLineIn.Length == 0)
                                 {
-                                    blnPrevLineWasBlank = true;
+                                    // Don't write out two blank lines in a row; skip this line
                                 }
                                 else
                                 {
-                                    blnPrevLineWasBlank = false;
+                                    swOutFile.WriteLine(strLineIn);
+
+                                    if (strLineIn.Length == 0)
+                                    {
+                                        blnPrevLineWasBlank = true;
+                                    }
+                                    else
+                                    {
+                                        blnPrevLineWasBlank = false;
+                                    }
                                 }
                             }
-                        }
 
-                        // Close the input file
-                        srInFile.Close();
-
-                        // Look for any unprocessed mods
-                        for (intIndex = 0; intIndex <= udtModList.Length - 1; intIndex++)
-                        {
-                            if (!blnModProcessed[intIndex])
+                            // Look for any unprocessed mods
+                            for (var intIndex = 0; intIndex <= udtModList.Length - 1; intIndex++)
                             {
-                                var mod = udtModList[intIndex];
-                                strLineIn = mod.ModName + "\t" + mod.ModMass + "\t" + mod.Residues;
-                                swOutFile.WriteLine(strLineIn);
+                                if (!blnModProcessed[intIndex])
+                                {
+                                    var mod = udtModList[intIndex];
+                                    var dataLine = mod.ModName + "\t" + mod.ModMass + "\t" + mod.Residues;
+                                    swOutFile.WriteLine(dataLine);
 
-                                blnDifferenceFound = true;
+                                    blnDifferenceFound = true;
+                                }
                             }
-                        }
-
-                        // Close the output file
-                        swOutFile.Close();
+                        } // end using
 
                         if (blnDifferenceFound)
                         {

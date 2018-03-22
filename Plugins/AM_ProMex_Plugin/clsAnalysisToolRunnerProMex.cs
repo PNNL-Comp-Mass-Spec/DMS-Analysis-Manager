@@ -515,11 +515,11 @@ namespace AnalysisManagerProMexPlugIn
                 // Write the console output to a text file
                 clsGlobal.IdleLoop(0.25);
 
+                using (var swConsoleOutputfile = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                {
+                    swConsoleOutputfile.WriteLine(mCmdRunner.CachedConsoleOutput);
+                }
 
-                var swConsoleOutputfile =
-                    new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
-                swConsoleOutputfile.WriteLine(mCmdRunner.CachedConsoleOutput);
-                swConsoleOutputfile.Close();
             }
 
             // Parse the console output file one more time to check for errors

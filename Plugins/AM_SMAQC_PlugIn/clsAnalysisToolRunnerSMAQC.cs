@@ -128,9 +128,10 @@ namespace AnalysisManagerSMAQCPlugIn
                     // Write the console output to a text file
                     clsGlobal.IdleLoop(0.25);
 
-                    var swConsoleOutputfile = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
-                    swConsoleOutputfile.WriteLine(mCmdRunner.CachedConsoleOutput);
-                    swConsoleOutputfile.Close();
+                    using (var swConsoleOutputfile = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                    {
+                        swConsoleOutputfile.WriteLine(mCmdRunner.CachedConsoleOutput);
+                    }
                 }
 
                 // Parse the console output file one more time to check for errors
@@ -249,12 +250,11 @@ namespace AnalysisManagerSMAQCPlugIn
 
             List<int> lstDatasetIDs;
 
-            var intDatasetID = m_jobParams.GetJobParameter("DatasetID", -1);
-
             if (!LLRC_ENABLED)
                 throw new Exception("LLRC is disabled -- do not call this function");
 
 #pragma warning disable 162
+            var intDatasetID = m_jobParams.GetJobParameter("DatasetID", -1);
 
             if (intDatasetID < 0)
             {

@@ -1017,9 +1017,10 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 // Write the console output to a text file
                 clsGlobal.IdleLoop(0.25);
 
-                var swConsoleOutputfile = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
-                swConsoleOutputfile.WriteLine(mCmdRunner.CachedConsoleOutput);
-                swConsoleOutputfile.Close();
+                using (var swConsoleOutputfile = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                {
+                    swConsoleOutputfile.WriteLine(mCmdRunner.CachedConsoleOutput);
+                }
             }
 
             if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
