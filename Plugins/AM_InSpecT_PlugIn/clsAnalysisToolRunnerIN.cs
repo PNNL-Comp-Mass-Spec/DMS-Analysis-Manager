@@ -309,8 +309,7 @@ namespace AnalysisManagerInSpecTPlugIn
         //    }
         //    catch (Exception ex)
         //    {
-        //        LogError(
-        //            "clsAnalysisToolRunnerIN.ExtractScanCountValueFromMzXML, Error determining the scan count in the .mzXML file: " + ex.Message);
+        //        LogError("clsAnalysisToolRunnerIN.ExtractScanCountValueFromMzXML, Error determining the scan count in the .mzXML file: " + ex.Message);
         //        return 0;
         //    }
         //

@@ -112,9 +112,8 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                     break;
                 default:
                     m_message = "Dataset type " + strRawDataType + " is not supported";
-                    LogError(
-                        "clsDtaGenResources.GetResources: " + m_message + "; must be " + RAW_DATA_TYPE_DOT_RAW_FILES + " or " +
-                        RAW_DATA_TYPE_BRUKER_FT_FOLDER);
+                    LogError("clsDtaGenResources.GetResources: " + m_message +
+                             "; must be " + RAW_DATA_TYPE_DOT_RAW_FILES + " or " + RAW_DATA_TYPE_BRUKER_FT_FOLDER);
                     return CloseOutType.CLOSEOUT_FAILED;
             }
 

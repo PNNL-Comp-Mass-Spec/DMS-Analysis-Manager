@@ -62,8 +62,7 @@ namespace AnalysisManagerMultiAlignPlugIn
             var multialignParamFileName = m_jobParams.GetParam("ParmFileName");
             if (string.IsNullOrEmpty(multialignParamFileName))
             {
-                LogError(
-                    "MultiAlign ParmFileName not defined in the settings for this job; unable to continue");
+                LogError("MultiAlign ParmFileName not defined in the settings for this job; unable to continue");
                 return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
             }
 
@@ -129,9 +128,8 @@ namespace AnalysisManagerMultiAlignPlugIn
             }
             catch (Exception ex)
             {
-                LogError(
-                    "clsAnalysisResourcesMultiAlign.BuildMultiAlignInputTextFile, Error buliding the input .txt file (" + INPUT_FILENAME + "): " +
-                    ex.Message);
+                LogError("clsAnalysisResourcesMultiAlign.BuildMultiAlignInputTextFile, Error buliding the input .txt file " +
+                         "(" + INPUT_FILENAME + "): " + ex.Message);
                 blnSuccess = false;
             }
 

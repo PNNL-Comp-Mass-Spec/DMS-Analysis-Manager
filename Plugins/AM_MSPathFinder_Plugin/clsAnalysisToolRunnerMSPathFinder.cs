@@ -800,8 +800,8 @@ namespace AnalysisManagerMSPathFinderPlugin
                 // Make sure the .Fasta file is not a Decoy fasta
                 if (fastaFileIsDecoy)
                 {
-                    LogError(
-                        "Parameter file / decoy protein collection conflict: do not use a decoy protein collection when using a target/decoy parameter file (which has setting TDA=1)");
+                    LogError("Parameter file / decoy protein collection conflict: do not use a decoy protein collection " +
+                             "when using a target/decoy parameter file (which has setting TDA=1)");
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
             }

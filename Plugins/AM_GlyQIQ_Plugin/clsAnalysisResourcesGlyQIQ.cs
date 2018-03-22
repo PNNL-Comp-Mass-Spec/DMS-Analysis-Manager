@@ -197,8 +197,7 @@ namespace AnalysisManagerGlyQIQPlugin
                 var progLoc = clsAnalysisToolRunnerBase.DetermineProgramLocation("GlyQIQ", "GlyQIQProgLoc", "IQGlyQ_Console.exe", "", m_mgrParams, out m_message);
                 if (string.IsNullOrEmpty(progLoc))
                 {
-                    LogError(
-                        "DetermineProgramLocation returned an empty string: " + m_message);
+                    LogError("DetermineProgramLocation returned an empty string: " + m_message);
                     return false;
                 }
 
@@ -211,7 +210,7 @@ namespace AnalysisManagerGlyQIQPlugin
                     using (var swOutFile = new StreamWriter(new FileStream(batchFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                     {
                         // Note that clsGlyQIqRunner expects this batch file to be in a specific format:
-                        // GlyQIQProgramPath "WorkingDirectoryPath" "DatasetName" "DatasetSuffix" "TargetsFileName" "ParamFileName" 
+                        // GlyQIQProgramPath "WorkingDirectoryPath" "DatasetName" "DatasetSuffix" "TargetsFileName" "ParamFileName"
                         //                   "WorkingParametersFolderPath" "LockFileName" "ResultsFolderPath" "CoreNumber"
                         //
                         // It will read and parse the batch file to determine the TargetsFile name and folder path so that it can cache the target code values
@@ -482,8 +481,7 @@ namespace AnalysisManagerGlyQIQPlugin
                         m_message = "Error retrieving instrument data file";
                     }
 
-                    LogError(
-                        "clsAnalysisResourcesGlyQIQ.GetResources: " + m_message);
+                    LogError("clsAnalysisResourcesGlyQIQ.GetResources: " + m_message);
                     return false;
                 }
 

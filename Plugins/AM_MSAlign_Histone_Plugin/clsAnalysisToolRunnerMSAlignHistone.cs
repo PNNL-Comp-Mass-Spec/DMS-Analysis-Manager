@@ -586,9 +586,8 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                                     m_message = "Must specify an explicit scan type for " + strKeyName +
                                                 " in the MSAlign parameter file (CID, HCD, or ETD)";
 
-                                    LogError(
-                                        m_message +
-                                        "; this is required because Bruker-created mzXML files do not include activationMethod information in the precursorMz tag");
+                                    LogError(m_message + "; this is required because Bruker-created mzXML files " +
+                                             "do not include activationMethod information in the precursorMz tag");
 
                                     return false;
                                 }

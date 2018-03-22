@@ -331,8 +331,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         if (string.IsNullOrEmpty(generatedOrgDBName))
                         {
                             m_message = "FASTA file was not generated when RetrieveFastaFiles called RetrieveOrgDB";
-                            LogError(
-                                m_message + " (class clsAnalysisResourcesPRIDEConverter)");
+                            LogError(m_message + " (class clsAnalysisResourcesPRIDEConverter)");
                             OverrideCurrentDatasetAndJobInfo(currentDatasetAndJobInfo);
                             return false;
                         }
@@ -344,8 +343,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                             m_message = "Generated FASTA file name (" + generatedOrgDBName + ") does not match expected fasta file name (" +
                                         dataPkgJob.OrganismDBName + "); aborting";
-                            LogError(
-                                m_message + " (class clsAnalysisResourcesPRIDEConverter)");
+                            LogError(m_message + " (class clsAnalysisResourcesPRIDEConverter)");
                             OverrideCurrentDatasetAndJobInfo(currentDatasetAndJobInfo);
                             return false;
                         }

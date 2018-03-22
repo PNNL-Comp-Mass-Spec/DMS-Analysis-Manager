@@ -414,9 +414,9 @@ namespace AnalysisManagerResultsXferPlugin
                     {
                         // Parent folder doesn't exist; try to go up one more level and create the parent
 
-                        if ((diParentFolder.Parent != null))
+                        if (diParentFolder.Parent != null)
                         {
-                            // Parent of the parent exist; try to create the parent folder
+                            // Parent of the parent exists; try to create the parent folder
                             diParentFolder.Create();
 
                             // Verify that the folder was created

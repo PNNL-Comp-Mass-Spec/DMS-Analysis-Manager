@@ -245,7 +245,12 @@ namespace AnalysisManagerICR2LSPlugIn
             }
         }
 
-        // Reads the ICR2LS Status file and updates mICR2LSStatus
+        /// <summary>
+        /// Reads the ICR2LS Status file and updates mICR2LSStatus
+        /// </summary>
+        /// <param name="strStatusFilePath"></param>
+        /// <param name="blnForceParse"></param>
+        /// <returns></returns>
         private bool ParseICR2LSStatusFile(string strStatusFilePath, bool blnForceParse)
         {
             const int MINIMUM_PARSING_INTERVAL_SECONDS = 4;

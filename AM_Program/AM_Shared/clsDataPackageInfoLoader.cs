@@ -266,7 +266,6 @@ namespace AnalysisManagerBase
 
             mLastJobParameterFromHistoryLookup = DateTime.UtcNow;
 
-
             try
             {
                 var cmd = new SqlCommand("GetJobStepParamsAsTableUseHistory")

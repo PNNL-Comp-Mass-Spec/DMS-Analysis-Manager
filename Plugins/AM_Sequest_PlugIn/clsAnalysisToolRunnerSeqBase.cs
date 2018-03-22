@@ -688,8 +688,7 @@ namespace AnalysisManagerSequestPlugin
             if (!blnSuccess)
             {
                 m_message = "Error appending .out files to the _out.txt.tmp file";
-                LogError(
-                    m_message + "; aborting after " + MAX_RETRY_ATTEMPTS + " attempts");
+                LogError(m_message + "; aborting after " + MAX_RETRY_ATTEMPTS + " attempts");
                 return false;
             }
 

@@ -383,16 +383,14 @@ namespace AnalysisManager_RepoPkgr_Plugin
                         if (string.IsNullOrEmpty(strOrgDBNameGenerated))
                         {
                             m_message = "FASTA file was not generated when RetrieveFastaFiles called RetrieveOrgDB";
-                            LogError(
-                                                 m_message + " (class clsAnalysisResourcesRepoPkgr)");
+                            LogError(m_message + " (class clsAnalysisResourcesRepoPkgr)");
                             return false;
                         }
                         if (strOrgDBNameGenerated != udtJob.OrganismDBName)
                         {
                             m_message = "Generated FASTA file name (" + strOrgDBNameGenerated + ") does not match expected fasta file name (" +
                                         udtJob.OrganismDBName + "); aborting";
-                            LogError(
-                                                 m_message + " (class clsAnalysisResourcesRepoPkgr)");
+                            LogError(m_message + " (class clsAnalysisResourcesRepoPkgr)");
                             return false;
                         }
                         dctOrgDBParamsToGeneratedFileNameMap.Add(strDictionaryKey, strOrgDBNameGenerated);

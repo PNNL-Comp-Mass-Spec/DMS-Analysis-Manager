@@ -367,8 +367,7 @@ namespace AnalysisManagerExtractionPlugin
                     numberOfClonedSteps = m_jobParams.GetJobParameter("NumberOfClonedSteps", 0);
                     if (numberOfClonedSteps == 0)
                     {
-                        LogError(
-                            "Settings file is missing parameter NumberOfClonedSteps; cannot retrieve MSGFPlus results");
+                        LogError("Settings file is missing parameter NumberOfClonedSteps; cannot retrieve MSGFPlus results");
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
 
@@ -674,8 +673,7 @@ namespace AnalysisManagerExtractionPlugin
         //
         //        if (m_DebugLevel >= 1)
         //        {
-        //            LogError(
-        //                "Retrieving default Mass Correction Tags file from " + ioFiles[0].FullName);
+        //            LogError("Retrieving default Mass Correction Tags file from " + ioFiles[0].FullName);
         //        }
         //
         //        ioFiles[0].CopyTo(Path.Combine(m_WorkingDir, ioFiles[0].Name));

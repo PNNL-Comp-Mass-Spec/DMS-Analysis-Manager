@@ -560,8 +560,7 @@ namespace AnalysisManagerQCARTPlugin
 
             if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
             {
-                LogError(
-                                     mConsoleOutputErrorMsg);
+                LogError(mConsoleOutputErrorMsg);
             }
 
             // Parse the QCART_summary file to look for errors
@@ -572,8 +571,7 @@ namespace AnalysisManagerQCARTPlugin
 
             if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
             {
-                LogError(
-                                     mConsoleOutputErrorMsg);
+                LogError(mConsoleOutputErrorMsg);
             }
             */
 

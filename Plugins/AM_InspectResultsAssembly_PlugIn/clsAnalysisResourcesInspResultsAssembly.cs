@@ -66,8 +66,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 {
                     if (m_DebugLevel >= 3)
                     {
-                        LogError(
-                            "RetrieveFile returned False for " + zippedResultName + " using folder " + transferFolderName);
+                        LogError("RetrieveFile returned False for " + zippedResultName + " using folder " + transferFolderName);
                     }
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -90,8 +89,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 {
                     if (m_DebugLevel >= 3)
                     {
-                        LogError(
-                            "RetrieveFile returned False for " + searchLogResultName + " using folder " + transferFolderName);
+                        LogError("RetrieveFile returned False for " + searchLogResultName + " using folder " + transferFolderName);
                     }
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -138,8 +136,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
             if (numOfResultFiles < 1)
             {
-                LogError(
-                    "Job parameter 'NumberOfClonedSteps' is empty or 0; unable to continue");
+                LogError("Job parameter 'NumberOfClonedSteps' is empty or 0; unable to continue");
                 return false;
             }
 
@@ -156,8 +153,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                         // Error copying file (error will have already been logged)
                         if (m_DebugLevel >= 3)
                         {
-                            LogError(
-                                "CopyFileToWorkDir returned False for " + inspectResultsFile + " using folder " + transferFolderName);
+                            LogError("CopyFileToWorkDir returned False for " + inspectResultsFile + " using folder " + transferFolderName);
                         }
                         return false;
                     }
@@ -201,8 +197,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                             // Error copying file (error will have already been logged)
                             if (m_DebugLevel >= 3)
                             {
-                                LogError(
-                                    "CopyFileToWorkDir returned False for " + fileName + " using folder " + transferFolderName);
+                                LogError("CopyFileToWorkDir returned False for " + fileName + " using folder " + transferFolderName);
                             }
                             return false;
                         }

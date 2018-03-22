@@ -1276,32 +1276,33 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <summary>
         /// Initialize the FASTA file
         /// </summary>
-        /// <param name="javaProgLoc"></param>
-        /// <param name="msgfPlusProgLoc"></param>
-        /// <param name="fastaFileSizeKB"></param>
-        /// <param name="fastaFileIsDecoy"></param>
-        /// <param name="fastaFilePath"></param>
-        /// <param name="msgfPlusParameterFilePath"></param>
+        /// <param name="javaProgLoc">Path to java.exe</param>
+        /// <param name="msgfPlusProgLoc">MSGF+ program location</param>
+        /// <param name="fastaFileSizeKB">Output: FASTA file size (in KB)</param>
+        /// <param name="fastaFileIsDecoy">Output: True if the FASTA file is a decoy FASTA</param>
+        /// <param name="fastaFilePath">Output: FASTA file path</param>
+        /// <param name="msgfPlusParameterFilePath">MSGF+ parameter file path</param>
         /// <returns></returns>
         public CloseOutType InitializeFastaFile(string javaProgLoc, string msgfPlusProgLoc, out float fastaFileSizeKB, out bool fastaFileIsDecoy,
             out string fastaFilePath, string msgfPlusParameterFilePath)
         {
-            return InitializeFastaFile(javaProgLoc, msgfPlusProgLoc, out fastaFileSizeKB, out fastaFileIsDecoy, out fastaFilePath,
-                                       msgfPlusParameterFilePath, 0);
+            return InitializeFastaFile(javaProgLoc, msgfPlusProgLoc, out fastaFileSizeKB, out fastaFileIsDecoy,
+                                       out fastaFilePath, msgfPlusParameterFilePath, 0);
         }
 
         /// <summary>
         /// Initialize the FASTA file
         /// </summary>
-        /// <param name="javaProgLoc"></param>
-        /// <param name="msgfPlusProgLoc"></param>
-        /// <param name="fastaFileSizeKB"></param>
-        /// <param name="fastaFileIsDecoy"></param>
-        /// <param name="fastaFilePath"></param>
-        /// <param name="msgfPlusParameterFilePath"></param>
-        /// <param name="maxFastaFileSizeMB"></param>
+        /// <param name="javaProgLoc">Path to java.exe</param>
+        /// <param name="msgfPlusProgLoc">MSGF+ program location</param>
+        /// <param name="fastaFileSizeKB">Output: FASTA file size (in KB)</param>
+        /// <param name="fastaFileIsDecoy">Output: True if the FASTA file is a decoy FASTA</param>
+        /// <param name="fastaFilePath">Output: FASTA file path</param>
+        /// <param name="msgfPlusParameterFilePath">MSGF+ parameter file path</param>
+        /// <param name="maxFastaFileSizeMB">Maximum FASTA file size (in MB); MzRefinery sets this to 50 MB to give faster search times</param>
         /// <returns></returns>
-        public CloseOutType InitializeFastaFile(string javaProgLoc, string msgfPlusProgLoc, out float fastaFileSizeKB, out bool fastaFileIsDecoy,
+        public CloseOutType InitializeFastaFile(
+            string javaProgLoc, string msgfPlusProgLoc, out float fastaFileSizeKB, out bool fastaFileIsDecoy,
             out string fastaFilePath, string msgfPlusParameterFilePath, int maxFastaFileSizeMB)
         {
             var oRand = new Random();
@@ -1456,7 +1457,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     break;
                 }
 
-                if (result == CloseOutType.CLOSEOUT_FAILED || (result != CloseOutType.CLOSEOUT_FAILED && indexIteration > 2))
+                if (result == CloseOutType.CLOSEOUT_FAILED || result != CloseOutType.CLOSEOUT_FAILED && indexIteration > 2)
                 {
                     if (!string.IsNullOrEmpty(indexedDBCreator.ErrorMessage))
                     {
@@ -1898,7 +1899,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                         else if (dataLine.StartsWith("Spectrum", StringComparison.OrdinalIgnoreCase))
                         {
                             // Extract out the number of spectra that MS-GF+ will actually search
-
                             var oMatch = reSpectraSearched.Match(dataLine);
 
                             if (oMatch.Success)

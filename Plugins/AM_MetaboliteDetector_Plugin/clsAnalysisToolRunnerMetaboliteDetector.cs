@@ -261,8 +261,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
 
             if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
             {
-                LogError(
-                                     mConsoleOutputErrorMsg);
+                LogError(mConsoleOutputErrorMsg);
             }
 
             clsGlobal.IdleLoop(0.25);

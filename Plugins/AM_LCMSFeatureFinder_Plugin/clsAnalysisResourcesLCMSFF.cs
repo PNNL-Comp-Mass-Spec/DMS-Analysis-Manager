@@ -241,12 +241,10 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
                     }
                     catch (Exception ex)
                     {
-                        LogError(
-                            "clsAnalysisResourcesLCMSFF.UpdateFeatureFinderIniFile, Error opening the .Ini file to customize (" + strLCMSFFIniFileName +
-                            "): " + ex.Message);
+                        LogError("clsAnalysisResourcesLCMSFF.UpdateFeatureFinderIniFile, Error opening the .Ini file to customize " +
+                                 "(" + strLCMSFFIniFileName + "): " + ex.Message);
                         result = false;
                     }
-                }
                 } // end using
 
                 // Replace the original .Ini file with the new one
@@ -262,9 +260,8 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
             }
             catch (Exception ex)
             {
-                LogError(
-                    "clsAnalysisResourcesLCMSFF.UpdateFeatureFinderIniFile, Error opening the .Ini file to customize (" + strLCMSFFIniFileName + "): " +
-                    ex.Message);
+                LogError("clsAnalysisResourcesLCMSFF.UpdateFeatureFinderIniFile, Error opening the .Ini file to customize " +
+                         "(" + strLCMSFFIniFileName + "): " + ex.Message);
                 result = false;
             }
 

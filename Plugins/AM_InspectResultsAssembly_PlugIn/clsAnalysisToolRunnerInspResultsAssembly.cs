@@ -496,9 +496,8 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             if (File.Exists(exportFilePath))
             {
                 // Post error to log
-                LogError(
-                    "clsAnalysisToolRunnerInspResultsAssembly->createNewExportFile: Export file already exists (" + exportFilePath +
-                    "); this is unexpected");
+                LogError("clsAnalysisToolRunnerInspResultsAssembly->createNewExportFile: Export file already exists " +
+                         "(" + exportFilePath + "); this is unexpected");
                 return null;
             }
 
@@ -959,8 +958,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             if (cmdRunner.ExitCode != 0)
             {
                 // Note: Log the non-zero exit code as an error, but return CLOSEOUT_SUCCESS anyway
-                LogError(
-                    Path.GetFileName(pvalueScriptPath) + " returned a non-zero exit code: " + cmdRunner.ExitCode);
+                LogError(Path.GetFileName(pvalueScriptPath) + " returned a non-zero exit code: " + cmdRunner.ExitCode);
             }
 
             return CloseOutType.CLOSEOUT_SUCCESS;
@@ -1195,9 +1193,8 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                             }
                             catch (Exception ex)
                             {
-                                LogError(
-                                    "clsAnalysisToolRunnerInspResultsAssembly.UpdatePTModsFile, Error swapping in the new PTMods.txt file : " +
-                                    m_JobNum + "; " + ex.Message);
+                                LogError("clsAnalysisToolRunnerInspResultsAssembly.UpdatePTModsFile, " +
+                                         "Error swapping in the new PTMods.txt file : " + m_JobNum + "; " + ex.Message);
                                 return false;
                             }
                         }

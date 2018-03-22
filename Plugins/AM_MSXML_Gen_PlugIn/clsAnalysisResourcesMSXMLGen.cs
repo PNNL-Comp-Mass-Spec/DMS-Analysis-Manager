@@ -137,8 +137,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             catch (Exception ex)
             {
                 m_message = "Exception in GetResources: " + ex.Message;
-                LogError(
-                    m_message + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
+                LogError(m_message + "; task = " + currentTask + "; " + clsGlobal.GetExceptionStackTrace(ex));
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 

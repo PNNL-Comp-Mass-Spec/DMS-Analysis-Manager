@@ -76,6 +76,7 @@ namespace AnalysisManagerProg
                     break;
             }
 
+            // ReSharper disable once ExpressionIsAlwaysNull
             return myToolRunner;
         }
 
@@ -93,6 +94,7 @@ namespace AnalysisManagerProg
                     break;
             }
 
+            // ReSharper disable once ExpressionIsAlwaysNull
             return myModule;
         }
 #endif

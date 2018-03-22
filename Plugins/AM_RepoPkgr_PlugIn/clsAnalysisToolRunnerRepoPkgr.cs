@@ -776,9 +776,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                     catch (Exception ex)
                     {
                         retryCount -= 1;
-                        LogError(
-                                             "Exception getting protein collection info from Protein Sequences database for Archived_File_ID = " +
-                                             fileID, ex);
+                        LogError("Exception getting protein collection info from Protein Sequences database for Archived_File_ID = " + fileID, ex);
 
                         // Delay for 2 seconds before trying again
                         clsGlobal.IdleLoop(2);

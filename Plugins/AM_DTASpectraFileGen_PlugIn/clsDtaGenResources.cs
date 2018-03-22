@@ -127,8 +127,7 @@ namespace DTASpectraFileGen
 
                             m_jobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, USING_EXISTING_DECONMSN_RESULTS, "True");
 
-                            LogMessage(
-                                "Found pre-existing DeconMSn results; will not re-run DeconMSn if they are valid");
+                            LogMessage("Found pre-existing DeconMSn results; will not re-run DeconMSn if they are valid");
 
                             fileToFind = DatasetName + "_profile.txt";
                             blnFileCopiedOrQueued = CopyFileToWorkDir(fileToFind, existingDtaFolder, m_WorkingDir);
@@ -152,14 +151,13 @@ namespace DTASpectraFileGen
 
                 fiZippedDtaFile.MoveTo(tempZipFilePath);
 
-                LogMessage(
-                    "Unzipping file " + Path.GetFileName(zippedDTAFilePath));
+                LogMessage("Unzipping file " + Path.GetFileName(zippedDTAFilePath));
+
                 if (UnzipFileStart(tempZipFilePath, m_WorkingDir, "clsDtaGenResources", false))
                 {
                     if (m_DebugLevel >= 1)
                     {
-                        LogMessage(
-                            "Unzipped file " + Path.GetFileName(zippedDTAFilePath));
+                        LogMessage("Unzipped file " + Path.GetFileName(zippedDTAFilePath));
                     }
 
                     m_jobParams.AddResultFileToSkip(Path.GetFileName(tempZipFilePath));

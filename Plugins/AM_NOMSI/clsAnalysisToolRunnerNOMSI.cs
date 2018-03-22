@@ -426,8 +426,7 @@ namespace AnalysisManagerNOMSIPlugin
 
             if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
             {
-                LogError(
-                                     mConsoleOutputErrorMsg);
+                LogError(mConsoleOutputErrorMsg);
             }
 
             // Parse the nomsi_summary file to look for errors
@@ -448,8 +447,7 @@ namespace AnalysisManagerNOMSIPlugin
 
             if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
             {
-                LogError(
-                                     mConsoleOutputErrorMsg);
+                LogError(mConsoleOutputErrorMsg);
             }
 
             if (success)

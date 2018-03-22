@@ -475,8 +475,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 if (string.IsNullOrEmpty(strParamFileFolderPath))
                 {
                     m_message = "Parameter 'ParmFileStoragePath' is empty";
-                    LogError(
-                        m_message + "; unable to get the LipidMaps database");
+                    LogError(m_message + "; unable to get the LipidMaps database");
                     return false;
                 }
 
