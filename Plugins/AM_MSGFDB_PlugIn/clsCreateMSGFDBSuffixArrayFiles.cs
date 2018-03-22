@@ -205,7 +205,15 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 foreach (var entry in filesToCopy)
                 {
-                    var fiSourceFile = new FileInfo(Path.Combine(diRemoteIndexFolderPath.FullName, entry.Key));
+                    var sourceFile = new FileInfo(Path.Combine(remoteIndexDirectory.FullName, entry.Key));
+
+                    var targetFile = new FileInfo(Path.Combine(fiFastaFile.Directory.FullName, sourceFile.Name));
+                    if (targetFile.Exists &&
+                        string.Equals(targetFile.Extension, clsAnalysisResources.LASTUSED_FILE_EXTENSION, StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Do not overwrite the local .LastUsed file
+                        continue;
+                    }
 
                     oFileTools.CopyFileUsingLocks(sourceFile, targetFile.FullName, manager, true);
 
@@ -1272,6 +1280,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                     // Require that the index files be newer than the fasta file (ignore the .LastUsed file)
                     if (fiSourceFile.LastWriteTimeUtc < dtMinWriteTimeThresholdUTC.AddSeconds(-0.1))
                     {
+                        if (!string.Equals(fiSourceFile.Extension, clsAnalysisResources.LASTUSED_FILE_EXTENSION, StringComparison.OrdinalIgnoreCase))
+                        {
                             var sourceFileDate = fiSourceFile.LastWriteTimeUtc.ToLocalTime().ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT);
                             var dateThreshold= dtMinWriteTimeThresholdUTC.ToLocalTime().ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT);
 
@@ -1281,7 +1291,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                                                         sourceFileDate,
                                                         dateThreshold));
 
-                        return false;
+                            return false;
+                        }
                     }
                 }
             }
