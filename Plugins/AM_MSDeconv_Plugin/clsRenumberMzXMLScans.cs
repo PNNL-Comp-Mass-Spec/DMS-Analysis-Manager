@@ -14,26 +14,16 @@ namespace AnalysisManagerMSDeconvPlugIn
         protected const string XML_ELEMENT_SCAN = "scan";
         protected const string XML_ELEMENT_PRECURSOR_MZ = "precursorMz";
 
-        private string mErrorMessage = string.Empty;
-        private string mSourceMzXmlFile;
-
         private Dictionary<int, int> mScanNumMap;
         private int mNextScanNumber;
 
-        public string ErrorMessage
-        {
-            get { return mErrorMessage; }
-        }
+        public string ErrorMessage { get; private set; } = string.Empty;
 
-        public string SourceMzXmlFile
-        {
-            get { return mSourceMzXmlFile; }
-            private set { mSourceMzXmlFile = value; }
-        }
+        public string SourceMzXmlFile { get; }
 
         public clsRenumberMzXMLScans(string sourceFilePath)
         {
-            mSourceMzXmlFile = sourceFilePath;
+            SourceMzXmlFile = sourceFilePath;
         }
 
         public bool Process(string targetFilePath)
@@ -42,13 +32,13 @@ namespace AnalysisManagerMSDeconvPlugIn
             {
                 mScanNumMap = new Dictionary<int, int>();
                 mNextScanNumber = 1;
-                mErrorMessage = string.Empty;
+                ErrorMessage = string.Empty;
 
-                using (var reader = new XmlTextReader(new FileStream(mSourceMzXmlFile, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using (var reader = new XmlTextReader(new FileStream(SourceMzXmlFile, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
                     reader.WhitespaceHandling = WhitespaceHandling.Significant;
 
-                    using (var writer = new XmlTextWriter(new FileStream(targetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read), System.Text.Encoding.GetEncoding("ISO-8859-1")))
+                    using (var writer = new XmlTextWriter(new FileStream(targetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read), Encoding.GetEncoding("ISO-8859-1")))
                     {
                         writer.Formatting = Formatting.Indented;
                         writer.Indentation = 2;
@@ -88,8 +78,8 @@ namespace AnalysisManagerMSDeconvPlugIn
             }
             catch (Exception ex)
             {
-                mErrorMessage = "Error in clsRenumberMzXMLScans.Process: " + ex.Message;
-                Console.WriteLine(mErrorMessage);
+                ErrorMessage = "Error in clsRenumberMzXMLScans.Process: " + ex.Message;
+                Console.WriteLine(ErrorMessage);
                 return false;
             }
         }
@@ -121,8 +111,7 @@ namespace AnalysisManagerMSDeconvPlugIn
 
                         if (reMatch.Success)
                         {
-                            var scanNumber = 0;
-                            if (int.TryParse(reMatch.Groups[1].ToString(), out scanNumber))
+                            if (int.TryParse(reMatch.Groups[1].ToString(), out var scanNumber))
                             {
                                 var currentOffset = reader.CurrentLineByteOffsetStart + reMatch.Index;
 
@@ -163,7 +152,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                 PRISM.clsProgRunner.GarbageCollectNow();
 
                 // Compute the Sha1 hash of the content written from the start, up to and including "  <sha1"
-                byte[] hashValue = null;
+                byte[] hashValue;
 
                 using (var mySha1 = SHA1.Create())
                 {
@@ -199,24 +188,26 @@ namespace AnalysisManagerMSDeconvPlugIn
 
                 try
                 {
-                    var targetFilePath = Path.Combine(fiOriginalFile.Directory.FullName,
-                        Path.GetFileNameWithoutExtension(fiOriginalFile.Name) + "_original" + fiOriginalFile.Extension);
-                    fiOriginalFile.MoveTo(targetFilePath);
+                    if (fiOriginalFile.Directory == null)
+                        throw new DirectoryNotFoundException("Cannot determine the parent directory of " + fiOriginalFile.FullName);
 
+                    var newFilename = Path.GetFileNameWithoutExtension(fiOriginalFile.Name) + "_original" + fiOriginalFile.Extension;
+                    var targetFilePath = Path.Combine(fiOriginalFile.Directory.FullName, newFilename);
+                    fiOriginalFile.MoveTo(targetFilePath);
 
                     fiIndexedFile.MoveTo(filePath);
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
-                    mErrorMessage = "Error replacing the original .mzXML file with the indexed version";
-                    Console.WriteLine(mErrorMessage);
+                    ErrorMessage = "Error replacing the original .mzXML file with the indexed version: " + ex.Message;
+                    Console.WriteLine(ErrorMessage);
                     return false;
                 }
             }
             catch (Exception ex)
             {
-                mErrorMessage = "Error in IndexMzXmlFile: " + ex.Message;
-                Console.WriteLine(mErrorMessage);
+                ErrorMessage = "Error in IndexMzXmlFile: " + ex.Message;
+                Console.WriteLine(ErrorMessage);
                 return false;
             }
 
@@ -287,9 +278,8 @@ namespace AnalysisManagerMSDeconvPlugIn
                 {
                     // Update the scan number
                     var oldScanNumberText = reader.Value;
-                    var oldScanNum = 0;
 
-                    if (int.TryParse(oldScanNumberText, out oldScanNum))
+                    if (int.TryParse(oldScanNumberText, out var oldScanNum))
                     {
                         mScanNumMap.Add(oldScanNum, mNextScanNumber);
                         writer.WriteString(mNextScanNumber.ToString());
@@ -322,12 +312,10 @@ namespace AnalysisManagerMSDeconvPlugIn
                 {
                     // Update the scan number of the precursor ion
                     var oldScanNumberText = reader.Value;
-                    var oldScanNum = 0;
-                    var newScanNum = 0;
 
-                    if (int.TryParse(oldScanNumberText, out oldScanNum))
+                    if (int.TryParse(oldScanNumberText, out var oldScanNum))
                     {
-                        if (mScanNumMap.TryGetValue(oldScanNum, out newScanNum))
+                        if (mScanNumMap.TryGetValue(oldScanNum, out var newScanNum))
                         {
                             writer.WriteString(newScanNum.ToString());
                         }

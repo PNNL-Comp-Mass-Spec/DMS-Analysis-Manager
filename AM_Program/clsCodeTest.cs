@@ -502,7 +502,7 @@ namespace AnalysisManagerProg
         public void TestArchiveFailedResults()
         {
 
-            var toolRunner = GetCodeTestToolRunner(out var jobParams);
+            GetCodeTestToolRunner(out var jobParams);
 
             if (string.IsNullOrWhiteSpace(m_mgrParams.GetParam(clsAnalysisMgrSettings.MGR_PARAM_FAILED_RESULTS_FOLDER_PATH)))
             {
@@ -877,7 +877,7 @@ namespace AnalysisManagerProg
             try
             {
                 m_FastaTimer.Start();
-                var hashString = m_FastaTools.ExportFASTAFile(proteinCollectionList, proteinOptions, legacyFasta, destFolder);
+                m_FastaTools.ExportFASTAFile(proteinCollectionList, proteinOptions, legacyFasta, destFolder);
             }
             catch (Exception ex)
             {
@@ -1091,7 +1091,7 @@ namespace AnalysisManagerProg
             jobParams.SetParam("PeptideSearch", "ProteinCollectionList", "na");
             jobParams.SetParam("PeptideSearch", "ProteinOptions", "na");
 
-            var debugLevel = 2;
+            const int debugLevel = 2;
             var resourcer = GetResourcesObject(debugLevel, jobParams);
 
             var proteinCollectionInfo = new clsProteinCollectionInfo(jobParams);
@@ -1230,8 +1230,7 @@ namespace AnalysisManagerProg
         /// <remarks>This uses DotNetZip</remarks>
         public bool TestUnzip(string zipFilePath, string outFolderPath)
         {
-            var debugLevel = 2;
-
+            const int debugLevel = 2;
             var resourcer = GetResourcesObject(debugLevel);
 
             var success = resourcer.UnzipFileStart(zipFilePath, outFolderPath, "TestUnzip", false);
@@ -1711,7 +1710,6 @@ namespace AnalysisManagerProg
         public void ValidateCentroided()
         {
             const int debugLevel = 2;
-
             var resourcer = GetResourcesObject(debugLevel);
 
             resourcer.ValidateCDTAFileIsCentroided(@"\\proto-7\dms3_Xfer\UW_HCV_03_Run2_19Dec13_Pippin_13-07-06\DTA_Gen_1_26_350136\UW_HCV_03_Run2_19Dec13_Pippin_13-07-06_dta.txt");
@@ -1774,5 +1772,6 @@ namespace AnalysisManagerProg
         }
 
         #endregion
+
     }
 }

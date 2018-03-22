@@ -34,8 +34,6 @@ namespace AnalysisManagerMultiAlignPlugIn
         /// <returns>CloseOutType enum indicating success or failure</returns>
         public override CloseOutType RunTool()
         {
-            string cmdStr = null;
-
             // Do the base class stuff
             if (base.RunTool() != CloseOutType.CLOSEOUT_SUCCESS)
             {
@@ -54,8 +52,7 @@ namespace AnalysisManagerMultiAlignPlugIn
             }
 
             // Determine the path to the MultiAlign folder
-            string progLoc = null;
-            progLoc = DetermineProgramLocation("MultiAlignProgLoc", "MultiAlignConsole.exe");
+            var progLoc = DetermineProgramLocation("MultiAlignProgLoc", "MultiAlignConsole.exe");
 
             if (string.IsNullOrWhiteSpace(progLoc))
             {
@@ -74,7 +71,7 @@ namespace AnalysisManagerMultiAlignPlugIn
             var MultiAlignDatabaseName = string.Copy(m_Dataset);
 
             // Set up and execute a program runner to run MultiAlign
-            cmdStr = " input.txt " + Path.Combine(m_WorkDir, m_jobParams.GetParam("ParmFileName")) + " " + m_WorkDir + " " + MultiAlignDatabaseName;
+            var cmdStr = " input.txt " + Path.Combine(m_WorkDir, m_jobParams.GetParam("ParmFileName")) + " " + m_WorkDir + " " + MultiAlignDatabaseName;
             if (m_DebugLevel >= 1)
             {
                 LogDebug(progLoc + " " + cmdStr);
@@ -130,8 +127,7 @@ namespace AnalysisManagerMultiAlignPlugIn
             // Move the Plots folder to the result files folder
             var diPlotsFolder = new DirectoryInfo(Path.Combine(m_WorkDir, "Plots"));
 
-            string strTargetFolderPath = null;
-            strTargetFolderPath = Path.Combine(Path.Combine(m_WorkDir, m_ResFolderName), "Plots");
+            var strTargetFolderPath = Path.Combine(Path.Combine(m_WorkDir, m_ResFolderName), "Plots");
             diPlotsFolder.MoveTo(strTargetFolderPath);
 
             var success = CopyResultsToTransferDirectory();
@@ -188,7 +184,6 @@ namespace AnalysisManagerMultiAlignPlugIn
         protected bool StoreToolVersionInfo(string strMultiAlignProgLoc)
         {
             var strToolVersionInfo = string.Empty;
-            var blnSuccess = false;
 
             if (m_DebugLevel >= 2)
             {
@@ -213,33 +208,39 @@ namespace AnalysisManagerMultiAlignPlugIn
             }
 
             // Lookup the version of MultiAlign
-            blnSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, ioMultiAlignProg.FullName);
+            var blnSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, ioMultiAlignProg.FullName);
             if (!blnSuccess)
                 return false;
 
-            // Lookup the version of additional DLLs
-            blnSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLOmics.dll"));
-            if (!blnSuccess)
-                return false;
+            var ioToolFiles = new List<FileInfo>();
 
-            blnSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, Path.Combine(ioMultiAlignProg.DirectoryName, "MultiAlignEngine.dll"));
-            if (!blnSuccess)
-                return false;
-
-            blnSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, Path.Combine(ioMultiAlignProg.DirectoryName, "MultiAlignCore.dll"));
-            if (!blnSuccess)
-                return false;
-
-            blnSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLControls.dll"));
-            if (!blnSuccess)
-                return false;
-
-            // Store paths to key DLLs in ioToolFiles
-            var ioToolFiles = new List<FileInfo>
+            if (ioMultiAlignProg.DirectoryName != null)
             {
-                new FileInfo(Path.Combine(ioMultiAlignProg.DirectoryName, "MultiAlignEngine.dll")),
-                new FileInfo(Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLOmics.dll"))
-            };
+                // Lookup the version of additional DLLs
+                blnSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLOmics.dll"));
+                if (!blnSuccess)
+                    return false;
+
+                blnSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo,
+                                                              Path.Combine(ioMultiAlignProg.DirectoryName, "MultiAlignEngine.dll"));
+                if (!blnSuccess)
+                    return false;
+
+                blnSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo,
+                                                              Path.Combine(ioMultiAlignProg.DirectoryName, "MultiAlignCore.dll"));
+                if (!blnSuccess)
+                    return false;
+
+                blnSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo,
+                                                              Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLControls.dll"));
+                if (!blnSuccess)
+                    return false;
+
+
+                // Store paths to key DLLs in ioToolFiles
+                ioToolFiles.Add(new FileInfo(Path.Combine(ioMultiAlignProg.DirectoryName, "MultiAlignEngine.dll")));
+                ioToolFiles.Add(new FileInfo(Path.Combine(ioMultiAlignProg.DirectoryName, "PNNLOmics.dll")));
+            }
 
             try
             {

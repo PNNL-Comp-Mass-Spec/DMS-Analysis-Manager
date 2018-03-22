@@ -60,7 +60,7 @@ namespace AnalysisManagerSequestPlugin
         #region "Module Variables"
 
         private FileSystemWatcher mOutFileWatcher;
-        private System.Timers.Timer mOutFileAppenderTimer;
+        private Timer mOutFileAppenderTimer;
 
         /// <summary>
         /// This tracks the names of out files that have been created
@@ -171,7 +171,7 @@ namespace AnalysisManagerSequestPlugin
             }
 
             // Initialize the Out File Appender timer
-            mOutFileAppenderTimer = new System.Timers.Timer(OUT_FILE_APPEND_INTERVAL_SECONDS * 1000);
+            mOutFileAppenderTimer = new Timer(OUT_FILE_APPEND_INTERVAL_SECONDS * 1000);
             mOutFileAppenderTimer.Elapsed += mOutFileAppenderTime_Elapsed;
             mOutFileAppenderTimer.Start();
 
@@ -728,6 +728,7 @@ namespace AnalysisManagerSequestPlugin
         /// <param name="RegexStr">Regular expresion match string to uniquely identify the line containing the count of interest</param>
         /// <returns>Count from desired line in sequest.log file if successful; 0 if count not found; -1 for error</returns>
         /// <remarks>If -1 returned, error message is in module variable m_ErrMsg</remarks>
+        [Obsolete("Unused")]
         private float GetSingleFromSeqLogFileString(string InpFileStr, string RegexStr)
         {
             try

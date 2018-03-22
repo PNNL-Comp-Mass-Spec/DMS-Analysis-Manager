@@ -384,8 +384,7 @@ namespace AnalysisManagerMODaPlugIn
                         var oMatch = reExtractScan.Match(strLineIn);
                         if (oMatch.Success)
                         {
-                            int intValue;
-                            if (int.TryParse(oMatch.Groups[1].Value, out intValue))
+                            if (int.TryParse(oMatch.Groups[1].Value, out var intValue))
                             {
                                 intScansProcessed = intValue;
                             }

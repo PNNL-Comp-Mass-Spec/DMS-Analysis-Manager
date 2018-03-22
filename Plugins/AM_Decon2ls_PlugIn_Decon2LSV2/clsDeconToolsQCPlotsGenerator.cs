@@ -54,9 +54,9 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 mOutputFolderPath = outputFolderPath;
                 mSuccess = false;
 
-                var thread = new Thread(ProcessMSFileOrFolderThread);
+                var thread = new System.Threading.Thread(ProcessMSFileOrFolderThread);
 
-                thread.SetApartmentState(ApartmentState.STA);
+                thread.SetApartmentState(System.Threading.ApartmentState.STA);
                 thread.Start();
 
                 var startTime = DateTime.UtcNow;

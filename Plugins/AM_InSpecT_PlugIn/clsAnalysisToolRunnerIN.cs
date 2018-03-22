@@ -67,14 +67,6 @@ namespace AnalysisManagerInSpecTPlugIn
         #region "Methods"
 
         /// <summary>
-        /// Constructor
-        /// </summary>
-        /// <remarks>Presently not used</remarks>
-        public clsAnalysisToolRunnerIN()
-        {
-        }
-
-        /// <summary>
         /// Runs InSpecT tool
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
@@ -351,16 +343,14 @@ namespace AnalysisManagerInSpecTPlugIn
                     // File not found; that means no errors occurred
                     return true;
                 }
-                else
+
+                var fi = new FileInfo(errorFilename);
+                if (fi.Length == 0)
                 {
-                    var fi = new FileInfo(errorFilename);
-                    if (fi.Length == 0)
-                    {
-                        // Error file is 0 bytes, which means no errors occurred
-                        // Delete the file
-                        File.Delete(errorFilename);
-                        return true;
-                    }
+                    // Error file is 0 bytes, which means no errors occurred
+                    // Delete the file
+                    File.Delete(errorFilename);
+                    return true;
                 }
 
                 // Initialize htMessages
@@ -483,7 +473,6 @@ namespace AnalysisManagerInSpecTPlugIn
                     default:
                         // Any other code
                         LogError("Unknown exit code; job failed");
-                        blnSuccess = false;
                         break;
                 }
 

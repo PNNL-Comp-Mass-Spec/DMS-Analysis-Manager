@@ -22,14 +22,14 @@ namespace AnalysisManagerDtaRefineryPlugIn
         /// <returns>True if the file was updated</returns>
         public bool FileUpdated => mFileUpdated;
 
-        private string CollapseLine(string[] dataColumns)
+        private string CollapseLine(IReadOnlyList<string> dataColumns)
         {
             var sbCollapsed = new StringBuilder(1024);
 
-            if (dataColumns.Length > 0)
+            if (dataColumns.Count > 0)
             {
                 sbCollapsed.Append(dataColumns[0]);
-                for (var intIndex = 1; intIndex <= dataColumns.Length - 1; intIndex++)
+                for (var intIndex = 1; intIndex <= dataColumns.Count - 1; intIndex++)
                 {
                     sbCollapsed.Append("\t" + dataColumns[intIndex]);
                 }
@@ -77,13 +77,12 @@ namespace AnalysisManagerDtaRefineryPlugIn
                             }
                             else if (dataColumns.Length > 1)
                             {
-                                bool columnUpdated;
-                                ValidateColumnIsPositive(dataColumns, parentIntensityColIndex, out columnUpdated);
-                                if (columnUpdated)
+                                ValidateColumnIsPositive(dataColumns, parentIntensityColIndex, out var parentIntensityColumnUpdated);
+                                if (parentIntensityColumnUpdated)
                                     columnCountUpdated += 1;
 
-                                ValidateColumnIsPositive(dataColumns, monoIntensityColIndex, out columnUpdated);
-                                if (columnUpdated)
+                                ValidateColumnIsPositive(dataColumns, monoIntensityColIndex, out var monoIntensityColumnUpdated);
+                                if (monoIntensityColumnUpdated)
                                     columnCountUpdated += 1;
                             }
 

@@ -33,7 +33,7 @@ namespace DTASpectraFileGen
 
         protected int m_NumScans;
         protected clsRunDosProgram mCmdRunner;
-        private Thread m_thThread;
+        private System.Threading.Thread m_thThread;
 
         protected int m_MaxScanInFile;
         private bool m_RunningExtractMSn;
@@ -110,7 +110,7 @@ namespace DTASpectraFileGen
             // Make the DTA files (the process runs in a separate thread)
             try
             {
-                m_thThread = new Thread(MakeDTAFilesThreaded);
+                m_thThread = new System.Threading.Thread(MakeDTAFilesThreaded);
                 m_thThread.Start();
                 m_Status = ProcessStatus.SF_RUNNING;
             }
@@ -326,7 +326,7 @@ namespace DTASpectraFileGen
             // Makes DTA files using extract_msn.exe or DeconMSn.exe
             // Warning: do not centroid spectra using DeconMSn since the masses reported when centroiding are not properly calibrated and thus could be off by 0.3 m/z or more
 
-            Thread.CurrentThread.Name = "MakeDTAFiles";
+            System.Threading.Thread.CurrentThread.Name = "MakeDTAFiles";
 
             if (m_DebugLevel >= 1)
             {
@@ -463,7 +463,7 @@ namespace DTASpectraFileGen
                     // (only used if selected in manager settings, but "UseDTALooping" is typically set to True)
 
                     var LocScanStart = scanStart;
-                    var LocScanStop = 0;
+                    int LocScanStop;
 
                     if (m_RunningExtractMSn && m_MgrParams.GetParam("UseDTALooping", false))
                     {
@@ -556,7 +556,7 @@ namespace DTASpectraFileGen
 
                         if (m_DebugLevel >= 2)
                         {
-                            OnStatusEvent("clsDtaGenThermoRaw.MakeDTAFiles, RunProgram complete, thread " + Thread.CurrentThread.Name);
+                            OnStatusEvent("clsDtaGenThermoRaw.MakeDTAFiles, RunProgram complete, thread " + System.Threading.Thread.CurrentThread.Name);
                         }
 
                         // Update loopy parameters
@@ -602,7 +602,7 @@ namespace DTASpectraFileGen
 
             if (m_DebugLevel >= 2)
             {
-                OnStatusEvent("clsDtaGenThermoRaw.MakeDTAFiles, DTA creation loop complete, thread " + Thread.CurrentThread.Name);
+                OnStatusEvent("clsDtaGenThermoRaw.MakeDTAFiles, DTA creation loop complete, thread " + System.Threading.Thread.CurrentThread.Name);
             }
 
             // We got this far, everything must have worked

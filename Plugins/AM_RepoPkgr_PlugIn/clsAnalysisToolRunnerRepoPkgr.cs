@@ -101,10 +101,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                     // FUTURE: code for other repositories to go here someday
             }
 
-            if (success)
-                return CloseOutType.CLOSEOUT_SUCCESS;
-            else
-                return CloseOutType.CLOSEOUT_FAILED;
+            return success ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
         }
 
         private void CopyFastaFiles()

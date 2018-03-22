@@ -176,8 +176,7 @@ namespace AnalysisManagerMODPlusPlugin
 
             foreach (var decoyPrefix in decoyPrefixes)
             {
-                var proteinCount = 0;
-                var fractionDecoy = GetDecoyFastaCompositionStats(fiFastaFile, decoyPrefix, out proteinCount);
+                var fractionDecoy = GetDecoyFastaCompositionStats(fiFastaFile, decoyPrefix, out var proteinCount);
 
                 if (proteinCount == 0)
                 {

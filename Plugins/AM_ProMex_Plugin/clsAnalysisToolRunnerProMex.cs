@@ -321,11 +321,9 @@ namespace AnalysisManagerProMexPlugIn
                         {
                             var strValue = kvSetting.Value;
 
-                            var strArgumentSwitch = string.Empty;
-
                             // Check whether kvSetting.key is one of the standard keys defined in dctParamNames
 
-                            if (dctParamNames.TryGetValue(kvSetting.Key, out strArgumentSwitch))
+                            if (dctParamNames.TryGetValue(kvSetting.Key, out var strArgumentSwitch))
                             {
                                 sbOptions.Append(" -" + strArgumentSwitch + " " + strValue);
                             }
@@ -358,21 +356,18 @@ namespace AnalysisManagerProMexPlugIn
         /// <remarks>Valid modification definition contains 5 parts and doesn't contain any whitespace</remarks>
         protected bool ParseProMexValidateMod(string strMod, out string strModClean)
         {
-            var intPoundIndex = 0;
-            string[] strSplitMod = null;
-
             var strComment = string.Empty;
 
             strModClean = string.Empty;
 
-            intPoundIndex = strMod.IndexOf('#');
+            var intPoundIndex = strMod.IndexOf('#');
             if (intPoundIndex > 0)
             {
                 strComment = strMod.Substring(intPoundIndex);
                 strMod = strMod.Substring(0, intPoundIndex - 1).Trim();
             }
 
-            strSplitMod = strMod.Split(',');
+            var strSplitMod = strMod.Split(',');
 
             if (strSplitMod.Length < 5)
             {
@@ -406,7 +401,7 @@ namespace AnalysisManagerProMexPlugIn
             return true;
         }
 
-        private bool PostProcessProMexResults(FileInfo fiResultsFile)
+        private bool PostProcessProMexResults(FileSystemInfo fiResultsFile)
         {
             // Make sure there are at least two features in the .ms1ft file
 
@@ -442,23 +437,19 @@ namespace AnalysisManagerProMexPlugIn
 
         protected bool StartProMex(string progLoc)
         {
-            string cmdStr = null;
-            var blnSuccess = false;
-
             mConsoleOutputErrorMsg = string.Empty;
 
             // Read the ProMex Parameter File
             // The parameter file name specifies the mass modifications to consider, plus also the analysis parameters
 
-            var strCmdLineOptions = string.Empty;
-
-            var eResult = ParseProMexParameterFile(out strCmdLineOptions);
+            var eResult = ParseProMexParameterFile(out var strCmdLineOptions);
 
             if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
             {
                 return false;
             }
-            else if (string.IsNullOrEmpty(strCmdLineOptions))
+
+            if (string.IsNullOrEmpty(strCmdLineOptions))
             {
                 if (string.IsNullOrEmpty(m_message))
                 {
@@ -467,7 +458,7 @@ namespace AnalysisManagerProMexPlugIn
                 return false;
             }
 
-            string msFilePath = null;
+            string msFilePath;
 
             var proMexBruker = clsAnalysisResourcesProMex.IsProMexBrukerJob(m_jobParams);
 
@@ -484,7 +475,7 @@ namespace AnalysisManagerProMexPlugIn
 
             // Set up and execute a program runner to run ProMex
 
-            cmdStr = " -i " + msFilePath;
+            var cmdStr = " -i " + msFilePath;
             cmdStr += " " + strCmdLineOptions;
 
             if (m_DebugLevel >= 1)
@@ -508,7 +499,7 @@ namespace AnalysisManagerProMexPlugIn
 
             // Start the program and wait for it to finish
             // However, while it's running, LoopWaiting will get called via events
-            blnSuccess = mCmdRunner.RunProgram(progLoc, cmdStr, "ProMex", true);
+            var blnSuccess = mCmdRunner.RunProgram(progLoc, cmdStr, "ProMex", true);
 
             if (!mCmdRunner.WriteConsoleOutputToFile)
             {
@@ -547,7 +538,8 @@ namespace AnalysisManagerProMexPlugIn
 
                 return false;
             }
-            else if (mConsoleOutputErrorMsg.Contains("Data file has no MS1 spectra"))
+
+            if (mConsoleOutputErrorMsg.Contains("Data file has no MS1 spectra"))
             {
                 m_message = mConsoleOutputErrorMsg;
                 return false;

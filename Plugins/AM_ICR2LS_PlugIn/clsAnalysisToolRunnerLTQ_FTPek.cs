@@ -74,7 +74,7 @@ namespace AnalysisManagerICR2LSPlugIn
             // Assemble the output file name and path
             var OutFileNamePath = Path.Combine(m_WorkDir, m_Dataset + ".pek");
 
-            var success = base.StartICR2LS(DSNamePath, paramFilePath, OutFileNamePath, ICR2LSProcessingModeConstants.LTQFTPEK, useAllScans, SkipMS2,
+            var success = StartICR2LS(DSNamePath, paramFilePath, OutFileNamePath, ICR2LSProcessingModeConstants.LTQFTPEK, useAllScans, SkipMS2,
                 MinScan, MaxScan);
 
             if (success)

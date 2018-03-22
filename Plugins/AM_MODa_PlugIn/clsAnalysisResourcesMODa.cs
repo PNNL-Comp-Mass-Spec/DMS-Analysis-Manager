@@ -70,7 +70,7 @@ namespace AnalysisManagerMODaPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            if (!base.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
+            if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
             {
                 return CloseOutType.CLOSEOUT_FAILED;
             }
@@ -132,17 +132,15 @@ namespace AnalysisManagerMODaPlugIn
                     LogError(m_message + ": " + mDTAtoMGF.GetErrorMessage());
                     return false;
                 }
-                else
+
+                // Delete the _dta.txt file
+                try
                 {
-                    // Delete the _dta.txt file
-                    try
-                    {
-                        fiCDTAFile.Delete();
-                    }
-                    catch (Exception)
-                    {
-                        // Ignore errors here
-                    }
+                    fiCDTAFile.Delete();
+                }
+                catch (Exception)
+                {
+                    // Ignore errors here
                 }
 
                 PRISM.clsProgRunner.GarbageCollectNow();

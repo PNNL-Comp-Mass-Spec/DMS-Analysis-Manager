@@ -224,7 +224,7 @@ namespace AnalysisManagerQCARTPlugin
 
         private bool CreateBaselineMetricsMetadataFile(
             Dictionary<string, int> datasetNamesAndJobs,
-            FileInfo fiNewBaselineData)
+            FileSystemInfo fiNewBaselineData)
         {
             try
             {
@@ -351,8 +351,7 @@ namespace AnalysisManagerQCARTPlugin
 
             foreach (var item in datasetNamesAndJobsText)
             {
-                int masicJob;
-                if (int.TryParse(item.Value, out masicJob))
+                if (int.TryParse(item.Value, out var masicJob))
                 {
                     datasetNamesAndJobs.Add(item.Key, masicJob);
                 }
@@ -363,7 +362,7 @@ namespace AnalysisManagerQCARTPlugin
 
         }
 
-        private bool LoadQCARTResults(FileInfo fiResults, out double qcartValue)
+        private bool LoadQCARTResults(FileSystemInfo fiResults, out double qcartValue)
         {
             qcartValue = 0;
             var validData = false;
@@ -468,9 +467,7 @@ namespace AnalysisManagerQCARTPlugin
                     return false;
                 }
 
-                double qcartValue;
-
-                var success = LoadQCARTResults(fiResultsFile, out qcartValue);
+                var success = LoadQCARTResults(fiResultsFile, out var qcartValue);
                 if (!success)
                 {
                     return false;

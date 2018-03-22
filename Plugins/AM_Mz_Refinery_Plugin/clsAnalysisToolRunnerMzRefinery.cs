@@ -273,7 +273,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 {
                     var msgfPlusResultsExist = false;
 
-                    if ((fiMSGFPlusResults != null) && fiMSGFPlusResults.Exists)
+                    if (fiMSGFPlusResults != null && fiMSGFPlusResults.Exists)
                     {
                         // MSGF+ succeeded but MzRefinery or PostProcessing failed
                         // We will mark the job as failed, but we want to move the MSGF+ results into the transfer folder
@@ -1358,13 +1358,6 @@ namespace AnalysisManagerMzRefineryPlugIn
                 LogError("Exception calling SetStepTaskToolVersion: " + ex.Message);
                 return false;
             }
-        }
-
-        private void UpdateProgress(float currentTaskProgressAtStart, float currentTaskProgressAtEnd, float subTaskProgress)
-        {
-            var progressCompleteOverall = ComputeIncrementalProgress(currentTaskProgressAtStart, currentTaskProgressAtEnd, subTaskProgress);
-
-            UpdateProgress(progressCompleteOverall);
         }
 
         private void UpdateProgress(float progressCompleteOverall)

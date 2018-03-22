@@ -121,8 +121,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 // Look for a ser file or fid file in the working directory
                 currentTask = "FindSerFileOrFolder";
 
-                bool blnIsFolder;
-                var serFileOrFolderPath = clsAnalysisResourcesIcr2ls.FindSerFileOrFolder(datasetFolderPathBase, out blnIsFolder);
+                var serFileOrFolderPath = clsAnalysisResourcesIcr2ls.FindSerFileOrFolder(datasetFolderPathBase, out var blnIsFolder);
 
                 if (string.IsNullOrEmpty(serFileOrFolderPath))
                 {
@@ -134,14 +133,12 @@ namespace AnalysisManagerICR2LSPlugIn
                         LogError(m_message);
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
-                    else
+
+                    // Assume we are processing zipped s-folders, and thus there should be a folder with the Dataset's name in the work directory
+                    //  and in that folder will be unzipped contents of the s-folders (one file per spectrum)
+                    if (m_DebugLevel >= 1)
                     {
-                        // Assume we are processing zipped s-folders, and thus there should be a folder with the Dataset's name in the work directory
-                        //  and in that folder will be unzipped contents of the s-folders (one file per spectrum)
-                        if (m_DebugLevel >= 1)
-                        {
-                            LogDebug("Did not find a ser file, fid file, or 0.ser folder; assuming we are processing zipped s-folders");
-                        }
+                        LogDebug("Did not find a ser file, fid file, or 0.ser folder; assuming we are processing zipped s-folders");
                     }
                 }
                 else
@@ -178,7 +175,7 @@ namespace AnalysisManagerICR2LSPlugIn
                     }
 
                     currentTask = "StartICR2LS for " + serFileOrFolderPath;
-                    success = base.StartICR2LS(
+                    success = StartICR2LS(
                         serFileOrFolderPath, paramFilePath, OutFileNamePath, eICR2LSMode, useAllScans,
                         SkipMS2, MinScan,MaxScan);
 
@@ -200,7 +197,7 @@ namespace AnalysisManagerICR2LSPlugIn
                     currentTask = "StartICR2LS for zippsed s-folders in " + DSNamePath;
 
                     eICR2LSMode = ICR2LSProcessingModeConstants.SFoldersPEK;
-                    success = base.StartICR2LS(DSNamePath, paramFilePath, OutFileNamePath, eICR2LSMode, useAllScans, SkipMS2, MinScan, MaxScan);
+                    success = StartICR2LS(DSNamePath, paramFilePath, OutFileNamePath, eICR2LSMode, useAllScans, SkipMS2, MinScan, MaxScan);
 
                     if (!success)
                     {
@@ -299,6 +296,7 @@ namespace AnalysisManagerICR2LSPlugIn
         /// <param name="strFolderPath">Folder to examine</param>
         /// <param name="strDatasetName">Dataset name</param>
         /// <remarks></remarks>
+        [Obsolete("Unused")]
         private void FixICR2LSResultFileNames(string strFolderPath, string strDatasetName)
         {
             var objExtensionsToCheck = new List<string>();
@@ -321,7 +319,7 @@ namespace AnalysisManagerICR2LSPlugIn
 
                             // Name should be of the form: Dataset_1_24_2010.PAR
                             // The datestamp in the name is month_day_year
-                            var strDesiredName = strDatasetName + "_" + System.DateTime.Now.ToString("M_d_yyyy") + "." + strExtension;
+                            var strDesiredName = strDatasetName + "_" + DateTime.Now.ToString("M_d_yyyy") + "." + strExtension;
 
                             if (!string.Equals(fiFile.Name, strDesiredName, StringComparison.InvariantCultureIgnoreCase))
                             {

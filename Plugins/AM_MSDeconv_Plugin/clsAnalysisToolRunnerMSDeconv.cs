@@ -295,8 +295,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                                     var oMatch = reExtractPercentFinished.Match(strLineIn);
                                     if (oMatch.Success)
                                     {
-                                        short intProgress;
-                                        if (short.TryParse(oMatch.Groups[1].Value, out intProgress))
+                                        if (short.TryParse(oMatch.Groups[1].Value, out var intProgress))
                                         {
                                             intActualProgress = intProgress;
                                         }

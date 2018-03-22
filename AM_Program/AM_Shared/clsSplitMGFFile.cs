@@ -103,6 +103,11 @@ namespace AnalysisManagerBase
 
                 var scanMapFile = Path.GetFileNameWithoutExtension(fiMgfFile.Name) + "_mgfScanMap.txt";
 
+                if (fiMgfFile.DirectoryName == null)
+                {
+                    throw new DirectoryNotFoundException("Cannot determine the parent directory of " + fiMgfFile.FullName);
+                }
+
                 var scanMapFilePath = Path.Combine(fiMgfFile.DirectoryName, scanMapFile);
 
                 var lstSplitMgfFiles = new List<FileInfo>();

@@ -385,9 +385,6 @@ namespace AnalysisManagerXTandemPlugIn
                 var fileList = Directory.GetFiles(m_WorkDir, "*_xt.xml");
                 foreach (var file in fileList)
                 {
-                    if (file == null)
-                        continue;
-
                     var filePath = Path.Combine(m_WorkDir, Path.GetFileName(file));
                     if (!ZipFile(filePath, true))
                     {

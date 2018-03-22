@@ -95,7 +95,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
 
                 // Set up and execute a program runner to run TargetedWorkflowsConsole
                 var strRawDataType = m_jobParams.GetParam("RawDataType");
-                string cmdStr = null;
+                string cmdStr;
 
                 switch (strRawDataType.ToLower())
                 {
@@ -253,7 +253,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
         /// <remarks></remarks>
         protected string CreateTargetedQuantParamFile()
         {
-            string strTargetedQuantParamFilePath = null;
+            string strTargetedQuantParamFilePath;
 
             try
             {
@@ -346,7 +346,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
         //   8/13/2012 2:33:20 PM    Percent complete = 8%   Target 300 of 3917
         //   ...
         //   8/13/2012 1:56:55 PM    ---- PROCESSING COMPLETE ---------------
-        private Regex reSubProgress = new Regex(@"Percent complete = ([0-9.]+)", RegexOptions.Compiled);
+        private readonly Regex reSubProgress = new Regex(@"Percent complete = ([0-9.]+)", RegexOptions.Compiled);
 
         /// <summary>
         /// Parse the TargetedWorkflowsConsole console output file to track progress
@@ -384,15 +384,9 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                     LogDebug("Parsing file " + strConsoleOutputFilePath);
                 }
 
-                string strLineIn = null;
-                string strLineInLCase = null;
-
-                var intCharIndex = 0;
-
                 double dblSubProgressAddon = 0;
 
-                var intEffectiveProgress = 0;
-                intEffectiveProgress = PROGRESS_TARGETED_WORKFLOWS_STARTING;
+                var intEffectiveProgress = PROGRESS_TARGETED_WORKFLOWS_STARTING;
 
                 mConsoleOutputErrorMsg = string.Empty;
 
@@ -400,11 +394,11 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                 {
                     while (!srInFile.EndOfStream)
                     {
-                        strLineIn = srInFile.ReadLine();
+                        var strLineIn = srInFile.ReadLine();
 
                         if (!string.IsNullOrWhiteSpace(strLineIn))
                         {
-                            strLineInLCase = strLineIn.ToLower();
+                            var strLineInLCase = strLineIn.ToLower();
 
                             // Update progress if the line contains any one of the expected phrases
                             foreach (var oItem in mConsoleOutputProgressMap)
@@ -430,7 +424,7 @@ namespace AnalysisManagerMSAlignQuantPlugIn
                                 }
                             }
 
-                            intCharIndex = strLineInLCase.IndexOf("exception of type", StringComparison.Ordinal);
+                            var intCharIndex = strLineInLCase.IndexOf("exception of type", StringComparison.Ordinal);
                             if (intCharIndex < 0)
                             {
                                 intCharIndex = strLineInLCase.IndexOf("\t" + "error", StringComparison.Ordinal);

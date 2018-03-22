@@ -113,8 +113,6 @@ namespace DTASpectraFileGen
         /// <remarks></remarks>
         private bool ConvertMGFtoDTA()
         {
-            var blnSuccess = false;
-
             var strRawDataType = m_JobParams.GetJobParameter("RawDataType", "");
 
             var oMGFConverter = new clsMGFConverter(m_DebugLevel, m_WorkDir)
@@ -126,7 +124,7 @@ namespace DTASpectraFileGen
             RegisterEvents(oMGFConverter);
 
             var eRawDataType = clsAnalysisResources.GetRawDataType(strRawDataType);
-            blnSuccess = oMGFConverter.ConvertMGFtoDTA(eRawDataType, m_Dataset);
+            var blnSuccess = oMGFConverter.ConvertMGFtoDTA(eRawDataType, m_Dataset);
 
             if (!blnSuccess)
             {
@@ -147,7 +145,7 @@ namespace DTASpectraFileGen
         /// <remarks></remarks>
         private bool ConvertRawToMGF(clsAnalysisResources.eRawDataTypeConstants eRawDataType)
         {
-            string RawFilePath = null;
+            string rawFilePath;
 
             if (m_DebugLevel > 0)
             {
@@ -160,21 +158,21 @@ namespace DTASpectraFileGen
             switch (eRawDataType)
             {
                 case clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile:
-                    RawFilePath = Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_RAW_EXTENSION);
+                    rawFilePath = Path.Combine(m_WorkDir, m_Dataset + clsAnalysisResources.DOT_RAW_EXTENSION);
                     break;
                 default:
                     m_ErrMsg = "Data file type not supported by the DeconMSn workflow in DeconConsole: " + eRawDataType;
                     return false;
             }
 
-            m_InstrumentFileName = Path.GetFileName(RawFilePath);
-            mInputFilePath = RawFilePath;
+            m_InstrumentFileName = Path.GetFileName(rawFilePath);
+            mInputFilePath = rawFilePath;
             m_JobParams.AddResultFileToSkip(m_InstrumentFileName);
 
             if (eRawDataType == clsAnalysisResources.eRawDataTypeConstants.ThermoRawFile)
             {
                 // Get the maximum number of scans in the file
-                m_MaxScanInFile = GetMaxScan(RawFilePath);
+                m_MaxScanInFile = GetMaxScan(rawFilePath);
             }
             else
             {
@@ -196,13 +194,11 @@ namespace DTASpectraFileGen
                 m_ErrMsg = clsAnalysisToolRunnerBase.NotifyMissingParameter(m_JobParams, "DeconMSn_ParamFile");
                 return false;
             }
-            else
-            {
-                strParamFilePath = Path.Combine(m_WorkDir, strParamFilePath);
-            }
+
+            strParamFilePath = Path.Combine(m_WorkDir, strParamFilePath);
 
             // Set up command
-            var cmdStr = " " + RawFilePath + " " + strParamFilePath;
+            var cmdStr = " " + rawFilePath + " " + strParamFilePath;
 
             if (m_DebugLevel > 0)
             {
@@ -218,17 +214,14 @@ namespace DTASpectraFileGen
                 WriteConsoleOutputToFile = false   // Disable since the DeconConsole log file has very similar information
             };
 
-            mCmdRunner.ErrorEvent += base.CmdRunner_ErrorEvent;
-            mCmdRunner.LoopWaiting += base.CmdRunner_LoopWaiting;
+            mCmdRunner.ErrorEvent += CmdRunner_ErrorEvent;
+            mCmdRunner.LoopWaiting += CmdRunner_LoopWaiting;
 
             var blnSuccess = mCmdRunner.RunProgram(m_DtaToolNameLoc, cmdStr, "DeconConsole", true);
 
             // Parse the DeconTools .Log file to see whether it contains message "Finished file processing"
 
-            var dtFinishTime = DateTime.Now;
-            var blnFinishedProcessing = false;
-
-            ParseDeconToolsLogFile(out blnFinishedProcessing, out dtFinishTime);
+            ParseDeconToolsLogFile(out var blnFinishedProcessing, out _);
 
             if (mDeconConsoleExceptionThrown)
             {
@@ -284,10 +277,7 @@ namespace DTASpectraFileGen
 
         protected override void MonitorProgress()
         {
-            var dtFinishTime = DateTime.Now;
-            var blnFinishedProcessing = false;
-
-            ParseDeconToolsLogFile(out blnFinishedProcessing, out dtFinishTime);
+            ParseDeconToolsLogFile(out var blnFinishedProcessing, out var dtFinishTime);
 
             if (m_DebugLevel >= 2)
             {
@@ -321,11 +311,11 @@ namespace DTASpectraFileGen
             var strScanLine = string.Empty;
 
             blnFinishedProcessing = false;
-            dtFinishTime = System.DateTime.MinValue;
+            dtFinishTime = DateTime.MinValue;
 
             try
             {
-                string strLogFilePath = null;
+                string strLogFilePath;
 
                 switch (m_RawDataType)
                 {
@@ -452,9 +442,7 @@ namespace DTASpectraFileGen
                 // It will look like:
                 // Scan= 16500; PercentComplete= 89.2
 
-                string[] strProgressStats = null;
-
-                strProgressStats = strScanLine.Split(';');
+                var strProgressStats = strScanLine.Split(';');
 
                 for (var i = 0; i <= strProgressStats.Length - 1; i++)
                 {
@@ -489,8 +477,7 @@ namespace DTASpectraFileGen
         /// <remarks></remarks>
         private KeyValuePair<string, string> ParseKeyValue(string strData)
         {
-            var intCharIndex = 0;
-            intCharIndex = strData.IndexOf('=');
+            var intCharIndex = strData.IndexOf('=');
 
             if (intCharIndex > 0)
             {

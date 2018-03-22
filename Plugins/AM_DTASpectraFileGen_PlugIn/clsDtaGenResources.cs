@@ -102,8 +102,6 @@ namespace DTASpectraFileGen
                     var datasetID = m_jobParams.GetJobParameter("DatasetID", 0);
                     var folderNameToFind = "DTA_Gen_1_26_" + datasetID;
                     var fileToFind = DatasetName + "_dta.zip";
-                    bool validFolderFound;
-                    string folderNotFoundMessage;
 
                     var existingDtaFolder = FolderSearch.FindValidFolder(DatasetName,
                         fileToFind,
@@ -112,8 +110,8 @@ namespace DTASpectraFileGen
                         logFolderNotFound: false,
                         retrievingInstrumentDataFolder: false,
                         assumeUnpurged: false,
-                        validFolderFound: out validFolderFound,
-                        folderNotFoundMessage: out folderNotFoundMessage);
+                        validFolderFound: out var validFolderFound,
+                        folderNotFoundMessage: out _);
 
                     if (validFolderFound)
                     {
@@ -130,10 +128,10 @@ namespace DTASpectraFileGen
                             LogMessage("Found pre-existing DeconMSn results; will not re-run DeconMSn if they are valid");
 
                             fileToFind = DatasetName + "_profile.txt";
-                            blnFileCopiedOrQueued = CopyFileToWorkDir(fileToFind, existingDtaFolder, m_WorkingDir);
+                            CopyFileToWorkDir(fileToFind, existingDtaFolder, m_WorkingDir);
 
                             fileToFind = DatasetName + "_DeconMSn_log.txt";
-                            blnFileCopiedOrQueued = CopyFileToWorkDir(fileToFind, existingDtaFolder, m_WorkingDir);
+                            CopyFileToWorkDir(fileToFind, existingDtaFolder, m_WorkingDir);
                         }
                     }
                 }

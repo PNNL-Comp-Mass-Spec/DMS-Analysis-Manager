@@ -101,7 +101,7 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
             PRISM.clsProgRunner.GarbageCollectNow();
 
             // Override the dataset name and transfer folder path so that the results get copied to the correct location
-            base.RedefineAggregationJobDatasetAndTransferFolder();
+            RedefineAggregationJobDatasetAndTransferFolder();
 
             // Update list of files to be deleted after run
             var groupedFiles = Directory.GetFiles(m_WorkDir, "*_grouped*");

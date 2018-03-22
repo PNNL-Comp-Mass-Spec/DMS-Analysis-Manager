@@ -227,25 +227,29 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
             if (!blnSuccess)
                 return false;
 
-            // Lookup the version of MultiAlignEngine (in the MultiAlign folder)
-            var strMultiAlignEngineDllLoc = Path.Combine(ioMultiAlignInfo.DirectoryName, "MultiAlignEngine.dll");
-            blnSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, strMultiAlignEngineDllLoc);
-            if (!blnSuccess)
-                return false;
-
-            // Lookup the version of MultiAlignCore (in the MultiAlign folder)
-            var strMultiAlignCoreDllLoc = Path.Combine(ioMultiAlignInfo.DirectoryName, "MultiAlignCore.dll");
-            blnSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, strMultiAlignCoreDllLoc);
-            if (!blnSuccess)
-                return false;
-
             // Store paths to key DLLs in ioToolFiles
             var ioToolFiles = new List<FileInfo>
             {
-                new FileInfo(strMultiAlignProgLoc),
-                new FileInfo(strMultiAlignEngineDllLoc),
-                new FileInfo(strMultiAlignCoreDllLoc)
+                new FileInfo(strMultiAlignProgLoc)
             };
+
+            if (ioMultiAlignInfo.DirectoryName != null)
+            {
+                // Lookup the version of MultiAlignEngine (in the MultiAlign folder)
+                var strMultiAlignEngineDllLoc = Path.Combine(ioMultiAlignInfo.DirectoryName, "MultiAlignEngine.dll");
+                blnSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, strMultiAlignEngineDllLoc);
+                if (!blnSuccess)
+                    return false;
+
+                // Lookup the version of MultiAlignCore (in the MultiAlign folder)
+                var strMultiAlignCoreDllLoc = Path.Combine(ioMultiAlignInfo.DirectoryName, "MultiAlignCore.dll");
+                blnSuccess = StoreToolVersionInfoOneFile64Bit(ref strToolVersionInfo, strMultiAlignCoreDllLoc);
+                if (!blnSuccess)
+                    return false;
+
+                ioToolFiles.Add(new FileInfo(strMultiAlignEngineDllLoc));
+                ioToolFiles.Add(new FileInfo(strMultiAlignCoreDllLoc));
+            }
 
             try
             {

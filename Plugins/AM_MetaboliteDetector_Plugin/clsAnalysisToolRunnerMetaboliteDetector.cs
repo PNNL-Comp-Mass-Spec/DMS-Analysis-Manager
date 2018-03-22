@@ -37,7 +37,6 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
         private string mMetaboliteDetectorProgLoc;
 
         private DateTime mLastConsoleOutputParse;
-        private DateTime mLastProgressWriteTime;
 
         #endregion
 
@@ -80,7 +79,6 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
 
                 // Initialize classwide variables
                 mLastConsoleOutputParse = DateTime.UtcNow;
-                mLastProgressWriteTime = DateTime.UtcNow;
 
                 var processingError = false;
 

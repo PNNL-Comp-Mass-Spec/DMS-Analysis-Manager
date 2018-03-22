@@ -25,7 +25,7 @@ namespace AnalysisManager_Ape_PlugIn
         #endregion
 
         #region Member Variables
-        protected string mResultsDBFileName = "";
+        protected string mResultsDBFileName;
 
         protected string mWorkingDir;
 
@@ -39,20 +39,17 @@ namespace AnalysisManager_Ape_PlugIn
 
         #region "Properties"
 
-        public string ErrorMessage
-        {
-            get { return mErrorMessage; }
-        }
+        public string ErrorMessage => mErrorMessage;
 
         #endregion
-        
+
         #region Constructors
 
         public clsApeAMBase(IJobParams jobParms, IMgrParams mgrParms) {
-            this.mJobParms = jobParms;
-            this.mMgrParms = mgrParms;
-            this.mResultsDBFileName = RequireJobParam("ResultsBaseName") + ".db3";
-            this.mWorkingDir = RequireMgrParam("workdir");
+            mJobParms = jobParms;
+            mMgrParms = mgrParms;
+            mResultsDBFileName = RequireJobParam("ResultsBaseName") + ".db3";
+            mWorkingDir = RequireMgrParam("workdir");
         }
 
         #endregion
@@ -95,7 +92,7 @@ namespace AnalysisManager_Ape_PlugIn
         protected void OnProgressChanged(string TaskDescription, float PctComplete)
         {
             ProgressChanged?.Invoke(this, new ProgressChangedEventArgs(TaskDescription, PctComplete));
-        }	
+        }
 
         public class ProgressChangedEventArgs : EventArgs {
             public readonly string taskDescription;     // Current task

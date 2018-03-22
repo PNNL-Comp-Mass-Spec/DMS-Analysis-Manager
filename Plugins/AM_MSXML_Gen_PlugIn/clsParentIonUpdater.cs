@@ -4,6 +4,8 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Xml;
+using AnalysisManagerBase;
+using MSDataFileReader;
 using PRISM;
 
 namespace AnalysisManagerMsXmlGenPlugIn
@@ -59,15 +61,14 @@ namespace AnalysisManagerMsXmlGenPlugIn
             {
                 OnProgressUpdate("Caching parent ion info in " + mgfFilePath, 0);
 
-                var mgfFileReader = new MSDataFileReader.clsMGFFileReader {ReadTextDataOnly = false};
+                var mgfFileReader = new clsMGFFileReader {ReadTextDataOnly = false};
 
                 // Open the MGF file
                 mgfFileReader.OpenFile(mgfFilePath);
 
                 // Cache the parent ion m/z and charge values in the MGF file
 
-                MSDataFileReader.clsSpectrumInfo objMGFSpectrum;
-                while (mgfFileReader.ReadNextSpectrum(out objMGFSpectrum))
+                while (mgfFileReader.ReadNextSpectrum(out var objMGFSpectrum))
                 {
                     var objCurrentSpectrum = mgfFileReader.CurrentSpectrum;
                     var udtChargeInfo = new udtChargeInfoType
@@ -77,8 +78,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                         Charge = objCurrentSpectrum.ParentIonCharges[0]
                     };
 
-                    List<udtChargeInfoType> chargeInfoList;
-                    if (!cachedParentIonInfo.TryGetValue(objMGFSpectrum.ScanNumber, out chargeInfoList))
+                    if (!cachedParentIonInfo.TryGetValue(objMGFSpectrum.ScanNumber, out var chargeInfoList))
                     {
                         chargeInfoList = new List<udtChargeInfoType>();
                         cachedParentIonInfo.Add(objMGFSpectrum.ScanNumber, chargeInfoList);
@@ -109,6 +109,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
         /// Could be used to update a _dta.txt file created using DeconMSn with the parent ion information
         /// from a .mgf file created by RawConverter.
         /// </remarks>
+        [Obsolete("Unused")]
         private string UpdateDtaParentIonInfoUsingMGF(string dtaFilePath, string mgfFilePath, bool removeUnmatchedSpectra, bool replaceDtaFile)
         {
             // Look for the charge state in the title line, for example 2.dta in "DatasetName.5396.5396.2.dta"
@@ -127,7 +128,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 var sourceDtaFile = new FileInfo(dtaFilePath);
                 var updatedDtaFile = new FileInfo(sourceDtaFile.FullName + ".new");
 
-                var dtaFileReader = new MSDataFileReader.clsDtaTextFileReader(false) {ReadTextDataOnly = true};
+                var dtaFileReader = new clsDtaTextFileReader(false) {ReadTextDataOnly = true};
 
                 // Open the _DTA.txt file
                 dtaFileReader.OpenFile(dtaFilePath);
@@ -136,13 +137,9 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 {
                     var lastScan = 0;
 
-                    MSDataFileReader.clsSpectrumInfo objDTASpectrum;
-
-                    while (dtaFileReader.ReadNextSpectrum(out objDTASpectrum))
+                    while (dtaFileReader.ReadNextSpectrum(out var objDTASpectrum))
                     {
-                        List<udtChargeInfoType> chargeInfoList;
-
-                        if (!cachedParentIonInfo.TryGetValue(objDTASpectrum.ScanNumber, out chargeInfoList))
+                        if (!cachedParentIonInfo.TryGetValue(objDTASpectrum.ScanNumber, out var chargeInfoList))
                         {
                             OnWarningEvent("Warning, scan " + objDTASpectrum.ScanNumber + " not found in MGF file; unable to update the data");
                             if (removeUnmatchedSpectra)
@@ -253,8 +250,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                     if (reader.Name == "count")
                     {
-                        int listItemCount;
-                        if (int.TryParse(reader.Value, out listItemCount))
+                        if (int.TryParse(reader.Value, out var listItemCount))
                         {
                             listItemCount += 1;
                         }
@@ -303,8 +299,13 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 }
 
                 var sourceMzMLFile = new FileInfo(mzMLFilePath);
-                var updatedMzMLFile = new FileInfo(Path.Combine(sourceMzMLFile.Directory.FullName,
-                        Path.GetFileNameWithoutExtension(sourceMzMLFile.Name) + "_new" + Path.GetExtension(sourceMzMLFile.Name)));
+                if (sourceMzMLFile.Directory == null)
+                {
+                    throw new DirectoryNotFoundException("Unable to determine the parent directory of " + mzMLFilePath);
+                }
+
+                var newFileName = Path.GetFileNameWithoutExtension(sourceMzMLFile.Name) + "_new" + Path.GetExtension(sourceMzMLFile.Name);
+                var updatedMzMLFile = new FileInfo(Path.Combine(sourceMzMLFile.Directory.FullName, newFileName));
 
                 var atEndOfMzML = false;
                 var currentScanNumber = -1;
@@ -423,8 +424,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                                         {
                                             updatedScan = true;
 
-                                            List<udtChargeInfoType> chargeInfoList;
-                                            if (cachedParentIonInfo.TryGetValue(currentScanNumber, out chargeInfoList))
+                                            if (cachedParentIonInfo.TryGetValue(currentScanNumber, out var chargeInfoList))
                                             {
                                                 WriteUpdatedScan(reader, writer, chargeInfoList);
                                                 nodeAlreadyWritten = true;
@@ -438,8 +438,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                                         {
                                             updatedSelectedIon = true;
 
-                                            List<udtChargeInfoType> chargeInfoList;
-                                            if (cachedParentIonInfo.TryGetValue(currentScanNumber, out chargeInfoList))
+                                            if (cachedParentIonInfo.TryGetValue(currentScanNumber, out var chargeInfoList))
                                             {
                                                 WriteUpdatedSelectedIon(reader, writer, chargeInfoList);
                                                 nodeAlreadyWritten = true;
@@ -497,7 +496,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             }
         }
 
-        private void WriteShallowNode(XmlTextReader reader, XmlTextWriter writer)
+        private void WriteShallowNode(XmlReader reader, XmlWriter writer)
         {
             switch (reader.NodeType)
             {
@@ -534,10 +533,12 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 case XmlNodeType.ProcessingInstruction:
                     writer.WriteProcessingInstruction(reader.Name, reader.Value);
                     break;
-                case XmlNodeType.DocumentType:
-                    writer.WriteDocType(reader.Name, reader.GetAttribute("PUBLIC"), reader.GetAttribute("SYSTEM"), reader.Value);
 
+                case XmlNodeType.DocumentType:
+                    var sysId = reader.GetAttribute("SYSTEM") ?? string.Empty;
+                    writer.WriteDocType(reader.Name, reader.GetAttribute("PUBLIC"), sysId, reader.Value);
                     break;
+
                 case XmlNodeType.Comment:
                     writer.WriteComment(reader.Value);
                     break;
@@ -548,7 +549,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             }
         }
 
-        private void WriteUpdatedScan(XmlTextReader reader, XmlTextWriter writer, List<udtChargeInfoType> chargeInfoList)
+        private void WriteUpdatedScan(XmlReader reader, XmlWriter writer, IReadOnlyCollection<udtChargeInfoType> chargeInfoList)
         {
             // Write the start element and any attributes
             WriteShallowNode(reader, writer);
@@ -608,7 +609,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             }
         }
 
-        private void WriteUpdatedSelectedIon(XmlTextReader reader, XmlTextWriter writer, List<udtChargeInfoType> chargeInfoList)
+        private void WriteUpdatedSelectedIon(XmlReader reader, XmlWriter writer, IReadOnlyCollection<udtChargeInfoType> chargeInfoList)
         {
             // Write the start element and any attributes
             WriteShallowNode(reader, writer);
@@ -684,7 +685,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             }
         }
 
-        private void WriteUpdatedDataProcessingList(XmlTextReader reader, XmlTextWriter writer, udtSoftwareInfoType softwareInfo)
+        private void WriteUpdatedDataProcessingList(XmlReader reader, XmlWriter writer, udtSoftwareInfoType softwareInfo)
         {
             if (reader.IsEmptyElement)
             {
@@ -743,7 +744,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             }
         }
 
-        private void WriteUpdatedSoftwareList(XmlTextReader reader, XmlTextWriter writer, udtSoftwareInfoType softwareInfo)
+        private void WriteUpdatedSoftwareList(XmlReader reader, XmlWriter writer, udtSoftwareInfoType softwareInfo)
         {
             if (reader.IsEmptyElement)
             {
@@ -805,7 +806,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
             }
         }
 
-        private void WriteXmlAttribute(XmlTextWriter writer, string name, string value)
+        private void WriteXmlAttribute(XmlWriter writer, string name, string value)
         {
             writer.WriteStartAttribute(name);
             if (string.IsNullOrEmpty(value))

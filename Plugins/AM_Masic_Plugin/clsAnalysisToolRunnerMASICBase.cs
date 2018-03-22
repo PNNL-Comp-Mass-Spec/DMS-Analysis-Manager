@@ -262,6 +262,9 @@ namespace AnalysisManagerMasicPlugin
             {
                 var masicExe = new FileInfo(masicProgLoc);
 
+                if (masicExe.DirectoryName == null)
+                    return;
+
                 var statusFile = new FileInfo(Path.Combine(masicExe.DirectoryName, m_MASICStatusFileName));
 
                 if (!statusFile.Exists)

@@ -426,13 +426,25 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                     return false;
                 }
 
+                if (fiMSAlignJarFile.Directory == null)
+                {
+                    LogError("Unable to determine the parent directory of " + fiMSAlignJarFile.FullName);
+                    return false;
+                }
+
+                if (fiMSAlignJarFile.Directory.Parent == null)
+                {
+                    LogError("Unable to determine the parent directory of " + fiMSAlignJarFile.Directory.FullName);
+                    return false;
+                }
+
                 // The source folder is one level up from the .Jar file
                 var diMSAlignSrc = new DirectoryInfo(fiMSAlignJarFile.Directory.Parent.FullName);
                 var diMSAlignWork = new DirectoryInfo(Path.Combine(m_WorkDir, "MSAlign"));
 
                 LogMessage("Copying MSAlign program file to the Work Directory");
 
-                // Make sure the folder doesn't already exit
+                // Make sure the folder doesn't already exist
                 if (diMSAlignWork.Exists)
                 {
                     diMSAlignWork.Delete(true);
@@ -694,11 +706,9 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                     LogError("MSAlign file not found in work directory");
                     return false;
                 }
-                else
-                {
-                    mInputPropertyValues.SpectrumFileName = string.Copy(fiFiles[0].Name);
-                    fiFiles[0].MoveTo(Path.Combine(strMSAlignWorkFolderPath, mInputPropertyValues.SpectrumFileName));
-                }
+
+                mInputPropertyValues.SpectrumFileName = string.Copy(fiFiles[0].Name);
+                fiFiles[0].MoveTo(Path.Combine(strMSAlignWorkFolderPath, mInputPropertyValues.SpectrumFileName));
             }
             catch (Exception ex)
             {

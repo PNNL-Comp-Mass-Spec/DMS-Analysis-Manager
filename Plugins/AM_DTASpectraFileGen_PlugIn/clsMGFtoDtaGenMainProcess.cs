@@ -18,15 +18,13 @@ namespace DTASpectraFileGen
 
         #region "Module variables"
 
-        private Thread m_thThread;
+        private System.Threading.Thread m_thThread;
         private MascotGenericFileToDTA.clsMGFtoDTA mMGFtoDTA;
 
         // DTA generation options
         private int mScanStart;
         private int mScanStop;
         private float mMWLower;
-
-        private float mMWUpper;
 
         #endregion
 
@@ -52,7 +50,7 @@ namespace DTASpectraFileGen
             // Make the DTA files (the process runs in a separate thread)
             try
             {
-                m_thThread = new Thread(MakeDTAFilesThreaded);
+                m_thThread = new System.Threading.Thread(MakeDTAFilesThreaded);
                 m_thThread.Start();
                 m_Status = ProcessStatus.SF_RUNNING;
             }
@@ -137,7 +135,7 @@ namespace DTASpectraFileGen
             mScanStart = m_JobParams.GetJobParameter("ScanStart", 0);
             mScanStop = m_JobParams.GetJobParameter("ScanStop", 0);
             mMWLower = m_JobParams.GetJobParameter("MWStart", 0);
-            mMWUpper = m_JobParams.GetJobParameter("MWStop", 0);
+            // mMWUpper = m_JobParams.GetJobParameter("MWStop", 0);
 
             // Run the MGF to DTA converter
             if (!ConvertMGFtoDTA(mgfFilePath, m_WorkDir))
@@ -154,14 +152,7 @@ namespace DTASpectraFileGen
             }
 
             // We got this far, everything must have worked
-            if (m_Status == ProcessStatus.SF_ABORTING | m_Status == ProcessStatus.SF_ERROR)
-            {
-                return false;
-            }
-            else
-            {
-                return true;
-            }
+            return m_Status != ProcessStatus.SF_ABORTING && m_Status != ProcessStatus.SF_ERROR;
         }
 
         /// <summary>
@@ -172,8 +163,6 @@ namespace DTASpectraFileGen
         /// <remarks></remarks>
         private bool ConvertMGFtoDTA(string strInputFilePathFull, string strOutputFolderPath)
         {
-            var blnSuccess = false;
-
             if (m_DebugLevel > 0)
             {
                 OnDebugEvent("Converting .MGF file to _DTA.txt");
@@ -201,7 +190,7 @@ namespace DTASpectraFileGen
             mMGFtoDTA.ThresholdIonPctForDoubleCharge = m_JobParams.GetJobParameter("ThresholdIonPctForDoubleCharge",
                 (int)mMGFtoDTA.ThresholdIonPctForDoubleCharge);
 
-            blnSuccess = mMGFtoDTA.ProcessFile(strInputFilePathFull, strOutputFolderPath);
+            var blnSuccess = mMGFtoDTA.ProcessFile(strInputFilePathFull, strOutputFolderPath);
 
             if (!blnSuccess && string.IsNullOrEmpty(m_ErrMsg))
             {

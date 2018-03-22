@@ -61,8 +61,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
                 // Verify that program files exist
 
                 // Determine the path to the PeakDetector program
-                string progLoc = null;
-                progLoc = DetermineProgramLocation("DeconPeakDetectorProgLoc", DECON_PEAK_DETECTOR_EXE_NAME);
+                var progLoc = DetermineProgramLocation("DeconPeakDetectorProgLoc", DECON_PEAK_DETECTOR_EXE_NAME);
 
                 if (string.IsNullOrWhiteSpace(progLoc))
                 {
@@ -147,7 +146,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
         // Peak creation progress: 2%
         // Peak creation progress: 3%
         // Peak creation progress: 4%
-        private Regex reProgress = new Regex(@"Peak creation progress: (?<Progress>\d+)%", RegexOptions.Compiled);
+        private readonly Regex reProgress = new Regex(@"Peak creation progress: (?<Progress>\d+)%", RegexOptions.Compiled);
 
         /// <summary>
         /// Parse the DeconPeakDetector console output file to track the search progress
@@ -173,14 +172,13 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
                     LogDebug("Parsing file " + strConsoleOutputFilePath);
                 }
 
-                string strLineIn = null;
                 var peakDetectProgress = 0;
 
                 using (var srInFile = new StreamReader(new FileStream(strConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     while (!srInFile.EndOfStream)
                     {
-                        strLineIn = srInFile.ReadLine();
+                        var strLineIn = srInFile.ReadLine();
 
                         if (string.IsNullOrWhiteSpace(strLineIn))
                             continue;
@@ -213,9 +211,6 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
 
         private bool RunDeconPeakDetector(string strPeakDetectorProgLoc)
         {
-            string cmdStr = null;
-            var blnSuccess = false;
-
             var peakDetectorParamFileName = m_jobParams.GetJobParameter("PeakDetectorParamFile", "");
             var paramFilePath = Path.Combine(m_WorkDir, peakDetectorParamFileName);
 
@@ -237,7 +232,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
             LogMessage("Running DeconPeakDetector");
 
             // Set up and execute a program runner to run the Peak Detector
-            cmdStr = m_Dataset + clsAnalysisResources.DOT_RAW_EXTENSION;
+            var cmdStr = m_Dataset + clsAnalysisResources.DOT_RAW_EXTENSION;
             cmdStr += " /P:" + PossiblyQuotePath(paramFilePath);
             cmdStr += " /O:" + PossiblyQuotePath(m_WorkDir);
 
@@ -256,7 +251,7 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
 
             m_progress = PROGRESS_PCT_STARTING;
 
-            blnSuccess = mCmdRunner.RunProgram(strPeakDetectorProgLoc, cmdStr, "PeakDetector", true);
+            var blnSuccess = mCmdRunner.RunProgram(strPeakDetectorProgLoc, cmdStr, "PeakDetector", true);
 
             if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
             {

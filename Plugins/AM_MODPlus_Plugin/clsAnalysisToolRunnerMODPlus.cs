@@ -545,9 +545,9 @@ namespace AnalysisManagerMODPlusPlugin
         /// <param name="attributes"></param>
         /// <returns></returns>
         /// <remarks>Code adapted from "http://stackoverflow.com/questions/508390/create-xml-nodes-based-on-xpath"</remarks>
-        private XmlNode MakeXPath(XmlDocument doc, string xpath, Dictionary<string, string> attributes)
+        private void MakeXPath(XmlDocument doc, string xpath, Dictionary<string, string> attributes)
         {
-            return MakeXPath(doc, doc, xpath, attributes);
+            MakeXPath(doc, doc, xpath, attributes);
         }
 
         private XmlNode MakeXPath(XmlDocument doc, XmlNode parent, string xpath, Dictionary<string, string> attributes)
@@ -901,7 +901,6 @@ namespace AnalysisManagerMODPlusPlugin
                 ResetProgRunnerCpuUsage();
 
                 mMODPlusRunners = new Dictionary<int, clsMODPlusRunner>();
-                var lstThreads = new List<Thread>();
 
                 foreach (var paramFile in paramFileList)
                 {
@@ -919,13 +918,12 @@ namespace AnalysisManagerMODPlusPlugin
 
                     mMODPlusRunners.Add(threadNum, modPlusRunner);
 
-                    var newThread = new Thread(modPlusRunner.StartAnalysis)
+                    var newThread = new System.Threading.Thread(modPlusRunner.StartAnalysis)
                     {
-                        Priority = ThreadPriority.BelowNormal
+                        Priority = System.Threading.ThreadPriority.BelowNormal
                     };
 
                     newThread.Start();
-                    lstThreads.Add(newThread);
                 }
 
                 // Wait for all of the threads to exit
