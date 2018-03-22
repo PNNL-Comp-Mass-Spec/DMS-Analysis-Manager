@@ -556,6 +556,11 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (!reindexingRequired)
                 {
+                    if (clsGlobal.OfflineMode)
+                        return CloseOutType.CLOSEOUT_SUCCESS;
+
+                    // Update the .LastUsed file on the remote share
+                    UpdateRemoteLastUsedFile(remoteIndexDirPath, fiFastaFile.Name);
 
                     // Delete old index files on the remote share
                     DeleteOldIndexFiles(remoteIndexDirPath, debugLevel);
@@ -590,6 +595,9 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (eResult == CloseOutType.CLOSEOUT_SUCCESS)
                 {
+                    // Update the .LastUsed file on the remote share
+                    UpdateRemoteLastUsedFile(remoteIndexDirPath, fiFastaFile.Name);
+
                     // Delete old index files on the remote share
                     DeleteOldIndexFiles(remoteIndexDirPath, debugLevel);
 
@@ -639,6 +647,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                     }
                 }
 
+                // Update the .LastUsed file on the remote share
+                UpdateRemoteLastUsedFile(remoteIndexDirPath, fiFastaFile.Name);
 
                 // Delete old index files on the remote share
                 DeleteOldIndexFiles(remoteIndexDirPath, debugLevel);
@@ -1177,6 +1187,45 @@ namespace AnalysisManagerMSGFDBPlugIn
             {
                 OnErrorEvent("Error parsing the BuildSA console output file", ex);
                 return string.Empty;
+            }
+        }
+
+
+        private void UpdateRemoteLastUsedFile(string remoteIndexDirPath, string fastaFileName)
+        {
+            try
+            {
+                var remoteIndexDir = new DirectoryInfo(remoteIndexDirPath);
+                if (!remoteIndexDir.Exists)
+                {
+                    OnErrorEvent("Remote index directory not found in UpdateRemoteLastUsedFile: " + remoteIndexDirPath);
+                }
+
+                var lastUsedFilePath = Path.Combine(remoteIndexDir.FullName,
+                                                    fastaFileName + clsAnalysisResources.LASTUSED_FILE_EXTENSION);
+
+                try
+                {
+                    using (var swLastUsedFile = new StreamWriter(new FileStream(lastUsedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                    {
+                        // Use UtcNow for dates in LastUsed files
+                        swLastUsedFile.WriteLine(DateTime.UtcNow.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
+                    }
+
+                }
+                catch (IOException)
+                {
+                    // The file is likely open by another manager; ignore this
+                }
+                catch (Exception ex)
+                {
+                    OnWarningEvent(string.Format("Unable to create a new .LastUsed file at {0}: {1}", lastUsedFilePath, ex.Message));
+                }
+
+            }
+            catch (Exception ex)
+            {
+                OnErrorEvent("Exception in UpdateRemoteLastUsedFile", ex);
             }
         }
 
