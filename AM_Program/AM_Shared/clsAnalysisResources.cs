@@ -5,12 +5,14 @@ using System.Data;
 using PHRPReader;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Linq;
 using PRISM.Logging;
 using MyEMSLReader;
 using ParamFileGenerator.MakeParams;
+using PRISM;
 using Renci.SshNet.Sftp;
 
 //*********************************************************************************************************
@@ -218,6 +220,11 @@ namespace AnalysisManagerBase
         /// FASTA file extension
         /// </summary>
         protected const string FASTA_FILE_EXTENSION = ".fasta";
+
+        /// <summary>
+        /// Extension for .LastUsed files that track when a FASTA file was last used
+        /// </summary>
+        public const string LASTUSED_FILE_EXTENSION = ".LastUsed";
 
         /// <summary>
         /// Storage path info file suffix
@@ -730,16 +737,16 @@ namespace AnalysisManagerBase
                 return false;
             }
 
-            var localOrgDbFolderPath = m_mgrParams.GetParam("orgdbdir");
-            if (string.IsNullOrWhiteSpace(localOrgDbFolderPath))
+            var orgDbFolderPath = m_mgrParams.GetParam("orgdbdir");
+            if (string.IsNullOrWhiteSpace(orgDbFolderPath))
             {
                 LogError("Cannot copy the generated FASTA remotely; manager parameter orgdbdir is empty");
                 return false;
             }
 
-            var localOrgDbFolder = new DirectoryInfo(localOrgDbFolderPath);
+            var orgDbFolder = new DirectoryInfo(orgDbFolderPath);
 
-            var sourceFasta = new FileInfo(Path.Combine(localOrgDbFolder.FullName, dbFilename));
+            var sourceFasta = new FileInfo(Path.Combine(orgDbFolder.FullName, dbFilename));
 
             if (!sourceFasta.Exists)
             {
@@ -748,7 +755,7 @@ namespace AnalysisManagerBase
             }
 
             // Find .hashcheck files
-            var hashcheckFiles = localOrgDbFolder.GetFiles(sourceFasta.Name + "*" + Protein_Exporter.clsGetFASTAFromDMS.HASHCHECK_SUFFIX);
+            var hashcheckFiles = orgDbFolder.GetFiles(sourceFasta.Name + "*" + Protein_Exporter.clsGetFASTAFromDMS.HASHCHECK_SUFFIX);
             if (hashcheckFiles.Length <= 0)
             {
                 LogError("Local hashcheck file not found for " + sourceFasta.FullName + "; cannot copy remotely");
@@ -879,6 +886,7 @@ namespace AnalysisManagerBase
         /// Plugins that implement this will skip files that are not be needed by the ToolRunner class of the plugin
         /// Plugins should also copy fasta files if appropriate
         /// </summary>
+        /// <exception cref="NotImplementedException"></exception>
         /// <returns>True if success, false if an error</returns>
         public virtual bool CopyResourcesToRemote(clsRemoteTransferUtility transferUtility)
         {
@@ -1321,14 +1329,14 @@ namespace AnalysisManagerBase
                 }
 
                 // Lookup the MSGFPlus Index Folder path
-                var strMSGFPlusIndexFilesFolderPathLegacyDB = m_mgrParams.GetParam("MSGFPlusIndexFilesFolderPathLegacyDB", @"\\Proto-7\MSGFPlus_Index_Files");
-                if (string.IsNullOrWhiteSpace(strMSGFPlusIndexFilesFolderPathLegacyDB))
+                var msgfPlusIndexFilesDirPathLegacyDB = m_mgrParams.GetParam("MSGFPlusIndexFilesFolderPathLegacyDB", @"\\Proto-7\MSGFPlus_Index_Files");
+                if (string.IsNullOrWhiteSpace(msgfPlusIndexFilesDirPathLegacyDB))
                 {
-                    strMSGFPlusIndexFilesFolderPathLegacyDB = @"\\Proto-7\MSGFPlus_Index_Files\Other";
+                    msgfPlusIndexFilesDirPathLegacyDB = @"\\Proto-7\MSGFPlus_Index_Files\Other";
                 }
                 else
                 {
-                    strMSGFPlusIndexFilesFolderPathLegacyDB = Path.Combine(strMSGFPlusIndexFilesFolderPathLegacyDB, "Other");
+                    msgfPlusIndexFilesDirPathLegacyDB = Path.Combine(msgfPlusIndexFilesDirPathLegacyDB, "Other");
                 }
 
                 if (m_DebugLevel >= 1)
@@ -1349,7 +1357,7 @@ namespace AnalysisManagerBase
                 m_SplitFastaFileUtility.SplittingBaseFastafile += m_SplitFastaFileUtility_SplittingBaseFastaFile;
 
 
-                m_SplitFastaFileUtility.MSGFPlusIndexFilesFolderPathLegacyDB = strMSGFPlusIndexFilesFolderPathLegacyDB;
+                m_SplitFastaFileUtility.MSGFPlusIndexFilesFolderPathLegacyDB = msgfPlusIndexFilesDirPathLegacyDB;
 
                 m_SplitFastaLastUpdateTime = DateTime.UtcNow;
                 m_SplitFastaLastPercentComplete = 0;
@@ -1424,7 +1432,7 @@ namespace AnalysisManagerBase
                 return false;
             }
 
-            var fiFastaFile = new FileInfo(Path.Combine(destFolder, m_FastaFileName));
+            var fastaFile = new FileInfo(Path.Combine(destFolder, m_FastaFileName));
 
             if (m_DebugLevel >= 1)
             {
@@ -1437,18 +1445,21 @@ namespace AnalysisManagerBase
 
                     try
                     {
-                        var fastaFileMsg = "Fasta file last modified: " +
+                        var fastaFileMsg = new StringBuilder();
+
+                        fastaFileMsg.Append("Fasta file last modified: " +
                             GetHumanReadableTimeInterval(
-                                DateTime.UtcNow.Subtract(fiFastaFile.LastWriteTimeUtc)) + " ago at " +
-                                fiFastaFile.LastWriteTime.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT);
+                                DateTime.UtcNow.Subtract(fastaFile.LastWriteTimeUtc)) + " ago at " +
+                                            fastaFile.LastWriteTime.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
 
-                        fastaFileMsg += "; file created: " +
-                            GetHumanReadableTimeInterval(DateTime.UtcNow.Subtract(fiFastaFile.CreationTimeUtc)) + " ago at " +
-                            fiFastaFile.CreationTime.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT);
+                        fastaFileMsg.Append("; file created: " +
+                            GetHumanReadableTimeInterval(
+                                DateTime.UtcNow.Subtract(fastaFile.CreationTimeUtc)) + " ago at " +
+                                            fastaFile.CreationTime.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
 
-                        fastaFileMsg += "; file size: " + fiFastaFile.Length + " bytes";
+                        fastaFileMsg.Append("; file size: " + fastaFile.Length + " bytes");
 
-                        LogDebugMessage(fastaFileMsg);
+                        LogDebugMessage(fastaFileMsg.ToString());
                     }
                     catch (Exception)
                     {
@@ -1724,7 +1735,7 @@ namespace AnalysisManagerBase
             // Requests Dataset information from a data package
             const short RETRY_COUNT = 3;
 
-            var sqlStr = new System.Text.StringBuilder();
+            var sqlStr = new StringBuilder();
 
             sqlStr.Append("Select [Share Path] AS StoragePath ");
             sqlStr.Append("From V_DMS_Data_Packages ");
@@ -1996,29 +2007,59 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Examine the specified DMS_Temp_Org folder to find the FASTA files and their corresponding .fasta.LastUsed or .hashcheck files
         /// </summary>
-        /// <param name="diOrgDbFolder"></param>
+        /// <param name="orgDbDirectory">Org DB directory (or parent directory if processing files on a remote share, e.g. \\gigasax\MSGFPlus_Index_Files)</param>
         /// <returns>Dictionary of FASTA files, including the last usage date for each</returns>
-        private Dictionary<FileInfo, DateTime> GetFastaFilesByLastUse(DirectoryInfo diOrgDbFolder)
+        private static Dictionary<FileInfo, DateTime> GetFastaFilesByLastUse(DirectoryInfo orgDbDirectory)
         {
 
             // Keys are the fasta file; values are the dtLastUsed time of the file (nominally obtained from a .hashcheck or .lastused file)
             var dctFastaFiles = new Dictionary<FileInfo, DateTime>();
 
-            foreach (var fiFile in diOrgDbFolder.GetFiles("*" + FASTA_FILE_EXTENSION))
+            var lastProgress = DateTime.UtcNow;
+            var longRunning = false;
+
+            foreach (var fiFile in orgDbDirectory.GetFiles("*" + FASTA_FILE_EXTENSION, SearchOption.AllDirectories))
             {
+                if (DateTime.UtcNow.Subtract(lastProgress).TotalSeconds > 1)
+                {
+                    lastProgress = DateTime.UtcNow;
+                    if (!longRunning)
+                    {
+                        Console.WriteLine("Finding FASTA files below " + orgDbDirectory);
+                        longRunning = true;
+                    }
+
+                    Console.Write(".");
+                }
+
                 if (!dctFastaFiles.ContainsKey(fiFile))
                 {
                     var dtLastUsed = DateMax(fiFile.LastWriteTimeUtc, fiFile.CreationTimeUtc);
 
+                    if (fiFile.Directory == null)
+                    {
+                        dctFastaFiles.Add(fiFile, dtLastUsed);
+                        continue;
+                    }
+
                     // Look for a .hashcheck file
-                    var lstHashCheckfiles = diOrgDbFolder.GetFiles(fiFile.Name + "*" + Protein_Exporter.clsGetFASTAFromDMS.HASHCHECK_SUFFIX).ToList();
+                    var lstHashCheckfiles = fiFile.Directory.GetFiles(fiFile.Name + "*" + Protein_Exporter.clsGetFASTAFromDMS.HASHCHECK_SUFFIX).ToList();
                     if (lstHashCheckfiles.Count > 0)
                     {
                         dtLastUsed = DateMax(dtLastUsed, lstHashCheckfiles.First().LastWriteTimeUtc);
                     }
 
                     // Look for a .LastUsed file
-                    var lstLastUsedFiles = diOrgDbFolder.GetFiles(fiFile.Name + ".LastUsed").ToList();
+                    var lstLastUsedFiles = fiFile.Directory.GetFiles(fiFile.Name + LASTUSED_FILE_EXTENSION).ToList();
+
+                    // If this is a .revCat.fasta file, look for .fasta.LastUsed
+                    if (fiFile.Name.EndsWith(".revCat.fasta", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var altFastaName = fiFile.Name.Substring(0, fiFile.Name.Length - ".revCat.fasta".Length) + ".fasta" + LASTUSED_FILE_EXTENSION;
+                        var additionalFiles = fiFile.Directory.GetFiles(altFastaName).ToList();
+                        lstLastUsedFiles.AddRange(additionalFiles);
+                    }
+
                     if (lstLastUsedFiles.Count > 0)
                     {
                         dtLastUsed = DateMax(dtLastUsed, lstLastUsedFiles.First().LastWriteTimeUtc);
@@ -2026,11 +2067,11 @@ namespace AnalysisManagerBase
                         try
                         {
                             // Read the date stored in the file
-                            using (var srLastUsedfile = new StreamReader(new FileStream(lstLastUsedFiles.First().FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                            using (var lastUsedReader = new StreamReader(new FileStream(lstLastUsedFiles.First().FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                             {
-                                if (!srLastUsedfile.EndOfStream)
+                                if (!lastUsedReader.EndOfStream)
                                 {
-                                    var lastUseDate = srLastUsedfile.ReadLine();
+                                    var lastUseDate = lastUsedReader.ReadLine();
                                     if (DateTime.TryParse(lastUseDate, out var dtLastUsedActual))
                                     {
                                         dtLastUsed = DateMax(dtLastUsed, dtLastUsedActual);
@@ -2044,9 +2085,13 @@ namespace AnalysisManagerBase
                         }
 
                     }
+
                     dctFastaFiles.Add(fiFile, dtLastUsed);
                 }
             }
+
+            if (longRunning)
+                Console.WriteLine();
 
             return dctFastaFiles;
 
@@ -2775,7 +2820,7 @@ namespace AnalysisManagerBase
 
             dctDataPackageDatasets = new Dictionary<int, clsDataPackageDatasetInfo>();
 
-            var sqlStr = new System.Text.StringBuilder();
+            var sqlStr = new StringBuilder();
 
             // View V_DMS_Data_Package_Datasets is in the DMS_Pipeline database
             // That view references view V_DMS_Data_Package_Aggregation_Datasets in the DMS_Data_Package database
@@ -2889,7 +2934,7 @@ namespace AnalysisManagerBase
 
             const int RETRY_COUNT = 3;
 
-            var sqlStr = new System.Text.StringBuilder();
+            var sqlStr = new StringBuilder();
 
             // This query uses view V_Analysis_Job_Export_DataPkg in the DMS5 database
             sqlStr.Append("SELECT Job, Dataset, DatasetID, InstrumentName As Instrument, InstrumentGroup,");
@@ -3316,11 +3361,12 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Delete the specified FASTA file and its associated files
         /// </summary>
-        /// <param name="diOrgDbFolder"></param>
         /// <param name="fileToPurge"></param>
         /// <param name="legacyFastaFileBaseName"></param>
+        /// <param name="debugLevel"></param>
+        /// <param name="preview"></param>
         /// <returns>Number of bytes deleted</returns>
-        private long PurgeFastaFiles(DirectoryInfo diOrgDbFolder, FileSystemInfo fileToPurge, string legacyFastaFileBaseName)
+        private static long PurgeFastaFiles(FileInfo fileToPurge, string legacyFastaFileBaseName, short debugLevel, bool preview)
         {
 
             var baseName = Path.GetFileNameWithoutExtension(fileToPurge.Name);
@@ -3331,18 +3377,39 @@ namespace AnalysisManagerBase
                 return 0;
             }
 
+            // Remove additional text from the base name if present
+            var extensionsToTrim = new List<string> {
+                ".revcat",
+                ".icsfldecoy"
+            };
+
+            foreach (var item in extensionsToTrim)
+            {
+                if (baseName.EndsWith(item, StringComparison.OrdinalIgnoreCase))
+                {
+                    baseName = baseName.Substring(0, baseName.Length - item.Length);
+                    break;
+                }
+            }
+
+            if (fileToPurge.Directory == null)
+            {
+                LogTools.LogWarning("Unable to purge old index files; cannot determine the parent directory of " + fileToPurge.FullName);
+                return 0;
+            }
+
             // Delete all files associated with this fasta file
             var lstFilesToDelete = new List<FileInfo>();
-            lstFilesToDelete.AddRange(diOrgDbFolder.GetFiles(baseName + ".*"));
+            lstFilesToDelete.AddRange(fileToPurge.Directory.GetFiles(baseName + ".*"));
 
-            if (m_DebugLevel >= 1)
+            if (debugLevel >= 1)
             {
                 var fileText = string.Format("{0,2} file", lstFilesToDelete.Count);
                 if (lstFilesToDelete.Count != 1)
                 {
                     fileText += "s";
                 }
-                LogDebugMessage("Deleting " + fileText + " associated with " + fileToPurge.FullName);
+                LogTools.LogMessage("Deleting " + fileText + " associated with " + fileToPurge.FullName);
             }
 
             long bytesDeleted = 0;
@@ -3352,13 +3419,17 @@ namespace AnalysisManagerBase
                 foreach (var fiFileToDelete in lstFilesToDelete)
                 {
                     var fileSizeBytes = fiFileToDelete.Length;
-                    fiFileToDelete.Delete();
+                    if (preview)
+                        ConsoleMsgUtils.ShowDebug("Preview delete " + fiFileToDelete.Name, "    ");
+                    else
+                        fiFileToDelete.Delete();
+
                     bytesDeleted += fileSizeBytes;
                 }
             }
             catch (Exception ex)
             {
-                LogError("Error in PurgeFastaFiles", ex);
+                LogTools.LogError("Error in PurgeFastaFiles", ex);
             }
 
             return bytesDeleted;
@@ -3366,17 +3437,26 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Purges old fasta files (and related suffix array files) from localOrgDbFolder
+        /// Purge old FASTA files and related index files in orgDbFolder
         /// </summary>
-        /// <param name="localOrgDbFolder"></param>
+        /// <param name="orgDbDirectoryPath">Organism database directory with FASTA files and related index files; supports Windows shares and Linux paths</param>
         /// <param name="freeSpaceThresholdPercent">Value between 1 and 50</param>
         /// <param name="requiredFreeSpaceMB">If greater than 0, the free space that we anticipate will be needed for the given fasta file</param>
         /// <param name="legacyFastaFileBaseName">
         /// Legacy fasta file name (without .fasta)
         /// For split fasta jobs, should not include the splitcount and segment number, e.g. should not include _25x_07 or _25x_08
         /// </param>
-        /// <remarks>This method only works on Windows, and only processes folders on a local drive, not a network share</remarks>
-        protected void PurgeFastaFilesIfLowFreeSpace(string localOrgDbFolder, int freeSpaceThresholdPercent, double requiredFreeSpaceMB, string legacyFastaFileBaseName)
+        /// <param name="preview">When true, preview the files that would be deleted</param>
+        /// <remarks>
+        /// This method works best on local drives (including on Linux)
+        /// It will also work on a remote Windows share if the directory has file MaxDirSize.txt
+        /// </remarks>
+        protected void PurgeFastaFilesIfLowFreeSpace(
+            string orgDbDirectoryPath,
+            int freeSpaceThresholdPercent,
+            double requiredFreeSpaceMB,
+            string legacyFastaFileBaseName,
+            bool preview = false)
         {
             if (freeSpaceThresholdPercent < 1)
                 freeSpaceThresholdPercent = 1;
@@ -3385,33 +3465,84 @@ namespace AnalysisManagerBase
 
             try
             {
-                var diOrgDbFolder = new DirectoryInfo(localOrgDbFolder);
-                if (diOrgDbFolder.FullName.Length <= 2)
+                var orgDbDirectory = new DirectoryInfo(orgDbDirectoryPath);
+                if (orgDbDirectory.FullName.Length <= 2)
                 {
-                    LogMessage("Warning: Org DB folder length is less than 3 characters; this is unexpected: " + diOrgDbFolder.FullName);
+                    LogMessage("Warning: Org DB folder length is less than 3 characters; this is unexpected: " + orgDbDirectory.FullName);
                     return;
                 }
 
                 // Look for file MaxDirSize.txt which defines the maximum space that the files can use
-                var fiMaxDirSize = new FileInfo(Path.Combine(diOrgDbFolder.FullName, "MaxDirSize.txt"));
+                var maxDirSizeFile = new FileInfo(Path.Combine(orgDbDirectory.FullName, "MaxDirSize.txt"));
 
-                var driveLetter = diOrgDbFolder.FullName.Substring(0, 2);
-
-                if (!driveLetter.EndsWith(":"))
+                if (maxDirSizeFile.Exists)
                 {
-                    // The folder is not local to this computer
-                    if (!fiMaxDirSize.Exists)
-                    {
-                        LogError("Warning: Orb DB folder path does not have a colon and could not find file " + fiMaxDirSize.Name + "; cannot manage drive space usage: " + diOrgDbFolder.FullName);
+                    // MaxDirSize.txt file exists; this file specifies the max total GB that files in orgDbDirectory can use
+                    // If the file exists and has a valid threshold, we will not delete files using PurgeFastaFilesUsingSpaceUsedThreshold
+                    var success = PurgeFastaFilesUsingSpaceUsedThreshold(maxDirSizeFile, legacyFastaFileBaseName, m_DebugLevel, preview);
+                    if (success)
                         return;
-                    }
+                }
 
-                    // MaxDirSize.txt file found; delete the older FASTA files to free up space
-                    PurgeFastaFilesUsingSpaceUsedThreshold(fiMaxDirSize, legacyFastaFileBaseName);
+                DriveInfo localDriveInfo = null;
+                if (Path.DirectorySeparatorChar == '/' || orgDbDirectory.FullName.StartsWith("/"))
+                {
+                    // Linux system, with a path like /file1/temp/DMSOrgDBs/
+                    // The root path that we need to send to DriveInfo is likely /file1
+                    // If that doesn't work, try /
+
+                    var candidateRootPaths = new List<string>();
+                    var slashIndex = orgDbDirectory.FullName.IndexOf('/', 1);
+
+                    if (slashIndex > 0)
+                    {
+                        candidateRootPaths.Add(orgDbDirectory.FullName.Substring(0, slashIndex));
+                    }
+                    candidateRootPaths.Add("/");
+
+                    foreach (var candidatePath in candidateRootPaths)
+                    {
+                        try
+                        {
+                            localDriveInfo = new DriveInfo(candidatePath);
+                            break;
+                        }
+                        catch (Exception ex)
+                        {
+                            ConsoleMsgUtils.ShowDebug(string.Format("Unable to create a DriveInfo object for {0}: {1}", candidatePath, ex.Message));
+                        }
+                    }
+                }
+                else
+                {
+                    // Windows system, with a path like C:\DMS_Temp_Org
+                    // Alternative, a Windows share like \\proto-7\MSGFPlus_Index_Files
+
+                    var driveLetter = orgDbDirectory.FullName.Substring(0, 2);
+                    if (driveLetter.EndsWith(":"))
+                    {
+                        localDriveInfo = new DriveInfo(driveLetter);
+                    }
+                }
+
+                if (localDriveInfo == null)
+                {
+                    // Could not instantiate the DriveInfo class (and MaxDirSize.txt does not exist)
+
+                    string baseErrorMessage;
+                    if (Path.DirectorySeparatorChar == '/')
+                        baseErrorMessage = "Could not determine the root path, and could not find file " + maxDirSizeFile.Name;
+                    else
+                        baseErrorMessage = "Orb DB directory path does not have a colon and could not find file " + maxDirSizeFile.Name;
+
+                    LogWarning(string.Format("Warning: {0}; cannot manage drive space usage: {1}", baseErrorMessage, orgDbDirectory.FullName));
+
+                    LogMessage(string.Format(
+                                   "Create file {0} with 'MaxSizeGB=50' on a single line. " +
+                                   "Comment lines are allowed using # as a comment character", maxDirSizeFile.Name));
                     return;
                 }
 
-                var localDriveInfo = new DriveInfo(driveLetter);
                 var percentFreeSpaceAtStart = localDriveInfo.AvailableFreeSpace / (double)localDriveInfo.TotalSize * 100;
 
                 if (percentFreeSpaceAtStart >= freeSpaceThresholdPercent)
@@ -3424,13 +3555,9 @@ namespace AnalysisManagerBase
                 }
                 else
                 {
-                    PurgeFastaFilesUsingFreeSpaceThreshold(localDriveInfo, diOrgDbFolder, legacyFastaFileBaseName, freeSpaceThresholdPercent, requiredFreeSpaceMB, percentFreeSpaceAtStart);
-                }
-
-                if (fiMaxDirSize.Exists)
-                {
-                    // MaxDirSize.txt file exists; possibly delete additional FASTA files to free up space
-                    PurgeFastaFilesUsingSpaceUsedThreshold(fiMaxDirSize, legacyFastaFileBaseName);
+                    PurgeFastaFilesUsingFreeSpaceThreshold(
+                        localDriveInfo, orgDbDirectory, legacyFastaFileBaseName,
+                        freeSpaceThresholdPercent, requiredFreeSpaceMB, percentFreeSpaceAtStart, preview);
                 }
 
             }
@@ -3441,13 +3568,25 @@ namespace AnalysisManagerBase
 
         }
 
+        /// <summary>
+        /// Purge Fasta Files until the drive free space falls below a threshold
+        /// This method is Windows specific
+        /// </summary>
+        /// <param name="localDriveInfo"></param>
+        /// <param name="orgDbDirectory"></param>
+        /// <param name="legacyFastaFileBaseName"></param>
+        /// <param name="freeSpaceThresholdPercent"></param>
+        /// <param name="requiredFreeSpaceMB"></param>
+        /// <param name="percentFreeSpaceAtStart"></param>
+        /// <param name="preview"></param>
         private void PurgeFastaFilesUsingFreeSpaceThreshold(
             DriveInfo localDriveInfo,
-            DirectoryInfo diOrgDbFolder,
+            DirectoryInfo orgDbDirectory,
             string legacyFastaFileBaseName,
             int freeSpaceThresholdPercent,
             double requiredFreeSpaceMB,
-            double percentFreeSpaceAtStart)
+            double percentFreeSpaceAtStart,
+            bool preview)
         {
             var freeSpaceGB = clsGlobal.BytesToGB(localDriveInfo.AvailableFreeSpace);
 
@@ -3460,7 +3599,7 @@ namespace AnalysisManagerBase
             }
 
             // Obtain a dictionary of FASTA files where Keys are FileInfo and values are last usage date
-            var dctFastaFiles = GetFastaFilesByLastUse(diOrgDbFolder);
+            var dctFastaFiles = GetFastaFilesByLastUse(orgDbDirectory);
 
             var lstFastaFilesByLastUse = (from item in dctFastaFiles orderby item.Value select item.Key);
             long totalBytesPurged = 0;
@@ -3474,7 +3613,7 @@ namespace AnalysisManagerBase
                     {
                         if (logInfoMessages)
                         {
-                            LogMessage("All fasta files in " + diOrgDbFolder.FullName + " are less than 5 days old; " +
+                            LogMessage("All fasta files in " + orgDbDirectory.FullName + " are less than 5 days old; " +
                                 "will not purge any more files to free disk space");
                         }
                         break;
@@ -3483,12 +3622,23 @@ namespace AnalysisManagerBase
 
                 // Delete all files associated with this fasta file
                 // However, do not delete it if the name starts with legacyFastaFileBaseName
-                var bytesDeleted = PurgeFastaFiles(diOrgDbFolder, fiFileToPurge, legacyFastaFileBaseName);
+                var bytesDeleted = PurgeFastaFiles(fiFileToPurge, legacyFastaFileBaseName, m_DebugLevel, preview);
                 totalBytesPurged += bytesDeleted;
 
                 // Re-check the disk free space
-                var percentFreeSpace = localDriveInfo.AvailableFreeSpace / (double)localDriveInfo.TotalSize * 100;
-                var updatedFreeSpaceGB = clsGlobal.BytesToGB(localDriveInfo.AvailableFreeSpace);
+                double updatedFreeSpaceGB;
+                double percentFreeSpace;
+
+                if (preview)
+                {
+                    updatedFreeSpaceGB = freeSpaceGB + clsGlobal.BytesToGB(totalBytesPurged);
+                    percentFreeSpace = updatedFreeSpaceGB * 1024 * 1024 * 1024 / localDriveInfo.TotalSize * 100;
+                }
+                else
+                {
+                    updatedFreeSpaceGB = clsGlobal.BytesToGB(localDriveInfo.AvailableFreeSpace);
+                    percentFreeSpace = localDriveInfo.AvailableFreeSpace / (double)localDriveInfo.TotalSize * 100;
+                }
 
                 if (requiredFreeSpaceMB > 0 && updatedFreeSpaceGB * 1024.0 < requiredFreeSpaceMB)
                 {
@@ -3503,7 +3653,7 @@ namespace AnalysisManagerBase
                 {
                     // Either required free space is not known, or we have more than enough free space
 
-                    if ((percentFreeSpace >= freeSpaceThresholdPercent))
+                    if (percentFreeSpace >= freeSpaceThresholdPercent)
                     {
                         // Target threshold reached
                         if (m_DebugLevel >= 1)
@@ -3523,7 +3673,16 @@ namespace AnalysisManagerBase
             }
 
             // We have deleted all of the files that can be deleted
-            var finalFreeSpaceGB = clsGlobal.BytesToGB(localDriveInfo.AvailableFreeSpace);
+
+            double finalFreeSpaceGB;
+            if (preview)
+            {
+                finalFreeSpaceGB = freeSpaceGB + clsGlobal.BytesToGB(totalBytesPurged);
+            }
+            else
+            {
+                finalFreeSpaceGB = clsGlobal.BytesToGB(localDriveInfo.AvailableFreeSpace);
+            }
 
             if (requiredFreeSpaceMB > 0 && finalFreeSpaceGB * 1024.0 < requiredFreeSpaceMB)
             {
@@ -3535,30 +3694,33 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Use the space usage defined in MaxDirSize.txt to decide if any FASTA files need to be deleted
+        /// Use the space usage threshold defined in MaxDirSize.txt to decide if any FASTA files need to be deleted
         /// </summary>
-        /// <param name="fiMaxDirSize">MaxDirSize.txt file in the local organism DB folder</param>
+        /// <param name="maxDirSizeFile">MaxDirSize.txt file in the organism DB folderOrg DB directory (or parent directory if processing files on a remote share, e.g. \\gigasax\MSGFPlus_Index_Files)</param>
         /// <param name="legacyFastaFileBaseName">Base FASTA file name for the current analysis job</param>
-        private void PurgeFastaFilesUsingSpaceUsedThreshold(FileInfo fiMaxDirSize, string legacyFastaFileBaseName)
+        /// <param name="debugLevel">Debug level (1 for normal, 2 for more verbose)</param>
+        /// <param name="preview">When true, preview the files that would be deleted</param>
+        /// <returns>True if the MaxDirSize.txt file exists and has a valid MaxSizeGB threshold</returns>
+        public static bool PurgeFastaFilesUsingSpaceUsedThreshold(FileInfo maxDirSizeFile, string legacyFastaFileBaseName, short debugLevel, bool preview)
         {
             try
             {
-                var diOrgDbFolder = fiMaxDirSize.Directory;
-                if (diOrgDbFolder == null)
+                var orgDbDirectory = maxDirSizeFile.Directory;
+                if (orgDbDirectory == null)
                 {
-                    LogError("Unable to determine the parent directory of file " + fiMaxDirSize.FullName + "; cannot manage drive space usage");
-                    return;
+                    LogTools.LogError("Unable to determine the parent directory of file " + maxDirSizeFile.FullName + "; cannot manage drive space usage");
+                    return false;
                 }
 
-                var errorSuffix = "; cannot manage drive space usage: " + diOrgDbFolder.FullName;
+                var errorSuffix = "; cannot manage drive space usage: " + orgDbDirectory.FullName;
                 var maxSizeGB = 0;
 
-                using (var reader = new StreamReader(new FileStream(fiMaxDirSize.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(maxDirSizeFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
-                        if (string.IsNullOrEmpty(dataLine) || dataLine.StartsWith("#"))
+                        if (string.IsNullOrWhiteSpace(dataLine) || dataLine.StartsWith("#"))
                         {
                             continue;
                         }
@@ -3573,8 +3735,8 @@ namespace AnalysisManagerBase
                         {
                             if (!int.TryParse(lineParts[1], out maxSizeGB))
                             {
-                                LogError("MaxSizeGB line does not contain an integer in " + fiMaxDirSize.FullName + errorSuffix);
-                                return;
+                                LogTools.LogError("MaxSizeGB line does not contain an integer in " + maxDirSizeFile.FullName + errorSuffix);
+                                return false;
                             }
                             break;
                         }
@@ -3584,13 +3746,13 @@ namespace AnalysisManagerBase
 
                 if (maxSizeGB == 0)
                 {
-                    LogError("MaxSizeGB line not found in " + fiMaxDirSize.FullName + errorSuffix);
-                    return;
+                    LogTools.LogError("MaxSizeGB line not found in " + maxDirSizeFile.FullName + errorSuffix);
+                    return false;
                 }
 
                 long spaceUsageBytes = 0;
 
-                foreach (var fiFile in diOrgDbFolder.GetFiles("*", SearchOption.TopDirectoryOnly))
+                foreach (var fiFile in orgDbDirectory.GetFiles("*", SearchOption.AllDirectories))
                 {
                     spaceUsageBytes += fiFile.Length;
                 }
@@ -3599,14 +3761,24 @@ namespace AnalysisManagerBase
                 if (spaceUsageGB <= maxSizeGB)
                 {
                     // Space usage is under the threshold
-                    var statusMessage = string.Format("Space usage in {0} is {1:F1} GB, which is below the threshold of {2} GB; nothing to purge", diOrgDbFolder.FullName, spaceUsageGB, maxSizeGB);
-                    LogMessage(statusMessage, 3);
-                    return;
+                    var statusMessage = string.Format(
+                        "Space usage in {0} is {1:F1} GB, which is below the threshold of {2} GB; nothing to purge",
+                        orgDbDirectory.FullName, spaceUsageGB, maxSizeGB);
+
+                    if (debugLevel >= 3)
+                    {
+                        LogTools.LogDebug(statusMessage);
+                    }
+                    else
+                    {
+                        ConsoleMsgUtils.ShowDebug(statusMessage);
+                    }
+                    return true;
                 }
 
                 // Space usage is too high; need to purge some files
                 // Obtain a dictionary of FASTA files where Keys are FileInfo and values are last usage date
-                var dctFastaFiles = GetFastaFilesByLastUse(diOrgDbFolder);
+                var dctFastaFiles = GetFastaFilesByLastUse(orgDbDirectory);
 
                 var lstFastaFilesByLastUse = from item in dctFastaFiles orderby item.Value select item.Key;
 
@@ -3620,45 +3792,51 @@ namespace AnalysisManagerBase
                     {
                         if (DateTime.UtcNow.Subtract(dtLastUsed).TotalDays < 5)
                         {
-                            LogMessage("All fasta files in " + diOrgDbFolder.FullName + " are less than 5 days old; " +
-                                "will not purge any more files to free disk space");
+                            LogTools.LogMessage("All fasta files in " + orgDbDirectory.FullName + " are less than 5 days old; " +
+                                                "will not purge any more files to free disk space");
                             break;
                         }
                     }
 
                     // Delete all files associated with this fasta file
                     // However, do not delete it if the name starts with legacyFastaFileBaseName
-                    var bytesDeleted = PurgeFastaFiles(diOrgDbFolder, fiFileToPurge, legacyFastaFileBaseName);
+                    var bytesDeleted = PurgeFastaFiles(fiFileToPurge, legacyFastaFileBaseName, debugLevel, preview);
                     totalBytesPurged += bytesDeleted;
 
                     if (totalBytesPurged < bytesToPurge)
                     {
                         // Keep deleting files
-                        if (m_DebugLevel >= 2)
+                        if (debugLevel >= 2)
                         {
-                            LogDebugMessage(string.Format("Purging FASTA files: {0:F1} / {1:F1} MB deleted",
-                                clsGlobal.BytesToMB(totalBytesPurged), clsGlobal.BytesToMB(bytesToPurge)));
+                            LogTools.LogDebug(string.Format(
+                                                "Purging FASTA files: {0:F1} / {1:F1} MB deleted",
+                                                clsGlobal.BytesToMB(totalBytesPurged), clsGlobal.BytesToMB(bytesToPurge)));
                         }
                     }
                     else
                     {
                         // Enough files have been deleted
-                        LogMessage(string.Format("Space usage in {0} is now below {1} GB; deleted {2:F1} GB of cached files",
-                            diOrgDbFolder.FullName, maxSizeGB, clsGlobal.BytesToGB(totalBytesPurged)));
-                        return;
+                        LogTools.LogMessage(string.Format(
+                                            "Space usage in {0} is now below {1} GB; deleted {2:F1} GB of cached files",
+                                            orgDbDirectory.FullName, maxSizeGB, clsGlobal.BytesToGB(totalBytesPurged)));
+                        return true;
                     }
                 }
 
                 if (totalBytesPurged < bytesToPurge)
                 {
-                    LogMessage(string.Format("Warning: unable to delete enough files to lower the space usage in {0} to below {1} GB; " +
-                        "deleted {2:F1} GB of cached files", diOrgDbFolder.FullName, maxSizeGB, clsGlobal.BytesToGB(totalBytesPurged)));
+                    LogTools.LogWarning(string.Format(
+                                       "Warning: unable to delete enough files to lower the space usage in {0} to below {1} GB; " +
+                                       "deleted {2:F1} GB of cached files", orgDbDirectory.FullName, maxSizeGB, clsGlobal.BytesToGB(totalBytesPurged)));
                 }
+
+                return true;
 
             }
             catch (Exception ex)
             {
-                LogError("Error in PurgeFastaFilesUsingSpaceUsedThreshold", ex);
+                LogTools.LogError("Error in PurgeFastaFilesUsingSpaceUsedThreshold", ex);
+                return false;
             }
 
         }
@@ -4166,10 +4344,10 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Create a fasta file for Sequest, X!Tandem, Inspect, or MSGFPlus analysis
         /// </summary>
-        /// <param name="localOrgDBFolder">Folder on analysis machine where fasta files are stored</param>
+        /// <param name="orgDbDirectoryPath">Directory on analysis machine where fasta files are stored</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks>Stores the name of the FASTA file as a new job parameter named "generatedFastaName" in section "PeptideSearch"</remarks>
-        protected bool RetrieveOrgDB(string localOrgDBFolder)
+        protected bool RetrieveOrgDB(string orgDbDirectoryPath)
         {
             const int freeSpaceThresholdPercent = 20;
 
@@ -4194,7 +4372,7 @@ namespace AnalysisManagerBase
                     }
 
                     // Confirm that the FASTA file exists
-                    var fastaFile = new FileInfo(Path.Combine(localOrgDBFolder, fastaFileName));
+                    var fastaFile = new FileInfo(Path.Combine(orgDbDirectoryPath, fastaFileName));
                     if (!fastaFile.Exists)
                     {
                         LogError(string.Format("FASTA file not found: {0}", fastaFile.FullName));
@@ -4208,6 +4386,9 @@ namespace AnalysisManagerBase
                     {
                         UpdateLastUsedfile(fastaFile);
                     }
+
+                    PurgeFastaFilesIfLowFreeSpace(orgDbDirectoryPath, freeSpaceThresholdPercent, 0, string.Empty);
+
                     return success;
                 }
 
@@ -4230,10 +4411,10 @@ namespace AnalysisManagerBase
                     legacyFastaFileBaseName = Path.GetFileNameWithoutExtension(proteinCollectionInfo.LegacyFastaName);
                 }
 
-                PurgeFastaFilesIfLowFreeSpace(localOrgDBFolder, freeSpaceThresholdPercent, requiredFreeSpaceMB, legacyFastaFileBaseName);
+                PurgeFastaFilesIfLowFreeSpace(orgDbDirectoryPath, freeSpaceThresholdPercent, requiredFreeSpaceMB, legacyFastaFileBaseName);
 
                 // Make a new fasta file from scratch
-                if (!CreateFastaFile(proteinCollectionInfo, localOrgDBFolder))
+                if (!CreateFastaFile(proteinCollectionInfo, orgDbDirectoryPath))
                 {
                     // There was a problem. Log entries in lower-level routines provide documentation
                     return false;
@@ -4249,8 +4430,7 @@ namespace AnalysisManagerBase
 
                 // Delete old fasta files and suffix array files if getting low on disk space
                 // No need to pass a value for legacyFastaFileBaseName because a .fasta.LastUsed file will have been created/updated by CreateFastaFile
-                // This method is Windows-specific
-                PurgeFastaFilesIfLowFreeSpace(localOrgDBFolder, freeSpaceThresholdPercent, 0, "");
+                PurgeFastaFilesIfLowFreeSpace(orgDbDirectoryPath, freeSpaceThresholdPercent, 0, "");
 
                 return true;
             }
@@ -4392,7 +4572,7 @@ namespace AnalysisManagerBase
             string xmlText;
 
             var memoryStream = new MemoryStream();
-            using (var xWriter = new XmlTextWriter(memoryStream, System.Text.Encoding.UTF8))
+            using (var xWriter = new XmlTextWriter(memoryStream, Encoding.UTF8))
             {
 
                 xWriter.Formatting = Formatting.Indented;
