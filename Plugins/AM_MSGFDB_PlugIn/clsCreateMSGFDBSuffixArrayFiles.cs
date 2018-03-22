@@ -26,8 +26,6 @@ namespace AnalysisManagerMSGFDBPlugIn
 
         #endregion
 
-        private const string DATE_TIME_FORMAT = "yyyy-MM-dd hh:mm:ss tt";
-
         #region "Module Variables"
 
         private string mErrorMessage = string.Empty;
@@ -320,7 +318,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                     filesToCopy.Add(fiSourceFile.Name, fiSourceFile.Length);
                     fileInfo.Add(fiSourceFile.Name + "\t" + fiSourceFile.Length + "\t" +
-                                    fiSourceFile.LastWriteTimeUtc.ToString(DATE_TIME_FORMAT));
+                                 fiSourceFile.LastWriteTimeUtc.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
                 }
 
                 if (!createIndexFileForExistingFiles)
@@ -536,8 +534,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                             if (fiIndexFile.LastWriteTimeUtc < fiFastaFile.LastWriteTimeUtc.AddSeconds(-0.1))
                             {
                                 OnStatusEvent("Index file is older than the fasta file; " + fiIndexFile.FullName + " modified " +
-                                              fiIndexFile.LastWriteTimeUtc.ToLocalTime().ToString(DATE_TIME_FORMAT) + " vs. " +
-                                              fiFastaFile.LastWriteTimeUtc.ToLocalTime().ToString(DATE_TIME_FORMAT));
+                                              fiIndexFile.LastWriteTimeUtc.ToLocalTime().ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT) + " vs. " +
+                                              fiFastaFile.LastWriteTimeUtc.ToLocalTime().ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
 
                                 reindexingRequired = true;
                                 break;
@@ -1274,11 +1272,14 @@ namespace AnalysisManagerMSGFDBPlugIn
                     // Require that the index files be newer than the fasta file (ignore the .LastUsed file)
                     if (fiSourceFile.LastWriteTimeUtc < dtMinWriteTimeThresholdUTC.AddSeconds(-0.1))
                     {
-                        OnStatusEvent(string.Format("{0} is older than the fasta file; {1} modified {2} vs. {3}; indexing is required",
-                                      sourceDescription,
-                                      fiSourceFile.FullName,
-                                      fiSourceFile.LastWriteTimeUtc.ToLocalTime().ToString(DATE_TIME_FORMAT),
-                                      dtMinWriteTimeThresholdUTC.ToLocalTime().ToString(DATE_TIME_FORMAT)));
+                            var sourceFileDate = fiSourceFile.LastWriteTimeUtc.ToLocalTime().ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT);
+                            var dateThreshold= dtMinWriteTimeThresholdUTC.ToLocalTime().ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT);
+
+                            OnStatusEvent(string.Format("{0} is older than the fasta file; {1} modified {2} vs. {3}; indexing is required",
+                                                        sourceDescription,
+                                                        fiSourceFile.FullName,
+                                                        sourceFileDate,
+                                                        dateThreshold));
 
                         return false;
                     }
