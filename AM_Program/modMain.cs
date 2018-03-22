@@ -32,7 +32,7 @@ namespace AnalysisManagerProg
 {
     static class modMain
     {
-        public const string PROGRAM_DATE = "March 19, 2018";
+        public const string PROGRAM_DATE = "March 21, 2018";
 
         private static bool mCodeTestMode;
         private static bool mTraceMode;
@@ -136,16 +136,17 @@ namespace AnalysisManagerProg
                         // testHarness.TestArchiveFailedResults();
                         // testHarness.TestGetToolVersionInfo();
                         // testHarness.TestConnectRSA();
-                        testHarness.TestGZip();
+                        // testHarness.TestGZip();
                         // testHarness.TestZipAndUnzip();
                         // testHarness.TestCopyToRemote();
 
                         // testHarness.TestLogging();
-                        testHarness.TestStatusLogging();
+                        // testHarness.TestStatusLogging();
 
                         // var connString = "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI";
                         // testHarness.TestDatabaseLogging(connString);
 
+                        testHarness.TestGetProcesses();
 
                     }
                     catch (Exception ex)

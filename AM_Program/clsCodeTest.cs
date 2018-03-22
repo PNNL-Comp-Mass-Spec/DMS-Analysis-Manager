@@ -956,6 +956,67 @@ namespace AnalysisManagerProg
             Console.WriteLine(lastWriteTime);
         }
 
+
+        /// <summary>
+        /// Display metadata regarding all of the processees running on this system
+        /// </summary>
+        public void TestGetProcesses()
+        {
+            var processes = Process.GetProcesses();
+
+            Console.WriteLine("Enumerating {0} processes", processes.Length);
+
+            foreach (var process in processes)
+            {
+                try
+                {
+                    Console.WriteLine();
+                    Console.WriteLine("ID               {0}", process.Id);
+                    Console.WriteLine("Priority         {0}", process.BasePriority);
+                    Console.WriteLine("Name             {0}", process.ProcessName);
+
+                }
+                catch (Exception ex)
+                {
+                    if (ex.Message == "Access is denied")
+                    {
+                        Console.WriteLine("Access denied for Process ID {0}", process.Id);
+                        continue;
+                    }
+
+                    // On Linux, any inaccessible property leads to exception:
+                    // Process has exited, so the requested information is not available
+                    if (!ex.Message.StartsWith("Process has exited"))
+                    {
+                        Console.WriteLine("Process ID {0}: {1}", process.Id, ex.Message);
+                    }
+                }
+
+                try
+                {
+                    Console.WriteLine("StartTime        {0}", process.StartTime);
+                }
+                catch (Exception)
+                {
+                    // For some processes, StartTime is accessible, but the Handle and Filename are not
+                }
+
+                try
+                {
+                    Console.WriteLine("Handle           {0}", process.Handle);
+                    Console.WriteLine("ModuleName       {0}", process.MainModule.ModuleName);
+                    Console.WriteLine("ModuleMemorySize {0}", process.MainModule.ModuleMemorySize);
+                    Console.WriteLine("Filename         {0}", process.MainModule.FileName);
+                }
+                catch (Exception)
+                {
+                    // Cannot get the handle on Windows for elevated processes or processes not owned by this user
+                    // Cannot get MainModule on Linux since not implemented
+                }
+
+            }
+        }
+
         /// <summary>
         /// Test determining the DLL version of DLLs
         /// </summary>
