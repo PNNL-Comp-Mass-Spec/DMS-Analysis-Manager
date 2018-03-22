@@ -175,7 +175,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 const int DEFAULT_ORG_DB_DIR_MIN_FREE_SPACE_MB = 750;
 
                 // Convert fileSizeTotalBytes to MB, but add on a Default_Min_free_Space to assure we'll still have enough free space after copying over the files
-                var minFreeSpaceMB = (int)(fileSizeTotalBytes / 1024.0 / 1024.0 + DEFAULT_ORG_DB_DIR_MIN_FREE_SPACE_MB);
+                var minFreeSpaceMB = (int)(clsGlobal.BytesToMB(fileSizeTotalBytes) + DEFAULT_ORG_DB_DIR_MIN_FREE_SPACE_MB);
 
                 diskFreeSpaceBelowThreshold =
                     !clsGlobal.ValidateFreeDiskSpace("Organism DB directory", fiFastaFile.Directory.FullName, minFreeSpaceMB, out mErrorMessage);
@@ -678,7 +678,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // Examine the size of the .Fasta file to determine how much ram to reserve
                 int javaMemorySizeMB;
 
-                var fastaFileSizeMB = (int)(fiFastaFile.Length / 1024.0 / 1024.0);
+                var fastaFileSizeMB = clsGlobal.BytesToMB(fiFastaFile.Length);
 
                 if (fastaFileSizeMB <= 125)
                 {

@@ -128,7 +128,7 @@ namespace AnalysisManagerBase
             var destFile = new FileInfo(destFilePath);
             if (destFile.Exists)
             {
-                var fileSizeMB = destFile.Length / 1024.0 / 1024;
+                var fileSizeMB = clsGlobal.BytesToMB(destFile.Length);
                 var copyRateMBperSec = fileSizeMB / elapsedSeconds;
 
                 // Note that m_FileTools may have been waiting for a lock file queue to subside,

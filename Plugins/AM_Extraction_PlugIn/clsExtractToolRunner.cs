@@ -1857,8 +1857,8 @@ namespace AnalysisManagerExtractionPlugin
 
             // Check the size of the Syn file
             // If it is too large, we will need to break it up into multiple parts, process each part separately, and then combine the results
-            var sngParentSynFileSizeMB = (float)(fiSynFile.Length / 1024.0 / 1024.0);
-            if (sngParentSynFileSizeMB <= SYN_FILE_MAX_SIZE_MB)
+            var parentSynFileSizeMB = clsGlobal.BytesToMB(fiSynFile.Length);
+            if (parentSynFileSizeMB <= SYN_FILE_MAX_SIZE_MB)
             {
                 splitFileList = new List<string>
                 {
@@ -1870,7 +1870,7 @@ namespace AnalysisManagerExtractionPlugin
                 if (m_DebugLevel >= 2)
                 {
                     LogDebug(
-                        "Synopsis file is " + sngParentSynFileSizeMB.ToString("0.0") +
+                        "Synopsis file is " + parentSynFileSizeMB.ToString("0.0") +
                         " MB, which is larger than the maximum size for peptide prophet (" + SYN_FILE_MAX_SIZE_MB +
                         " MB); splitting into multiple sections");
                 }
@@ -1910,10 +1910,10 @@ namespace AnalysisManagerExtractionPlugin
                 peptideProphet.DebugLevel = m_DebugLevel;
 
                 fiSynFile = new FileInfo(splitFile);
-                var synFileNameAndSize = fiSynFile.Name + " (file size = " + (fiSynFile.Length / 1024.0 / 1024.0).ToString("0.00") + " MB";
+                var synFileNameAndSize = string.Format("{0} (file size = {1:F2} MB", fiSynFile.Name, clsGlobal.BytesToMB(fiSynFile.Length));
                 if (splitFileList.Count > 1)
                 {
-                    synFileNameAndSize += "; parent syn file is " + sngParentSynFileSizeMB.ToString("0.00") + " MB)";
+                    synFileNameAndSize += "; parent syn file is " + parentSynFileSizeMB.ToString("0.00") + " MB)";
                 }
                 else
                 {

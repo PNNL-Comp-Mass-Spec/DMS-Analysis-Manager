@@ -172,14 +172,14 @@ namespace AnalysisManagerBrukerDAExportPlugin
             var fiBafFile = diDataFolder.GetFiles("analysis.baf", SearchOption.AllDirectories).ToList();
             if (fiBafFile.Count > 0)
             {
-                datasetSizeMB = fiBafFile[0].Length / 1024.0 / 1024;
+                datasetSizeMB = clsGlobal.BytesToMB(fiBafFile[0].Length);
             }
             else
             {
                 var fileTools = new PRISM.clsFileTools();
                 RegisterEvents(fileTools);
 
-                datasetSizeMB = fileTools.GetDirectorySize(dataFolderPath) / 1024.0 / 1024;
+                datasetSizeMB = clsGlobal.BytesToMB(fileTools.GetDirectorySize(dataFolderPath));
             }
 
             var scanCountEstimate = (int)Math.Round(datasetSizeMB / MB_PER_SCAN, 0);

@@ -264,8 +264,9 @@ namespace AnalysisManagerXTandemPlugIn
                 {
                     // Need to condense the file
 
-                    var strMessage = ioFileInfo.Name + " is " + (ioFileInfo.Length / 1024.0 / 1024 / 1024).ToString("0.00") +
-                                 " GB in size; will now condense it by combining data points with consecutive zero-intensity values";
+                    var strMessage = string.Format("{0} is {1:F2} GB in size; will now condense it by combining data points with consecutive zero-intensity value",
+                                                   ioFileInfo.Name, clsGlobal.BytesToGB(ioFileInfo.Length));
+
                     LogMessage(strMessage);
 
                     mCDTACondenser = new CondenseCDTAFile.clsCDTAFileCondenser();
@@ -285,8 +286,8 @@ namespace AnalysisManagerXTandemPlugIn
 
                     if (m_DebugLevel >= 1)
                     {
-                        strMessage = "Condensing complete; size of the new _dta.txt file is " +
-                                     (ioFileInfo.Length / 1024.0 / 1024 / 1024).ToString("0.00") + " GB";
+                        strMessage = string.Format("Condensing complete; size of the new _dta.txt file is {0:F2} GB",
+                                                   clsGlobal.BytesToGB(ioFileInfo.Length));
                         LogMessage(strMessage);
                     }
 

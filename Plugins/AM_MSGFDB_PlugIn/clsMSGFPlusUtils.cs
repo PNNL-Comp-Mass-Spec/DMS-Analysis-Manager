@@ -572,7 +572,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
 
                 // Dynamically set the amount of required memory based on the size of the .mzid file
-                var fileSizeMB = fiMzidFile.Length / 1024.0 / 1024.0;
+                var fileSizeMB = clsGlobal.BytesToMB(fiMzidFile.Length);
                 int javaMemorySizeMB;
 
                 if (fileSizeMB < 100)
@@ -1366,7 +1366,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (tdaValue == 0)
                 {
-                    if (!fastaFileIsDecoy && fastaFileSizeKB / 1024.0 / 1024.0 > 1)
+                    if (!fastaFileIsDecoy && clsGlobal.BytesToGB(fiFastaFile.Length) > 1)
                     {
                         // Large Fasta file (over 1 GB in size)
                         // TDA is 0, so we're performing a forward-only search

@@ -243,7 +243,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 mErrorMessage = "Call to " + Path.GetFileNameWithoutExtension(mProgramPath) + " failed (but exit code is 0)";
                 return true;
             }
-            
+
             // Make sure the output file was created and is not empty
             var sourceFile = new FileInfo(mSourceFilePath);
             var outputFilePath = Path.Combine(sourceFile.Directory.FullName, GetOutputFileName(msXmlFormat, mSourceFilePath, mRawDataType));
@@ -278,16 +278,16 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                 var dblTotalMinutes = DateTime.UtcNow.Subtract(dtStartTimeUTC).TotalMinutes;
 
-                var ioFileInfo = new FileInfo(strSourceFilePath);
-                if (ioFileInfo.Exists)
+                var sourceFile = new FileInfo(strSourceFilePath);
+                if (sourceFile.Exists)
                 {
-                    dblSourceFileSizeMB = ioFileInfo.Length / 1024.0 / 1024;
+                    dblSourceFileSizeMB = clsGlobal.BytesToMB(sourceFile.Length);
                 }
 
-                ioFileInfo = new FileInfo(strMsXmlFilePath);
-                if (ioFileInfo.Exists)
+                var msXmlFile = new FileInfo(strMsXmlFilePath);
+                if (msXmlFile.Exists)
                 {
-                    dblMsXmlSizeMB = ioFileInfo.Length / 1024.0 / 1024;
+                    dblMsXmlSizeMB = clsGlobal.BytesToMB(msXmlFile.Length);
                 }
 
                 var strMessage = "MsXml creation time = " + dblTotalMinutes.ToString("0.00") + " minutes";
