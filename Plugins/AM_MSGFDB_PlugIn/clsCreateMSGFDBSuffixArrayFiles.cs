@@ -551,8 +551,17 @@ namespace AnalysisManagerMSGFDBPlugIn
                     }
                 }
 
+                var remoteIndexDirPath = DetermineRemoteMSGFPlusIndexFilesDirectoryPath(
+                    fiFastaFile.Name, msgfPlusIndexFilesDirPathBase, msgfPlusIndexFilesDirPathLegacyDB);
+
                 if (!reindexingRequired)
+                {
+
+                    // Delete old index files on the remote share
+                    DeleteOldIndexFiles(remoteIndexDirPath, debugLevel);
+
                     return CloseOutType.CLOSEOUT_SUCCESS;
+                }
 
                 // Index files are missing or out of date
 
@@ -569,9 +578,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // Copy the missing index files from msgfPlusIndexFilesFolderPathBase or msgfPlusIndexFilesFolderPathLegacyDB if possible
                 // Otherwise, create new index files
 
-                var remoteIndexFolderPath = DetermineRemoteMSGFPlusIndexFilesFolderPath(
-                    fiFastaFile.Name, msgfPlusIndexFilesFolderPathBase, msgfPlusIndexFilesFolderPathLegacyDB);
-
                 const bool CHECK_FOR_LOCK_FILE_A = true;
                 var eResult = CopyExistingIndexFilesFromRemote(fiFastaFile, usingLegacyFasta, remoteIndexFolderPath, CHECK_FOR_LOCK_FILE_A,
                                                                         debugLevel, maxWaitTimeHours, out var diskFreeSpaceBelowThreshold1);
@@ -584,7 +590,10 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (eResult == CloseOutType.CLOSEOUT_SUCCESS)
                 {
-                    return eResult;
+                    // Delete old index files on the remote share
+                    DeleteOldIndexFiles(remoteIndexDirPath, debugLevel);
+
+                    return CloseOutType.CLOSEOUT_SUCCESS;
                 }
 
                 // Files did not exist or were out of date, or an error occurred while copying them
@@ -629,6 +638,10 @@ namespace AnalysisManagerMSGFDBPlugIn
                         CopyIndexFilesToRemote(fiFastaFile, remoteIndexFolderPath, debugLevel);
                     }
                 }
+
+
+                // Delete old index files on the remote share
+                DeleteOldIndexFiles(remoteIndexDirPath, debugLevel);
 
                 if (remoteLockFileCreated)
                 {
@@ -923,8 +936,83 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
         }
 
-        private string DetermineRemoteMSGFPlusIndexFilesFolderPath(string fastaFileName, string msgfPlusIndexFilesFolderPathBase,
-                                                                   string msgfPlusIndexFilesFolderPathLegacyDB)
+        /// <summary>
+        /// Delete old MSGF+ index files
+        /// </summary>
+        /// <param name="remoteIndexDirPath"></param>
+        /// <param name="debugLevel"></param>
+        private void DeleteOldIndexFiles(string remoteIndexDirPath, short debugLevel)
+        {
+            try
+            {
+
+                var remoteIndexDir = new DirectoryInfo(remoteIndexDirPath);
+
+                if (!remoteIndexDir.Exists)
+                {
+                    OnWarningEvent("Remote index directory not found: " + remoteIndexDir.FullName);
+                    return;
+                }
+
+                // MSGF+ index files for protein collections are grouped by ArchiveOutputFile ID, rounded to the nearest 1000
+                // For example \\gigasax\MSGFPlus_Index_Files\2000 and \\gigasax\MSGFPlus_Index_Files\3000
+                // The MaxDirSize.txt file will be up one directory
+                // Similarly, for Legacy FASTA files, the MaxDirSize.txt file is in the parent directory of \\Proto-7\MSGFPlus_Index_Files\Other
+
+                var remoteIndexDirToUse = remoteIndexDir.Parent ?? remoteIndexDir;
+
+                // Only delete old files once every 24 hours
+                var purgeInfoFile = new FileInfo(Path.Combine(remoteIndexDirToUse.FullName, "PurgeInfoFile.txt"));
+                if (purgeInfoFile.Exists && DateTime.UtcNow.Subtract(purgeInfoFile.LastWriteTimeUtc).TotalHours < 24)
+                {
+                    return;
+                }
+
+                try
+                {
+                    using (var purgeInfoWriter = new StreamWriter(new FileStream(purgeInfoFile.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                    {
+                        // Use local time for the date in the purge Info file
+                        purgeInfoWriter.WriteLine(DateTime.Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
+                        purgeInfoWriter.WriteLine("Manager: " + mMgrName);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Unable to create or update the file
+                    // It's possible another manager was trying to update it simultaneously
+                    // Alternatively, we may not have write access (or the server might be offline)
+                    OnWarningEvent("Unable to create/update the PurgeInfo file at " + purgeInfoFile.FullName + ": " + ex.Message);
+                    return;
+                }
+
+                // Look for file MaxDirSize.txt which defines the maximum space that the files can use
+                var maxDirSizeFile = new FileInfo(Path.Combine(remoteIndexDirToUse.FullName, "MaxDirSize.txt"));
+
+                if (!maxDirSizeFile.Exists)
+                {
+                    OnWarningEvent("Remote index directory does not have file MaxDirSize.txt; cannot purge old index files in " + remoteIndexDirPath);
+                    OnStatusEvent(string.Format(
+                                  "Create file {0} with 'MaxSizeGB=50' on a single line. " +
+                                  "Comment lines are allowed using # as a comment character", maxDirSizeFile.Name));
+
+                    return;
+                }
+
+                // MaxDirSize.txt file exists; this file specifies the max total GB that files orgDbFolder can use
+                clsAnalysisResources.PurgeFastaFilesUsingSpaceUsedThreshold(maxDirSizeFile, "", debugLevel, preview: false);
+            }
+            catch (Exception ex)
+            {
+                OnErrorEvent("Error deleting old index files in " + remoteIndexDirPath, ex);
+            }
+
+        }
+
+        private string DetermineRemoteMSGFPlusIndexFilesDirectoryPath(
+            string fastaFileName,
+            string msgfPlusIndexFilesDirPathBase,
+            string msgfPlusIndexFilesDirPathLegacyDB)
         {
             var reExtractNum = new Regex(@"^ID_(\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
