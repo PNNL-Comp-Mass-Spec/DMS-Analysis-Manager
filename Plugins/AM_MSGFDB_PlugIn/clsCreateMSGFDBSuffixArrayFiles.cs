@@ -7,7 +7,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -50,9 +49,10 @@ namespace AnalysisManagerMSGFDBPlugIn
             mMgrName = managerName;
         }
 
-        private CloseOutType CopyExistingIndexFilesFromRemote(FileInfo fiFastaFile, bool usingLegacyFasta, string remoteIndexFolderPath,
-                                                              bool checkForLockFile, int debugLevel, float maxWaitTimeHours,
-                                                              out bool diskFreeSpaceBelowThreshold)
+        private CloseOutType CopyExistingIndexFilesFromRemote(
+            FileInfo fiFastaFile, bool usingLegacyFasta, string remoteIndexDirPath,
+            bool checkForLockFile, int debugLevel, float maxWaitTimeHours,
+            out bool diskFreeSpaceBelowThreshold)
         {
             bool success;
 
@@ -60,12 +60,12 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             try
             {
-                var diRemoteIndexFolderPath = new DirectoryInfo(remoteIndexFolderPath);
+                var remoteIndexDirectory = new DirectoryInfo(remoteIndexDirPath);
 
-                if (!diRemoteIndexFolderPath.Exists)
+                if (!remoteIndexDirectory.Exists)
                 {
                     // This is not a critical error
-                    OnDebugEvent(string.Format("Remote index folder not found ({0}); indexing is required", remoteIndexFolderPath));
+                    OnDebugEvent(string.Format("Remote index directory not found ({0}); indexing is required", remoteIndexDirectory));
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
@@ -78,24 +78,24 @@ namespace AnalysisManagerMSGFDBPlugIn
                 if (checkForLockFile)
                 {
                     // Look for an existing lock file on the remote server
-                    var fiRemoteLockFile1 = new FileInfo(Path.Combine(
-                        diRemoteIndexFolderPath.FullName,
-                        fiFastaFile.Name + MSGF_PLUS_INDEX_FILE_INFO_SUFFIX + ".lock"));
+                    var fiRemoteLockFile1 = new FileInfo(
+                        Path.Combine(remoteIndexDirectory.FullName,
+                                     fiFastaFile.Name + MSGF_PLUS_INDEX_FILE_INFO_SUFFIX + ".lock"));
 
                     WaitForExistingLockfile(fiRemoteLockFile1, debugLevel, maxWaitTimeHours);
                 }
 
                 // Look for the .MSGFPlusIndexFileInfo file for this fasta file
-                var fiMSGFPlusIndexFileInfo = new FileInfo(Path.Combine(
-                    diRemoteIndexFolderPath.FullName,
-                    fiFastaFile.Name + MSGF_PLUS_INDEX_FILE_INFO_SUFFIX));
+                var fiMSGFPlusIndexFileInfo = new FileInfo(
+                    Path.Combine(remoteIndexDirectory.FullName,
+                                 fiFastaFile.Name + MSGF_PLUS_INDEX_FILE_INFO_SUFFIX));
 
                 long fileSizeTotalKB = 0;
 
                 if (!fiMSGFPlusIndexFileInfo.Exists)
                 {
                     OnDebugEvent(string.Format("{0} not found at {1}; indexing is required",
-                        fiMSGFPlusIndexFileInfo.Name, diRemoteIndexFolderPath.FullName));
+                        fiMSGFPlusIndexFileInfo.Name, remoteIndexDirectory.FullName));
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
@@ -105,9 +105,8 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 var filesToCopy = new Dictionary<string, long>();
 
-                using (
-                    var srInFile =
-                        new StreamReader(new FileStream(fiMSGFPlusIndexFileInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var srInFile = new StreamReader(
+                    new FileStream(fiMSGFPlusIndexFileInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     while (!srInFile.EndOfStream)
                     {
@@ -140,7 +139,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     // Confirm that each file in filesToCopy exists on the remote server
                     // If using a legacy fasta file, must also confirm that each file is newer than the fasta file that was indexed
                     filesAreValid = ValidateFiles(
-                        diRemoteIndexFolderPath.FullName, filesToCopy, usingLegacyFasta,
+                        remoteIndexDirectory.FullName, filesToCopy, usingLegacyFasta,
                         fiFastaFile.LastWriteTimeUtc, true);
                 }
 
@@ -151,7 +150,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (debugLevel >= 1 && fileSizeTotalKB >= 1000)
                 {
-                    OnStatusEvent("Copying existing MSGF+ index files from " + diRemoteIndexFolderPath.FullName);
+                    OnStatusEvent("Copying existing MSGF+ index files from " + remoteIndexDirectory.FullName);
                 }
 
                 // Copy each file in filesToCopy (overwrite existing files)
@@ -168,7 +167,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 foreach (var entry in filesToCopy)
                 {
-                    var fiSourceFile = new FileInfo(Path.Combine(diRemoteIndexFolderPath.FullName, entry.Key));
+                    var fiSourceFile = new FileInfo(Path.Combine(remoteIndexDirectory.FullName, entry.Key));
                     fileSizeTotalBytes += fiSourceFile.Length;
                 }
 
@@ -185,7 +184,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-
                 var remoteLockFileCreated = CreateRemoteSuffixArrayLockFile(
                     fiFastaFile.Name, fiFastaFile.Directory.FullName,
                     out var fiRemoteLockFile2, debugLevel, maxWaitTimeHours);
@@ -194,7 +192,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 {
                     // Lock file successfully created
                     // If this manager ended up waiting while another manager was indexing the files or while another manager was copying files locally,
-                    // then we should once again check to see if the required files exist
+                    // we should once again check to see if the required files exist
 
                     // Now confirm that each file was successfully copied locally
                     success = ValidateFiles(fiFastaFile.Directory.FullName, filesToCopy, usingLegacyFasta, fiFastaFile.LastWriteTimeUtc,
@@ -211,8 +209,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 {
                     var fiSourceFile = new FileInfo(Path.Combine(diRemoteIndexFolderPath.FullName, entry.Key));
 
-                    var targetFilePath = Path.Combine(fiFastaFile.Directory.FullName, fiSourceFile.Name);
-                    oFileTools.CopyFileUsingLocks(fiSourceFile, targetFilePath, manager, true);
+                    oFileTools.CopyFileUsingLocks(sourceFile, targetFile.FullName, manager, true);
 
                     filesCopied += 1;
 
@@ -243,62 +240,60 @@ namespace AnalysisManagerMSGFDBPlugIn
 
         }
 
-        private bool CopyIndexFilesToRemote(FileInfo fiFastaFile, string remoteIndexFolderPath, int debugLevel)
+        private void CopyIndexFilesToRemote(FileInfo fiFastaFile, string remoteIndexdirPath, int debugLevel)
         {
             var manager = GetPseudoManagerName();
             const bool createIndexFileForExistingFiles = false;
 
-            var success = CopyIndexFilesToRemote(fiFastaFile, remoteIndexFolderPath, debugLevel, manager, createIndexFileForExistingFiles,
-                                                 out var errorMessage);
+            var success = CopyIndexFilesToRemote(fiFastaFile, remoteIndexdirPath, debugLevel, manager,
+                                                 createIndexFileForExistingFiles, out var errorMessage);
             if (!success)
             {
                 OnErrorEvent(errorMessage);
             }
-
-            return success;
         }
 
         /// <summary>
-        /// Copies the suffix array files for the specified fasta file to the remote MSGFPlus_Index_File folder share
+        /// Copies the suffix array files for the specified fasta file to the remote MSGFPlus_Index_File share
         /// </summary>
         /// <param name="fiFastaFile"></param>
-        /// <param name="remoteIndexFolderPath"></param>
+        /// <param name="remoteIndexDirPath"></param>
         /// <param name="debugLevel"></param>
         /// <param name="managerName">Manager name (only required because the constructor for PRISM.clsFileTools requires this)</param>
         /// <param name="createIndexFileForExistingFiles">
-        /// When true, assumes that the index files were previously copied to remoteIndexFolderPath,
+        /// When true, assumes that the index files were previously copied to remoteIndexDirPath,
         /// and we should simply create the .MSGFPlusIndexFileInfo file for the matching files
         /// This option is used by the MSGFPlusIndexFileCopier program when switch /X is provided
         /// </param>
         /// <param name="errorMessage"></param>
         /// <returns></returns>
         /// <remarks>This function is used both by this class and by the MSGFPlusIndexFileCopier console application</remarks>
-        public static bool CopyIndexFilesToRemote(FileInfo fiFastaFile, string remoteIndexFolderPath, int debugLevel, string managerName,
+        public static bool CopyIndexFilesToRemote(FileInfo fiFastaFile, string remoteIndexDirPath, int debugLevel, string managerName,
                                                   bool createIndexFileForExistingFiles, out string errorMessage)
         {
             errorMessage = string.Empty;
 
             try
             {
-                if (string.IsNullOrWhiteSpace(remoteIndexFolderPath))
-                    throw new ArgumentException("Remote index folder path cannot be empty", nameof(remoteIndexFolderPath));
+                if (string.IsNullOrWhiteSpace(remoteIndexDirPath))
+                    throw new ArgumentException("Remote index directory path cannot be empty", nameof(remoteIndexDirPath));
 
-                var diRemoteIndexFolderPath = new DirectoryInfo(remoteIndexFolderPath);
+                var remoteIndexDirectory = new DirectoryInfo(remoteIndexDirPath);
 
-                if (diRemoteIndexFolderPath.Parent == null || !diRemoteIndexFolderPath.Parent.Exists)
+                if (remoteIndexDirectory.Parent == null || !remoteIndexDirectory.Parent.Exists)
                 {
-                    errorMessage = "Parent folder for the MSGF+ index files folder not found: " + remoteIndexFolderPath;
+                    errorMessage = "Parent directory for the MSGF+ index files directory not found: " + remoteIndexDirPath;
                     return false;
                 }
 
-                if (!diRemoteIndexFolderPath.Exists)
+                if (!remoteIndexDirectory.Exists)
                 {
-                    diRemoteIndexFolderPath.Create();
+                    remoteIndexDirectory.Create();
                 }
 
                 if (createIndexFileForExistingFiles)
                 {
-                    var remoteFastaPath = Path.Combine(remoteIndexFolderPath, fiFastaFile.Name);
+                    var remoteFastaPath = Path.Combine(remoteIndexDirPath, fiFastaFile.Name);
                     fiFastaFile = new FileInfo(remoteFastaPath);
                 }
 
@@ -336,7 +331,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     foreach (var entry in filesToCopy)
                     {
                         var sourceFilePath = Path.Combine(fiFastaFile.Directory.FullName, entry.Key);
-                        var targetFilePath = Path.Combine(diRemoteIndexFolderPath.FullName, entry.Key);
+                        var targetFilePath = Path.Combine(remoteIndexDirectory.FullName, entry.Key);
 
                         var success = oFileTools.CopyFileUsingLocks(sourceFilePath, targetFilePath, managerName, true);
                         if (!success)
@@ -348,9 +343,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
 
                 // Create the .MSGFPlusIndexFileInfo file for this fasta file
-                var fiMSGFPlusIndexFileInfo = new FileInfo(Path.Combine(
-                    diRemoteIndexFolderPath.FullName,
-                    fiFastaFile.Name + MSGF_PLUS_INDEX_FILE_INFO_SUFFIX));
+                var fiMSGFPlusIndexFileInfo = new FileInfo(
+                    Path.Combine(remoteIndexDirectory.FullName, fiFastaFile.Name + MSGF_PLUS_INDEX_FILE_INFO_SUFFIX));
 
                 using (var swOutFile = new StreamWriter(new FileStream(fiMSGFPlusIndexFileInfo.FullName, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
@@ -372,10 +366,10 @@ namespace AnalysisManagerMSGFDBPlugIn
 
         /// <summary>
         /// Convert .Fasta file to indexed DB files compatible with MSGFPlus
-        /// Will copy the files from msgfPlusIndexFilesFolderPathBase if they exist
+        /// Will copy the files from msgfPlusIndexFilesDirPathBase if they exist
         /// </summary>
         /// <param name="logFileDir"></param>
-        /// <param name="debugLevel"></param>
+        /// <param name="debugLevel">1 for normal, 2 for more verbose, 5 for the most verbose</param>
         /// <param name="javaProgLoc"></param>
         /// <param name="msgfPlusProgLoc">Path to the MSGF+ .jar file</param>
         /// <param name="fastaFilePath">FASTA file path (on the local computer)</param>
@@ -383,16 +377,16 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// When True, only creates the forward-based index files.
         /// When False, creates both the forward and reverse index files
         /// </param>
-        /// <param name="msgfPlusIndexFilesFolderPathBase">Folder path from which to copy (or store) the index files</param>
-        /// <param name="msgfPlusIndexFilesFolderPathLegacyDB">
-        /// Folder path from which to copy (or store) the index files for Legacy DBs
+        /// <param name="msgfPlusIndexFilesDirPathBase">Directory path from which to copy (or store) the index files</param>
+        /// <param name="msgfPlusIndexFilesDirPathLegacyDB">
+        /// Directory path from which to copy (or store) the index files for Legacy DBs
         /// (.fasta files not created from the protein sequences database)
         /// </param>
         /// <returns>CloseOutType enum indicating success or failure</returns>
         /// <remarks></remarks>
-        public CloseOutType CreateSuffixArrayFiles(string logFileDir, int debugLevel, string javaProgLoc, string msgfPlusProgLoc,
-                                                   string fastaFilePath, bool fastaFileIsDecoy, string msgfPlusIndexFilesFolderPathBase,
-                                                   string msgfPlusIndexFilesFolderPathLegacyDB)
+        public CloseOutType CreateSuffixArrayFiles(string logFileDir, short debugLevel, string javaProgLoc, string msgfPlusProgLoc,
+                                                   string fastaFilePath, bool fastaFileIsDecoy, string msgfPlusIndexFilesDirPathBase,
+                                                   string msgfPlusIndexFilesDirPathLegacyDB)
         {
             const float MAX_WAITTIME_HOURS = 1.0f;
 
@@ -533,8 +527,9 @@ namespace AnalysisManagerMSGFDBPlugIn
                     {
                         // Make sure all of the index files have a file modification date newer than the fasta file
                         // We only do this for legacy fasta files, since their file modification date will be the same on all pubs
+
                         // We can't do this for programatically generated fasta files (that use protein collections)
-                        //   since their modification date will be the time that the file was created
+                        // since their modification date will be the time that the file was created
 
                         foreach (var fiIndexFile in existingFiles)
                         {
@@ -569,7 +564,6 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
 
                 // Index files are missing or out of date
-
                 if (clsGlobal.OfflineMode)
                 {
                     // The manager that pushed the FASTA files to the the remote host should have also indexed them and pushed all of the index files to this host
@@ -580,12 +574,12 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                // Copy the missing index files from msgfPlusIndexFilesFolderPathBase or msgfPlusIndexFilesFolderPathLegacyDB if possible
+                // Copy the missing index files from remoteIndexDirPath (if possible)
                 // Otherwise, create new index files
 
                 const bool CHECK_FOR_LOCK_FILE_A = true;
-                var eResult = CopyExistingIndexFilesFromRemote(fiFastaFile, usingLegacyFasta, remoteIndexFolderPath, CHECK_FOR_LOCK_FILE_A,
-                                                                        debugLevel, maxWaitTimeHours, out var diskFreeSpaceBelowThreshold1);
+                var eResult = CopyExistingIndexFilesFromRemote(fiFastaFile, usingLegacyFasta, remoteIndexDirPath, CHECK_FOR_LOCK_FILE_A,
+                                                               debugLevel, maxWaitTimeHours, out var diskFreeSpaceBelowThreshold1);
 
                 if (diskFreeSpaceBelowThreshold1)
                 {
@@ -607,7 +601,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // Files did not exist or were out of date, or an error occurred while copying them
                 currentTask = "Create a remote lock file";
                 var remoteLockFileCreated = CreateRemoteSuffixArrayLockFile(
-                    fiFastaFile.Name, remoteIndexFolderPath,
+                    fiFastaFile.Name, remoteIndexDirPath,
                     out var fiRemoteLockFile, debugLevel, maxWaitTimeHours);
 
                 if (remoteLockFileCreated)
@@ -616,7 +610,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     // If this manager ended up waiting while another manager was indexing the files, we should once again try to copy the files locally
 
                     const bool CHECK_FOR_LOCK_FILE_B = false;
-                    eResult = CopyExistingIndexFilesFromRemote(fiFastaFile, usingLegacyFasta, remoteIndexFolderPath, CHECK_FOR_LOCK_FILE_B,
+                    eResult = CopyExistingIndexFilesFromRemote(fiFastaFile, usingLegacyFasta, remoteIndexDirPath, CHECK_FOR_LOCK_FILE_B,
                                                                debugLevel, maxWaitTimeHours, out var diskFreeSpaceBelowThreshold2);
 
                     if (eResult == CloseOutType.CLOSEOUT_SUCCESS)
@@ -642,8 +636,8 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                     if (remoteLockFileCreated && eResult == CloseOutType.CLOSEOUT_SUCCESS)
                     {
-                        OnStatusEvent("Copying index files to " + remoteIndexFolderPath);
-                        CopyIndexFilesToRemote(fiFastaFile, remoteIndexFolderPath, debugLevel);
+                        OnStatusEvent("Copying index files to " + remoteIndexDirPath);
+                        CopyIndexFilesToRemote(fiFastaFile, remoteIndexDirPath, debugLevel);
                     }
                 }
 
@@ -752,7 +746,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     }
                 }
 
-                // Create a lock file in the folder that the index files will be created
+                // Create a lock file in the directory that the index files will be created
                 currentTask = "Create the local lock file: " + fiLockFile.FullName;
                 var success = CreateLockFile(fiLockFile.FullName);
                 if (!success)
@@ -874,6 +868,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             {
                 using (var swLockFile = new StreamWriter(new FileStream(lockFilePath, FileMode.CreateNew, FileAccess.Write, FileShare.Read)))
                 {
+                    // Use local time for dates in lock files
                     swLockFile.WriteLine("Date: " + DateTime.Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
                     swLockFile.WriteLine("Manager: " + mMgrName);
                 }
@@ -889,29 +884,30 @@ namespace AnalysisManagerMSGFDBPlugIn
 
         }
 
-        private bool CreateRemoteSuffixArrayLockFile(string fastaFileName, string remoteIndexFolderPath, out FileInfo fiRemoteLockFile,
-                                                     int debugLevel, float maxWaitTimeHours)
+        private bool CreateRemoteSuffixArrayLockFile(
+            string fastaFileName, string remoteIndexDirPath,
+            out FileInfo fiRemoteLockFile, int debugLevel, float maxWaitTimeHours)
         {
-            var diRemoteIndexFolderPath = new DirectoryInfo(remoteIndexFolderPath);
+            var remoteIndexDirectory = new DirectoryInfo(remoteIndexDirPath);
 
-            if (diRemoteIndexFolderPath.Parent == null || !diRemoteIndexFolderPath.Parent.Exists)
+            if (remoteIndexDirectory.Parent == null || !remoteIndexDirectory.Parent.Exists)
             {
-                OnErrorEvent("Cannot read/write MSGF+ index files from remote share; folder not found; " + diRemoteIndexFolderPath.FullName);
+                OnErrorEvent("Cannot read/write MSGF+ index files from remote share; directory not found; " + remoteIndexDirectory.FullName);
                 fiRemoteLockFile = null;
                 return false;
             }
 
             fiRemoteLockFile =
-                new FileInfo(Path.Combine(diRemoteIndexFolderPath.FullName, fastaFileName + MSGF_PLUS_INDEX_FILE_INFO_SUFFIX + ".lock"));
+                new FileInfo(Path.Combine(remoteIndexDirectory.FullName, fastaFileName + MSGF_PLUS_INDEX_FILE_INFO_SUFFIX + ".lock"));
 
             var currentTask = "Looking for lock file " + fiRemoteLockFile.FullName;
             WaitForExistingLockfile(fiRemoteLockFile, debugLevel, maxWaitTimeHours);
 
             try
             {
-                if (!diRemoteIndexFolderPath.Exists)
+                if (!remoteIndexDirectory.Exists)
                 {
-                    diRemoteIndexFolderPath.Create();
+                    remoteIndexDirectory.Create();
                 }
 
                 // Create the remote lock file
@@ -922,7 +918,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Exception creating remote MSGF+ suffix array lock file at " + diRemoteIndexFolderPath.FullName + "; " + currentTask,
+                OnErrorEvent("Exception creating remote MSGF+ suffix array lock file at " + remoteIndexDirectory.FullName + "; " + currentTask,
                              ex);
                 return false;
             }
@@ -1026,7 +1022,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         {
             var reExtractNum = new Regex(@"^ID_(\d+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-            string remoteIndexFolderPath;
+            string remoteIndexDirectory;
 
             // DMS-generated fasta files will have a name of the form ID_003949_3D6802EE.fasta
             // Parse out the number (003949 in this case)
@@ -1038,21 +1034,21 @@ namespace AnalysisManagerMSGFDBPlugIn
                 {
                     // Round down to the nearest 1000
                     // Thus, 003949 will round to 3000
-                    var folderName = (Math.Floor(generatedFastaFileNumber / 1000.0) * 1000).ToString("0");
+                    var directoryName = (Math.Floor(generatedFastaFileNumber / 1000.0) * 1000).ToString("0");
 
-                    if (string.IsNullOrWhiteSpace(msgfPlusIndexFilesFolderPathBase))
+                    if (string.IsNullOrWhiteSpace(msgfPlusIndexFilesDirPathBase))
                         return string.Empty;
 
-                    remoteIndexFolderPath = Path.Combine(msgfPlusIndexFilesFolderPathBase, folderName);
-                    return remoteIndexFolderPath;
+                    remoteIndexDirectory = Path.Combine(msgfPlusIndexFilesDirPathBase, directoryName);
+                    return remoteIndexDirectory;
                 }
             }
 
-            if (string.IsNullOrWhiteSpace(msgfPlusIndexFilesFolderPathLegacyDB))
+            if (string.IsNullOrWhiteSpace(msgfPlusIndexFilesDirPathLegacyDB))
                 return string.Empty;
 
-            remoteIndexFolderPath = Path.Combine(msgfPlusIndexFilesFolderPathLegacyDB, "Other");
-            return remoteIndexFolderPath;
+            remoteIndexDirectory = Path.Combine(msgfPlusIndexFilesDirPathLegacyDB, "Other");
+            return remoteIndexDirectory;
         }
 
         /// <summary>
@@ -1061,7 +1057,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// </summary>
         /// <param name="fastaFileIsDecoy"></param>
         /// <param name="outputNameBase"></param>
-        /// <param name="folderPathToSearch"></param>
+        /// <param name="directoryPathToSearch"></param>
         /// <param name="filesToFind">List of files that should exist; calling function must have initialized it</param>
         /// <param name="existingFileList">Output param: semicolon separated list of existing files</param>
         /// <param name="missingFiles">Output param: semicolon separated list of missing files</param>
@@ -1069,7 +1065,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <remarks></remarks>
         private List<FileInfo> FindExistingSuffixArrayFiles(
             bool fastaFileIsDecoy, string outputNameBase,
-            string folderPathToSearch, ICollection<string> filesToFind,
+            string directoryPathToSearch, ICollection<string> filesToFind,
             out string existingFileList,
             out string missingFiles)
         {
@@ -1104,7 +1100,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             {
                 var fileNameToFind = outputNameBase + suffix;
 
-                var fiFileToFind = new FileInfo(Path.Combine(folderPathToSearch, fileNameToFind));
+                var fiFileToFind = new FileInfo(Path.Combine(directoryPathToSearch, fileNameToFind));
 
                 if (fiFileToFind.Exists)
                 {
@@ -1230,21 +1226,20 @@ namespace AnalysisManagerMSGFDBPlugIn
         }
 
         /// <summary>
-        /// Verifies that each of the files specified by filesToCopy exists at folderPathToCheck and has the correct file size
+        /// Verifies that each of the files specified by filesToCopy exists at directoryPathToCheck and has the correct file size
         /// </summary>
-        /// <param name="folderPathToCheck">folder to check</param>
+        /// <param name="directoryPathToCheck">Directory to check</param>
         /// <param name="filesToCopy">Dictionary with filenames and file sizes</param>
         /// <param name="usingLegacyFasta">True when using a legacy FASTA file (not protein collection based)</param>
         /// <param name="dtMinWriteTimeThresholdUTC"></param>
-        /// <param name="verifyingRemoteFolder">True when validating files on a remote server, false if verifying the local DMS_Temp_Org folder</param>
+        /// <param name="verifyingRemoteDirectory">True when validating files on a remote server, false if verifying the local DMS_Temp_Org directory</param>
         /// <returns>True if all files are found and are the right size</returns>
         /// <remarks></remarks>
-        [SuppressMessage("ReSharper", "UseFormatSpecifierInFormatString")]
-        private bool ValidateFiles(string folderPathToCheck, Dictionary<string, long> filesToCopy, bool usingLegacyFasta,
-                                   DateTime dtMinWriteTimeThresholdUTC, bool verifyingRemoteFolder)
+        private bool ValidateFiles(string directoryPathToCheck, Dictionary<string, long> filesToCopy, bool usingLegacyFasta,
+                                   DateTime dtMinWriteTimeThresholdUTC, bool verifyingRemoteDirectory)
         {
             string sourceDescription;
-            if (verifyingRemoteFolder)
+            if (verifyingRemoteDirectory)
             {
                 sourceDescription = "Remote MSGF+ index file";
             }
@@ -1255,7 +1250,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             foreach (var entry in filesToCopy)
             {
-                var fiSourceFile = new FileInfo(Path.Combine(folderPathToCheck, entry.Key));
+                var fiSourceFile = new FileInfo(Path.Combine(directoryPathToCheck, entry.Key));
 
                 if (!fiSourceFile.Exists)
                 {
@@ -1276,7 +1271,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (usingLegacyFasta)
                 {
-                    // Require that the index files be newer than the fasta file
+                    // Require that the index files be newer than the fasta file (ignore the .LastUsed file)
                     if (fiSourceFile.LastWriteTimeUtc < dtMinWriteTimeThresholdUTC.AddSeconds(-0.1))
                     {
                         OnStatusEvent(string.Format("{0} is older than the fasta file; {1} modified {2} vs. {3}; indexing is required",
