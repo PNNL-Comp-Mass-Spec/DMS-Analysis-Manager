@@ -37,15 +37,6 @@ namespace AnalysisManagerProg
         // 450 seconds is 7.5 minutes
         private const int FASTA_GEN_TIMEOUT_INTERVAL_SEC = 450;
 
-        #region "Properties"
-
-        /// <summary>
-        /// When true, show additional messages at the console
-        /// </summary>
-        public bool TraceMode { get; set; }
-
-        #endregion
-
         /// <summary>
         /// Constructor
         /// </summary>

@@ -124,7 +124,7 @@ namespace AnalysisManagerProg
                 {
                     ShowTraceMessage("Code test mode enabled");
 
-                    var testHarness = new clsCodeTest { TraceMode = mTraceMode };
+                    var testHarness = new clsCodeTest();
 
                     try
                     {
@@ -161,9 +161,7 @@ namespace AnalysisManagerProg
 
                 if (mDisplayDllVersions)
                 {
-                    var testHarness = new clsCodeTest {
-                        TraceMode = mTraceMode
-                    };
+                    var testHarness = new clsCodeTest();
                     testHarness.DisplayDllVersions(mDisplayDllPath);
                     clsParseCommandLine.PauseAtConsole();
                     return 0;
