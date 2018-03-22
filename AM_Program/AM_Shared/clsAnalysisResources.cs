@@ -3750,84 +3750,124 @@ namespace AnalysisManagerBase
                     return false;
                 }
 
-                long spaceUsageBytes = 0;
+                var purgeSuccessful = false;
+                long totalBytesPurgedOverall = 0;
 
-                foreach (var fiFile in orgDbDirectory.GetFiles("*", SearchOption.AllDirectories))
+                // This variable is a safety measure to assure the while loop doesn't continue indefinitely
+                // Since we're deleting data in chunks of 10 GB and max iterations is 100,
+                // this method will purge, at most, 1000 GB of old FASTA files
+                var iterations = 0;
+
+                while (iterations < 100)
                 {
-                    spaceUsageBytes += fiFile.Length;
-                }
+                    iterations++;
 
-                var spaceUsageGB = clsGlobal.BytesToGB(spaceUsageBytes);
-                if (spaceUsageGB <= maxSizeGB)
-                {
-                    // Space usage is under the threshold
-                    var statusMessage = string.Format(
-                        "Space usage in {0} is {1:F1} GB, which is below the threshold of {2} GB; nothing to purge",
-                        orgDbDirectory.FullName, spaceUsageGB, maxSizeGB);
-
-                    if (debugLevel >= 3)
+                    long spaceUsageBytes = 0;
+                    foreach (var fiFile in orgDbDirectory.GetFiles("*", SearchOption.AllDirectories))
                     {
-                        LogTools.LogDebug(statusMessage);
+                        spaceUsageBytes += fiFile.Length;
                     }
-                    else
+
+                    var spaceUsageGB = clsGlobal.BytesToGB(spaceUsageBytes);
+                    if (spaceUsageGB <= maxSizeGB)
                     {
-                        ConsoleMsgUtils.ShowDebug(statusMessage);
-                    }
-                    return true;
-                }
+                        // Space usage is under the threshold
+                        var statusMessage = string.Format(
+                            "Space usage in {0} is {1:F1} GB, which is below the threshold of {2} GB; nothing to purge",
+                            orgDbDirectory.FullName, spaceUsageGB, maxSizeGB);
 
-                // Space usage is too high; need to purge some files
-                // Obtain a dictionary of FASTA files where Keys are FileInfo and values are last usage date
-                var dctFastaFiles = GetFastaFilesByLastUse(orgDbDirectory);
-
-                var lstFastaFilesByLastUse = from item in dctFastaFiles orderby item.Value select item.Key;
-
-                var bytesToPurge = (long)(spaceUsageBytes - maxSizeGB * 1024.0 * 1024 * 1024);
-                long totalBytesPurged = 0;
-
-                foreach (var fiFileToPurge in lstFastaFilesByLastUse)
-                {
-                    // Abort this process if the LastUsed date of this file is less than 5 days old
-                    if (dctFastaFiles.TryGetValue(fiFileToPurge, out var dtLastUsed))
-                    {
-                        if (DateTime.UtcNow.Subtract(dtLastUsed).TotalDays < 5)
+                        if (debugLevel >= 3)
                         {
-                            LogTools.LogMessage("All fasta files in " + orgDbDirectory.FullName + " are less than 5 days old; " +
-                                                "will not purge any more files to free disk space");
-                            break;
+                            LogTools.LogDebug(statusMessage);
                         }
-                    }
-
-                    // Delete all files associated with this fasta file
-                    // However, do not delete it if the name starts with legacyFastaFileBaseName
-                    var bytesDeleted = PurgeFastaFiles(fiFileToPurge, legacyFastaFileBaseName, debugLevel, preview);
-                    totalBytesPurged += bytesDeleted;
-
-                    if (totalBytesPurged < bytesToPurge)
-                    {
-                        // Keep deleting files
-                        if (debugLevel >= 2)
+                        else
                         {
-                            LogTools.LogDebug(string.Format(
-                                                "Purging FASTA files: {0:F1} / {1:F1} MB deleted",
-                                                clsGlobal.BytesToMB(totalBytesPurged), clsGlobal.BytesToMB(bytesToPurge)));
+                            ConsoleMsgUtils.ShowDebug(statusMessage);
                         }
-                    }
-                    else
-                    {
-                        // Enough files have been deleted
-                        LogTools.LogMessage(string.Format(
-                                            "Space usage in {0} is now below {1} GB; deleted {2:F1} GB of cached files",
-                                            orgDbDirectory.FullName, maxSizeGB, clsGlobal.BytesToGB(totalBytesPurged)));
+
                         return true;
                     }
-                }
 
-                if (totalBytesPurged < bytesToPurge)
+                    // Space usage is too high; need to purge some files
+                    // Obtain a dictionary of FASTA files where Keys are FileInfo and values are last usage date
+                    var dctFastaFiles = GetFastaFilesByLastUse(orgDbDirectory);
+
+                    if (dctFastaFiles.Count == 0)
+                    {
+                        LogTools.LogWarning("Did not find any FASTA files to purge in " + orgDbDirectory.FullName);
+
+                        // Even though we found no FASTA files to purge, return true since MaxDirSize.txt was found
+                        return true;
+                    }
+
+                    var lstFastaFilesByLastUse = (from item in dctFastaFiles orderby item.Value select item.Key).ToList();
+
+                    var bytesToPurge = (long)(spaceUsageBytes - maxSizeGB * 1024.0 * 1024 * 1024);
+                    long totalBytesPurged = 0;
+
+                    var filesProcessed = 0;
+                    foreach (var fiFileToPurge in lstFastaFilesByLastUse)
+                    {
+                        filesProcessed++;
+
+                        // Abort this process if the LastUsed date of this file is less than 5 days old
+                        if (dctFastaFiles.TryGetValue(fiFileToPurge, out var dtLastUsed))
+                        {
+                            if (DateTime.UtcNow.Subtract(dtLastUsed).TotalDays < 5)
+                            {
+                                LogTools.LogMessage("All fasta files in " + orgDbDirectory.FullName + " are less than 5 days old; " +
+                                                    "will not purge any more files to free disk space");
+                                filesProcessed = lstFastaFilesByLastUse.Count;
+                                break;
+                            }
+                        }
+
+                        // Delete all files associated with this fasta file
+                        // However, do not delete it if the name starts with legacyFastaFileBaseName
+                        var bytesDeleted = PurgeFastaFiles(fiFileToPurge, legacyFastaFileBaseName, debugLevel, preview);
+                        totalBytesPurged += bytesDeleted;
+                        totalBytesPurgedOverall += bytesDeleted;
+
+                        if (totalBytesPurged < bytesToPurge)
+                        {
+                            // Keep deleting files
+                            if (debugLevel >= 2)
+                            {
+                                LogTools.LogDebug(string.Format(
+                                                      "Purging FASTA files: {0:F1} / {1:F1} MB deleted",
+                                                      clsGlobal.BytesToMB(totalBytesPurged), clsGlobal.BytesToMB(bytesToPurge)));
+                            }
+
+                            if (clsGlobal.BytesToGB(totalBytesPurged) > 10)
+                            {
+                                // We have deleted 10 GB of data; re-scan for FASTA files to delete
+                                // This is done in case two managers are actively purging files from the same directory simultaneously
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            // Enough files have been deleted
+                            LogTools.LogMessage(string.Format(
+                                                    "Space usage in {0} is now below {1} GB; deleted {2:F1} GB of cached files",
+                                                    orgDbDirectory.FullName, maxSizeGB, clsGlobal.BytesToGB(totalBytesPurgedOverall)));
+                            return true;
+                        }
+                    }
+
+                    if (filesProcessed < lstFastaFilesByLastUse.Count)
+                        continue;
+
+                    purgeSuccessful = totalBytesPurged >= bytesToPurge;
+                    break;
+
+                } // end while
+
+                if (!purgeSuccessful)
                 {
                     LogTools.LogWarning(string.Format(
-                                       "Warning: unable to delete enough files to lower the space usage in {0} to below {1} GB; " +
-                                       "deleted {2:F1} GB of cached files", orgDbDirectory.FullName, maxSizeGB, clsGlobal.BytesToGB(totalBytesPurged)));
+                                            "Warning: unable to delete enough files to lower the space usage in {0} to below {1} GB; " +
+                                            "deleted {2:F1} GB of cached files", orgDbDirectory.FullName, maxSizeGB, clsGlobal.BytesToGB(totalBytesPurgedOverall)));
                 }
 
                 return true;
