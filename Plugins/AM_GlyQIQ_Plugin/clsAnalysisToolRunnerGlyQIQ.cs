@@ -12,7 +12,6 @@ using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading;
 using AnalysisManagerBase;
 using ThermoRawFileReader;
 
@@ -128,7 +127,6 @@ namespace AnalysisManagerGlyQIQPlugin
                 UpdateSummaryFile();
 
                 // Make sure objects are released
-                Thread.Sleep(500);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
                 if (!blnSuccess)
@@ -222,8 +220,6 @@ namespace AnalysisManagerGlyQIQPlugin
                         }
                     }
                 }
-
-                Thread.Sleep(250);
 
                 // Zip the unfiltered results
                 ZipFile(fiUnfilteredResults.FullName, true);
@@ -485,8 +481,6 @@ namespace AnalysisManagerGlyQIQPlugin
                 // Clear the TempZipFolder
                 Thread.Sleep(250);
                 diTempZipFolder.Delete(true);
-
-                Thread.Sleep(250);
                 diTempZipFolder.Create();
             }
             catch (Exception)

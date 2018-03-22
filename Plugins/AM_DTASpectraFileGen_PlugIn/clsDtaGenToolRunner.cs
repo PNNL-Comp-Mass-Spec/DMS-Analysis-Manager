@@ -10,7 +10,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using System.Threading;
 using AnalysisManagerBase;
 using MsMsDataFileReader;
 
@@ -280,7 +279,6 @@ namespace DTASpectraFileGen
         {
             // Make sure all files have released locks
             PRISM.clsProgRunner.GarbageCollectNow();
-            Thread.Sleep(1000);
 
             // Get rid of raw data file
             try
@@ -486,7 +484,6 @@ namespace DTASpectraFileGen
                 }
 
                 PRISM.clsProgRunner.GarbageCollectNow();
-                Thread.Sleep(50);
 
                 strCDTAFileOriginal = Path.Combine(m_WorkDir, m_Dataset + "_DTA_Original.txt");
                 fiCDTA.MoveTo(strCDTAFileOriginal);
@@ -532,7 +529,6 @@ namespace DTASpectraFileGen
                 }
 
                 PRISM.clsProgRunner.GarbageCollectNow();
-                Thread.Sleep(50);
 
                 strCDTAFileCentroided = Path.Combine(m_WorkDir, m_Dataset + "_DTA_Centroided.txt");
                 fiCDTA.MoveTo(strCDTAFileCentroided);
@@ -724,8 +720,6 @@ namespace DTASpectraFileGen
                 oCDTAReaderFragIonData.CloseFile();
                 var udtFragIonDataHeader = oCDTAReaderFragIonData.GetNewSpectrumHeaderInfo();
 
-                Thread.Sleep(10);
-
                 oCDTAReaderFragIonData = new clsDtaTextFileReader(true);
                 if (!oCDTAReaderFragIonData.OpenFile(strCDTAWithFragIonData))
                 {
@@ -764,8 +758,6 @@ namespace DTASpectraFileGen
                             // Try closing the FragIonData file, re-opening, and parsing again
                             oCDTAReaderFragIonData.CloseFile();
                             udtFragIonDataHeader = oCDTAReaderFragIonData.GetNewSpectrumHeaderInfo();
-
-                            Thread.Sleep(10);
 
                             oCDTAReaderFragIonData = new clsDtaTextFileReader(true);
                             if (!oCDTAReaderFragIonData.OpenFile(strCDTAWithFragIonData))
@@ -1219,7 +1211,6 @@ namespace DTASpectraFileGen
 
             try
             {
-                Thread.Sleep(250);
 
 #pragma warning disable 618
                 if (ZipFileSharpZipLib(DtaFilePath))

@@ -496,10 +496,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 var finalMsXmlFilePath = string.Copy(sourceMsXmlFile.FullName);
 
                 // Delete the original mzML file
-                System.Threading.Thread.Sleep(125);
                 sourceMsXmlFile.Delete();
-
-                System.Threading.Thread.Sleep(125);
 
                 // Rename the updated mzML file so that it does not end in _new.mzML
                 updatedMzMLFile.MoveTo(finalMsXmlFilePath);
@@ -591,9 +588,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 }
 
                 // Replace the original .mzML file with the indexed one
-                System.Threading.Thread.Sleep(125);
                 File.Delete(mzMLFilePath);
-                System.Threading.Thread.Sleep(125);
 
                 reindexedMzMLFile.MoveTo(mzMLFilePath);
                 return true;

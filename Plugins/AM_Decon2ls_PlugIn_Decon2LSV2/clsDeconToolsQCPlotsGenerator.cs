@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Threading;
 using PRISM;
 
 namespace AnalysisManagerDecon2lsV2PlugIn

@@ -7,7 +7,6 @@
 
 using System;
 using System.IO;
-using System.Threading;
 using AnalysisManagerBase;
 
 namespace AnalysisManagerMODaPlugIn
@@ -146,7 +145,6 @@ namespace AnalysisManagerMODaPlugIn
                     }
                 }
 
-                Thread.Sleep(125);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
                 var fiNewMGFFile = new FileInfo(Path.Combine(m_WorkingDir, DatasetName + ".mgf"));

@@ -8,7 +8,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading;
 using AnalysisManagerBase;
 using PRISM;
 
@@ -93,7 +92,6 @@ namespace AnalysisManagerLCMSFeatureFinderPlugIn
             UpdateSummaryFile();
 
             // Make sure objects are released
-            Thread.Sleep(500);
             clsProgRunner.GarbageCollectNow();
 
             if (!blnSuccess)

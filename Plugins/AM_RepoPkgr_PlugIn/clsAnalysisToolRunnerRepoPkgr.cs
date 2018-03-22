@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Data.SqlClient;
 using System.Text.RegularExpressions;
-using System.Threading;
 using AnalysisManager_RepoPkgr_PlugIn;
 using AnalysisManagerBase;
 using AnalysisManagerMsXmlGenPlugIn;
@@ -444,7 +443,6 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
                 m_jobParams.AddResultFileToSkip(Path.GetFileName(fiMzXmlFilePathLocal.FullName + clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX));
 
-                Thread.Sleep(250);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
                 return fiMzXmlFileGZipped.FullName;

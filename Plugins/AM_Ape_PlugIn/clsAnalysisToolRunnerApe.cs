@@ -85,7 +85,6 @@ namespace AnalysisManager_Ape_PlugIn
                 UpdateSummaryFile();
 
                 // Make sure objects are released
-                System.Threading.Thread.Sleep(500);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
                 if(!processingSuccess)

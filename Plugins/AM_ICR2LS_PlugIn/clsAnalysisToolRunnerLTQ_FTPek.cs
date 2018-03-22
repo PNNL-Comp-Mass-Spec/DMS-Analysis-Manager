@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Threading;
 using AnalysisManagerBase;
 using PRISM.Logging;
 

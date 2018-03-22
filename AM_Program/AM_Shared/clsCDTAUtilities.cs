@@ -1,7 +1,6 @@
 ﻿
 using System;
 using System.IO;
-using System.Threading;
 using PRISM;
 
 namespace AnalysisManagerBase
@@ -178,8 +177,6 @@ namespace AnalysisManagerBase
         {
             if (newCDTAFileHasUpdates)
             {
-                Thread.Sleep(100);
-
                 var sourceFilePath = fiOriginalFile.FullName;
 
                 if (!replaceSourceFile)
@@ -203,15 +200,12 @@ namespace AnalysisManagerBase
                 } while (File.Exists(oldFilePath));
 
                 fiOriginalFile.MoveTo(oldFilePath);
-                Thread.Sleep(100);
 
                 fiUpdatedFile.MoveTo(sourceFilePath);
 
                 if (deleteSourceFileIfUpdated)
                 {
-                    Thread.Sleep(125);
                     clsProgRunner.GarbageCollectNow();
-
                     fiOriginalFile.Delete();
                 }
             }
@@ -219,7 +213,6 @@ namespace AnalysisManagerBase
             {
                 // No changes were made; nothing to update
                 // However, delete the new file we created
-                Thread.Sleep(125);
                 clsProgRunner.GarbageCollectNow();
 
                 fiUpdatedFile.Delete();
@@ -409,9 +402,7 @@ namespace AnalysisManagerBase
                     return false;
                 }
 
-                // Wait 500 msec, then check the size of the new _dta.txt file
-                Thread.Sleep(500);
-
+                // Check the size of the new _dta.txt file
                 ioFileInfo.Refresh();
 
                 OnStatusEvent(

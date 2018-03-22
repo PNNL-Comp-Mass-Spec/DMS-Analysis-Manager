@@ -9,7 +9,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading;
 using AnalysisManagerBase;
 using PeptideToProteinMapEngine;
 using PRISM;
@@ -194,7 +193,6 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 UpdateSummaryFile();
 
                 // Make sure objects are released
-                Thread.Sleep(500);
                 clsProgRunner.GarbageCollectNow();
 
                 if (!processingSuccess)
@@ -1182,8 +1180,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
 
                         if (blnDifferenceFound)
                         {
-                            // Wait 500 msec, then replace PTMods.txt with strPTModsFilePathNew
-                            Thread.Sleep(500);
+                            // Replace PTMods.txt with strPTModsFilePathNew
 
                             try
                             {
@@ -1207,7 +1204,6 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                         else
                         {
                             // No difference was found; delete the .tmp file
-                            Thread.Sleep(500);
                             try
                             {
                                 File.Delete(strPTModsFilePathNew);

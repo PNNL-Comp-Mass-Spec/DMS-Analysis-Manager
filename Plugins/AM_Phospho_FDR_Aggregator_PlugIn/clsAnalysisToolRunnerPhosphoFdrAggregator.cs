@@ -10,7 +10,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading;
 using AnalysisManagerBase;
 using Mage;
 using PHRPReader;
@@ -146,7 +145,6 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 mCmdRunner = null;
 
                 // Make sure objects are released
-                Thread.Sleep(1000);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
                 if (!processingSuccess)
@@ -254,8 +252,6 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                     LogError(m_message);
                     return false;
                 }
-
-                Thread.Sleep(100);
 
                 // Replace the original file with the new one
                 var originalFilePath = fiSynFile.FullName;

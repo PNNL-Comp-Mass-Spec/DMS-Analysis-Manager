@@ -7,7 +7,6 @@
 //*********************************************************************************************************
 
 using System.IO;
-using System.Threading;
 using AnalysisManagerBase;
 
 namespace DTASpectraFileGen
@@ -148,8 +147,6 @@ namespace DTASpectraFileGen
 
             if (!string.IsNullOrEmpty(zippedDTAFilePath))
             {
-                Thread.Sleep(150);
-
                 var fiZippedDtaFile = new FileInfo(zippedDTAFilePath);
                 var tempZipFilePath = Path.Combine(m_WorkingDir, Path.GetFileNameWithoutExtension(fiZippedDtaFile.Name) + "_PreExisting.zip");
 

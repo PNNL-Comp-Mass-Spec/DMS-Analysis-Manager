@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
-using System.Threading;
 using AnalysisManagerBase;
 using PRISM.Logging;
 
@@ -175,7 +174,6 @@ namespace AnalysisManagerICR2LSPlugIn
 
                 mPEKResultsFile.CopyTo(fiTargetFileTemp.FullName, true);
 
-                Thread.Sleep(500);
                 fiTargetFileTemp.Refresh();
 
                 if (fiTargetFileFinal.Exists)
@@ -554,7 +552,6 @@ namespace AnalysisManagerICR2LSPlugIn
                 if (scanToResumeAfter > 0)
                 {
                     useAllScans = false;
-                    Thread.Sleep(200);
                     fiTempResultsFile.MoveTo(resultsFileNamePath);
                 }
             }

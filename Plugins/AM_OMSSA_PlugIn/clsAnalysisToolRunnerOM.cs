@@ -8,7 +8,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading;
 using AnalysisManagerBase;
 
 namespace AnalysisManagerOMSSAPlugIn
@@ -115,7 +114,6 @@ namespace AnalysisManagerOMSSAPlugIn
             UpdateSummaryFile();
 
             // Make sure objects are released
-            Thread.Sleep(500);
             PRISM.clsProgRunner.GarbageCollectNow();
 
             if (processingSuccess)

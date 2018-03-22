@@ -10,7 +10,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
-using System.Threading;
 using AnalysisManagerBase;
 using PRISM;
 
@@ -172,7 +171,6 @@ namespace AnalysisManagerXTandemPlugIn
             UpdateSummaryFile();
 
             // Make sure objects are released
-            Thread.Sleep(500);
             clsProgRunner.GarbageCollectNow();
 
             // Zip the output file

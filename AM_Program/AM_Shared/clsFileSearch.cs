@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading;
 using PRISM.Logging;
 using MyEMSLReader;
 using PHRPReader;
@@ -1429,7 +1428,6 @@ namespace AnalysisManagerBase
             }
 
             // Delete the _DTA.zip file to free up some disk space
-            Thread.Sleep(100);
             if (m_DebugLevel >= 3)
             {
                 OnDebugEvent("Deleting the _DTA.zip file");
@@ -1437,9 +1435,7 @@ namespace AnalysisManagerBase
 
             try
             {
-                Thread.Sleep(125);
                 clsProgRunner.GarbageCollectNow();
-
                 File.Delete(targetZipFilePath);
             }
             catch (Exception ex)
@@ -2897,7 +2893,6 @@ namespace AnalysisManagerBase
                     }
                 }
 
-                Thread.Sleep(125);
                 clsProgRunner.GarbageCollectNow();
 
                 // Delete all s*.zip files in working directory

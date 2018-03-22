@@ -8,7 +8,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading;
 using AnalysisManagerBase;
 
 namespace AnalysisManagerMetaboliteDetectorPlugin
@@ -109,7 +108,6 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                 // UpdateSummaryFile();
 
                 // Make sure objects are released
-                Thread.Sleep(500);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
                 if (processingError)

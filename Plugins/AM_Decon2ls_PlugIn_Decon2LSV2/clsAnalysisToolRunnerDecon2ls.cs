@@ -10,7 +10,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
-using System.Threading;
 using AnalysisManagerBase;
 
 namespace AnalysisManagerDecon2lsV2PlugIn
@@ -715,7 +714,6 @@ namespace AnalysisManagerDecon2lsV2PlugIn
             m_StopTime = DateTime.UtcNow;
 
             // Make sure objects are released
-            Thread.Sleep(500);
             PRISM.clsProgRunner.GarbageCollectNow();
 
             if (m_DebugLevel > 3)
@@ -1239,7 +1237,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 case clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder:
                     // Bruker_FT folders are actually .D folders
                     return Path.Combine(workDirPath, datasetName) + clsAnalysisResources.DOT_D_EXTENSION;
-                    
+
                 case clsAnalysisResources.eRawDataTypeConstants.BrukerTOFBaf:
                     // Bruker_TOFBaf folders are actually .D folders
                     return Path.Combine(workDirPath, datasetName) + clsAnalysisResources.DOT_D_EXTENSION;

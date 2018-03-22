@@ -10,7 +10,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading;
 using AnalysisManagerBase;
 using AnalysisManagerMSGFDBPlugIn;
 using MSGFResultsSummarizer;
@@ -913,8 +912,6 @@ namespace AnalysisManagerExtractionPlugin
                         totalLinesToWrite + " merged peptides using FlexibleFileSortUtility.dll");
                 }
 
-                Thread.Sleep(250);
-
                 var success = SortTextFile(fiTempFile.FullName, mergedFilePath, true);
 
                 if (!success)
@@ -1749,8 +1746,6 @@ namespace AnalysisManagerExtractionPlugin
                 // Delete the _inspect.txt file
                 File.Delete(targetFilePath);
 
-                Thread.Sleep(250);
-
                 // Extract _inspect.txt from the _inspect.zip file
                 targetFilePath = Path.Combine(m_WorkDir, m_Dataset + "_inspect.zip");
                 success = UnzipFile(targetFilePath);
@@ -2052,8 +2047,6 @@ namespace AnalysisManagerExtractionPlugin
         /// <remarks></remarks>
         private void DeleteTemporaryFiles(IReadOnlyCollection<string> splitFileList)
         {
-            // Delay for 1 second
-            Thread.Sleep(1000);
             PRISM.clsProgRunner.GarbageCollectNow();
 
             // Delete each file in fileList

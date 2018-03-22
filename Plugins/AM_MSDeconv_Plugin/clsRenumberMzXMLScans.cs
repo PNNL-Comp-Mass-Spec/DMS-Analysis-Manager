@@ -4,7 +4,6 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Xml;
 using MSDataFileReader;
 
@@ -80,11 +79,9 @@ namespace AnalysisManagerMSDeconvPlugIn
 
                         writer.WriteWhitespace(Environment.NewLine);
                     }
-                }
+                } // end using
 
-                // Wait 250 msec, then re-generate the byte-offset index at the end of the file
-                Thread.Sleep(250);
-
+                // Regenerate the byte-offset index at the end of the file
                 var blnSuccess = IndexMzXmlFile(targetFilePath);
 
                 return blnSuccess;
@@ -163,9 +160,7 @@ namespace AnalysisManagerMSDeconvPlugIn
 
                 reader.Close();
 
-                Thread.Sleep(100);
                 PRISM.clsProgRunner.GarbageCollectNow();
-                Thread.Sleep(100);
 
                 // Compute the Sha1 hash of the content written from the start, up to and including "  <sha1"
                 byte[] hashValue = null;
@@ -179,9 +174,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                     mySha1.Dispose();
                 }
 
-                Thread.Sleep(100);
                 PRISM.clsProgRunner.GarbageCollectNow();
-                Thread.Sleep(100);
 
                 using (var fsIndexedFile = new FileStream(fiIndexedFile.FullName, FileMode.Append, FileAccess.Write, FileShare.ReadWrite))
                 {
@@ -202,9 +195,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                 }
 
                 // Replace the target file with the indexed copy
-                Thread.Sleep(100);
                 PRISM.clsProgRunner.GarbageCollectNow();
-                Thread.Sleep(100);
 
                 try
                 {
@@ -212,7 +203,6 @@ namespace AnalysisManagerMSDeconvPlugIn
                         Path.GetFileNameWithoutExtension(fiOriginalFile.Name) + "_original" + fiOriginalFile.Extension);
                     fiOriginalFile.MoveTo(targetFilePath);
 
-                    Thread.Sleep(100);
 
                     fiIndexedFile.MoveTo(filePath);
                 }

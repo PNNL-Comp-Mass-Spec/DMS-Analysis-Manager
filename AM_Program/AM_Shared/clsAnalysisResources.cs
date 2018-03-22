@@ -6,7 +6,6 @@ using PHRPReader;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Xml;
 using System.Xml.Linq;
 using PRISM.Logging;
@@ -1651,19 +1650,17 @@ namespace AnalysisManagerBase
             {
                 LogMessage("Generated ScanStats file using " + inputFilePath);
 
-                Thread.Sleep(125);
-                PRISM.clsProgRunner.GarbageCollectNow();
+                if (!deleteRawDataFile)
+                    return true;
 
-                if (deleteRawDataFile)
+                clsProgRunner.GarbageCollectNow();
+                try
                 {
-                    try
-                    {
-                        File.Delete(inputFilePath);
-                    }
-                    catch (Exception)
-                    {
-                        // Ignore errors here
-                    }
+                    File.Delete(inputFilePath);
+                }
+                catch (Exception)
+                {
+                    // Ignore errors here
                 }
 
             }

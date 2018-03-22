@@ -10,7 +10,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading;
 using AnalysisManagerBase;
 using PRISM;
 
@@ -184,7 +183,6 @@ namespace AnalysisManagerInSpecTPlugIn
                 UpdateSummaryFile();
 
                 // Make sure objects are released
-                Thread.Sleep(500);
                 clsProgRunner.GarbageCollectNow();
 
                 var success = CopyResultsToTransferDirectory();

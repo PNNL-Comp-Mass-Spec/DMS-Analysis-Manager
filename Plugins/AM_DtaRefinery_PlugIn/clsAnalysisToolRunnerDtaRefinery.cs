@@ -8,7 +8,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading;
 using AnalysisManagerBase;
 using PRISM;
 
@@ -118,8 +117,6 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
                 swBatchFile.WriteLine(strBatchFileCmdLine);
             }
-
-            Thread.Sleep(100);
 
             m_progress = PROGRESS_PCT_DTA_REFINERY_RUNNING;
             ResetProgRunnerCpuUsage();

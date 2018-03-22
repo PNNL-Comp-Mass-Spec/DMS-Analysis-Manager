@@ -11,7 +11,6 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Text;
-using System.Threading;
 using AnalysisManagerBase;
 using PRISM;
 
@@ -155,7 +154,6 @@ namespace AnalysisManagerMSPathFinderPlugin
                 mCmdRunner = null;
 
                 // Make sure objects are released
-                Thread.Sleep(500);
                 clsProgRunner.GarbageCollectNow();
 
                 if (!processingSuccess)
@@ -876,7 +874,6 @@ namespace AnalysisManagerMSPathFinderPlugin
 
                 // Make sure MSPathFinder has released the file handles
                 clsProgRunner.GarbageCollectNow();
-                Thread.Sleep(500);
 
                 var diCompressDir = new DirectoryInfo(Path.Combine(m_WorkDir, "TempCompress"));
                 if (diCompressDir.Exists)

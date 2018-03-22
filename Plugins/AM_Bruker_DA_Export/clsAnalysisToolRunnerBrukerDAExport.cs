@@ -10,7 +10,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading;
 using AnalysisManagerBase;
 
 namespace AnalysisManagerBrukerDAExportPlugin
@@ -131,7 +130,6 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 // UpdateSummaryFile();
 
                 // Make sure objects are released
-                Thread.Sleep(500);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
                 if (!exportSuccess)
@@ -527,7 +525,6 @@ namespace AnalysisManagerBrukerDAExportPlugin
 
                 var diSubDir = diWorkDir.CreateSubdirectory("FilesToZip");
 
-                Thread.Sleep(100);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
                 foreach (var file in fiSpectraFiles)

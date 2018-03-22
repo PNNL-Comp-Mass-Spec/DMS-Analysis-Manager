@@ -9,7 +9,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
-using System.Threading;
 using AnalysisManagerBase;
 
 namespace AnalysisManagerDeconPeakDetectorPlugIn
@@ -116,7 +115,6 @@ namespace AnalysisManagerDeconPeakDetectorPlugIn
                 UpdateSummaryFile();
 
                 // Make sure objects are released
-                Thread.Sleep(500);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
                 if (!blnSuccess)

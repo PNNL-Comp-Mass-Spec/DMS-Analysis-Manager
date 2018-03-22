@@ -1,5 +1,4 @@
 using System.IO;
-using System.Threading;
 using AnalysisManagerBase;
 using System;
 using Mage;
@@ -111,7 +110,6 @@ namespace AnalysisManager_AScore_PlugIn
                 UpdateSummaryFile();
 
                 // Make sure objects are released
-                Thread.Sleep(500);
                 clsProgRunner.GarbageCollectNow();
 
                 if (!processingSuccess)

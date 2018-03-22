@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
 using AnalysisManagerBase;
 
 namespace AnalysisManagerLipidMapSearchPlugIn
@@ -216,7 +215,6 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 UpdateSummaryFile();
 
                 // Make sure objects are released
-                Thread.Sleep(500);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
                 // Zip up the text files that contain the data behind the plots
@@ -807,8 +805,6 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                     LIPID_TOOLS_RESULT_FILE_PREFIX + "MassErrorComparison.txt"
                 };
 
-                Thread.Sleep(500);
-
                 foreach (var strFileName in lstFilesToMove)
                 {
                     var fiSourceFile = new FileInfo(Path.Combine(m_WorkDir, strFileName));
@@ -818,8 +814,6 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                         fiSourceFile.MoveTo(Path.Combine(strFolderToZip, strFileName));
                     }
                 }
-
-                Thread.Sleep(500);
 
                 // Zip up the files in the PlotData folder
                 var dotNetZipTools = new clsDotNetZipTools(m_DebugLevel, m_WorkDir);

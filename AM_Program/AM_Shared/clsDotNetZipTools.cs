@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading;
 using Ionic.Zip;
 using PRISM;
 
@@ -83,11 +82,6 @@ namespace AnalysisManagerBase
                     // Now delete the source file
                     fiFile.Delete();
                 }
-
-
-                // Wait 250 msec
-                Thread.Sleep(250);
-
             }
             catch (Exception ex)
             {
@@ -273,8 +267,6 @@ namespace AnalysisManagerBase
                     }
 
                     File.Delete(gzipFilePath);
-                    Thread.Sleep(250);
-
                 }
             }
             catch (Exception ex)
@@ -578,8 +570,6 @@ namespace AnalysisManagerBase
 
             try
             {
-                // Wait 150 msec
-                Thread.Sleep(150);
 
                 // Confirm that the zip file was created
                 var fiZipFile = new FileInfo(zipFilePath);
@@ -718,8 +708,6 @@ namespace AnalysisManagerBase
                     }
 
                     File.Delete(zipFilePath);
-                    Thread.Sleep(250);
-
                 }
             }
             catch (Exception ex)
@@ -829,7 +817,6 @@ namespace AnalysisManagerBase
                     }
 
                     File.Delete(zipFilePath);
-                    Thread.Sleep(250);
                 }
             }
             catch (Exception ex)

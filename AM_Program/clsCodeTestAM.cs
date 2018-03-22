@@ -7,7 +7,6 @@
 //*********************************************************************************************************
 
 using System.IO;
-using System.Threading;
 using AnalysisManagerBase;
 
 namespace AnalysisManagerProg
@@ -86,7 +85,6 @@ namespace AnalysisManagerProg
             }
 
             // Make sure objects are released
-            Thread.Sleep(500);
             PRISM.clsProgRunner.GarbageCollectNow();
 
             var folderCreateSuccess = MakeResultsFolder();

@@ -6,7 +6,6 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text;
-using System.Threading;
 using System.Xml;
 using PRISM.Logging;
 using PHRPReader;
@@ -318,8 +317,6 @@ namespace AnalysisManagerBase
                     OnStatusEvent(string.Format("Found remote mzML file for job {0}: {1}", job, remoteMsXmlFilePath));
                 }
 
-                Thread.Sleep(250);
-
                 // Delete the locally cached file
                 localCacheInfoFile.Delete();
 
@@ -467,7 +464,6 @@ namespace AnalysisManagerBase
 
                 if (deleteLocalFile)
                 {
-                    Thread.Sleep(200);
                     File.Delete(mzidFilePathLocal);
                 }
 
@@ -998,7 +994,6 @@ namespace AnalysisManagerBase
                 var fiFileToRename = new FileInfo(Path.Combine(sourceFolderPath, sourceFileName));
                 newFilePath = Path.Combine(targetFolderPath, prefixToAdd + fiFileToRename.Name);
 
-                Thread.Sleep(100);
                 fiFileToRename.MoveTo(newFilePath);
 
                 mAnalysisResources.AddResultFileToSkip(Path.GetFileName(newFilePath));

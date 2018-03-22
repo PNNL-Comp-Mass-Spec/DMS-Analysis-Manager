@@ -10,7 +10,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
 using AnalysisManagerBase;
 using PRISM;
 
@@ -121,7 +120,6 @@ namespace AnalysisManagerProMexPlugIn
                 mCmdRunner = null;
 
                 // Make sure objects are released
-                Thread.Sleep(500);
                 clsProgRunner.GarbageCollectNow();
 
                 if (!processingSuccess)

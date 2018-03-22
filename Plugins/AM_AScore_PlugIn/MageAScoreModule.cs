@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Linq;
-using System.Threading;
 using AnalysisManagerBase;
 using AScore_DLL;
 using AScore_DLL.Managers;
@@ -355,7 +354,6 @@ namespace AnalysisManager_AScore_PlugIn
             try
             {
                 // Perform garage collection to force the Unzip tool to release the file handle
-                Thread.Sleep(250);
                 clsProgRunner.GarbageCollectNow();
 
                 clsAnalysisToolRunnerBase.DeleteFileWithRetries(dtaZipPathLocal, debugLevel: 1, maxRetryCount: 2);

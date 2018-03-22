@@ -7,7 +7,6 @@
 
 using System;
 using System.IO;
-using System.Threading;
 using AnalysisManagerBase;
 
 namespace AnalysisManagerPRIDEMzXMLPlugIn
@@ -99,7 +98,6 @@ namespace AnalysisManagerPRIDEMzXMLPlugIn
             UpdateSummaryFile();
 
             // Make sure objects are released
-            Thread.Sleep(500);
             PRISM.clsProgRunner.GarbageCollectNow();
 
             // Override the dataset name and transfer folder path so that the results get copied to the correct location

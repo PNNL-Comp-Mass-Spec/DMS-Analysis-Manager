@@ -11,7 +11,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading;
 using AnalysisManagerBase;
 using PRISM;
 
@@ -128,7 +127,6 @@ namespace AnalysisManagerSequestPlugin
             UpdateSummaryFile();
 
             // Make sure objects are released
-            Thread.Sleep(500);
             clsProgRunner.GarbageCollectNow();
 
             // Parse the Sequest .Log file to make sure the expected number of nodes was used in the analysis
@@ -565,7 +563,6 @@ namespace AnalysisManagerSequestPlugin
             }
 
             // Make sure objects are released
-            Thread.Sleep(500);
             clsProgRunner.GarbageCollectNow();
 
             // Verify out file creation
@@ -592,7 +589,6 @@ namespace AnalysisManagerSequestPlugin
             }
 
             // Try to ensure there are no open objects with file handles
-            Thread.Sleep(500);
             clsProgRunner.GarbageCollectNow();
 
             // Zip concatenated .out files
@@ -658,7 +654,6 @@ namespace AnalysisManagerSequestPlugin
                 }
 
                 // Make sure objects are released
-                Thread.Sleep(500);
                 clsProgRunner.GarbageCollectNow();
 
                 try

@@ -10,7 +10,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading;
 using System.Xml;
 using AnalysisManagerBase;
 using PRISM;
@@ -128,7 +127,6 @@ namespace AnalysisManagerQCARTPlugin
                 // UpdateSummaryFile();
 
                 // Make sure objects are released
-                Thread.Sleep(500);
                 clsProgRunner.GarbageCollectNow();
 
                 if (!processingSuccess)

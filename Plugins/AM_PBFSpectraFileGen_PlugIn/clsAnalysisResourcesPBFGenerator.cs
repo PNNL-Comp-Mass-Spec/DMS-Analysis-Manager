@@ -69,14 +69,8 @@ namespace AnalysisManagerPBFGenerator
 
                 currentTask = "Process MyEMSL Download Queue";
 
-                if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
-                {
-                    return false;
-                }
-
-                System.Threading.Thread.Sleep(500);
-
-                return true;
+                var success = ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders);
+                return success;
             }
             catch (Exception ex)
             {

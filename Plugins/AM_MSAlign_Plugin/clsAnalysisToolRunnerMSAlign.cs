@@ -9,7 +9,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
-using System.Threading;
 using AnalysisManagerBase;
 
 namespace AnalysisManagerMSAlignPlugIn
@@ -289,7 +288,6 @@ namespace AnalysisManagerMSAlignPlugIn
                 mCmdRunner = null;
 
                 // Make sure objects are released
-                Thread.Sleep(500);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
                 if (eMSalignVersion != eMSAlignVersionType.v0pt5)
@@ -352,11 +350,9 @@ namespace AnalysisManagerMSAlignPlugIn
                     }
                 }
 
-                Thread.Sleep(500);
 
                 // Delete the source file, then rename the new file to match the source file
                 File.Delete(strSourceFilePath);
-                Thread.Sleep(500);
 
                 File.Move(strTargetFilePath, strSourceFilePath);
             }
@@ -454,7 +450,6 @@ namespace AnalysisManagerMSAlignPlugIn
                 if (diMSAlignWork.Exists)
                 {
                     diMSAlignWork.Delete(true);
-                    Thread.Sleep(500);
                 }
 
                 // Create the folder
@@ -1075,8 +1070,7 @@ namespace AnalysisManagerMSAlignPlugIn
                     }
                 }
 
-                // Wait 500 msec, then swap the files
-                Thread.Sleep(500);
+                // Swap the files
 
                 try
                 {
@@ -1264,7 +1258,6 @@ namespace AnalysisManagerMSAlignPlugIn
                 var objZipper = new Ionic.Zip.ZipFile(strTargetFilePath);
                 objZipper.AddDirectory(strSourceFolderPath);
                 objZipper.Save();
-                Thread.Sleep(500);
             }
             catch (Exception ex)
             {

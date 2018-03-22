@@ -10,7 +10,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading;
 using AnalysisManagerBase;
 
 namespace AnalysisManagerNOMSIPlugin
@@ -146,7 +145,6 @@ namespace AnalysisManagerNOMSIPlugin
                 // UpdateSummaryFile();
 
                 // Make sure objects are released
-                Thread.Sleep(500);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
                 if (!processingSuccess)
@@ -656,7 +654,6 @@ namespace AnalysisManagerNOMSIPlugin
                 }
 
                 fiParamFile.MoveTo(Path.Combine(fiParamFile.DirectoryName, fiParamFile.Name + ".old"));
-                Thread.Sleep(100);
 
                 fiParamFileNew.MoveTo(paramFilePath);
 

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Xml;
 using PRISM;
 
@@ -223,8 +222,6 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                     Thread.Sleep(250);
                     sourceDtaFile.MoveTo(oldDtaFilePath);
-
-                    Thread.Sleep(250);
                     updatedDtaFile.MoveTo(dtaFilePath);
 
                     return dtaFilePath;
@@ -486,8 +483,6 @@ namespace AnalysisManagerMsXmlGenPlugIn
 
                     Thread.Sleep(250);
                     sourceMzMLFile.MoveTo(oldMzMLFilePath);
-
-                    Thread.Sleep(250);
                     updatedMzMLFile.MoveTo(mzMLFilePath);
 
                     return mzMLFilePath;

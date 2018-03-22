@@ -251,7 +251,6 @@ namespace MSMSSpectrumFilterAM
             {
                 try
                 {
-                    System.Threading.Thread.Sleep(250);
                     objOriginalCDTA?.CloseFile();
                     objFilteredCDTA?.CloseFile();
                 }
@@ -475,7 +474,6 @@ namespace MSMSSpectrumFilterAM
 
                         var blnFilesMatch = CDTAFilesMatch(strBakFilePath, strInputFilePath);
 
-                        System.Threading.Thread.Sleep(250);
                         PRISM.clsProgRunner.GarbageCollectNow();
 
                         // Delete the _dta.txt.bak file

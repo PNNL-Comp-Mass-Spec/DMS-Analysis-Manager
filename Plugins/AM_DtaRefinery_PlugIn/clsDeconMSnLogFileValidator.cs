@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using System.Threading;
 using PRISM;
 
 namespace AnalysisManagerDtaRefineryPlugIn
@@ -56,7 +55,6 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 mFileUpdated = false;
 
                 var tempFilePath = Path.GetTempFileName();
-                Thread.Sleep(250);
 
                 using (var srSourceFile = new StreamReader(new FileStream(strSourceFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 using (var swOutFile = new StreamWriter(new FileStream(tempFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))

@@ -62,7 +62,6 @@ namespace AnalysisManagerDataImportPlugIn
                 m_StopTime = DateTime.UtcNow;
 
                 // Make sure objects are released
-                System.Threading.Thread.Sleep(500);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
                 // Skip two auto-generated files from the Results Folder since they're not necessary to keep
@@ -87,7 +86,7 @@ namespace AnalysisManagerDataImportPlugIn
                 LogError("Error in DataImportPlugin->RunTool: " + ex.Message, ex);
                 return CloseOutType.CLOSEOUT_FAILED;
             }
-            
+
         }
 
         /// <summary>

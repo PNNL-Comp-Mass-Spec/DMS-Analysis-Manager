@@ -5,7 +5,6 @@ using System.Data.SqlClient;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Threading;
 using System.Text.RegularExpressions;
 using PRISM;
 using PRISM.Logging;
@@ -3929,8 +3928,6 @@ namespace AnalysisManagerBase
                     return false;
                 }
 
-                Thread.Sleep(100);
-
                 success = ReadVersionInfoFile(dllFilePath, versionInfoFilePath, out var version);
 
                 // Delete the version info file
@@ -3938,7 +3935,6 @@ namespace AnalysisManagerBase
                 {
                     if (File.Exists(versionInfoFilePath))
                     {
-                        Thread.Sleep(100);
                         File.Delete(versionInfoFilePath);
                     }
                 }
@@ -4681,7 +4677,6 @@ namespace AnalysisManagerBase
                         }
 
                         File.Delete(zipFilePath);
-                        Thread.Sleep(250);
 
                     }
                 }

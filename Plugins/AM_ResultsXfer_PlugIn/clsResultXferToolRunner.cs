@@ -11,7 +11,6 @@ using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Text;
-using System.Threading;
 using AnalysisManagerBase;
 
 namespace AnalysisManagerResultsXferPlugin
@@ -420,8 +419,7 @@ namespace AnalysisManagerResultsXferPlugin
                             // Parent of the parent exist; try to create the parent folder
                             diParentFolder.Create();
 
-                            // Wait 500 msec then verify that the folder was created
-                            Thread.Sleep(500);
+                            // Verify that the folder was created
                             diParentFolder.Refresh();
                             diDatasetFolder.Refresh();
                         }
@@ -432,8 +430,7 @@ namespace AnalysisManagerResultsXferPlugin
                         // Parent folder exists; try to create the dataset folder
                         diDatasetFolder.Create();
 
-                        // Wait 500 msec then verify that the folder now exists
-                        Thread.Sleep(500);
+                        // Verify that the folder now exists
                         diDatasetFolder.Refresh();
 
                         if (!diDatasetFolder.Exists)

@@ -5,7 +5,6 @@ using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Xml;
 using AnalysisManagerBase;
 using MyEMSLReader;
@@ -327,7 +326,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 UpdateSummaryFile();
 
                 // Make sure objects are released
-                Thread.Sleep(500);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
                 if (!success || jobFailureCount > 0)
@@ -880,7 +878,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     // Ignore errors here
                 }
 
-                Thread.Sleep(125);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
                 var fiNewMGFFile = new FileInfo(Path.Combine(m_WorkDir, dataPkgJob.Dataset + DOT_MGF));
@@ -1093,7 +1090,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 m_jobParams.AddResultFileToSkip(Path.GetFileName(fiMzXmlFilePathLocal.FullName + clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX));
 
-                Thread.Sleep(250);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
                 try
@@ -3537,9 +3533,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     if (!string.Equals(pepXMLFile.Name, pepXmlFilename, StringComparison.Ordinal))
                     {
                         pepXMLFile.MoveTo(pepXMLFile.FullName + ".tmp");
-                        Thread.Sleep(50);
                         pepXMLFile.MoveTo(Path.Combine(m_WorkDir, pepXmlFilename));
-                        Thread.Sleep(50);
                     }
 
                     // Note that the original file will be auto-deleted after the .gz file is created
@@ -4803,7 +4797,6 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 StoreMzIdSampleInfo(mzIdFilePath, sampleMetadata);
 
-                Thread.Sleep(250);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
                 mzIdExistsRemotely = false;

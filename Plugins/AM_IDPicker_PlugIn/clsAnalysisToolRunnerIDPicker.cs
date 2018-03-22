@@ -3,7 +3,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading;
 using AnalysisManagerBase;
 using PHRPReader;
 
@@ -241,7 +240,6 @@ namespace AnalysisManagerIDPickerPlugIn
                 UpdateSummaryFile();
 
                 // Make sure objects are released
-                Thread.Sleep(500);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
                 if (!processingSuccess)
@@ -1242,7 +1240,6 @@ namespace AnalysisManagerIDPickerPlugIn
                     swBatchFile.WriteLine(strExePathOriginal + " " + CmdStrOriginal + " > " + strConsoleOutputFileName + " 2>&1");
                 }
 
-                Thread.Sleep(100);
             }
 
             if (blnCaptureConsoleOutputViaDosRedirection || string.IsNullOrEmpty(strConsoleOutputFileName))

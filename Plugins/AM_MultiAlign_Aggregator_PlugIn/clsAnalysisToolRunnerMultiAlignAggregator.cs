@@ -2,7 +2,6 @@ using AnalysisManagerBase;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading;
 using PRISM.Logging;
 
 namespace AnalysisManagerMultiAlign_AggregatorPlugIn
@@ -99,7 +98,6 @@ namespace AnalysisManagerMultiAlign_AggregatorPlugIn
                 UpdateSummaryFile();
 
                 // Make sure objects are released
-                Thread.Sleep(500);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
                 if (!processingSuccess)

@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Threading;
 using AnalysisManagerBase;
 using InterDetect;
 using PRISM;
@@ -123,7 +122,6 @@ namespace AnalysisManager_IDM_Plugin
                 UpdateSummaryFile();
 
                 // Make sure objects are released
-                Thread.Sleep(500);
                 clsProgRunner.GarbageCollectNow();
 
                 if (!processingSuccess)

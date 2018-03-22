@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
-using System.Threading;
 using System.Xml;
 using AnalysisManagerBase;
 using ThermoRawFileReader;
@@ -352,7 +351,6 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 m_jobParams.AddResultFileToSkip(newParamFilePath);
 
                 paramFile.MoveTo(newParamFilePath);
-                Thread.Sleep(250);
 
                 // Open the file and parse the XML
                 var updatedXmlDoc = new XmlDocument();

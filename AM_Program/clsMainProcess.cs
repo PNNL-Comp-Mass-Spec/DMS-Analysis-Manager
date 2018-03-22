@@ -14,7 +14,6 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Xml;
 using AnalysisManagerBase;
 using PRISM.Logging;
@@ -2051,7 +2050,6 @@ namespace AnalysisManagerProg
                 if (messageCacheFile.Exists)
                 {
                     cachedMessages = LoadCachedLogMessages(messageCacheFile);
-                    Thread.Sleep(150);
                 }
                 else
                 {
@@ -2869,9 +2867,6 @@ namespace AnalysisManagerProg
                         LogWarning("Working directory contains a stray JobParameters file, deleting it: " + firstFile.FullName);
 
                         firstFile.Delete();
-
-                        // Wait 100 msec then refresh the listing
-                        Thread.Sleep(100);
 
                         // Now obtain a new listing of files
                         workDir.Refresh();

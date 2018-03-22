@@ -132,7 +132,6 @@ namespace AnalysisManager_Cyclops_PlugIn
                 UpdateSummaryFile();
 
                 // Make sure objects are released
-                System.Threading.Thread.Sleep(500);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
                 // Delete the log file if it only has the "initializing log file" line

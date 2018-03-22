@@ -10,7 +10,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading;
 using AnalysisManagerBase;
 
 namespace AnalysisManagerMSAlignHistonePlugIn
@@ -303,8 +302,6 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 UpdateSummaryFile();
 
                 // Make sure objects are released
-                Thread.Sleep(500);
-
                 PRISM.clsProgRunner.GarbageCollectNow();
 
                 if (!processingSuccess)
@@ -439,7 +436,6 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 if (diMSAlignWork.Exists)
                 {
                     diMSAlignWork.Delete(true);
-                    Thread.Sleep(500);
                 }
 
                 // Create the folder
@@ -1134,7 +1130,6 @@ namespace AnalysisManagerMSAlignHistonePlugIn
                 var objZipper = new Ionic.Zip.ZipFile(strTargetFilePath);
                 objZipper.AddDirectory(strSourceFolderPath);
                 objZipper.Save();
-                Thread.Sleep(500);
             }
             catch (Exception ex)
             {

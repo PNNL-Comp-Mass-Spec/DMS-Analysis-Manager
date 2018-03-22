@@ -9,7 +9,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading;
 using AnalysisManagerBase;
 using AnalysisManagerMSGFDBPlugIn;
 using PHRPReader;
@@ -331,8 +330,6 @@ namespace AnalysisManagerExtractionPlugin
             }
             m_jobParams.AddResultFileToSkip(fileToGet);
             m_jobParams.AddResultFileExtensionToSkip("_modp.txt");
-
-            Thread.Sleep(100);
 
             // Delete the MSConvert_ConsoleOutput.txt and MODPlus_ConsoleOutput files that were in the zip file; we don't need them
 

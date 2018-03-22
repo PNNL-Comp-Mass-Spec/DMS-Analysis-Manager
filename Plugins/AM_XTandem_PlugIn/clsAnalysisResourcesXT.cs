@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Threading;
 using AnalysisManagerBase;
 
 namespace AnalysisManagerXTandemPlugIn
@@ -281,9 +280,7 @@ namespace AnalysisManagerXTandemPlugIn
                         return false;
                     }
 
-                    // Wait 500 msec, then check the size of the new _dta.txt file
-                    Thread.Sleep(500);
-
+                    // Check the size of the new _dta.txt file
                     ioFileInfo.Refresh();
 
                     if (m_DebugLevel >= 1)

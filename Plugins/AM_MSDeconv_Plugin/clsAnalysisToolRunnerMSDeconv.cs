@@ -10,7 +10,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading;
 using AnalysisManagerBase;
 using MSDataFileReader;
 
@@ -176,7 +175,6 @@ namespace AnalysisManagerMSDeconvPlugIn
                 mCmdRunner = null;
 
                 // Make sure objects are released
-                Thread.Sleep(500);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
                 // Trim the console output file to remove the majority of the % finished messages
@@ -374,8 +372,6 @@ namespace AnalysisManagerMSDeconvPlugIn
                     {
                         // Renumber the .mzXML file
                         // May need to renumber if the scan gap is every greater than one; not sure
-
-                        Thread.Sleep(200);
 
                         // Rename the file
                         fiMzXmlFile.MoveTo(Path.Combine(m_WorkDir, m_Dataset + "_old" + clsAnalysisResources.DOT_MZXML_EXTENSION));
@@ -589,8 +585,7 @@ namespace AnalysisManagerMSDeconvPlugIn
                     }
                 }
 
-                // Wait 500 msec, then swap the files
-                Thread.Sleep(500);
+                // Swap the files
 
                 try
                 {

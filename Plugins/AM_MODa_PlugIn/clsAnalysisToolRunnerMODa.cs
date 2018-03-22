@@ -9,7 +9,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
-using System.Threading;
 using AnalysisManagerBase;
 
 namespace AnalysisManagerMODaPlugIn
@@ -135,7 +134,6 @@ namespace AnalysisManagerMODaPlugIn
                 mCmdRunner = null;
 
                 // Make sure objects are released
-                Thread.Sleep(500);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
                 // Trim the console output file to remove the majority of the status messages (since there is currently one per scan)
