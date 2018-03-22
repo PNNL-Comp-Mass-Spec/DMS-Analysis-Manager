@@ -34,6 +34,8 @@ namespace AnalysisManagerProg
 
         private DateTime mLastStatusTime;
 
+        private clsRunDosProgram m_ProgRunner;
+
         // 450 seconds is 7.5 minutes
         private const int FASTA_GEN_TIMEOUT_INTERVAL_SEC = 450;
 
@@ -462,8 +464,6 @@ namespace AnalysisManagerProg
             return true;
         }
 
-        private clsRunDosProgram m_RunProgTool;
-
         /// <summary>
         /// Use MSConvert to convert a .raw file to .mgf
         /// </summary>
@@ -475,7 +475,7 @@ namespace AnalysisManagerProg
             var dataFilePath = @"C:\DMS_WorkDir\QC_ShewPartialInj_15_02-100ng_Run-1_20Jan16_Pippin_15-08-53.raw";
             var cmdStr = dataFilePath + @" --filter ""peakPicking true 1-"" --filter ""threshold count 500 most-intense"" --mgf -o C:\DMS_WorkDir";
 
-            m_RunProgTool = new clsRunDosProgram(workDir, m_DebugLevel)
+            m_ProgRunner = new clsRunDosProgram(workDir, m_DebugLevel)
             {
                 CreateNoWindow = true,
                 CacheStandardOutput = true,
@@ -484,9 +484,9 @@ namespace AnalysisManagerProg
                 ConsoleOutputFilePath = string.Empty
                 // Allow the console output filename to be auto-generated
             };
-            RegisterEvents(m_RunProgTool);
+            RegisterEvents(m_ProgRunner);
 
-            if (!m_RunProgTool.RunProgram(exePath, cmdStr, "MSConvert", true))
+            if (!m_ProgRunner.RunProgram(exePath, cmdStr, "MSConvert", true))
             {
                 Console.WriteLine("Error running MSConvert");
             }
