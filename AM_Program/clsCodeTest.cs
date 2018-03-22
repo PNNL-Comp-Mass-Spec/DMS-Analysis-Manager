@@ -61,6 +61,13 @@ namespace AnalysisManagerProg
 
                 m_DebugLevel = 2;
 
+                // Initialize the log file
+                var logFileNameBase = clsMainProcess.GetBaseLogFileName(m_mgrParams);
+
+                // The analysis manager determines when to log or not log based on internal logic
+                // Set the LogLevel tracked by FileLogger to DEBUG so that all messages sent to the class are logged
+                LogTools.CreateFileLogger(logFileNameBase, BaseLogger.LogLevels.DEBUG);
+
                 if (clsGlobal.LinuxOS)
                     m_mgrParams.SetParam(clsAnalysisMgrSettings.MGR_PARAM_WORK_DIR, m_mgrParams.GetParam(clsAnalysisMgrSettings.MGR_PARAM_LOCAL_WORK_DIR_PATH));
                 else

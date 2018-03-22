@@ -1529,8 +1529,19 @@ namespace AnalysisManagerProg
 
         private string GetBaseLogFileName()
         {
+            return GetBaseLogFileName(m_MgrSettings);
 
-            var logFileNameBase = m_MgrSettings.GetParam("logfilename");
+
+        }
+
+        /// <summary>
+        /// Get the base log file name, as defined in the manager parameters
+        /// </summary>
+        /// <param name="mgrParams"></param>
+        /// <returns></returns>
+        public static string GetBaseLogFileName(IMgrParams mgrParams)
+        {
+            var logFileNameBase = mgrParams.GetParam("logfilename");
             if (string.IsNullOrWhiteSpace(logFileNameBase))
                 return "AnalysisMgr";
 
