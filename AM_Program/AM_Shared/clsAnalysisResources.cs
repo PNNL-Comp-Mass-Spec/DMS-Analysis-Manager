@@ -1458,19 +1458,7 @@ namespace AnalysisManagerBase
 
             }
 
-            // Create/Update the .LastUsed file for the newly created Fasta File
-            var lastUsedFilePath = fiFastaFile.FullName + ".LastUsed";
-            try
-            {
-                using (var swLastUsedFile = new StreamWriter(new FileStream(lastUsedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
-                {
-                    swLastUsedFile.WriteLine(DateTime.UtcNow.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
-                }
-            }
-            catch (Exception ex)
-            {
-                LogError("Warning: unable to create a new .LastUsed file at " + lastUsedFilePath, ex);
-            }
+            UpdateLastUsedfile(fastaFile);
 
             // If we got to here, everything worked OK
             return true;
@@ -4216,6 +4204,10 @@ namespace AnalysisManagerBase
                     // Validate the FASTA file against the .localhashcheck file (created if missing)
                     var success = ValidateOfflineFASTA(fastaFile);
 
+                    if (success)
+                    {
+                        UpdateLastUsedfile(fastaFile);
+                    }
                     return success;
                 }
 
@@ -4561,6 +4553,32 @@ namespace AnalysisManagerBase
             return success;
         }
 
+        /// <summary>
+        /// Create (or update) the .LastUsed file for the given FASTA file
+        /// </summary>
+        /// <param name="fastaFile"></param>
+        /// <remarks>The LastUsed file simply has the current date/time on the first line</remarks>
+        private void UpdateLastUsedfile(FileSystemInfo fastaFile)
+        {
+            var lastUsedFilePath = fastaFile.FullName + LASTUSED_FILE_EXTENSION;
+
+            try
+            {
+                using (var swLastUsedFile = new StreamWriter(new FileStream(lastUsedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                {
+                    swLastUsedFile.WriteLine(DateTime.UtcNow.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
+                }
+            }
+            catch (IOException)
+            {
+                // The file is likely open by another manager; ignore this
+            }
+            catch (Exception ex)
+            {
+                LogWarning(string.Format("Unable to create a new .LastUsed file at {0}: {1}", lastUsedFilePath, ex.Message));
+            }
+
+        }
         /// <summary>
         /// Update m_message, which is logged in the pipeline job steps table when the job step finishes
         /// </summary>
