@@ -3421,7 +3421,7 @@ namespace AnalysisManagerBase
                     var fileSizeBytes = fiFileToDelete.Length;
                     if (preview)
                         ConsoleMsgUtils.ShowDebug("Preview delete " + fiFileToDelete.Name, "    ");
-                    else
+                    else if (fiFileToDelete.Exists)
                         fiFileToDelete.Delete();
 
                     bytesDeleted += fileSizeBytes;
