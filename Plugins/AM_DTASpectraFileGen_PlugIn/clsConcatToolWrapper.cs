@@ -104,7 +104,7 @@ namespace DTASpectraFileGen
                 // Loop until the concatenation finishes
                 while (m_CatInProgress)
                 {
-                    Thread.Sleep(1000);
+                    clsGlobal.IdleLoop(1);
                 }
 
                 // Concatenation must have finished successfully, so exit

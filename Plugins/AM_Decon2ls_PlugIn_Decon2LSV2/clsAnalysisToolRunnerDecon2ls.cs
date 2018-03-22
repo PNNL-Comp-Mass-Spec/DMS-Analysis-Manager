@@ -1487,7 +1487,7 @@ namespace AnalysisManagerDecon2lsV2PlugIn
                 // Abort processing
                 mCmdRunner.AbortProgramNow();
 
-                Thread.Sleep(3000);
+                clsGlobal.IdleLoop(3);
             }
         }
 

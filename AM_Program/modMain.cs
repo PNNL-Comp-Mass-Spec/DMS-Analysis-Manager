@@ -115,7 +115,7 @@ namespace AnalysisManagerProg
                 if (mShowVersionOnly)
                 {
                     DisplayVersion();
-                    Thread.Sleep(500);
+                    clsGlobal.IdleLoop(0.5);
                     return 0;
                 }
 

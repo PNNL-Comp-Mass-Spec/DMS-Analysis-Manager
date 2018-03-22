@@ -146,7 +146,7 @@ namespace AnalysisManagerProSightQuantPlugIn
                 if (!mCmdRunner.WriteConsoleOutputToFile)
                 {
                     // Write the console output to a text file
-                    System.Threading.Thread.Sleep(250);
+                    clsGlobal.IdleLoop(0.25);
 
                     using (var swConsoleOutputfile = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                     {
@@ -155,7 +155,7 @@ namespace AnalysisManagerProSightQuantPlugIn
                 }
 
                 // Parse the console output file one more time to check for errors
-                System.Threading.Thread.Sleep(250);
+                clsGlobal.IdleLoop(0.25);
                 ParseConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath);
 
                 if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))

@@ -311,7 +311,7 @@ namespace DTASpectraFileGen
                     // Abort processing
                     mCmdRunner.AbortProgramNow();
 
-                    Thread.Sleep(3000);
+                    clsGlobal.IdleLoop(3);
                 }
             }
         }

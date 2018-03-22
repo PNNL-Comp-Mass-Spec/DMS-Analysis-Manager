@@ -781,7 +781,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                                              fileID, ex);
 
                         // Delay for 2 seconds before trying again
-                        Thread.Sleep(2000);
+                        clsGlobal.IdleLoop(2);
                     }
                 }
 

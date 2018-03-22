@@ -414,7 +414,8 @@ namespace AnalysisManagerNOMSIPlugin
             if (!cmdRunner.WriteConsoleOutputToFile && cmdRunner.CachedConsoleOutput.Length > 0)
             {
                 // Write the console output to a text file
-                Thread.Sleep(250);
+                clsGlobal.IdleLoop(0.25);
+
 
                 var swConsoleOutputfile =
                     new StreamWriter(new FileStream(cmdRunner.ConsoleOutputFilePath, FileMode.Create,
@@ -430,7 +431,7 @@ namespace AnalysisManagerNOMSIPlugin
             }
 
             // Parse the nomsi_summary file to look for errors
-            Thread.Sleep(250);
+            clsGlobal.IdleLoop(0.25);
             var fiLogSummaryFile = new FileInfo(Path.Combine(m_WorkDir, "nomsi_summary.txt"));
             if (!fiLogSummaryFile.Exists)
             {

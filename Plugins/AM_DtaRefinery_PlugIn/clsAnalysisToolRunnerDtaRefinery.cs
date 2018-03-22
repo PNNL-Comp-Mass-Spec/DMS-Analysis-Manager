@@ -128,7 +128,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
             if (!processingSuccess)
             {
-                Thread.Sleep(500);
+                clsGlobal.IdleLoop(0.5);
 
                 // Open DTARefinery_Console_Output.txt and look for the last line with the text "error"
                 var fiConsoleOutputFile = new FileInfo(Path.Combine(m_WorkDir, strConsoleOutputFileName));
@@ -179,7 +179,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             UpdateSummaryFile();
 
             // Make sure objects are released
-            Thread.Sleep(500);
+            clsGlobal.IdleLoop(0.5);
             clsProgRunner.GarbageCollectNow();
 
             if (!ValidateDTARefineryLogFile())
@@ -250,7 +250,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 var tmpFilePath = fiSourceFile.FullName + ".tmp";
                 fiSourceFile.CopyTo(tmpFilePath, true);
                 m_jobParams.AddResultFileToSkip(tmpFilePath);
-                Thread.Sleep(100);
+                clsGlobal.IdleLoop(0.1);
 
                 using (var srSourceFile = new StreamReader(new FileStream(tmpFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {

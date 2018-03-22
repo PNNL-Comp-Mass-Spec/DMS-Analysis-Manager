@@ -7,7 +7,6 @@
 
 using System;
 using System.Collections.Generic;
-
 using AnalysisManagerBase;
 using System.IO;
 
@@ -206,7 +205,6 @@ namespace AnalysisManagerPBFGenerator
                 UpdateSummaryFile();
 
                 // Make sure objects are released
-                System.Threading.Thread.Sleep(500);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
                 if (!processingSuccess)
@@ -411,7 +409,7 @@ namespace AnalysisManagerPBFGenerator
             if (!cmdRunner.WriteConsoleOutputToFile)
             {
                 // Write the console output to a text file
-                System.Threading.Thread.Sleep(250);
+                clsGlobal.IdleLoop(0.25);
 
                 using (var swConsoleOutputfile = new StreamWriter(new FileStream(cmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
@@ -425,7 +423,7 @@ namespace AnalysisManagerPBFGenerator
             }
 
             // Parse the console output file one more time to check for errors and to update mPbfFormatVersion
-            System.Threading.Thread.Sleep(250);
+            clsGlobal.IdleLoop(0.25);
             ParseConsoleOutputFile(cmdRunner.ConsoleOutputFilePath);
 
             if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))

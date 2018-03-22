@@ -142,7 +142,7 @@ namespace AnalysisManagerProg
                     swOutFile.WriteLine(System.DateTime.Now.ToString(DATE_TIME_FORMAT) + " - This is a test file.");
                 }
 
-                Thread.Sleep(50);
+                clsGlobal.IdleLoop(0.5);
             }
 
             return true;

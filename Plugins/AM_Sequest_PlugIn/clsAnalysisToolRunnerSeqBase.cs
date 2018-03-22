@@ -493,7 +493,7 @@ namespace AnalysisManagerSequestPlugin
             for (var ProcIndx = 0; ProcIndx <= RunProgs.GetUpperBound(0); ProcIndx++)
             {
                 RunProgs[ProcIndx].StartAndMonitorProgram();
-                Thread.Sleep(1000);
+                clsGlobal.IdleLoop(1);
             }
 
             // Wait for completion
@@ -503,7 +503,7 @@ namespace AnalysisManagerSequestPlugin
             {
 
                 // Wait 5 seconds
-                Thread.Sleep(5000);
+                clsGlobal.IdleLoop(5);
 
                 CalculateNewStatus();
                 UpdateStatusRunning(m_progress, m_DtaCount);
@@ -629,10 +629,10 @@ namespace AnalysisManagerSequestPlugin
             {
                 var dtInterlockWaitStartTime = DateTime.UtcNow;
 
-                while (Interlocked.Read(ref mOutFileHandlerInUse) > 0)
+                while (System.Threading.Interlocked.Read(ref mOutFileHandlerInUse) > 0)
                 {
                     // Need to wait for ProcessCandidateOutFiles to exit
-                    Thread.Sleep(3000);
+                    clsGlobal.IdleLoop(3);
 
                     if (DateTime.UtcNow.Subtract(dtInterlockWaitStartTime).TotalMinutes >= MAX_INTERLOCK_WAIT_TIME_MINUTES)
                     {
@@ -677,7 +677,8 @@ namespace AnalysisManagerSequestPlugin
                 catch (Exception ex)
                 {
                     LogWarning("Error appending .out files to the _out.txt.tmp file" + ": " + ex.Message);
-                    Thread.Sleep(oRandom.Next(15, 30) * 1000);           // Delay for a random length between 15 and 30 seconds
+                    // Delay for a random length between 15 and 30 seconds
+                    clsGlobal.IdleLoop(oRandom.Next(15, 30));
                     blnSuccess = false;
                 }
 

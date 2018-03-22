@@ -3224,10 +3224,10 @@ namespace AnalysisManagerBase
             {
                 var finalFilePath = fiOrginalFile.FullName;
 
-                Thread.Sleep(250);
+                clsGlobal.IdleLoop(0.25);
                 fiOrginalFile.Delete();
 
-                Thread.Sleep(250);
+                clsGlobal.IdleLoop(0.25);
                 fiUpdatedFile.MoveTo(finalFilePath);
 
                 return true;

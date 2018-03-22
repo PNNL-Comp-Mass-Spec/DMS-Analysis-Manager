@@ -295,7 +295,7 @@ namespace AnalysisManagerSequestPlugin
             mOutFileAppenderTimer.Stop();
 
             // Make sure objects are released
-            Thread.Sleep(5000);        // 5 second delay
+            clsGlobal.IdleLoop(5);
             clsProgRunner.GarbageCollectNow();
 
             UpdateSequestNodeProcessingStats(false);
@@ -341,7 +341,7 @@ namespace AnalysisManagerSequestPlugin
                 if (!ProcessCandidateOutFiles(true))
                 {
                     // Wait 5 seconds, then try again (up to 3 times)
-                    Thread.Sleep(5000);
+                    clsGlobal.IdleLoop(5);
                 }
 
                 intIterationsRemaining -= 1;
@@ -867,14 +867,14 @@ namespace AnalysisManagerSequestPlugin
             var intItemsProcessed = 0;
 
             // Examine mOutFileHandlerInUse; if greater then zero, exit the sub
-            if (Interlocked.Read(ref mOutFileHandlerInUse) > 0)
+            if (System.Threading.Interlocked.Read(ref mOutFileHandlerInUse) > 0)
             {
                 return false;
             }
 
             try
             {
-                Interlocked.Increment(ref mOutFileHandlerInUse);
+                System.Threading.Interlocked.Increment(ref mOutFileHandlerInUse);
 
                 if (m_DebugLevel >= 4)
                 {
@@ -999,7 +999,7 @@ namespace AnalysisManagerSequestPlugin
             {
                 // Make sure mOutFileHandlerInUse is now zero
                 long lngZero = 0;
-                Interlocked.Exchange(ref mOutFileHandlerInUse, lngZero);
+                System.Threading.Interlocked.Exchange(ref mOutFileHandlerInUse, lngZero);
             }
 
             return blnAppendSuccess;
@@ -1160,7 +1160,7 @@ namespace AnalysisManagerSequestPlugin
             }
 
             // Wait 5 seconds
-            Thread.Sleep(5000);
+            clsGlobal.IdleLoop(5);
 
             return true;
         }
@@ -1205,7 +1205,7 @@ namespace AnalysisManagerSequestPlugin
             }
 
             // Wait 5 seconds
-            Thread.Sleep(5000);
+            clsGlobal.IdleLoop(5);
 
             return true;
         }
@@ -1258,7 +1258,7 @@ namespace AnalysisManagerSequestPlugin
             }
 
             // Wait 5 seconds
-            Thread.Sleep(5000);
+            clsGlobal.IdleLoop(5);
 
             return true;
         }
@@ -1303,7 +1303,7 @@ namespace AnalysisManagerSequestPlugin
             }
 
             // Wait 5 seconds
-            Thread.Sleep(5000);
+            clsGlobal.IdleLoop(5);
 
             return true;
         }

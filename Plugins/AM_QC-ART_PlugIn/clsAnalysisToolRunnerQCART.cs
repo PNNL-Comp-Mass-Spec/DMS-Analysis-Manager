@@ -551,7 +551,7 @@ namespace AnalysisManagerQCARTPlugin
             if (!cmdRunner.WriteConsoleOutputToFile && cmdRunner.CachedConsoleOutput.Length > 0)
             {
                 // Write the console output to a text file
-                Thread.Sleep(250);
+                clsGlobal.IdleLoop(0.25);
 
                 var swConsoleOutputfile = new StreamWriter(new FileStream(cmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
                 swConsoleOutputfile.WriteLine(cmdRunner.CachedConsoleOutput);

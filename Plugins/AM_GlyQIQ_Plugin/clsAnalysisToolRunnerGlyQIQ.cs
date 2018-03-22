@@ -479,7 +479,7 @@ namespace AnalysisManagerGlyQIQPlugin
             try
             {
                 // Clear the TempZipFolder
-                Thread.Sleep(250);
+                clsGlobal.IdleLoop(0.25);
                 diTempZipFolder.Delete(true);
                 diTempZipFolder.Create();
             }
@@ -724,8 +724,8 @@ namespace AnalysisManagerGlyQIQPlugin
                     glyQRunner.CmdRunnerWaiting += CmdRunner_LoopWaiting;
                     mGlyQRunners.Add(core, glyQRunner);
 
-                    var newThread = new Thread(glyQRunner.StartAnalysis) {
-                        Priority = ThreadPriority.BelowNormal
+                    var newThread = new System.Threading.Thread(glyQRunner.StartAnalysis) {
+                        Priority = System.Threading.ThreadPriority.BelowNormal
                     };
 
                     newThread.Start();
@@ -779,7 +779,7 @@ namespace AnalysisManagerGlyQIQPlugin
                         break;
                     }
 
-                    Thread.Sleep(2000);
+                    clsGlobal.IdleLoop(2);
 
                     if (DateTime.UtcNow.Subtract(dtStartTime).TotalDays > 14)
                     {

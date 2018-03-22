@@ -126,7 +126,7 @@ namespace AnalysisManagerSMAQCPlugIn
                 if (!mCmdRunner.WriteConsoleOutputToFile)
                 {
                     // Write the console output to a text file
-                    Thread.Sleep(250);
+                    clsGlobal.IdleLoop(0.25);
 
                     var swConsoleOutputfile = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
                     swConsoleOutputfile.WriteLine(mCmdRunner.CachedConsoleOutput);
@@ -134,7 +134,7 @@ namespace AnalysisManagerSMAQCPlugIn
                 }
 
                 // Parse the console output file one more time to check for errors
-                Thread.Sleep(250);
+                clsGlobal.IdleLoop(0.25);
                 ParseConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath);
 
                 if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
@@ -360,7 +360,7 @@ namespace AnalysisManagerSMAQCPlugIn
                     LogError(m_message);
 
                     // Delay for 5 second before trying again
-                    Thread.Sleep(5000);
+                    clsGlobal.IdleLoop(5);
                 }
             }
 

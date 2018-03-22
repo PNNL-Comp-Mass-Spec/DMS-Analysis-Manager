@@ -261,7 +261,8 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 if (!cmdRunner.WriteConsoleOutputToFile)
                 {
                     // Write the console output to a text file
-                    Thread.Sleep(250);
+                    clsGlobal.IdleLoop(0.25);
+
 
                     var swConsoleOutputfile = new StreamWriter(new FileStream(cmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
                     swConsoleOutputfile.WriteLine(cmdRunner.CachedConsoleOutput);
@@ -274,7 +275,7 @@ namespace AnalysisManagerBrukerDAExportPlugin
                 }
 
                 // Parse the console output file one more time to check for errors
-                Thread.Sleep(250);
+                clsGlobal.IdleLoop(0.25);
                 ParseConsoleOutputFile(cmdRunner.ConsoleOutputFilePath);
 
                 if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))

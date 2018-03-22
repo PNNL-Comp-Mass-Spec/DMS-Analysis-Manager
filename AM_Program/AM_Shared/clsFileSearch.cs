@@ -2758,7 +2758,7 @@ namespace AnalysisManagerBase
                                 break;
                             }
 
-                            Thread.Sleep(500);
+                            clsGlobal.IdleLoop(0.5);
                         }
                     }
 

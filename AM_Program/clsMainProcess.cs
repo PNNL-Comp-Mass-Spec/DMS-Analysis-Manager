@@ -206,14 +206,14 @@ namespace AnalysisManagerProg
                 catch (Exception ex)
                 {
                     ConsoleMsgUtils.ShowError("Exception instantiating clsAnalysisMgrSettings: " + ex.Message);
-                    Thread.Sleep(500);
+                    clsGlobal.IdleLoop(0.5);
                     return false;
                 }
             }
             catch (Exception ex)
             {
                 ConsoleMsgUtils.ShowError("Exception loading settings from AnalysisManagerProg.exe.config: " + ex.Message);
-                Thread.Sleep(500);
+                clsGlobal.IdleLoop(0.5);
                 return false;
             }
 
@@ -411,7 +411,7 @@ namespace AnalysisManagerProg
                         }
 
                         LogMessage("Manager inactive: " + managerDisableReason);
-                        Thread.Sleep(750);
+                        clsGlobal.IdleLoop(0.75);
                         return;
                     }
 

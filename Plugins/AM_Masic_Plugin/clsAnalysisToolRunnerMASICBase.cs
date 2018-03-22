@@ -206,7 +206,8 @@ namespace AnalysisManagerMasicPlugin
             // Wait for the job to complete
             var blnSuccess = WaitForJobToFinish(objMasicProgRunner);
 
-            Thread.Sleep(3000);                // Delay for 3 seconds to make sure program exits
+            // Delay for 3 seconds to make sure program exits
+            clsGlobal.IdleLoop(3);
 
             // Read the most recent MASIC_Log file and look for any lines with the text "Error"
             ExtractErrorsFromMASICLogFile(logFile);
@@ -427,16 +428,10 @@ namespace AnalysisManagerMasicPlugin
             // Wait for completion
             m_JobRunning = true;
 
-            var dtLastUpdate = DateTime.UtcNow;
-
             while (m_JobRunning)
             {
-                // Wait for 15 seconds
-                while (DateTime.UtcNow.Subtract(dtLastUpdate).TotalSeconds < SECONDS_BETWEEN_UPDATE)
-                {
-                    Thread.Sleep(250);
-                }
-                dtLastUpdate = DateTime.UtcNow;
+                // Wait for 30 seconds
+                clsGlobal.IdleLoop(SECONDS_BETWEEN_UPDATE);
 
                 if (objMasicProgRunner.State == clsProgRunner.States.NotMonitoring)
                 {

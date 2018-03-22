@@ -209,7 +209,7 @@ namespace AnalysisManagerBase
                         OnErrorEvent("Exception deleting lock file in DeleteLockStream: " + ex.Message);
                         retryCount -= 1;
                         var oRandom = new Random();
-                        Thread.Sleep(oRandom.Next(100, 500));
+                        clsGlobal.IdleLoop(0.25 + oRandom.NextDouble());
                     }
                 }
 

@@ -694,7 +694,7 @@ namespace AnalysisManagerICR2LSPlugIn
             var success = mCmdRunner.RunProgram(strExeFilePath, strArguments, "ICR2LS.exe", true);
 
             // Pause for another 500 msec to make sure ICR-2LS closes
-            Thread.Sleep(500);
+            clsGlobal.IdleLoop(0.5);
 
             // Make sure the status file is parsed one final time
             ParseICR2LSStatusFile(mStatusFilePath, true);

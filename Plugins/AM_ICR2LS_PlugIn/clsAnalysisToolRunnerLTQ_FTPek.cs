@@ -131,7 +131,7 @@ namespace AnalysisManagerICR2LSPlugIn
             try
             {
                 // Allow extra time for ICR2LS to release file locks
-                Thread.Sleep(5000);
+                clsGlobal.IdleLoop(5);
                 var FoundFiles = Directory.GetFiles(m_WorkDir, "*.raw");
                 foreach (var MyFile in FoundFiles)
                 {

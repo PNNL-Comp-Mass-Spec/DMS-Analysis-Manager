@@ -79,7 +79,7 @@ namespace AnalysisManagerProg
             catch (Exception ex)
             {
                 ConsoleMsgUtils.ShowError("Exception loading settings from AnalysisManagerProg.exe.config", ex);
-                Thread.Sleep(500);
+                clsGlobal.IdleLoop(0.5);
             }
         }
 

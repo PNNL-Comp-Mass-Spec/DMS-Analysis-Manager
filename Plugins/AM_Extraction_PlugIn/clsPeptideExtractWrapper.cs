@@ -165,7 +165,7 @@ namespace AnalysisManagerExtractionPlugin
                 // Loop until the extraction finishes
                 while (m_ExtractInProgress)
                 {
-                    Thread.Sleep(2000);
+                    clsGlobal.IdleLoop(2);
                 }
 
                 var Result = TestOutputSynFile();
@@ -192,8 +192,7 @@ namespace AnalysisManagerExtractionPlugin
                 // Make sure no stray objects are hanging around
                 m_ExtractTools = null;
 
-                // Delay 1 second, then clean up processes
-                Thread.Sleep(1000);
+                // Clean up processes
                 clsProgRunner.GarbageCollectNow();
             }
         }

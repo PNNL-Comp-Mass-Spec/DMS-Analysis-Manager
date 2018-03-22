@@ -856,7 +856,7 @@ namespace AnalysisManagerIDPickerPlugIn
                         catch (Exception)
                         {
                             intAttempts += 1;
-                            Thread.Sleep(2000);
+                            clsGlobal.IdleLoop(2);
                         }
                     } while (!blnSuccess && intAttempts <= 3);
 

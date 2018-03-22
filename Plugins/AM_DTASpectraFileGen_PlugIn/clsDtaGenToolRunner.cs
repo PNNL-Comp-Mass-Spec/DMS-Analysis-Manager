@@ -946,7 +946,7 @@ namespace DTASpectraFileGen
                 UpdateStatusRunning(m_progress, oDTAGenerator.SpectraFileCount);
 
                 // Delay for 5 seconds
-                Thread.Sleep(5000);
+                clsGlobal.IdleLoop(5);
             }
 
             UpdateStatusRunning(m_progress, oDTAGenerator.SpectraFileCount);

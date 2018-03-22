@@ -266,7 +266,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 mCmdRunner = null;
 
                 // Make sure objects are released
-                System.Threading.Thread.Sleep(500);
+                clsGlobal.IdleLoop(0.5);
                 PRISM.clsProgRunner.GarbageCollectNow();
 
                 if (processingError)
@@ -1125,7 +1125,7 @@ namespace AnalysisManagerMzRefineryPlugIn
             if (!mCmdRunner.WriteConsoleOutputToFile)
             {
                 // Write the console output to a text file
-                System.Threading.Thread.Sleep(250);
+                clsGlobal.IdleLoop(0.25);
 
                 using (var swConsoleOutputfile = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
@@ -1135,7 +1135,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
             // Parse the console output file one more time to check for errors and to make sure mMzRefineryCorrectionMode is up-to-date
             // We will also extract out the final MS-GF:SpecEValue used for filtering the data
-            System.Threading.Thread.Sleep(250);
+            clsGlobal.IdleLoop(0.25);
             ParseMSConvertConsoleOutputfile(mCmdRunner.ConsoleOutputFilePath);
 
             if (!string.IsNullOrEmpty(mMzRefineryCorrectionMode))

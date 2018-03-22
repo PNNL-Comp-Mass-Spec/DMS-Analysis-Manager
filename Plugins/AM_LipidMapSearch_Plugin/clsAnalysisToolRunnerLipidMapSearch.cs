@@ -156,7 +156,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 if (!mCmdRunner.WriteConsoleOutputToFile)
                 {
                     // Write the console output to a text file
-                    Thread.Sleep(250);
+                    clsGlobal.IdleLoop(0.25);
 
                     var swConsoleOutputfile = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
                     swConsoleOutputfile.WriteLine(mCmdRunner.CachedConsoleOutput);
@@ -164,7 +164,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 }
 
                 // Parse the console output file one more time to check for errors
-                Thread.Sleep(250);
+                clsGlobal.IdleLoop(0.25);
                 ParseConsoleOutputFile(mCmdRunner.ConsoleOutputFilePath);
 
                 if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
@@ -376,7 +376,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 if (Path.GetFileName(strLipidMapsDBFileLocal) != strNewestLipidMapsDBFileName)
                 {
                     // Rename the newly downloaded file to strNewestLipidMapsDBFileName
-                    Thread.Sleep(500);
+                    clsGlobal.IdleLoop(0.25);
                     if (string.IsNullOrWhiteSpace(strNewestLipidMapsDBFileName))
                         throw new Exception("strNewestLipidMapsDBFileName is null in DownloadNewLipidMapsDB");
 
@@ -408,7 +408,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                         LogDebug("Source path: " + strLipidMapsDBFileLocal);
                         LogDebug("Target path: " + strLipidMapsDBFileTarget);
                         // Wait 5 seconds, then try again
-                        Thread.Sleep(5000);
+                        clsGlobal.IdleLoop(5);
                     }
                 }
 
@@ -517,7 +517,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                         {
                             LogError("Exception downloading Lipid Maps DB; attempt=" + intDownloadAttempts + ": " + ex.Message);
                             // Wait 5 seconds, then try again
-                            Thread.Sleep(5000);
+                            clsGlobal.IdleLoop(5);
                         }
                     }
                 }

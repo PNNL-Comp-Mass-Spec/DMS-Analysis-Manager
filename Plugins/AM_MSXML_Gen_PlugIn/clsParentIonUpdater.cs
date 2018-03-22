@@ -220,7 +220,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                         oldDtaFile.Delete();
                     }
 
-                    Thread.Sleep(250);
+                    clsGlobal.IdleLoop(0.25);
                     sourceDtaFile.MoveTo(oldDtaFilePath);
                     updatedDtaFile.MoveTo(dtaFilePath);
 
@@ -481,7 +481,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                         oldMzMLFile.Delete();
                     }
 
-                    Thread.Sleep(250);
+                    clsGlobal.IdleLoop(0.25);
                     sourceMzMLFile.MoveTo(oldMzMLFilePath);
                     updatedMzMLFile.MoveTo(mzMLFilePath);
 

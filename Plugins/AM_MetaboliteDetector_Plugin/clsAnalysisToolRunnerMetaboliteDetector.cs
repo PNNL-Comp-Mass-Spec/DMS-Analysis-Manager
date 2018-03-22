@@ -252,7 +252,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
             if (!cmdRunner.WriteConsoleOutputToFile && cmdRunner.CachedConsoleOutput.Length > 0)
             {
                 // Write the console output to a text file
-                Thread.Sleep(250);
+                clsGlobal.IdleLoop(0.25);
 
                 var swConsoleOutputfile = new StreamWriter(new FileStream(cmdRunner.ConsoleOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read));
                 swConsoleOutputfile.WriteLine(cmdRunner.CachedConsoleOutput);
@@ -265,7 +265,7 @@ namespace AnalysisManagerMetaboliteDetectorPlugin
                                      mConsoleOutputErrorMsg);
             }
 
-            Thread.Sleep(250);
+            clsGlobal.IdleLoop(0.25);
 
             // Parse the ConsoleOutput file to look for errors
             ParseConsoleOutputFile(mConsoleOutputFile);

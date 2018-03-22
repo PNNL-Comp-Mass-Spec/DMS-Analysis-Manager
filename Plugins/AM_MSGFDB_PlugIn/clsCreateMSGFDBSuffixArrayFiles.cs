@@ -714,7 +714,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 // Delay between 2 and 5 seconds
                 var oRandom = new Random();
-                Thread.Sleep(oRandom.Next(2, 5) * 1000);
+                clsGlobal.IdleLoop(oRandom.Next(2, 5));
 
                 // Check one more time for a lock file
                 // If it exists, another manager just created it and we should abort

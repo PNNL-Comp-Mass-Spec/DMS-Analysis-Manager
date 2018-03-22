@@ -263,7 +263,7 @@ namespace AnalysisManagerICR2LSPlugIn
                 try
                 {
                     // Allow extra time for ICR2LS to release file locks
-                    Thread.Sleep(5000);
+                    clsGlobal.IdleLoop(5);
                     if (Directory.Exists(Path.Combine(m_WorkDir, m_Dataset)))
                     {
                         Directory.Delete(Path.Combine(m_WorkDir, m_Dataset), true);

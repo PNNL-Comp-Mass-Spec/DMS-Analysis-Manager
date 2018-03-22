@@ -1416,7 +1416,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                         var sleepTimeSec = oRand.Next(10, 19);
 
                         OnStatusEvent("Fasta file trimming failed; waiting " + sleepTimeSec + " seconds then trying again");
-                        Thread.Sleep(sleepTimeSec * 1000);
+                        clsGlobal.IdleLoop(sleepTimeSec);
                     }
                 }
 
@@ -1474,7 +1474,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 var sleepTimeSec = oRand.Next(10, 19);
 
                 OnStatusEvent("Fasta file indexing failed; waiting " + sleepTimeSec + " seconds then trying again");
-                Thread.Sleep(sleepTimeSec * 1000);
+                clsGlobal.IdleLoop(sleepTimeSec);
             }
 
             return CloseOutType.CLOSEOUT_SUCCESS;

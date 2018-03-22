@@ -937,7 +937,6 @@ namespace AnalysisManagerMODPlusPlugin
                 var completedThreads = new SortedSet<int>();
 
                 const int SECONDS_BETWEEN_UPDATES = 15;
-                var dtLastStatusUpdate = DateTime.UtcNow;
 
                 while (true)
                 {
@@ -1003,12 +1002,7 @@ namespace AnalysisManagerMODPlusPlugin
                         break;
                     }
 
-                    while (DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds < SECONDS_BETWEEN_UPDATES)
-                    {
-                        Thread.Sleep(250);
-                    }
-
-                    dtLastStatusUpdate = DateTime.UtcNow;
+                    clsGlobal.IdleLoop(SECONDS_BETWEEN_UPDATES);
 
                     CmdRunner_LoopWaiting(processIDs, coreUsageOverall, SECONDS_BETWEEN_UPDATES);
 

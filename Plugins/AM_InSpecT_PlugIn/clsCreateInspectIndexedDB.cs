@@ -101,7 +101,7 @@ namespace AnalysisManagerInSpecTPlugIn
                     while (File.Exists(dbLockFilename) && durationTime.Hours < sngMaxWaitTimeHours)
                     {
                         // Sleep for 2 seconds
-                        Thread.Sleep(2000);
+                        clsGlobal.IdleLoop(2);
 
                         // Update the current time and elapsed duration
                         currentTime = DateTime.UtcNow;
