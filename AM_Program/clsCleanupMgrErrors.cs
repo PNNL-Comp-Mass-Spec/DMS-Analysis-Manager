@@ -157,7 +157,7 @@ namespace AnalysisManagerProg
             }
             else
             {
-                // If successful, then deletes flag files: flagfile.txt and flagFile_Svr.txt
+                // If successful, deletes flag files: flagfile.txt and flagFile_Svr.txt
                 success = DeleteDeconServerFlagFile(debugLevel);
 
                 if (!success)

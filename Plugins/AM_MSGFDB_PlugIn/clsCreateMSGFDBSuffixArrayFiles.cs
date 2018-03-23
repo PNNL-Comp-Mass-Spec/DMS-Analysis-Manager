@@ -924,8 +924,8 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Exception creating remote MSGF+ suffix array lock file at " + remoteIndexDirectory.FullName + "; " + currentTask,
-                             ex);
+                OnErrorEvent("Exception creating remote MSGF+ suffix array lock file at " + 
+                             remoteIndexDirectory.FullName + "; " + currentTask, ex);
                 return false;
             }
 

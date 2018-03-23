@@ -1199,7 +1199,7 @@ namespace AnalysisManagerProg
         /// Parses the log files for this manager to determine the recent error messages, returning up to errorMessageCountToReturn of them
         /// Will use objLogger to determine the most recent log file
         /// Also examines the message info stored in objLogger
-        /// Lastly, if mostRecentJobInfo is empty, then will update it with info on the most recent job started
+        /// Lastly, if mostRecentJobInfo is empty, will update it with info on the most recent job started
         /// </summary>
         /// <param name="errorMessageCountToReturn">Maximum number of error messages to return</param>
         /// <param name="mostRecentJobInfo">Info on the most recent job started by this manager</param>
@@ -1455,7 +1455,7 @@ namespace AnalysisManagerProg
                 return;
 
             // Queue this message
-            // However, if we already have errorMessageCountToReturn messages queued, then dequeue the oldest one
+            // However, if we already have errorMessageCountToReturn messages queued, dequeue the oldest one
 
             if (qErrorMsgQueue.Count < maxErrorMessageCountToReturn)
             {
