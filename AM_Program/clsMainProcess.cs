@@ -34,6 +34,8 @@ namespace AnalysisManagerProg
         private const string DECON2LS_CORRUPTED_MEMORY_ERROR = "Corrupted memory error";
         private const string DECON2LS_TCP_ALREADY_REGISTERED_ERROR = "channel 'tcp' is already registered";
 
+        private const string DEFAULT_BASE_LOGFILE_NAME = @"Logs\AnalysisMgr";
+
         private const bool ENABLE_LOGGER_TRACE_MODE = false;
 
         #endregion
@@ -160,7 +162,12 @@ namespace AnalysisManagerProg
         /// <remarks></remarks>
         private bool InitMgr()
         {
+
             var hostName = System.Net.Dns.GetHostName();
+
+            // Define the default logging info
+            // This will get updated below
+            LogTools.CreateFileLogger(DEFAULT_BASE_LOGFILE_NAME, BaseLogger.LogLevels.DEBUG);
 
             if (!clsGlobal.OfflineMode)
             {
@@ -1543,7 +1550,7 @@ namespace AnalysisManagerProg
         {
             var logFileNameBase = mgrParams.GetParam("logfilename");
             if (string.IsNullOrWhiteSpace(logFileNameBase))
-                return "AnalysisMgr";
+                return DEFAULT_BASE_LOGFILE_NAME;
 
             return logFileNameBase;
         }
