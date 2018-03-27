@@ -1474,6 +1474,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="diDirectory"></param>
         /// <returns>Free space, in MB</returns>
+        /// <remarks>Supports local drives on Windows and Linux; supports remote shares like \\Server\Share\ on Windows</remarks>
         private static double GetFreeDiskSpaceWindows(DirectoryInfo diDirectory)
         {
             double freeSpaceMB;
@@ -1481,17 +1482,18 @@ namespace AnalysisManagerBase
             if (diDirectory.Root.FullName.StartsWith(@"\\") || !diDirectory.Root.FullName.Contains(":"))
             {
                 // Directory path is a remote share; use GetDiskFreeSpaceEx in Kernel32.dll
+                var targetFilePath = Path.Combine(diDirectory.FullName, "DummyFile.txt");
 
-                if (clsDiskInfo.GetDiskFreeSpace(
-                    diDirectory.FullName,
-                    out _,
-                    out _,
-                    out var totalNumberOfFreeBytes))
+                var success = clsDiskInfo.GetDiskFreeSpace(
+                    targetFilePath, out var totalNumberOfFreeBytes, out var errorMessage, reportFreeSpaceAvailableToUser: false);
+
+                if (success)
                 {
                     freeSpaceMB = BytesToMB(totalNumberOfFreeBytes);
                 }
                 else
                 {
+                    LogTools.LogWarning(errorMessage);
                     freeSpaceMB = 0;
                 }
 
@@ -2019,6 +2021,7 @@ namespace AnalysisManagerBase
         /// <param name="logToDatabase"></param>
         /// <param name="errorMessage">Output: error message</param>
         /// <returns>True if the drive has sufficient free space, otherwise false</returns>
+        /// <remarks>Supports local drives on Windows and Linux; supports remote shares like \\Server\Share\ on Windows</remarks>
         public static bool ValidateFreeDiskSpace(
             string directoryDescription,
             string directoryPath,
