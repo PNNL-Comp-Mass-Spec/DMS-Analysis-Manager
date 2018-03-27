@@ -146,13 +146,9 @@ namespace AnalysisManagerProg
             m_NeedToAbortProcessing = false;
             m_MostRecentJobInfo = string.Empty;
 
-            var exeName = Path.GetFileName(Assembly.GetExecutingAssembly().Location);
-            if (exeName == null)
-                throw new Exception("Unable to determine the Exe path of the currently executing assembly");
-
-            var fiMgr = new FileInfo(exeName);
-            m_MgrExeName = fiMgr.Name;
-            m_MgrFolderPath = fiMgr.DirectoryName;
+            var exeInfo = new FileInfo(PRISM.FileProcessor.ProcessFilesOrFoldersBase.GetAppPath());
+            m_MgrExeName = exeInfo.Name;
+            m_MgrDirectoryPath = exeInfo.DirectoryName;
         }
 
         /// <summary>

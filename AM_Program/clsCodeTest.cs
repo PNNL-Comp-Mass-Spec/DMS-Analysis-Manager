@@ -774,7 +774,7 @@ namespace AnalysisManagerProg
             jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "NumberOfClonedSteps", "25");
             jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "ClonedStepsHaveEqualNumSpectra", "True");
 
-            var fiMgr = new FileInfo(System.Windows.Forms.Application.ExecutablePath);
+            var fiMgr = new FileInfo(PRISM.FileProcessor.ProcessFilesOrFoldersBase.GetAppPath());
             var mgrFolderPath = fiMgr.DirectoryName;
 
             var summaryFile = new clsSummaryFile();
@@ -955,7 +955,6 @@ namespace AnalysisManagerProg
 
             Console.WriteLine(lastWriteTime);
         }
-
 
         /// <summary>
         /// Display metadata regarding all of the processees running on this system
