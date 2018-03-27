@@ -174,11 +174,12 @@ namespace AnalysisManagerProg
                 throw new ApplicationException("Unable to initialize manager settings class: unknown error");
             }
 
-            if (TraceMode)
-            {
-                ShowTraceMessage("Initialized IMgrParams");
-                ShowDictionaryTrace(mParamDictionary);
-            }
+
+            if (!TraceMode)
+                return;
+
+            ShowTraceMessage("Initialized IMgrParams");
+            ShowDictionaryTrace(mParamDictionary);
         }
 
         /// <summary>
@@ -201,14 +202,14 @@ namespace AnalysisManagerProg
                     return;
                 }
 
-                if (TraceMode)
-                    ShowTraceMessage("AckManagerUpdateRequired using " + connectionString);
+                ShowTrace("AckManagerUpdateRequired using " + connectionString);
 
                 var conn = new SqlConnection(connectionString);
                 conn.Open();
 
                 // Set up the command object prior to SP execution
-                var cmd = new SqlCommand(SP_NAME_ACKMANAGERUPDATE, conn) {
+                var cmd = new SqlCommand(SP_NAME_ACKMANAGERUPDATE, conn)
+                {
                     CommandType = CommandType.StoredProcedure
                 };
 
@@ -436,8 +437,7 @@ namespace AnalysisManagerProg
                 mErrMsg = "MgrCnfgDbConnectStr parameter not found in m_ParamDictionary; " +
                           "it should be defined in the " + Path.GetFileName(GetConfigFilePath()) + " file";
 
-                if (TraceMode)
-                    ShowTraceMessage("LoadMgrSettingsFromDBWork: " + mErrMsg);
+                ShowTrace("LoadMgrSettingsFromDBWork: " + mErrMsg);
 
                 dtSettings = null;
                 return false;
@@ -452,8 +452,7 @@ namespace AnalysisManagerProg
                 return false;
             }
 
-            if (TraceMode)
-                ShowTraceMessage("LoadMgrSettingsFromDBWork using [" + connectionString + "] for manager " + managerName);
+            ShowTrace("LoadMgrSettingsFromDBWork using [" + connectionString + "] for manager " + managerName);
 
             var sqlStr = "SELECT ParameterName, ParameterValue FROM V_MgrParams WHERE ManagerName = '" + managerName + "'";
 
@@ -717,8 +716,7 @@ namespace AnalysisManagerProg
             // Gigasax.DMS_Pipeline
             var connectionString = GetParam("brokerconnectionstring");
 
-            if (TraceMode)
-                ShowTraceMessage("LoadBrokerDBSettings has brokerconnectionstring = " + connectionString);
+            ShowTrace("LoadBrokerDBSettings has brokerconnectionstring = " + connectionString);
 
             // Construct the Sql to obtain the information:
             //   SELECT 'StepTool_ParamFileStoragePath_' + Name AS ParameterName, [Param File Storage Path] AS ParameterValue
@@ -730,9 +728,7 @@ namespace AnalysisManagerProg
                 " [Param File Storage Path] AS ParameterValue" + " FROM V_Pipeline_Step_Tools_Detail_Report" +
                 " WHERE ISNULL([Param File Storage Path], '') <> ''";
 
-
-            if (TraceMode)
-                ShowTraceMessage("Query V_Pipeline_Step_Tools_Detail_Report in broker");
+            ShowTrace("Query V_Pipeline_Step_Tools_Detail_Report in broker");
 
             // Get a table to hold the results of the query
             var success = clsGlobal.GetDataTableByQuery(sqlStr, connectionString, "LoadBrokerDBSettings", retryCount, out var dt);
@@ -874,10 +870,27 @@ namespace AnalysisManagerProg
             Console.ResetColor();
         }
 
-        private static void ShowTraceMessage(string message)
+        /// <summary>
+        /// Show a message at the console, preceded by a time stamp
+        /// </summary>
+        /// <param name="message"></param>
+        private void ShowTrace(string message)
         {
-            clsMainProcess.ShowTraceMessage(message);
+            if (!TraceMode)
+                return;
+
+            ShowTraceMessage(message);
         }
+
+        /// <summary>
+        /// Show a message at the console, preceded with a timestamp
+        /// </summary>
+        /// <param name="message"></param>
+        public static void ShowTraceMessage(string message)
+        {
+            clsMainProcess.ShowTraceMessage(DateTime.Now.ToString("hh:mm:ss.fff tt") + ": " + message);
+        }
+
 
         private bool ValidateOfflineTaskDirectories()
         {
@@ -955,10 +968,7 @@ namespace AnalysisManagerProg
             var logToDb = !mMCParamsLoaded && allowLogToDB;
             LogError(errorMessage, logToDb);
 
-            if (TraceMode)
-            {
-                ShowTraceMessage(errorMessage);
-            }
+            ShowTrace(errorMessage);
         }
 
         /// <summary>

@@ -2532,10 +2532,16 @@ namespace AnalysisManagerProg
             return true;
         }
 
+        /// <summary>
+        /// Show a trace message only if TraceMode is true
+        /// </summary>
+        /// <param name="message"></param>
         private void ShowTrace(string message)
         {
-            if (TraceMode)
-                ShowTraceMessage(message);
+            if (!TraceMode)
+                return;
+
+            ShowTraceMessage(message);
         }
 
         /// <summary>
