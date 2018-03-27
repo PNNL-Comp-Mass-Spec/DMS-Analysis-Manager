@@ -2,7 +2,7 @@
 <settings>
     <setting name="AuroraAvailable"><value>False</value></setting>
     <setting name="ConfigFileName"><value>AnalysisManagerProg.exe.config</value></setting>
-    <setting name="DebugLevel"><value>3</value></setting>
+    <setting name="DebugLevel"><value>1</value></setting>
     <setting name="LocalTaskQueuePath"><value>/file1/temp/DMSTasks</value></setting>
     <setting name="LocalWorkDirPath"><value>/file1/temp/DMSWorkDir</value></setting>
     <setting name="LogFileName"><value>Logs/AnalysisMgr</value></setting>
