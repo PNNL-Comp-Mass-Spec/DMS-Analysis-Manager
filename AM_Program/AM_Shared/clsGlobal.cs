@@ -1388,10 +1388,84 @@ namespace AnalysisManagerBase
             return ProcessInfo.GetCoreCount();
         }
 
+        /// <summary>
+        /// Get a DriveInfo instance for the drive with the given target directory (must be on the local host)
+        /// Supports both Windows and Linux paths
+        /// </summary>
+        /// <param name="targetDirectory"></param>
+        /// <returns></returns>
+        public static DriveInfo GetLocalDriveInfo(DirectoryInfo targetDirectory)
+        {
+            var baseWarningMsg = "Unable to instantiate a DriveInfo object for " + targetDirectory.FullName;
+
+            try
+            {
+                DriveInfo localDriveInfo;
+
+                if (Path.DirectorySeparatorChar == '/' || targetDirectory.FullName.StartsWith("/"))
+                {
+                    // Linux system, with a path like /file1/temp/DMSOrgDBs/
+                    // The root path that we need to send to DriveInfo is likely /file1
+                    // If that doesn't work, try /
+
+                    var candidateRootPaths = new List<string>();
+                    var slashIndex = targetDirectory.FullName.IndexOf('/', 1);
+
+                    if (slashIndex > 0)
+                    {
+                        candidateRootPaths.Add(targetDirectory.FullName.Substring(0, slashIndex));
+                    }
+                    candidateRootPaths.Add("/");
+
+                    foreach (var candidatePath in candidateRootPaths)
+                    {
+                        try
+                        {
+                            localDriveInfo = new DriveInfo(candidatePath);
+                            return localDriveInfo;
+                        }
+                        catch (Exception ex)
+                        {
+                            ConsoleMsgUtils.ShowDebug(string.Format("Unable to create a DriveInfo object for {0}: {1}", candidatePath, ex.Message));
+                        }
+                    }
+                }
+                else
+                {
+                    // Windows system, with a path like C:\DMS_Temp_Org
+                    // Alternatively, a Windows share like \\proto-7\MSGFPlus_Index_Files
+
+                    var driveLetter = targetDirectory.FullName.Substring(0, 2);
+                    if (driveLetter.EndsWith(":"))
+                    {
+                        localDriveInfo = new DriveInfo(driveLetter);
+                        return localDriveInfo;
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                LogTools.LogWarning(string.Format("{0}: {1}", baseWarningMsg, ex));
+            }
+
+            LogTools.LogWarning(baseWarningMsg);
+            return null;
+
+        }
+
+        /// <summary>
+        /// Determine the free disk space on the drive with the given directory
+        /// </summary>
+        /// <param name="diDirectory"></param>
+        /// <returns></returns>
         private static double GetFreeDiskSpaceLinux(DirectoryInfo diDirectory)
         {
-            var diDrive = new DriveInfo(diDirectory.Root.FullName);
-            var freeSpaceMB = BytesToMB(diDrive.TotalFreeSpace);
+            var driveInfo = GetLocalDriveInfo(diDirectory);
+            if (driveInfo == null)
+                return 0;
+
+            var freeSpaceMB = BytesToMB(driveInfo.TotalFreeSpace);
             return freeSpaceMB;
         }
 

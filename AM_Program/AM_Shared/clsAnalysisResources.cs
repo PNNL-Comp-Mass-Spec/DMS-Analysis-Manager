@@ -3484,46 +3484,7 @@ namespace AnalysisManagerBase
                         return;
                 }
 
-                DriveInfo localDriveInfo = null;
-                if (Path.DirectorySeparatorChar == '/' || orgDbDirectory.FullName.StartsWith("/"))
-                {
-                    // Linux system, with a path like /file1/temp/DMSOrgDBs/
-                    // The root path that we need to send to DriveInfo is likely /file1
-                    // If that doesn't work, try /
-
-                    var candidateRootPaths = new List<string>();
-                    var slashIndex = orgDbDirectory.FullName.IndexOf('/', 1);
-
-                    if (slashIndex > 0)
-                    {
-                        candidateRootPaths.Add(orgDbDirectory.FullName.Substring(0, slashIndex));
-                    }
-                    candidateRootPaths.Add("/");
-
-                    foreach (var candidatePath in candidateRootPaths)
-                    {
-                        try
-                        {
-                            localDriveInfo = new DriveInfo(candidatePath);
-                            break;
-                        }
-                        catch (Exception ex)
-                        {
-                            ConsoleMsgUtils.ShowDebug(string.Format("Unable to create a DriveInfo object for {0}: {1}", candidatePath, ex.Message));
-                        }
-                    }
-                }
-                else
-                {
-                    // Windows system, with a path like C:\DMS_Temp_Org
-                    // Alternative, a Windows share like \\proto-7\MSGFPlus_Index_Files
-
-                    var driveLetter = orgDbDirectory.FullName.Substring(0, 2);
-                    if (driveLetter.EndsWith(":"))
-                    {
-                        localDriveInfo = new DriveInfo(driveLetter);
-                    }
-                }
+                var localDriveInfo = clsGlobal.GetLocalDriveInfo(orgDbDirectory);
 
                 if (localDriveInfo == null)
                 {
