@@ -47,7 +47,7 @@ namespace AnalysisManagerProg
 
         private clsCleanupMgrErrors m_MgrErrorCleanup;
         private readonly string m_MgrExeName;
-        private readonly string m_MgrFolderPath;
+        private readonly string m_MgrDirectoryPath;
         private string m_WorkDirPath;
 
         private string m_MgrName = "??";
@@ -173,8 +173,8 @@ namespace AnalysisManagerProg
             {
                 // Create a database logger connected to DMS5
                 // Once the initial parameters have been successfully read,
-                // we remove this logger than make a new one using the connection string read from the Manager Control DB
-                string dmsConnectionString;
+                // we update the dbLogger to use the connection string read from the Manager Control DB
+                string defaultDmsConnectionString;
 
                 // Open AnalysisManagerProg.exe.config to look for setting DefaultDMSConnString, so we know which server to log to by default
                 var dmsConnectionStringFromConfig = GetXmlConfigDefaultConnectionString();
@@ -182,18 +182,18 @@ namespace AnalysisManagerProg
                 if (string.IsNullOrWhiteSpace(dmsConnectionStringFromConfig))
                 {
                     // Use the hard-coded default that points to Gigasax
-                    dmsConnectionString = Properties.Settings.Default.DefaultDMSConnString;
+                    defaultDmsConnectionString = Properties.Settings.Default.DefaultDMSConnString;
                 }
                 else
                 {
                     // Use the connection string from AnalysisManagerProg.exe.config
-                    dmsConnectionString = dmsConnectionStringFromConfig;
+                    defaultDmsConnectionString = dmsConnectionStringFromConfig;
                 }
 
-                ShowTrace("Instantiate a DbLogger using " + dmsConnectionString);
+                ShowTrace("Instantiate a DbLogger using " + defaultDmsConnectionString);
 
                 // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-                LogTools.CreateDbLogger(dmsConnectionString, "Analysis Tool Manager: " + hostName, TraceMode && ENABLE_LOGGER_TRACE_MODE);
+                LogTools.CreateDbLogger(defaultDmsConnectionString, "Analysis Tool Manager: " + hostName, TraceMode && ENABLE_LOGGER_TRACE_MODE);
             }
 
             // Get the manager settings from the database or from ManagerSettingsLocal.xml if clsGlobal.OfflineMode is true
@@ -208,7 +208,7 @@ namespace AnalysisManagerProg
 
                 try
                 {
-                    m_MgrSettings = new clsAnalysisMgrSettings(lstMgrSettings, m_MgrFolderPath, TraceMode);
+                    m_MgrSettings = new clsAnalysisMgrSettings(lstMgrSettings, m_MgrDirectoryPath, TraceMode);
                 }
                 catch (Exception ex)
                 {
@@ -240,7 +240,6 @@ namespace AnalysisManagerProg
 
             if (!clsGlobal.OfflineMode)
             {
-                LogTools.RemoveDefaultDbLogger();
                 var logCnStr = m_MgrSettings.GetParam("connectionstring");
 
                 // ReSharper disable once ConditionIsAlwaysTrueOrFalse
@@ -259,7 +258,7 @@ namespace AnalysisManagerProg
             var configFileName = m_MgrSettings.GetParam("configfilename");
             if (string.IsNullOrEmpty(configFileName))
             {
-                //  Manager parameter error; log an error and exit
+                // Manager parameter error; log an error and exit
                 LogError("Manager parameter 'configfilename' is undefined; this likely indicates a problem retrieving manager parameters.  Shutting down the manager");
                 return false;
             }
@@ -314,7 +313,7 @@ namespace AnalysisManagerProg
                 mgrConfigDBConnectionString = m_MgrSettings.GetParam(clsAnalysisMgrSettings.MGR_PARAM_MGR_CFG_DB_CONN_STRING);
             }
 
-            m_MgrErrorCleanup = new clsCleanupMgrErrors(mgrConfigDBConnectionString, m_MgrName, m_DebugLevel, m_MgrFolderPath, m_WorkDirPath);
+            m_MgrErrorCleanup = new clsCleanupMgrErrors(mgrConfigDBConnectionString, m_MgrName, m_DebugLevel, m_MgrDirectoryPath, m_WorkDirPath);
 
             ShowTrace("Initialize the Summary file");
 
@@ -323,7 +322,7 @@ namespace AnalysisManagerProg
 
             ShowTrace("Initialize the Plugin Loader");
 
-            m_PluginLoader = new clsPluginLoader(m_SummaryFile, m_MgrFolderPath);
+            m_PluginLoader = new clsPluginLoader(m_SummaryFile, m_MgrDirectoryPath);
             RegisterEvents(m_PluginLoader);
 
             if (TraceMode)
@@ -1123,7 +1122,7 @@ namespace AnalysisManagerProg
         {
             var watcher = new FileSystemWatcher
             {
-                Path = m_MgrFolderPath,
+                Path = m_MgrDirectoryPath,
                 IncludeSubdirectories = false,
                 Filter = configFileName,
                 NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size,
@@ -1537,8 +1536,6 @@ namespace AnalysisManagerProg
         private string GetBaseLogFileName()
         {
             return GetBaseLogFileName(m_MgrSettings);
-
-
         }
 
         /// <summary>
@@ -1561,7 +1558,7 @@ namespace AnalysisManagerProg
             {
                 // Obtain a list of log files
                 var logFileNameBase = GetBaseLogFileName();
-                var files = Directory.GetFiles(m_MgrFolderPath, logFileNameBase + "*.txt");
+                var files = Directory.GetFiles(m_MgrDirectoryPath, logFileNameBase + "*.txt");
 
                 if (files.Length == 0)
                     return string.Empty;
@@ -1588,7 +1585,8 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Extract the value for the given setting from AnalysisManagerProg.exe.config
         /// </summary>
-        /// <returns></returns>
+        /// <returns>Setting value if found, otherwise an empty string</returns>
+        /// <remarks>Uses a simple text reader in case the file has malformed XML</remarks>
         private string GetXmlConfigFileSetting(string settingName)
         {
 
@@ -1597,7 +1595,7 @@ namespace AnalysisManagerProg
 
             try
             {
-                var configFilePath = Path.Combine(m_MgrFolderPath, m_MgrExeName + ".config");
+                var configFilePath = Path.Combine(m_MgrDirectoryPath, m_MgrExeName + ".config");
                 var configfile = new FileInfo(configFilePath);
 
                 if (!configfile.Exists)
@@ -1818,7 +1816,7 @@ namespace AnalysisManagerProg
             if (m_StatusTools != null)
                 return;
 
-            var statusFileLoc = Path.Combine(m_MgrFolderPath, m_MgrSettings.GetParam("statusfilelocation", "Status.xml"));
+            var statusFileLoc = Path.Combine(m_MgrDirectoryPath, m_MgrSettings.GetParam("statusfilelocation", "Status.xml"));
 
             ShowTrace("Initialize m_StatusTools using " + statusFileLoc);
 
@@ -1850,6 +1848,7 @@ namespace AnalysisManagerProg
         /// Read settings from file AnalysisManagerProg.exe.config
         /// </summary>
         /// <returns>String dictionary of settings as key/value pairs; null on error</returns>
+        /// <remarks>Uses an XML reader instead of Properties.Settings.Default (see the comments in LoadMgrSettingsFromFile)</remarks>
         private Dictionary<string, string> ReadMgrSettingsFile(out string configFilePath)
         {
 
@@ -1859,7 +1858,7 @@ namespace AnalysisManagerProg
             try
             {
                 // Construct the path to the config document
-                configFilePath = Path.Combine(m_MgrFolderPath, m_MgrExeName + ".config");
+                configFilePath = Path.Combine(m_MgrDirectoryPath, m_MgrExeName + ".config");
                 var configfile = new FileInfo(configFilePath);
                 if (!configfile.Exists)
                 {
@@ -1974,7 +1973,7 @@ namespace AnalysisManagerProg
                 lstMgrSettings.Add(clsAnalysisMgrSettings.MGR_PARAM_USING_DEFAULTS, Properties.Settings.Default.UsingDefaults.ToString());
             }
 
-            // Default connection string for logging errors to the databsae
+            // Default connection string for logging errors to the database
             // Will get updated later when manager settings are loaded from the manager control database
             if (!lstMgrSettings.ContainsKey(clsAnalysisMgrSettings.MGR_PARAM_DEFAULT_DMS_CONN_STRING))
             {
@@ -2154,7 +2153,7 @@ namespace AnalysisManagerProg
 
         private void RemoveTempFiles()
         {
-            var diMgrFolder = new DirectoryInfo(m_MgrFolderPath);
+            var diMgrFolder = new DirectoryInfo(m_MgrDirectoryPath);
 
             // Files starting with the name IgnoreMe are created by log4NET when it is first instantiated
             // This name is defined in the RollingFileAppender section of the Logging.config file via this XML:
@@ -2552,7 +2551,7 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
-        /// Display a trace message at the console, preceded by a time stamp
+        /// Show a message at the console, preceded by a time stamp
         /// </summary>
         /// <param name="message"></param>
         public static void ShowTraceMessage(string message)
@@ -2709,7 +2708,7 @@ namespace AnalysisManagerProg
             var messageQueueUri = m_MgrSettings.GetParam("MessageQueueURI");
             var messageQueueTopicMgrStatus = m_MgrSettings.GetParam("MessageQueueTopicMgrStatus");
 
-            objStatusFile.ConfigureMemoryLogging(logMemoryUsage, minimumMemoryUsageLogInterval, m_MgrFolderPath);
+            objStatusFile.ConfigureMemoryLogging(logMemoryUsage, minimumMemoryUsageLogInterval, m_MgrDirectoryPath);
             objStatusFile.ConfigureBrokerDBLogging(logStatusToBrokerDb, brokerDbConnectionString, brokerDbStatusUpdateIntervalMinutes);
             objStatusFile.ConfigureMessageQueueLogging(logStatusToMessageQueue, messageQueueUri, messageQueueTopicMgrStatus);
         }
