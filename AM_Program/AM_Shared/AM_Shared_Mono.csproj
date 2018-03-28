@@ -21,6 +21,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <DocumentationFile>bin\Debug\AnalysisManagerBase.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -32,12 +33,6 @@
     <DocumentationFile>bin\Release\AnalysisManagerBase.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Apache.NMS">
-      <HintPath>..\..\AM_Common\Apache.NMS.dll</HintPath>
-    </Reference>
-    <Reference Include="Apache.NMS.ActiveMQ">
-      <HintPath>..\..\AM_Common\Apache.NMS.ActiveMQ.dll</HintPath>
-    </Reference>
     <Reference Include="CondenseCDTAFile">
       <HintPath>..\..\AM_Common\CondenseCDTAFile.dll</HintPath>
     </Reference>
@@ -138,6 +133,9 @@
     <Compile Include="clsFileSearch.cs" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Apache.NMS.ActiveMQ">
+      <Version>1.7.2</Version>
+    </PackageReference>
     <PackageReference Include="DotNetZip">
       <Version>1.10.1</Version>
     </PackageReference>

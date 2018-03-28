@@ -41,3 +41,5 @@ CachedLibs/
 /AM_Common/Renci.SshNet.dll
 **/.vs/
 /AM_Common/Jayrock.Json.dll
+/AM_Common/Apache.NMS.ActiveMQ.dll
+/AM_Common/Apache.NMS.dll

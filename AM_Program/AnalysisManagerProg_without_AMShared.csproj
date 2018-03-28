@@ -122,6 +122,9 @@
     <Content Include="LITENING.ICO" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Apache.NMS.ActiveMQ">
+      <Version>1.7.2</Version>
+    </PackageReference>
     <PackageReference Include="DotNetZip">
       <Version>1.10.1</Version>
     </PackageReference>
@@ -181,6 +184,8 @@ xcopy "$(ProjectDir)..\AM_Common\ThermoRawFileReader.dll" "$(TargetDir)" /D /Y
 xcopy "$(TargetDir)AnalysisManagerProg.exe" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)AnalysisManagerProg.pdb" "$(ProjectDir)..\AM_Common\" /D /Y
 xcopy "$(TargetDir)Jayrock.Json.dll" "$(ProjectDir)..\AM_Common\" /D /Y
+xcopy "$(TargetDir)Apache.NMS.ActiveMQ.dll" "$(ProjectDir)..\AM_Common\" /D /Y
+xcopy "$(TargetDir)Apache.NMS.dll" "$(ProjectDir)..\AM_Common\" /D /Y
 
 rem if exist "$(TargetDir)SQLite.Interop.dll" (del "$(TargetDir)SQLite.Interop.dll")
 rem if not exist "$(TargetDir)x86" mkdir "$(TargetDir)x86"
