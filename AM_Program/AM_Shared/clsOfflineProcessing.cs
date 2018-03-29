@@ -14,6 +14,7 @@ namespace AnalysisManagerBase
         /// Also removes the .lock file
         /// </summary>
         /// <param name="infoFilePath">Info file path</param>
+        /// <param name="managerName">Manager name</param>
         /// <param name="succeeded">True if the job succeeded</param>
         /// <param name="startTime">Time the analysis started (UTC-based)</param>
         /// <param name="compCode">Integer version of enum CloseOutType specifying the completion code</param>
@@ -21,7 +22,8 @@ namespace AnalysisManagerBase
         /// <param name="evalCode">Evaluation code</param>
         /// <param name="evalMsg">Evaluation messge</param>
         public static void FinalizeJob(
-            string infoFilePath, bool succeeded, DateTime startTime,
+            string infoFilePath, string managerName,
+            bool succeeded, DateTime startTime,
             int compCode, string compMsg,
             int evalCode = 0, string evalMsg = "")
         {
@@ -84,6 +86,7 @@ namespace AnalysisManagerBase
                 writer.WriteLine("CompMsg=" + compMsg);
                 writer.WriteLine("EvalCode=" + evalCode);
                 writer.WriteLine("EvalMsg=" + evalMsg);
+                writer.WriteLine("MgrName=" + managerName);
             }
 
             var lockFile = new FileInfo(Path.ChangeExtension(infoFile.FullName, clsGlobal.LOCK_FILE_EXTENSION));
