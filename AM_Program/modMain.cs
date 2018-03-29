@@ -32,7 +32,7 @@ namespace AnalysisManagerProg
 {
     static class modMain
     {
-        public const string PROGRAM_DATE = "March 27, 2018";
+        public const string PROGRAM_DATE = "March 28, 2018";
 
         private static bool mCodeTestMode;
         private static bool mTraceMode;
@@ -63,7 +63,7 @@ namespace AnalysisManagerProg
             var osVersionInfo = new clsOSVersionInfo();
 
             var osVersion = osVersionInfo.GetOSVersion();
-            if (osVersion.IndexOf("windows", StringComparison.OrdinalIgnoreCase) < 0)
+            if (!osVersion.ToLower().Contains("windows"))
             {
                 // Running on Linux
                 // Auto-enable offline mode
