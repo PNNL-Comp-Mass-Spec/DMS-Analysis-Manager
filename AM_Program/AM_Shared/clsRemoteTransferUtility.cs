@@ -725,11 +725,17 @@ namespace AnalysisManagerBase
 
                 var dmsUpdateMgrSource = MgrParams.GetParam("DMSUpdateManagerSource");
                 var dmsProgramsPath = MgrParams.GetParam("RemoteHostDMSProgramsPath");
-                var analysisManagerDir = MgrParams.GetParam("RemoteHostAnalysisManagerDir", "AnalysisManager");
+                var analysisManagerDirs = MgrParams.GetParam("RemoteHostAnalysisManagerDirs", "AnalysisManager");
 
                 if (string.IsNullOrEmpty(dmsProgramsPath))
                 {
                     OnErrorEvent("Manager parameter not found: RemoteHostDMSProgramsPath; cannot run the DMS Update Manager");
+                    return false;
+                }
+
+                if (string.IsNullOrEmpty(analysisManagerDirs))
+                {
+                    OnErrorEvent("Manager parameter not found: RemoteHostAnalysisManagerDirs; cannot run the DMS Update Manager");
                     return false;
                 }
 
@@ -779,26 +785,61 @@ namespace AnalysisManagerBase
 
                 var filesToIgnore = MgrParams.GetParam("DMSUpdateManagerFilesToIgnore");
 
-                var targetDirectoryPath = clsPathUtils.CombineLinuxPaths(dmsProgramsPath, analysisManagerDir);
+                var ignoreList = new List<string>();
 
-                OnDebugEvent(string.Format("Copying new/updated DMS Programs files from {0} to {1} on remote host {2}",
-                                           sourceDirectoryPath, targetDirectoryPath, RemoteHostInfo.HostName));
+                if (!string.IsNullOrWhiteSpace(filesToIgnore))
+                {
+                    ignoreList.AddRange(filesToIgnore.Split(',').ToList());
+                }
 
-                RemoteHostInfo.BaseDirectoryPath = targetDirectoryPath;
-                var success = StartDMSUpdateManager(sourceDirectoryPath, targetDirectoryPath, filesToIgnore, out var errorMessage);
+                // Also ignore System.Data.SQLite.dll since the Linux version differs from the Windows version
+                ignoreList.Add("System.Data.SQLite.dll");
 
-                if (success)
+                var dirsProcessed = 0;
+                var errorMessages = new List<string>();
+                foreach (var analysisManagerDir in analysisManagerDirs.Split(','))
+                {
+                    if (string.IsNullOrWhiteSpace(analysisManagerDir))
+                        continue;
+
+                    var targetDirectoryPath = clsPathUtils.CombineLinuxPaths(dmsProgramsPath, analysisManagerDir.Trim());
+
+                    OnDebugEvent(string.Format("Copying new/updated DMS Programs files from {0} to {1} on remote host {2}",
+                                               sourceDirectoryPath, targetDirectoryPath, RemoteHostInfo.HostName));
+
+                    RemoteHostInfo.BaseDirectoryPath = targetDirectoryPath;
+
+                    // For the first remote analysis manager directory, we will also update the
+                    // parent directories of the target directory, e.g. ../MSGFDB and ../MSPathFinder
+
+                    // On subsequent analysis manager directories, we only need to update the analysis manager directory itself
+                    CopySubdirectoriesToParentDirectory = (dirsProcessed == 0);
+
+                    var success = StartDMSUpdateManager(sourceDirectoryPath, targetDirectoryPath, ignoreList, out var errorMessage);
+
+                    if (success)
+                    {
+                        dirsProcessed++;
+                        continue;
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(errorMessage))
+                        errorMessages.Add(errorMessage);
+
+                }
+
+                if (dirsProcessed > 0)
                     return true;
 
                 var msg = "Error pushing DMS Programs files to the remote host; UpdateRemoteHost returns false";
 
-                if (string.IsNullOrWhiteSpace(errorMessage))
+                if (errorMessages.Count == 0)
                 {
                     OnErrorEvent(msg);
                 }
                 else
                 {
-                    OnErrorEvent(msg + ": " + errorMessage);
+                    OnErrorEvent(msg + ": " + errorMessages.First());
                 }
 
                 return false;
