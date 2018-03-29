@@ -1448,7 +1448,7 @@ namespace AnalysisManagerBase
         private void FinalizeFailedOfflineJob(FileSystemInfo infoFile, DateTime startTime, string errorMessage)
         {
             LogError(errorMessage);
-            clsOfflineProcessing.FinalizeJob(infoFile.FullName, false, startTime, 1, errorMessage);
+            clsOfflineProcessing.FinalizeJob(infoFile.FullName, ManagerName, false, startTime, 1, errorMessage);
         }
 
         /// <summary>
@@ -1552,7 +1552,7 @@ namespace AnalysisManagerBase
                     }
 
                     var succeeded = SuccessOrNoData(closeOut);
-                    clsOfflineProcessing.FinalizeJob(m_OfflineJobInfoFile.FullName, succeeded, startTime, compCode, compMsg, evalCode, evalMsg);
+                    clsOfflineProcessing.FinalizeJob(m_OfflineJobInfoFile.FullName, ManagerName, succeeded, startTime, compCode, compMsg, evalCode, evalMsg);
                 }
                 else
                 {

@@ -9,14 +9,15 @@ namespace AnalysisManagerBase
     /// <summary>
     /// Delegate that does the eventual posting
     /// </summary>
-    /// <param name="message"></param>
-    public delegate void MessageSenderDelegate(string message);
+    /// <param name="messageContainer"></param>
+    public delegate void MessageSenderDelegate(clsMessageContainer messageContainer);
 
     /// <summary>
     /// Class for interacting with a message queue
     /// </summary>
     class clsMessageQueueLogger : clsEventNotifier
     {
+
         /// <summary>
         /// Actual delegate registers here
         /// </summary>
@@ -37,7 +38,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// local queue that contains messages to be sent
         /// </summary>
-        private readonly Queue<string> m_statusMessages = new Queue<string>();
+        private readonly Queue<clsMessageContainer> m_statusMessages = new Queue<clsMessageContainer>();
 
         public clsMessageQueueLogger()
         {
@@ -49,11 +50,14 @@ namespace AnalysisManagerBase
         /// to be sent off by the PostalWorker thread
         /// </summary>
         /// <param name="statusMessage"></param>
-        public void LogStatusMessage(string statusMessage)
+        /// <param name="managerName"></param>
+        public void LogStatusMessage(string statusMessage, string managerName)
         {
+            var messageContainer = new clsMessageContainer(statusMessage, managerName);
+
             lock (locker)
             {
-                m_statusMessages.Enqueue(statusMessage);
+                m_statusMessages.Enqueue(messageContainer);
             }
 
             if (!worker.IsAlive)
@@ -75,23 +79,23 @@ namespace AnalysisManagerBase
         {
             while (true)
             {
-                string statusMessage = null;
+                clsMessageContainer messageContainer = null;
                 lock (locker)
                 {
                     if (m_statusMessages.Count > 0)
                     {
-                        statusMessage = m_statusMessages.Dequeue();
-                        if (statusMessage == null)
+                        messageContainer = m_statusMessages.Dequeue();
+                        if (messageContainer?.Message == null)
                         {
                             return;
                         }
                     }
                 }
-                if (statusMessage != null)
+                if (messageContainer?.Message != null)
                 {
                     // we have work to do
                     // use our delegates (if we have any)
-                    Sender?.Invoke(statusMessage);
+                    Sender?.Invoke(messageContainer);
                 }
                 else
                 {
@@ -109,7 +113,7 @@ namespace AnalysisManagerBase
 
         public void Dispose()
         {
-            LogStatusMessage(null);
+            LogStatusMessage(null, string.Empty);
 
             // Signal the worker to exit.
             // Wait a maximum of 15 seconds

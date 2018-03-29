@@ -661,7 +661,7 @@ namespace AnalysisManagerBase
             return statusFileDirectory;
         }
 
-        private void LogStatusToMessageQueue(string xmlText)
+        private void LogStatusToMessageQueue(string xmlText, string managerName)
         {
             const float MINIMUM_LOG_FAILURE_INTERVAL_MINUTES = 10;
 
@@ -701,7 +701,7 @@ namespace AnalysisManagerBase
 
                 if (m_QueueLogger != null)
                 {
-                    m_QueueLogger?.LogStatusMessage(xmlText);
+                    m_QueueLogger?.LogStatusMessage(xmlText, managerName);
                     return;
                 }
 
@@ -991,7 +991,7 @@ namespace AnalysisManagerBase
             if (LogToMsgQueue)
             {
                 // Send the XML text to a message queue
-                LogStatusToMessageQueue(xmlText);
+                LogStatusToMessageQueue(xmlText, status.MgrName);
             }
 
             if (m_BrokerDBLogger != null)

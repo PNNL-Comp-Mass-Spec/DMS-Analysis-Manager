@@ -33,14 +33,14 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        ///  Send the message using NMS connection objects
+        /// Send the message using NMS connection objects
         /// </summary>
-        /// <param name="message"></param>
+        /// <param name="messageContainer"></param>
         /// <remarks>
         /// If connection does not exist, make it
         /// If connection objects don't work, erase them and make another set
         /// </remarks>
-        public void SendMessage(string message)
+        public void SendMessage(clsMessageContainer messageContainer)
         {
             if (isDisposed)
             {
@@ -59,8 +59,10 @@ namespace AnalysisManagerBase
 
             try
             {
-                var textMessage = session.CreateTextMessage(message);
-                textMessage.Properties.SetString("ProcessorName", processorName);
+                var textMessage = session.CreateTextMessage(messageContainer.Message);
+                textMessage.Properties.SetString("ProcessorName",
+                                                 string.IsNullOrWhiteSpace(messageContainer.ManagerName) ? processorName : messageContainer.ManagerName);
+
                 producer.Send(textMessage);
             }
             catch (Exception)
