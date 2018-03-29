@@ -348,7 +348,9 @@ namespace AnalysisManagerBase
                     // Retrieve the .success file
                     OnDebugEvent(string.Format("Retrieve status file {0} from {1} ", remoteSuccessFile.Name, TransferUtility.RemoteHostName));
 
-                    TransferUtility.RetrieveStatusFile(remoteSuccessFile.Name, out _);
+                    TransferUtility.RetrieveStatusFile(remoteSuccessFile.Name, out var successFilePathLocal);
+
+                    ReportRemoteManagerIsIdle(successFilePathLocal);
 
                     return EnumRemoteJobStatus.Success;
                 }
@@ -358,7 +360,9 @@ namespace AnalysisManagerBase
                 {
                     LogWarning(".fail file found for " + TransferUtility.JobStepDescription + " on " + TransferUtility.RemoteHostName);
 
-                    TransferUtility.RetrieveStatusFile(remoteFailureFile.Name, out _);
+                    TransferUtility.RetrieveStatusFile(remoteFailureFile.Name, out var failFilePathLocal);
+
+                    ReportRemoteManagerIsIdle(failFilePathLocal);
 
                     return EnumRemoteJobStatus.Failed;
                 }
@@ -472,6 +476,9 @@ namespace AnalysisManagerBase
                     RegisterEvents(status);
 
                     // Note: do not configure status to push to the BrokerDB or the MessageQueue
+                    // Instead, use the .jobstatus file to populate status, then call StatusTools.UpdateRemoteStatus
+                    // which calls WriteStatusFile with writeToDisk=false, which results in the remote status info getting pushed to the MessageQueue
+                    // The Status Message DB Updater will then push that info into table T_Processor_Status in the DMS_Pipeline database
 
                     var mgrStatus = clsXMLUtils.GetXmlValue(managerInfo, "MgrStatus");
                     status.MgrStatus = StatusTools.ConvertToMgrStatusFromText(mgrStatus);
@@ -664,10 +671,11 @@ namespace AnalysisManagerBase
                             case "Staged":
                             case "Started":
                             case "Finished":
+                            case "MgrName":
                                 // Ignore these lines
                                 break;
                             default:
-                                LogWarning("Skippping unrecognized line label: " + lineParts[0]);
+                                LogWarning("Skipping unrecognized line label: " + lineParts[0]);
                                 break;
                         }
                     }
@@ -739,6 +747,116 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
+        /// Send a status update to the MessageQueue in order to update the remote manager status in T_Processor_Status
+        /// </summary>
+        /// <param name="statusResultFilePath">Job .success or .fail status file path</param>
+        private void ReportRemoteManagerIsIdle(string statusResultFilePath)
+        {
+            try
+            {
+                var statusResultFile = new FileInfo(statusResultFilePath);
+
+                OnDebugEvent("Parse status file " + statusResultFile.Name);
+
+                var remoteMgrName = "";
+                var taskStartTime = DateTime.MinValue;
+
+                using (var reader = new StreamReader(new FileStream(statusResultFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                {
+                    char[] sepChars = { '=' };
+
+                    while (!reader.EndOfStream)
+                    {
+                        var dataLine = reader.ReadLine();
+                        if (string.IsNullOrWhiteSpace(dataLine))
+                            continue;
+
+                        var lineParts = dataLine.Split(sepChars, 2);
+
+                        if (lineParts.Length < 2)
+                        {
+                            LogWarning(string.Format("Ignoring invalid line in status file {0}: {1}", statusResultFile.Name, dataLine));
+                            continue;
+                        }
+
+                        if (lineParts[0] == "MgrName")
+                            remoteMgrName = lineParts[1];
+
+                        if (lineParts[0] == "Started")
+                            DateTime.TryParse(lineParts[1], out taskStartTime);
+                    }
+
+                    if (string.IsNullOrWhiteSpace(remoteMgrName))
+                    {
+                        OnErrorEvent(string.Format("File {0} did not contain parameter MgrName; cannot update status for the remote manager",
+                                                   statusResultFile.Name));
+                        return;
+                    }
+
+                    // Note: although we pass localStatusFilePath to the clsStatusFile constructor, the path doesn't matter because
+                    // we call UpdateRemoteStatus to push the remote status to the message queue only; a status file is not written
+                    var localStatusFilePath = Path.Combine(WorkDir, "RemoteStatus.xml");
+
+                    var status = new clsStatusFile(localStatusFilePath, DebugLevel)
+                    {
+                        MgrName = remoteMgrName
+                    };
+                    RegisterEvents(status);
+
+                    // Note: do not configure status to push to the BrokerDB or the MessageQueue
+                    // Instead, use the .jobstatus file to populate status, then call StatusTools.UpdateRemoteStatus
+                    // which calls WriteStatusFile with writeToDisk=false, which results in the remote status info getting pushed to the MessageQueue
+
+                    status.MgrStatus = EnumMgrStatus.STOPPED;
+
+                    status.TaskStartTime = taskStartTime;
+                    if (status.TaskStartTime > DateTime.MinValue)
+                    {
+                        status.TaskStartTime = status.TaskStartTime.ToUniversalTime();
+                    }
+
+                    var lastUpdate = statusResultFile.LastWriteTimeUtc;
+
+                    var cpuUtilization = 0;
+                    var freeMemoryMB = 0;
+                    var processId = 0;
+
+                    status.ProgRunnerProcessID = 0;
+
+                    status.ProgRunnerCoreUsage = 0;
+
+                    status.Tool = string.Empty;
+
+                    status.TaskStatus = EnumTaskStatus.NO_TASK;
+
+                    if (statusResultFile.Name.EndsWith(".success"))
+                        status.Progress = 100;
+                    else
+                        status.Progress = 0;
+
+                    status.CurrentOperation = string.Empty;
+
+                    status.TaskStatusDetail = EnumTaskStatusDetail.NO_TASK;
+
+                    status.JobNumber = 0;
+                    status.JobStep = 0;
+                    status.Dataset = string.Empty;
+
+                    // Update the cached progress; used by clsMainProcess
+                    RemoteProgress = status.Progress;
+
+                    StatusTools.UpdateRemoteStatus(status, lastUpdate, processId, cpuUtilization, freeMemoryMB);
+
+                }
+
+            }
+            catch (Exception ex)
+            {
+                OnErrorEvent("Error in ReportRemoteManagerIsIdle reading the .success or .fail file for the remotely running job", ex);
+            }
+        }
+
+        /// <summary>
         /// Look for file statusFileName in dictionary statusFiles
         /// </summary>
         /// <param name="statusFileName">Status file to find</param>
@@ -761,7 +879,6 @@ namespace AnalysisManagerBase
         }
 
         #endregion
-
 
         #region "Events"
 
