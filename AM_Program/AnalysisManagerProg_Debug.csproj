@@ -47,7 +47,8 @@
     <StartupObject>AnalysisManagerProg.modMain</StartupObject>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="DMSUpdateManager">
+    <Reference Include="DMSUpdateManager, Version=1.2.6661.30600, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\AM_Common\DMSUpdateManager.dll</HintPath>
     </Reference>
     <Reference Include="FilterMsMsSpectra">
