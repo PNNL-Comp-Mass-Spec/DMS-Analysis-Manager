@@ -53,7 +53,7 @@ namespace AnalysisManagerProg
         private string m_MgrName = "??";
 
         // clsAnalysisJob
-        private IJobParams m_AnalysisTask;
+        private clsAnalysisJob m_AnalysisTask;
 
         private clsPluginLoader m_PluginLoader;
 
@@ -1829,6 +1829,29 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
+        /// Initialize the remote transfer utility
+        /// Used by RunJobRemotely and when PushFilesToRemoteHost is true
+        /// </summary>
+        /// <returns></returns>
+        private clsRemoteTransferUtility InitializeRemoteTransferUtility()
+        {
+            var transferUtility = new clsRemoteTransferUtility(m_MgrSettings, m_AnalysisTask);
+            RegisterEvents(transferUtility);
+
+            try
+            {
+                transferUtility.UpdateParameters(true);
+                return transferUtility;
+            }
+            catch (Exception ex)
+            {
+                m_MostRecentErrorMessage = "Exception initializing the remote transfer utility: " + ex.Message;
+                LogError(m_MostRecentErrorMessage, ex);
+                return null;
+            }
+        }
+
+        /// <summary>
         /// Initializes the status file writing tool
         /// </summary>
         /// <remarks></remarks>
@@ -2366,23 +2389,15 @@ namespace AnalysisManagerProg
 
                 ShowTrace("Instantiating clsRemoteTransferUtility");
 
-                var transferUtility = new clsRemoteTransferUtility(m_MgrSettings, m_AnalysisTask);
-                RegisterEvents(transferUtility);
+                var transferUtility = InitializeRemoteTransferUtility();
 
-                var remoteTimestamp = transferUtility.UpdateRemoteTimestamp();
-
-                try
+                if (transferUtility == null)
                 {
-                    transferUtility.UpdateParameters(true);
-                }
-                catch (Exception ex)
-                {
-                    m_MostRecentErrorMessage = "Exception initializing the remote transfer utility: " + ex.Message;
-                    LogError(m_MostRecentErrorMessage, ex);
-
                     eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
                     return false;
                 }
+
+                var remoteTimestamp = transferUtility.UpdateRemoteTimestamp();
 
                 ShowTrace("Pushing new/updated DMS_Programs files to remote host");
 
