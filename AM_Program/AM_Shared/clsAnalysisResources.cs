@@ -226,6 +226,8 @@ namespace AnalysisManagerBase
         /// </summary>
         public const string LASTUSED_FILE_EXTENSION = ".LastUsed";
 
+        private const string LOCALHASHCHECK_EXTENSION = ".localhashcheck";
+
         /// <summary>
         /// Storage path info file suffix
         /// </summary>
@@ -804,10 +806,16 @@ namespace AnalysisManagerBase
                 LogDebug(string.Format("Fasta file not found on remote host; copying {0} to {1}", sourceFasta.Name, transferUtility.RemoteHostName));
             }
 
-            var sourceFiles = new List<FileInfo> {
-                sourceFasta,
-                sourceHashcheck
-            };
+            // Find the files to copy (skipping the .localhashcheck file)
+            var sourceFiles = new List<FileInfo>();
+
+            foreach (var sourceFile in orgDbFolder.GetFiles(fileMatchSpec))
+            {
+                if (string.Equals(sourceFile.Extension, LOCALHASHCHECK_EXTENSION))
+                    continue;
+
+                sourceFiles.Add(sourceFile);
+            }
 
             var success = transferUtility.CopyFilesToRemote(sourceFiles, transferUtility.RemoteOrgDBPath, useLockFile: true);
             if (success)
@@ -868,7 +876,7 @@ namespace AnalysisManagerBase
                 }
 
                 LogError(string.Format("Failure copying {0} files to {1} on host {2}",
-                                         filesToCopy.Count, remoteDirectoryPath, remoteHost));
+                                       filesToCopy.Count, remoteDirectoryPath, remoteHost));
 
                 m_message = "Failure copying required files to remote host " + remoteHost;
                 return false;
@@ -5113,7 +5121,7 @@ namespace AnalysisManagerBase
                     ref crc32Hash,
                     retryHoldoffHours: 48,
                     forceRegenerateHash: false,
-                    hashcheckExtension: ".localhashcheck");
+                    hashcheckExtension: LOCALHASHCHECK_EXTENSION);
 
                 if (fastaIsValid)
                     return true;
