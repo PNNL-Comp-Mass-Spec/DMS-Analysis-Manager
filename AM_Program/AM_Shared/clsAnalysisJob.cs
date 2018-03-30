@@ -1820,7 +1820,7 @@ namespace AnalysisManagerBase
             clsOfflineProcessing.RenameFileChangeExtension(oldInfoFile, ".oldinfo", true);
 
             // Also check for a .lock file; if found, rename it
-            var oldLockFile = new FileInfo(Path.ChangeExtension(oldInfoFile.FullName, ".lock"));
+            var oldLockFile = new FileInfo(Path.ChangeExtension(oldInfoFile.FullName, clsGlobal.LOCK_FILE_EXTENSION));
             clsOfflineProcessing.RenameFileChangeExtension(oldLockFile, ".oldlock", true);
 
         }
@@ -1993,5 +1993,6 @@ namespace AnalysisManagerBase
         }
 
         #endregion
+
     }
 }
