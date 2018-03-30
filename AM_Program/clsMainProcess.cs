@@ -93,6 +93,13 @@ namespace AnalysisManagerProg
         public bool DisableMyEMSL { get; set; }
 
         /// <summary>
+        /// When true, only push analysis manager files to the remote host using the DMSUpdateManager
+        /// Do not request a new analysis job
+        /// </summary>
+        /// <remarks>Only valid if the manager has parameter RunJobsRemotely set to True in the Manager Control DB</remarks>
+        public bool PushRemoteMgrFilesOnly { get; set; }
+
+        /// <summary>
         /// When true, show additional messages at the console
         /// </summary>
         public bool TraceMode { get; set; }
@@ -118,6 +125,26 @@ namespace AnalysisManagerProg
                 }
 
                 ShowTrace("Call DoAnalysis");
+
+                if (PushRemoteMgrFilesOnly)
+                {
+                    m_AnalysisTask.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job", "100");
+                    m_AnalysisTask.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step", "1");
+                    m_AnalysisTask.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "StepTool", "Sync");
+                    m_AnalysisTask.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_DATASET_NAME, "Placeholder");
+
+                    var transferUtility = InitializeRemoteTransferUtility();
+
+                    if (transferUtility == null)
+                    {
+                        return -1;
+                    }
+
+                    ShowTrace("Pushing new/updated DMS_Programs files to remote host");
+
+                    transferUtility.RunDMSUpdateManager();
+                    return 0;
+                }
 
                 DoAnalysis();
 
