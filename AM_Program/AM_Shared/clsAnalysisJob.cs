@@ -9,6 +9,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Linq;
+using DMSUpdateManager;
 using PRISM.Logging;
 using PRISM;
 
@@ -970,6 +971,229 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
+        /// Rename or delete old directories in the WorkDirs specified by any .info files in the task queue directory
+        /// </summary>
+        /// <param name="taskQueueDirectory"></param>
+        private void PurgeOldOfflineWorkDirs(DirectoryInfo taskQueueDirectory)
+        {
+            const int ORPHANED_THRESHOLD_HOURS = 4;
+            const int PURGE_THRESHOLD_DAYS = 10;
+
+            try
+            {
+
+                var jobStepMatcher = new Regex(@"^Job\d+_Step\d+$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+                var xJobStepMatcher = new Regex(@"^x_Job\d+_Step\d+$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+                var infoFiles = taskQueueDirectory.GetFiles("*.info");
+                if (infoFiles.Length == 0)
+                    return;
+
+                // Construct a list of WorkDir paths tracked by the current .info files
+                // Also keep track of the parent directory (or directories) of the job-specific Work Dirs
+
+                var activeWorkDirs = new Dictionary<string, DirectoryInfo>();
+                var parentWorkDirs = new Dictionary<string, DirectoryInfo>();
+
+                foreach (var infoFile in infoFiles)
+                {
+                    var success = ReadOfflineJobInfoFile(infoFile, out _, out _, out var workDirPath, out _);
+                    if (!success || string.IsNullOrWhiteSpace(workDirPath))
+                        continue;
+
+                    var jobWorkDir = new DirectoryInfo(workDirPath);
+                    if (!activeWorkDirs.ContainsKey(jobWorkDir.FullName))
+                        activeWorkDirs.Add(jobWorkDir.FullName, jobWorkDir);
+
+                    var parentWorkDir = jobWorkDir.Parent;
+
+                    if (parentWorkDir == null)
+                        continue;
+
+                    if (!parentWorkDirs.ContainsKey(parentWorkDir.FullName))
+                        parentWorkDirs.Add(parentWorkDir.FullName, parentWorkDir);
+                }
+
+                if (parentWorkDirs.Count == 0)
+                    return;
+
+                foreach (var parentWorkDir in parentWorkDirs.Values)
+                {
+                    // Find all directories named JobX_StepY in parentWorkDir
+
+                    var workDirs = parentWorkDir.GetDirectories("Job*_Step*", SearchOption.TopDirectoryOnly);
+                    if (workDirs.Length == 0)
+                        continue;
+
+                    // JobX_StepY directories older than this time are renamed to x_
+                    var orphanedDateThresholdUtc = DateTime.UtcNow.AddHours(-ORPHANED_THRESHOLD_HOURS);
+
+                    // x_JobX_StepY directories older than this date are deleted
+                    var purgeThresholdUtc = DateTime.UtcNow.AddDays(-PURGE_THRESHOLD_DAYS);
+
+                    foreach (var workDir in workDirs)
+                    {
+                        if (activeWorkDirs.ContainsKey(workDir.FullName))
+                        {
+                            // This work dir is active; ignore it
+                            continue;
+                        }
+
+                        workDir.Refresh();
+                        if (!workDir.Exists)
+                        {
+                            // Workdir no longer exists
+                            continue;
+                        }
+
+                        if (!jobStepMatcher.IsMatch(workDir.Name))
+                        {
+                            if (TraceMode)
+                                LogDebug("Ignore WorkDir directory since not of the form JobX_StepY: " + workDir.FullName);
+                            continue;
+                        }
+
+                        // Find the newest file in this work dir
+                        var newestFile = GetNewestFileInDirectory(workDir);
+
+                        if (newestFile == null || newestFile.LastWriteTimeUtc >= orphanedDateThresholdUtc)
+                        {
+                            // Files in the WorkDir are recent; ignore it
+                            continue;
+                        }
+
+                        if (workDir.Parent == null)
+                        {
+                            LogWarning(string.Format(
+                                           "Unable to determine the parent directory of {0}; cannot update the name to contain x_",
+                                           workDir.FullName));
+                            continue;
+                        }
+
+                        var newWorkDirPath = Path.Combine(workDir.Parent.FullName, "x_" + workDir.Name);
+
+                        try
+                        {
+                            LogMessage(string.Format(
+                                           "Renaming old working directory since no current .info files refer to it; moving {0} to {1}",
+                                           workDir.FullName, Path.GetFileName(newWorkDirPath)));
+
+                            workDir.MoveTo(newWorkDirPath);
+                        }
+                        catch (Exception ex)
+                        {
+                            LogWarning(string.Format(
+                                           "Error renaming {0} to {1}: {2}",
+                                           workDir.FullName, Path.GetFileName(newWorkDirPath), ex.Message));
+                        }
+
+                    }
+
+                    var oldWorkDirs = parentWorkDir.GetDirectories("x_Job*_Step*", SearchOption.TopDirectoryOnly);
+                    if (oldWorkDirs.Length == 0)
+                        continue;
+
+                    foreach (var oldWorkDir in oldWorkDirs)
+                    {
+
+                        oldWorkDir.Refresh();
+                        if (!oldWorkDir.Exists)
+                        {
+                            // Workdir no longer exists
+                            continue;
+                        }
+
+                        if (!xJobStepMatcher.IsMatch(oldWorkDir.Name))
+                        {
+                            if (TraceMode)
+                                LogDebug("Ignore x_WorkDir directory since not of the form x_JobX_StepY: " + oldWorkDir.FullName);
+                            continue;
+                        }
+
+                        var newestFile = GetNewestFileInDirectory(oldWorkDir);
+
+                        if (newestFile == null || newestFile.LastWriteTimeUtc >= purgeThresholdUtc)
+                        {
+                            // Files in the old WorkDir are less than 10 days old; ignore it
+                            continue;
+                        }
+
+                        try
+                        {
+                            LogMessage(string.Format(
+                                           "Deleting old working directory since over {0} days old: {1}",
+                                           PURGE_THRESHOLD_DAYS, oldWorkDir.FullName));
+
+                            oldWorkDir.Delete(true);
+                        }
+                        catch (Exception ex)
+                        {
+                            LogWarning(string.Format(
+                                           "Error deleting {0}: {1}",
+                                           oldWorkDir.FullName, ex.Message));
+                        }
+
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception looking for old WorkDirs in " + taskQueueDirectory.FullName, ex);
+            }
+
+        }
+
+        private bool ReadOfflineJobInfoFile(FileSystemInfo infoFile, out int jobId, out int stepNum, out string workDirPath, out string staged)
+        {
+
+            jobId = 0;
+            stepNum = 0;
+            workDirPath = string.Empty;
+            staged = string.Empty;
+
+            if (!infoFile.Exists)
+                return false;
+
+            var splitChars = new[] { '=' };
+
+            using (var reader = new StreamReader(new FileStream(infoFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+            {
+                while (!reader.EndOfStream)
+                {
+                    var dataLine = reader.ReadLine();
+                    if (string.IsNullOrWhiteSpace(dataLine))
+                        continue;
+
+                    var lineParts = dataLine.Split(splitChars, 2);
+                    if (lineParts.Length < 2)
+                        continue;
+
+                    var key = lineParts[0];
+                    var value = lineParts[1];
+
+                    switch (key)
+                    {
+                        case "Job":
+                            jobId = int.Parse(value);
+                            break;
+                        case "Step":
+                            stepNum = int.Parse(value);
+                            break;
+                        case "WorkDir":
+                            workDirPath = value;
+                            break;
+                        case "Staged":
+                            staged = value;
+                            break;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
         /// Requests a task from the database
         /// </summary>
         /// <returns>Enum indicating if task was found</returns>
@@ -1162,6 +1386,8 @@ namespace AnalysisManagerBase
                     if (infoFiles.Length == 0)
                         continue;
 
+                    PurgeOldOfflineWorkDirs(taskQueueDirectory);
+
                     // Keys in this dictionary are of the form Job1449939_Step3
                     // Values are are KeyValuePair of Timestamp and .info file, where Timestamp is of the form 20170518_0353
                     var jobStepInfoFiles = new Dictionary<string, KeyValuePair<string, FileInfo>>();
@@ -1329,51 +1555,16 @@ namespace AnalysisManagerBase
 
                 // Parse the .info file
 
-                var splitChars = new[] { '=' };
                 m_JobId = 0;
-                var stepNum = 0;
-                var workDirPath = string.Empty;
-                var staged = string.Empty;
+                var success = ReadOfflineJobInfoFile(infoFile, out var jobId, out var stepNum, out var workDirPath, out var staged);
 
-                using (var reader = new StreamReader(new FileStream(infoFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
-                {
-                    while (!reader.EndOfStream)
-                    {
-                        var dataLine = reader.ReadLine();
-                        if (string.IsNullOrWhiteSpace(dataLine))
-                            continue;
-
-                        var lineParts = dataLine.Split(splitChars, 2);
-                        if (lineParts.Length < 2)
-                            continue;
-
-                        var key = lineParts[0];
-                        var value = lineParts[1];
-
-                        switch (key)
-                        {
-                            case "Job":
-                                m_JobId = int.Parse(value);
-                                break;
-                            case "Step":
-                                stepNum = int.Parse(value);
-                                break;
-                            case "WorkDir":
-                                workDirPath = value;
-                                break;
-                            case "Staged":
-                                staged = value;
-                                break;
-                        }
-                    }
-                }
-
-                if (m_JobId == 0)
+                if (!success || jobId == 0)
                 {
                     FinalizeFailedOfflineJob(infoFile, startTime, "Job missing from .info file");
                     return false;
                 }
 
+                m_JobId = jobId;
                 if (stepNum == 0)
                 {
                     FinalizeFailedOfflineJob(infoFile, startTime, "Step missing from .info file");
@@ -1556,14 +1747,36 @@ namespace AnalysisManagerBase
                     clsOfflineProcessing.FinalizeJob(m_OfflineJobInfoFile.FullName, ManagerName, succeeded, startTime, compCode, compMsg, evalCode, evalMsg);
                 }
                 else
+
+        /// <summary>
+        /// Find the newest file in the given directory
+        /// </summary>
+        /// <param name="directory"></param>
+        /// <param name="recurse"></param>
+        /// <returns>FileOrDirectoryInfo instance of the newest file</returns>
+        /// <remarks>
+        /// If the directory has no files, the returned file info will be for a
+        /// non-existent file named Placeholder.txt, with the date of the directory's last write time</remarks>
+        private FileOrDirectoryInfo GetNewestFileInDirectory(DirectoryInfo directory, bool recurse = false)
+        {
+
+            var newestDate = DateTime.MinValue;
+            var newestFile = new FileOrDirectoryInfo(
+                Path.Combine(directory.FullName, "Placeholder.txt"), false, 0,
+                directory.LastWriteTime, directory.LastWriteTimeUtc, clsGlobal.LinuxOS);
+
+            var searchOption = recurse ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+
+            foreach (var workDirFile in directory.GetFiles("*", searchOption))
+            {
+                if (workDirFile.LastWriteTime > newestDate)
                 {
-                    if (!SetAnalysisJobComplete(compCode, compMsg, evalCode, evalMsg))
-                    {
-                        LogError("Error setting job complete in database, job " + m_JobId);
-                    }
+                    newestDate = workDirFile.LastWriteTime;
+                    newestFile = new FileOrDirectoryInfo(workDirFile);
                 }
             }
 
+            return newestFile;
         }
 
         /// <summary>
