@@ -1264,6 +1264,7 @@ namespace AnalysisManagerBase
                 managerVersion = productVersion + "; Unkown .NET Version";
             }
 
+            // Reset various tracking variables, including TaskClosed
             Reset();
 
             try
@@ -1370,6 +1371,9 @@ namespace AnalysisManagerBase
                     LogError("Manager parameter LocalTaskQueuePath is empty; update ManagerSettingsLocal.xml");
                     return RequestTaskResult.ResultError;
                 }
+
+                // Reset various tracking variables, including TaskClosed
+                Reset();
 
                 foreach (var stepTool in stepTools)
                 {
