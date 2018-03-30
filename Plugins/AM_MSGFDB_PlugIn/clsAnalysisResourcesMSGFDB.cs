@@ -158,6 +158,51 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             try
             {
+                // Index the FASTA file (either by copying from a remote share, or by re-generating the index)
+                var msgfPlusUtils = new MSGFPlusUtils(m_mgrParams, m_jobParams, m_WorkingDir, m_DebugLevel);
+                RegisterEvents(msgfPlusUtils);
+
+                msgfPlusUtils.IgnorePreviousErrorEvent += MSGFPlusUtils_IgnorePreviousErrorEvent;
+
+                // Get the FASTA file and index it if necessary
+                // Passing in the path to the parameter file so we can look for TDA=0 when using large .Fasta files
+                var parameterFilePath = Path.Combine(m_WorkingDir, m_jobParams.GetParam("parmFileName"));
+
+                // javaProgLoc will typically be "C:\Program Files\Java\jre8\bin\Java.exe"
+                var javaProgLoc = clsAnalysisToolRunnerBase.GetJavaProgLoc(m_mgrParams, out var javaLocErrorMessage);
+
+                if (string.IsNullOrEmpty(javaProgLoc))
+                {
+                    m_message = clsGlobal.AppendToComment(m_message, javaLocErrorMessage);
+                    return false;
+                }
+
+                var msgfPlusProgLoc = clsAnalysisToolRunnerBase.DetermineProgramLocation(
+                    m_mgrParams, m_jobParams, StepToolName, "MSGFPlusProgLoc", MSGFPlusUtils.MSGFPLUS_JAR_NAME, out var msgfPlusLocErrorMessage);
+
+                if (string.IsNullOrEmpty(msgfPlusProgLoc))
+                {
+                    m_message = clsGlobal.AppendToComment(m_message, msgfPlusLocErrorMessage);
+                    return false;
+                }
+
+                var msgfPlusJarFilePath = string.Copy(msgfPlusProgLoc);
+
+                var result = msgfPlusUtils.InitializeFastaFile(
+                    javaProgLoc, msgfPlusJarFilePath,
+                    out var fastaFileSizeKB, out var fastaFileIsDecoy,
+                    out var fastaFilePath, parameterFilePath);
+
+                if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                {
+                    if (string.IsNullOrWhiteSpace(m_message) &&
+                        !string.IsNullOrWhiteSpace(msgfPlusUtils.ErrorMessage))
+                    {
+                        m_message = clsGlobal.AppendToComment(m_message, msgfPlusUtils.ErrorMessage);
+                    }
+
+                    return false;
+                }
 
                 // Construct a list of any files that we don't want to copy
                 var filesToIgnore = GetDefaultWorkDirFilesToIgnore();

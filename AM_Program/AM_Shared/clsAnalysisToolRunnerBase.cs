@@ -1523,11 +1523,7 @@ namespace AnalysisManagerBase
         /// <remarks>If the program is not found, m_message will be updated with the error message</remarks>
         protected string DetermineProgramLocation(string progLocManagerParamName, string exeName)
         {
-
-            // Check whether the settings file specifies that a specific version of the step tool be used
-            var stepToolVersion = m_jobParams.GetParam(StepToolName + "_Version");
-
-            var progLoc = DetermineProgramLocation(StepToolName, progLocManagerParamName, exeName, stepToolVersion, m_mgrParams, out var errorMessage);
+            var progLoc = DetermineProgramLocation(m_mgrParams, m_jobParams, StepToolName, progLocManagerParamName, exeName, out var errorMessage);
 
             if (!string.IsNullOrEmpty(errorMessage))
             {
@@ -1536,7 +1532,28 @@ namespace AnalysisManagerBase
             }
 
             return progLoc;
+        }
 
+        /// <summary>
+        /// Determine the path to the correct version of the step tool
+        /// </summary>
+        /// <param name="mgrParams">Manager parameters</param>
+        /// <param name="jobParams">Job parameters</param>
+        /// <param name="stepToolName">The name of the step tool, e.g. LCMSFeatureFinder</param>
+        /// <param name="progLocManagerParamName">The name of the manager parameter that defines the path to the folder with the exe, e.g. LCMSFeatureFinderProgLoc</param>
+        /// <param name="exeName">The name of the exe file, e.g. LCMSFeatureFinder.exe</param>
+        /// <param name="errorMessage">Output: error message</param>
+        /// <returns>The path to the program, or an empty string if there is a problem</returns>
+        public static string DetermineProgramLocation(
+            IMgrParams mgrParams, IJobParams jobParams,
+            string stepToolName, string progLocManagerParamName, string exeName,
+            out string errorMessage)
+        {
+
+            // Check whether the settings file specifies that a specific version of the step tool be used
+            var stepToolVersion = jobParams.GetParam(stepToolName + "_Version");
+
+            return DetermineProgramLocation(stepToolName, progLocManagerParamName, exeName, stepToolVersion, mgrParams, out errorMessage);
         }
 
         /// <summary>
@@ -1549,7 +1566,6 @@ namespace AnalysisManagerBase
         /// <param name="mgrParams">Manager parameters</param>
         /// <param name="errorMessage">Output: error message</param>
         /// <returns>The path to the program, or an empty string if there is a problem</returns>
-        /// <remarks></remarks>
         public static string DetermineProgramLocation(
             string stepToolName,
             string progLocManagerParamName,
@@ -1786,35 +1802,60 @@ namespace AnalysisManagerBase
         protected string GetJavaProgLoc()
         {
 
-            string javaProgLoc;
+            var javaProgLoc = GetJavaProgLoc(m_mgrParams, out var errorMessage);
+
+            if (!string.IsNullOrEmpty(javaProgLoc))
+                return javaProgLoc;
+
+            if (string.IsNullOrWhiteSpace(errorMessage))
+                LogError("GetJavaProgLoc could not find Java");
+            else
+                LogError(errorMessage);
+
+            return string.Empty;
+
+        }
+
+        /// <summary>
+        /// Deterime the path to java.exe
+        /// </summary>
+        /// <returns>The path to the java.exe, or an empty string if the manager parameter is not defined or if java.exe does not exist</returns>
+        /// <remarks></remarks>
+        public static string GetJavaProgLoc(IMgrParams mgrParams, out string errorMessage)
+        {
+            string paramName;
 
             if (clsGlobal.LinuxOS)
             {
                 // On Linux, the Java location is tracked via manager parameter JavaLocLinux, loaded from file ManagerSettingsLocal.xml
                 // For example: /usr/bin/java
-                javaProgLoc = m_mgrParams.GetParam("JavaLocLinux");
+                paramName = "JavaLocLinux";
             }
             else
             {
                 // JavaLoc will typically be "C:\Program Files\Java\jre8\bin\Java.exe"
-                javaProgLoc = m_mgrParams.GetParam("JavaLoc");
+                paramName = "JavaLoc";
             }
+
+            var javaProgLoc = mgrParams.GetParam(paramName);
 
             if (string.IsNullOrEmpty(javaProgLoc))
             {
-                LogError("Parameter 'JavaLoc' not defined for this manager");
+                errorMessage = string.Format("Parameter '{0}' not defined for this manager", paramName);
                 return string.Empty;
             }
 
             var javaProg = new FileInfo(javaProgLoc);
 
             if (javaProg.Exists)
+            {
+                errorMessage = string.Empty;
                 return javaProgLoc;
+            }
 
-            LogError("Cannot find Java: " + javaProgLoc);
+            errorMessage = "Cannot find Java: " + javaProgLoc;
             return string.Empty;
         }
-
         /// <summary>
         /// Returns the full path to the program to use for converting a dataset to a .mzXML file
         /// </summary>

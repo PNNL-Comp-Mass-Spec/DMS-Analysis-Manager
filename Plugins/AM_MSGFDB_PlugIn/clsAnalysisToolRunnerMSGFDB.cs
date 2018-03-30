@@ -231,8 +231,6 @@ namespace AnalysisManagerMSGFDBPlugIn
             out bool processingError,
             out bool tooManySkippedSpectra)
         {
-            var msgfPlusJarfile = MSGFPlusUtils.MSGFPLUS_JAR_NAME;
-
             fiMSGFPlusResults = new FileInfo(Path.Combine(m_WorkDir, Dataset + "_msgfplus.mzid"));
 
             processingError = false;
@@ -241,7 +239,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             // Determine the path to MSGF+
             // Manager parameter MSGFPlusProgLoc will either come from the Manager Control database,
             // or on Linux from file ManagerSettingsLocal.xml
-            mMSGFPlusProgLoc = DetermineProgramLocation("MSGFPlusProgLoc", msgfPlusJarfile);
+            mMSGFPlusProgLoc = DetermineProgramLocation("MSGFPlusProgLoc", MSGFPlusUtils.MSGFPLUS_JAR_NAME);
 
             if (string.IsNullOrWhiteSpace(mMSGFPlusProgLoc))
             {

@@ -570,45 +570,50 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
 
                 // Index files are missing or out of date
+                bool remoteLockFileCreated;
+                FileInfo fiRemoteLockFile = null;
+                CloseOutType eResult;
+
                 if (clsGlobal.OfflineMode)
                 {
                     // The manager that pushed the FASTA files to the the remote host should have also indexed them and pushed all of the index files to this host
-                    // Fail out the job
-                    mErrorMessage = "Index files are missing or out of date for " + fastaFilePath;
-
-                    // Do not call OnErrorEvent; the calling procedure will do so
-                    return CloseOutType.CLOSEOUT_FAILED;
+                    // We can still re-index the files using the local FASTA file
+                    OnWarningEvent("Index files are missing or out of date for " + fastaFilePath + "; will re-generate them");
+                    remoteLockFileCreated = false;
+                    eResult = CloseOutType.CLOSEOUT_SUCCESS;
                 }
-
-                // Copy the missing index files from remoteIndexDirPath (if possible)
-                // Otherwise, create new index files
-
-                const bool CHECK_FOR_LOCK_FILE_A = true;
-                var eResult = CopyExistingIndexFilesFromRemote(fiFastaFile, usingLegacyFasta, remoteIndexDirPath, CHECK_FOR_LOCK_FILE_A,
-                                                               debugLevel, maxWaitTimeHours, out var diskFreeSpaceBelowThreshold1);
-
-                if (diskFreeSpaceBelowThreshold1)
+                else
                 {
-                    // Not enough free disk space; abort
-                    return CloseOutType.CLOSEOUT_FAILED;
+                    // Copy the missing index files from remoteIndexDirPath (if possible)
+                    // Otherwise, create new index files
+
+                    const bool CHECK_FOR_LOCK_FILE_A = true;
+                    eResult = CopyExistingIndexFilesFromRemote(fiFastaFile, usingLegacyFasta, remoteIndexDirPath, CHECK_FOR_LOCK_FILE_A,
+                                                                   debugLevel, maxWaitTimeHours, out var diskFreeSpaceBelowThreshold1);
+
+                    if (diskFreeSpaceBelowThreshold1)
+                    {
+                        // Not enough free disk space; abort
+                        return CloseOutType.CLOSEOUT_FAILED;
+                    }
+
+                    if (eResult == CloseOutType.CLOSEOUT_SUCCESS)
+                    {
+                        // Update the .LastUsed file on the remote share
+                        UpdateRemoteLastUsedFile(remoteIndexDirPath, fiFastaFile.Name);
+
+                        // Delete old index files on the remote share
+                        DeleteOldIndexFiles(remoteIndexDirPath, debugLevel);
+
+                        return CloseOutType.CLOSEOUT_SUCCESS;
+                    }
+
+                    // Files did not exist or were out of date, or an error occurred while copying them
+                    currentTask = "Create a remote lock file";
+                    remoteLockFileCreated = CreateRemoteSuffixArrayLockFile(
+                        fiFastaFile.Name, remoteIndexDirPath,
+                        out fiRemoteLockFile, debugLevel, maxWaitTimeHours);
                 }
-
-                if (eResult == CloseOutType.CLOSEOUT_SUCCESS)
-                {
-                    // Update the .LastUsed file on the remote share
-                    UpdateRemoteLastUsedFile(remoteIndexDirPath, fiFastaFile.Name);
-
-                    // Delete old index files on the remote share
-                    DeleteOldIndexFiles(remoteIndexDirPath, debugLevel);
-
-                    return CloseOutType.CLOSEOUT_SUCCESS;
-                }
-
-                // Files did not exist or were out of date, or an error occurred while copying them
-                currentTask = "Create a remote lock file";
-                var remoteLockFileCreated = CreateRemoteSuffixArrayLockFile(
-                    fiFastaFile.Name, remoteIndexDirPath,
-                    out var fiRemoteLockFile, debugLevel, maxWaitTimeHours);
 
                 if (remoteLockFileCreated)
                 {
@@ -640,23 +645,26 @@ namespace AnalysisManagerMSGFDBPlugIn
                     eResult = CreateSuffixArrayFilesWork(logFileDir, debugLevel, fiFastaFile, fiLockFile, javaProgLoc,
                                                          msgfPlusProgLoc, fastaFileIsDecoy, dbSarrayFilename);
 
-                    if (remoteLockFileCreated && eResult == CloseOutType.CLOSEOUT_SUCCESS)
+                    if (remoteLockFileCreated && eResult == CloseOutType.CLOSEOUT_SUCCESS && !clsGlobal.OfflineMode)
                     {
                         OnStatusEvent("Copying index files to " + remoteIndexDirPath);
                         CopyIndexFilesToRemote(fiFastaFile, remoteIndexDirPath, debugLevel);
                     }
                 }
 
-                // Update the .LastUsed file on the remote share
-                UpdateRemoteLastUsedFile(remoteIndexDirPath, fiFastaFile.Name);
-
-                // Delete old index files on the remote share
-                DeleteOldIndexFiles(remoteIndexDirPath, debugLevel);
-
-                if (remoteLockFileCreated)
+                if (!clsGlobal.OfflineMode)
                 {
-                    // Delete the remote lock file
-                    DeleteLockFile(fiRemoteLockFile);
+                    // Update the .LastUsed file on the remote share
+                    UpdateRemoteLastUsedFile(remoteIndexDirPath, fiFastaFile.Name);
+
+                    // Delete old index files on the remote share
+                    DeleteOldIndexFiles(remoteIndexDirPath, debugLevel);
+
+                    if (remoteLockFileCreated)
+                    {
+                        // Delete the remote lock file
+                        DeleteLockFile(fiRemoteLockFile);
+                    }
                 }
 
                 return eResult;
@@ -924,7 +932,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Exception creating remote MSGF+ suffix array lock file at " + 
+                OnErrorEvent("Exception creating remote MSGF+ suffix array lock file at " +
                              remoteIndexDirectory.FullName + "; " + currentTask, ex);
                 return false;
             }
