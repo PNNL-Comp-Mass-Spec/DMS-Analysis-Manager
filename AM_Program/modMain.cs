@@ -39,6 +39,7 @@ namespace AnalysisManagerProg
         private static bool mDisableMessageQueue;
         private static bool mDisableMyEMSL;
         private static bool mDisplayDllVersions;
+        private static bool mPushRemoteMgrFilesOnly;
         private static bool mShowVersionOnly;
 
         private static string mDisplayDllPath;
@@ -57,6 +58,7 @@ namespace AnalysisManagerProg
             mDisableMessageQueue = false;
             mDisableMyEMSL = false;
             mDisplayDllVersions = false;
+            mPushRemoteMgrFilesOnly = false;
             mDisplayDllPath = string.Empty;
             mShowVersionOnly = false;
 
@@ -174,7 +176,8 @@ namespace AnalysisManagerProg
                 var mainProcess = new clsMainProcess(mTraceMode)
                 {
                     DisableMessageQueue = mDisableMessageQueue,
-                    DisableMyEMSL = mDisableMyEMSL
+                    DisableMyEMSL = mDisableMyEMSL,
+                    PushRemoteMgrFilesOnly = mPushRemoteMgrFilesOnly
                 };
 
                 var returnCode = mainProcess.Main();
@@ -261,6 +264,7 @@ namespace AnalysisManagerProg
                 "NQ",
                 "NoMyEMSL",
                 "DLL",
+                "PushRemote",
                 "Offline",
                 "Linux",
                 "Version"
@@ -309,6 +313,9 @@ namespace AnalysisManagerProg
                     }
                 }
 
+                if (commandLineParser.IsParameterPresent("PushRemote"))
+                    mPushRemoteMgrFilesOnly = true;
+
                 if (!clsGlobal.OfflineMode)
                 {
                     if (!clsGlobal.LinuxOS && commandLineParser.IsParameterPresent("Linux"))
@@ -345,7 +352,8 @@ namespace AnalysisManagerProg
                 Console.WriteLine();
                 Console.WriteLine("Program syntax:" + Environment.NewLine +
                                   exeName + " [/NQ] [/NoMyEMSL] [/T] [/Trace]");
-                Console.WriteLine("[/DLL] [/Offline] [/Linux] [/Version]");
+                Console.WriteLine("[/DLL] [/PushRemote]");
+                Console.WriteLine("[/Offline] [/Linux] [/Version]");
 
                 Console.WriteLine();
                 Console.WriteLine("Use /NQ to disable posting status messages to the message queue");
@@ -362,6 +370,11 @@ namespace AnalysisManagerProg
 
                 Console.WriteLine("Use /Offline to enable offline mode (database access and use of external servers is disabled). " +
                                   "Requires that the ManagerSettingsLocal.xml file has several settings defined, including LocalTaskQueuePath and LocalWorkDirPath");
+                Console.WriteLine();
+                Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
+                                      "Use /PushRemote to use the DMSUpdateManager to push new/updated files to the remote host associated with this manager. " +
+                                      "This is only valid if the manager has parameter RunJobsRemotely set to True in the Manager Control DB. " +
+                                      "Ignored if /Offline is used."));
                 Console.WriteLine();
                 Console.WriteLine("Use /Linux to disable access to Windows-specific methods. " +
                                   "Both /Offline and /Linux are auto-enabled if the path separation character is /");
