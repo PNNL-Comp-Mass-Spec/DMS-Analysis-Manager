@@ -32,7 +32,7 @@ namespace AnalysisManagerProg
 {
     static class modMain
     {
-        public const string PROGRAM_DATE = "March 29, 2018";
+        public const string PROGRAM_DATE = "March 30, 2018";
 
         private static bool mCodeTestMode;
         private static bool mTraceMode;
@@ -358,30 +358,38 @@ namespace AnalysisManagerProg
                 Console.WriteLine();
                 Console.WriteLine("Use /NQ to disable posting status messages to the message queue");
                 Console.WriteLine();
-                Console.WriteLine("Use /NoMyEMSL to disable searching for files in MyEMSL. This is useful if MyEMSL is offline or the current user does not have read access to SimpleSearch");
+                Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
+                                      "Use /NoMyEMSL to disable searching for files in MyEMSL. " +
+                                      "This is useful if MyEMSL is offline or the current user does not have read access to SimpleSearch"));
                 Console.WriteLine();
                 Console.WriteLine("Use /T or /Test to start the program in code test mode.");
                 Console.WriteLine();
-                Console.WriteLine("Use /Trace or /Verbose to enable trace mode, where debug messages are written to the command prompt");
+                Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
+                                      "Use /Trace or /Verbose to enable trace mode, where debug messages are written to the command prompt"));
                 Console.WriteLine();
-                Console.WriteLine("Use /DLL to display the version of all DLLs in the same folder as this .exe");
-                Console.WriteLine("Use /DLL:Path to display the version of all DLLs in the specified folder (surround path with double quotes if spaces)");
+                Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
+                                      "Use /DLL to display the version of all DLLs in the same folder as this .exe"));
                 Console.WriteLine();
-
-                Console.WriteLine("Use /Offline to enable offline mode (database access and use of external servers is disabled). " +
-                                  "Requires that the ManagerSettingsLocal.xml file has several settings defined, including LocalTaskQueuePath and LocalWorkDirPath");
+                Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
+                                      "Use /DLL:Path to display the version of all DLLs in the specified folder (surround path with double quotes if spaces)"));
                 Console.WriteLine();
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
                                       "Use /PushRemote to use the DMSUpdateManager to push new/updated files to the remote host associated with this manager. " +
                                       "This is only valid if the manager has parameter RunJobsRemotely set to True in the Manager Control DB. " +
                                       "Ignored if /Offline is used."));
                 Console.WriteLine();
-                Console.WriteLine("Use /Linux to disable access to Windows-specific methods. " +
-                                  "Both /Offline and /Linux are auto-enabled if the path separation character is /");
+                Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
+                                      "Use /Offline to enable offline mode (database access and use of external servers is disabled). " +
+                                      "Requires that the ManagerSettingsLocal.xml file has several settings defined, including LocalTaskQueuePath and LocalWorkDirPath"));
+                Console.WriteLine();
+                Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
+                                      "Use /Linux to disable access to Windows-specific methods. " +
+                                      "Both /Offline and /Linux are auto-enabled if the path separation character is /"));
                 Console.WriteLine();
                 Console.WriteLine("Use /Version to see the program version and OS version");
                 Console.WriteLine();
-                Console.WriteLine("Program written by Dave Clark, Matthew Monroe, and John Sandoval for the Department of Energy (PNNL, Richland, WA)");
+                Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
+                                      "Program written by Dave Clark, Matthew Monroe, and John Sandoval for the Department of Energy (PNNL, Richland, WA)"));
                 Console.WriteLine();
 
                 Console.WriteLine("Version: " + GetAppVersion(PROGRAM_DATE));
