@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using PRISM.Logging;
 
 namespace AnalysisManagerBase
 {
@@ -27,72 +28,99 @@ namespace AnalysisManagerBase
             int compCode, string compMsg,
             int evalCode = 0, string evalMsg = "")
         {
+
             var infoFile = new FileInfo(infoFilePath);
-            if (!infoFile.Exists)
-                throw new FileNotFoundException(".info file not found: " + infoFilePath);
-
-            string targetFilePath;
-            if (succeeded)
-                targetFilePath = Path.ChangeExtension(infoFilePath, ".success");
-            else
-                targetFilePath = Path.ChangeExtension(infoFilePath, ".fail");
-
-            if (compMsg == null)
-                compMsg = string.Empty;
-
-            if (evalMsg == null)
-                evalMsg = string.Empty;
-
-            var settingsToAppend = new SortedSet<string> {
-                "Started",
-                "Finished",
-                "CompCode",
-                "CompMsg",
-                "EvalCode",
-                "EvalMsg"
-            };
-
-            using (var reader = new StreamReader(new FileStream(infoFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
-            using (var writer = new StreamWriter(new FileStream(targetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
-            {
-                while (!reader.EndOfStream)
-                {
-                    var dataLine = reader.ReadLine();
-                    if (string.IsNullOrWhiteSpace(dataLine))
-                    {
-                        writer.WriteLine(dataLine);
-                        continue;
-                    }
-
-                    var skipLine = false;
-                    foreach (var setting in settingsToAppend)
-                    {
-                        if (dataLine.StartsWith(setting + "=", StringComparison.OrdinalIgnoreCase))
-                            skipLine = true;
-                    }
-
-                    if (!skipLine)
-                        writer.WriteLine(dataLine);
-                }
-
-                if (startTime > DateTime.MinValue)
-                {
-                    writer.WriteLine("Started=" + startTime.ToLocalTime().ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
-                }
-
-                writer.WriteLine("Finished=" + DateTime.Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
-
-                writer.WriteLine("CompCode=" + compCode);
-                writer.WriteLine("CompMsg=" + compMsg);
-                writer.WriteLine("EvalCode=" + evalCode);
-                writer.WriteLine("EvalMsg=" + evalMsg);
-                writer.WriteLine("MgrName=" + managerName);
-            }
-
             var lockFile = new FileInfo(Path.ChangeExtension(infoFile.FullName, clsGlobal.LOCK_FILE_EXTENSION));
 
-            infoFile.Delete();
+            if (!infoFile.Exists)
+            {
+                if (lockFile.Exists)
+                {
+                    LogTools.LogError("Deleting lock file for missing .info file: " + infoFilePath);
+                    lockFile.Delete();
+                }
 
+                throw new FileNotFoundException(".info file not found: " + infoFilePath);
+            }
+
+            try
+            {
+
+                string targetFilePath;
+                if (succeeded)
+                    targetFilePath = Path.ChangeExtension(infoFilePath, ".success");
+                else
+                    targetFilePath = Path.ChangeExtension(infoFilePath, ".fail");
+
+                if (compMsg == null)
+                    compMsg = string.Empty;
+
+                if (evalMsg == null)
+                    evalMsg = string.Empty;
+
+                var settingsToAppend = new SortedSet<string>
+                {
+                    "Started",
+                    "Finished",
+                    "CompCode",
+                    "CompMsg",
+                    "EvalCode",
+                    "EvalMsg"
+                };
+
+                using (var reader = new StreamReader(new FileStream(infoFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var writer = new StreamWriter(new FileStream(targetFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
+                {
+                    while (!reader.EndOfStream)
+                    {
+                        var dataLine = reader.ReadLine();
+                        if (string.IsNullOrWhiteSpace(dataLine))
+                        {
+                            writer.WriteLine(dataLine);
+                            continue;
+                        }
+
+                        var skipLine = false;
+                        foreach (var setting in settingsToAppend)
+                        {
+                            if (dataLine.StartsWith(setting + "=", StringComparison.OrdinalIgnoreCase))
+                                skipLine = true;
+                        }
+
+                        if (!skipLine)
+                            writer.WriteLine(dataLine);
+                    }
+
+                    if (startTime > DateTime.MinValue)
+                    {
+                        writer.WriteLine("Started=" + startTime.ToLocalTime().ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
+                    }
+
+                    writer.WriteLine("Finished=" + DateTime.Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
+
+                    writer.WriteLine("CompCode=" + compCode);
+                    writer.WriteLine("CompMsg=" + compMsg);
+                    writer.WriteLine("EvalCode=" + evalCode);
+                    writer.WriteLine("EvalMsg=" + evalMsg);
+                    writer.WriteLine("MgrName=" + managerName);
+                }
+
+                infoFile.Delete();
+            }
+            catch (Exception ex)
+            {
+                LogTools.LogError("Error in FinalizeJob", ex);
+
+                if (lockFile.Exists)
+                {
+                    LogTools.LogMessage("Deleting the lock file, then re-throwing the exception");
+                    lockFile.Delete();
+                }
+
+                throw;
+            }
+
+            // No problems; delete the lock file
             if (lockFile.Exists)
                 lockFile.Delete();
 
