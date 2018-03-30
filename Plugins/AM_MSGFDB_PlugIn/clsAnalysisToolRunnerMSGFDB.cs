@@ -233,6 +233,21 @@ namespace AnalysisManagerMSGFDBPlugIn
         {
             fiMSGFPlusResults = new FileInfo(Path.Combine(m_WorkDir, Dataset + "_msgfplus.mzid"));
 
+            var splitFastaEnabled = m_jobParams.GetJobParameter("SplitFasta", false);
+            if (splitFastaEnabled)
+            {
+                var iteration = clsAnalysisResources.GetSplitFastaIteration(m_jobParams, out m_message);
+                var fiMSGFPlusResultsSplitFasta = new FileInfo(
+                    Path.Combine(m_WorkDir, Dataset + "_msgfplus" + "_Part" + iteration + ".mzid"));
+
+                if (!fiMSGFPlusResults.Exists && fiMSGFPlusResultsSplitFasta.Exists)
+                {
+                    fiMSGFPlusResultsSplitFasta.MoveTo(fiMSGFPlusResults.FullName);
+                    fiMSGFPlusResults.Refresh();
+                }
+
+            }
+
             processingError = false;
             tooManySkippedSpectra = false;
 
