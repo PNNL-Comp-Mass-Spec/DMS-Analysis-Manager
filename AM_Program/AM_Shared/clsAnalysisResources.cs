@@ -4370,6 +4370,14 @@ namespace AnalysisManagerBase
             {
                 var proteinCollectionInfo = new clsProteinCollectionInfo(m_jobParams);
 
+                var legacyFastaFileBaseName = string.Empty;
+
+                if (proteinCollectionInfo.UsingLegacyFasta && !string.IsNullOrWhiteSpace(proteinCollectionInfo.LegacyFastaName) &&
+                    proteinCollectionInfo.LegacyFastaName.ToLower() != "na")
+                {
+                    legacyFastaFileBaseName = Path.GetFileNameWithoutExtension(proteinCollectionInfo.LegacyFastaName);
+                }
+
                 if (clsGlobal.OfflineMode)
                 {
                     var fastaFileName = m_jobParams.GetJobParameter(JOB_PARAM_GENERATED_FASTA_NAME, string.Empty);
@@ -4396,7 +4404,7 @@ namespace AnalysisManagerBase
                         UpdateLastUsedfile(fastaFile);
                     }
 
-                    PurgeFastaFilesIfLowFreeSpace(orgDbDirectoryPath, freeSpaceThresholdPercent, 0, string.Empty);
+                    PurgeFastaFilesIfLowFreeSpace(orgDbDirectoryPath, freeSpaceThresholdPercent, 0, legacyFastaFileBaseName);
 
                     return success;
                 }
@@ -4411,14 +4419,6 @@ namespace AnalysisManagerBase
 
                 // Delete old fasta files and suffix array files if getting low on disk space
                 // Do not delete any files related to the current Legacy Fasta file (if defined)
-
-                var legacyFastaFileBaseName = string.Empty;
-
-                if (proteinCollectionInfo.UsingLegacyFasta && !string.IsNullOrWhiteSpace(proteinCollectionInfo.LegacyFastaName) &&
-                    proteinCollectionInfo.LegacyFastaName.ToLower() != "na")
-                {
-                    legacyFastaFileBaseName = Path.GetFileNameWithoutExtension(proteinCollectionInfo.LegacyFastaName);
-                }
 
                 PurgeFastaFilesIfLowFreeSpace(orgDbDirectoryPath, freeSpaceThresholdPercent, requiredFreeSpaceMB, legacyFastaFileBaseName);
 
