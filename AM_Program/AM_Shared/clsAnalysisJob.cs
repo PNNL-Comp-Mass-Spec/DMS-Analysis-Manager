@@ -1206,11 +1206,12 @@ namespace AnalysisManagerBase
                         continue;
                     }
 
-                    // Select the oldest file in jobStepInfoFiles
-                    var infoFileToProcess = (from item in jobStepInfoFiles.Values orderby item.Value.LastWriteTimeUtc select item.Value).First();
-
-                    if (SelectOfflineJobInfoFile(infoFileToProcess))
-                        return RequestTaskResult.TaskFound;
+                    // Find the oldest file in jobStepInfoFiles that does not have a .lock file
+                    foreach (var infoFileToProcess in (from item in jobStepInfoFiles.Values orderby item.Value.LastWriteTimeUtc select item.Value))
+                    {
+                        if (SelectOfflineJobInfoFile(infoFileToProcess))
+                            return RequestTaskResult.TaskFound;
+                    }
 
                 }
 
