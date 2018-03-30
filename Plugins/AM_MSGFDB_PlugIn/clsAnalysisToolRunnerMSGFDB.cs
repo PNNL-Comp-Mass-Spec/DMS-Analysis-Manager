@@ -1047,17 +1047,34 @@ namespace AnalysisManagerMSGFDBPlugIn
                 var modDefsFile = new FileInfo(Path.Combine(m_WorkDir, Path.GetFileNameWithoutExtension(paramFileName) + "_ModDefs.txt"));
 
                 var filesToRetrieve = new List<string> {
-                    Dataset + "_msgfplus.mzid.gz",
-                    Dataset + "_msgfplus_PepToProtMap.txt",
-                    Dataset + MSGFPlusUtils.MSGFPLUS_TSV_SUFFIX,
                     Dataset + "_ScanType.txt",
                     "Mass_Correction_Tags.txt",
                     modDefsFile.Name,
                     "MSGFPlus_Mods.txt",
-                    MSGFPlusUtils.MSGFPLUS_CONSOLE_OUTPUT_FILE,
                     paramFileName,
                     ToolVersionInfoFile,
                 };
+
+                string addon;
+                var splitFastaEnabled = m_jobParams.GetJobParameter("SplitFasta", false);
+                if (splitFastaEnabled)
+                {
+                    var iteration = clsAnalysisResources.GetSplitFastaIteration(m_jobParams, out m_message);
+                    addon = "_Part" + iteration;
+                }
+                else
+                {
+                    addon = string.Empty;
+                }
+
+                filesToRetrieve.Add(Dataset + "_msgfplus" + addon + ".mzid.gz");
+                filesToRetrieve.Add(Dataset + "_msgfplus" + addon + "_PepToProtMap.txt");
+
+                filesToRetrieve.Add(Dataset + Path.GetFileNameWithoutExtension(MSGFPlusUtils.MSGFPLUS_TSV_SUFFIX) + 
+                                    addon + Path.GetExtension(MSGFPlusUtils.MSGFPLUS_TSV_SUFFIX));
+
+                filesToRetrieve.Add(Path.GetFileNameWithoutExtension(MSGFPlusUtils.MSGFPLUS_CONSOLE_OUTPUT_FILE) + 
+                                    addon + Path.GetExtension(MSGFPlusUtils.MSGFPLUS_CONSOLE_OUTPUT_FILE));
 
                 var success = RetrieveRemoteResults(transferUtility, filesToRetrieve, verifyCopied, out retrievedFilePaths);
 
