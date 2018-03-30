@@ -1728,25 +1728,50 @@ namespace AnalysisManagerBase
             if (evalMsg == null)
                 evalMsg = string.Empty;
 
+            if (TaskClosed && clsGlobal.OfflineMode)
+            {
+                // Make sure a .lock file does not exist
+                var lockFile = new FileInfo(Path.ChangeExtension(m_OfflineJobInfoFile.FullName, clsGlobal.LOCK_FILE_EXTENSION));
+                if (lockFile.Exists)
+                {
+                    LogWarning(string.Format(
+                                   "Job {0} has already been closed; however, a lock file still exists at {1}; re-trying the call to FinalizeJob",
+                                   m_JobId, lockFile.FullName));
+
+                    TaskClosed = false;
+                }
+            }
+
             if (TaskClosed)
             {
-                LogWarning("Job " + m_JobId + " has already been closed; will not call " + SP_NAME_SET_COMPLETE + " again");
+                // Job 1234567 has already been closed; will not call SetStepTaskComplete again
+                LogWarning(string.Format(
+                               "Job {0} has already been closed; will not call {1} again",
+                               m_JobId, SP_NAME_SET_COMPLETE));
+                return;
+            }
+
+            TaskClosed = true;
+            if (clsGlobal.OfflineMode)
+            {
+                if (m_OfflineJobInfoFile == null)
+                {
+                    LogError("Cannot finalize offline job; m_OfflineJobInfoFile is null for job" + m_JobId);
+                    return;
+                }
+
+                var succeeded = SuccessOrNoData(closeOut);
+                clsOfflineProcessing.FinalizeJob(m_OfflineJobInfoFile.FullName, ManagerName, succeeded, startTime, compCode, compMsg, evalCode, evalMsg);
             }
             else
             {
-                TaskClosed = true;
-                if (clsGlobal.OfflineMode)
+                if (!SetAnalysisJobComplete(compCode, compMsg, evalCode, evalMsg))
                 {
-                    if (m_OfflineJobInfoFile == null)
-                    {
-                        LogError("Cannot finalize offline job; m_OfflineJobInfoFile is null");
-                        return;
-                    }
-
-                    var succeeded = SuccessOrNoData(closeOut);
-                    clsOfflineProcessing.FinalizeJob(m_OfflineJobInfoFile.FullName, ManagerName, succeeded, startTime, compCode, compMsg, evalCode, evalMsg);
+                    LogError("Error setting job complete in database, job " + m_JobId);
                 }
-                else
+            }
+
+        }
 
         /// <summary>
         /// Find the newest file in the given directory
