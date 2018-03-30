@@ -901,6 +901,10 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return resultsFileName;
 
                 filePathNew = Path.Combine(m_WorkDir, fileNameNew);
+
+                if (File.Exists(filePathNew))
+                    File.Delete(filePathNew);
+
                 fiFile.MoveTo(filePathNew);
 
                 return fileNameNew;
