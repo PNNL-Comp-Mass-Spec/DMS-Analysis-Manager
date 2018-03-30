@@ -217,7 +217,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 while (true)
                 {
 
-                    // Copy the FASTA file to the remote computer
+                    // Copy the FASTA file and related index files to the remote computer
                     var copyOrgDbSuccess = CopyGeneratedOrgDBToRemote(transferUtility);
                     if (copyOrgDbSuccess)
                         return true;
@@ -384,6 +384,14 @@ namespace AnalysisManagerMSGFDBPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
+            var cDtaValidated = m_jobParams.GetJobParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, "ValidatedCDtaIsCentroided", false);
+
+            if (cDtaValidated)
+            {
+                LogMessage("Previously validated that the _dta.txt file has centroided spectra");
+                return CloseOutType.CLOSEOUT_SUCCESS;
+            }
+
             // Make sure that the spectra are centroided
             var cdtaPath = Path.Combine(m_WorkingDir, DatasetName + "_dta.txt");
 
@@ -395,6 +403,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
+            m_jobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, "ValidatedCDtaIsCentroided", true);
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
@@ -557,5 +566,9 @@ namespace AnalysisManagerMSGFDBPlugIn
             return false;
         }
 
+        private void MSGFPlusUtils_IgnorePreviousErrorEvent(string messageToIgnore)
+        {
+            m_message = m_message.Replace(messageToIgnore, string.Empty).Trim(';', ' ');
+        }
     }
 }
