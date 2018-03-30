@@ -163,7 +163,8 @@ namespace AnalysisManagerProg
 
             // Define the default logging info
             // This will get updated below
-            LogTools.CreateFileLogger(DEFAULT_BASE_LOGFILE_NAME, BaseLogger.LogLevels.DEBUG);
+            var baseLogFileName = clsGlobal.LinuxOS ? DEFAULT_BASE_LOGFILE_NAME.Replace('\\', '/') : DEFAULT_BASE_LOGFILE_NAME;
+            LogTools.CreateFileLogger(baseLogFileName, BaseLogger.LogLevels.DEBUG);
 
             if (!clsGlobal.OfflineMode)
             {
@@ -1541,11 +1542,8 @@ namespace AnalysisManagerProg
         /// <returns></returns>
         public static string GetBaseLogFileName(IMgrParams mgrParams)
         {
-            var logFileNameBase = mgrParams.GetParam("logfilename");
-            if (string.IsNullOrWhiteSpace(logFileNameBase))
-                return DEFAULT_BASE_LOGFILE_NAME;
-
-            return logFileNameBase;
+            var logFileNameBase = mgrParams.GetParam("logfilename", DEFAULT_BASE_LOGFILE_NAME);
+            return clsGlobal.LinuxOS ? logFileNameBase.Replace('\\', '/') : logFileNameBase;
         }
 
         private string GetRecentLogFilename()
