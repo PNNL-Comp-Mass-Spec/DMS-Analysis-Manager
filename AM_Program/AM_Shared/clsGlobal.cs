@@ -126,6 +126,9 @@ namespace AnalysisManagerBase
 
             if (string.IsNullOrWhiteSpace(baseComment))
             {
+                if (string.IsNullOrWhiteSpace(addnlComment))
+                    return string.Empty;
+
                 return addnlComment.Trim();
             }
 
