@@ -993,10 +993,11 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Rename or delete old directories in the WorkDirs specified by any .info files in the task queue directory
+        /// Rename or delete old directories in the WorkDirs specified by any .info files below the base task queue directory
+        /// Ignores files in the /Completed/ directory
         /// </summary>
-        /// <param name="taskQueueDirectory"></param>
-        private void PurgeOldOfflineWorkDirs(DirectoryInfo taskQueueDirectory)
+        /// <param name="taskQueuePathBase"></param>
+        private void PurgeOldOfflineWorkDirs(string taskQueuePathBase)
         {
             const int ORPHANED_THRESHOLD_HOURS = 4;
             const int PURGE_THRESHOLD_DAYS = 10;
@@ -1007,19 +1008,35 @@ namespace AnalysisManagerBase
                 var jobStepMatcher = new Regex(@"^Job\d+_Step\d+$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
                 var xJobStepMatcher = new Regex(@"^x_Job\d+_Step\d+$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-                var infoFiles = taskQueueDirectory.GetFiles("*.info");
-                if (infoFiles.Length == 0)
+                // Find all .info, .fail, or .success files below taskQueuePathBase
+
+                var taskQueuePathBaseDir = new DirectoryInfo(taskQueuePathBase);
+                var taskInfoFiles = new List<FileInfo>();
+
+                taskInfoFiles.AddRange(taskQueuePathBaseDir.GetFiles("*.info", SearchOption.AllDirectories));
+                taskInfoFiles.AddRange(taskQueuePathBaseDir.GetFiles("*.success", SearchOption.AllDirectories));
+                taskInfoFiles.AddRange(taskQueuePathBaseDir.GetFiles("*.fail", SearchOption.AllDirectories));
+
+                if (taskInfoFiles.Count == 0)
                     return;
 
-                // Construct a list of WorkDir paths tracked by the current .info files
+                // Construct a list of WorkDir paths tracked by the current .info, .fail, and .success files
                 // Also keep track of the parent directory (or directories) of the job-specific Work Dirs
 
                 var activeWorkDirs = new Dictionary<string, DirectoryInfo>();
                 var parentWorkDirs = new Dictionary<string, DirectoryInfo>();
 
-                foreach (var infoFile in infoFiles)
+                var archivedDirName = Path.DirectorySeparatorChar + clsRemoteMonitor.ARCHIVED_TASK_QUEUE_DIRECTORY_NAME + Path.DirectorySeparatorChar;
+
+                foreach (var taskInfoFile in taskInfoFiles)
                 {
-                    var success = ReadOfflineJobInfoFile(infoFile, out _, out _, out var workDirPath, out _);
+                    if (taskInfoFile.FullName.Contains(archivedDirName))
+                    {
+                        // Ignore files in the Completed directory
+                        continue;
+                    }
+
+                    var success = ReadOfflineJobInfoFile(taskInfoFile, out _, out _, out var workDirPath, out _);
                     if (!success || string.IsNullOrWhiteSpace(workDirPath))
                         continue;
 
@@ -1052,6 +1069,7 @@ namespace AnalysisManagerBase
 
                     // x_JobX_StepY directories older than this date are deleted
                     var purgeThresholdUtc = DateTime.UtcNow.AddDays(-PURGE_THRESHOLD_DAYS);
+
 
                     foreach (var workDir in workDirs)
                     {
@@ -1161,7 +1179,7 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                LogError("Exception looking for old WorkDirs in " + taskQueueDirectory.FullName, ex);
+                LogError("Exception looking for old WorkDirs for .info, .success, and .fail files below " + taskQueuePathBase, ex);
             }
 
         }
@@ -1397,6 +1415,8 @@ namespace AnalysisManagerBase
                 // Reset various tracking variables, including TaskClosed
                 Reset();
 
+                PurgeOldOfflineWorkDirs(taskQueuePathBase);
+
                 foreach (var stepTool in stepTools)
                 {
                     var taskQueueDirectory = new DirectoryInfo(Path.Combine(taskQueuePathBase, stepTool.Trim()));
@@ -1411,8 +1431,6 @@ namespace AnalysisManagerBase
                     var infoFiles = taskQueueDirectory.GetFiles("*.info");
                     if (infoFiles.Length == 0)
                         continue;
-
-                    PurgeOldOfflineWorkDirs(taskQueueDirectory);
 
                     // Keys in this dictionary are of the form Job1449939_Step3
                     // Values are are KeyValuePair of Timestamp and .info file, where Timestamp is of the form 20170518_0353
