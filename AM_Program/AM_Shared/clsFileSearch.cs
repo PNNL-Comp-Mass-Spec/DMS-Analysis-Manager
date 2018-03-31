@@ -1083,9 +1083,6 @@ namespace AnalysisManagerBase
         public bool RetrieveCachedMSXMLFile(string resultFileExtension, bool unzip, out string errorMessage, out bool fileMissingFromCache)
         {
 
-            var msXMLCacheFolderPath = m_mgrParams.GetParam("MSXMLCacheFolderPath", string.Empty);
-            var diMSXmlCacheFolder = new DirectoryInfo(msXMLCacheFolderPath);
-
             errorMessage = string.Empty;
             fileMissingFromCache = false;
 
@@ -1094,6 +1091,47 @@ namespace AnalysisManagerBase
                 errorMessage = "resultFileExtension is empty; should be .mzXML or .mzML";
                 return false;
             }
+
+            if (clsGlobal.OfflineMode)
+            {
+                // Look for the .mzML file in the working directory
+                var localMsXmlFile = new FileInfo(Path.Combine(m_WorkingDir, DatasetName + resultFileExtension));
+                if (localMsXmlFile.Exists)
+                {
+                    OnStatusEvent(string.Format("Using {0} file {1}", resultFileExtension, localMsXmlFile.Name));
+                    return true;
+                }
+
+                var localMsXmlGzFile = new FileInfo(localMsXmlFile.FullName + clsAnalysisResources.DOT_GZ_EXTENSION);
+                if (!localMsXmlGzFile.Exists)
+                {
+                    errorMessage = string.Format(
+                        "Could not find a {0} file or {1} file for this dataset in the working directory",
+                        resultFileExtension, resultFileExtension + clsAnalysisResources.DOT_GZ_EXTENSION);
+
+                    OnWarningEvent(errorMessage);
+                    return false;
+                }
+
+                if (!unzip)
+                    return true;
+
+                if (GUnzipFile(localMsXmlGzFile.FullName))
+                    return true;
+
+                errorMessage = m_DotNetZipTools.Message;
+                return false;
+            }
+
+            var msXMLCacheFolderPath = m_mgrParams.GetParam("MSXMLCacheFolderPath", string.Empty);
+
+            if (string.IsNullOrWhiteSpace(msXMLCacheFolderPath))
+            {
+                errorMessage = "Manager parameter MSXMLCacheFolderPath is not defined";
+                return false;
+            }
+
+            var diMSXmlCacheFolder = new DirectoryInfo(msXMLCacheFolderPath);
 
             if (!diMSXmlCacheFolder.Exists)
             {
