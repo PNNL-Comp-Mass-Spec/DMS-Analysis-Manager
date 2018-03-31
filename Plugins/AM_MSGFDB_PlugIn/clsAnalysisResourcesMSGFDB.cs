@@ -143,6 +143,30 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <returns>True if success, false if an error</returns>
         public override bool CopyResourcesToRemote(clsRemoteTransferUtility transferUtility)
         {
+            // Lookup scan stats
+            try
+            {
+                var msgfPlusUtils = new MSGFPlusUtils(m_mgrParams, m_jobParams, m_WorkingDir, m_DebugLevel);
+                RegisterEvents(msgfPlusUtils);
+
+                var success = msgfPlusUtils.LookupScanTypesForDataset(DatasetName, out var countLowResMSn, out var countHighResMSn, out var countHCDMSn);
+                if (!success)
+                {
+                    LogError("LookupScanTypesForDataset returned false for dataset " + DatasetName);
+                    return false;
+                }
+
+                m_jobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, MSGFPlusUtils.SCANCOUNT_LOWRES_MSN, countLowResMSn);
+                m_jobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, MSGFPlusUtils.SCANCOUNT_HIGHRES_MSN, countHighResMSn);
+                m_jobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, MSGFPlusUtils.SCANCOUNT_HCD_MSN, countHCDMSn);
+
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception looking up scan counts for dataset " + DatasetName, ex);
+                return false;
+            }
+
             try
             {
                 // Save job parameters to XML file JobParams.xml
@@ -216,7 +240,6 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 while (true)
                 {
-
                     // Copy the FASTA file and related index files to the remote computer
                     var copyOrgDbSuccess = CopyGeneratedOrgDBToRemote(transferUtility);
                     if (copyOrgDbSuccess)

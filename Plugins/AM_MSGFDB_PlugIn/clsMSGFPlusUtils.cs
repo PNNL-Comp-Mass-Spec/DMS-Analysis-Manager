@@ -2659,7 +2659,15 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
         }
 
-        private bool LookupScanTypesForDataset(string datasetName, out int countLowResMSn, out int countHighResMSn, out int countHCDMSn)
+        /// <summary>
+        /// Contact the database to determine the number of MSn scans of various type for the given dataset
+        /// </summary>
+        /// <param name="datasetName"></param>
+        /// <param name="countLowResMSn"></param>
+        /// <param name="countHighResMSn"></param>
+        /// <param name="countHCDMSn"></param>
+        /// <returns></returns>
+        public bool LookupScanTypesForDataset(string datasetName, out int countLowResMSn, out int countHighResMSn, out int countHCDMSn)
         {
             countLowResMSn = 0;
             countHighResMSn = 0;
@@ -2728,7 +2736,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Exception in LookupScanTypersForDataset", ex);
+                OnErrorEvent("Exception in LookupScanTypesForDataset", ex);
                 return false;
             }
         }
