@@ -32,7 +32,7 @@ namespace AnalysisManagerProg
 {
     static class modMain
     {
-        public const string PROGRAM_DATE = "March 30, 2018";
+        public const string PROGRAM_DATE = "March 31, 2018";
 
         private static bool mCodeTestMode;
         private static bool mTraceMode;

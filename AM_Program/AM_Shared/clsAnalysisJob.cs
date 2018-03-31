@@ -9,7 +9,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Linq;
-using DMSUpdateManager;
 using PRISM.Logging;
 using PRISM;
 
@@ -999,8 +998,8 @@ namespace AnalysisManagerBase
         /// <param name="taskQueuePathBase"></param>
         private void PurgeOldOfflineWorkDirs(string taskQueuePathBase)
         {
-            const int ORPHANED_THRESHOLD_HOURS = 4;
-            const int PURGE_THRESHOLD_DAYS = 10;
+            const int ORPHANED_THRESHOLD_DAYS = 5;
+            const int PURGE_THRESHOLD_DAYS = 14;
 
             try
             {
