@@ -1035,6 +1035,9 @@ namespace AnalysisManagerBase
                         continue;
                     }
 
+                    if (TraceMode)
+                        ConsoleMsgUtils.ShowDebug("  Reading task info file " + taskInfoFile.FullName);
+
                     var success = ReadOfflineJobInfoFile(taskInfoFile, out _, out _, out var workDirPath, out _);
                     if (!success || string.IsNullOrWhiteSpace(workDirPath))
                         continue;
@@ -1059,6 +1062,9 @@ namespace AnalysisManagerBase
                 {
                     // Find all directories named JobX_StepY in parentWorkDir
 
+                    if (TraceMode)
+                        ConsoleMsgUtils.ShowDebug("Finding Job_Step directories in " + parentWorkDir.FullName);
+
                     var workDirs = parentWorkDir.GetDirectories("Job*_Step*", SearchOption.TopDirectoryOnly);
                     if (workDirs.Length == 0)
                         continue;
@@ -1069,11 +1075,15 @@ namespace AnalysisManagerBase
                     // x_JobX_StepY directories older than this date are deleted
                     var purgeThresholdUtc = DateTime.UtcNow.AddDays(-PURGE_THRESHOLD_DAYS);
 
-
                     foreach (var workDir in workDirs)
                     {
                         if (activeWorkDirs.ContainsKey(workDir.FullName))
                         {
+                            if (TraceMode)
+                                ConsoleMsgUtils.ShowDebug(string.Format(
+                                                              "  Ignore {0} since referred to by a recent task info file",
+                                                              workDir.Name));
+
                             // This work dir is active; ignore it
                             continue;
                         }
@@ -1088,15 +1098,20 @@ namespace AnalysisManagerBase
                         if (!jobStepMatcher.IsMatch(workDir.Name))
                         {
                             if (TraceMode)
-                                LogDebug("Ignore WorkDir directory since not of the form JobX_StepY: " + workDir.FullName);
+                                ConsoleMsgUtils.ShowDebug("  Ignore WorkDir directory since not of the form JobX_StepY: " + workDir.FullName);
                             continue;
                         }
 
                         // Determine when the directory (or any files in it) were last updated
-                        var newestDateUtc = GetDirectoryLastWriteTime(workDir);
+                        var lastModifiedUtc = GetDirectoryLastWriteTime(workDir);
 
-                        if (newestDateUtc >= orphanedDateThresholdUtc)
+                        if (lastModifiedUtc >= orphanedDateThresholdUtc)
                         {
+                            if (TraceMode)
+                                ConsoleMsgUtils.ShowDebug(string.Format(
+                                                              "  Ignoring {0} since last modified {1}",
+                                                              workDir.Name, lastModifiedUtc.ToLocalTime()));
+
                             // Files in the WorkDir are less than 5 days old; leave it unchanged
                             continue;
                         }
@@ -1128,6 +1143,9 @@ namespace AnalysisManagerBase
 
                     }
 
+                    if (TraceMode)
+                        ConsoleMsgUtils.ShowDebug("Finding x_Job_Step directories in " + parentWorkDir.FullName);
+
                     var oldWorkDirs = parentWorkDir.GetDirectories("x_Job*_Step*", SearchOption.TopDirectoryOnly);
                     if (oldWorkDirs.Length == 0)
                         continue;
@@ -1145,15 +1163,20 @@ namespace AnalysisManagerBase
                         if (!xJobStepMatcher.IsMatch(oldWorkDir.Name))
                         {
                             if (TraceMode)
-                                LogDebug("Ignore x_WorkDir directory since not of the form x_JobX_StepY: " + oldWorkDir.FullName);
+                                LogDebug("  Ignore x_WorkDir directory since not of the form x_JobX_StepY: " + oldWorkDir.FullName);
                             continue;
                         }
 
                         // Determine when the directory (or any files in it) were last updated
-                        var newestDateUtc = GetDirectoryLastWriteTime(oldWorkDir);
+                        var lastModifiedUtc = GetDirectoryLastWriteTime(oldWorkDir);
 
-                        if (newestDateUtc >= purgeThresholdUtc)
+                        if (lastModifiedUtc >= purgeThresholdUtc)
                         {
+                            if (TraceMode)
+                                ConsoleMsgUtils.ShowDebug(string.Format(
+                                                              "  Ignoring {0} since last modified {1}",
+                                                              oldWorkDir.Name, lastModifiedUtc.ToLocalTime()));
+
                             // Files in the old WorkDir are less than 14 days old; leave it unchanged
                             continue;
                         }
