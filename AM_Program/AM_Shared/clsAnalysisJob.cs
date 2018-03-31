@@ -1065,7 +1065,7 @@ namespace AnalysisManagerBase
                         continue;
 
                     // JobX_StepY directories older than this time are renamed to x_
-                    var orphanedDateThresholdUtc = DateTime.UtcNow.AddHours(-ORPHANED_THRESHOLD_HOURS);
+                    var orphanedDateThresholdUtc = DateTime.UtcNow.AddDays(-ORPHANED_THRESHOLD_DAYS);
 
                     // x_JobX_StepY directories older than this date are deleted
                     var purgeThresholdUtc = DateTime.UtcNow.AddDays(-PURGE_THRESHOLD_DAYS);
@@ -1093,12 +1093,12 @@ namespace AnalysisManagerBase
                             continue;
                         }
 
-                        // Find the newest file in this work dir
-                        var newestFile = GetNewestFileInDirectory(workDir);
+                        // Determine when the directory (or any files in it) were last updated
+                        var newestDateUtc = GetDirectoryLastWriteTime(workDir);
 
-                        if (newestFile == null || newestFile.LastWriteTimeUtc >= orphanedDateThresholdUtc)
+                        if (newestDateUtc >= orphanedDateThresholdUtc)
                         {
-                            // Files in the WorkDir are recent; ignore it
+                            // Files in the WorkDir are less than 5 days old; leave it unchanged
                             continue;
                         }
 
@@ -1150,11 +1150,12 @@ namespace AnalysisManagerBase
                             continue;
                         }
 
-                        var newestFile = GetNewestFileInDirectory(oldWorkDir);
+                        // Determine when the directory (or any files in it) were last updated
+                        var newestDateUtc = GetDirectoryLastWriteTime(oldWorkDir);
 
-                        if (newestFile == null || newestFile.LastWriteTimeUtc >= purgeThresholdUtc)
+                        if (newestDateUtc >= purgeThresholdUtc)
                         {
-                            // Files in the old WorkDir are less than 10 days old; ignore it
+                            // Files in the old WorkDir are less than 14 days old; leave it unchanged
                             continue;
                         }
 
@@ -1818,34 +1819,33 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Find the newest file in the given directory
+        /// Determine the most recent time that a file in a directory was changed, or that the directory itself was changed
         /// </summary>
         /// <param name="directory"></param>
         /// <param name="recurse"></param>
-        /// <returns>FileOrDirectoryInfo instance of the newest file</returns>
+        /// <returns>UTC time of last change to files in the directory or the directory itself</returns>
         /// <remarks>
         /// If the directory has no files, the returned file info will be for a
         /// non-existent file named Placeholder.txt, with the date of the directory's last write time</remarks>
-        private FileOrDirectoryInfo GetNewestFileInDirectory(DirectoryInfo directory, bool recurse = false)
+        private DateTime GetDirectoryLastWriteTime(DirectoryInfo directory, bool recurse = false)
         {
 
-            var newestDate = DateTime.MinValue;
-            var newestFile = new FileOrDirectoryInfo(
-                Path.Combine(directory.FullName, "Placeholder.txt"), false, 0,
-                directory.LastWriteTime, directory.LastWriteTimeUtc, clsGlobal.LinuxOS);
+            var newestDateUtc = DateTime.MinValue;
 
             var searchOption = recurse ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
 
             foreach (var workDirFile in directory.GetFiles("*", searchOption))
             {
-                if (workDirFile.LastWriteTime > newestDate)
+                if (workDirFile.LastWriteTimeUtc > newestDateUtc)
                 {
-                    newestDate = workDirFile.LastWriteTime;
-                    newestFile = new FileOrDirectoryInfo(workDirFile);
+                    newestDateUtc = workDirFile.LastWriteTimeUtc;
                 }
             }
 
-            return newestFile;
+            if (directory.LastWriteTimeUtc > newestDateUtc)
+                newestDateUtc = directory.LastWriteTimeUtc;
+
+            return newestDateUtc;
         }
 
         /// <summary>
