@@ -23,6 +23,12 @@ namespace AnalysisManagerBase
 
         private const int STALE_JOBSTATUS_FILE_AGE_HOURS = 24;
 
+        /// <summary>
+        /// Name of the directory under which completed status files will be archived
+        /// Files will be stored in a year-based directory, e.g. /Completed/2018/
+        /// </summary>
+        public const string ARCHIVED_TASK_QUEUE_DIRECTORY_NAME = "Completed";
+
         #endregion
 
         #region "Enums"
@@ -212,10 +218,10 @@ namespace AnalysisManagerBase
                 if (statusFiles.Count == 0)
                     return true;
 
-                var archiveFolderPathBase = clsPathUtils.CombineLinuxPaths(TransferUtility.RemoteTaskQueuePath, "Completed");
-                var archiveFolderPath = clsPathUtils.CombineLinuxPaths(archiveFolderPathBase, DateTime.Now.Year.ToString());
+                var archiveDirPathBase = clsPathUtils.CombineLinuxPaths(TransferUtility.RemoteTaskQueuePath, ARCHIVED_TASK_QUEUE_DIRECTORY_NAME);
+                var archiveDirPath = clsPathUtils.CombineLinuxPaths(archiveDirPathBase, DateTime.Now.Year.ToString());
 
-                TransferUtility.CreateRemoteDirectories(new List<string> { archiveFolderPathBase, archiveFolderPath });
+                TransferUtility.CreateRemoteDirectories(new List<string> { archiveDirPathBase, archiveDirPath });
 
                 // Do not transfer .info, .lock, or .jobstatus files to the archive folder
 
@@ -226,7 +232,7 @@ namespace AnalysisManagerBase
                     TransferUtility.JobStatusFile
                 };
 
-                TransferUtility.MoveFiles(statusFiles, archiveFolderPath, filesToDelete);
+                TransferUtility.MoveFiles(statusFiles, archiveDirPath, filesToDelete);
 
                 return true;
             }
