@@ -172,10 +172,20 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="sectionName">Section name for parameter</param>
         /// <param name="paramName">Name of parameter</param>
-        /// <param name="paramValue">Boolean alue for parameter</param>
+        /// <param name="paramValue">Boolean value for parameter</param>
         /// <returns>True if success, False if an error</returns>
         /// <remarks></remarks>
         bool AddAdditionalParameter(string sectionName, string paramName, bool paramValue);
+
+        /// <summary>
+        /// Adds (or updates) a job parameter
+        /// </summary>
+        /// <param name="sectionName">Section name for parameter</param>
+        /// <param name="paramName">Name of parameter</param>
+        /// <param name="paramValue">Integer value for parameter</param>
+        /// <returns>True if success, False if an error</returns>
+        /// <remarks></remarks>
+        bool AddAdditionalParameter(string sectionName, string paramName, int paramValue);
 
         /// <summary>
         /// Add new dataset name and ID to DatasetInfoList

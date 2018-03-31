@@ -198,7 +198,30 @@ namespace AnalysisManagerBase
             try
             {
                 SetParam(sectionName, paramName, paramValue.ToString());
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception adding parameter: " + paramName + " Value: " + paramValue, ex);
+                return false;
+            }
 
+        }
+
+        /// <summary>
+        /// Adds (or updates) a job parameter
+        /// </summary>
+        /// <param name="sectionName">Section name for parameter</param>
+        /// <param name="paramName">Name of parameter</param>
+        /// <param name="paramValue">Integer value for parameter</param>
+        /// <returns>True if success, False if an error</returns>
+        /// <remarks></remarks>
+        public bool AddAdditionalParameter(string sectionName, string paramName, int paramValue)
+        {
+
+            try
+            {
+                SetParam(sectionName, paramName, paramValue.ToString());
                 return true;
             }
             catch (Exception ex)
@@ -226,7 +249,6 @@ namespace AnalysisManagerBase
                     paramValue = string.Empty;
 
                 SetParam(sectionName, paramName, paramValue);
-
                 return true;
             }
             catch (Exception ex)
