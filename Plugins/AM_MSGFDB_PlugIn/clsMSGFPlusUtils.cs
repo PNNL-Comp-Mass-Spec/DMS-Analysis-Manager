@@ -101,6 +101,10 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// </summary>
         public const string MOD_FILE_NAME = "MSGFPlus_Mods.txt";
 
+        public const string SCANCOUNT_LOWRES_MSN = "ScanCountLowResMSn";
+        public const string SCANCOUNT_HIGHRES_MSN = "ScanCountHighResMSn";
+        public const string SCANCOUNT_HCD_MSN = "ScanCountHCDMSn";
+
         #endregion
 
         #region "Events"
@@ -2275,7 +2279,27 @@ namespace AnalysisManagerMSGFDBPlugIn
                                     {
                                         var datasetName = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_DATASET_NAME);
 
-                                        if (LookupScanTypesForDataset(datasetName, out var countLowResMSn, out var countHighResMSn, out var countHCDMSn))
+                                        bool scanTypeLookupSuccess;
+                                        int countLowResMSn;
+                                        int countHighResMSn;
+                                        int countHCDMSn;
+
+                                        if (clsGlobal.OfflineMode)
+                                        {
+                                            countLowResMSn = m_jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, SCANCOUNT_LOWRES_MSN, 0);
+                                            countHighResMSn = m_jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, SCANCOUNT_HIGHRES_MSN, 0);
+                                            countHCDMSn = m_jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, SCANCOUNT_HCD_MSN, 0);
+
+                                            scanTypeLookupSuccess = (countLowResMSn + countHighResMSn + countHCDMSn) > 0;
+                                        }
+                                        else
+                                        {
+                                            scanTypeLookupSuccess =
+                                                LookupScanTypesForDataset(datasetName,
+                                                                          out countLowResMSn, out countHighResMSn, out countHCDMSn);
+                                        }
+
+                                        if (scanTypeLookupSuccess)
                                         {
                                             ExamineScanTypes(countLowResMSn, countHighResMSn, countHCDMSn, out instrumentIDNew, out autoSwitchReason);
                                         }
@@ -2581,7 +2605,6 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 // Count the number of High res CID or ETD spectra
                 // Count HCD spectra separately since MS-GF+ has a special scoring model for HCD spectra
-
 
                 var success = LoadScanTypeFile(scanTypeFilePath, out var lowResMSn, out var highResMSn, out var hcdMSn, out _);
 
