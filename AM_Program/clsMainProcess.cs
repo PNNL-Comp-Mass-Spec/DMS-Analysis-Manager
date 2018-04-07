@@ -76,7 +76,7 @@ namespace AnalysisManagerProg
 
         private int mPluginLoaderErrorCount;
 
-        private string mPluginLoaderStepTool  = string.Empty;
+        private string mPluginLoaderStepTool = string.Empty;
 
         #endregion
 
@@ -315,7 +315,8 @@ namespace AnalysisManagerProg
 
             // Setup the tool for getting tasks
             ShowTrace("Instantiate m_AnalysisTask as new clsAnalysisJob");
-            m_AnalysisTask = new clsAnalysisJob(m_MgrSettings, m_DebugLevel) {
+            m_AnalysisTask = new clsAnalysisJob(m_MgrSettings, m_DebugLevel)
+            {
                 TraceMode = TraceMode
             };
 
@@ -2882,17 +2883,9 @@ namespace AnalysisManagerProg
             return clsGlobal.ValidateFreeDiskSpace(directoryDescription, directoryPath, minFreeSpaceMB, out errorMessage, logToDatabase);
         }
 
-        private bool VerifyWorkDir()
         {
-            // Verify working directory is valid
-            if (!Directory.Exists(m_WorkDirPath))
             {
-                LogError("Invalid working directory: " + m_WorkDirPath);
-                clsGlobal.IdleLoop(1.5);
-                return false;
-            }
 
-            return true;
         }
 
         /// <summary>
@@ -2955,6 +2948,19 @@ namespace AnalysisManagerProg
 
             LogError("Working directory not empty: " + m_WorkDirPath);
             return false;
+        }
+
+        private bool VerifyWorkDir()
+        {
+            // Verify working directory is valid
+            if (!Directory.Exists(m_WorkDirPath))
+            {
+                LogError("Invalid working directory: " + m_WorkDirPath);
+                clsGlobal.IdleLoop(1.5);
+                return false;
+            }
+
+            return true;
         }
 
         /// <summary>
