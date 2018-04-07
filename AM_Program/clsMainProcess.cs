@@ -297,6 +297,13 @@ namespace AnalysisManagerProg
                 m_LocalSettingsFileWatcher.Changed += m_ConfigFileWatcher_Changed;
             }
 
+            if (clsGlobal.LinuxOS)
+            {
+                // Make sure System.Data.SQLite.dll is correct for this OS
+                // Do this prior to initializing m_AnalysisTask via new clsAnalysisJob
+                ValidateSQLiteDLL();
+            }
+
             // Get the debug level
             m_DebugLevel = (short)m_MgrSettings.GetParam("debuglevel", 2);
 
@@ -2883,9 +2890,126 @@ namespace AnalysisManagerProg
             return clsGlobal.ValidateFreeDiskSpace(directoryDescription, directoryPath, minFreeSpaceMB, out errorMessage, logToDatabase);
         }
 
+        /// <summary>
+        /// Validate the SQLite DLL and interop.so file
+        /// (only called if clsGlobal.LinuxOS is true)
+        /// </summary>
+        /// <remarks>
+        /// Looks for subdirectories named SQLite_1.0.108
+        /// Compares the file size of System.Data.SQLite.dll and libSQLite.Interop.so 
+        /// in the subdirectory with the newest version with the versions in the manager directory
+        /// </remarks>
+        private void ValidateSQLiteDLL()
         {
-            {
+            const string SQLITE_DLL = "System.Data.SQLite.dll";
+            const string SQLITE_INTEROP_FILE = "libSQLite.Interop.so";
 
+            try
+            {
+                var activeDll = new FileInfo(Path.Combine(m_MgrDirectoryPath, SQLITE_DLL));
+
+                var mgrDir = new DirectoryInfo(m_MgrDirectoryPath);
+
+                // Find the newest SQLite_1.*.* directory
+                // For example, SQLite_1.0.108
+                var srcDirs = mgrDir.GetDirectories("SQLite_1.*.*");
+                if (srcDirs.Length == 0)
+                {
+                    LogWarning(string.Format(
+                        "Did not find any SQLite_1.x.y directories in the manager directory; " +
+                        "cannot confirm that {0} is up-to-date for this OS", SQLITE_DLL));
+                    return;
+                }
+
+                var srcDirVersions = new Dictionary<Version, DirectoryInfo>();
+
+                var sortedVersions = new SortedSet<Version>();
+
+                var versionMatcher = new Regex(@"(?<Major>\d+)\.(?<Minor>\d+)\.(?<Revision>\d+)$", RegexOptions.Compiled);
+
+                foreach (var srcDir in srcDirs)
+                {
+                    var match = versionMatcher.Match(srcDir.Name);
+                    if (!match.Success)
+                    {
+                        LogDebug(string.Format(
+                                     "Ignoring {0} since did not end with a version of the form X.Y.Z", srcDir.Name));
+                        continue;
+                    }
+
+                    var srcDirVersion = new Version(
+                        int.Parse(match.Groups["Major"].Value),
+                        int.Parse(match.Groups["Minor"].Value),
+                        int.Parse(match.Groups["Revision"].Value));
+
+                    if (sortedVersions.Contains(srcDirVersion))
+                        continue;
+
+                    srcDirVersions.Add(srcDirVersion, srcDir);
+                    sortedVersions.Add(srcDirVersion);
+                }
+
+                if (srcDirVersions.Count == 0)
+                {
+                    LogWarning(string.Format(
+                                   "Did not find any SQLite_1.x.y directories in the manager directory; " +
+                                   "cannot confirm that {0} is up-to-date for this OS", SQLITE_DLL));
+                    return;
+                }
+
+                // Select the newest SQLite_1.*.* directory
+                var newestSrcDir = srcDirVersions[sortedVersions.Last()];
+
+                var newestDll = new FileInfo(Path.Combine(newestSrcDir.FullName, SQLITE_DLL));
+                if (!newestDll.Exists)
+                {
+                    LogWarning(string.Format(
+                        "{0} is missing file {1}; cannot validate against the DLL in the manager directory",
+                        newestSrcDir.FullName, newestDll.Name));
+                    return;
+                }
+
+                if (!activeDll.Exists || activeDll.Length != newestDll.Length)
+                {
+                    // File sizes differ; replace the active DLL
+                    LogMessage(string.Format("Copying {0} to {1}", newestDll.FullName, mgrDir.FullName));
+                    newestDll.CopyTo(activeDll.FullName, true);
+                }
+
+                // Also look for a .so file below the SQLite_1.*.* directory
+
+                var soFiles = newestSrcDir.GetFiles(SQLITE_INTEROP_FILE, SearchOption.AllDirectories);
+                if (soFiles.Length == 0)
+                {
+                    LogWarning(string.Format(
+                                   "{0} is missing file {1}; cannot validate against the .so file in the manager directory",
+                                   newestSrcDir.FullName, SQLITE_INTEROP_FILE));
+                    return;
+                }
+
+                if (soFiles.Length > 1)
+                {
+                    LogWarning(string.Format(
+                                   "Found multiple {0} files in {1} (including subdirectories); cannot validate against the .so file in the manager directory",
+                                   SQLITE_INTEROP_FILE, newestSrcDir.FullName));
+                    return;
+                }
+
+                var activeInterop = new FileInfo(Path.Combine(mgrDir.FullName, SQLITE_INTEROP_FILE));
+                var newestInterop = soFiles.First();
+
+                if (!activeInterop.Exists || activeInterop.Length != newestInterop.Length)
+                {
+                    // File sizes differ; replace the active Interop.so file
+                    LogMessage(string.Format("Copying {0} to {1}", newestInterop.FullName, mgrDir.FullName));
+                    newestInterop.CopyTo(activeInterop.FullName, true);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception validating System.Data.SQLite.dll", ex);
+            }
         }
 
         /// <summary>
