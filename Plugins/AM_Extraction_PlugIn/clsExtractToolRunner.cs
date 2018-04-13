@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using AnalysisManagerBase;
 using AnalysisManagerMSGFDBPlugIn;
 using MSGFResultsSummarizer;
@@ -58,6 +59,7 @@ namespace AnalysisManagerExtractionPlugin
 
         private string mGeneratedFastaFilePath;
 
+        private string mMzidMergerConsoleOutputFilePath;
         #endregion
 
         #region "Methods"
@@ -140,26 +142,38 @@ namespace AnalysisManagerExtractionPlugin
                         }
 
                         break;
+
                     case clsAnalysisResources.RESULT_TYPE_XTANDEM:
                         // Run PHRP
                         currentAction = "running peptide hits result processor for X!Tandem";
                         result = RunPhrpForXTandem();
                         break;
+
                     case clsAnalysisResources.RESULT_TYPE_INSPECT:
                         // Run PHRP
                         currentAction = "running peptide hits result processor for Inspect";
                         result = RunPhrpForInSpecT();
                         break;
+
                     case clsAnalysisResources.RESULT_TYPE_MSGFPLUS:
                         // Run PHRP
                         currentAction = "running peptide hits result processor for MSGF+";
                         result = RunPhrpForMSGFPlus();
+
+                        var splitFastaEnabled = m_jobParams.GetJobParameter("SplitFasta", false);
+                        if (result == CloseOutType.CLOSEOUT_SUCCESS && splitFastaEnabled)
+                        {
+                            result = RunMzidMerger(Dataset + "_msgfplus_Part*.mzid", Dataset + "_msgfplus.mzid");
+                        }
+
                         break;
+
                     case clsAnalysisResources.RESULT_TYPE_MSALIGN:
                         // Run PHRP
                         currentAction = "running peptide hits result processor for MSAlign";
                         result = RunPhrpForMSAlign();
                         break;
+
                     case clsAnalysisResources.RESULT_TYPE_MODA:
                         // Convert the MODa results to a tab-delimited file; do not filter out the reversed-hit proteins
                         result = ConvertMODaResultsToTxt(out var filteredMODaResultsFilePath, true);
@@ -185,6 +199,7 @@ namespace AnalysisManagerExtractionPlugin
                         }
 
                         break;
+
                     case clsAnalysisResources.RESULT_TYPE_MODPLUS:
                         // Convert the MODPlus results to a tab-delimited file; do not filter out the reversed-hit proteins
                         result = ConvertMODPlusResultsToTxt(out var filteredMODPlusResultsFilePath, true);
@@ -210,11 +225,13 @@ namespace AnalysisManagerExtractionPlugin
                         }
 
                         break;
+
                     case clsAnalysisResources.RESULT_TYPE_MSPATHFINDER:
                         // Run PHRP
                         currentAction = "running peptide hits result processor for MSPathFinder";
                         result = RunPHRPForMSPathFinder();
                         break;
+
                     default:
                         // Should never get here - invalid result type specified
                         LogError("Invalid ResultType specified: " + m_jobParams.GetParam("ResultType"));
@@ -246,7 +263,6 @@ namespace AnalysisManagerExtractionPlugin
 
                 // Stop the job timer
                 m_StopTime = DateTime.UtcNow;
-
 
                 // Add the current job data to the summary file
                 UpdateSummaryFile();
@@ -944,6 +960,85 @@ namespace AnalysisManagerExtractionPlugin
             }
         }
 
+        private void ParseMzidMergerConsoleOutputFile()
+        {
+            try
+            {
+                var reFileCount = new Regex(@"Input files: \(count: (?<FileCount>\d+)\)");
+                var reMerging = new Regex(@"Merging file (?<MergeFile>\d+)");
+
+                var totalFiles = 0;
+                var filesMerged = 0;
+
+                float progressSubtask = 0;
+
+                if (!File.Exists(mMzidMergerConsoleOutputFilePath))
+                    return;
+
+                using (var srInFile = new StreamReader(new FileStream(mMzidMergerConsoleOutputFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                {
+                    while (!srInFile.EndOfStream)
+                    {
+                        var dataLine = srInFile.ReadLine();
+                        if (string.IsNullOrWhiteSpace(dataLine))
+                        {
+                            continue;
+                        }
+
+                        var matchFileCount = reFileCount.Match(dataLine);
+                        if (matchFileCount.Success)
+                        {
+                            totalFiles = int.Parse(matchFileCount.Groups["FileCount"].Value);
+                            continue;
+                        }
+
+                        var matchMerging = reMerging.Match(dataLine);
+                        if (matchMerging.Success)
+                        {
+                            var fileNumber = int.Parse(matchMerging.Groups["MergeFile"].Value);
+                            if (fileNumber > filesMerged)
+                                filesMerged = fileNumber;
+
+
+                            if (totalFiles > 0)
+                            {
+                                progressSubtask = ComputeIncrementalProgress(0, 75, filesMerged / (float)totalFiles * 100);
+                            }
+                            continue;
+                        }
+
+                        if (dataLine.StartsWith("Repopulating the sequence collection"))
+                        {
+                            progressSubtask = 85;
+                            continue;
+                        }
+
+                        if (dataLine.StartsWith("Writing merged file"))
+                        {
+                            progressSubtask = 95;
+                            continue;
+                        }
+
+                        if (dataLine.StartsWith("Total time to merge"))
+                        {
+                            progressSubtask = 100;
+                        }
+                    }
+                }
+
+                var progressOverall = ComputeIncrementalProgress(PROGRESS_PHRP_DONE, PROGRESS_PEPTIDE_PROPHET_OR_MZID_MERGE_DONE, progressSubtask);
+
+                if (progressOverall > m_progress)
+                {
+                    m_progress = progressOverall;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogWarning("Error parsing MzidMerger console output file: " + ex.Message);
+            }
+        }
+
         /// <summary>
         /// Perform peptide hit extraction for Sequest data
         /// </summary>
@@ -1005,6 +1100,144 @@ namespace AnalysisManagerExtractionPlugin
             phrp.ProgressChanged += PHRP_ProgressChanged;
             phrp.SkipConsoleWriteIfNoProgressListener = true;
 
+        }
+
+        private CloseOutType RunMzidMerger(string mzidFilenameMatchSpec, string combinedMzidFileName)
+        {
+
+            try
+            {
+
+                if (string.IsNullOrWhiteSpace(mzidFilenameMatchSpec))
+                {
+                    LogError("mzidFilenameMatchSpec is empty; unable to run the MzidMerger");
+                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                }
+
+                // Make sure the .mzid files exist
+                var workDir = new DirectoryInfo(m_WorkDir);
+                var mzidFiles = workDir.GetFiles(mzidFilenameMatchSpec);
+
+                if (mzidFiles.Length == 0)
+                {
+                    LogError(string.Format(
+                                 "Working directory does not have any files matching {0}; unable to run the MzidMerger", mzidFilenameMatchSpec));
+                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                }
+
+                mMzidMergerConsoleOutputFilePath = Path.Combine(m_WorkDir, "MzidMergerOutput.txt");
+
+                var progLoc = m_mgrParams.GetParam("MzidMergerProgLoc");
+                progLoc = Path.Combine(progLoc, "MzidMerger.exe");
+
+                // Verify that program file exists
+                if (!File.Exists(progLoc))
+                {
+                    LogError("MzidMerger not found at " + progLoc);
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                // Set up and execute a program runner to run the MzidMerger
+
+                var cmdStr = " -inDir " + PossiblyQuotePath(m_WorkDir) +
+                             " -filter " + PossiblyQuotePath(mzidFilenameMatchSpec) +
+                             " -keepOnlyBestResults" +
+                             " -out " + PossiblyQuotePath(combinedMzidFileName);
+
+                if (m_DebugLevel >= 1)
+                {
+                    LogDebug(progLoc + " " + cmdStr);
+                }
+
+                var cmdRunner = new clsRunDosProgram(m_WorkDir, m_DebugLevel)
+                {
+                    CreateNoWindow = true,
+                    CacheStandardOutput = true,
+                    EchoOutputToConsole = true,
+                    WriteConsoleOutputToFile = true,
+                    ConsoleOutputFilePath = mMzidMergerConsoleOutputFilePath
+                };
+                RegisterEvents(cmdRunner);
+                cmdRunner.LoopWaiting += MzidMerger_LoopWaiting;
+
+                // Abort MzidMerger if it runs for over 720 minutes (this generally indicates that it's stuck)
+                const int maxRuntimeSeconds = 720 * 60;
+                var success = cmdRunner.RunProgram(progLoc, cmdStr, "MzidMerger", true, maxRuntimeSeconds);
+
+                if (!success)
+                {
+                    LogError("Error running MzidMerger");
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                if (cmdRunner.ExitCode != 0)
+                {
+                    LogError("MzidMerger runner returned a non-zero error code: " + cmdRunner.ExitCode);
+
+                    // Parse the console output file for any lines that start with "ERROR:"
+
+                    var consoleOutputFile = new FileInfo(mMzidMergerConsoleOutputFilePath);
+                    var errorMessageFound = false;
+
+                    if (consoleOutputFile.Exists)
+                    {
+                        using (var reader = new StreamReader(new FileStream(consoleOutputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                        {
+                            while (!reader.EndOfStream)
+                            {
+                                var lineIn = reader.ReadLine();
+                                if (string.IsNullOrWhiteSpace(lineIn))
+                                    continue;
+
+                                if (!lineIn.ToUpper().StartsWith("ERROR:"))
+                                    continue;
+
+                                LogError(lineIn);
+                                errorMessageFound = true;
+                            }
+                        }
+                    }
+
+                    if (!errorMessageFound)
+                    {
+                        LogError("MzidMerger returned a non-zero exit code; unknown error");
+                    }
+
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                // Make sure the key MzidMerger result file was created
+
+                var combinedMzidFile = new FileInfo(Path.Combine(m_WorkDir, combinedMzidFileName));
+
+                if (!combinedMzidFile.Exists)
+                {
+                    LogError("Combined .mzid file not found: " + combinedMzidFileName);
+                    return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                // GZip the combined file
+                var combinedMzidGzFile = GZipFile(combinedMzidFile, true);
+                if (combinedMzidGzFile == null || !combinedMzidGzFile.Exists)
+                {
+                    // The error has already been logged
+                    return CloseOutType.CLOSEOUT_ERROR_ZIPPING_FILE;
+                }
+
+                m_jobParams.AddResultFileToSkip(mMzidMergerConsoleOutputFilePath);
+
+                if (m_DebugLevel >= 3)
+                {
+                    LogDebug("MzidMerger complete");
+                }
+
+                return CloseOutType.CLOSEOUT_SUCCESS;
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception while running the MzidMerger: " + ex.Message, ex);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
         }
 
         /// <summary>
@@ -2379,6 +2612,34 @@ namespace AnalysisManagerExtractionPlugin
                 return false;
             }
 
+            var splitFastaEnabled = m_jobParams.GetJobParameter("SplitFasta", false);
+            if (splitFastaEnabled)
+            {
+                // Lookup the version of the MzidMerger
+
+                try
+                {
+                    var progLoc = m_mgrParams.GetParam("MzidMergerProgLoc");
+                    var diMzidMerger = new DirectoryInfo(progLoc);
+
+                    // verify that program file exists
+                    if (diMzidMerger.Exists)
+                    {
+                        StoreToolVersionInfoOneFile64Bit(ref toolVersionInfo, Path.Combine(diMzidMerger.FullName, "MzidMerger.exe"));
+                    }
+                    else
+                    {
+                        LogError("MzidMerger directory not found at " + progLoc);
+                        return false;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogError("Exception determining Assembly info for the PeptideHitResultsProcessor: " + ex.Message, ex);
+                    return false;
+                }
+            }
+
             if (m_jobParams.GetParam("ResultType") == clsAnalysisResources.RESULT_TYPE_SEQUEST)
             {
                 // Sequest result type
@@ -2536,6 +2797,22 @@ namespace AnalysisManagerExtractionPlugin
                 LogErrorToDatabase(errorMessage);
             }
 
+        }
+
+        private DateTime dtLastMzidMergerUpdate = DateTime.MinValue;
+
+        /// <summary>
+        /// Event handler for CmdRunner.LoopWaiting event for MzidMerger
+        /// </summary>
+        /// <remarks></remarks>
+        private void MzidMerger_LoopWaiting()
+        {
+            // Update the status by parsing the PHRP console output file every 20 seconds
+            if (DateTime.UtcNow.Subtract(dtLastMzidMergerUpdate).TotalSeconds >= 20)
+            {
+                dtLastMzidMergerUpdate = DateTime.UtcNow;
+                ParseMzidMergerConsoleOutputFile();
+            }
         }
 
         #endregion
