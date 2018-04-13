@@ -113,6 +113,11 @@
 		AssemblyFile="AnalysisManagerExtractionPlugin.dll" 
 	/>
 	<ToolRunner 
+		Tool="dataextractorsplitfasta" 
+		Class="AnalysisManagerExtractionPlugin.clsExtractToolRunner" 
+		AssemblyFile="AnalysisManagerExtractionPlugin.dll" 
+	/>
+	<ToolRunner 
 		Tool="results_transfer" 
 		Class="AnalysisManagerResultsXferPlugin.clsResultXferToolRunner" 
 		AssemblyFile="AnalysisManagerResultsXferPlugin.dll" 
@@ -378,6 +383,11 @@
 	/>
 	<Resourcer 
 		Tool="dataextractor" 
+		Class="AnalysisManagerExtractionPlugin.clsAnalysisResourcesExtraction" 
+		AssemblyFile="AnalysisManagerExtractionPlugin.dll" 
+	/>
+	<Resourcer 
+		Tool="dataextractorsplitfasta" 
 		Class="AnalysisManagerExtractionPlugin.clsAnalysisResourcesExtraction" 
 		AssemblyFile="AnalysisManagerExtractionPlugin.dll" 
 	/>
