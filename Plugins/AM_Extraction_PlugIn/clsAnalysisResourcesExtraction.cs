@@ -200,7 +200,7 @@ namespace AnalysisManagerExtractionPlugin
                 return CloseOutType.CLOSEOUT_NO_OUT_FILES;
             }
 
-            // Note that we'll obtain the Sequest parameter file in RetrieveMiscFiles
+            // Note that we'll obtain the SEQUEST parameter file in RetrieveMiscFiles
 
             // Add all the extensions of the files to delete after run
             m_jobParams.AddResultFileExtensionToSkip("_dta.zip");    // Zipped DTA
@@ -380,6 +380,9 @@ namespace AnalysisManagerExtractionPlugin
 
                 currentStep = "Determining results file type based on the results file name";
                 var useLegacyMSGFDB = false;
+
+                // Look for file DatasetName_msgfplus.mzid.gz
+                // or for split fasta, DatasetName_msgfplus_Part1.mzid.gz
 
                 var fileToFind = DatasetName + "_msgfplus" + suffixToAdd + ".mzid.gz";
                 var sourceFolder = FileSearch.FindDataFile(fileToFind, true, false);
@@ -702,7 +705,7 @@ namespace AnalysisManagerExtractionPlugin
             {
                 // Call RetrieveGeneratedParamFile() now to re-create the parameter file, retrieve the _ModDefs.txt file,
                 //   and retrieve the MassCorrectionTags.txt file
-                // Although the ModDefs file should have been created when Sequest, X!Tandem, Inspect, MSGFDB, or MSAlign ran,
+                // Although the ModDefs file should have been created when SEQUEST, X!Tandem, Inspect, MSGF+, or MSAlign ran,
                 //   we re-generate it here just in case T_Param_File_Mass_Mods had missing information
                 // Furthermore, we need the search engine parameter file for the PHRPReader
 
@@ -732,16 +735,15 @@ namespace AnalysisManagerExtractionPlugin
 
                 if (ResultType == RESULT_TYPE_XTANDEM)
                 {
-                    // Retrieve the taxonomy.xml file (PHRPReader looks for it)
+                    // Retrieve the taxonomy.xml file (PHRPReader uses for it)
                     FileSearch.FindAndRetrieveMiscFiles("taxonomy.xml", false);
                 }
 
                 if (!fiModDefsFile.Exists && ResultType != RESULT_TYPE_MSALIGN)
                 {
                     m_message = "Unable to create the ModDefs.txt file; update T_Param_File_Mass_Mods";
-                    LogWarning(
-                        "Unable to create the ModDefs.txt file; define the modifications in table T_Param_File_Mass_Mods for parameter file " +
-                        paramFileName);
+                    LogWarning("Unable to create the ModDefs.txt file; " +
+                               "define the modifications in table T_Param_File_Mass_Mods for parameter file " + paramFileName);
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 

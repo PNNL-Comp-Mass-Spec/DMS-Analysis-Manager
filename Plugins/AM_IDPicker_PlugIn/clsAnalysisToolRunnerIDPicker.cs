@@ -110,6 +110,8 @@ namespace AnalysisManagerIDPickerPlugIn
 
                 // Determine the path to the IDPicker program (idpQonvert); folder will also contain idpAssemble.exe and idpReport.exe
                 var progLocQonvert = string.Empty;
+
+                // ReSharper disable ConditionIsAlwaysTrueOrFalse
                 if (!skipIDPicker)
                 {
                     progLocQonvert = DetermineProgramLocation("IDPickerProgLoc", IDPicker_Qonvert);
@@ -273,6 +275,8 @@ namespace AnalysisManagerIDPickerPlugIn
                         return CloseOutType.CLOSEOUT_FAILED;
                     }
                 }
+
+                // ReSharper restore ConditionIsAlwaysTrueOrFalse
 
                 var success = CopyResultsToTransferDirectory();
 
@@ -520,7 +524,7 @@ namespace AnalysisManagerIDPickerPlugIn
                 var iHitsPerSpectrum = m_jobParams.GetJobParameter("PepXMLHitsPerSpectrum", 3);
 
                 var cmdStr = PossiblyQuotePath(strSynFilePath) + " /E:" + PossiblyQuotePath(strParamFileName) + " /F:" +
-                                PossiblyQuotePath(strFastaFilePath) + " /H:" + iHitsPerSpectrum;
+                             PossiblyQuotePath(strFastaFilePath) + " /H:" + iHitsPerSpectrum;
 
                 if (ePHRPResultType == clsPHRPReader.ePeptideHitResultType.MODa | ePHRPResultType == clsPHRPReader.ePeptideHitResultType.MODPlus)
                 {
@@ -543,7 +547,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
                 if (blnSuccess)
                 {
-                    // Make sure a .pepXML file was created
+                    // Make sure the .pepXML file was created
                     if (!File.Exists(mPepXMLFilePath))
                     {
                         m_message = "Error creating PepXML file";

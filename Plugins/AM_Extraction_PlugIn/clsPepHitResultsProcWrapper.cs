@@ -108,7 +108,7 @@ namespace AnalysisManagerExtractionPlugin
             {
                 if (!createFirstHitsFile && !createSynopsisFile)
                 {
-                    ReportError("Must create either a first hits file or a synopsis file (or both); cannot continue");
+                    ReportError("Must create either a first hits file or a synopsis file (or both); cannot run PHRP");
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
@@ -117,7 +117,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 if (string.IsNullOrWhiteSpace(peptideSearchResultsFileName))
                 {
-                    ReportError("PeptideSearchResultsFileName is empty; unable to continue");
+                    ReportError("peptideSearchResultsFileName is empty; unable to run PHRP");
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
@@ -313,7 +313,7 @@ namespace AnalysisManagerExtractionPlugin
                     }
                 }
 
-                // Delete pHRPConsoleOutputFilePath, since we didn't encounter any errors and the file is typically not useful
+                // Delete the PHRP console output file, since we didn't encounter any errors and the file is typically not useful
                 try
                 {
                     File.Delete(m_PHRPConsoleOutputFilePath);
@@ -416,7 +416,7 @@ namespace AnalysisManagerExtractionPlugin
             }
             catch (Exception ex)
             {
-                OnErrorEvent("Error parsing PHRP Console Output File", ex);
+                OnErrorEvent("Error parsing PHRP console output file", ex);
             }
         }
 
@@ -465,7 +465,7 @@ namespace AnalysisManagerExtractionPlugin
         /// <remarks></remarks>
         private void CmdRunner_LoopWaiting()
         {
-            // Update the status by parsing the PHRP Console Output file every 20 seconds
+            // Update the status by parsing the PHRP console output file every 20 seconds
             if (DateTime.UtcNow.Subtract(dtLastStatusUpdate).TotalSeconds >= 20)
             {
                 dtLastStatusUpdate = DateTime.UtcNow;

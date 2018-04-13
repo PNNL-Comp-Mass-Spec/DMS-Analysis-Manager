@@ -309,7 +309,7 @@ namespace AnalysisManagerMSGFPlugin
         }
 
         /// <summary>
-        /// Examines the Sequest, X!Tandem, Inspect, or MSGFDB param file to determine if ETD mode is enabled
+        /// Examines the SEQUEST, X!Tandem, Inspect, or MSGF+ param file to determine if ETD mode is enabled
         /// </summary>
         /// <param name="eResultType"></param>
         /// <param name="searchToolParamFilePath"></param>
@@ -365,7 +365,13 @@ namespace AnalysisManagerMSGFPlugin
             return success;
         }
 
-        private bool CheckETDModeEnabledMSGFDB(string searchToolParamFilePath)
+        /// <summary>
+        /// Examines the MSGF+ param file to determine if ETD mode is enabled
+        /// If it is, sets mETDMode to True
+        /// </summary>
+        /// <param name="searchToolParamFilePath">MSGF+ parameter file to read</param>
+        /// <returns>True if success; false if an error</returns>
+        private bool CheckETDModeEnabledMSGFPlus(string searchToolParamFilePath)
         {
             const string MSGFDB_FRAG_METHOD_TAG = "FragmentationMethodID";
 
@@ -375,10 +381,10 @@ namespace AnalysisManagerMSGFPlugin
 
                 if (m_DebugLevel >= 2)
                 {
-                    LogDebug("Reading the MSGF-DB parameter file: " + searchToolParamFilePath);
+                    LogDebug("Reading the MSGF+ parameter file: " + searchToolParamFilePath);
                 }
 
-                // Read the data from the MSGF-DB Param file
+                // Read the data from the MSGF+ Param file
                 using (var srParamFile = new StreamReader(new FileStream(searchToolParamFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
                     while (!srParamFile.EndOfStream)
@@ -435,7 +441,7 @@ namespace AnalysisManagerMSGFPlugin
             }
             catch (Exception ex)
             {
-                LogError("Error reading the MSGFDB param file", ex);
+                LogError("Error reading the MSGF+ param file", ex);
                 return false;
             }
 
@@ -443,10 +449,10 @@ namespace AnalysisManagerMSGFPlugin
         }
 
         /// <summary>
-        /// Examines the Sequest param file to determine if ETD mode is enabled
+        /// Examines the SEQUEST param file to determine if ETD mode is enabled
         /// If it is, sets mETDMode to True
         /// </summary>
-        /// <param name="searchToolParamFilePath">Sequest parameter file to read</param>
+        /// <param name="searchToolParamFilePath">SEQUEST parameter file to read</param>
         /// <returns>True if success; false if an error</returns>
         private bool CheckETDModeEnabledSequest(string searchToolParamFilePath)
         {
@@ -458,10 +464,10 @@ namespace AnalysisManagerMSGFPlugin
 
                 if (m_DebugLevel >= 2)
                 {
-                    LogDebug("Reading the Sequest parameter file: " + searchToolParamFilePath);
+                    LogDebug("Reading the SEQUEST parameter file: " + searchToolParamFilePath);
                 }
 
-                // Read the data from the Sequest Param file
+                // Read the data from the SEQUEST Param file
                 using (var srParamFile = new StreamReader(new FileStream(searchToolParamFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
                     while (!srParamFile.EndOfStream)
@@ -532,7 +538,7 @@ namespace AnalysisManagerMSGFPlugin
             }
             catch (Exception ex)
             {
-                LogError("Error reading the Sequest param file", ex);
+                LogError("Error reading the SEQUEST param file", ex);
                 return false;
             }
 
@@ -652,7 +658,7 @@ namespace AnalysisManagerMSGFPlugin
         }
 
         /// <summary>
-        /// Creates the MSGF Input file by reading Sequest, X!Tandem, or Inspect PHRP result file and extracting the relevant information
+        /// Creates the MSGF Input file by reading SEQUEST, X!Tandem, or Inspect PHRP result file and extracting the relevant information
         /// Uses the ModSummary.txt file to determine the dynamic and static mods used
         /// </summary>
         /// <param name="eResultType"></param>
@@ -675,7 +681,7 @@ namespace AnalysisManagerMSGFPlugin
             {
                 case clsPHRPReader.ePeptideHitResultType.Sequest:
 
-                    // Convert Sequest results to input format required for MSGF
+                    // Convert SEQUEST results to input format required for MSGF
                     mMSGFInputCreator = new clsMSGFInputCreatorSequest(m_Dataset, m_WorkDir);
                     break;
 
@@ -693,7 +699,7 @@ namespace AnalysisManagerMSGFPlugin
 
                 case clsPHRPReader.ePeptideHitResultType.MSGFDB:
 
-                    // Convert MSGFDB results to input format required for MSGF
+                    // Convert MSGF+ results to input format required for MSGF
                     mMSGFInputCreator = new clsMSGFInputCreatorMSGFDB(m_Dataset, m_WorkDir);
                     break;
 
@@ -1414,7 +1420,7 @@ namespace AnalysisManagerMSGFPlugin
             bool doNotFilterPeptides, bool mgfInstrumentData)
         {
 
-            // Parse the Sequest, X!Tandem, Inspect, or MODa parameter file to determine if ETD mode was used
+            // Parse the SEQUEST, X!Tandem, Inspect, or MODa parameter file to determine if ETD mode was used
             var searchToolParamFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("ParmFileName"));
 
             var success = CheckETDModeEnabled(eResultType, searchToolParamFilePath);
@@ -1972,20 +1978,20 @@ namespace AnalysisManagerMSGFPlugin
             if (mUsingMSGFDB && msgfDBVersion >= 7097)
             {
                 // Always use -m 0 (assuming we're sending an mzXML file to MSGFDB)
+                // -m 0 means as-written in the input file
                 cmdStr += " -m 0";
-                // as-written in the input file
             }
             else
             {
                 if (mETDMode)
                 {
-                    cmdStr += " -m 1";
                     // ETD fragmentation
+                    cmdStr += " -m 1";
                 }
                 else
                 {
-                    cmdStr += " -m 0";
                     // CID fragmentation
+                    cmdStr += " -m 0";
                 }
             }
 

@@ -2172,7 +2172,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// GZip the given file
         /// </summary>
-        /// <param name="fiResultFile"></param>
+        /// <param name="fiResultFile">File to compress</param>
         /// <returns>Fileinfo object of the new .gz file or null if an error</returns>
         /// <remarks>Deletes the original file after creating the .gz file</remarks>
         public FileInfo GZipFile(FileInfo fiResultFile)
@@ -2183,7 +2183,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// GZip the given file
         /// </summary>
-        /// <param name="fiResultFile"></param>
+        /// <param name="fiResultFile">File to compress</param>
         /// <param name="deleteSourceAfterZip">If True, will delete the file after zipping it</param>
         /// <returns>Fileinfo object of the new .gz file or null if an error</returns>
         public FileInfo GZipFile(FileInfo fiResultFile, bool deleteSourceAfterZip)

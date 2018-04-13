@@ -98,8 +98,8 @@ namespace AnalysisManagerExtractionPlugin
 
                 switch (m_jobParams.GetParam("ResultType"))
                 {
-                    case clsAnalysisResources.RESULT_TYPE_SEQUEST:   // Sequest result type
-                        // Run Ken's Peptide Extractor DLL
+                    case clsAnalysisResources.RESULT_TYPE_SEQUEST:
+                        // Run the Peptide Extractor DLL
                         currentAction = "running peptide extraction for Sequest";
                         result = PerformPeptideExtraction();
 
@@ -190,7 +190,7 @@ namespace AnalysisManagerExtractionPlugin
                             processingSuccess = false;
                         }
 
-                        // Convert the MODa results to a tab-delimited file, filter by FDR (and filter out the reverse-hit proteins)
+                        // Convert the MODPlus results to a tab-delimited file, filter by FDR (and filter out the reverse-hit proteins)
                         result = ConvertMODPlusResultsToTxt(out filteredMODPlusResultsFilePath, false);
                         if (result != CloseOutType.CLOSEOUT_SUCCESS)
                         {
@@ -242,7 +242,7 @@ namespace AnalysisManagerExtractionPlugin
                 if (!processingSuccess)
                 {
                     // Something went wrong
-                    // In order to help diagnose things, we will move whatever files were created into the result folder,
+                    // In order to help diagnose things, we will move whatever files were created into the results directory,
                     //  archive it using CopyFailedResultsToArchiveFolder, then return CloseOutType.CLOSEOUT_FAILED
                     CopyFailedResultsToArchiveFolder();
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -254,7 +254,10 @@ namespace AnalysisManagerExtractionPlugin
                     return CloseOutType.CLOSEOUT_FAILED;
 
                 // Everything succeeded; now delete the _msgfplus.tsv file from the server
-                // For SplitFasta files there will be multiple tsv files to delete, plus the individual ConsoleOutput.txt files (all tracked with m_jobParams.ServerFilesToDelete)
+
+                // For SplitFasta files there will be multiple tsv files to delete,
+                // plus the individual ConsoleOutput.txt files (all tracked with m_jobParams.ServerFilesToDelete)
+
                 RemoveNonResultServerFiles();
 
                 return result;
@@ -1674,7 +1677,7 @@ namespace AnalysisManagerExtractionPlugin
             var zippedConsoleOutputFilePath = Path.Combine(diWorkingDirectory.FullName, "MSGFPlus_ConsoleOutput_Files.zip");
             if (!m_DotNetZipTools.ZipDirectory(diConsoleOutputFiles.FullName, zippedConsoleOutputFilePath))
             {
-                LogError("Problem zipping the ConsoleOutput files; will not delete the separate copies from the transfer folder");
+                LogError("Problem zipping the console output file; will not delete the separate copies from the transfer directory");
                 return;
             }
 
@@ -1731,8 +1734,11 @@ namespace AnalysisManagerExtractionPlugin
                 var createInspectFirstHitsFile = true;
                 var createInspectSynopsisFile = false;
                 targetFilePath = Path.Combine(m_WorkDir, m_Dataset + "_inspect.txt");
+
+                // ReSharper disable ConditionIsAlwaysTrueOrFalse
                 var result = phrp.ExtractDataFromResults(targetFilePath, createInspectFirstHitsFile, createInspectSynopsisFile,
                     mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_INSPECT);
+                // ReSharper enable ConditionIsAlwaysTrueOrFalse
 
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {
@@ -1761,8 +1767,10 @@ namespace AnalysisManagerExtractionPlugin
                 targetFilePath = Path.Combine(m_WorkDir, m_Dataset + "_inspect.txt");
                 synFilePath = Path.Combine(m_WorkDir, m_Dataset + "_inspect_syn.txt");
 
+                // ReSharper disable ConditionIsAlwaysTrueOrFalse
                 result = phrp.ExtractDataFromResults(targetFilePath, createInspectFirstHitsFile, createInspectSynopsisFile,
                     mGeneratedFastaFilePath, clsAnalysisResources.RESULT_TYPE_INSPECT);
+                // ReSharper restore ConditionIsAlwaysTrueOrFalse
 
                 if (result == CloseOutType.CLOSEOUT_NO_DATA)
                 {
