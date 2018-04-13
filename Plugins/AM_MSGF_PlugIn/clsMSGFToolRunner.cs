@@ -355,6 +355,12 @@ namespace AnalysisManagerMSGFPlugin
                     LogDebug("MODPlus does not support ETD data processing; will set mETDMode to False");
                     success = true;
                     break;
+
+                case clsPHRPReader.ePeptideHitResultType.MSPathFinder:
+                    LogDebug("MSPathFinder does not support ETD data processing; will set mETDMode to False");
+                    success = true;
+                    break;
+
             }
 
             if (mETDMode)
