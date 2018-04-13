@@ -32,6 +32,12 @@ namespace AnalysisManagerExtractionPlugin
         /// </summary>
         public const string MASS_CORRECTION_TAGS_FILENAME = "Mass_Correction_Tags.txt";
 
+
+        /// <summary>
+        /// Job parameter used to instruct clsExtractToolRunner to skip PHRP since the PHRP result files are already up-to-date
+        /// </summary>
+        public const string JOB_PARAM_SKIP_PHRP = "SkipPHRP";
+
         protected bool mRetrieveOrganismDB;
 
         // Keys are the original file name, values are the new name
@@ -436,6 +442,9 @@ namespace AnalysisManagerExtractionPlugin
                     }
                 }
 
+                var newestMzIdOrTsvFile = DateTime.MinValue;
+                var ignorePepToProtMapErrors = false;
+
                 for (var iteration = 1; iteration <= numberOfClonedSteps; iteration++)
                 {
                     var skipMSGFResultsZipFileCopy = false;
@@ -498,6 +507,11 @@ namespace AnalysisManagerExtractionPlugin
                                     {
                                         skipMSGFResultsZipFileCopy = true;
                                         m_jobParams.AddResultFileToSkip(tsvFile);
+
+                                        if (fiTSVFile.LastWriteTimeUtc > newestMzIdOrTsvFile)
+                                        {
+                                            newestMzIdOrTsvFile = fiTSVFile.LastWriteTimeUtc;
+                                        }
                                     }
                                 }
 
@@ -517,6 +531,18 @@ namespace AnalysisManagerExtractionPlugin
                             return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                         }
                         m_jobParams.AddResultFileToSkip(mzidFile);
+
+                        var fiMzidFile = new FileInfo(Path.Combine(m_WorkingDir, mzidFile));
+                        if (!fiMzidFile.Exists)
+                        {
+                            LogError(string.Format(
+                                         "FileSearch.FindAndRetrieveMiscFiles returned true, but {0} was not found in the working directory", mzidFile));
+                        }
+
+                        if (fiMzidFile.LastWriteTimeUtc > newestMzIdOrTsvFile)
+                        {
+                            newestMzIdOrTsvFile = fiMzidFile.LastWriteTimeUtc;
+                        }
 
                         // Also retrieve the ConsoleOutput file; the command line used to call the MzidToTsvConverter.exe will be appended to this file
                         // This file is not critical, so pass false to logFileNotFound
@@ -551,26 +577,40 @@ namespace AnalysisManagerExtractionPlugin
                     {
                         // Errors were reported in function call
 
-                        // See if IgnorePeptideToProteinMapError=True
-                        if (m_jobParams.GetJobParameter("IgnorePeptideToProteinMapError", false))
+                        if (splitFastaEnabled && !ignorePepToProtMapErrors)
                         {
-                            LogWarning(
-                                "Ignoring missing _PepToProtMap.txt file since 'IgnorePeptideToProteinMapError' = True");
-                        }
-                        else if (m_jobParams.GetJobParameter("SkipProteinMods", false))
-                        {
-                            LogWarning(
-                                "Ignoring missing _PepToProtMap.txt file since 'SkipProteinMods' = True");
-                        }
-                        else
-                        {
-                            if (useLegacyMSGFDB)
-                            {
-                                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
-                            }
+                            // If PHRP has already finished, separate PepToProtMap.txt files will not exist for each jobstep
 
-                            // This class will auto-create the PepToProtMap.txt file after the fasta file is retrieved
-                            createPepToProtMapFile = true;
+                            var peptToProtMapSourceDir = FileSearch.FindDataFile(DatasetName + "_msgfplus_PepToProtMap.txt", false, false);
+                            if (!string.IsNullOrEmpty(peptToProtMapSourceDir))
+                            {
+                                ignorePepToProtMapErrors = true;
+                            }
+                        }
+
+                        if (!ignorePepToProtMapErrors)
+                        {
+                            // See if IgnorePeptideToProteinMapError=True
+                            if (m_jobParams.GetJobParameter("IgnorePeptideToProteinMapError", false))
+                            {
+                                LogWarning(
+                                    "Ignoring missing _PepToProtMap.txt file since 'IgnorePeptideToProteinMapError' = True");
+                            }
+                            else if (m_jobParams.GetJobParameter("SkipProteinMods", false))
+                            {
+                                LogWarning(
+                                    "Ignoring missing _PepToProtMap.txt file since 'SkipProteinMods' = True");
+                            }
+                            else
+                            {
+                                if (useLegacyMSGFDB)
+                                {
+                                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                                }
+
+                                // This class will auto-create the PepToProtMap.txt file after the fasta file is retrieved
+                                createPepToProtMapFile = true;
+                            }
                         }
                     }
                     else
@@ -597,7 +637,80 @@ namespace AnalysisManagerExtractionPlugin
                         m_jobParams.AddResultFileToSkip(consoleOutputFile);
                     }
 
+                } // foreach cloned step
+
+                if (newestMzIdOrTsvFile <= DateTime.MinValue)
+                {
+                    // No .mzid files were found; this indicates a problem
+                    LogError("Did not find any .tsv or .mzid.gz files for this job");
+                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
+
+                // Check whether PHRP has already complete successfully,
+                // and whether the timestamp of the PHRP result files
+                // is newer than the .mzid.gz file(s)
+
+                var phrpResultsSourceDir = FileSearch.FindDataFile(DatasetName + "_msgfplus_fht.txt", false, false);
+                if (string.IsNullOrWhiteSpace(phrpResultsSourceDir))
+                {
+                    // PHRP has not been run yet (which will typically be the case)
+                    // Note that we'll obtain the MSGF+ parameter file in RetrieveMiscFiles
+                    return CloseOutType.CLOSEOUT_SUCCESS;
+                }
+
+                var phrpFilesToFind = new List<string>
+                {
+                    DatasetName + "_msgfplus_syn_ModDetails.txt",
+                    DatasetName + "_msgfplus_syn_ModSummary.txt",
+                    DatasetName + "_msgfplus_syn_ResultToSeqMap.txt",
+                    DatasetName + "_msgfplus_syn_SeqInfo.txt",
+                    DatasetName + "_msgfplus_syn_SeqToProteinMap.txt",
+                    DatasetName + "_msgfplus_syn.txt",
+                    DatasetName + "_msgfplus_fht.txt",
+                    DatasetName + "_msgfplus_PepToProtMap.txt"
+                };
+
+                var oldestPhrpFile = DateTime.MaxValue;
+                var existingPhrpFileCount = 0;
+
+                foreach (var phrpFileName in phrpFilesToFind)
+                {
+                    var phrpFile = new FileInfo(Path.Combine(phrpResultsSourceDir, phrpFileName));
+                    if (!phrpFile.Exists)
+                    {
+                        // File not found; need to run PHRP
+                        existingPhrpFileCount++;
+                        continue;
+                    }
+
+                    if (phrpFile.LastWriteTimeUtc < oldestPhrpFile)
+                    {
+                        oldestPhrpFile = phrpFile.LastWriteTimeUtc;
+                    }
+                }
+
+                if (existingPhrpFileCount < phrpFilesToFind.Count)
+                {
+                    // One or more PHRP files was missing; we'll run PHRP
+                    if (existingPhrpFileCount > 0)
+                    {
+                        LogMessage(string.Format("Found {0} out of {1} existing PHRP files; will re-run PHRP",
+                                                 existingPhrpFileCount, phrpFilesToFind.Count));
+                    }
+                }
+                else if (oldestPhrpFile > newestMzIdOrTsvFile)
+                {
+                    // PHRP files are up-to-date; no need to re-run PHRP
+                    var fileLabel = splitFastaEnabled ? "files" : "file";
+
+                    LogMessage(string.Format("PHRP files are all newer than the .mzid.gz {0}; will skip running PHRP on this job", fileLabel));
+
+                    m_jobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, JOB_PARAM_SKIP_PHRP, true);
+                }
+
+                // Note that we'll obtain the MSGF+ parameter file in RetrieveMiscFiles
+                return CloseOutType.CLOSEOUT_SUCCESS;
+
             }
             catch (Exception ex)
             {
@@ -605,9 +718,6 @@ namespace AnalysisManagerExtractionPlugin
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            // Note that we'll obtain the MSGF-DB parameter file in RetrieveMiscFiles
-
-            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         private CloseOutType GetMSAlignFiles()

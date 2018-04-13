@@ -1363,6 +1363,18 @@ namespace AnalysisManagerExtractionPlugin
 
             try
             {
+                var skipPHRP = m_jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION,
+                                                           clsAnalysisResourcesExtraction.JOB_PARAM_SKIP_PHRP, false);
+
+                if (skipPHRP)
+                {
+                    LogMessage("Skipping PHRP since the results directory already has up-to-date PHRP files");
+
+                    // Zip the MSGFPlus_ConsoleOutput files (if they exist; they probably don't)
+                    ZipConsoleOutputFiles(false);
+                    return CloseOutType.CLOSEOUT_SUCCESS;
+                }
+
                 var phrp = new clsPepHitResultsProcWrapper(m_mgrParams, m_jobParams);
                 RegisterPHRPEvents(phrp);
 
@@ -1665,7 +1677,7 @@ namespace AnalysisManagerExtractionPlugin
             }
         }
 
-        private void ZipConsoleOutputFiles()
+        private void ZipConsoleOutputFiles(bool warnFilesNotFound = true)
         {
             var diWorkingDirectory = new DirectoryInfo(m_WorkDir);
             var consoleOutputFiles = new List<string>();
@@ -1682,7 +1694,12 @@ namespace AnalysisManagerExtractionPlugin
 
             if (consoleOutputFiles.Count == 0)
             {
-                LogWarning("MSGF+ Console output files not found");
+                if (warnFilesNotFound)
+                {
+                    LogWarning("MSGF+ console output files not found");
+                }
+
+                diConsoleOutputFiles.Delete();
                 return;
             }
 
