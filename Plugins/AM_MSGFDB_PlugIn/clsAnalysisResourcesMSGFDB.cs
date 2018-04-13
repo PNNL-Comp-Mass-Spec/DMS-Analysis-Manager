@@ -80,36 +80,36 @@ namespace AnalysisManagerMSGFDBPlugIn
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                // The ToolName job parameter holds the name of the job script we are executing
-                var scriptName = m_jobParams.GetParam("ToolName");
+                    // The ToolName job parameter holds the name of the job script we are executing
+                    var scriptName = m_jobParams.GetParam("ToolName");
 
-                if (scriptName.ToLower().Contains("mzxml") || scriptName.ToLower().Contains("msgfplus_bruker"))
-                {
-                    currentTask = "Get mzXML file";
-                    result = GetMzXMLFile();
-                }
-                else if (scriptName.ToLower().Contains("mzml"))
-                {
-                    currentTask = "Get mzML file";
-                    result = GetMzMLFile();
-                }
-                else
-                {
-                    currentTask = "RetrieveDtaFiles";
-                    result = GetCDTAFile();
-
-                    if (result == CloseOutType.CLOSEOUT_SUCCESS)
+                    if (scriptName.ToLower().Contains("mzxml") || scriptName.ToLower().Contains("msgfplus_bruker"))
                     {
-                        currentTask = "GetMasicFiles";
-                        result = GetMasicFiles();
+                        currentTask = "Get mzXML file";
+                        result = GetMzXMLFile();
                     }
-
-                    if (result == CloseOutType.CLOSEOUT_SUCCESS)
+                    else if (scriptName.ToLower().Contains("mzml"))
                     {
-                        currentTask = "ValidateCDTAFile";
-                        result = ValidateCDTAFile();
+                        currentTask = "Get mzML file";
+                        result = GetMzMLFile();
                     }
-                }
+                    else
+                    {
+                        currentTask = "RetrieveDtaFiles";
+                        result = GetCDTAFile();
+
+                        if (result == CloseOutType.CLOSEOUT_SUCCESS)
+                        {
+                            currentTask = "GetMasicFiles";
+                            result = GetMasicFiles();
+                        }
+
+                        if (result == CloseOutType.CLOSEOUT_SUCCESS)
+                        {
+                            currentTask = "ValidateCDTAFile";
+                            result = ValidateCDTAFile();
+                        }
+                    }
 
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
                 {

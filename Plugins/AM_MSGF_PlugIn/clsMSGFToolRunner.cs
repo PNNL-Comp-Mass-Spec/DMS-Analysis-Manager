@@ -373,7 +373,7 @@ namespace AnalysisManagerMSGFPlugin
         /// <returns>True if success; false if an error</returns>
         private bool CheckETDModeEnabledMSGFPlus(string searchToolParamFilePath)
         {
-            const string MSGFDB_FRAG_METHOD_TAG = "FragmentationMethodID";
+            const string MSGFPLUS_FRAG_METHOD_TAG = "FragmentationMethodID";
 
             try
             {
@@ -391,51 +391,49 @@ namespace AnalysisManagerMSGFPlugin
                     {
                         var lineIn = srParamFile.ReadLine();
 
-                        if (!string.IsNullOrEmpty(lineIn) && lineIn.StartsWith(MSGFDB_FRAG_METHOD_TAG))
+                        if (string.IsNullOrWhiteSpace(lineIn) || !lineIn.StartsWith(MSGFPLUS_FRAG_METHOD_TAG))
+                            continue;
+
+                        // Check whether this line is FragmentationMethodID=2
+                        // Note that FragmentationMethodID=4 means Merge spectra from the same precursor (e.g. CID/ETD pairs, CID/HCD/ETD triplets)
+                        // This mode is not yet supported
+
+                        if (m_DebugLevel >= 3)
                         {
-                            // Check whether this line is FragmentationMethodID=2
-                            // Note that FragmentationMethodID=4 means Merge spectra from the same precursor (e.g. CID/ETD pairs, CID/HCD/ETD triplets)
-                            // This mode is not yet supported
+                            LogDebug("MSGF+ " + MSGFPLUS_FRAG_METHOD_TAG + " line found: " + lineIn);
+                        }
 
-                            if (m_DebugLevel >= 3)
+                        // Look for the equals sign
+                        var charIndex = lineIn.IndexOf('=');
+                        if (charIndex > 0)
+                        {
+                            var fragModeText = lineIn.Substring(charIndex + 1).Trim();
+
+                            if (int.TryParse(fragModeText, out var fragMode))
                             {
-                                LogDebug("MSGFDB " + MSGFDB_FRAG_METHOD_TAG + " line found: " + lineIn);
-                            }
-
-                            // Look for the equals sign
-                            var charIndex = lineIn.IndexOf('=');
-                            if (charIndex > 0)
-                            {
-                                var fragModeText = lineIn.Substring(charIndex + 1).Trim();
-
-                                if (int.TryParse(fragModeText, out var fragMode))
+                                if (fragMode == 2)
                                 {
-                                    if (fragMode == 2)
-                                    {
-                                        mETDMode = true;
-                                    }
-                                    else if (fragMode == 4)
-                                    {
-                                        // ToDo: Figure out how to handle this mode
-                                        mETDMode = false;
-                                    }
-                                    else
-                                    {
-                                        mETDMode = false;
-                                    }
+                                    mETDMode = true;
+                                }
+                                else if (fragMode == 4)
+                                {
+                                    // ToDo: Figure out how to handle this mode
+                                    mETDMode = false;
+                                }
+                                else
+                                {
+                                    mETDMode = false;
                                 }
                             }
-                            else
-                            {
-                                LogWarning(
-                                    "MSGFDB " + MSGFDB_FRAG_METHOD_TAG +
-                                     " line does not have an equals sign; will assume not using ETD ions: " +
-                                    lineIn);
-                            }
-
-                            // No point in checking any further since we've parsed the ion_series line
-                            break;
                         }
+                        else
+                        {
+                            LogWarning("MSGF+ " + MSGFPLUS_FRAG_METHOD_TAG + " line does not have an equals sign; " +
+                                       "will assume not using ETD ions: " + lineIn);
+                        }
+
+                        // No point in checking any further since we've parsed the FragmentationMethodID line
+                        break;
                     }
                 }
             }
@@ -474,65 +472,63 @@ namespace AnalysisManagerMSGFPlugin
                     {
                         var lineIn = srParamFile.ReadLine();
 
-                        if (!string.IsNullOrEmpty(lineIn) && lineIn.StartsWith(SEQUEST_ION_SERIES_TAG))
+                        if (string.IsNullOrWhiteSpace(lineIn) || !lineIn.StartsWith(SEQUEST_ION_SERIES_TAG))
+                            continue;
+
+                        // This is the ion_series line
+                        // If ETD mode is enabled, c and z ions will have a 1 in this series of numbers:
+                        // ion_series = 0 1 1 0.0 0.0 1.0 0.0 0.0 0.0 0.0 0.0 1.0
+                        //
+                        // The key to parsing this data is:
+                        // ion_series = - - -  a   b   c  --- --- ---  x   y   z
+                        // ion_series = 0 1 1 0.0 0.0 1.0 0.0 0.0 0.0 0.0 0.0 1.0
+
+                        if (m_DebugLevel >= 3)
                         {
-                            // This is the ion_series line
-                            // If ETD mode is enabled, c and z ions will have a 1 in this series of numbers:
-                            // ion_series = 0 1 1 0.0 0.0 1.0 0.0 0.0 0.0 0.0 0.0 1.0
-                            //
-                            // The key to parsing this data is:
-                            // ion_series = - - -  a   b   c  --- --- ---  x   y   z
-                            // ion_series = 0 1 1 0.0 0.0 1.0 0.0 0.0 0.0 0.0 0.0 1.0
+                            LogDebug("SEQUEST " + SEQUEST_ION_SERIES_TAG + " line found: " + lineIn);
+                        }
 
-                            if (m_DebugLevel >= 3)
+                        // Look for the equals sign
+                        var charIndex = lineIn.IndexOf('=');
+                        if (charIndex > 0)
+                        {
+                            var ionWeightText = lineIn.Substring(charIndex + 1).Trim();
+
+                            // Split ionWeightText on spaces
+                            var ionWeights = ionWeightText.Split(' ');
+
+                            if (ionWeights.Length >= 12)
                             {
-                                LogDebug("Sequest " + SEQUEST_ION_SERIES_TAG + " line found: " + lineIn);
-                            }
 
-                            // Look for the equals sign
-                            var charIndex = lineIn.IndexOf('=');
-                            if (charIndex > 0)
-                            {
-                                var ionWeightText = lineIn.Substring(charIndex + 1).Trim();
+                                double.TryParse(ionWeights[5], out var cWeight);
+                                double.TryParse(ionWeights[11], out var zWeight);
 
-                                // Split ionWeightText on spaces
-                                var ionWeights = ionWeightText.Split(' ');
-
-                                if (ionWeights.Length >= 12)
+                                if (m_DebugLevel >= 3)
                                 {
-
-                                    double.TryParse(ionWeights[5], out var cWeight);
-                                    double.TryParse(ionWeights[11], out var zWeight);
-
-                                    if (m_DebugLevel >= 3)
-                                    {
-                                        LogDebug(
-                                            "Sequest " + SEQUEST_ION_SERIES_TAG + " line has c-ion weighting = " + cWeight +
-                                            " and z-ion weighting = " + zWeight);
-                                    }
-
-                                    if (cWeight > 0 || zWeight > 0)
-                                    {
-                                        mETDMode = true;
-                                    }
+                                    LogDebug("SEQUEST " + SEQUEST_ION_SERIES_TAG + " line" +
+                                             " has c-ion weighting = " + cWeight +
+                                             " and z-ion weighting = " + zWeight);
                                 }
-                                else
+
+                                if (cWeight > 0 || zWeight > 0)
                                 {
-                                    LogWarning(
-                                        "Sequest " + SEQUEST_ION_SERIES_TAG + " line does not have 11 numbers; will assume not using ETD ions: " +
-                                        lineIn);
+                                    mETDMode = true;
                                 }
                             }
                             else
                             {
-                                LogWarning(
-                                    "Sequest " + SEQUEST_ION_SERIES_TAG + " line does not have an equals sign; will assume not using ETD ions: " +
-                                    lineIn);
+                                LogWarning("SEQUEST " + SEQUEST_ION_SERIES_TAG + " line does not have 11 numbers; " +
+                                           "will assume not using ETD ions: " + lineIn);
                             }
-
-                            // No point in checking any further since we've parsed the ion_series line
-                            break;
                         }
+                        else
+                        {
+                            LogWarning("SEQUEST " + SEQUEST_ION_SERIES_TAG + " line does not have an equals sign; " +
+                                       "will assume not using ETD ions: " + lineIn);
+                        }
+
+                        // No point in checking any further since we've parsed the ion_series line
+                        break;
                     }
                 }
             }
@@ -553,7 +549,6 @@ namespace AnalysisManagerMSGFPlugin
         /// <returns>True if success; false if an error</returns>
         private bool CheckETDModeEnabledXTandem(string searchToolParamFilePath)
         {
-            XmlNodeList objSelectedNodes = null;
 
             try
             {
@@ -582,6 +577,8 @@ namespace AnalysisManagerMSGFPlugin
 
                 for (var settingIndex = 0; settingIndex <= 1; settingIndex++)
                 {
+                    XmlNodeList objSelectedNodes;
+
                     switch (settingIndex)
                     {
                         case 0:
@@ -590,31 +587,36 @@ namespace AnalysisManagerMSGFPlugin
                         case 1:
                             objSelectedNodes = objParamFile.DocumentElement.SelectNodes("/bioml/note[@label='scoring, z ions']");
                             break;
+                        default:
+                            objSelectedNodes = null;
+                            break;
                     }
 
-                    if (objSelectedNodes != null)
+                    if (objSelectedNodes == null)
                     {
-                        for (var matchIndex = 0; matchIndex <= objSelectedNodes.Count - 1; matchIndex++)
+                        continue;
+                    }
+
+                    for (var matchIndex = 0; matchIndex <= objSelectedNodes.Count - 1; matchIndex++)
+                    {
+                        var xmlAttributes = objSelectedNodes.Item(matchIndex)?.Attributes;
+
+                        // Make sure this node has an attribute named type with value "input"
+                        var objAttributeNode = xmlAttributes?.GetNamedItem("type");
+
+                        if (objAttributeNode == null)
                         {
-                            var xmlAttributes = objSelectedNodes.Item(matchIndex)?.Attributes;
+                            // Node does not have an attribute named "type"
+                            continue;
+                        }
 
-                            // Make sure this node has an attribute named type with value "input"
-                            var objAttributeNode = xmlAttributes?.GetNamedItem("type");
+                        if (objAttributeNode.Value.ToLower() != "input")
+                            continue;
 
-                            if (objAttributeNode == null)
-                            {
-                                // Node does not have an attribute named "type"
-                                continue;
-                            }
-
-                            if (objAttributeNode.Value.ToLower() == "input")
-                            {
-                                // Valid node; examine its InnerText value
-                                if (objSelectedNodes.Item(matchIndex)?.InnerText.ToLower() == "yes")
-                                {
-                                    mETDMode = true;
-                                }
-                            }
+                        // Valid node; examine its InnerText value
+                        if (objSelectedNodes.Item(matchIndex)?.InnerText.ToLower() == "yes")
+                        {
+                            mETDMode = true;
                         }
                     }
 
