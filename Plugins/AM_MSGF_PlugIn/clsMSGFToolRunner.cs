@@ -183,7 +183,7 @@ namespace AnalysisManagerMSGFPlugin
 
                     StoreToolVersionInfoPrecomputedProbabilities(eResultType);
 
-                    if (!CreateMSGFResultsFromMSGFDBResults())
+                    if (!CreateMSGFResultsFromMSGFPlusResults())
                     {
                         processingError = true;
                     }
@@ -343,7 +343,7 @@ namespace AnalysisManagerMSGFPlugin
                     break;
 
                 case clsPHRPReader.ePeptideHitResultType.MSGFDB:
-                    success = CheckETDModeEnabledMSGFDB(searchToolParamFilePath);
+                    success = CheckETDModeEnabledMSGFPlus(searchToolParamFilePath);
                     break;
 
                 case clsPHRPReader.ePeptideHitResultType.MODa:
@@ -816,7 +816,7 @@ namespace AnalysisManagerMSGFPlugin
             return success;
         }
 
-        private bool CreateMSGFResultsFromMSGFDBResults()
+        private bool CreateMSGFResultsFromMSGFPlusResults()
         {
             var objMSGFInputCreator = new clsMSGFInputCreatorMSGFDB(m_Dataset, m_WorkDir);
 

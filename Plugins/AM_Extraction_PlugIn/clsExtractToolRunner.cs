@@ -25,9 +25,21 @@ namespace AnalysisManagerExtractionPlugin
     {
         #region "Constants"
 
-        private const float SEQUEST_PROGRESS_EXTRACTION_DONE = 33;
-        private const float SEQUEST_PROGRESS_PHRP_DONE = 66;
-        private const float SEQUEST_PROGRESS_PEPPROPHET_DONE = 100;
+        /// <summary>
+        /// SEQUEST jobs have an extract extraction step, where progress will be between 0% and 33% complete
+        /// </summary>
+        private const float PROGRESS_EXTRACTION_DONE = 33;
+
+        /// <summary>
+        /// For all tools, progress will be between 33% and 66% complete while PHRP is running
+        /// For SEQUEST, we also run Peptide Prophet, during which progress will be between 66% and 100%
+        /// For SplitFasta MSGF+ jobs, we merge .mzid files, during which progress will be between 66% and 100%
+        /// </summary>
+        private const float PROGRESS_PHRP_DONE = 66;
+
+        private const float PROGRESS_PEPTIDE_PROPHET_OR_MZID_MERGE_DONE = 90;
+
+        private const float PROGRESS_COMPLETE = 100;
 
         public const string INSPECT_UNFILTERED_RESULTS_FILE_SUFFIX = "_inspect_unfiltered.txt";
 
@@ -112,7 +124,7 @@ namespace AnalysisManagerExtractionPlugin
                         // Run PHRP
                         if (result == CloseOutType.CLOSEOUT_SUCCESS)
                         {
-                            m_progress = SEQUEST_PROGRESS_EXTRACTION_DONE;     // 33% done
+                            m_progress = PROGRESS_EXTRACTION_DONE;     // 33% done
                             UpdateStatusRunning(m_progress);
 
                             currentAction = "running peptide hits result processor for Sequest";
@@ -121,7 +133,7 @@ namespace AnalysisManagerExtractionPlugin
 
                         if (result == CloseOutType.CLOSEOUT_SUCCESS)
                         {
-                            m_progress = SEQUEST_PROGRESS_PHRP_DONE;   // 66% done
+                            m_progress = PROGRESS_PHRP_DONE;   // 66% done
                             UpdateStatusRunning(m_progress);
                             currentAction = "running peptide prophet for Sequest";
                             RunPeptideProphet();
@@ -227,7 +239,7 @@ namespace AnalysisManagerExtractionPlugin
                 }
                 else
                 {
-                    m_progress = 100;
+                    m_progress = PROGRESS_COMPLETE;
                     UpdateStatusRunning(m_progress);
                     m_jobParams.AddResultFileToSkip(clsPepHitResultsProcWrapper.PHRP_LOG_FILE_NAME);
                 }
@@ -589,7 +601,7 @@ namespace AnalysisManagerExtractionPlugin
         {
             LogMessage("Creating the missing _PepToProtMap.txt file");
 
-            var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
+            var localOrgDbDir = m_mgrParams.GetParam("orgdbdir");
             if (mMSGFPlusUtils == null)
             {
                 mMSGFPlusUtils = new MSGFPlusUtils(m_mgrParams, m_jobParams, m_WorkDir, m_DebugLevel);
@@ -605,7 +617,7 @@ namespace AnalysisManagerExtractionPlugin
             // Assume this is true
             const bool resultsIncludeAutoAddedDecoyPeptides = true;
 
-            var result = mMSGFPlusUtils.CreatePeptideToProteinMapping(resultsFileName, resultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder);
+            var result = mMSGFPlusUtils.CreatePeptideToProteinMapping(resultsFileName, resultsIncludeAutoAddedDecoyPeptides, localOrgDbDir);
 
             if (result != CloseOutType.CLOSEOUT_SUCCESS && result != CloseOutType.CLOSEOUT_NO_DATA)
             {
@@ -1681,9 +1693,9 @@ namespace AnalysisManagerExtractionPlugin
                 return;
             }
 
-            var transferFolderPath = GetTransferFolderPath();
+            var transferDirPath = GetTransferFolderPath();
 
-            if (string.IsNullOrEmpty(transferFolderPath))
+            if (string.IsNullOrEmpty(transferDirPath))
             {
                 // Error has already been logged
                 return;
@@ -1697,7 +1709,7 @@ namespace AnalysisManagerExtractionPlugin
 
             foreach (var consoleOutputfile in consoleOutputFiles)
             {
-                var targetPath = Path.Combine(transferFolderPath, m_Dataset, m_ResFolderName, consoleOutputfile);
+                var targetPath = Path.Combine(transferDirPath, m_Dataset, m_ResFolderName, consoleOutputfile);
                 m_jobParams.AddServerFileToDelete(targetPath);
             }
         }
@@ -1851,13 +1863,13 @@ namespace AnalysisManagerExtractionPlugin
                 LogDebug("clsExtractToolRunner.RunPeptideProphet(); Starting Peptide Prophet");
             }
 
-            var SynFile = Path.Combine(m_WorkDir, m_Dataset + "_syn.txt");
+            var synFilePath = Path.Combine(m_WorkDir, m_Dataset + "_syn.txt");
 
             // Check to see if Syn file exists
-            var fiSynFile = new FileInfo(SynFile);
+            var fiSynFile = new FileInfo(synFilePath);
             if (!fiSynFile.Exists)
             {
-                LogError("clsExtractToolRunner.RunPeptideProphet(); Syn file " + SynFile + " not found; unable to run peptide prophet");
+                LogError("clsExtractToolRunner.RunPeptideProphet(); Syn file " + synFilePath + " not found; unable to run peptide prophet");
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
@@ -2000,7 +2012,7 @@ namespace AnalysisManagerExtractionPlugin
             // We now need to recombine the peptide prophet result files
 
             // Update fileList() to have the peptide prophet result file names
-            var baseName = Path.Combine(peptideProphet.OutputFolderPath, Path.GetFileNameWithoutExtension(SynFile));
+            var baseName = Path.Combine(peptideProphet.OutputFolderPath, Path.GetFileNameWithoutExtension(synFilePath));
 
             for (var intFileIndex = 0; intFileIndex <= splitFileList.Count - 1; intFileIndex++)
             {
@@ -2340,7 +2352,7 @@ namespace AnalysisManagerExtractionPlugin
                 }
                 else
                 {
-                    LogError("PHRP folder not found at " + progLoc);
+                    LogError("PHRP directory not found at " + progLoc);
                     return false;
                 }
             }
@@ -2453,7 +2465,8 @@ namespace AnalysisManagerExtractionPlugin
         private void m_PeptideProphet_PeptideProphetRunning(string pepProphetStatus, float percentComplete)
         {
             const int PEPPROPHET_DETAILED_LOG_INTERVAL_SECONDS = 60;
-            m_progress = SEQUEST_PROGRESS_PHRP_DONE + (float)(percentComplete / 3.0);
+            m_progress = ComputeIncrementalProgress(PROGRESS_PHRP_DONE, PROGRESS_PEPTIDE_PROPHET_OR_MZID_MERGE_DONE, percentComplete);
+
             m_StatusTools.UpdateAndWrite(m_progress);
 
             if (m_DebugLevel < 3 || DateTime.UtcNow.Subtract(dtLastPepProphetStatusLog).TotalSeconds < PEPPROPHET_DETAILED_LOG_INTERVAL_SECONDS)
@@ -2475,7 +2488,7 @@ namespace AnalysisManagerExtractionPlugin
             const int PHRP_LOG_INTERVAL_SECONDS = 180;
             const int PHRP_DETAILED_LOG_INTERVAL_SECONDS = 20;
 
-            m_progress = SEQUEST_PROGRESS_EXTRACTION_DONE + (float)(percentComplete / 3.0);
+            ComputeIncrementalProgress(PROGRESS_EXTRACTION_DONE, PROGRESS_PHRP_DONE, percentComplete);
             m_StatusTools.UpdateAndWrite(m_progress);
 
             if (m_DebugLevel < 1)

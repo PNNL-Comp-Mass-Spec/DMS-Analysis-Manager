@@ -164,9 +164,9 @@ namespace AnalysisManagerIDPickerPlugIn
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
-                var blnSplitFasta = m_jobParams.GetJobParameter("SplitFasta", false);
+                var splitFasta = m_jobParams.GetJobParameter("SplitFasta", false);
 
-                if (!skipIDPicker && blnSplitFasta)
+                if (!skipIDPicker && splitFasta)
                 {
                     skipIDPicker = true;
                     LogWarning("SplitFasta jobs typically have fasta files too large for IDPQonvert; skipping IDPicker", true);

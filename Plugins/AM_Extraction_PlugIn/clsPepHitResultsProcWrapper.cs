@@ -102,7 +102,7 @@ namespace AnalysisManagerExtractionPlugin
         public CloseOutType ExtractDataFromResults(string peptideSearchResultsFileName, bool createFirstHitsFile, bool createSynopsisFile,
             string fastaFilePath, string resultType)
         {
-            var ParamFileName = m_JobParams.GetParam("ParmFileName");
+            var paramFileName = m_JobParams.GetParam("ParmFileName");
 
             try
             {
@@ -122,7 +122,7 @@ namespace AnalysisManagerExtractionPlugin
                 }
 
                 // Define the modification definitions file name
-                var ModDefsFileName = Path.GetFileNameWithoutExtension(ParamFileName) + clsAnalysisResourcesExtraction.MOD_DEFS_FILE_SUFFIX;
+                var modDefsFileName = Path.GetFileNameWithoutExtension(paramFileName) + clsAnalysisResourcesExtraction.MOD_DEFS_FILE_SUFFIX;
 
                 var psmResultsFile = new FileInfo(peptideSearchResultsFileName);
                 if (psmResultsFile.Directory == null)
@@ -147,8 +147,8 @@ namespace AnalysisManagerExtractionPlugin
                 // Note:
                 //   /SynPvalue is only used when processing Inspect files
                 //   /SynProb is only used for MODa and MODPlus results
-                var cmdStr = psmResultsFile.FullName + " /O:" + psmResultsFile.DirectoryName + " /M:" + ModDefsFileName + " /T:" +
-                                clsAnalysisResourcesExtraction.MASS_CORRECTION_TAGS_FILENAME + " /N:" + ParamFileName + " /SynPvalue:0.2 " +
+                var cmdStr = psmResultsFile.FullName + " /O:" + psmResultsFile.DirectoryName + " /M:" + modDefsFileName + " /T:" +
+                                clsAnalysisResourcesExtraction.MASS_CORRECTION_TAGS_FILENAME + " /N:" + paramFileName + " /SynPvalue:0.2 " +
                                 " /SynProb:0.05 ";
 
                 cmdStr += " /L:" + Path.Combine(psmResultsFile.Directory.FullName, PHRP_LOG_FILE_NAME);

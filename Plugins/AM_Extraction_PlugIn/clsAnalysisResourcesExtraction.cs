@@ -385,45 +385,45 @@ namespace AnalysisManagerExtractionPlugin
                 // or for split fasta, DatasetName_msgfplus_Part1.mzid.gz
 
                 var fileToFind = DatasetName + "_msgfplus" + suffixToAdd + ".mzid.gz";
-                var sourceFolder = FileSearch.FindDataFile(fileToFind, true, false);
+                var sourceDir = FileSearch.FindDataFile(fileToFind, true, false);
                 string mzidSuffix;
-                if (!string.IsNullOrEmpty(sourceFolder))
+                if (!string.IsNullOrEmpty(sourceDir))
                 {
                     // Running MSGF+ with gzipped results
                     mzidSuffix = ".mzid.gz";
                 }
                 else
                 {
-                    // File not found; look for _msgfdb.mzid.gz
-                    var fileToGetAlternative = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(fileToFind, "Dataset_msgfdb.txt");
-                    var mzidSourceFolderAlt = FileSearch.FindDataFile(fileToGetAlternative, true, false);
+                    // File not found; look for DatasetName_msgfdb.mzid.gz or DatasetName_msgfdb_Part1.mzid.gz
+                    var fileToGetAlternative = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(fileToFind, DatasetName + "_msgfdb.txt");
+                    var mzidSourceDirAlt = FileSearch.FindDataFile(fileToGetAlternative, true, false);
 
-                    if (!string.IsNullOrEmpty(mzidSourceFolderAlt))
+                    if (!string.IsNullOrEmpty(mzidSourceDirAlt))
                     {
                         // Running MSGF+ with gzipped results
                         mzidSuffix = ".mzid.gz";
-                        sourceFolder = mzidSourceFolderAlt;
+                        sourceDir = mzidSourceDirAlt;
                     }
                     else
                     {
                         // File not found; look for a .zip file
-                        var zipSourceFolder = FileSearch.FindDataFile(DatasetName + "_msgfplus" + suffixToAdd + ".zip", true, false);
-                        if (!string.IsNullOrEmpty(zipSourceFolder))
+                        var zipSourceDir = FileSearch.FindDataFile(DatasetName + "_msgfplus" + suffixToAdd + ".zip", true, false);
+                        if (!string.IsNullOrEmpty(zipSourceDir))
                         {
                             // Running MSGF+ with zipped results
                             mzidSuffix = ".zip";
-                            sourceFolder = zipSourceFolder;
+                            sourceDir = zipSourceDir;
                         }
                         else
                         {
                             // File not found; try _msgfdb
-                            var zipSourceFolderAlt = FileSearch.FindDataFile(DatasetName + "_msgfdb" + suffixToAdd + ".zip", true, false);
-                            if (!string.IsNullOrEmpty(zipSourceFolderAlt))
+                            var zipSourceDirAlt = FileSearch.FindDataFile(DatasetName + "_msgfdb" + suffixToAdd + ".zip", true, false);
+                            if (!string.IsNullOrEmpty(zipSourceDirAlt))
                             {
                                 // File Found
                                 useLegacyMSGFDB = true;
                                 mzidSuffix = ".zip";
-                                sourceFolder = zipSourceFolderAlt;
+                                sourceDir = zipSourceDirAlt;
                             }
                             else
                             {
@@ -464,33 +464,33 @@ namespace AnalysisManagerExtractionPlugin
                     {
                         baseName = DatasetName + "_msgfplus" + suffixToAdd;
 
-                        var tsvFile = DatasetName + "_msgfplus" + suffixToAdd + ".tsv";
+                        var tsvFile = baseName + ".tsv";
                         currentStep = "Retrieving " + tsvFile;
 
-                        var tsvSourceFolder = FileSearch.FindDataFile(tsvFile, false, false);
-                        if (string.IsNullOrEmpty(tsvSourceFolder))
+                        var tsvSourceDir = FileSearch.FindDataFile(tsvFile, false, false);
+                        if (string.IsNullOrEmpty(tsvSourceDir))
                         {
-                            var fileToGetAlternative = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(tsvFile, "Dataset_msgfdb.txt");
-                            var tsvSourceFolderAlt = FileSearch.FindDataFile(fileToGetAlternative, false, false);
-                            if (!string.IsNullOrEmpty(tsvSourceFolderAlt))
+                            var fileToGetAlternative = clsPHRPReader.AutoSwitchToLegacyMSGFDBIfRequired(tsvFile, DatasetName + "_msgfdb.txt");
+                            var tsvSourceDirAlt = FileSearch.FindDataFile(fileToGetAlternative, false, false);
+                            if (!string.IsNullOrEmpty(tsvSourceDirAlt))
                             {
                                 tsvFile = fileToGetAlternative;
-                                tsvSourceFolder = tsvSourceFolderAlt;
+                                tsvSourceDir = tsvSourceDirAlt;
                             }
                         }
 
-                        if (!string.IsNullOrEmpty(tsvSourceFolder))
+                        if (!string.IsNullOrEmpty(tsvSourceDir))
                         {
-                            if (!tsvSourceFolder.StartsWith(MYEMSL_PATH_FLAG))
+                            if (!tsvSourceDir.StartsWith(MYEMSL_PATH_FLAG))
                             {
                                 // Examine the date of the TSV file
                                 // If less than 4 hours old, retrieve it; otherwise, grab the _msgfplus.mzid.gz file and re-generate the .tsv file
 
-                                var fiTSVFile = new FileInfo(Path.Combine(tsvSourceFolder, tsvFile));
+                                var fiTSVFile = new FileInfo(Path.Combine(tsvSourceDir, tsvFile));
                                 if (DateTime.UtcNow.Subtract(fiTSVFile.LastWriteTimeUtc).TotalHours < 4)
                                 {
                                     // File is recent; grab it
-                                    if (!CopyFileToWorkDir(tsvFile, tsvSourceFolder, m_WorkingDir))
+                                    if (!CopyFileToWorkDir(tsvFile, tsvSourceDir, m_WorkingDir))
                                     {
                                         // File copy failed; that's OK; we'll grab the _msgfplus.mzid.gz file
                                     }
@@ -544,7 +544,7 @@ namespace AnalysisManagerExtractionPlugin
                     }
 
                     // Get the peptide to protein mapping file
-                    var pepToProtMapFile = DatasetName + "_msgfplus" + suffixToAdd + "_PepToProtMap.txt";
+                    var pepToProtMapFile = baseName + "_PepToProtMap.txt";
                     currentStep = "Retrieving " + pepToProtMapFile;
 
                     if (!FileSearch.FindAndRetrievePHRPDataFile(ref pepToProtMapFile, synopsisFileName: "", addToResultFileSkipList: true, logFileNotFound: false))
@@ -575,9 +575,9 @@ namespace AnalysisManagerExtractionPlugin
                     }
                     else
                     {
-                        if (splitFastaEnabled && !string.IsNullOrWhiteSpace(sourceFolder))
+                        if (splitFastaEnabled && !string.IsNullOrWhiteSpace(sourceDir))
                         {
-                            var fiPepToProtMapFile = new FileInfo(Path.Combine(sourceFolder, pepToProtMapFile));
+                            var fiPepToProtMapFile = new FileInfo(Path.Combine(sourceDir, pepToProtMapFile));
                             m_jobParams.AddServerFileToDelete(fiPepToProtMapFile.FullName);
                         }
                     }
@@ -696,10 +696,10 @@ namespace AnalysisManagerExtractionPlugin
         /// </summary>
         /// <returns>CloseOutType specifying results</returns>
         /// <remarks></remarks>
-        protected internal CloseOutType RetrieveMiscFiles(string ResultType)
+        protected internal CloseOutType RetrieveMiscFiles(string resultType)
         {
             var paramFileName = m_jobParams.GetParam("ParmFileName");
-            var ModDefsFilename = Path.GetFileNameWithoutExtension(paramFileName) + MOD_DEFS_FILE_SUFFIX;
+            var modDefsFilename = Path.GetFileNameWithoutExtension(paramFileName) + MOD_DEFS_FILE_SUFFIX;
 
             try
             {
@@ -723,23 +723,23 @@ namespace AnalysisManagerExtractionPlugin
                 }
 
                 // Confirm that the file was actually created
-                var fiModDefsFile = new FileInfo(Path.Combine(m_WorkingDir, ModDefsFilename));
+                var fiModDefsFile = new FileInfo(Path.Combine(m_WorkingDir, modDefsFilename));
 
-                if (!fiModDefsFile.Exists && ResultType == RESULT_TYPE_MSPATHFINDER)
+                if (!fiModDefsFile.Exists && resultType == RESULT_TYPE_MSPATHFINDER)
                 {
                     // MSPathFinder should have already created the ModDefs file during the previous step
-                    // Retrieve it from the transfer folder now
-                    FileSearch.FindAndRetrieveMiscFiles(ModDefsFilename, false);
+                    // Retrieve it from the transfer directory now
+                    FileSearch.FindAndRetrieveMiscFiles(modDefsFilename, false);
                     fiModDefsFile.Refresh();
                 }
 
-                if (ResultType == RESULT_TYPE_XTANDEM)
+                if (resultType == RESULT_TYPE_XTANDEM)
                 {
                     // Retrieve the taxonomy.xml file (PHRPReader uses for it)
                     FileSearch.FindAndRetrieveMiscFiles("taxonomy.xml", false);
                 }
 
-                if (!fiModDefsFile.Exists && ResultType != RESULT_TYPE_MSALIGN)
+                if (!fiModDefsFile.Exists && resultType != RESULT_TYPE_MSALIGN)
                 {
                     m_message = "Unable to create the ModDefs.txt file; update T_Param_File_Mass_Mods";
                     LogWarning("Unable to create the ModDefs.txt file; " +
@@ -750,28 +750,29 @@ namespace AnalysisManagerExtractionPlugin
                 m_jobParams.AddResultFileToSkip(paramFileName);
                 m_jobParams.AddResultFileToSkip(MASS_CORRECTION_TAGS_FILENAME);
 
-                var logModFilesFileNotFound = (ResultType == RESULT_TYPE_MSALIGN);
+                var logModFilesFileNotFound = (resultType == RESULT_TYPE_MSALIGN);
 
                 // Check whether the newly generated ModDefs file matches the existing one
                 // If it doesn't match, or if the existing one is missing, we need to keep the file
                 // Otherwise, we can skip it
-                var remoteModDefsFolder = FileSearch.FindDataFile(ModDefsFilename, searchArchivedDatasetFolder: false, logFileNotFound: logModFilesFileNotFound);
-                if (string.IsNullOrEmpty(remoteModDefsFolder))
+                var remoteModDefsDirectory = FileSearch.FindDataFile(modDefsFilename, searchArchivedDatasetFolder: false, logFileNotFound: logModFilesFileNotFound);
+                if (string.IsNullOrEmpty(remoteModDefsDirectory))
                 {
                     // ModDefs file not found on the server
                     if (fiModDefsFile.Length == 0)
                     {
                         // File is empty; no point in keeping it
-                        m_jobParams.AddResultFileToSkip(ModDefsFilename);
+                        m_jobParams.AddResultFileToSkip(modDefsFilename);
                     }
                 }
-                else if (remoteModDefsFolder.ToLower().StartsWith(@"\\proto"))
+                else if (remoteModDefsDirectory.ToLower().StartsWith(@"\\proto"))
                 {
-                    if (clsGlobal.FilesMatch(fiModDefsFile.FullName, Path.Combine(remoteModDefsFolder, ModDefsFilename)))
+                    if (clsGlobal.FilesMatch(fiModDefsFile.FullName, Path.Combine(remoteModDefsDirectory, modDefsFilename)))
                     {
-                        m_jobParams.AddResultFileToSkip(ModDefsFilename);
+                        m_jobParams.AddResultFileToSkip(modDefsFilename);
                     }
                 }
+
             }
             catch (Exception ex)
             {
