@@ -1054,9 +1054,10 @@ namespace AnalysisManagerExtractionPlugin
                     if (!phrpFile.Exists)
                     {
                         // File not found; need to run PHRP
-                        existingPhrpFileCount++;
                         continue;
                     }
+
+                    existingPhrpFileCount++;
 
                     if (phrpFile.LastWriteTimeUtc < oldestPhrpFile)
                     {
