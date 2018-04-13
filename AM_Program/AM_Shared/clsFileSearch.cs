@@ -313,7 +313,7 @@ namespace AnalysisManagerBase
             OnStatusEvent("Unzipping file " + fileName);
             if (UnzipFileStart(Path.Combine(m_WorkingDir, fileName), m_WorkingDir, "FindAndRetrieveMiscFiles", false))
             {
-                if (m_DebugLevel >= 1)
+                if (m_DebugLevel >= 3)
                 {
                     OnStatusEvent("Unzipped file " + fileName);
                 }

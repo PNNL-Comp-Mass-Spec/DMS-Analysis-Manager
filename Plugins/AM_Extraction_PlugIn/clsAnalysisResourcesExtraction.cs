@@ -173,7 +173,10 @@ namespace AnalysisManagerExtractionPlugin
 
                             if (modDefParts.Count < 5)
                             {
-                                LogWarning("Incomplete mod def line in MSGF+ parameter file: " + modDef);
+                                if (!modDef.StartsWith("None", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    LogWarning("Incomplete mod def line in MSGF+ parameter file: " + modDef);
+                                }
                                 continue;
                             }
 
@@ -1079,7 +1082,10 @@ namespace AnalysisManagerExtractionPlugin
                     // PHRP files are up-to-date; no need to re-run PHRP
                     var fileLabel = splitFastaEnabled ? "files" : "file";
 
-                    LogMessage(string.Format("PHRP files are all newer than the .mzid.gz {0}; will skip running PHRP on this job", fileLabel));
+                    LogMessage(string.Format("PHRP files are all newer than the .mzid.gz {0} ({1} > {2}); will skip running PHRP on this job",
+                                             fileLabel,
+                                             oldestPhrpFile.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT),
+                                             newestMzIdOrTsvFile.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT)));
 
                     m_jobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, JOB_PARAM_SKIP_PHRP, true);
                 }
