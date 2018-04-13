@@ -9,6 +9,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Xml;
 using AnalysisManagerBase;
 using AnalysisManagerMSGFDBPlugIn;
 using PHRPReader;
@@ -32,6 +34,10 @@ namespace AnalysisManagerExtractionPlugin
         /// </summary>
         public const string MASS_CORRECTION_TAGS_FILENAME = "Mass_Correction_Tags.txt";
 
+        /// <summary>
+        /// Job parameter used to instruct clsExtractToolRunner to run AScore
+        /// </summary>
+        public const string JOB_PARAM_RUN_ASCORE = "RunAScore";
 
         /// <summary>
         /// Job parameter used to instruct clsExtractToolRunner to skip PHRP since the PHRP result files are already up-to-date
@@ -55,6 +61,375 @@ namespace AnalysisManagerExtractionPlugin
             // FASTA file to determine the protein to include in the FHT file
 
             SetOption(clsGlobal.eAnalysisResourceOptions.OrgDbRequired, true);
+        }
+
+
+        /// <summary>
+        /// Examines the SEQUEST, X!Tandem, Inspect, or MSGF+ param file to determine if ETD mode is enabled
+        /// </summary>
+        /// <param name="resultType"></param>
+        /// <param name="searchToolParamFilePath"></param>
+        /// <returns>True if we should run AScore, otherwise false</returns>
+        private bool CheckAScoreRequired(string resultType, string searchToolParamFilePath)
+        {
+
+            if (string.IsNullOrEmpty(searchToolParamFilePath))
+            {
+                LogError("PeptideHit param file path is empty; unable to continue");
+                return false;
+            }
+
+            m_StatusTools.CurrentOperation = "Checking whether we should run AScore after Data Extraction";
+
+            bool runAscore;
+
+            switch (resultType)
+            {
+                case RESULT_TYPE_SEQUEST:
+                    runAscore = CheckAScoreRequiredSequest(searchToolParamFilePath);
+                    break;
+
+                case RESULT_TYPE_XTANDEM:
+                    runAscore = CheckAScoreRequiredXTandem(searchToolParamFilePath);
+                    break;
+
+                case RESULT_TYPE_MSGFPLUS:
+                    runAscore = CheckAScoreRequiredMSGFPlus(searchToolParamFilePath);
+                    break;
+
+                case RESULT_TYPE_INSPECT:
+                case RESULT_TYPE_MSALIGN:
+                case RESULT_TYPE_MODA:
+                case RESULT_TYPE_MODPLUS:
+                case RESULT_TYPE_MSPATHFINDER:
+                    LogDebug(string.Format("{0} does not support running AScore as part of data extraction", RESULT_TYPE_INSPECT));
+                    runAscore = false;
+                    break;
+
+                default:
+                    LogDebug("Unrecognized result type: " + resultType);
+                    runAscore = false;
+                    break;
+            }
+
+            return runAscore;
+        }
+
+        /// <summary>
+        /// Examines the MSGF+ param file to determine if phospho STY is enabled
+        /// </summary>
+        /// <param name="searchToolParamFilePath">MSGF+ parameter file to read</param>
+        /// <returns>True if we should run AScore, otherwise false</returns>
+        private bool CheckAScoreRequiredMSGFPlus(string searchToolParamFilePath)
+        {
+            const string DYNAMICMOD_TAG = "DynamicMod";
+
+            var runAscore = false;
+
+            try
+            {
+
+                if (m_DebugLevel >= 2)
+                {
+                    LogDebug("Reading the MSGF+ parameter file: " + searchToolParamFilePath);
+                }
+
+                // Read the data from the MSGF+ Param file
+                using (var srParamFile = new StreamReader(new FileStream(searchToolParamFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                {
+
+                    while (!srParamFile.EndOfStream)
+                    {
+                        var lineIn = srParamFile.ReadLine();
+
+                        if (string.IsNullOrWhiteSpace(lineIn) || !lineIn.StartsWith(DYNAMICMOD_TAG))
+                            continue;
+
+                        // Check whether this line has HO3P or mod mass 79.966 on S, T, or Y
+                        // Alternatively, if the mod name is Phospho assume this is a phosphorylation search
+
+                        if (m_DebugLevel >= 3)
+                        {
+                            LogDebug("MSGF+ " + DYNAMICMOD_TAG + " line found: " + lineIn);
+                        }
+
+                        // Look for the equals sign
+                        var charIndex = lineIn.IndexOf('=');
+                        if (charIndex > 0)
+                        {
+                            var modDef = lineIn.Substring(charIndex + 1).Trim();
+
+                            var commentIndex = lineIn.IndexOf('#');
+                            List<string> modDefParts;
+
+                            if (commentIndex > 1)
+                            {
+                                modDefParts= modDef.Substring(0, commentIndex).Trim().Split(',').ToList();
+                            }
+                            else
+                            {
+                                modDefParts = modDef.Split(',').ToList();
+                            }
+
+                            if (modDefParts.Count < 5)
+                            {
+                                LogWarning("Incomplete mod def line in MSGF+ parameter file: " + modDef);
+                                continue;
+                            }
+
+                            var modMassOrFormula = modDefParts[0].Trim();
+                            var residues = modDefParts[1].Trim();
+                            var modName = modDefParts[4].Trim();
+
+                            if (!HasAnyResidue(residues, "STY"))
+                            {
+                                // Mod doesn't affect S, T, or Y
+                                continue;
+                            }
+
+                            if (string.Equals(modMassOrFormula, "HO3P") ||
+                                modMassOrFormula.StartsWith("79.96") ||
+                                modMassOrFormula.StartsWith("79.97"))
+                            {
+                                runAscore = true;
+                                break;
+                            }
+
+                            if (string.Equals(modName, "phospho", StringComparison.InvariantCultureIgnoreCase))
+                            {
+                                runAscore = true;
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            LogWarning("MSGF+ " + DYNAMICMOD_TAG + " line does not have an equals sign; ignoring " + lineIn);
+                        }
+
+                    }
+                }
+
+                return runAscore;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error reading the MSGF+ param file", ex);
+                return false;
+            }
+
+        }
+
+        /// <summary>
+        /// Examines the SEQUEST param file to determine if phospho STY is enabled
+        /// </summary>
+        /// <param name="searchToolParamFilePath">SEQUEST parameter file to read</param>
+        /// <returns>True if we should run AScore, otherwise false</returns>
+        private bool CheckAScoreRequiredSequest(string searchToolParamFilePath)
+        {
+            const string DIFF_SEARCH_OPTIONS_TAG = "diff_search_options";
+
+            var runAscore = false;
+
+            try
+            {
+
+                if (m_DebugLevel >= 2)
+                {
+                    LogDebug("Reading the SEQUEST parameter file: " + searchToolParamFilePath);
+                }
+
+                // Read the data from the SEQUEST Param file
+                using (var srParamFile = new StreamReader(new FileStream(searchToolParamFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                {
+                    while (!srParamFile.EndOfStream)
+                    {
+                        var lineIn = srParamFile.ReadLine();
+
+                        if (string.IsNullOrWhiteSpace(lineIn) || !lineIn.StartsWith(DIFF_SEARCH_OPTIONS_TAG))
+                            continue;
+
+                        // Check whether the dynamic mods line has 79.9663 STY (or similar)
+
+                        if (m_DebugLevel >= 3)
+                        {
+                            LogDebug("SEQUEST " + DIFF_SEARCH_OPTIONS_TAG + " line found: " + lineIn);
+                        }
+
+                        // Look for the equals sign
+                        var charIndex = lineIn.IndexOf('=');
+                        if (charIndex > 0)
+                        {
+                            var modDef = lineIn.Substring(charIndex + 1).Trim();
+
+                            // Split modDef on spaces
+                            var modDefParts = modDef.Split(' ');
+
+                            if (modDefParts.Length >= 2)
+                            {
+
+                                for (var i = 0; i < modDefParts.Length; i += 2)
+                                {
+                                    if (modDefParts.Length <= i + 1)
+                                        break;
+
+                                    var residues = modDefParts[i + 1];
+
+                                    if (!HasAnyResidue(residues, "STY"))
+                                    {
+                                        continue;
+                                    }
+
+                                    if (!double.TryParse(modDefParts[i], out var modMass))
+                                        continue;
+
+                                    if (Math.Abs(79.966331 - modMass) < 0.01)
+                                    {
+                                        runAscore = true;
+                                        break;
+                                    }
+
+                                }
+
+                            }
+                            else
+                            {
+                                LogWarning("SEQUEST " + DIFF_SEARCH_OPTIONS_TAG + " line is not valid: " + lineIn);
+                            }
+                        }
+                        else
+                        {
+                            LogWarning("SEQUEST " + DIFF_SEARCH_OPTIONS_TAG + " line does not have an equals sign: " + lineIn);
+                        }
+
+                        // No point in checking any further since we've parsed the ion_series line
+                        break;
+                    }
+                }
+
+                return runAscore;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error reading the SEQUEST param file", ex);
+                return false;
+            }
+
+        }
+
+        /// <summary>
+        /// Examines the X!Tandem param file to determine if phospho STY is enabled
+        /// </summary>
+        /// <param name="searchToolParamFilePath">X!Tandem XML parameter file to read</param>
+        /// <returns>True if we should run AScore, otherwise false</returns>
+        private bool CheckAScoreRequiredXTandem(string searchToolParamFilePath)
+        {
+            var runAscore = false;
+
+            try
+            {
+
+                if (m_DebugLevel >= 2)
+                {
+                    LogDebug("Reading the X!Tandem parameter file: " + searchToolParamFilePath);
+                }
+
+                // Open the parameter file
+                // Look for either of these lines:
+                //   <note type="input" label="residue, potential modification mass">79.9663@S,79.9663@T,79.9663@Y</note>
+                //   <note type="input" label="refine, potential modification mass">79.9663@S,79.9663@T,79.9663@Y</note>
+
+                var objParamFile = new XmlDocument
+                {
+                    PreserveWhitespace = true
+                };
+                objParamFile.Load(searchToolParamFilePath);
+
+                if (objParamFile.DocumentElement == null)
+                {
+                    LogError("Error reading the X!Tandem param file: DocumentElement is null");
+                    return false;
+                }
+
+                for (var settingIndex = 0; settingIndex <= 1; settingIndex++)
+                {
+                    XmlNodeList objSelectedNodes;
+
+                    switch (settingIndex)
+                    {
+                        case 0:
+                            objSelectedNodes = objParamFile.DocumentElement.SelectNodes("/bioml/note[@label='residue, potential modification mass']");
+                            break;
+                        case 1:
+                            objSelectedNodes = objParamFile.DocumentElement.SelectNodes("/bioml/note[@label='refine, potential modification mass']");
+                            break;
+                        default:
+                            objSelectedNodes = null;
+                            break;
+                    }
+
+                    if (objSelectedNodes == null)
+                    {
+                        continue;
+                    }
+
+                    for (var matchIndex = 0; matchIndex <= objSelectedNodes.Count - 1; matchIndex++)
+                    {
+                        var xmlAttributes = objSelectedNodes.Item(matchIndex)?.Attributes;
+
+                        // Make sure this node has an attribute named type with value "input"
+                        var objAttributeNode = xmlAttributes?.GetNamedItem("type");
+
+                        if (objAttributeNode == null)
+                        {
+                            // Node does not have an attribute named "type"
+                            continue;
+                        }
+
+                        if (objAttributeNode.Value.ToLower() != "input")
+                            continue;
+
+                        // Valid node; examine its InnerText value
+                        var modDefList = objSelectedNodes.Item(matchIndex)?.InnerText;
+                        if (string.IsNullOrWhiteSpace(modDefList))
+                            continue;
+
+                        // modDefList is of the form:
+                        // 79.9663@S,79.9663@T,79.9663@Y
+
+                        var modDefs = modDefList.Split(',');
+                        foreach (var modDef in modDefs)
+                        {
+                            var modDefParts = modDef.Split('@');
+                            if (modDefParts.Length < 2)
+                                continue;
+
+                            if (!HasAnyResidue(modDefParts[1], "STY"))
+                                continue;
+
+                            if (!double.TryParse(modDefParts[0], out var modMass))
+                                continue;
+
+                            if (Math.Abs(79.966331 - modMass) < 0.01)
+                            {
+                                runAscore = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (runAscore)
+                        break;
+                }
+
+                return runAscore;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error reading the X!Tandem param file", ex);
+
+                return false;
+            }
+
         }
 
         /// <summary>
@@ -753,6 +1128,26 @@ namespace AnalysisManagerExtractionPlugin
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
+        private CloseOutType GetCDTAFile()
+        {
+            // Retrieve the _DTA.txt file
+            // Note that if the file was found in MyEMSL then RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file
+
+            if (!FileSearch.RetrieveDtaFiles())
+            {
+                var sharedResultsFolder = m_jobParams.GetParam("SharedResultsFolders");
+                if (!string.IsNullOrEmpty(sharedResultsFolder))
+                {
+                    m_message += "; shared results folder is " + sharedResultsFolder;
+                }
+
+                // Errors were reported in function call, so just return
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+            return CloseOutType.CLOSEOUT_SUCCESS;
+        }
+
         // Deprecated function
         //
         ///// <summary>
@@ -802,7 +1197,25 @@ namespace AnalysisManagerExtractionPlugin
         //}
 
         /// <summary>
-        /// Retrieves misc files (i.e., ModDefs) needed for extraction
+        /// Examine residuesToSearch to look for any residue in residuesToFind
+        /// </summary>
+        /// <param name="residuesToSearch"></param>
+        /// <param name="residuesToFind"></param>
+        /// <returns>True if residuesToSearch has any of the residues in residuesToFind</returns>
+        private bool HasAnyResidue(string residuesToSearch, string residuesToFind)
+        {
+            foreach (var residue in residuesToFind)
+            {
+                if (residuesToSearch.Contains(residue))
+                    return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Retrieves misc files needed for extraction
+        /// (including the search engine parameter file, _ModDefs.txt and MassCorrectionTags.txt)
         /// </summary>
         /// <returns>CloseOutType specifying results</returns>
         /// <remarks></remarks>
@@ -883,6 +1296,60 @@ namespace AnalysisManagerExtractionPlugin
                     }
                 }
 
+                // Examine the parameter file to check whether a phospho STY search was performed
+                // If so, retrieving the instrument data file so that we can run AScore
+
+                var runAScore = CheckAScoreRequired(resultType, Path.Combine(m_WorkingDir, paramFileName));
+
+                if (!runAScore)
+                    return CloseOutType.CLOSEOUT_SUCCESS;
+
+                m_jobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, JOB_PARAM_RUN_ASCORE, true);
+
+                // If existing PHRP files were found and SkipPHRP was set to true,
+                // assure that a .mzid or .mzid.gz file exists in the working directory
+                // If one is not found, change SkipPHRP back to false
+                var skipPHRPEnabled = m_jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, JOB_PARAM_SKIP_PHRP, false);
+
+                if (skipPHRPEnabled)
+                {
+                    var workDir = new DirectoryInfo(m_WorkingDir);
+
+                    var mzidGzFiles = workDir.GetFiles(DatasetName + "*.mzid.gz");
+                    var mzidFiles = workDir.GetFiles(DatasetName + "*.mzid");
+
+                    if (mzidGzFiles.Length == 0 && mzidFiles.Length == 0)
+                    {
+                        LogWarning(string.Format("Changing job parameter {0} back to False because no .mzid files were found",
+                                                 JOB_PARAM_SKIP_PHRP));
+                        m_jobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, JOB_PARAM_SKIP_PHRP, false);
+                    }
+                }
+
+                LogMessage("TODO: Retrieve the instrument data file so that we can run AScore");
+                return CloseOutType.CLOSEOUT_SUCCESS;
+
+                // Retrieve the instrument data file
+
+                // The ToolName job parameter holds the name of the job script we are executing
+                var scriptName = m_jobParams.GetParam("ToolName");
+
+                CloseOutType result;
+
+                if (scriptName.ToLower().Contains("mzxml") || scriptName.ToLower().Contains("msgfplus_bruker"))
+                {
+                    result = GetMzXMLFile();
+                }
+                else if (scriptName.ToLower().Contains("mzml"))
+                {
+                    result = GetMzMLFile();
+                }
+                else
+                {
+                    result = GetCDTAFile();
+                }
+
+                return result;
             }
             catch (Exception ex)
             {
@@ -890,7 +1357,6 @@ namespace AnalysisManagerExtractionPlugin
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         protected bool RetrieveToolVersionFile(string resultTypeName)
