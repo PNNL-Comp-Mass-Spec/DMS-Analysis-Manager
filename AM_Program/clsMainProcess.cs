@@ -592,7 +592,7 @@ namespace AnalysisManagerProg
                                 oneTaskStarted = true;
                                 var defaultManagerWorkDir = string.Copy(m_WorkDirPath);
 
-                                var success = DoAnalysisJob(out var runningRemote);
+                                var resultCode = DoAnalysisJob(out var runningRemote);
 
                                 if (!string.Equals(m_WorkDirPath, defaultManagerWorkDir))
                                 {
@@ -601,7 +601,7 @@ namespace AnalysisManagerProg
                                     m_MgrSettings.SetParam(clsAnalysisMgrSettings.MGR_PARAM_WORK_DIR, m_WorkDirPath);
                                 }
 
-                                if (success)
+                                if (resultCode == CloseOutType.CLOSEOUT_SUCCESS)
                                 {
                                     // Task succeeded; reset the sequential job failure counter
                                     criticalMgrErrorCount = 0;
@@ -610,7 +610,8 @@ namespace AnalysisManagerProg
                                 else
                                 {
                                     // Something went wrong; errors were logged by DoAnalysisJob
-                                    if (m_MostRecentErrorMessage.Contains("None of the spectra are centroided") ||
+                                    if (resultCode != CloseOutType.CLOSEOUT_FAILED ||
+                                        m_MostRecentErrorMessage.Contains("None of the spectra are centroided") ||
                                         m_MostRecentErrorMessage.Contains("No peaks found") ||
                                         m_MostRecentErrorMessage.Contains("No spectra were exported"))
                                     {
@@ -737,9 +738,9 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Perform an analysis job
         /// </summary>
-        /// <param name="runningRemote">True if we checked the status of a remote job</param>
-        /// <returns></returns>
-        private bool DoAnalysisJob(out bool runningRemote)
+        /// <param name="runningRemote">Output: True if we checked the status of a remote job</param>
+        /// <returns>Tool resourcer or tool runner result code</returns>
+        private CloseOutType DoAnalysisJob(out bool runningRemote)
         {
             var jobNum = m_AnalysisTask.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Job", 0);
             var stepNum = m_AnalysisTask.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "Step", 0);
@@ -821,7 +822,7 @@ namespace AnalysisManagerProg
                 m_AnalysisTask.CloseTask(CloseOutType.CLOSEOUT_FAILED, "Unable to set resource object");
                 m_MgrErrorCleanup.CleanWorkDir();
                 UpdateStatusIdle("Error encountered: Unable to set resource object");
-                return false;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
             // Create an object to run the analysis tool
@@ -831,7 +832,7 @@ namespace AnalysisManagerProg
                 m_AnalysisTask.CloseTask(CloseOutType.CLOSEOUT_FAILED, "Unable to set tool runner object");
                 m_MgrErrorCleanup.CleanWorkDir();
                 UpdateStatusIdle("Error encountered: Unable to set tool runner object");
-                return false;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
             if (NeedToAbortProcessing())
@@ -840,7 +841,7 @@ namespace AnalysisManagerProg
                 m_AnalysisTask.CloseTask(CloseOutType.CLOSEOUT_FAILED, "Processing aborted");
                 m_MgrErrorCleanup.CleanWorkDir();
                 UpdateStatusIdle("Processing aborted");
-                return false;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
             // Make sure we have enough free space on the drive with the working directory and on the drive with the transfer folder
@@ -854,7 +855,7 @@ namespace AnalysisManagerProg
                 m_AnalysisTask.CloseTask(CloseOutType.CLOSEOUT_FAILED, m_MostRecentErrorMessage);
                 m_MgrErrorCleanup.CleanWorkDir();
                 UpdateStatusIdle("Processing aborted");
-                return false;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
             // Possibly disable MyEMSL
@@ -893,9 +894,13 @@ namespace AnalysisManagerProg
                 {
                     // Error occurred
                     // Note that m_AnalysisTask.CloseTask() should have already been called
-                    var reportSuccess = HandleJobFailure(toolRunner, eToolRunnerResult);
+                    var reportSuccess = HandleJobFailure(toolRunner, resultCode);
 
-                    return reportSuccess;
+                    if (reportSuccess)
+                        return CloseOutType.CLOSEOUT_SUCCESS;
+
+                    return resultCode == CloseOutType.CLOSEOUT_SUCCESS ? CloseOutType.CLOSEOUT_FAILED : resultCode;
+
                 }
 
                 // Run the job
@@ -974,13 +979,14 @@ namespace AnalysisManagerProg
 
                 var cleanupSuccess = CleanupAfterJob(deleteRemoteJobFiles, remoteMonitor);
 
-                return cleanupSuccess;
+                return cleanupSuccess ? CloseOutType.CLOSEOUT_SUCCESS : CloseOutType.CLOSEOUT_FAILED;
+
             }
             catch (Exception ex)
             {
                 LogError("Exception closing task after a normal run", ex);
                 m_StatusTools.UpdateIdle("Error encountered", "clsMainProcess.DoAnalysisJob(): " + ex.Message, m_MostRecentJobInfo, true);
-                return false;
+                return CloseOutType.CLOSEOUT_FAILED;
             }
 
         }
