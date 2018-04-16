@@ -866,19 +866,19 @@ namespace AnalysisManagerProg
             bool success;
             bool jobSucceeded;
 
-            CloseOutType eToolRunnerResult;
             clsRemoteMonitor remoteMonitor;
 
             // Retrieve files required for the job
             m_MgrErrorCleanup.CreateStatusFlagFile();
 
+            CloseOutType resultCode;
             if (runningRemote)
             {
                 // Job is running remotely; check its status
                 // If completed (success or fail), retrieve the results
-                success = CheckRemoteJobStatus(toolRunner, out eToolRunnerResult, out remoteMonitor);
+                success = CheckRemoteJobStatus(toolRunner, out resultCode, out remoteMonitor);
 
-                if (success && clsAnalysisJob.SuccessOrNoData(eToolRunnerResult))
+                if (success && clsAnalysisJob.SuccessOrNoData(resultCode))
                     jobSucceeded = true;
                 else
                     jobSucceeded = false;
@@ -888,7 +888,7 @@ namespace AnalysisManagerProg
                 remoteMonitor = null;
 
                 // Retrieve the resources for the job then either run locally or run remotely
-                var resourcesRetrieved = RetrieveResources(toolResourcer, jobNum, datasetName, out eToolRunnerResult);
+                var resourcesRetrieved = RetrieveResources(toolResourcer, jobNum, datasetName, out resultCode);
                 if (!resourcesRetrieved)
                 {
                     // Error occurred
@@ -904,7 +904,7 @@ namespace AnalysisManagerProg
                 if (runJobsRemotely)
                 {
                     // Transfer files to the remote host so that the job can run remotely
-                    success = RunJobRemotely(toolResourcer, jobNum, stepNum, out eToolRunnerResult);
+                    success = RunJobRemotely(toolResourcer, jobNum, stepNum, out resultCode);
                     if (!success)
                     {
                         ShowTrace("Error staging the job to run remotely; closing job step task");
@@ -913,16 +913,16 @@ namespace AnalysisManagerProg
                         {
                             m_MostRecentErrorMessage = "Unknown error staging the job to run remotely";
                         }
-                        m_AnalysisTask.CloseTask(eToolRunnerResult, m_MostRecentErrorMessage, toolRunner);
+                        m_AnalysisTask.CloseTask(resultCode, m_MostRecentErrorMessage, toolRunner);
                     }
 
                     // jobSucceeded is always false when we stage files to run remotely
-                    // Only set it to true if CheckRemoteJobStatus reports success and the eToolRunnerResult is Success or No_Data
+                    // Only set it to true if CheckRemoteJobStatus reports success and the resultCode is Success or No_Data
                     jobSucceeded = false;
                 }
                 else
                 {
-                    success = RunJobLocally(toolRunner, jobNum, datasetName, out eToolRunnerResult);
+                    success = RunJobLocally(toolRunner, jobNum, datasetName, out resultCode);
 
                     // Note: if success is false, RunJobLocally will have already called .CloseTask
 
@@ -934,10 +934,12 @@ namespace AnalysisManagerProg
             {
                 // Error occurred
                 // Note that m_AnalysisTask.CloseTask() should have already been called
-                var reportSuccess = HandleJobFailure(toolRunner, eToolRunnerResult);
+                var reportSuccess = HandleJobFailure(toolRunner, resultCode);
 
-                return reportSuccess;
+                if (reportSuccess)
+                    return CloseOutType.CLOSEOUT_SUCCESS;
 
+                return resultCode == CloseOutType.CLOSEOUT_SUCCESS ? CloseOutType.CLOSEOUT_FAILED : resultCode;
             }
 
             // Close out the job
@@ -949,13 +951,13 @@ namespace AnalysisManagerProg
                 CloseOutType closeOut;
                 if (runJobsRemotely)
                 {
-                    // eToolRunnerResult will be CLOSEOUT_RUNNING_REMOTE if RunJobRemotely was called
+                    // resultCode will be CLOSEOUT_RUNNING_REMOTE if RunJobRemotely was called
                     // or if CheckRemoteJobStatus was called and the job is still in progress
 
-                    // eToolRunnerResult will be CLOSEOUT_SUCCESS if CheckRemoteJobStatus found that the job was done
+                    // resultCode will be CLOSEOUT_SUCCESS if CheckRemoteJobStatus found that the job was done
                     // and successfully retrieved the results
 
-                    closeOut = eToolRunnerResult;
+                    closeOut = resultCode;
                 }
                 else
                 {
@@ -985,7 +987,7 @@ namespace AnalysisManagerProg
 
         private bool CheckRemoteJobStatus(
             IToolRunner toolRunner,
-            out CloseOutType eToolRunnerResult,
+            out CloseOutType resultCode,
             out clsRemoteMonitor remoteMonitor)
         {
 
@@ -1004,7 +1006,7 @@ namespace AnalysisManagerProg
             {
                 m_MostRecentErrorMessage = "Exception instantiating the RemoteMonitor class";
                 LogError(m_MostRecentErrorMessage, ex);
-                eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED_REMOTE;
+                resultCode = CloseOutType.CLOSEOUT_FAILED_REMOTE;
                 remoteMonitor = null;
                 return false;
             }
@@ -1019,40 +1021,40 @@ namespace AnalysisManagerProg
                         m_MostRecentErrorMessage = "Undefined remote job status; check the logs";
                         LogError(clsGlobal.AppendToComment(m_MostRecentErrorMessage, remoteMonitor.Message));
 
-                        eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED_REMOTE;
+                        resultCode = CloseOutType.CLOSEOUT_FAILED_REMOTE;
                         return false;
 
                     case clsRemoteMonitor.EnumRemoteJobStatus.Unstarted:
                         LogDebug("Remote job has not yet started", 2);
-                        eToolRunnerResult = CloseOutType.CLOSEOUT_RUNNING_REMOTE;
+                        resultCode = CloseOutType.CLOSEOUT_RUNNING_REMOTE;
                         return true;
 
                     case clsRemoteMonitor.EnumRemoteJobStatus.Running:
                         LogDebug(string.Format("Remote job is running, {0:F1}% complete", remoteMonitor.RemoteProgress), 2);
-                        eToolRunnerResult = CloseOutType.CLOSEOUT_RUNNING_REMOTE;
+                        resultCode = CloseOutType.CLOSEOUT_RUNNING_REMOTE;
                         return true;
 
                     case clsRemoteMonitor.EnumRemoteJobStatus.Success:
 
-                        var success = HandleRemoteJobSuccess(toolRunner, remoteMonitor, out eToolRunnerResult);
+                        var success = HandleRemoteJobSuccess(toolRunner, remoteMonitor, out resultCode);
                         if (!success)
                         {
                             m_MostRecentErrorMessage = toolRunner.Message;
-                            m_AnalysisTask.CloseTask(eToolRunnerResult, m_MostRecentErrorMessage, toolRunner);
+                            m_AnalysisTask.CloseTask(resultCode, m_MostRecentErrorMessage, toolRunner);
                         }
                         return success;
 
                     case clsRemoteMonitor.EnumRemoteJobStatus.Failed:
 
-                        HandleRemoteJobFailure(toolRunner, remoteMonitor, out eToolRunnerResult);
-                        m_AnalysisTask.CloseTask(eToolRunnerResult, m_MostRecentErrorMessage, toolRunner);
+                        HandleRemoteJobFailure(toolRunner, remoteMonitor, out resultCode);
+                        m_AnalysisTask.CloseTask(resultCode, m_MostRecentErrorMessage, toolRunner);
                         return false;
 
                     default:
                         m_MostRecentErrorMessage = "Unrecognized remote job status: " + eJobStatus;
                         LogError(clsGlobal.AppendToComment(m_MostRecentErrorMessage, remoteMonitor.Message));
 
-                        eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED_REMOTE;
+                        resultCode = CloseOutType.CLOSEOUT_FAILED_REMOTE;
                         return false;
                 }
 
@@ -1060,7 +1062,7 @@ namespace AnalysisManagerProg
             catch (Exception ex)
             {
                 LogError("Exception checking job status on the remote host", ex);
-                eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED_REMOTE;
+                resultCode = CloseOutType.CLOSEOUT_FAILED_REMOTE;
                 return false;
             }
         }
@@ -1694,7 +1696,7 @@ namespace AnalysisManagerProg
             return eManagerErrorCleanupMode;
         }
 
-        private bool HandleJobFailure(IToolRunner toolRunner, CloseOutType eToolRunnerResult)
+        private bool HandleJobFailure(IToolRunner toolRunner, CloseOutType resultCode)
         {
 
             ShowTrace("Tool run error; cleaning up");
@@ -1705,7 +1707,7 @@ namespace AnalysisManagerProg
                 {
                     LogWarning("Upstream code typically calls .CloseTask before HandleJobFailure is reached; closing the task now");
 
-                    m_AnalysisTask.CloseTask(eToolRunnerResult, m_MostRecentErrorMessage, toolRunner);
+                    m_AnalysisTask.CloseTask(resultCode, m_MostRecentErrorMessage, toolRunner);
                 }
 
                 if (m_MgrErrorCleanup.CleanWorkDir())
@@ -1717,14 +1719,14 @@ namespace AnalysisManagerProg
                     m_MgrErrorCleanup.CreateErrorDeletingFilesFlagFile();
                 }
 
-                if (eToolRunnerResult == CloseOutType.CLOSEOUT_NO_DTA_FILES && m_AnalysisTask.GetParam("StepTool").ToLower() == "sequest")
+                if (resultCode == CloseOutType.CLOSEOUT_NO_DTA_FILES && m_AnalysisTask.GetParam("StepTool").ToLower() == "sequest")
                 {
                     // This was a Sequest job, but no .DTA files were found
                     // Return True; do not count this as a manager failure
                     return true;
                 }
 
-                if (eToolRunnerResult == CloseOutType.CLOSEOUT_NO_DATA)
+                if (resultCode == CloseOutType.CLOSEOUT_NO_DATA)
                 {
                     // Return True; do not count this as a manager failure
                     return true;
@@ -1740,7 +1742,7 @@ namespace AnalysisManagerProg
             }
         }
 
-        private void HandleRemoteJobFailure(IToolRunner toolRunner, clsRemoteMonitor remoteMonitor, out CloseOutType eToolRunnerResult)
+        private void HandleRemoteJobFailure(IToolRunner toolRunner, clsRemoteMonitor remoteMonitor, out CloseOutType resultCode)
         {
             // Job failed
             // Parse the .fail file to read the result codes and messages (the file was already retrieved by GetRemoteJobStatus, if it existed)
@@ -1750,25 +1752,25 @@ namespace AnalysisManagerProg
             if (!jobResultFile.Exists)
             {
                 m_MostRecentErrorMessage = ".fail file not found in the working directory: " + remoteMonitor.TransferUtility.ProcessingFailureFile;
-                eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED_REMOTE;
+                resultCode = CloseOutType.CLOSEOUT_FAILED_REMOTE;
                 return;
             }
 
-            var statusParsed = remoteMonitor.ParseStatusResultFile(jobResultFile.FullName, out eToolRunnerResult, out var completionMessage);
+            var statusParsed = remoteMonitor.ParseStatusResultFile(jobResultFile.FullName, out resultCode, out var completionMessage);
 
             if (!statusParsed)
             {
                 if (string.IsNullOrWhiteSpace(m_MostRecentErrorMessage))
                     m_MostRecentErrorMessage = "Status file parse error";
 
-                eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED_REMOTE;
+                resultCode = CloseOutType.CLOSEOUT_FAILED_REMOTE;
                 return;
             }
 
             m_MostRecentErrorMessage = completionMessage;
 
             if (string.IsNullOrWhiteSpace(m_MostRecentErrorMessage))
-                m_MostRecentErrorMessage = "Remote job failed: " + eToolRunnerResult;
+                m_MostRecentErrorMessage = "Remote job failed: " + resultCode;
 
             LogError(clsGlobal.AppendToComment(m_MostRecentErrorMessage, remoteMonitor.Message));
 
@@ -1781,23 +1783,23 @@ namespace AnalysisManagerProg
                 toolRunner.CopyFailedResultsToArchiveFolder();
             }
 
-            eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED_REMOTE;
+            resultCode = CloseOutType.CLOSEOUT_FAILED_REMOTE;
         }
 
-        private bool HandleRemoteJobSuccess(IToolRunner toolRunner, clsRemoteMonitor remoteMonitor, out CloseOutType eToolRunnerResult)
+        private bool HandleRemoteJobSuccess(IToolRunner toolRunner, clsRemoteMonitor remoteMonitor, out CloseOutType resultCode)
         {
             // Job succeeded
             // Parse the .success file to read the result codes and messages (the file was already retrieved by GetRemoteJobStatus()
 
             var jobResultFilePath = Path.Combine(m_WorkDirPath, remoteMonitor.TransferUtility.ProcessingSuccessFile);
 
-            var statusParsed = remoteMonitor.ParseStatusResultFile(jobResultFilePath, out eToolRunnerResult, out var completionMessage);
+            var statusParsed = remoteMonitor.ParseStatusResultFile(jobResultFilePath, out resultCode, out var completionMessage);
 
             m_MostRecentErrorMessage = completionMessage;
 
             if (!statusParsed)
             {
-                eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED_REMOTE;
+                resultCode = CloseOutType.CLOSEOUT_FAILED_REMOTE;
                 return false;
             }
 
@@ -1806,17 +1808,17 @@ namespace AnalysisManagerProg
 
             if (!resultsRetrieved)
             {
-                eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED_REMOTE;
+                resultCode = CloseOutType.CLOSEOUT_FAILED_REMOTE;
                 return false;
             }
 
             var postProcessResult = toolRunner.PostProcessRemoteResults();
             if (!clsAnalysisJob.SuccessOrNoData(postProcessResult))
             {
-                eToolRunnerResult = postProcessResult;
+                resultCode = postProcessResult;
             }
 
-            if (!clsAnalysisJob.SuccessOrNoData(eToolRunnerResult))
+            if (!clsAnalysisJob.SuccessOrNoData(resultCode))
             {
                 toolRunner.CopyFailedResultsToArchiveFolder();
                 return false;
@@ -1832,7 +1834,7 @@ namespace AnalysisManagerProg
             if (success)
                 return true;
 
-            eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED_REMOTE;
+            resultCode = CloseOutType.CLOSEOUT_FAILED_REMOTE;
             return false;
         }
 
@@ -2258,25 +2260,25 @@ namespace AnalysisManagerProg
             IAnalysisResources toolResourcer,
             int jobNum,
             string datasetName,
-            out CloseOutType eToolRunnerResult)
+            out CloseOutType resultCode)
         {
-            eToolRunnerResult = CloseOutType.CLOSEOUT_SUCCESS;
+            resultCode = CloseOutType.CLOSEOUT_SUCCESS;
 
             try
             {
                 ShowTrace("Getting job resources");
 
-                eToolRunnerResult = toolResourcer.GetResources();
-                if (eToolRunnerResult == CloseOutType.CLOSEOUT_SUCCESS)
+                resultCode = toolResourcer.GetResources();
+                if (resultCode == CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     return true;
                 }
 
-                m_MostRecentErrorMessage = "GetResources returned result: " + eToolRunnerResult;
+                m_MostRecentErrorMessage = "GetResources returned result: " + resultCode;
                 ShowTrace(m_MostRecentErrorMessage + "; closing job step task");
 
                 LogError(m_MgrName + ": " + clsGlobal.AppendToComment(m_MostRecentErrorMessage, toolResourcer.Message) + ", Job " + jobNum + ", Dataset " + datasetName);
-                m_AnalysisTask.CloseTask(eToolRunnerResult, toolResourcer.Message);
+                m_AnalysisTask.CloseTask(resultCode, toolResourcer.Message);
 
                 m_MgrErrorCleanup.CleanWorkDir();
                 UpdateStatusIdle("Error encountered: " + m_MostRecentErrorMessage);
@@ -2309,7 +2311,7 @@ namespace AnalysisManagerProg
             IToolRunner toolRunner,
             int jobNum,
             string datasetName,
-            out CloseOutType eToolRunnerResult)
+            out CloseOutType resultCode)
         {
             var success = true;
 
@@ -2318,9 +2320,9 @@ namespace AnalysisManagerProg
 
                 ShowTrace("Running the step tool locally");
 
-                eToolRunnerResult = toolRunner.RunTool();
+                resultCode = toolRunner.RunTool();
 
-                if (eToolRunnerResult != CloseOutType.CLOSEOUT_SUCCESS)
+                if (resultCode != CloseOutType.CLOSEOUT_SUCCESS)
                 {
                     m_MostRecentErrorMessage = toolRunner.Message;
 
@@ -2332,7 +2334,7 @@ namespace AnalysisManagerProg
                     ShowTrace("Error running the tool; closing job step task");
 
                     LogError(m_MgrName + ": " + m_MostRecentErrorMessage + ", Job " + jobNum + ", Dataset " + datasetName);
-                    m_AnalysisTask.CloseTask(eToolRunnerResult, m_MostRecentErrorMessage, toolRunner);
+                    m_AnalysisTask.CloseTask(resultCode, m_MostRecentErrorMessage, toolRunner);
 
                     try
                     {
@@ -2347,7 +2349,7 @@ namespace AnalysisManagerProg
                         LogError("Exception examining MostRecentErrorMessage", ex);
                     }
 
-                    if (eToolRunnerResult == CloseOutType.CLOSEOUT_ERROR_ZIPPING_FILE)
+                    if (resultCode == CloseOutType.CLOSEOUT_ERROR_ZIPPING_FILE)
                     {
                         m_NeedToAbortProcessing = true;
                     }
@@ -2378,8 +2380,8 @@ namespace AnalysisManagerProg
                     m_NeedToAbortProcessing = true;
                 }
 
-                eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
-                m_AnalysisTask.CloseTask(eToolRunnerResult, "Exception running tool", toolRunner);
+                resultCode = CloseOutType.CLOSEOUT_FAILED;
+                m_AnalysisTask.CloseTask(resultCode, "Exception running tool", toolRunner);
 
                 return false;
             }
@@ -2390,7 +2392,7 @@ namespace AnalysisManagerProg
             IAnalysisResources toolResourcer,
             int jobNum,
             int stepNum,
-            out CloseOutType eToolRunnerResult)
+            out CloseOutType resultCode)
         {
             try
             {
@@ -2401,7 +2403,7 @@ namespace AnalysisManagerProg
 
                 if (transferUtility == null)
                 {
-                    eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+                    resultCode = CloseOutType.CLOSEOUT_FAILED;
                     return false;
                 }
 
@@ -2419,7 +2421,7 @@ namespace AnalysisManagerProg
                         m_MostRecentErrorMessage = "Error copying manager-related files to the remote host";
                         LogError(m_MostRecentErrorMessage);
 
-                        eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+                        resultCode = CloseOutType.CLOSEOUT_FAILED;
                         return false;
                     }
 
@@ -2430,7 +2432,7 @@ namespace AnalysisManagerProg
                     m_MostRecentErrorMessage = "Exception copying manager-related files to the remote host: " + ex.Message;
                     LogError(m_MostRecentErrorMessage, ex);
 
-                    eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+                    resultCode = CloseOutType.CLOSEOUT_FAILED;
                     return false;
                 }
 
@@ -2445,7 +2447,7 @@ namespace AnalysisManagerProg
                         m_MostRecentErrorMessage = "Error copying job-related files to the remote host";
                         LogError(m_MostRecentErrorMessage);
 
-                        eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+                        resultCode = CloseOutType.CLOSEOUT_FAILED;
                         return false;
                     }
                 }
@@ -2457,7 +2459,7 @@ namespace AnalysisManagerProg
                     // Don't send ex to LogError; no need to log a stack trace
                     LogError(m_MostRecentErrorMessage);
 
-                    eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+                    resultCode = CloseOutType.CLOSEOUT_FAILED;
                     return false;
                 }
                 catch (Exception ex)
@@ -2465,7 +2467,7 @@ namespace AnalysisManagerProg
                     m_MostRecentErrorMessage = "Exception copying job-related files to the remote host: " + ex.Message;
                     LogError(m_MostRecentErrorMessage, ex);
 
-                    eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+                    resultCode = CloseOutType.CLOSEOUT_FAILED;
                     return false;
                 }
 
@@ -2480,14 +2482,14 @@ namespace AnalysisManagerProg
                     m_MostRecentErrorMessage = "Error creating the remote job task info file";
                     LogError(m_MostRecentErrorMessage);
 
-                    eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+                    resultCode = CloseOutType.CLOSEOUT_FAILED;
                     return false;
                 }
 
                 LogMessage(string.Format("Job {0}, step {1} staged to run remotely on {2}; remote info file at {3}",
                                          jobNum, stepNum, transferUtility.RemoteHostName, infoFilePathRemote));
 
-                eToolRunnerResult = CloseOutType.CLOSEOUT_RUNNING_REMOTE;
+                resultCode = CloseOutType.CLOSEOUT_RUNNING_REMOTE;
                 return true;
 
             }
@@ -2496,7 +2498,7 @@ namespace AnalysisManagerProg
                 m_MostRecentErrorMessage = "Exception staging job to run remotely";
                 LogError(m_MostRecentErrorMessage + ", job " + jobNum, ex);
 
-                eToolRunnerResult = CloseOutType.CLOSEOUT_FAILED;
+                resultCode = CloseOutType.CLOSEOUT_FAILED;
                 return false;
             }
         }
@@ -2896,7 +2898,7 @@ namespace AnalysisManagerProg
         /// </summary>
         /// <remarks>
         /// Looks for subdirectories named SQLite_1.0.108
-        /// Compares the file size of System.Data.SQLite.dll and libSQLite.Interop.so 
+        /// Compares the file size of System.Data.SQLite.dll and libSQLite.Interop.so
         /// in the subdirectory with the newest version with the versions in the manager directory
         /// </remarks>
         private void ValidateSQLiteDLL()

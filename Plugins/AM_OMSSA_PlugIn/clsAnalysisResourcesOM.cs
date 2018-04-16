@@ -198,7 +198,7 @@ namespace AnalysisManagerOMSSAPlugIn
             return blnSuccess;
         }
 
-        protected bool MakeInputFile(ref string strErrorMessage)
+        protected bool MakeInputFile(out string errorMessage)
         {
             var OmssaDefaultInput = Path.Combine(m_WorkingDir, OMSSA_DEFAULT_INPUT_FILE);
             var OmssaInput = Path.Combine(m_WorkingDir, OMSSA_INPUT_FILE);
@@ -220,13 +220,13 @@ namespace AnalysisManagerOMSSAPlugIn
 
                 if (!fiTemplateFile.Exists)
                 {
-                    strErrorMessage = "File not found: " + fiTemplateFile.FullName;
+                    errorMessage = "File not found: " + fiTemplateFile.FullName;
                     return false;
                 }
 
                 if (!fiFileToMerge.Exists)
                 {
-                    strErrorMessage = "File not found: " + fiFileToMerge.FullName;
+                    errorMessage = "File not found: " + fiFileToMerge.FullName;
                     return false;
                 }
 
@@ -244,7 +244,7 @@ namespace AnalysisManagerOMSSAPlugIn
                 }
                 catch (Exception ex)
                 {
-                    strErrorMessage = "Error loading file " + fiTemplateFile.Name + ": " + ex.Message;
+                    errorMessage = "Error loading file " + fiTemplateFile.Name + ": " + ex.Message;
                     return false;
                 }
 
@@ -259,7 +259,7 @@ namespace AnalysisManagerOMSSAPlugIn
                 }
                 catch (Exception ex)
                 {
-                    strErrorMessage = "Error loading file " + fiFileToMerge.Name + ": " + ex.Message;
+                    errorMessage = "Error loading file " + fiFileToMerge.Name + ": " + ex.Message;
                     return false;
                 }
 
@@ -344,7 +344,7 @@ namespace AnalysisManagerOMSSAPlugIn
                             }
                             catch (Exception ex)
                             {
-                                strErrorMessage = "Error appending comment for node " + objImportedNode.Name + ": " + ex.Message;
+                                errorMessage = "Error appending comment for node " + objImportedNode.Name + ": " + ex.Message;
                                 return false;
                             }
 
@@ -356,7 +356,7 @@ namespace AnalysisManagerOMSSAPlugIn
                             }
                             catch (Exception ex)
                             {
-                                strErrorMessage = "Error appending new node " + objImportedNode.Name + ": " + ex.Message;
+                                errorMessage = "Error appending new node " + objImportedNode.Name + ": " + ex.Message;
                                 return false;
                             }
                         }
@@ -400,7 +400,7 @@ namespace AnalysisManagerOMSSAPlugIn
                                 }
                                 catch (Exception ex)
                                 {
-                                    strErrorMessage = "Error appending comment for node " + objImportedNode.Name + ": " + ex.Message;
+                                    errorMessage = "Error appending comment for node " + objImportedNode.Name + ": " + ex.Message;
                                     return false;
                                 }
 
@@ -418,7 +418,7 @@ namespace AnalysisManagerOMSSAPlugIn
                             }
                             catch (Exception ex)
                             {
-                                strErrorMessage = "Error updating node " + objImportedNode.Name + ": " + ex.Message;
+                                errorMessage = "Error updating node " + objImportedNode.Name + ": " + ex.Message;
                                 return false;
                             }
                         }
@@ -438,23 +438,24 @@ namespace AnalysisManagerOMSSAPlugIn
 
                     if (objFileNameNodes.Count == 0)
                     {
-                        strErrorMessage = "Did not find the MSInFile_infile node in the template file";
+                        errorMessage = "Did not find the MSInFile_infile node in the template file";
                         return false;
                     }
                     else if (objFileTypeNodes.Count == 0)
                     {
-                        strErrorMessage = "Did not find the MSSpectrumFileType node in the template file";
+                        errorMessage = "Did not find the MSSpectrumFileType node in the template file";
                         return false;
                     }
 
                     if (objFileNameNodes.Count > 1)
                     {
-                        strErrorMessage = "Found multiple instances of the MSInFile_infile node in the template file";
+                        errorMessage = "Found multiple instances of the MSInFile_infile node in the template file";
                         return false;
                     }
-                    else if (objFileTypeNodes.Count > 1)
+
+                    if (objFileTypeNodes.Count > 1)
                     {
-                        strErrorMessage = "Found multiple instances of the MSSpectrumFileType node in the template file";
+                        errorMessage = "Found multiple instances of the MSSpectrumFileType node in the template file";
                         return false;
                     }
 
@@ -465,7 +466,7 @@ namespace AnalysisManagerOMSSAPlugIn
                 }
                 catch (Exception ex)
                 {
-                    strErrorMessage = "Error updating the MSInFile nodes: " + ex.Message;
+                    errorMessage = "Error updating the MSInFile nodes: " + ex.Message;
                     return false;
                 }
 
@@ -476,13 +477,13 @@ namespace AnalysisManagerOMSSAPlugIn
 
                     if (objFileNameNodes.Count == 0)
                     {
-                        strErrorMessage = "Did not find the MSSearchSettings_db node in the template file";
+                        errorMessage = "Did not find the MSSearchSettings_db node in the template file";
                         return false;
                     }
 
                     if (objFileNameNodes.Count > 1)
                     {
-                        strErrorMessage = "Found multiple instances of the MSSearchSettings_db node in the template file";
+                        errorMessage = "Found multiple instances of the MSSearchSettings_db node in the template file";
                         return false;
                     }
 
@@ -491,7 +492,7 @@ namespace AnalysisManagerOMSSAPlugIn
                 }
                 catch (Exception ex)
                 {
-                    strErrorMessage = "Error updating the MSSearchSettings_db node: " + ex.Message;
+                    errorMessage = "Error updating the MSSearchSettings_db node: " + ex.Message;
                     return false;
                 }
 
@@ -515,18 +516,19 @@ namespace AnalysisManagerOMSSAPlugIn
 
                     if (objFileNameNodes.Count == 0)
                     {
-                        strErrorMessage = "Did not find the MSOutFile_outfile node in the template file";
+                        errorMessage = "Did not find the MSOutFile_outfile node in the template file";
                         return false;
                     }
-                    else if (objFileTypeNodes.Count == 0)
+
+                    if (objFileTypeNodes.Count == 0)
                     {
-                        strErrorMessage = "Did not find the MSSerialDataFormat node in the template file";
+                        errorMessage = "Did not find the MSSerialDataFormat node in the template file";
                         return false;
                     }
 
                     if (objFileNameNodes.Count != objFileTypeNodes.Count)
                     {
-                        strErrorMessage = "The number of MSOutFile_outfile nodes doesn't match the number of MSSerialDataFormat nodes";
+                        errorMessage = "The number of MSOutFile_outfile nodes doesn't match the number of MSSerialDataFormat nodes";
                         return false;
                     }
 
@@ -558,10 +560,11 @@ namespace AnalysisManagerOMSSAPlugIn
                         // Template only has one MSOutFile node tree defined
                         // Nothing else to update
                     }
+
                 }
                 catch (Exception ex)
                 {
-                    strErrorMessage = "Error updating the MSOutfile nodes: " + ex.Message;
+                    errorMessage = "Error updating the MSOutfile nodes: " + ex.Message;
                     return false;
                 }
 
@@ -582,16 +585,17 @@ namespace AnalysisManagerOMSSAPlugIn
                 }
                 catch (Exception ex)
                 {
-                    strErrorMessage = "Error creating new XML file (" + Path.GetFileName(strOutputFilePath) + "): " + ex.Message;
+                    errorMessage = "Error creating new XML file (" + Path.GetFileName(strOutputFilePath) + "): " + ex.Message;
                     return false;
                 }
             }
             catch (Exception ex)
             {
-                strErrorMessage = "General exception: " + ex.Message;
+                errorMessage = "General exception: " + ex.Message;
                 return false;
             }
 
+            errorMessage = string.Empty;
             return true;
         }
     }

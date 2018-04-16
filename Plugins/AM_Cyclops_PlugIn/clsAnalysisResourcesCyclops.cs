@@ -44,33 +44,32 @@ namespace AnalysisManager_Cyclops_PlugIn
                 var sourceFolderName = m_jobParams.GetParam("StepInputFolderName");
 
                 // Retrieve the Cyclops Workflow file specified for this job
-                var strCyclopsWorkflowFileName = m_jobParams.GetParam("CyclopsWorkflowName");
+                var cyclopsWorkflowFileName = m_jobParams.GetParam("CyclopsWorkflowName");
 
                 // Retrieve the Workflow file name specified for this job
-                if (string.IsNullOrEmpty(strCyclopsWorkflowFileName))
+                if (string.IsNullOrEmpty(cyclopsWorkflowFileName))
                 {
                     m_message = "Parameter CyclopsWorkflowName not defined in the job parameters for this job";
                     LogError(m_message + "; unable to continue");
                     return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                 }
 
-                var strProteinProphet = m_jobParams.GetParam("RunProteinProphet");
+                var proteinProphet = m_jobParams.GetParam("RunProteinProphet");
 
-                if (!string.IsNullOrEmpty(strProteinProphet))
+                if (!string.IsNullOrEmpty(proteinProphet))
                 {
                     // If User requests to run ProteinProphet
-                    if (strProteinProphet.ToLower().Equals("true"))
+                    if (proteinProphet.ToLower().Equals("true"))
                     {
-                        var sProteinOptions = m_jobParams.GetParam("ProteinOptions");
+                        var proteinOptions = m_jobParams.GetParam("ProteinOptions");
 
-                        if (sProteinOptions.Length > 0 && !sProteinOptions.ToLower().Equals("na"))
+                        if (proteinOptions.Length > 0 && !proteinOptions.ToLower().Equals("na"))
                         {
                             // Override the Protein Options to force forward direction only
                             m_jobParams.SetParam("PeptideSearch", "ProteinOptions", "seq_direction=forward,filetype=fasta");
                         }
 
                         // Generate the path Fasta File
-                        var s_FastaDir = m_mgrParams.GetParam("orgdbdir");
                         var orgDbDirectoryPath = m_mgrParams.GetParam("orgdbdir");
                         if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultcode))
                         {
@@ -80,20 +79,20 @@ namespace AnalysisManager_Cyclops_PlugIn
                     }
                 }
 
-                var strDMSWorkflowsFolderPath = m_mgrParams.GetParam("DMSWorkflowsFolderPath", @"\\gigasax\DMS_Workflows");
-                var diRemoteRScriptFolder = new DirectoryInfo(Path.Combine(strDMSWorkflowsFolderPath, "Cyclops", "RScript"));
+                var dmsWorkflowsFolderPath = m_mgrParams.GetParam("DMSWorkflowsFolderPath", @"\\gigasax\DMS_Workflows");
+                var remoteRScriptFolder = new DirectoryInfo(Path.Combine(dmsWorkflowsFolderPath, "Cyclops", "RScript"));
 
-                if (!diRemoteRScriptFolder.Exists)
+                if (!remoteRScriptFolder.Exists)
                 {
-                    m_message = "R Script folder not found: " + diRemoteRScriptFolder.FullName;
+                    m_message = "R Script folder not found: " + remoteRScriptFolder.FullName;
                     LogError(m_message);
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
                 if (m_DebugLevel >= 2)
-                    LogMessage("Copying FROM: " + diRemoteRScriptFolder.FullName);
+                    LogMessage("Copying FROM: " + remoteRScriptFolder.FullName);
 
-                foreach (var rFile in diRemoteRScriptFolder.GetFiles("*.R"))
+                foreach (var rFile in remoteRScriptFolder.GetFiles("*.R"))
                 {
                     if (m_DebugLevel >= 3)
                         LogMessage("Copying " + rFile.Name + " to " + dirLocalRScriptFolder.FullName);
@@ -101,12 +100,12 @@ namespace AnalysisManager_Cyclops_PlugIn
                     rFile.CopyTo(Path.Combine(dirLocalRScriptFolder.FullName, rFile.Name));
                 }
 
-                var strCyclopsWorkflowDirectory = Path.Combine(strDMSWorkflowsFolderPath, "Cyclops", analysisType);
+                var strCyclopsWorkflowDirectory = Path.Combine(dmsWorkflowsFolderPath, "Cyclops", analysisType);
 
-                LogMessage("Retrieving workflow file: " + Path.Combine(strCyclopsWorkflowDirectory, strCyclopsWorkflowFileName));
+                LogMessage("Retrieving workflow file: " + Path.Combine(strCyclopsWorkflowDirectory, cyclopsWorkflowFileName));
 
                 // Now copy the Cyclops workflow file to the working directory
-                if (!CopyFileToWorkDir(strCyclopsWorkflowFileName, strCyclopsWorkflowDirectory, m_WorkingDir))
+                if (!CopyFileToWorkDir(cyclopsWorkflowFileName, strCyclopsWorkflowDirectory, m_WorkingDir))
                 {
                     // Errors were reported in function call, so just return
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;

@@ -52,12 +52,11 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
             var dataPkgId = m_jobParams.GetJobParameter("DataPackageID", -1);
 
-            // This list will track non Peptide-hit jobs (e.g. DeconTools or MASIC jobs)
-            List<clsDataPackageJobInfo> lstAdditionalJobs;
+            // lstAdditionalJobs tracks non Peptide-hit jobs (e.g. DeconTools or MASIC jobs)
 
             var dataPackageInfoLoader = new clsDataPackageInfoLoader(connectionString, dataPkgId);
 
-            var lstDataPackagePeptideHitJobs = dataPackageInfoLoader.RetrieveDataPackagePeptideHitJobInfo(out lstAdditionalJobs);
+            var lstDataPackagePeptideHitJobs = dataPackageInfoLoader.RetrieveDataPackagePeptideHitJobInfo(out var lstAdditionalJobs);
             var success = RetrieveFastaFiles(localOrgDBFolder, lstDataPackagePeptideHitJobs);
 
             if (!success)
@@ -345,7 +344,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
         }
 
-        private bool RetrieveFastaFiles(string localOrgDBFolder, IEnumerable<clsDataPackageJobInfo> lstDataPackagePeptideHitJobs)
+        private bool RetrieveFastaFiles(string orgDbDirectoryPath, IEnumerable<clsDataPackageJobInfo> lstDataPackagePeptideHitJobs)
         {
             try
             {
@@ -364,8 +363,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                 {
                     var strDictionaryKey = string.Format("{0}_{1}_{2}", udtJob.LegacyFastaFileName, udtJob.ProteinCollectionList,
                                                             udtJob.ProteinOptions);
-                    string strOrgDBNameGenerated;
-                    if (dctOrgDBParamsToGeneratedFileNameMap.TryGetValue(strDictionaryKey, out strOrgDBNameGenerated))
+                    if (dctOrgDBParamsToGeneratedFileNameMap.TryGetValue(strDictionaryKey, out var orgDbNameGenerated))
                     {
                         // Organism DB was already generated
                     }
@@ -379,27 +377,27 @@ namespace AnalysisManager_RepoPkgr_Plugin
                                 m_message = "Call to RetrieveOrgDB returned false in clsAnalysisResourcesRepoPkgr.RetrieveFastaFiles";
                             return false;
                         }
-                        strOrgDBNameGenerated = m_jobParams.GetJobParameter("PeptideSearch", "generatedFastaName", string.Empty);
-                        if (string.IsNullOrEmpty(strOrgDBNameGenerated))
+                        orgDbNameGenerated = m_jobParams.GetJobParameter("PeptideSearch", "generatedFastaName", string.Empty);
+                        if (string.IsNullOrEmpty(orgDbNameGenerated))
                         {
                             m_message = "FASTA file was not generated when RetrieveFastaFiles called RetrieveOrgDB";
                             LogError(m_message + " (class clsAnalysisResourcesRepoPkgr)");
                             return false;
                         }
-                        if (strOrgDBNameGenerated != udtJob.OrganismDBName)
+                        if (orgDbNameGenerated != udtJob.OrganismDBName)
                         {
-                            m_message = "Generated FASTA file name (" + strOrgDBNameGenerated + ") does not match expected fasta file name (" +
+                            m_message = "Generated FASTA file name (" + orgDbNameGenerated + ") does not match expected fasta file name (" +
                                         udtJob.OrganismDBName + "); aborting";
                             LogError(m_message + " (class clsAnalysisResourcesRepoPkgr)");
                             return false;
                         }
-                        dctOrgDBParamsToGeneratedFileNameMap.Add(strDictionaryKey, strOrgDBNameGenerated);
+                        dctOrgDBParamsToGeneratedFileNameMap.Add(strDictionaryKey, orgDbNameGenerated);
 
-                        lstGeneratedOrgDBNames.Add(strOrgDBNameGenerated);
+                        lstGeneratedOrgDBNames.Add(orgDbNameGenerated);
                     }
-                    // Add a new job parameter that associates strOrgDBNameGenerated with this job
+                    // Add a new job parameter that associates orgDbNameGenerated with this job
                     m_jobParams.AddAdditionalParameter("PeptideSearch", GetGeneratedFastaParamNameForJob(udtJob.Job),
-                                                       strOrgDBNameGenerated);
+                                                       orgDbNameGenerated);
                 }
 
                 // Store the names of the generated fasta files

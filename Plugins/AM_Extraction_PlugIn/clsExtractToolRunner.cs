@@ -93,7 +93,7 @@ namespace AnalysisManagerExtractionPlugin
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
 
-                var orgDbDir = m_mgrParams.GetParam("orgdbdir");
+                var orgDbDirectoryPath = m_mgrParams.GetParam("orgdbdir");
 
                 // Note that job parameter "generatedFastaName" gets defined by clsAnalysisResources.RetrieveOrgDB
                 // However, if job parameter SkipProteinMods is True, the Fasta file will not have been retrieved
@@ -104,7 +104,7 @@ namespace AnalysisManagerExtractionPlugin
                 }
                 else
                 {
-                    mGeneratedFastaFilePath = Path.Combine(orgDbDir, fastaFileName);
+                    mGeneratedFastaFilePath = Path.Combine(orgDbDirectoryPath, fastaFileName);
                 }
 
                 CloseOutType result;
@@ -247,6 +247,14 @@ namespace AnalysisManagerExtractionPlugin
                         // See stored procedure UpdateJobState
                         m_message = NO_RESULTS_ABOVE_THRESHOLD;
                     }
+                }
+
+                // Possibly run AScore
+                var runAscore = m_jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResourcesExtraction.JOB_PARAM_RUN_ASCORE, false);
+                if (runAscore)
+                {
+                    LogMessage("TODO: Run AScore");
+                    // result = RunAscore());
                 }
 
                 if (result != CloseOutType.CLOSEOUT_SUCCESS && result != CloseOutType.CLOSEOUT_NO_DATA)
