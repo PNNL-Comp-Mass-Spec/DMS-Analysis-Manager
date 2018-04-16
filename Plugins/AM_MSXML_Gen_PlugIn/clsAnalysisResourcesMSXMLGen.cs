@@ -106,12 +106,12 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 if (!string.IsNullOrEmpty(mzMLRefParamFile))
                 {
                     // Retrieve the Fasta file
-                    var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
+                    var orgDbDirectoryPath = m_mgrParams.GetParam("orgdbdir");
 
-                    currentTask = "RetrieveOrgDB to " + localOrgDbFolder;
+                    currentTask = "RetrieveOrgDB to " + orgDbDirectoryPath;
 
-                    if (!RetrieveOrgDB(localOrgDbFolder))
-                        return CloseOutType.CLOSEOUT_FAILED;
+                    if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
+                        return resultCode;
 
                     currentTask = "Retrieve the MzML Refinery parameter file " + mzMLRefParamFile;
 

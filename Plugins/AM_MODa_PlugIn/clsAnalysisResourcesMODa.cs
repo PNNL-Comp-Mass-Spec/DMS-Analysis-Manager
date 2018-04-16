@@ -52,8 +52,9 @@ namespace AnalysisManagerMODaPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
 
             // Retrieve Fasta file
-            if (!RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")))
-                return CloseOutType.CLOSEOUT_FAILED;
+            var orgDbDirectoryPath = m_mgrParams.GetParam("orgdbdir");
+            if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
+                return resultCode;
 
             // Retrieve the _DTA.txt file
             // Note that if the file was found in MyEMSL then RetrieveDtaFiles will auto-call ProcessMyEMSLDownloadQueue to download the file

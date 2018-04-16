@@ -39,8 +39,9 @@ namespace AnalysisManagerInSpecTPlugIn
             }
 
             // Retrieve Fasta file
-            if (!RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")))
-                return CloseOutType.CLOSEOUT_FAILED;
+            var orgDbDirectoryPath = m_mgrParams.GetParam("orgdbdir");
+            if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
+                return resultCode;
 
             // Retrieve param file
             if (!RetrieveGeneratedParamFile(m_jobParams.GetParam("ParmFileName")))

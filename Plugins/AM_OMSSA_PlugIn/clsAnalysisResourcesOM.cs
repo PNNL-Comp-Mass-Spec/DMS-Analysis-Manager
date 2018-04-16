@@ -37,8 +37,9 @@ namespace AnalysisManagerOMSSAPlugIn
             }
 
             // Retrieve Fasta file
-            if (!RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")))
-                return CloseOutType.CLOSEOUT_FAILED;
+            var orgDbDirectoryPath = m_mgrParams.GetParam("orgdbdir");
+            if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
+                return resultCode;
 
             // OMSSA just copies its parameter file from the central repository
             //	This will eventually be replaced by Ken Auberry dll call to make param file on the fly

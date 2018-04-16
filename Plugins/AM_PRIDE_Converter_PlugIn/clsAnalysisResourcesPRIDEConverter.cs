@@ -318,7 +318,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         OverrideCurrentDatasetAndJobInfo(dataPkgJob);
 
                         m_jobParams.AddAdditionalParameter("PeptideSearch", "generatedFastaName", string.Empty);
-                        if (!RetrieveOrgDB(localOrgDBFolder))
+                        if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
                         {
                             if (string.IsNullOrEmpty(m_message))
                                 m_message = "Call to RetrieveOrgDB returned false in clsAnalysisResourcesPRIDEConverter.RetrieveFastaFiles";

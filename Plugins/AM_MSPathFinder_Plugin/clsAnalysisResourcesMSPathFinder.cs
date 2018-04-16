@@ -136,7 +136,7 @@ namespace AnalysisManagerMSPathFinderPlugin
 
                 currentTask = "RetrieveOrgDB to " + localOrgDbFolder;
 
-                if (!RetrieveOrgDB(localOrgDbFolder))
+                if (!RetrieveOrgDB(localOrgDbFolder, out _))
                     return false;
 
                 LogMessage("Getting param file");

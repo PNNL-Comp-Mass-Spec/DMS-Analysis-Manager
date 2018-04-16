@@ -488,9 +488,10 @@ namespace AnalysisManagerExtractionPlugin
                 if (!skipProteinMods || createPepToProtMapFile)
                 {
                     // Retrieve the Fasta file; required to create the _ProteinMods.txt file
-                    if (!RetrieveOrgDB(m_mgrParams.GetParam("orgdbdir")))
+                    var orgDbDirectoryPath = m_mgrParams.GetParam("orgdbdir");
+                    if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
                     {
-                        return CloseOutType.CLOSEOUT_FAILED;
+                        return resultCode;
                     }
                 }
             }

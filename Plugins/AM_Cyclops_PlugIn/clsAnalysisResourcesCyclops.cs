@@ -71,10 +71,11 @@ namespace AnalysisManager_Cyclops_PlugIn
 
                         // Generate the path Fasta File
                         var s_FastaDir = m_mgrParams.GetParam("orgdbdir");
-                        if (!RetrieveOrgDB(s_FastaDir))
+                        var orgDbDirectoryPath = m_mgrParams.GetParam("orgdbdir");
+                        if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultcode))
                         {
                             m_message = "Cyclops Resourcer failed to retrieve the path to the Fasta file to run ProteinProphet";
-                            return CloseOutType.CLOSEOUT_FAILED;
+                            return resultcode;
                         }
                     }
                 }

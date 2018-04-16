@@ -54,13 +54,13 @@ namespace AnalysisManagerMzRefineryPlugIn
                 }
 
                 // Retrieve the Fasta file
-                var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
+                var orgDbDirectoryPath = m_mgrParams.GetParam("orgdbdir");
 
-                currentTask = "RetrieveOrgDB to " + localOrgDbFolder;
+                currentTask = "RetrieveOrgDB to " + orgDbDirectoryPath;
 
-                if (!RetrieveOrgDB(localOrgDbFolder))
+                if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
                 {
-                    return CloseOutType.CLOSEOUT_FAILED;
+                    return resultCode;
                 }
 
                 // Retrieve the Mz Refinery parameter file

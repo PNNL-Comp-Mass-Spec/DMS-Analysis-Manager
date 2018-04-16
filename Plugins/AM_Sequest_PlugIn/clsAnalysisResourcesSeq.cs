@@ -354,9 +354,9 @@ namespace AnalysisManagerSequestPlugin
             }
 
             // Retrieve Fasta file (we'll distribute it to the cluster nodes later in this function)
-            var LocOrgDBFolder = m_mgrParams.GetParam("orgdbdir");
-            if (!RetrieveOrgDB(LocOrgDBFolder))
-                return CloseOutType.CLOSEOUT_FAILED;
+            var orgDbDirectoryPath = m_mgrParams.GetParam("orgdbdir");
+            if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
+                return resultCode;
 
             // Retrieve param file
             if (!RetrieveGeneratedParamFile(m_jobParams.GetParam("ParmFileName")))

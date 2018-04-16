@@ -373,7 +373,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                     {
                         OverrideCurrentDatasetAndJobInfo(udtJob);
                         m_jobParams.AddAdditionalParameter("PeptideSearch", "generatedFastaName", string.Empty);
-                        if (!RetrieveOrgDB(localOrgDBFolder))
+                        if (!RetrieveOrgDB(orgDbDirectoryPath, out _))
                         {
                             if (string.IsNullOrEmpty(m_message))
                                 m_message = "Call to RetrieveOrgDB returned false in clsAnalysisResourcesRepoPkgr.RetrieveFastaFiles";

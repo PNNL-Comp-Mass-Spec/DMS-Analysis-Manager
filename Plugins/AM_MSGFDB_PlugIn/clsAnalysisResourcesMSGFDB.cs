@@ -61,8 +61,10 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 currentTask = "RetrieveOrgDB to " + localOrgDbFolder;
 
-                if (!RetrieveOrgDB(localOrgDbFolder))
-                    return CloseOutType.CLOSEOUT_FAILED;
+                if (!RetrieveOrgDB(localOrgDbFolder, out result))
+                {
+                    return result;
+                }
 
                 LogMessage("Getting param file", 2);
 

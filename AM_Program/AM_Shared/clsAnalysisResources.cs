@@ -4354,9 +4354,10 @@ namespace AnalysisManagerBase
         /// Create a fasta file for Sequest, X!Tandem, Inspect, or MSGFPlus analysis
         /// </summary>
         /// <param name="orgDbDirectoryPath">Directory on analysis machine where fasta files are stored</param>
+        /// <param name="resultCode">Output: status code</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks>Stores the name of the FASTA file as a new job parameter named "generatedFastaName" in section "PeptideSearch"</remarks>
-        protected bool RetrieveOrgDB(string orgDbDirectoryPath)
+        protected bool RetrieveOrgDB(string orgDbDirectoryPath, out CloseOutType resultCode)
         {
             const int freeSpaceThresholdPercent = 20;
 
@@ -4385,6 +4386,7 @@ namespace AnalysisManagerBase
                     if (string.IsNullOrWhiteSpace(fastaFileName))
                     {
                         LogError(string.Format("Job parameter {0} is undefined", JOB_PARAM_GENERATED_FASTA_NAME));
+                        resultCode = CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                         return false;
                     }
 
@@ -4393,6 +4395,7 @@ namespace AnalysisManagerBase
                     if (!fastaFile.Exists)
                     {
                         LogError(string.Format("FASTA file not found: {0}", fastaFile.FullName));
+                        resultCode = CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                         return false;
                     }
 
@@ -4405,6 +4408,11 @@ namespace AnalysisManagerBase
                     }
 
                     PurgeFastaFilesIfLowFreeSpace(orgDbDirectoryPath, freeSpaceThresholdPercent, 0, legacyFastaFileBaseName);
+
+                    if (success)
+                        resultCode = CloseOutType.CLOSEOUT_SUCCESS;
+                    else
+                        resultCode = CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
 
                     return success;
                 }
@@ -4426,6 +4434,7 @@ namespace AnalysisManagerBase
                 if (!CreateFastaFile(proteinCollectionInfo, orgDbDirectoryPath))
                 {
                     // There was a problem. Log entries in lower-level routines provide documentation
+                    resultCode = CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                     return false;
                 }
 
@@ -4434,6 +4443,7 @@ namespace AnalysisManagerBase
                 if (!m_jobParams.AddAdditionalParameter("PeptideSearch", JOB_PARAM_GENERATED_FASTA_NAME, m_FastaFileName))
                 {
                     LogError("Error adding parameter 'generatedFastaName' to m_jobParams");
+                    resultCode = CloseOutType.CLOSEOUT_FAILED;
                     return false;
                 }
 
@@ -4441,11 +4451,13 @@ namespace AnalysisManagerBase
                 // No need to pass a value for legacyFastaFileBaseName because a .fasta.LastUsed file will have been created/updated by CreateFastaFile
                 PurgeFastaFilesIfLowFreeSpace(orgDbDirectoryPath, freeSpaceThresholdPercent, 0, "");
 
+                resultCode = CloseOutType.CLOSEOUT_SUCCESS;
                 return true;
             }
             catch (Exception ex)
             {
                 LogError("Exception in RetrieveOrgDB", ex);
+                resultCode = CloseOutType.CLOSEOUT_FAILED;
                 return false;
             }
 

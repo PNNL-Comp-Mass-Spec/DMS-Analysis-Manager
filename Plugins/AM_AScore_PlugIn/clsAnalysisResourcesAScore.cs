@@ -37,7 +37,7 @@ namespace AnalysisManager_AScore_PlugIn
                 LogMessage("No input files to retrieve; AScore accesses the files over the network");
             }
 
-            if (!RetrieveFastaFile())
+            if (!RetrieveFastaFile(out _))
             {
                 LogWarning("Unable to retrieve the fasta file; AScore results will not have protein information");
             }
@@ -49,7 +49,7 @@ namespace AnalysisManager_AScore_PlugIn
         /// Retrieve the fasta file (if defined)
         /// </summary>
         /// <returns></returns>
-        private bool RetrieveFastaFile()
+        private bool RetrieveFastaFile(out CloseOutType resultCode)
         {
 
             var currentTask = "Initializing";
@@ -58,11 +58,11 @@ namespace AnalysisManager_AScore_PlugIn
             try
             {
                 // Retrieve the Fasta file
-                var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
+                var orgDbDirectoryPath = m_mgrParams.GetParam("orgdbdir");
 
-                currentTask = "RetrieveOrgDB to " + localOrgDbFolder;
+                currentTask = "RetrieveOrgDB to " + orgDbDirectoryPath;
 
-                var success = RetrieveOrgDB(localOrgDbFolder);
+                var success = RetrieveOrgDB(orgDbDirectoryPath, out resultCode);
 
                 return success;
 
@@ -71,6 +71,7 @@ namespace AnalysisManager_AScore_PlugIn
             {
                 m_message = "Exception in RetrieveFastaAndParamFile: " + ex.Message;
                 LogError(m_message + "; task = " + currentTask, ex);
+                resultCode = CloseOutType.CLOSEOUT_FAILED;
                 return false;
             }
 
