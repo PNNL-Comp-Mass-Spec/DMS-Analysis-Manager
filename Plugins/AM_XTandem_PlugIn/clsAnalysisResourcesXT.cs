@@ -47,7 +47,7 @@ namespace AnalysisManagerXTandemPlugIn
             // Retrieve param file
             if (!RetrieveGeneratedParamFile(m_jobParams.GetParam("ParmFileName")))
             {
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             // Retrieve the _DTA.txt file
@@ -55,7 +55,7 @@ namespace AnalysisManagerXTandemPlugIn
             if (!FileSearch.RetrieveDtaFiles())
             {
                 // Errors were reported in function call, so just return
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             // Make sure the _DTA.txt file has parent ion lines with text: scan=x and cs=y
@@ -67,7 +67,7 @@ namespace AnalysisManagerXTandemPlugIn
             if (!ValidateCDTAFileScanAndCSTags(strCDTAPath, blnReplaceSourceFile, blnDeleteSourceFileIfUpdated, ""))
             {
                 m_message = "Error validating the _DTA.txt file";
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             // Add all the extensions of the files to delete after run
@@ -80,33 +80,33 @@ namespace AnalysisManagerXTandemPlugIn
             if (!ValidateDTATextFileSize(m_WorkingDir, DatasetName + "_dta.txt"))
             {
                 // Errors were reported in function call, so just return
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             var success = CopyFileToWorkDir("taxonomy_base.xml", m_jobParams.GetParam("ParmFileStoragePath"), m_WorkingDir);
             if (!success)
             {
                 LogError("clsAnalysisResourcesXT.GetResources(), failed retrieving taxonomy_base.xml file");
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             success = CopyFileToWorkDir("input_base.txt", m_jobParams.GetParam("ParmFileStoragePath"), m_WorkingDir);
             if (!success)
             {
                 LogError("clsAnalysisResourcesXT.GetResources(), failed retrieving input_base.xml file");
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             success = CopyFileToWorkDir("default_input.xml", m_jobParams.GetParam("ParmFileStoragePath"), m_WorkingDir);
             if (!success)
             {
                 LogError("clsAnalysisResourcesXT.GetResources(), failed retrieving default_input.xml file");
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
             {
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             // set up taxonomy file to reference the organism DB file (fasta)
@@ -114,7 +114,7 @@ namespace AnalysisManagerXTandemPlugIn
             if (!success)
             {
                 LogError("clsAnalysisResourcesXT.GetResources(), failed making taxonomy file");
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             // set up run parameter file to reference spectra file, taxonomy file, and analysis parameter file
@@ -122,7 +122,7 @@ namespace AnalysisManagerXTandemPlugIn
             if (!success)
             {
                 LogError("clsAnalysisResourcesXT.GetResources(), failed making input file");
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             return CloseOutType.CLOSEOUT_SUCCESS;

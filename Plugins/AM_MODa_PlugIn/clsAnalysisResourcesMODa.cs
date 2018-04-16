@@ -49,7 +49,7 @@ namespace AnalysisManagerMODaPlugIn
 
             // Retrieve param file
             if (!FileSearch.RetrieveFile(m_jobParams.GetParam("ParmFileName"), m_jobParams.GetParam("ParmFileStoragePath")))
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
 
             // Retrieve Fasta file
             var orgDbDirectoryPath = m_mgrParams.GetParam("orgdbdir");
@@ -68,32 +68,32 @@ namespace AnalysisManagerMODaPlugIn
                 }
 
                 // Errors were reported in function call, so just return
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
             {
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             // If the _dta.txt file is over 2 GB in size, condense it
             if (!ValidateCDTAFileSize(m_WorkingDir, DatasetName + "_dta.txt"))
             {
                 // Errors were reported in function call, so just return
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             // Remove any spectra from the _DTA.txt file with fewer than 3 ions
             if (!ValidateCDTAFileRemoveSparseSpectra(m_WorkingDir, DatasetName + "_dta.txt"))
             {
                 // Errors were reported in function call, so just return
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             // Convert the _dta.txt file to a mgf file
             if (!ConvertCDTAToMGF())
             {
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             return CloseOutType.CLOSEOUT_SUCCESS;

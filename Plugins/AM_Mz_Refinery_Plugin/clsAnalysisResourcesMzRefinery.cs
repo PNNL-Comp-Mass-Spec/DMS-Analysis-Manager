@@ -41,7 +41,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 if (string.IsNullOrEmpty(mzRefParamFile))
                 {
                     LogError("MzRefParamFile parameter is empty");
-                    return CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                 }
 
                 currentTask = "Get Input file";
@@ -79,7 +79,7 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                 if (!FileSearch.RetrieveFile(mzRefParamFile, mzRefineryParmFileStoragePath))
                 {
-                    return CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
                 // Look for existing MSGF+ results in the transfer folder
@@ -87,8 +87,10 @@ namespace AnalysisManagerMzRefineryPlugIn
 
                 if (!FindExistingMSGFPlusResults(mzRefParamFile))
                 {
-                    return CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
+
+                return CloseOutType.CLOSEOUT_SUCCESS;
             }
             catch (Exception ex)
             {
@@ -97,7 +99,6 @@ namespace AnalysisManagerMzRefineryPlugIn
                 return CloseOutType.CLOSEOUT_FAILED;
             }
 
-            return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
         /// <summary>

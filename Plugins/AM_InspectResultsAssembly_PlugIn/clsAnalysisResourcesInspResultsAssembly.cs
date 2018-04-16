@@ -48,14 +48,14 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
             // Retrieve param file
             if (!RetrieveGeneratedParamFile(m_jobParams.GetParam("ParmFileName")))
             {
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             // Retrieve the Inspect Input Params file
             if (!FileSearch.RetrieveFile(clsAnalysisToolRunnerInspResultsAssembly.INSPECT_INPUT_PARAMS_FILENAME, transferFolderName))
             {
                 // Errors were reported in function call, so just return
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             numClonedSteps = m_jobParams.GetParam("NumberOfClonedSteps");
@@ -69,7 +69,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                     {
                         LogError("RetrieveFile returned False for " + zippedResultName + " using folder " + transferFolderName);
                     }
-                    return CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
                 // Unzip Inspect result file
@@ -92,7 +92,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                     {
                         LogError("RetrieveFile returned False for " + searchLogResultName + " using folder " + transferFolderName);
                     }
-                    return CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
                 m_jobParams.AddResultFileExtensionToSkip(searchLogResultName);
@@ -104,7 +104,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 if (!RetrieveMultiInspectResultFiles())
                 {
                     // Errors were reported in function call, so just return
-                    return CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
             }
 

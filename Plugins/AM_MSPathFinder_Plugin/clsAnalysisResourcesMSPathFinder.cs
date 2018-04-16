@@ -65,7 +65,7 @@ namespace AnalysisManagerMSPathFinderPlugin
             // These typically will not exist, but may exist if a search was interrupted before it finished
             if (!RetrieveExistingSearchResults())
             {
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             return CloseOutType.CLOSEOUT_SUCCESS;
@@ -194,7 +194,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                     if (!clsGlobal.GetQueryResultsTopRow(sql, dmsConnectionString, out var lstResults, "RetrievePBFFile"))
                     {
                         m_message = "Error looking up the correct PBF_Gen folder name in T_Job_Steps";
-                        return CloseOutType.CLOSEOUT_FAILED;
+                        return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                     }
 
                     var pbfGenFolderName = lstResults.FirstOrDefault();
@@ -202,7 +202,7 @@ namespace AnalysisManagerMSPathFinderPlugin
                     if (string.IsNullOrWhiteSpace(pbfGenFolderName))
                     {
                         m_message = "PBF_Gen folder name listed in T_Job_Steps for step " + (stepNum - 1) + " was empty";
-                        return CloseOutType.CLOSEOUT_FAILED;
+                        return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                     }
 
                     m_jobParams.SetParam("InputFolderName", pbfGenFolderName);

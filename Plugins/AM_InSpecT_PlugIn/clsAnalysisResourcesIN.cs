@@ -46,14 +46,14 @@ namespace AnalysisManagerInSpecTPlugIn
             // Retrieve param file
             if (!RetrieveGeneratedParamFile(m_jobParams.GetParam("ParmFileName")))
             {
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             // Retrieve the _DTA.txt file
             if (!RetrieveDtaFiles())
             {
                 // Errors were reported in function call, so just return
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             // Add all the extensions of the files to delete after run

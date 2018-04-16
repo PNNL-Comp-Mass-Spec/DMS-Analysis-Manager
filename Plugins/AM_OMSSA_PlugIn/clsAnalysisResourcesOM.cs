@@ -48,14 +48,14 @@ namespace AnalysisManagerOMSSAPlugIn
 
             // Retrieve param file
             if (!FileSearch.RetrieveFile(m_jobParams.GetParam("ParmFileName"), m_jobParams.GetParam("ParmFileStoragePath")))
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
 
             // Convert the .fasta file to OMSSA format using formatdb.exe
             var success = ConvertOMSSAFastaFile();
             if (!success)
             {
                 LogError("clsAnalysisResourcesOM.GetResources(), failed converting fasta file to OMSSA format");
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             // Retrieve settings files aka default file that will have values overwritten by parameter file values
@@ -63,7 +63,7 @@ namespace AnalysisManagerOMSSAPlugIn
             //         m_jobParams.GetParam("SettingsFileName"), _
             if (!FileSearch.RetrieveFile(OMSSA_DEFAULT_INPUT_FILE, m_jobParams.GetParam("ParmFileStoragePath")))
             {
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
             m_jobParams.AddResultFileExtensionToSkip(OMSSA_DEFAULT_INPUT_FILE);
 
@@ -72,14 +72,14 @@ namespace AnalysisManagerOMSSAPlugIn
             if (!FileSearch.RetrieveDtaFiles())
             {
                 // Errors were reported in function call, so just return
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             success = ConvertDtaToXml();
             if (!success)
             {
                 LogError("clsAnalysisResourcesOM.GetResources(), failed converting dta file to xml format");
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             // Add all the extensions of the files to delete after run
@@ -89,14 +89,13 @@ namespace AnalysisManagerOMSSAPlugIn
             m_jobParams.AddResultFileExtensionToSkip(DatasetName + ".xml");
 
             // set up run parameter file to reference spectra file, taxonomy file, and analysis parameter file
-            var errorMessage = string.Empty;
-            success = MakeInputFile(ref errorMessage);
+            success = MakeInputFile(out var errorMessage);
 
             if (!success)
             {
                 var msg = "clsAnalysisResourcesOM.GetResources(), failed making input file: " + errorMessage;
                 LogError(msg);
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             return CloseOutType.CLOSEOUT_SUCCESS;

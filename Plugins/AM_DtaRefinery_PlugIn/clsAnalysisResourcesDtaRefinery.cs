@@ -51,7 +51,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
 
             if (!RetrieveGeneratedParamFile(strParamFileName))
             {
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             var strParamFileStoragePathKeyName = clsGlobal.STEPTOOL_PARAMFILESTORAGEPATH_PREFIX + "DTA_Refinery";
@@ -69,17 +69,17 @@ namespace AnalysisManagerDtaRefineryPlugIn
             // Stored in same location as parameter file
             if (!FileSearch.RetrieveFile(XTANDEM_DEFAULT_INPUT_FILE, strDtaRefineryParmFileStoragePath))
             {
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             if (!FileSearch.RetrieveFile(XTANDEM_TAXONOMY_LIST_FILE, strDtaRefineryParmFileStoragePath))
             {
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             if (!FileSearch.RetrieveFile(m_jobParams.GetParam("DTARefineryXMLFile"), strDtaRefineryParmFileStoragePath))
             {
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             // Retrieve the _DTA.txt file
@@ -87,7 +87,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
             if (!FileSearch.RetrieveDtaFiles())
             {
                 // Errors were reported in function call, so just return
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             // Make sure the _DTA.txt file has parent ion lines with text: scan=x and cs=y
@@ -98,26 +98,26 @@ namespace AnalysisManagerDtaRefineryPlugIn
             if (!ValidateCDTAFileScanAndCSTags(strCDTAPath, blnReplaceSourceFile, blnDeleteSourceFileIfUpdated, ""))
             {
                 m_message = "Error validating the _DTA.txt file";
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             // If the _dta.txt file is over 2 GB in size, condense it
             if (!ValidateCDTAFileSize(m_WorkingDir, Path.GetFileName(strCDTAPath)))
             {
                 // Errors were reported in function call, so just return
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             // Retrieve DeconMSn Log file and DeconMSn Profile File
             if (!RetrieveDeconMSnLogFiles())
             {
                 // Errors were reported in function call, so just return
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, Downloader.DownloadFolderLayout.FlatNoSubfolders))
             {
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             // If this is a MSGFPlus script, make sure that the spectra are centroided
@@ -129,7 +129,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                 if (!ValidateCDTAFileIsCentroided(strCDTAPath))
                 {
                     // m_message is already updated
-                    return CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
             }
 
@@ -146,13 +146,12 @@ namespace AnalysisManagerDtaRefineryPlugIn
             m_jobParams.AddResultFileToKeep(DatasetName + "_dta.zip");
 
             // Set up run parameter file to reference spectra file, taxonomy file, and analysis parameter file
-            string strErrorMessage;
-            var success = UpdateParameterFile(out strErrorMessage);
+            var success = UpdateParameterFile(out var strErrorMessage);
             if (!success)
             {
                 var msg = "clsAnalysisResourcesDtaRefinery.GetResources(), failed making input file: " + strErrorMessage;
                 LogError(msg);
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             return CloseOutType.CLOSEOUT_SUCCESS;

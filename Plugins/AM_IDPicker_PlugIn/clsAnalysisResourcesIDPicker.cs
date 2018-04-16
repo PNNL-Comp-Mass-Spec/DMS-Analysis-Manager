@@ -80,7 +80,7 @@ namespace AnalysisManagerIDPickerPlugIn
             if (!GetInputFiles(DatasetName, strParamFileName, out result))
             {
                 if (result == CloseOutType.CLOSEOUT_SUCCESS)
-                    result = CloseOutType.CLOSEOUT_FAILED;
+                    result = CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 return result;
             }
 
@@ -118,7 +118,7 @@ namespace AnalysisManagerIDPickerPlugIn
 
             if (!m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
             {
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             var blnSplitFasta = m_jobParams.GetJobParameter("SplitFasta", false);
@@ -142,7 +142,7 @@ namespace AnalysisManagerIDPickerPlugIn
                         m_message = "Unable to determine the legacy fasta file name";
                         LogError(m_message);
                     }
-                    return CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
                 m_jobParams.AddAdditionalParameter("PeptideSearch", "generatedFastaName", m_FastaFileName);
@@ -212,7 +212,7 @@ namespace AnalysisManagerIDPickerPlugIn
             {
                 m_message = "Invalid tool result type (not supported by IDPicker): " + strResultType;
                 LogError(m_message);
-                eReturnCode = CloseOutType.CLOSEOUT_FAILED;
+                eReturnCode = CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 return false;
             }
 

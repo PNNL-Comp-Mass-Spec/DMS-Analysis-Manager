@@ -40,13 +40,13 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     if (string.IsNullOrWhiteSpace(msXmlFormat))
                     {
                         LogError("Job parameter MSXMLOutputType must be defined in the settings file");
-                        return CloseOutType.CLOSEOUT_FAILED;
+                        return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                     }
 
                     if (!msXmlFormat.ToLower().Contains("mzml"))
                     {
                         LogError("ProMex_Bruker jobs require mzML files, not " + msXmlFormat + " files");
-                        return CloseOutType.CLOSEOUT_FAILED;
+                        return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                     }
                 }
 
@@ -74,7 +74,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                             else
                             {
                                 LogDebug("clsAnalysisResourcesMSXMLGen.GetResources: Error occurred retrieving spectra.");
-                                return CloseOutType.CLOSEOUT_FAILED;
+                                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                             }
                             break;
                         default:
@@ -83,7 +83,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                                 "clsAnalysisResourcesMSXMLGen.GetResources: " + m_message + "; must be " + RAW_DATA_TYPE_DOT_RAW_FILES + ", " +
                                 RAW_DATA_TYPE_DOT_D_FOLDERS + ", " + RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER + ", or " + RAW_DATA_TYPE_BRUKER_FT_FOLDER);
 
-                            return CloseOutType.CLOSEOUT_FAILED;
+                            return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                     }
 
                     if (m_MyEMSLUtilities.FilesToDownload.Count == 0)
@@ -130,7 +130,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                     // Retrieve param file
                     if (!FileSearch.RetrieveFile(mzMLRefParamFile, m_jobParams.GetParam("ParmFileStoragePath")))
                     {
-                        return CloseOutType.CLOSEOUT_FAILED;
+                        return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                     }
                 }
             }

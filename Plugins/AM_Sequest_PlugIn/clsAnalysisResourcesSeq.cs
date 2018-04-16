@@ -386,7 +386,7 @@ namespace AnalysisManagerSequestPlugin
             if (!FileSearch.RetrieveDtaFiles())
             {
                 // Errors were reported in function call, so just return
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             // If running on a cluster, distribute the database file across the nodes

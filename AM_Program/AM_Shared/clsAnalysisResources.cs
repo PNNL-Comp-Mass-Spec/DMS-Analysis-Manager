@@ -950,7 +950,7 @@ namespace AnalysisManagerBase
                 return CloseOutType.CLOSEOUT_SUCCESS;
             }
 
-            return CloseOutType.CLOSEOUT_FAILED;
+            return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
         }
 
         /// <summary>
@@ -2312,7 +2312,7 @@ namespace AnalysisManagerBase
             // ReSharper disable once RedundantNameQualifier
             if (!m_MyEMSLUtilities.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
             {
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             return CloseOutType.CLOSEOUT_SUCCESS;

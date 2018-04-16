@@ -46,12 +46,12 @@ namespace AnalysisManagerBase
         CLOSEOUT_NO_ANN_FILES = 5,
 
         /// <summary>
-        /// No fasta file
+        /// FASTA file not defined or not found
         /// </summary>
         CLOSEOUT_NO_FAS_FILES = 6,
 
         /// <summary>
-        /// No parmater file
+        /// No parameter file (either not defined or not found)
         /// </summary>
         CLOSEOUT_NO_PARAM_FILE = 7,
 
@@ -76,7 +76,7 @@ namespace AnalysisManagerBase
         CLOSEOUT_NO_INSP_FILES = 13,
 
         /// <summary>
-        /// File not found
+        /// File not found or file verification failed
         /// </summary>
         CLOSEOUT_FILE_NOT_FOUND = 14,
 

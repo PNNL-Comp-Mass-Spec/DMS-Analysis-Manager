@@ -79,7 +79,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 if (!RetrieveGeneratedParamFile(paramFileName))
                 {
-                    return CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                 }
 
                     // The ToolName job parameter holds the name of the job script we are executing
@@ -278,7 +278,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
 
                 // Errors were reported in function call, so just return
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             return CloseOutType.CLOSEOUT_SUCCESS;
@@ -300,7 +300,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                         break;
                     default:
                         LogError("Invalid assumed scan type '" + assumedScanType + "'; must be CID, ETD, or HCD");
-                        return CloseOutType.CLOSEOUT_FAILED;
+                        return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
                 return CloseOutType.CLOSEOUT_SUCCESS;
@@ -312,7 +312,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
             {
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             if (success)
@@ -330,7 +330,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                     if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
                     {
-                        return CloseOutType.CLOSEOUT_FAILED;
+                        return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                     }
 
                     if (success)
@@ -356,7 +356,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                         m_message += " do not contain detailed CID, ETD, or HCD information; MSGF+ could use the wrong scoring model; fix this problem before running MSGF+";
 
-                        return CloseOutType.CLOSEOUT_FAILED;
+                        return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                     }
                 }
             }
@@ -372,7 +372,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             if (!GenerateScanStatsFile())
             {
                 // Error message should already have been logged and stored in m_message
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             var scanStatsFilePath = Path.Combine(m_WorkingDir, DatasetName + "_ScanStats.txt");
@@ -382,12 +382,12 @@ namespace AnalysisManagerMSGFDBPlugIn
             {
                 m_message = "ScanTypes defined in the ScanTypeName column do not contain detailed CID, ETD, or HCD information; " +
                     "MSGF+ could use the wrong scoring model; fix this problem before running MSGF+";
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
             {
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             return CloseOutType.CLOSEOUT_SUCCESS;
@@ -399,14 +399,14 @@ namespace AnalysisManagerMSGFDBPlugIn
             if (!ValidateCDTAFileSize(m_WorkingDir, DatasetName + "_dta.txt"))
             {
                 // Errors were reported in function call, so just return
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             // Remove any spectra from the _DTA.txt file with fewer than 3 ions
             if (!ValidateCDTAFileRemoveSparseSpectra(m_WorkingDir, DatasetName + "_dta.txt"))
             {
                 // Errors were reported in function call, so just return
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             var cDtaValidated = m_jobParams.GetJobParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, "ValidatedCDtaIsCentroided", false);
@@ -425,7 +425,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             if (!ValidateCDTAFileIsCentroided(cdtaPath))
             {
                 // m_message is already updated
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             m_jobParams.AddAdditionalParameter(clsAnalysisJob.JOB_PARAMETERS_SECTION, "ValidatedCDtaIsCentroided", true);

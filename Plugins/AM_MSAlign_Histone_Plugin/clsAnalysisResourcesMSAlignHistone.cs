@@ -52,7 +52,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
             // Retrieve param file
             if (!FileSearch.RetrieveFile(m_jobParams.GetParam("ParmFileName"), m_jobParams.GetParam("ParmFileStoragePath")))
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
 
             // Retrieve Fasta file
             var orgDbDirectoryPath = m_mgrParams.GetParam("orgdbdir");
@@ -71,7 +71,7 @@ namespace AnalysisManagerMSAlignHistonePlugIn
 
             if (!base.ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
             {
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             return CloseOutType.CLOSEOUT_SUCCESS;

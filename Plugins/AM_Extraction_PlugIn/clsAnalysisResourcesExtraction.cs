@@ -459,18 +459,18 @@ namespace AnalysisManagerExtractionPlugin
             // Get analysis results files
             if (GetInputFiles(resultType, out var createPepToProtMapFile) != CloseOutType.CLOSEOUT_SUCCESS)
             {
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             // Get misc files
             if (RetrieveMiscFiles(resultType) != CloseOutType.CLOSEOUT_SUCCESS)
             {
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             if (!ProcessMyEMSLDownloadQueue(m_WorkingDir, MyEMSLReader.Downloader.DownloadFolderLayout.FlatNoSubfolders))
             {
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             foreach (var entry in m_PendingFileRenames)
@@ -557,7 +557,7 @@ namespace AnalysisManagerExtractionPlugin
 
                     default:
                         LogError("Invalid tool result type: " + resultType);
-                        return CloseOutType.CLOSEOUT_FAILED;
+                        return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
                 if (result != CloseOutType.CLOSEOUT_SUCCESS)
@@ -753,7 +753,7 @@ namespace AnalysisManagerExtractionPlugin
                     if (numberOfClonedSteps == 0)
                     {
                         LogError("Settings file is missing parameter NumberOfClonedSteps; cannot retrieve MSGFPlus results");
-                        return CloseOutType.CLOSEOUT_FAILED;
+                        return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                     }
 
                     suffixToAdd = "_Part1";
@@ -845,7 +845,7 @@ namespace AnalysisManagerExtractionPlugin
                         if (splitFastaEnabled)
                         {
                             LogError("GetMSGFPlusFiles does not support SplitFasta mode for legacy MSGF-DB results");
-                            return CloseOutType.CLOSEOUT_FAILED;
+                            return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                         }
                     }
                     else
@@ -1150,7 +1150,7 @@ namespace AnalysisManagerExtractionPlugin
                 }
 
                 // Errors were reported in function call, so just return
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
             }
 
             return CloseOutType.CLOSEOUT_SUCCESS;
@@ -1250,7 +1250,7 @@ namespace AnalysisManagerExtractionPlugin
                 if (!success)
                 {
                     LogError("Error retrieving parameter file and ModDefs.txt file");
-                    return CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                 }
 
                 // Confirm that the file was actually created
@@ -1275,7 +1275,7 @@ namespace AnalysisManagerExtractionPlugin
                     m_message = "Unable to create the ModDefs.txt file; update T_Param_File_Mass_Mods";
                     LogWarning("Unable to create the ModDefs.txt file; " +
                                "define the modifications in table T_Param_File_Mass_Mods for parameter file " + paramFileName);
-                    return CloseOutType.CLOSEOUT_FAILED;
+                    return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
 
                 m_jobParams.AddResultFileToSkip(paramFileName);

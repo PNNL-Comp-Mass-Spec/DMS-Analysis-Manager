@@ -67,7 +67,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
             success = FindInstrumentDataFiles(dataPackageInfoLoader, lstDataPackagePeptideHitJobs, lstAdditionalJobs, includeMzXmlFiles);
             if (!success)
-                return CloseOutType.CLOSEOUT_FAILED;
+                return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
 
             if (includeMzXmlFiles)
             {
