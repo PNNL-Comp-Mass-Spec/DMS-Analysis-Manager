@@ -1070,8 +1070,17 @@ namespace AnalysisManagerBase
                 xWriter.WriteStartElement("Task");
                 xWriter.WriteElementString("Tool", status.Tool);
                 xWriter.WriteElementString("Status", status.ConvertTaskStatusToString(status.TaskStatus));
+
+                if (status.TaskStatus == EnumTaskStatus.STOPPED ||
+                    status.TaskStatus == EnumTaskStatus.FAILED ||
+                    status.TaskStatus == EnumTaskStatus.NO_TASK)
+                {
+                    runTimeHours = 0;
+                }
+
                 xWriter.WriteElementString("Duration", runTimeHours.ToString("0.00"));
                 xWriter.WriteElementString("DurationMinutes", (runTimeHours * 60).ToString("0.0"));
+
                 xWriter.WriteElementString("Progress", status.Progress.ToString("##0.00"));
                 xWriter.WriteElementString("CurrentOperation", status.CurrentOperation);
 
