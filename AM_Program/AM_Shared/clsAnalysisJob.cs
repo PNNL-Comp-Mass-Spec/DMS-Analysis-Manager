@@ -1948,7 +1948,7 @@ namespace AnalysisManagerBase
                 throw new Exception("SetAnalysisJobComplete should not be called when offline mode is enabled");
             }
 
-            // Setup for execution of the stored procedure
+            // Setup for execution of stored procedure SetStepTaskComplete
             var cmd = new SqlCommand(SP_NAME_SET_COMPLETE)
             {
                 CommandType = CommandType.StoredProcedure
@@ -1983,7 +1983,7 @@ namespace AnalysisManagerBase
                 remoteInfoParam.Value = string.Empty;
             }
 
-            // Note: leave remoteTimestampParam.Value as null if remoteTimestamp is empty
+            // Note: leave remoteTimestampParam.Value as null if job parameter RemoteTimestamp is empty
             var remoteTimestampParam = cmd.Parameters.Add(new SqlParameter("@remoteTimestamp", SqlDbType.VarChar, 24));
             if (TryGetParam(STEP_PARAMETERS_SECTION, clsRemoteTransferUtility.STEP_PARAM_REMOTE_TIMESTAMP, out var remoteTimestamp, false))
             {
@@ -1991,11 +1991,28 @@ namespace AnalysisManagerBase
                     remoteTimestampParam.Value = remoteTimestamp;
             }
 
-            // Note: leave remoteTimestampParam.Value as null if remoteTimestamp is empty
+            // Note: leave remoteProgressParam.Value as null if job parameter RemoteProgress is empty
+            //
             var remoteProgressParam = cmd.Parameters.Add(new SqlParameter("@remoteProgress", SqlDbType.Real));
             if (TryGetParam(STEP_PARAMETERS_SECTION, clsRemoteTransferUtility.STEP_PARAM_REMOTE_PROGRESS, out var remoteProgressText, false))
             {
                 remoteProgressParam.Value = clsGlobal.CSngSafe(remoteProgressText, 0);
+            }
+
+            // Note: leave remoteStartParam.Value as null if job parameter RemoteStart is empty
+            var remoteStartParam = cmd.Parameters.Add(new SqlParameter("@remoteStart", SqlDbType.DateTime));
+            if (TryGetParam(STEP_PARAMETERS_SECTION, clsRemoteTransferUtility.STEP_PARAM_REMOTE_START, out var remoteStartText, false))
+            {
+                if (DateTime.TryParse(remoteStartText, out var remoteStart))
+                    remoteStartParam.Value = remoteStart;
+            }
+
+            // Note: leave remoteFinishParam.Value as null if job parameter RemoteFinish is empty
+            var remoteFinishParam = cmd.Parameters.Add(new SqlParameter("@remoteFinish", SqlDbType.DateTime));
+            if (TryGetParam(STEP_PARAMETERS_SECTION, clsRemoteTransferUtility.STEP_PARAM_REMOTE_FINISH, out var remoteFinishText, false))
+            {
+                if (DateTime.TryParse(remoteFinishText, out var remoteFinish))
+                    remoteFinishParam.Value = remoteFinish;
             }
 
             cmd.Parameters.Add(new SqlParameter("@processorName", SqlDbType.VarChar, 128)).Value = ManagerName;

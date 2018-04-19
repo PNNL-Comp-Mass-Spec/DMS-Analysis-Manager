@@ -1762,7 +1762,7 @@ namespace AnalysisManagerProg
                 return;
             }
 
-            var statusParsed = remoteMonitor.ParseStatusResultFile(jobResultFile.FullName, out resultCode, out var completionMessage);
+            var statusParsed = ParseStatusResultFile(remoteMonitor, jobResultFile.FullName, out resultCode, out var completionMessage);
 
             if (!statusParsed)
             {
@@ -1797,9 +1797,10 @@ namespace AnalysisManagerProg
             // Job succeeded
             // Parse the .success file to read the result codes and messages (the file was already retrieved by GetRemoteJobStatus()
 
-            var jobResultFilePath = Path.Combine(m_WorkDirPath, remoteMonitor.TransferUtility.ProcessingSuccessFile);
+            var jobResultFile = new FileInfo(Path.Combine(m_WorkDirPath, remoteMonitor.TransferUtility.ProcessingSuccessFile));
 
-            var statusParsed = remoteMonitor.ParseStatusResultFile(jobResultFilePath, out resultCode, out var completionMessage);
+
+            var statusParsed = ParseStatusResultFile(remoteMonitor, jobResultFile.FullName, out resultCode, out var completionMessage);
 
             m_MostRecentErrorMessage = completionMessage;
 
@@ -2163,6 +2164,30 @@ namespace AnalysisManagerProg
             {
                 LogError("Exception in LogErrorToDatabasePeriodically", ex);
             }
+        }
+
+        private bool ParseStatusResultFile(clsRemoteMonitor remoteMonitor, string jobResultFilePath, out CloseOutType resultCode, out string completionMessage)
+        {
+            var statusParsed = remoteMonitor.ParseStatusResultFile(
+                jobResultFilePath,
+                out resultCode, out completionMessage,
+                out var remoteStart, out var remoteFinish);
+
+            if (remoteStart > DateTime.MinValue)
+            {
+                m_AnalysisTask.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION,
+                                                      clsRemoteTransferUtility.STEP_PARAM_REMOTE_START,
+                                                      string.Format("{0:O}", remoteStart));
+            }
+
+            if (remoteFinish > DateTime.MinValue)
+            {
+                m_AnalysisTask.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION,
+                                                      clsRemoteTransferUtility.STEP_PARAM_REMOTE_FINISH,
+                                                      string.Format("{0:O}", remoteFinish));
+            }
+
+            return statusParsed;
         }
 
         /// <summary>

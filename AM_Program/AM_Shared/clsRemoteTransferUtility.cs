@@ -32,8 +32,24 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Step parameter RemoteProgress
         /// </summary>
+        /// <remarks>Read from the .info file and sent to stored procedure SetStepTaskComplete in SetAnalysisJobComplete</remarks>
         public const string STEP_PARAM_REMOTE_PROGRESS = "RemoteProgress";
 
+        /// <summary>
+        /// Step parameter RemoteStart
+        /// </summary>
+        /// <remarks>Read from the .info or .success file and sent to stored procedure SetStepTaskComplete</remarks>
+        public const string STEP_PARAM_REMOTE_START = "RemoteStart";
+
+        /// <summary>
+        /// Step parameter RemoteFinish
+        /// </summary>
+        /// <remarks>Read from the .success file and sent to stored procedure SetStepTaskComplete</remarks>
+        public const string STEP_PARAM_REMOTE_FINISH = "RemoteFinish";
+
+        /// <summary>
+        /// Since this constant is true, we will use the RemoteInfo defined for the manager
+        /// </summary>
         private const bool USE_MANAGER_REMOTE_INFO = true;
 
         #endregion

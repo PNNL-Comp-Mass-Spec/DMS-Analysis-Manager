@@ -565,8 +565,27 @@ namespace AnalysisManagerBase
 
                     status.StoreCoreUsageHistory(coreUsageHistory);
 
-                    JobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsRemoteTransferUtility.STEP_PARAM_REMOTE_PROGRESS,
+                    // Cache some remote status values so that SetAnalysisJobComplete can use them
+                    JobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION,
+                                                     clsRemoteTransferUtility.STEP_PARAM_REMOTE_PROGRESS,
                                                      status.Progress.ToString("0.0###"));
+
+                    JobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION,
+                                                     clsRemoteTransferUtility.STEP_PARAM_REMOTE_START,
+                                                     string.Format("{0:O}", status.TaskStartTime));
+
+                    if (status.Progress >= 100)
+                    {
+                        JobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION,
+                                                         clsRemoteTransferUtility.STEP_PARAM_REMOTE_FINISH,
+                                                         string.Format("{0:O}", lastUpdate));
+                    }
+                    else
+                    {
+                        JobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION,
+                                                         clsRemoteTransferUtility.STEP_PARAM_REMOTE_FINISH,
+                                                         string.Empty);
+                    }
 
                     // Update the cached progress; used by clsMainProcess
                     RemoteProgress = status.Progress;
@@ -592,14 +611,20 @@ namespace AnalysisManagerBase
         /// <param name="statusResultFilePath">Job .success or .fail status file path</param>
         /// <param name="eToolRunnerResult">Toolrunner result</param>
         /// <param name="completionMessage">Completion message</param>
+        /// <param name="remoteStart">Processing start time on the remote host</param>
+        /// <param name="remoteFinish">Processing end time on the remote host</param>
         /// <returns></returns>
         public bool ParseStatusResultFile(
             string statusResultFilePath,
             out CloseOutType eToolRunnerResult,
-            out string completionMessage)
+            out string completionMessage,
+            out DateTime remoteStart,
+            out DateTime remoteFinish)
         {
 
             completionMessage = string.Empty;
+            remoteStart = DateTime.MinValue;
+            remoteFinish= DateTime.MinValue;
 
             try
             {
@@ -656,30 +681,45 @@ namespace AnalysisManagerBase
                             case "Job":
                                 int.TryParse(lineParts[1], out remoteJob);
                                 break;
+
                             case "Step":
                                 int.TryParse(lineParts[1], out remoteStep);
                                 break;
+
                             case "CompCode":
                                 int.TryParse(lineParts[1], out compCode);
                                 break;
+
                             case "CompMsg":
                                 completionMessage = lineParts[1];
                                 LogWarning(string.Format("Completion message for job {0} run remotely: {1}", JobNum, completionMessage));
                                 break;
+
                             case "EvalCode":
                                 int.TryParse(lineParts[1], out evalCode);
                                 break;
+
                             case "EvalMsg":
                                 evalMessage = lineParts[1];
                                 break;
+
+                            case "Started":
+                                if (DateTime.TryParse(lineParts[1], out var startDate))
+                                    remoteStart = startDate;
+                                break;
+
+                            case "Finished":
+                                if (DateTime.TryParse(lineParts[1], out var endDate))
+                                    remoteFinish = endDate;
+                                break;
+
                             case "StepTool":
                             case "WorkDir":
                             case "Staged":
-                            case "Started":
-                            case "Finished":
                             case "MgrName":
                                 // Ignore these lines
                                 break;
+
                             default:
                                 LogWarning("Skipping unrecognized line label: " + lineParts[0]);
                                 break;
@@ -766,6 +806,7 @@ namespace AnalysisManagerBase
 
                 var remoteMgrName = "";
                 var taskStartTime = DateTime.MinValue;
+                var taskEndTime = DateTime.MinValue;
 
                 using (var reader = new StreamReader(new FileStream(statusResultFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
@@ -788,8 +829,13 @@ namespace AnalysisManagerBase
                         if (lineParts[0] == "MgrName")
                             remoteMgrName = lineParts[1];
 
+                        // Start time is based on local time
                         if (lineParts[0] == "Started")
                             DateTime.TryParse(lineParts[1], out taskStartTime);
+
+                        // Finish time is based on local time
+                        if (lineParts[0] == "Finished")
+                            DateTime.TryParse(lineParts[1], out taskEndTime);
                     }
 
                     if (string.IsNullOrWhiteSpace(remoteMgrName))
@@ -815,13 +861,17 @@ namespace AnalysisManagerBase
 
                     status.MgrStatus = EnumMgrStatus.STOPPED;
 
-                    status.TaskStartTime = taskStartTime;
-                    if (status.TaskStartTime > DateTime.MinValue)
-                    {
-                        status.TaskStartTime = status.TaskStartTime.ToUniversalTime();
-                    }
+                    if (taskStartTime > DateTime.MinValue)
+                        status.TaskStartTime = taskStartTime.ToUniversalTime();
+                    else
+                        status.TaskStartTime = taskStartTime;
 
-                    var lastUpdate = statusResultFile.LastWriteTimeUtc;
+                    DateTime lastUpdate;
+
+                    if (taskEndTime > DateTime.MinValue)
+                        lastUpdate = taskEndTime.ToUniversalTime();
+                    else
+                        lastUpdate = statusResultFile.LastWriteTimeUtc;
 
                     var cpuUtilization = 0;
                     var freeMemoryMB = 0;
