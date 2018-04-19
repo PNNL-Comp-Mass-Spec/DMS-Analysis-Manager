@@ -1524,9 +1524,9 @@ namespace AnalysisManagerBase
         /// <remarks>Pushes the status to the message queue; does not write the XML to disk</remarks>
         public void UpdateRemoteStatus(clsStatusFile status, DateTime lastUpdate, int processId, int cpuUtilization, float freeMemoryMB)
         {
-            var runTimeHours = (float)DateTime.UtcNow.Subtract(status.TaskStartTime).TotalHours;
+            var runTimeHours = (float)lastUpdate.Subtract(status.TaskStartTime).TotalHours;
 
-            WriteStatusFile(status, lastUpdate, processId, cpuUtilization, runTimeHours, freeMemoryMB, false);
+            WriteStatusFile(status, lastUpdate, processId, cpuUtilization, freeMemoryMB, runTimeHours, false);
         }
 
         /// <summary>
