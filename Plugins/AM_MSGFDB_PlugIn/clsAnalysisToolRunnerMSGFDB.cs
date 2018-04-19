@@ -953,19 +953,18 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <remarks></remarks>
         private void ParseConsoleOutputFile(string workingDirectory)
         {
-            float msgfPlusProgress = 0;
 
             try
             {
-                if (mMSGFPlusUtils != null)
-                {
-                    msgfPlusProgress = mMSGFPlusUtils.ParseMSGFPlusConsoleOutputFile(workingDirectory);
-                }
+                if (mMSGFPlusUtils == null)
+                    return;
 
-                if (msgfPlusProgress > m_progress)
+                var msgfPlusProgress = mMSGFPlusUtils.ParseMSGFPlusConsoleOutputFile(workingDirectory);
+                if (msgfPlusProgress > 0)
                 {
                     m_progress = msgfPlusProgress;
                 }
+
             }
             catch (Exception ex)
             {
