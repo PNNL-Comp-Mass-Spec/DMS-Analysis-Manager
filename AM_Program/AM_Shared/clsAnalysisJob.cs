@@ -1128,6 +1128,16 @@ namespace AnalysisManagerBase
 
                         try
                         {
+                            if (Directory.Exists(newWorkDirPath))
+                            {
+                                LogMessage(string.Format(
+                                               "Deleting old working directory prior to renaming another old working directory; deleting {0}",
+                                               newWorkDirPath));
+
+                                Directory.Delete(newWorkDirPath, true);
+
+                            }
+
                             LogMessage(string.Format(
                                            "Renaming old working directory since no current .info files refer to it; moving {0} to {1}",
                                            workDir.FullName, Path.GetFileName(newWorkDirPath)));
