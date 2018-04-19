@@ -1757,7 +1757,7 @@ namespace AnalysisManagerProg
 
             if (!jobResultFile.Exists)
             {
-                m_MostRecentErrorMessage = ".fail file not found in the working directory: " + remoteMonitor.TransferUtility.ProcessingFailureFile;
+                m_MostRecentErrorMessage = ".fail file not found in the working directory: " + jobResultFile.Name;
                 resultCode = CloseOutType.CLOSEOUT_FAILED_REMOTE;
                 return;
             }
@@ -1799,6 +1799,12 @@ namespace AnalysisManagerProg
 
             var jobResultFile = new FileInfo(Path.Combine(m_WorkDirPath, remoteMonitor.TransferUtility.ProcessingSuccessFile));
 
+            if (!jobResultFile.Exists)
+            {
+                m_MostRecentErrorMessage = ".success file not found in the working directory: " + jobResultFile.Name;
+                resultCode = CloseOutType.CLOSEOUT_FAILED_REMOTE;
+                return false;
+            }
 
             var statusParsed = ParseStatusResultFile(remoteMonitor, jobResultFile.FullName, out resultCode, out var completionMessage);
 
