@@ -947,9 +947,9 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Updates the status in various locations, including on disk and with the message queue (and optionally directly to the Broker DB)
         /// </summary>
-        /// <param name="status"></param>
-        /// <param name="lastUpdate"></param>
-        /// <param name="processId"></param>
+        /// <param name="status">Status info</param>
+        /// <param name="lastUpdate">Last update time (UTC)</param>
+        /// <param name="processId">Manager process ID</param>
         /// <param name="cpuUtilization">CPU utilization</param>
         /// <param name="freeMemoryMB">Free memory in MB</param>
         /// <param name="runTimeHours">Runtime, in hours</param>
@@ -1003,6 +1003,16 @@ namespace AnalysisManagerBase
             }
         }
 
+        /// <summary>
+        /// Generate the status XML
+        /// </summary>
+        /// <param name="status">Status info</param>
+        /// <param name="lastUpdate">Last update time (UTC)</param>
+        /// <param name="processId">Manager process ID</param>
+        /// <param name="cpuUtilization">CPU utilization</param>
+        /// <param name="freeMemoryMB">Free memory in MB</param>
+        /// <param name="runTimeHours">Runtime, in hours</param>
+        /// <returns></returns>
         private static string GenerateStatusXML(
             clsStatusFile status,
             DateTime lastUpdate,
@@ -1516,11 +1526,11 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Update the status of a remotely running job
         /// </summary>
-        /// <param name="status"></param>
-        /// <param name="lastUpdate"></param>
-        /// <param name="processId"></param>
-        /// <param name="cpuUtilization"></param>
-        /// <param name="freeMemoryMB"></param>
+        /// <param name="status">Status info</param>
+        /// <param name="lastUpdate">Last update time (UTC)</param>
+        /// <param name="processId">Manager process ID</param>
+        /// <param name="cpuUtilization">CPU utilization</param>
+        /// <param name="freeMemoryMB">Free memory in MB</param>
         /// <remarks>Pushes the status to the message queue; does not write the XML to disk</remarks>
         public void UpdateRemoteStatus(clsStatusFile status, DateTime lastUpdate, int processId, int cpuUtilization, float freeMemoryMB)
         {

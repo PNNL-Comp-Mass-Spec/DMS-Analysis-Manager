@@ -14,9 +14,9 @@ namespace AnalysisManagerBase
     #region "Enums"
 
     /// <summary>
-    /// Job result codes
+    /// Job result codes (aka completion codes)
     /// </summary>
-    /// <remarks></remarks>
+    /// <remarks>Sent to parameter completionCode when calling SetStepTaskComplete</remarks>
     public enum CloseOutType
     {
 
