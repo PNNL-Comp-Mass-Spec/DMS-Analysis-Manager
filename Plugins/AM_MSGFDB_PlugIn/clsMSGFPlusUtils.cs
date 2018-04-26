@@ -1922,37 +1922,11 @@ namespace AnalysisManagerMSGFDBPlugIn
                             }
                         }
 
-                        var reMatch = reTaskComplete.Match(dataLine);
-                        if (reMatch.Success)
-                        {
-                            var taskNumber = int.Parse(reMatch.Groups["TaskNumber"].Value);
+                        UpdateCompletedTasks(dataLine, completedTasks);
 
-                            if (completedTasks.Contains(taskNumber))
-                            {
-                                OnWarningEvent("MS-GF+ reported that task " + taskNumber + " completed more than once");
-                            }
-                            else
-                            {
-                                completedTasks.Add(taskNumber);
-                            }
-                        }
+                        UpdatePercentComplete(dataLine, ref percentCompleteAllTasks, ref tasksCompleteViaSearchProgress);
 
-                        var reProgressMatch = rePercentComplete.Match(dataLine);
-                        if (reProgressMatch.Success)
-                        {
-                            var newTasksComplete = int.Parse(reProgressMatch.Groups["TasksComplete"].Value);
 
-                            if (newTasksComplete > tasksCompleteViaSearchProgress)
-                            {
-                                tasksCompleteViaSearchProgress = newTasksComplete;
-                            }
-
-                            var newPercentComplete = float.Parse(reProgressMatch.Groups["PercentComplete"].Value);
-                            if (newPercentComplete > percentCompleteAllTasks)
-                            {
-                                percentCompleteAllTasks = newPercentComplete;
-                            }
-                        }
                     }
                 }
 
@@ -2897,6 +2871,60 @@ namespace AnalysisManagerMSGFDBPlugIn
             var chReversed = text.ToCharArray();
             Array.Reverse(chReversed);
             return new string(chReversed);
+        }
+
+        /// <summary>
+        /// If the data line is of the form "pool-1-thread-7: Task 7 completed"
+        /// extract out the task number that completed
+        /// </summary>
+        /// <param name="dataLine"></param>
+        /// <param name="completedTasks"></param>
+        /// <remarks>This type of status line was removed in January 2017</remarks>
+        private void UpdateCompletedTasks(string dataLine, ISet<int> completedTasks)
+        {
+            var reMatch = reTaskComplete.Match(dataLine);
+            if (reMatch.Success)
+            {
+                var taskNumber = int.Parse(reMatch.Groups["TaskNumber"].Value);
+
+                if (completedTasks.Contains(taskNumber))
+                {
+                    OnWarningEvent("MS-GF+ reported that task " + taskNumber + " completed more than once");
+                }
+                else
+                {
+                    completedTasks.Add(taskNumber);
+                }
+            }
+
+        }
+
+
+        /// <summary>
+        /// If the data line is of the form "Search progress: 27 / 36 tasks, 92.33%	"
+        /// extract out the number of completed tasks and the percent complete
+        /// </summary>
+        /// <param name="dataLine"></param>
+        /// <param name="percentCompleteAllTasks"></param>
+        /// <param name="tasksCompleteViaSearchProgress"></param>
+        private void UpdatePercentComplete(string dataLine, ref float percentCompleteAllTasks, ref int tasksCompleteViaSearchProgress)
+        {
+            var reProgressMatch = rePercentComplete.Match(dataLine);
+            if (reProgressMatch.Success)
+            {
+                var newTasksComplete = int.Parse(reProgressMatch.Groups["TasksComplete"].Value);
+
+                if (newTasksComplete > tasksCompleteViaSearchProgress)
+                {
+                    tasksCompleteViaSearchProgress = newTasksComplete;
+                }
+
+                var newPercentComplete = float.Parse(reProgressMatch.Groups["PercentComplete"].Value);
+                if (newPercentComplete > percentCompleteAllTasks)
+                {
+                    percentCompleteAllTasks = newPercentComplete;
+                }
+            }
         }
 
         /// <summary>
