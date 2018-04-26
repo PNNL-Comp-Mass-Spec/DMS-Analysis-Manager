@@ -1081,6 +1081,84 @@ namespace AnalysisManagerMSGFDBPlugIn
             }
         }
 
+        public override CloseOutType PostProcessRemoteResults()
+        {
+            var result = base.PostProcessRemoteResults();
+            if (result != CloseOutType.CLOSEOUT_SUCCESS)
+                return result;
+
+            // Read the MSGF+ Console_Output file and look for "seconds elapsed", "minutes elapsed", and "hours elapsed" entries
+            // If the elapsed time from the job status file is more than 10% shorter than MSGF+ runtime, use the MSGF+ runtime instead
+            // This will be the case if the analysis manager crashes while MSGF+ is running but MSGF+ actually finishes and another manager uses the existing results
+            // Also require the MSGF+ progress to be over 95%
+            try
+            {
+                if (mMSGFPlusUtils == null)
+                {
+                    // Initialize mMSGFPlusUtils
+                    mMSGFPlusUtils = new MSGFPlusUtils(m_mgrParams, m_jobParams, m_WorkDir, m_DebugLevel);
+                    RegisterEvents(mMSGFPlusUtils);
+                }
+
+                var msgfPlusProgress = mMSGFPlusUtils.ParseMSGFPlusConsoleOutputFile(m_WorkDir);
+                if (msgfPlusProgress < MSGFPlusUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE - 5)
+                {
+                    LogWarning(string.Format(
+                                   "Progress from the MSGF+ console output file is {0:F0}, " +
+                                   "which is much less than the expected value of {1:F0}; " +
+                                   "will not compare to the RemoteStart and RemoteFinish job parameters",
+                                   msgfPlusProgress, MSGFPlusUtils.PROGRESS_PCT_MSGFPLUS_COMPLETE));
+
+                    return CloseOutType.CLOSEOUT_SUCCESS;
+                }
+
+                if (mMSGFPlusUtils.ElapsedTimeHours * 60 <= 1)
+                {
+                    LogWarning(string.Format(
+                                   "Processing time from the MSGF+ console output file is {0:F1} minutes; " +
+                                   "will not compare to the RemoteStart and RemoteFinish job parameters",
+                                   mMSGFPlusUtils.ElapsedTimeHours * 60));
+
+                    return CloseOutType.CLOSEOUT_SUCCESS;
+                }
+
+                var remoteStartText = m_jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsRemoteTransferUtility.STEP_PARAM_REMOTE_START, "");
+                var remoteFinishText = m_jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsRemoteTransferUtility.STEP_PARAM_REMOTE_FINISH, "");
+
+                if (string.IsNullOrWhiteSpace(remoteStartText) || string.IsNullOrWhiteSpace(remoteFinishText))
+                    return CloseOutType.CLOSEOUT_SUCCESS;
+
+                if (!DateTime.TryParse(remoteStartText, out var remoteStart) ||
+                    !DateTime.TryParse(remoteFinishText, out var remoteFinish))
+                    return CloseOutType.CLOSEOUT_SUCCESS;
+
+                var elapsedTimeHoursFromStatusFile = remoteFinish.Subtract(remoteStart).TotalHours;
+
+                if (elapsedTimeHoursFromStatusFile > mMSGFPlusUtils.ElapsedTimeHours * 0.9)
+                    return CloseOutType.CLOSEOUT_SUCCESS;
+
+                LogMessage(string.Format(
+                               "Updating the RemoteStart and RemoteFinish times based on the processing time reported in the MSGF+ console output file; " +
+                               "changing from {0:F1} hours to {1:F1} hours",
+                               elapsedTimeHoursFromStatusFile, mMSGFPlusUtils.ElapsedTimeHours));
+
+                var newRemoteStart = remoteFinish.AddHours(-mMSGFPlusUtils.ElapsedTimeHours);
+
+                // Update the remote start time, using format code "{0:O}" to format as "2018-04-17T10:30:59.0000000"
+                m_jobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION,
+                                                   clsRemoteTransferUtility.STEP_PARAM_REMOTE_START,
+                                                   string.Format("{0:O}", newRemoteStart));
+
+                return CloseOutType.CLOSEOUT_SUCCESS;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error post-processing MSGF+ results retrieved from the remote processor", ex);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+        }
+
         /// <summary>
         /// Retrieve MSGF+ results that were run remotely
         /// </summary>
