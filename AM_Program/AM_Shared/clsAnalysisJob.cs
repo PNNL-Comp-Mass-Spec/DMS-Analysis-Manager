@@ -2003,6 +2003,7 @@ namespace AnalysisManagerBase
             var remoteStartParam = cmd.Parameters.Add(new SqlParameter("@remoteStart", SqlDbType.DateTime));
             if (TryGetParam(STEP_PARAMETERS_SECTION, clsRemoteTransferUtility.STEP_PARAM_REMOTE_START, out var remoteStartText, false))
             {
+                // remoteStartText should be UTC-based
                 if (DateTime.TryParse(remoteStartText, out var remoteStart))
                     remoteStartParam.Value = remoteStart;
             }
@@ -2011,13 +2012,14 @@ namespace AnalysisManagerBase
             var remoteFinishParam = cmd.Parameters.Add(new SqlParameter("@remoteFinish", SqlDbType.DateTime));
             if (TryGetParam(STEP_PARAMETERS_SECTION, clsRemoteTransferUtility.STEP_PARAM_REMOTE_FINISH, out var remoteFinishText, false))
             {
+                // remoteFinishText should be UTC-based
                 if (DateTime.TryParse(remoteFinishText, out var remoteFinish))
                     remoteFinishParam.Value = remoteFinish;
             }
 
             cmd.Parameters.Add(new SqlParameter("@processorName", SqlDbType.VarChar, 128)).Value = ManagerName;
 
-            // Execute the Stored Procedure (retry the call up to 20 times)
+            // Call Stored Procedure SetStepTaskComplete (retry the call up to 20 times)
             var returnCode = PipelineDBProcedureExecutor.ExecuteSP(cmd, 20);
 
             if (returnCode == 0)

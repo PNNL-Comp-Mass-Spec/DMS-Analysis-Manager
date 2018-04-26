@@ -2181,6 +2181,7 @@ namespace AnalysisManagerProg
 
             if (remoteStart > DateTime.MinValue)
             {
+                // Store the remote start time, using format code "{0:O}" to format as "2018-04-17T10:30:59.0000000"
                 m_AnalysisTask.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION,
                                                       clsRemoteTransferUtility.STEP_PARAM_REMOTE_START,
                                                       string.Format("{0:O}", remoteStart));
@@ -2188,6 +2189,7 @@ namespace AnalysisManagerProg
 
             if (remoteFinish > DateTime.MinValue)
             {
+                // Store the remote finish time, using format code "{0:O}" to format as "2018-04-17T10:30:59.0000000"
                 m_AnalysisTask.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION,
                                                       clsRemoteTransferUtility.STEP_PARAM_REMOTE_FINISH,
                                                       string.Format("{0:O}", remoteFinish));

@@ -570,12 +570,14 @@ namespace AnalysisManagerBase
                                                      clsRemoteTransferUtility.STEP_PARAM_REMOTE_PROGRESS,
                                                      status.Progress.ToString("0.0###"));
 
+                    // Store the remote start time, converting to UTC via format code "{0:O}"
                     JobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION,
                                                      clsRemoteTransferUtility.STEP_PARAM_REMOTE_START,
                                                      string.Format("{0:O}", status.TaskStartTime));
 
                     if (status.Progress >= 100)
                     {
+                        // Store the remote finish time, converting to UTC via format code "{0:O}"
                         JobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION,
                                                          clsRemoteTransferUtility.STEP_PARAM_REMOTE_FINISH,
                                                          string.Format("{0:O}", lastUpdate));
@@ -611,8 +613,8 @@ namespace AnalysisManagerBase
         /// <param name="statusResultFilePath">Job .success or .fail status file path</param>
         /// <param name="eToolRunnerResult">Toolrunner result</param>
         /// <param name="completionMessage">Completion message</param>
-        /// <param name="remoteStart">Processing start time on the remote host</param>
-        /// <param name="remoteFinish">Processing end time on the remote host</param>
+        /// <param name="remoteStart">Processing start time on the remote host (local time)</param>
+        /// <param name="remoteFinish">Processing end time on the remote host (local time)</param>
         /// <returns></returns>
         public bool ParseStatusResultFile(
             string statusResultFilePath,
