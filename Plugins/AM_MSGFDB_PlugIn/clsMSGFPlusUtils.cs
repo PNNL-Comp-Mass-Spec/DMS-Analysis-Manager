@@ -146,6 +146,10 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// </summary>
         public string ConsoleOutputErrorMsg { get; private set; }
 
+        /// <summary>
+        /// Total search time, in hours
+        /// </summary>
+        public float ElapsedTimeHours { get; private set; }
 
         /// <summary>
         /// Error message
@@ -212,6 +216,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             ContinuumSpectraSkipped = 0;
             SpectraSearched = 0;
 
+            ElapsedTimeHours = 0;
 
             ThreadCountActual = 0;
             TaskCountTotal = 0;
@@ -1751,7 +1756,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         private readonly Regex reSpectraSearched = new Regex(@"Spectrum.+\(total: *(?<SpectrumCount>\d+)\)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private readonly Regex reTaskComplete = new Regex(@"pool-\d+-thread-\d+: Task +(?<TaskNumber>\d+) +completed", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private readonly Regex rePercentComplete = new Regex(@"Search progress: (?<TasksComplete>\d+) / \d+ tasks?, (?<PercentComplete>[0-9.]+)%", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-
+        private readonly Regex reElapsedTime = new Regex(@"(?<ElapsedTime>[0-9.]+) (?<Units>seconds|minutes|hours) elapsed", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         /// <summary>
         /// Parse the MSGFPlus console output file to determine the MS-GF+ version and to track the search progress
         /// </summary>
@@ -1764,6 +1769,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             float effectiveProgress = 0;
             float percentCompleteAllTasks = 0;
             var tasksCompleteViaSearchProgress = 0;
+            float totalElapsedTimeHours = 0;
 
             try
             {
@@ -1926,6 +1932,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                         UpdatePercentComplete(dataLine, ref percentCompleteAllTasks, ref tasksCompleteViaSearchProgress);
 
+                        UpdateElapsedTime(dataLine, ref totalElapsedTimeHours);
 
                     }
                 }
@@ -1948,6 +1955,9 @@ namespace AnalysisManagerMSGFDBPlugIn
                     }
 
                 }
+
+                ElapsedTimeHours = totalElapsedTimeHours;
+
             }
             catch (Exception ex)
             {
@@ -2899,6 +2909,44 @@ namespace AnalysisManagerMSGFDBPlugIn
 
         }
 
+        /// <summary>
+        /// Look for seconds elapsed, minutes elapsed, or hours elapsed in dataLine
+        /// If found, and if larger than totalElapsedTimeHours, update totalElapsedTimeHours
+        /// </summary>
+        /// <param name="dataLine"></param>
+        /// <param name="totalElapsedTimeHours"></param>
+        private void UpdateElapsedTime(string dataLine, ref float totalElapsedTimeHours)
+        {
+            var reElapsedTimeMatch = reElapsedTime.Match(dataLine);
+            if (!reElapsedTimeMatch.Success)
+                return;
+
+            var elapsedTimeValue = float.Parse(reElapsedTimeMatch.Groups["ElapsedTime"].Value);
+            var elapsedTimeUnits = reElapsedTimeMatch.Groups["Units"].Value;
+            float elapsedTimeHours;
+
+            switch (elapsedTimeUnits)
+            {
+                case "seconds":
+                    elapsedTimeHours = elapsedTimeValue / 3600;
+                    break;
+                case "minutes":
+                    elapsedTimeHours = elapsedTimeValue / 60;
+                    break;
+                case "hours":
+                    elapsedTimeHours = elapsedTimeValue;
+                    break;
+                default:
+                    // Unknown units; ignore it
+                    elapsedTimeHours = 0;
+                    break;
+            }
+
+            if (elapsedTimeHours > totalElapsedTimeHours)
+            {
+                totalElapsedTimeHours = elapsedTimeHours;
+            }
+        }
 
         /// <summary>
         /// If the data line is of the form "Search progress: 27 / 36 tasks, 92.33%	"
