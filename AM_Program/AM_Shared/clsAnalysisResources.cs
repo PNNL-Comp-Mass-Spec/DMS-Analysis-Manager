@@ -803,7 +803,7 @@ namespace AnalysisManagerBase
             }
             else
             {
-                LogDebug(string.Format("Fasta file not found on remote host; copying {0} to {1}", sourceFasta.Name, transferUtility.RemoteHostName));
+                LogDebug(string.Format("FASTA file not found on remote host; copying {0} to {1}", sourceFasta.Name, transferUtility.RemoteHostName));
             }
 
             // Find the files to copy (skipping the .localhashcheck file)
@@ -2987,12 +2987,23 @@ namespace AnalysisManagerBase
 
         /// <summary>
         /// Estimate the amount of disk space required for the FASTA file associated with this analysis job
+        /// Includes the expected disk usage of index files
         /// </summary>
         /// <param name="proteinCollectionInfo">Collection info object</param>
+        /// <param name="legacyFastaName">
+        /// Output: the FASTA file name
+        /// For split FASTA searches, will be the original FASTA file if running extraction,
+        /// or if running MSGF+ (or similar), the split FASTA file corresponding to this job step</param>
+        /// <param name="fastaFileSizeGB">Output: FASTA file size, in GB</param>
         /// <returns>Space required, in MB</returns>
         /// <remarks>Uses both m_jobParams and m_mgrParams; returns 0 if a problem (e.g. the legacy fasta file is not listed in V_Organism_DB_File_Export)</remarks>
-        public double LookupLegacyDBDiskSpaceRequiredMB(clsProteinCollectionInfo proteinCollectionInfo)
+        public double LookupLegacyDBDiskSpaceRequiredMB(
+            clsProteinCollectionInfo proteinCollectionInfo,
+            out string legacyFastaName,
+            out double fastaFileSizeGB)
         {
+            legacyFastaName = string.Empty;
+            fastaFileSizeGB = 0;
 
             try
             {
@@ -3003,7 +3014,6 @@ namespace AnalysisManagerBase
                     return 0;
                 }
 
-                string legacyFastaName;
                 if (proteinCollectionInfo.UsingSplitFasta && !RunningDataExtraction)
                 {
                     legacyFastaName = GetSplitFastaFileName(m_jobParams, out _);
@@ -3012,6 +3022,9 @@ namespace AnalysisManagerBase
                 {
                     legacyFastaName = proteinCollectionInfo.LegacyFastaName;
                 }
+
+                if (string.IsNullOrWhiteSpace(legacyFastaName))
+                    return 0;
 
                 var sqlQuery = "SELECT File_Size_KB FROM V_Organism_DB_File_Export WHERE (FileName = '" + legacyFastaName + "')";
 
@@ -3041,6 +3054,8 @@ namespace AnalysisManagerBase
                     LogMessage("Legacy fasta file size is not numeric, job " + m_JobNum + ", file " + legacyFastaName + ": " + lstResults.First(), 0, true);
                     return 0;
                 }
+
+                fastaFileSizeGB = fileSizeKB / 1024.0 / 1024;
 
                 // Assume that the MSGF+ index files will be 15 times larger than the legacy FASTA file itself
                 var fileSizeMB = (fileSizeKB + fileSizeKB * 15) / 1024.0;
@@ -4359,6 +4374,23 @@ namespace AnalysisManagerBase
         /// <remarks>Stores the name of the FASTA file as a new job parameter named "generatedFastaName" in section "PeptideSearch"</remarks>
         protected bool RetrieveOrgDB(string orgDbDirectoryPath, out CloseOutType resultCode)
         {
+            var maxLegacyFASTASizeGB = 100;
+            return RetrieveOrgDB(orgDbDirectoryPath, out resultCode, maxLegacyFASTASizeGB, out _);
+        }
+
+        /// <summary>
+        /// Create a fasta file for Sequest, X!Tandem, Inspect, or MSGFPlus analysis
+        /// </summary>
+        /// <param name="orgDbDirectoryPath">Directory on analysis machine where fasta files are stored</param>
+        /// <param name="resultCode">Output: status code</param>
+        /// <param name="maxLegacyFASTASizeGB">
+        /// Maximum FASTA file size to retrieve when retrieving a legacy (standalone) FASTA file
+        /// Returns False if the file was not copied because it is too large</param>
+        /// <param name="fastaFileSizeGB">Output: FASTA file size, in GB</param>
+        /// <returns>TRUE for success; FALSE for failure</returns>
+        /// <remarks>Stores the name of the FASTA file as a new job parameter named "generatedFastaName" in section "PeptideSearch"</remarks>
+        protected bool RetrieveOrgDB(string orgDbDirectoryPath, out CloseOutType resultCode, float maxLegacyFASTASizeGB, out double fastaFileSizeGB)
+        {
             const int freeSpaceThresholdPercent = 20;
 
             Console.WriteLine();
@@ -4366,6 +4398,8 @@ namespace AnalysisManagerBase
             {
                 LogMessage("Obtaining Org DB file");
             }
+
+            fastaFileSizeGB = 0;
 
             try
             {
@@ -4421,8 +4455,18 @@ namespace AnalysisManagerBase
 
                 if (proteinCollectionInfo.UsingLegacyFasta)
                 {
-                    // Estimate the drive space required to download the fasta file and its associated MSGF+ the index files
-                    requiredFreeSpaceMB = LookupLegacyDBDiskSpaceRequiredMB(proteinCollectionInfo);
+                    // Estimate the drive space required to download the fasta file and its associated MSGF+ index files
+                    requiredFreeSpaceMB = LookupLegacyDBDiskSpaceRequiredMB(proteinCollectionInfo, out var legacyFastaName, out fastaFileSizeGB);
+
+                    if (fastaFileSizeGB > maxLegacyFASTASizeGB)
+                    {
+                        LogWarning(string.Format(
+                                       "Not retrieving FASTA file {0} since it is {1:F2} GB, which is larger than the max size threshold of {2:F1} GB",
+                                       legacyFastaName, fastaFileSizeGB, maxLegacyFASTASizeGB));
+
+                        resultCode = CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
+                        return false;
+                    }
                 }
 
                 // Delete old fasta files and suffix array files if getting low on disk space
@@ -4438,9 +4482,17 @@ namespace AnalysisManagerBase
                     return false;
                 }
 
-                // Fasta file was successfully generated. Put the name of the generated fastafile in the
+                if (Math.Abs(fastaFileSizeGB) < float.Epsilon)
+                {
+                    // Determine the FASTA file size (should already be known for legacy FASTA files)
+                    var fastaFile = new FileInfo(Path.Combine(orgDbDirectoryPath, m_FastaFileName));
+                    if (fastaFile.Exists)
+                        fastaFileSizeGB = clsGlobal.BytesToGB(fastaFile.Length);
+                }
+
+                // Fasta file was successfully generated. Put the name of the generated FASTA file in the
                 // job data class for other methods to use
-                if (!m_jobParams.AddAdditionalParameter("PeptideSearch", JOB_PARAM_GENERATED_FASTA_NAME, m_FastaFileName))
+                    if (!m_jobParams.AddAdditionalParameter("PeptideSearch", JOB_PARAM_GENERATED_FASTA_NAME, m_FastaFileName))
                 {
                     LogError("Error adding parameter 'generatedFastaName' to m_jobParams");
                     resultCode = CloseOutType.CLOSEOUT_FAILED;

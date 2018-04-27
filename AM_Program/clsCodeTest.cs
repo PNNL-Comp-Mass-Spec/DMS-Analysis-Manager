@@ -1123,20 +1123,10 @@ namespace AnalysisManagerProg
 
             var proteinCollectionInfo = new clsProteinCollectionInfo(jobParams);
 
-            var spaceRequiredMB = resourcer.LookupLegacyDBDiskSpaceRequiredMB(proteinCollectionInfo);
+            var spaceRequiredMB = resourcer.LookupLegacyDBDiskSpaceRequiredMB(proteinCollectionInfo, out var legacyFastaName, out var fastaFileSizeGB);
 
-            string legacyFastaName;
-
-            if (proteinCollectionInfo.UsingSplitFasta)
-            {
-                legacyFastaName = clsAnalysisResources.GetSplitFastaFileName(jobParams, out _);
-            }
-            else
-            {
-                legacyFastaName = proteinCollectionInfo.LegacyFastaName;
-            }
-
-            Console.WriteLine(legacyFastaName + " requires roughly " + spaceRequiredMB.ToString("#,##0") + " MB");
+            Console.WriteLine("{0} is {1:F3} GB", legacyFastaName, fastaFileSizeGB);
+            Console.WriteLine("The FASTA file plus its index files requires roughly {0:F3} GB", spaceRequiredMB / 1024.0);
         }
 
         /// <summary>
