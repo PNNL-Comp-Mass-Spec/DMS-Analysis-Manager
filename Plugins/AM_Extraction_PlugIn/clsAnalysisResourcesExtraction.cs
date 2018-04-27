@@ -482,17 +482,27 @@ namespace AnalysisManagerExtractionPlugin
                 }
             }
 
-            if (mRetrieveOrganismDB)
+            if (!mRetrieveOrganismDB)
+                return CloseOutType.CLOSEOUT_SUCCESS;
+
+            var skipProteinMods = m_jobParams.GetJobParameter("SkipProteinMods", false);
+            if (!skipProteinMods || createPepToProtMapFile)
             {
-                var skipProteinMods = m_jobParams.GetJobParameter("SkipProteinMods", false);
-                if (!skipProteinMods || createPepToProtMapFile)
+                // Examine the FASTA file size
+                // If it is over 2 GB in size, do not retrieve the file, and force skipProteinMods to false
+                const float MAX_LEGACY_FASTA_SIZE_GB = 2;
+
+                // Retrieve the Fasta file; required to create the _ProteinMods.txt file
+                var orgDbDirectoryPath = m_mgrParams.GetParam("orgdbdir");
+                if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode, MAX_LEGACY_FASTA_SIZE_GB, out var fastaFileSizeGB))
                 {
-                    // Retrieve the Fasta file; required to create the _ProteinMods.txt file
-                    var orgDbDirectoryPath = m_mgrParams.GetParam("orgdbdir");
-                    if (!RetrieveOrgDB(orgDbDirectoryPath, out var resultCode))
+                    if (fastaFileSizeGB >= MAX_LEGACY_FASTA_SIZE_GB)
                     {
-                        return resultCode;
+                        m_jobParams.SetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "SkipProteinMods", "true");
+                        return CloseOutType.CLOSEOUT_SUCCESS;
                     }
+
+                    return resultCode;
                 }
             }
 
@@ -500,7 +510,7 @@ namespace AnalysisManagerExtractionPlugin
         }
 
         /// <summary>
-        /// Retrieves input files (ie, .out files) needed for extraction
+        /// Retrieves input files needed for extraction
         /// </summary>
         /// <param name="resultType">String specifying type of analysis results input to extraction process</param>
         /// <param name="createPepToProtMapFile"></param>
