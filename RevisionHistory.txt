@@ -1,5 +1,40 @@
 Analysis Tool Manager History
 
+April 26, 2018
+	- During data extraction, skip finding protein mods if the FASTA file is over 2 GB
+
+April 25, 2018
+	- Use elapsed MSGF+ processing time to update remote start and remote finish values when using existing MSGF+ results
+
+April 19, 2018
+	- Always use the progress value reported by the MSGF+ console output file
+
+April 13, 2018
+	- Configure tool DataExtractorSplitFasta to load the standard data extraction plugin
+	- Skip running PHRP if the PHRP result files are all newer than the search result file(s)
+	- Use the MzidMerger to combine .mzid files in a SplitFASTA analysis
+
+March 30, 2018
+	- Extensively improve offline job processing, including monitoring job progress and reporting runtime stats to the database
+
+February 16, 2018
+	- Use DMSUpdateManager to push new/updated DMS_Programs files to a remote Linux host
+
+February 5, 2018
+	- Use class LogTools in PRISM.dll instead of local clsLogTools
+
+January 4, 2018
+	- Add standalone logging classes that replace Log4Net
+
+December 19, 2017
+	- Enable Python Plotting when generating plots with MSFileInfoScanner after running DeconTools
+
+November 15, 2017
+	- Use GetFreeMemoryMB in PRISM.dll instead of class SystemMemoryInfo
+
+October 30, 2017
+	- Increase MSGF+ memory usage when processing large .mzML files
+
 July 11, 2017
 	- Add support for pushing jobs to a remote Linux host
 	- Add offline mode option for processing jobs on a Linux host, independent of other servers
