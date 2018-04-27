@@ -621,9 +621,9 @@ namespace AnalysisManagerBase
         public string Message => m_message;
 
         /// <summary>
-        /// True when the step tool is DataExtractor
+        /// True when the step tool contains the text DataExtractor
         /// </summary>
-        private bool RunningDataExtraction => string.Equals(StepToolName, "DataExtractor", StringComparison.OrdinalIgnoreCase);
+        private bool RunningDataExtraction => StepToolName.ToLower().Contains("DataExtractor".ToLower());
 
         /// <summary>
         /// Step tool name
