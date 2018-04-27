@@ -73,13 +73,13 @@ namespace AnalysisManagerExtractionPlugin
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="MgrParams">IMgrParams object containing manager settings</param>
-        /// <param name="JobParams">IJobParams object containing job parameters</param>
+        /// <param name="mgrParams">IMgrParams object containing manager settings</param>
+        /// <param name="jobParams">IJobParams object containing job parameters</param>
         /// <remarks></remarks>
-        public clsPepHitResultsProcWrapper(IMgrParams MgrParams, IJobParams JobParams)
+        public clsPepHitResultsProcWrapper(IMgrParams mgrParams, IJobParams jobParams)
         {
-            m_MgrParams = MgrParams;
-            m_JobParams = JobParams;
+            m_MgrParams = mgrParams;
+            m_JobParams = jobParams;
             m_DebugLevel = m_MgrParams.GetParam("debuglevel", 1);
         }
 
@@ -88,7 +88,10 @@ namespace AnalysisManagerExtractionPlugin
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
         /// <remarks></remarks>
-        public CloseOutType ExtractDataFromResults(string peptideSearchResultsFileName, string fastaFilePath, string resultType)
+        public CloseOutType ExtractDataFromResults(
+            string peptideSearchResultsFileName,
+            string fastaFilePath,
+            string resultType)
         {
             //  Let the DLL auto-determines the input filename, based on the dataset name
             return ExtractDataFromResults(peptideSearchResultsFileName, true, true, fastaFilePath, resultType);
@@ -99,8 +102,12 @@ namespace AnalysisManagerExtractionPlugin
         /// </summary>
         /// <returns>CloseOutType enum indicating success or failure</returns>
         /// <remarks></remarks>
-        public CloseOutType ExtractDataFromResults(string peptideSearchResultsFileName, bool createFirstHitsFile, bool createSynopsisFile,
-            string fastaFilePath, string resultType)
+        public CloseOutType ExtractDataFromResults(
+            string peptideSearchResultsFileName,
+            bool createFirstHitsFile,
+            bool createSynopsisFile,
+            string fastaFilePath,
+            string resultType)
         {
             var paramFileName = m_JobParams.GetParam("ParmFileName");
 
@@ -159,7 +166,7 @@ namespace AnalysisManagerExtractionPlugin
                     cmdStr += " /ProteinMods";
                 }
 
-                if (!string.IsNullOrEmpty(fastaFilePath))
+                if (!string.IsNullOrWhiteSpace(fastaFilePath))
                 {
                     // Note that FastaFilePath will likely be empty if job parameter SkipProteinMods is true
                     cmdStr += " /F:" + clsAnalysisToolRunnerBase.PossiblyQuotePath(fastaFilePath);
@@ -178,12 +185,12 @@ namespace AnalysisManagerExtractionPlugin
                 var msgfPlusSpecEValue = m_JobParams.GetJobParameter("MSGFPlusSpecEValue", "");
                 var msgfPlusEValue = m_JobParams.GetJobParameter("MSGFPlusEValue", "");
 
-                if (!string.IsNullOrEmpty(msgfPlusSpecEValue))
+                if (!string.IsNullOrWhiteSpace(msgfPlusSpecEValue))
                 {
                     cmdStr += " /MSGFPlusSpecEValue:" + msgfPlusSpecEValue;
                 }
 
-                if (!string.IsNullOrEmpty(msgfPlusEValue))
+                if (!string.IsNullOrWhiteSpace(msgfPlusEValue))
                 {
                     cmdStr += " /MSGFPlusEValue:" + msgfPlusEValue;
                 }
@@ -290,7 +297,7 @@ namespace AnalysisManagerExtractionPlugin
 
                     if (!skipProteinMods && validationResult != CloseOutType.CLOSEOUT_NO_DATA)
                     {
-                        if (!string.IsNullOrEmpty(fastaFilePath))
+                        if (!string.IsNullOrWhiteSpace(fastaFilePath))
                         {
                             if (PeptideHitResultsProcessor.clsPHRPBaseClass.ValidateProteinFastaFile(fastaFilePath, out _))
                             {

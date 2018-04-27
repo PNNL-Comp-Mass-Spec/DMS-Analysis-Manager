@@ -98,7 +98,7 @@ namespace AnalysisManagerExtractionPlugin
                 // Note that job parameter "generatedFastaName" gets defined by clsAnalysisResources.RetrieveOrgDB
                 // However, if job parameter SkipProteinMods is True, the Fasta file will not have been retrieved
                 var fastaFileName = m_jobParams.GetParam("PeptideSearch", "generatedFastaName");
-                if (string.IsNullOrEmpty(fastaFileName))
+                if (string.IsNullOrWhiteSpace(fastaFileName))
                 {
                     mGeneratedFastaFilePath = string.Empty;
                 }
@@ -397,7 +397,7 @@ namespace AnalysisManagerExtractionPlugin
                         }
                     }
 
-                    if (!string.IsNullOrEmpty(bestPrefix.Value) && bestPrefix.Value != decoyPrefixJobParam)
+                    if (!string.IsNullOrWhiteSpace(bestPrefix.Value) && bestPrefix.Value != decoyPrefixJobParam)
                     {
                         var msg = string.Format("Using decoy prefix {0} instead of {1} as defined by job parameter MODPlusDecoyPrefix " +
                                                 "because {2:F1}% of the proteins start with {0}",
@@ -432,7 +432,7 @@ namespace AnalysisManagerExtractionPlugin
 
                 // javaProgLoc will typically be "C:\Program Files\Java\jre8\bin\java.exe"
                 var javaProgLoc = GetJavaProgLoc();
-                if (string.IsNullOrEmpty(javaProgLoc))
+                if (string.IsNullOrWhiteSpace(javaProgLoc))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
                 }
@@ -549,9 +549,9 @@ namespace AnalysisManagerExtractionPlugin
                 // Determine the path to the MzidToTsvConverter
                 var mzidToTsvConverterProgLoc = DetermineProgramLocation("MzidToTsvConverterProgLoc", "MzidToTsvConverter.exe");
 
-                if (string.IsNullOrEmpty(mzidToTsvConverterProgLoc))
+                if (string.IsNullOrWhiteSpace(mzidToTsvConverterProgLoc))
                 {
-                    if (string.IsNullOrEmpty(m_message))
+                    if (string.IsNullOrWhiteSpace(m_message))
                     {
                         LogError("Parameter 'MzidToTsvConverter' not defined for this manager");
                     }
@@ -581,11 +581,11 @@ namespace AnalysisManagerExtractionPlugin
                     return string.Empty;
                 }
 
-                if (!string.IsNullOrEmpty(tsvFilePath))
+                if (!string.IsNullOrWhiteSpace(tsvFilePath))
                 {
                     // File successfully created
 
-                    if (string.IsNullOrEmpty(suffixToAdd))
+                    if (string.IsNullOrWhiteSpace(suffixToAdd))
                         return tsvFilePath;
 
                     var fiTSVFile = new FileInfo(tsvFilePath);
@@ -603,7 +603,7 @@ namespace AnalysisManagerExtractionPlugin
                     return newTSVPath;
                 }
 
-                if (string.IsNullOrEmpty(m_message))
+                if (string.IsNullOrWhiteSpace(m_message))
                 {
                     LogError("Error calling mMSGFPlusUtils.ConvertMZIDToTSV; path not returned");
                 }
@@ -920,7 +920,7 @@ namespace AnalysisManagerExtractionPlugin
                                         // Done processing the last peptide; we can now update lstPepProtMappingWritten to True for this peptide
                                         // to prevent it from getting added to the merged file again in the future
 
-                                        if (!string.IsNullOrEmpty(lastPeptideFull))
+                                        if (!string.IsNullOrWhiteSpace(lastPeptideFull))
                                         {
                                             if (!lstPepProtMappingWritten.Contains(lastPeptideFull))
                                             {
@@ -1419,7 +1419,7 @@ namespace AnalysisManagerExtractionPlugin
 
             if (!success)
             {
-                if (string.IsNullOrEmpty(summarizer.ErrorMessage))
+                if (string.IsNullOrWhiteSpace(summarizer.ErrorMessage))
                 {
                     LogError("Error summarizing the PSMs using clsMSGFResultsSummarizer");
                 }
@@ -1689,7 +1689,7 @@ namespace AnalysisManagerExtractionPlugin
                                 currentStep = "Creating .tsv file " + targetFilePath;
 
                                 targetFilePath = ConvertMZIDToTSV(suffixToAdd);
-                                if (string.IsNullOrEmpty(targetFilePath))
+                                if (string.IsNullOrWhiteSpace(targetFilePath))
                                 {
                                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                                 }
@@ -1953,13 +1953,13 @@ namespace AnalysisManagerExtractionPlugin
 
             var transferDirPath = GetTransferFolderPath();
 
-            if (string.IsNullOrEmpty(transferDirPath))
+            if (string.IsNullOrWhiteSpace(transferDirPath))
             {
                 // Error has already been logged
                 return;
             }
 
-            if (string.IsNullOrEmpty(m_ResFolderName))
+            if (string.IsNullOrWhiteSpace(m_ResFolderName))
             {
                 // Ignore error; will be logged in function
                 return;
