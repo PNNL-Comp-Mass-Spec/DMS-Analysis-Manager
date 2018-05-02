@@ -909,7 +909,9 @@ namespace AnalysisManagerExtractionPlugin
                         }
                     }
 
-                    if (!skipMSGFResultsZipFileCopy)
+                    // Retrieve the .mzid.gz file if skipMSGFResultsZipFileCopy is false
+                    // or if extracting data from a SplitFASTA search (since we need to merge the .mzid files together)
+                    if (!skipMSGFResultsZipFileCopy || splitFastaEnabled)
                     {
                         var mzidFile = baseName + mzidSuffix;
                         currentStep = "Retrieving " + mzidFile;
@@ -1013,7 +1015,7 @@ namespace AnalysisManagerExtractionPlugin
 
                     if (splitFastaEnabled)
                     {
-                        // Retrieve the _ConsoleOutput file
+                        // Retrieve the _ConsoleOutput file for this cloned step
 
                         var consoleOutputFile = "MSGFPlus_ConsoleOutput" + suffixToAdd + ".txt";
                         currentStep = "Retrieving " + consoleOutputFile;
