@@ -3,13 +3,13 @@
 // -------------------------------------------------------------------------------
 // Written by Dave Clark, Matthew Monroe, and John Sandoval for the Department of Energy (PNNL, Richland, WA)
 //
-// E-mail: matthew.monroe@pnnl.gov or matt@alchemistmatt.com
-// Website: http://omics.pnl.gov/ or http://www.sysbio.org/resources/staff/ or http://panomics.pnnl.gov/
+// E-mail: matthew.monroe@pnnl.gov or proteomics@pnnl.gov
+// Website: https://omics.pnl.gov/ or https://www.pnnl.gov/sysbio/ or https://panomics.pnnl.gov/
 // -------------------------------------------------------------------------------
 //
 // Licensed under the Apache License, Version 2.0; you may not use this file except
 // in compliance with the License.  You may obtain a copy of the License at
-// http://www.apache.org/licenses/LICENSE-2.0
+// https://www.apache.org/licenses/LICENSE-2.0
 //
 // Notice: This computer software was prepared by Battelle Memorial Institute,
 // hereinafter the Contractor, under Contract No. DE-AC05-76RL0 1830 with the
@@ -32,7 +32,7 @@ namespace AnalysisManagerProg
 {
     static class modMain
     {
-        public const string PROGRAM_DATE = "April 26, 2018";
+        public const string PROGRAM_DATE = "May 1, 2018";
 
         private static bool mCodeTestMode;
         private static bool mTraceMode;
@@ -400,7 +400,7 @@ namespace AnalysisManagerProg
                 Console.WriteLine();
 
                 Console.WriteLine("Licensed under the Apache License, Version 2.0; you may not use this file except in compliance with the License.  " +
-                                  "You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0");
+                                  "You may obtain a copy of the License at https://www.apache.org/licenses/LICENSE-2.0");
                 Console.WriteLine();
 
                 clsParseCommandLine.PauseAtConsole(1500);

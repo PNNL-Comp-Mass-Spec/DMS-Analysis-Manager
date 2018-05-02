@@ -4492,7 +4492,7 @@ namespace AnalysisManagerBase
 
                 // Fasta file was successfully generated. Put the name of the generated FASTA file in the
                 // job data class for other methods to use
-                    if (!m_jobParams.AddAdditionalParameter("PeptideSearch", JOB_PARAM_GENERATED_FASTA_NAME, m_FastaFileName))
+                if (!m_jobParams.AddAdditionalParameter("PeptideSearch", JOB_PARAM_GENERATED_FASTA_NAME, m_FastaFileName))
                 {
                     LogError("Error adding parameter 'generatedFastaName' to m_jobParams");
                     resultCode = CloseOutType.CLOSEOUT_FAILED;

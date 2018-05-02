@@ -680,7 +680,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         [Obsolete("Use GetMZIDtoTSVCommandLine for MzidToTsvConverter.exe")]
         public static string GetMZIDtoTSVCommandLine(string mzidFileName, string tsvFileName, string workingDirectory, string msgfDbProgLoc, int javaMemorySizeMB)
         {
-            // We're using "-XX:+UseConcMarkSweepGC" as directed at http://stackoverflow.com/questions/5839359/java-lang-outofmemoryerror-gc-overhead-limit-exceeded
+            // We're using "-XX:+UseConcMarkSweepGC" as directed at https://stackoverflow.com/questions/5839359/java-lang-outofmemoryerror-gc-overhead-limit-exceeded
             // due to seeing error "java.lang.OutOfMemoryError: GC overhead limit exceeded" with a 353 MB .mzid file
 
             var cmdStr = " -Xmx" + javaMemorySizeMB + "M -XX:+UseConcMarkSweepGC -cp " + msgfDbProgLoc;
