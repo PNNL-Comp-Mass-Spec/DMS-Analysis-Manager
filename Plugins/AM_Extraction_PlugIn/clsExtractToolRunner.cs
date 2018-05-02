@@ -1653,7 +1653,6 @@ namespace AnalysisManagerExtractionPlugin
 
                         var skipProteinMods = m_jobParams.GetJobParameter("SkipProteinMods", false);
 
-                        // ReSharper disable once UseImplicitlyTypedVariableEvident
                         for (var iteration = 1; iteration <= numberOfClonedSteps; iteration++)
                         {
 
@@ -1940,7 +1939,12 @@ namespace AnalysisManagerExtractionPlugin
                     LogWarning("MSGF+ console output files not found");
                 }
 
-                diConsoleOutputFiles.Delete();
+                diConsoleOutputFiles.Refresh();
+                if (diConsoleOutputFiles.GetFileSystemInfos().Length == 0)
+                {
+                    diConsoleOutputFiles.Delete();
+                }
+
                 return;
             }
 
