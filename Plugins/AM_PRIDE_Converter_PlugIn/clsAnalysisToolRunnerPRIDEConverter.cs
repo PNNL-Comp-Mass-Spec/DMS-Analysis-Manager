@@ -49,7 +49,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         private const string PARTIAL_SUBMISSION = "PARTIAL";
         private const string COMPLETE_SUBMISSION = "COMPLETE";
 
-        private const string PNNL_NAME_COUNTRY = "Pacific Northwest National Laboratory, USA";
+        private const string PNNL_NAME_COUNTRY = "Pacific Northwest National Laboratory";
 
         private const string DEFAULT_TISSUE_CV = "[PRIDE, PRIDE:0000442, Tissue not applicable to dataset, ]";
         private const string DEFAULT_TISSUE_CV_MOUSE_HUMAN = "[BTO, BTO:0000089, blood, ]";
