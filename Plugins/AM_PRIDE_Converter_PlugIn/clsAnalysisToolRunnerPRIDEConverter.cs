@@ -2542,21 +2542,33 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     }
                 }
 
+                var paramsWithCVs = new SortedSet<string>
+                {
+                    "experiment_type",
+                    "species",
+                    "tissue",
+                    "instrument",
+                    "cell_type",
+                    "disease",
+                    "quantification",
+                    "modification"
+                };
+
                 using (var swPXFile = new StreamWriter(new FileStream(pXFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    WritePXHeader(swPXFile, "submitter_name", "Matthew Monroe", templateParameters);
-                    WritePXHeader(swPXFile, "submitter_email", "matthew.monroe@pnnl.gov", templateParameters);
-                    WritePXHeader(swPXFile, "submitter_affiliation", PNNL_NAME_COUNTRY, templateParameters);
-                    WritePXHeader(swPXFile, "submitter_pride_login", "matthew.monroe@pnnl.gov", templateParameters);
+                    WritePXHeader(swPXFile, "submitter_name", "Matthew Monroe", templateParameters, paramsWithCVs);
+                    WritePXHeader(swPXFile, "submitter_email", "matthew.monroe@pnnl.gov", templateParameters, paramsWithCVs);
+                    WritePXHeader(swPXFile, "submitter_affiliation", PNNL_NAME_COUNTRY, templateParameters, paramsWithCVs);
+                    WritePXHeader(swPXFile, "submitter_pride_login", "matthew.monroe@pnnl.gov", templateParameters, paramsWithCVs);
 
-                    WritePXHeader(swPXFile, "lab_head_name", "Richard D. Smith", templateParameters);
-                    WritePXHeader(swPXFile, "lab_head_email", "dick.smith@pnnl.gov", templateParameters);
-                    WritePXHeader(swPXFile, "lab_head_affiliation", PNNL_NAME_COUNTRY, templateParameters);
+                    WritePXHeader(swPXFile, "lab_head_name", "Richard D. Smith", templateParameters, paramsWithCVs);
+                    WritePXHeader(swPXFile, "lab_head_email", "dick.smith@pnnl.gov", templateParameters, paramsWithCVs);
+                    WritePXHeader(swPXFile, "lab_head_affiliation", PNNL_NAME_COUNTRY, templateParameters, paramsWithCVs);
 
-                    WritePXHeader(swPXFile, "project_title", TBD + "User-friendly Article Title", templateParameters);
+                    WritePXHeader(swPXFile, "project_title", TBD + "User-friendly Article Title", templateParameters, paramsWithCVs);
 
                     // Minimum 50 characterse, max 5000 characters
-                    WritePXHeader(swPXFile, "project_description", TBD + "Summary sentence", templateParameters, 50);
+                    WritePXHeader(swPXFile, "project_description", TBD + "Summary sentence", templateParameters, paramsWithCVs, 50);
 
                     // We don't normally use the project_tag field, so it is commented out
                     // Example official tags are:
@@ -2566,20 +2578,20 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                     if (templateParameters.ContainsKey("pubmed_id"))
                     {
-                        WritePXHeader(swPXFile, "pubmed_id", TBD, templateParameters);
+                        WritePXHeader(swPXFile, "pubmed_id", TBD, templateParameters, paramsWithCVs);
                     }
 
                     // We don't normally use this field, so it is commented out
                     // WritePXHeader(swPXFile, "other_omics_link", "Related data is available from PeptideAtlas at http://www.peptideatlas.org/PASS/PASS00297")
 
                     // Comma separated list; suggest at least 3 keywords
-                    WritePXHeader(swPXFile, "keywords", TBD, templateParameters);
+                    WritePXHeader(swPXFile, "keywords", TBD, templateParameters, paramsWithCVs);
 
                     // Minimum 50 characters, max 5000 characters
-                    WritePXHeader(swPXFile, "sample_processing_protocol", TBD, templateParameters, 50);
+                    WritePXHeader(swPXFile, "sample_processing_protocol", TBD, templateParameters, paramsWithCVs, 50);
 
                     // Minimum 50 characters, max 5000 characters
-                    WritePXHeader(swPXFile, "data_processing_protocol", TBD, templateParameters, 50);
+                    WritePXHeader(swPXFile, "data_processing_protocol", TBD, templateParameters, paramsWithCVs, 50);
 
                     // Example values for experiment_type (a given submission can have more than one experiment_type listed)
                     //   [PRIDE, PRIDE:0000427, Top-down proteomics, ]
@@ -2594,7 +2606,9 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     //   [PRIDE, PRIDE:0000454, All-ion fragmentation, ]
                     //   [MS, MS:1002521, Mass spectrometry imaging,]
                     //   [MS, MS:1002521, Mass spectrometry imaging,]
-                    WritePXHeader(swPXFile, "experiment_type", GetCVString("PRIDE", "PRIDE:0000429", "Shotgun proteomics", ""), templateParameters);
+
+                    var defaultExperiment = GetCVString("PRIDE", "PRIDE:0000429", "Shotgun proteomics");
+                    WritePXHeader(swPXFile, "experiment_type", defaultExperiment, templateParameters, paramsWithCVs);
 
                     WritePXLine(swPXFile, new List<string>
                     {
@@ -2609,7 +2623,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         // However, we don't have a good alternative place to put this comment, so we'll include it anyway
                         if (!string.IsNullOrWhiteSpace(filterText))
                         {
-                            WritePXHeader(swPXFile, "comment", filterText);
+                            WritePXHeader(swPXFile, "comment", filterText, paramsWithCVs);
                         }
                     }
                     else
@@ -2630,21 +2644,22 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                             comment += ", and " + mSearchToolsUsed.Last();
                         }
 
-                        WritePXHeader(swPXFile, "reason_for_partial", comment);
+                        WritePXHeader(swPXFile, "reason_for_partial", comment, paramsWithCVs);
                     }
 
                     var mouseOrHuman = false;
                     if (mExperimentNEWTInfo.Count == 0)
                     {
                         // None of the data package jobs had valid NEWT info
-                        WritePXHeader(swPXFile, "species", TBD + GetCVString("NEWT", "2323", "unclassified Bacteria", ""), templateParameters);
+                        var defaultSpecies = TBD + GetCVString("NEWT", "2323", "unclassified Bacteria");
+                        WritePXHeader(swPXFile, "species", defaultSpecies, templateParameters, paramsWithCVs);
                     }
                     else
                     {
                         // NEWT info is defined; write it out
                         foreach (var item in mExperimentNEWTInfo)
                         {
-                            WritePXHeader(swPXFile, "species", GetNEWTCv(item.Key, item.Value));
+                            WritePXHeader(swPXFile, "species", GetNEWTCv(item.Key, item.Value), paramsWithCVs);
 
                             if (item.Value.IndexOf("Homo sapiens", StringComparison.OrdinalIgnoreCase) >= 0 ||
                                 item.Value.IndexOf("Mus musculus", StringComparison.OrdinalIgnoreCase) >= 0)
@@ -2654,13 +2669,19 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         }
                     }
 
+                    string defaultTissue;
                     if (mouseOrHuman)
-                        WritePXHeader(swPXFile, "tissue", TBD + DEFAULT_TISSUE_CV_MOUSE_HUMAN, templateParameters);
+                        defaultTissue = TBD + DEFAULT_TISSUE_CV_MOUSE_HUMAN;
                     else
-                        WritePXHeader(swPXFile, "tissue", TBD + DEFAULT_TISSUE_CV, templateParameters);
+                        defaultTissue = TBD + DEFAULT_TISSUE_CV;
 
-                    WritePXHeader(swPXFile, "cell_type", TBD + "Optional, e.g. " + DEFAULT_CELL_TYPE_CV + DELETION_WARNING, templateParameters);
-                    WritePXHeader(swPXFile, "disease", TBD + "Optional, e.g. " + DEFAULT_DISEASE_TYPE_CV + DELETION_WARNING, templateParameters);
+                    WritePXHeader(swPXFile, "tissue", defaultTissue, templateParameters, paramsWithCVs);
+
+                    var defaultCellType = TBD + "Optional, e.g. " + DEFAULT_CELL_TYPE_CV + DELETION_WARNING;
+                    var defaultDisease = TBD + "Optional, e.g. " + DEFAULT_DISEASE_TYPE_CV + DELETION_WARNING;
+
+                    WritePXHeader(swPXFile, "cell_type", defaultCellType, templateParameters, paramsWithCVs);
+                    WritePXHeader(swPXFile, "disease", defaultDisease, templateParameters, paramsWithCVs);
 
                     // Example values for quantification (a given submission can have more than one type listed)
                     //   [PRIDE, PRIDE:0000318, 18O,]
@@ -2679,21 +2700,23 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     //   [PRIDE, PRIDE:0000439, Spectral Abundance Factor – SAF,]
                     //   [PRIDE, PRIDE:0000440, Normalized Spectral Abundance Factor – NSAF,]
                     //   [PRIDE, PRIDE:0000441, APEX - Absolute Protein Expression,]
-                    WritePXHeader(swPXFile, "quantification", TBD + "Optional, e.g. " + DEFAULT_QUANTIFICATION_TYPE_CV, templateParameters);
+                    var defaultQuantCV = TBD + "Optional, e.g. " + DEFAULT_QUANTIFICATION_TYPE_CV;
+                    WritePXHeader(swPXFile, "quantification", defaultQuantCV, templateParameters, paramsWithCVs);
 
                     if (mInstrumentGroupsStored.Count > 0)
                     {
-                        WritePXInstruments(swPXFile);
+                        WritePXInstruments(swPXFile, paramsWithCVs);
                     }
                     else
                     {
                         // Instrument type is unknown
-                        WritePXHeader(swPXFile, "instrument", TBD + GetCVString("MS", "MS:1000031", "instrument model", "CUSTOM UNKNOWN MASS SPEC"), templateParameters);
+                        var defaultInstrument = TBD + GetCVString("MS", "MS:1000031", "instrument model", "CUSTOM UNKNOWN MASS SPEC");
+                        WritePXHeader(swPXFile, "instrument", defaultInstrument, templateParameters, paramsWithCVs);
                     }
 
                     // Note that the modification terms are optional for complete submissions
                     // However, it doesn't hurt to include them
-                    WritePXMods(swPXFile);
+                    WritePXMods(swPXFile, paramsWithCVs);
 
                     // Could write additional terms here
                     // WritePXHeader(swPXFile, "additional", GetCVString("", "", "Patient", "Colorectal cancer patient 1"), templateParameters)
@@ -2956,7 +2979,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             return GetCVString(cvParamInfo.CvRef, cvParamInfo.Accession, cvParamInfo.Name, cvParamInfo.Value);
         }
 
-        private string GetCVString(string cvRef, string accession, string name, string value)
+        private string GetCVString(string cvRef, string accession, string name, string value = "")
         {
             if (string.IsNullOrEmpty(value))
             {
@@ -2981,7 +3004,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
             else
             {
-                instrumentCV = GetCVString("MS", accession, description, "");
+                instrumentCV = GetCVString("MS", accession, description);
             }
 
             return instrumentCV;
@@ -2995,7 +3018,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 newtName = "unclassified Bacteria";
             }
 
-            return GetCVString("NEWT", newtID.ToString(), newtName, "");
+            return GetCVString("NEWT", newtID.ToString(), newtName);
         }
 
         /// <summary>
@@ -4337,12 +4360,12 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             var sampleMetadata = new clsSampleMetadata();
             sampleMetadata.Clear();
 
-            sampleMetadata.Species = GetNEWTCv(dataPkgJob.Experiment_NEWT_ID, dataPkgJob.Experiment_NEWT_Name);
-            sampleMetadata.Tissue = GetValueOrDefault("tissue", templateParameters, DEFAULT_TISSUE_CV);
+            sampleMetadata.Species = ValidateCV(GetNEWTCv(dataPkgJob.Experiment_NEWT_ID, dataPkgJob.Experiment_NEWT_Name));
+            sampleMetadata.Tissue = ValidateCV(GetValueOrDefault("tissue", templateParameters, DEFAULT_TISSUE_CV));
 
             if (templateParameters.TryGetValue("cell_type", out var cellType))
             {
-                sampleMetadata.CellType = cellType;
+                sampleMetadata.CellType = ValidateCV(cellType);
             }
             else
             {
@@ -4351,7 +4374,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             if (templateParameters.TryGetValue("disease", out var disease))
             {
-                sampleMetadata.Disease = disease;
+                sampleMetadata.Disease = ValidateCV(disease);
             }
             else
             {
@@ -4893,6 +4916,48 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             return eFileLocation;
         }
 
+        /// <summary>
+        /// If the CV param info is enclosed in square brackets, assure that it has exactly three commas
+        /// </summary>
+        /// <param name="cvParam"></param>
+        /// <returns></returns>
+        private string ValidateCV(string cvParam)
+        {
+            if (!cvParam.Trim().StartsWith("[") || !cvParam.Trim().EndsWith("]"))
+                return cvParam;
+
+            var valueParts = cvParam.Trim().TrimStart('[').TrimEnd(']').Split(',');
+            if (valueParts.Length == 4)
+                return cvParam;
+
+            var updatedCV = new StringBuilder();
+            updatedCV.Append('[');
+
+            var itemsAppended = 0;
+            foreach (var item in valueParts)
+            {
+                if (itemsAppended > 0)
+                    updatedCV.Append(", ");
+
+                updatedCV.Append(item.Trim());
+                itemsAppended++;
+            }
+
+            while (itemsAppended < 4)
+            {
+                if (itemsAppended < 3)
+                    updatedCV.Append(", xx_Undefined_xx");
+                else
+                    updatedCV.Append(", ");
+
+                itemsAppended++;
+            }
+
+            updatedCV.Append(']');
+
+            return updatedCV.ToString();
+        }
+
         private void WriteConfigurationOption(XmlWriter writer, string KeyName, string Value)
         {
             writer.WriteStartElement("Option");
@@ -4905,32 +4970,45 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// Append a new header line to the .px file
         /// </summary>
         /// <param name="swPXFile"></param>
-        /// <param name="type"></param>
-        /// <param name="value"></param>
+        /// <param name="type">Parameter type</param>
+        /// <param name="value">Value for parameter</param>
+        /// <param name="paramsWithCVs">Parameters that should have a CV</param>
         /// <remarks></remarks>
-        private void WritePXHeader(TextWriter swPXFile, string type, string value)
+        private void WritePXHeader(TextWriter swPXFile, string type, string value, ICollection<string> paramsWithCVs)
         {
-            WritePXHeader(swPXFile, type, value, new Dictionary<string, string>());
+            WritePXHeader(swPXFile, type, value, new Dictionary<string, string>(), paramsWithCVs);
         }
 
         /// <summary>
         /// Append a new header line to the .px file
         /// </summary>
         /// <param name="swPXFile"></param>
-        /// <param name="type"></param>
-        /// <param name="value"></param>
-        /// <param name="parameters"></param>
-        /// <param name="minimumValueLength"></param>
+        /// <param name="type">Parameter type</param>
+        /// <param name="value">Value for parameter</param>
+        /// <param name="templateParameters">Dictionary of parameters and values loaded from the template .px file</param>
+        /// <param name="paramsWithCVs">Parameters that should have a CV</param>
+        /// <param name="minimumValueLength">Minimum length for the parameter value</param>
         /// <remarks></remarks>
         private void WritePXHeader(
             TextWriter swPXFile,
             string type,
             string value,
-            IReadOnlyDictionary<string, string> parameters,
+            IReadOnlyDictionary<string, string> templateParameters,
+            ICollection<string> paramsWithCVs,
             int minimumValueLength = 0)
         {
-            if (parameters.TryGetValue(type, out var valueOverride))
+            if (templateParameters.TryGetValue(type, out var valueOverride))
             {
+                if (type.Equals("tissue") && valueOverride.Contains("BRENDA"))
+                {
+                    valueOverride = valueOverride.Replace("BRENDA", "BTO");
+                }
+
+                if (paramsWithCVs.Contains(type))
+                {
+                    valueOverride = ValidateCV(valueOverride);
+                }
+
                 value = valueOverride;
             }
 
@@ -4955,7 +5033,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             });
         }
 
-        private void WritePXInstruments(TextWriter swPXFile)
+        private void WritePXInstruments(TextWriter swPXFile, ICollection<string> paramsWithCVs)
         {
             foreach (var instrumentGroup in mInstrumentGroupsStored)
             {
@@ -4969,7 +5047,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 }
 
                 var instrumentCV = GetInstrumentCv(accession, description);
-                WritePXHeader(swPXFile, "instrument", instrumentCV);
+                WritePXHeader(swPXFile, "instrument", instrumentCV, paramsWithCVs);
             }
         }
 
@@ -4981,11 +5059,12 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
         }
 
-        private void WritePXMods(TextWriter swPXFile)
+        private void WritePXMods(TextWriter swPXFile, ICollection<string> paramsWithCVs)
         {
             if (mModificationsUsed.Count == 0)
             {
-                WritePXHeader(swPXFile, "modification", GetCVString("PRIDE", "PRIDE:0000398", "No PTMs are included in the dataset", ""));
+                var noPTMsCV = GetCVString("PRIDE", "PRIDE:0000398", "No PTMs are included in the dataset");
+                WritePXHeader(swPXFile, "modification", noPTMsCV, paramsWithCVs);
             }
             else
             {
@@ -4996,7 +5075,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 foreach (var item in mModificationsUsed)
                 {
-                    WritePXHeader(swPXFile, "modification", GetCVString(item.Value));
+                    WritePXHeader(swPXFile, "modification", GetCVString(item.Value), paramsWithCVs);
                 }
             }
         }
