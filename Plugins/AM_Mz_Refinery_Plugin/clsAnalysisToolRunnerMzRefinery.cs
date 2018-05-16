@@ -1175,7 +1175,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                 }
                 else if (mConsoleOutputErrorMsg.Contains("No significant peak (ppm error histogram) found"))
                 {
-                    m_message = "Signficant peak not found in the ppm error histogram; cannot use MzRefinery on this dataset";
+                    m_message = "Significant peak not found in the ppm error histogram; cannot use MzRefinery on this dataset";
                     LogError(m_message);
                     m_UnableToUseMzRefinery = true;
                     m_ForceGeneratePPMErrorPlots = true;
