@@ -4361,7 +4361,13 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             sampleMetadata.Clear();
 
             sampleMetadata.Species = ValidateCV(GetNEWTCv(dataPkgJob.Experiment_NEWT_ID, dataPkgJob.Experiment_NEWT_Name));
-            sampleMetadata.Tissue = ValidateCV(GetValueOrDefault("tissue", templateParameters, DEFAULT_TISSUE_CV));
+
+            var tissueCv = GetValueOrDefault("tissue", templateParameters, DEFAULT_TISSUE_CV);
+            if (tissueCv.Contains("BRENDA"))
+            {
+                tissueCv = tissueCv.Replace("BRENDA", "BTO");
+            }
+            sampleMetadata.Tissue = ValidateCV(tissueCv);
 
             if (templateParameters.TryGetValue("cell_type", out var cellType))
             {
