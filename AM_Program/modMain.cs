@@ -32,7 +32,7 @@ namespace AnalysisManagerProg
 {
     static class modMain
     {
-        public const string PROGRAM_DATE = "May 15, 2018";
+        public const string PROGRAM_DATE = "May 25, 2018";
 
         private static bool mCodeTestMode;
         private static bool mTraceMode;
@@ -79,7 +79,7 @@ namespace AnalysisManagerProg
                 // Look for /T or /Test on the command line
                 // If present, this means "code test mode" is enabled
                 //
-                // Other valid switches are /I, /NoStatus, /T, /Test, /Trace, /EL, /Offline, /Version, /Q, and /?
+                // Other valid switches are /I, /NoStatus, /T, /Test, /CodeTest, /Trace, /EL, /Offline, /Version, /Q, and /?
                 //
                 if (commandLineParser.ParseCommandLine())
                 {
@@ -260,6 +260,7 @@ namespace AnalysisManagerProg
 
             var lstValidParameters = new List<string> {
                 "T",
+                "CodeTest",
                 "Test",
                 "Trace",
                 "Verbose",
@@ -286,6 +287,9 @@ namespace AnalysisManagerProg
                 // Query objParseCommandLine to see if various parameters are present
 
                 if (commandLineParser.IsParameterPresent("T"))
+                    mCodeTestMode = true;
+
+                if (commandLineParser.IsParameterPresent("CodeTest"))
                     mCodeTestMode = true;
 
                 if (commandLineParser.IsParameterPresent("Test"))
