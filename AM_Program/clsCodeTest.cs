@@ -14,6 +14,7 @@ using AnalysisManagerBase;
 using PRISM.Logging;
 using PRISM;
 using Renci.SshNet;
+using FileInfo = System.IO.FileInfo;
 
 namespace AnalysisManagerProg
 {
@@ -954,6 +955,35 @@ namespace AnalysisManagerProg
             }
 
             Console.WriteLine(lastWriteTime);
+        }
+
+        /// <summary>
+        /// Test .hashcheck files
+        /// </summary>
+        public void TestFileHashing()
+        {
+            var exePath = Assembly.GetExecutingAssembly().Location;
+            var sourceFile = new FileInfo(exePath);
+
+            var crc32 = HashUtilities.ComputeFileHashCrc32(sourceFile.FullName);
+            var md5 = HashUtilities.ComputeFileHashMD5(sourceFile.FullName);
+            var sha1 = HashUtilities.ComputeFileHashSha1(sourceFile.FullName);
+
+            Console.WriteLine(sourceFile.FullName);
+            Console.WriteLine("Crc32: " + crc32);
+            Console.WriteLine("MD5:   " + md5);
+            Console.WriteLine("Sha1:  " + sha1);
+
+            var expectedHashInfo = new HashUtilities.HashInfoType();
+            expectedHashInfo.Clear();
+
+            var validHash = FileSyncUtils.ValidateFileVsHashcheck(sourceFile.FullName, "", out var errorMessage, expectedHashInfo);
+            if (validHash)
+                Console.WriteLine("Hashcheck values match");
+            else
+                Console.WriteLine(errorMessage);
+
+            var fileSyncUtils = new FileSyncUtils("test manager");
         }
 
         /// <summary>

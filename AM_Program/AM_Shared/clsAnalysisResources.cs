@@ -221,11 +221,6 @@ namespace AnalysisManagerBase
         /// </summary>
         protected const string FASTA_FILE_EXTENSION = ".fasta";
 
-        /// <summary>
-        /// Extension for .LastUsed files that track when a FASTA file was last used
-        /// </summary>
-        public const string LASTUSED_FILE_EXTENSION = ".LastUsed";
-
         private const string LOCALHASHCHECK_EXTENSION = ".localhashcheck";
 
         /// <summary>
@@ -2020,7 +2015,7 @@ namespace AnalysisManagerBase
         private static Dictionary<FileInfo, DateTime> GetFastaFilesByLastUse(DirectoryInfo orgDbDirectory)
         {
 
-            // Keys are the fasta file; values are the dtLastUsed time of the file (nominally obtained from a .hashcheck or .lastused file)
+            // Keys are the fasta file; values are the dtLastUsed time of the file (nominally obtained from a .hashcheck or .LastUsed file)
             var dctFastaFiles = new Dictionary<FileInfo, DateTime>();
 
             var lastProgress = DateTime.UtcNow;
@@ -2058,12 +2053,12 @@ namespace AnalysisManagerBase
                     }
 
                     // Look for a .LastUsed file
-                    var lstLastUsedFiles = fiFile.Directory.GetFiles(fiFile.Name + LASTUSED_FILE_EXTENSION).ToList();
+                    var lstLastUsedFiles = fiFile.Directory.GetFiles(fiFile.Name + FileSyncUtils.LASTUSED_FILE_EXTENSION).ToList();
 
                     // If this is a .revCat.fasta file, look for .fasta.LastUsed
                     if (fiFile.Name.EndsWith(".revCat.fasta", StringComparison.OrdinalIgnoreCase))
                     {
-                        var altFastaName = fiFile.Name.Substring(0, fiFile.Name.Length - ".revCat.fasta".Length) + ".fasta" + LASTUSED_FILE_EXTENSION;
+                        var altFastaName = fiFile.Name.Substring(0, fiFile.Name.Length - ".revCat.fasta".Length) + ".fasta" + FileSyncUtils.LASTUSED_FILE_EXTENSION;
                         var additionalFiles = fiFile.Directory.GetFiles(altFastaName).ToList();
                         lstLastUsedFiles.AddRange(additionalFiles);
                     }
@@ -4811,27 +4806,11 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="fastaFile"></param>
         /// <remarks>The LastUsed file simply has the current date/time on the first line</remarks>
-        private void UpdateLastUsedfile(FileSystemInfo fastaFile)
+        private void UpdateLastUsedfile(FileInfo fastaFile)
         {
-            var lastUsedFilePath = fastaFile.FullName + LASTUSED_FILE_EXTENSION;
-
-            try
-            {
-                using (var swLastUsedFile = new StreamWriter(new FileStream(lastUsedFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
-                {
-                    swLastUsedFile.WriteLine(DateTime.UtcNow.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
-                }
-            }
-            catch (IOException)
-            {
-                // The file is likely open by another manager; ignore this
-            }
-            catch (Exception ex)
-            {
-                LogWarning(string.Format("Unable to create a new .LastUsed file at {0}: {1}", lastUsedFilePath, ex.Message));
-            }
-
+            FileSyncUtils.UpdateLastUsedFile(fastaFile);
         }
+
         /// <summary>
         /// Update m_message, which is logged in the pipeline job steps table when the job step finishes
         /// </summary>

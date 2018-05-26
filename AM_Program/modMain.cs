@@ -148,7 +148,9 @@ namespace AnalysisManagerProg
                         // var connString = "Data Source=gigasax;Initial Catalog=DMS5;Integrated Security=SSPI";
                         // testHarness.TestDatabaseLogging(connString);
 
-                        testHarness.TestGetProcesses();
+                        // testHarness.TestGetProcesses();
+
+                        testHarness.TestFileHashing();
 
                     }
                     catch (Exception ex)

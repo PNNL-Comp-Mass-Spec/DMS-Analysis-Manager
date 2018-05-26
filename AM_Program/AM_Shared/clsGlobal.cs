@@ -5,8 +5,6 @@ using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Security.Cryptography;
-using System.Text;
 using System.Text.RegularExpressions;
 using PRISM.Logging;
 using PRISM;
@@ -1123,42 +1121,15 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Converts a byte array into a hex string
-        /// </summary>
-        private static string ByteArrayToString(byte[] arrInput)
-        {
-
-            var output = new StringBuilder(arrInput.Length);
-
-            for (var i = 0; i <= arrInput.Length - 1; i++)
-            {
-                output.Append(arrInput[i].ToString("X2"));
-            }
-
-            return output.ToString().ToLower();
-
-        }
-
-        /// <summary>
         /// Computes the MD5 hash for a file
         /// </summary>
         /// <param name="filePath"></param>
         /// <returns></returns>
         /// <remarks></remarks>
+        [Obsolete("Use PRISM.HashUtilities.ComputeFileHashMD5")]
         public static string ComputeFileHashMD5(string filePath)
         {
-
-            string hashValue;
-
-            // open file (as read-only)
-            using (Stream objReader = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-            {
-                // Hash contents of this stream
-                hashValue = ComputeMD5Hash(objReader);
-            }
-
-            return hashValue;
-
+            return HashUtilities.ComputeFileHashMD5(filePath);
         }
 
         /// <summary>
@@ -1167,13 +1138,10 @@ namespace AnalysisManagerBase
         /// <param name="text"></param>
         /// <returns></returns>
         /// <remarks></remarks>
+        [Obsolete("Use PRISM.HashUtilities.ComputeStringHashMD5")]
         public static string ComputeStringHashMD5(string text)
         {
-
-            var hashValue = ComputeMD5Hash(new MemoryStream(Encoding.UTF8.GetBytes(text)));
-
-            return hashValue;
-
+            return HashUtilities.ComputeStringHashMD5(text);
         }
 
         /// <summary>
@@ -1182,20 +1150,10 @@ namespace AnalysisManagerBase
         /// <param name="filePath"></param>
         /// <returns></returns>
         /// <remarks></remarks>
+        [Obsolete("Use PRISM.HashUtilities.ComputeFileHashSha1")]
         public static string ComputeFileHashSha1(string filePath)
         {
-
-            string hashValue;
-
-            // open file (as read-only)
-            using (Stream objReader = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-            {
-                // Hash contents of this stream
-                hashValue = ComputeSha1Hash(objReader);
-            }
-
-            return hashValue;
-
+            return HashUtilities.ComputeFileHashSha1(filePath);
         }
 
         /// <summary>
@@ -1204,58 +1162,10 @@ namespace AnalysisManagerBase
         /// <param name="text"></param>
         /// <returns></returns>
         /// <remarks></remarks>
+        [Obsolete("Use PRISM.HashUtilities.ComputeStringHashSha1")]
         public static string ComputeStringHashSha1(string text)
         {
-
-            var hashValue = ComputeSha1Hash(new MemoryStream(Encoding.UTF8.GetBytes(text)));
-
-            return hashValue;
-
-        }
-
-        /// <summary>
-        /// Computes the MD5 hash of a given stream
-        /// </summary>
-        /// <param name="data"></param>
-        /// <returns>MD5 hash, as a string</returns>
-        /// <remarks></remarks>
-        private static string ComputeMD5Hash(Stream data)
-        {
-
-            var md5Hasher = new MD5CryptoServiceProvider();
-            return ComputeHash(md5Hasher, data);
-
-        }
-
-        /// <summary>
-        /// Computes the SHA-1 hash of a given stream
-        /// </summary>
-        /// <param name="data"></param>
-        /// <returns>SHA1 hash, as a string</returns>
-        /// <remarks></remarks>
-        private static string ComputeSha1Hash(Stream data)
-        {
-
-            var sha1Hasher = new SHA1CryptoServiceProvider();
-            return ComputeHash(sha1Hasher, data);
-
-        }
-
-        /// <summary>
-        /// Use the given hash algorithm to compute a hash of the data stream
-        /// </summary>
-        /// <param name="hasher"></param>
-        /// <param name="data"></param>
-        /// <returns>Hash string</returns>
-        /// <remarks></remarks>
-        private static string ComputeHash(HashAlgorithm hasher, Stream data)
-        {
-            // hash contents of this stream
-            var arrHash = hasher.ComputeHash(data);
-
-            // Return the hash, formatted as a string
-            return ByteArrayToString(arrHash);
-
+            return HashUtilities.ComputeStringHashSha1(text);
         }
 
         /// <summary>
@@ -1263,7 +1173,7 @@ namespace AnalysisManagerBase
         /// The file will be created in the same folder as the data file, and will contain size, modification_date_utc, and hash
         /// </summary>
         /// <param name="dataFilePath"></param>
-        /// <param name="computeMD5Hash">If True, computes the MD5 hash</param>
+        /// <param name="computeMD5Hash">If True, computes the MD5 hash, otherwise createsa hashcheck file with an empty string for the hash</param>
         /// <returns>The full path to the .hashcheck file; empty string if a problem</returns>
         /// <remarks></remarks>
         public static string CreateHashcheckFile(string dataFilePath, bool computeMD5Hash)
@@ -1276,14 +1186,14 @@ namespace AnalysisManagerBase
 
             if (computeMD5Hash)
             {
-                md5Hash = ComputeFileHashMD5(dataFilePath);
+                md5Hash = HashUtilities.ComputeFileHashMD5(dataFilePath);
             }
             else
             {
                 md5Hash = string.Empty;
             }
 
-            return CreateHashcheckFile(dataFilePath, md5Hash);
+            return HashUtilities.CreateHashcheckFileWithHash(dataFilePath, md5Hash, HashUtilities.HashTypeConstants.MD5);
 
         }
 
@@ -1295,28 +1205,10 @@ namespace AnalysisManagerBase
         /// <param name="md5Hash"></param>
         /// <returns>The full path to the .hashcheck file; empty string if a problem</returns>
         /// <remarks></remarks>
+        [Obsolete("Use PRISM.HashUtilities.CreateHashcheckFile and specify the hash type")]
         public static string CreateHashcheckFile(string dataFilePath, string md5Hash)
         {
-
-            var fiDataFile = new FileInfo(dataFilePath);
-
-            if (!fiDataFile.Exists)
-                return string.Empty;
-
-            var hashFilePath = fiDataFile.FullName + SERVER_CACHE_HASHCHECK_FILE_SUFFIX;
-            if (string.IsNullOrWhiteSpace(md5Hash))
-                md5Hash = string.Empty;
-
-            using (var swOutFile = new StreamWriter(new FileStream(hashFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
-            {
-                swOutFile.WriteLine("# Hashcheck file created " + DateTime.Now.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
-                swOutFile.WriteLine("size=" + fiDataFile.Length);
-                swOutFile.WriteLine("modification_date_utc=" + fiDataFile.LastWriteTimeUtc.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT));
-                swOutFile.WriteLine("hash=" + md5Hash);
-            }
-
-            return hashFilePath;
-
+            return HashUtilities.CreateHashcheckFileWithHash(dataFilePath, md5Hash, HashUtilities.HashTypeConstants.MD5);
         }
 
         /// <summary>
@@ -1881,16 +1773,16 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Looks for a .hashcheck file for the specified data file
-        /// If found, opens the file and reads the stored values: size, modification_date_utc, and hash
+        /// Looks for a .hashcheck file for the specified data file; returns false if not found
+        /// If found, compares the stored values to the actual values (size, modification_date_utc, and hash)
         /// Next compares the stored values to the actual values
         /// </summary>
-        /// <param name="dataFilePath">Data file to check.</param>
+        /// <param name="dataFilePath">Data file to check</param>
         /// <param name="hashFilePath">Hashcheck file for the given data file (auto-defined if blank)</param>
-        /// <param name="errorMessage"></param>
+        /// <param name="errorMessage">Output: error message</param>
         /// <param name="checkDate">If True, compares UTC modification time; times must agree within 2 seconds</param>
-        /// <param name="computeHash"></param>
-        /// <param name="checkSize"></param>
+        /// <param name="computeHash">If true, compute the file hash (every time); if false, only compare file size and date</param>
+        /// <param name="checkSize">If true, compare the actual file size to that in the hashcheck file</param>
         /// <returns>True if the hashcheck file exists and the actual file matches the expected values; false if a mismatch or a problem</returns>
         /// <remarks>The .hashcheck file has the same name as the data file, but with ".hashcheck" appended</remarks>
         public static bool ValidateFileVsHashcheck(
@@ -1898,106 +1790,9 @@ namespace AnalysisManagerBase
             bool checkDate, bool computeHash, bool checkSize)
         {
 
-            var validFile = false;
-            errorMessage = string.Empty;
-
-            try
-            {
-                var fiDataFile = new FileInfo(dataFilePath);
-
-                if (string.IsNullOrEmpty(hashFilePath))
-                    hashFilePath = fiDataFile.FullName + SERVER_CACHE_HASHCHECK_FILE_SUFFIX;
-                var fiHashCheck = new FileInfo(hashFilePath);
-
-                if (!fiDataFile.Exists)
-                {
-                    errorMessage = "Data file not found at " + fiDataFile.FullName;
-                    return false;
-                }
-
-                if (!fiHashCheck.Exists)
-                {
-                    errorMessage = "Data file at " + fiDataFile.FullName + " does not have a corresponding .hashcheck file named " + fiHashCheck.Name;
-                    return false;
-                }
-
-                long expectedFileSizeBytes = 0;
-                var dtExpectedFileDate = DateTime.MinValue;
-                var expectedHash = string.Empty;
-
-                // Read the details in the HashCheck file
-                using (var srInfile = new StreamReader(new FileStream(fiHashCheck.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)))
-                {
-                    while (!srInfile.EndOfStream)
-                    {
-                        var dataLine = srInfile.ReadLine();
-
-                        if (string.IsNullOrWhiteSpace(dataLine) || dataLine.StartsWith("#") || !dataLine.Contains('='))
-                            continue;
-
-                        var lineParts = dataLine.Split('=');
-
-
-                        if (lineParts.Length < 2)
-                            continue;
-
-                        // Set this to true for now
-                        validFile = true;
-
-                        switch (lineParts[0].ToLower())
-                        {
-                            case "size":
-                                long.TryParse(lineParts[1], out expectedFileSizeBytes);
-                                break;
-                            case "modification_date_utc":
-                                DateTime.TryParse(lineParts[1], out dtExpectedFileDate);
-                                break;
-                            case "hash":
-                                expectedHash = string.Copy(lineParts[1]);
-                                break;
-                        }
-                    }
-                }
-
-                if (checkSize && fiDataFile.Length != expectedFileSizeBytes)
-                {
-                    errorMessage = "File size mismatch: expecting " + expectedFileSizeBytes.ToString("#,##0") + " but computed " + fiDataFile.Length.ToString("#,##0");
-                    return false;
-                }
-
-                // Only compare dates if we are not comparing hash values
-                if (!computeHash && checkDate)
-                {
-                    if (Math.Abs(fiDataFile.LastWriteTimeUtc.Subtract(dtExpectedFileDate).TotalSeconds) > 2)
-                    {
-                        errorMessage = "File modification date mismatch: expecting " +
-                            dtExpectedFileDate.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT) + " UTC but actually " +
-                            fiDataFile.LastWriteTimeUtc.ToString(clsAnalysisToolRunnerBase.DATE_TIME_FORMAT) + " UTC";
-                        return false;
-                    }
-                }
-
-                if (computeHash)
-                {
-                    // Compute the hash of the file
-                    var actualHash = ComputeFileHashMD5(dataFilePath);
-
-                    if (actualHash != expectedHash)
-                    {
-                        errorMessage = "Hash mismatch: expecting " + expectedHash + " but computed " + actualHash;
-                        return false;
-                    }
-                }
-
-                return validFile;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Error in ValidateFileVsHashcheck: " + ex.Message);
-            }
-
+            var validFile = FileSyncUtils.ValidateFileVsHashcheck(dataFilePath, hashFilePath, out errorMessage,
+                                                            checkDate, computeHash, checkSize);
             return validFile;
-
         }
 
         /// <summary>
