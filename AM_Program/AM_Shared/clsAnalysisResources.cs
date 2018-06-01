@@ -318,6 +318,11 @@ namespace AnalysisManagerBase
         public const string JOB_PARAM_OUTPUT_FOLDER_NAME = "OutputFolderName";
 
         /// <summary>
+        /// Parameter file name
+        /// </summary>
+        public const string JOB_PARAM_PARAMETER_FILE = "ParmFileName";
+
+        /// <summary>
         /// Transfer folder path
         /// </summary>
         public const string JOB_PARAM_TRANSFER_FOLDER_PATH = "transferFolderPath";
@@ -1705,7 +1710,7 @@ namespace AnalysisManagerBase
                 NumberOfClonedSteps = m_jobParams.GetJobParameter("NumberOfClonedSteps", 0),
                 ResultType = m_jobParams.GetJobParameter(jobParamsSection, "ResultType", string.Empty),
                 SettingsFileName = m_jobParams.GetJobParameter(jobParamsSection, "SettingsFileName", string.Empty),
-                ParameterFileName = m_jobParams.GetJobParameter("PeptideSearch", "ParmFileName", string.Empty),
+                ParameterFileName = m_jobParams.GetJobParameter("PeptideSearch", JOB_PARAM_PARAMETER_FILE, string.Empty),
                 LegacyFastaFileName = m_jobParams.GetJobParameter("PeptideSearch", "legacyFastaFileName", string.Empty)
             };
 
@@ -3232,7 +3237,7 @@ namespace AnalysisManagerBase
             m_jobParams.AddAdditionalParameter(jobParamsSection, "ResultType", dataPkgJob.ResultType);
             m_jobParams.AddAdditionalParameter(jobParamsSection, "SettingsFileName", dataPkgJob.SettingsFileName);
 
-            m_jobParams.AddAdditionalParameter("PeptideSearch", "ParmFileName", dataPkgJob.ParameterFileName);
+            m_jobParams.AddAdditionalParameter("PeptideSearch", JOB_PARAM_PARAMETER_FILE, dataPkgJob.ParameterFileName);
 
             if (string.IsNullOrWhiteSpace(dataPkgJob.OrganismDBName))
             {

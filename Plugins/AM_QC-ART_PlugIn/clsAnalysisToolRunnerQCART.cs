@@ -142,7 +142,7 @@ namespace AnalysisManagerQCARTPlugin
                 m_jobParams.AddResultFileToSkip(clsAnalysisResourcesQCART.SMAQC_DATA_FILE_NAME);
                 m_jobParams.AddResultFileToSkip(clsAnalysisResourcesQCART.QCART_PROCESSING_SCRIPT_NAME);
                 m_jobParams.AddResultFileToSkip(clsAnalysisResourcesQCART.NEW_BASELINE_DATASETS_METADATA_FILE);
-                m_jobParams.AddResultFileToSkip(m_jobParams.GetParam("ParmFileName"));
+                m_jobParams.AddResultFileToSkip(m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_PARAMETER_FILE));
 
                 // Skip the .Rout file
                 m_jobParams.AddResultFileToSkip(clsAnalysisResourcesQCART.QCART_PROCESSING_SCRIPT_NAME + "out");

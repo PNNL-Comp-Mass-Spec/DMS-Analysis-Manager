@@ -74,7 +74,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 //  FROM V_Param_File_Mass_Mod_Info
                 //  WHERE Param_File_Name = 'ParamFileName'
 
-                var paramFileName = m_jobParams.GetParam("ParmFileName");
+                var paramFileName = m_jobParams.GetParam(JOB_PARAM_PARAMETER_FILE);
                 currentTask = "RetrieveGeneratedParamFile " + paramFileName;
 
                 if (!RetrieveGeneratedParamFile(paramFileName))
@@ -192,7 +192,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
                 // Get the FASTA file and index it if necessary
                 // Passing in the path to the parameter file so we can look for TDA=0 when using large .Fasta files
-                var parameterFilePath = Path.Combine(m_WorkingDir, m_jobParams.GetParam("parmFileName"));
+                var parameterFilePath = Path.Combine(m_WorkingDir, m_jobParams.GetParam(JOB_PARAM_PARAMETER_FILE));
 
                 // javaProgLoc will typically be "C:\Program Files\Java\jre8\bin\Java.exe"
                 var javaProgLoc = clsAnalysisToolRunnerBase.GetJavaProgLoc(m_mgrParams, out var javaLocErrorMessage);

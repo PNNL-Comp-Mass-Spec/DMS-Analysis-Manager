@@ -282,7 +282,7 @@ namespace AnalysisManagerMSGFDBPlugIn
 
             // Get the FASTA file and index it if necessary
             // Passing in the path to the parameter file so we can look for TDA=0 when using large .Fasta files
-            var parameterFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"));
+            var parameterFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_PARAMETER_FILE));
             var javaExePath = string.Copy(javaProgLoc);
             var msgfPlusJarFilePath = string.Copy(mMSGFPlusProgLoc);
 
@@ -1170,7 +1170,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         {
             try
             {
-                var paramFileName = m_jobParams.GetParam("ParmFileName");
+                var paramFileName = m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_PARAMETER_FILE);
                 var modDefsFile = new FileInfo(Path.Combine(m_WorkDir, Path.GetFileNameWithoutExtension(paramFileName) + "_ModDefs.txt"));
 
                 var filesToRetrieve = new List<string> {

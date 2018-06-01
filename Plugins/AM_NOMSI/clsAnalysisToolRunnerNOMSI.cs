@@ -213,7 +213,6 @@ namespace AnalysisManagerNOMSIPlugin
             return fiSpectraFiles;
         }
 
-
         private int MoveWorkDirFiles(FileSystemInfo diZipWork, string fileMask)
         {
             var diWorkDir = new DirectoryInfo(m_WorkDir);
@@ -480,7 +479,7 @@ namespace AnalysisManagerNOMSIPlugin
 
                 LogMessage("Processing data using NOMSI");
 
-                var paramFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam("parmFileName"));
+                var paramFilePath = Path.Combine(m_WorkDir, m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_PARAMETER_FILE));
 
                 if (!File.Exists(paramFilePath))
                 {

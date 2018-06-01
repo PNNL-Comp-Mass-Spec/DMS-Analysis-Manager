@@ -397,7 +397,7 @@ namespace AnalysisManagerBase
                     swInfoFile.WriteLine("StepTool" + '\t' + m_jobParams.GetParam("StepTool"));
                     swInfoFile.WriteLine("Dataset" + '\t' + m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_DATASET_NAME));
                     swInfoFile.WriteLine("XferFolder" + '\t' + m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH));
-                    swInfoFile.WriteLine("ParamFileName" + '\t' + m_jobParams.GetParam("parmFileName"));
+                    swInfoFile.WriteLine("ParamFileName" + '\t' + m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_PARAMETER_FILE));
                     swInfoFile.WriteLine("SettingsFileName" + '\t' + m_jobParams.GetParam("settingsFileName"));
                     swInfoFile.WriteLine("LegacyOrganismDBName" + '\t' + m_jobParams.GetParam("LegacyFastaFileName"));
                     swInfoFile.WriteLine("ProteinCollectionList" + '\t' + m_jobParams.GetParam("ProteinCollectionList"));

@@ -3351,7 +3351,7 @@ namespace AnalysisManagerBase
                         LogError("Required result file not found: " + fileName);
                 }
 
-                var paramFileName = m_jobParams.GetParam("ParmFileName");
+                var paramFileName = m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_PARAMETER_FILE);
                 var modDefsFile = new FileInfo(Path.Combine(m_WorkDir, Path.GetFileNameWithoutExtension(paramFileName) + "_ModDefs.txt"));
                 if (modDefsFile.Exists && modDefsFile.Length == 0)
                 {
@@ -3645,7 +3645,7 @@ namespace AnalysisManagerBase
                 {
                     if (Path.IsPathRooted(dllNameOrPath) || dllNameOrPath.Contains(Path.DirectorySeparatorChar))
                     {
-                        // Absolute or relative path; use as it
+                        // Absolute or relative path; use as is
                         ioToolFiles.Add(new FileInfo(dllNameOrPath));
                         continue;
                     }
@@ -4288,7 +4288,7 @@ namespace AnalysisManagerBase
                 m_SummaryFile.Add("Tool" + '\t' + toolAndStepTool);
                 m_SummaryFile.Add("Dataset Name" + '\t' + Dataset);
                 m_SummaryFile.Add("Xfer Folder" + '\t' + m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH));
-                m_SummaryFile.Add("Param File Name" + '\t' + m_jobParams.GetParam("parmFileName"));
+                m_SummaryFile.Add("Param File Name" + '\t' + m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_PARAMETER_FILE));
                 m_SummaryFile.Add("Settings File Name" + '\t' + m_jobParams.GetParam("settingsFileName"));
                 m_SummaryFile.Add("Legacy Organism Db Name" + '\t' + m_jobParams.GetParam("LegacyFastaFileName"));
                 m_SummaryFile.Add("Protein Collection List" + '\t' + m_jobParams.GetParam("ProteinCollectionList"));
