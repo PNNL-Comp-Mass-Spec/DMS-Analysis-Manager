@@ -84,17 +84,9 @@ namespace AnalysisManagerQCARTPlugin
         /// </summary>
         public const string NEW_BASELINE_DATASETS_CACHE_FILE = "NewBaselineDatasets_Data_Cache.csv";
 
-        private string mProjectName;
-        private int mTargetDatasetFraction;
+        private string mProjectName = string.Empty;
 
-        /// <summary>
-        /// Constructor
-        /// </summary>
-        public clsAnalysisResourcesQCART()
-        {
-            mProjectName = string.Empty;
-            mTargetDatasetFraction = 0;
-        }
+        private int mTargetDatasetFraction;
 
         /// <summary>
         /// Retrieve required files
@@ -146,16 +138,15 @@ namespace AnalysisManagerQCARTPlugin
                 // Parse the parameter file to discover the baseline datasets
                 currentTask = "Read the parameter file";
 
-                // Keys are dataset names; values are MASIC job numbers
-                Dictionary<string, int> baselineDatasets;
-
-                // The unique key is a MD5 hash of the dataset names, appended with JobFirst_JobLast
-                string baselineMetadataKey;
 
                 var paramFilePathRemote = Path.Combine(paramFileStoragePath, paramFileName);
                 var paramFilePathLocal = Path.Combine(m_WorkingDir, paramFileName);
 
-                success = ParseQCARTParamFile(paramFilePathLocal, out baselineDatasets, out baselineMetadataKey);
+                // out var param notes:
+                // In baselineDatasets, keys are dataset names and values are MASIC job numbers
+                // baselineMetadataKey tracks a unique key defined as the MD5 hash of the dataset names, appended with JobFirst_JobLast
+
+                success = ParseQCARTParamFile(paramFilePathLocal, out var baselineDatasets, out var baselineMetadataKey);
                 if (!success)
                 {
                     if (string.IsNullOrWhiteSpace(m_message))
@@ -170,10 +161,7 @@ namespace AnalysisManagerQCARTPlugin
 
                 currentTask = "Get existing baseline results";
 
-                string baselineMetadataFilePath;
-                bool criticalError;
-
-                var baselineResultsFound = FindBaselineResults(paramFilePathRemote, baselineMetadataKey, out baselineMetadataFilePath, out criticalError);
+                var baselineResultsFound = FindBaselineResults(paramFilePathRemote, baselineMetadataKey, out var baselineMetadataFilePath, out var criticalError);
                 if (criticalError)
                     return CloseOutType.CLOSEOUT_FAILED;
 
@@ -688,7 +676,7 @@ namespace AnalysisManagerQCARTPlugin
 
                 // Hash contents of this stream
                 // We will use the first 8 characters of the hash as a uniquifier for the baseline unique key
-                var md5Hash = clsGlobal.ComputeStringHashMD5(sbTextToHash.ToString());
+                var md5Hash = PRISM.HashUtilities.ComputeStringHashMD5(sbTextToHash.ToString());
 
                 // Key format: FirstJob_LastJob_DatasetCount_FirstEightCharsFromHash
                 baselineMetadataKey = baselineDatasets.Values.Min() + "_" + baselineDatasets.Values.Max() + "_" + baselineDatasets.Count + "_" + md5Hash.Substring(0, 8);
@@ -716,9 +704,8 @@ namespace AnalysisManagerQCARTPlugin
             {
                 var baselineDatasetName = datasetJobInfo.Key;
                 var baselineDatasetJob = datasetJobInfo.Value;
-                clsDataPackageJobInfo dataPkgJob;
 
-                if (!LookupJobInfo(baselineDatasetJob, out dataPkgJob))
+                if (!LookupJobInfo(baselineDatasetJob, out var dataPkgJob))
                 {
                     if (string.IsNullOrWhiteSpace(m_message))
                     {
@@ -874,13 +861,11 @@ namespace AnalysisManagerQCARTPlugin
                 sqlStr.Append("'" + string.Join("', '", datasetNamesToRetrieveMectrics) + "'");
                 sqlStr.AppendLine(")");
 
-                DataTable resultSet;
-
                 // Gigasax.DMS5
                 var dmsConnectionString = m_mgrParams.GetParam("connectionstring");
 
                 // Get a table to hold the results of the query
-                var success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), dmsConnectionString, "RetrieveQCMetricsFromDB", RETRY_COUNT, out resultSet);
+                var success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), dmsConnectionString, "RetrieveQCMetricsFromDB", RETRY_COUNT, out var resultSet);
 
                 string errorMessage;
 
