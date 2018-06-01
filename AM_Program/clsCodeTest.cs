@@ -718,6 +718,29 @@ namespace AnalysisManagerProg
         }
 
         /// <summary>
+        /// Test copying a remote file locally, skipping the copy if the file hash matches the hash tracked via a .hashcheck file
+        /// </summary>
+        public void TestCopyToLocalWithHashCheck()
+        {
+            var remoteFilePath = @"\\gigasax\dms_parameter_Files\Formularity\PNNL_CIA_DB_1500_B.bin";
+            var targetDirectoryPath = @"C:\DMS_Temp_Org";
+
+            var fileTools = new clsFileTools("AnalysisManager", 1);
+            var fileSyncUtil = new FileSyncUtils(fileTools);
+            RegisterEvents(fileSyncUtil);
+
+            var recheckIntervalDays = 1;
+            var success = fileSyncUtil.CopyFileToLocal(remoteFilePath, targetDirectoryPath, out var errorMessage, recheckIntervalDays);
+
+            if (success)
+                Console.WriteLine("Verified " + Path.Combine(targetDirectoryPath, Path.GetFileName(remoteFilePath)));
+            else
+                Console.WriteLine("Error: " + errorMessage);
+
+            Console.WriteLine();
+        }
+
+        /// <summary>
         /// Test copying a large fasta file to a remote host
         /// </summary>
         public void TestCopyToRemote()
@@ -955,35 +978,6 @@ namespace AnalysisManagerProg
             }
 
             Console.WriteLine(lastWriteTime);
-        }
-
-        /// <summary>
-        /// Test .hashcheck files
-        /// </summary>
-        public void TestFileHashing()
-        {
-            var exePath = Assembly.GetExecutingAssembly().Location;
-            var sourceFile = new FileInfo(exePath);
-
-            var crc32 = HashUtilities.ComputeFileHashCrc32(sourceFile.FullName);
-            var md5 = HashUtilities.ComputeFileHashMD5(sourceFile.FullName);
-            var sha1 = HashUtilities.ComputeFileHashSha1(sourceFile.FullName);
-
-            Console.WriteLine(sourceFile.FullName);
-            Console.WriteLine("Crc32: " + crc32);
-            Console.WriteLine("MD5:   " + md5);
-            Console.WriteLine("Sha1:  " + sha1);
-
-            var expectedHashInfo = new HashUtilities.HashInfoType();
-            expectedHashInfo.Clear();
-
-            var validHash = FileSyncUtils.ValidateFileVsHashcheck(sourceFile.FullName, "", out var errorMessage, expectedHashInfo);
-            if (validHash)
-                Console.WriteLine("Hashcheck values match");
-            else
-                Console.WriteLine(errorMessage);
-
-            var fileSyncUtils = new FileSyncUtils("test manager");
         }
 
         /// <summary>

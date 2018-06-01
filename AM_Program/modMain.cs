@@ -32,7 +32,7 @@ namespace AnalysisManagerProg
 {
     static class modMain
     {
-        public const string PROGRAM_DATE = "May 25, 2018";
+        public const string PROGRAM_DATE = "May 29, 2018";
 
         private static bool mCodeTestMode;
         private static bool mTraceMode;
@@ -150,7 +150,7 @@ namespace AnalysisManagerProg
 
                         // testHarness.TestGetProcesses();
 
-                        testHarness.TestFileHashing();
+                        testHarness.TestCopyToLocalWithHashCheck();
 
                     }
                     catch (Exception ex)
