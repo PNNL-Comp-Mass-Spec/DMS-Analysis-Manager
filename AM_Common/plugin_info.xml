@@ -367,7 +367,11 @@
 		Class="AnalysisManagerQCARTPlugin.clsAnalysisToolRunnerQCART" 
 		AssemblyFile="AnalysisManagerQCARTPlugin.dll" 
 	/>
-
+	<ToolRunner 
+		Tool="formularity" 
+		Class="AnalysisManagerFormularityPlugin.clsAnalysisToolRunnerFormularity" 
+		AssemblyFile="AnalysisManagerFormularityPlugin.dll" 
+	/>
 </ToolRunners>
 
 <Resourcers>
@@ -735,6 +739,11 @@
 		Tool="qc_art" 
 		Class="AnalysisManagerQCARTPlugin.clsAnalysisResourcesQCART" 
 		AssemblyFile="AnalysisManagerQCARTPlugin.dll" 
+	/>
+	<Resourcer 
+		Tool="formularity" 
+		Class="AnalysisManagerFormularityPlugin.clsAnalysisResourcesFormularity" 
+		AssemblyFile="AnalysisManagerFormularityPlugin.dll" 
 	/>
 </Resourcers>
 
