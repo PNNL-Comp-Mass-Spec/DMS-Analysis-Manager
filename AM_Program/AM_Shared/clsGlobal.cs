@@ -1173,7 +1173,7 @@ namespace AnalysisManagerBase
         /// The file will be created in the same folder as the data file, and will contain size, modification_date_utc, and hash
         /// </summary>
         /// <param name="dataFilePath"></param>
-        /// <param name="computeMD5Hash">If True, computes the MD5 hash, otherwise createsa hashcheck file with an empty string for the hash</param>
+        /// <param name="computeMD5Hash">If True, computes the MD5 hash, otherwise creates a hashcheck file with an empty string for the hash</param>
         /// <returns>The full path to the .hashcheck file; empty string if a problem</returns>
         /// <remarks></remarks>
         public static string CreateHashcheckFile(string dataFilePath, bool computeMD5Hash)
@@ -1193,13 +1193,16 @@ namespace AnalysisManagerBase
                 md5Hash = string.Empty;
             }
 
-            return HashUtilities.CreateHashcheckFileWithHash(dataFilePath, md5Hash, HashUtilities.HashTypeConstants.MD5);
+            var hashcheckFilePath = HashUtilities.CreateHashcheckFileWithHash(dataFilePath, HashUtilities.HashTypeConstants.MD5, md5Hash, out var warningMessage);
+            if (!string.IsNullOrWhiteSpace(warningMessage))
+                ConsoleMsgUtils.ShowWarning(warningMessage);
 
+            return hashcheckFilePath;
         }
 
         /// <summary>
-        /// Creates a .hashcheck file for the specified file
-        /// The file will be created in the same folder as the data file, and will contain size, modification_date_utc, and hash
+        /// Creates a .hashcheck file for the specified file, using the given hash string
+        /// The file will be created in the same folder as the data file, and will contain size, modification_date_utc, hash, and hashtype
         /// </summary>
         /// <param name="dataFilePath"></param>
         /// <param name="md5Hash"></param>
@@ -1208,7 +1211,11 @@ namespace AnalysisManagerBase
         [Obsolete("Use PRISM.HashUtilities.CreateHashcheckFile and specify the hash type")]
         public static string CreateHashcheckFile(string dataFilePath, string md5Hash)
         {
-            return HashUtilities.CreateHashcheckFileWithHash(dataFilePath, md5Hash, HashUtilities.HashTypeConstants.MD5);
+            var hashCheckFilePath = HashUtilities.CreateHashcheckFileWithHash(dataFilePath, HashUtilities.HashTypeConstants.MD5, md5Hash, out var warningMessage);
+            if (!string.IsNullOrWhiteSpace(warningMessage))
+                ConsoleMsgUtils.ShowWarning(warningMessage);
+
+            return hashCheckFilePath;
         }
 
         /// <summary>
@@ -1747,6 +1754,7 @@ namespace AnalysisManagerBase
         /// <param name="errorMessage"></param>
         /// <returns>True if the hashcheck file exists and the actual file matches the expected values; false if a mismatch or a problem</returns>
         /// <remarks>The .hashcheck file has the same name as the data file, but with ".hashcheck" appended</remarks>
+        [Obsolete("Use PRISM.FileSyncUtils.ValidateFileVsHashcheck")]
         public static bool ValidateFileVsHashcheck(string dataFilePath, string hashFilePath, out string errorMessage)
         {
             return ValidateFileVsHashcheck(dataFilePath, hashFilePath, out errorMessage, checkDate: true, computeHash: false, checkSize: true);
@@ -1765,6 +1773,7 @@ namespace AnalysisManagerBase
         /// <param name="computeHash"></param>
         /// <returns>True if the hashcheck file exists and the actual file matches the expected values; false if a mismatch or a problem</returns>
         /// <remarks>The .hashcheck file has the same name as the data file, but with ".hashcheck" appended</remarks>
+        [Obsolete("Use PRISM.FileSyncUtils.ValidateFileVsHashcheck")]
         public static bool ValidateFileVsHashcheck(
             string dataFilePath, string hashFilePath, out string errorMessage,
             bool checkDate, bool computeHash)
@@ -1785,13 +1794,13 @@ namespace AnalysisManagerBase
         /// <param name="checkSize">If true, compare the actual file size to that in the hashcheck file</param>
         /// <returns>True if the hashcheck file exists and the actual file matches the expected values; false if a mismatch or a problem</returns>
         /// <remarks>The .hashcheck file has the same name as the data file, but with ".hashcheck" appended</remarks>
+        [Obsolete("Use PRISM.FileSyncUtils.ValidateFileVsHashcheck")]
         public static bool ValidateFileVsHashcheck(
             string dataFilePath, string hashFilePath, out string errorMessage,
             bool checkDate, bool computeHash, bool checkSize)
         {
 
-            var validFile = FileSyncUtils.ValidateFileVsHashcheck(dataFilePath, hashFilePath, out errorMessage,
-                                                            checkDate, computeHash, checkSize);
+            var validFile = FileSyncUtils.ValidateFileVsHashcheck(dataFilePath, hashFilePath, out errorMessage, checkDate, computeHash, checkSize);
             return validFile;
         }
 
