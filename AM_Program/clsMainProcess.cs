@@ -2860,7 +2860,7 @@ namespace AnalysisManagerProg
                 var transferDir = m_AnalysisTask.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
                 var transferDirMinFreeSpaceGB = m_MgrSettings.GetParam("TransferDirMinFreeSpaceGB", DEFAULT_TRANSFER_DIR_MIN_FREE_SPACE_GB);
 
-                var orgDbDir = m_MgrSettings.GetParam("orgdbdir");
+                var orgDbDir = m_MgrSettings.GetParam(clsAnalysisResources.MGR_PARAM_ORG_DB_DIR);
                 var orgDbDirMinFreeSpaceMB = m_MgrSettings.GetParam("OrgDBDirMinFreeSpaceMB", DEFAULT_ORG_DB_DIR_MIN_FREE_SPACE_MB);
 
                 ShowTrace("Validating free space for the working directory: " + m_WorkDirPath);

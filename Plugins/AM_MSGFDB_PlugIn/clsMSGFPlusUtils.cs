@@ -705,7 +705,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             clsPeptideToProteinMapEngine.ePeptideInputFileFormatConstants ePeptideInputFileFormat)
         {
             const bool resultsIncludeAutoAddedDecoyPeptides = false;
-            var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
+            var localOrgDbFolder = m_mgrParams.GetParam(clsAnalysisResources.MGR_PARAM_ORG_DB_DIR);
             return CreatePeptideToProteinMapping(resultsFileName, resultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder, ePeptideInputFileFormat);
         }
 
@@ -717,7 +717,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         /// <returns></returns>
         public CloseOutType CreatePeptideToProteinMapping(string resultsFileName, bool resultsIncludeAutoAddedDecoyPeptides)
         {
-            var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
+            var localOrgDbFolder = m_mgrParams.GetParam(clsAnalysisResources.MGR_PARAM_ORG_DB_DIR);
             return CreatePeptideToProteinMapping(resultsFileName, resultsIncludeAutoAddedDecoyPeptides, localOrgDbFolder);
         }
 
@@ -1310,7 +1310,7 @@ namespace AnalysisManagerMSGFDBPlugIn
             RegisterEvents(indexedDBCreator);
 
             // Define the path to the fasta file
-            var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
+            var localOrgDbFolder = m_mgrParams.GetParam(clsAnalysisResources.MGR_PARAM_ORG_DB_DIR);
             fastaFilePath = Path.Combine(localOrgDbFolder, m_jobParams.GetParam("PeptideSearch", clsAnalysisResources.JOB_PARAM_GENERATED_FASTA_NAME));
 
             fastaFileSizeKB = 0;

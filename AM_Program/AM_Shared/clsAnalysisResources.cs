@@ -333,6 +333,12 @@ namespace AnalysisManagerBase
         public const string JOB_PARAM_XML_PARAMS_FILE = "genJobParamsFilename";
 
         /// <summary>
+        /// Manager parameter: local directory for caching FASTA files
+        /// Also caches CIA DB files for Formularity
+        /// </summary>
+        public const string MGR_PARAM_ORG_DB_DIR = "orgdbdir";
+
+        /// <summary>
         /// Warning message that spectra are not centroided
         /// </summary>
         /// <remarks>This constant is used by clsAnalysisToolRunnerMSGFDB, clsAnalysisResourcesMSGFDB, and clsAnalysisResourcesDtaRefinery</remarks>
@@ -739,7 +745,7 @@ namespace AnalysisManagerBase
                 return false;
             }
 
-            var orgDbFolderPath = m_mgrParams.GetParam("orgdbdir");
+            var orgDbFolderPath = m_mgrParams.GetParam(MGR_PARAM_ORG_DB_DIR);
             if (string.IsNullOrWhiteSpace(orgDbFolderPath))
             {
                 LogError("Cannot copy the generated FASTA remotely; manager parameter orgdbdir is empty");
@@ -4563,7 +4569,7 @@ namespace AnalysisManagerBase
                     return false;
                 }
 
-                var fastaFilePath = Path.Combine(m_mgrParams.GetParam("orgdbdir"), m_jobParams.GetParam("PeptideSearch", JOB_PARAM_GENERATED_FASTA_NAME));
+                var fastaFilePath = Path.Combine(m_mgrParams.GetParam(MGR_PARAM_ORG_DB_DIR), m_jobParams.GetParam("PeptideSearch", JOB_PARAM_GENERATED_FASTA_NAME));
 
                 // Gigasax.DMS5
                 var connectionString = m_mgrParams.GetParam("connectionstring");

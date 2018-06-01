@@ -57,7 +57,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                 }
 
                 // Retrieve the Fasta file
-                var localOrgDbFolder = m_mgrParams.GetParam("orgdbdir");
+                var localOrgDbFolder = m_mgrParams.GetParam(MGR_PARAM_ORG_DB_DIR);
 
                 currentTask = "RetrieveOrgDB to " + localOrgDbFolder;
 
