@@ -864,14 +864,15 @@ namespace AnalysisManagerBase
 
             // One or more matches were found; select the newest one
             var sortQuery = (from item in lstMatchingFiles orderby item.LastWriteTimeUtc descending select item).Take(1);
-            var matchedFilePath = sortQuery.First().FullName;
+            var dataFilePath = sortQuery.First().FullName;
 
             // Confirm that the file has a .hashcheck file and that the information in the .hashcheck file matches the file
-            hashCheckFilePath = matchedFilePath + clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX;
+            hashCheckFilePath = dataFilePath + clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX;
 
-            if (clsGlobal.ValidateFileVsHashcheck(matchedFilePath, hashCheckFilePath, out var errorMessage))
+            var validFile = FileSyncUtils.ValidateFileVsHashcheck(dataFilePath, hashCheckFilePath, out var errorMessage);
+            if (validFile)
             {
-                return matchedFilePath;
+                return dataFilePath;
             }
 
             OnWarningEvent("Warning: " + errorMessage);
@@ -1248,7 +1249,7 @@ namespace AnalysisManagerBase
 
             var hashCheckFilePath = fiSourceFile.FullName + clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX;
 
-            if (!clsGlobal.ValidateFileVsHashcheck(fiSourceFile.FullName, hashCheckFilePath, out errorMessage))
+            if (!FileSyncUtils.ValidateFileVsHashcheck(fiSourceFile.FullName, hashCheckFilePath, out errorMessage))
             {
                 errorMessage = "Cached " + resultFileExtension + " file does not match the hashcheck file in " + disourceFolder.FullName + "; will re-generate it";
                 fileMissingFromCache = true;
@@ -1686,7 +1687,7 @@ namespace AnalysisManagerBase
                 computeHash = true;
             }
 
-            if (clsGlobal.ValidateFileVsHashcheck(targetFilePath, hashCheckFilePath, out var errorMessage, checkDate: true, computeHash: computeHash))
+            if (FileSyncUtils.ValidateFileVsHashcheck(targetFilePath, hashCheckFilePath, out var errorMessage, checkDate: true, computeHash: computeHash))
             {
                 return true;
             }

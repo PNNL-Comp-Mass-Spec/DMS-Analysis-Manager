@@ -981,7 +981,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                     // Verify that the file matches the .hashcheck value
                     var hashcheckFilePath = fiTrimmedFasta.FullName + clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX;
 
-                    if (clsGlobal.ValidateFileVsHashcheck(fiTrimmedFasta.FullName, hashcheckFilePath, out _))
+                    if (FileSyncUtils.ValidateFileVsHashcheck(fiTrimmedFasta.FullName, hashcheckFilePath, out _))
                     {
                         // The trimmed fasta file is valid
                         OnStatusEvent("Using existing trimmed fasta: " + fiTrimmedFasta.Name);
