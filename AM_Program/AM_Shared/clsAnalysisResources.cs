@@ -4367,6 +4367,8 @@ namespace AnalysisManagerBase
 
             var success = dataPackageFileHander.RetrieveDataPackagePeptideHitJobPHRPFiles(udtOptions, out lstDataPackagePeptideHitJobs, progressPercentAtStart, progressPercentAtFinish);
 
+            m_jobParams.AddResultFileToSkip(clsDataPackageFileHandler.DATA_PKG_JOB_METADATA_FILE);
+
             return success;
 
         }

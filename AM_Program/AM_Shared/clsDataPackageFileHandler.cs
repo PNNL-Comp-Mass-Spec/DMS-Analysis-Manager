@@ -29,7 +29,10 @@ namespace AnalysisManagerBase
 
         private const string SP_NAME_GET_JOB_STEP_INPUT_FOLDER = "GetJobStepInputFolder";
 
-        private const string DATA_PKG_JOB_METADATA_FILE = "DataPkgJobMetadata.txt";
+        /// <summary>
+        /// File that tracks Job number and whether or not the search used a .mzML file
+        /// </summary>
+        public const string DATA_PKG_JOB_METADATA_FILE = "DataPkgJobMetadata.txt";
 
         #endregion
 
