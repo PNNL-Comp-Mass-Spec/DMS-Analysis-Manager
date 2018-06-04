@@ -120,7 +120,7 @@ namespace AnalysisManagerUIMFtoMassHunterPlugin
 
         private bool ConvertToAgilentDotD()
         {
-            // Set up and execute a program runner to run the Metabolite Detector
+            // Set up and execute a program runner to run the UIMF to MassHunter converter
 
             // Valid dataset type
             var uimfFileName = m_Dataset + ".uimf";
