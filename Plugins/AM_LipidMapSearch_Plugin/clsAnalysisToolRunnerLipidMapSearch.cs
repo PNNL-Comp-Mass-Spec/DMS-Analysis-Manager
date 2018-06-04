@@ -4,6 +4,7 @@ using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 using AnalysisManagerBase;
+using PRISM;
 
 namespace AnalysisManagerLipidMapSearchPlugIn
 {
@@ -173,11 +174,13 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                     LogError(mConsoleOutputErrorMsg);
                 }
 
+                var sha1Hash = HashUtilities.ComputeFileHashSha1(Path.Combine(m_WorkDir, mLipidMapsDBFilename));
+
                 // Append a line to the console output file listing the name of the LipidMapsDB that we used
                 using (var swConsoleOutputFile = new StreamWriter(new FileStream(mCmdRunner.ConsoleOutputFilePath, FileMode.Append, FileAccess.Write, FileShare.Read)))
                 {
                     swConsoleOutputFile.WriteLine("LipidMapsDB Name: " + mLipidMapsDBFilename);
-                    swConsoleOutputFile.WriteLine("LipidMapsDB Hash: " + clsGlobal.ComputeFileHashSha1(Path.Combine(m_WorkDir, mLipidMapsDBFilename)));
+                    swConsoleOutputFile.WriteLine("LipidMapsDB Hash: " + sha1Hash);
                 }
 
                 // Update the evaluation message to include the lipid maps DB filename
@@ -265,7 +268,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
             var strLockFilePath = string.Empty;
 
             var strHashCheckFilePath = string.Empty;
-            var strNewestLipidMapsDBFileHash = string.Empty;
+            var sha1HashNewestLipidMapsDBFile = string.Empty;
 
             // Look for a recent .lock file
 
@@ -304,13 +307,16 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 // Read the hash value stored in the hashcheck file for strNewestLipidMapsDBFileName
                 strHashCheckFilePath = GetHashCheckFilePath(diLipidMapsDBFolder.FullName, strNewestLipidMapsDBFileName);
 
-                using (var srInFile = new StreamReader(new FileStream(strHashCheckFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                if (File.Exists(strHashCheckFilePath))
                 {
-                    strNewestLipidMapsDBFileHash = srInFile.ReadLine();
-                }
+                    using (var srInFile = new StreamReader(new FileStream(strHashCheckFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                    {
+                        sha1HashNewestLipidMapsDBFile = srInFile.ReadLine();
+                    }
 
-                if (string.IsNullOrEmpty(strNewestLipidMapsDBFileHash))
-                    strNewestLipidMapsDBFileHash = string.Empty;
+                    if (string.IsNullOrEmpty(sha1HashNewestLipidMapsDBFile))
+                        sha1HashNewestLipidMapsDBFile = string.Empty;
+                }
             }
 
             // Call the LipidTools.exe program to obtain the latest database
@@ -361,17 +367,17 @@ namespace AnalysisManagerLipidMapSearchPlugIn
                 return string.Empty;
             }
 
-            // Compute the MD5 hash value of the newly downloaded file
-            var strHashCheckNew = clsGlobal.ComputeFileHashSha1(strLipidMapsDBFileLocal);
+            // Compute the Sha1 hash value of the newly downloaded file
+            var sha1HashNew = PRISM.HashUtilities.ComputeFileHashSha1(strLipidMapsDBFileLocal);
 
-            if (!string.IsNullOrEmpty(strNewestLipidMapsDBFileHash) && strHashCheckNew == strNewestLipidMapsDBFileHash)
+            if (!string.IsNullOrEmpty(sha1HashNewestLipidMapsDBFile) && sha1HashNew == sha1HashNewestLipidMapsDBFile)
             {
                 // The hashes match; we'll update the timestamp of the hashcheck file below
                 if (m_DebugLevel >= 1)
                 {
                     LogMessage(
                         "Hash code of the newly downloaded database matches the hash for " + strNewestLipidMapsDBFileName + ": " +
-                        strNewestLipidMapsDBFileHash);
+                        sha1HashNewestLipidMapsDBFile);
                 }
 
                 if (Path.GetFileName(strLipidMapsDBFileLocal) != strNewestLipidMapsDBFileName)
@@ -419,7 +425,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
             // Update the hash-check file (do this regardless of whether or not the newly downloaded file matched the most recent one)
             using (var swOutFile = new StreamWriter(new FileStream(strHashCheckFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
             {
-                swOutFile.WriteLine(strHashCheckNew);
+                swOutFile.WriteLine(sha1HashNew);
             }
 
             clsGlobal.DeleteLockFile(newLipidMapsDBFilePath);
