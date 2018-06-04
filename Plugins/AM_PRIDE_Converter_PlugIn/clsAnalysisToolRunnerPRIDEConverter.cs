@@ -809,7 +809,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 }
 
                 // Compute the MD5 hash for this _dta.txt file
-                var md5Hash = clsGlobal.ComputeFileHashMD5(fiCDTAFile.FullName);
+                var md5Hash = PRISM.HashUtilities.ComputeFileHashMD5(fiCDTAFile.FullName);
 
                 // Make sure this is either a new _dta.txt file or identical to a previous one
                 // Abort processing if the job list contains multiple jobs for the same dataset but those jobs used different _dta.txt files
