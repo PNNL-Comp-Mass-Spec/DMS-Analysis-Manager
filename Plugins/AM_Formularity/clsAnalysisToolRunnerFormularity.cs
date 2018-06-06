@@ -85,34 +85,22 @@ namespace AnalysisManagerFormularityPlugin
                 }
 
                 // Process the XML files using Formularity
-                var processingSuccess = ProcessScansWithFormularity(progLoc);
+                var processingSuccess = ProcessScansWithFormularity(progLoc, out var nothingToAlign);
 
-                var eReturnCode = CloseOutType.CLOSEOUT_SUCCESS;
+                CloseOutType eReturnCode;
 
-                if (!processingSuccess)
+                if (nothingToAlign)
+                {
+                    eReturnCode = CloseOutType.CLOSEOUT_NO_DATA;
+                }
+                else if (!processingSuccess)
                 {
                     eReturnCode = CloseOutType.CLOSEOUT_FAILED;
                 }
                 else
                 {
                     // Look for the result files
-
-                    var reportFile = new FileInfo(Path.Combine(m_WorkDir, "Report.csv"));
-
-                    if (!reportFile.Exists)
-                    {
-                        if (string.IsNullOrEmpty(m_message))
-                        {
-                            m_message = string.Format("Formularity results not found ({0})", reportFile.Name);
-                            processingSuccess = false;
-                            eReturnCode = CloseOutType.CLOSEOUT_FAILED;
-                        }
-                    }
-                    else
-                    {
-                        // Rename the report file to start with the dataset name
-                        reportFile.MoveTo(Path.Combine(m_WorkDir, m_Dataset + "_Report.csv"));
-                    }
+                    eReturnCode = PostProcessResults(ref processingSuccess);
                 }
 
                 m_progress = PROGRESS_PCT_COMPLETE;
@@ -189,6 +177,19 @@ namespace AnalysisManagerFormularityPlugin
         /// <remarks>Not used at present</remarks>
         private void ParseConsoleOutputFile(string consoleOutputFilePath)
         {
+            ParseConsoleOutputFile(consoleOutputFilePath, out _, out _, out _);
+        }
+
+        /// <summary>
+        /// Parse the Formularity console output file to track the search progress
+        /// </summary>
+        /// <param name="consoleOutputFilePath"></param>
+        /// <param name="fileCountNoPeaks">Output: will be non-zero if Formularity reports "no data points found" for a given file</param>
+        /// <param name="nothingToAlign">Output: set to true if Formularity reports "Nothing to align" (meaning non of the input files had peaks)</param>
+        /// <param name="calibrationFailed">Output: set to true if calibration failed</param>
+        /// <remarks>Not used at present</remarks>
+        private void ParseConsoleOutputFile(string consoleOutputFilePath, out int fileCountNoPeaks, out bool nothingToAlign, out bool calibrationFailed)
+        {
             // Example Console output
             //
             // Started.
@@ -204,6 +205,10 @@ namespace AnalysisManagerFormularityPlugin
             // Formula Finding
             // Writing results to F:\Documents\Projects\NikolaTolic\Formularity\Data\TestDataXML\Report.csv
             // Finished.
+
+            fileCountNoPeaks = 0;
+            nothingToAlign = false;
+            calibrationFailed = false;
 
             try
             {
@@ -237,6 +242,29 @@ namespace AnalysisManagerFormularityPlugin
                             continue;
                         }
 
+                        // Check for "Warning: no data points found in FileName"
+                        if (dataLine.StartsWith("Warning", StringComparison.OrdinalIgnoreCase) && dataLine.ToLower().Contains("no data points found"))
+                        {
+                            fileCountNoPeaks++;
+                            continue;
+                        }
+
+                        // Check for "Error: Nothing to align; aborting"
+                        if (dataLine.StartsWith("Error", StringComparison.OrdinalIgnoreCase) && dataLine.ToLower().Contains("nothing to align"))
+                        {
+                            nothingToAlign = true;
+                            m_message = dataLine;
+                            continue;
+                        }
+
+                        // Check for "Error: Nothing to align; aborting"
+                        if (dataLine.StartsWith("Calibration failed", StringComparison.OrdinalIgnoreCase))
+                        {
+                            calibrationFailed = true;
+                            continue;
+                        }
+
+                        // Look for generic errors
                         var reMatch = reErrorMessage.Match(dataLine);
 
                         if (reMatch.Success)
@@ -255,25 +283,71 @@ namespace AnalysisManagerFormularityPlugin
                     }
                 }
 
+
             }
             catch (Exception ex)
             {
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    LogError("Error parsing console output file (" + consoleOutputFilePath + "): " + ex.Message);
+                    LogErrorNoMessageUpdate("Error parsing console output file (" + consoleOutputFilePath + "): " + ex.Message);
                 }
             }
 
         }
 
+        private CloseOutType PostProcessResults(ref bool processingSuccess)
+        {
+
+            try
+            {
+                var reportFile = new FileInfo(Path.Combine(m_WorkDir, "Report.csv"));
+
+                if (!reportFile.Exists)
+                {
+                    if (string.IsNullOrEmpty(m_message))
+                    {
+                        m_message = string.Format("Formularity results not found ({0})", reportFile.Name);
+                        processingSuccess = false;
+                        return CloseOutType.CLOSEOUT_FAILED;
+                    }
+                }
+                else
+                {
+                    // Rename the report file to start with the dataset name
+                    reportFile.MoveTo(Path.Combine(m_WorkDir, m_Dataset + "_Report.csv"));
+                }
+
+                var workDir = new DirectoryInfo(m_WorkDir);
+
+                var logFiles = workDir.GetFiles("Report*.log");
+
+                if (logFiles.Length > 0)
+                {
+                    // Rename the log file file to start with the dataset name
+                    logFiles[0].MoveTo(Path.Combine(m_WorkDir, m_Dataset + "_Report.log"));
+                }
+
+                return CloseOutType.CLOSEOUT_SUCCESS;
+            }
+            catch (Exception ex)
+            {
+                LogError("Error post processing results: " + ex.Message);
+                return CloseOutType.CLOSEOUT_FAILED;
+            }
+
+
+        }
         private bool StartFormularity(
             string progLoc,
             string wildcardMatchSpec,
             string paramFilePath,
             string ciaDbPath,
             string calibrationPeaksFilePath,
+            out int fileCountNoPeaks,
+            out bool nothingToAlign)
         {
+
             // Set up and execute a program runner to run Formularity
 
             var cmdStr = " cia " +
@@ -320,7 +394,12 @@ namespace AnalysisManagerFormularityPlugin
             }
 
             // Parse the console output file to look for errors
-            ParseConsoleOutputFile(mConsoleOutputFile);
+            ParseConsoleOutputFile(mConsoleOutputFile, out fileCountNoPeaks, out nothingToAlign, out var calibrationFailed);
+
+            if (calibrationFailed)
+            {
+                m_message = "Calibration failed; used uncalibrated masses";
+            }
 
             if (!string.IsNullOrEmpty(mConsoleOutputErrorMsg))
             {
@@ -344,8 +423,10 @@ namespace AnalysisManagerFormularityPlugin
             return false;
         }
 
-        private bool ProcessScansWithFormularity(string progLoc)
+        private bool ProcessScansWithFormularity(string progLoc, out bool nothingToAlign)
         {
+
+            nothingToAlign = false;
 
             try
             {
@@ -399,6 +480,7 @@ namespace AnalysisManagerFormularityPlugin
                 m_progress = PROGRESS_PCT_STARTING;
 
                 var success = StartFormularity(progLoc, wildcardMatchSpec, paramFilePath, ciaDbPath, calibrationPeaksFilePath,
+                                               out var fileCountNoPeaks, out nothingToAlign);
 
                 if (!success)
                     return false;
@@ -408,6 +490,32 @@ namespace AnalysisManagerFormularityPlugin
                 if (m_DebugLevel >= 3)
                 {
                     LogDebug("Formularity processing Complete");
+                }
+
+                if (fileCountNoPeaks <= 0 && nothingToAlign == false)
+                {
+                    return true;
+                }
+
+                if (nothingToAlign || fileCountNoPeaks >= spectraFiles.Count)
+                {
+                    // None of the scans had peaks
+                    m_message = "No peaks found";
+                    if (spectraFiles.Count > 1)
+                        m_EvalMessage = "None of the scans had peaks";
+                    else
+                        m_EvalMessage = "Scan did not have peaks";
+
+                    if (!nothingToAlign)
+                        nothingToAlign = true;
+
+                    // Do not put the parameter file in the results directory
+                    m_jobParams.AddResultFileToSkip(paramFilePath);
+                }
+                else
+                {
+                    // Some of the scans had no peaks
+                    m_EvalMessage = fileCountNoPeaks + " / " + spectraFiles.Count + " scans had no peaks";
                 }
 
                 return true;
