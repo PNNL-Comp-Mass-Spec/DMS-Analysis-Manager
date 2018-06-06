@@ -312,7 +312,7 @@ namespace AnalysisManagerNOMSIPlugin
                 // Ignore errors here
                 if (m_DebugLevel >= 2)
                 {
-                    LogError("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
+                    LogErrorNoMessageUpdate("Error parsing console output file (" + strConsoleOutputFilePath + "): " + ex.Message);
                 }
             }
 
@@ -555,6 +555,7 @@ namespace AnalysisManagerNOMSIPlugin
 
                     noPeaksFound = true;
 
+                    // Do not put the parameter file in the results directory
                     m_jobParams.AddResultFileToSkip(paramFilePath);
                 }
                 else
