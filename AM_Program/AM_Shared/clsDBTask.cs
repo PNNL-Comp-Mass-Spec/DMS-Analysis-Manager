@@ -2,9 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
-using System.Xml.XPath;
-using System.Xml;
 using System.IO;
+using System.Xml.Linq;
 using PRISM.Logging;
 
 //*********************************************************************************************************
@@ -238,57 +237,81 @@ namespace AnalysisManagerBase
         public abstract void CloseTask(CloseOutType closeOut, string compMsg, IToolRunner toolRunner);
 
         /// <summary>
-        /// Populate the parameters dictionary using parameters stored as XML
+        /// Populate the job parameters list using XML-based job parameters
         /// </summary>
         /// <param name="jobParamsXML"></param>
         /// <returns></returns>
-        protected IEnumerable<udtParameterInfoType> FillParamDictXml(string jobParamsXML)
+        protected IEnumerable<udtParameterInfoType> ParseXMLJobParameters(string jobParamsXML)
         {
 
             try
             {
-                // Read XML string into XPathDocument object
-                // and set up navigation objects to traverse it
+                var jobParameters = new List<udtParameterInfoType>();
 
-                using (XmlReader xReader = new XmlTextReader(new StringReader(jobParamsXML)))
+                using (var reader = new StringReader(jobParamsXML))
                 {
+                    // Note that XDocument supersedes XmlDocument and XPathDocument
+                    // XDocument can often be easier to use since XDocument is LINQ-based
 
-                    var xdoc = new XPathDocument(xReader);
-                    var xpn = xdoc.CreateNavigator();
-                    var nodes = xpn.Select("//item");
+                    var doc = XDocument.Parse(reader.ReadToEnd());
 
-                    var dctParameters = new List<udtParameterInfoType>();
-
-                    // Traverse the parsed XML document and extract the key and value for each item
-                    while (nodes.MoveNext())
+                    foreach (var section in doc.Elements("sections").Elements("section"))
                     {
-                        // Extract section, key, and value from XML element and append entry to dctParameterInfo
-                        var udtParamInfo = new udtParameterInfoType
+
+                        string sectionName;
+                        if (section.HasAttributes)
                         {
-                            ParamName = nodes.Current.GetAttribute("key", ""),
-                            Value = nodes.Current.GetAttribute("value", "")
-                        };
+                            var sectionNameAttrib = section.Attribute("name");
 
+                            if (sectionNameAttrib == null)
+                            {
+                                LogWarning("Job params XML section found without a name attribute");
+                                sectionName = string.Empty;
+                            }
+                            else
+                            {
+                                sectionName = sectionNameAttrib.Value;
+                            }
+                        }
+                        else
+                        {
+                            sectionName = string.Empty;
+                        }
 
-                        // Extract the section name for the current item and dump it to output
-                        var nav2 = nodes.Current.Clone();
-                        nav2.MoveToParent();
+                        foreach (var item in section.Elements("item"))
+                        {
+                            if (!item.HasAttributes)
+                                continue;
 
-                        udtParamInfo.Section = nav2.GetAttribute("name", "");
+                            var keyAttrib = item.Attribute("key");
+                            if (keyAttrib == null)
+                                continue;
 
-                        dctParameters.Add(udtParamInfo);
+                            var valueAttrib = item.Attribute("value");
+                            if (valueAttrib == null)
+                                continue;
 
+                            var udtParamInfo = new udtParameterInfoType
+                            {
+                                Section = sectionName,
+                                ParamName = keyAttrib.Value,
+                                Value = valueAttrib.Value
+                            };
+
+                            jobParameters.Add(udtParamInfo);
+
+                        }
                     }
 
-                    return dctParameters;
-
                 }
+
+                return jobParameters;
 
             }
             catch (Exception ex)
             {
-                LogError("clsDBTask.FillParamDict(), exception filling dictionary", ex);
-                return null;
+                LogError("clsDBTask.FillParamDict(), exception determining job parameters", ex);
+                return new List<udtParameterInfoType>();
             }
 
         }

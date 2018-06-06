@@ -738,7 +738,7 @@ namespace AnalysisManagerBase
         {
             if (!m_JobParams.TryGetValue(section, out var oParams))
             {
-                // Need to add a section with a blank name
+                // New section; add it
                 oParams = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
                 m_JobParams.Add(section, oParams);
             }
@@ -1376,9 +1376,16 @@ namespace AnalysisManagerBase
                         var jobParamsXML = Convert.ToString(cmd.Parameters["@parameters"].Value);
 
                         // Step task was found; get the data for it
-                        var dctParameters = FillParamDictXml(jobParamsXML).ToList();
+                        var jobParameters = ParseXMLJobParameters(jobParamsXML).ToList();
 
-                        foreach (var udtParamInfo in dctParameters)
+                        if (jobParameters.Count == 0)
+                        {
+                            LogWarning("Unable to parse out job parameters from the job parameters XML");
+                            taskResult = RequestTaskResult.ResultError;
+                            break;
+                        }
+
+                        foreach (var udtParamInfo in jobParameters)
                         {
                             SetParam(udtParamInfo.Section, udtParamInfo.ParamName, udtParamInfo.Value);
                         }
@@ -1685,9 +1692,16 @@ namespace AnalysisManagerBase
                     jobParamsXML = reader.ReadToEnd();
                 }
 
-                var dctParameters = FillParamDictXml(jobParamsXML).ToList();
+                var jobParameters = ParseXMLJobParameters(jobParamsXML).ToList();
 
-                foreach (var udtParamInfo in dctParameters)
+
+                if (jobParameters.Count == 0)
+                {
+                    FinalizeFailedOfflineJob(infoFile, startTime, "Unable to parse out job parameters from the job parameters file: " + jobParamsFile.FullName);
+                    return false;
+                }
+
+                foreach (var udtParamInfo in jobParameters)
                 {
                     SetParam(udtParamInfo.Section, udtParamInfo.ParamName, udtParamInfo.Value);
                 }
