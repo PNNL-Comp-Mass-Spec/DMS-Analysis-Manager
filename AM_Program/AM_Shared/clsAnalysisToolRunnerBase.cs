@@ -209,7 +209,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Evaluation message to be reported to the DMS_Pipeline DB
         /// </summary>
-        public string EvalMessage => m_EvalMessage;
+        public string EvalMessage => string.IsNullOrWhiteSpace(m_EvalMessage) ? string.Empty : m_EvalMessage;
 
         /// <summary>
         /// Job number
@@ -224,7 +224,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Explanation of what happened to last operation this class performed
         /// </summary>
-        public string Message => m_message;
+        public string Message => string.IsNullOrWhiteSpace(m_message) ? string.Empty : m_message;
 
         /// <summary>
         /// Set this to true if we need to abort processing as soon as possible due to a critical error

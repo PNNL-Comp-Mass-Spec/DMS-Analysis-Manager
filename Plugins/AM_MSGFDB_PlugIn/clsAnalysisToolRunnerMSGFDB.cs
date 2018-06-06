@@ -236,7 +236,10 @@ namespace AnalysisManagerMSGFDBPlugIn
             var splitFastaEnabled = m_jobParams.GetJobParameter("SplitFasta", false);
             if (splitFastaEnabled)
             {
-                var iteration = clsAnalysisResources.GetSplitFastaIteration(m_jobParams, out m_message);
+                var iteration = clsAnalysisResources.GetSplitFastaIteration(m_jobParams, out var errorMessage);
+                if (!string.IsNullOrWhiteSpace(errorMessage))
+                    m_message = errorMessage;
+
                 var fiMSGFPlusResultsSplitFasta = new FileInfo(
                     Path.Combine(m_WorkDir, Dataset + "_msgfplus" + "_Part" + iteration + ".mzid"));
 
@@ -924,7 +927,9 @@ namespace AnalysisManagerMSGFDBPlugIn
             {
                 var fiFile = new FileInfo(Path.Combine(m_WorkDir, resultsFileName));
 
-                var iteration = clsAnalysisResources.GetSplitFastaIteration(m_jobParams, out m_message);
+                var iteration = clsAnalysisResources.GetSplitFastaIteration(m_jobParams, out var errorMessage);
+                if (!string.IsNullOrWhiteSpace(errorMessage))
+                    m_message = errorMessage;
 
                 var fileNameNew = Path.GetFileNameWithoutExtension(fiFile.Name) + "_Part" + iteration + fiFile.Extension;
 
@@ -1193,7 +1198,10 @@ namespace AnalysisManagerMSGFDBPlugIn
                 var splitFastaEnabled = m_jobParams.GetJobParameter("SplitFasta", false);
                 if (splitFastaEnabled)
                 {
-                    var iteration = clsAnalysisResources.GetSplitFastaIteration(m_jobParams, out m_message);
+                    var iteration = clsAnalysisResources.GetSplitFastaIteration(m_jobParams, out var errorMessage);
+                    if (!string.IsNullOrWhiteSpace(errorMessage))
+                        m_message = errorMessage;
+
                     addon = "_Part" + iteration;
                 }
                 else

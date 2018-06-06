@@ -1315,7 +1315,9 @@ namespace AnalysisManagerBase
                 // Running a SplitFasta job; need to update the name of the fasta file to be of the form FastaFileName_NNx_nn.fasta
                 // where NN is the number of total cloned steps and nn is this job's specific step number
 
-                legacyFastaToUse = GetSplitFastaFileName(m_jobParams, out m_message, out var numberOfClonedSteps);
+                legacyFastaToUse = GetSplitFastaFileName(m_jobParams, out var errorMessage, out var numberOfClonedSteps);
+                if (!string.IsNullOrWhiteSpace(errorMessage))
+                    m_message = errorMessage;
 
                 if (string.IsNullOrEmpty(legacyFastaToUse))
                 {
