@@ -970,7 +970,16 @@ namespace AnalysisManagerProg
                 }
 
                 // Close out the job as a success
-                m_AnalysisTask.CloseTask(closeOut, string.Empty, toolRunner);
+                // Examine toolRunner.Message to determine if we should use it as the completion message
+                string compMsg;
+                if (toolRunner.Message.StartsWith("Calibration failed"))
+                    compMsg = toolRunner.Message;
+                else
+                {
+                    compMsg = string.Empty;
+                }
+
+                m_AnalysisTask.CloseTask(closeOut, compMsg, toolRunner);
                 LogMessage(m_MgrName + ": Completed job " + jobNum);
 
                 UpdateStatusIdle("Completed job " + jobNum + ", step " + stepNum);

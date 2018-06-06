@@ -257,7 +257,7 @@ namespace AnalysisManagerFormularityPlugin
                             continue;
                         }
 
-                        // Check for "Error: Nothing to align; aborting"
+                        // Check for Calibration failed; using uncalibrated masses"
                         if (dataLine.StartsWith("Calibration failed", StringComparison.OrdinalIgnoreCase))
                         {
                             calibrationFailed = true;
