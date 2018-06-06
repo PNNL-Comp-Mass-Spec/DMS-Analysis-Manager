@@ -37,7 +37,7 @@ namespace AnalysisManagerBase
         string ResFolderName { get; }
 
         /// <summary>
-        /// Explanation of what happened to last operation this class performed
+        /// Status message related to processing tasks performed by this class
         /// </summary>
         string Message { get; }
 

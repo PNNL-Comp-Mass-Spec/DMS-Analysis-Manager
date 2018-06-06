@@ -17,6 +17,7 @@ using PRISM.Logging;
 //
 //*********************************************************************************************************
 
+// ReSharper disable UnusedMember.Global
 namespace AnalysisManagerBase
 {
     /// <summary>
@@ -222,7 +223,7 @@ namespace AnalysisManagerBase
         public string ResFolderName => m_ResFolderName;
 
         /// <summary>
-        /// Explanation of what happened to last operation this class performed
+        /// Status message related to processing tasks performed by this class
         /// </summary>
         public string Message => string.IsNullOrWhiteSpace(m_message) ? string.Empty : m_message;
 
