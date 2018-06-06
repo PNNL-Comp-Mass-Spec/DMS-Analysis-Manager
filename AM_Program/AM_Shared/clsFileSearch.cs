@@ -794,7 +794,7 @@ namespace AnalysisManagerBase
                     throw new ArgumentOutOfRangeException(nameof(msXmlType), "Unsupported enum value for MSXMLOutputTypeConstants: " + msXmlType);
             }
 
-            // Lookup the MSXML cache path (typically \\Proto-11\MSXML_Cache )
+            // Lookup the MSXML cache path (typically \\Proto-11\MSXML_Cache)
             var msXmlCacheFolderPath = m_mgrParams.GetParam("MSXMLCacheFolderPath", string.Empty);
 
             var diCacheFolder = new DirectoryInfo(msXmlCacheFolderPath);
@@ -869,7 +869,10 @@ namespace AnalysisManagerBase
             // Confirm that the file has a .hashcheck file and that the information in the .hashcheck file matches the file
             hashCheckFilePath = dataFilePath + clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX;
 
-            var validFile = FileSyncUtils.ValidateFileVsHashcheck(dataFilePath, hashCheckFilePath, out var errorMessage);
+            const int recheckIntervalDays = 1;
+
+            var validFile = FileSyncUtils.ValidateFileVsHashcheck(dataFilePath, hashCheckFilePath, out var errorMessage, HashUtilities.HashTypeConstants.MD5, recheckIntervalDays);
+
             if (validFile)
             {
                 return dataFilePath;
@@ -1249,7 +1252,11 @@ namespace AnalysisManagerBase
 
             var hashCheckFilePath = fiSourceFile.FullName + clsGlobal.SERVER_CACHE_HASHCHECK_FILE_SUFFIX;
 
-            if (!FileSyncUtils.ValidateFileVsHashcheck(fiSourceFile.FullName, hashCheckFilePath, out errorMessage))
+            const int recheckIntervalDays = 1;
+
+            var validFile = FileSyncUtils.ValidateFileVsHashcheck(fiSourceFile.FullName, hashCheckFilePath, out errorMessage, HashUtilities.HashTypeConstants.MD5, recheckIntervalDays);
+
+            if (!validFile)
             {
                 errorMessage = "Cached " + resultFileExtension + " file does not match the hashcheck file in " + disourceFolder.FullName + "; will re-generate it";
                 fileMissingFromCache = true;
