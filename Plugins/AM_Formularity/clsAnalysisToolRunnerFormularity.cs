@@ -318,14 +318,13 @@ namespace AnalysisManagerFormularityPlugin
                     reportFile.MoveTo(Path.Combine(m_WorkDir, m_Dataset + "_Report.csv"));
                 }
 
+                // Ignore the Report*.log files
+                // All messages in those files were displayed at the console and are thus already in Formularity_ConsoleOutput.txt
                 var workDir = new DirectoryInfo(m_WorkDir);
 
-                var logFiles = workDir.GetFiles("Report*.log");
-
-                if (logFiles.Length > 0)
+                foreach (var logFile in workDir.GetFiles("Report*.log"))
                 {
-                    // Rename the log file file to start with the dataset name
-                    logFiles[0].MoveTo(Path.Combine(m_WorkDir, m_Dataset + "_Report.log"));
+                    m_jobParams.AddResultFileToSkip(logFile.Name);
                 }
 
                 return CloseOutType.CLOSEOUT_SUCCESS;
