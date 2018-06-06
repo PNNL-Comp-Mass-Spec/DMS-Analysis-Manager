@@ -271,14 +271,20 @@ namespace AnalysisManagerFormularityPlugin
             string progLoc,
             string wildcardMatchSpec,
             string paramFilePath,
-            string ciaDbPath)
+            string ciaDbPath,
+            string calibrationPeaksFilePath,
         {
             // Set up and execute a program runner to run Formularity
 
             var cmdStr = " cia " +
                          PossiblyQuotePath(wildcardMatchSpec) + " " +
-                         paramFilePath + " " +
-                         ciaDbPath;
+                         PossiblyQuotePath(paramFilePath) + " " +
+                         PossiblyQuotePath(ciaDbPath);
+
+            if (!string.IsNullOrWhiteSpace(calibrationPeaksFilePath))
+            {
+                cmdStr += " " + PossiblyQuotePath(calibrationPeaksFilePath);
+            }
 
             if (m_DebugLevel >= 1)
             {
@@ -379,9 +385,20 @@ namespace AnalysisManagerFormularityPlugin
                     m_jobParams.AddResultFileToSkip(spectrumFile.Name);
                 }
 
+                var calibrationPeaksFileName = m_jobParams.GetJobParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "CalibrationPeaksFile", string.Empty);
+                string calibrationPeaksFilePath;
+                if (string.IsNullOrWhiteSpace(calibrationPeaksFileName))
+                {
+                    calibrationPeaksFilePath = string.Empty;
+                }
+                else
+                {
+                    calibrationPeaksFilePath = Path.Combine(m_WorkDir, calibrationPeaksFileName);
+                }
+
                 m_progress = PROGRESS_PCT_STARTING;
 
-                var success = StartFormularity(progLoc, wildcardMatchSpec, paramFilePath, ciaDbPath);
+                var success = StartFormularity(progLoc, wildcardMatchSpec, paramFilePath, ciaDbPath, calibrationPeaksFilePath,
 
                 if (!success)
                     return false;
