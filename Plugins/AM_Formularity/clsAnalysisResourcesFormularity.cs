@@ -6,7 +6,10 @@
 *****************************************************************/
 
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Xml.Linq;
 using AnalysisManagerBase;
 using PRISM;
 
@@ -46,6 +49,18 @@ namespace AnalysisManagerFormularityPlugin
                 if (!FileSearch.RetrieveFile(paramFileName, paramFileStoragePath))
                 {
                     return CloseOutType.CLOSEOUT_FAILED;
+                }
+
+                // Examine the parameter file
+                // If calibration is enabled, retrieve the calibration peaks file
+                var success = RetrieveCalibrationPeaksFile(paramFileStoragePath, paramFileName);
+                if (!success)
+                {
+                    if (string.IsNullOrWhiteSpace(m_message))
+                    {
+                        LogError("Error extracting calibration settings from the parameter file");
+                    }
+                    return CloseOutType.CLOSEOUT_NO_PARAM_FILE;
                 }
 
                 // Retrieve the database
@@ -127,5 +142,108 @@ namespace AnalysisManagerFormularityPlugin
             }
 
         }
+
+        private bool RetrieveCalibrationPeaksFile(string paramFileStoragePath, string paramFileName)
+        {
+
+            try
+            {
+                var paramFilePath = Path.Combine(paramFileStoragePath, paramFileName);
+
+                using (var reader = new StreamReader(new FileStream(paramFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                {
+                    // Note that XDocument supersedes XmlDocument and XPathDocument
+                    // XDocument can often be easier to use since XDocument is LINQ-based
+
+                    var doc = XDocument.Parse(reader.ReadToEnd());
+
+                    var calibrationSection = doc.Elements("DefaultParameters").Elements("InputFilesTab").Elements("Calibration").ToList();
+
+                    if (calibrationSection.Count == 0)
+                    {
+                        LogError("Formularity parameter file does not have a Calibration section");
+                        return false;
+                    }
+
+                    var regressionSetting = clsXMLUtils.GetXmlValue(calibrationSection, "Regression");
+                    if (string.IsNullOrWhiteSpace(regressionSetting))
+                    {
+                        LogError("Regression setting is missing from the Calibration section of the parameter file");
+                        return false;
+                    }
+
+
+                    // Validate that regressionSetting is a known value
+                    var allowedValues = new SortedSet<string>(StringComparer.Ordinal) {
+                        "none",
+                        "auto",
+                        "linear",
+                        "quadratic"
+                    };
+
+                    if (!allowedValues.Contains(regressionSetting))
+                    {
+                        // Check for the word being correct, but not lowercase
+                        foreach (var value in allowedValues)
+                        {
+                            if (string.Equals(value, regressionSetting, StringComparison.OrdinalIgnoreCase))
+                            {
+                                LogError(string.Format("The Regression value in the Calibration section is {0}; it needs to be lowercase {1}",
+                                                       regressionSetting, value));
+                                return false;
+                            }
+                        }
+
+                        LogError(string.Format("Invalid Regression value in the Calibration section: {0}; allowed values are {1}",
+                                               regressionSetting, string.Join(", ", allowedValues)));
+                        return false;
+                    }
+
+                    if (regressionSetting.Equals("none", StringComparison.Ordinal))
+                    {
+                        // Calibration is not enabled
+                        LogDebug("Calibration is not enabled in Formularity parameter file " + paramFileName);
+                        return true;
+                    }
+
+                    var calibrationPeaksFileName = clsXMLUtils.GetXmlValue(calibrationSection, "CalibrationPeaksFile");
+                    if (string.IsNullOrWhiteSpace(calibrationPeaksFileName))
+                    {
+                        LogError("Calibration is enabled in the Formularity parameter file, but CalibrationPeaksFile is missing or empty");
+                        return false;
+                    }
+
+                    var calibrationFilesDirPath = Path.Combine(paramFileStoragePath, "CalibrationFiles");
+                    var calibrationFilesDirectory = new DirectoryInfo(calibrationFilesDirPath);
+                    if (!calibrationFilesDirectory.Exists)
+                    {
+                        LogError("Calibration files directory not found: " + calibrationFilesDirectory.FullName);
+                        return false;
+                    }
+
+                    var calibrationPeaksFilePath = Path.Combine(calibrationFilesDirectory.FullName, calibrationPeaksFileName);
+                    var calibrationPeaksFile = new FileInfo(calibrationPeaksFilePath);
+                    if (!calibrationPeaksFile.Exists)
+                    {
+                        LogError("Calibration peaks file not found: " + calibrationPeaksFile.FullName);
+                        return false;
+                    }
+
+                    var localCalFilePath = Path.Combine(m_WorkingDir, calibrationPeaksFileName);
+                    calibrationPeaksFile.CopyTo(localCalFilePath, true);
+
+                    m_jobParams.AddResultFileToSkip(calibrationPeaksFileName);
+                    m_jobParams.AddAdditionalParameter(clsAnalysisJob.STEP_PARAMETERS_SECTION, "CalibrationPeaksFile", calibrationPeaksFileName);
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogError("Exception in RetrieveCalibrationPeaksFile", ex);
+                return false;
+            }
+        }
+
     }
 }
