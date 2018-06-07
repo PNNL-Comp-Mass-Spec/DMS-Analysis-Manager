@@ -164,6 +164,7 @@ xcopy "$(ProjectDir)..\AM_Common\AScore_DLL.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\Cyclops.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\DLLVersionInspector*.exe" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\DTAtoMGF.dll" "$(TargetDir)" /D /Y
+xcopy "$(ProjectDir)..\AM_Common\DynamicInterop.dll" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\FileConcatenator.dll" "$(TargetDir)" /D /Y  /F
 xcopy "$(ProjectDir)..\AM_Common\gzip.exe" "$(TargetDir)" /D /Y
 xcopy "$(ProjectDir)..\AM_Common\InterDetect.dll" "$(TargetDir)" /D /Y
