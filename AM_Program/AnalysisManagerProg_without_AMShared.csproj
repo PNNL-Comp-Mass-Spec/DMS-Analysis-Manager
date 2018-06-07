@@ -121,15 +121,14 @@
   <ItemGroup>
     <Content Include="LITENING.ICO" />
   </ItemGroup>
+  <!-- R.NET uses DynamicInterop, which it will auto-download from NuGet -->
+  <!-- R.NET 1.7.0 uses DynamicInterop 0.8.1 -->
   <ItemGroup>
     <PackageReference Include="Apache.NMS.ActiveMQ">
       <Version>1.7.2</Version>
     </PackageReference>
     <PackageReference Include="DotNetZip">
       <Version>1.10.1</Version>
-    </PackageReference>
-    <PackageReference Include="DynamicInterop">
-      <Version>0.8.1</Version>
     </PackageReference>
     <PackageReference Include="jayrock-json">
       <Version>0.9.16530.1</Version>
