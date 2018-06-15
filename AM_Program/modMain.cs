@@ -32,7 +32,7 @@ namespace AnalysisManagerProg
 {
     static class modMain
     {
-        public const string PROGRAM_DATE = "June 6, 2018";
+        public const string PROGRAM_DATE = "June 14, 2018";
 
         private static bool mCodeTestMode;
         private static bool mTraceMode;
@@ -203,6 +203,8 @@ namespace AnalysisManagerProg
             Console.WriteLine();
             Console.WriteLine("DMS Analysis Manager");
             Console.WriteLine("Version " + GetAppVersion(PROGRAM_DATE));
+            Console.WriteLine("Host    " + Environment.MachineName);
+            Console.WriteLine("User    " + Environment.UserName);
             Console.WriteLine();
 
             DisplayOSVersion();
@@ -270,6 +272,7 @@ namespace AnalysisManagerProg
                 "PushRemote",
                 "Offline",
                 "Linux",
+                "V",
                 "Version"
             };
 
@@ -330,6 +333,9 @@ namespace AnalysisManagerProg
                     if (!clsGlobal.OfflineMode && commandLineParser.IsParameterPresent("Offline"))
                         EnableOfflineMode();
                 }
+
+                if (commandLineParser.IsParameterPresent("V"))
+                    mShowVersionOnly = true;
 
                 if (commandLineParser.IsParameterPresent("Version"))
                     mShowVersionOnly = true;
