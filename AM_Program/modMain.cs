@@ -215,6 +215,12 @@ namespace AnalysisManagerProg
 
             try
             {
+                // For this to work properly on Windows 10, you must add a app.manifest file
+                // and uncomment the versions of Windows listed below
+                // <compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">
+                //
+                // See https://stackoverflow.com/a/36158739/1179467
+
                 var osVersionInfo = new clsOSVersionInfo();
                 var osDescription = osVersionInfo.GetOSVersion();
 
@@ -222,7 +228,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                LogTools.LogError("Error displaying the OS version: " + Environment.NewLine + ex.Message, ex);
+                LogTools.LogError("Error displaying the OS version", ex);
             }
         }
 
@@ -344,7 +350,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                LogTools.LogError("Error parsing the command line parameters: " + Environment.NewLine + ex.Message, ex);
+                LogTools.LogError("Error parsing the command line parameters", ex);
                 return false;
             }
         }
