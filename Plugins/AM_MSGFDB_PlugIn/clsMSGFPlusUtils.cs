@@ -2562,9 +2562,14 @@ namespace AnalysisManagerMSGFDBPlugIn
             // #  2 means TOF
             // #  3 means Q-Exactive
 
+            // The logic for determining InstrumentID is:
+            // If the instrument is a QExactive, use InstrumentID 3
+            // If the instrument has HCD spectra (which should be high res MS2), use InstrumentID 1
+            // If the instrument has high res MS2 spectra, use InstrumentID 1
+            // If the instrument has low res MS2 spectra, use InstrumentID 0
+
             if (string.IsNullOrEmpty(instrumentGroup))
                 instrumentGroup = "#Undefined#";
-
 
             if (!CanDetermineInstIdFromInstGroup(instrumentGroup, out var instrumentIDNew, out var autoSwitchReason))
             {
@@ -2605,6 +2610,16 @@ namespace AnalysisManagerMSGFDBPlugIn
             return CloseOutType.CLOSEOUT_SUCCESS;
         }
 
+        /// <summary>
+        /// Determine the instrument mode based on the number of low res and high res MS2 spectra
+        /// This method is used only if we cannot determine the instrument group for the dataset's instrument
+        /// </summary>
+        /// <param name="countLowResMSn"></param>
+        /// <param name="countHighResMSn"></param>
+        /// <param name="countHCDMSn"></param>
+        /// <param name="instrumentIDNew"></param>
+        /// <param name="autoSwitchReason"></param>
+        ///
         private void ExamineScanTypes(int countLowResMSn, int countHighResMSn, int countHCDMSn, out string instrumentIDNew, out string autoSwitchReason)
         {
             instrumentIDNew = string.Empty;
