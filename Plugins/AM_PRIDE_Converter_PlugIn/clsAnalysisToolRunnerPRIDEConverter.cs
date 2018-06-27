@@ -515,15 +515,18 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 foreach (var datasetInfo in dataPackageDatasets)
                 {
-                    if (!datasetsProcessed.ContainsKey(datasetInfo.Key))
-                    {
-                        m_StatusTools.CurrentOperation = "Adding dataset " + datasetInfo.Value.Dataset + " (no associated PeptideHit job)";
+                    var datasetId = datasetInfo.Key;
+                    var datasetName = datasetInfo.Value.Dataset;
 
-                        Console.WriteLine();
-                        LogDebug(m_StatusTools.CurrentOperation, 10);
+                    if (datasetsProcessed.ContainsKey(datasetId))
+                        continue;
 
-                        AddPlaceholderDatasetEntry(datasetInfo);
-                    }
+                    m_StatusTools.CurrentOperation = "Adding dataset " + datasetName + " (no associated PeptideHit job)";
+
+                    Console.WriteLine();
+                    LogDebug(m_StatusTools.CurrentOperation, 10);
+
+                    AddPlaceholderDatasetEntry(datasetInfo);
                 }
 
                 // If we were still unable to delete some files, we want to make sure that they don't end up in the results folder
@@ -3340,7 +3343,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
             // Initialize additional items
             mFilterThresholdsUsed = new udtFilterThresholdsType();
-            mInstrumentGroupsStored = new Dictionary<string, List<string>>();
+            mInstrumentGroupsStored = new Dictionary<string, SortedSet<string>>();
             mSearchToolsUsed = new SortedSet<string>();
             mExperimentNEWTInfo = new Dictionary<int, string>();
             mExperimentTissue = new Dictionary<string, string>();
@@ -4259,7 +4262,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
             else
             {
-                instruments = new List<string> { instrumentName };
+                instruments = new SortedSet<string> { instrumentName };
                 mInstrumentGroupsStored.Add(instrumentGroup, instruments);
             }
         }
