@@ -476,7 +476,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     m_StatusTools.CurrentOperation = "Processing job " + udtCurrentJobInfo.Job + ", dataset " + udtCurrentJobInfo.Dataset;
 
                     Console.WriteLine();
-                    LogDebug((jobsProcessed + 1) + ": " + m_StatusTools.CurrentOperation, 10);
+                    LogDebug(string.Format("{0}: {1}", jobsProcessed + 1, m_StatusTools.CurrentOperation), 10);
 
                     var result = ProcessJob(
                         jobInfo, udtFilterThresholds,
@@ -3958,7 +3958,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                             if (allowSkip)
                             {
-                                LogDebug(string.Format("Skipping job {0} since the .mgf and .mzid.gz file already exist at {1}", job,
+                                LogDebug(string.Format("Skipping job {0} since the .mgf and .mzid.gz files already exist at {1}", job,
                                                        remoteTransferFolder));
 
                                 foreach (var sourceFilePath in filesToCopy)
