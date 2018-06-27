@@ -55,7 +55,7 @@ namespace AnalysisManagerBase
         public int Experiment_NEWT_ID { get; set; }
 
         /// <summary>
-        /// NEWT Name for Experiment_Organism; see http://dms2.pnl.gov/ontology/report/NEWT/
+        /// NEWT Name for Experiment_Organism; see https://dms2.pnl.gov/ontology/report/NEWT/
         /// </summary>
         /// <value></value>
         /// <returns></returns>

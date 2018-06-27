@@ -66,7 +66,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         private string mConsoleOutputErrorMsg;
 
         // This dictionary tracks the peptide hit jobs defined for this data package
-        // The keys are job numbers and the values contains job info
+        // The keys are job numbers and the values contain job info
         private Dictionary<int, clsDataPackageJobInfo> mDataPackagePeptideHitJobs;
 
         private string mPrideConverterProgLoc = string.Empty;
@@ -84,59 +84,130 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         private string mCacheFolderPath = string.Empty;
         private string mPreviousDatasetName = string.Empty;
 
-        // This list contains full file paths for files that will be deleted from the local work directory
+        /// <summary>
+        /// Previous dataset files to delete
+        /// </summary>
+        /// <remarks>Full file paths for files that will be deleted from the local work directory</remarks>
         private List<string> mPreviousDatasetFilesToDelete;
 
-        // This list contains full file paths for files that will be copied from the local work directory to the transfer directory
+        /// <summary>
+        /// Previous dataset files to copy
+        /// </summary>
+        /// <remarks>Full file paths for files that will be copied from the local work directory to the transfer directory</remarks>
         private List<string> mPreviousDatasetFilesToCopy;
 
+        /// <summary>
+        /// Cached FASTA file name
+        /// </summary>
         private string mCachedOrgDBName = string.Empty;
 
-        // This dictionary holds protein name in the key
-        // The value is a key-value pair where the key is the Protein Index and the value is the protein sequence
+        /// <summary>
+        /// Cached proteins
+        /// </summary>
+        /// <remarks>
+        /// Keys are protein name
+        /// Values are key-value pairs where the key is the Protein Index and the value is the protein sequence
+        /// </remarks>
         private Dictionary<string, KeyValuePair<int, string>> mCachedProteins;
 
-        // This dictionary holds the protein index as the key and tracks the number of filter-passing PSMs for each protein as the value
+        /// <summary>
+        /// Protein PSM Counts
+        /// </summary>
+        /// <remarks>
+        /// Keys are protein index in mCachedProteins
+        /// Values are the filter-passing PSMs for each protein
+        /// </remarks>
         private Dictionary<int, int> mCachedProteinPSMCounts;
 
-        // Keys in this dictionary are filenames
-        // Values contain info on each file
-        // Note that PRIDE uses case-sensitive file names, so it is important to properly capitalize the files to match the official DMS dataset name
-        // However, this dictionary is instantiated with a case-insensitive comparer, to prevent duplicate entries
+        /// <summary>
+        /// Master px file list
+        /// </summary>
+        /// <remarks>
+        /// Keys are filenames
+        /// Values contain info on each file
+        /// Note that PRIDE uses case-sensitive file names, so it is important to properly capitalize the files to match the official DMS dataset name
+        /// However, this dictionary is instantiated with a case-insensitive comparer, to prevent duplicate entries
+        /// </remarks>
         private Dictionary<string, clsPXFileInfoBase> mPxMasterFileList;
 
-        // Keys in this dictionary are PXFileIDs
-        // Values contain info on each file, including the PXFileType and the FileIDs that map to this file (empty list if no mapped files)
-        // Note that PRIDE uses case-sensitive file names, so it is important to properly capitalize the files to match the official DMS dataset name
-        // However, this dictionary is instantiated with a case-insensitive comparer, to prevent duplicate entries
+        /// <summary>
+        /// Px result files
+        /// </summary>
+        /// <remarks>
+        /// Keys are PXFileIDs
+        /// Values contain info on each file, including the PXFileType and the FileIDs that map to this file (empty list if no mapped files)
+        /// </remarks>
         private Dictionary<int, clsPXFileInfo> mPxResultFiles;
 
         private udtFilterThresholdsType mFilterThresholdsUsed;
 
-        // Keys in this dictionary are instrument group names
-        // Values are the specific instrument names
-        private Dictionary<string, List<string>> mInstrumentGroupsStored;
+        /// <summary>
+        /// Instrument group names
+        /// </summary>
+        /// <remarks>
+        /// Keys are instrument group names
+        /// Values are the specific instrument names in the instrument gruop
+        /// </remarks>
+        private Dictionary<string, SortedSet<string>> mInstrumentGroupsStored;
+
+        /// <summary>
+        /// Search tool names
+        /// </summary>
         private SortedSet<string> mSearchToolsUsed;
 
-        // Keys in this dictionary are NEWT IDs
-        // Values are the NEWT name for the given ID
+        /// <summary>
+        /// Experiment organism information
+        /// </summary>
+        /// <remarks>
+        /// Keys are NEWT IDs
+        /// Values are the NEWT name for the given ID
+        /// </remarks>
         private Dictionary<int, string> mExperimentNEWTInfo;
 
         // Keys in this dictionary are Unimod accession names (e.g. UNIMOD:35)
         // Values are CvParam data for the modification
+
+        /// <summary>
+        /// Modifications used in the analysis jobs
+        /// </summary>
+        /// <remarks>
+        /// Keys are Unimod accession names(e.g.UNIMOD:35)
+        /// Values are CvParam data for the modification
+        /// </remarks>
         private Dictionary<string, clsSampleMetadata.udtCvParamInfoType> mModificationsUsed;
 
-        // Keys in this dictionary are mzid.gz file names
-        // Values are the sample info for the file
+        /// <summary>
+        /// Sample info for each mzid.gz file
+        /// (instantiated with a case insensitive comparer)
+        /// </summary>
+        /// <remarks>
+        /// Keys are mzid.gz file names
+        /// Values are the sample info for the file
+        /// </remarks>
         private Dictionary<string, clsSampleMetadata> mMzIdSampleInfo;
 
-        // Keys in this dictionary are _dta.txt file names
-        // Values contain info on each file
+        /// <summary>
+        /// _dta.txt file stats
+        /// </summary>
+        /// <remarks>
+        /// Keys are _dta.txt file names
+        /// Values contain info on each file
+        /// </remarks>
         private Dictionary<string, clsPXFileInfoBase> mCDTAFileStats;
 
+        /// <summary>
+        /// MzML /  MzXML file creator
+        /// </summary>
         private AnalysisManagerMsXmlGenPlugIn.clsMSXMLCreator mMSXmlCreator;
+
+        /// <summary>
+        /// DTA to MGF converter
+        /// </summary>
         private DTAtoMGF.clsDTAtoMGF mDTAtoMGF;
 
+        /// <summary>
+        /// Program runner
+        /// </summary>
         private clsRunDosProgram mCmdRunner;
 
         #endregion

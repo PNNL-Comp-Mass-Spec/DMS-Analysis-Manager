@@ -53,7 +53,7 @@ namespace AnalysisManagerBase
         public string Experiment_Organism { get; set; }
 
         /// <summary>
-        /// NEWT ID for Experiment_Organism; see http://dms2.pnl.gov/ontology/report/NEWT/
+        /// NEWT ID for Experiment_Organism; see https://dms2.pnl.gov/ontology/report/NEWT/
         /// </summary>
         /// <value></value>
         /// <returns></returns>
@@ -61,7 +61,7 @@ namespace AnalysisManagerBase
         public int Experiment_NEWT_ID { get; set; }
 
         /// <summary>
-        /// NEWT Name for Experiment_Organism; see http://dms2.pnl.gov/ontology/report/NEWT/
+        /// NEWT Name for Experiment_Organism; see https://dms2.pnl.gov/ontology/report/NEWT/
         /// </summary>
         /// <value></value>
         /// <returns></returns>
