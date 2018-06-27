@@ -533,21 +533,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             return 5;
         }
 
-        private void AddPlaceholderDatasetEntry(KeyValuePair<int, clsDataPackageDatasetInfo> datasetInfo)
         {
-            AddNEWTInfo(datasetInfo.Value.Experiment_NEWT_ID, datasetInfo.Value.Experiment_NEWT_Name);
-
-            // Store the instrument group and instrument name
-            StoreInstrumentInfo(datasetInfo.Value);
-
-            var udtDatasetInfo = datasetInfo.Value;
-            var datasetRawFilePath = Path.Combine(udtDatasetInfo.ServerStoragePath, udtDatasetInfo.Dataset + ".raw");
-
-            var dataPkgJob = clsAnalysisResources.GetPseudoDataPackageJobInfo(udtDatasetInfo);
-
-            var rawFileID = AddPxFileToMasterList(datasetRawFilePath, dataPkgJob);
-
-            AddPxResultFile(rawFileID, clsPXFileInfoBase.ePXFileType.Raw, datasetRawFilePath, dataPkgJob);
         }
 
         private void AddNEWTInfo(int newtID, string newtName)
@@ -562,6 +548,25 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             {
                 mExperimentNEWTInfo.Add(newtID, newtName);
             }
+        }
+
+        private void AddPlaceholderDatasetEntry(KeyValuePair<int, clsDataPackageDatasetInfo> datasetInfo)
+        {
+            AddExperimentTissueId(datasetInfo.Value.Experiment_Tissue_ID, datasetInfo.Value.Experiment_Tissue_Name);
+
+            AddNEWTInfo(datasetInfo.Value.Experiment_NEWT_ID, datasetInfo.Value.Experiment_NEWT_Name);
+
+            // Store the instrument group and instrument name
+            StoreInstrumentInfo(datasetInfo.Value);
+
+            var udtDatasetInfo = datasetInfo.Value;
+            var datasetRawFilePath = Path.Combine(udtDatasetInfo.ServerStoragePath, udtDatasetInfo.Dataset + ".raw");
+
+            var dataPkgJob = clsAnalysisResources.GetPseudoDataPackageJobInfo(udtDatasetInfo);
+
+            var rawFileID = AddPxFileToMasterList(datasetRawFilePath, dataPkgJob);
+
+            AddPxResultFile(rawFileID, clsPXFileInfoBase.ePXFileType.Raw, datasetRawFilePath, dataPkgJob);
         }
 
         private int AddPxFileToMasterList(string filePath, clsDataPackageJobInfo dataPkgJob)
