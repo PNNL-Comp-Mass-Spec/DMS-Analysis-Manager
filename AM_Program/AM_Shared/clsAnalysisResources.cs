@@ -2817,74 +2817,7 @@ namespace AnalysisManagerBase
                 return false;
             }
 
-            return LoadDataPackageDatasetInfo(connectionString, dataPackageID, out dctDataPackageDatasets);
-        }
-
-        /// <summary>
-        /// Looks up dataset information for a data package
-        /// </summary>
-        /// <param name="connectionString">Database connection string (DMS_Pipeline DB, aka the broker DB)</param>
-        /// <param name="dataPackageID">Data Package ID</param>
-        /// <param name="dctDataPackageDatasets">Datasets associated with the given data package</param>
-        /// <returns>True if a data package is defined and it has datasets associated with it</returns>
-        /// <remarks></remarks>
-        public static bool LoadDataPackageDatasetInfo(string connectionString, int dataPackageID, out Dictionary<int, clsDataPackageDatasetInfo> dctDataPackageDatasets)
-        {
-
-            // Obtains the dataset information for a data package
-            const short RETRY_COUNT = 3;
-
-            dctDataPackageDatasets = new Dictionary<int, clsDataPackageDatasetInfo>();
-
-            var sqlStr = new StringBuilder();
-
-            // View V_DMS_Data_Package_Datasets is in the DMS_Pipeline database
-            // That view references view V_DMS_Data_Package_Aggregation_Datasets in the DMS_Data_Package database
-            // That view pulls information from several tables in the DMS_Data_Package database, plus 3 views in DMS5:
-            //   V_Dataset_Folder_Path, V_Organism_Export, and V_Dataset_Archive_Path
-            // Experiment_NEWT_ID comes from the organism for the experiment, and actually comes from field NCBI_Taxonomy_ID in T_Organisms
-            //
-            sqlStr.Append(" SELECT Dataset, DatasetID, Instrument, InstrumentGroup, ");
-            sqlStr.Append("        Experiment, Experiment_Reason, Experiment_Comment, Organism, Experiment_NEWT_ID, Experiment_NEWT_Name, ");
-            sqlStr.Append("        Dataset_Folder_Path, Archive_Folder_Path, RawDataType");
-            sqlStr.Append(" FROM V_DMS_Data_Package_Datasets");
-            sqlStr.Append(" WHERE Data_Package_ID = " + dataPackageID);
-            sqlStr.Append(" ORDER BY Dataset");
-
-
-            // Get a table to hold the results of the query
-            var success = clsGlobal.GetDataTableByQuery(sqlStr.ToString(), connectionString, "LoadDataPackageDatasetInfo", RETRY_COUNT, out var resultSet);
-
-            if (!success)
-            {
-                var errorMessage = "LoadDataPackageDatasetInfo; Excessive failures attempting to retrieve data package dataset info from database";
-                LogTools.LogError(errorMessage);
-                resultSet.Dispose();
-                return false;
-            }
-
-            // Verify at least one row returned
-            if (resultSet.Rows.Count < 1)
-            {
-                // No data was returned
-                var warningMessage = "LoadDataPackageDatasetInfo; No datasets were found for data package " + dataPackageID;
-                LogTools.LogError(warningMessage);
-                return false;
-            }
-
-            foreach (DataRow curRow in resultSet.Rows)
-            {
-                var udtDatasetInfo = ParseDataPackageDatasetInfoRow(curRow);
-
-                if (!dctDataPackageDatasets.ContainsKey(udtDatasetInfo.DatasetID))
-                {
-                    dctDataPackageDatasets.Add(udtDatasetInfo.DatasetID, udtDatasetInfo);
-                }
-            }
-
-            resultSet.Dispose();
-            return true;
-
+            return clsDataPackageInfoLoader.LoadDataPackageDatasetInfo(connectionString, dataPackageID, out dctDataPackageDatasets);
         }
 
         /// <summary>

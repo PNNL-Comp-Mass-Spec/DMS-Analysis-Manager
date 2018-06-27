@@ -2308,7 +2308,7 @@ namespace AnalysisManagerBase
                 return false;
             }
 
-            return clsAnalysisResources.LoadDataPackageDatasetInfo(connectionString, dataPackageID, out dctDataPackageDatasets);
+            return clsDataPackageInfoLoader.LoadDataPackageDatasetInfo(connectionString, dataPackageID, out dctDataPackageDatasets);
         }
 
         /// <summary>
