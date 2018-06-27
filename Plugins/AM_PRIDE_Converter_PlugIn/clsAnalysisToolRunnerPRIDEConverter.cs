@@ -164,8 +164,14 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// </remarks>
         private Dictionary<int, string> mExperimentNEWTInfo;
 
-        // Keys in this dictionary are Unimod accession names (e.g. UNIMOD:35)
-        // Values are CvParam data for the modification
+        /// <summary>
+        /// List of BTO Tissue IDs for experiments in the data package
+        /// </summary>
+        /// <remarks>
+        /// Keys are BTO IDs (e.g., BTO:0000131)
+        /// Values are tissue names (e.g., blood plasma)
+        /// </remarks>
+        private Dictionary<string, string> mExperimentTissue;
 
         /// <summary>
         /// Modifications used in the analysis jobs
@@ -424,8 +430,19 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
         }
 
-        private int ProcessJobs(clsAnalysisResults analysisResults, string remoteTransferFolder,
-            IReadOnlyDictionary<string, string> templateParameters, Dictionary<int, clsDataPackageDatasetInfo> dataPackageDatasets)
+        /// <summary>
+        /// Process the analysis jobs in mDataPackagePeptideHitJobs
+        /// </summary>
+        /// <param name="analysisResults"></param>
+        /// <param name="remoteTransferFolder"></param>
+        /// <param name="templateParameters"></param>
+        /// <param name="dataPackageDatasets">Datasets in the data package (keys are DatasetID)</param>
+        /// <returns></returns>
+        private int ProcessJobs(
+            clsAnalysisResults analysisResults,
+            string remoteTransferFolder,
+            IReadOnlyDictionary<string, string> templateParameters,
+            IReadOnlyDictionary<int, clsDataPackageDatasetInfo> dataPackageDatasets)
         {
             var jobsProcessed = 0;
             var jobFailureCount = 0;
@@ -461,7 +478,10 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                     Console.WriteLine();
                     LogDebug((jobsProcessed + 1) + ": " + m_StatusTools.CurrentOperation, 10);
 
-                    var result = ProcessJob(jobInfo, udtFilterThresholds, analysisResults, remoteTransferFolder, datasetRawFilePaths,
+                    var result = ProcessJob(
+                        jobInfo, udtFilterThresholds,
+                        analysisResults, dataPackageDatasets,
+                        remoteTransferFolder, datasetRawFilePaths,
                         templateParameters, assumeInstrumentDataUnpurged);
 
                     if (result != CloseOutType.CLOSEOUT_SUCCESS)
@@ -533,7 +553,12 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             return 5;
         }
 
+        private void AddExperimentTissueId(string tissueId, string tissueName)
         {
+            if (!string.IsNullOrWhiteSpace(tissueId) && !mExperimentTissue.ContainsKey(tissueId))
+            {
+                mExperimentTissue.Add(tissueId, tissueName);
+            }
         }
 
         private void AddNEWTInfo(int newtID, string newtName)
@@ -2745,13 +2770,23 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         }
                     }
 
-                    string defaultTissue;
-                    if (mouseOrHuman)
-                        defaultTissue = TBD + DEFAULT_TISSUE_CV_MOUSE_HUMAN;
+                    if (mExperimentTissue.Count > 0)
+                    {
+                        foreach (var item in mExperimentTissue)
+                        {
+                            WritePXHeader(swPXFile, "tissue", GetCVString("BTO", item.Key, item.Value), templateParameters, paramsWithCVs);
+                        }
+                    }
                     else
-                        defaultTissue = TBD + DEFAULT_TISSUE_CV;
+                    {
+                        string defaultTissue;
+                        if (mouseOrHuman)
+                            defaultTissue = TBD + DEFAULT_TISSUE_CV_MOUSE_HUMAN;
+                        else
+                            defaultTissue = TBD + DEFAULT_TISSUE_CV;
 
-                    WritePXHeader(swPXFile, "tissue", defaultTissue, templateParameters, paramsWithCVs);
+                        WritePXHeader(swPXFile, "tissue", defaultTissue, templateParameters, paramsWithCVs);
+                    }
 
                     var defaultCellType = TBD + "Optional, e.g. " + DEFAULT_CELL_TYPE_CV + DELETION_WARNING;
                     var defaultDisease = TBD + "Optional, e.g. " + DEFAULT_DISEASE_TYPE_CV + DELETION_WARNING;
@@ -3308,6 +3343,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             mInstrumentGroupsStored = new Dictionary<string, List<string>>();
             mSearchToolsUsed = new SortedSet<string>();
             mExperimentNEWTInfo = new Dictionary<int, string>();
+            mExperimentTissue = new Dictionary<string, string>();
 
             mModificationsUsed = new Dictionary<string, clsSampleMetadata.udtCvParamInfoType>(StringComparer.OrdinalIgnoreCase);
 
@@ -3491,10 +3527,23 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             }
         }
 
+        /// <summary>
+        /// Process one job
+        /// </summary>
+        /// <param name="jobInfo">Keys are job numbers and values contain job info</param>
+        /// <param name="udtFilterThresholds"></param>
+        /// <param name="analysisResults"></param>
+        /// <param name="dataPackageDatasets"></param>
+        /// <param name="remoteTransferFolder"></param>
+        /// <param name="datasetRawFilePaths"></param>
+        /// <param name="templateParameters"></param>
+        /// <param name="assumeInstrumentDataUnpurged"></param>
+        /// <returns></returns>
         private CloseOutType ProcessJob(
             KeyValuePair<int, clsDataPackageJobInfo> jobInfo,
             udtFilterThresholdsType udtFilterThresholds,
             clsAnalysisResults analysisResults,
+            IReadOnlyDictionary<int, clsDataPackageDatasetInfo> dataPackageDatasets,
             string remoteTransferFolder,
             IReadOnlyDictionary<string, string> datasetRawFilePaths,
             IReadOnlyDictionary<string, string> templateParameters,
@@ -3528,6 +3577,21 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             if (!mSearchToolsUsed.Contains(jobInfo.Value.Tool))
             {
                 mSearchToolsUsed.Add(jobInfo.Value.Tool);
+            }
+
+            // Look for this job's dataset in dataPackageDatasets
+            var datasetId = jobInfo.Value.DatasetID;
+
+            if (dataPackageDatasets.TryGetValue(datasetId, out var datasetInfo))
+            {
+                if (!string.IsNullOrWhiteSpace(datasetInfo.Experiment_Tissue_ID))
+                {
+                    AddExperimentTissueId(datasetInfo.Experiment_Tissue_ID, datasetInfo.Experiment_Tissue_Name);
+                }
+                else
+                {
+                    datasetInfo = null;
+                }
             }
 
             // Update the cached NEWT info
@@ -3600,7 +3664,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             {
                 m_message = string.Empty;
 
-                success = UpdateMzIdFiles(remoteTransferFolder, jobInfo.Value, searchedMzML, out var mzIdFilePaths, out _, templateParameters);
+                success = UpdateMzIdFiles(remoteTransferFolder, jobInfo.Value, datasetInfo, searchedMzML, out var mzIdFilePaths, out _, templateParameters);
 
                 if (!success || mzIdFilePaths == null || mzIdFilePaths.Count == 0)
                 {
@@ -4419,6 +4483,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         /// </summary>
         /// <param name="remoteTransferFolder">Remote transfer folder</param>
         /// <param name="dataPkgJob">Data package job info</param>
+        /// <param name="dataPkgDatasetInfo">Dataset info for this job</param>
         /// <param name="searchedMzML">True if analysis job used a .mzML file (though we track .mzml.gz files with this class)</param>
         /// <param name="mzIdFilePaths">Output parameter: path to the .mzid.gz file for this job (will be multiple files if a SplitFasta search was performed)</param>
         /// <param name="mzIdExistsRemotely">Output parameter: true if the .mzid.gz file already exists in the remote transfer folder</param>
@@ -4428,6 +4493,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         private bool UpdateMzIdFiles(
             string remoteTransferFolder,
             clsDataPackageJobInfo dataPkgJob,
+            clsDataPackageDatasetInfo dataPkgDatasetInfo,
             bool searchedMzML,
             out List<string> mzIdFilePaths,
             out bool mzIdExistsRemotely,
@@ -4443,6 +4509,12 @@ namespace AnalysisManagerPRIDEConverterPlugIn
             {
                 tissueCv = tissueCv.Replace("BRENDA", "BTO");
             }
+
+            if (dataPkgDatasetInfo != null && !string.IsNullOrWhiteSpace(dataPkgDatasetInfo.Experiment_Tissue_ID))
+            {
+                tissueCv = GetCVString("BTO", dataPkgDatasetInfo.Experiment_Tissue_ID, dataPkgDatasetInfo.Experiment_Tissue_Name);
+            }
+
             sampleMetadata.Tissue = ValidateCV(tissueCv);
 
             if (templateParameters.TryGetValue("cell_type", out var cellType))

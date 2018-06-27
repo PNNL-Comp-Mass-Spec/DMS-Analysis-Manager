@@ -47,7 +47,25 @@ namespace AnalysisManagerBase
         public string Experiment_Organism { get; set; }
 
         /// <summary>
-        /// NEWT ID for Experiment_Organism; see http://dms2.pnl.gov/ontology/report/NEWT/
+        /// BTO ID for Experiment_Tissue; see https://dms2.pnl.gov/tissue/report
+        /// For example, BTO:0000131
+        /// </summary>
+        /// <value></value>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        public string Experiment_Tissue_ID { get; set; }
+
+        /// <summary>
+        /// Experiment_Tissue name; see https://dms2.pnl.gov/tissue/report
+        /// For example, blood plasma
+        /// </summary>
+        /// <value></value>
+        /// <returns></returns>
+        /// <remarks></remarks>
+        public string Experiment_Tissue_Name { get; set; }
+
+        /// <summary>
+        /// NEWT ID for Experiment_Organism; see https://dms2.pnl.gov/ontology/report/NEWT/
         /// </summary>
         /// <value></value>
         /// <returns></returns>
@@ -92,6 +110,8 @@ namespace AnalysisManagerBase
             Experiment_Reason = string.Empty;
             Experiment_Comment = string.Empty;
             Experiment_Organism = string.Empty;
+            Experiment_Tissue_ID = string.Empty;
+            Experiment_Tissue_Name = string.Empty;
             Experiment_NEWT_ID = 0;
             Experiment_NEWT_Name = string.Empty;
             ServerStoragePath = string.Empty;

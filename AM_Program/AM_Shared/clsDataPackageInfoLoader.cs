@@ -80,7 +80,8 @@ namespace AnalysisManagerBase
             // That view references   view V_DMS_Data_Package_Aggregation_Datasets in the DMS_Data_Package database
 
             sqlStr.Append(" SELECT Dataset, DatasetID, Instrument, InstrumentGroup, ");
-            sqlStr.Append("        Experiment, Experiment_Reason, Experiment_Comment, Organism, Experiment_NEWT_ID, Experiment_NEWT_Name, ");
+            sqlStr.Append("        Experiment, Experiment_Reason, Experiment_Comment, Organism,");
+            sqlStr.Append("        Experiment_NEWT_ID, Experiment_NEWT_Name, Experiment_Tissue_ID, Experiment_Tissue_Name,");
             sqlStr.Append("        Dataset_Folder_Path, Archive_Folder_Path, RawDataType");
             sqlStr.Append(" FROM V_DMS_Data_Package_Datasets");
             sqlStr.Append(" WHERE Data_Package_ID = " + dataPackageID);
@@ -373,13 +374,14 @@ namespace AnalysisManagerBase
                 Experiment_Reason = clsGlobal.DbCStr(curRow["Experiment_Reason"]),
                 Experiment_Comment = clsGlobal.DbCStr(curRow["Experiment_Comment"]),
                 Experiment_Organism = clsGlobal.DbCStr(curRow["Organism"]),
+                Experiment_Tissue_ID = clsGlobal.DbCStr(curRow["Experiment_Tissue_ID"]),
+                Experiment_Tissue_Name = clsGlobal.DbCStr(curRow["Experiment_Tissue_Name"]),
                 Experiment_NEWT_ID = clsGlobal.DbCInt(curRow["Experiment_NEWT_ID"]),
                 Experiment_NEWT_Name = clsGlobal.DbCStr(curRow["Experiment_NEWT_Name"]),
                 ServerStoragePath = clsGlobal.DbCStr(curRow["Dataset_Folder_Path"]),
                 ArchiveStoragePath = clsGlobal.DbCStr(curRow["Archive_Folder_Path"]),
                 RawDataType = clsGlobal.DbCStr(curRow["RawDataType"])
             };
-
 
             return datasetInfo;
 
