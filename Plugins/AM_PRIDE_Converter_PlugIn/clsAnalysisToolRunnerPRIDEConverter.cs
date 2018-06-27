@@ -5076,17 +5076,20 @@ namespace AnalysisManagerPRIDEConverterPlugIn
         {
             if (templateParameters.TryGetValue(type, out var valueOverride))
             {
-                if (type.Equals("tissue") && valueOverride.Contains("BRENDA"))
+                if (!valueOverride.Equals("Auto-Defined", StringComparison.OrdinalIgnoreCase))
                 {
-                    valueOverride = valueOverride.Replace("BRENDA", "BTO");
-                }
+                    if (type.Equals("tissue") && valueOverride.Contains("BRENDA"))
+                    {
+                        valueOverride = valueOverride.Replace("BRENDA", "BTO");
+                    }
 
-                if (paramsWithCVs.Contains(type))
-                {
-                    valueOverride = ValidateCV(valueOverride);
-                }
+                    if (paramsWithCVs.Contains(type))
+                    {
+                        valueOverride = ValidateCV(valueOverride);
+                    }
 
-                value = valueOverride;
+                    value = valueOverride;
+                }
             }
 
             if (minimumValueLength > 0)
