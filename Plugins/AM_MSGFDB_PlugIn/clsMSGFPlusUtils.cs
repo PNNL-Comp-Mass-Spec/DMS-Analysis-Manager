@@ -1178,8 +1178,8 @@ namespace AnalysisManagerMSGFDBPlugIn
         private Dictionary<string, string> GetMSFGDBParameterNames()
         {
             // Keys are the parameter name in the MS-GF+ parameter file
-            // Values are the command line switch name
-            var dctParamNames = new Dictionary<string, string>(25, StringComparer.OrdinalIgnoreCase)
+            // Values are the MS-GF+ command line switch name
+            var dctParamNames = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
                 {"PMTolerance", "t"},
                 {"FragTolerance", "f"},
@@ -1211,7 +1211,8 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // Auto-added by this code if not defined
                 {"minNumPeaks", "minNumPeaks"},
                 {"Protocol", "protocol"},
-                {"ChargeCarrierMass", "ccm"}
+                {"ChargeCarrierMass", "ccm"},
+                {"MaxMissedCleavages", "maxMissedCleavages"}
             };
 
             // The following are special cases;
@@ -1729,7 +1730,7 @@ namespace AnalysisManagerMSGFDBPlugIn
         // Reading spectra finished (elapsed time: 15.54 sec)
         // Using 7 threads.
         // Search Parameters:
-        // 	PrecursorMassTolerance: 20.0ppm
+        // 	PrecursorMassTolerance: 20.0 ppm
         // 	IsotopeError: -1,2
         // Spectrum 0-27672 (total: 27673)
         // Splitting work into 21 tasks.
@@ -2170,11 +2171,11 @@ namespace AnalysisManagerMSGFDBPlugIn
                 // Initialize the Param Name dictionary
                 var dctParamNames = GetMSFGDBParameterNames();
 
-                using (var srParamFile = new StreamReader(new FileStream(parameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
+                using (var reader = new StreamReader(new FileStream(parameterFilePath, FileMode.Open, FileAccess.Read, FileShare.Read)))
                 {
-                    while (!srParamFile.EndOfStream)
+                    while (!reader.EndOfStream)
                     {
-                        var dataLine = srParamFile.ReadLine();
+                        var dataLine = reader.ReadLine();
 
                         var kvSetting = clsGlobal.GetKeyValueSetting(dataLine);
 
@@ -2363,7 +2364,7 @@ namespace AnalysisManagerMSGFDBPlugIn
                             {
                                 ErrorMessage = "Invalid value for NumMods in MS-GF+ parameter file";
                                 OnErrorEvent(ErrorMessage + ": " + dataLine);
-                                srParamFile.Dispose();
+                                reader.Dispose();
                                 return CloseOutType.CLOSEOUT_FAILED;
                             }
                         }
