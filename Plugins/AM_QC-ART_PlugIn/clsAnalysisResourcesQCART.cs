@@ -499,7 +499,7 @@ namespace AnalysisManagerQCARTPlugin
 
                 if (!diCacheFolder.Exists)
                 {
-                    // Create the folder (we'll use it later)
+                    // Create the directory (we'll use it later)
                     diCacheFolder.Create();
                     return false;
                 }
@@ -509,7 +509,7 @@ namespace AnalysisManagerQCARTPlugin
 
                 if (!diProjectFolder.Exists)
                 {
-                    // Create the folder (we'll use it later)
+                    // Create the directory (we'll use it later)
                     diProjectFolder.Create();
                     return false;
                 }

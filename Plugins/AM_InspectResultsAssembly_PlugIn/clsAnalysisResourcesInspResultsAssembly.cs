@@ -67,7 +67,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 {
                     if (m_DebugLevel >= 3)
                     {
-                        LogError("RetrieveFile returned False for " + zippedResultName + " using folder " + transferFolderName);
+                        LogError("RetrieveFile returned False for " + zippedResultName + " using directory " + transferFolderName);
                     }
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
@@ -90,7 +90,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                 {
                     if (m_DebugLevel >= 3)
                     {
-                        LogError("RetrieveFile returned False for " + searchLogResultName + " using folder " + transferFolderName);
+                        LogError("RetrieveFile returned False for " + searchLogResultName + " using directory " + transferFolderName);
                     }
                     return CloseOutType.CLOSEOUT_FILE_NOT_FOUND;
                 }
@@ -154,7 +154,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                         // Error copying file (error will have already been logged)
                         if (m_DebugLevel >= 3)
                         {
-                            LogError("CopyFileToWorkDir returned False for " + inspectResultsFile + " using folder " + transferFolderName);
+                            LogError("CopyFileToWorkDir returned False for " + inspectResultsFile + " using directory " + transferFolderName);
                         }
                         return false;
                     }
@@ -198,7 +198,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                             // Error copying file (error will have already been logged)
                             if (m_DebugLevel >= 3)
                             {
-                                LogError("CopyFileToWorkDir returned False for " + fileName + " using folder " + transferFolderName);
+                                LogError("CopyFileToWorkDir returned False for " + fileName + " using directory " + transferFolderName);
                             }
                             return false;
                         }

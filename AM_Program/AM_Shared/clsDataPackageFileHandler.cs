@@ -202,7 +202,7 @@ namespace AnalysisManagerBase
                 OnStatusEvent(string.Format("Determined the input folder for job {0} is {1}, step tool {2}", job, inputFolderName, stepToolMatch));
 
                 // Look for a CacheInfo.txt file in the matched input folder
-                // Note that FindValidFolder will search both the dataset folder and in folder inputFolderName below the dataset folder
+                // Note that FindValidFolder will search both the dataset directory and in folder inputFolderName below the dataset directory
 
                 var datasetFolderPath = mAnalysisResources.FindValidFolder(
                     dataset, "*_CacheInfo.txt", folderNameToFind: inputFolderName, maxAttempts: 1,
@@ -252,7 +252,7 @@ namespace AnalysisManagerBase
 
                     if (!sourceFolder.Exists)
                     {
-                        OnErrorEvent("FindValidFolder reported a match to folder " + cacheInfoFileSourceType + " but the folder was not found");
+                        OnErrorEvent("FindValidFolder reported a match to folder " + cacheInfoFileSourceType + " but the directory was not found");
                         return string.Empty;
                     }
 
@@ -827,7 +827,7 @@ namespace AnalysisManagerBase
                         {
                             if (eLogMsgTypeIfNotFound != BaseLogger.LogLevels.DEBUG)
                             {
-                                OnErrorEvent("CopyFileToWorkDir returned False for " + sourceFilename + " using folder " + sourceFolderPath);
+                                OnErrorEvent("CopyFileToWorkDir returned False for " + sourceFilename + " using directory " + sourceFolderPath);
                                 mAnalysisResources.RestoreCachedDataAndJobInfo();
                                 return false;
                             }
@@ -835,7 +835,7 @@ namespace AnalysisManagerBase
                         }
                         else
                         {
-                            OnStatusEvent("Copied " + sourceFilename + " from folder " + sourceFolderPath);
+                            OnStatusEvent("Copied " + sourceFilename + " from directory " + sourceFolderPath);
                             lstFoundFiles.Add(Path.Combine(localFolderPath, sourceFilename));
 
                             if (prefixRequired)
@@ -944,7 +944,7 @@ namespace AnalysisManagerBase
 
                     if (fileCopied)
                     {
-                        OnStatusEvent("Copied " + sourceMzMLFile.Name + " from folder " + sourceMzMLFile.DirectoryName);
+                        OnStatusEvent("Copied " + sourceMzMLFile.Name + " from directory " + sourceMzMLFile.DirectoryName);
                         lstFoundFiles.Add(Path.Combine(localFolderPath, sourceMzMLFile.Name));
 
                     }

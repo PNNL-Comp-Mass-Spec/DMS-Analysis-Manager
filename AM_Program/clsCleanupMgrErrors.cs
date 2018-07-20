@@ -147,7 +147,7 @@ namespace AnalysisManagerProg
             // Call SP ReportManagerErrorCleanup @ActionCode=1
             ReportManagerErrorCleanup(eCleanupActionCodeConstants.Start);
 
-            // Delete all folders and subfolders in work folder
+            // Delete all directories and subdirectories in the work directory
             var success = CleanWorkDir(mWorkingDirPath, 1);
             string failureMessage;
 
@@ -217,11 +217,11 @@ namespace AnalysisManagerProg
         /// <summary>
         /// Deletes all files in working directory
         /// </summary>
-        /// <param name="workDir">Full path to working directory</param>
+        /// <param name="workDirPath">Full path to working directory</param>
         /// <param name="holdoffSeconds">Number of seconds to wait after calling PRISM.clsProgRunner.GarbageCollectNow()</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks></remarks>
-        private bool CleanWorkDir(string workDir, float holdoffSeconds)
+        private bool CleanWorkDir(string workDirPath, float holdoffSeconds)
         {
             double actualHoldoffSeconds;
 
@@ -246,8 +246,8 @@ namespace AnalysisManagerProg
             clsGlobal.IdleLoop(actualHoldoffSeconds);
 
             // Delete all of the files and folders in the work directory
-            var diWorkFolder = new DirectoryInfo(workDir);
-            if (!DeleteFilesWithRetry(diWorkFolder))
+            var workDir = new DirectoryInfo(workDirPath);
+            if (!DeleteFilesWithRetry(workDir))
             {
                 return false;
             }
@@ -255,7 +255,7 @@ namespace AnalysisManagerProg
             return true;
         }
 
-        private bool DeleteFilesWithRetry(DirectoryInfo diWorkFolder)
+        private bool DeleteFilesWithRetry(DirectoryInfo workDir)
         {
             const int DELETE_RETRY_COUNT = 3;
 
@@ -265,7 +265,7 @@ namespace AnalysisManagerProg
             // Delete the files
             try
             {
-                foreach (var fiFile in diWorkFolder.GetFiles())
+                foreach (var fiFile in workDir.GetFiles())
                 {
 
                     if (!oFileTools.DeleteFileWithRetry(fiFile, DELETE_RETRY_COUNT, out var errorMessage))
@@ -276,11 +276,11 @@ namespace AnalysisManagerProg
                 }
 
                 // Delete the sub directories
-                foreach (var diSubDirectory in diWorkFolder.GetDirectories())
+                foreach (var diSubDirectory in workDir.GetDirectories())
                 {
                     if (DeleteFilesWithRetry(diSubDirectory))
                     {
-                        // Remove the folder if it is empty
+                        // Remove the directory if it is empty
                         diSubDirectory.Refresh();
                         if (diSubDirectory.GetFileSystemInfos().Length != 0)
                             continue;
@@ -319,7 +319,7 @@ namespace AnalysisManagerProg
                                 {
                                     // Retry the delete
                                     diSubDirectory.Delete();
-                                    LogDebug("Updated permissions, then successfully deleted the folder");
+                                    LogDebug("Updated permissions, then successfully deleted the directory");
                                 }
                                 catch (Exception ex3)
                                 {
@@ -344,7 +344,7 @@ namespace AnalysisManagerProg
                     }
                     else
                     {
-                        var failureMessage = "Error deleting working directory subfolder " + diSubDirectory.FullName;
+                        var failureMessage = "Error deleting working directory subdirectory " + diSubDirectory.FullName;
                         LogError(failureMessage);
                         failedDeleteCount += 1;
                     }
@@ -352,7 +352,7 @@ namespace AnalysisManagerProg
             }
             catch (Exception ex)
             {
-                var failureMessage = "Error deleting files/folders in " + diWorkFolder.FullName;
+                var failureMessage = "Error deleting files/folders in " + workDir.FullName;
                 LogError(failureMessage, ex);
                 return false;
             }

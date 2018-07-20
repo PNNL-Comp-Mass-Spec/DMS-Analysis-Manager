@@ -251,7 +251,7 @@ namespace AnalysisManagerICR2LSPlugIn
 
         protected override CloseOutType DeleteDataFile()
         {
-            // Deletes the dataset folder containing s-folders from the working directory
+            // Deletes the dataset directory containing s-folders from the working directory
             var RetryCount = 0;
             var ErrMsg = string.Empty;
 

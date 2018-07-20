@@ -184,7 +184,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
                 bool blnIsFolder;
 
-                // Note that FindDatasetFileOrFolder will return the default dataset folder path, even if the data file is not found
+                // Note that FindDatasetFileOrFolder will return the default dataset directory path, even if the data file is not found
                 // Therefore, we need to check that strRawFilePath actually exists
                 var strRawFilePath = FolderSearch.FindDatasetFileOrFolder(1, out blnIsFolder);
 

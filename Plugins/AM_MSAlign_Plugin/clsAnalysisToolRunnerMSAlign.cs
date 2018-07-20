@@ -458,13 +458,13 @@ namespace AnalysisManagerMSAlignPlugIn
 
                 LogMessage("Copying MSAlign program file to the Work Directory");
 
-                // Make sure the folder doesn't already exit
+                // Make sure the directory doesn't already exist
                 if (diMSAlignWork.Exists)
                 {
                     diMSAlignWork.Delete(true);
                 }
 
-                // Create the folder
+                // Create the directory
                 diMSAlignWork.Create();
                 mMSAlignWorkFolderPath = diMSAlignWork.FullName;
 
@@ -1253,7 +1253,7 @@ namespace AnalysisManagerMSAlignPlugIn
                 var strTargetFilePath = Path.Combine(m_WorkDir, m_Dataset + "_MSAlign_Results_" + strFolderName.ToUpper() + ".zip");
                 var strSourceFolderPath = Path.Combine(mMSAlignWorkFolderPath, strFolderName);
 
-                // Confirm that the folder has one or more files or subfolders
+                // Confirm that the directory has one or more files or subfolders
                 var diSourceFolder = new DirectoryInfo(strSourceFolderPath);
                 if (diSourceFolder.GetFileSystemInfos().Length == 0)
                 {

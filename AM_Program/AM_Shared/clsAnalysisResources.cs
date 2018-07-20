@@ -83,12 +83,12 @@ namespace AnalysisManagerBase
         /// Bruker_FT folder data
         /// </summary>
         /// <remarks>
-        /// 12T datasets acquired prior to 7/16/2010 use a Bruker data station and have an analysis.baf file, 0.ser folder, and a XMASS_Method.m subfolder with file apexAcquisition.method
+        /// 12T datasets acquired prior to 7/16/2010 use a Bruker data station and have an analysis.baf file, 0.ser folder, and a XMASS_Method.m subdirectory with file apexAcquisition.method
         /// - Datasets will have an instrument name of 12T_FTICR and raw_data_type of "zipped_s_folders"
         /// 12T datasets acquired after 9/1/2010 use the Agilent data station, and thus have a .D folder
         /// - Datasets will have an instrument name of 12T_FTICR_B and raw_data_type of "bruker_ft"
         /// 15T datasets also have raw_data_type "bruker_ft"
-        /// - Inside the .D folder is the analysis.baf file; there is also .m subfolder that has a apexAcquisition.method file
+        /// - Inside the .D folder is the analysis.baf file; there is also .m subdirectory that has a apexAcquisition.method file
         /// </remarks>
         public const string RAW_DATA_TYPE_BRUKER_FT_FOLDER = "bruker_ft";
 
@@ -106,7 +106,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <remarks>
         /// The following is used by instruments 9T_FTICR_Imaging and BrukerTOF_Imaging_01
-        /// Series of zipped subfolders, with names like 0_R00X329.zip; subfolders inside the .Zip files have fid files
+        /// Series of zipped subdirectories, with names like 0_R00X329.zip; subdirectories inside the .Zip files have fid files
         /// </remarks>
         public const string RAW_DATA_TYPE_BRUKER_MALDI_IMAGING = "bruker_maldi_imaging";
 
@@ -115,7 +115,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <remarks>
         /// The following is used by instrument Maxis_01
-        /// Inside the .D folder is the analysis.baf file; there is also .m subfolder that has a microTOFQMaxAcquisition.method file; there is not a ser or fid file
+        /// Inside the .D folder is the analysis.baf file; there is also .m subdirectory that has a microTOFQMaxAcquisition.method file; there is not a ser or fid file
         /// </remarks>
         public const string RAW_DATA_TYPE_BRUKER_TOF_BAF_FOLDER = "bruker_tof_baf";
 
@@ -264,12 +264,12 @@ namespace AnalysisManagerBase
         public const string BRUKER_SER_FILE = "ser";
 
         /// <summary>
-        /// Bruerk fid file name
+        /// Bruker fid file name
         /// </summary>
         public const string BRUKER_FID_FILE = "fid";
 
         /// <summary>
-        /// Dataset folder name
+        /// Dataset directory name
         /// </summary>
         public const string JOB_PARAM_DATASET_FOLDER_NAME = "DatasetFolderName";
 
@@ -400,7 +400,7 @@ namespace AnalysisManagerBase
             ZippedSFolders = 8,
 
             /// <summary>
-            /// .D folder is the analysis.baf file; there is also .m subfolder that has a apexAcquisition.method file
+            /// .D folder is the analysis.baf file; there is also .m subdirectory that has a apexAcquisition.method file
             /// </summary>
             BrukerFTFolder = 9,
 
@@ -410,12 +410,12 @@ namespace AnalysisManagerBase
             BrukerMALDISpot = 10,
 
             /// <summary>
-            /// Series of zipped subfolders, with names like 0_R00X329.zip; subfolders inside the .Zip files have fid files
+            /// Series of zipped subdirectories, with names like 0_R00X329.zip; subdirectories inside the .Zip files have fid files
             /// </summary>
             BrukerMALDIImaging = 11,
 
             /// <summary>
-            /// Used by Maxis01; Inside the .D folder is the analysis.baf file; there is also .m subfolder that has a microTOFQMaxAcquisition.method file; there is not a ser or fid file
+            /// Used by Maxis01; Inside the .D folder is the analysis.baf file; there is also .m subdirectory that has a microTOFQMaxAcquisition.method file; there is not a ser or fid file
             /// </summary>
             BrukerTOFBaf = 12
         }
@@ -1547,19 +1547,19 @@ namespace AnalysisManagerBase
 
         /// <summary>
         /// Determines the most appropriate folder to use to obtain dataset files from
-        /// Optionally, can require that a certain file also be present in the folder for it to be deemed valid
+        /// Optionally, can require that a certain file also be present in the directory for it to be deemed valid
         /// If no folder is deemed valid, returns the path defined by Job Param "DatasetStoragePath"
         /// </summary>
         /// <param name="dsName">Name of the dataset</param>
-        /// <param name="fileNameToFind">Optional: Name of a file that must exist in the dataset folder; can contain a wildcard, e.g. *.zip</param>
-        /// <param name="folderNameToFind">Optional: Name of a subfolder that must exist in the dataset folder; can contain a wildcard, e.g. SEQ*</param>
+        /// <param name="fileNameToFind">Optional: Name of a file that must exist in the dataset directory; can contain a wildcard, e.g. *.zip</param>
+        /// <param name="folderNameToFind">Optional: Name of a subdirectory that must exist in the dataset directory; can contain a wildcard, e.g. SEQ*</param>
         /// <param name="maxAttempts">Maximum number of attempts</param>
-        /// <param name="logFolderNotFound">If true, log a warning if the folder is not found</param>
+        /// <param name="logFolderNotFound">If true, log a warning if the directory is not found</param>
         /// <param name="retrievingInstrumentDataFolder">Set to True when retrieving an instrument data folder</param>
-        /// <param name="validFolderFound">Output parameter: True if a valid folder is ultimately found, otherwise false</param>
-        /// <param name="assumeUnpurged">When true, this function returns the path to the dataset folder on the storage server</param>
+        /// <param name="validFolderFound">Output parameter: True if a valid directory is ultimately found, otherwise false</param>
+        /// <param name="assumeUnpurged">When true, this function returns the path to the dataset directory on the storage server</param>
         /// <param name="folderNotFoundMessage"></param>
-        /// <returns>Path to the most appropriate dataset folder</returns>
+        /// <returns>Path to the most appropriate dataset directory</returns>
         /// <remarks>The path returned will be "\\MyEMSL" if the best folder is in MyEMSL</remarks>
         public string FindValidFolder(string dsName, string fileNameToFind, string folderNameToFind, int maxAttempts, bool logFolderNotFound,
                                       bool retrievingInstrumentDataFolder, out bool validFolderFound, bool assumeUnpurged,
@@ -1802,7 +1802,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Examines the folder tree in folderPath to find the a folder with a name like 2013_2
+        /// Examines the directory tree in folderPath to find the a folder with a name like 2013_2
         /// </summary>
         /// <param name="folderPath"></param>
         /// <returns>Matching folder name if found, otherwise an empty string</returns>
@@ -2231,17 +2231,17 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Examine a folder of the form MSXML_Gen_1_93_367204 and remove the DatasetID portion
+        /// Examine a directory name of the form MSXML_Gen_1_93_367204 and remove the DatasetID portion
         /// </summary>
-        /// <param name="toolNameVersionDatasetIDFolder">Shared results folder name</param>
-        /// <returns>The trimmed folder name if a valid folder; throws an exception if the folder name is not the correct format</returns>
+        /// <param name="toolNameVersionDatasetIdDirectory">Shared results folder name</param>
+        /// <returns>The trimmed folder name if a valid directory; throws an exception if the directory name is not the correct format</returns>
         /// <remarks></remarks>
-        public static string GetMSXmlToolNameVersionFolder(string toolNameVersionDatasetIDFolder)
+        public static string GetMSXmlToolNameVersionFolder(string toolNameVersionDatasetIdDirectory)
         {
 
-            // Remove the dataset ID from the end of the folder name
+            // Remove the dataset ID from the end of the directory name
             var reToolNameAndVersion = new Regex(@"^(?<ToolNameVersion>.+\d+_\d+)_\d+$");
-            var reMatch = reToolNameAndVersion.Match(toolNameVersionDatasetIDFolder);
+            var reMatch = reToolNameAndVersion.Match(toolNameVersionDatasetIdDirectory);
             if (!reMatch.Success)
             {
                 throw new Exception("Folder name is not in the expected form of ToolName_Version_DatasetID; unable to strip out the dataset ID");
@@ -2433,7 +2433,7 @@ namespace AnalysisManagerBase
 
             try
             {
-                // Archive storage path and server storage path track the folder just above the dataset folder
+                // Archive storage path and server storage path track the directory just above the dataset directory
                 var archiveFolder = new DirectoryInfo(udtDatasetInfo.ArchiveStoragePath);
                 if (archiveFolder.Parent != null)
                     jobInfo.ArchiveStoragePath = archiveFolder.Parent.FullName;
@@ -2733,7 +2733,7 @@ namespace AnalysisManagerBase
                 return string.Empty;
             }
 
-            // Append the dataset folder name to the transfer folder path
+            // Append the dataset directory name to the transfer folder path
             var datasetFolderName = m_jobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, JOB_PARAM_DATASET_FOLDER_NAME);
             if (string.IsNullOrWhiteSpace(datasetFolderName))
                 datasetFolderName = m_DatasetName;
@@ -3835,7 +3835,7 @@ namespace AnalysisManagerBase
         /// If not present, looks for a file named FileName_StoragePathInfo.txt; if that file is found, opens the file and reads the path
         /// If the file isn't found (and the _StoragePathInfo.txt file isn't present), returns an empty string
         /// </summary>
-        /// <param name="folderPath">The folder to look in</param>
+        /// <param name="folderPath">the directory to look in</param>
         /// <param name="fileName">The file name to find</param>
         /// <returns></returns>
         /// <remarks></remarks>
@@ -3883,7 +3883,7 @@ namespace AnalysisManagerBase
         /// If found, returns the path to the 0.ser folder
         /// Otherwise, returns an empty string
         /// </summary>
-        /// <param name="folderPath">The folder to look in</param>
+        /// <param name="folderPath">the directory to look in</param>
         /// <returns></returns>
         /// <remarks></remarks>
         public static string ResolveSerStoragePath(string folderPath)
@@ -3910,7 +3910,7 @@ namespace AnalysisManagerBase
             {
                 // The desired file was not found
 
-                // Look for a ser file in the dataset folder
+                // Look for a ser file in the dataset directory
                 physicalFilePath = Path.Combine(folderPath, BRUKER_SER_FILE);
                 var fiFile = new FileInfo(physicalFilePath);
 
@@ -4071,7 +4071,7 @@ namespace AnalysisManagerBase
                                 continue;
                             }
 
-                            // To avoid collisions, files for this job will be placed in a subfolder based on the Job number
+                            // To avoid collisions, files for this job will be placed in a subdirectory based on the Job number
                             var diTargetFolder = new DirectoryInfo(Path.Combine(m_WorkingDir, "Job" + dataPkgJob.Key));
                             if (!diTargetFolder.Exists)
                                 diTargetFolder.Create();
@@ -4154,7 +4154,7 @@ namespace AnalysisManagerBase
                                     continue;
                                 }
 
-                                m_message = "Could not find a valid folder with file " + sourceFileName + " for job " + dataPkgJob.Key;
+                                m_message = "Could not find a valid directory with file " + sourceFileName + " for job " + dataPkgJob.Key;
                                 if (m_DebugLevel >= 1)
                                 {
                                     LogMessage(m_message, 0, true);
@@ -4164,7 +4164,7 @@ namespace AnalysisManagerBase
 
                             if (!m_FileCopyUtilities.CopyFileToWorkDir(sourceFileName, sourceFolderPath, m_WorkingDir, BaseLogger.LogLevels.ERROR))
                             {
-                                m_message = "CopyFileToWorkDir returned False for " + sourceFileName + " using folder " + sourceFolderPath + " for job " + dataPkgJob.Key;
+                                m_message = "CopyFileToWorkDir returned False for " + sourceFileName + " using directory " + sourceFolderPath + " for job " + dataPkgJob.Key;
                                 if (m_DebugLevel >= 1)
                                 {
                                     LogMessage(m_message, 0, true);
@@ -4186,13 +4186,13 @@ namespace AnalysisManagerBase
 
                             if (m_DebugLevel >= 1)
                             {
-                                LogMessage("Copied " + sourceFileName + " from folder " + sourceFolderPath);
+                                LogMessage("Copied " + sourceFileName + " from directory " + sourceFolderPath);
                             }
 
                         }
                         catch (Exception ex)
                         {
-                            LogError("RetrieveAggregateFiles; Exception during copy of file: " + sourceFileName + " from folder " + sourceFolderPath + " for job " + dataPkgJob.Key, ex);
+                            LogError("RetrieveAggregateFiles; Exception during copy of file: " + sourceFileName + " from directory " + sourceFolderPath + " for job " + dataPkgJob.Key, ex);
                             return false;
 
                         }

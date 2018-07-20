@@ -191,7 +191,7 @@ namespace MSMSSpectrumFilterAM
             {
                 if (!diDatasetFolder.Exists)
                 {
-                    LogError("Dataset folder not found: " + strDatasetFolderPath);
+                    LogError("Dataset directory not found: " + strDatasetFolderPath);
                 }
 
                 var lstFiles = diDatasetFolder.GetFiles(DatasetName + "_ScanStats.txt", SearchOption.AllDirectories).ToList();

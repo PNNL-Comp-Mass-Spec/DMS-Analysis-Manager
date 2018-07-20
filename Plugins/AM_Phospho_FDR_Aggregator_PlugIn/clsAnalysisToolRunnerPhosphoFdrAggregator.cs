@@ -661,7 +661,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
         }
 
         /// <summary>
-        /// Finds the folders that start with Job
+        /// Finds the directories that start with Job
         /// </summary>
         /// <returns>Dictionary where key is the Job number and value is a DirectoryInfo object</returns>
         /// <remarks></remarks>
@@ -782,7 +782,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
         }
 
         /// <summary>
-        /// Run AScore against the Synopsis and First hits files in the Job subfolders
+        /// Run AScore against the Synopsis and First hits files in the Job subdirectories
         /// </summary>
         /// <param name="progLoc">AScore exe path</param>
         /// <param name="fileSuffixesToCombine">Output parameter: File suffixes that were processed</param>

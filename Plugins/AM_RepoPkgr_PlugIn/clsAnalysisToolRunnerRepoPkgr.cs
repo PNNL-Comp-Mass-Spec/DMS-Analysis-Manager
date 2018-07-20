@@ -361,11 +361,11 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
                 if (blnDatasetFileIsAFolder)
                 {
-                    // Confirm that the dataset folder exists in the working directory
+                    // Confirm that the dataset directory exists in the working directory
 
                     if (!Directory.Exists(strDatasetFilePathLocal))
                     {
-                        // Copy the dataset folder locally
+                        // Copy the dataset directory locally
                         objAnalysisResults.CopyDirectory(strDatasetFilePathRemote, strDatasetFilePathLocal, overwrite: true);
                     }
 
@@ -516,7 +516,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
 
                 if (_bIncludeInstrumentData)
                 {
-                    // Copy the .raw file, either from the local working directory or from the remote dataset folder
+                    // Copy the .raw file, either from the local working directory or from the remote dataset directory
                     var strDatasetFilePathSource = dctDatasetRawFilePaths[datasetName];
                     if (!string.IsNullOrEmpty(strDatasetFilePathLocal))
                     {
@@ -554,7 +554,7 @@ namespace AnalysisManager_RepoPkgr_Plugin
                     {
                         if (blnDatasetFileIsAFolder)
                         {
-                            // Delete the local dataset folder
+                            // Delete the local dataset directory
                             if (Directory.Exists(strDatasetFilePathLocal))
                             {
                                 Directory.Delete(strDatasetFilePathLocal, true);

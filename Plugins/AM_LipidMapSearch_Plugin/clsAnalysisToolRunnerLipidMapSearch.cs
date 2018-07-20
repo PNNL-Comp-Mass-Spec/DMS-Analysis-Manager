@@ -255,7 +255,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
         /// <summary>
         /// Downloads the latest version of the LipidMaps database
         /// </summary>
-        /// <param name="diLipidMapsDBFolder">The folder to store the Lipid Maps DB file</param>
+        /// <param name="diLipidMapsDBFolder">the directory to store the Lipid Maps DB file</param>
         /// <param name="strNewestLipidMapsDBFileName">The name of the newest Lipid Maps DB in the Lipid Maps DB folder</param>
         /// <returns>The filename of the latest version of the database</returns>
         /// <remarks>

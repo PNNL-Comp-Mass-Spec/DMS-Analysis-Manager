@@ -115,7 +115,7 @@ namespace AnalysisManagerBase
 
             var DSFolderPath = m_FolderSearch.FindValidFolder(DatasetName, "s*.zip", RetrievingInstrumentDataFolder: true);
 
-            // Verify dataset folder exists
+            // Verify dataset directory exists
             if (!Directory.Exists(DSFolderPath))
                 return false;
 
@@ -257,7 +257,7 @@ namespace AnalysisManagerBase
         /// <param name="fileName">Name of file to be retrieved</param>
         /// <param name="unzip">TRUE if retrieved file should be unzipped after retrieval</param>
         /// <param name="searchArchivedDatasetFolder">TRUE if the EMSL archive (Aurora) should also be searched</param>
-        /// <param name="sourceFolderPath">Output parameter: the folder from which the file was copied</param>
+        /// <param name="sourceFolderPath">Output parameter: the directory from which the file was copied</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks>Logs an error if the file is not found</remarks>
         public bool FindAndRetrieveMiscFiles(string fileName, bool unzip, bool searchArchivedDatasetFolder, out string sourceFolderPath)
@@ -272,7 +272,7 @@ namespace AnalysisManagerBase
         /// <param name="fileName">Name of file to be retrieved</param>
         /// <param name="unzip">TRUE if retrieved file should be unzipped after retrieval</param>
         /// <param name="searchArchivedDatasetFolder">TRUE if the EMSL archive (Aurora) should also be searched</param>
-        /// <param name="sourceFolderPath">Output parameter: the folder from which the file was copied</param>
+        /// <param name="sourceFolderPath">Output parameter: the directory from which the file was copied</param>
         /// <param name="logFileNotFound">True if an error should be logged when a file is not found</param>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks></remarks>
@@ -393,7 +393,7 @@ namespace AnalysisManagerBase
             {
                 if (sourceFolderPath.StartsWith(MYEMSL_PATH_FLAG))
                 {
-                    // add the _dta.zip file name to the folder path found by FindDataFile
+                    // add the _dta.zip file name to the directory path found by FindDataFile
                     return clsMyEMSLUtilities.AddFileToMyEMSLFolderPath(sourceFolderPath, sourceFileName);
                 }
 
@@ -455,9 +455,9 @@ namespace AnalysisManagerBase
                 // Fill collection with possible folder locations
                 // The order of searching is:
                 //  a. Check the "inputFolderName" and then each of the Shared Results Folders in the Transfer folder
-                //  b. Check the "inputFolderName" and then each of the Shared Results Folders in the Dataset folder
+                //  b. Check the "inputFolderName" and then each of the Shared Results Folders in the dataset directory
                 //  c. Check the "inputFolderName" and then each of the Shared Results Folders in MyEMSL for this dataset
-                //  d. Check the "inputFolderName" and then each of the Shared Results Folders in the Archived dataset folder
+                //  d. Check the "inputFolderName" and then each of the Shared Results Folders in the Archived dataset directory
                 //
                 // Note that "SharedResultsFolders" will typically only contain one folder path,
                 //  but can contain a comma-separated list of folders
@@ -491,17 +491,17 @@ namespace AnalysisManagerBase
                     {
                         if (!string.IsNullOrEmpty(inputFolderName))
                         {
-                            // Parent Folder \ Dataset Folder \ Input folder
+                            // Parent directory \ Dataset directory \ Input directory
                             foldersToSearch.Add(FindDataFileAddFolder(parentFolderPath, datasetFolderName, inputFolderName));
                         }
 
                         foreach (var sharedFolderName in sharedResultFolderNames)
                         {
-                            // Parent Folder \ Dataset Folder \  Shared results folder
+                            // Parent directory \ Dataset directory \ Shared results directory
                             foldersToSearch.Add(FindDataFileAddFolder(parentFolderPath, datasetFolderName, sharedFolderName));
                         }
 
-                        // Parent Folder \ Dataset Folder
+                        // Parent directory \ Dataset directory
                         foldersToSearch.Add(FindDataFileAddFolder(parentFolderPath, datasetFolderName, string.Empty));
                     }
 
@@ -604,7 +604,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Looks for file fileName in folderPath or any of its subfolders
+        /// Looks for file fileName in folderPath or any of its subdirectories
         /// The filename may contain a wildcard character, in which case the first match will be returned
         /// </summary>
         /// <param name="folderPath">Folder path to examine</param>
@@ -617,7 +617,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Looks for file fileName in folderPath or any of its subfolders
+        /// Looks for file fileName in folderPath or any of its subdirectories
         /// The filename may contain a wildcard character, in which case the first match will be returned
         /// </summary>
         /// <param name="folderPath">Folder path to examine</param>
@@ -641,11 +641,11 @@ namespace AnalysisManagerBase
                 // Match not found
                 // Recursively call this function with the subdirectories in this folder
 
-                foreach (var ioSubFolder in diFolder.GetDirectories())
+                foreach (var subDirectory in diFolder.GetDirectories())
                 {
-                    if (!lstFolderNamesToSkip.Contains(ioSubFolder.Name))
+                    if (!lstFolderNamesToSkip.Contains(subDirectory.Name))
                     {
-                        var filePathMatch = FindFileInDirectoryTree(ioSubFolder.FullName, fileName);
+                        var filePathMatch = FindFileInDirectoryTree(subDirectory.FullName, fileName);
                         if (!string.IsNullOrEmpty(filePathMatch))
                         {
                             return filePathMatch;
@@ -675,7 +675,7 @@ namespace AnalysisManagerBase
                 return matchingFilePath;
             }
 
-            // Not found in the cache; look in the dataset folder
+            // Not found in the cache; look in the dataset directory
 
             var datasetID = m_jobParams.GetParam(clsAnalysisJob.JOB_PARAMETERS_SECTION, "DatasetID");
 
@@ -707,7 +707,7 @@ namespace AnalysisManagerBase
                 var msXmlFoldername = MSXmlFoldernameBase + version + "_" + datasetID;
 
                 // Look for the MSXmlFolder
-                // If the folder cannot be found, m_FolderSearch.FindValidFolder will return the folder defined by "DatasetStoragePath"
+                // If the directory cannot be found, m_FolderSearch.FindValidFolder will return the directory defined by "DatasetStoragePath"
                 var ServerPath = m_FolderSearch.FindValidFolder(DatasetName, "", msXmlFoldername, MAX_ATTEMPTS, false, retrievingInstrumentDataFolder: false);
 
                 if (string.IsNullOrEmpty(ServerPath))
@@ -745,13 +745,13 @@ namespace AnalysisManagerBase
 
                     if (diFolderInfo.Exists)
                     {
-                        // See if the ServerPath folder actually contains a subfolder named MSXmlFoldername
-                        var diSubfolders = diFolderInfo.GetDirectories(msXmlFoldername);
+                        // See if the ServerPath folder actually contains a subdirectory named MSXmlFoldername
+                        var subDirectories = diFolderInfo.GetDirectories(msXmlFoldername);
 
-                        if (diSubfolders.Length > 0)
+                        if (subDirectories.Length > 0)
                         {
                             // MSXmlFolder found; return the path to the file
-                            return Path.Combine(diSubfolders[0].FullName, mzXMLFilename);
+                            return Path.Combine(subDirectories[0].FullName, mzXMLFilename);
 
                         }
 
@@ -834,18 +834,18 @@ namespace AnalysisManagerBase
             }
             else
             {
-                // Look for the file in the top level subfolders of the MSXML file cache
+                // Look for the file in the top level subDirectories of the MSXML file cache
                 foreach (var diToolFolder in diCacheFolder.GetDirectories())
                 {
-                    var lstSubFolders = diToolFolder.GetDirectories(yearQuarter);
+                    var subDirectories = diToolFolder.GetDirectories(yearQuarter);
 
-                    if (lstSubFolders.Length > 0)
+                    if (subDirectories.Length > 0)
                     {
-                        var lstFilesToAppend = lstSubFolders.First().GetFiles(MsXMLFilename, SearchOption.TopDirectoryOnly);
+                        var lstFilesToAppend = subDirectories.First().GetFiles(MsXMLFilename, SearchOption.TopDirectoryOnly);
                         if (lstFilesToAppend.Length == 0 && msXmlType == clsAnalysisResources.MSXMLOutputTypeConstants.mzXML)
                         {
                             // Older .mzXML files were not gzipped
-                            lstFilesToAppend = lstSubFolders.First().GetFiles(DatasetName + clsAnalysisResources.DOT_MZXML_EXTENSION, SearchOption.TopDirectoryOnly);
+                            lstFilesToAppend = subDirectories.First().GetFiles(DatasetName + clsAnalysisResources.DOT_MZXML_EXTENSION, SearchOption.TopDirectoryOnly);
                         }
 
                         var query = (from item in lstFilesToAppend orderby item.LastWriteTimeUtc descending select item).Take(1);
@@ -1033,7 +1033,7 @@ namespace AnalysisManagerBase
         /// <param name="sourceDirectoryPath">Output parameter: source directory path</param>
         /// <returns>True if success, false if an error or file not found</returns>
         /// <remarks>
-        /// Uses the jobs InputFolderName parameter to dictate which subfolder to search at \\Proto-11\MSXML_Cache
+        /// Uses the jobs InputFolderName parameter to dictate which subDirectory to search at \\Proto-11\MSXML_Cache
         /// InputFolderName should be in the form MSXML_Gen_1_93_367204
         /// </remarks>
         public bool RetrieveCachedMzMLFile(bool unzip, out string errorMessage, out bool fileMissingFromCache, out string sourceDirectoryPath)
@@ -1050,7 +1050,7 @@ namespace AnalysisManagerBase
         /// <param name="sourceDirectoryPath">Output parameter: source directory path</param>
         /// <returns>True if success, false if an error or file not found</returns>
         /// <remarks>
-        /// Uses the jobs InputFolderName parameter to dictate which subfolder to search at \\Proto-11\MSXML_Cache
+        /// Uses the jobs InputFolderName parameter to dictate which subDirectory to search at \\Proto-11\MSXML_Cache
         /// InputFolderName should be in the form MSXML_Gen_1_93_367204
         /// </remarks>
         public bool RetrieveCachedPBFFile(out string errorMessage, out bool fileMissingFromCache, out string sourceDirectoryPath)
@@ -1069,7 +1069,7 @@ namespace AnalysisManagerBase
         /// <param name="sourceDirectoryPath">Output parameter: source directory path</param>
         /// <returns>True if success, false if an error or file not found</returns>
         /// <remarks>
-        /// Uses the jobs InputFolderName parameter to dictate which subfolder to search at \\Proto-11\MSXML_Cache
+        /// Uses the jobs InputFolderName parameter to dictate which subDirectory to search at \\Proto-11\MSXML_Cache
         /// InputFolderName should be in the form MSXML_Gen_1_105_367204
         /// </remarks>
         public bool RetrieveCachedMzXMLFile(bool unzip, out string errorMessage, out bool fileMissingFromCache, out string sourceDirectoryPath)
@@ -1088,7 +1088,7 @@ namespace AnalysisManagerBase
         /// <param name="sourceDirectoryPath">Output parameter: source directory path</param>
         /// <returns>True if success, false if an error or file not found</returns>
         /// <remarks>
-        /// Uses the job's InputFolderName parameter to dictate which subfolder to search at \\Proto-11\MSXML_Cache
+        /// Uses the job's InputFolderName parameter to dictate which subDirectory to search at \\Proto-11\MSXML_Cache
         /// InputFolderName should be in the form MSXML_Gen_1_93_367204
         /// </remarks>
         public bool RetrieveCachedMSXMLFile(
@@ -1187,7 +1187,7 @@ namespace AnalysisManagerBase
 
             var msXmlToolNameVersionFolders = new List<string>();
 
-            foreach (var folderName in foldersToSearch)
+            foreach (var directoryName in directoriesToSearch)
             {
                 try
                 {
@@ -1486,14 +1486,14 @@ namespace AnalysisManagerBase
                     {
                         if (m_DebugLevel >= 2)
                         {
-                            OnStatusEvent("CopyFileToWorkDir returned False for " + fiSourceFile.Name + " using folder " + fiSourceFile.Directory.FullName);
+                            OnStatusEvent("CopyFileToWorkDir returned False for " + fiSourceFile.Name + " using directory " + fiSourceFile.Directory.FullName);
                         }
                         return false;
                     }
 
                     if (m_DebugLevel >= 1)
                     {
-                        OnStatusEvent("Copied " + fiSourceFile.Name + " from folder " + fiSourceFile.FullName);
+                        OnStatusEvent("Copied " + fiSourceFile.Name + " from directory " + fiSourceFile.FullName);
                     }
                 }
 
@@ -1646,7 +1646,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Looks for the newest mzXML file for this dataset
         /// First looks for the newest file in \\Proto-11\MSXML_Cache
-        /// If not found, looks in the dataset folder, looking for subfolders
+        /// If not found, looks in the dataset directory, looking for subDirectories
         /// MSXML_Gen_1_154_DatasetID, MSXML_Gen_1_93_DatasetID, or MSXML_Gen_1_39_DatasetID (plus some others)
         /// </summary>
         /// <param name="createStoragePathInfoOnly"></param>
@@ -1953,13 +1953,13 @@ namespace AnalysisManagerBase
             }
 
             // Look for the MASIC Results folder
-            // If the folder cannot be found, m_FolderSearch.FindValidFolder will return the folder defined by "DatasetStoragePath"
+            // If the directory cannot be found, m_FolderSearch.FindValidFolder will return the directory defined by "DatasetStoragePath"
                 var scanStatsFilename = DatasetName + clsAnalysisResources.SCAN_STATS_FILE_SUFFIX;
             var serverPath = m_FolderSearch.FindValidFolder(DatasetName, "", "SIC*", MAX_ATTEMPTS, logFolderNotFound: false, retrievingInstrumentDataFolder: false);
 
             if (string.IsNullOrEmpty(serverPath))
             {
-                OnErrorEvent("Dataset folder path not found in RetrieveScanAndSICStatsFiles");
+                OnErrorEvent("Dataset directory path not found in RetrieveScanAndSICStatsFiles");
                 return false;
             }
 
@@ -2010,26 +2010,26 @@ namespace AnalysisManagerBase
 
                 if (!diFolderInfo.Exists)
                 {
-                    OnErrorEvent("Dataset folder with MASIC files not found: " + diFolderInfo.FullName);
+                    OnErrorEvent("Dataset directory with MASIC files not found: " + diFolderInfo.FullName);
                     return false;
                 }
 
-                // See if the ServerPath folder actually contains a subfolder that starts with "SIC"
-                var diSubfolders = diFolderInfo.GetDirectories("SIC*");
-                if (diSubfolders.Length == 0)
+                // See if the ServerPath folder actually contains a subdirectory that starts with "SIC"
+                var subDirectories = diFolderInfo.GetDirectories("SIC*");
+                if (subDirectories.Length == 0)
                 {
-                    OnErrorEvent("Dataset folder does not contain any MASIC results folders: " + diFolderInfo.FullName);
+                    OnErrorEvent("Dataset directory does not contain any MASIC results folders: " + diFolderInfo.FullName);
                     return false;
                 }
 
                 // MASIC Results Folder Found
-                // If more than one folder, use the folder with the newest _ScanStats.txt file
+                // If more than one folder, use the directory with the newest _ScanStats.txt file
                 var dtNewestScanStatsFileDate = DateTime.MinValue;
                 var newestScanStatsFilePath = string.Empty;
 
-                foreach (var diSubFolder in diSubfolders)
+                foreach (var subDirectory in subDirectories)
                 {
-                    var fiScanStatsFile = new FileInfo(Path.Combine(diSubFolder.FullName, scanStatsFilename));
+                    var fiScanStatsFile = new FileInfo(Path.Combine(subDirectory.FullName, scanStatsFilename));
                     if (fiScanStatsFile.Exists)
                     {
                         if (string.IsNullOrEmpty(newestScanStatsFilePath) || fiScanStatsFile.LastWriteTimeUtc > dtNewestScanStatsFileDate)
@@ -2233,7 +2233,7 @@ namespace AnalysisManagerBase
 
                 if (!ignoreFile)
                 {
-                    OnErrorEvent(fileToFind + " not found in MyEMSL, subfolder " + sicFolderName);
+                    OnErrorEvent(fileToFind + " not found in MyEMSL, subdirectory " + sicFolderName);
                     return false;
                 }
             }
@@ -2361,7 +2361,7 @@ namespace AnalysisManagerBase
                     else
                     {
                         // DeconTools_V2 now supports reading the .D files directly
-                        // Call RetrieveDotDFolder() to copy the folder and all subfolders
+                        // Call RetrieveDotDFolder() to copy the directory and all subdirectories
                         success = RetrieveDotDFolder(createStoragePathInfoOnly, skipBAFFiles: true);
                     }
 
@@ -2401,7 +2401,7 @@ namespace AnalysisManagerBase
                     break;
                 case clsAnalysisResources.eRawDataTypeConstants.BrukerFTFolder:
                 case clsAnalysisResources.eRawDataTypeConstants.BrukerTOFBaf:
-                    // Call RetrieveDotDFolder() to copy the folder and all subfolders
+                    // Call RetrieveDotDFolder() to copy the directory and all subdirectories
 
                     // Both the MSXml step tool and DeconTools require the .Baf file
                     // We previously didn't need this file for DeconTools, but, now that DeconTools is using CompassXtract, we need the file
@@ -2472,7 +2472,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Retrieves a folder with a name like Dataset.D or Dataset.Raw
         /// </summary>
-        /// <param name="folderExtension">Extension on the folder; for example, ".D"</param>
+        /// <param name="folderExtension">Extension on the directory; for example, ".D"</param>
         /// <param name="createStoragePathInfoOnly"></param>
         /// <param name="fileNamesToSkip"></param>
         /// <returns>TRUE for success; FALSE for failure</returns>
@@ -2485,7 +2485,7 @@ namespace AnalysisManagerBase
 
             // Copies a data folder ending in folderExtension to the working directory
 
-            // Find the instrument data folder (e.g. Dataset.D or Dataset.Raw) in the dataset folder
+            // Find the instrument data folder (e.g. Dataset.D or Dataset.Raw) in the dataset directory
             var DSFolderPath = m_FolderSearch.FindDotXFolder(folderExtension, assumeUnpurged: false);
 
             if (string.IsNullOrEmpty(DSFolderPath))
@@ -2509,7 +2509,7 @@ namespace AnalysisManagerBase
                 var disourceFolder = new DirectoryInfo(DSFolderPath);
                 if (!disourceFolder.Exists)
                 {
-                    OnErrorEvent("Source dataset folder not found: " + disourceFolder.FullName);
+                    OnErrorEvent("Source dataset directory not found: " + disourceFolder.FullName);
                     return false;
                 }
 
@@ -2547,7 +2547,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Retrieves a data from a Bruker MALDI imaging dataset
         /// The data is stored as zip files with names like 0_R00X433.zip
-        /// This data is unzipped into a subfolder in the Chameleon cached data folder
+        /// This data is unzipped into a subdirectory in the Chameleon cached data folder
         /// </summary>
         /// <param name="unzipOverNetwork"></param>
         /// <returns></returns>
@@ -2575,7 +2575,7 @@ namespace AnalysisManagerBase
                     return false;
                 }
 
-                // Delete any subfolders at ChameleonCachedDataFolder that do not have this dataset's name
+                // Delete any subdirectories at ChameleonCachedDataFolder that do not have this dataset's name
                 diCachedDataFolder = new DirectoryInfo(ChameleonCachedDataFolder);
                 if (!diCachedDataFolder.Exists)
                 {
@@ -2586,9 +2586,9 @@ namespace AnalysisManagerBase
 
                 unzipFolderPathBase = Path.Combine(diCachedDataFolder.FullName, DatasetName);
 
-                foreach (var diSubFolder in diCachedDataFolder.GetDirectories())
+                foreach (var subDirectory in diCachedDataFolder.GetDirectories())
                 {
-                    if (!clsGlobal.IsMatch(diSubFolder.Name, DatasetName))
+                    if (!clsGlobal.IsMatch(subDirectory.Name, DatasetName))
                     {
                         // Delete this directory
                         try
@@ -2596,7 +2596,7 @@ namespace AnalysisManagerBase
                             if (m_DebugLevel >= 2)
                             {
 
-                                OnDebugEvent("Deleting old dataset subfolder from chameleon cached data folder: " + diSubFolder.FullName);
+                                OnDebugEvent("Deleting old dataset subdirectory from chameleon cached data folder: " + subDirectory.FullName);
                             }
 
                             if (m_mgrParams.ManagerName.ToLower().Contains("monroe"))
@@ -2606,14 +2606,14 @@ namespace AnalysisManagerBase
                             }
                             else
                             {
-                                diSubFolder.Delete(true);
+                                subDirectory.Delete(true);
                             }
 
                         }
                         catch (Exception ex)
                         {
 
-                            OnErrorEvent("Error deleting cached subfolder " + diSubFolder.FullName, ex);
+                            OnErrorEvent("Error deleting cached subdirectory " + subDirectory.FullName, ex);
                             return false;
                         }
                     }
@@ -2639,8 +2639,8 @@ namespace AnalysisManagerBase
             // See if any imaging section filters are defined
             var applySectionFilter = GetBrukerImagingSectionFilter(m_jobParams, out var startSectionX, out var endSectionX);
 
-            // Look for the dataset folder; it must contain .Zip files with names like 0_R00X442.zip
-            // If a matching folder isn't found, ServerPath will contain the folder path defined by Job Param "DatasetStoragePath"
+            // Look for the dataset directory; it must contain .Zip files with names like 0_R00X442.zip
+            // If a matching folder isn't found, ServerPath will contain the directory path defined by Job Param "DatasetStoragePath"
             var serverPath = m_FolderSearch.FindValidFolder(DatasetName, ZIPPED_BRUKER_IMAGING_SECTIONS_FILE_MASK, RetrievingInstrumentDataFolder: true);
 
             try
@@ -2656,7 +2656,7 @@ namespace AnalysisManagerBase
                     if (MisFiles.Length == 0)
                     {
                         // No .mis files were found; unable to continue
-                        OnErrorEvent("ImagingSequence (.mis) file not found in dataset folder; unable to process MALDI imaging data");
+                        OnErrorEvent("ImagingSequence (.mis) file not found in dataset directory; unable to process MALDI imaging data");
                         return false;
                     }
 
@@ -2868,7 +2868,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Unzips dataset folders to working directory
+        /// Unzips dataset directories to the working directory
         /// </summary>
         /// <returns>TRUE for success; FALSE for failure</returns>
         /// <remarks></remarks>
@@ -2898,7 +2898,7 @@ namespace AnalysisManagerBase
                         }
 
                         // Copy the 0.ser folder to the Work directory
-                        // First create the 0.ser subfolder
+                        // First create the 0.ser subdirectory
                         var diTargetFolder = Directory.CreateDirectory(Path.Combine(m_WorkingDir, clsAnalysisResources.BRUKER_ZERO_SER_FOLDER));
 
                         // Now copy the files from the source 0.ser folder to the target folder
@@ -2940,11 +2940,11 @@ namespace AnalysisManagerBase
                 }
 
                 // Create a dataset subdirectory under the working directory
-                var datasetWorkFolder = Path.Combine(m_WorkingDir, DatasetName);
-                Directory.CreateDirectory(datasetWorkFolder);
+                var datasetWorkDir = Path.Combine(m_WorkingDir, DatasetName);
+                Directory.CreateDirectory(datasetWorkDir);
 
                 // Set up the unzipper
-                var dotNetZipTools = new clsDotNetZipTools(m_DebugLevel, datasetWorkFolder);
+                var dotNetZipTools = new clsDotNetZipTools(m_DebugLevel, datasetWorkDir);
                 RegisterEvents(dotNetZipTools);
 
                 // Unzip each of the zip files to the working directory
@@ -2966,7 +2966,7 @@ namespace AnalysisManagerBase
                             return false;
                         }
 
-                        var targetFolderPath = Path.Combine(datasetWorkFolder, fileNameBase);
+                        var targetFolderPath = Path.Combine(datasetWorkDir, fileNameBase);
                         Directory.CreateDirectory(targetFolderPath);
 
                         var sourceFilePath = Path.Combine(m_WorkingDir, sourceFileName);

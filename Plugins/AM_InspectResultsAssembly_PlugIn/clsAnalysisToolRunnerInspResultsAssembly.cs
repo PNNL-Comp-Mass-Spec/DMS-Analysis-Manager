@@ -435,7 +435,7 @@ namespace AnalysisManagerInspResultsAssemblyPlugIn
                         {
                             if (resFileType == ResultFileType.INSPECT_RESULT)
                             {
-                                // Parse each line of the Inspect Results files to remove the folder path information from the first column
+                                // Parse each line of the Inspect Results files to remove the directory path information from the first column
                                 try
                                 {
                                     var intTabIndex = s.IndexOf('\t');

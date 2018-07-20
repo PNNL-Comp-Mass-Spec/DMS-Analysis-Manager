@@ -141,7 +141,7 @@ namespace AnalysisManagerSMAQCPlugIn
 
             if (string.IsNullOrEmpty(serverPath))
             {
-                m_message = "Dataset folder path not defined";
+                m_message = "Dataset directory path not defined";
             }
             else
             {
@@ -164,7 +164,7 @@ namespace AnalysisManagerSMAQCPlugIn
 
                 if (!diFolderInfo.Exists)
                 {
-                    m_message = "Dataset folder not found: " + diFolderInfo.FullName;
+                    m_message = "Dataset directory not found: " + diFolderInfo.FullName;
                 }
                 else
                 {

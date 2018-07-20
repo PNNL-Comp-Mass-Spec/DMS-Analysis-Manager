@@ -126,7 +126,7 @@ namespace AnalysisManagerInSpecTPlugIn
                     // Error copying file (error will have already been logged)
                     if (m_DebugLevel >= 3)
                     {
-                        LogError("CopyFileToWorkDir returned False for " + dtaResultFileName + " using folder " + DtaResultFolderName);
+                        LogError("CopyFileToWorkDir returned False for " + dtaResultFileName + " using directory " + DtaResultFolderName);
                     }
                     return false;
                 }

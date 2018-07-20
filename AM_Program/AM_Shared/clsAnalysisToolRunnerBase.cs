@@ -511,7 +511,7 @@ namespace AnalysisManagerBase
 
         /// <summary>
         /// Copies a file (typically a mzXML or mzML file) to a server cache folder
-        /// Will store the file in a subfolder based on job parameter OutputFolderName, and below that, in a folder with a name like 2013_2
+        /// Will store the file in a subdirectory based on job parameter OutputFolderName, and below that, in a folder with a name like 2013_2
         /// </summary>
         /// <param name="cacheFolderPath">Cache folder base path, e.g. \\proto-6\MSXML_Cache</param>
         /// <param name="sourceFilePath">Path to the data file</param>
@@ -580,10 +580,10 @@ namespace AnalysisManagerBase
 
         /// <summary>
         /// Copies a file (typically a mzXML or mzML file) to a server cache folder
-        /// Will store the file in the subfolder subfolderInTarget and, below that, in a folder with a name like 2013_2
+        /// Will store the file in the subdirectory subDirectoryInTarget and, below that, in a directory with a name like 2013_2
         /// </summary>
         /// <param name="cacheFolderPath">Cache folder base path, e.g. \\proto-6\MSXML_Cache</param>
-        /// <param name="subfolderInTarget">Subfolder name to create below cacheFolderPath (optional), e.g. MSXML_Gen_1_93 or MSConvert</param>
+        /// <param name="subDirectoryInTarget">Directory name to create below cacheFolderPath (optional), e.g. MSXML_Gen_1_93 or MSConvert</param>
         /// <param name="sourceFilePath">Path to the data file</param>
         /// <param name="datasetYearQuarter">
         /// Dataset year quarter text (optional)
@@ -597,23 +597,23 @@ namespace AnalysisManagerBase
         /// </remarks>
         protected bool CopyFileToServerCache(
             string cacheFolderPath,
-            string subfolderInTarget,
+            string subDirectoryInTarget,
             string sourceFilePath,
             string datasetYearQuarter,
             bool purgeOldFilesIfNeeded)
         {
             return CopyFileToServerCache(
-                cacheFolderPath, subfolderInTarget, sourceFilePath,
+                cacheFolderPath, subDirectoryInTarget, sourceFilePath,
                 datasetYearQuarter, purgeOldFilesIfNeeded, out _);
 
         }
 
         /// <summary>
         /// Copies a file (typically a mzXML or mzML file) to a server cache folder
-        /// Will store the file in the subfolder subfolderInTarget and, below that, in a folder with a name like 2013_2
+        /// Will store the file in the directory subDirectoryInTarget and, below that, in a folder with a name like 2013_2
         /// </summary>
         /// <param name="cacheFolderPath">Cache folder base path, e.g. \\proto-11\MSXML_Cache</param>
-        /// <param name="subfolderInTarget">Subfolder name to create below cacheFolderPath (optional), e.g. MSXML_Gen_1_93 or MSConvert</param>
+        /// <param name="subDirectoryInTarget">Directory name to create below cacheFolderPath (optional), e.g. MSXML_Gen_1_93 or MSConvert</param>
         /// <param name="sourceFilePath">Path to the data file</param>
         /// <param name="datasetYearQuarter">
         /// Dataset year quarter text (optional)
@@ -628,7 +628,7 @@ namespace AnalysisManagerBase
         /// </remarks>
         protected bool CopyFileToServerCache(
             string cacheFolderPath,
-            string subfolderInTarget, string
+            string subDirectoryInTarget, string
             sourceFilePath,
             string datasetYearQuarter,
             bool purgeOldFilesIfNeeded,
@@ -650,13 +650,13 @@ namespace AnalysisManagerBase
                 DirectoryInfo ditargetDirectory;
 
                 // Define the target folder
-                if (string.IsNullOrEmpty(subfolderInTarget))
+                if (string.IsNullOrEmpty(subDirectoryInTarget))
                 {
                     ditargetDirectory = diCacheFolder;
                 }
                 else
                 {
-                    ditargetDirectory = new DirectoryInfo(Path.Combine(diCacheFolder.FullName, subfolderInTarget));
+                    ditargetDirectory = new DirectoryInfo(Path.Combine(diCacheFolder.FullName, subDirectoryInTarget));
                     if (!ditargetDirectory.Exists)
                         ditargetDirectory.Create();
                 }
@@ -873,7 +873,7 @@ namespace AnalysisManagerBase
             {
                 // Copy all of the files and subdirectories in the local result folder to the target folder
 
-                // Copy the files and subfolders
+                // Copy the files and subdirectories
                 var success = CopyResultsFolderRecursive(
                     sourceFolderPath, sourceFolderPath, targetDirectoryPath, analysisResults,
                     ref errorEncountered, ref failedFileCount, retryCount,
@@ -994,10 +994,10 @@ namespace AnalysisManagerBase
                 return false;
             }
 
-            var sourceFolder = new DirectoryInfo(sourceFolderPath);
+            var sourceDirectory = new DirectoryInfo(sourceFolderPath);
 
             // Note: Entries in ResultFiles will have full file paths, not just file names
-            var resultFiles = sourceFolder.GetFiles("*");
+            var resultFiles = sourceDirectory.GetFiles("*");
 
             foreach (var fileToCopy in resultFiles)
             {
@@ -1030,15 +1030,15 @@ namespace AnalysisManagerBase
                 }
             }
 
-            // Recursively call this function for each subfolder
-            // If any of the subfolders have an error, we'll continue copying, but will set errorEncountered to True
+            // Recursively call this function for each subdirectory
+            // If any of the subdirectories have an error, we'll continue copying, but will set errorEncountered to True
             var success = true;
 
-            foreach (var subFolder in sourceFolder.GetDirectories())
+            foreach (var subDirectory in sourceDirectory.GetDirectories())
             {
-                var targetDirectoryPathCurrent = Path.Combine(targetDirectoryPath, subFolder.Name);
+                var targetDirectoryPathCurrent = Path.Combine(targetDirectoryPath, subDirectory.Name);
 
-                success = CopyResultsFolderRecursive(rootSourceFolderPath, subFolder.FullName, targetDirectoryPathCurrent, analysisResults,
+                success = CopyResultsFolderRecursive(rootSourceFolderPath, subDirectory.FullName, targetDirectoryPathCurrent, analysisResults,
                     ref errorEncountered, ref failedFileCount, retryCount, retryHoldoffSeconds, increaseHoldoffOnEachRetry);
 
                 if (!success)
@@ -1098,7 +1098,7 @@ namespace AnalysisManagerBase
 
         /// <summary>
         /// Determines the path to the remote transfer folder
-        /// Creates the folder if it does not exist
+        /// Creates the directory if it does not exist
         /// </summary>
         /// <returns>The full path to the remote transfer folder; an empty string if an error</returns>
         /// <remarks></remarks>
@@ -1122,7 +1122,7 @@ namespace AnalysisManagerBase
 
         /// <summary>
         /// Determines the path to the remote transfer folder
-        /// Creates the folder if it does not exist
+        /// Creates the directory if it does not exist
         /// </summary>
         /// <param name="analysisResults">Analysis results object</param>
         /// <param name="transferFolderPath">Base transfer folder path, e.g. \\proto-11\DMS3_Xfer\</param>
@@ -1156,7 +1156,7 @@ namespace AnalysisManagerBase
                 return string.Empty;
             }
 
-            // Determine if dataset folder in transfer directory already exists; make directory if it doesn't exist
+            // Determine if dataset directory in transfer directory already exists; make directory if it doesn't exist
             // First make sure "DatasetFolderName" or "DatasetNum" is defined
             if (string.IsNullOrEmpty(Dataset))
             {
@@ -1174,7 +1174,7 @@ namespace AnalysisManagerBase
             }
             else
             {
-                // Append the dataset folder name to the transfer folder path
+                // Append the dataset directory name to the transfer folder path
                 var datasetFolderName = m_jobParams.GetParam(clsAnalysisJob.STEP_PARAMETERS_SECTION, clsAnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME);
                 if (string.IsNullOrWhiteSpace(datasetFolderName))
                     datasetFolderName = Dataset;
@@ -1188,7 +1188,7 @@ namespace AnalysisManagerBase
             }
             catch (Exception ex)
             {
-                LogError("Error creating dataset folder in transfer directory, " + Path.GetPathRoot(remoteTransferFolderPath), ex);
+                LogError("Error creating dataset directory in transfer directory, " + Path.GetPathRoot(remoteTransferFolderPath), ex);
                 return string.Empty;
             }
 
@@ -1523,7 +1523,7 @@ namespace AnalysisManagerBase
         /// <summary>
         /// Determine the path to the correct version of the step tool
         /// </summary>
-        /// <param name="progLocManagerParamName">The name of the manager parameter that defines the path to the folder with the exe, e.g. LCMSFeatureFinderProgLoc</param>
+        /// <param name="progLocManagerParamName">The name of the manager parameter that defines the path to the directory with the exe, e.g. LCMSFeatureFinderProgLoc</param>
         /// <param name="exeName">The name of the exe file, e.g. LCMSFeatureFinder.exe</param>
         /// <returns>The path to the program, or an empty string if there is a problem</returns>
         /// <remarks>If the program is not found, m_message will be updated with the error message</remarks>
@@ -1546,7 +1546,7 @@ namespace AnalysisManagerBase
         /// <param name="mgrParams">Manager parameters</param>
         /// <param name="jobParams">Job parameters</param>
         /// <param name="stepToolName">The name of the step tool, e.g. LCMSFeatureFinder</param>
-        /// <param name="progLocManagerParamName">The name of the manager parameter that defines the path to the folder with the exe, e.g. LCMSFeatureFinderProgLoc</param>
+        /// <param name="progLocManagerParamName">The name of the manager parameter that defines the path to the directory with the exe, e.g. LCMSFeatureFinderProgLoc</param>
         /// <param name="exeName">The name of the exe file, e.g. LCMSFeatureFinder.exe</param>
         /// <param name="errorMessage">Output: error message</param>
         /// <returns>The path to the program, or an empty string if there is a problem</returns>
@@ -1566,9 +1566,9 @@ namespace AnalysisManagerBase
         /// Determine the path to the correct version of the step tool
         /// </summary>
         /// <param name="stepToolName">The name of the step tool, e.g. LCMSFeatureFinder</param>
-        /// <param name="progLocManagerParamName">The name of the manager parameter that defines the path to the folder with the exe, e.g. LCMSFeatureFinderProgLoc</param>
+        /// <param name="progLocManagerParamName">The name of the manager parameter that defines the path to the directory with the exe, e.g. LCMSFeatureFinderProgLoc</param>
         /// <param name="exeName">The name of the exe file, e.g. LCMSFeatureFinder.exe</param>
-        /// <param name="stepToolVersion">Specific step tool version to use (will be the name of a subfolder located below the primary ProgLoc location)</param>
+        /// <param name="stepToolVersion">Specific step tool version to use (will be the name of a subdirectory located below the primary ProgLoc location)</param>
         /// <param name="mgrParams">Manager parameters</param>
         /// <param name="errorMessage">Output: error message</param>
         /// <returns>The path to the program, or an empty string if there is a problem</returns>
@@ -1583,7 +1583,7 @@ namespace AnalysisManagerBase
 
             errorMessage = string.Empty;
 
-            // Lookup the path to the folder that contains the Step tool
+            // Lookup the path to the directory that contains the Step tool
             var progLoc = mgrParams.GetParam(progLocManagerParamName);
 
             if (string.IsNullOrWhiteSpace(progLoc))
@@ -1597,7 +1597,7 @@ namespace AnalysisManagerBase
 
             if (!string.IsNullOrWhiteSpace(stepToolVersion))
             {
-                // Specific version is defined; verify that the folder exists
+                // Specific version is defined; verify that the directory exists
                 progLoc = Path.Combine(progLoc, stepToolVersion);
 
                 if (!Directory.Exists(progLoc))
@@ -1920,7 +1920,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Determines the folder that contains R.exe and Rcmd.exe (queries the registry)
+        /// Determines the directory that contains R.exe and Rcmd.exe (queries the registry)
         /// </summary>
         /// <returns>Folder path, e.g. C:\Program Files\R\R-3.2.2\bin\x64</returns>
         /// <remarks>This function is public because it is used by the Cyclops test harness program</remarks>
@@ -4027,17 +4027,17 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="sourceFolderPath"></param>
         /// <param name="targetDirectoryPath"></param>
-        /// <param name="copySubfolders">If true, recursively copies subfolders</param>
+        /// <param name="copySubdirectories">If true, recursively copies subdirectories</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks></remarks>
-        protected bool SynchronizeFolders(string sourceFolderPath, string targetDirectoryPath, bool copySubfolders)
+        protected bool SynchronizeFolders(string sourceFolderPath, string targetDirectoryPath, bool copySubdirectories)
         {
 
             var lstFileNameFilterSpec = new List<string> { "*" };
             var lstFileNameExclusionSpec = new List<string>();
             const int maxRetryCount = 3;
 
-            return SynchronizeFolders(sourceFolderPath, targetDirectoryPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount, copySubfolders);
+            return SynchronizeFolders(sourceFolderPath, targetDirectoryPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount, copySubdirectories);
         }
 
         /// <summary>
@@ -4054,9 +4054,9 @@ namespace AnalysisManagerBase
             var lstFileNameFilterSpec = new List<string> { fileNameFilterSpec };
             var lstFileNameExclusionSpec = new List<string>();
             const int maxRetryCount = 3;
-            const bool copySubfolders = false;
+            const bool copySubdirectories = false;
 
-            return SynchronizeFolders(sourceFolderPath, targetDirectoryPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount, copySubfolders);
+            return SynchronizeFolders(sourceFolderPath, targetDirectoryPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount, copySubdirectories);
         }
 
         /// <summary>
@@ -4072,9 +4072,9 @@ namespace AnalysisManagerBase
 
             var lstFileNameExclusionSpec = new List<string>();
             const int maxRetryCount = 3;
-            const bool copySubfolders = false;
+            const bool copySubdirectories = false;
 
-            return SynchronizeFolders(sourceFolderPath, targetDirectoryPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount, copySubfolders);
+            return SynchronizeFolders(sourceFolderPath, targetDirectoryPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount, copySubdirectories);
         }
 
         /// <summary>
@@ -4090,9 +4090,9 @@ namespace AnalysisManagerBase
         {
 
             const int maxRetryCount = 3;
-            const bool copySubfolders = false;
+            const bool copySubdirectories = false;
 
-            return SynchronizeFolders(sourceFolderPath, targetDirectoryPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount, copySubfolders);
+            return SynchronizeFolders(sourceFolderPath, targetDirectoryPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount, copySubdirectories);
         }
 
         /// <summary>
@@ -4108,8 +4108,8 @@ namespace AnalysisManagerBase
         protected bool SynchronizeFolders(string sourceFolderPath, string targetDirectoryPath, List<string> lstFileNameFilterSpec, List<string> lstFileNameExclusionSpec, int maxRetryCount)
         {
 
-            const bool copySubfolders = false;
-            return SynchronizeFolders(sourceFolderPath, targetDirectoryPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount, copySubfolders);
+            const bool copySubdirectories = false;
+            return SynchronizeFolders(sourceFolderPath, targetDirectoryPath, lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount, copySubdirectories);
 
         }
 
@@ -4121,7 +4121,7 @@ namespace AnalysisManagerBase
         /// <param name="lstFileNameFilterSpec">One or more filename filters for including files; can use * as a wildcard; when blank then processes all files</param>
         /// <param name="lstFileNameExclusionSpec">One or more filename filters for excluding files; can use * as a wildcard</param>
         /// <param name="maxRetryCount">Will retry failed copies up to maxRetryCount times; use 0 for no retries</param>
-        /// <param name="copySubfolders">If true, recursively copies subfolders</param>
+        /// <param name="copySubdirectories">If true, recursively copies subdirectories</param>
         /// <returns>True if success, false if an error</returns>
         /// <remarks></remarks>
         protected bool SynchronizeFolders(
@@ -4130,7 +4130,7 @@ namespace AnalysisManagerBase
             List<string> lstFileNameFilterSpec,
             List<string> lstFileNameExclusionSpec,
             int maxRetryCount,
-            bool copySubfolders)
+            bool copySubdirectories)
         {
             try
             {
@@ -4236,19 +4236,19 @@ namespace AnalysisManagerBase
                     }
                 }
 
-                if (copySubfolders)
+                if (copySubdirectories)
                 {
-                    var lstSubFolders = diSourceFolder.GetDirectories();
+                    var subDirectories = diSourceFolder.GetDirectories();
 
-                    foreach (var diSubFolder in lstSubFolders)
+                    foreach (var subDirectory in subDirectories)
                     {
-                        var subfolderTargetPath = Path.Combine(targetDirectoryPath, diSubFolder.Name);
-                        var success = SynchronizeFolders(diSubFolder.FullName, subfolderTargetPath,
-                            lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount, copySubfolders: true);
+                        var subDirectoryTargetPath = Path.Combine(targetDirectoryPath, subDirectory.Name);
+                        var success = SynchronizeFolders(subDirectory.FullName, subDirectoryTargetPath,
+                            lstFileNameFilterSpec, lstFileNameExclusionSpec, maxRetryCount, copySubdirectories: true);
 
                         if (!success)
                         {
-                            LogError("Error copying subfolder " + diSubFolder.FullName + " to " + targetDirectoryPath);
+                            LogError("Error copying subdirectory " + subDirectory.FullName + " to " + targetDirectoryPath);
                             break;
                         }
 

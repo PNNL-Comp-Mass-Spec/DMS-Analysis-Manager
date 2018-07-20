@@ -70,7 +70,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 }
 
                 // Setup a program runner tool to make the spectra files
-                // The working directory must be the folder that has RawConverter.exe
+                // The working directory must be the directory that has RawConverter.exe
                 // Otherwise, the program creates the .mgf file in C:\  (and will likely get Access Denied)
 
                 var consoleOutputFilePath = Path.Combine(fiSourceFile.Directory.FullName, "RawConverter_ConsoleOutput.txt");

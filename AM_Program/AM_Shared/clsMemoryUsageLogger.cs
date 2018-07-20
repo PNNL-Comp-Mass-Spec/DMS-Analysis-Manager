@@ -154,7 +154,7 @@ namespace AnalysisManagerBase
                     logFile.MoveTo(newPath);
                 }
 
-                // Move MemoryUsageLog files in the Logs folder into year-based subfolders
+                // Move MemoryUsageLog files in the Logs folder into year-based subdirectories
                 PRISM.Logging.FileLogger.ArchiveOldLogs(logFolder, LOG_FILE_MATCH_SPEC, LOG_FILE_EXTENSION, LOG_FILE_DATE_REGEX);
             }
             catch (Exception ex)

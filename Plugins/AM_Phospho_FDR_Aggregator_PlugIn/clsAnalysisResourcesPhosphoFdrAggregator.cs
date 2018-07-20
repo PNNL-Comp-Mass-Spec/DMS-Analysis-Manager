@@ -89,7 +89,7 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
         {
             try
             {
-                var diWorkingFolder = new DirectoryInfo(m_WorkingDir);
+                var workDir = new DirectoryInfo(m_WorkingDir);
 
                 var jobToDatasetMap = new Dictionary<string, string>();
                 var jobToSettingsFileMap = new Dictionary<string, string>();
@@ -97,9 +97,9 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
                 // Find the Job* folders
 
-                foreach (var subFolder in diWorkingFolder.GetDirectories("Job*"))
+                foreach (var subDirectory in workDir.GetDirectories("Job*"))
                 {
-                    var jobNumber = int.Parse(subFolder.Name.Substring(3));
+                    var jobNumber = int.Parse(subDirectory.Name.Substring(3));
                     var udtJobInfo = dctDataPackageJobs[jobNumber];
 
                     jobToDatasetMap.Add(jobNumber.ToString(), udtJobInfo.Dataset);

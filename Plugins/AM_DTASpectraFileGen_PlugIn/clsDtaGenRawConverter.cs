@@ -151,7 +151,7 @@ namespace DTASpectraFileGen
                 }
 
                 // Setup a program runner tool to make the spectra files
-                // The working directory must be the folder that has RawConverter.exe
+                // The working directory must be the directory that has RawConverter.exe
                 // Otherwise, the program creates the .mgf file in C:\  (and will likely get Access Denied)
 
                 mCmdRunner = new clsRunDosProgram(fiRawConverter.Directory.FullName, m_DebugLevel)

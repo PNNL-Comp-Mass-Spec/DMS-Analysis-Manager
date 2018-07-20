@@ -81,7 +81,7 @@ namespace AnalysisManagerBase
         public string Experiment_NEWT_Name { get; set; }
 
         /// <summary>
-        /// Dataset folder path
+        /// Dataset directory path
         /// </summary>
         public string ServerStoragePath { get; set; }
 

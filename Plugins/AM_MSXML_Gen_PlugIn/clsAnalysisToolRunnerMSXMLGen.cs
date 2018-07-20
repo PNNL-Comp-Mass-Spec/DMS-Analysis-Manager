@@ -254,7 +254,7 @@ namespace AnalysisManagerMsXmlGenPlugIn
                 var rawConverterDir = m_mgrParams.GetParam("RawConverterProgLoc");
                 if (string.IsNullOrWhiteSpace(rawConverterDir))
                 {
-                    LogError("Manager parameter RawConverterProgLoc is not defined; cannot find the folder for " +
+                    LogError("Manager parameter RawConverterProgLoc is not defined; cannot find the directory for " +
                              clsRawConverterRunner.RAWCONVERTER_FILENAME);
                     return string.Empty;
                 }

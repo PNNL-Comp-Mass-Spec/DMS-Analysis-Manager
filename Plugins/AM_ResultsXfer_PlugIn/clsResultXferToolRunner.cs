@@ -97,7 +97,7 @@ namespace AnalysisManagerResultsXferPlugin
         }
 
         /// <summary>
-        /// If there are no more folders or files in the dataset folder in the xfer directory, delete the folder
+        /// If there are no more folders or files in the dataset directory in the xfer directory, delete the directory
         /// </summary>
         /// <remarks>
         /// Another manager might be simultaneously examining this folder to see if it's empty
@@ -120,12 +120,12 @@ namespace AnalysisManagerResultsXferPlugin
 
                 if (diTransferFolder.Exists && diTransferFolder.GetFileSystemInfos("*", SearchOption.AllDirectories).Length == 0)
                 {
-                    // Dataset folder in transfer folder is empty; delete it
+                    // Dataset directory in the transfer folder is empty; delete it
                     try
                     {
                         if (m_DebugLevel >= 3)
                         {
-                            LogDebug("Deleting empty dataset folder in transfer directory: " + diTransferFolder.FullName);
+                            LogDebug("Deleting empty dataset directory in transfer directory: " + diTransferFolder.FullName);
                         }
 
                         diTransferFolder.Delete();
@@ -133,29 +133,29 @@ namespace AnalysisManagerResultsXferPlugin
                     catch (Exception ex)
                     {
                         // Log this exception, but don't treat it is a job failure
-                        var msg = "clsResultXferToolRunner.RunTool(); Exception deleting dataset folder " + m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME) +
+                        var msg = "clsResultXferToolRunner.RunTool(); Exception deleting dataset directory " + m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME) +
                                   " in xfer folder (another results manager may have deleted it): " + ex.Message;
                         LogWarning(msg);
 
-                        UpdateEvalCode(0, "Exception deleting dataset folder in xfer folder: " + ex.Message + "; " + diTransferFolder.FullName);
+                        UpdateEvalCode(0, "Exception deleting dataset directory in xfer folder: " + ex.Message + "; " + diTransferFolder.FullName);
                     }
                 }
                 else
                 {
                     if (m_DebugLevel >= 3)
                     {
-                        LogDebug("Dataset folder in transfer directory still has files/folders; will not delete: " + diTransferFolder.FullName);
+                        LogDebug("Dataset directory in transfer directory still has files/folders; will not delete: " + diTransferFolder.FullName);
                     }
                 }
             }
             catch (Exception ex)
             {
                 // Log this exception, but don't treat it is a job failure
-                var msg = "clsResultXferToolRunner.RunTool(); Exception looking for dataset folder " + m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME) +
+                var msg = "clsResultXferToolRunner.RunTool(); Exception looking for dataset directory " + m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME) +
                           " in xfer folder (another results manager may have deleted it): " + ex.Message;
                 LogWarning(msg);
 
-                UpdateEvalCode(0, "Exception looking for dataset folder in xfer folder " + ex.Message + "; " + transferFolderPath);
+                UpdateEvalCode(0, "Exception looking for dataset directory in xfer folder " + ex.Message + "; " + transferFolderPath);
             }
         }
 
@@ -358,7 +358,7 @@ namespace AnalysisManagerResultsXferPlugin
             var transferFolderPath = m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_TRANSFER_FOLDER_PATH);
             var datasetStoragePath = m_jobParams.GetParam("DatasetStoragePath");
 
-            // Check whether the transfer folder and the dataset folder reside on the same server as this manager
+            // Check whether the transfer folder and the dataset directory reside on the same server as this manager
             var serverName = Environment.MachineName;
             var movingLocalFiles = false;
 
@@ -392,13 +392,13 @@ namespace AnalysisManagerResultsXferPlugin
                 LogDebug("Results folder to move: " + folderToMove);
             }
 
-            // Verify dataset folder exists on storage server
+            // Verify that the dataset directory exists on storage server
             // If it doesn't exist, we will auto-create it (this behavior was added 4/24/2009)
             var datasetDir = Path.Combine(datasetStoragePath, m_jobParams.GetParam(clsAnalysisResources.JOB_PARAM_DATASET_FOLDER_NAME));
             var diDatasetFolder = new DirectoryInfo(datasetDir);
             if (!diDatasetFolder.Exists)
             {
-                LogWarning("Dataset folder " + datasetDir + " not found for results transfer; will attempt to make it");
+                LogWarning("Dataset directory " + datasetDir + " not found for results transfer; will attempt to make it");
 
                 try
                 {
@@ -419,7 +419,7 @@ namespace AnalysisManagerResultsXferPlugin
                             // Parent of the parent exists; try to create the parent folder
                             diParentFolder.Create();
 
-                            // Verify that the folder was created
+                            // Verify that the directory was created
                             diParentFolder.Refresh();
                             diDatasetFolder.Refresh();
                         }
@@ -427,16 +427,16 @@ namespace AnalysisManagerResultsXferPlugin
 
                     if (diParentFolder.Exists)
                     {
-                        // Parent folder exists; try to create the dataset folder
+                        // Parent folder exists; try to create the dataset directory
                         diDatasetFolder.Create();
 
-                        // Verify that the folder now exists
+                        // Verify that the directory now exists
                         diDatasetFolder.Refresh();
 
                         if (!diDatasetFolder.Exists)
                         {
-                            // Creation of the dataset folder failed; unable to continue
-                            var msg = "Error trying to create missing dataset folder";
+                            // Creation of the dataset directory failed; unable to continue
+                            var msg = "Error trying to create missing dataset directory";
                             LogError(msg, msg + datasetDir + ": folder creation failed for unknown reason");
                             return CloseOutType.CLOSEOUT_FAILED;
                         }
@@ -449,7 +449,7 @@ namespace AnalysisManagerResultsXferPlugin
                 }
                 catch (Exception ex)
                 {
-                    var msg = "Error trying to create missing dataset folder";
+                    var msg = "Error trying to create missing dataset directory";
                     LogError(msg, msg + ": " + datasetDir, ex);
 
                     return CloseOutType.CLOSEOUT_FAILED;
@@ -457,7 +457,7 @@ namespace AnalysisManagerResultsXferPlugin
             }
             else if (m_DebugLevel >= 4)
             {
-                LogDebug("Dataset folder path: " + datasetDir);
+                LogDebug("Dataset directory path: " + datasetDir);
             }
 
             var targetDir = Path.Combine(datasetDir, m_jobParams.GetParam("inputfoldername"));

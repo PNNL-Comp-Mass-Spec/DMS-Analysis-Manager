@@ -101,7 +101,7 @@ namespace AnalysisManagerProg
         /// Used by managers running in Offline mode
         /// </summary>
         /// <remarks>
-        /// Directory with JobX_StepY subfolders containing files required for a single job step
+        /// Directory with JobX_StepY subdirectories containing files required for a single job step
         /// Each manager also has its own subdirectory for staging files
         /// </remarks>
         public const string MGR_PARAM_LOCAL_WORK_DIR_PATH = "LocalWorkDirPath";

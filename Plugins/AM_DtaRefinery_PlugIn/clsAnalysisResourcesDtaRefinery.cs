@@ -182,7 +182,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                         // Error copying file (error will have already been logged)
                         if (m_DebugLevel >= 3)
                         {
-                            LogError("CopyFileToWorkDir returned False for " + deconMSnLogFileName + " using folder " + sourceFolderPath);
+                            LogError("CopyFileToWorkDir returned False for " + deconMSnLogFileName + " using directory " + sourceFolderPath);
                         }
                         // Ignore the error and continue
                     }
@@ -209,7 +209,7 @@ namespace AnalysisManagerDtaRefineryPlugIn
                         // Error copying file (error will have already been logged)
                         if (m_DebugLevel >= 3)
                         {
-                            LogError("CopyFileToWorkDir returned False for " + deconMSnProfileFileName + " using folder " + sourceFolderPath);
+                            LogError("CopyFileToWorkDir returned False for " + deconMSnProfileFileName + " using directory " + sourceFolderPath);
                         }
                         // Ignore the error and continue
                     }

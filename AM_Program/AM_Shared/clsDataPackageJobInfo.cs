@@ -129,13 +129,13 @@ namespace AnalysisManagerBase
         public string ProteinOptions { get; set; }
 
         /// <summary>
-        /// The folder (on the storage server) just above the dataset folder
+        /// the directory (on the storage server) just above the dataset directory
         /// </summary>
         /// <returns></returns>
         public string ServerStoragePath { get; set; }
 
         /// <summary>
-        /// The folder (in the archive) just above the dataset folder
+        /// The directory (in the archive) just above the dataset directory
         /// </summary>
         /// <returns></returns>
         public string ArchiveStoragePath { get; set; }
@@ -146,7 +146,7 @@ namespace AnalysisManagerBase
         public string ResultsFolderName { get; set; }
 
         /// <summary>
-        /// Dataset folder name
+        /// Dataset directory name
         /// </summary>
         public string DatasetFolderName { get; set; }
 

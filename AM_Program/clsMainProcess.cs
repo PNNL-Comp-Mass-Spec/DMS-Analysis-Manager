@@ -2846,7 +2846,7 @@ namespace AnalysisManagerProg
                     var diDatasetStoragePath = new DirectoryInfo(datasetStoragePath);
                     if (!diDatasetStoragePath.Exists)
                     {
-                        // Dataset folder not found; that's OK, since the Results Transfer plugin will auto-create it
+                        // Dataset directory not found; that's OK, since the Results Transfer plugin will auto-create it
                         // Try to use the parent folder (or the parent of the parent)
                         while (!diDatasetStoragePath.Exists && diDatasetStoragePath.Parent != null)
                         {

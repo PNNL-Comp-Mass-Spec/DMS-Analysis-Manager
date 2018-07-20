@@ -505,7 +505,7 @@ namespace AnalysisManagerBase
                         {
                             if (!item.IsDirectory)
                             {
-                                // Note that objItem.FileName contains the relative path of the file, for example "Filename.txt" or "Subfolder/Filename.txt"
+                                // Note that objItem.FileName contains the relative path of the file, for example "Filename.txt" or "Subdirectory/Filename.txt"
                                 var fiUnzippedItem = new FileInfo(Path.Combine(targetDirectory, item.FileName.Replace('/', Path.DirectorySeparatorChar)));
                                 MostRecentUnzippedFiles.Add(new KeyValuePair<string, string>(fiUnzippedItem.Name, fiUnzippedItem.FullName));
                             }
@@ -520,7 +520,7 @@ namespace AnalysisManagerBase
                             item.Extract(targetDirectory, overwriteBehavior);
                             if (!item.IsDirectory)
                             {
-                                // Note that objItem.FileName contains the relative path of the file, for example "Filename.txt" or "Subfolder/Filename.txt"
+                                // Note that objItem.FileName contains the relative path of the file, for example "Filename.txt" or "Subdirectory/Filename.txt"
                                 var fiUnzippedItem = new FileInfo(Path.Combine(targetDirectory, item.FileName.Replace('/', Path.DirectorySeparatorChar)));
                                 MostRecentUnzippedFiles.Add(new KeyValuePair<string, string>(fiUnzippedItem.Name, fiUnzippedItem.FullName));
                             }
@@ -796,7 +796,7 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="sourceDirectoryPath">Full path to the directory to be zipped</param>
         /// <param name="zipFilePath">Full path to the .zip file to be created.  Existing files will be overwritten</param>
-        /// <param name="recurse">If True, recurse through all subfolders</param>
+        /// <param name="recurse">If True, recurse through all subdirectories</param>
         /// <param name="fileFilter">Filter to apply when zipping</param>
         /// <returns>True if success; false if an error</returns>
         public bool ZipDirectory(string sourceDirectoryPath, string zipFilePath, bool recurse, string fileFilter)

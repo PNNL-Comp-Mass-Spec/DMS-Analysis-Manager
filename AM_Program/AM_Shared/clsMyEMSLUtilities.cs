@@ -249,15 +249,15 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Look for the given file (optionally in a given subfolder) for the given dataset
+        /// Look for the given file (optionally in a given subdirectory) for the given dataset
         /// </summary>
         /// <param name="fileName">File name to find; can contain a wildcard, e.g. *.zip</param>
-        /// <param name="subFolderName">Subfolder in which the file must reside; can contain a wildcard, e.g. SIC*</param>
+        /// <param name="subDirectoryName">Directory in which the file must reside; can contain a wildcard, e.g. SIC*</param>
         /// <param name="datasetName">Dataset name filter</param>
-        /// <param name="recurse">True to search all subfolders; false to only search the root folder (or only subFolderName)</param>
+        /// <param name="recurse">True to search all directories; false to only search the root folder (or only subDirectoryName)</param>
         /// <returns>List of matching files</returns>
-        /// <remarks>subFolderName can contain a partial path, for example 2013_09_10_DPB_Unwashed_Media_25um.d\2013_09_10_In_1sec_1MW.m</remarks>
-        public List<DatasetFolderOrFileInfo> FindFiles(string fileName, string subFolderName, string datasetName, bool recurse)
+        /// <remarks>subDirectoryName can contain a partial path, for example 2013_09_10_DPB_Unwashed_Media_25um.d\2013_09_10_In_1sec_1MW.m</remarks>
+        public List<DatasetFolderOrFileInfo> FindFiles(string fileName, string subDirectoryName, string datasetName, bool recurse)
         {
 
             // Make sure the dataset name is being tracked by m_MyEMSLDatasetListInfo
@@ -288,7 +288,7 @@ namespace AnalysisManagerBase
                 }
             }
 
-            m_RecentlyFoundMyEMSLFiles = m_MyEMSLDatasetListInfo.FindFiles(fileName, subFolderName, datasetName, recurse);
+            m_RecentlyFoundMyEMSLFiles = m_MyEMSLDatasetListInfo.FindFiles(fileName, subDirectoryName, datasetName, recurse);
 
             if (!mMyEMSLAutoDisabled)
             {

@@ -564,7 +564,7 @@ namespace MSMSSpectrumFilterAM
                     // Unable to resolve the file path
                     m_ErrMsg = "Could not find " + strRawFileName + " or " +
                         strRawFileName + clsAnalysisResources.STORAGE_PATH_INFO_FILE_SUFFIX +
-                        " in the dataset folder; unable to generate the ScanStats files";
+                        " in the dataset directory; unable to generate the ScanStats files";
                     LogErrors("GenerateFinniganScanStatsFiles", m_ErrMsg);
                     return false;
                 }

@@ -409,7 +409,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Create the folder (if it does not yet exist)
+        /// Create the directory (if it does not yet exist)
         /// </summary>
         /// <param name="folderPath">Folder to create</param>
         /// <remarks>Tries up to 3 times, waiting 15 seconds between attempts</remarks>
@@ -420,7 +420,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Create the folder (if it does not yet exist)
+        /// Create the directory (if it does not yet exist)
         /// </summary>
         /// <param name="folderPath">Folder to create</param>
         /// <param name="maxRetryCount">Maximum attempts</param>
@@ -432,7 +432,7 @@ namespace AnalysisManagerBase
         }
 
         /// <summary>
-        /// Create the folder (if it does not yet exist)
+        /// Create the directory (if it does not yet exist)
         /// </summary>
         /// <param name="folderPath">Folder to create</param>
         /// <param name="maxRetryCount">Maximum attempts</param>
@@ -461,7 +461,7 @@ namespace AnalysisManagerBase
                 {
                     if (Directory.Exists(folderPath))
                     {
-                        // If the folder already exists, there is nothing to do
+                        // If the directory already exists, there is nothing to do
                         return;
                     }
 
@@ -499,7 +499,7 @@ namespace AnalysisManagerBase
         {
             var targetFilePath = "";
 
-            // Determine the folder archive time by reading the modification times on the ResultsFolderInfo_ files
+            // Determine the directory archive time by reading the modification times on the ResultsFolderInfo_ files
             foreach (var fiFileInfo in diTargetFolder.GetFiles(FAILED_RESULTS_FOLDER_INFO_TEXT + "*"))
             {
                 if (DateTime.UtcNow.Subtract(fiFileInfo.LastWriteTimeUtc).TotalDays < FAILED_RESULTS_FOLDER_RETAIN_DAYS)

@@ -1113,7 +1113,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
 
                 if (datasetFileIsAFolder)
                 {
-                    // Confirm that the dataset folder exists in the working directory
+                    // Confirm that the dataset directory exists in the working directory
 
                     if (!Directory.Exists(datasetFilePathLocal))
                     {
@@ -1125,7 +1125,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                         }
                         else
                         {
-                            // Copy the dataset folder locally
+                            // Copy the dataset directory locally
                             analysisResults.CopyDirectory(datasetFilePathRemote, datasetFilePathLocal, overwrite: true);
                         }
                     }
@@ -1200,7 +1200,7 @@ namespace AnalysisManagerPRIDEConverterPlugIn
                 {
                     if (datasetFileIsAFolder)
                     {
-                        // Delete the local dataset folder
+                        // Delete the local dataset directory
                         if (Directory.Exists(datasetFilePathLocal))
                         {
                             Directory.Delete(datasetFilePathLocal, true);

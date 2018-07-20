@@ -54,7 +54,7 @@ namespace AnalysisManagerBase
         #region "Properties"
 
         /// <summary>
-        /// Path to the folder that was not found
+        /// Path to the directory that was not found
         /// </summary>
         public string FolderPath { get; }
 

@@ -251,7 +251,7 @@ namespace AnalysisManagerMzRefineryPlugIn
                     {
                         swMessageFile.WriteLine("This folder contains MSGF+ results and the MzRefinery log file from a failed attempt at running MzRefinery for job " + m_JobNum + ".");
                         swMessageFile.WriteLine("The files can be used to investigate the MzRefinery failure.");
-                        swMessageFile.WriteLine("The folder can be safely deleted.");
+                        swMessageFile.WriteLine("the directory can be safely deleted.");
                     }
                 }
 

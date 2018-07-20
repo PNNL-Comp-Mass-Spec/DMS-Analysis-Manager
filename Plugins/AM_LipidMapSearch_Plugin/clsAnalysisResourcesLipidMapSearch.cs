@@ -228,7 +228,7 @@ namespace AnalysisManagerLipidMapSearchPlugIn
             string strFileToFind = null;
 
             // Copy the .Raw file
-            // Search the dataset folder first, then the archive folder
+            // Search the dataset directory first, then the archive folder
 
             strFileToFind = strDatasetName + DOT_RAW_EXTENSION;
             if (!CopyFileToWorkDir(strFileToFind, strDatasetFolderPath, m_WorkingDir, BaseLogger.LogLevels.INFO))
