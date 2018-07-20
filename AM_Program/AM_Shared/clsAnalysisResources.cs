@@ -1736,7 +1736,15 @@ namespace AnalysisManagerBase
             jobInfo.ArchiveStoragePath = m_jobParams.GetJobParameter(jobParamsSection, "DatasetArchivePath", string.Empty);
             jobInfo.ResultsFolderName = m_jobParams.GetJobParameter(jobParamsSection, "inputFolderName", string.Empty);
             jobInfo.DatasetFolderName = m_jobParams.GetJobParameter(jobParamsSection, JOB_PARAM_DATASET_FOLDER_NAME, string.Empty);
-            jobInfo.SharedResultsFolder = m_jobParams.GetJobParameter(jobParamsSection, "SharedResultsFolders", string.Empty);
+
+            var sharedResultsFolders = m_jobParams.GetJobParameter(jobParamsSection, JOB_PARAM_SHARED_RESULTS_FOLDERS, string.Empty);
+            foreach (var sharedResultsFolder in sharedResultsFolders.Split(','))
+            {
+                if (string.IsNullOrWhiteSpace(sharedResultsFolder) || jobInfo.SharedResultsFolders.Contains(sharedResultsFolder))
+                    continue;
+                jobInfo.SharedResultsFolders.Add(sharedResultsFolder);
+            }
+
             jobInfo.RawDataType = m_jobParams.GetJobParameter(jobParamsSection, "RawDataType", string.Empty);
 
             return jobInfo;
@@ -2420,9 +2428,9 @@ namespace AnalysisManagerBase
                 ProteinOptions = string.Empty,
                 ResultsFolderName = string.Empty,
                 DatasetFolderName = udtDatasetInfo.Dataset,
-                SharedResultsFolder = string.Empty,
                 RawDataType = udtDatasetInfo.RawDataType
             };
+            jobInfo.SharedResultsFolders.Clear();
 
             try
             {
@@ -2895,7 +2903,8 @@ namespace AnalysisManagerBase
             sqlStr.Append("        Experiment, Experiment_Reason, Experiment_Comment, Organism, Experiment_NEWT_ID, Experiment_NEWT_Name, ");
             sqlStr.Append("        Tool, ResultType, SettingsFileName, ParameterFileName,");
             sqlStr.Append("        OrganismDBName, ProteinCollectionList, ProteinOptions,");
-            sqlStr.Append("        ServerStoragePath, ArchiveStoragePath, ResultsFolder, DatasetFolder, '' AS SharedResultsFolder, RawDataType ");
+            sqlStr.Append("        ServerStoragePath, ArchiveStoragePath, ResultsFolder, DatasetFolder,");
+            sqlStr.Append("        1 As Step, '' As SharedResultsFolder, RawDataType ");
             sqlStr.Append("FROM V_Analysis_Job_Export_DataPkg ");
             sqlStr.Append("WHERE Job = " + jobNumber);
 
@@ -3210,7 +3219,7 @@ namespace AnalysisManagerBase
             m_jobParams.AddAdditionalParameter(jobParamsSection, "DatasetArchivePath", dataPkgJob.ArchiveStoragePath);
             m_jobParams.AddAdditionalParameter(jobParamsSection, "inputFolderName", dataPkgJob.ResultsFolderName);
             m_jobParams.AddAdditionalParameter(jobParamsSection, JOB_PARAM_DATASET_FOLDER_NAME, dataPkgJob.DatasetFolderName);
-            m_jobParams.AddAdditionalParameter(jobParamsSection, "SharedResultsFolders", dataPkgJob.SharedResultsFolder);
+            m_jobParams.AddAdditionalParameter(jobParamsSection, JOB_PARAM_SHARED_RESULTS_FOLDERS, string.Join(",", dataPkgJob.SharedResultsFolders));
             m_jobParams.AddAdditionalParameter(jobParamsSection, "RawDataType", dataPkgJob.RawDataType);
 
             return true;
@@ -4177,7 +4186,7 @@ namespace AnalysisManagerBase
                                         }
 
                                         LogError(errorMessage);
-                                        return false;
+                                        continue;
                                     }
 
                                     sourceFileName = dataPkgJob.Value.Dataset + DOT_MZML_EXTENSION + DOT_GZ_EXTENSION;

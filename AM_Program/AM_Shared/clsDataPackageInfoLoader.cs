@@ -151,14 +151,18 @@ namespace AnalysisManagerBase
             // That view references   view V_DMS_Data_Package_Aggregation_Jobs in the DMS_Data_Package database
             // The two views have the same name, but some columns differ
 
+            // Jobs that have more than one job step with a shared results folder will have multiple rows in view V_DMS_Data_Package_Aggregation_Jobs
+            // Order by Step ascending, since the SharedResultsFolders list is processed in reverse (last item first)
+
             sqlStr.Append(" SELECT Job, Dataset, DatasetID, Instrument, InstrumentGroup, ");
             sqlStr.Append("        Experiment, Experiment_Reason, Experiment_Comment, Organism, Experiment_NEWT_ID, Experiment_NEWT_Name, ");
             sqlStr.Append("        Tool, ResultType, SettingsFileName, ParameterFileName, ");
             sqlStr.Append("        OrganismDBName, ProteinCollectionList, ProteinOptions,");
-            sqlStr.Append("        ServerStoragePath, ArchiveStoragePath, ResultsFolder, DatasetFolder, SharedResultsFolder, RawDataType");
+            sqlStr.Append("        ServerStoragePath, ArchiveStoragePath, ResultsFolder, DatasetFolder,");
+            sqlStr.Append("        Step, SharedResultsFolder, RawDataType");
             sqlStr.Append(" FROM V_DMS_Data_Package_Aggregation_Jobs");
             sqlStr.Append(" WHERE Data_Package_ID = " + dataPackageID);
-            sqlStr.Append(" ORDER BY Dataset, Tool");
+            sqlStr.Append(" ORDER BY Dataset, Tool, Job, Step");
 
 
             // Get a table to hold the results of the query
@@ -221,6 +225,18 @@ namespace AnalysisManagerBase
                 if (!dctDataPackageJobs.ContainsKey(dataPkgJob.Job))
                 {
                     dctDataPackageJobs.Add(dataPkgJob.Job, dataPkgJob);
+                }
+                else
+                {
+                    // Existing job; append an additional SharedResultsFolder
+                    var existingPkgJob = dctDataPackageJobs[dataPkgJob.Job];
+                    foreach (var sharedResultsFolder in dataPkgJob.SharedResultsFolders)
+                    {
+                        if (existingPkgJob.SharedResultsFolders.Contains(sharedResultsFolder))
+                            continue;
+
+                        existingPkgJob.SharedResultsFolders.Add(sharedResultsFolder);
+                    }
                 }
             }
 
@@ -431,7 +447,13 @@ namespace AnalysisManagerBase
             jobInfo.ArchiveStoragePath = clsGlobal.DbCStr(curRow["ArchiveStoragePath"]);
             jobInfo.ResultsFolderName = clsGlobal.DbCStr(curRow["ResultsFolder"]);
             jobInfo.DatasetFolderName = clsGlobal.DbCStr(curRow["DatasetFolder"]);
-            jobInfo.SharedResultsFolder = clsGlobal.DbCStr(curRow["SharedResultsFolder"]);
+
+            var sharedResultsFolder = clsGlobal.DbCStr(curRow["SharedResultsFolder"]);
+            if (!string.IsNullOrWhiteSpace(sharedResultsFolder))
+            {
+                jobInfo.SharedResultsFolders.Add(sharedResultsFolder);
+            }
+
             jobInfo.RawDataType = clsGlobal.DbCStr(curRow["RawDataType"]);
 
             return jobInfo;
@@ -599,7 +621,6 @@ namespace AnalysisManagerBase
                     }
 
                 }
-
 
             }
             catch (Exception ex)

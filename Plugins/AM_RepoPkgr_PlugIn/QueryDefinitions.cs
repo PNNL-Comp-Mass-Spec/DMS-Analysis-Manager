@@ -60,7 +60,7 @@ namespace AnalysisManager_RepoPkgr_PlugIn
                   BaseSQL = "SELECT * FROM V_Mage_Data_Package_Datasets WHERE {0} = {1}"
                 }},
                 {"DataPkgAggJobsQueryTemplate",  new QueryDefinition {
-                  BaseSQL = "SELECT * FROM V_DMS_Data_Package_Aggregation_Jobs WHERE {0} = {1}",
+                  BaseSQL = "SELECT * FROM V_DMS_Data_Package_Aggregation_Jobs WHERE {0} = {1} ORDER BY Dataset, Tool, Job, Step",
                   DatabaseTagName = TagName.Broker
                 }}
               };

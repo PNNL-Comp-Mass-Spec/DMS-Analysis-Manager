@@ -1,4 +1,5 @@
-﻿using PHRPReader;
+﻿using System.Collections.Generic;
+using PHRPReader;
 
 namespace AnalysisManagerBase
 {
@@ -150,9 +151,9 @@ namespace AnalysisManagerBase
         public string DatasetFolderName { get; set; }
 
         /// <summary>
-        /// Shared results folder path
+        /// Shared results folder paths
         /// </summary>
-        public string SharedResultsFolder { get; set; }
+        public List<string> SharedResultsFolders { get; set; }
 
         /// <summary>
         /// Instrument data type
@@ -191,7 +192,7 @@ namespace AnalysisManagerBase
             ArchiveStoragePath = string.Empty;
             ResultsFolderName = string.Empty;
             DatasetFolderName = string.Empty;
-            SharedResultsFolder = string.Empty;
+            SharedResultsFolders = new List<string>();
             RawDataType = string.Empty;
         }
 
