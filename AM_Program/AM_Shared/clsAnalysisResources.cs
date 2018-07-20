@@ -2289,7 +2289,7 @@ namespace AnalysisManagerBase
 
             const bool unzipFile = true;
 
-            var success = m_FileSearch.RetrieveCachedMzMLFile(unzipFile, out var errorMessage, out var fileMissingFromCache);
+            var success = m_FileSearch.RetrieveCachedMzMLFile(unzipFile, out var errorMessage, out var fileMissingFromCache, out _);
             if (!success)
             {
                 return HandleMsXmlRetrieveFailure(fileMissingFromCache, errorMessage, DOT_MZML_EXTENSION);
@@ -2321,7 +2321,7 @@ namespace AnalysisManagerBase
 
                 const bool unzipFile = true;
 
-                var success = m_FileSearch.RetrieveCachedMzXMLFile(unzipFile, out var errorMessage, out var fileMissingFromCache);
+                var success = m_FileSearch.RetrieveCachedMzXMLFile(unzipFile, out var errorMessage, out var fileMissingFromCache, out _);
                 if (!success)
                 {
                     return HandleMsXmlRetrieveFailure(fileMissingFromCache, errorMessage, DOT_MZXML_EXTENSION);
@@ -2349,8 +2349,7 @@ namespace AnalysisManagerBase
 
             LogMessage("Getting PBF file");
 
-
-            var success = m_FileSearch.RetrieveCachedPBFFile(out var errorMessage, out var fileMissingFromCache);
+            var success = m_FileSearch.RetrieveCachedPBFFile(out var errorMessage, out var fileMissingFromCache, out _);
             if (!success)
             {
                 return HandleMsXmlRetrieveFailure(fileMissingFromCache, errorMessage, DOT_PBF_EXTENSION);
@@ -4124,7 +4123,9 @@ namespace AnalysisManagerBase
                                     // Look for a mzML.gz file instead
 
                                     var retrieved = m_FileSearch.RetrieveCachedMSXMLFile(DOT_MZML_EXTENSION, false,
-                                        out var errorMessage, out _);
+                                                                                         out var errorMessage,
+                                                                                         out _,
+                                                                                         out var sourceDirectoryPath);
 
                                     if (!retrieved)
                                     {
@@ -4146,7 +4147,8 @@ namespace AnalysisManagerBase
 
                                     if (m_DebugLevel >= 1)
                                     {
-                                        LogMessage("Retrieved the .mzML file for " + dataPkgJob.Value.Dataset + ", job " + dataPkgJob.Key);
+                                        LogMessage(string.Format("Retrieved the .mzML file for {0}, job {1}, from {2}",
+                                                                 dataPkgJob.Value.Dataset, dataPkgJob.Key, sourceDirectoryPath));
                                     }
 
                                     continue;

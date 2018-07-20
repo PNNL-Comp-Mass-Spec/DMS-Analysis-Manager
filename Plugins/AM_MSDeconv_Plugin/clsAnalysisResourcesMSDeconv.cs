@@ -37,17 +37,9 @@ namespace AnalysisManagerMSDeconvPlugIn
 
             LogMessage("Getting mzXML file");
 
-            // var eResult = GetMzXMLFile();
-            // if (eResult != CloseOutType.CLOSEOUT_SUCCESS)
-            // {
-            //    return eResult;
-            // }
-
-            string errorMessage;
-            bool fileMissingFromCache;
             const bool unzipFile = true;
 
-            var success = FileSearch.RetrieveCachedMzXMLFile(unzipFile, out errorMessage, out fileMissingFromCache);
+            var success = FileSearch.RetrieveCachedMzXMLFile(unzipFile, out var errorMessage, out var fileMissingFromCache, out _);
             if (!success)
             {
                 return HandleMsXmlRetrieveFailure(fileMissingFromCache, errorMessage, DOT_MZXML_EXTENSION);

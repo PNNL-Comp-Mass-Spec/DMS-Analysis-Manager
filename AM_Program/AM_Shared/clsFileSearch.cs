@@ -1030,14 +1030,16 @@ namespace AnalysisManagerBase
         /// <param name="unzip">True to unzip; otherwise, will remain as a .gzip file</param>
         /// <param name="errorMessage">Output parameter: Error message</param>
         /// <param name="fileMissingFromCache">Output parameter: will be True if the file was not found in the cache</param>
+        /// <param name="sourceDirectoryPath">Output parameter: source directory path</param>
         /// <returns>True if success, false if an error or file not found</returns>
         /// <remarks>
         /// Uses the jobs InputFolderName parameter to dictate which subfolder to search at \\Proto-11\MSXML_Cache
         /// InputFolderName should be in the form MSXML_Gen_1_93_367204
         /// </remarks>
-        public bool RetrieveCachedMzMLFile(bool unzip, out string errorMessage, out bool fileMissingFromCache)
+        public bool RetrieveCachedMzMLFile(bool unzip, out string errorMessage, out bool fileMissingFromCache, out string sourceDirectoryPath)
         {
-            return RetrieveCachedMSXMLFile(clsAnalysisResources.DOT_MZML_EXTENSION, unzip, out errorMessage, out fileMissingFromCache);
+            return RetrieveCachedMSXMLFile(clsAnalysisResources.DOT_MZML_EXTENSION, unzip,
+                                           out errorMessage, out fileMissingFromCache, out sourceDirectoryPath);
         }
 
         /// <summary>
@@ -1045,15 +1047,17 @@ namespace AnalysisManagerBase
         /// </summary>
         /// <param name="errorMessage">Output parameter: Error message</param>
         /// <param name="fileMissingFromCache">Output parameter: will be True if the file was not found in the cache</param>
+        /// <param name="sourceDirectoryPath">Output parameter: source directory path</param>
         /// <returns>True if success, false if an error or file not found</returns>
         /// <remarks>
         /// Uses the jobs InputFolderName parameter to dictate which subfolder to search at \\Proto-11\MSXML_Cache
         /// InputFolderName should be in the form MSXML_Gen_1_93_367204
         /// </remarks>
-        public bool RetrieveCachedPBFFile(out string errorMessage, out bool fileMissingFromCache)
+        public bool RetrieveCachedPBFFile(out string errorMessage, out bool fileMissingFromCache, out string sourceDirectoryPath)
         {
             const bool unzip = false;
-            return RetrieveCachedMSXMLFile(clsAnalysisResources.DOT_PBF_EXTENSION, unzip, out errorMessage, out fileMissingFromCache);
+            return RetrieveCachedMSXMLFile(clsAnalysisResources.DOT_PBF_EXTENSION, unzip,
+                                           out errorMessage, out fileMissingFromCache, out sourceDirectoryPath);
         }
 
         /// <summary>
@@ -1062,33 +1066,42 @@ namespace AnalysisManagerBase
         /// <param name="unzip">True to unzip; otherwise, will remain as a .gzip file</param>
         /// <param name="errorMessage">Output parameter: Error message</param>
         /// <param name="fileMissingFromCache">Output parameter: will be True if the file was not found in the cache</param>
+        /// <param name="sourceDirectoryPath">Output parameter: source directory path</param>
         /// <returns>True if success, false if an error or file not found</returns>
         /// <remarks>
         /// Uses the jobs InputFolderName parameter to dictate which subfolder to search at \\Proto-11\MSXML_Cache
         /// InputFolderName should be in the form MSXML_Gen_1_105_367204
         /// </remarks>
-        public bool RetrieveCachedMzXMLFile(bool unzip, out string errorMessage, out bool fileMissingFromCache)
+        public bool RetrieveCachedMzXMLFile(bool unzip, out string errorMessage, out bool fileMissingFromCache, out string sourceDirectoryPath)
         {
-            return RetrieveCachedMSXMLFile(clsAnalysisResources.DOT_MZXML_EXTENSION, unzip, out errorMessage, out fileMissingFromCache);
+            return RetrieveCachedMSXMLFile(clsAnalysisResources.DOT_MZXML_EXTENSION, unzip,
+                                           out errorMessage, out fileMissingFromCache, out sourceDirectoryPath);
         }
 
         /// <summary>
-        /// Retrieve the dataset's cached .mzXML or .mzML file from the MsXML Cache (assumes the file is gzipped)
+        /// Retrieve the dataset's cached .mzXML or .mzML file from the MsXML Cache
         /// </summary>
         /// <param name="resultFileExtension">File extension to retrieve (.mzXML or .mzML)</param>
         /// <param name="unzip">True to unzip; otherwise, will remain as a .gzip file</param>
         /// <param name="errorMessage">Output parameter: Error message</param>
         /// <param name="fileMissingFromCache">Output parameter: will be True if the file was not found in the cache</param>
+        /// <param name="sourceDirectoryPath">Output parameter: source directory path</param>
         /// <returns>True if success, false if an error or file not found</returns>
         /// <remarks>
         /// Uses the job's InputFolderName parameter to dictate which subfolder to search at \\Proto-11\MSXML_Cache
         /// InputFolderName should be in the form MSXML_Gen_1_93_367204
         /// </remarks>
-        public bool RetrieveCachedMSXMLFile(string resultFileExtension, bool unzip, out string errorMessage, out bool fileMissingFromCache)
+        public bool RetrieveCachedMSXMLFile(
+            string resultFileExtension,
+            bool unzip,
+            out string errorMessage,
+            out bool fileMissingFromCache,
+            out string sourceDirectoryPath)
         {
 
             errorMessage = string.Empty;
             fileMissingFromCache = false;
+            sourceDirectoryPath = string.Empty;
 
             if (string.IsNullOrEmpty(resultFileExtension))
             {
@@ -1103,6 +1116,7 @@ namespace AnalysisManagerBase
                 if (localMsXmlFile.Exists)
                 {
                     OnStatusEvent(string.Format("Using {0} file {1}", resultFileExtension, localMsXmlFile.Name));
+                    sourceDirectoryPath = m_WorkingDir;
                     return true;
                 }
 
@@ -1116,6 +1130,8 @@ namespace AnalysisManagerBase
                     OnWarningEvent(errorMessage);
                     return false;
                 }
+
+                sourceDirectoryPath = m_WorkingDir;
 
                 if (!unzip)
                     return true;
@@ -1198,21 +1214,21 @@ namespace AnalysisManagerBase
 
             errorMessage = string.Empty;
 
-            DirectoryInfo disourceFolder = null;
+            DirectoryInfo sourceDirectory = null;
             var sourceFilePath = string.Empty;
 
             foreach (var toolNameVersionFolder in msXmlToolNameVersionFolders)
             {
-                var sourceFolder = clsAnalysisResources.GetMSXmlCacheFolderPath(diMSXmlCacheFolder.FullName, m_jobParams, toolNameVersionFolder, out errorMessage);
+                var sourceFolder = clsAnalysisResources.GetMSXmlCacheFolderPath(msXmlCacheDir.FullName, m_jobParams, toolNameVersionFolder, out errorMessage);
                 if (!string.IsNullOrEmpty(errorMessage))
                 {
                     continue;
                 }
 
-                disourceFolder = new DirectoryInfo(sourceFolder);
-                if (disourceFolder.Exists)
+                sourceDirectory = new DirectoryInfo(sourceFolder);
+                if (sourceDirectory.Exists)
                 {
-                    var candidateFilePath = Path.Combine(disourceFolder.FullName, DatasetName + resultFileExtension);
+                    var candidateFilePath = Path.Combine(sourceDirectory.FullName, DatasetName + resultFileExtension);
                     if (File.Exists(candidateFilePath))
                     {
                         sourceFilePath = candidateFilePath;
@@ -1221,10 +1237,10 @@ namespace AnalysisManagerBase
 
                     if (resultFileExtension != clsAnalysisResources.DOT_PBF_EXTENSION)
                     {
-                        candidateFilePath += clsAnalysisResources.DOT_GZ_EXTENSION;
-                        if (File.Exists(candidateFilePath))
+                        var candidateGzFilePath = candidateFilePath + clsAnalysisResources.DOT_GZ_EXTENSION;
+                        if (File.Exists(candidateGzFilePath))
                         {
-                            sourceFilePath = candidateFilePath;
+                            sourceFilePath = candidateGzFilePath;
                             break;
                         }
                     }
@@ -1234,7 +1250,7 @@ namespace AnalysisManagerBase
 
                 if (string.IsNullOrEmpty(errorMessage))
                 {
-                    errorMessage = "Cache folder does not exist (" + sourceFolder;
+                    errorMessage = "Cache directory does not exist (" + sourceFolder;
                 }
                 else
                 {
@@ -1243,7 +1259,7 @@ namespace AnalysisManagerBase
 
             }
 
-            if (disourceFolder == null || !disourceFolder.Exists)
+            if (sourceDirectory == null || !sourceDirectory.Exists)
             {
                 errorMessage += ")";
                 fileMissingFromCache = true;
@@ -1252,7 +1268,7 @@ namespace AnalysisManagerBase
 
             if (string.IsNullOrWhiteSpace(sourceFilePath))
             {
-                errorMessage = "msXML file not found in the source folder(s): " + string.Join(",", msXmlToolNameVersionFolders);
+                errorMessage = "msXML file not found in the source directory(s): " + string.Join(",", msXmlToolNameVersionFolders);
                 fileMissingFromCache = true;
                 return false;
             }
@@ -1266,10 +1282,14 @@ namespace AnalysisManagerBase
             var fiSourceFile = new FileInfo(sourceFilePath);
             if (!fiSourceFile.Exists)
             {
-                errorMessage = "Cached " + expectedFileDescription + " file does not exist in " + disourceFolder.FullName + "; will re-generate it";
+                errorMessage = string.Format("Cached {0} file does not exist in {1}; will re-generate it",
+                                             expectedFileDescription,
+                                             sourceDirectory.FullName);
                 fileMissingFromCache = true;
                 return false;
             }
+
+            sourceDirectoryPath = fiSourceFile.DirectoryName;
 
             // Match found; confirm that it has a .hashcheck file and that the information in the .hashcheck file matches the file
 
@@ -1281,7 +1301,9 @@ namespace AnalysisManagerBase
 
             if (!validFile)
             {
-                errorMessage = "Cached " + resultFileExtension + " file does not match the hashcheck file in " + disourceFolder.FullName + "; will re-generate it";
+                errorMessage = string.Format("Cached {0} file does not match the hashcheck file in {1}; will re-generate it",
+                                             resultFileExtension,
+                                             sourceDirectory.FullName);
                 fileMissingFromCache = true;
                 return false;
             }
