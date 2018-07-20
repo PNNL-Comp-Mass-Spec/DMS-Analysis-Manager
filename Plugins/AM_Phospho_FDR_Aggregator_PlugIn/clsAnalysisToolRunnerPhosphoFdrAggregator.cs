@@ -804,7 +804,9 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                 var jobToToolMap = ExtractPackedJobParameterDictionary(clsAnalysisResources.JOB_PARAM_DICTIONARY_JOB_TOOL_MAP);
                 var jobsProcessed = new List<udtJobMetadataForAScore>();
 
-                var jobCountSkipped = 0;
+                var jobCountSkippedUnknownJob = 0;
+                var jobCountSkippedNoSpectrumFile = 0;
+                var jobCountSkippedNoSynFile = 0;
 
                 var jobFolderlist = GetJobFolderList();
 
@@ -837,7 +839,8 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                         m_message = "Job " + udtJobMetadata.Job + " not found in packed job parameter " +
                                     clsAnalysisResources.JOB_PARAM_DICTIONARY_JOB_DATASET_MAP;
                         LogError("Error in ProcessSynopsisFiles: " + m_message);
-                        return false;
+                        jobCountSkippedUnknownJob++;
+                        continue;
                     }
 
                     udtJobMetadata.Dataset = datasetName;
@@ -858,14 +861,15 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
 
                     if (string.IsNullOrWhiteSpace(udtJobMetadata.SpectrumFilePath))
                     {
-                        return false;
+                        jobCountSkippedNoSpectrumFile++;
+                        continue;
                     }
 
                     // Find any first hits and synopsis files
                     var success = DetermineInputFilePaths(jobFolder.Value, ref udtJobMetadata, fileSuffixesToCombine);
                     if (!success)
                     {
-                        jobCountSkipped += 1;
+                        jobCountSkippedNoSynFile += 1;
                     }
                     else
                     {
@@ -910,9 +914,32 @@ namespace AnalysisManagerPhospho_FDR_AggregatorPlugIn
                     m_progress = ComputeIncrementalProgress(PROGRESS_PCT_PHOSPHO_FDR_RUNNING, PROGRESS_PCT_PHOSPHO_FDR_COMPLETE, subTaskProgress);
                 }
 
-                if (jobCountSkipped > 0)
+                // see the DMS_FailedResults directory ...
+                var failedResultsDirInfo = string.Format("see the {0} directory for results from successfully processed jobs",
+                                                         DMS_FAILED_RESULTS_DIRECTORY_NAME);
+
+                if (jobCountSkippedUnknownJob > 0)
                 {
-                    var msg = "Skipped " + jobCountSkipped + " job(s) because a synopsis or first hits file was not found";
+                    var msg = "Skipped " + jobCountSkippedUnknownJob + " job(s) " +
+                              "because the job number was not defined in the job to dataset mapping dictionary; " + failedResultsDirInfo;
+                    LogWarning(msg);
+                    UpdateStatusMessage(msg);
+                    successOverall = false;
+                }
+
+                if (jobCountSkippedNoSpectrumFile > 0)
+                {
+                    var msg = "Skipped " + jobCountSkippedNoSpectrumFile + " job(s) " +
+                              "because the _dta.txt or .mzML file could not be found for the dataset; " + failedResultsDirInfo;
+                    LogWarning(msg);
+                    UpdateStatusMessage(msg);
+                    successOverall = false;
+                }
+
+                if (jobCountSkippedNoSynFile > 0)
+                {
+                    var msg = "Skipped " + jobCountSkippedNoSynFile + " job(s) " +
+                              "because a synopsis or first hits file was not found; " + failedResultsDirInfo;
                     LogWarning(msg);
                     UpdateStatusMessage(msg);
                 }
